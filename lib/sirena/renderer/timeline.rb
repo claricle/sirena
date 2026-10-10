@@ -18,21 +18,13 @@ module Sirena
       # @param scene [Layout::Timeline::Scene] final timeline geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = document(scene)
+        svg = create_document(scene)
         svg << text_element(scene.title) if scene.title
         scene.tracks.each { |track| render_track(track, svg) }
         svg
       end
 
       protected
-
-      def document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
 
       def render_track(track, svg)
         svg << text_element(track.header) if track.header

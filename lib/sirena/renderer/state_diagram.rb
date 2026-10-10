@@ -7,14 +7,18 @@ module Sirena
   module Renderer
     # Emits SVG from final, typed state-diagram geometry.
     class StateDiagram < Base
+      LAYOUT_SCENE = Layout::StateDiagram::Scene
+      private_constant :LAYOUT_SCENE
+
       # @param scene [Layout::StateDiagram::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = if scene.is_a?(Layout::StateDiagram::Scene)
-                typed_document(scene)
-              else
-                create_document(scene)
-              end
+        canvas = scene
+        if scene.is_a?(Hash)
+          canvas = LAYOUT_SCENE.new(width: calculate_width(scene) + 40,
+                                    height: calculate_height(scene) + 40)
+        end
+        svg = create_document(canvas)
         render_transitions(scene, svg)
         render_states(scene, svg)
         svg
@@ -177,14 +181,6 @@ module Sirena
       end
 
       private
-
-      def typed_document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
 
       def compatibility_state_shape(state_type, arguments)
         case state_type

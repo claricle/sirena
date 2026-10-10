@@ -24,7 +24,7 @@ module Sirena
       def render(scene)
         return render_graph(scene) if scene.is_a?(Hash)
 
-        svg = document(scene)
+        svg = create_document(scene)
         render_relationships(scene, svg)
         render_entities(scene, svg)
 
@@ -34,20 +34,15 @@ module Sirena
       protected
 
       def render_graph(graph)
-        svg = create_document(
-          graph, padding: Layout::ErDiagram.diagram_padding(graph)
+        padding = Layout::ErDiagram.diagram_padding(graph) * 2
+        scene = Layout::ErDiagram::Scene.new(
+          width: calculate_width(graph) + padding,
+          height: calculate_height(graph) + padding,
         )
+        svg = create_document(scene)
         render_relationships(graph, svg) if graph[:edges]
         render_entities(graph, svg) if graph[:children]
         svg
-      end
-
-      def document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
       end
 
       def emit_entities(nodes, class_defs, svg)

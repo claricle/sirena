@@ -67,58 +67,26 @@ module Sirena
 
       protected
 
-      # Creates an SVG document with appropriate dimensions.
+      # Creates an SVG document from final Scene canvas dimensions.
       #
-      # The viewBox origin stays at zero, so this grows the right and bottom
-      # extents rather than adding visible space on all four sides.
+      # Scene coordinates already include their framing. The renderer must not
+      # add padding or reuse a caller-supplied viewBox origin.
       #
-      # @param graph [Object] the graph to get dimensions from
-      # @param padding [Numeric] half the growth added to each dimension
+      # @param scene [Layout::Scene] final canvas geometry
       # @param overflow [String, nil] SVG `overflow` presentation attribute
-      #   for the root element, e.g. `'hidden'`. nil (the default) omits it,
-      #   which keeps every renderer's output byte-for-byte what it always
-      #   was; a renderer opts in deliberately, the way `Flowchart`
-      #   does for the self-loop overflow policy documented on `#render`.
+      #   for the root element, e.g. `'hidden'`
       # @return [Svg::Document] new SVG document
-      def create_document(graph, padding: 20, overflow: nil)
-        width = calculate_width(graph) + (padding * 2)
-        height = calculate_height(graph) + (padding * 2)
-
-        Svg::Document.new.tap do |doc|
-          doc.width = width
-          doc.height = height
-          doc.view_box = "0 0 #{width} #{height}"
-          doc.overflow = overflow
-        end
-      end
-
-      # Creates an SVG document sized from `layout[:width]`/`layout[:height]`.
-      # Keep it single-argument (released arity); for padding, override it
-      # and call {#build_document_from_layout} instead of `super`.
-      #
-      # @param layout [Hash] laid-out diagram data with :width and :height
-      # @return [Svg::Document] new SVG document
-      def create_document_from_layout(layout)
-        build_document_from_layout(layout, padding: 0)
-      end
-
-      # Padded form of {#create_document_from_layout}, for subclass overrides.
-      #
-      # @param layout [Hash] laid-out diagram data with :width and :height
-      # @param padding [Numeric] added to each side of width/height; also
-      #   sets @offset_x/@offset_y to this value when positive
-      # @return [Svg::Document] new SVG document
-      def build_document_from_layout(layout, padding:)
-        Svg::Document.new.tap do |doc|
-          doc.width = layout[:width] + (padding * 2)
-          doc.height = layout[:height] + (padding * 2)
-          doc.view_box = "0 0 #{doc.width} #{doc.height}"
-
-          if padding.positive?
-            @offset_x = padding
-            @offset_y = padding
-          end
-        end
+      def create_document(scene, overflow: nil)
+        dimensions = [scene.width, scene.height]
+          .map { |value| value.to_i == value ? value.to_i : value }
+        existing = scene.view_box.to_s.split.last(2)
+        dimensions = { existing.map(&:to_f) => existing }.fetch(
+          [scene.width, scene.height], dimensions
+        )
+        Svg::Document.new(
+          width: scene.width, height: scene.height,
+          view_box: "0 0 #{dimensions.join(' ')}", overflow: overflow
+        )
       end
 
       # Room to reserve for a text label: its measured width with headroom

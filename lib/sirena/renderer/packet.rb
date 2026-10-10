@@ -29,7 +29,7 @@ module Sirena
       # @return [Svg::Document] rendered SVG document
       def render(layout)
         scene = typed_scene(layout)
-        svg = create_document_from_layout(scene)
+        svg = create_document(scene)
         render_scene_title(scene, svg)
         render_scene_markers(scene, svg)
         render_scene_grid(scene, svg)
@@ -43,20 +43,6 @@ module Sirena
         return layout if layout.is_a?(Layout::Packet::Scene)
 
         Layout::Packet.from_graph(layout, theme: theme)
-      end
-
-      def document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
-
-      def create_document_from_layout(layout)
-        return super unless layout.is_a?(Layout::Packet::Scene)
-
-        document(layout)
       end
 
       def label_element(label)

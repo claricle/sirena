@@ -20,7 +20,7 @@ module Sirena
       # @param scene [Layout::Block::Scene] final canvas geometry
       # @return [Svg::Document] the rendered SVG document
       def render(scene)
-        svg = create_document_from_layout(scene)
+        svg = create_document(scene)
         render_connections(scene, svg)
         render_blocks(scene, svg)
 
@@ -28,11 +28,6 @@ module Sirena
       end
 
       protected
-
-      def create_document_from_layout(scene)
-        Svg::Document.new(width: scene.width, height: scene.height,
-                          view_box: scene.view_box)
-      end
 
       def render_blocks(scene, svg)
         scene.children.each { |node| render_block(node, svg) }

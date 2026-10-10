@@ -24,7 +24,7 @@ module Sirena
         unless scene.is_a?(Layout::Radar::Scene)
           scene = Layout::Radar.from_graph(scene, theme: theme)
         end
-        svg = document(scene)
+        svg = create_document(scene)
         scene.grid_circles.each { |circle| svg << grid_circle(circle) }
         scene.axes.each { |axis| render_axis(axis, svg) }
         scene.curves.each { |curve| render_curve(curve, svg) }
@@ -33,14 +33,6 @@ module Sirena
       end
 
       protected
-
-      def document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
 
       def grid_circle(circle)
         Svg::Circle.new.tap do |element|

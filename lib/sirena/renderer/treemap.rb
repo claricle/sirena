@@ -13,9 +13,7 @@ module Sirena
     class Treemap < Base
       def render(layout)
         scene = typed_scene(layout)
-        doc = Svg::Document.new(
-          width: scene.width, height: scene.height, view_box: scene.view_box,
-        )
+        doc = create_document(scene)
 
         add_title(doc, scene.title) if scene.title
 

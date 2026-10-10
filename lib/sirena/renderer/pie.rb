@@ -39,7 +39,7 @@ module Sirena
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
         scene = typed_scene(graph)
-        svg = typed_document(scene)
+        svg = create_document(scene)
         svg << typed_label(scene.title) if scene.title
         scene.slices.each do |slice|
           svg << typed_slice(slice)
@@ -54,14 +54,6 @@ module Sirena
         return graph if graph.is_a?(Layout::Pie::Scene)
 
         Layout::Pie.from_graph(graph, theme: theme)
-      end
-
-      def typed_document(scene)
-        Svg::Document.new.tap do |doc|
-          doc.width = scene.width
-          doc.height = scene.height
-          doc.view_box = scene.view_box
-        end
       end
 
       def typed_slice(slice)
@@ -98,17 +90,6 @@ module Sirena
 
       def number_string(value)
         value.to_i == value ? value.to_i.to_s : value.to_s
-      end
-
-      def create_document_for_pie(graph)
-        width = calculate_width_for_pie(graph)
-        height = calculate_height_for_pie(graph)
-
-        Svg::Document.new.tap do |doc|
-          doc.width = width
-          doc.height = height
-          doc.view_box = "0 0 #{width} #{height}"
-        end
       end
 
       def calculate_width_for_pie(_graph)

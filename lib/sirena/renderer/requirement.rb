@@ -18,8 +18,7 @@ module Sirena
       # @param scene [Layout::Requirement::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = Svg::Document.new(width: scene.width, height: scene.height,
-                                view_box: scene.view_box)
+        svg = create_document(scene)
         scene.edges.each { |edge| render_relationship(edge, svg) }
         scene.children.each { |node| render_node(node, svg) }
         svg

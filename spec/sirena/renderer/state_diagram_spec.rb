@@ -348,11 +348,11 @@ RSpec.describe Sirena::Renderer::StateDiagram do
       expect { renderer.render(scene) }.not_to raise_error
     end
 
-    it "uses the final typed canvas view box" do
+    it "uses the final typed canvas dimensions with a zero origin" do
       document = renderer.render(routed_typed_scene)
 
       expect([document.width, document.height, document.view_box])
-        .to eq([100.0, 100.0, "5 6 70 80"])
+        .to eq([100.0, 100.0, "0 0 100 100"])
     end
 
     it "serializes every final transition section" do

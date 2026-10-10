@@ -21,7 +21,7 @@ module Sirena
       # @param scene [Layout::Architecture::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = document(scene)
+        svg = create_document(scene)
         scene.children.select { |node| node.kind == "group" }
           .each { |group| render_group(group, svg) }
         scene.edges.each { |edge| render_edge(edge, svg) }
@@ -31,11 +31,6 @@ module Sirena
       end
 
       protected
-
-      def document(scene)
-        Svg::Document.new(width: scene.width, height: scene.height,
-                          view_box: scene.view_box)
-      end
 
       def render_group(node, svg)
         group = Svg::Group.new.tap { |item| item.id = "group-#{node.id}" }
