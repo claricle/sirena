@@ -473,9 +473,32 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       end
     end
 
-    it "refuses a nested box" do
-      expect { parse("box", "box", "participant A") }
-        .to raise_error(unsupported, /nested box/)
+    it "keeps the inner boxes and drops an outer box with no members" do
+      diagram = parse("box \"out\"", "box \"in1\"", "participant A", "endbox",
+                      "box \"in2\"", "participant B", "endbox", "end box")
+
+      expect(diagram.boxes.map { |b| [b.title, b.members] })
+        .to eq([["in1", %w[A]], ["in2", %w[B]]])
+    end
+
+    it "keeps an outer box for the members it holds itself" do
+      diagram = parse("box \"out\"", "participant A", "box \"in\"",
+                      "participant B", "endbox", "end box")
+
+      expect(diagram.boxes.map { |b| [b.title, b.members] })
+        .to eq([["in", %w[B]], ["out", %w[A]]])
+    end
+
+    it "refuses an outer box whose members the inner box splits apart" do
+      expect do
+        parse("box", "participant A", "box", "participant B", "endbox",
+              "participant C", "endbox")
+      end.to raise_error(Sirena::Parser::ParseError, /neighbours/)
+    end
+
+    it "names the unclosed box when an inner one is left open" do
+      expect { parse("box \"out\"", "box \"in\"", "participant A", "endbox") }
+        .to raise_error(Sirena::Parser::ParseError, /"out"/)
     end
 
     it "reports the line of the refusal" do
