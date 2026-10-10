@@ -11,6 +11,28 @@ RSpec.describe Sirena::Layout::C4 do
     )
   end
 
+  def missing_label_sets
+    unpositioned = layout.send(
+      :typed_node,
+      { id: "plain", width: 40, height: 40, labels: [{ text: "Plain" }] },
+    )
+    boundary = layout.send(:typed_node, empty_boundary)
+    [unpositioned.labels, boundary.labels]
+  end
+
+  def empty_boundary
+    {
+      id: "scope", x: 0, y: 0, width: 100, height: 80, labels: [],
+      metadata: { boundary_type: "System_Boundary" }
+    }
+  end
+
+  def fallback_sizes
+    layout.theme = double(typography: nil)
+    [layout.send(:normal_font_size), layout.send(:large_font_size),
+     layout.send(:small_font_size)]
+  end
+
   it "keeps a missing semantic element type missing" do
     element_class = described_class.const_get(:SemanticElement, false)
 
@@ -25,19 +47,7 @@ RSpec.describe Sirena::Layout::C4 do
   end
 
   it "omits labels without positions and on an empty boundary" do
-    unpositioned = layout.send(
-      :typed_node,
-      { id: "plain", width: 40, height: 40, labels: [{ text: "Plain" }] },
-    )
-    boundary = layout.send(
-      :typed_node,
-      {
-        id: "scope", x: 0, y: 0, width: 100, height: 80, labels: [],
-        metadata: { boundary_type: "System_Boundary" }
-      },
-    )
-
-    expect([unpositioned.labels, boundary.labels]).to eq([[], []])
+    expect(missing_label_sets).to eq([[], []])
   end
 
   it "filters an edge whose endpoint collections are absent" do
@@ -56,13 +66,6 @@ RSpec.describe Sirena::Layout::C4 do
   end
 
   it "falls back when theme typography is absent" do
-    layout.theme = double(typography: nil)
-    sizes = [
-      layout.send(:normal_font_size),
-      layout.send(:large_font_size),
-      layout.send(:small_font_size),
-    ]
-
-    expect(sizes).to eq([14, 16, 12])
+    expect(fallback_sizes).to eq([14, 16, 12])
   end
 end
