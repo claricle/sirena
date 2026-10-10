@@ -492,7 +492,7 @@ module Sirena
         loop do
           changed = false
           tasks.each_with_index do |task, index|
-            next if task.calculated_start
+            next unless unresolved?(task)
 
             if task.after_task || task.until_task
               changed = true if resolve_task_dependency(task)
@@ -504,6 +504,18 @@ module Sirena
           iteration += 1
           break if !changed || iteration >= max_iterations
         end
+      end
+
+      # A task with a start date but an "until" end is scheduled by the
+      # first pass yet still waits for the until task's start.
+      def unresolved?(task)
+        return true unless task.calculated_start
+
+        dated_until?(task) && task.calculated_end.nil?
+      end
+
+      def dated_until?(task)
+        task.until_task && task.start_date && !task.after_task
       end
 
       # The predecessor is found by POSITION, not by id — the previous
