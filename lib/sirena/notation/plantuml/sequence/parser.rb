@@ -4,6 +4,7 @@ require_relative "../../../error"
 require_relative "../../../error/diagram_type_error"
 require_relative "../../../error/parse_error"
 require_relative "../caption"
+require_relative "chrome"
 require_relative "../unsupported_construct_error"
 require_relative "appearance"
 require_relative "arrow_syntax"
@@ -51,7 +52,12 @@ module Sirena
           SKINPARAM_OPEN = /\Askinparam[ \t]*\{\z/i
           HIDE_FOOTBOX = /\Ahide[ \t]+footbox\z/i
           AUTOACTIVATE = /\Aautoactivate[ \t]+(on|off)\z/i
-          TITLE = /\Atitle[ \t]+(?!\S*(?:--|\.\.|->|<-))\S/i
+          TITLE = /\A(?:title|header|footer|caption|legend)[ \t]+
+                   (?!\S*(?:--|\.\.|->|<-))\S/xi
+          CHROME_OPEN = /\A(?:(title|header|footer|caption)|
+                          legend(?:[ \t]+(top|bottom))?
+                          (?:[ \t]+(left|center|right))?)\z/xi
+          CHROME_CLOSE = /\Aend[ \t]*(title|header|footer|caption|legend)\z/i
           STYLE_OPEN = /\A<style>\z/i
           STYLE_CLOSE = /\A<\/style>\z/i
           MESSAGE = /\A(#{QUOTED}|#{NAME}|[\[?](?=[-<\\\/oxOX]))[ \t]*
@@ -97,6 +103,7 @@ module Sirena
                       [SKINPARAM_OPEN, :open_skinparam],
                       [HIDE_FOOTBOX, :hide_footbox],
                       [AUTOACTIVATE, :autoactivate],
+                      [CHROME_OPEN, :open_chrome],
                       [TITLE, :title],
                       [STYLE_OPEN, :open_style]].freeze
 
@@ -107,7 +114,8 @@ module Sirena
                            :DIVIDER, :DESTROY, :COLOUR, :SKINPARAM_WIDTH,
                            :STYLE_OPEN, :STYLE_CLOSE, :PARALLEL,
                            :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE,
-                           :AUTOACTIVATE, :AUTONUMBER, :TITLE
+                           :AUTOACTIVATE, :AUTONUMBER, :TITLE,
+                           :CHROME_OPEN, :CHROME_CLOSE
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -144,6 +152,8 @@ module Sirena
             @footbox = true
             @autoactivate = false
             @title = nil
+            @chrome = Chrome::NONE
+            @pending_chrome = nil
             @warnings = []
           end
 
@@ -169,7 +179,7 @@ module Sirena
           end
 
           def skippable?(text)
-            return false if @pending_note
+            return false if @pending_note || @pending_chrome
 
             text.empty? || text.start_with?("'")
           end
@@ -184,14 +194,24 @@ module Sirena
           end
 
           def statement(text, number)
-            return collect_note(text) if @pending_note
-            return collect_style(text) if @pending_style
+            return collect_pending(text, number) if collecting?
             return collect_skinparam(text, number) if @skin_open
             return end_of_diagram(text, number) if text == "@enduml"
             return pragma(PRAGMA.match(text)) if PRAGMA.match?(text)
 
             read(text, number)
             :statements
+          end
+
+          def collecting?
+            @pending_note || @pending_chrome || @pending_style
+          end
+
+          def collect_pending(text, number)
+            return collect_note(text) if @pending_note
+            return collect_chrome(text, number) if @pending_chrome
+
+            collect_style(text)
           end
 
           def pragma(match)
@@ -237,12 +257,59 @@ module Sirena
             @autoactivate = match[1].casecmp?("on")
           end
 
-          # Only the one plain line, as {Caption} reads it; markup and
-          # the block form stay refused.
+          # Only plain text, as {Caption} reads it; markup stays refused.
           def title(_match, number, text)
             caption = Caption.read(text) or raise refusal(text, number)
 
-            @title = caption.text
+            keep(caption.kind, caption.text)
+          end
+
+          def keep(kind, text, place = nil)
+            if kind == :title
+              @title = text
+            else
+              @chrome = @chrome.with(kind, text, place || @chrome.legend_place)
+            end
+          end
+
+          def open_chrome(match, number, text)
+            kind = (match[1] || "legend").downcase.to_sym
+            place = [match[2] || "bottom", match[3] || "center"].join(" ")
+            @pending_chrome = { kind: kind, place: place.downcase,
+                                line: number, text: text, lines: [] }
+          end
+
+          def collect_chrome(text, number)
+            raise unclosed_chrome if text == "@enduml"
+
+            if closes_chrome?(text)
+              close_chrome
+            else
+              chrome_line(text, number)
+            end
+            :statements
+          end
+
+          def closes_chrome?(text)
+            close = CHROME_CLOSE.match(text)
+            close && close[1].casecmp?(@pending_chrome[:kind].to_s)
+          end
+
+          def chrome_line(text, number)
+            kind = @pending_chrome[:kind].to_s
+            raise refusal(text, number, kind) unless Caption.plain?(text)
+
+            @pending_chrome[:lines] << text
+          end
+
+          def close_chrome
+            pending = @pending_chrome
+            @pending_chrome = nil
+            raise refusal(pending[:text], pending[:line]) if
+              pending[:lines].empty?
+
+            place = pending[:place] if pending[:kind] == :legend
+            keep(pending[:kind], pending[:lines].join("\n"), place)
           end
 
           def open_style(_match, number, text)
@@ -622,7 +689,8 @@ module Sirena
             Diagram.new(participants: @participants.values.freeze,
                         items: @outline.items.freeze, boxes: @boxes.freeze,
                         appearance: @appearance, footbox: @footbox,
-                        warnings: @warnings.freeze, title: @title)
+                        warnings: @warnings.freeze, title: @title,
+                        chrome: @chrome)
           end
 
           # The number of a wrapped label would sit on one of its lines,
@@ -638,6 +706,13 @@ module Sirena
           def unclosed_block
             Sirena::Parser::ParseError.new(
               "Parse error: a block is never closed with end",
+            )
+          end
+
+          def unclosed_chrome
+            kind = @pending_chrome[:kind]
+            Sirena::Parser::ParseError.new(
+              "Parse error: #{kind} is never closed with end #{kind}",
             )
           end
 

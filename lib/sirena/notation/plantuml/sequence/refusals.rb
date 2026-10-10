@@ -19,6 +19,8 @@ module Sirena
           LEADING = /\A(#{WORDS.join('|')})\b/io
           RULES = [
             [LEADING, nil],
+            [/\A(?:left|right|center)[ \t]+(?:header|footer)\b/i,
+             "aligned header or footer"],
             [/\A!/, "preprocessor directive"],
             [/\A<style\b/i, "style block"],
             [/\A==.*==\z/, "divider"],

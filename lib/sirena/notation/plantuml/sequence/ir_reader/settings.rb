@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../appearance"
+require_relative "../chrome"
 require_relative "../head_style"
 
 module Sirena
@@ -23,7 +24,16 @@ module Sirena
               { appearance: appearance(index),
                 footbox: index.with_role("no_footbox").empty?,
                 warnings: index.with_role("warning").map(&:label).freeze,
-                title: index.with_role("title").first&.label }
+                title: index.with_role("title").first&.label,
+                chrome: chrome(index) }
+            end
+
+            def chrome(index)
+              texts = Chrome::KINDS.to_h do |kind|
+                [kind, index.with_role(kind.to_s).first&.label]
+              end
+              place = index.with_role("legend_place").first&.label
+              Chrome.new(texts.compact, legend_place: place)
             end
 
             def appearance(index)

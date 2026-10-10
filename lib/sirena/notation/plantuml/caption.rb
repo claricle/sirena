@@ -32,6 +32,11 @@ module Sirena
           new(match[1].downcase.to_sym, body)
         end
 
+        # @return [Boolean] whether one line of a block is plain text
+        def self.plain?(text)
+          PLAIN.match?(text) && !ARROW_START.match?(text)
+        end
+
         attr_reader :kind, :text
 
         def initialize(kind, text)

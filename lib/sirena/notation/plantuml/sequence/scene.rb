@@ -94,6 +94,21 @@ module Sirena
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
+          # The header, caption or footer, as lines of text.
+          class TextBlock < Lutaml::Model::Serializable
+            attribute :id, :string
+            attribute :texts, PlantUML::Scene::Text, collection: true
+          end
+
+          # The framed legend.
+          class Legend < Lutaml::Model::Serializable
+            attribute :x, :float
+            attribute :y, :float
+            attribute :width, :float
+            attribute :height, :float
+            attribute :texts, PlantUML::Scene::Text, collection: true
+          end
+
           # The title above the diagram.
           class Title < Lutaml::Model::Serializable
             attribute :texts, PlantUML::Scene::Text, collection: true
@@ -118,6 +133,8 @@ module Sirena
 
           attribute :banners, Banner, collection: true
           attribute :title, Title
+          attribute :text_blocks, TextBlock, collection: true
+          attribute :legend, Legend
           attribute :frames, Frame, collection: true
           attribute :fragments, Fragment, collection: true
           attribute :notes, Note, collection: true

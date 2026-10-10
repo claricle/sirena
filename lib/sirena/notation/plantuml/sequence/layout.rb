@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../layout/base"
+require_relative "chrome_rows"
 require_relative "edge"
 require_relative "ir_adapter"
 require_relative "ir_reader"
@@ -13,7 +14,6 @@ require_relative "picture"
 require_relative "ref"
 require_relative "ref_shape"
 require_relative "scene"
-require_relative "title_row"
 require_relative "walker"
 
 module Sirena
@@ -62,7 +62,7 @@ module Sirena
           private
 
           def place_origin
-            @origin = MARGIN + banner_room + TitleRow.room(@diagram.title)
+            @origin = MARGIN + banner_room + chrome_rows.top_room
             @top = @origin + (@diagram.boxes.empty? ? 0 : BOX_TITLE_HEIGHT)
           end
 
@@ -147,8 +147,10 @@ module Sirena
 
           def build(widths)
             Scene.new(width: canvas_width(widths),
-                      height: @flow.y + foot_height + MARGIN,
+                      height: page_height,
                       banners: banners, title: title_scene(widths),
+                      text_blocks: text_blocks(widths),
+                      legend: legend_scene(widths),
                       frames: frames(widths),
                       heads: heads(widths),
                       lifelines: lifelines, page_breaks: page_breaks(widths),
@@ -372,16 +374,37 @@ module Sirena
           end
 
           def title_extent
-            TitleRow.width(@diagram.title, method(:caption_width))
+            chrome_rows.width
           end
 
-          def caption_width(text)
-            measure_text(text, font_size: font_size)[:width]
+          def chrome_rows
+            @chrome_rows ||= ChromeRows.new(@diagram, method(:chrome_width))
+          end
+
+          def chrome_width(text, size)
+            measure_text(text, font_size: size || font_size)[:width]
+          end
+
+          def page_height
+            @flow.y + foot_height + MARGIN + chrome_rows.bottom_room
+          end
+
+          def chrome_top
+            MARGIN + banner_room
           end
 
           def title_scene(widths)
-            top = MARGIN + banner_room
-            TitleRow.scene(@diagram.title, top, canvas_width(widths))
+            chrome_rows.title(chrome_top, canvas_width(widths))
+          end
+
+          def text_blocks(widths)
+            chrome_rows.blocks(chrome_top, @flow.y + foot_height,
+                               canvas_width(widths))
+          end
+
+          def legend_scene(widths)
+            chrome_rows.legend(chrome_top, @flow.y + foot_height,
+                               canvas_width(widths))
           end
 
           def banner_room
