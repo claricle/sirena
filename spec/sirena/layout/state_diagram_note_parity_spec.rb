@@ -6,28 +6,43 @@ RSpec.describe Sirena::Layout::StateDiagram do
   include SpecSupport::LayoutParity::FigureHelpers
 
   let(:note_cases) do
-    %w[
-      state/027_parser_should_handle_multiline_notes_with_different_line_breaks_26.mmd
-      state/051_parser_should_handle_multiline_notes_with_different_line_breaks_50.mmd
-      state_diagram/026_parser_should_handle_multiline_notes_with_different_line_breaks_25.mmd
-      state_diagram/049_parser_should_handle_multiline_notes_with_different_line_breaks_48.mmd
-      state_diagram/050_parser_should_handle_multiline_notes_with_different_line_breaks_49.mmd
-      state_diagram/073_parser_should_handle_multiline_notes_with_different_line_breaks_72.mmd
-      state_diagram/097_parser_should_handle_multiline_notes_with_different_line_breaks_96.mmd
+    [
+      multiline_note_case("state", 27, 26),
+      multiline_note_case("state", 51, 50),
+      multiline_note_case("state_diagram", 26, 25),
+      multiline_note_case("state_diagram", 49, 48),
+      multiline_note_case("state_diagram", 50, 49),
+      multiline_note_case("state_diagram", 73, 72),
+      multiline_note_case("state_diagram", 97, 96),
     ]
   end
   let(:control_cases) do
-    %w[
-      state/020_parser_should_handle_state_definitions_with_separation_of_id_19.mmd
-      state/030_parser_should_handle_notes_for_composite_nested_states_29.mmd
-      state/044_parser_should_handle_state_definitions_with_separation_of_id_43.mmd
-      state_diagram/019_parser_should_handle_state_definitions_with_separation_of_id_18.mmd
-      state_diagram/029_parser_should_handle_notes_for_composite_nested_states_28.mmd
-      state_diagram/043_parser_should_handle_state_definitions_with_separation_of_id_42.mmd
-      state_diagram/052_parser_should_handle_notes_for_composite_nested_states_51.mmd
-      state_diagram/066_parser_should_handle_state_definitions_with_separation_of_id_65.mmd
-      state_diagram/090_parser_should_handle_state_definitions_with_separation_of_id_89.mmd
+    [
+      separation_case("state", 20, 19),
+      composite_note_case("state", 30, 29),
+      separation_case("state", 44, 43),
+      separation_case("state_diagram", 19, 18),
+      composite_note_case("state_diagram", 29, 28),
+      separation_case("state_diagram", 43, 42),
+      composite_note_case("state_diagram", 52, 51),
+      separation_case("state_diagram", 66, 65),
+      separation_case("state_diagram", 90, 89),
     ]
+  end
+
+  def multiline_note_case(directory, number, source_number)
+    "#{directory}/#{format('%03d', number)}_parser_should_handle_multiline_" \
+      "notes_with_different_line_breaks_#{source_number}.mmd"
+  end
+
+  def separation_case(directory, number, source_number)
+    "#{directory}/#{format('%03d', number)}_parser_should_handle_state_" \
+      "definitions_with_separation_of_id_#{source_number}.mmd"
+  end
+
+  def composite_note_case(directory, number, source_number)
+    "#{directory}/#{format('%03d', number)}_parser_should_handle_notes_for_" \
+      "composite_nested_states_#{source_number}.mmd"
   end
 
   def source
@@ -36,11 +51,22 @@ RSpec.describe Sirena::Layout::StateDiagram do
 
   def note_evidence
     diagram = Sirena::Parser::StateDiagram.new.parse(source)
+    [note_metadata(diagram), rendered_note_labels(diagram), recognized_keys]
+  end
+
+  def note_metadata(diagram)
+    diagram.notes.map { |item| [item.target_id, item.position] }
+  end
+
+  def rendered_note_labels(diagram)
     scene = described_class.new.scene(diagram)
     note = scene.children.find { |node| node.id == "State1----note" }
+    note.labels.map(&:text)
+  end
+
+  def recognized_keys
     figure = extract(Sirena.render(source), state_recognizer)
-    [diagram.notes.map { |item| [item.target_id, item.position] },
-     note.labels.map(&:text), figure.elements.map(&:key)]
+    figure.elements.map(&:key)
   end
 
   def state_recognizer
@@ -64,20 +90,32 @@ RSpec.describe Sirena::Layout::StateDiagram do
     end
   end
 
+  def expected_note_evidence
+    [[%w[State1 right]], %w[Line1 Line2 Line3 Line4 Line5],
+     %w[State1 State1----note]]
+  end
+
+  def fixed_hard_failures(rows)
+    fixed = rows.select { |row| note_cases.include?(row.fetch("case")) }
+    fixed.map { |row| row.dig("summary", "hard_failure") }.uniq
+  end
+
+  def regressions_for(rows)
+    SpecSupport::LayoutParity::ScoreboardRatchet.diff(
+      committed: committed_rows, fresh: rows,
+    )[:regressions]
+  end
+
+  def parity_evidence
+    rows = fresh_rows
+    [fixed_hard_failures(rows), regressions_for(rows)]
+  end
+
   it "preserves attached multiline notes through the rendered figure" do
-    expect(note_evidence).to eq(
-      [[%w[State1 right]], %w[Line1 Line2 Line3 Line4 Line5],
-       %w[State1 State1----note]],
-    )
+    expect(note_evidence).to eq(expected_note_evidence)
   end
 
   it "recovers multiline notes without regressing State controls" do
-    rows = fresh_rows
-    fixed = rows.select { |row| note_cases.include?(row.fetch("case")) }
-    diff = SpecSupport::LayoutParity::ScoreboardRatchet.diff(
-      committed: committed_rows, fresh: rows,
-    )
-    expect([fixed.map { |row| row.dig("summary", "hard_failure") }.uniq,
-            diff[:regressions]]).to eq([[false], []])
+    expect(parity_evidence).to eq([[false], []])
   end
 end

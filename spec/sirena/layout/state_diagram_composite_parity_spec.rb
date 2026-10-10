@@ -12,30 +12,47 @@ RSpec.describe Sirena::Layout::StateDiagram do
     )
   end
   let(:separation_cases) do
-    %w[
-      state/020_parser_should_handle_state_definitions_with_separation_of_id_19.mmd
-      state/044_parser_should_handle_state_definitions_with_separation_of_id_43.mmd
-      state_diagram/019_parser_should_handle_state_definitions_with_separation_of_id_18.mmd
-      state_diagram/043_parser_should_handle_state_definitions_with_separation_of_id_42.mmd
-      state_diagram/066_parser_should_handle_state_definitions_with_separation_of_id_65.mmd
-      state_diagram/090_parser_should_handle_state_definitions_with_separation_of_id_89.mmd
+    [
+      separation_case("state", 20, 19),
+      separation_case("state", 44, 43),
+      separation_case("state_diagram", 19, 18),
+      separation_case("state_diagram", 43, 42),
+      separation_case("state_diagram", 66, 65),
+      separation_case("state_diagram", 90, 89),
     ]
   end
   let(:composite_note_cases) do
-    %w[
-      state/030_parser_should_handle_notes_for_composite_nested_states_29.mmd
-      state_diagram/029_parser_should_handle_notes_for_composite_nested_states_28.mmd
-      state_diagram/052_parser_should_handle_notes_for_composite_nested_states_51.mmd
+    [
+      composite_note_case("state", 30, 29),
+      composite_note_case("state_diagram", 29, 28),
+      composite_note_case("state_diagram", 52, 51),
     ]
+  end
+
+  def separation_case(directory, number, source_number)
+    "#{directory}/#{format('%03d', number)}_parser_should_handle_state_" \
+      "definitions_with_separation_of_id_#{source_number}.mmd"
+  end
+
+  def composite_note_case(directory, number, source_number)
+    "#{directory}/#{format('%03d', number)}_parser_should_handle_notes_for_" \
+      "composite_nested_states_#{source_number}.mmd"
   end
 
   def hierarchy_evidence
     diagram = Sirena::Parser::StateDiagram.new.parse(source)
+    model_hierarchy(diagram) + rendered_hierarchy(diagram)
+  end
+
+  def model_hierarchy(diagram)
+    [diagram.states.map(&:id), diagram.find_state("Idle").id,
+     diagram.states.first.children.map(&:id)]
+  end
+
+  def rendered_hierarchy(diagram)
     scene = described_class.new.scene(diagram)
     figure = extract(Sirena.render(source), state_recognizer)
-    [diagram.states.map(&:id), diagram.find_state("Idle").id,
-     diagram.states.first.children.map(&:id),
-     scene.children.first.children.map(&:id), parents_of(figure)]
+    [scene.children.first.children.map(&:id), parents_of(figure)]
   end
 
   def state_recognizer
@@ -59,22 +76,28 @@ RSpec.describe Sirena::Layout::StateDiagram do
     end
   end
 
-  it "preserves composite ownership through the rendered figure" do
-    expect(hierarchy_evidence).to eq(
-      [["NotShooting"], "Idle", %w[Idle Configuring start_1],
-       %w[Idle Configuring start_1],
-       { "NotShooting" => nil, "Idle" => "NotShooting",
-         "[*]" => "NotShooting", "Configuring" => "NotShooting" }],
-    )
+  def expected_hierarchy
+    [["NotShooting"], "Idle", %w[Idle Configuring start_1],
+     %w[Idle Configuring start_1],
+     { "NotShooting" => nil, "Idle" => "NotShooting",
+       "[*]" => "NotShooting", "Configuring" => "NotShooting" }]
   end
 
-  it "removes separation failures without regressing composite cases" do
+  def parity_evidence
     rows = parity_rows
     fixed = rows.select { |row| separation_cases.include?(row.fetch("case")) }
     diff = SpecSupport::LayoutParity::ScoreboardRatchet.diff(
       committed: committed_rows, fresh: rows,
     )
-    expect([fixed.map { |row| row.dig("summary", "hard_failure") }.uniq,
-            diff[:regressions]]).to eq([[false], []])
+    [fixed.map { |row| row.dig("summary", "hard_failure") }.uniq,
+     diff[:regressions]]
+  end
+
+  it "preserves composite ownership through the rendered figure" do
+    expect(hierarchy_evidence).to eq(expected_hierarchy)
+  end
+
+  it "removes separation failures without regressing composite cases" do
+    expect(parity_evidence).to eq([[false], []])
   end
 end

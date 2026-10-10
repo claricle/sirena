@@ -225,11 +225,11 @@ module Sirena
       end
 
       def note_state_shape(state)
-        Svg::Rect.new.tap do |rect|
-          rect.x = state.x
-          rect.y = state.y
-          rect.width = state.width
-          rect.height = state.height
+        normal_state_shape(
+          state.x, state.y, state.width, state.height
+        ).tap do |rect|
+          rect.rx = nil
+          rect.ry = nil
           rect.fill = "#fff5ad"
           rect.stroke = "#aaaa33"
           rect.stroke_width = "1"
@@ -329,9 +329,13 @@ module Sirena
         Layout::StateDiagram::Node.new(
           id: state[:id], state_type: state.dig(:metadata, :state_type),
           shape_type: resolved_type, labels: labels,
-          children: (state[:children] || []).map { |child| typed_state(child) },
+          children: typed_state_children(state),
           **geometry
         )
+      end
+
+      def typed_state_children(state)
+        Array(state[:children]).map { |child| typed_state(child) }
       end
 
       def typed_transition(transition, graph)

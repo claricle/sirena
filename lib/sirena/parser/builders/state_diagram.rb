@@ -50,8 +50,7 @@ module Sirena
           return unless stmt.is_a?(Hash)
           return process_state_declaration(stmt) if state_declaration?(stmt)
           return process_transition(stmt) if transition?(stmt)
-          return process_note(stmt) if attached_note?(stmt)
-          return if ignored_statement?(stmt)
+          return if handle_ignored_statement?(stmt)
 
           process_standalone_state(stmt) if standalone_state?(stmt)
         end
@@ -75,8 +74,11 @@ module Sirena
         # Floating notes and styles remain unsupported. A direction nested in
         # a composite also falls through; it cannot be attached to the model's
         # flattened state collection.
-        def ignored_statement?(stmt)
-          stmt[:note_keyword] || stmt[:style_keyword]
+        def handle_ignored_statement?(stmt)
+          return false unless stmt[:note_keyword] || stmt[:style_keyword]
+
+          process_note(stmt) if attached_note?(stmt)
+          true
         end
 
         def process_note(stmt)
@@ -84,12 +86,12 @@ module Sirena
           target = find_state(target_id)
           return unless target && !@composite_ids.include?(target_id)
 
-          note = Diagram::StateNote.new
-          note.id = "#{target_id}----note"
-          note.text = extract_text(stmt[:note_text]).strip
-          note.target_id = target_id
-          note.position = extract_text(stmt[:position])
-          @diagram.notes << note
+          @diagram.notes << Diagram::StateNote.new(
+            id: "#{target_id}----note",
+            text: extract_text(stmt[:note_text]).strip,
+            target_id: target_id,
+            position: extract_text(stmt[:position]),
+          )
         end
 
         def process_state_declaration(stmt)
@@ -180,7 +182,9 @@ module Sirena
           children = composite_children(prior_state, parent_state, label)
 
           within(children) do
-            statements_in(composite_data).each { |stmt| process_statement(stmt) }
+            statements_in(composite_data).each do |stmt|
+              process_statement(stmt)
+            end
           end
 
           parent_state

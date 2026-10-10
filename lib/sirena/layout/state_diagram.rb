@@ -293,12 +293,15 @@ module Sirena
           description: semantic_value(semantics, node.id,
                                       "latest_description"),
           descriptions: semantic_values(semantics, node.id, "display_text"),
-          children: nested_state_nodes(node, semantics).map do |child|
-            state_from(child, semantics)
-          end,
-          target_id: nil,
-          position: nil,
+          children: state_children_from(node, semantics),
+          target_id: nil, position: nil
         )
+      end
+
+      def state_children_from(node, semantics)
+        nested_state_nodes(node, semantics).map do |child|
+          state_from(child, semantics)
+        end
       end
 
       def note_from(node, semantics)
@@ -320,7 +323,9 @@ module Sirena
       end
 
       def nested_state_nodes(node, semantics)
-        Array(semantics[node.id]).select { |child| STATE_TYPES.key?(child.role) }
+        Array(semantics[node.id]).select do |child|
+          STATE_TYPES.key?(child.role)
+        end
       end
 
       def nested_states(states)
@@ -386,20 +391,28 @@ module Sirena
       end
 
       def typed_node(state, parent_x, parent_y)
-        positioned = state.merge(
-          x: state[:x].to_f + parent_x,
-          y: state[:y].to_f + parent_y,
-        )
+        positioned = position_state(state, parent_x, parent_y)
         state_type = positioned.dig(:metadata, :state_type) || "normal"
         shape_type = positioned.dig(:metadata, :shape_type) || state_type
-        Node.new(
+        Node.new(**typed_node_values(positioned, state_type, shape_type))
+      end
+
+      def position_state(state, parent_x, parent_y)
+        state.merge(x: state[:x].to_f + parent_x,
+                    y: state[:y].to_f + parent_y)
+      end
+
+      def typed_node_values(positioned, state_type, shape_type)
+        {
           id: positioned[:id], labels: typed_labels(positioned),
-          state_type: state_type,
-          shape_type: shape_type,
-          children: typed_children(positioned[:children] || [],
-                                   positioned[:x], positioned[:y]),
+          state_type: state_type, shape_type: shape_type,
+          children: typed_child_nodes(positioned),
           **self.class.shape_geometry(positioned, shape_type)
-        )
+        }
+      end
+
+      def typed_child_nodes(state)
+        typed_children(state[:children] || [], state[:x], state[:y])
       end
 
       def typed_labels(state)
@@ -542,7 +555,12 @@ module Sirena
       end
 
       def state_metadata(state)
-        metadata = {
+        metadata = base_state_metadata(state)
+        add_terminal_radius(metadata)
+      end
+
+      def base_state_metadata(state)
+        {
           state_type: state.state_type,
           shape_type: state_shape_type(state),
           description: state.description,
@@ -550,6 +568,9 @@ module Sirena
           note_target: state.target_id,
           note_position: state.position,
         }
+      end
+
+      def add_terminal_radius(metadata)
         if TERMINAL_TYPES.include?(metadata[:shape_type])
           metadata[:shape_radius] = TERMINAL_RADIUS
         end
@@ -772,14 +793,23 @@ module Sirena
       end
 
       def place_attached_notes(graph)
-        nodes = nested_states(graph[:children]).to_h { |node| [node[:id], node] }
-        nodes.each_value do |note|
-          target = nodes[note.dig(:metadata, :note_target)]
-          next unless target
-
-          note[:x] = target[:x] + ((target[:width] - note[:width]) / 2.0)
-          note[:y] = target[:y] + target[:height] + 75
+        nodes = nested_states(graph[:children]).to_h do |node|
+          [node[:id], node]
         end
+        nodes.each_value { |note| place_attached_note(note, nodes) }
+      end
+
+      def place_attached_note(note, nodes)
+        target = nodes[note.dig(:metadata, :note_target)]
+        return unless target
+
+        note[:x], note[:y] = attached_note_coordinates(note, target)
+      end
+
+      def attached_note_coordinates(note, target)
+        x_position = target[:x] + ((target[:width] - note[:width]) / 2.0)
+        y_position = target[:y] + target[:height] + 75
+        [x_position, y_position]
       end
     end
   end
