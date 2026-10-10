@@ -142,10 +142,10 @@ module Sirena
         [MIN_CELL_HEIGHT, *boxes.map { |c| c[:height].to_i + CELL_GAP }].max
       end
 
-      def shift(contents, dx, dy)
+      def shift(contents, delta_x, delta_y)
         contents.each do |child|
-          child[:x] = child[:x].to_i + dx
-          child[:y] = child[:y].to_i + dy
+          child[:x] = child[:x].to_i + delta_x
+          child[:y] = child[:y].to_i + delta_y
         end
       end
 

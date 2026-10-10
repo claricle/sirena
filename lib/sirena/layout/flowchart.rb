@@ -198,10 +198,10 @@ module Sirena
         graph.merge(children: nodes, clusters: clusters)
       end
 
-      def collect(children, dx, dy, clusters, nodes)
+      def collect(children, delta_x, delta_y, clusters, nodes)
         children.each do |child|
-          placed = child.merge(x: (child[:x] || 0) + dx,
-                               y: (child[:y] || 0) + dy)
+          placed = child.merge(x: (child[:x] || 0) + delta_x,
+                               y: (child[:y] || 0) + delta_y)
           unless child[:children]
             nodes << placed
             next
@@ -216,21 +216,22 @@ module Sirena
         FlowchartEdgeRouter.cluster?(child)
       end
 
-      def shift_page(graph, dx, dy)
-        return graph if dx.zero? && dy.zero?
+      def shift_page(graph, delta_x, delta_y)
+        return graph if delta_x.zero? && delta_y.zero?
 
-        graph.merge(children: shift_boxes(graph[:children], dx, dy),
-                    clusters: shift_boxes(graph[:clusters], dx, dy),
-                    edges: shift_edges(graph[:edges], dx, dy))
+        graph.merge(children: shift_boxes(graph[:children], delta_x, delta_y),
+                    clusters: shift_boxes(graph[:clusters], delta_x, delta_y),
+                    edges: shift_edges(graph[:edges], delta_x, delta_y))
       end
 
-      def shift_boxes(boxes, dx, dy)
+      def shift_boxes(boxes, delta_x, delta_y)
         (boxes || []).map do |box|
-          box.merge(x: (box[:x] || 0) + dx, y: (box[:y] || 0) + dy)
+          box.merge(x: (box[:x] || 0) + delta_x,
+                    y: (box[:y] || 0) + delta_y)
         end
       end
 
-      def shift_edges(edges, dx, dy)
+      def shift_edges(edges, delta_x, delta_y)
         (edges || []).map do |edge|
           sections = edge[:sections]
           next edge unless sections&.any?
@@ -240,22 +241,22 @@ module Sirena
             next section unless bends&.any?
 
             section.merge(bendPoints: bends.map do |point|
-              point.merge(x: (point[:x] || 0) + dx,
-                          y: (point[:y] || 0) + dy)
+              point.merge(x: (point[:x] || 0) + delta_x,
+                          y: (point[:y] || 0) + delta_y)
             end)
           end)
         end
       end
 
-      def typed_children(children, parent_x, parent_y, dx, dy)
+      def typed_children(children, parent_x, parent_y, delta_x, delta_y)
         children.map do |child|
-          x = (child[:x] || 0) + parent_x + dx
-          y = (child[:y] || 0) + parent_y + dy
-          typed_node(child, x, y, dx, dy)
+          x = (child[:x] || 0) + parent_x + delta_x
+          y = (child[:y] || 0) + parent_y + delta_y
+          typed_node(child, x, y, delta_x, delta_y)
         end
       end
 
-      def typed_node(node, x, y, dx, dy)
+      def typed_node(node, x_pos, y_pos, delta_x, delta_y)
         width = node[:width] || 100
         height = node[:height] || 50
         is_cluster = cluster?(node)
@@ -263,46 +264,50 @@ module Sirena
         kind = is_cluster ? "cluster" : (NODE_OUTLINES[shape] || "rect")
 
         Node.new(
-          id: node[:id], x: x, y: y, width: width, height: height,
-          labels: typed_node_labels(node, x, y, width, height, is_cluster),
+          id: node[:id], x: x_pos, y: y_pos, width: width, height: height,
+          labels: typed_node_labels(
+            node, x_pos, y_pos, width, height, is_cluster
+          ),
           shape: shape, shape_kind: kind,
-          shape_points: polygon_points(kind, x, y, width, height),
-          shape_x: is_cluster ? x.to_i : x,
-          shape_y: is_cluster ? y.to_i : y,
+          shape_points: polygon_points(kind, x_pos, y_pos, width, height),
+          shape_x: is_cluster ? x_pos.to_i : x_pos,
+          shape_y: is_cluster ? y_pos.to_i : y_pos,
           shape_width: is_cluster ? width.to_i : width,
           shape_height: is_cluster ? height.to_i : height,
-          center_x: x + (width / 2.0), center_y: y + (height / 2.0),
+          center_x: x_pos + (width / 2.0), center_y: y_pos + (height / 2.0),
           radius: [width, height].min / 2.0,
           corner_radius: corner_radius(kind, width, height),
           cluster: is_cluster,
           container: node.key?(:children),
-          children: typed_children(node[:children] || [], x - dx, y - dy, dx, dy)
+          children: typed_children(node[:children] || [], x_pos - delta_x,
+                                   y_pos - delta_y, delta_x, delta_y)
         )
       end
 
-      def typed_node_labels(node, x, y, width, height, cluster)
+      def typed_node_labels(node, x_pos, y_pos, width, height, cluster)
         (node[:labels] || []).first(1).map do |label|
           Label.new(
             text: label[:text], width: label[:width], height: label[:height],
-            x: cluster ? x + (width.to_i / 2) : x + (width / 2.0),
-            y: cluster ? y + CLUSTER_TITLE_BASELINE : y + (height / 2.0)
+            x: cluster ? x_pos + (width.to_i / 2) : x_pos + (width / 2.0),
+            y: cluster ? y_pos + CLUSTER_TITLE_BASELINE : y_pos + (height / 2.0)
           )
         end
       end
 
-      def polygon_points(kind, x, y, width, height)
+      def polygon_points(kind, x_pos, y_pos, width, height)
         case kind
         when "rhombus"
-          cx = x + (width / 2.0)
-          cy = y + (height / 2.0)
-          [[cx, y], [x + width, cy], [cx, y + height], [x, cy]]
+          cx = x_pos + (width / 2.0)
+          cy = y_pos + (height / 2.0)
+          [[cx, y_pos], [x_pos + width, cy], [cx, y_pos + height], [x_pos, cy]]
             .map { |px, py| "#{px},#{py}" }.join(" ")
         when "hexagon"
-          cy = y + (height / 2.0)
+          cy = y_pos + (height / 2.0)
           quarter = width / 4.0
-          [[x + quarter, y], [x + width - quarter, y], [x + width, cy],
-           [x + width - quarter, y + height], [x + quarter, y + height],
-           [x, cy]].map { |px, py| "#{px},#{py}" }.join(" ")
+          [[x_pos + quarter, y_pos], [x_pos + width - quarter, y_pos],
+           [x_pos + width, cy], [x_pos + width - quarter, y_pos + height],
+           [x_pos + quarter, y_pos + height], [x_pos, cy]]
+            .map { |px, py| "#{px},#{py}" }.join(" ")
         end
       end
 
@@ -612,49 +617,52 @@ module Sirena
         [cx + (dx * scale), cy + (dy * scale)]
       end
 
-      def boundary_scale(node, dx, dy)
+      def boundary_scale(node, delta_x, delta_y)
         half_w = (node[:width] || 100) / 2.0
         half_h = (node[:height] || 50) / 2.0
         case NODE_OUTLINES[node.dig(:metadata, :shape)]
-        when "rhombus" then rhombus_scale(half_w, half_h, dx, dy)
-        when "circle" then circle_scale(half_w, half_h, dx, dy)
-        when "hexagon" then hexagon_scale(half_w, half_h, dx, dy)
-        when "rounded" then stadium_scale(half_w, half_h, dx, dy)
-        else box_scale(half_w, half_h, dx, dy)
+        when "rhombus" then rhombus_scale(half_w, half_h, delta_x, delta_y)
+        when "circle" then circle_scale(half_w, half_h, delta_x, delta_y)
+        when "hexagon" then hexagon_scale(half_w, half_h, delta_x, delta_y)
+        when "rounded" then stadium_scale(half_w, half_h, delta_x, delta_y)
+        else box_scale(half_w, half_h, delta_x, delta_y)
         end
       end
 
-      def box_scale(half_w, half_h, dx, dy)
-        [dx.zero? ? Float::INFINITY : half_w / dx.abs,
-         dy.zero? ? Float::INFINITY : half_h / dy.abs].min
+      def box_scale(half_w, half_h, delta_x, delta_y)
+        [delta_x.zero? ? Float::INFINITY : half_w / delta_x.abs,
+         delta_y.zero? ? Float::INFINITY : half_h / delta_y.abs].min
       end
 
-      def rhombus_scale(half_w, half_h, dx, dy)
-        1 / (axis_ratio(dx, half_w) + axis_ratio(dy, half_h))
+      def rhombus_scale(half_w, half_h, delta_x, delta_y)
+        1 / (axis_ratio(delta_x, half_w) + axis_ratio(delta_y, half_h))
       end
 
-      def circle_scale(half_w, half_h, dx, dy)
-        [half_w, half_h].min / Math.hypot(dx, dy)
+      def circle_scale(half_w, half_h, delta_x, delta_y)
+        [half_w, half_h].min / Math.hypot(delta_x, delta_y)
       end
 
-      def hexagon_scale(half_w, half_h, dx, dy)
-        slope = 1 / (axis_ratio(dx, half_w) + axis_ratio(dy, 2 * half_h))
-        [slope, dy.zero? ? Float::INFINITY : half_h / dy.abs].min
+      def hexagon_scale(half_w, half_h, delta_x, delta_y)
+        slope = 1 / (
+          axis_ratio(delta_x, half_w) + axis_ratio(delta_y, 2 * half_h)
+        )
+        [slope, delta_y.zero? ? Float::INFINITY : half_h / delta_y.abs].min
       end
 
-      def stadium_scale(half_w, half_h, dx, dy)
-        return ellipse_scale(half_w, half_h, dx, dy) if half_w <= half_h
+      def stadium_scale(half_w, half_h, x_diff, y_diff)
+        return ellipse_scale(half_w, half_h, x_diff, y_diff) if half_w <= half_h
 
-        flat = dy.zero? ? Float::INFINITY : half_h / dy.abs
+        flat = y_diff.zero? ? Float::INFINITY : half_h / y_diff.abs
         straight = half_w - half_h
-        return flat if (flat * dx).abs <= straight
+        return flat if (flat * x_diff).abs <= straight
 
-        cap_intersection(straight * (dx.negative? ? -1 : 1), half_h, dx, dy)
+        cap_intersection(straight * (x_diff.negative? ? -1 : 1), half_h,
+                         x_diff, y_diff)
       end
 
-      def ellipse_scale(half_w, half_h, dx, dy)
-        x_ratio = axis_ratio(dx, half_w)
-        y_ratio = axis_ratio(dy, half_h)
+      def ellipse_scale(half_w, half_h, delta_x, delta_y)
+        x_ratio = axis_ratio(delta_x, half_w)
+        y_ratio = axis_ratio(delta_y, half_h)
         1 / Math.sqrt((x_ratio**2) + (y_ratio**2))
       end
 
@@ -662,9 +670,9 @@ module Sirena
         delta.zero? ? 0.0 : delta.abs / half_extent
       end
 
-      def cap_intersection(centre_x, radius, dx, dy)
-        a = (dx * dx) + (dy * dy)
-        b = dx * centre_x
+      def cap_intersection(centre_x, radius, delta_x, delta_y)
+        a = (delta_x * delta_x) + (delta_y * delta_y)
+        b = delta_x * centre_x
         c = (centre_x * centre_x) - (radius * radius)
         (b + Math.sqrt([(b * b) - (a * c), 0].max)) / a
       end
