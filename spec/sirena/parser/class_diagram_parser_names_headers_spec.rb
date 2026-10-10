@@ -3,7 +3,8 @@
 require "spec_helper"
 
 # How a class is named and how the diagram is headed: backticks, hyphens,
-# generics on relationship ends and members, the `:::css` shorthand and `classDiagram-v2`.
+# generics on relationship ends and members, the `:::css` shorthand and
+# `classDiagram-v2`.
 # Every accept/reject below was checked against mmdc 11.12.0.
 RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
   let(:parser) { described_class.new }
@@ -99,15 +100,19 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
   end
 
   it "resolves a standalone class inside a namespace to its declaration" do
-    diagram = parser.parse("classDiagram\nnamespace N {\nclass `A B`\n`A B`\n}\n")
+    source = "classDiagram\nnamespace N {\nclass `A B`\n`A B`\n}\n"
+    diagram = parser.parse(source)
 
     expect(diagram.entities.map(&:id)).to eq(["A B"])
   end
 
-  it "keeps generic-looking text in a backticked name when a generic is applied" do
+  it "keeps generic-looking text in a backticked name when a generic is " \
+     "applied" do
     diagram = parser.parse("classDiagram\nclass `A~B~`~T~\n")
 
-    expect(diagram.entities.map { |e| [e.id, e.name] }).to eq([["A~B~", "A~B~~T~"]])
+    expect(diagram.entities.map do |e|
+      [e.id, e.name]
+    end).to eq([["A~B~", "A~B~~T~"]])
   end
 
   it "reads a direction on the plain header" do
@@ -146,15 +151,25 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
     end
 
     {
-      "a later generic on a declared class" => ["class A~T~\nA~U~ --> B\n", %w[A~T~ B]],
-      "a later generic on a related class" => ["A~T~ --> B\nA~U~ --> C\n", %w[A~T~ B C]],
-      "a generic first written on a later mention" => ["A --> B\nA~T~ --> C\n", %w[A B C]],
-      "a generic first written on a later declaration" => ["class A\nclass A~T~\n", %w[A]],
-      "a generic first written on a later colon member" => ["A --> B\nB~T~ : +x\n", %w[A B]],
-      "a label written after the generic" => ["A~T~ --> B\nclass A[\"Label\"]\n", %w[Label B]],
+      "a later generic on a declared class" => ["class A~T~\nA~U~ --> B\n",
+                                                %w[A~T~ B]],
+      "a later generic on a related class" => ["A~T~ --> B\nA~U~ --> C\n",
+                                               %w[A~T~ B C]],
+      "a generic first written on a later mention" => ["A --> B\nA~T~ --> C\n",
+                                                       %w[A B C]],
+      "a generic first written on a later declaration" => [
+        "class A\nclass A~T~\n", %w[A]
+      ],
+      "a generic first written on a later colon member" => [
+        "A --> B\nB~T~ : +x\n", %w[A B]
+      ],
+      "a label written after the generic" => [
+        "A~T~ --> B\nclass A[\"Label\"]\n", %w[Label B]
+      ],
       "both ends of one relationship" => ["A~T~ --> A~U~\n", %w[A~T~]],
     }.each do |name, (body, names)|
-      it "follows mmdc, which only reads the generic that creates the class: #{name}" do
+      it "follows mmdc, which only reads the generic that creates the " \
+         "class: #{name}" do
         diagram = parser.parse("classDiagram\n#{body}")
 
         expect(diagram.entities.map(&:name)).to eq(names)
@@ -201,7 +216,8 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
     end
 
     it "does not make the css class a class" do
-      diagram = parser.parse("classDiagram\nclass A:::pink\nclassDef pink fill:#f9f\n")
+      source = "classDiagram\nclass A:::pink\nclassDef pink fill:#f9f\n"
+      diagram = parser.parse(source)
 
       expect(diagram.entities.map(&:id)).to eq(["A"])
     end
