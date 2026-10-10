@@ -38,10 +38,8 @@ RSpec.describe Sirena::Parser::Builders::Sequence do
   end
 
   it "splits a box colour name from its title and lists its members" do
-    diagram = parse_sequence(
-      "box Aqua Group1\nparticipant A\nparticipant B\nend",
-    )
-    box = diagram.boxes.first
+    source = "box Aqua Group1\nparticipant A\nparticipant B\nend"
+    box = parse_sequence(source).boxes.first
 
     expect([box.color, box.title, box.participant_ids])
       .to eq(["Aqua", "Group1", %w[A B]])

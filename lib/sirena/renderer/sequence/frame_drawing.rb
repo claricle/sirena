@@ -116,8 +116,9 @@ module Sirena
         end
 
         def tab_points(left, right, top)
+          bottom = top + TAB_HEIGHT
           "#{left},#{top} #{right},#{top} #{right},#{top + 13} " \
-            "#{right - TAB_SLANT},#{top + TAB_HEIGHT} #{left},#{top + TAB_HEIGHT}"
+            "#{right - TAB_SLANT},#{bottom} #{left},#{bottom}"
         end
 
         def frame_dividers(frame)
