@@ -9,6 +9,8 @@ RSpec.describe Sirena::Layout::Sequence do
   include SequenceFrameHelpers
 
   let(:long) { "Hello Bob, how are you?" }
+  let(:twice) { "#{long} #{long}" }
+  let(:four_times) { "#{twice} #{twice}" }
 
   it "keeps the standard gap for a short message" do
     expect(last_actor_x("A->>B: hi")).to eq(250)
@@ -19,7 +21,9 @@ RSpec.describe Sirena::Layout::Sequence do
   end
 
   it "widens it the same for a message sent back" do
-    expect(last_actor_x("B->>A: #{long}")).to eq(294)
+    body = "participant A\nparticipant B\nB->>A: #{long}"
+
+    expect(last_actor_x(body)).to eq(294)
   end
 
   it "widens it to the widest line of a <br> message" do
@@ -34,6 +38,12 @@ RSpec.describe Sirena::Layout::Sequence do
     expect(layout_scene("A->>B: #{long}").width).to eq(494)
   end
 
+  it "gives a self message half its width" do
+    body = "participant A\nparticipant B\nA->>A: #{four_times}"
+
+    expect(last_actor_x(body)).to eq(465.5)
+  end
+
   it "ignores a message that skips an actor" do
     body = "A->>B: x\nB->>C: y\nA->>C: #{long}"
 
@@ -46,6 +56,14 @@ RSpec.describe Sirena::Layout::Sequence do
 
   it "widens the gap before the actor a note sits left of" do
     expect(last_actor_x("A->>B: x\nNote left of B: #{long}")).to eq(294)
+  end
+
+  it "gives half of a note over two actors to the gap before the last" do
+    expect(last_actor_x("A->>B: x\nNote over A,B: #{twice}")).to eq(286.5)
+  end
+
+  it "gives half of a note over one actor to the gap after it" do
+    expect(last_actor_x("A->>B: x\nNote over A: #{four_times}")).to eq(465.5)
   end
 
   it "leaves the gaps alone for a note right of the last actor" do
