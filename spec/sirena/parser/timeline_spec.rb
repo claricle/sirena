@@ -108,10 +108,21 @@ RSpec.describe Sirena::Parser::Timeline do
 
       diagram = parser.parse(source)
 
-      # Trailing semicolons are stripped as line terminators
-      expect(diagram.title).to eq(";my;title")
-      expect(diagram.sections[0].name).to eq(";abc-123")
-      expect(diagram.sections[0].tasks).to include(";task1")
+      expect(diagram.title).to eq(";my;title;")
+      expect(diagram.sections[0].name).to eq(";abc-123;")
+      expect(diagram.sections[0].tasks).to include(";task1;")
+    end
+
+    it "keeps a trailing semicolon on an event description" do
+      diagram = parser.parse("timeline\n  2020 : ;ev;ent;\n")
+
+      expect(diagram.events[0].descriptions).to eq([";ev;ent;"])
+    end
+
+    it "keeps a colon that is not followed by whitespace" do
+      diagram = parser.parse("timeline\n  2020 : see http://a.b : two\n")
+
+      expect(diagram.events[0].descriptions).to eq(["see http://a.b", "two"])
     end
 
     it "validates parsed timeline" do

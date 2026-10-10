@@ -26,6 +26,11 @@ module Sirena
       class Timeline < Common
         root(:diagram)
 
+        # mmdc's timeline lexer gives ";" no meaning, so it stays in text.
+        rule(:line_end) do
+          space? >> (comment.maybe >> newline | eof)
+        end
+
         # Main diagram structure
         rule(:diagram) do
           ws? >>
@@ -118,12 +123,18 @@ module Sirena
             (space? >> colon >> space? >> event_description.as(:desc)).repeat
         end
 
-        # Single event description (can include HTML tags like <br>)
+        # Single event description (can include HTML tags like <br>).
+        # A colon only separates descriptions when whitespace follows it,
+        # so "http://example.com" stays whole as in mmdc.
         rule(:event_description) do
-          space? >>
-            (colon.absent? >> line_end.absent? >> any).repeat(1) >>
-            space?
+          space? >> description_char.repeat(1) >> space?
         end
+
+        rule(:description_char) do
+          separator_colon.absent? >> line_end.absent? >> any
+        end
+
+        rule(:separator_colon) { colon >> match("\\s") }
 
         # Task entry (plain text without colon, for sections)
         rule(:task_entry) do
