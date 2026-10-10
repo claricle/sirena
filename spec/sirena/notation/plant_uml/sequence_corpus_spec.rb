@@ -30,7 +30,7 @@ module PlantUmlSequenceCorpus
     7ff458de0156 2a2a7bb5aacc f0cf331472b7 e76e451484c6
     ddc664f08110 d918f796209f ae1299794d0b fcaf69429c9c
     bea0f11e448b 2bd5234bfbfe 2018ad068c81 f0cb24bd16e0
-    ad11bf4b448a 793d6e993975
+    ad11bf4b448a 793d6e993975 1f75ab64bf5e
   ].freeze
 
   def case_named(suffix)
@@ -176,6 +176,19 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     end
 
     expect(counts.last - counts.first).to eq(2)
+  end
+
+  it "draws the warning banner of the note-top-on-ref case" do
+    svg = Sirena.render(source_of("1f75ab64bf5e"), notation: :plantuml)
+
+    expect(matches(svg, "//text[@font-family='monospace']").map(&:text))
+      .to eq(["This position is ignored: TOP"])
+  end
+
+  it "drops the note of the note-top-on-ref case" do
+    svg = Sirena.render(source_of("1f75ab64bf5e"), notation: :plantuml)
+
+    expect(matches(svg, "//text[.='x']")).to be_empty
   end
 
   it "refuses every other case instead of rendering part of it" do

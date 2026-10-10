@@ -70,6 +70,15 @@ module Sirena
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
+          # A warning PlantUML draws above the heads.
+          class Banner < Lutaml::Model::Serializable
+            attribute :x, :float
+            attribute :y, :float
+            attribute :width, :float
+            attribute :height, :float
+            attribute :texts, PlantUML::Scene::Text, collection: true
+          end
+
           class Bar < Lutaml::Model::Serializable
             attribute :fill, :string
             attribute :x, :float
@@ -87,6 +96,7 @@ module Sirena
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
+          attribute :banners, Banner, collection: true
           attribute :frames, Frame, collection: true
           attribute :fragments, Fragment, collection: true
           attribute :notes, Note, collection: true

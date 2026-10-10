@@ -54,7 +54,7 @@ module Sirena
           MARKS = { "++" => [:on], "--" => [:off], "!!" => [:destroy],
                     "--++" => %i[off on], "++--" => %i[on off] }.freeze
           TARGET = /(?:#{QUOTED}|#{NAME})/
-          NOTE = /\A(note|hnote|rnote)[ \t]+(left|right|over|across)
+          NOTE = /\A(note|hnote|rnote)[ \t]+(left|right|over|across|top|bottom)
                   (?:[ \t]+of)?
                   (?:[ \t]+(#{TARGET}(?:[ \t]*,[ \t]*#{TARGET})*))?
                   (?:[ \t]+\#\w+)?[ \t]*(?::[ \t]*(.*))?\z/xio
@@ -116,6 +116,7 @@ module Sirena
             @teoz = false
             @parallel = false
             @footbox = true
+            @warnings = []
           end
 
           def lines_of(source)
@@ -297,10 +298,30 @@ module Sirena
 
           def note(match)
             pending = pending_note_from(match)
+            return positioned_note(pending, match[4]) if misplaced?(pending)
             return false if hanging?(pending) && !hangs_from_something?
 
             @pending_note = pending
             match[4] ? collect_note(match[4].strip, inline: true) : true
+          end
+
+          # PlantUML has no top or bottom note. After a message the note is
+          # drawn as a `left` one; after a ref it is dropped and a warning
+          # is drawn at the top instead. Only the one-line form is read.
+          def misplaced?(pending)
+            %i[top bottom].include?(pending[:side])
+          end
+
+          def positioned_note(pending, text)
+            return false unless text && pending[:targets].empty?
+            return false if @parallel
+
+            if @outline.after_message?
+              @pending_note = pending.merge(side: :left)
+              collect_note(text.strip, inline: true)
+            elsif @outline.after_ref?
+              @warnings << "This position is ignored: #{pending[:side].upcase}"
+            end
           end
 
           def hangs_from_something?
@@ -451,7 +472,8 @@ module Sirena
             check_boxes
             Diagram.new(participants: @participants.values.freeze,
                         items: @outline.items.freeze, boxes: @boxes.freeze,
-                        appearance: @appearance, footbox: @footbox)
+                        appearance: @appearance, footbox: @footbox,
+                        warnings: @warnings.freeze)
           end
 
           def unclosed_block

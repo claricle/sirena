@@ -78,6 +78,10 @@ module Sirena
             @items.last.is_a?(Message)
           end
 
+          def after_ref?
+            @items.last.is_a?(Ref)
+          end
+
           def after_block?
             last = @items.last
             last.is_a?(Fragment) && last.phase == :close

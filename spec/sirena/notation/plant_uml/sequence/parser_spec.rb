@@ -806,4 +806,45 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
         .to raise_error(unsupported, /newpage/)
     end
   end
+
+  describe "note top and note bottom" do
+    it "reads a one-line note after a message as a left note" do
+      note = parse("A -> B", "note top: x").items.last
+
+      expect([note.side, note.text]).to eq([:left, "x"])
+    end
+
+    it "reads note bottom after a message the same way" do
+      expect(parse("A -> B", "rnote bottom: x").items.last.side).to eq(:left)
+    end
+
+    it "drops the note after a ref and keeps a warning" do
+      diagram = parse("A -> B", "ref over A : r", "note top: x")
+
+      expect([diagram.items.grep(Sirena::Notation::PlantUML::Sequence::Note),
+              diagram.warnings])
+        .to eq([[], ["This position is ignored: TOP"]])
+    end
+
+    it "names the position in the warning" do
+      diagram = parse("A -> B", "ref over A : r", "note bottom: x")
+
+      expect(diagram.warnings).to eq(["This position is ignored: BOTTOM"])
+    end
+
+    [
+      ["note top of A: x"],
+      ["note top", "x", "end note"],
+      ["note top: x", "note top: y"],
+    ].each do |lines|
+      it "refuses #{lines.join(' / ')} after a message" do
+        expect { parse("A -> B", *lines) }.to raise_error(unsupported, /note/)
+      end
+    end
+
+    it "refuses a note top before any message" do
+      expect { parse("note top: x", "A -> B") }
+        .to raise_error(unsupported, /note/)
+    end
+  end
 end

@@ -13,14 +13,19 @@ module Sirena
           # Back to front: the scene collection and the method drawing each
           # of its items.
           LAYERS = [
-            %i[frames frame_group], %i[lifelines lifeline],
+            %i[banners banner_group], %i[frames frame_group],
+            %i[lifelines lifeline],
             %i[bars activation_bar], %i[crosses cross_line],
             %i[page_breaks page_break_line],
             %i[fragments fragment_group], %i[dividers divider_group],
             %i[arrows arrow_group], %i[notes note_group],
             %i[heads head_group]
           ].freeze
-          private_constant :LAYERS
+          BANNER_FILL = "#FFFFCC"
+          BANNER_STROKE = "#FFDD88"
+          WARNING_SIZE = "10"
+          private_constant :LAYERS, :BANNER_FILL, :BANNER_STROKE,
+                           :WARNING_SIZE
 
           def render(scene)
             document = blank_document(scene)
@@ -54,6 +59,15 @@ module Sirena
               children.each { |child| group << child }
               texts.each { |text| group << text_element(text) }
             end
+          end
+
+          def banner_group(banner)
+            rect = element(Svg::Rect, x: banner.x, y: banner.y,
+                                      width: banner.width,
+                                      height: banner.height, rx: 2.5, ry: 2.5,
+                                      fill: BANNER_FILL, stroke: BANNER_STROKE,
+                                      stroke_width: "3")
+            group("banner-#{banner.y}", [rect], banner.texts)
           end
 
           def frame_group(frame)
@@ -184,13 +198,15 @@ module Sirena
                                content: scene_text.content,
                                text_anchor: scene_text.anchor,
                                fill: scene_text.colour || text_colour,
-                               font_family: font_family,
+                               font_family: font_family(scene_text.role),
                                font_size: text_size(scene_text),
                                font_style: text_style(scene_text.role),
                                font_weight: text_weight(scene_text.role))
           end
 
-          def font_family
+          def font_family(role = nil)
+            return "monospace" if role == "warning"
+
             theme_typography(:font_family) || "Arial"
           end
 
@@ -209,6 +225,8 @@ module Sirena
           end
 
           def font_size(role)
+            return WARNING_SIZE if role == "warning"
+
             normal = theme_typography(:font_size_normal) || 14
             return (normal.to_f * 0.85).to_s if role == "kind"
 
