@@ -222,7 +222,7 @@ module Sirena
               if free_note?(item, previous)
                 yield item, NoteGeometry.span(item, previous, ids)
               end
-              previous = item
+              previous = item unless item.is_a?(Activation)
             end
           end
 

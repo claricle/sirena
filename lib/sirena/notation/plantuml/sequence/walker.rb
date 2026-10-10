@@ -68,7 +68,7 @@ module Sirena
             items.each do |item|
               @mark_y = nil unless anchoring?(item)
               visit(item, previous)
-              previous = item
+              previous = item unless item.is_a?(Activation)
             end
             @tracker.finish(@y - 20)
             self

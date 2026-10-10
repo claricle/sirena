@@ -132,9 +132,30 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       expect(phases.call(diagram)).to eq(%i[on off on])
     end
 
-    it "refuses a deactivate that closes nothing" do
-      expect { parse("A -> B", "deactivate B") }
-        .to raise_error(unsupported, /deactivate/)
+    it "drops a deactivate that closes nothing" do
+      expect(activations(parse("A -> B", "deactivate B"))).to be_empty
+    end
+
+    it "drops a -- on a participant with no open bar" do
+      expect(activations(parse("A -> B", "B -> C --"))).to be_empty
+    end
+
+    it "keeps the ++ of ++-- when the sender has no bar to close" do
+      expect(phases.call(parse("A -> B ++--"))).to eq([:on])
+    end
+
+    it "closes the sender's bar for the -- of ++--" do
+      diagram = parse("A -> B ++", "B -> C ++--")
+
+      expect(phases.call(diagram)).to eq(%i[on on off])
+    end
+
+    it "hangs a note off a message that opened a bar" do
+      diagram = parse("A -> B ++", "note right : x")
+
+      notes = diagram.items.grep(Sirena::Notation::PlantUML::Sequence::Note)
+
+      expect(notes.size).to eq(1)
     end
 
     it "reads the colour of an activation, hex or named" do
