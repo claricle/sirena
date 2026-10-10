@@ -64,7 +64,7 @@ rows:
 - file: lib/sirena/layout/state_diagram.rb
   count: 2
 - file: lib/sirena/layout/treemap.rb
-  count: 2
+  count: 1
 - file: lib/sirena/layout/user_journey.rb
   count: 1
 - file: lib/sirena/markdown_text.rb
@@ -159,8 +159,6 @@ rows:
   count: 5
 - file: lib/sirena/renderer/packet.rb
   count: 4
-- file: lib/sirena/renderer/pie.rb
-  count: 3
 - file: lib/sirena/renderer/quadrant.rb
   count: 4
 - file: lib/sirena/renderer/radar.rb
@@ -177,8 +175,6 @@ rows:
   count: 3
 - file: lib/sirena/renderer/treemap.rb
   count: 2
-- file: lib/sirena/renderer/user_journey.rb
-  count: 7
 - file: lib/sirena/renderer/xy_chart.rb
   count: 6
 - file: lib/sirena/source.rb

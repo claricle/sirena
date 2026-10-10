@@ -7,7 +7,3 @@ rows:
   count: 2
 - file: lib/sirena/renderer/mindmap.rb
   count: 3
-- file: lib/sirena/renderer/pie.rb
-  count: 6
-- file: lib/sirena/renderer/user_journey.rb
-  count: 14
