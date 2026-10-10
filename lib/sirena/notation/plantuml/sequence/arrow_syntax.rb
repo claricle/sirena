@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "arrow_style"
+require_relative "fill"
 
 module Sirena
   module Notation
@@ -17,11 +18,12 @@ module Sirena
           # separate it from the names.
           SOURCE =
             '(?:(?<=[ \t\[])[oxOX])?(?:<<|<|//|/|\\\\\\\\|\\\\)?' \
-            '-(?i:\[hidden\])?-?' \
+            '-(?:(?i:\[hidden\])|\[\#\h{3}(?:\h{3})?\])?-?' \
             '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[oxOX](?=[ \t\]?]|\z))?'
           TOKEN = /\A([oxOX])?(<<|<|\/\/|\/|\\\\|\\)?(--?)
                    (>>|>|\\\\|\\|\/\/|\/)?([oxOX])?\z/x
           HIDDEN = /\[hidden\]/i
+          COLOUR = /\[(\#\h{6}|\#\h{3})\]/
           LEFT = { "<<" => :open, "<" => :filled, "//" => :upper_open,
                    "/" => :upper, "\\\\" => :lower_open,
                    "\\" => :lower }.freeze
@@ -30,17 +32,20 @@ module Sirena
                     "/" => :lower }.freeze
 
           # `-[hidden]>` takes its row and its label's room but draws nothing.
+          # `-[#22A722]>` draws the shaft and head in that colour.
           #
           # @return [Array(ArrowStyle, Boolean), nil] the style and whether
           #   the arrow is written pointing at the sender's name
           def read(token)
             hidden = HIDDEN.match?(token)
-            match = TOKEN.match(token.sub(HIDDEN, "")) or return
+            colour = Fill.read(token[COLOUR, 1])&.colour
+            match = TOKEN.match(token.sub(HIDDEN, "").sub(COLOUR, "")) or return
             lead, left, shaft, right, trail = match.captures
             return unless fits?(lead, left, right, trail)
 
             build(ends(lead, left, LEFT), ends(trail, right, RIGHT),
-                  shaft.length == 2, !left.nil? && right.nil?, hidden)
+                  shaft.length == 2, !left.nil? && right.nil?,
+                  { hidden: hidden, colour: colour })
           end
 
           private
@@ -54,10 +59,10 @@ module Sirena
                          circle: mark&.downcase == "o")
           end
 
-          def build(left, right, dashed, reversed, hidden)
+          def build(left, right, dashed, reversed, looks)
             head, tail = reversed ? [left, right] : [right, left]
             [ArrowStyle.new(head: head, tail: tail, dashed: dashed,
-                            leftward: reversed, hidden: hidden), reversed]
+                            leftward: reversed, **looks), reversed]
           end
 
           # Only the combinations measured against PlantUML.

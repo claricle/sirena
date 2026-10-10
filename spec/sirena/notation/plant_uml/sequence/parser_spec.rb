@@ -295,6 +295,32 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
   end
 
+  describe "arrow colour" do
+    def style_of(arrow)
+      parse("A #{arrow} B").items.first.style
+    end
+
+    it "reads a six digit colour" do
+      expect(style_of("-[#22a722]>").colour).to eq("#22A722")
+    end
+
+    it "doubles the digits of a three digit colour" do
+      expect(style_of("-[#f00]->").colour).to eq("#FF0000")
+    end
+
+    it "keeps the dashed shaft" do
+      expect(style_of("-[#f00]->").dashed).to be(true)
+    end
+
+    it "leaves a plain arrow without a colour" do
+      expect(style_of("->").colour).to be_nil
+    end
+
+    it "refuses a named colour" do
+      expect { parse("A -[#red]> B") }.to raise_error(unsupported, /arrow/)
+    end
+  end
+
   describe "Maxmessagesize" do
     def limit(*lines)
       parse(*lines, "A -> B").appearance.max_message
