@@ -219,7 +219,7 @@ diagram types; 52 have a tracked SVG (one `.beta.mmd` source does not render yet
 
 == Documentation
 
-Comprehensive documentation is available at the
+Documentation is available at the
 https://claricle.github.io/sirena[Sirena Documentation Site].
 
 === Quick links
