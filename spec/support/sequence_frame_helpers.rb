@@ -18,6 +18,12 @@ module SequenceFrameHelpers
     Sirena::Layout::Sequence.new.call(parse_sequence(body))
   end
 
+  # Distance from the first message row to the last.
+  def row_gap(body)
+    shafts = layout_scene(body).messages.map { |m| m.shaft.y1 }
+    shafts.last - shafts.first
+  end
+
   def mermaid_scene(source)
     parsed = Sirena::Notation::Mermaid.parse(source)
     Sirena::Layout::Sequence.new.call(parsed.diagram)

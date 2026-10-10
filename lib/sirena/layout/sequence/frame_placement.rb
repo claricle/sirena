@@ -22,6 +22,8 @@ module Sirena
         CLOSE_HEIGHT = 10
         RECT_CLOSE_HEIGHT = 8
         SECTION_HEIGHT = 45
+        # A frame or section with no text lacks the label line.
+        UNLABELLED_DROP = 20
         SLOT_HALF = 34
         SIDE_MARGIN = 11
         NEST_MARGIN = 10
@@ -113,7 +115,7 @@ module Sirena
         def room(index)
           opening(index).sum { |frame| open_height(frame) } +
             closing(index).sum { |frame| close_height(frame) } +
-            (sections_at(index).length * SECTION_HEIGHT)
+            sections_height(index)
         end
 
         def opening(index) = @frames.select { |f| f[:start] == index }
@@ -127,7 +129,17 @@ module Sirena
         end
 
         def open_height(frame)
-          frame[:kind] == "rect" ? RECT_OPEN_HEIGHT : OPEN_HEIGHT
+          return RECT_OPEN_HEIGHT if frame[:kind] == "rect"
+
+          labelled_height(OPEN_HEIGHT, frame[:label])
+        end
+
+        def section_height(section)
+          labelled_height(SECTION_HEIGHT, section[:label])
+        end
+
+        def labelled_height(height, label)
+          label.empty? ? height - UNLABELLED_DROP : height
         end
 
         def close_height(frame)
@@ -147,7 +159,7 @@ module Sirena
         end
 
         def section_edges(index)
-          sections_at(index).map { |s| edge(s[:order], SECTION_HEIGHT) }
+          sections_at(index).map { |s| edge(s[:order], section_height(s)) }
         end
 
         def edge(order, height) = { order: order, height: height }
@@ -199,7 +211,9 @@ module Sirena
           closing(at).sum { |frame| close_height(frame) }
         end
 
-        def sections_height(at) = sections_at(at).length * SECTION_HEIGHT
+        def sections_height(at)
+          sections_at(at).sum { |section| section_height(section) }
+        end
 
         def opened_before(index, start)
           earlier = @frames.first(index).select { |f| f[:start] == start }
@@ -238,8 +252,9 @@ module Sirena
         end
 
         def divider_top(at, rank, row_y)
-          base(at, row_y) + closing_room(at) + (SECTION_HEIGHT * rank) +
-            DIVIDER_OFFSET
+          earlier = sections_at(at).first(rank)
+          base(at, row_y) + closing_room(at) + DIVIDER_OFFSET +
+            earlier.sum { |section| section_height(section) }
         end
 
         def horizontal_extent(frame, positions)
