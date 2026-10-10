@@ -108,7 +108,7 @@ module Sirena
             @participants = {}
             @outline = Outline.new
             @boxes = []
-            @open_box = nil
+            @open_boxes = []
             @pending_note = nil
             @pending_style = nil
             @min_head_width = nil
@@ -171,7 +171,7 @@ module Sirena
             if (match = DECLARATION.match(text)) && plain_stereotype?(match)
               declare(match)
             elsif (match = BOX.match(text))
-              open_box(match, text, number)
+              open_box(match)
             else
               read_setting(text, number)
             end
@@ -214,9 +214,9 @@ module Sirena
           end
 
           def read_structure(text, number)
-            if END_BOX.match?(text) && @open_box
+            if END_BOX.match?(text) && @open_boxes.any?
               close_box
-            elsif @open_box || !timeline(text)
+            elsif @open_boxes.any? || !timeline(text)
               raise refusal(text, number)
             end
           end
@@ -329,20 +329,24 @@ module Sirena
                                    parallel: pending[:parallel]))
           end
 
-          def open_box(match, text, number)
-            raise refusal(text, number, "nested box") if @open_box
-
-            @open_box = { title: unquote(match[1].to_s), members: [] }
+          # PlantUML does not draw a box inside a box: the inner one is drawn
+          # beside the outer one's own members, and an outer box with none is
+          # not drawn at all.
+          def open_box(match)
+            @open_boxes.last&.store(:nested, true)
+            @open_boxes << { title: unquote(match[1].to_s), members: [] }
           end
 
           def close_box
-            @boxes << Box.new(**@open_box)
-            @open_box = nil
+            box = @open_boxes.pop
+            return if box[:nested] && box[:members].empty?
+
+            @boxes << Box.new(title: box[:title], members: box[:members])
           end
 
           def end_of_diagram(text, number)
             raise refusal(text, number, "empty diagram") if @participants.empty?
-            raise unclosed_box if @open_box
+            raise unclosed_box if @open_boxes.any?
             raise unclosed_block if @outline.open_block?
 
             :after
@@ -355,7 +359,7 @@ module Sirena
               id: id, label: display, kind: match[1].downcase.to_sym,
               stereotype: match[4]
             )
-            @open_box[:members] << id if @open_box
+            @open_boxes.last[:members] << id if @open_boxes.any?
           end
 
           def message(match)
@@ -449,7 +453,7 @@ module Sirena
 
           def unclosed_box
             Sirena::Parser::ParseError.new(
-              "Parse error: box #{@open_box[:title].inspect} is never " \
+              "Parse error: box #{@open_boxes.last[:title].inspect} is never " \
               "closed with endbox",
             )
           end
