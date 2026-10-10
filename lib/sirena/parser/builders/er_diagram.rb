@@ -96,8 +96,10 @@ module Sirena
 
               attribute = Diagram::ErAttribute.new.tap do |attr|
                 attr.name = attr_data[:name].to_s
-                attr.attribute_type = extract_attribute_type(attr_data[:type]) if attr_data[:type]
-                attr.key_type = extract_key_type(attr_data[:key]) if attr_data[:key]
+                type = attr_data[:type]
+                key = attr_data[:key]
+                attr.attribute_type = extract_attribute_type(type) if type
+                attr.key_type = extract_key_type(key) if key
                 attr.note = extract_text(attr_data[:note]) if attr_data[:note]
               end
 
