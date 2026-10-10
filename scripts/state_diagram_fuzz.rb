@@ -68,7 +68,9 @@ module StateDiagramFuzz
     # Sirena's state_id falls through to the narrow common `identifier`
     # rule and has no case for a bare "$". mermaid accepts it as an
     # ordinary state id.
-    MermaidFuzz::Case.new("known-1-dollar-state-id", "stateDiagram-v2\n    $\n"),
+    MermaidFuzz::Case.new(
+      "known-1-dollar-state-id", "stateDiagram-v2\n    $\n"
+    ),
   ].freeze
 
   # Runs Sirena's own StateDiagram in-process, via
@@ -82,7 +84,11 @@ module StateDiagramFuzz
 
   RUNNER_KWARGS = {
     label: "state_diagram",
-    generator_factory: ->(rng) { MermaidFuzz::IdentifierGenerator.new(rng, wild_chars: WILD_CHARS, template: TEMPLATE) },
+    generator_factory: lambda do |rng|
+      MermaidFuzz::IdentifierGenerator.new(
+        rng, wild_chars: WILD_CHARS, template: TEMPLATE
+      )
+    end,
     known_divergences: KNOWN_DIVERGENCES,
     sirena_verdict_for: SIRENA_VERDICT_FOR,
     mermaid_getter: "getStates",
@@ -90,4 +96,6 @@ module StateDiagramFuzz
   }.freeze
 end
 
-MermaidFuzz::CLI.run(ARGV, **StateDiagramFuzz::RUNNER_KWARGS) if $PROGRAM_NAME == __FILE__
+if $PROGRAM_NAME == __FILE__
+  MermaidFuzz::CLI.run(ARGV, **StateDiagramFuzz::RUNNER_KWARGS)
+end

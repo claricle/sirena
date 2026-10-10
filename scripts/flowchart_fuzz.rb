@@ -90,7 +90,10 @@ module FlowchartFuzz
     # "()" run as part of the id ("+F-N()" -> node id "+F-N"), but
     # mermaid's own lexer does not accept unmatched/attached parens
     # there and rejects the whole line.
-    MermaidFuzz::Case.new("known-2-trailing-parens-accepted-by-sirena-only", "flowchart TD\n    +F-N()\n"),
+    MermaidFuzz::Case.new(
+      "known-2-trailing-parens-accepted-by-sirena-only",
+      "flowchart TD\n    +F-N()\n",
+    ),
   ].freeze
 
   # Runs Sirena's own Flowchart in-process, via MermaidFuzz.safe_parse
@@ -102,7 +105,11 @@ module FlowchartFuzz
 
   RUNNER_KWARGS = {
     label: "flowchart",
-    generator_factory: ->(rng) { MermaidFuzz::IdentifierGenerator.new(rng, wild_chars: WILD_CHARS, template: TEMPLATE) },
+    generator_factory: lambda do |rng|
+      MermaidFuzz::IdentifierGenerator.new(
+        rng, wild_chars: WILD_CHARS, template: TEMPLATE
+      )
+    end,
     known_divergences: KNOWN_DIVERGENCES,
     sirena_verdict_for: SIRENA_VERDICT_FOR,
     mermaid_getter: "getVertices",
@@ -110,4 +117,6 @@ module FlowchartFuzz
   }.freeze
 end
 
-MermaidFuzz::CLI.run(ARGV, **FlowchartFuzz::RUNNER_KWARGS) if $PROGRAM_NAME == __FILE__
+if $PROGRAM_NAME == __FILE__
+  MermaidFuzz::CLI.run(ARGV, **FlowchartFuzz::RUNNER_KWARGS)
+end

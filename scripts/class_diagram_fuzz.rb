@@ -84,11 +84,16 @@ module ClassDiagramFuzz
     # not a punctuation edge case: it reproduces on ordinary letters
     # ("K", "q", "h", ...), so it is a systemic difference in what
     # counts as a class declaration, not a lexer gap.
-    MermaidFuzz::Case.new("known-1-bare-identifier-not-a-class-in-mermaid", "classDiagram\n    K\n"),
+    MermaidFuzz::Case.new(
+      "known-1-bare-identifier-not-a-class-in-mermaid",
+      "classDiagram\n    K\n",
+    ),
     # A bare "-" is likewise silently accepted (and dropped) by mermaid,
     # while sirena's class_name rule (which requires a leading
     # `[a-zA-Z_]`) rejects the line outright.
-    MermaidFuzz::Case.new("known-2-dash-rejected-by-sirena-only", "classDiagram\n    -\n"),
+    MermaidFuzz::Case.new(
+      "known-2-dash-rejected-by-sirena-only", "classDiagram\n    -\n"
+    ),
   ].freeze
 
   # Runs Sirena's own ClassDiagram in-process, via
@@ -100,7 +105,11 @@ module ClassDiagramFuzz
 
   RUNNER_KWARGS = {
     label: "class_diagram",
-    generator_factory: ->(rng) { MermaidFuzz::IdentifierGenerator.new(rng, wild_chars: WILD_CHARS, template: TEMPLATE) },
+    generator_factory: lambda do |rng|
+      MermaidFuzz::IdentifierGenerator.new(
+        rng, wild_chars: WILD_CHARS, template: TEMPLATE
+      )
+    end,
     known_divergences: KNOWN_DIVERGENCES,
     sirena_verdict_for: SIRENA_VERDICT_FOR,
     mermaid_getter: "getClasses",
@@ -108,4 +117,6 @@ module ClassDiagramFuzz
   }.freeze
 end
 
-MermaidFuzz::CLI.run(ARGV, **ClassDiagramFuzz::RUNNER_KWARGS) if $PROGRAM_NAME == __FILE__
+if $PROGRAM_NAME == __FILE__
+  MermaidFuzz::CLI.run(ARGV, **ClassDiagramFuzz::RUNNER_KWARGS)
+end

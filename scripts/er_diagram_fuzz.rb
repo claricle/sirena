@@ -65,7 +65,9 @@ module ErDiagramFuzz
   KNOWN_DIVERGENCES = [
     # Sirena's entity id, via the common `identifier` rule, cannot lead
     # with a digit. mermaid accepts a bare "1" as an entity id.
-    MermaidFuzz::Case.new("known-1-digit-leading-entity-id", "erDiagram\n    1\n"),
+    MermaidFuzz::Case.new(
+      "known-1-digit-leading-entity-id", "erDiagram\n    1\n"
+    ),
   ].freeze
 
   # Runs Sirena's own ErDiagram in-process, via MermaidFuzz.safe_parse
@@ -77,7 +79,11 @@ module ErDiagramFuzz
 
   RUNNER_KWARGS = {
     label: "er_diagram",
-    generator_factory: ->(rng) { MermaidFuzz::IdentifierGenerator.new(rng, wild_chars: WILD_CHARS, template: TEMPLATE) },
+    generator_factory: lambda do |rng|
+      MermaidFuzz::IdentifierGenerator.new(
+        rng, wild_chars: WILD_CHARS, template: TEMPLATE
+      )
+    end,
     known_divergences: KNOWN_DIVERGENCES,
     sirena_verdict_for: SIRENA_VERDICT_FOR,
     mermaid_getter: "getEntities",
@@ -85,4 +91,6 @@ module ErDiagramFuzz
   }.freeze
 end
 
-MermaidFuzz::CLI.run(ARGV, **ErDiagramFuzz::RUNNER_KWARGS) if $PROGRAM_NAME == __FILE__
+if $PROGRAM_NAME == __FILE__
+  MermaidFuzz::CLI.run(ARGV, **ErDiagramFuzz::RUNNER_KWARGS)
+end
