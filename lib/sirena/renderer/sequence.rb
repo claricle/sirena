@@ -56,8 +56,10 @@ module Sirena
         render_lifelines(positions, metadata[:message_count] || 0, svg)
         render_messages(graph, positions, svg) if graph[:edges]
         render_participants(graph[:children], positions, svg)
-        render_notes(metadata[:note_entries], positions, svg) if
-          metadata[:note_entries]
+        if metadata[:notes]
+          render_notes(metadata[:note_entries] || metadata[:notes],
+                       positions, svg)
+        end
         svg
       end
 
@@ -173,6 +175,8 @@ module Sirena
         participant.actor_lines.each do |geometry|
           group.children << svg_line(geometry, stroke_width: "2")
         end
+        group.children << participant_label(participant.label) if
+          participant.label
       end
 
       def svg_line(geometry, stroke_width:, dash: nil)
@@ -373,7 +377,8 @@ module Sirena
       end
 
       def render_notes(entries, positions, svg)
-        placement = sequence_layout.send(:note_placement, entries, positions)
+        placement = sequence_layout.send(:note_placement,
+                                         entries.grep(Hash), positions)
         placement.notes.each { |note| svg << NoteDrawing.new(note).group }
       end
 
