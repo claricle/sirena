@@ -160,6 +160,29 @@ RSpec.describe Sirena::Layout::Architecture do
     [scene, scene.children.find { |node| node.id == "gm" }]
   end
 
+  def ir_equivalence_diagram
+    outer = group("outer")
+    inner = group("inner", parent_id: outer.id)
+    api = service("api", group_id: inner.id)
+    worker = service("worker", group_id: outer.id)
+    router = junction("route", group_id: inner.id)
+    diagram(
+      services: [api, worker], junctions: [router], groups: [outer, inner],
+      edges: [edge("api", "route", from: "B", to: "T", label: "queue"),
+              edge("route", "worker", from: "R", to: "L")]
+    )
+  end
+
+  def inputs_unchanged_after_layout?
+    private_diagram = ir_equivalence_diagram
+    graph = Sirena::Notation::Mermaid::IRAdapters::Architecture
+      .call(private_diagram)
+    before = [Marshal.dump(private_diagram), Marshal.dump(graph)]
+    layout.call(private_diagram)
+    layout.call(graph)
+    [Marshal.dump(private_diagram), Marshal.dump(graph)] == before
+  end
+
   def groups_with_services(count)
     groups = Array.new(count) { |index| group("g#{index}") }
     services = groups.map do |item|
@@ -176,6 +199,19 @@ RSpec.describe Sirena::Layout::Architecture do
 
   it "returns a typed final Scene" do
     expect(routed_scene).to be_a(described_class::Scene)
+  end
+
+  it "lays out nested direct graph IR byte-identically to its private model" do
+    private_diagram = ir_equivalence_diagram
+    graph = Sirena::Notation::Mermaid::IRAdapters::Architecture
+      .call(private_diagram)
+
+    expect(Marshal.dump(layout.call(graph)))
+      .to eq(Marshal.dump(layout.call(private_diagram)))
+  end
+
+  it "does not mutate either private or graph input during layout" do
+    expect(inputs_unchanged_after_layout?).to be(true)
   end
 
   it "returns typed final nodes" do
