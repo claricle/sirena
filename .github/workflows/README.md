@@ -26,9 +26,9 @@ available: no run missed the cache entirely, and the 4 runs below hit only a
 | Full | 6.9 / 7.5 min (35 runs) | 7.3 / 7.7 min (4 runs) | < 30 min |
 
 The fast lane's slowest job is always a Windows `unit` cell (median 9.4 to
-13.0 min); Linux and macOS cells run 5.2 to 6.6 min. 25 more runs are in
-the totals but could not be classified (job logs not fetched), and Windows
-logs gave no cache line. The fast lane is over budget on Windows.
+13.0 min); Linux and macOS cells run 5.2 to 6.6 min (medians). 25 further
+runs are in neither column: their job logs were not fetched. 14 Windows
+jobs logged no cache line. The fast lane is over budget on Windows.
 
 ## Branch protection (owner applies; a repository setting, not YAML)
 
