@@ -50,6 +50,15 @@ RSpec.describe Sirena::Parser::Base do
   end
 
   describe ".grammar and .builder" do
+    it "inherits the builder from the parent parser" do
+      expect(Class.new(Sirena::Parser::Pie).builder)
+        .to eq(Sirena::Parser::Builders::Pie)
+    end
+
+    it "has no builder when nothing in the chain declares one" do
+      expect(described_class.builder).to be_nil
+    end
+
     it "raises NotImplementedError when a subclass declares nothing" do
       expect { Class.new(described_class).new.parse("x") }
         .to raise_error(NotImplementedError, /must declare grammar and builder/)
