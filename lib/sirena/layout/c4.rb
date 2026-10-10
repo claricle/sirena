@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "elk_placement"
 require_relative "grid"
 require_relative "../diagram/c4"
 require_relative "../notation/mermaid/ir_adapters/c4"
@@ -137,6 +138,10 @@ module Sirena
         attribute :children, Node, collection: true, default: -> { [] }
         attribute :edges, Edge, collection: true, default: -> { [] }
       end
+
+      # :grid (the default) or :elk. Grid remains the default until the
+      # parity ratchet permits changing it.
+      attr_accessor :placement
 
       # Converts a C4 diagram to a graph structure.
       #
@@ -291,7 +296,7 @@ module Sirena
 
       def scene(diagram)
         graph = build_graph(diagram)
-        Grid.apply(graph)
+        placer.apply(graph)
         children = graph[:children].map { |node| typed_node(node) }
         width, height = scene_dimensions(children)
         Scene.new(
@@ -299,6 +304,10 @@ module Sirena
           children: children,
           edges: typed_edges(graph[:edges], children)
         )
+      end
+
+      def placer
+        placement == :elk ? ElkPlacement : Grid
       end
 
       def typed_node(node)

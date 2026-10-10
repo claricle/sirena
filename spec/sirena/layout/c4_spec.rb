@@ -10,11 +10,23 @@ RSpec.describe Sirena::Layout::C4 do
     nodes.flat_map { |node| [node, *flatten(node.children)] }
   end
 
-  def diagram(elements: [], relationships: [], boundaries: [])
+  def diagram(level: "Context", elements: [], relationships: [], boundaries: [])
     Sirena::Diagram::C4.new(
-      level: "Context", elements: elements, relationships: relationships,
+      level: level, elements: elements, relationships: relationships,
       boundaries: boundaries
     )
+  end
+
+  def engine_scenes(path)
+    source = File.read(path)
+    engine = Sirena::Engine.new
+    [engine.render(source, layout_engine: :elk), engine.render(source)]
+  end
+
+  def expect_right_error(level)
+    graph = layout.build_graph(diagram(level: level, elements: [element("a")]))
+    expect { layout.send(:placer).apply(graph) }
+      .to raise_error(Sirena::Layout::LayoutError, /direction RIGHT/)
   end
 
   def element(id, type: "System", boundary_id: nil)
@@ -119,6 +131,23 @@ RSpec.describe Sirena::Layout::C4 do
   it "keeps nested boundary children" do
     boundary = container_scene.children.find { |node| node.id == "ecommerce" }
     expect(boundary.children).not_to be_empty
+  end
+
+  it "keeps Grid as the default placement" do
+    allow(Sirena::Layout::Grid).to receive(:apply).and_call_original
+    layout.call(diagram)
+    expect(Sirena::Layout::Grid).to have_received(:apply).once
+  end
+
+  it "lets Engine select ELK for Context and Container DOWN layouts" do
+    paths = %w[01-context-diagram.mmd 02-container-diagram.mmd]
+    scenes = paths.map { |path| engine_scenes("examples/c4/#{path}") }
+    expect(scenes).to all(satisfy { |elk, grid| elk != grid })
+  end
+
+  it "retains explicit RIGHT errors for Component and Code" do
+    layout.placement = :elk
+    %w[Component Code].each { |level| expect_right_error(level) }
   end
 
   it "lays out direct graph IR byte-identically to the private diagram" do
