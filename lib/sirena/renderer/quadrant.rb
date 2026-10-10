@@ -56,7 +56,7 @@ module Sirena
       end
 
       def centred_in?(label, quadrant)
-        label.x == quadrant.x + (quadrant.width / 2.0) &&
+        (label.x - (quadrant.x + (quadrant.width / 2.0))).abs < 0.001 &&
           label.y.between?(quadrant.y, quadrant.y + quadrant.height)
       end
 

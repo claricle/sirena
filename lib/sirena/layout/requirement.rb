@@ -251,11 +251,11 @@ module Sirena
           height: geometry[:height], box: rect(geometry),
           header: Rect.new(x: geometry[:x], y: geometry[:y],
                            width: geometry[:width], height: HEADER_HEIGHT),
-          labels: requirement_labels(requirement, geometry)
+          labels: requirement_labels(geometry)
         )
       end
 
-      def requirement_labels(requirement, geometry)
+      def requirement_labels(geometry)
         row_labels(geometry, header_role: "header", body_role: "property")
       end
 
