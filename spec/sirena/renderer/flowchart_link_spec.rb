@@ -988,8 +988,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
       radius = circle[/\sr="([\d.]+)"/, 1].to_f
       far_x = path_points(xml).map(&:first).max
 
-      expect(radius).to eq(20.0)
-      expect(far_x - (cx + radius)).to be_within(0.1).of(2 * radius * 0.45)
+      expect([radius, far_x - (cx + radius)])
+        .to match([20.0, be_within(0.1).of(2 * 20.0 * 0.45)])
     end
 
     it "puts the head where the loop meets the node, not inside it" do

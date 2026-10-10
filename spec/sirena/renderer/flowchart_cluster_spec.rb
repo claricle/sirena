@@ -580,14 +580,20 @@ RSpec.describe Sirena::Engine do
   # Unconnected nodes share one rank, left to right in source order, with
   # elkrb's 50 point node spacing between them.
   describe "a diagram with no subgraph" do
-    it "lays unconnected nodes in one row, 50 apart" do
-      found = spots(render("flowchart TD\nA\nB\nC\nD\n"))
+    let(:found) { spots(render("flowchart TD\nA\nB\nC\nD\n")) }
 
+    it "keeps unconnected nodes in source order" do
       expect(found.map(&:first)).to eq(%w[A B C D])
+    end
+
+    it "lays them in one row" do
       expect(found.map(&:last).uniq.size).to eq(1)
+    end
+
+    it "leaves more than the 50 point node spacing between them" do
       gaps = found.each_cons(2).map { |left, right| right[1] - left[1] }
+
       expect(gaps).to all(be > 50.0)
-      expect(found.map { |spot| spot[1] }).to eq(found.map { |spot| spot[1] }.sort)
     end
   end
 
