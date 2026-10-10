@@ -324,7 +324,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       "sequenceDiagram\nparticipant A\nparticipant B\nA->>B: hello\n"
     end
     let(:decorated_digest) do
-      "7fd1d01dadf9188cdc9e5898c7450395a290a2b7623572e06b574a50176b1a38"
+      "462eb6aca8e9ffd45bde342925333555a688d1242f677edcaf49f445f45ed9a8"
     end
 
     it "emits the font sizes resolved by the injected theme" do
@@ -333,7 +333,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       message = xml[%r{<g id="message-0".*?</g>}m]
 
       expect([participant, message])
-        .to match([include('font-size="16"'), include('font-size="14"')])
+        .to match([include('font-size="18"'), include('font-size="18"')])
     end
 
     it "preserves the pre-conversion bytes with a note and activation" do

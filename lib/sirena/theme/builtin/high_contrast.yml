@@ -31,6 +31,7 @@ typography:
   font_family_monospace: "Courier New, monospace"
   font_size_small: 14.0
   font_size_normal: 16.0
+  sequence_font_size: 18.0
   font_size_large: 18.0
   font_size_title: 24.0
   font_weight_normal: "bold"

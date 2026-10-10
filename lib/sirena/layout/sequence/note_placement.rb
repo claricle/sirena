@@ -18,7 +18,7 @@ module Sirena
         PADDING = 20
         SIDE_GAP = 25
         MIN_WIDTH = 100
-        LINE_SPACING = 1.4
+        LINE_SPACING = 1.2
 
         # @param graph [Sirena::IR::Graph] the sequence graph
         # @return [Array<Hash>] text, position, participant_ids and
