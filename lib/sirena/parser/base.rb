@@ -23,6 +23,10 @@ module Sirena
     #
     # @abstract Declare grammar and builder, or override #parse
     class Base
+      EMPTY_SEPARATOR = ""
+      LINE_SEPARATOR = "\n"
+      private_constant :EMPTY_SEPARATOR, :LINE_SEPARATOR
+
       class << self
         # Declares (with an argument) or reads (without) the grammar class.
         # A subclass inherits its parent's declaration.
@@ -124,7 +128,8 @@ module Sirena
       # @param cause [Parslet::Cause] the failure to describe
       # @return [String] the message alone
       def failure_message(cause)
-        Array(cause.message).map { |part| message_part(part) }.join
+        Array(cause.message).map { |part| message_part(part) }
+          .join(EMPTY_SEPARATOR)
       end
 
       # Parslet quotes a Slice and leaves everything else alone. Quoting by
@@ -165,8 +170,8 @@ module Sirena
       # @return [Array(Integer, Integer)] 1-based line and character column
       def failure_position(cause, source)
         line, = cause.source.line_and_column(cause.pos)
-        lines = source.lines
-        preceding = lines[0, line - 1].to_a.join
+        lines = source.lines(LINE_SEPARATOR)
+        preceding = lines[0, line - 1].to_a.join(EMPTY_SEPARATOR)
         offset = failure_byte_offset(cause, preceding)
 
         [line, character_column(lines[line - 1], offset)]
@@ -199,14 +204,14 @@ module Sirena
       # @param source [String] the source that was parsed
       # @return [String] the positioned, multi-line error message
       def format_parse_error(cause, source)
-        lines = source.lines
+        lines = source.lines(LINE_SEPARATOR)
         line_num, col_num = failure_position(cause, source)
         [
           "Parse error at line #{line_num}, column #{col_num}:",
           source_line(lines, line_num),
           caret_for(lines[line_num - 1], col_num),
           failure_message(cause),
-        ].join("\n")
+        ].join(LINE_SEPARATOR)
       rescue StandardError
         fallback_message(cause)
       end
@@ -215,7 +220,7 @@ module Sirena
         in_range = line_num.positive? && line_num <= lines.length
         return "(end of input)" unless in_range
 
-        lines[line_num - 1].chomp
+        lines[line_num - 1].chomp(LINE_SEPARATOR)
       end
     end
   end
