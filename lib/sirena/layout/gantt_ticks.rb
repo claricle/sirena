@@ -23,6 +23,13 @@ module Sirena
       ].freeze
       INTERVAL_PATTERN = /\A([1-9]\d*)(hour|day|week|month)\z/
       SUNDAY_OFFSET_DAYS = 4
+      # An explicit tickInterval that would draw more ticks than this over
+      # the range is ignored in favour of the automatic ladder, so a span of
+      # millennia cannot produce millions of labels.
+      MAX_TICKS = 2000
+      UNIT_SECONDS = {
+        hour: HOUR, day: DAY, week: 7 * DAY, month: 30 * DAY
+      }.freeze
 
       def self.times(start_time, stop_time, interval = nil)
         new(start_time, stop_time, interval).times
@@ -31,7 +38,7 @@ module Sirena
       def initialize(start_time, stop_time, interval)
         @start = start_time
         @stop = stop_time
-        @interval = parse(interval) || pick_interval
+        @interval = affordable(parse(interval)) || pick_interval
       end
 
       def times
@@ -46,6 +53,14 @@ module Sirena
       def parse(text)
         match = INTERVAL_PATTERN.match(text.to_s.strip)
         [match[2].to_sym, match[1].to_i] if match
+      end
+
+      def affordable(interval)
+        return unless interval
+
+        unit, step = interval
+        seconds = UNIT_SECONDS.fetch(unit) * step
+        interval if (@stop - @start).abs / seconds <= MAX_TICKS
       end
 
       def pick_interval
