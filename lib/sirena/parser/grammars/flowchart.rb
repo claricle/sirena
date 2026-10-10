@@ -220,7 +220,7 @@ module Sirena
         # `EDGE_ID_END_AHEAD` below) so a future correction to this
         # hand-tuned set cannot drift between the two.
         LINE_SPACE_CHARS = '\t\v\f\x20\u00A0\u1680' \
-          '\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF'
+                           '\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF'
         private_constant :LINE_SPACE_CHARS
 
         rule(:line_space) { match[LINE_SPACE_CHARS] }
