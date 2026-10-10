@@ -29,6 +29,10 @@ RSpec.describe Sirena::Svg::Escaping do
     it "escapes an ampersand once, not twice" do
       expect(described_class.escape_text("&lt;")).to eq("&amp;lt;")
     end
+
+    it "keeps a character past U+FFFF, which XML allows" do
+      expect(described_class.escape_text("a\u{1F600}b")).to eq("a\u{1F600}b")
+    end
   end
 
   describe ".escape_attribute" do

@@ -39,10 +39,11 @@ module Sirena
       # XML 1.0 forbids these code points entirely: they have no escape, so a
       # document containing one is unparseable whatever you do to the rest.
       # Tab, newline and carriage return are the only C0 characters allowed.
+      # Characters past U+FFFF (emoji among them) are allowed.
       # A sequence label accepts any non-line-ending character
       # (grammars/sequence.rb:241), so a NUL in a diagram reached the output
       # and xmllint refused the SVG.
-      FORBIDDEN = /[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD]/
+      FORBIDDEN = /[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/
 
       module_function
 
