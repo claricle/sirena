@@ -237,8 +237,8 @@ module Sirena
             c.to = stmt[:to].to_s
 
             arrow_type = if stmt[:arrow]
-                          stmt[:arrow][:arrow_type] || stmt[:arrow][:line_type]
-                        end
+                           stmt[:arrow][:arrow_type] || stmt[:arrow][:line_type]
+                         end
 
             c.connection_type = if arrow_type
                                   ARROW_MAP[arrow_type.to_s] || "arrow"
