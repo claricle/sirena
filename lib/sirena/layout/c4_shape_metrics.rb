@@ -75,8 +75,8 @@ module Sirena
 
       def description_bottom(offset)
         @description_offset = offset + 20
-        bottom = @description_offset +
-                 C4Text.height(@description, BODY_FONT_SIZE)
+        text_height = C4Text.height(@description, BODY_FONT_SIZE)
+        bottom = @description_offset + text_height
         bottom - (C4Text.lines(@description).length * 5)
       end
 

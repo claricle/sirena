@@ -18,7 +18,8 @@ RSpec.describe Sirena::Layout::Radar do
     end
 
     it "keeps the default canvas with the default rings" do
-      expected = [described_class::Scene, [], [], [60.0, 120.0, 180.0, 240.0, 300.0],
+      expected = [described_class::Scene, [], [],
+                  [60.0, 120.0, 180.0, 240.0, 300.0],
                   350.0, 350.0, 300.0, 700.0, 700.0, 0.0, 100.0, "0 0 700 700"]
 
       expect(empty_scene_geometry).to eq(expected)

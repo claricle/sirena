@@ -194,12 +194,15 @@ module Sirena
 
         def top_of(index)
           own = @entries[index][:message_index]
-          above = @entries.first(index).each_index.sum do |at|
+          FIRST_ROW + (own * ROW_SPACING) + slots_above(index, own) +
+            TOP_GAP + @rows.extra_before(own) +
+            frame_offset(own, @entries[index][:order])
+        end
+
+        def slots_above(index, own)
+          @entries.first(index).each_index.sum do |at|
             @entries[at][:message_index] <= own ? slots[at] : 0
           end
-          FIRST_ROW + (own * ROW_SPACING) + above + TOP_GAP +
-            @rows.extra_before(own) +
-            frame_offset(own, @entries[index][:order])
         end
 
         def frame_offset(own, order)
