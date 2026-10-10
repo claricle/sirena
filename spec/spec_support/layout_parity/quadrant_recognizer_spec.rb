@@ -19,6 +19,15 @@ RSpec.describe SpecSupport::LayoutParity::QuadrantRecognizer do
     [summaries(reference), summaries(sirena)]
   end
 
+  def ibm_points
+    name = "003_parser_should_throw_error_if_quadrantchart_text_is_not_there_2"
+    real_pair(name).map do |summary|
+      summary.find do |kind, key, _parent|
+        kind == :quadrant_point && key == "IBM"
+      end
+    end
+  end
+
   it "matches region and point identities with containment parents" do
     reference_summary, sirena_summary = real_pair
 
@@ -26,13 +35,6 @@ RSpec.describe SpecSupport::LayoutParity::QuadrantRecognizer do
   end
 
   it "assigns a boundary-straddling point by its center" do
-    pair = real_pair(
-      "003_parser_should_throw_error_if_quadrantchart_text_is_not_there_2",
-    )
-    ibm_points = pair.map do |summary|
-      summary.find { |kind, key, _parent| kind == :quadrant_point && key == "IBM" }
-    end
-
     expect(ibm_points).to eq(
       Array.new(2, [:quadrant_point, "IBM", "Visionaries"]),
     )
