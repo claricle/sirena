@@ -1,8 +1,6 @@
 ---
 cop: Layout/FirstHashElementIndentation
 rows:
-- file: lib/sirena/parser/builders/treemap.rb
-  count: 2
 - file: scripts/extract_mermaid_tests.rb
   count: 2
 - file: spec/tasks/corpus_spec.rb

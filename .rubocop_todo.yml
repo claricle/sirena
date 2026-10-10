@@ -15,19 +15,12 @@ Gemspec/RequiredRubyVersion:
 # This cop supports safe autocorrection (--autocorrect).
 Layout/ElseAlignment:
   Exclude:
-    - 'lib/sirena/parser/builders/kanban.rb'
-    - 'lib/sirena/parser/builders/mindmap.rb'
     - 'tasks/benchmark.rake'
 
 # Offense count: 8
 # This cop supports safe autocorrection (--autocorrect).
 Layout/EmptyLineAfterGuardClause:
   Exclude:
-    - 'lib/sirena/parser/mindmap.rb'
-    - 'lib/sirena/parser/builders/c4.rb'
-    - 'lib/sirena/parser/builders/er_diagram.rb'
-    - 'lib/sirena/parser/builders/mindmap.rb'
-    - 'lib/sirena/parser/builders/sequence.rb'
     - 'tasks/benchmark.rake'
 
 # Offense count: 11
@@ -36,9 +29,6 @@ Layout/EmptyLineAfterGuardClause:
 # SupportedStylesAlignWith: keyword, variable, start_of_line
 Layout/EndAlignment:
   Exclude:
-    - 'lib/sirena/parser/builders/block.rb'
-    - 'lib/sirena/parser/builders/kanban.rb'
-    - 'lib/sirena/parser/builders/mindmap.rb'
     - 'tasks/benchmark.rake'
 
 # Offense count: 8
@@ -46,8 +36,6 @@ Layout/EndAlignment:
 # Configuration parameters: AllowForAlignment, AllowBeforeTrailingComments, ForceEqualSignAlignment.
 Layout/ExtraSpacing:
   Exclude:
-    - 'lib/sirena/parser/builders/mindmap.rb'
-    - 'lib/sirena/parser/builders/treemap.rb'
     - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 4
@@ -62,9 +50,6 @@ Layout/FirstHashElementIndentation:
 # Configuration parameters: Width, AllowedPatterns.
 Layout/IndentationWidth:
   Exclude:
-    - 'lib/sirena/parser/builders/block.rb'
-    - 'lib/sirena/parser/builders/kanban.rb'
-    - 'lib/sirena/parser/builders/mindmap.rb'
     - 'tasks/benchmark.rake'
 
 # Offense count: 18
