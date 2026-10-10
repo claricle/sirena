@@ -7,17 +7,6 @@ module Sirena
   module Renderer
     # Emits SVG from final, typed Sankey geometry.
     class Sankey < Base
-      FLOW_COLORS = [
-        "#4472C4", # Blue
-        "#ED7D31", # Orange
-        "#A5A5A5", # Gray
-        "#FFC000", # Yellow
-        "#5B9BD5", # Light Blue
-        "#70AD47", # Green
-        "#C00000", # Red
-        "#7030A0", # Purple
-      ].freeze
-
       # @param scene [Layout::Sankey::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
@@ -118,7 +107,7 @@ module Sirena
       end
 
       def flow_colour(flow)
-        FLOW_COLORS.fetch(flow.colour_index % FLOW_COLORS.length)
+        theme_palette(:flow, flow.colour_index)
       end
     end
   end

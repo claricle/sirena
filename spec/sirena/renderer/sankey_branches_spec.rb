@@ -36,8 +36,12 @@ RSpec.describe Sirena::Renderer::Sankey do
       flow(id: "plain", colour_index: 3),
       flow(id: "loop", self_loop: true),
     ]
-    described_class.new(theme: Sirena::Theme.new)
+    described_class.new(theme: Sirena::Theme::Registry.get(:default))
       .render(scene(title: label("Flows", 100, 15), flows: flows)).to_xml
+  end
+
+  let(:bare_xml) do
+    described_class.new(theme: Sirena::Theme.new).render(scene).to_xml
   end
 
   let(:themed_xml) do
@@ -63,11 +67,11 @@ RSpec.describe Sirena::Renderer::Sankey do
   end
 
   it "uses default node colors" do
-    expect(flow_xml).to include('fill="#2E86AB"', 'stroke="#1A5276"')
+    expect(bare_xml).to include('fill="#2E86AB"', 'stroke="#1A5276"')
   end
 
   it "uses default typography" do
-    expect(flow_xml).to include('font-family="Arial, sans-serif"')
+    expect(bare_xml).to include('font-family="Arial, sans-serif"')
   end
 
   it "uses theme node colors" do
