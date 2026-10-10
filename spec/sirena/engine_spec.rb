@@ -513,4 +513,40 @@ RSpec.describe Sirena::Engine do
       expect(svg).to include("Alice").and include("Bob")
     end
   end
+
+  describe "#render theme specs" do
+    let(:engine) { described_class.new }
+    let(:source) { "graph TD\nA-->B" }
+    let(:default_svg) { engine.render(source) }
+
+    it "accepts a Theme instance" do
+      dark = Sirena::Theme::Registry.get(:dark)
+      expected = described_class.new(theme: :dark).render(source)
+
+      expect(engine.render(source, theme: dark)).to eq(expected)
+    end
+
+    it "builds a theme from a Hash of Theme attributes" do
+      colors = Sirena::Theme::ColorPalette.new(node_fill: "#ff0000")
+      svg = engine.render(source, theme: { name: "x", colors: colors })
+
+      expect(svg).to include("#ff0000")
+    end
+
+    it "falls back to the default theme for an unrecognised type" do
+      expect(engine.render(source, theme: 42)).to eq(default_svg)
+    end
+  end
+
+  describe "#render today:" do
+    let(:engine) { described_class.new }
+    let(:source) { "gantt\n dateFormat YYYY-MM-DD\n section S\n T :t1, 2d\n" }
+
+    it "draws a task with no start from the date given per render" do
+      first = engine.render(source, today: Date.new(2024, 1, 1))
+      later = engine.render(source, today: Date.new(2031, 6, 1))
+
+      expect(first).not_to eq(later)
+    end
+  end
 end
