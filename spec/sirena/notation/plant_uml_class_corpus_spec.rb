@@ -25,6 +25,25 @@ module PlantUmlCorpusHelpers
     %w[x y width height].to_h { |key| [key, rect.attributes[key].to_f] }
   end
 
+  # True when the rectangle `inner` lies strictly inside `outer`.
+  def enclosed?(inner, outer)
+    inside, around = [inner, outer].map { |r| corners(r) }
+
+    inside.first(2).zip(around.first(2)).all? { |i, o| i > o } &&
+      inside.last(2).zip(around.last(2)).all? { |i, o| i < o }
+  end
+
+  def corners(rectangle)
+    [rectangle["x"], rectangle["y"], rectangle["x"] + rectangle["width"],
+     rectangle["y"] + rectangle["height"]]
+  end
+
+  # True when the rectangle `box` lies wholly above or below `other`.
+  def clear_vertically?(box, other)
+    box["y"] + box["height"] < other["y"] ||
+      box["y"] > other["y"] + other["height"]
+  end
+
   def circle_centre(group)
     %w[cx cy].map { |name| group.elements["circle"].attributes[name].to_f }
   end
@@ -464,7 +483,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     {
-      "package p {\npackage q {\nclass A\n}\n}" => /nested package/,
+      "package p {\npackage q {\n}\nclass A\n}" => /empty package/,
       "package p {\n}" => /empty package/,
       "package p <<Cloud>> {\nclass A\n}" => /package stereotype/,
       "package p {\nclass A\n}\npackage p {\nclass B\n}" => /twice/,
@@ -523,6 +542,73 @@ RSpec.describe Sirena::Notation::PlantUML do
 
         expect(box["y"] + box["height"]).to be < frame["y"]
       end
+    end
+  end
+
+  describe "nested packages" do
+    let(:source) do
+      ["package outer {", "class A", "package inner {", "class B", "}",
+       "class C", "}", "class D"].join("\n")
+    end
+    let(:svg) { rendered_document(source) }
+
+    it "records the package each one is written inside" do
+      expect(parse_corpus(source).packages.map { |p| [p.id, p.parent] })
+        .to eq([["outer", nil], ["inner", "outer"]])
+    end
+
+    it "gives each class its innermost package" do
+      expect(parse_corpus(source).classes.map(&:package))
+        .to eq(%w[outer inner outer] + [nil])
+    end
+
+    it "refuses an outer package whose only content is an empty one" do
+      expect { parse_corpus("package o {\npackage i {\n}\n}") }
+        .to raise_error(described_class::UnsupportedConstructError,
+                        /empty package/)
+    end
+
+    it "draws the inner frame inside the outer one" do
+      inner = bounds(svg, "package-inner")
+
+      expect(enclosed?(inner, bounds(svg, "package-outer"))).to be(true)
+    end
+
+    it "keeps the outer package's own classes out of the inner frame" do
+      inner = bounds(svg, "package-inner")
+      own = %w[A C].map { |name| bounds(svg, "class-#{name}") }
+
+      expect(own.map { |box| clear_vertically?(box, inner) })
+        .to eq([true, true])
+    end
+
+    it "keeps every frame and box inside the canvas" do
+      canvas = REXML::XPath.first(svg, "/svg/@height").value.to_f
+      frame = bounds(svg, "package-outer")
+
+      expect(frame["y"] + frame["height"]).to be < canvas
+    end
+
+    it "leaves the canvas margin above frames opened together" do
+      stacked = rendered_document("package o {\npackage i {\nclass B\n}\n}")
+
+      expect(bounds(stacked, "package-o")["y"]).to be >= 36.0
+    end
+
+    it "keeps the class outside every package clear of the outer frame" do
+      outer = bounds(svg, "package-outer")
+      loose = bounds(svg, "class-D")
+
+      expect(loose["y"] + loose["height"]).to be < outer["y"]
+    end
+
+    it "keeps a hidden inner package's classes from drawing its frame" do
+      hidden = "#{source.sub('class B', 'class B $x')}\nhide $x"
+
+      ids = group_ids(rendered_document(hidden))
+
+      expect([ids.include?("package-outer"), ids.include?("package-inner")])
+        .to eq([true, false])
     end
   end
 

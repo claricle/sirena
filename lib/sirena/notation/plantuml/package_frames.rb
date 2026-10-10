@@ -26,31 +26,51 @@ module Sirena
         end
 
         # @param boxes [Array<Scene::Box>] the positioned class boxes
-        # @return [Array<Scene::Frame>]
+        # @return [Array<Scene::Frame>] outer packages before the ones
+        #   inside them
         def call(boxes)
+          @boxes = boxes
+          @bounds = {}
           @diagram.packages.map do |package|
-            members = @diagram.classes.select { |k| k.package == package.id }
-            names = members.map(&:name)
-            frame(package, boxes.select { |box| names.include?(box.id) })
+            build(package, bounds_of(package))
           end
         end
 
         private
 
-        def frame(package, boxes)
-          left, right = horizontal_bounds(boxes)
-          top, bottom = vertical_bounds(boxes)
-          build(package, [left, top, right - left, bottom - top])
+        # Left, top, width and height around the package's own boxes and
+        # the frames of the packages inside it.
+        def bounds_of(package)
+          @bounds[package.id] ||= begin
+            left, top, right, bottom = edges(own_edges(package) +
+              inner_edges(package))
+            [left, top, right - left, bottom - top]
+          end
         end
 
-        def horizontal_bounds(boxes)
-          [boxes.map(&:x).min - SIDE,
-           boxes.map { |box| box.x + box.width }.max + SIDE]
+        def edges(rectangles)
+          lefts, tops, rights, bottoms = rectangles.transpose
+          [lefts.min - SIDE, tops.min - OPEN + 6.0,
+           rights.max + SIDE, bottoms.max + 12.0]
         end
 
-        def vertical_bounds(boxes)
-          [boxes.map(&:y).min - OPEN + 6.0,
-           boxes.map { |box| box.y + box.height }.max + 12.0]
+        def own_edges(package)
+          names = @diagram.classes.filter_map do |klass|
+            klass.name if klass.package == package.id
+          end
+          @boxes.select { |box| names.include?(box.id) }.map { |b| edges_of(b) }
+        end
+
+        def edges_of(box)
+          [box.x, box.y, box.x + box.width, box.y + box.height]
+        end
+
+        def inner_edges(package)
+          inside = @diagram.packages.select { |p| p.parent == package.id }
+          inside.map do |inner|
+            left, top, width, height = bounds_of(inner)
+            [left, top, left + width, top + height]
+          end
         end
 
         def build(package, (left, top, width, height))
