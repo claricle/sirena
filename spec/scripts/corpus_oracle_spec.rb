@@ -258,6 +258,7 @@ end
 
 RSpec.describe CorpusOracle do
   include CorpusOracleSpecSupport
+  include CorpusOracleProvenance
   include MermaidDiffSpecSupport::Helpers
 
   let(:dir) { Dir.mktmpdir }
@@ -272,16 +273,23 @@ RSpec.describe CorpusOracle do
         "toolchain" => { "mmdc" => "11.12.0" } }
     end
 
+    let(:entries) { write_entries(dir, { "a" => "pie\n" }) }
+
     it "is empty for a complete row" do
       expect(described_class.missing_provenance(complete)).to eq([])
     end
 
-    it "lists every key an old-format row lacks, yet load_rows still reads it" do
-      old = { "sha256" => "abc", "verdict" => "accepts" }
-      File.write(out, oracle_yaml(provenance, [old]))
+    it "lists every key an old-format row lacks" do
+      old_row = { "sha256" => "abc", "verdict" => "accepts" }
 
-      expect(described_class.missing_provenance(old))
+      expect(described_class.missing_provenance(old_row))
         .to eq(%w[source_sha256 svg_sha256 toolchain.mmdc])
+    end
+
+    it "still lets load_rows read an old-format row" do
+      old_row = { "sha256" => "abc", "verdict" => "accepts" }
+      File.write(out, oracle_yaml(provenance, [old_row]))
+
       expect(described_class.load_rows(out).keys).to eq(["abc"])
     end
 
@@ -293,12 +301,11 @@ RSpec.describe CorpusOracle do
 
     it "makes refresh refuse a toolchain-less row, leaving the file alone" do
       File.write(out, "earlier\n")
-      entries = write_entries(dir, { "a" => "pie\n" })
 
       expect do
         described_class.refresh(entries, provenance: {}, path: out, &accepting)
-      end.to raise_error(described_class::InfrastructureError, /toolchain\.mmdc/)
-      expect(File.read(out)).to eq("earlier\n")
+      end.to raise_error(CorpusOracle::InfrastructureError, /toolchain\.mmdc/)
+        .and(not_change { File.read(out) })
     end
   end
 
@@ -478,11 +485,7 @@ RSpec.describe CorpusOracle do
 
       rows = YAML.load_file(out)["cases"]
 
-      expect(rows).to all(include(
-                            "source_sha256" => match(/\A\h{64}\z/),
-                            "svg_sha256" => Digest::SHA256.hexdigest(rendered_svg),
-                            "toolchain" => { "mmdc" => described_class::EXPECTED_CLI },
-                          ))
+      expect(rows).to all(include(judged_provenance(rendered_svg)))
     end
 
     it "hashes the bytes judged: source_sha256 equals the row key" do
@@ -493,9 +496,8 @@ RSpec.describe CorpusOracle do
     end
 
     it "records the full toolchain identity it was given" do
-      full = provenance.merge("mermaid" => "11.16.1", "chromium" => "131.0",
-                              "node" => "22")
-      described_class.refresh(entries, provenance: full, path: out, &accepting)
+      described_class.refresh(entries, provenance: full_provenance(provenance),
+                                       path: out, &accepting)
 
       expect(YAML.load_file(out)["cases"].map { |row| row["toolchain"] })
         .to all(eq("mmdc" => "11.12.0", "mermaid" => "11.16.1",
@@ -503,9 +505,7 @@ RSpec.describe CorpusOracle do
     end
 
     it "gives a rejection no svg hash" do
-      rows = described_class.refresh(entries, provenance: provenance,
-                                              path: out,
-                                     &error_page_runner)
+      rows = refresh_with_entries(entries, error_page_runner)
 
       expect(rows.map { |row| row["svg_sha256"] }).to all(be_nil)
     end

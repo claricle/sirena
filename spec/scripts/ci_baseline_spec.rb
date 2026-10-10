@@ -31,6 +31,14 @@ RSpec.describe CiBaseline, :aggregate_failures do
   end
 
   describe "pull_request" do
+    let(:deepened_checkout) do
+      shallow_checkout.tap do |dir|
+        repo.git(dir, "fetch", "--quiet", "--unshallow", "origin")
+        repo.git(dir, "fetch", "--quiet", "origin",
+                 "main:refs/remotes/origin/main")
+      end
+    end
+
     it "is the merge-base with the PR base ref, not the moved base tip" do
       result = described_class.resolve("pull_request", pr_payload,
                                        dir: feature_checkout)
@@ -41,18 +49,16 @@ RSpec.describe CiBaseline, :aggregate_failures do
     end
 
     it "fails on a one-commit shallow checkout, naming the missing history" do
+      shallow = shallow_checkout
+
       expect do
-        described_class.resolve("pull_request", pr_payload, dir: shallow_checkout)
+        described_class.resolve("pull_request", pr_payload, dir: shallow)
       end.to raise_error(described_class::Error, /fetch more history/)
     end
 
     it "resolves once the shallow checkout is deepened" do
-      shallow = shallow_checkout
-      repo.git(shallow, "fetch", "--quiet", "--unshallow", "origin")
-      repo.git(shallow, "fetch", "--quiet", "origin",
-               "main:refs/remotes/origin/main")
-
-      result = described_class.resolve("pull_request", pr_payload, dir: shallow)
+      result = described_class.resolve("pull_request", pr_payload,
+                                       dir: deepened_checkout)
 
       expect(result.sha).to eq(shas[:m2])
     end
