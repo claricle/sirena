@@ -19,13 +19,15 @@ RSpec.describe Sirena::Renderer::Base, "#render" do
     Sirena::Renderer::Quadrant =>
       "quadrantChart\n x-axis L --> R\n y-axis B --> T\n P: [0.3, 0.6]",
   }.each do |renderer, source|
-    it "keeps a fractional font size in #{renderer.name}" do
+    before do
       allow(renderer).to receive(:new).and_wrap_original do |original, **opts|
         original.call(**opts).tap do |instance|
           instance.singleton_class.prepend(FractionalFontScene::Widening)
         end
       end
+    end
 
+    it "keeps a fractional font size in #{renderer.name}" do
       expect(Sirena::Engine.new.render(source)).to match(fractional)
     end
   end
