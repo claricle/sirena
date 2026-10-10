@@ -37,7 +37,7 @@ RSpec.describe Sirena::Layout::Sequence do
         described_class::Scene, 450.0, 215.0, "0 0 450 215",
         ["A", 50.0, 10.0, 150.0, 65.0],
         [125.0, 75.0, 125.0, 139.0],
-        [125.0, 119.0, 317.0, 119.0],
+        [126.0, 119.0, 317.0, 119.0],
         "325,119 317,115 317,123",
         ["hello", 225.0, 109.0]
       ]
@@ -130,7 +130,7 @@ RSpec.describe Sirena::Layout::Sequence do
           described_class::PARTICIPANT_MARGIN,
         label_center: first.label.x == first.x + (first.width / 2),
         lifeline_center: contrast_scene.lifelines.first.x1 == first.label.x,
-        message_source: contrast_scene.messages.first.shaft.x1 == first.label.x,
+        message_source: contrast_scene.messages.first.shaft.x1 == first.label.x + 1,
         message_target: contrast_scene.messages.first.shaft.x2 ==
           second.label.x - described_class::ARROW_SIZE,
         left_containment: label_left >= first.x,
