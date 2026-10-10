@@ -4,7 +4,7 @@ require "svg_conform"
 require "rexml/document"
 require "yaml"
 
-# Cases and judging for spec/plantuml_svg_conformance_spec.rb.
+# Cases and judging for spec/sirena/notation/plant_uml_svg_conformance_spec.rb.
 module PlantUmlConformanceHelpers
   ROOT = File.expand_path("../..", __dir__)
 
@@ -32,11 +32,17 @@ module PlantUmlConformanceHelpers
 
   # @return [String, nil] why the svg is not conformant, or nil
   def conformance_problem(svg)
-    begin
-      REXML::Document.new(svg)
-    rescue REXML::ParseException => e
-      return "not well-formed: #{e.message.lines.first.to_s.strip}"
-    end
+    well_formed_problem(svg) || profile_problem(svg)
+  end
+
+  def well_formed_problem(svg)
+    REXML::Document.new(svg)
+    nil
+  rescue REXML::ParseException => e
+    "not well-formed: #{e.message.lines.first.to_s.strip}"
+  end
+
+  def profile_problem(svg)
     result = SvgConform.validate(svg, profile: Sirena::Svg::CONFORMANCE_PROFILE)
     return nil if result.valid?
 
