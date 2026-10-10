@@ -92,13 +92,16 @@ module Sirena
 
       def collect(nodes, origin, plain, boxes)
         nodes.each do |node|
-          x = origin[0] + (node[:x] || 0)
-          y = origin[1] + (node[:y] || 0)
+          x, y = offset(node, origin)
           next plain << node.merge(x: x, y: y) unless titled?(node)
 
           boxes << box(node, x, y)
           collect(Array(node[:children]), [x, y], plain, boxes)
         end
+      end
+
+      def offset(node, origin)
+        [origin[0] + (node[:x] || 0), origin[1] + (node[:y] || 0)]
       end
 
       def titled?(node)

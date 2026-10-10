@@ -132,7 +132,8 @@ module Sirena
         )
       end
 
-      # mmdc lays slices out largest first (stable); the legend keeps input order.
+      # mmdc lays slices out largest first (stable); the legend keeps
+      # input order.
       def ranked(graph)
         slices = graph[:slices] || []
         order = slices.each_index.sort_by { |i| [-slices[i][:value].to_f, i] }
