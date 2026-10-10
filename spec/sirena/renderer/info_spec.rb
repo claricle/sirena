@@ -8,38 +8,28 @@ RSpec.describe Sirena::Renderer::Info do
 
   let(:show_info) { false }
 
-  it "renders the default message on the fixed info canvas" do
+  it "renders only the mmdc version text on mmdc's 400x100 canvas" do
     expect(rendered_geometry).to eq(expected_geometry)
   end
 
-  it "renders the enabled showInfo message" do
+  it "renders the same version text when showInfo is enabled" do
     enabled_svg = described_class.new.render(show_info: true)
     label = enabled_svg.children.grep(Sirena::Svg::Text).first
 
-    expect(Array(label.content).join).to eq("Info: showInfo enabled")
-  end
-
-  def box_geometry(box)
-    [box.x, box.y, box.width, box.height, box.rx]
+    expect(Array(label.content).join).to eq("v11.12.0")
   end
 
   def text_geometry(label)
-    [label.x, label.y, Array(label.content).join]
+    [label.x, label.y, Array(label.content).join, label.font_size]
   end
 
   def rendered_geometry
     [svg.width, svg.height, svg.view_box,
-     box_geometry(first_child(Sirena::Svg::Rect)),
-     text_geometry(first_child(Sirena::Svg::Text))]
-  end
-
-  def first_child(type)
-    svg.children.grep(type).first
+     svg.children.grep(Sirena::Svg::Rect).size,
+     text_geometry(svg.children.grep(Sirena::Svg::Text).first)]
   end
 
   def expected_geometry
-    [500.0, 200.0, "0 0 500 200",
-     [50.0, 50.0, 400.0, 100.0, 8.0],
-     [250.0, 105.0, "Info"]]
+    [400.0, 100.0, "0 0 400 100", 0, [100.0, 40.0, "v11.12.0", "32"]]
   end
 end

@@ -10,16 +10,15 @@ RSpec.describe Sirena::Layout::Info do
 
   it "defaults the identifier and showInfo state" do
     expect(scene_geometry).to eq(
-      [described_class::Scene, "info", nil, 500.0, 200.0,
-       [50.0, 50.0, 400.0, 100.0, 8.0], "Info"],
+      [described_class::Scene, "info", nil, 400.0, 100.0, "v11.12.0"],
     )
   end
 
   it "preserves an explicit identifier, title, and enabled showInfo state" do
     populate_diagram
     expect(scene_geometry).to eq(
-      [described_class::Scene, "status", "System status", 500.0, 200.0,
-       [50.0, 50.0, 400.0, 100.0, 8.0], "Info: showInfo enabled"],
+      [described_class::Scene, "status", "System status", 400.0, 100.0,
+       "v11.12.0"],
     )
   end
 
@@ -32,16 +31,11 @@ RSpec.describe Sirena::Layout::Info do
   end
 
   def scene_geometry(value = scene)
-    scene_identity(value) + [box_geometry(value), value.label.text]
+    scene_identity(value) + [value.label.text]
   end
 
   def scene_identity(value)
     [value.class, value.id, value.title, value.width, value.height]
-  end
-
-  def box_geometry(value)
-    [value.box.x, value.box.y, value.box.width, value.box.height,
-     value.box.corner_radius]
   end
 
   def populate_diagram

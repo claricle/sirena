@@ -13,13 +13,14 @@ RSpec.describe Sirena::Layout::Info do
     described_class.from_graph(graph, theme: theme_with_size(size)).label
   end
 
-  it "uses a positive injected font size" do
+  it "ignores the injected font size: mmdc fixes the version at 32" do
     expect(label_for({ show_info: true }, 21)).to have_attributes(
-      text: "Info: showInfo enabled", font_size: 21.0,
+      text: "v11.12.0", font_size: 32.0, x: 100.0, y: 40.0,
     )
   end
 
-  it "falls back for a nonpositive injected font size" do
-    expect(label_for({}, 0)).to have_attributes(text: "Info", font_size: 16.0)
+  it "keeps the same label for a nonpositive injected font size" do
+    expect(label_for({}, 0)).to have_attributes(text: "v11.12.0",
+                                                font_size: 32.0)
   end
 end
