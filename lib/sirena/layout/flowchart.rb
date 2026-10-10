@@ -797,8 +797,16 @@ module Sirena
           labels: [
             { text: title, width: label[:width], height: label[:height] },
           ],
-          metadata: { cluster: true },
+          metadata: { cluster: true,
+                      direction: own_direction(semantics) },
         }
+      end
+
+      # The ELK direction a subgraph's own `direction` asks for, nil if it
+      # has none.
+      def own_direction(semantics)
+        written = semantic_value(semantics, "layout_direction")
+        direction_to_layout(written) if written
       end
 
       def transform_node(node, semantics)
