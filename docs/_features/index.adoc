@@ -17,10 +17,10 @@ In-depth coverage of:
 * **Batch Processing** - Processing multiple diagrams efficiently
 * **CLI Tools** - Command-line interface capabilities
 * **Parslet Parsing** - Grammar-based parsing architecture
-* **SVG Generation** - Professional-quality output
-* **Error Handling** - Clear, actionable error messages
+* **SVG Generation** - Self-contained SVG output
+* **Error Handling** - Parse errors report line and column
 * **Layout Engine** - Built-in fallback grid layout; flowcharts can opt in to elkrb with `layout_engine: :elk`
-* **Text Measurement** - Accurate text rendering
+* **Text Measurement** - Per-glyph advances for the default font stack
 * **Color Palettes** - Theme color system
 * **Typography** - Font and text styling
 * **Shape Styles** - Node and edge styling
@@ -45,9 +45,9 @@ these are described inline rather than linked.
 
 === Rendering & Output
 
-* **SVG Generation** - High-quality scalable graphics
+* **SVG Generation** - Scalable vector output
 * **Layout Engine** - Built-in fallback grid layout; flowcharts can opt in to elkrb with `layout_engine: :elk`
-* **Text Measurement** - Character-based approximation, not font-metric accurate
+* **Text Measurement** - Per-glyph advance table for the default font stack (Arial, Helvetica, sans-serif); not measured from the font a viewer actually uses
 
 === Theming & Styling
 
@@ -59,7 +59,7 @@ these are described inline rather than linked.
 === Parsing & Validation
 
 * **Parslet Parsing** - Grammar-based parser
-* **Error Handling** - Clear error messages
+* **Error Handling** - Parse errors report line and column
 
 === Productivity Features
 
@@ -68,12 +68,12 @@ these are described inline rather than linked.
 
 == Built-in Themes
 
-Sirena includes four professional themes:
+Sirena includes four built-in themes:
 
 * **Default** - Classic Mermaid.js-compatible styling
 * **Dark** - Dark background with high contrast
 * **Light** - Minimalist light theme
-* **High Contrast** - Maximum accessibility
+* **High Contrast** - Higher-contrast colors
 
 See link:../../pages/compatibility/[Compatibility Comparison] for how Sirena's themes map to Mermaid.js's.
 
@@ -91,7 +91,6 @@ so it embeds cleanly wherever an app already handles SVG, including Metanorma do
 
 == Performance Features
 
-* **Fast Parsing** - Parslet-based parsing
 * **Batch Processing** - Renders a directory of files sequentially (`sirena batch`); not parallelized
 
 No caching layer or plugin system exists yet.
@@ -105,19 +104,18 @@ No caching layer or plugin system exists yet.
 * **Native Ruby** - First-class Ruby integration
 
 A dated Apple M2 comparison run and the commands used to reproduce it are published
-in the link:../performance-benchmark/[Performance Benchmark report]. It did not
+in the link:../../performance-benchmark/[Performance Benchmark report]. It did not
 measure memory and does not establish a machine-independent speed multiplier.
 
 == Extensibility
 
-Sirena is designed for extension via its diagram registry
-(`Sirena::DiagramRegistry.register`), the same mechanism every built-in diagram type
-uses:
+Sirena is extended through `Sirena::Notation.register(plugin)`, which adds a
+whole notation (see ARCHITECTURE.md, "Registry Pattern (Notation)"), and
+`sirena render --require` to load such a file. Built-in diagram types are rows of
+`Sirena::Notation::Mermaid::TYPES`. `Sirena::DiagramRegistry` is a read-only,
+deprecated facade and has no `register` method.
 
 * **Custom Themes** - Create your own themes (name, `Theme`, or `Hash`)
-* **Custom Parsers** - Register a new diagram type's parser/transform/renderer/model
-
-There is no separate plugin system beyond this registry.
 
 == Related Documentation
 
