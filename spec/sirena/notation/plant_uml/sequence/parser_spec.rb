@@ -898,4 +898,39 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
         .to raise_error(unsupported, /message arrow/)
     end
   end
+
+  describe "participant fills" do
+    def fill_of(token)
+      parse("participant A #{token}").participants.first.fill
+    end
+
+    {
+      "#transparent" => ["none", nil],
+      "#FFFFFF00" => ["none", nil],
+      "#CCCCCC01" => ["#CCCCCC", 0.00392],
+      "#000000FE" => ["#000000", 0.99608],
+      "#000000FF" => ["#000000", nil],
+      "#abc" => ["#AABBCC", nil],
+      "#e00" => ["#EE0000", nil],
+    }.each do |token, (colour, opacity)|
+      it "reads #{token} as #{colour} at #{opacity.inspect}" do
+        expect([fill_of(token).colour, fill_of(token).opacity])
+          .to eq([colour, opacity])
+      end
+    end
+
+    it "leaves a participant without a colour unfilled" do
+      expect(parse("participant A").participants.first.fill).to be_nil
+    end
+
+    it "refuses a colour name, which is not measured" do
+      expect { parse("participant A #red") }
+        .to raise_error(unsupported, /participant/)
+    end
+
+    it "refuses a colour on an actor" do
+      expect { parse("actor A #FF0000") }
+        .to raise_error(unsupported, /actor/)
+    end
+  end
 end

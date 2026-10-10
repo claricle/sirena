@@ -363,7 +363,8 @@ module Sirena
             Scene::Head.new(
               id: participant.id, kind: participant.kind.to_s,
               x: centre - (width / 2), y: top, width: width,
-              height: @head_height,
+              height: @head_height, fill: participant.fill&.colour,
+              fill_opacity: participant.fill&.opacity,
               texts: head_texts(participant, centre, top)
             )
           end

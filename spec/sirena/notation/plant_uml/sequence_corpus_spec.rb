@@ -30,7 +30,7 @@ module PlantUmlSequenceCorpus
     7ff458de0156 2a2a7bb5aacc f0cf331472b7 e76e451484c6
     ddc664f08110 d918f796209f ae1299794d0b fcaf69429c9c
     bea0f11e448b 2bd5234bfbfe 2018ad068c81 f0cb24bd16e0
-    ad11bf4b448a 793d6e993975 1f75ab64bf5e e6d99fb6ac3c
+    ad11bf4b448a 793d6e993975 1f75ab64bf5e e6d99fb6ac3c 1f8e5fb51e4d
   ].freeze
 
   def case_named(suffix)
@@ -198,6 +198,20 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     plain = Sirena.render(bare, notation: :plantuml)
 
     expect(rect_count(svg) - rect_count(plain)).to eq(3)
+  end
+
+  it "draws no fill for the transparent heads of the alpha case" do
+    svg = Sirena.render(source_of("1f8e5fb51e4d"), notation: :plantuml)
+    heads = matches(svg, "//rect[@height='36.0'][@fill='none']")
+
+    expect(heads.size).to eq(8)
+  end
+
+  it "keeps the opacity of the translucent heads of the alpha case" do
+    svg = Sirena.render(source_of("1f8e5fb51e4d"), notation: :plantuml)
+
+    expect(matches(svg, "//rect/@fill-opacity").map(&:value).uniq)
+      .to eq(%w[0.00392 0.99608])
   end
 
   it "refuses every other case instead of rendering part of it" do

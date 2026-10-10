@@ -9,6 +9,7 @@ require_relative "arrow_syntax"
 require_relative "box"
 require_relative "diagram"
 require_relative "edge"
+require_relative "fill"
 require_relative "message"
 require_relative "note"
 require_relative "outline"
@@ -38,7 +39,8 @@ module Sirena
 
           DECLARATION = /\A(#{KINDS.join('|')})[ \t]+(#{QUOTED}|#{NAME})
                          (?:[ \t]+as[ \t]+(#{NAME}))?
-                         (?:[ \t]+<<[ \t]*([^<>\n]+?)[ \t]*>>)?\z/xio
+                         (?:[ \t]+<<[ \t]*([^<>\n]+?)[ \t]*>>)?
+                         (?:[ \t]+(\#\w+))?\z/xio
           SKINPARAM_WIDTH = /\Askinparam[ \t]+MinClassWidth[ \t]+(\d+)\z/i
           HIDE_FOOTBOX = /\Ahide[ \t]+footbox\z/i
           AUTOACTIVATE = /\Aautoactivate[ \t]+(on|off)\z/i
@@ -173,7 +175,7 @@ module Sirena
           end
 
           def read(text, number)
-            if (match = DECLARATION.match(text)) && plain_stereotype?(match)
+            if (match = DECLARATION.match(text)) && declaration?(match)
               declare(match)
             elsif (match = BOX.match(text))
               open_box(match)
@@ -197,9 +199,12 @@ module Sirena
           end
 
           # A stereotype is drawn above the label, where the other kinds
-          # already draw their name.
-          def plain_stereotype?(match)
-            match[4].nil? || match[1].casecmp?("participant")
+          # already draw their name. Only a participant takes a fill, in the
+          # forms {Fill} reads.
+          def declaration?(match)
+            participant = match[1].casecmp?("participant")
+            (match[4].nil? || participant) &&
+              (match[5].nil? || (participant && Fill.read(match[5])))
           end
 
           def collect_style(text)
@@ -392,7 +397,7 @@ module Sirena
             id = match[3] || display
             @participants[id] ||= Participant.new(
               id: id, label: display, kind: match[1].downcase.to_sym,
-              stereotype: match[4]
+              stereotype: match[4], fill: Fill.read(match[5])
             )
             @open_boxes.last[:members] << id if @open_boxes.any?
           end

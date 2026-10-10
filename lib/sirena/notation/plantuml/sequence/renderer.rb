@@ -189,8 +189,9 @@ module Sirena
           def head_rectangle(head)
             element(Svg::Rect, x: head.x, y: head.y, width: head.width,
                                height: head.height, rx: 3, ry: 3,
-                               fill: node_fill, stroke: node_stroke,
-                               stroke_width: stroke_width)
+                               fill: head.fill || node_fill,
+                               fill_opacity: head.fill_opacity&.to_s,
+                               stroke: node_stroke, stroke_width: stroke_width)
           end
 
           def text_element(scene_text)
