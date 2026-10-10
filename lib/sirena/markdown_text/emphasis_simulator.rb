@@ -76,7 +76,9 @@ module Sirena
       def open_gate_ok?(suffix_is_punct, prev_char)
         return true unless suffix_is_punct
         return true if prev_char.nil?
-        return true if prev_char != "*" && prev_char != "_" && %i[space punct].include?(char_class(prev_char))
+        return true if prev_char != "*" &&
+          prev_char != "_" &&
+          %i[space punct].include?(char_class(prev_char))
 
         false
       end
@@ -118,7 +120,11 @@ module Sirena
 
           prefix_class = char_class(text[next_start - 1])
           suffix_class = char_class(r_end < text.length ? text[r_end] : nil)
-          classification = c == "*" ? classify_ast(prefix_class, suffix_class) : classify_und(prefix_class, suffix_class)
+          classification = if c == "*"
+                             classify_ast(prefix_class, suffix_class)
+                           else
+                             classify_und(prefix_class, suffix_class)
+                           end
 
           case classification
           when :none
@@ -171,57 +177,57 @@ module Sirena
       # Tokenizes one segment into {type: :text, text:} /
       # {type: :em/:strong, tokens: [...]} nodes.
       #
-      # Classification runs on `masked` (escapes replaced by same-length
+      # Classification runs on `mask` (escapes replaced by same-length
       # `+`), never on `text` -- an escaped `*`/`_` must never open,
       # close, or extend a run. Output text always comes from `text`,
       # with escapes resolved.
       #
-      # `prev_char` resets to nil after an escape token or emStrong
+      # `prev` resets to nil after an escape token or emStrong
       # match; only a plain literal-text run updates it.
       def tokenize(text)
-        escaped_chars = ::Kramdown::Parser::Kramdown::ESCAPED_CHARS
-        masked = text.gsub(escaped_chars) { "+" * ::Regexp.last_match(0).length }
+        escapes = ::Kramdown::Parser::Kramdown::ESCAPED_CHARS
+        mask = text.gsub(escapes) { "+" * ::Regexp.last_match(0).length }
         tokens = []
         pos = 0
-        prev_char = nil
+        prev = nil
 
         while pos < text.length
           pair = text[pos, 2]
-          pair_match = pair&.match(escaped_chars)
+          pair_match = pair&.match(escapes)
           if pair_match
             append_text(tokens, pair_match[1])
             pos += 2
-            prev_char = nil
+            prev = nil
             next
           end
 
-          ch = masked[pos]
-          match = MarkdownText::EMPHASIS_MARKER.match?(ch) ? try_em_strong(masked, pos, prev_char) : nil
+          ch = mask[pos]
+          match = EMPHASIS_MARKER.match?(ch) && try_em_strong(mask, pos, prev)
 
           if match
             end_pos, trim, strong = match
-            content = text[(pos + trim)...(end_pos - trim)]
-            tokens << { type: strong ? :strong : :em, tokens: tokenize(content) }
+            inner = text[(pos + trim)...(end_pos - trim)]
+            tokens << { type: strong ? :strong : :em, tokens: tokenize(inner) }
             pos = end_pos
-            prev_char = nil
+            prev = nil
             next
           end
 
           start = pos
           pos += 1
           while pos < text.length
-            break if MarkdownText::EMPHASIS_MARKER.match?(masked[pos])
+            break if EMPHASIS_MARKER.match?(mask[pos])
 
             next_pair = text[pos, 2]
-            break if next_pair&.match?(escaped_chars)
+            break if next_pair&.match?(escapes)
 
             pos += 1
           end
-          run_text = text[start...pos].gsub(escaped_chars) { ::Regexp.last_match(1) }
+          run_text = text[start...pos].gsub(escapes) { ::Regexp.last_match(1) }
           append_text(tokens, run_text)
 
           last_ch = text[pos - 1]
-          prev_char = last_ch unless last_ch == "_"
+          prev = last_ch unless last_ch == "_"
         end
 
         tokens
@@ -231,7 +237,7 @@ module Sirena
         tokens.each do |tok|
           case tok[:type]
           when :text
-            out << MarkdownText::Run.new(text: tok[:text], bold: bold, italic: italic)
+            out << Run.new(text: tok[:text], bold: bold, italic: italic)
           when :em
             flatten(tok[:tokens], bold: bold, italic: true, out: out)
           when :strong
@@ -250,7 +256,7 @@ module Sirena
       def coalesce_runs(runs)
         out = []
         runs.each do |run|
-          if out.last && out.last.bold == run.bold && out.last.italic == run.italic
+          if out[-1] && out[-1].bold == run.bold && out[-1].italic == run.italic
             out[-1] = out.last.with(text: out.last.text + run.text)
           else
             out << run
