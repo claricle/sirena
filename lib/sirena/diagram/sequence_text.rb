@@ -19,7 +19,7 @@ module Sirena
         "lt" => "<", "LT" => "<",
         "gt" => ">", "GT" => ">",
         "quot" => '"', "QUOT" => '"',
-        "apos" => "'", "nbsp" => " ",
+        "apos" => "'", "nbsp" => "\u00A0",
         "infin" => "∞", "hearts" => "♥",
         "copy" => "©", "reg" => "®", "deg" => "°",
         "trade" => "™", "euro" => "€",
