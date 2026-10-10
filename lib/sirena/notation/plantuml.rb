@@ -2,6 +2,7 @@
 
 require_relative "../../sirena"
 require_relative "plantuml/parser"
+require_relative "plantuml/ir_adapter"
 require_relative "plantuml/layout"
 require_relative "plantuml/renderer"
 require_relative "plantuml/sequence"
@@ -65,7 +66,7 @@ module Sirena
 
         Notation::Parsed.new(
           type: :class_diagram,
-          diagram: Parser.new.parse(source),
+          diagram: IRAdapter.call(Parser.new.parse(source)),
           transform: Layout,
           renderer: Renderer,
         )

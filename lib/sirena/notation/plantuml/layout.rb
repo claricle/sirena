@@ -3,13 +3,15 @@
 require_relative "../../layout/base"
 require_relative "caption_layout"
 require_relative "class_name"
+require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "scene"
 
 module Sirena
   module Notation
     module PlantUML
-      # Positions PlantUML class boxes and relations in final canvas space.
+      # Positions PlantUML class boxes and relations in final canvas space,
+      # from the IR::Graph {IRAdapter} emits.
       class Layout < Sirena::Layout::Base
         MARGIN = 36.0
         COLUMN_GAP = 90.0
@@ -27,7 +29,9 @@ module Sirena
                          :MARKER_HALF_WIDTH, :LABEL_OFFSET, :FILLED_MARKERS,
                          :NESTING_RADIUS
 
-        def scene(diagram)
+        # @param graph [IR::Graph] from {IRAdapter}
+        def scene(graph)
+          diagram = IRReader.call(graph)
           specifications = diagram.classes.map do |klass|
             box_specification(klass, diagram)
           end

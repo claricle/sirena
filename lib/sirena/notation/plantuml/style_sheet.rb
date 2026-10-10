@@ -8,7 +8,7 @@ module Sirena
       class StyleSheet
         EMPTY_RULE = {}.freeze
 
-        attr_reader :background
+        attr_reader :background, :rules
 
         def initialize(background: nil, rules: {})
           @background = background
