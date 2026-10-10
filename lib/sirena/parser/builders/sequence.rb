@@ -137,7 +137,7 @@ module Sirena
           id = actor_id(stmt[:id])
           @known_actor_ids << id
           label = if stmt[:label]
-                    extract_text(stmt[:label])
+                    decoded_text(stmt[:label])
                   else
                     id
                   end
@@ -275,7 +275,7 @@ module Sirena
                            [actor_id(stmt[:participants][:participant])]
                          end
 
-          text = extract_text(stmt[:note_text])
+          text = decoded_text(stmt[:note_text])
 
           # Ensure participants exist
           participants.each { |pid| ensure_participant(diagram, pid) }
@@ -377,7 +377,12 @@ module Sirena
         # capture site normalises through here rather than duplicating
         # `.strip`, because each is reachable from legal mermaid and each
         # unstripped id creates a phantom duplicate participant.
-        def actor_id(slice) = slice.to_s.strip
+        #
+        # Character references are decoded here too: mermaid decodes them
+        # before it parses, so `A#59;B` and `A;B` are one actor.
+        def actor_id(slice)
+          Diagram::SequenceText.decode(slice.to_s.strip)
+        end
 
         # `track:` is false only from `track_activation`: an `activate`/
         # `deactivate` reference introduces a participant for RENDERING
@@ -398,6 +403,13 @@ module Sirena
           end
 
           diagram.participants << participant
+        end
+
+        # Message text is decoded later, by `SequenceText.display`, which
+        # also drops `wrap:` and turns `<br>` into a space; labels and notes
+        # have no later step.
+        def decoded_text(value)
+          Diagram::SequenceText.decode(extract_text(value))
         end
 
         # `message_text` is a Slice when non-empty and `[]` (Parslet's
