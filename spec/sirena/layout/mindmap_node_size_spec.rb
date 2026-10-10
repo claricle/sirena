@@ -64,4 +64,18 @@ RSpec.describe Sirena::Layout::MindmapNodeSize do
   it "falls back to the default box for an unknown shape" do
     expect(size("root", "mystery")).to eq(size("root", "default"))
   end
+
+  # mmdc box of "the root" per shape: hexagon, bang, cloud.
+  {
+    "hexagon" => [126.4, 44.0],
+    "bang" => [135.5, 80.0],
+    "cloud" => [91.7, 66.9],
+  }.each do |shape, (wide, high)|
+    it "sizes a #{shape} within 5% of mmdc" do
+      box = size("the root", shape)
+
+      expect([box[:width] / wide, box[:height] / high])
+        .to all(be_within(0.05).of(1.0))
+    end
+  end
 end
