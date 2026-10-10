@@ -100,40 +100,47 @@ module Sirena
 
         # Transform the entire diagram
         rule(statements: subtree(:statements)) do
+          XyChart.build(statements)
+        end
+
+        def self.build(statements)
           result = {
             title: nil,
             x_axis: nil,
             y_axis: nil,
             datasets: [],
           }
-
-          Array(statements).each do |stmt|
-            next unless stmt.is_a?(Hash)
-
-            case stmt[:type]
-            when :title
-              result[:title] = stmt[:title]
-            when :x_axis
-              result[:x_axis] = {
-                label: stmt[:label],
-                values: stmt[:values],
-              }
-            when :y_axis
-              result[:y_axis] = {
-                label: stmt[:label],
-                min: stmt[:min],
-                max: stmt[:max],
-              }
-            when :dataset
-              result[:datasets] << {
-                chart_type: stmt[:chart_type],
-                label: stmt[:label],
-                values: stmt[:values],
-              }
-            end
+          Array(statements).grep(Hash).each do |statement|
+            apply_statement(result, statement)
           end
-
           result
+        end
+
+        def self.apply_statement(result, statement)
+          case statement[:type]
+          when :title
+            result[:title] = statement[:title]
+          when :x_axis
+            result[:x_axis] = axis_values(statement, :values)
+          when :y_axis
+            result[:y_axis] = axis_values(statement, :min, :max)
+          when :dataset
+            result[:datasets] << dataset(statement)
+          end
+        end
+
+        def self.axis_values(statement, *keys)
+          keys.each_with_object(label: statement[:label]) do |key, values|
+            values[key] = statement[key]
+          end
+        end
+
+        def self.dataset(statement)
+          {
+            chart_type: statement[:chart_type],
+            label: statement[:label],
+            values: statement[:values],
+          }
         end
       end
     end

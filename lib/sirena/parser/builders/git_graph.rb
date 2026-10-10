@@ -23,6 +23,23 @@ module Sirena
           }.freeze
           private_constant :ESCAPES
 
+          OPTION_KEYS = {
+            id: :id, type: :type, tag: :tag,
+            parent: :cherry_pick_parent
+          }.freeze
+          private_constant :OPTION_KEYS
+
+          STATEMENT_HANDLERS = {
+            commit: :process_commit,
+            branch: :process_branch,
+            checkout: :process_checkout,
+            switch: :process_switch,
+            merge: :process_merge,
+            cherry_pick: :process_cherry_pick,
+            acc_title: :process_acc_title,
+          }.freeze
+          private_constant :STATEMENT_HANDLERS
+
           # A backslash in a quoted string escapes the next character: `\n`
           # and the other control escapes become the control character,
           # anything else (`\"`, `\\`, `\x`) becomes itself.
@@ -47,22 +64,60 @@ module Sirena
           def add_commit(options = {})
             @commit_counter += 1
             commit_id = options[:id] || "commit-#{@commit_counter}"
+            commit = commit_identity(commit_id, options).merge(
+              commit_semantics(options),
+            )
+            @commits << commit
+            commit
+          end
 
-            commit = {
+          def process(statements)
+            Array(statements).each do |statement|
+              process_statement(statement) if statement.is_a?(Hash)
+            end
+            self
+          end
+
+          def to_h
+            {
+              acc_title: acc_title,
+              acc_description: acc_description,
+              commits: commits,
+              branches: branches.map { |name, info| branch_entry(name, info) },
+            }
+          end
+
+          def extract_options(options)
+            Array(options).each_with_object({}) do |option, result|
+              next unless option.is_a?(Hash)
+
+              OPTION_KEYS.each do |source, target|
+                result[target] = option[source].to_s if option[source]
+              end
+              if option[:message]
+                result[:message] = State.unquote(option[:message])
+              end
+            end
+          end
+
+          def commit_identity(commit_id, options)
+            {
               id: commit_id,
               message: options[:message],
               type: options[:type] || "NORMAL",
               tag: options[:tag],
               branch_name: @current_branch,
               parent_ids: find_parents,
+            }
+          end
+
+          def commit_semantics(options)
+            {
               is_merge: options[:is_merge] || false,
               merge_branch: options[:merge_branch],
               is_cherry_pick: options[:is_cherry_pick] || false,
               cherry_pick_parent: options[:cherry_pick_parent],
             }
-
-            @commits << commit
-            commit
           end
 
           def add_branch(name, order = nil)
@@ -94,26 +149,56 @@ module Sirena
             )
           end
 
-          def extract_options(options)
-            return {} unless options
+          private
 
-            opts = {}
-            options_array = Array(options)
-
-            options_array.each do |opt|
-              next unless opt.is_a?(Hash)
-
-              opts[:id] = opt[:id].to_s if opt[:id]
-              opts[:message] = State.unquote(opt[:message]) if opt[:message]
-              opts[:type] = opt[:type].to_s if opt[:type]
-              opts[:tag] = opt[:tag].to_s if opt[:tag]
-              opts[:cherry_pick_parent] = opt[:parent].to_s if opt[:parent]
+          def process_statement(statement)
+            entry = STATEMENT_HANDLERS.find { |key, _| statement.key?(key) }
+            unless entry
+              self.acc_description = State.directive_text(statement[:acc_descr])
+              return
             end
 
-            opts
+            send(entry.last, statement.fetch(entry.first))
           end
 
-          private
+          def process_commit(data)
+            options = data.is_a?(Hash) ? extract_options(data[:options]) : {}
+            add_commit(options)
+          end
+
+          def process_branch(data)
+            options = data[:options]
+            order = options.first[:order].to_i if options
+            add_branch(State.unquote(data[:name]), order)
+          end
+
+          def process_checkout(data)
+            checkout_branch(State.unquote(data[:branch]))
+          end
+
+          alias process_switch process_checkout
+
+          def process_merge(data)
+            branch = State.unquote(data[:branch])
+            merge_branch(branch, extract_options(data[:options]))
+          end
+
+          def process_cherry_pick(data)
+            cherry_pick(extract_options(data[:options]))
+          end
+
+          def process_acc_title(data)
+            self.acc_title = State.directive_text(data)
+          end
+
+          def branch_entry(name, info)
+            {
+              name: name,
+              order: info[:order],
+              parent_branch: info[:parent_branch],
+              created_at_commit: info[:created_at],
+            }
+          end
 
           def find_parents
             # Find the last commit on the current branch
@@ -127,60 +212,7 @@ module Sirena
 
         # Statement handlers
         rule(statements: subtree(:stmts)) do
-          state = State.new
-          stmts_array = Array(stmts)
-
-          stmts_array.each do |stmt|
-            next unless stmt.is_a?(Hash)
-
-            if stmt.key?(:commit)
-              # commit[:options] contains the parsed options if any
-              commit_data = stmt[:commit]
-              options = if commit_data.is_a?(Hash) && commit_data.key?(:options)
-                          state.extract_options(commit_data[:options])
-                        else
-                          {}
-                        end
-              state.add_commit(options)
-            elsif stmt.key?(:branch)
-              name = State.unquote(stmt[:branch][:name])
-              # The grammar yields nil, or an Array of { order: } hashes.
-              options = stmt[:branch][:options]
-              order = options.first[:order].to_i if options
-
-              state.add_branch(name, order)
-            elsif stmt.key?(:checkout)
-              state.checkout_branch(State.unquote(stmt[:checkout][:branch]))
-            elsif stmt.key?(:switch)
-              state.checkout_branch(State.unquote(stmt[:switch][:branch]))
-            elsif stmt.key?(:merge)
-              branch = State.unquote(stmt[:merge][:branch])
-              options = state.extract_options(stmt[:merge][:options])
-              state.merge_branch(branch, options)
-            elsif stmt.key?(:cherry_pick)
-              options = state.extract_options(stmt[:cherry_pick][:options])
-              state.cherry_pick(options)
-            elsif stmt.key?(:acc_title)
-              state.acc_title = State.directive_text(stmt[:acc_title])
-            else
-              state.acc_description = State.directive_text(stmt[:acc_descr])
-            end
-          end
-
-          # Convert state to diagram structure
-          {
-            acc_title: state.acc_title,
-            acc_description: state.acc_description,
-            commits: state.commits,
-            branches: state.branches.map do |name, info|
-              {
-                name: name,
-                order: info[:order],
-                parent_branch: info[:parent_branch],
-                created_at_commit: info[:created_at],
-              }
-            end,
-          }
+          State.new.process(stmts).to_h
         end
       end
     end

@@ -16,30 +16,23 @@ module Sirena
         # @return [Diagram::Info] the info diagram model
         def apply(tree)
           diagram = Diagram::Info.new
-
-          # Process tree structure
-          if tree.is_a?(Array)
-            tree.each do |item|
-              next unless item.is_a?(Hash)
-
-              if item.key?(:show_info_inline)
-                process_show_info_inline(diagram, item)
-              end
-              if item.key?(:show_info_body)
-                process_show_info_body(diagram, item)
-              end
-            end
-          elsif tree.is_a?(Hash)
-            if tree.key?(:show_info_inline)
-              process_show_info_inline(diagram, tree)
-            end
-            process_show_info_body(diagram, tree) if tree.key?(:show_info_body)
-          end
-
+          info_items(tree).each { |item| process_item(diagram, item) }
           diagram
         end
 
         private
+
+        def info_items(tree)
+          items = tree.is_a?(Array) ? tree : [tree]
+          items.grep(Hash)
+        end
+
+        def process_item(diagram, item)
+          if item.key?(:show_info_inline)
+            process_show_info_inline(diagram, item)
+          end
+          process_show_info_body(diagram, item) if item.key?(:show_info_body)
+        end
 
         def process_show_info_inline(diagram, item)
           show_info = item[:show_info_inline]
