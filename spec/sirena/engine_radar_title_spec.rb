@@ -10,7 +10,8 @@ RSpec.describe Sirena::Engine do
 
   context "with a radar that has a title" do
     let(:source) do
-      "radar-beta\n  title Best Radar Ever\n  axis A, B, C\n  curve c1{1, 2, 3}\n"
+      "radar-beta\n  title Best Radar Ever\n  axis A, B, C\n  " \
+        "curve c1{1, 2, 3}\n"
     end
 
     it "draws the title after the axis and legend labels" do

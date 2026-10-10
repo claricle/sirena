@@ -6,7 +6,9 @@ RSpec.describe Sirena::Parser::Builders::Sequence do
   include SequenceFrameHelpers
 
   it "records a loop over the message it wraps" do
-    diagram = parse_sequence("A->>B: x\nloop Every minute\nA->>B: hi\nend\nA->>B: y")
+    diagram = parse_sequence(
+      "A->>B: x\nloop Every minute\nA->>B: hi\nend\nA->>B: y",
+    )
 
     expect(diagram.frames.map { |f| frame_summary(f) })
       .to eq([["loop", "Every minute", 1, 2, 0]])
@@ -29,14 +31,16 @@ RSpec.describe Sirena::Parser::Builders::Sequence do
 
   it "records and and option dividers" do
     diagram = parse_sequence("par p\nA->>B: x\nand q\nA->>B: y\nend\n" \
-                    "critical c\nA->>B: z\noption o\nA->>B: w\nend")
+                             "critical c\nA->>B: z\noption o\nA->>B: w\nend")
 
     expect(diagram.frames.map { |f| f.sections.map(&:kind) })
       .to eq([["and"], ["option"]])
   end
 
   it "splits a box colour name from its title and lists its members" do
-    diagram = parse_sequence("box Aqua Group1\nparticipant A\nparticipant B\nend")
+    diagram = parse_sequence(
+      "box Aqua Group1\nparticipant A\nparticipant B\nend",
+    )
     box = diagram.boxes.first
 
     expect([box.color, box.title, box.participant_ids])

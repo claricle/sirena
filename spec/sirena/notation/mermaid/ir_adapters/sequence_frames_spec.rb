@@ -15,22 +15,27 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapters::Sequence do
   it "carries a frame with its kind, label and message range" do
     frame = ir.nodes.find { |n| n.role == "frame" }
 
-    expect([frame.label, ir_field(ir, frame.id, "frame_kind"),
-            ir_field(ir, frame.id, "start_index"), ir_field(ir, frame.id, "end_index")])
-      .to eq(["ok", "alt", "0", "2"])
+    roles = %w[frame_kind start_index end_index]
+    fields = roles.map { |role| ir_field(ir, frame.id, role) }
+
+    expect([frame.label, *fields]).to eq(["ok", "alt", "0", "2"])
   end
 
   it "carries each divider with its label and first message" do
     divider = ir.nodes.find { |n| n.role == "frame_section" }
 
-    expect([divider.label, ir_field(ir, divider.id, "section_kind"),
-            ir_field(ir, divider.id, "start_index")]).to eq(["bad", "else", "1"])
+    roles = %w[section_kind start_index]
+    fields = roles.map { |role| ir_field(ir, divider.id, role) }
+
+    expect([divider.label, *fields]).to eq(["bad", "else", "1"])
   end
 
   it "carries a box with its colour and title" do
     box = ir.nodes.find { |n| n.role == "box" }
 
-    expect([box.label, ir_field(ir, box.id, "box_color")]).to eq(%w[Group1 Aqua])
+    color = ir_field(ir, box.id, "box_color")
+
+    expect([box.label, color]).to eq(%w[Group1 Aqua])
   end
 
   it "links a box to the participants declared inside it" do

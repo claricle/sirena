@@ -31,7 +31,8 @@ RSpec.describe Sirena::Layout::KanbanCardText do
   end
 
   it "keeps bold on the wrapped run" do
-    runs = described_class.lines("**#{(['word'] * 10).join(' ')}**", width: 160, font_size: 14)
+    text = "**#{(['word'] * 10).join(' ')}**"
+    runs = described_class.lines(text, width: 160, font_size: 14)
 
     expect(runs.flatten.map(&:bold)).to all(be(true))
   end
