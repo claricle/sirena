@@ -28,10 +28,10 @@ RSpec.describe Sirena::Renderer::Pie do
     expect(rendered_arcs).to match(expected_arcs)
   end
 
-  it "keeps labels free of values when showData is disabled" do
+  it "captions the legend with the label alone without showData" do
     graph.merge!(slices: slices, show_data: false)
 
-    expect(rendered_labels).to eq(["Large", "Small"])
+    expect(rendered_labels).to eq(["75%", "25%", "Large", "Small"])
   end
 
   def rendered_arcs
@@ -42,7 +42,7 @@ RSpec.describe Sirena::Renderer::Pie do
   def expected_arcs
     [
       [include("A 150 150 0 1 1"), include("A 150 150 0 0 1")],
-      ["Large: 75.0%", "Small: 25.0%"],
+      ["75%", "25%", "Large [3]", "Small [1]"],
     ]
   end
 
@@ -52,8 +52,8 @@ RSpec.describe Sirena::Renderer::Pie do
 
   def slices
     [
-      { label: "Large", percentage: 75.0, angle: 270.0 },
-      { label: "Small", percentage: 25.0, angle: 90.0 },
+      { label: "Large", value: 3, percentage: 75.0, angle: 270.0 },
+      { label: "Small", value: 1, percentage: 25.0, angle: 90.0 },
     ]
   end
 
