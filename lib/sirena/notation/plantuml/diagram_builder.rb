@@ -50,32 +50,33 @@ module Sirena
         end
 
         # Opens a package; the classes declared until {#close_package} are
-        # in it.
+        # in it, and a package opened before then is inside it.
         def open_package(package, number, text)
-          refuse(text, number, "nested package") if @scope
           if @packages.any? { |known| known.id == package.id }
             refuse(text, number, "package declared twice")
           end
 
-          @packages << package
-          @scope = [package, number, text]
+          @packages << package.inside(scopes.last&.first&.id)
+          scopes.push([package, number, text])
         end
 
         def package_open?
-          !@scope.nil?
+          !scopes.empty?
         end
 
-        # @raise [UnsupportedConstructError] when the package holds no class
+        # @raise [UnsupportedConstructError] when the package holds no class,
+        #   directly or in a package inside it
         def close_package
-          package, number, text = @scope
-          members = @extras.values.count { |e| e[:package] == package.id }
+          package, number, text = scopes.pop
+          members = @extras.values.count do |entry|
+            chain_of(entry[:package]).include?(package.id)
+          end
           refuse(text, number, "empty package") if members.zero?
-          @scope = nil
         end
 
-        # @return [Integer, nil] the line of the package still open
+        # @return [Integer, nil] the line of the innermost package still open
         def open_package_line
-          @scope && @scope[1]
+          scopes.last && scopes.last[1]
         end
 
         def junction(junction, number, text)
@@ -133,7 +134,7 @@ module Sirena
           @explicit[name] = true
           @class_evidence = true
           @extras[name] = entry.slice(:generics, :stereotypes, :tags)
-            .merge(package: @scope&.first&.id)
+            .merge(package: scope_id)
           @open = [name, number] if entry[:body]
         end
 
@@ -189,8 +190,20 @@ module Sirena
 
         # A package whose every class is hidden draws no frame.
         def occupied_packages(classes)
-          named = classes.filter_map(&:package)
+          named = classes.flat_map { |klass| chain_of(klass.package) }
           @packages.select { |package| named.include?(package.id) }
+        end
+
+        def chain_of(id)
+          Package.chain(id, @packages)
+        end
+
+        def scopes
+          @scopes ||= []
+        end
+
+        def scope_id
+          scopes.last&.first&.id
         end
 
         def hidden?(klass)
@@ -246,13 +259,13 @@ module Sirena
         # be a second class to PlantUML.
         def refuse_package_clash(name, number, text)
           return unless @kinds.key?(name)
-          return if @extras.dig(name, :package) == @scope&.first&.id
+          return if @extras.dig(name, :package) == scope_id
 
           refuse(text, number, "class declared in more than one place")
         end
 
         def refuse_new_class_in_package(relation, number, text)
-          return unless @scope
+          return if scopes.empty?
           return if [relation.left, relation.right].all? { |name| @kinds[name] }
 
           refuse(text, number, "class first mentioned in a package")

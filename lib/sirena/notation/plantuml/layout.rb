@@ -27,11 +27,12 @@ module Sirena
 
         def scene(diagram)
           specifications = diagram.classes.map do |klass|
-            box_specification(klass)
+            box_specification(klass, diagram)
           end
           specifications += note_specifications(diagram.notes)
           box_width = widest_box(specifications)
-          boxes = position_boxes(rows_by_package(specifications), box_width)
+          boxes = position_boxes(rows_by_package(specifications, diagram),
+                                 box_width)
 
           build_scene(diagram, boxes, box_width)
         end
@@ -60,12 +61,13 @@ module Sirena
             build_note_links(diagram.notes, boxes)
         end
 
-        def box_specification(klass)
+        def box_specification(klass, diagram)
           member_rows = klass.body.map { |member| member_text(member) }
           title_rows = title_rows(klass)
           box_record(klass.name, title_rows, member_rows)
             .merge(member_modifiers: klass.body.map(&:modifiers),
-                   package: klass.package)
+                   package: klass.package,
+                   chain: diagram.package_chain(klass.package))
         end
 
         def note_specifications(notes)
@@ -128,19 +130,21 @@ module Sirena
             .fetch(visibility, "")
         end
 
-        # Classes outside any package first, then each package's classes,
-        # every group padded to whole rows so a row holds one group only.
-        def rows_by_package(specifications)
+        # Classes outside any package first, then each package's own classes
+        # in the order the packages open (an outer package before the ones
+        # inside it), every group padded to whole rows so a row holds one
+        # group only.
+        def rows_by_package(specifications, diagram)
           columns = column_count(specifications)
-          package_groups(specifications).flat_map do |group|
+          package_groups(specifications, diagram).flat_map do |group|
             group.each_slice(columns).map { |row| pad(row, columns) }
           end
         end
 
-        def package_groups(specifications)
-          loose, packaged = specifications.partition { |i| !i[:package] }
-          [loose, *packaged.group_by { |i| i[:package] }.values]
-            .reject(&:empty?)
+        def package_groups(specifications, diagram)
+          by_package = specifications.group_by { |item| item[:package] }
+          ids = [nil, *diagram.packages.map(&:id)]
+          ids.filter_map { |id| by_package[id] }
         end
 
         def pad(row, columns)
@@ -157,16 +161,16 @@ module Sirena
         end
 
         def row_tops(rows)
-          packages = rows.map { |row| row.compact.first[:package] }
-          first = [MARGIN + frame_space(nil, packages.first)]
-          row_steps(rows, packages).each_with_object(first) do |step, tops|
+          chains = rows.map { |row| row.compact.first[:chain] || [] }
+          first = [MARGIN + frame_space([], chains.first)]
+          row_steps(rows, chains).each_with_object(first) do |step, tops|
             tops << (tops.last + step)
           end
         end
 
-        def row_steps(rows, packages)
+        def row_steps(rows, chains)
           row_heights(rows).each_with_index.map do |height, index|
-            space = frame_space(packages[index], packages[index + 1])
+            space = frame_space(chains[index], chains[index + 1] || [])
             height + ROW_GAP + space
           end
         end
@@ -175,11 +179,13 @@ module Sirena
           rows.map { |row| row.compact.map { |item| item[:height] }.max }
         end
 
+        # The room for the frames closed on leaving the packages `above` and
+        # opened on entering the packages `below`, each given outermost first.
         def frame_space(above, below)
-          return 0.0 if above == below
+          shared = above.zip(below).take_while { |a, b| a == b }.size
 
-          (above ? PackageFrames::CLOSE : 0.0) +
-            (below ? PackageFrames::OPEN : 0.0)
+          ((above.size - shared) * PackageFrames::CLOSE) +
+            ((below.size - shared) * PackageFrames::OPEN)
         end
 
         def column_count(items)

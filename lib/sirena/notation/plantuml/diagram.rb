@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "package"
+
 module Sirena
   module Notation
     module PlantUML
@@ -37,6 +39,11 @@ module Sirena
         # the pipeline's validity guard for this notation too.
         def valid?
           !classes.empty?
+        end
+
+        # @see Package.chain
+        def package_chain(id)
+          Package.chain(id, packages)
         end
 
         def diagram_type
