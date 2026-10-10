@@ -3,8 +3,6 @@ cop: RSpec/SpecFilePathFormat
 rows:
 - file: spec/contract_spec.rb
   count: 1
-- file: spec/integration/kanban_integration_spec.rb
-  count: 1
 - file: spec/scripts/check_changelog_spec.rb
   count: 1
 - file: spec/scripts/docs_site_verifier_spec.rb
@@ -32,8 +30,6 @@ rows:
 - file: spec/sirena/parser/error_position_spec.rb
   count: 1
 - file: spec/sirena/parser/greedy_run_spec.rb
-  count: 1
-- file: spec/sirena/parser/trimmed_run_spec.rb
   count: 1
 - file: spec/sirena/renderer/flowchart_cluster_spec.rb
   count: 1

@@ -3,7 +3,5 @@ cop: Lint/AmbiguousOperatorPrecedence
 rows:
 - file: lib/sirena/parser/grammars/common.rb
   count: 5
-- file: lib/sirena/renderer/class_diagram.rb
-  count: 2
 - file: lib/sirena/renderer/mindmap.rb
   count: 3

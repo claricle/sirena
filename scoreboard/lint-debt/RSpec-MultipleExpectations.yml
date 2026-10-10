@@ -5,34 +5,8 @@ rows:
   count: 1
 - file: spec/fixtures_spec.rb
   count: 4
-- file: spec/integration/class_diagram_integration_spec.rb
-  count: 7
-- file: spec/integration/er_diagram_integration_spec.rb
-  count: 11
-- file: spec/integration/flowchart_integration_spec.rb
-  count: 4
-- file: spec/integration/git_graph_integration_spec.rb
-  count: 4
-- file: spec/integration/requirement_integration_spec.rb
-  count: 6
-- file: spec/integration/state_diagram_integration_spec.rb
-  count: 17
-- file: spec/integration/user_journey_integration_spec.rb
-  count: 5
-- file: spec/scripts/apply_fixes_never_called_spec.rb
-  count: 1
-- file: spec/scripts/corpus_sweep_malformed_xml_spec.rb
-  count: 2
-- file: spec/scripts/corpus_sweep_spec.rb
-  count: 1
 - file: spec/scripts/docs_site_verifier_spec.rb
   count: 4
-- file: spec/scripts/hardened_mmdc_spec.rb
-  count: 6
-- file: spec/scripts/lane_verdict_spec.rb
-  count: 3
-- file: spec/scripts/mermaid_diff_spec.rb
-  count: 7
 - file: spec/sirena/cli_spec.rb
   count: 6
 - file: spec/sirena/commands/batch_spec.rb
@@ -43,8 +17,6 @@ rows:
   count: 1
 - file: spec/sirena/determinism_spec.rb
   count: 2
-- file: spec/sirena/diagram/class_diagram_spec.rb
-  count: 1
 - file: spec/sirena/diagram/er_diagram_spec.rb
   count: 1
 - file: spec/sirena/diagram/user_journey_spec.rb
@@ -59,32 +31,14 @@ rows:
   count: 2
 - file: spec/sirena/exhaustion_errors_spec.rb
   count: 2
-- file: spec/sirena/layout/architecture_spec.rb
-  count: 4
 - file: spec/sirena/layout/base_call_spec.rb
   count: 5
-- file: spec/sirena/layout/class_diagram_spec.rb
-  count: 6
-- file: spec/sirena/layout/er_diagram_spec.rb
-  count: 7
-- file: spec/sirena/layout/flowchart_spec.rb
-  count: 6
 - file: spec/sirena/layout/grid_spec.rb
   count: 4
-- file: spec/sirena/layout/kanban_spec.rb
-  count: 2
-- file: spec/sirena/layout/state_diagram_spec.rb
-  count: 9
 - file: spec/sirena/layout/user_journey_spec.rb
   count: 2
 - file: spec/sirena/markdown_text_spec.rb
   count: 12
-- file: spec/sirena/parser/architecture_spec.rb
-  count: 11
-- file: spec/sirena/parser/block_spec.rb
-  count: 8
-- file: spec/sirena/parser/c4_spec.rb
-  count: 17
 - file: spec/sirena/parser/class_diagram_parser_annotations_members_spec.rb
   count: 1
 - file: spec/sirena/parser/class_diagram_spec.rb
@@ -92,14 +46,6 @@ rows:
 - file: spec/sirena/parser/er_diagram_spec.rb
   count: 28
 - file: spec/sirena/parser/error_position_spec.rb
-  count: 5
-- file: spec/sirena/parser/error_spec.rb
-  count: 2
-- file: spec/sirena/parser/flowchart_accessibility_spec.rb
-  count: 6
-- file: spec/sirena/parser/flowchart_link_spec.rb
-  count: 5
-- file: spec/sirena/parser/flowchart_node_id_spec.rb
   count: 5
 - file: spec/sirena/parser/flowchart_node_metadata_spec.rb
   count: 6
@@ -117,22 +63,10 @@ rows:
   count: 1
 - file: spec/sirena/parser/flowchart_semicolon_spec.rb
   count: 2
-- file: spec/sirena/parser/flowchart_spec.rb
-  count: 5
-- file: spec/sirena/parser/flowchart_subgraph_ownership_spec.rb
-  count: 12
-- file: spec/sirena/parser/flowchart_subgraph_spec.rb
-  count: 16
 - file: spec/sirena/parser/gantt_spec.rb
   count: 13
-- file: spec/sirena/parser/git_graph_spec.rb
-  count: 14
 - file: spec/sirena/parser/greedy_run_spec.rb
   count: 6
-- file: spec/sirena/parser/info_spec.rb
-  count: 2
-- file: spec/sirena/parser/kanban_spec.rb
-  count: 26
 - file: spec/sirena/parser/mindmap_spec.rb
   count: 21
 - file: spec/sirena/parser/packet_spec.rb
@@ -141,40 +75,20 @@ rows:
   count: 8
 - file: spec/sirena/parser/quadrant_spec.rb
   count: 6
-- file: spec/sirena/parser/radar_spec.rb
-  count: 16
 - file: spec/sirena/parser/requirement_spec.rb
   count: 16
-- file: spec/sirena/parser/sankey_spec.rb
-  count: 8
-- file: spec/sirena/parser/sequence_actor_names_spec.rb
-  count: 14
-- file: spec/sirena/parser/sequence_metadata_spec.rb
-  count: 1
-- file: spec/sirena/parser/sequence_spec.rb
-  count: 22
-- file: spec/sirena/parser/state_diagram_spec.rb
-  count: 31
 - file: spec/sirena/parser/timeline_spec.rb
   count: 8
 - file: spec/sirena/parser/treemap_spec.rb
   count: 10
-- file: spec/sirena/parser/user_journey_spec.rb
-  count: 21
-- file: spec/sirena/parser/xy_chart_spec.rb
-  count: 11
 - file: spec/sirena/renderer/architecture_edge_router_spec.rb
   count: 6
 - file: spec/sirena/renderer/architecture_spec.rb
   count: 6
 - file: spec/sirena/renderer/base_spec.rb
   count: 6
-- file: spec/sirena/renderer/block_spec.rb
-  count: 1
 - file: spec/sirena/renderer/c4_spec.rb
   count: 5
-- file: spec/sirena/renderer/class_diagram_spec.rb
-  count: 10
 - file: spec/sirena/renderer/er_diagram_spec.rb
   count: 13
 - file: spec/sirena/renderer/flowchart_cluster_spec.rb
@@ -183,34 +97,18 @@ rows:
   count: 30
 - file: spec/sirena/renderer/flowchart_spec.rb
   count: 2
-- file: spec/sirena/renderer/gantt_spec.rb
-  count: 7
-- file: spec/sirena/renderer/kanban_spec.rb
-  count: 13
-- file: spec/sirena/renderer/markdown_text_spec.rb
-  count: 1
 - file: spec/sirena/renderer/packet_spec.rb
-  count: 2
-- file: spec/sirena/renderer/quadrant_spec.rb
-  count: 7
+  count: 1
 - file: spec/sirena/renderer/radar_spec.rb
   count: 1
-- file: spec/sirena/renderer/sankey_spec.rb
-  count: 5
 - file: spec/sirena/renderer/sequence_spec.rb
   count: 13
-- file: spec/sirena/renderer/state_diagram_spec.rb
-  count: 4
 - file: spec/sirena/renderer/treemap_spec.rb
   count: 5
 - file: spec/sirena/renderer/user_journey_spec.rb
   count: 1
-- file: spec/sirena/source_spec.rb
-  count: 27
 - file: spec/sirena/svg/arrowhead_spec.rb
   count: 2
-- file: spec/sirena/svg/element_naming_spec.rb
-  count: 1
 - file: spec/sirena/svg/escaping_boundary_spec.rb
   count: 7
 - file: spec/sirena/svg/group_spec.rb
@@ -224,20 +122,10 @@ rows:
 - file: spec/sirena/svg/tiny_properties_spec.rb
   count: 1
 - file: spec/sirena/tasks/examples_spec.rb
-  count: 44
-- file: spec/sirena/theme/registry_spec.rb
-  count: 5
-- file: spec/sirena/theme_spec.rb
-  count: 8
+  count: 42
 - file: spec/spec_helper_corpus_guard_spec.rb
   count: 1
 - file: spec/svg_conformance_spec.rb
   count: 6
-- file: spec/tasks/benchmark_rake_spec.rb
-  count: 8
-- file: spec/tasks/corpus_spec.rb
-  count: 14
-- file: spec/tasks/coverage_rake_spec.rb
-  count: 8
 - file: spec/workflows/workflows_spec.rb
   count: 6

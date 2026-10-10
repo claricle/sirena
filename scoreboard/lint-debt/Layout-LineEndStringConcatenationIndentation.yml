@@ -7,7 +7,3 @@ rows:
   count: 4
 - file: spec/sirena/parser/kanban_spec.rb
   count: 1
-- file: spec/sirena/parser/sequence_spec.rb
-  count: 2
-- file: spec/sirena/svg/registry_spec.rb
-  count: 1

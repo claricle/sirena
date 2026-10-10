@@ -1,183 +1,63 @@
 ---
 cop: Metrics/MethodLength
 rows:
-- file: lib/sirena/cli.rb
-  count: 1
-- file: lib/sirena/commands/batch.rb
-  count: 3
-- file: lib/sirena/diagram/c4.rb
-  count: 1
-- file: lib/sirena/diagram/containment.rb
-  count: 1
-- file: lib/sirena/diagram/er_diagram.rb
-  count: 1
-- file: lib/sirena/diagram/flowchart.rb
-  count: 1
 - file: lib/sirena/diagram/sequence.rb
   count: 1
-- file: lib/sirena/diagram/state_diagram.rb
-  count: 1
-- file: lib/sirena/engine.rb
-  count: 3
 - file: lib/sirena/layout/architecture.rb
   count: 7
-- file: lib/sirena/layout/base.rb
-  count: 2
 - file: lib/sirena/layout/block.rb
   count: 3
-- file: lib/sirena/layout/c4.rb
-  count: 7
-- file: lib/sirena/layout/class_diagram.rb
-  count: 7
-- file: lib/sirena/layout/er_diagram.rb
-  count: 5
 - file: lib/sirena/layout/flowchart.rb
   count: 14
 - file: lib/sirena/layout/flowchart/edge_router.rb
   count: 3
 - file: lib/sirena/layout/gantt.rb
   count: 5
-- file: lib/sirena/layout/git_graph.rb
-  count: 5
-- file: lib/sirena/layout/grid.rb
-  count: 2
-- file: lib/sirena/layout/kanban.rb
-  count: 1
 - file: lib/sirena/layout/mindmap.rb
   count: 3
-- file: lib/sirena/layout/packet.rb
-  count: 5
 - file: lib/sirena/layout/pie.rb
   count: 2
 - file: lib/sirena/layout/requirement.rb
   count: 3
-- file: lib/sirena/layout/sankey.rb
-  count: 5
 - file: lib/sirena/layout/sequence.rb
   count: 3
-- file: lib/sirena/layout/state_diagram.rb
-  count: 5
 - file: lib/sirena/layout/user_journey.rb
   count: 5
 - file: lib/sirena/layout/xy_chart.rb
   count: 3
-- file: lib/sirena/markdown_text.rb
-  count: 5
-- file: lib/sirena/markdown_text/emphasis_simulator.rb
-  count: 3
-- file: lib/sirena/parser/atoms/delimited_run.rb
-  count: 1
-- file: lib/sirena/parser/atoms/greedy_run.rb
-  count: 1
-- file: lib/sirena/parser/base.rb
-  count: 1
 - file: lib/sirena/parser/builders/architecture.rb
   count: 2
-- file: lib/sirena/parser/builders/block.rb
-  count: 5
-- file: lib/sirena/parser/builders/c4.rb
-  count: 9
 - file: lib/sirena/parser/builders/class_diagram.rb
   count: 5
-- file: lib/sirena/parser/builders/er_diagram.rb
-  count: 7
-- file: lib/sirena/parser/builders/flowchart.rb
-  count: 8
 - file: lib/sirena/parser/builders/gantt.rb
   count: 4
-- file: lib/sirena/parser/builders/git_graph.rb
-  count: 2
-- file: lib/sirena/parser/builders/info.rb
-  count: 1
-- file: lib/sirena/parser/builders/kanban.rb
-  count: 3
 - file: lib/sirena/parser/builders/mindmap.rb
   count: 4
-- file: lib/sirena/parser/builders/quadrant.rb
-  count: 5
-- file: lib/sirena/parser/builders/requirement.rb
-  count: 6
-- file: lib/sirena/parser/builders/sankey.rb
-  count: 3
-- file: lib/sirena/parser/builders/sequence.rb
-  count: 6
-- file: lib/sirena/parser/builders/state_diagram.rb
-  count: 8
-- file: lib/sirena/parser/builders/timeline.rb
-  count: 2
-- file: lib/sirena/parser/builders/treemap.rb
-  count: 2
-- file: lib/sirena/parser/git_graph.rb
-  count: 1
 - file: lib/sirena/parser/grammars/flowchart.rb
   count: 1
-- file: lib/sirena/parser/kanban.rb
-  count: 2
 - file: lib/sirena/parser/mindmap.rb
   count: 2
-- file: lib/sirena/parser/packet.rb
-  count: 1
-- file: lib/sirena/parser/radar.rb
-  count: 1
-- file: lib/sirena/parser/user_journey.rb
-  count: 2
-- file: lib/sirena/parser/xy_chart.rb
-  count: 2
-- file: lib/sirena/renderer/architecture_edge_router.rb
-  count: 4
-- file: lib/sirena/renderer/base.rb
-  count: 1
-- file: lib/sirena/renderer/block.rb
-  count: 3
 - file: lib/sirena/renderer/c4.rb
   count: 2
-- file: lib/sirena/renderer/class_diagram.rb
-  count: 11
-- file: lib/sirena/renderer/er_diagram.rb
-  count: 3
 - file: lib/sirena/renderer/error.rb
   count: 3
 - file: lib/sirena/renderer/gantt.rb
   count: 1
 - file: lib/sirena/renderer/info.rb
   count: 2
-- file: lib/sirena/renderer/kanban.rb
-  count: 3
-- file: lib/sirena/renderer/markdown_text.rb
-  count: 1
 - file: lib/sirena/renderer/mindmap.rb
   count: 6
 - file: lib/sirena/renderer/packet.rb
   count: 4
-- file: lib/sirena/renderer/quadrant.rb
-  count: 2
 - file: lib/sirena/renderer/radar.rb
   count: 1
-- file: lib/sirena/renderer/requirement.rb
-  count: 2
-- file: lib/sirena/renderer/sankey.rb
-  count: 3
 - file: lib/sirena/renderer/sequence.rb
   count: 4
 - file: lib/sirena/renderer/state_diagram.rb
   count: 5
 - file: lib/sirena/renderer/treemap.rb
   count: 2
-- file: lib/sirena/renderer/xy_chart.rb
-  count: 2
-- file: lib/sirena/source.rb
-  count: 2
-- file: lib/sirena/source/frontmatter.rb
-  count: 2
-- file: lib/sirena/svg/arrowhead.rb
-  count: 1
 - file: lib/sirena/svg/document.rb
-  count: 1
-- file: lib/sirena/svg/path.rb
-  count: 1
-- file: lib/sirena/svg/path_geometry.rb
-  count: 3
-- file: lib/sirena/svg/style.rb
   count: 1
 - file: scripts/corpus_sweep.rb
   count: 4
@@ -199,8 +79,6 @@ rows:
   count: 4
 - file: tasks/benchmark.rake
   count: 4
-- file: tasks/corpus.rake
-  count: 5
 - file: tasks/example_tasks.rb
   count: 9
 - file: tasks/generate_mermaid_fixtures.rake
