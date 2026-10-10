@@ -27,7 +27,7 @@ module Sirena
       MESSAGE_SPACING = Geometry::MESSAGE_PITCH
       LIFELINE_DASH = "5,5"
       ARROW_SIZE = 8
-      SELF_LOOP_WIDTH = 56
+      SELF_LOOP_WIDTH = 60
       SELF_LOOP_HEIGHT = 20
       ACTOR_LABEL_OFFSET = 55
       # The released renderer hooks size the canvas this much smaller
@@ -639,8 +639,8 @@ module Sirena
         (source_x + target_x) / 2
       end
 
-      def message_label_offset(source_x, target_x)
-        source_x == target_x ? (SELF_LOOP_HEIGHT / 2) + 10 : 10
+      def message_label_offset(_source_x, _target_x)
+        10
       end
 
       def compatibility_label(source_x, target_x, vertical, text)
@@ -663,8 +663,8 @@ module Sirena
       end
 
       def self_arrow_geometry(horizontal, vertical, style)
-        top = vertical - (SELF_LOOP_HEIGHT / 2)
-        bottom = vertical + (SELF_LOOP_HEIGHT / 2)
+        top = vertical
+        bottom = vertical + SELF_LOOP_HEIGHT
         reach = horizontal + SELF_LOOP_WIDTH
         heads = head_ends(style).map do |which|
           edge_y = which == :source ? top : bottom
@@ -675,8 +675,8 @@ module Sirena
           head_geometry(:target, span, style)
         end
         {
-          loop_path: "M #{horizontal},#{top} C #{reach},#{top} " \
-                     "#{reach},#{bottom} #{horizontal},#{bottom}",
+          loop_path: "M #{horizontal},#{top} C #{reach},#{top - 10} " \
+                     "#{reach},#{bottom + 10} #{horizontal},#{bottom}",
           heads: heads,
         }
       end

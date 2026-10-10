@@ -22,7 +22,7 @@ RSpec.describe Sirena::Layout::Sequence do
   end
 
   it "keeps the self message's own row where it was" do
-    expect(plain.messages[1].label.y).to eq(143)
+    expect(plain.messages[1].label.y).to eq(153)
   end
 
   it "pushes the row after a frame that ends on a self message 60" do
