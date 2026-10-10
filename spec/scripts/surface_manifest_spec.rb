@@ -59,6 +59,14 @@ RSpec.describe SurfaceManifest do
     end
   end
 
+  describe ".checkout_env" do
+    it "points the child at the checkout's own Gemfile, not the caller's" do
+      env = described_class.checkout_env("/some/checkout")
+
+      expect(env).to include("BUNDLE_GEMFILE" => "/some/checkout/Gemfile")
+    end
+  end
+
   describe ".compare" do
     let(:baseline) { record_with("before") }
 
