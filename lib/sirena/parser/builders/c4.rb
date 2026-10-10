@@ -68,6 +68,7 @@ module Sirena
                 break if next_item[:element_type] || next_item[:boundary_type] ||
                          next_item[:rel_type] || next_item[:title] ||
                          next_item[:config_params] || next_item[:header]
+
                 # Merge this hash into the current statement
                 item = item.merge(next_item)
                 j += 1
