@@ -3,7 +3,7 @@
 require "spec_helper"
 require "rexml/document"
 
-RSpec.describe "ErDiagram Integration" do
+RSpec.describe "ErDiagram Integration", :aggregate_failures do
   describe "complete ER diagram pipeline" do
     let(:parser) { Sirena::Parser::ErDiagram.new }
     let(:transform) { Sirena::Layout::ErDiagram.new }

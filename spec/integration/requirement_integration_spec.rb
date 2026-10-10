@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "Requirement Integration" do
+RSpec.describe "Requirement Integration", :aggregate_failures do
   describe "complete requirement pipeline" do
     let(:parser) { Sirena::Parser::Requirement.new }
     let(:transform) { Sirena::Layout::Requirement.new }
