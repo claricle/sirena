@@ -122,7 +122,7 @@ module Sirena
         rule(:attribute) do
           attribute_type.maybe.as(:type) >> space? >>
             identifier.as(:name) >> space? >>
-            key_type.maybe.as(:key) >>
+            key_list.maybe.as(:key) >>
             (space? >> note.as(:note)).maybe >>
             (space? >> comment).maybe
         end
@@ -186,6 +186,14 @@ module Sirena
 
         rule(:key_type) do
           (str("PK") | str("FK") | str("UK")).as(:key_type)
+        end
+
+        # Mermaid takes comma-separated keys in any combination, spaces
+        # around the comma optional: `PK,FK`, `FK , UK`. Space alone does
+        # not separate them. Parslet yields a Hash for one key and an
+        # Array of Hashes for several.
+        rule(:key_list) do
+          key_type >> (space? >> comma >> space? >> key_type).repeat
         end
 
         # Relationship pattern: cardinality(2) + operator(2) + cardinality(2)
