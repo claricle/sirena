@@ -18,8 +18,8 @@ namespace :benchmark do
     # Save results
     benchmarker.save_results(results, "docs/PERFORMANCE_BENCHMARK.adoc")
 
-    puts "\n✅ Benchmark complete! " \
-         "Results saved to docs/PERFORMANCE_BENCHMARK.adoc"
+    puts "\n✅ Benchmark complete! Results saved to " \
+         "docs/PERFORMANCE_BENCHMARK.adoc"
   end
 
   desc "Quick benchmark with sample diagrams"
@@ -38,6 +38,7 @@ end
 # Performance benchmarking class
 class PerformanceBenchmarker
   BENCHMARK_DIR = "tmp/benchmark"
+  REPORT_CELL_INDENT = "      "
   SAMPLE_DIAGRAMS = {
     flowchart: <<~MERMAID,
       flowchart TD
@@ -95,15 +96,13 @@ class PerformanceBenchmarker
   def run_full_benchmark
     check_prerequisites
 
-    results = {
+    {
       system_info: gather_system_info,
       single_diagram: benchmark_single_renders,
       batch_rendering: benchmark_batch_renders,
       memory_usage: benchmark_memory_usage,
       startup_time: benchmark_startup_time,
     }
-
-    results
   end
 
   def run_quick_benchmark
@@ -126,32 +125,40 @@ class PerformanceBenchmarker
   end
 
   def print_summary(results)
+    print_summary_header
+    print_single_summary(results[:single]) if results[:single]
+    print_startup_summary(results[:startup]) if results[:startup]
+  end
+
+  def print_summary_header
     puts "\n#{'=' * 80}"
     puts "BENCHMARK SUMMARY"
     puts "=" * 80
+  end
 
-    if results[:single]
-      puts "\nSingle Diagram Rendering:"
-      results[:single].each do |type, data|
-        puts "  #{type}:"
-        puts "    Sirena:     #{format_time(data[:sirena_time])}"
-        if data[:mermaid_time]
-          puts "    Mermaid.js: #{format_time(data[:mermaid_time])}"
-          speedup = data[:mermaid_time] / data[:sirena_time]
-          puts "    Speedup:    #{speedup_label(speedup)}"
-        end
-      end
-    end
+  def print_single_summary(results)
+    puts "\nSingle Diagram Rendering:"
+    results.each do |type, data|
+      puts "  #{type}:"
+      puts "    Sirena:     #{format_time(data[:sirena_time])}"
+      next unless data[:mermaid_time]
 
-    if results[:startup]
-      puts "\nStartup Time:"
-      puts "  Sirena:     #{format_time(results[:startup][:sirena])}"
-      if results[:startup][:mermaid]
-        puts "  Mermaid.js: #{format_time(results[:startup][:mermaid])}"
-        speedup = results[:startup][:mermaid] / results[:startup][:sirena]
-        puts "  Speedup:    #{speedup_label(speedup)}"
-      end
+      puts "    Mermaid.js: #{format_time(data[:mermaid_time])}"
+      puts "    Speedup:    #{single_speedup(data)}"
     end
+  end
+
+  def single_speedup(data)
+    speedup_label(data[:mermaid_time] / data[:sirena_time])
+  end
+
+  def print_startup_summary(results)
+    puts "\nStartup Time:"
+    puts "  Sirena:     #{format_time(results[:sirena])}"
+    return unless results[:mermaid]
+
+    puts "  Mermaid.js: #{format_time(results[:mermaid])}"
+    puts "  Speedup:    #{speedup_label(results[:mermaid] / results[:sirena])}"
   end
 
   private
@@ -188,99 +195,100 @@ class PerformanceBenchmarker
     }
   end
 
+  def cpu_info
+    command = "sysctl -n machdep.cpu.brand_string 2>/dev/null || " \
+              "lscpu 2>/dev/null | grep 'Model name' || echo 'Unknown'"
+    `#{command}`.strip
+  end
+
   def benchmark_single_renders
-    results = {}
-
-    SAMPLE_DIAGRAMS.each do |type, source|
+    SAMPLE_DIAGRAMS.to_h do |type, source|
       puts "Benchmarking #{type}..."
-
-      # Benchmark Sirena
-      sirena_time = Benchmark.realtime do
-        10.times { Sirena.render(source) }
-      end
-      sirena_avg = sirena_time / 10
-
-      # Benchmark mermaid-cli if available
-      mermaid_avg = nil
-      if mermaid_cli_available?
-        input_file = File.join(BENCHMARK_DIR, "#{type}.mmd")
-        output_file = File.join(BENCHMARK_DIR, "#{type}.svg")
-        File.write(input_file, source)
-
-        mermaid_ok = true
-        mermaid_time = Benchmark.realtime do
-          10.times do
-            mermaid_ok = false unless system(
-              "mmdc -i '#{input_file}' -o '#{output_file}' 2>/dev/null",
-            )
-          end
-        end
-        # A failed mmdc invocation (e.g. Chrome unavailable) still exits
-        # `system`
-        # near-instantly -- timing that as a successful render would publish
-        # failure latency as a real speedup (TODO.foundation/11: unattributable
-        # benchmarks). Report nothing for mermaid rather than a bogus number.
-        mermaid_avg = mermaid_time / 10 if mermaid_ok
-      end
-
-      results[type] = {
-        sirena_time: sirena_avg,
-        mermaid_time: mermaid_avg,
-      }
+      [type, benchmark_single(source, type)]
     end
+  end
 
-    results
+  def benchmark_single(source, type)
+    sirena_time = Benchmark.realtime { 10.times { Sirena.render(source) } }
+    {
+      sirena_time: sirena_time / 10,
+      mermaid_time: benchmark_single_with_mermaid(source, type),
+    }
+  end
+
+  def benchmark_single_with_mermaid(source, type)
+    return unless mermaid_cli_available?
+
+    input = File.join(BENCHMARK_DIR, "#{type}.mmd")
+    output = File.join(BENCHMARK_DIR, "#{type}.svg")
+    File.write(input, source)
+    time, succeeded = benchmark_command(10, mmdc_command(input, output))
+    time / 10 if succeeded
+  end
+
+  def benchmark_command(iterations, command)
+    succeeded = true
+    time = Benchmark.realtime do
+      iterations.times { succeeded = false unless system(command) }
+    end
+    [time, succeeded]
+  end
+
+  def mmdc_command(input, output)
+    "mmdc -i '#{input}' -o '#{output}' 2>/dev/null"
   end
 
   def benchmark_batch_renders
     return {} unless mermaid_cli_available?
 
-    # Create 50 sample diagrams
-    puts "Preparing 50 sample diagrams..."
-    batch_dir = File.join(BENCHMARK_DIR, "batch_test")
-    FileUtils.mkdir_p(batch_dir)
-
-    50.times do |i|
-      type = SAMPLE_DIAGRAMS.keys.sample
-      source = SAMPLE_DIAGRAMS[type]
-      File.write(File.join(batch_dir, "diagram_#{i}.mmd"), source)
-    end
-
-    # Benchmark Sirena
-    puts "Benchmarking Sirena batch..."
-    sirena_time = Benchmark.realtime do
-      Dir.glob(File.join(batch_dir, "*.mmd")).each do |file|
-        source = File.read(file)
-        Sirena.render(source)
-      end
-    end
-
-    # Benchmark mermaid-cli
-    puts "Benchmarking mermaid-cli batch..."
-    mermaid_ok = true
-    mermaid_time = Benchmark.realtime do
-      Dir.glob(File.join(batch_dir, "*.mmd")).each do |file|
-        output = file.sub(".mmd", ".svg")
-        mermaid_ok = false unless system(
-          "mmdc -i '#{file}' -o '#{output}' 2>/dev/null",
-        )
-      end
-    end
-
-    result = {
-      diagram_count: 50,
-      sirena_total: sirena_time,
-      sirena_per_diagram: sirena_time / 50,
-    }
-    # See benchmark_single_renders: a failed mmdc invocation still exits
-    # `system`
-    # near-instantly, so never publish its timing as a real batch speedup.
-    return result unless mermaid_ok
+    files = prepare_batch
+    sirena_time = benchmark_sirena_batch(files)
+    mermaid_time, succeeded = benchmark_mermaid_batch(files)
+    result = batch_result(sirena_time)
+    return result unless succeeded
 
     result.merge(
       mermaid_total: mermaid_time,
       mermaid_per_diagram: mermaid_time / 50,
     )
+  end
+
+  def prepare_batch
+    puts "Preparing 50 sample diagrams..."
+    batch_dir = File.join(BENCHMARK_DIR, "batch_test")
+    FileUtils.mkdir_p(batch_dir)
+    50.times { |index| write_sample(batch_dir, index) }
+    Dir.glob(File.join(batch_dir, "*.mmd"))
+  end
+
+  def write_sample(batch_dir, index)
+    source = SAMPLE_DIAGRAMS.fetch(SAMPLE_DIAGRAMS.keys.sample)
+    File.write(File.join(batch_dir, "diagram_#{index}.mmd"), source)
+  end
+
+  def benchmark_sirena_batch(files)
+    puts "Benchmarking Sirena batch..."
+    Benchmark.realtime { files.each { |file| Sirena.render(File.read(file)) } }
+  end
+
+  def benchmark_mermaid_batch(files)
+    puts "Benchmarking mermaid-cli batch..."
+    succeeded = true
+    time = Benchmark.realtime do
+      files.each do |file|
+        output = file.sub(".mmd", ".svg")
+        succeeded = false unless system(mmdc_command(file, output))
+      end
+    end
+    [time, succeeded]
+  end
+
+  def batch_result(sirena_time)
+    {
+      diagram_count: 50,
+      sirena_total: sirena_time,
+      sirena_per_diagram: sirena_time / 50,
+    }
   end
 
   def benchmark_memory_usage
@@ -296,49 +304,34 @@ class PerformanceBenchmarker
   end
 
   def benchmark_startup_time
-    # Benchmark Sirena startup. Unlike mmdc, this command is entirely ours (no
-    # external tool, no environment dependency) -- a failure here is a real bug,
-    # not a flaky dependency, so raise instead of silently timing the failure.
-    sirena_ok = true
-    sirena_startup = Benchmark.realtime do
-      10.times do
-        # Simulate fresh start by requiring in subprocess
-        sirena_ok = false unless system(
-          "ruby -r sirena -e 'Sirena.render(\"graph TD\\nA-->B\")' 2>/dev/null",
-        )
-      end
-    end
-    unless sirena_ok
-      raise "Sirena subprocess startup benchmark failed -- a fresh " \
-            "`ruby -r sirena` process could not render; this is not the " \
-            "external mmdc tool, so fix " \
-            "the gem load rather than trusting any number from this run"
-    end
-
-    # Benchmark mermaid-cli startup
-    mermaid_startup = nil
-    if mermaid_cli_available?
-      input_file = File.join(BENCHMARK_DIR, "startup.mmd")
-      output_file = File.join(BENCHMARK_DIR, "startup.svg")
-      File.write(input_file, "graph TD\nA-->B")
-
-      mermaid_ok = true
-      mermaid_startup = Benchmark.realtime do
-        10.times do
-          mermaid_ok = false unless system(
-            "mmdc -i '#{input_file}' -o '#{output_file}' 2>/dev/null",
-          )
-        end
-      end
-      # See benchmark_single_renders: don't publish a failed mmdc invocation's
-      # near-instant exit as a real startup time.
-      mermaid_startup = nil unless mermaid_ok
-    end
-
+    sirena_startup = benchmark_sirena_startup
+    mermaid_startup = benchmark_mermaid_startup
     {
       sirena: sirena_startup / 10,
       mermaid: mermaid_startup ? mermaid_startup / 10 : nil,
     }
+  end
+
+  def benchmark_sirena_startup
+    command = "ruby -r sirena " \
+              "-e 'Sirena.render(\"graph TD\\nA-->B\")' 2>/dev/null"
+    time, succeeded = benchmark_command(10, command)
+    return time if succeeded
+
+    raise "Sirena subprocess startup benchmark failed -- a fresh " \
+          "`ruby -r sirena` process could not render; this is not the " \
+          "external mmdc tool, so fix the gem load rather than trusting " \
+          "any number from this run"
+  end
+
+  def benchmark_mermaid_startup
+    return unless mermaid_cli_available?
+
+    input = File.join(BENCHMARK_DIR, "startup.mmd")
+    output = File.join(BENCHMARK_DIR, "startup.svg")
+    File.write(input, "graph TD\nA-->B")
+    time, succeeded = benchmark_command(10, mmdc_command(input, output))
+    time if succeeded
   end
 
   def benchmark_sirena_only
@@ -353,6 +346,13 @@ class PerformanceBenchmarker
   end
 
   def generate_report(results)
+    report_header(results[:system_info]) +
+      report_measurements(results) +
+      report_analysis(results) +
+      report_reproduction(results)
+  end
+
+  def report_header(system)
     <<~ADOC
       = Sirena Performance Benchmark Report
       :toc:
@@ -365,15 +365,15 @@ class PerformanceBenchmarker
 
       == System Information
 
-      *Benchmark Date:* #{results[:system_info][:timestamp]}
+      *Benchmark Date:* #{system[:timestamp]}
 
       *System Configuration:*
 
-      * Ruby Version: #{results[:system_info][:ruby_version]}
-      * Platform: #{results[:system_info][:platform]}
-      * Sirena Version: #{results[:system_info][:sirena_version]}
-      * Mermaid CLI Version: #{results[:system_info][:mermaid_cli_version]}
-      * CPU: #{results[:system_info][:cpu_info]}
+      * Ruby Version: #{system[:ruby_version]}
+      * Platform: #{system[:platform]}
+      * Sirena Version: #{system[:sirena_version]}
+      * Mermaid CLI Version: #{system[:mermaid_cli_version]}
+      * CPU: #{system[:cpu_info]}
 
       == Benchmark Methodology
 
@@ -386,6 +386,17 @@ class PerformanceBenchmarker
       * With default settings for both tools
       * Cold start for startup time tests
 
+    ADOC
+  end
+
+  def report_measurements(results)
+    single = results[:single_diagram]
+    single_rows = single_report_rows(single)
+    average = calculate_average_speedup(single)
+    batch = batch_report(results[:batch_rendering])
+    startup = startup_report(results[:startup_time])
+    memory = memory_report(results[:memory_usage])
+    <<~ADOC
       == Single Diagram Rendering
 
       Performance for rendering individual diagrams:
@@ -394,53 +405,26 @@ class PerformanceBenchmarker
       |===
       |Diagram Type |Sirena |Mermaid.js |Speedup
 
-      #{results[:single_diagram].map do |type, data|
-        speedup = data[:mermaid_time] ? speedup_label(data[:mermaid_time] / data[:sirena_time]) : 'N/A'
-        "
-      |#{type}
-      |#{format_time(data[:sirena_time])}
-      |#{data[:mermaid_time] ? format_time(data[:mermaid_time]) : 'N/A'}
-      |#{speedup}"
-      end.join("\n")}
+      #{single_rows}
       |===
 
-      *Average speedup:* #{calculate_average_speedup(results[:single_diagram])}
+      *Average speedup:* #{average}
 
       == Batch Rendering Performance
 
-      #{if results[:batch_rendering] && !results[:batch_rendering].empty?
-          batch = results[:batch_rendering]
-          <<~BATCH
-            Performance rendering #{batch[:diagram_count]} diagrams:
+      #{batch}
 
-            [cols="2,2,2"]
-            |===
-            |Metric |Sirena |Mermaid.js
+      #{startup}
 
-            |Total Time
-            |#{format_time(batch[:sirena_total])}
-            |#{format_time(batch[:mermaid_total])}
+      == Memory Usage
 
-            |Per Diagram
-            |#{format_time(batch[:sirena_per_diagram])}
-            |#{format_time(batch[:mermaid_per_diagram])}
+      #{memory}
 
-            |Throughput
-            |#{(batch[:diagram_count] / batch[:sirena_total]).round(1)} diagrams/sec
-            |#{batch[:mermaid_total] ? "#{(batch[:diagram_count] / batch[:mermaid_total]).round(1)} diagrams/sec" : 'N/A'}
-            |===
+    ADOC
+  end
 
-            #{if batch[:mermaid_total]
-                "*Batch speedup:* #{speedup_label(batch[:mermaid_total] / batch[:sirena_total])}"
-              else
-                '*Batch speedup:* not measured (mermaid-cli failed during this run)'
-              end}
-
-          BATCH
-        else
-          '*Batch benchmarking requires mermaid-cli installation*'
-        end}
-
+  def startup_report(startup)
+    <<~ADOC.chomp
       == Startup Time
 
       Cold start performance (time to render first diagram):
@@ -450,49 +434,27 @@ class PerformanceBenchmarker
       |Tool |Average Startup Time
 
       |Sirena
-      |#{format_time(results[:startup_time][:sirena])}
+      |#{format_time(startup[:sirena])}
 
       |Mermaid.js
-      |#{results[:startup_time][:mermaid] ? format_time(results[:startup_time][:mermaid]) : 'N/A'}
+      |#{format_time(startup[:mermaid])}
       |===
 
-      #{if results[:startup_time][:mermaid]
-          speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
-          "*Startup speedup:* #{speedup_label(speedup)}"
-        end}
+      #{startup_speedup_report(startup)}
+    ADOC
+  end
 
-      == Memory Usage
-
-      #{if results[:memory_usage] && !results[:memory_usage].empty?
-          mem = results[:memory_usage]
-          <<~MEMORY
-            Note: #{mem[:note]}
-
-          MEMORY
-        end}
-
+  def report_analysis(results)
+    average = calculate_average_speedup(results[:single_diagram])
+    findings = findings_report(results, average)
+    <<~ADOC
       == Analysis
 
       === Key Findings
 
       *Measured Results:*
 
-      #{if results[:single_diagram]
-          avg_speedup = calculate_average_speedup(results[:single_diagram])
-          <<~FINDINGS
-            . *Rendering Speed:* #{avg_speedup} on average for single diagrams
-            #{if results[:batch_rendering] && results[:batch_rendering][:sirena_total] && results[:batch_rendering][:mermaid_total]
-                batch_speedup = results[:batch_rendering][:mermaid_total] / results[:batch_rendering][:sirena_total]
-                ". *Batch Processing:* #{speedup_label(batch_speedup)} for rendering #{results[:batch_rendering][:diagram_count]} diagrams"
-              end}
-            #{if results[:startup_time][:mermaid]
-                startup_speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
-                ". *Startup Time (cold start):* #{speedup_label(startup_speedup)}"
-              end}
-            . *Dependencies:* No Node.js, Puppeteer, or Chrome required
-
-          FINDINGS
-        end}
+      #{findings}
 
       === Architectural Differences
 
@@ -519,6 +481,13 @@ class PerformanceBenchmarker
       . *Live Preview:* Real-time diagram editing
       . *Client-Side Rendering:* When rendering must happen in browser
 
+    ADOC
+  end
+
+  def report_reproduction(results)
+    average = calculate_average_speedup(results[:single_diagram])
+    conclusion = conclusion_startup_report(results[:startup_time])
+    <<~ADOC
       == Reproduction
 
       To reproduce these benchmarks:
@@ -539,16 +508,8 @@ class PerformanceBenchmarker
 
       Measured against mermaid-cli (mmdc) on this machine:
 
-      * **#{calculate_average_speedup(results[:single_diagram])}** rendering, averaged over the sample diagrams above
-      #{if results[:startup_time][:mermaid]
-          startup_speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
-          explanation = if startup_speedup >= 1
-                          '(Sirena pays Ruby interpreter + gem load per process, but still starts faster here)'
-                        else
-                          "(Sirena pays Ruby interpreter + gem load per process; mmdc's Node process starts faster here)"
-                        end
-          "* **Cold start: #{speedup_label(startup_speedup)}** than launching mmdc #{explanation}"
-        end}
+      * **#{average}** rendering, averaged over the sample diagrams above
+      #{conclusion}
       * **Memory usage:** not measured in this run
       * **Native Ruby integration** (no Node.js required at render time)
 
@@ -561,12 +522,126 @@ class PerformanceBenchmarker
     ADOC
   end
 
-  def calculate_average_speedup(single_results)
-    speedups = single_results.values.map do |data|
-      next unless data[:mermaid_time]
+  def single_report_rows(results)
+    results.map do |type, data|
+      mermaid = format_time(data[:mermaid_time])
+      speedup = data[:mermaid_time] ? single_speedup(data) : "N/A"
+      "\n#{REPORT_CELL_INDENT}|#{type}\n" \
+        "#{REPORT_CELL_INDENT}|#{format_time(data[:sirena_time])}\n" \
+        "#{REPORT_CELL_INDENT}|#{mermaid}\n" \
+        "#{REPORT_CELL_INDENT}|#{speedup}"
+    end.join("\n")
+  end
 
-      data[:mermaid_time] / data[:sirena_time]
-    end.compact
+  def batch_report(batch)
+    if batch.nil? || batch.empty?
+      return "*Batch benchmarking requires mermaid-cli installation*"
+    end
+
+    <<~BATCH
+      Performance rendering #{batch[:diagram_count]} diagrams:
+
+      [cols="2,2,2"]
+      |===
+      |Metric |Sirena |Mermaid.js
+
+      |Total Time
+      |#{format_time(batch[:sirena_total])}
+      |#{format_time(batch[:mermaid_total])}
+
+      |Per Diagram
+      |#{format_time(batch[:sirena_per_diagram])}
+      |#{format_time(batch[:mermaid_per_diagram])}
+
+      |Throughput
+      |#{batch_throughput(batch, :sirena_total)}
+      |#{batch_throughput(batch, :mermaid_total)}
+      |===
+
+      #{batch_speedup_report(batch)}
+
+    BATCH
+  end
+
+  def batch_throughput(batch, key)
+    return "N/A" unless batch[key]
+
+    "#{(batch[:diagram_count] / batch[key]).round(1)} diagrams/sec"
+  end
+
+  def batch_speedup_report(batch)
+    unless batch[:mermaid_total]
+      return "*Batch speedup:* not measured " \
+             "(mermaid-cli failed during this run)"
+    end
+
+    speedup = batch[:mermaid_total] / batch[:sirena_total]
+    "*Batch speedup:* #{speedup_label(speedup)}"
+  end
+
+  def startup_speedup_report(startup)
+    return unless startup[:mermaid]
+
+    speedup = startup[:mermaid] / startup[:sirena]
+    "*Startup speedup:* #{speedup_label(speedup)}"
+  end
+
+  def memory_report(memory)
+    return if memory.nil? || memory.empty?
+
+    "Note: #{memory[:note]}\n\n"
+  end
+
+  def findings_report(results, average)
+    return unless results[:single_diagram]
+
+    <<~FINDINGS
+      . *Rendering Speed:* #{average} on average for single diagrams
+      #{batch_finding(results[:batch_rendering])}
+      #{startup_finding(results[:startup_time])}
+      . *Dependencies:* No Node.js, Puppeteer, or Chrome required
+
+    FINDINGS
+  end
+
+  def batch_finding(batch)
+    return unless batch && batch[:sirena_total] && batch[:mermaid_total]
+
+    speedup = batch[:mermaid_total] / batch[:sirena_total]
+    ". *Batch Processing:* #{speedup_label(speedup)} for rendering " \
+      "#{batch[:diagram_count]} diagrams"
+  end
+
+  def startup_finding(startup)
+    return unless startup[:mermaid]
+
+    speedup = startup[:mermaid] / startup[:sirena]
+    ". *Startup Time (cold start):* #{speedup_label(speedup)}"
+  end
+
+  def conclusion_startup_report(startup)
+    return unless startup[:mermaid]
+
+    speedup = startup[:mermaid] / startup[:sirena]
+    explanation = startup_explanation(speedup)
+    "* **Cold start: #{speedup_label(speedup)}** than launching mmdc " \
+      "#{explanation}"
+  end
+
+  def startup_explanation(speedup)
+    if speedup >= 1
+      return "(Sirena pays Ruby interpreter + gem load per process, " \
+             "but still starts faster here)"
+    end
+
+    "(Sirena pays Ruby interpreter + gem load per process; " \
+      "mmdc's Node process starts faster here)"
+  end
+
+  def calculate_average_speedup(single_results)
+    speedups = single_results.values.filter_map do |data|
+      data[:mermaid_time] / data[:sirena_time] if data[:mermaid_time]
+    end
 
     return "N/A" if speedups.empty?
 

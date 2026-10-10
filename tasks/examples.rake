@@ -42,21 +42,13 @@ namespace :examples do
     ExampleTasks.with_examples_lock(examples_dir) do
       puts "Pruning example SVGs with no source..."
       removed = ExampleTasks.prune_orphan_svgs(examples_dir)
-      message = if removed.zero?
-                  "Nothing to prune."
-                else
-                  "Removed #{removed} orphaned SVG(s)."
-                end
-      puts message
+      message = "Removed #{removed} orphaned SVG(s)."
+      puts removed.zero? ? "Nothing to prune." : message
 
       puts "\nPruning example SVGs beside a source that never renders..."
       removed = ExampleTasks.prune_known_unrenderable_svgs(examples_dir)
-      message = if removed.zero?
-                  "Nothing to prune."
-                else
-                  "Removed #{removed} stale SVG(s)."
-                end
-      puts message
+      message = "Removed #{removed} stale SVG(s)."
+      puts removed.zero? ? "Nothing to prune." : message
     end
   end
 
@@ -121,9 +113,8 @@ namespace :examples do
 
         # Read metadata
         metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
-        title = metadata["title"] || basename.split("-")
-          .map(&:capitalize)
-          .join(" ")
+        fallback_title = basename.split("-").map(&:capitalize).join(" ")
+        title = metadata["title"] || fallback_title
         description = metadata["description"] || "Example diagram"
         complexity = metadata["complexity"] || "basic"
         use_cases = metadata["use_cases"] || []
@@ -151,8 +142,8 @@ namespace :examples do
         content << "----"
         content << ""
         content << ".Rendered Output"
-        content << "image::../../../assets/examples/#{diagram_type}/" \
-                   "#{basename}.svg[#{title},600]"
+        image_path = "../../../assets/examples/#{diagram_type}/#{basename}.svg"
+        content << "image::#{image_path}[#{title},600]"
         content << ""
         content << "'''"
         content << ""
@@ -281,8 +272,8 @@ namespace :examples do
     end
 
     puts "\n#{'=' * 60}"
-    puts "Total: #{total_examples} examples across #{diagram_dirs.size} " \
-         "diagram types"
+    puts "Total: #{total_examples} examples across " \
+         "#{diagram_dirs.size} diagram types"
     puts "=" * 60
   end
 
