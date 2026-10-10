@@ -140,7 +140,6 @@ module Sirena
           path.d = section_path(edge.sections.first)
           path.fill = "none"
           apply_theme_to_edge(path)
-          path.marker_end = "url(#arrowhead)"
         end
       end
 
