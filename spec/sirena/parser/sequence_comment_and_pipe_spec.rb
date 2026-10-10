@@ -21,7 +21,8 @@ RSpec.describe Sirena::Parser::Sequence do
 
   describe "a bare % at a statement's start is a whole-line comment" do
     it "accepts a comment-only diagram with zero participants" do
-      diagram = parser.parse("sequenceDiagram\n    %foo bar->baz: not a message\n")
+      source = "sequenceDiagram\n    %foo bar->baz: not a message\n"
+      diagram = parser.parse(source)
 
       expect(diagram.participants).to eq([])
     end

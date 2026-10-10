@@ -31,9 +31,7 @@ RSpec.describe Sirena::Parser::Sequence do
     it "accepts #{name} without changing the diagram around it" do
       diagram = parser.parse("sequenceDiagram\n#{line}\n#{body}")
 
-      expect(diagram.participants.map(&:id)).to eq(plain.participants.map(&:id))
-      expect(diagram.messages.size).to eq(plain.messages.size)
-      expect(diagram.notes.size).to eq(plain.notes.size)
+      expect(diagram_shape(diagram)).to eq(diagram_shape(plain))
     end
   end
 
@@ -44,7 +42,9 @@ RSpec.describe Sirena::Parser::Sequence do
   end
 
   it "accepts metadata after the first message" do
-    diagram = parser.parse("sequenceDiagram\nAlice->Bob: hi\nautonumber\nBob->Alice: yo\n")
+    source = "sequenceDiagram\nAlice->Bob: hi\n" \
+             "autonumber\nBob->Alice: yo\n"
+    diagram = parser.parse(source)
 
     expect(diagram.messages.size).to eq(2)
   end
@@ -120,8 +120,14 @@ RSpec.describe Sirena::Parser::Sequence do
   # accDescr block rule ever accepts a block with no closing brace.
   describe "malformed metadata still fails" do
     it "rejects an unterminated accDescr block" do
-      expect { parser.parse("sequenceDiagram\naccDescr {\nnever closed\nAlice->Bob: hi\n") }
+      source = "sequenceDiagram\naccDescr {\nnever closed\nAlice->Bob: hi\n"
+
+      expect { parser.parse(source) }
         .to raise_error(Sirena::Parser::ParseError)
     end
+  end
+
+  def diagram_shape(diagram)
+    [diagram.participants.map(&:id), diagram.messages.size, diagram.notes.size]
   end
 end
