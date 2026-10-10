@@ -47,25 +47,18 @@ module Sirena
     #   lines landing on the same stream, so the default logs to $stderr
     #   instead; pass one in to redirect or format diagnostics your own way.
     # @raise [PipelineError] if `notation` is invalid or not registered
+    #
+    # Theme loading parses attacker-supplied YAML, and it happens here,
+    # before `render` is ever called. The exhaustion rescue converts those
+    # VM-level failures into the public pipeline error contract.
     def initialize(verbose: false, theme: nil, today: nil, logger: nil,
                    notation: nil)
       @verbose = verbose
       @notation_id = registered_id(notation)
       @theme = load_theme(theme)
       @today = today
-      @logger = logger || Logger.new($stderr).tap do |default_logger|
-        default_logger.formatter = proc do |_severity, _time, _progname, message|
-          "[Sirena::Engine] #{message}\n"
-        end
-      end
+      @logger = logger || default_logger
     rescue *EXHAUSTION_ERRORS => e
-      # Theme loading parses attacker-supplied YAML, and it happens HERE --
-      # before `render` is ever called, so `render`'s own rescue cannot see
-      # it. A host embedding sirena and catching `StandardError` still loses
-      # its whole process, because neither exhaustion class is one.
-      #
-      # Reproduce with a theme whose YAML nests 2000 deep:
-      #   Sirena::Engine.new(theme: bomb_path)   # raised raw SystemStackError
       raise PipelineError, "Theme loading failed: #{e.message}"
     end
 
@@ -89,75 +82,68 @@ module Sirena
     #   validity check
     # @raise [Renderer::RenderError] if rendering itself fails
     # @raise [PipelineError] if a stage fails with no error class of its own
+    #
+    # Layer-specific Sirena errors propagate unchanged so the corpus harness
+    # keeps their stage. Exhaustion and notation-plugin failures are wrapped,
+    # without embedding backtraces in messages; Ruby retains each cause for
+    # diagnostics while batch rendering avoids accumulating huge strings.
     def render(source, options = {})
-      @verbose = options[:verbose] if options.key?(:verbose)
-
-      # Override theme if specified in options
-      theme = options[:theme] ? load_theme(options[:theme]) : @theme
-
-      # Same for the reference date. Without this, Sirena.render and the
-      # rake tasks that call it get the wall clock no matter what they pass,
-      # silently — examples:generate rewrote its committed gantt SVG daily.
-      today = options.key?(:today) ? options[:today] : @today
-      layout_engine =
-        checked_layout_engine(options.fetch(:layout_engine, :grid))
-
-      log "Starting render pipeline..."
-
-      explicit_notation = case options[:notation]
-                          when nil then @notation_id
-                          else options[:notation]
-                          end
-      notation = Notation.resolve(
-        explicit: explicit_notation,
-        path: options[:path],
-        source: source,
-      )
-      parsed = parse_source(notation, source)
-
-      graph = transform_diagram(parsed.diagram, parsed.transform, today, theme,
-                                layout_engine)
-      laid_out_graph = layout_graph(graph)
-      svg_document = render_svg(laid_out_graph, parsed.renderer, theme)
-
-      # Return XML string
-      svg_xml = svg_document.to_xml
-      log "Render complete, #{svg_xml.length} bytes"
-
-      svg_xml
+      render_pipeline(source, options)
     rescue Error
-      # Every layer raises its own Sirena::Error subclass (DiagramTypeError,
-      # Parser::ParseError, Layout::LayoutError, Renderer::RenderError)
-      # naming the stage that failed. Wrapping one into PipelineError would
-      # erase exactly the field the corpus harness records as `stage`, so
-      # let it propagate unwrapped instead.
       raise
     rescue *EXHAUSTION_ERRORS => e
-      # `EXHAUSTION_ERRORS` are not `StandardError`, so without naming them
-      # here a deeply nested document takes the whole host down instead of
-      # failing one render.
-      #
-      # The message carries `e.message` only, never `e.backtrace`. A real
-      # stack overflow's backtrace runs to thousands of frames -- measured
-      # at 1,044,280 bytes for one bomb through an unguarded type -- and
-      # embedding that here meant every failure in a batch kept a
-      # megabyte-sized string alive in `BatchCommand`'s error list: the
-      # very structure meant to survive exhaustion re-accumulating it.
-      # Raising inside the rescue that caught `e` chains it onto
-      # `PipelineError` as `cause` automatically, so `e` and its backtrace
-      # are still one `.cause` away for anyone debugging; they are just
-      # not baked into the string every caller of `#message` receives.
       raise PipelineError, "Rendering failed: #{e.message}"
     rescue Notation::PluginFailure => e
-      # A failure with no layer error of its own, from a notation or the
-      # layers it returned: any Exception, not only a StandardError, but
-      # never exit, a signal or a host's timeout. `e` becomes `cause`
-      # automatically because we are still inside the rescue; never
-      # stringify a backtrace into the message.
       raise PipelineError, "Rendering failed: #{describe_failure(e)}"
     end
 
     private
+
+    def default_logger
+      Logger.new($stderr).tap do |created_logger|
+        created_logger.formatter = proc do |_level, _time, _name, message|
+          "[Sirena::Engine] #{message}\n"
+        end
+      end
+    end
+
+    def render_pipeline(source, options)
+      @verbose = options[:verbose] if options.key?(:verbose)
+      theme, today, layout_engine = render_settings(options)
+      log "Starting render pipeline..."
+      parsed = parse_source(resolve_notation(source, options), source)
+      graph = transform_diagram(parsed.diagram, parsed.transform, today, theme,
+                                layout_engine)
+      document = render_svg(layout_graph(graph), parsed.renderer, theme)
+      serialize(document)
+    end
+
+    def render_settings(options)
+      theme = options[:theme] ? load_theme(options[:theme]) : @theme
+      today = options.key?(:today) ? options[:today] : @today
+      layout_engine = checked_layout_engine(
+        options.fetch(:layout_engine, :grid),
+      )
+      [theme, today, layout_engine]
+    end
+
+    def resolve_notation(source, options)
+      explicit = case options[:notation]
+                 when nil then @notation_id
+                 else options[:notation]
+                 end
+      Notation.resolve(
+        explicit: explicit,
+        path: options[:path],
+        source: source,
+      )
+    end
+
+    def serialize(document)
+      xml = document.to_xml
+      log "Render complete, #{xml.length} bytes"
+      xml
+    end
 
     # "Class: message", for an exception whose own #message may raise (an
     # RSpec::Expectations::MultipleExpectationsNotMetError built without its
@@ -277,26 +263,18 @@ module Sirena
       return Theme::Registry.get(:default) if theme_spec.nil?
 
       case theme_spec
-      when String
-        # Could be theme name or path to file
-        if File.exist?(theme_spec)
-          Theme.load(theme_spec)
-        else
-          resolve_theme_name(theme_spec)
-        end
-      when Symbol
-        # Theme::Registry is itself keyed by Symbol internally, so a Symbol
-        # here is a plausible caller mistake (e.g. `theme: :dark`), not an
-        # exotic input -- it must go through the same raise-on-unknown path
-        # as a String, not the silent-default `else` below.
-        resolve_theme_name(theme_spec.to_s)
-      when Theme
-        theme_spec
-      when Hash
-        Theme.new(**theme_spec)
-      else
-        Theme::Registry.get(:default)
+      when String then load_string_theme(theme_spec)
+      when Symbol then resolve_theme_name(theme_spec.to_s)
+      when Theme then theme_spec
+      when Hash then Theme.new(**theme_spec)
+      else Theme::Registry.get(:default)
       end
+    end
+
+    def load_string_theme(theme_spec)
+      return Theme.load(theme_spec) if File.exist?(theme_spec)
+
+      resolve_theme_name(theme_spec)
     end
 
     # Resolves a theme name against the registry, or raises -- an unknown

@@ -165,20 +165,23 @@ module Sirena
 
     # Handles errors and exits with appropriate code.
     #
-    # @param error [StandardError, SystemStackError, NoMemoryError] the error to handle
+    # @param error [StandardError, SystemStackError, NoMemoryError]
+    #   the error to handle
     # @return [void]
     def handle_error(error)
       warn "Error: #{error.message}"
+      report_verbose_error(error) if options[:verbose]
+      exit 1
+    end
+
+    def report_verbose_error(error)
       # `backtrace` is nil when the VM fails an allocation before it can
       # even build one -- `NoMemoryError` from `File.read` or a hostile
       # `--theme` reaches this method through the rescue above, and
       # `--verbose` on that failure must not itself crash the CLI.
-      if options[:verbose]
-        warn error.backtrace&.join("\n")
-        diagnostics = ErrorReport.cause_diagnostics(error)
-        warn diagnostics unless diagnostics.empty?
-      end
-      exit 1
+      warn error.backtrace&.join("\n")
+      diagnostics = ErrorReport.cause_diagnostics(error)
+      warn diagnostics unless diagnostics.empty?
     end
   end
 end

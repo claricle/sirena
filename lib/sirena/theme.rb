@@ -11,6 +11,8 @@ module Sirena
   # under. A sub-model file required standalone (bypassing this file) would
   # raise NameError on Sirena::Theme, not resolve to a wrong superclass.
   class Theme < Lutaml::Model::Serializable
+    MERGEABLE_ATTRIBUTES = %i[colors typography shapes spacing effects].freeze
+
     require_relative "theme/color_palette"
     require_relative "theme/typography"
     require_relative "theme/shape_styles"
@@ -46,15 +48,18 @@ module Sirena
       self.class.new(
         name: other_theme.name || name,
         description: other_theme.description || description,
-        colors: merge_attribute(colors, other_theme.colors),
-        typography: merge_attribute(typography, other_theme.typography),
-        shapes: merge_attribute(shapes, other_theme.shapes),
-        spacing: merge_attribute(spacing, other_theme.spacing),
-        effects: merge_attribute(effects, other_theme.effects),
+        **merged_attributes(other_theme),
       )
     end
 
     private
+
+    def merged_attributes(other_theme)
+      MERGEABLE_ATTRIBUTES.to_h do |attribute|
+        values = [public_send(attribute), other_theme.public_send(attribute)]
+        [attribute, merge_attribute(*values)]
+      end
+    end
 
     def merge_attribute(base, override)
       return base if override.nil?
