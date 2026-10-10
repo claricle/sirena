@@ -62,10 +62,13 @@ RSpec.describe Sirena::Parser::Builders::Timeline do
   context "with a task before any section" do
     let(:tree) { [{ task: "first" }] }
 
-    it "opens a Default section" do
-      expect(diagram.sections.map do |s|
-        [s.name, s.tasks]
-      end).to eq([["Default", ["first"]]])
+    it "opens no section" do
+      expect(diagram.sections).to be_empty
+    end
+
+    it "keeps the task as a bare period of the diagram" do
+      expect(diagram.events.map { |e| [e.time, e.bare?] })
+        .to eq([["first", true]])
     end
   end
 

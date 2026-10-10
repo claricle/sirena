@@ -105,14 +105,11 @@ module Sirena
         end
 
         def process_task(diagram, item)
-          # Ensure we have a section for tasks
-          unless @current_section
-            @current_section = Diagram::TimelineSection.new("Default")
-            diagram.sections << @current_section
-          end
-
           task_name = extract_text(item[:task])
-          @current_section.tasks << task_name unless task_name.empty?
+          return if task_name.empty?
+
+          event = Diagram::TimelineEvent.new.tap { |e| e.time = task_name }
+          (@current_section || diagram).events << event
         end
 
         def extract_descriptions(descriptions_data)
