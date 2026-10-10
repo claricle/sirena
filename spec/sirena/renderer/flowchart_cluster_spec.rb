@@ -555,7 +555,7 @@ RSpec.describe Sirena::Engine do
       xml = render("flowchart TB\nsubgraph a\nsubgraph b\nend\nend\nz\n")
       outer = box(xml, "a")
 
-      expect([outer[:width], outer[:height]]).to eq([47.0, 74.0])
+      expect([outer[:width], outer[:height]]).to eq([47.0, 50.0])
     end
   end
 
@@ -676,8 +676,10 @@ RSpec.describe Sirena::Engine do
     # One box holds the other, so trimming each end independently put
     # both of them past the other and drew the arrow backwards.
     it "still points at the target when one box holds the other" do
+      # B keeps the two centres apart; boxes with one centre have no way
+      # to run.
       xml = render("flowchart TD\nsubgraph outer\nsubgraph inner\nA\n" \
-                   "end\nend\nouter --> inner\n")
+                   "end\nB\nend\nouter --> inner\n")
       path = xml[/<g id="edge-outer_to_inner">\s*<path[^>]*\bd="([^"]*)"/, 1]
       sx, sy, tx, ty = path.scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
 
@@ -726,8 +728,8 @@ RSpec.describe Sirena::Engine do
       # The whole path. Counting decimal places only proves the number is
       # no longer than three, which rounding to two or fewer also
       # satisfies. The start is where the ray between the two boxes' exact
-      # centres leaves `one` (crossing x = 300).
-      expect(path).to eq("M 69.1 137.0 L 46.277 212.5")
+      # centres leaves `one`.
+      expect(path).to eq("M 71.28 113.0 L 46.277 188.5")
     end
 
     it "joins a box to a plain node" do

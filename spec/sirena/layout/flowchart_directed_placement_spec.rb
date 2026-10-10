@@ -43,7 +43,7 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
     expect(found["A"].y).to be >= found["B"].y + found["B"].height
   end
 
-  it "boxes a subgraph around its members with 20 points of padding" do
+  it "boxes a subgraph around its members with 8 points beside and 25 above and below" do
     xml = Sirena::Engine.new.render("flowchart TD\nsubgraph s [T]\nA --> B\nend\n")
     rects = xml.scan(/<rect[^>]*>/).map do |tag|
       %w[x y width height].map { |name| tag[/\s#{name}="(-?[\d.]+)"/, 1].to_f }
@@ -52,8 +52,11 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
     inner = rects.reject { |rect| rect == cluster }
 
     expect(inner.map { |x, _, w, _| x + w }.max).to be_within(1.0)
-      .of(cluster[0] + cluster[2] - 20)
-    expect(inner.map { |x, *| x }.min).to be_within(0.01).of(cluster[0] + 20)
+      .of(cluster[0] + cluster[2] - 8)
+    expect(inner.map { |x, *| x }.min).to be_within(1.0).of(cluster[0] + 8)
+    expect(inner.map { |_, y, *| y }.min).to be_within(0.01).of(cluster[1] + 25)
+    expect(inner.map { |_, y, _, h| y + h }.max).to be_within(1.0)
+      .of(cluster[1] + cluster[3] - 25)
   end
 
   it "places every node when a model repeats an id" do
