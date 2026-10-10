@@ -6,10 +6,6 @@ RSpec.describe Sirena::Parser::Builders::CaptureString do
   # Parslet captures an empty quoted string as `[]`; each row feeds one
   # through a parser and reads back the label the builder produced.
   rows = [
-    ["sequence participant alias falls back to the id",
-     Sirena::Parser::Sequence,
-     "sequenceDiagram\n  participant A as \"\"\n  A->>A: hi\n",
-     ->(d) { d.participants.first.label }, "A"],
     ["class label falls back to the id",
      Sirena::Parser::ClassDiagram,
      "classDiagram\n  class C1[\"\"]\n",

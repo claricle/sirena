@@ -879,10 +879,10 @@ module Sirena
             str("end") >> line_end
         end
 
-        # Label can be quoted or unquoted text
-        rule(:label) do
-          string | unquoted_label
-        end
+        # mmdc keeps the quotes of `as "x"` in the label (measured, see
+        # spec/sirena/parser/sequence_alias_quotes_spec.rb), so a quoted
+        # alias is ordinary text, never a `string`.
+        rule(:label) { unquoted_label }
 
         # Only caller is `declaration_body`'s alias branch, shared by
         # `participant`/`actor`/`create`. Stops at an inline `;` for the
@@ -892,7 +892,7 @@ module Sirena
         # statement. Measured against mermaid 11.16.1: `B` gets label
         # "Bee", and `A->>B: m` parses as a separate message.
         rule(:unquoted_label) do
-          (line_end.absent? >> semicolon.absent? >> any).repeat(1)
+          (char_ref | (line_end.absent? >> semicolon.absent? >> any)).repeat(1)
         end
       end
     end
