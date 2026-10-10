@@ -162,10 +162,12 @@ RSpec.describe Sirena::Notation::PlantUML do
       end
     end
 
-    it "stacks them header, title, content, legend, caption, footer" do
-      content = REXML::XPath.first(svg, "//g[@id='class-Bob']/rect")
-
+    it "stacks them header, title, legend, caption, footer" do
       expect(rows.values).to eq(rows.values.sort)
+    end
+
+    it "puts the content between the title and the legend" do
+      content = REXML::XPath.first(svg, "//g[@id='class-Bob']/rect")
       shift = svg.root.elements["g"].attributes["transform"][/, ([\d.]+)\)/, 1]
 
       expect(number(content, "y") + shift.to_f)
@@ -179,20 +181,25 @@ RSpec.describe Sirena::Notation::PlantUML do
         .to be < number(svg.root, "height")
     end
 
-    it "puts the header against the right edge and the title in the middle" do
-      width = number(svg.root, "width")
+    it "puts the title in the middle" do
+      expect(number(panel(svg, "title").elements["text"], "x"))
+        .to eq(number(svg.root, "width") / 2)
+    end
+
+    it "puts the header against the right edge" do
       header = panel(svg, "header").elements["rect"] ||
                panel(svg, "header").elements["text"]
 
-      expect(number(panel(svg, "title").elements["text"], "x"))
-        .to eq(width / 2)
-      expect(number(header, "x")).to be > width / 2
+      expect(number(header, "x")).to be > number(svg.root, "width") / 2
     end
 
-    it "draws the legend as a bordered box and the others as bare text" do
+    it "draws the legend as a bordered box" do
       rect = panel(svg, "legend").elements["rect"].attributes
 
       expect([rect["stroke"], rect["fill"]]).to eq(%w[#000000 #DDDDDD])
+    end
+
+    it "draws the title as bare text" do
       expect(panel(svg, "title").elements["rect"]).to be_nil
     end
 
@@ -204,26 +211,36 @@ RSpec.describe Sirena::Notation::PlantUML do
         .to eq(["#888888", "#888888", "bold", nil])
     end
 
-    it "moves the diagram down as one group and leaves it alone with no captions" do
-      plain = drawn("class A")
-
+    it "moves the diagram down as one group" do
       expect(svg.root.elements["g"].attributes["transform"])
         .to match(/translate\(\d.* [1-9]/)
-      expect(REXML::XPath.match(plain, "//g[@transform]")).to be_empty
+    end
+
+    it "leaves the diagram alone with no captions" do
+      expect(REXML::XPath.match(drawn("class A"), "//g[@transform]")).to be_empty
     end
   end
 
   describe "drawing a style" do
-    it "fills the canvas and dresses a caption" do
-      svg = drawn("title T", *style_block(
+    let(:styled) do
+      drawn("title T", *style_block(
         "BackGroundColor orange", "title {", "BackGroundColor yellow",
         "FontColor red", "FontSize 20", "}"
       ))
-      text = panel(svg, "title").elements["text"].attributes
+    end
 
-      expect(svg.root.elements["rect"].attributes["fill"]).to eq("#FFA500")
-      expect(panel(svg, "title").elements["rect"].attributes["fill"])
+    it "fills the canvas" do
+      expect(styled.root.elements["rect"].attributes["fill"]).to eq("#FFA500")
+    end
+
+    it "fills a caption's box" do
+      expect(panel(styled, "title").elements["rect"].attributes["fill"])
         .to eq("#FFFF00")
+    end
+
+    it "sets a caption's font colour and size" do
+      text = panel(styled, "title").elements["text"].attributes
+
       expect([text["fill"], text["font-size"]]).to eq(["#FF0000", "20.0"])
     end
 
