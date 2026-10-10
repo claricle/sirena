@@ -215,8 +215,6 @@ rows:
   count: 3
 - file: scripts/mmdc_oracle.rb
   count: 1
-- file: scripts/sequence_fuzz.rb
-  count: 1
 - file: scripts/verify_docs_site.rb
   count: 1
 - file: spec/integration/state_diagram_integration_spec.rb
