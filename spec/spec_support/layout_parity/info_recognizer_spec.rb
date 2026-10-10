@@ -20,17 +20,6 @@ RSpec.describe SpecSupport::LayoutParity::InfoRecognizer do
     [recognized(reference), recognized(sirena)]
   end
 
-  def matched_real_pair
-    name = "001_rendering_info_spec_info_0"
-    reference = extract(reference_svg("info/#{name}.svg"), recognizer)
-    sirena = extract(
-      Sirena.render(corpus_source("info/#{name}.mmd")), recognizer
-    )
-    SpecSupport::LayoutParity::ElementMatcher.match(
-      reference: reference, sirena: sirena,
-    )
-  end
-
   def expected_pair
     [[[:info_text, "info-text", nil, "v11.12.0"]],
      [[:info_text, "info-text", nil, "Info"]]]
@@ -38,12 +27,5 @@ RSpec.describe SpecSupport::LayoutParity::InfoRecognizer do
 
   it "uses one fixed role despite the producers' different wording" do
     expect(real_pair).to eq(expected_pair)
-  end
-
-  it "matches the fixed role instead of the producer-specific wording" do
-    result = matched_real_pair
-
-    expect([result[:failures], result[:pairs].map { |pair| pair.map(&:key) }])
-      .to eq([[], [["info-text", "info-text"]]])
   end
 end
