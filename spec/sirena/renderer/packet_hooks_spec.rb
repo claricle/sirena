@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::Packet, "protected hooks" do
+RSpec.describe Sirena::Renderer::Packet do
   subject(:renderer) { described_class.new }
 
   let(:svg) { Sirena::Svg::Document.new }
