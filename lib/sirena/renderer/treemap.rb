@@ -6,6 +6,7 @@ require_relative "../svg/document"
 require_relative "../svg/rect"
 require_relative "../svg/text"
 require_relative "../svg/group"
+require_relative "treemap/section_total"
 
 module Sirena
   module Renderer
@@ -66,6 +67,7 @@ module Sirena
 
         # Add value if it's a leaf
         group << label_element(cell.value_label) if cell.value_label
+        add_section_total(group, cell)
 
         # Render children recursively
         cell.children.each { |child| render_cell(group, child, group) }
@@ -75,6 +77,22 @@ module Sirena
         else
           doc << group
         end
+      end
+
+      def add_section_total(group, cell)
+        return if cell.children.empty?
+
+        total = SectionTotal.new(cell).text
+        return unless total
+
+        group << label_element(section_total_label(cell, total))
+      end
+
+      def section_total_label(cell, total)
+        Layout::Treemap::Label.new(
+          text: total, x: cell.box.x + cell.box.width - 5, y: cell.label.y,
+          font_size: 10, style: "value", text_anchor: "end"
+        )
       end
 
       def label_element(label)
@@ -88,6 +106,7 @@ module Sirena
         text.content = label.text
         text.x = label.x
         text.y = label.y
+        text.text_anchor = label.text_anchor if label.text_anchor
       end
 
       def set_label_style(text, label)
