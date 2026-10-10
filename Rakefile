@@ -3,7 +3,15 @@
 require "bundler/gem_tasks"
 require "rspec/core/rake_task"
 
-RSpec::Core::RakeTask.new(:spec)
+require_relative "tasks/support/spec_shard"
+
+# CI splits the suite across parallel jobs with SIRENA_SPEC_SHARD=<i>/<n>;
+# unset, every spec file runs.
+SPEC_SHARD = Sirena::SpecShard.from_env
+
+RSpec::Core::RakeTask.new(:spec) do |task|
+  task.pattern = SPEC_SHARD.files if SPEC_SHARD
+end
 
 # Speed and size checks, held out of `rspec`'s default pattern by their
 # file names. They read the clock and build fixtures with thousands of
@@ -21,10 +29,12 @@ Dir.glob("tasks/**/*.rake").each { |r| load r }
 # to run wherever `rake` does, or a refactor can drop 200 cases and nothing
 # notices. Measured: the whole corpus (1997 cases) renders in ~4s, so this
 # adds negligible time to the default task.
-task default: [
-  :spec,
+SPEC_TAIL = [
   :benchmark,
   "corpus:check",
   "claims_manifest:check",
   "layout_parity:check",
-]
+].freeze
+
+skip_tail = SPEC_SHARD && !SPEC_SHARD.runs_tail?
+task default: [:spec, *(skip_tail ? [] : SPEC_TAIL)]
