@@ -281,6 +281,23 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
   end
 
+  describe "hide footbox" do
+    let(:shown) { scene_of("A -> B") }
+    let(:hidden) { scene_of("hide footbox", "A -> B") }
+
+    it "draws the heads at the top only" do
+      expect(hidden.heads.map(&:y).uniq).to eq([shown.heads.first.y])
+    end
+
+    it "shortens the canvas by the height of a head" do
+      expect(shown.height - hidden.height).to eq(shown.heads.first.height)
+    end
+
+    it "ends the lifelines where they ended" do
+      expect(hidden.lifelines.map(&:y2)).to eq(shown.lifelines.map(&:y2))
+    end
+  end
+
   describe "participant heads" do
     it "makes every head at least the requested minimum plus 14 wide" do
       heads = top_heads(scene_of("skinparam MinClassWidth 100", "A -> B"))

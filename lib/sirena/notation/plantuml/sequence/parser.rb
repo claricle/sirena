@@ -46,6 +46,7 @@ module Sirena
                          (?:[ \t]+as[ \t]+(#{NAME}))?
                          (?:[ \t]+<<[ \t]*([^<>\n]+?)[ \t]*>>)?\z/xio
           SKINPARAM_WIDTH = /\Askinparam[ \t]+MinClassWidth[ \t]+(\d+)\z/i
+          HIDE_FOOTBOX = /\Ahide[ \t]+footbox\z/i
           STYLE_OPEN = /\A<style>\z/i
           STYLE_CLOSE = /\A<\/style>\z/i
           MESSAGE = /\A(#{QUOTED}|#{NAME})[ \t]*
@@ -88,7 +89,8 @@ module Sirena
                            :NOTE, :END_NOTE, :BLOCK, :BRANCH, :RETURN, :DIVIDER,
                            :DESTROY, :COLOUR, :SKINPARAM_WIDTH, :STYLE_OPEN,
                            :STYLE_CLOSE, :PARALLEL,
-                           :PARALLEL_KINDS
+                           :PARALLEL_KINDS,
+                           :HIDE_FOOTBOX
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -117,6 +119,7 @@ module Sirena
             @min_head_width = nil
             @teoz = false
             @parallel = false
+            @footbox = true
           end
 
           def lines_of(source)
@@ -182,6 +185,8 @@ module Sirena
           def read_setting(text, number)
             if (match = SKINPARAM_WIDTH.match(text))
               @min_head_width = match[1].to_i
+            elsif HIDE_FOOTBOX.match?(text)
+              @footbox = false
             elsif STYLE_OPEN.match?(text)
               @pending_style = { line: number, text: text, lines: [] }
             else
@@ -404,7 +409,7 @@ module Sirena
             check_boxes
             Diagram.new(participants: @participants.values.freeze,
                         items: @outline.items.freeze, boxes: @boxes.freeze,
-                        min_head_width: @min_head_width)
+                        min_head_width: @min_head_width, footbox: @footbox)
           end
 
           def unclosed_block

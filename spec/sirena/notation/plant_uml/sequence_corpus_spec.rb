@@ -26,6 +26,7 @@ module PlantUmlSequenceCorpus
     559333843e38 184d55bcfb9c 2dd4eecfa67b f985a9b8f0de
     0385427ea4be 24072f84b995 577feb6055fb
     6893700e037a 18d6381b866f f602d00329ee
+    7ff458de0156 2a2a7bb5aacc f0cf331472b7 e76e451484c6
   ].freeze
 
   def case_named(suffix)
@@ -120,6 +121,15 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     ys = matches(svg, "//text[starts-with(., 'n')]/@y").map(&:value)
 
     expect([ys.size, ys.uniq.size]).to eq([4, 1])
+  end
+
+  it "draws the foot heads of a rendered case only without hide footbox" do
+    source = source_of("f0cf331472b7")
+    counts = [source, source.sub(/^hide footbox\n/, "")].map do |text|
+      rect_count(Sirena.render(text, notation: :plantuml))
+    end
+
+    expect(counts.last - counts.first).to eq(2)
   end
 
   it "refuses every other case instead of rendering part of it" do
