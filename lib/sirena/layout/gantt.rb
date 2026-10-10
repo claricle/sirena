@@ -629,11 +629,11 @@ module Sirena
 
         @diagram.sections.each do |section|
           section.tasks.each do |task|
-            if task.calculated_start
-              min_date = task.calculated_start if !min_date || task.calculated_start < min_date
+            if task.calculated_start && (!min_date || task.calculated_start < min_date)
+              min_date = task.calculated_start
             end
-            if task.calculated_end
-              max_date = task.calculated_end if !max_date || task.calculated_end > max_date
+            if task.calculated_end && (!max_date || task.calculated_end > max_date)
+              max_date = task.calculated_end
             end
           end
         end
