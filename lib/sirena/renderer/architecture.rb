@@ -118,9 +118,9 @@ module Sirena
       def render_junction(node, svg)
         group = Svg::Group.new.tap { |item| item.id = "junction-#{node.id}" }
         group.children << Svg::Circle.new.tap do |circle|
-          circle.cx = node.x + (node.width / 2)
-          circle.cy = node.y + (node.height / 2)
-          circle.r = node.width / 2
+          circle.cx = node.center_x
+          circle.cy = node.center_y
+          circle.r = node.radius
           apply_theme_to_node(circle)
         end
         svg << group

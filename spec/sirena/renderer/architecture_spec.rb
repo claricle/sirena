@@ -84,9 +84,10 @@ RSpec.describe Sirena::Renderer::Architecture do
     expect(xml).to include("<circle")
   end
 
-  it "centers a junction circle and derives its radius from width" do
+  it "draws a junction circle from Scene centre and radius" do
     junction = Sirena::Layout::Architecture::Node.new(
       id: "mid", kind: "junction", x: 300, y: 40, width: 20, height: 12,
+      center_x: 310, center_y: 46, radius: 10
     )
     manual_scene = Sirena::Layout::Architecture::Scene.new(
       width: 400, height: 200, view_box: "0 0 400 200",
