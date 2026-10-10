@@ -77,18 +77,10 @@ rows:
   count: 10
 - file: scripts/check_workflow_pins.rb
   count: 4
-- file: scripts/class_diagram_fuzz.rb
-  count: 4
 - file: scripts/corpus_sweep.rb
   count: 7
 - file: scripts/corpus_verdicts.rb
   count: 6
-- file: scripts/diagram_fuzz_report.rb
-  count: 2
-- file: scripts/er_diagram_fuzz.rb
-  count: 3
-- file: scripts/flowchart_fuzz.rb
-  count: 3
 - file: scripts/generate_shape_table.rb
   count: 1
 - file: scripts/hardened_mmdc.rb
@@ -97,10 +89,6 @@ rows:
   count: 3
 - file: scripts/mmdc_oracle.rb
   count: 2
-- file: scripts/sequence_fuzz.rb
-  count: 14
-- file: scripts/state_diagram_fuzz.rb
-  count: 3
 - file: sirena.gemspec
   count: 5
 - file: spec/contract_spec.rb
