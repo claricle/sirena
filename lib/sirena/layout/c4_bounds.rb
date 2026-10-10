@@ -47,9 +47,7 @@ module Sirena
       # Gives a box node its :x and :y and grows the extent over it.
       def insert(node)
         @count += 1
-        left, top = origin
-        right = left + node[:width]
-        left, top, right = next_line(node) if overflows?(left, right)
+        left, top, right = position_for(node)
         node[:x] = left
         node[:y] = top
         cover(left, top, right, top + node[:height])
@@ -68,6 +66,14 @@ module Sirena
 
       private
 
+      def position_for(node)
+        left, top = origin
+        right = left + node[:width]
+        return next_line(node) if overflows?(left, right)
+
+        [left, top, right]
+      end
+
       def origin
         gap = @upcoming.startx == @upcoming.stopx ? MARGIN : MARGIN * 2
         [@upcoming.stopx + gap, @upcoming.starty + (MARGIN * 2)]
@@ -80,11 +86,15 @@ module Sirena
       def next_line(node)
         left = @upcoming.startx + MARGIN
         top = @upcoming.stopy + (MARGIN * 2)
+        start_row(left, top, node)
+        [left, top, @upcoming.stopx]
+      end
+
+      def start_row(left, top, node)
         @upcoming.stopx = left + node[:width]
         @upcoming.starty = @upcoming.stopy
         @upcoming.stopy = top + node[:height]
         @count = 1
-        [left, top, @upcoming.stopx]
       end
 
       def cover(left, top, right, bottom)

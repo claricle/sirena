@@ -677,11 +677,16 @@ module Sirena
 
         lines = C4Text.lines(text)
         lines.each_with_index.map do |line, index|
-          spread = (index * size) - (size * (lines.length - 1) / 2.0)
           { text: line, width: C4Text.width(line, size),
-            height: C4Text.height(line, size), offset: offset + spread,
+            height: C4Text.height(line, size),
+            offset: offset + line_spread(index, size, lines.length),
             font_size: size, font_weight: weight, font_style: style }
         end
+      end
+
+      # Centres a block of lines on its offset, one font size apart.
+      def line_spread(index, size, count)
+        (index * size) - (size * (count - 1) / 2.0)
       end
 
       def element_metadata(element, metrics)

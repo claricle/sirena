@@ -115,7 +115,8 @@ RSpec.describe Sirena::Renderer::C4 do
     end
 
     def group(id)
-      xml[%r{<g id="element-#{id}">.*?</g>\s*</g>|<g id="element-#{id}">.*?</g>}m]
+      start = %(<g id="element-#{id}">)
+      xml[%r{#{start}.*?</g>\s*</g>|#{start}.*?</g>}m]
     end
 
     it "draws a database as a cylinder with caps above and below the box" do
