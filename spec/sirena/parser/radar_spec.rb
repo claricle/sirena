@@ -68,6 +68,15 @@ RSpec.describe Sirena::Parser::Radar do
       end
     end
 
+    context "with only comments" do
+      it "reads a body of only comments and blank lines as empty" do
+        diagram = parser.parse("radar-beta\n%% only a comment\n\n")
+
+        expect([diagram.title, diagram.axes, diagram.curves])
+          .to eq([nil, [], []])
+      end
+    end
+
     context "with curve values" do
       it "parses positional values" do
         source = <<~MERMAID
