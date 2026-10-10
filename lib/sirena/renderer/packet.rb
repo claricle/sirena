@@ -50,8 +50,8 @@ module Sirena
           rect.y = box.y
           rect.width = box.width
           rect.height = box.height
-          rect.fill = theme_color(:field_background) || "#efefef"
-          rect.stroke = theme_color(:field_border) || "#000000"
+          rect.fill = theme_color(:field_background)
+          rect.stroke = theme_color(:field_border)
           rect.stroke_width = "1"
         end
       end
@@ -71,9 +71,9 @@ module Sirena
 
       def label_color(style)
         case style
-        when "title" then theme_color(:title_text) || "#000000"
-        when "start", "end" then theme_color(:label_text) || "#000000"
-        else theme_color(:field_text) || "#000000"
+        when "title" then theme_color(:title_text)
+        when "start", "end" then theme_color(:label_text)
+        else theme_color(:field_text)
         end
       end
 

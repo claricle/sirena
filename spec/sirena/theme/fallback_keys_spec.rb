@@ -15,6 +15,13 @@ RSpec.describe Sirena::Theme::ColorPalette do
        title_text]
   end
 
+  # Keys whose last fallback was deleted from lib/: the colour it drew.
+  let(:pinned) do
+    { border: "#d1d5db", field_background: "#efefef",
+      field_border: "#000000", field_text: "#000000", node_text: "#FFFFFF",
+      title_text: "#000000" }
+  end
+
   it "defines every colour a renderer asks the theme for" do
     unset = builtin_themes.flat_map do |theme|
       asked_for.reject { |key| theme.colors.public_send(key) }
@@ -22,10 +29,18 @@ RSpec.describe Sirena::Theme::ColorPalette do
     expect(unset).to be_empty
   end
 
-  it "carries each added key at the colour its fallback already drew" do
+  it "carries each key with a remaining fallback at that fallback's colour" do
+    still_fallen_back = carried & theme_fallbacks.keys
     drawn = builtin_themes.map do |theme|
-      carried.map { |key| [theme.colors.public_send(key)] }
+      still_fallen_back.map { |key| [theme.colors.public_send(key)] }
     end
-    expect(drawn.uniq).to eq([carried.map { |key| theme_fallbacks[key] }])
+    expect(drawn.uniq).to eq([still_fallen_back.map { |k| theme_fallbacks[k] }])
+  end
+
+  it "carries each key whose fallback was deleted at the colour it drew" do
+    drawn = builtin_themes.map do |theme|
+      pinned.keys.to_h { |key| [key, theme.colors.public_send(key)] }
+    end
+    expect(drawn.uniq).to eq([pinned])
   end
 end

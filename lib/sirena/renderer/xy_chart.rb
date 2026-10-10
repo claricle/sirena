@@ -82,7 +82,7 @@ module Sirena
       end
 
       def apply_label_style(text, geometry)
-        text.fill = theme_color(:label_text) || "#000000"
+        text.fill = theme_color(:label_text)
         text.font_size = geometry.font_size.to_s
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         text.font_weight = geometry.font_weight
@@ -121,7 +121,7 @@ module Sirena
           circle.cy = point.y
           circle.r = point.radius
           circle.fill = colour
-          circle.stroke = theme_color(:background) || "#ffffff"
+          circle.stroke = theme_color(:background)
           circle.stroke_width = "2"
         end
       end

@@ -42,9 +42,9 @@ RSpec.describe Sirena::Renderer::Kanban do
     Struct.new(:colors, :typography).new(colors, typography)
   end
 
-  def fallback_styles
-    ['fill="#f3f4f6"', 'stroke="#d1d5db"', 'fill="#3b82f6"',
-     'fill="#1f2937"', 'font-family="Arial, sans-serif"']
+  def default_theme_colours
+    ['fill="#ffffff"', 'stroke="#d1d5db"', 'fill="#007bff"',
+     'fill="#1f2937"']
   end
 
   def metadata_texts
@@ -99,10 +99,16 @@ RSpec.describe Sirena::Renderer::Kanban do
       )
     end
 
-    it "uses fallback styles when the theme omits them" do
+    it "draws the default theme's colours" do
       cards << card
 
-      expect(fallback_xml).to include(*fallback_styles)
+      expect(xml).to include(*default_theme_colours)
+    end
+
+    it "uses the font fallback when the theme omits typography" do
+      cards << card
+
+      expect(fallback_xml).to include('font-family="Arial, sans-serif"')
     end
 
     it "adds forty pixels of document padding and offsets board geometry" do
