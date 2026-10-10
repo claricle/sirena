@@ -57,4 +57,20 @@ RSpec.describe SpecSupport::LayoutParity::KanbanRecognizer do
   it "separates a wrapped card's lines with spaces" do
     expect(real_labels).to eq(expected_real_labels)
   end
+
+  it "uses the primary card label instead of metadata values" do
+    %w[
+      007_rendering_kanban_spec_kanban_6
+      009_rendering_kanban_spec_kanban_8
+      010_rendering_kanban_spec_kanban_9
+    ].each do |name|
+      reference = reference_svg("kanban/#{name}.svg")
+      sirena = Sirena.render(corpus_source("kanban/#{name}.mmd"))
+      labels = [reference, sirena].map do |svg|
+        recognized(svg).select { |item| item.first == :card }
+      end
+
+      expect(labels.first).to eq(labels.last)
+    end
+  end
 end
