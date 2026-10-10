@@ -40,7 +40,8 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphRecognizer do
   end
 
   def vertical_lane_keys(orientation)
-    source = "gitGraph #{orientation}:\n commit\n branch x\n checkout x\n commit\n"
+    source = "gitGraph #{orientation}:\n commit\n branch x\n " \
+             "checkout x\n commit\n"
     keys_of(recognized(Sirena.render(source)), :lane)
   end
 

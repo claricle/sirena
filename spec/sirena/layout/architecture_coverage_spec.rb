@@ -33,10 +33,41 @@ RSpec.describe Sirena::Layout::Architecture do
     )
   end
 
+  def routed_scene
+    layout.call(
+      diagram(
+        services: [service("source"), service("target")],
+        junctions: [junction("obstacle")],
+        edges: [edge("source", "target")],
+      ),
+    )
+  end
+
+  def missing_endpoint_graph
+    ir_graph(
+      id: "architecture",
+      nodes: [ir_node(id: "source", label: "Source", role: "service")],
+      edges: [ir_edge(id: "missing", source_id: "source",
+                      target_id: "absent")],
+    )
+  end
+
+  def cyclic_group_graph
+    layout.build_graph(
+      diagram(
+        services: [service("api", group_id: "one")],
+        groups: [group("one", parent_id: "two"),
+                 group("two", parent_id: "one")],
+      ),
+    )
+  end
+
   it "lays out a graph without a settings node" do
     scene = layout.call(ir_graph(id: "architecture", nodes: []))
 
-    expect(scene).to have_attributes(children: [], edges: [], width: 40, height: 40)
+    expect(scene).to have_attributes(
+      children: [], edges: [], width: 40, height: 40,
+    )
   end
 
   it "omits the label for an unlabeled service" do
@@ -46,38 +77,16 @@ RSpec.describe Sirena::Layout::Architecture do
   end
 
   it "routes past a junction that is not an endpoint" do
-    scene = layout.call(
-      diagram(
-        services: [service("source"), service("target")],
-        junctions: [junction("obstacle")],
-        edges: [edge("source", "target")],
-      ),
-    )
-
-    expect(scene.edges.first.sections).not_to be_empty
+    expect(routed_scene.edges.first.sections).not_to be_empty
   end
 
   it "omits an edge whose endpoint is absent" do
-    graph = ir_graph(
-      id: "architecture",
-      nodes: [ir_node(id: "source", label: "Source", role: "service")],
-      edges: [ir_edge(id: "missing", source_id: "source",
-                      target_id: "absent")],
-    )
-
-    expect(layout.build_graph(graph)[:edges]).to be_empty
+    expect(layout.build_graph(missing_endpoint_graph)[:edges]).to be_empty
   end
 
   it "bounds cyclic ancestry during direct graph construction" do
-    graph = layout.build_graph(
-      diagram(
-        services: [service("api", group_id: "one")],
-        groups: [group("one", parent_id: "two"),
-                 group("two", parent_id: "one")],
-      ),
-    )
-
-    expect([graph[:width], graph[:height]]).to all(be_finite)
+    expect([cyclic_group_graph[:width], cyclic_group_graph[:height]])
+      .to all(be_finite)
   end
 
   it "uses default typography when the injected theme has none" do
@@ -85,6 +94,7 @@ RSpec.describe Sirena::Layout::Architecture do
       diagram(services: [service("api")]), theme: Sirena::Theme.new
     )
 
-    expect(scene.children.first.width).to be >= described_class::DEFAULT_SERVICE_WIDTH
+    expect(scene.children.first.width)
+      .to be >= described_class::DEFAULT_SERVICE_WIDTH
   end
 end

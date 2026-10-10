@@ -73,26 +73,44 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Renderer do
 
   let(:matches) { ->(xpath) { REXML::XPath.match(document, xpath) } }
 
+  def arrow_mark_attributes
+    [
+      matches.call("//g[@id='arrow-residual']/path/@stroke-dasharray")
+        .map(&:value),
+      matches.call("//g[@id='arrow-residual']/polygon/@fill").map(&:value),
+      matches.call("//g[@id='arrow-residual']/circle").length,
+      matches.call("//g[@id='arrow-residual']/line/@stroke-width").map(&:value),
+    ]
+  end
+
+  def optional_opacities
+    [
+      matches.call("//g[starts-with(@id, 'note-')]/path/@fill-opacity")
+        .map(&:value),
+      matches.call("//g[@id='participant-A-150.0']/rect/@fill-opacity")
+        .map(&:value),
+      matches.call("//g[@id='participant-B-150.0']/rect/@fill-opacity")
+        .map(&:value),
+      matches.call("//g[starts-with(@id, 'note-')]/g[@transform]").length,
+    ]
+  end
+
+  def role_typography
+    %w[warning kind].map do |role|
+      text = matches.call("//g[@id='roles']/text[.='#{role}']").first
+      [text.attributes[role == "warning" ? "font-family" : "font-style"],
+       text.attributes["font-size"]]
+    end
+  end
+
   it "draws every residual arrow mark and dashed shaft", :aggregate_failures do
-    expect(matches.call("//g[@id='arrow-residual']/path/@stroke-dasharray")
-      .map(&:value)).to eq(["6,4"])
-    expect(matches.call("//g[@id='arrow-residual']/polygon/@fill")
-      .map(&:value)).to eq(["#ffffff"])
-    expect(matches.call("//g[@id='arrow-residual']/circle").length).to eq(1)
-    expect(matches.call("//g[@id='arrow-residual']/line/@stroke-width")
-      .map(&:value)).to contain_exactly("4.0", "2.0")
+    expect(arrow_mark_attributes)
+      .to eq([["6,4"], ["#ffffff"], 1, %w[4.0 2.0]])
   end
 
   it "keeps optional note and head opacity absent or explicit",
      :aggregate_failures do
-    expect(matches.call("//g[starts-with(@id, 'note-')]/path/@fill-opacity")
-      .map(&:value)).to eq(["0.5"])
-    expect(matches.call("//g[@id='participant-A-150.0']/rect/@fill-opacity"))
-      .to be_empty
-    expect(matches.call("//g[@id='participant-B-150.0']/rect/@fill-opacity")
-      .map(&:value)).to eq(["0.25"])
-    expect(matches.call("//g[starts-with(@id, 'note-')]/g[@transform]"))
-      .to be_empty
+    expect(optional_opacities).to eq([["0.5"], [], ["0.25"], 0])
   end
 
   it "draws a divider label only when its text exists", :aggregate_failures do
@@ -101,12 +119,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Renderer do
   end
 
   it "uses warning and kind typography fallbacks", :aggregate_failures do
-    warning = matches.call("//g[@id='roles']/text[.='warning']").first
-    kind = matches.call("//g[@id='roles']/text[.='kind']").first
-
-    expect([warning.attributes["font-family"], warning.attributes["font-size"]])
-      .to eq(["monospace", "10"])
-    expect([kind.attributes["font-style"], kind.attributes["font-size"]])
-      .to eq(["italic", "11.9"])
+    expect(role_typography)
+      .to eq([["monospace", "10"], ["italic", "11.9"]])
   end
 end

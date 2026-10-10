@@ -53,6 +53,11 @@ RSpec.describe SpecSupport::LayoutParity::ErrorRecognizer do
     ]
   end
 
+  def match_summary
+    result = matched_real_pair
+    [result[:pairs].map { |pair| pair.map(&:key) }, result[:failures]]
+  end
+
   it "unions only the candidate icon primitives" do
     figure = extract(candidate_svg, recognizer)
 
@@ -64,13 +69,9 @@ RSpec.describe SpecSupport::LayoutParity::ErrorRecognizer do
   end
 
   it "matches shared fixed roles while retaining a missing version role" do
-    result = matched_real_pair
-
-    expect(result[:pairs].map { |pair| pair.map(&:key) }).to eq(
-      [["error-icon", "error-icon"], ["message", "message"]],
-    )
-    expect(result[:failures]).to contain_exactly(
-      include(type: :missing, group: [:error_text, nil, "version"]),
+    expect(match_summary).to match(
+      [[%w[error-icon error-icon], %w[message message]],
+       [include(type: :missing, group: [:error_text, nil, "version"])]],
     )
   end
 end
