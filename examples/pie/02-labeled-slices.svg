@@ -8,16 +8,16 @@
 >
 <circle fill="none" stroke="#000000" stroke-width="2" cx="225.0" cy="225.0" r="186.0"/>
 <text fill="#000000" x="225.0" y="25.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="bold">Browser Market Share 2024</text>
-<path id="slice-0" fill="#4472C4" stroke="#000000" stroke-width="2" d="M 225 225 L 225.0 40.0 A 185 185 0 1 1 75.33185604063473 333.74027167410753 Z"/>
-<text fill="#000000" x="348.62715523113604" y="293.9412" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">65%</text>
-<path id="slice-1" fill="#ED7D31" stroke="#000000" stroke-width="2" d="M 225 225 L 75.33185604063473 333.74027167410753 A 185 185 0 0 1 62.883264191885246 135.87557029118267 Z"/>
-<text fill="#000000" x="86.52379143057732" y="239.6622" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">18%</text>
-<path id="slice-2" fill="#A5A5A5" stroke="#000000" stroke-width="2" d="M 225 225 L 62.883264191885246 135.87557029118267 A 185 185 0 0 1 125.87204292888568 68.79933378212718 Z"/>
-<text fill="#000000" x="123.85560294527919" y="135.9691" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">8%</text>
-<path id="slice-3" fill="#FFC000" stroke="#000000" stroke-width="2" d="M 225 225 L 125.87204292888568 68.79933378212718 A 185 185 0 0 1 190.3344568016411 43.276858615192566 Z"/>
-<text fill="#000000" x="173.92271831500108" y="101.9435" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">6%</text>
-<path id="slice-4" fill="#5B9BD5" stroke="#000000" stroke-width="2" d="M 225 225 L 190.3344568016411 43.276858615192566 A 185 185 0 0 1 225.00000000000014 40.0 Z"/>
-<text fill="#000000" x="211.9424715270562" y="92.8158" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">3%</text>
+<path id="slice-0" fill="#4472C4" stroke="#000000" stroke-width="2" d="M 225 225 L 225.0 40.0 A 185 185 0 1 1 75.3319 333.7403 Z"/>
+<text fill="#000000" x="348.6272" y="293.9412" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">65%</text>
+<path id="slice-1" fill="#ED7D31" stroke="#000000" stroke-width="2" d="M 225 225 L 75.3319 333.7403 A 185 185 0 0 1 62.8833 135.8756 Z"/>
+<text fill="#000000" x="86.5238" y="239.6622" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">18%</text>
+<path id="slice-2" fill="#A5A5A5" stroke="#000000" stroke-width="2" d="M 225 225 L 62.8833 135.8756 A 185 185 0 0 1 125.872 68.7993 Z"/>
+<text fill="#000000" x="123.8556" y="135.9691" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">8%</text>
+<path id="slice-3" fill="#FFC000" stroke="#000000" stroke-width="2" d="M 225 225 L 125.872 68.7993 A 185 185 0 0 1 190.3345 43.2769 Z"/>
+<text fill="#000000" x="173.9227" y="101.9435" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">6%</text>
+<path id="slice-4" fill="#5B9BD5" stroke="#000000" stroke-width="2" d="M 225 225 L 190.3345 43.2769 A 185 185 0 0 1 225.0 40.0 Z"/>
+<text fill="#000000" x="211.9425" y="92.8158" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">3%</text>
 <rect fill="#4472C4" stroke="#4472C4" x="441.0" y="170.0" width="18.0" height="18.0"/>
 <text fill="#000000" x="463.0" y="184.0" font-family="Arial, Helvetica, sans-serif" font-size="17">Chrome</text>
 <rect fill="#ED7D31" stroke="#ED7D31" x="441.0" y="192.0" width="18.0" height="18.0"/>

@@ -26,6 +26,21 @@ RSpec.describe Sirena::Layout::Pie do
     expect(populated_geometry(ir_scene)).to eq(populated_geometry)
   end
 
+  it "draws a lone slice as two half arcs, as mmdc does" do
+    diagram.slices = [slice("ash", 100)]
+
+    expect(scene.slices.map(&:path)).to eq(
+      ["M 225 225 L 225.0 40.0 A 185 185 0 1 1 225.0 410.0 A 185 185 0 1 1 225.0 40.0 Z"],
+    )
+  end
+
+  it "rounds slice points to four decimals so every platform emits the same text" do
+    diagram.slices = [42.5, 28.3, 18.7, 10.5].map { |share| slice("part", share) }
+    points = scene.slices.flat_map { |part| part.path.scan(/\d+\.\d+/) << part.label.x.to_s }
+
+    expect(points.map { |point| point.split(".").last.size }.max).to be <= 4
+  end
+
   def populate_diagram
     diagram.slices = [slice("Small", 1), slice("Large", 3)]
     diagram.id = "share"
