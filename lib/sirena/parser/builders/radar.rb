@@ -78,7 +78,11 @@ module Sirena
         end
 
         rule(show_legend: simple(:show_legend)) do
-          { type: :option, key: :show_legend, value: show_legend.to_s == "true" }
+          {
+            type: :option,
+            key: :show_legend,
+            value: show_legend.to_s == "true",
+          }
         end
 
         rule(graticule: simple(:graticule)) do

@@ -52,7 +52,9 @@ module Sirena
           process_tick_interval(diagram, item) if item.key?(:tick_interval)
           process_excludes(diagram, item) if item.key?(:excludes)
           process_weekend(diagram, item) if item.key?(:weekend)
-          process_inclusive_end_dates(diagram, item) if item.key?(:inclusive_end_dates)
+          if item.key?(:inclusive_end_dates)
+            process_inclusive_end_dates(diagram, item)
+          end
           process_today_marker(diagram, item) if item.key?(:today_marker)
           process_acc_title(diagram, item) if item.key?(:acc_title)
           process_acc_descr(diagram, item) if item.key?(:acc_descr)
@@ -115,9 +117,13 @@ module Sirena
         def process_click(item)
           click_id = extract_text(item[:click_id])
           if item[:href]
-            @click_map[click_id] = { type: :href, value: extract_text(item[:href]) }
+            @click_map[click_id] = {
+              type: :href, value: extract_text(item[:href])
+            }
           elsif item[:callback]
-            @click_map[click_id] = { type: :callback, value: extract_text(item[:callback]) }
+            @click_map[click_id] = {
+              type: :callback, value: extract_text(item[:callback])
+            }
           end
         end
 
@@ -177,7 +183,9 @@ module Sirena
         end
 
         def extract_task_fields(parts)
-          Array(parts.is_a?(Array) ? parts : [parts]).map { |part| extract_text(part[:field]) }
+          Array(parts.is_a?(Array) ? parts : [parts]).map do |part|
+            extract_text(part[:field])
+          end
         end
 
         def reject_tag_fields(task, fields)
