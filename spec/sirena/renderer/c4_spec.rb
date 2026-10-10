@@ -80,7 +80,7 @@ RSpec.describe Sirena::Renderer::C4 do
   end
 
   it "draws the first relationship as a line and a later one as a curve" do
-    expect([context_xml.scan("<line").size, context_xml.scan("<path").size])
+    expect([context_xml.scan("<line").size, context_xml.scan(/ Q\d/).size])
       .to eq([1, 2])
   end
 
@@ -100,5 +100,36 @@ RSpec.describe Sirena::Renderer::C4 do
 
   it "draws the person icon inside the 48 px image box" do
     expect(context_xml).to include('r="10.0"')
+  end
+
+  describe "database and queue shapes" do
+    let(:xml) do
+      source = <<~MERMAID
+        C4Context
+        SystemDb(db, "Store")
+        SystemQueue(q, "Bus")
+        System(plain, "Plain")
+      MERMAID
+      diagram = Sirena::Parser::C4.new.parse(source)
+      renderer.render(Sirena::Layout::C4.new.call(diagram)).to_xml
+    end
+
+    def group(id)
+      xml[%r{<g id="element-#{id}">.*?</g>\s*</g>|<g id="element-#{id}">.*?</g>}m]
+    end
+
+    it "draws a database as a cylinder with caps above and below the box" do
+      expect(group("db")).to include("<path").and(include("c0,-10"))
+        .and(satisfy { |text| !text.include?("<rect") })
+    end
+
+    it "draws a queue as a pill with caps beside the box" do
+      expect(group("q")).to include("<path").and(include("c5,0 5,"))
+        .and(satisfy { |text| !text.include?("<rect") })
+    end
+
+    it "keeps a plain system as a rectangle" do
+      expect(group("plain")).to include("<rect")
+    end
   end
 end

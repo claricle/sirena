@@ -118,6 +118,56 @@ module Sirena
       end
 
       def element_box(node, colours)
+        case node.shape
+        when "database" then database_shape(node, colours)
+        when "queue" then queue_shape(node, colours)
+        else plain_box(node, colours)
+        end
+      end
+
+      # mmdc draws a database as a cylinder whose caps lie outside the box.
+      def database_shape(node, colours)
+        half = node.width / 2
+        x = node.x
+        y = node.y
+        body = "M#{x},#{y}c0,-10 #{half},-10 #{half},-10c0,0 #{half},0 " \
+               "#{half},10l0,#{node.height}c0,10 -#{half},10 -#{half},10" \
+               "c0,0 -#{half},0 -#{half},-10l0,-#{node.height}"
+        rim = "M#{x},#{y}c0,10 #{half},10 #{half},10c0,0 #{half},0 " \
+              "#{half},-10"
+        shape_group(body, rim, colours)
+      end
+
+      # mmdc draws a queue as a pill whose end caps lie outside the box.
+      def queue_shape(node, colours)
+        half = node.height / 2
+        x = node.x
+        y = node.y
+        body = "M#{x},#{y}l#{node.width},0c5,0 5,#{half} 5,#{half}" \
+               "c0,0 0,#{half} -5,#{half}l-#{node.width},0" \
+               "c-5,0 -5,-#{half} -5,-#{half}c0,0 0,-#{half} 5,-#{half}"
+        rim = "M#{x + node.width},#{y}c-5,0 -5,#{half} -5,#{half}" \
+              "c0,#{half} 5,#{half} 5,#{half}"
+        shape_group(body, rim, colours)
+      end
+
+      def shape_group(body, rim, colours)
+        Svg::Group.new.tap do |group|
+          group.children << shape_path(body, colours[:bg], colours)
+          group.children << shape_path(rim, "none", colours)
+        end
+      end
+
+      def shape_path(data, fill, colours)
+        Svg::Path.new.tap do |path|
+          path.d = data
+          path.fill = fill
+          path.stroke = colours[:border]
+          path.stroke_width = "2"
+        end
+      end
+
+      def plain_box(node, colours)
         Svg::Rect.new.tap do |rect|
           apply_box(rect, node)
           rect.fill = colours[:bg]

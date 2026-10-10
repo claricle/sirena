@@ -15,4 +15,17 @@ RSpec.describe Sirena::Layout::C4Stereotype do
       expect(described_class.text(type)).to eq(caption)
     end
   end
+
+  {
+    "SystemDb_Ext" => "database",
+    "ContainerDb" => "database",
+    "SystemQueue" => "queue",
+    "ComponentQueue_Ext" => "queue",
+    "System" => nil,
+    nil => nil,
+  }.each do |type, shape|
+    it "shapes #{type.inspect} as #{shape.inspect}" do
+      expect(described_class.shape(type)).to eq(shape)
+    end
+  end
 end

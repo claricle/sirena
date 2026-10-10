@@ -118,6 +118,7 @@ module Sirena
         attribute :stereotype, Label
         attribute :kind, :string
         attribute :external, :boolean, default: false
+        attribute :shape, :string
         attribute :head_center, Point
         attribute :body_center, Point
         attribute :children, Node, collection: true, default: -> { [] }
@@ -355,6 +356,7 @@ module Sirena
       def node_attributes(node, kind)
         node.slice(:id, :x, :y, :width, :height).merge(
           kind: kind, external: node.dig(:metadata, :external) || false,
+          shape: C4Stereotype.shape(node.dig(:metadata, :element_type)),
           labels: positioned_node_labels(node),
           stereotype: positioned_stereotype(node, kind),
           head_center: person_head(node, kind),
