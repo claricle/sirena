@@ -1,5 +1,0 @@
----
-cop: Style/IdenticalConditionalBranches
-rows:
-- file: lib/sirena/layout/requirement.rb
-  count: 2

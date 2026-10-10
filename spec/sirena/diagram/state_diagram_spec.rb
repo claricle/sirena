@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Diagram do
+RSpec.describe Sirena::Diagram::StateDiagram do
   describe Sirena::Diagram::StateDiagram do
     describe "#diagram_type" do
       it "returns :state_diagram" do

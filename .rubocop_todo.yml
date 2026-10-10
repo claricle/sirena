@@ -208,10 +208,7 @@ RSpec/ExampleLength:
 # Offense count: 4
 RSpec/MultipleDescribes:
   Exclude:
-    - 'spec/sirena/diagram/class_diagram_spec.rb'
     - 'spec/sirena/diagram/er_diagram_spec.rb'
-    - 'spec/sirena/diagram/state_diagram_spec.rb'
-    - 'spec/sirena/diagram/user_journey_spec.rb'
 
 # Offense count: 335
 RSpec/MultipleExpectations:
@@ -222,33 +219,6 @@ RSpec/MultipleExpectations:
 # SupportedInflectors: default, active_support
 RSpec/SpecFilePathFormat:
   Enabled: false
-
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: MinBranchesCount.
-Style/CaseLikeIf:
-  Exclude:
-    - 'lib/sirena/parser/builders/requirement.rb'
-
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/CombinableLoops:
-  Exclude:
-    - 'lib/sirena/layout/requirement.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, SingleLineConditionsOnly, IncludeTernaryExpressions.
-# SupportedStyles: assign_to_condition, assign_inside_condition
-Style/ConditionalAssignment:
-  Exclude:
-    - 'lib/sirena/parser/builders/requirement.rb'
-
-# Offense count: 2
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/IdenticalConditionalBranches:
-  Exclude:
-    - 'lib/sirena/layout/requirement.rb'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
