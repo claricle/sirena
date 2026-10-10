@@ -87,10 +87,6 @@ rows:
   count: 1
 - file: lib/sirena/renderer/base.rb
   count: 1
-- file: lib/sirena/renderer/block.rb
-  count: 1
-- file: lib/sirena/renderer/c4.rb
-  count: 2
 - file: lib/sirena/renderer/class_diagram.rb
   count: 3
 - file: lib/sirena/renderer/er_diagram.rb
@@ -98,8 +94,6 @@ rows:
 - file: lib/sirena/renderer/markdown_text.rb
   count: 1
 - file: lib/sirena/renderer/packet.rb
-  count: 1
-- file: lib/sirena/renderer/treemap.rb
   count: 1
 - file: lib/sirena/renderer/user_journey.rb
   count: 3

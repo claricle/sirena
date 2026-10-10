@@ -95,16 +95,10 @@ rows:
   count: 1
 - file: lib/sirena/parser/user_journey.rb
   count: 1
-- file: lib/sirena/renderer/architecture.rb
-  count: 2
 - file: lib/sirena/renderer/architecture_edge_router.rb
   count: 2
 - file: lib/sirena/renderer/base.rb
   count: 1
-- file: lib/sirena/renderer/block.rb
-  count: 1
-- file: lib/sirena/renderer/c4.rb
-  count: 3
 - file: lib/sirena/renderer/class_diagram.rb
   count: 3
 - file: lib/sirena/renderer/er_diagram.rb
@@ -120,8 +114,6 @@ rows:
 - file: lib/sirena/renderer/quadrant.rb
   count: 1
 - file: lib/sirena/renderer/state_diagram.rb
-  count: 1
-- file: lib/sirena/renderer/treemap.rb
   count: 1
 - file: lib/sirena/renderer/user_journey.rb
   count: 4

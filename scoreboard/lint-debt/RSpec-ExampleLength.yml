@@ -154,11 +154,11 @@ rows:
 - file: spec/sirena/renderer/architecture_edge_router_spec.rb
   count: 6
 - file: spec/sirena/renderer/architecture_spec.rb
-  count: 6
+  count: 5
 - file: spec/sirena/renderer/base_spec.rb
   count: 6
 - file: spec/sirena/renderer/c4_spec.rb
-  count: 8
+  count: 4
 - file: spec/sirena/renderer/class_diagram_spec.rb
   count: 9
 - file: spec/sirena/renderer/er_diagram_spec.rb

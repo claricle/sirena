@@ -13,5 +13,3 @@ rows:
   count: 1
 - file: lib/sirena/layout/treemap.rb
   count: 1
-- file: lib/sirena/renderer/packet.rb
-  count: 1

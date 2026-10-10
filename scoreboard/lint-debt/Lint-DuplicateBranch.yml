@@ -23,5 +23,3 @@ rows:
   count: 1
 - file: lib/sirena/renderer/block.rb
   count: 1
-- file: lib/sirena/renderer/c4.rb
-  count: 1

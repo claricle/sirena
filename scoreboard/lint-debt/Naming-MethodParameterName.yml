@@ -17,8 +17,6 @@ rows:
   count: 8
 - file: lib/sirena/renderer/block.rb
   count: 6
-- file: lib/sirena/renderer/c4.rb
-  count: 10
 - file: lib/sirena/renderer/class_diagram.rb
   count: 8
 - file: lib/sirena/renderer/er_diagram.rb
@@ -27,17 +25,11 @@ rows:
   count: 2
 - file: lib/sirena/renderer/pie.rb
   count: 2
-- file: lib/sirena/renderer/requirement.rb
-  count: 8
 - file: lib/sirena/renderer/sequence.rb
   count: 19
 - file: lib/sirena/renderer/state_diagram.rb
   count: 14
-- file: spec/sirena/layout/architecture_spec.rb
-  count: 2
 - file: spec/sirena/renderer/architecture_edge_router_spec.rb
-  count: 4
-- file: spec/sirena/renderer/architecture_spec.rb
   count: 4
 - file: spec/sirena/renderer/flowchart_cluster_spec.rb
   count: 21
