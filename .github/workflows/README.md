@@ -13,7 +13,22 @@ goes in BOTH lanes. `lint` (19b) is folded into the fast lane as an ordinary
 job hanging off `fast-lane`; there is no standalone `lint.yml` workflow, and
 no separate `lint / rubocop` required check.
 
-Budgets are targets. No cold or warm timing has been measured (19b).
+Budgets are targets. Measured 2026-10-09 to 2026-10-10 from 64 successful
+`ci` runs (19b). A lane's time here is its slowest job, `started_at` to
+`completed_at`, so runner queue time is excluded. "Warm" means the
+`ruby/setup-ruby` step logged `Cache hit for:` (exact key). Cold is not
+available: no run missed the cache entirely, and the 4 runs below hit only a
+`restore-key` (lockfile changed, gems partly reinstalled).
+
+| Lane | Warm: median / max | Restore-key only: median / max | Budget |
+|---|---|---|---|
+| Fast | 10.9 / 13.1 min (35 runs) | 13.5 / 14.4 min (4 runs) | < 10 min |
+| Full | 6.9 / 7.5 min (35 runs) | 7.3 / 7.7 min (4 runs) | < 30 min |
+
+The fast lane's slowest job is always a Windows `unit` cell (median 9.4 to
+13.0 min); Linux and macOS cells run 5.2 to 6.6 min. 25 more runs are in
+the totals but could not be classified (job logs not fetched), and Windows
+logs gave no cache line. The fast lane is over budget on Windows.
 
 ## Branch protection (owner applies; a repository setting, not YAML)
 
