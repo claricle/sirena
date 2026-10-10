@@ -84,11 +84,17 @@ module CorpusOracle
   # of them; load_rows still reads those, so a migration can report them.
   def missing_provenance(row)
     missing = ROW_HASHES.reject { |key| row[key].is_a?(String) }
-    missing << "svg_sha256" if row["verdict"] == "accepts" &&
-                               !row["svg_sha256"].is_a?(String)
-    toolchain = row["toolchain"]
-    missing << "toolchain.mmdc" unless toolchain.is_a?(Hash) && toolchain["mmdc"]
+    missing << "svg_sha256" if accepts_without_svg_hash?(row)
+    missing << "toolchain.mmdc" unless mmdc_toolchain?(row["toolchain"])
     missing
+  end
+
+  def accepts_without_svg_hash?(row)
+    row["verdict"] == "accepts" && !row["svg_sha256"].is_a?(String)
+  end
+
+  def mmdc_toolchain?(toolchain)
+    toolchain.is_a?(Hash) && toolchain["mmdc"]
   end
 
   # Runs one source through mmdc. Returns ["accepts", nil] or
@@ -172,28 +178,37 @@ module CorpusOracle
   # entries: [{path:, digest:, case:}, ...]; one judgement per distinct source.
   def refresh(entries, provenance:, path: PATH, &)
     canary!(&)
-    groups = entries.group_by { |e| e[:digest] }.values
-    groups = groups.sort_by { |group| group.map { |e| e[:case] }.min }
-    rows = groups.map { |group| row_for(group, provenance, &) }
+    rows = source_groups(entries).map { |group| row_for(group, provenance, &) }
     canary!(&)
     verify_provenance!(rows)
     write(path, provenance, rows)
     rows
   end
 
+  def source_groups(entries)
+    entries.group_by { |e| e[:digest] }.values
+      .sort_by { |group| group.map { |e| e[:case] }.min }
+  end
+
   # sha256 keys the row; source_sha256 is the hash of the bytes mmdc was
   # actually given, so a source edited between planning and judging is caught.
   def row_for(group, provenance, &)
     path = group.first.fetch(:path)
-    source_sha = Digest::SHA256.hexdigest(File.binread(path))
     digest = group.first.fetch(:digest)
-    refuse!(path, "source changed since it was hashed") unless source_sha == digest
+    source_sha = verified_source_sha(path, digest)
     verdict, reason, svg = judge_rendering(path, &)
     { "sha256" => digest, "verdict" => verdict,
       "reason" => reason, "cases" => group.map { |e| e[:case] }.sort,
       "source_sha256" => source_sha,
       "svg_sha256" => svg && Digest::SHA256.hexdigest(svg),
       "toolchain" => provenance.slice(*TOOLCHAIN_KEYS) }.compact
+  end
+
+  def verified_source_sha(path, digest)
+    source_sha = Digest::SHA256.hexdigest(File.binread(path))
+    return source_sha if source_sha == digest
+
+    refuse!(path, "source changed since it was hashed")
   end
 
   def verify_provenance!(rows)

@@ -63,7 +63,9 @@ module CiBaseline
   def merge_group(payload, dir)
     base = payload.dig("merge_group", "base_sha").to_s
     raise Error, "merge_group payload has no base_sha" if base.empty?
-    raise Error, "merge_group base #{base} is not fetched" unless commit?(dir, base)
+    unless commit?(dir, base)
+      raise Error, "merge_group base #{base} is not fetched"
+    end
 
     Result.new(sha: rev_parse(dir, base), mode: "merge_group")
   end
@@ -71,7 +73,9 @@ module CiBaseline
   def dispatch(payload, dir)
     ref = payload.dig("inputs", "baseline_sha").to_s
     return Result.new(sha: nil, mode: "workflow_dispatch") if ref.empty?
-    raise Error, "baseline_sha #{ref.inspect} is not a commit here" unless commit?(dir, ref)
+    unless commit?(dir, ref)
+      raise Error, "baseline_sha #{ref.inspect} is not a commit here"
+    end
 
     Result.new(sha: rev_parse(dir, ref), mode: "workflow_dispatch")
   end
@@ -105,7 +109,8 @@ if __FILE__ == $PROGRAM_NAME
     result = CiBaseline.resolve(ENV.fetch("GITHUB_EVENT_NAME"), payload)
     lines = ["baseline=#{result.sha}", "mode=#{result.mode}"]
     puts lines
-    File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |f| f.puts(lines) } if ENV["GITHUB_OUTPUT"]
+    out = ENV.fetch("GITHUB_OUTPUT", nil)
+    File.open(out, "a") { |f| f.puts(lines) } if out
   rescue CiBaseline::Error, KeyError, Errno::ENOENT, JSON::ParserError => e
     warn "ci_baseline -- #{e.message}"
     exit 1
