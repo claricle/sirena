@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "line_break_text"
 require_relative "../layout/timeline"
 require_relative "../svg/document"
 require_relative "../svg/rect"
@@ -63,17 +64,17 @@ module Sirena
       end
 
       def text_element(label)
-        Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
-          text.content = label.text
-          text.fill = label_color(label)
-          text.font_family =
+        text = Svg::Text.new.tap do |node|
+          node.x = label.x
+          node.y = label.y
+          node.fill = label_color(label)
+          node.font_family =
             theme_typography(:font_family) || "Arial, sans-serif"
-          text.font_size = number_string(label.font_size)
-          text.text_anchor = label.text_anchor if label.text_anchor
-          text.font_weight = label.font_weight if label.font_weight
+          node.font_size = number_string(label.font_size)
+          node.text_anchor = label.text_anchor if label.text_anchor
+          node.font_weight = label.font_weight if label.font_weight
         end
+        LineBreakText.fill(text, label.text)
       end
 
       def label_color(label)
