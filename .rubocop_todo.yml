@@ -102,12 +102,6 @@ Lint/AmbiguousOperatorPrecedence:
 Lint/DuplicateBranch:
   Enabled: false
 
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-Lint/UselessAssignment:
-  Exclude:
-    - 'tasks/generate_mermaid_fixtures.rake'
-
 # Offense count: 317
 # Configuration parameters: AllowedMethods, AllowedPatterns, CountRepeatedAttributes, Max.
 Metrics/AbcSize:
@@ -233,7 +227,6 @@ Style/RedundantAssignment:
 # This cop supports safe autocorrection (--autocorrect).
 Style/RedundantRegexpArgument:
   Exclude:
-    - 'scripts/extract_mermaid_tests.rb'
     - 'spec/sirena/renderer/quadrant_spec.rb'
 
 # Offense count: 7
@@ -244,7 +237,6 @@ Style/RescueStandardError:
   Exclude:
     - 'lib/sirena/commands/batch.rb'
     - 'tasks/examples.rake'
-    - 'tasks/generate_mermaid_fixtures.rake'
     - 'old-docs/testing/debug_full_load.rb'
     - 'old-docs/testing/generate_remaining_svgs.rb'
 

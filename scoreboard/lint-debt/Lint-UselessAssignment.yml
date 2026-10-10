@@ -1,5 +1,0 @@
----
-cop: Lint/UselessAssignment
-rows:
-- file: tasks/generate_mermaid_fixtures.rake
-  count: 2
