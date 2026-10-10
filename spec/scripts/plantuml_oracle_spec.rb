@@ -205,6 +205,12 @@ RSpec.describe PlantumlOracle do
       expect(killed_promptly(hang, 1)).to eq([true, true])
     end
 
+    it "escalates to KILL when the process ignores TERM", :speed do
+      stubborn = ["sh", "-c", "trap '' TERM; sleep 30"]
+
+      expect(killed_promptly(stubborn, 1)).to eq([true, true])
+    end
+
     it "reports a missing binary as a spawn error, not an exception" do
       command = ["plantuml-does-not-exist-xyz", "--pipe"]
       run = PlantumlOracle::Runner.call(command, "", 5)
@@ -269,6 +275,15 @@ RSpec.describe PlantumlOracle do
       it "records versions and content hashes in each record" do
         expect(records.first).to include(good_record_fields)
       end
+
+      it "records all five hashes and versions on a rejected record too" do
+        expect(records.last).to include(
+          "plantuml" => "1.2026.6 / abc", "java" => "21.0.2",
+          "graphviz" => "15.1.1",
+          "source_sha256" => Digest::SHA256.hexdigest(bad),
+          "svg_sha256" => Digest::SHA256.hexdigest(error_svg)
+        )
+      end
     end
 
     context "when one case hits an infrastructure failure" do
@@ -290,6 +305,23 @@ RSpec.describe PlantumlOracle do
         refresh_failure(cases, path, runner)
 
         expect(Dir.children(dir)).to eq(["verdicts.yml"])
+      end
+    end
+
+    {
+      "java is missing" => :missing_java_run,
+      "graphviz is missing" => :missing_graphviz_run,
+      "the binary is missing" => :missing_binary_run,
+    }.each do |name, build|
+      context "when #{name} for a case" do
+        let(:runner) { alive_runner(bad => public_send(build)) }
+
+        it "raises naming the case and leaves prior verdicts untouched" do
+          failure = refresh_failure(cases, path, runner)
+
+          expect([failure.class, failure.message, File.read(path)])
+            .to match([PlantumlOracle::InfrastructureFailure, %r{b/bad}, prior])
+        end
       end
     end
 
@@ -353,6 +385,14 @@ RSpec.describe PlantumlOracle do
         .to match(expected_source_verdicts(sources))
     end
 
+    it "carries a source hash and an svg hash in every verdict" do
+      hashes = records.flat_map do |record|
+        record.values_at("source_sha256", "svg_sha256")
+      end
+
+      expect(hashes).to all(match(/\A\h{64}\z/))
+    end
+
     it "carries the pinned toolchain in every verdict" do
       pin = JSON.parse(File.read(File.join(corpus, "pin.json")))
       toolchain = pin.dig("oracle", "toolchain")
@@ -362,13 +402,15 @@ RSpec.describe PlantumlOracle do
     end
   end
 
-  describe "against the real binary" do
+  # Runs only with `--tag toolchain` (the plantuml-toolchain CI job), where
+  # ToolchainProbe#probe raises, rather than skips, when a binary is missing.
+  describe "against the real binary", :toolchain do
+    include ToolchainProbe
+
     before do
-      tools = %w[plantuml java dot]
-      available = tools.all? do |t|
-        system("which", t, out: File::NULL, err: File::NULL)
-      end
-      skip("plantuml, java or dot not on PATH") unless available
+      probe("plantuml", "-version")
+      probe("java", "-version")
+      probe("dot", "-V")
     end
 
     it "passes its own canary" do
