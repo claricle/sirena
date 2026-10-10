@@ -166,4 +166,25 @@ RSpec.describe Sirena::Renderer::Flowchart do
       expect(svg.children).to be_empty
     end
   end
+
+  describe "text size" do
+    let(:source) { "flowchart TD\nsubgraph s [T]\nA -->|go| B\nend\n" }
+    let(:sizes) do
+      lambda do |theme|
+        Sirena::Engine.new(theme: theme).render(source)
+          .scan(/<text[^>]*font-size="([^"]*)"/).flatten.uniq
+      end
+    end
+
+    it "draws nodes, titles and edge labels at mmdc's 16px" do
+      expect(sizes.call({ typography: { font_size_small: 12.0,
+                                        font_size_normal: 14.0 } }))
+        .to eq(["16.0"])
+    end
+
+    it "draws them at the theme's flowchart_font_size" do
+      expect(sizes.call({ typography: { flowchart_font_size: 20.0 } }))
+        .to eq(["20.0"])
+    end
+  end
 end

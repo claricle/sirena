@@ -11,19 +11,20 @@ module Sirena
   module Layout
     # Computes final canvas geometry for flowcharts.
     class Flowchart < Base
-      # Fallback font size for text measurement, used only when the
-      # injected theme has no typography or no font_size_normal set. When
-      # a theme is present (the normal case), #layout_font_size measures
-      # against its font_size_normal instead -- the same value the
-      # renderer draws node and cluster-title text with (D10). Matches
-      # Svg::Text::DEFAULT_FONT_SIZE / renderer/flowchart.rb's
-      # SVG_DEFAULT_FONT_SIZE, the value the SVG itself falls back to when
-      # apply_theme_to_text leaves font_size unset for the same reason --
-      # a mismatched fallback would re-open the box/drawn-text gap D10
-      # exists to close, just for the no-typography case instead of the
-      # has-typography one.
+      # mmdc draws every flowchart text, node, cluster title and edge
+      # label alike, at 16px; a theme overrides it with flowchart_font_size.
       DEFAULT_FONT_SIZE = 16.0
       NODE_LINE_HEIGHT = 1.5
+
+      # The size every flowchart text is measured and drawn at. A theme
+      # value that is not a positive finite number falls back to the
+      # default: a NaN raises inside the box arithmetic and a non-positive
+      # one produces a negative SVG width.
+      def self.font_size(theme)
+        value = theme&.typography&.flowchart_font_size
+        usable = value.is_a?(Numeric) && value.finite? && value.positive?
+        usable ? value : DEFAULT_FONT_SIZE
+      end
 
       # What mmdc adds to the label, measured on its output, as
       # [width, height]. A shape not listed is sized as a box.
@@ -514,10 +515,10 @@ module Sirena
         return [0.0, 0.0] unless label
 
         width = measure_text(
-          label[:text].to_s, font_size: edge_label_font_size
+          label[:text].to_s, font_size: layout_font_size
         )[:width] *
           SUBSTITUTE_FONT_HEADROOM
-        height = edge_label_font_size * TextMeasurement::HEIGHT_RATIO
+        height = layout_font_size * TextMeasurement::HEIGHT_RATIO
         [width / 2.0, height]
       end
 
@@ -839,7 +840,7 @@ module Sirena
         return [] if edge.label.nil? || edge.label.empty?
 
         text = display_text(edge.label)
-        label_dims = measure_text(text, font_size: edge_label_font_size)
+        label_dims = measure_text(text, font_size: layout_font_size)
 
         [
           {
@@ -879,39 +880,8 @@ module Sirena
           height: label_height + extra_height }
       end
 
-      # The size node and cluster-title measure_text calls size against:
-      # the injected theme's font_size_normal, the same value
-      # apply_theme_to_text sets on node and cluster-title text at render
-      # time (renderer/base.rb, renderer/flowchart.rb#create_node_label,
-      # #cluster_title). Falls back to DEFAULT_FONT_SIZE only when the
-      # theme has no typography or no font_size_normal. NOT used for edge
-      # labels -- see #edge_label_font_size.
       def layout_font_size
-        normal_size = valid_font_size(theme&.typography&.font_size_normal)
-        normal_size || DEFAULT_FONT_SIZE
-      end
-
-      # The size edge-label measure_text calls size against, mirroring the
-      # renderer's own preference order for the text it actually draws
-      # (renderer/flowchart.rb#edge_label_font_size: font_size_small first,
-      # since edge labels draw at the small size when the theme sets one).
-      # Keeping the two in step means the layout reserves room for the font
-      # the renderer draws with, not a different one.
-      def edge_label_font_size
-        small_size = valid_font_size(theme&.typography&.font_size_small)
-        normal_size = valid_font_size(theme&.typography&.font_size_normal)
-        small_size || normal_size || DEFAULT_FONT_SIZE
-      end
-
-      # A theme-supplied font size flows unchecked into TextMeasurement's
-      # box-size arithmetic (summed glyph advances times it). A non-finite
-      # value (NaN, Infinity) raises deep inside Float comparison, and a
-      # non-positive one produces an invalid negative SVG width -- both
-      # unvalidated anywhere else on this path (Typography's font_size_*
-      # attributes carry no range check). Falls through to DEFAULT_FONT_SIZE
-      # the same way a missing value does.
-      def valid_font_size(value)
-        value if value.is_a?(Numeric) && value.finite? && value.positive?
+        self.class.font_size(theme)
       end
 
       def layout_options(graph)

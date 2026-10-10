@@ -71,7 +71,7 @@ module Sirena
           text.x = label.x
           text.y = label.y
           text.content = label.text
-          apply_theme_to_text(text)
+          apply_flowchart_text_style(text)
           text.text_anchor = "middle"
           text.dominant_baseline = "middle"
         end
@@ -154,7 +154,7 @@ module Sirena
           text.x = label.x
           text.y = label.y
           text.content = label.text
-          apply_theme_to_text(text)
+          apply_flowchart_text_style(text)
           text.text_anchor = "middle"
           text.dominant_baseline = "middle"
         end
@@ -256,8 +256,8 @@ module Sirena
       def edge_label(label)
         Svg::Text.new.tap do |text|
           assign_edge_label_geometry(text, label)
-          apply_theme_to_text(text)
-          apply_edge_label_style(text)
+          apply_flowchart_text_style(text)
+          text.text_anchor = "middle"
         end
       end
 
@@ -267,10 +267,9 @@ module Sirena
         text.content = label.text
       end
 
-      def apply_edge_label_style(text)
-        font_size = theme_typography(:font_size_small)
-        text.font_size = font_size.to_s if font_size
-        text.text_anchor = "middle"
+      def apply_flowchart_text_style(text)
+        apply_theme_to_text(text)
+        text.font_size = Layout::Flowchart.font_size(theme).to_s
       end
     end
   end

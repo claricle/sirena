@@ -15,6 +15,7 @@ module Sirena
       attribute :font_size_large, :float
       attribute :font_size_title, :float
       attribute :sequence_font_size, :float
+      attribute :flowchart_font_size, :float
       attribute :font_weight_normal, :string
       attribute :font_weight_bold, :string
       attribute :line_height, :float
@@ -28,6 +29,7 @@ module Sirena
         map "font_size_large", to: :font_size_large
         map "font_size_title", to: :font_size_title
         map "sequence_font_size", to: :sequence_font_size
+        map "flowchart_font_size", to: :flowchart_font_size
         map "font_weight_normal", to: :font_weight_normal
         map "font_weight_bold", to: :font_weight_bold
         map "line_height", to: :line_height
