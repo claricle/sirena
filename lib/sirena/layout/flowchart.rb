@@ -674,8 +674,9 @@ module Sirena
         scale = box_scale(half_w, half_h, x_diff, y_diff)
         inner_x = half_w - ROUNDED_CORNER
         inner_y = half_h - ROUNDED_CORNER
-        return scale if (x_diff * scale).abs <= inner_x ||
-                        (y_diff * scale).abs <= inner_y
+        along_x = (x_diff * scale).abs <= inner_x
+        along_y = (y_diff * scale).abs <= inner_y
+        return scale if along_x || along_y
 
         cap_intersection(inner_x * (x_diff.negative? ? -1 : 1), ROUNDED_CORNER,
                          x_diff, y_diff, inner_y * (y_diff.negative? ? -1 : 1))
@@ -705,10 +706,14 @@ module Sirena
       end
 
       def cap_intersection(centre_x, radius, delta_x, delta_y, centre_y = 0)
-        a = (delta_x * delta_x) + (delta_y * delta_y)
-        b = (delta_x * centre_x) + (delta_y * centre_y)
-        c = (centre_x * centre_x) + (centre_y * centre_y) - (radius * radius)
+        a = dot(delta_x, delta_y, delta_x, delta_y)
+        b = dot(delta_x, delta_y, centre_x, centre_y)
+        c = dot(centre_x, centre_y, centre_x, centre_y) - (radius * radius)
         (b + Math.sqrt([(b * b) - (a * c), 0].max)) / a
+      end
+
+      def dot(x_one, y_one, x_two, y_two)
+        (x_one * x_two) + (y_one * y_two)
       end
 
       def edge_label_anchor(source, target, bends, route)
@@ -870,7 +875,8 @@ module Sirena
         end
 
         extra_width, extra_height = SHAPE_PADDING.fetch(shape, BOX_PADDING)
-        { width: label_width + extra_width, height: label_height + extra_height }
+        { width: label_width + extra_width,
+          height: label_height + extra_height }
       end
 
       # The size node and cluster-title measure_text calls size against:
