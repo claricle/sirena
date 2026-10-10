@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/architecture"
+require_relative "../notation/mermaid/ir_adapters/architecture"
 require_relative "../renderer/architecture_edge_router"
 
 module Sirena
@@ -17,6 +18,24 @@ module Sirena
       DEFAULT_JUNCTION_SIZE = 12
 
       VALID_SIDES = %w[L R T B].freeze
+
+      SemanticGroup = Struct.new(
+        :id, :label, :icon, :parent_id, keyword_init: true
+      )
+      SemanticService = Struct.new(
+        :id, :label, :icon, :group_id, keyword_init: true
+      )
+      SemanticJunction = Struct.new(:id, :group_id, keyword_init: true)
+      SemanticEdge = Struct.new(
+        :from_id, :to_id, :from_position, :to_position, :label,
+        keyword_init: true
+      )
+      SemanticDiagram = Struct.new(
+        :id, :title, :direction, :theme, :acc_title, :acc_descr,
+        :groups, :services, :junctions, :edges, keyword_init: true
+      )
+      private_constant :SemanticGroup, :SemanticService, :SemanticJunction,
+                       :SemanticEdge, :SemanticDiagram
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -69,6 +88,7 @@ module Sirena
       # @param diagram [Diagram::Architecture] the diagram to transform
       # @return [Hash] positioned layout hash
       def build_graph(diagram)
+        diagram = semantic_diagram(ir_graph(diagram))
         # Build hierarchy
         hierarchy = build_hierarchy(diagram)
 
@@ -89,6 +109,120 @@ module Sirena
       end
 
       private
+
+      ENTITY_ROLES = %w[group service junction].freeze
+      private_constant :ENTITY_ROLES
+
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::Architecture.call(diagram)
+      end
+
+      def semantic_diagram(graph)
+        children, nodes_by_id = semantic_context(graph)
+        SemanticDiagram.new(
+          **semantic_attributes(graph, children, nodes_by_id),
+        )
+      end
+
+      def semantic_context(graph)
+        children = graph.nodes.group_by(&:parent_id)
+        nodes_by_id = graph.nodes.to_h { |node| [node.id, node] }
+        [children, nodes_by_id]
+      end
+
+      def semantic_attributes(graph, children, nodes_by_id)
+        semantic_metadata(graph, children).merge(
+          semantic_collections(graph, children, nodes_by_id),
+        )
+      end
+
+      def semantic_metadata(graph, children)
+        settings = graph.nodes.find { |node| node.role == "diagram_settings" }
+        fields = semantic_fields(children[settings&.id])
+        {
+          id: fields["diagram_identifier"], title: graph.label,
+          direction: fields["layout_direction"], theme: fields["theme"],
+          acc_title: graph.accessibility_title,
+          acc_descr: graph.accessibility_description
+        }
+      end
+
+      def semantic_collections(graph, children, nodes_by_id)
+        entities = graph.nodes.select do |node|
+          ENTITY_ROLES.include?(node.role)
+        end
+        {
+          groups: semantic_groups(entities, children, nodes_by_id),
+          services: semantic_services(entities, children, nodes_by_id),
+          junctions: semantic_junctions(entities, children, nodes_by_id),
+          edges: semantic_edges(graph.edges, children, nodes_by_id),
+        }
+      end
+
+      def semantic_groups(entities, children, nodes_by_id)
+        entities.select { |node| node.role == "group" }.map do |node|
+          fields = semantic_fields(children[node.id])
+          SemanticGroup.new(
+            id: source_identifier(node, children), label: node.label,
+            icon: fields["icon"],
+            parent_id: source_container(fields, node, nodes_by_id, children,
+                                        "parent_identifier")
+          )
+        end
+      end
+
+      def semantic_services(entities, children, nodes_by_id)
+        entities.select { |node| node.role == "service" }.map do |node|
+          fields = semantic_fields(children[node.id])
+          SemanticService.new(
+            id: source_identifier(node, children), label: node.label,
+            icon: fields["icon"],
+            group_id: source_container(fields, node, nodes_by_id, children,
+                                       "group_identifier")
+          )
+        end
+      end
+
+      def semantic_junctions(entities, children, nodes_by_id)
+        entities.select { |node| node.role == "junction" }.map do |node|
+          fields = semantic_fields(children[node.id])
+          SemanticJunction.new(
+            id: source_identifier(node, children),
+            group_id: source_container(fields, node, nodes_by_id, children,
+                                       "group_identifier"),
+          )
+        end
+      end
+
+      def semantic_edges(edges, children, nodes_by_id)
+        edges.map do |edge|
+          fields = semantic_fields(children[edge.parent_id])
+          SemanticEdge.new(
+            from_id: source_identifier(nodes_by_id[edge.source_id], children),
+            to_id: source_identifier(nodes_by_id[edge.target_id], children),
+            from_position: fields["source_position"],
+            to_position: fields["target_position"], label: edge.label
+          )
+        end
+      end
+
+      def semantic_fields(nodes)
+        Array(nodes).to_h { |node| [node.role, node.label] }
+      end
+
+      def source_identifier(node, children)
+        return unless node
+
+        semantic_fields(children[node.id]).fetch("original_identifier", node.id)
+      end
+
+      def source_container(fields, node, nodes_by_id, children, field)
+        fields.fetch(field) do
+          source_identifier(nodes_by_id[node.parent_id], children)
+        end
+      end
 
       def scene(diagram)
         graph = build_graph(diagram)
