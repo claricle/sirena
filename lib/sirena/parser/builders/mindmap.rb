@@ -11,6 +11,10 @@ module Sirena
         class TreeBuilder
           # The first matching rule wins, in this order.
           SHAPE_NAMES = %w[circle bang cloud hexagon square round].freeze
+          NODE_KEYS = %i[
+            content icon classes shape_circle shape_bang shape_cloud
+            shape_hexagon shape_square shape_round
+          ].freeze
 
           attr_reader :root, :all_nodes
 
@@ -24,63 +28,61 @@ module Sirena
           end
 
           def add_node(node_data)
-            # Handle icon and class declarations - apply to PREVIOUS node
             if node_data[:icon]
-              icon = node_data[:icon].to_s
-              if @all_nodes.last
-                @all_nodes.last[:icon] = icon
-              end
-              return
+              return apply_to_previous(:icon, node_data[:icon].to_s)
             end
+            return apply_classes(node_data[:classes]) if node_data[:classes]
 
-            if node_data[:classes]
-              classes_str = node_data[:classes].to_s
-              classes = classes_str.split(/\s+/)
-              if @all_nodes.last
-                @all_nodes.last[:classes] = classes
-              end
-              return
-            end
+            add_tree_node(node_data)
+          end
 
-            # Track minimum indentation for relative level calculation
+          def node_data?(node_data)
+            NODE_KEYS.any? { |key| node_data[key] }
+          end
+
+          def apply_to_previous(attribute, value)
+            @all_nodes.last[attribute] = value if @all_nodes.last
+          end
+
+          def apply_classes(classes)
+            apply_to_previous(:classes, classes.to_s.split(/\s+/))
+          end
+
+          def add_tree_node(node_data)
             indent_size = get_indent_size(node_data[:indent])
-            @min_indent = indent_size if @min_indent.nil? || indent_size < @min_indent
-
-            # Calculate level from indentation (will be adjusted later)
+            if @min_indent.nil? || indent_size < @min_indent
+              @min_indent = indent_size
+            end
             level = calculate_level(node_data[:indent])
-
-            # Create the node
-            content = extract_content(node_data)
-            shape = extract_shape(node_data)
-
-            node = {
-              id: "node-#{@all_nodes.size}",
-              content: content,
-              level: level,
-              shape: shape,
-              icon: nil,
-              classes: [],
-              children: [],
-              _indent_size: indent_size, # Store for later adjustment
-            }
-
+            node = node_entry(node_data, level, indent_size)
             @all_nodes << node
+            link_node(node, level)
+          end
 
-            # Build hierarchy
+          def node_entry(node_data, level, indent_size)
+            {
+              id: "node-#{@all_nodes.size}",
+              content: extract_content(node_data), level: level,
+              shape: extract_shape(node_data), icon: nil, classes: [],
+              children: [], _indent_size: indent_size
+            }
+          end
+
+          def link_node(node, level)
             if level.zero?
               @root = node
               @level_stack = [node]
             else
-              # Find parent at previous level
-              parent = find_parent(level)
-              if parent
-                parent[:children] << node
-                node[:parent] = parent
-              end
-
-              # Update stack
+              attach_to_parent(node, find_parent(level))
               @level_stack = @level_stack[0..(level - 1)] + [node]
             end
+          end
+
+          def attach_to_parent(node, parent)
+            return unless parent
+
+            parent[:children] << node
+            node[:parent] = parent
           end
 
           def finalize
@@ -119,7 +121,10 @@ module Sirena
           # when it was indented with one.
           ROUND_COMMENT_INDENT = '[\t\n\v\f\r \u00a0\u1680\u2000-\u200a' \
                                  '\u2028\u2029\u202f\u205f\u3000\ufeff]'
-          ROUND_COMMENT_LINE = /(?<=\n)#{ROUND_COMMENT_INDENT}*%%(?!\{)[^\r\n]+\r?\n?/o
+          ROUND_COMMENT_LINE = Regexp.new(
+            "(?<=\\n)#{ROUND_COMMENT_INDENT}*%%(?!\\{)" \
+            "[^\\r\\n]+\\r?\\n?",
+          )
 
           private
 
@@ -130,92 +135,86 @@ module Sirena
             # (those are siblings or deeper nodes it isn't nested under),
             # then attaches under whatever remains on top.
             indent_stack = []
+            @all_nodes.each { |node| rebuild_node(node, indent_stack) }
+          end
 
-            @all_nodes.each do |node|
-              indent_size = node.delete(:_indent_size) || 0
+          def rebuild_node(node, indent_stack)
+            indent_size = prepare_for_rebuild(node)
+            discard_siblings(indent_stack, indent_size)
+            attach_rebuilt_node(node, indent_stack)
+            indent_stack << [indent_size, node]
+          end
 
-              # Clear old parent/children relationships
-              node[:children] = []
-              node.delete(:parent)
+          def prepare_for_rebuild(node)
+            indent_size = node.delete(:_indent_size) || 0
+            node[:children] = []
+            node.delete(:parent)
+            indent_size
+          end
 
-              indent_stack.pop while indent_stack.any? && indent_stack.last[0] >= indent_size
-
-              if indent_stack.empty?
-                # A second node with nothing above it in the stack is a
-                # second root -- Mermaid rejects this ("Multiple roots are
-                # illegal"). Without this guard it silently replaced @root
-                # via ||= below and the first root's whole subtree, still
-                # linked as node[:children] on the dropped node, vanished
-                # from the diagram with no error.
-                raise Sirena::Parser::ParseError, "Multiple roots are illegal" if @root
-
-                node[:level] = 0
-                @root = node
-              else
-                parent = indent_stack.last[1]
-                node[:level] = parent[:level] + 1
-                parent[:children] << node
-                node[:parent] = parent
-              end
-
-              indent_stack << [indent_size, node]
+          def discard_siblings(indent_stack, indent_size)
+            while indent_stack.any? && indent_stack.last[0] >= indent_size
+              indent_stack.pop
             end
+          end
+
+          def attach_rebuilt_node(node, indent_stack)
+            return install_root(node) if indent_stack.empty?
+
+            parent = indent_stack.last[1]
+            node[:level] = parent[:level] + 1
+            attach_to_parent(node, parent)
+          end
+
+          # A second node with no ancestor is a second root. Mermaid rejects
+          # it rather than silently discarding the first root and its subtree.
+          def install_root(node)
+            if @root
+              raise Sirena::Parser::ParseError, "Multiple roots are illegal"
+            end
+
+            node[:level] = 0
+            @root = node
           end
 
           def get_indent_size(indent_data)
             return 0 if indent_data.nil?
             return 0 if indent_data.is_a?(Array) && indent_data.empty?
 
-            indent_str = if indent_data.is_a?(Array)
-                           indent_data.join("")
-                         else
-                           indent_data.to_s
-                         end
-
-            indent_str.length
+            indent_string(indent_data).length
           end
 
           def calculate_level(indent_data)
-            # Handle empty array or nil
             return 0 if indent_data.nil?
             return 0 if indent_data.is_a?(Array) && indent_data.empty?
 
-            # Convert to string and count length
-            indent_str = if indent_data.is_a?(Array)
-                           indent_data.join("")
-                         else
-                           indent_data.to_s
-                         end
-
+            indent_str = indent_string(indent_data)
             return 0 if indent_str.empty?
 
-            # Count spaces (2 or 4 spaces per level)
             spaces = indent_str.length
-            # Try 2-space indentation first
-            level = spaces / 2
-            # If not evenly divisible, try 4-space
-            level = spaces / 4 if spaces % 2 != 0
+            spaces.even? ? spaces / 2 : spaces / 4
+          end
 
-            level
+          def indent_string(indent_data)
+            separator = ""
+            return indent_data.join(separator) if indent_data.is_a?(Array)
+
+            indent_data.to_s
           end
 
           def extract_content(node_data)
             return "" unless node_data[:content]
 
             content = node_data[:content].to_s
-            if node_data[:shape_round]
-              # Mermaid's comment strip is a textual pre-pass that runs
-              # before quote lexing, so it removes a real comment LINE
-              # (one already starting at a source line boundary) whether
-              # or not that line sits inside quotes -- quoting a node's
-              # content does not protect a line from it. What quoting
-              # does change is the leading-newline normalisation below:
-              # that is specific to an unquoted round shape's own
-              # opening "(\n" convention and does not apply to a quoted
-              # string's own leading newline.
-              content = node_data[:round_quoted] ? strip_round_comments(content) : strip_round_extras(content)
-            end
-            content
+            return content unless node_data[:shape_round]
+
+            round_content(content, node_data[:round_quoted])
+          end
+
+          # Quoting protects the leading newline but not a real comment line:
+          # Mermaid strips those comments before quote lexing.
+          def round_content(content, quoted)
+            quoted ? strip_round_comments(content) : strip_round_extras(content)
           end
 
           def strip_round_comments(content)
@@ -253,11 +252,7 @@ module Sirena
           nodes_array.each do |node_data|
             next unless node_data.is_a?(Hash)
 
-            # Skip if no actual node data (just whitespace)
-            next unless node_data[:content] || node_data[:icon] || node_data[:classes] ||
-                       node_data[:shape_circle] || node_data[:shape_bang] ||
-                       node_data[:shape_cloud] || node_data[:shape_hexagon] ||
-                       node_data[:shape_square] || node_data[:shape_round]
+            next unless builder.node_data?(node_data)
 
             builder.add_node(node_data)
           end

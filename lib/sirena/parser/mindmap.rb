@@ -36,26 +36,36 @@ module Sirena
 
       def create_diagram(result)
         diagram = Diagram::Mindmap.new
+        add_root(diagram, result[:root])
+        add_remaining_nodes(diagram, result)
+        diagram
+      end
 
-        # Build node hierarchy
-        if result[:root]
-          root = build_node(result[:root])
-          diagram.root = root
-          diagram.add_node(root)
-        end
+      def add_root(diagram, root_data)
+        return unless root_data
 
-        # Add all nodes to diagram
+        root = build_node(root_data)
+        diagram.root = root
+        diagram.add_node(root)
+      end
+
+      def add_remaining_nodes(diagram, result)
         result[:nodes].each do |node_data|
           next if node_data == result[:root]
 
           diagram.add_node(build_node(node_data))
         end
-
-        diagram
       end
 
       def build_node(node_data, parent = nil)
-        node = Diagram::Mindmap::MindmapNode.new(
+        node = create_node(node_data)
+        node.parent = parent if parent
+        add_children(node, node_data[:children])
+        node
+      end
+
+      def create_node(node_data)
+        Diagram::Mindmap::MindmapNode.new(
           id: node_data[:id],
           content: node_data[:content],
           level: node_data[:level],
@@ -63,16 +73,13 @@ module Sirena
           icon: node_data[:icon],
           classes: node_data[:classes] || [],
         )
+      end
 
-        node.parent = parent if parent
-
-        # Build children recursively
-        node_data[:children].each do |child_data|
+      def add_children(node, children)
+        children.each do |child_data|
           child = build_node(child_data, node)
           node.add_child(child)
         end
-
-        node
       end
     end
   end

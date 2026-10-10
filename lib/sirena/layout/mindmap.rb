@@ -87,32 +87,36 @@ module Sirena
         root = graph.nodes.find { |node| node.parent_id.nil? }
         return empty_graph unless root
 
+        prepare_graph(graph)
+        positioned_graph(graph, root)
+      end
+
+      private
+
+      def prepare_graph(graph)
         @children_by_parent = graph.nodes.group_by(&:parent_id)
         @nodes_by_id = graph.nodes.to_h { |node| [node.id, node] }
         @levels = {}
         @sizes = {}
+      end
 
-        # Position nodes using tree layout
+      def positioned_graph(graph, root)
         positioned_nodes = position_tree(root)
-
-        # Build connections between nodes
-        connections = graph.edges.map do |edge|
-          { from: edge.source_id, to: edge.target_id, type: edge.role.to_sym }
-        end
-
-        # Calculate bounds
         bounds = calculate_bounds(positioned_nodes)
-
         {
           nodes: positioned_nodes,
-          connections: connections,
+          connections: graph_connections(graph),
           width: bounds[:width],
           height: bounds[:height],
           root: positioned_nodes.first,
         }
       end
 
-      private
+      def graph_connections(graph)
+        graph.edges.map do |edge|
+          { from: edge.source_id, to: edge.target_id, type: edge.role.to_sym }
+        end
+      end
 
       def ir_graph(diagram)
         return diagram if diagram.is_a?(IR::Graph)
@@ -293,30 +297,22 @@ module Sirena
       # @param root [Diagram::Mindmap::MindmapNode] root node
       # @return [Array<Hash>] positioned nodes
       def position_tree(root)
-        nodes = []
-
-        # Start with root at center-top
-        root_width = estimate_node_width(root)
-        root_height = estimate_node_height(root)
-
-        # Calculate tree width to center root
-        tree_width = calculate_tree_width(root)
-        root_x = tree_width / 2
-
-        # Position root
-        nodes << root_entry(root, root_x, root_width, root_height)
-
-        # Position children recursively
-        if children_of(root).any?
-          position_children(
-            root,
-            root_x,
-            ROOT_PADDING + root_height + LEVEL_VERTICAL_SPACING,
-            nodes,
-          )
-        end
-
+        root_x, width, height = root_geometry(root)
+        nodes = [root_entry(root, root_x, width, height)]
+        position_root_children(root, root_x, height, nodes)
         nodes
+      end
+
+      def root_geometry(root)
+        [calculate_tree_width(root) / 2,
+         estimate_node_width(root), estimate_node_height(root)]
+      end
+
+      def position_root_children(root, root_x, root_height, nodes)
+        return if children_of(root).empty?
+
+        children_y = ROOT_PADDING + root_height + LEVEL_VERTICAL_SPACING
+        position_children(root, root_x, children_y, nodes)
       end
 
       def root_entry(root, x_position, width, height)
@@ -331,53 +327,48 @@ module Sirena
       #
       # @param parent [Diagram::Mindmap::MindmapNode] parent node
       # @param parent_x [Numeric] parent X position
-      # @param y [Numeric] Y position for this level
+      # @param y_position [Numeric] Y position for this level
       # @param nodes [Array<Hash>] accumulator for positioned nodes
-      def position_children(parent, parent_x, y, nodes)
+      def position_children(parent, parent_x, y_position, nodes)
         children = children_of(parent)
         return if children.empty?
 
-        # Calculate total width needed for all children
-        total_width = children.sum { |c| estimate_subtree_width(c) }
-        total_width += (children.size - 1) * NODE_HORIZONTAL_SPACING
-
-        # Start x position (centered under parent)
-        start_x = parent_x - (total_width / 2)
-        current_x = start_x
-
+        current_x = parent_x - (children_width(children) / 2)
         children.each do |child|
-          child_width = estimate_node_width(child)
-          child_height = estimate_node_height(child)
-          subtree_width = estimate_subtree_width(child)
-
-          # Center the node within its subtree space
-          node_x = current_x + (subtree_width / 2)
-
-          nodes << {
-            id: child.id,
-            content: child.label,
-            x: node_x,
-            y: y,
-            width: child_width,
-            height: child_height,
-            lines: node_size(child)[:lines],
-            level: level_for(child),
-            shape: child.role,
-            parent_id: parent.id,
-          }
-
-          # Recursively position grandchildren
-          if children_of(child).any?
-            position_children(
-              child,
-              node_x,
-              y + child_height + LEVEL_VERTICAL_SPACING,
-              nodes,
-            )
-          end
-
-          current_x += subtree_width + NODE_HORIZONTAL_SPACING
+          current_x = position_child(
+            child, parent, current_x, y_position, nodes
+          )
         end
+      end
+
+      def children_width(children)
+        subtree_widths = children.sum { |child| estimate_subtree_width(child) }
+        subtree_widths + ((children.size - 1) * NODE_HORIZONTAL_SPACING)
+      end
+
+      def position_child(child, parent, current_x, y_position, nodes)
+        subtree_width = estimate_subtree_width(child)
+        node_x = current_x + (subtree_width / 2)
+        height = estimate_node_height(child)
+        nodes << child_entry(child, parent, node_x, y_position, height)
+        position_descendants(child, node_x, y_position, height, nodes)
+        current_x + subtree_width + NODE_HORIZONTAL_SPACING
+      end
+
+      def child_entry(child, parent, node_x, y_position, height)
+        {
+          id: child.id, content: child.label, x: node_x, y: y_position,
+          width: estimate_node_width(child), height: height,
+          lines: node_size(child)[:lines], level: level_for(child),
+          shape: child.role, parent_id: parent.id
+        }
+      end
+
+      def position_descendants(child, node_x, y_position, height, nodes)
+        return if children_of(child).empty?
+
+        child_y = y_position + height + LEVEL_VERTICAL_SPACING
+        position_children(child, node_x, child_y, nodes)
       end
 
       # The mmdc box of a node: width, height and wrapped label lines.
