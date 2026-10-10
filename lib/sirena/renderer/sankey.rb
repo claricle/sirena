@@ -107,7 +107,7 @@ module Sirena
       end
 
       def flow_colour(flow)
-        theme_palette(:flow, flow.colour_index)
+        theme.colors.palette(:flow, flow.colour_index)
       end
     end
   end
