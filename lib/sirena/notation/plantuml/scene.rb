@@ -44,6 +44,7 @@ module Sirena
           attribute :width, :float
           attribute :height, :float
           attribute :tab_width, :float
+          attribute :fill, :string
           attribute :icon, :boolean
           attribute :texts, Text, collection: true
         end
