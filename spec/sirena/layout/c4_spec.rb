@@ -108,13 +108,13 @@ RSpec.describe Sirena::Layout::C4 do
 
   it "stores a person's final default dimensions" do
     expect(context_nodes["user"]).to have_attributes(
-      kind: "person", width: 216.0, height: 134.0
+      kind: "person", width: 216.0, height: 134.0,
     )
   end
 
   it "stores a system's final default dimensions" do
     expect(context_nodes["webapp"]).to have_attributes(
-      kind: "system", width: 216.0, height: 86.0
+      kind: "system", width: 216.0, height: 86.0,
     )
   end
 
@@ -165,7 +165,7 @@ RSpec.describe Sirena::Layout::C4 do
     scene = layout.call(diagram(elements: [element("x", type: "Unknown")]))
 
     expect(scene.children.first).to have_attributes(
-      id: "x", kind: "system", width: 216.0, height: 60.0
+      id: "x", kind: "system", width: 216.0, height: 60.0,
     )
   end
 

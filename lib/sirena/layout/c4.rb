@@ -377,9 +377,9 @@ module Sirena
       def node_label(label, node)
         Label.new(
           **label_measurements(label), x: node[:x] + (node[:width] / 2.0),
-          y: node[:y] + label[:offset], baseline: "middle",
-          font_size: label[:font_size], font_weight: label[:font_weight],
-          font_style: label[:font_style]
+                                       y: node[:y] + label[:offset], baseline: "middle",
+                                       font_size: label[:font_size], font_weight: label[:font_weight],
+                                       font_style: label[:font_style]
         )
       end
 

@@ -36,11 +36,11 @@ module Sirena
       def self.diagonal_point(box, target)
         dx = (box.x - target[0]).abs
         dy = (box.y - target[1]).abs
-        slope = dy / dx
-        if (box.height / box.width) >= slope
+        slope = dy.fdiv(dx)
+        if box.height.fdiv(box.width) >= slope
           side_point(box, target, slope)
         else
-          edge_point(box, target, dx / dy)
+          edge_point(box, target, dx.fdiv(dy))
         end
       end
 
