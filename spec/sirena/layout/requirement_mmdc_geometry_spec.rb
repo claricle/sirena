@@ -27,6 +27,18 @@ RSpec.describe Sirena::Layout::Requirement do
     )
   end
 
+  let(:reversed) do
+    layout.call(
+      Sirena::Diagram::Requirement.new(
+        requirements: [Sirena::Diagram::RequirementNode.new(name: "r")],
+        elements: [Sirena::Diagram::RequirementElement.new(name: "e")],
+        relationships: [Sirena::Diagram::RequirementRelationship.new(
+          source: "r", target: "e", type: "verifies",
+        )],
+      ),
+    )
+  end
+
   def node(id)
     scene.children.find { |child| child.id == id }
   end
@@ -40,18 +52,6 @@ RSpec.describe Sirena::Layout::Requirement do
 
   it "sizes a box from its widest label plus 10px each side" do
     expect(node("test_req").width).to be_within(15).of(157.7)
-  end
-
-  let(:reversed) do
-    layout.call(
-      Sirena::Diagram::Requirement.new(
-        requirements: [Sirena::Diagram::RequirementNode.new(name: "r")],
-        elements: [Sirena::Diagram::RequirementElement.new(name: "e")],
-        relationships: [Sirena::Diagram::RequirementRelationship.new(
-          source: "r", target: "e", type: "verifies",
-        )],
-      ),
-    )
   end
 
   it "puts the relationship source above its target" do
