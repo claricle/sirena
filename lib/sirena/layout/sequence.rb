@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "../diagram/sequence"
 require_relative "../diagram/sequence_text"
+require_relative "../notation/mermaid/ir_adapters/sequence"
 
 module Sirena
   module Layout
@@ -27,6 +28,7 @@ module Sirena
         "both" => %i[source target].freeze,
       }.freeze
       FLUSH_HEADS = %w[cross open stick_top stick_bottom].freeze
+      PARTICIPANT_ROLES = %w[participant actor].freeze
 
       class Line < Lutaml::Model::Serializable
         attribute :x1, :float
@@ -89,22 +91,38 @@ module Sirena
 
       # Retains the pre-Scene graph shape for direct layout callers.
       def build_graph(diagram)
+        graph = ir_graph(diagram)
         {
-          id: diagram.id || "sequence",
-          children: transform_participants(diagram),
-          edges: transform_messages(diagram),
-          layoutOptions: layout_options(diagram),
-          metadata: graph_metadata(diagram),
+          id: source_diagram_id(graph),
+          children: transform_participants(graph),
+          edges: transform_messages(graph),
+          layoutOptions: layout_options,
+          metadata: graph_metadata(graph),
         }
       end
 
       private
 
-      def graph_metadata(diagram)
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::Sequence.call(diagram)
+      end
+
+      def source_diagram_id(graph)
+        settings = graph.nodes.find { |node| node.role == "diagram_settings" }
+        semantic_value(graph, settings&.id, "diagram_identifier") || graph.id
+      end
+
+      def graph_metadata(graph)
+        participants = participant_nodes(graph)
         {
-          participants: diagram.participants.map(&:id),
-          message_count: diagram.messages.length,
-          notes: diagram.notes,
+          participants: participants.map(&:id),
+          message_count: message_edges(graph).length,
+          notes: graph.nodes.select { |node| node.role == "note" },
+          title: graph.label,
+          accessibility_title: graph.accessibility_title,
+          accessibility_description: graph.accessibility_description,
         }
       end
 
@@ -132,8 +150,8 @@ module Sirena
          canvas_height(participants, message_count) + 40]
       end
 
-      def transform_participants(diagram)
-        diagram.participants.map.with_index do |participant, index|
+      def transform_participants(graph)
+        participant_nodes(graph).map.with_index do |participant, index|
           label = measured_label(participant.label, participant_font_size)
           {
             id: participant.id,
@@ -141,42 +159,72 @@ module Sirena
             height: PARTICIPANT_HEIGHT,
             labels: [label],
             metadata: {
-              actor_type: participant.actor_type,
+              actor_type: participant_type(graph, participant),
               index: index,
-              lifeline_length: calculate_lifeline_length(diagram),
+              lifeline_length: calculate_lifeline_length(graph),
             },
           }
         end
       end
 
-      def transform_messages(diagram)
-        return [] if diagram.messages.nil? || diagram.messages.empty?
-
-        diagram.messages.map.with_index do |message, index|
-          {
-            id: "msg_#{index}",
-            sources: [message.from_id],
-            targets: [message.to_id],
-            labels: message_labels(message),
-            metadata: {
-              line_style: message.line_style,
-              head_style: message.head_style,
-              head_side: message.head_side,
-              message_index: index,
-              message_text: shown_text(message),
-            },
-          }
+      def participant_nodes(graph)
+        graph.nodes.select do |node|
+          PARTICIPANT_ROLES.include?(node.role)
         end
       end
 
-      def shown_text(message)
-        Diagram::SequenceText.display(message.message_text.to_s)
+      def participant_type(graph, participant)
+        semantic_value(graph, participant.id, "participant_type") ||
+          participant.role
       end
 
-      def message_labels(message)
-        return [] if message.message_text.nil? || message.message_text.empty?
+      def transform_messages(graph)
+        message_edges(graph).map.with_index do |message, index|
+          transformed_message(graph, message, index)
+        end
+      end
 
-        [measured_label(shown_text(message), message_font_size)]
+      def transformed_message(graph, message, index)
+        semantics = semantic_fields(graph, message.parent_id)
+        text = shown_text(message.label.to_s)
+        {
+          id: message.id, sources: [message.source_id],
+          targets: [message.target_id], labels: message_labels(text),
+          metadata: message_metadata(semantics, text, index)
+        }
+      end
+
+      def message_metadata(semantics, text, index)
+        {
+          line_style: semantics["line_style"],
+          head_style: semantics["head_style"],
+          head_side: semantics["head_side"],
+          message_index: index, message_text: text
+        }
+      end
+
+      def message_edges(graph)
+        graph.edges.select { |edge| edge.role == "message" }
+      end
+
+      def semantic_fields(graph, parent_id)
+        graph.nodes.filter_map do |node|
+          [node.role, node.label] if node.parent_id == parent_id
+        end.to_h
+      end
+
+      def semantic_value(graph, parent_id, role)
+        semantic_fields(graph, parent_id)[role]
+      end
+
+      def shown_text(text)
+        Diagram::SequenceText.display(text)
+      end
+
+      def message_labels(text)
+        return [] if text.empty?
+
+        [measured_label(text, message_font_size)]
       end
 
       def measured_label(text, font_size)
@@ -196,12 +244,13 @@ module Sirena
         value&.positive? ? value : fallback
       end
 
-      def calculate_lifeline_length(diagram)
-        base_height = diagram.messages.length * MESSAGE_SPACING
-        base_height + ((diagram.notes&.length || 0) * 30)
+      def calculate_lifeline_length(graph)
+        base_height = message_edges(graph).length * MESSAGE_SPACING
+        note_count = graph.nodes.count { |node| node.role == "note" }
+        base_height + (note_count * 30)
       end
 
-      def layout_options(_diagram)
+      def layout_options
         build_elk_options(
           algorithm: ALGORITHM_LAYERED,
           direction: DIRECTION_DOWN,

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "sirena/notation/mermaid/ir_adapters/sequence"
 
 RSpec.describe Sirena::Layout::Sequence do
   let(:source) do
@@ -132,5 +133,65 @@ RSpec.describe Sirena::Layout::Sequence do
     it "does not add geometry for notes or activations" do
       expect(omission_evidence).to eq([280.0, 1, [220.0, 220.0], false, false])
     end
+  end
+
+  describe "shared graph IR" do
+    it "lays out aliases, fragments, notes, and activations identically" do
+      diagram = Sirena::Parser::Sequence.new.parse(representative_source)
+      actual, expected = scene_round_trip(diagram)
+
+      expect(actual).to eq(expected)
+    end
+
+    it "retains alias, actor, message, and self-loop rendering through IR" do
+      diagram = Sirena::Parser::Sequence.new.parse(representative_source)
+      graph = Sirena::Notation::Mermaid::IRAdapters::Sequence.call(diagram)
+      result = described_class.new.call(graph)
+
+      expect(shared_scene_signature(result)).to eq(expected_shared_signature)
+    end
+  end
+
+  def representative_source
+    <<~MERMAID
+      sequenceDiagram
+        actor A as Alice
+        box Services
+          participant B as Bob
+          A->>+B: wrap: request<br>accepted
+          Note over A,B: in flight
+          B-->>-A: response
+        end
+        loop Retry
+          A-)A: retry
+        end
+    MERMAID
+  end
+
+  def scene_round_trip(diagram)
+    before = Marshal.dump(diagram)
+    graph = Sirena::Notation::Mermaid::IRAdapters::Sequence.call(diagram)
+    private_scene = described_class.new.call(diagram)
+    shared_scene = described_class.new.call(graph)
+    actual = [Marshal.dump(shared_scene), Marshal.dump(diagram)]
+    [actual, [Marshal.dump(private_scene), before]]
+  end
+
+  def shared_scene_signature(result)
+    participants = result.participants.map do |participant|
+      [participant.id, participant.actor_type, participant.label.text]
+    end
+    messages = result.messages.map do |message|
+      [message.line_style, message.label&.text, !message.loop_path.nil?]
+    end
+    [participants, messages]
+  end
+
+  def expected_shared_signature
+    [
+      [%w[A actor Alice], %w[B participant Bob]],
+      [["solid", "request accepted", false],
+       ["dotted", "response", false], ["solid", "retry", true]],
+    ]
   end
 end
