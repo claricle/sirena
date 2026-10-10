@@ -61,8 +61,6 @@ rows:
   count: 3
 - file: lib/sirena/parser/builders/er_diagram.rb
   count: 3
-- file: lib/sirena/parser/builders/error.rb
-  count: 1
 - file: lib/sirena/parser/builders/flowchart.rb
   count: 5
 - file: lib/sirena/parser/builders/gantt.rb
@@ -75,8 +73,6 @@ rows:
   count: 1
 - file: lib/sirena/parser/builders/mindmap.rb
   count: 3
-- file: lib/sirena/parser/builders/pie.rb
-  count: 1
 - file: lib/sirena/parser/builders/quadrant.rb
   count: 3
 - file: lib/sirena/parser/builders/requirement.rb
@@ -86,7 +82,7 @@ rows:
 - file: lib/sirena/parser/builders/state_diagram.rb
   count: 2
 - file: lib/sirena/parser/builders/timeline.rb
-  count: 2
+  count: 1
 - file: lib/sirena/parser/builders/treemap.rb
   count: 2
 - file: lib/sirena/parser/metadata_yaml.rb

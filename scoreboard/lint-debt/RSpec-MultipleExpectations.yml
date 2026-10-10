@@ -25,8 +25,6 @@ rows:
   count: 2
 - file: spec/scripts/corpus_sweep_spec.rb
   count: 1
-- file: spec/scripts/corpus_sweep_task_spec.rb
-  count: 1
 - file: spec/scripts/docs_site_verifier_spec.rb
   count: 4
 - file: spec/scripts/hardened_mmdc_spec.rb
@@ -188,7 +186,7 @@ rows:
 - file: spec/sirena/renderer/gantt_spec.rb
   count: 7
 - file: spec/sirena/renderer/kanban_spec.rb
-  count: 15
+  count: 13
 - file: spec/sirena/renderer/markdown_text_spec.rb
   count: 1
 - file: spec/sirena/renderer/packet_spec.rb

@@ -172,7 +172,7 @@ rows:
 - file: spec/sirena/renderer/gantt_spec.rb
   count: 9
 - file: spec/sirena/renderer/kanban_spec.rb
-  count: 8
+  count: 7
 - file: spec/sirena/renderer/mindmap_spec.rb
   count: 2
 - file: spec/sirena/renderer/quadrant_spec.rb
