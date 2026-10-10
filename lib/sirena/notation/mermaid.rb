@@ -109,6 +109,7 @@ module Sirena
         requirement: {
           pattern: /\A\s*requirementDiagram/i,
           keyword: "requirementDiagram",
+          ir_adapter: true,
         },
         xychart: {
           pattern: /\A\s*xychart-beta/i,
