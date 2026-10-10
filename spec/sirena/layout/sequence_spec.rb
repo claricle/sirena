@@ -119,7 +119,7 @@ RSpec.describe Sirena::Layout::Sequence do
     end
   end
 
-  describe "omitted sequence features" do
+  describe "activations stay undrawn while notes get a slot" do
     subject(:omission_evidence) do
       decorated = Sirena::Parser::Sequence.new.parse(
         "sequenceDiagram\nparticipant A\nparticipant B\n" \
@@ -127,11 +127,11 @@ RSpec.describe Sirena::Layout::Sequence do
       )
       result = described_class.new.to_graph(decorated)
       [result.height, result.messages.length, result.lifelines.map(&:y2),
-       result.respond_to?(:notes), result.respond_to?(:activations)]
+       result.notes.length, result.respond_to?(:activations)]
     end
 
-    it "does not add geometry for notes or activations" do
-      expect(omission_evidence).to eq([280.0, 1, [220.0, 220.0], false, false])
+    it "adds a note slot but no activation geometry" do
+      expect(omission_evidence).to eq([337.0, 1, [277.0, 277.0], 1, false])
     end
   end
 
