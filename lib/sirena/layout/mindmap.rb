@@ -169,12 +169,16 @@ module Sirena
       end
 
       def node_label(node, geometry)
-        center_y = geometry[:y] + (geometry[:height] / 2)
-        center_y = geometry[:y] + geometry[:radius] if node[:shape] == "circle"
         lines = node[:lines]
         Label.new(text: lines.join("\n"), x: geometry[:center_x],
-                  y: center_y + 5 - first_line_lift(lines),
+                  y: label_baseline(node, geometry) - first_line_lift(lines),
                   font_size: MindmapNodeSize::FONT_SIZE.to_f)
+      end
+
+      def label_baseline(node, geometry)
+        center_y = geometry[:y] + (geometry[:height] / 2)
+        center_y = geometry[:y] + geometry[:radius] if node[:shape] == "circle"
+        center_y + 5
       end
 
       # Lifts the first line so a stack of lines stays centred on the node.
@@ -300,17 +304,7 @@ module Sirena
         root_x = tree_width / 2
 
         # Position root
-        nodes << {
-          id: root.id,
-          content: root.label,
-          x: root_x,
-          y: ROOT_PADDING,
-          width: root_width,
-          height: root_height,
-          lines: node_size(root)[:lines],
-          level: level_for(root),
-          shape: root.role,
-        }
+        nodes << root_entry(root, root_x, root_width, root_height)
 
         # Position children recursively
         if children_of(root).any?
@@ -323,6 +317,14 @@ module Sirena
         end
 
         nodes
+      end
+
+      def root_entry(root, x_position, width, height)
+        {
+          id: root.id, content: root.label, x: x_position, y: ROOT_PADDING,
+          width: width, height: height, lines: node_size(root)[:lines],
+          level: level_for(root), shape: root.role
+        }
       end
 
       # Positions children of a node
