@@ -263,14 +263,14 @@ RSpec.describe Sirena::Parser::Kanban do
         expect(diagram).to be_a(Sirena::Diagram::Kanban)
       end
 
-      it "creates the correct column" do
+      it "creates the correct column", :aggregate_failures do
         diagram = parser.parse(source)
         expect(diagram.columns.size).to eq(1)
         expect(diagram.columns.first.id).to eq("id1")
         expect(diagram.columns.first.title).to eq("Todo")
       end
 
-      it "creates the correct card" do
+      it "creates the correct card", :aggregate_failures do
         diagram = parser.parse(source)
         column = diagram.columns.first
         expect(column.cards.size).to eq(1)
@@ -293,14 +293,14 @@ RSpec.describe Sirena::Parser::Kanban do
         MERMAID
       end
 
-      it "creates all columns" do
+      it "creates all columns", :aggregate_failures do
         diagram = parser.parse(source)
         expect(diagram.columns.size).to eq(3)
         expect(diagram.columns.map(&:title))
           .to eq(["Todo", "In Progress", "Done"])
       end
 
-      it "creates all cards in correct columns" do
+      it "creates all cards in correct columns", :aggregate_failures do
         diagram = parser.parse(source)
         expect(diagram.columns[0].cards.size).to eq(2)
         expect(diagram.columns[1].cards.size).to eq(1)
@@ -317,7 +317,7 @@ RSpec.describe Sirena::Parser::Kanban do
         MERMAID
       end
 
-      it "parses metadata correctly" do
+      it "parses metadata correctly", :aggregate_failures do
         diagram = parser.parse(source)
         card = diagram.columns.first.cards.first
         expect(card.priority).to eq("High")
@@ -382,7 +382,7 @@ RSpec.describe Sirena::Parser::Kanban do
         MERMAID
       end
 
-      it "parses all metadata fields" do
+      it "parses all metadata fields", :aggregate_failures do
         diagram = parser.parse(source)
         card = diagram.columns.first.cards.first
         expect(card.priority).to eq("High")
@@ -400,7 +400,7 @@ RSpec.describe Sirena::Parser::Kanban do
         MERMAID
       end
 
-      it "creates columns without cards" do
+      it "creates columns without cards", :aggregate_failures do
         diagram = parser.parse(source)
         expect(diagram.columns.size).to eq(2)
         expect(diagram.columns[0].cards.size).to eq(0)
@@ -423,7 +423,7 @@ RSpec.describe Sirena::Parser::Kanban do
     context "with a bare node (corpus 015, 034)" do
       let(:source) { "kanban\n    root\n" }
 
-      it "creates one column whose title falls back to its id" do
+      it "creates one column whose title falls back to its id", :aggregate_failures do
         diagram = parser.parse(source)
         expect(diagram.columns.size).to eq(1)
         expect(diagram.columns.first.id).to eq("root")
@@ -434,7 +434,7 @@ RSpec.describe Sirena::Parser::Kanban do
     context "with a bare hierarchy (corpus 016)" do
       let(:source) { "kanban\n    root\n      child1\n      child2\n" }
 
-      it "nests bare children as cards titled by their ids" do
+      it "nests bare children as cards titled by their ids", :aggregate_failures do
         diagram = parser.parse(source)
         expect(diagram.columns.map(&:id)).to eq(["root"])
         cards = diagram.columns.first.cards
@@ -500,7 +500,7 @@ RSpec.describe Sirena::Parser::Kanban do
     context "with a round shape and no id (corpus 017)" do
       let(:source) { "kanban\n    (root)\n" }
 
-      it "auto-assigns an id and titles the column from the shape text" do
+      it "auto-assigns an id and titles the column from the shape text", :aggregate_failures do
         diagram = parser.parse(source)
         expect(diagram.columns.size).to eq(1)
         expect(diagram.columns.first.id).to eq("kanban-1")
@@ -508,7 +508,7 @@ RSpec.describe Sirena::Parser::Kanban do
       end
 
       it "assigns the next id deterministically " \
-         "for a second unlabelled shape" do
+         "for a second unlabelled shape", :aggregate_failures do
         diagram = parser.parse("kanban\n  (Col A)\n  (Col B)\n")
         expect(diagram.columns.map(&:id)).to eq(%w[kanban-1 kanban-2])
         expect(diagram.columns.map(&:title)).to eq(["Col A", "Col B"])
@@ -563,7 +563,7 @@ RSpec.describe Sirena::Parser::Kanban do
         expect(diagram.columns.first.title).to eq("Fix (today)")
       end
 
-      it "parses a column and a child both carrying a quoted label" do
+      it "parses a column and a child both carrying a quoted label", :aggregate_failures do
         diagram = parser.parse("kanban\n  col(\"Hello\")\n    (\"Task\")\n")
         column = diagram.columns.first
         expect(column.title).to eq("Hello")
@@ -571,7 +571,7 @@ RSpec.describe Sirena::Parser::Kanban do
       end
 
       it "parses a paren inside quotes on both the column and its child, " \
-         "where the unquoted form failed to parse at all" do
+         "where the unquoted form failed to parse at all", :aggregate_failures do
         diagram = parser.parse(nested_quoted_parens_source)
         column = diagram.columns.first
         expect(column.title).to eq("Todo (urgent)")
@@ -1173,7 +1173,7 @@ RSpec.describe Sirena::Parser::Kanban do
     context "with blank and spaces-only rows (corpus 012 = 013 = 014)" do
       let(:source) { "kanban\nroot\n A\n \n\n B\n" }
 
-      it "ignores the empty rows and keeps the bare nodes" do
+      it "ignores the empty rows and keeps the bare nodes", :aggregate_failures do
         diagram = parser.parse(source)
         expect(diagram.columns.map(&:id)).to eq(["root"])
         expect(diagram.columns.first.cards.map(&:id)).to eq(%w[A B])
@@ -1185,7 +1185,7 @@ RSpec.describe Sirena::Parser::Kanban do
         "kanban\n    root\n      child1\n        leaf1\n      child2\n"
       end
 
-      it "flattens every deeper level into the column card list" do
+      it "flattens every deeper level into the column card list", :aggregate_failures do
         # Mermaid does not distinguish deeper levels here, and neither does
         # the builder: anything not at the first item's indent is a card.
         diagram = parser.parse(source)
@@ -1198,7 +1198,7 @@ RSpec.describe Sirena::Parser::Kanban do
     context "with several bare sections (corpus 019)" do
       let(:source) { "kanban\n    section1\n    section2\n" }
 
-      it "creates a column per section and no cards" do
+      it "creates a column per section and no cards", :aggregate_failures do
         diagram = parser.parse(source)
         expect(diagram.columns.map(&:id)).to eq(%w[section1 section2])
         expect(diagram.columns.map { |c| c.cards.size }).to eq([0, 0])
@@ -1213,7 +1213,7 @@ RSpec.describe Sirena::Parser::Kanban do
         "id2\n    docs[Create Blog about the new diagram]\n"
       end
 
-      it "accepts both forms on one board" do
+      it "accepts both forms on one board", :aggregate_failures do
         diagram = parser.parse(source)
         expect(diagram.columns.map(&:id)).to eq(%w[id1 id2])
         expect(diagram.columns.map(&:title)).to eq(["Todo", "id2"])
@@ -1366,14 +1366,14 @@ RSpec.describe Sirena::Parser::Kanban do
         $; = old_fs
       end
 
-      it "accepts a class line followed by an icon line (corpus 026)" do
+      it "accepts a class line followed by an icon line (corpus 026)", :aggregate_failures do
         diagram = parser.parse(class_then_icon_source)
         column = diagram.columns.first
         expect(column.classes).to eq(%w[m-4 p-8])
         expect(column.icon).to eq("fa-rocket")
       end
 
-      it "accepts an icon line followed by a class line (corpus 027)" do
+      it "accepts an icon line followed by a class line (corpus 027)", :aggregate_failures do
         diagram = parser.parse(icon_then_class_source)
         column = diagram.columns.first
         expect(column.icon).to eq("fa-flag")
@@ -1381,7 +1381,7 @@ RSpec.describe Sirena::Parser::Kanban do
       end
 
       it "applies a class line to a card, " \
-         "and a later card stays unaffected (corpus 030)" do
+         "and a later card stays unaffected (corpus 030)", :aggregate_failures do
         source = "kanban\n  root(Root)\n    Child(Child)\n    " \
                  ":::hot\n      a(a)\n      b[New Stuff]\n"
         diagram = parser.parse(source)
@@ -1497,7 +1497,7 @@ RSpec.describe Sirena::Parser::Kanban do
         expect(diagram.columns.first.cards.first.text).to eq("K")
       end
 
-      it "does not let id: overwrite the card id" do
+      it "does not let id: overwrite the card id", :aggregate_failures do
         diagram = parser.parse("kanban\n  col[C]\n    card@{ id: 'CLOB' }\n")
         card = diagram.columns.first.cards.first
         expect(card.id).to eq("card")
@@ -1510,7 +1510,7 @@ RSpec.describe Sirena::Parser::Kanban do
       # label, carrying metadata.
       let(:source) { "kanban\n  col[Todo]\n    child1@{ assigned: knsv }\n" }
 
-      it "titles the card by its id and keeps the metadata" do
+      it "titles the card by its id and keeps the metadata", :aggregate_failures do
         card = parser.parse(source).columns.first.cards.first
         expect(card.id).to eq("child1")
         expect(card.text).to eq("child1")
@@ -1610,7 +1610,7 @@ RSpec.describe Sirena::Parser::Kanban do
         end
       end
 
-      it "keeps truthy scalars and quoted falsy-looking ones" do
+      it "keeps truthy scalars and quoted falsy-looking ones", :aggregate_failures do
         expect(title_for("1")).to eq("1")
         expect(title_for("true")).to eq("true")
         expect(title_for("'0'")).to eq("0")
@@ -1866,7 +1866,7 @@ RSpec.describe Sirena::Parser::Kanban do
     # straight parse failure on legitimate Unicode input.
     context "with a multibyte label, icon or class body" do
       it "parses a label, icon and class body " \
-         "containing multibyte characters" do
+         "containing multibyte characters", :aggregate_failures do
         label = parser.parse("kanban\n  id1[Todo]\n    root[café]\n")
           .columns.first.cards.first
         expect(label.text).to eq("café")
@@ -1892,7 +1892,7 @@ RSpec.describe Sirena::Parser::Kanban do
     context "with an unterminated icon or bracket body, " \
             "GreedyRun called directly" do
       it "consumes to EOF without hanging, " \
-         "using the icon_modifier char class" do
+         "using the icon_modifier char class", :aggregate_failures do
         result = nil
         expect do
           Timeout.timeout(2) { result = icon_greedy_run.parse("unterminated") }
@@ -1901,7 +1901,7 @@ RSpec.describe Sirena::Parser::Kanban do
       end
 
       it "consumes to EOF without hanging, " \
-         "using the labelled_item char class" do
+         "using the labelled_item char class", :aggregate_failures do
         result = nil
         expect do
           Timeout.timeout(2) { result = label_greedy_run.parse("unterminated") }
