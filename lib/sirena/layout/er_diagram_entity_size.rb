@@ -34,12 +34,8 @@ module Sirena
       def call(name, attributes)
         return label_box(name) if attributes.empty?
 
-        cells = cell_texts(attributes)
         {
-          width: [column_widths(cells).sum,
-                  text_width(name) + (PADDING * 2),
-                  cells.flatten.map { |cell| text_width(cell) }.max +
-                    (PADDING * 2)].max,
+          width: box_width(name, cell_texts(attributes)),
           height: ROW_HEIGHT * (attributes.length + 1),
         }
       end
@@ -58,6 +54,12 @@ module Sirena
         }
       end
 
+      def box_width(name, cells)
+        [column_widths(cells).sum,
+         text_width(name) + (PADDING * 2),
+         cells.flatten.map { |cell| text_width(cell) }.max + (PADDING * 2)].max
+      end
+
       def cell_texts(attributes)
         attributes.map do |attribute|
           [attribute[:attribute_type], attribute[:name],
@@ -74,7 +76,7 @@ module Sirena
           index >= 2 && widest <= PADDING ? 0 : widest
         end
       end
-      private_class_method :label_box, :cell_texts, :column_widths
+      private_class_method :label_box, :box_width, :cell_texts, :column_widths
     end
   end
 end
