@@ -285,7 +285,6 @@ This illustrates:
 * Quarterly comparison
 * Polygon grid style
 * Clear value range
-* Professional presentation
 ====
 
 === Named value format
