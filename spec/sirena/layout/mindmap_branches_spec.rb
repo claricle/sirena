@@ -33,4 +33,17 @@ RSpec.describe Sirena::Layout::Mindmap do
 
     expect([root.shape, label.y]).to eq(["circle", root.y + root.radius + 5])
   end
+
+  it "sizes a node by mmdc's rule instead of a 100px minimum" do
+    root = scene_for("mindmap\n  a\n").children.first
+
+    expect(root.width).to be < 100
+  end
+
+  it "joins wrapped lines into the label with newlines" do
+    source = "mindmap\n  a[one<br/>two]\n"
+
+    expect(scene_for(source).children.first.labels.first.text)
+      .to eq("one\ntwo")
+  end
 end
