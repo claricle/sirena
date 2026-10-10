@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/architecture"
 
-RSpec.describe Sirena::Parser::Architecture do
+RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
   let(:parser) { described_class.new }
 
   describe "#parse" do
