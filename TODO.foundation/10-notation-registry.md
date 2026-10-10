@@ -1,12 +1,15 @@
 # 10 — Notation registry (two-level), fast-tracked
 
-Status (2026-10-10): **10a complete; 10b in progress.** The owner-approved
+Status (2026-10-10): **complete.** The owner-approved
 Reading A contract is committed in `TODO.foundation/10a-notation-contract.md`.
 It makes one unambiguous choice for API placement, identifiers, precedence,
 mismatch/unknown errors, stdin, built-in discovery, external discovery, CLI
-behavior, and the interim IR boundary. The three-part 10b implementation is
-tracked separately below; this status does not claim its checksum-manifest or
-implementation gates are complete.
+behavior, and the interim IR boundary. The 10b truth-table, fake-notation,
+cold-subprocess discovery, boundary, and CLI contracts are on `main`.
+`scoreboard/corpus-output.json` closes the remaining byte-output gate with a
+path-keyed SHA-256 baseline for all 1,161 current oracle-valid Sirena-passing
+cases; `scripts/corpus_output_manifest.rb --check` reports zero added,
+deleted, or changed outputs against that committed baseline.
 
 Can start: after 01. Blocks: 16, 12. The corpus tracks (06/07) run
 CONCURRENTLY — no dependency — with one coordination rule: this
