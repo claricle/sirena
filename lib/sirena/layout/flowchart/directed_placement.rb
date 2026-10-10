@@ -18,6 +18,8 @@ module Sirena
       # one is mirrored.
       class DirectedPlacement
         CLUSTER_PADDING = 20.0
+        CLUSTER_SIDE = 8.0
+        CLUSTER_VERTICAL = 25.0
         TRANSPOSED = [Base::DIRECTION_RIGHT, Base::DIRECTION_LEFT].freeze
         MIRRORED_X = [Base::DIRECTION_LEFT].freeze
         MIRRORED_Y = [Base::DIRECTION_UP].freeze
@@ -125,19 +127,28 @@ module Sirena
         def place_cluster(cluster)
           contents = cluster[:children] || []
           place_level(contents, cluster[:id])
-          band = title_band(cluster)
           if contents.empty?
             cluster[:width] = titled_width(cluster)
-            cluster[:height] = band + CLUSTER_PADDING
+            cluster[:height] = CLUSTER_VERTICAL * 2
             return
           end
 
-          shift(contents, CLUSTER_PADDING - contents.map { |c| c[:x] }.min,
-                band - contents.map { |c| c[:y] }.min)
-          cluster[:width] = [contents.map { |c| c[:x] + c[:width] }.max +
-                               CLUSTER_PADDING, titled_width(cluster)].max
+          fit(cluster, contents)
+        end
+
+        # The contents sit CLUSTER_SIDE from the left and CLUSTER_VERTICAL
+        # below the top; a title wider than them stretches the box and the
+        # contents are centred in it.
+        def fit(cluster, contents)
+          left = contents.map { |c| c[:x] }.min
+          top = contents.map { |c| c[:y] }.min
+          inner = contents.map { |c| c[:x] + c[:width] }.max - left
+          width = [inner + (CLUSTER_SIDE * 2), titled_width(cluster)].max.ceil
+          shift(contents, ((width - inner) / 2.0) - left,
+                CLUSTER_VERTICAL - top)
+          cluster[:width] = width
           cluster[:height] =
-            contents.map { |c| c[:y] + c[:height] }.max + CLUSTER_PADDING
+            contents.map { |c| c[:y] + c[:height] }.max + CLUSTER_VERTICAL
         end
 
         def shift(boxes, delta_x, delta_y)
@@ -145,10 +156,6 @@ module Sirena
             box[:x] += delta_x
             box[:y] += delta_y
           end
-        end
-
-        def title_band(cluster)
-          label_size(cluster, :height) + (CLUSTER_PADDING * 2)
         end
 
         def titled_width(cluster)
