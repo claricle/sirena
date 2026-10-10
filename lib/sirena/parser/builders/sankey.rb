@@ -16,29 +16,18 @@ module Sirena
         # @return [Diagram::Sankey] the sankey diagram model
         def apply(tree)
           diagram = Diagram::Sankey.new
-
-          # Tree structure: array with header and statements
-          if tree.is_a?(Array)
-            tree.each do |item|
-              next unless item.is_a?(Hash)
-
-              process_item(diagram, item)
-            end
-          elsif tree.is_a?(Hash)
-            process_item(diagram, tree)
-
-            if tree[:statements]
-              process_statements(diagram, tree[:statements])
-            end
-          end
-
-          # Auto-discover nodes from flows if not explicitly declared
+          process_tree(diagram, tree)
           ensure_nodes_from_flows(diagram)
-
           diagram
         end
 
         private
+
+        def process_tree(diagram, tree)
+          items = tree.is_a?(Array) ? tree : [tree]
+          items.grep(Hash).each { |item| process_item(diagram, item) }
+          process_statements(diagram, tree[:statements]) if tree.is_a?(Hash)
+        end
 
         def process_item(diagram, item)
           return unless item.is_a?(Hash)
@@ -66,17 +55,14 @@ module Sirena
 
           node_id = extract_text(node_data[:node_id])
           node_label = extract_text(node_data[:node_label])
-
-          # Check if node already exists
           existing_node = diagram.nodes.find { |n| n.id == node_id }
-          if existing_node
-            # Update label if provided
-            existing_node.label = node_label unless node_label.empty?
-          else
-            # Create new node
-            node = Diagram::SankeyNode.new(node_id, node_label)
-            diagram.nodes << node
-          end
+          return update_node(existing_node, node_label) if existing_node
+
+          diagram.nodes << Diagram::SankeyNode.new(node_id, node_label)
+        end
+
+        def update_node(node, label)
+          node.label = label unless label.empty?
         end
 
         def process_flow_entry(diagram, item)
@@ -99,12 +85,9 @@ module Sirena
           end.uniq
 
           node_ids_from_flows.each do |node_id|
-            # Check if node already exists
-            unless diagram.nodes.any? { |n| n.id == node_id }
-              # Create node with id as label
-              node = Diagram::SankeyNode.new(node_id, node_id)
-              diagram.nodes << node
-            end
+            next if diagram.nodes.any? { |node| node.id == node_id }
+
+            diagram.nodes << Diagram::SankeyNode.new(node_id, node_id)
           end
         end
 

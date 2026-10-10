@@ -21,30 +21,33 @@ module Sirena
           end
 
           def add_line(line_data)
-            return apply_modifier(:icon, line_data[:icon].to_s) if line_data[:icon]
-            return apply_modifier(:classes, line_data[:classes].to_s.strip.split(/\s+/)) if line_data[:classes]
+            return apply_modifier_line(line_data) if modifier?(line_data)
 
-            indent_size = get_indent_size(line_data[:indent])
+            @items << item_from(line_data)
+          end
 
+          def modifier?(line_data)
+            line_data[:icon] || line_data[:classes]
+          end
+
+          def apply_modifier_line(line_data)
+            if line_data[:icon]
+              return apply_modifier(:icon, line_data[:icon].to_s)
+            end
+
+            classes = line_data[:classes].to_s.strip.split(/\s+/)
+            apply_modifier(:classes, classes)
+          end
+
+          # An item with no bracket label displays its id. Metadata is parsed
+          # here so both add_card and add_column see it. An absent label is
+          # nil, so `|| id` safely falls back without hiding an empty string.
+          def item_from(line_data)
             id = resolve_id(line_data[:id])
-
-            # An item with no bracket label displays its id, which is what
-            # mermaid renders. Resolved here, once: add_card reads this field
-            # directly, and add_column reads it through column_title, which
-            # may override it with a `label:` from the metadata.
-            #
-            # The metadata is parsed here rather than in add_card so that
-            # add_column can consult it too; parse_metadata returns {} for a
-            # nil subtree, so this is always a Hash.
-            #
-            # `|| id` relies on an absent label being nil rather than "",
-            # since `""` is truthy in Ruby and would not fall back. That
-            # holds only because labelled_item and shaped_item capture with
-            # `repeat(1)`, so a label that matched is never empty.
-            @items << {
+            {
               id: id,
               text: line_data[:text]&.to_s || id,
-              indent: indent_size,
+              indent: get_indent_size(line_data[:indent]),
               metadata: parse_metadata(line_data[:metadata]),
             }
           end
@@ -57,27 +60,25 @@ module Sirena
             # indent is a card of the latest column, including one LESS
             # indented than the first. Mermaid rejects a less-indented item
             # only once another item follows it.
-            column_indent = @items.first[:indent]
-            shallower = nil
-
-            @items.each do |item|
-              if shallower
-                raise Parser::ParseError,
-                      "Items without section detected, " \
-                      "found section (\"#{column_title(shallower)}\")."
-              end
-
-              shallower = item if item[:indent] < column_indent
-
-              if item[:indent] == column_indent
-                add_column(item)
-              else
-                add_card(item)
-              end
-            end
+            build_columns(@items.first[:indent])
           end
 
           private
+
+          def build_columns(column_indent)
+            shallower = nil
+            @items.each do |item|
+              refuse_item_after(shallower) if shallower
+              shallower = item if item[:indent] < column_indent
+              item[:indent] == column_indent ? add_column(item) : add_card(item)
+            end
+          end
+
+          def refuse_item_after(item)
+            raise Parser::ParseError,
+                  "Items without section detected, " \
+                  "found section (\"#{column_title(item)}\")."
+          end
 
           # A shape with no id (`(text)`) never captures `:id`. Mermaid
           # still draws it - it auto-assigns one - so this does too,
@@ -119,7 +120,10 @@ module Sirena
           # last-write-wins, matching mermaid's `decorateNode`, which
           # plainly assigns `node.cssClasses = ...` rather than merging.
           def apply_modifier(key, value)
-            raise Parser::ParseError, "#{key == :icon ? '::icon' : ':::'} with no preceding item." unless @items.last
+            unless @items.last
+              marker = key == :icon ? "::icon" : ":::"
+              raise Parser::ParseError, "#{marker} with no preceding item."
+            end
 
             @items.last[:metadata][key] = value
           end
@@ -166,39 +170,17 @@ module Sirena
           # for structure and resolution - so this is left only to route each
           # resolved key to the card/column field mermaid's `addNode` reads
           # it into.
+          # Mermaid reads no `classes` key from metadata; only a `:::`
+          # modifier may set it. Every other resolved key is stored as-is.
           def parse_metadata(metadata_data)
             return {} if metadata_data.nil?
 
-            result = {}
+            fields = Kanban.metadata_fields(metadata_data)
+            fields.each_with_object({}) do |(key, value), result|
+              next if key == "classes"
 
-            Kanban.metadata_fields(metadata_data).each do |key, value|
-              case key
-              when "assigned"
-                result[:assigned] = value
-              when "ticket"
-                result[:ticket] = value
-              when "icon"
-                result[:icon] = value
-              when "label"
-                result[:label] = value
-              when "priority"
-                result[:priority] = value
-              when "classes"
-                # Mermaid's `addNode` reads shape/label/icon/assigned/ticket/
-                # priority out of `@{ ... }` metadata and nothing else -
-                # `classes` is not a recognized key there (verified against
-                # the installed @mermaid-js/mermaid-cli 11.12.0
-                # kanban-definition bundle). Only a `:::` directive
-                # (apply_modifier) may set classes; a scalar `@{ classes: ... }`
-                # entry is dropped, matching mermaid.
-                next
-              else
-                # Store unknown keys as-is
-                result[key.to_sym] = value
-              end
+              result[key.to_sym] = value
             end
-
-            result
           end
 
           # The grammar captures the indent as a string, "" when absent.

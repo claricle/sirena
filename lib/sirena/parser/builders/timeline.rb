@@ -10,6 +10,17 @@ module Sirena
       # Converts the parse tree output from Grammars::Timeline into a
       # fully-formed Diagram::Timeline object with sections and events.
       class Timeline
+        ITEM_HANDLERS = {
+          title: :process_title,
+          acc_title: :process_acc_title,
+          acc_descr: :process_acc_descr,
+          section: :process_section,
+          event_entry: :process_event,
+          continuation_entry: :process_continuation,
+          task: :process_task,
+        }.freeze
+        private_constant :ITEM_HANDLERS
+
         # Transform parse tree into Timeline diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
@@ -29,13 +40,9 @@ module Sirena
         private
 
         def process_item(diagram, item)
-          process_title(diagram, item) if item.key?(:title)
-          process_acc_title(diagram, item) if item.key?(:acc_title)
-          process_acc_descr(diagram, item) if item.key?(:acc_descr)
-          process_section(diagram, item) if item.key?(:section)
-          process_event(diagram, item) if item.key?(:event_entry)
-          process_continuation(diagram, item) if item.key?(:continuation_entry)
-          process_task(diagram, item) if item.key?(:task)
+          ITEM_HANDLERS.each do |key, handler|
+            send(handler, diagram, item) if item.key?(key)
+          end
         end
 
         def process_title(diagram, item)
@@ -63,21 +70,9 @@ module Sirena
 
           time = extract_text(event_data[:time])
           descriptions = extract_descriptions(event_data[:descriptions])
-
-          event = Diagram::TimelineEvent.new.tap do |e|
-            e.time = time
-            e.descriptions.concat(descriptions)
-          end
-
-          # Store reference for continuation entries
+          event = timeline_event(time, descriptions)
           @last_event = event
-
-          # Add to current section or diagram
-          if @current_section
-            @current_section.events << event
-          else
-            diagram.events << event
-          end
+          append_event(diagram, event)
         end
 
         def process_continuation(diagram, item)
@@ -85,26 +80,28 @@ module Sirena
           return unless continuation_data
 
           descriptions = extract_descriptions(continuation_data[:descriptions])
-
-          # Add descriptions to last event if it exists
           if @last_event
             @last_event.descriptions.concat(descriptions)
           else
-            # If no last event, create a new event with empty time
-            # This handles edge case of continuation at start
-            event = Diagram::TimelineEvent.new.tap do |e|
-              e.time = ""
-              e.descriptions.concat(descriptions)
-            end
-
-            if @current_section
-              @current_section.events << event
-            else
-              diagram.events << event
-            end
-
-            @last_event = event
+            @last_event = timeline_event("", descriptions)
+            append_event(diagram, @last_event)
           end
+        end
+
+        def timeline_event(time, descriptions)
+          Diagram::TimelineEvent.new.tap do |event|
+            event.time = time
+            event.descriptions.concat(descriptions)
+          end
+        end
+
+        def append_event(diagram, event)
+          collection = if @current_section
+                         @current_section.events
+                       else
+                         diagram.events
+                       end
+          collection << event
         end
 
         def process_task(diagram, item)

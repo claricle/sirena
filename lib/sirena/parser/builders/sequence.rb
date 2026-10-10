@@ -52,6 +52,26 @@ module Sirena
           "<<-->>" => %w[dotted filled both],
         }.freeze
 
+        STATEMENT_HANDLERS = [
+          [%i[participant], :add_participant_statement],
+          [%i[actor], :add_actor_statement],
+          [%i[destroy], :destroy_participant],
+          [%i[links], :link_participant],
+          [%i[from to arrow], :add_message],
+          [%i[position note_text], :add_note],
+          [%i[activate], :activate_participant],
+          [%i[deactivate], :deactivate_participant],
+          [%i[box_label], :process_box],
+          [%i[loop_label], :process_loop],
+          [%i[alt_label], :process_alt],
+          [%i[opt_label], :process_opt],
+          [%i[rect_label], :process_rect],
+          [%i[par_label], :process_par],
+          [%i[critical_label], :process_critical],
+          [%i[break_label], :process_break],
+        ].freeze
+        private_constant :STATEMENT_HANDLERS
+
         # Transform parse tree into Sequence diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
@@ -100,95 +120,95 @@ module Sirena
           # because the duplicate-id check needs the id to still be
           # absent from `@known_actor_ids`.
           register_created(actor_id(stmt[:id])) if stmt[:create]
-
-          if stmt[:participant]
-            add_participant(diagram, stmt, "participant")
-          elsif stmt[:actor]
-            add_participant(diagram, stmt, "actor")
-          elsif stmt[:destroy]
-            register_destroyed(actor_id(stmt[:destroy]))
-          elsif stmt[:links]
-            ensure_participant(diagram, actor_id(stmt[:links]))
-          elsif stmt[:from] && stmt[:to] && stmt[:arrow]
-            add_message(diagram, stmt)
-          elsif stmt[:position] && stmt[:note_text]
-            add_note(diagram, stmt)
-          elsif stmt[:activate]
-            track_activation(diagram, actor_id(stmt[:activate]), true)
-          elsif stmt[:deactivate]
-            track_activation(diagram, actor_id(stmt[:deactivate]), false)
-          elsif stmt[:box_label]
-            process_box(diagram, stmt)
-          elsif stmt[:loop_label]
-            process_loop(diagram, stmt)
-          elsif stmt[:alt_label]
-            process_alt(diagram, stmt)
-          elsif stmt[:opt_label]
-            process_opt(diagram, stmt)
-          elsif stmt[:rect_label]
-            process_rect(diagram, stmt)
-          elsif stmt[:par_label]
-            process_par(diagram, stmt)
-          elsif stmt[:critical_label]
-            process_critical(diagram, stmt)
-          elsif stmt[:break_label]
-            process_break(diagram, stmt)
+          entry = STATEMENT_HANDLERS.find do |keys, _handler|
+            keys.all? { |key| stmt[key] }
           end
+          send(entry.last, diagram, stmt) if entry
+        end
+
+        def add_participant_statement(diagram, stmt)
+          add_participant(diagram, stmt, "participant")
+        end
+
+        def add_actor_statement(diagram, stmt)
+          add_participant(diagram, stmt, "actor")
+        end
+
+        def destroy_participant(_diagram, stmt)
+          register_destroyed(actor_id(stmt[:destroy]))
+        end
+
+        def link_participant(diagram, stmt)
+          ensure_participant(diagram, actor_id(stmt[:links]))
+        end
+
+        def activate_participant(diagram, stmt)
+          track_activation(diagram, actor_id(stmt[:activate]), true)
+        end
+
+        def deactivate_participant(diagram, stmt)
+          track_activation(diagram, actor_id(stmt[:deactivate]), false)
         end
 
         def add_participant(diagram, stmt, actor_type)
           id = actor_id(stmt[:id])
           @known_actor_ids << id
           @box_ids&.push(id)
-          shown_id = Diagram::SequenceText.decode(id)
-          label = stmt[:label] ? decoded_text(stmt[:label]) : shown_id
-          label = shown_id if label.empty?
-
-          participant = Diagram::SequenceParticipant.new.tap do |p|
-            p.id = id
-            p.label = label
-            p.actor_type = actor_type
-          end
-
-          # Add or update participant
+          label = participant_label(id, stmt[:label])
           existing = diagram.find_participant(id)
-          if existing
-            existing.label = label unless label.empty?
-            existing.actor_type = actor_type
-          else
-            diagram.participants << participant
+          return update_participant(existing, label, actor_type) if existing
+
+          diagram.participants << participant(id, label, actor_type)
+        end
+
+        def participant_label(id, captured_label)
+          shown_id = Diagram::SequenceText.decode(id)
+          label = captured_label ? decoded_text(captured_label) : shown_id
+          label.empty? ? shown_id : label
+        end
+
+        def participant(id, label, actor_type)
+          Diagram::SequenceParticipant.new.tap do |item|
+            item.id = id
+            item.label = label
+            item.actor_type = actor_type
           end
+        end
+
+        def update_participant(participant, label, actor_type)
+          participant.label = label unless label.empty?
+          participant.actor_type = actor_type
         end
 
         def add_message(diagram, stmt)
           check_lifecycle!(stmt)
-
-          from_id = actor_id(stmt[:from])
-          to_id = actor_id(stmt[:to])
-          message_text = extract_text(stmt[:text])
-
-          base = arrow_base(stmt[:arrow])
-          line_style, head_style, head_side =
-            ARROW_STYLES.fetch(base, %w[solid filled target])
-
-          # Ensure participants exist
-          ensure_participant(diagram, from_id)
-          ensure_participant(diagram, to_id)
-
-          handle_arrow_activation(diagram, from_id, to_id,
+          data = message_data(stmt)
+          ensure_participant(diagram, data[:from_id])
+          ensure_participant(diagram, data[:to_id])
+          handle_arrow_activation(diagram, data[:from_id], data[:to_id],
                                   activation(stmt[:arrow]))
-
-          message = Diagram::SequenceMessage.new.tap do |m|
-            m.from_id = from_id
-            m.to_id = to_id
-            m.message_text = message_text
-            m.line_style = line_style
-            m.head_style = head_style
-            m.head_side = head_side
-          end
-
-          diagram.messages << message
+          diagram.messages << sequence_message(data)
           @message_index += 1
+        end
+
+        def message_data(stmt)
+          styles = ARROW_STYLES.fetch(
+            arrow_base(stmt[:arrow]), %w[solid filled target]
+          )
+          {
+            from_id: actor_id(stmt[:from]),
+            to_id: actor_id(stmt[:to]),
+            message_text: extract_text(stmt[:text]),
+            line_style: styles[0], head_style: styles[1], head_side: styles[2]
+          }
+        end
+
+        def sequence_message(data)
+          Diagram::SequenceMessage.new.tap do |message|
+            data.each do |attribute, value|
+              message.public_send("#{attribute}=", value)
+            end
+          end
         end
 
         # mermaid rejects a `create` whose id already belongs to an actor,
@@ -221,24 +241,31 @@ module Sirena
         def check_lifecycle!(stmt)
           to_id = actor_id(stmt[:to])
           from_id = actor_id(stmt[:from])
-
           if @pending_created
-            unless to_id == @pending_created
-              raise Parser::ParseError,
-                    "The created participant #{@pending_created} does not " \
-                    "have an associated creating message after its " \
-                    "declaration. Please check the sequence diagram."
-            end
+            validate_created!(to_id)
             @pending_created = nil
           elsif @pending_destroyed
-            unless to_id == @pending_destroyed || from_id == @pending_destroyed
-              raise Parser::ParseError,
-                    "The destroyed participant #{@pending_destroyed} does " \
-                    "not have an associated destroying message after its " \
-                    "declaration. Please check the sequence diagram."
-            end
+            validate_destroyed!(from_id, to_id)
             @pending_destroyed = nil
           end
+        end
+
+        def validate_created!(to_id)
+          return if to_id == @pending_created
+
+          raise Parser::ParseError,
+                "The created participant #{@pending_created} does not " \
+                "have an associated creating message after its " \
+                "declaration. Please check the sequence diagram."
+        end
+
+        def validate_destroyed!(from_id, to_id)
+          return if [from_id, to_id].include?(@pending_destroyed)
+
+          raise Parser::ParseError,
+                "The destroyed participant #{@pending_destroyed} does " \
+                "not have an associated destroying message after its " \
+                "declaration. Please check the sequence diagram."
         end
 
         def arrow_base(arrow)
@@ -259,73 +286,66 @@ module Sirena
         end
 
         def add_note(diagram, stmt)
-          position_data = stmt[:position]
-          position = if position_data[:left_of]
-                       "left_of"
-                     elsif position_data[:right_of]
-                       "right_of"
-                     else
-                       "over"
-                     end
-
-          participants = if stmt[:participants].is_a?(Array)
-                           stmt[:participants].map do |p|
-                             actor_id(p[:participant])
-                           end
-                         else
-                           [actor_id(stmt[:participants][:participant])]
-                         end
-
-          text = decoded_text(stmt[:note_text])
-
-          # Ensure participants exist
+          participants = note_participants(stmt)
           participants.each { |pid| ensure_participant(diagram, pid) }
+          diagram.notes << sequence_note(stmt, participants)
+        end
 
-          note = Diagram::SequenceNote.new.tap do |n|
-            n.text = text
-            n.position = position
-            n.participant_ids = participants
-            n.message_index = @message_index
-            n.order = next_order
+        def note_position(position)
+          return "left_of" if position[:left_of]
+          return "right_of" if position[:right_of]
+
+          "over"
+        end
+
+        def note_participants(stmt)
+          captures = stmt[:participants]
+          captures = [captures] unless captures.is_a?(Array)
+          captures.map { |item| actor_id(item[:participant]) }
+        end
+
+        def sequence_note(stmt, participants)
+          Diagram::SequenceNote.new.tap do |note|
+            note.text = decoded_text(stmt[:note_text])
+            note.position = note_position(stmt[:position])
+            note.participant_ids = participants
+            note.message_index = @message_index
+            note.order = next_order
           end
-
-          diagram.notes << note
         end
 
         def track_activation(diagram, participant_id, activate)
           ensure_participant(diagram, participant_id, track: false)
-
           @activations[participant_id] ||= []
+          return open_activation(participant_id) if activate
 
-          if activate
-            # Start new activation
-            @activations[participant_id] << { start: @message_index }
-          else
-            # Close the most recent activation still open — a stack, not
-            # simply the last entry. Two `+` on the same participant
-            # followed by two `-` is ordinary mermaid, and reading only the
-            # last entry closed the same one twice.
-            active = @activations[participant_id].reverse.find { |a| !a[:end] }
+          close_activation(diagram, participant_id)
+        end
 
-            if active.nil?
-              # mmdc rejects a source that deactivates a participant with
-              # nothing open. Ignoring it silently rendered arrow forms
-              # mermaid refuses, such as `A-x-B`.
-              raise Parser::ParseError,
-                    "Trying to deactivate an inactive participant " \
-                    "(#{participant_id})"
-            end
+        def open_activation(participant_id)
+          @activations[participant_id] << { start: @message_index }
+        end
 
-            active[:end] = @message_index
+        def close_activation(diagram, participant_id)
+          active = @activations[participant_id].reverse.find do |item|
+            !item[:end]
+          end
+          refuse_inactive_participant(participant_id) unless active
+          active[:end] = @message_index
+          diagram.activations << activation_record(participant_id, active)
+        end
 
-            # Create activation record
-            activation = Diagram::SequenceActivation.new.tap do |a|
-              a.participant_id = participant_id
-              a.start_index = active[:start]
-              a.end_index = active[:end]
-            end
+        def refuse_inactive_participant(participant_id)
+          raise Parser::ParseError,
+                "Trying to deactivate an inactive participant " \
+                "(#{participant_id})"
+        end
 
-            diagram.activations << activation
+        def activation_record(participant_id, active)
+          Diagram::SequenceActivation.new.tap do |activation|
+            activation.participant_id = participant_id
+            activation.start_index = active[:start]
+            activation.end_index = active[:end]
           end
         end
 

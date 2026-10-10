@@ -7,6 +7,16 @@ module Sirena
     module Builders
       # Transform for Radar diagrams
       class Radar < Parslet::Transform
+        RESULT_HANDLERS = {
+          title: :apply_scalar,
+          acc_title: :apply_scalar,
+          acc_descr: :apply_scalar,
+          axes: :apply_axes,
+          curve: :apply_curve,
+          option: :apply_option,
+        }.freeze
+        private_constant :RESULT_HANDLERS
+
         # Transform axis definition
         rule(id: simple(:id), label: simple(:label)) do
           { id: id.to_s, label: label.to_s }
@@ -99,7 +109,19 @@ module Sirena
 
         # Transform the entire diagram
         rule(statements: subtree(:statements)) do
-          result = {
+          Radar.build(statements)
+        end
+
+        def self.build(statements)
+          result = empty_result
+          Array(statements).grep(Hash).each do |statement|
+            apply_statement(result, statement)
+          end
+          result
+        end
+
+        def self.empty_result
+          {
             title: nil,
             acc_title: nil,
             acc_descr: nil,
@@ -107,27 +129,27 @@ module Sirena
             curves: [],
             options: {},
           }
+        end
 
-          Array(statements).each do |stmt|
-            next unless stmt.is_a?(Hash)
+        def self.apply_statement(result, statement)
+          handler = RESULT_HANDLERS[statement[:type]]
+          send(handler, result, statement) if handler
+        end
 
-            case stmt[:type]
-            when :title
-              result[:title] = stmt[:title]
-            when :acc_title
-              result[:acc_title] = stmt[:acc_title]
-            when :acc_descr
-              result[:acc_descr] = stmt[:acc_descr]
-            when :axes
-              result[:axes].concat(stmt[:axes])
-            when :curve
-              result[:curves] << stmt
-            when :option
-              result[:options][stmt[:key]] = stmt[:value]
-            end
-          end
+        def self.apply_scalar(result, statement)
+          result[statement[:type]] = statement[statement[:type]]
+        end
 
-          result
+        def self.apply_axes(result, statement)
+          result[:axes].concat(statement[:axes])
+        end
+
+        def self.apply_curve(result, statement)
+          result[:curves] << statement
+        end
+
+        def self.apply_option(result, statement)
+          result[:options][statement[:key]] = statement[:value]
         end
       end
     end
