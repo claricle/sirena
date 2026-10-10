@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "sirena/notation/plantuml"
+Sirena::Notation.send(:entries).delete(:plantuml)
 
 RSpec.describe Sirena::Notation::PlantUML::Layout do
   let(:source) do
