@@ -6,6 +6,7 @@ require_relative "elk_placement"
 require_relative "flowchart/edge_router"
 require_relative "../diagram/flowchart"
 require_relative "../diagram/flowchart_label_text"
+require_relative "../notation/mermaid/ir_adapters/flowchart"
 
 module Sirena
   module Layout
@@ -146,7 +147,7 @@ module Sirena
       attr_accessor :placement
 
       def scene(diagram)
-        graph = build_graph(diagram)
+        graph = build_graph(ir_graph(diagram))
         placer.apply(graph)
         scene_from_graph(graph)
       end
@@ -157,16 +158,19 @@ module Sirena
         placement == :elk ? ElkPlacement : Grid
       end
 
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::Flowchart.call(diagram)
+      end
+
       # Builds the temporary ELK-shaped input used within this layout.
-      #
-      # @param diagram [Diagram::Flowchart] the flowchart to transform
-      # @return [Hash] elkrb-compatible graph hash
-      def build_graph(diagram)
+      def build_graph(graph)
         {
-          id: diagram.id || "flowchart",
-          children: transform_children(diagram),
-          edges: transform_edges(diagram),
-          layoutOptions: layout_options(diagram),
+          id: diagram_identifier(graph),
+          children: transform_children(graph),
+          edges: transform_edges(graph),
+          layoutOptions: layout_options(graph),
         }
       end
 
@@ -686,15 +690,11 @@ module Sirena
       # Subgraphs become compound children holding their members, which is
       # what elkrb reads and what lets the layout size a cluster to fit.
       # A node in no subgraph stays at the top level.
-      def transform_children(diagram)
-        boxes = drawable_subgraphs(diagram)
-        nested = boxes.each_with_object({}) do |box, acc|
-          box.node_ids.each { |id| acc[id] = box }
-        end
-
-        placed = diagram.nodes.map { |node| transform_node(node) }
-
-        assemble(boxes, placed, nested)
+      def transform_children(graph)
+        semantic_children = graph.nodes.group_by(&:parent_id)
+        boxes = graph.nodes.select { |node| node.role == "group" }
+        placed = graph.nodes.select { |node| node.role == "flow_node" }
+        assemble(boxes, placed, semantic_children)
       end
 
       # Model order is kept for emitted clusters. Nested clusters are attached
@@ -702,18 +702,9 @@ module Sirena
       # lookup is independent of declaration order, so a later cluster can
       # hold an earlier one.
       #
-      # A box naming a parent nobody drew belongs at the top level. That
-      # is asked rather than written back, because the diagram belongs to
-      # the caller and a transform has no business editing it.
-      def assemble(boxes, placed, nested)
-        entries = boxes.map { |box| [box, transform_subgraph(box)] }
-
-        # Two indexes over the same pairs. Boxes are keyed by identity,
-        # because a source may declare the same id twice and each
-        # declaration is its own box; parents are keyed by id, because
-        # that is all a child has to name one by.
-        clusters_by_box = entries.each_with_object({}.compare_by_identity) do |(box, cluster), acc|
-          acc[box] = cluster
+      def assemble(boxes, placed, semantic_children)
+        entries = boxes.map do |box|
+          [box, transform_subgraph(box, semantic_children[box.id])]
         end
         clusters_by_id = entries.to_h { |box, cluster| [box.id, cluster] }
 
@@ -724,26 +715,21 @@ module Sirena
         end
 
         loose = placed.each_with_object([]) do |node, top_level|
-          holder = clusters_by_box[nested[node[:id]]]
-          holder ? holder[:children] << node : top_level << node
+          transformed = transform_node(node, semantic_children[node.id])
+          holder = clusters_by_id[node.parent_id]
+          holder ? holder[:children] << transformed : top_level << transformed
         end
 
         loose + entries.reject { |box, _| clusters_by_id[box.parent_id] }
           .map(&:last)
       end
 
-      # An empty subgraph draws no cluster in mermaid, so it is not
-      # carried into the layout.
-      def drawable_subgraphs(diagram)
-        (diagram.subgraphs || []).select(&:drawable?)
-      end
-
-      def transform_subgraph(box)
-        title = display_text(box.title)
+      def transform_subgraph(box, semantics)
+        title = display_text(box.label)
         label = measure_text(title, font_size: layout_font_size)
 
         {
-          id: box.id,
+          id: semantic_value(semantics, "source_identifier") || box.id,
           width: 0,
           height: 0,
           children: [],
@@ -754,11 +740,12 @@ module Sirena
         }
       end
 
-      def transform_node(node)
-        dims = calculate_dimensions(node)
+      def transform_node(node, semantics)
+        shape = semantic_value(semantics, "shape") || "rect"
+        dims = calculate_dimensions(node.label, shape)
 
         {
-          id: node.id,
+          id: semantic_value(semantics, "source_identifier") || node.id,
           width: dims[:width],
           height: dims[:height],
           labels: [
@@ -769,26 +756,32 @@ module Sirena
             },
           ],
           metadata: {
-            shape: node.shape,
-            classes: node.classes,
+            shape: shape,
+            classes: semantic_value(semantics, "style_reference"),
           },
         }
       end
 
-      def transform_edges(diagram)
-        return [] if diagram.edges.nil? || diagram.edges.empty?
+      def transform_edges(graph)
+        source_ids = source_identifiers(graph)
+        graph.edges.map { |edge| transform_edge(edge, source_ids) }
+      end
 
-        diagram.edges.map do |edge|
-          {
-            id: "#{edge.source_id}_to_#{edge.target_id}",
-            sources: [edge.source_id],
-            targets: [edge.target_id],
-            labels: edge_labels(edge),
-            metadata: {
-              arrow_type: edge.arrow_type,
-            },
-          }
+      def source_identifiers(graph)
+        children = graph.nodes.group_by(&:parent_id)
+        graph.nodes.to_h do |node|
+          source_id = semantic_value(children[node.id], "source_identifier")
+          [node.id, source_id || node.id]
         end
+      end
+
+      def transform_edge(edge, source_ids)
+        source = source_ids.fetch(edge.source_id)
+        target = source_ids.fetch(edge.target_id)
+        {
+          id: "#{source}_to_#{target}", sources: [source], targets: [target],
+          labels: edge_labels(edge), metadata: { arrow_type: edge.role }
+        }
       end
 
       def display_text(text)
@@ -810,16 +803,16 @@ module Sirena
         ]
       end
 
-      def calculate_dimensions(node)
+      def calculate_dimensions(label, shape)
         label_dims = measure_text(
-          display_text(node.label),
+          display_text(label),
           font_size: layout_font_size,
         )
 
         node_dims = calculate_node_dimensions(
           label_dims[:width],
           label_dims[:height],
-          shape_to_type(node.shape),
+          shape_to_type(shape),
         )
 
         {
@@ -876,8 +869,12 @@ module Sirena
         end
       end
 
-      def layout_options(diagram)
-        direction = direction_to_layout(diagram.direction)
+      def layout_options(graph)
+        settings = graph.nodes.find { |node| node.role == "diagram_settings" }
+        children = graph.nodes.select { |node| node.parent_id == settings&.id }
+        direction = direction_to_layout(
+          semantic_value(children, "layout_direction"),
+        )
 
         # Flowcharts use layered algorithm for hierarchical flow
         # This ensures nodes are placed in distinct layers and edges flow
@@ -894,6 +891,16 @@ module Sirena
           # This is ideal for flowcharts where clarity is paramount
           ElkOptions::NODE_PLACEMENT => "SIMPLE",
         )
+      end
+
+      def diagram_identifier(graph)
+        settings = graph.nodes.find { |node| node.role == "diagram_settings" }
+        children = graph.nodes.select { |node| node.parent_id == settings&.id }
+        semantic_value(children, "diagram_identifier") || graph.id
+      end
+
+      def semantic_value(nodes, role)
+        (nodes || []).find { |node| node.role == role }&.label
       end
 
       def direction_to_layout(direction)

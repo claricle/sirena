@@ -28,6 +28,99 @@ module LayoutFlowchartSpecHelpers
     end
     themed_transform.to_graph(diagram).children.first.labels.first.width
   end
+
+  def representative_ir_diagram
+    outer = Sirena::Diagram::FlowchartSubgraph.new(
+      id: "outer", declared_title: "Outer", node_ids: ["C"],
+      child_ids: ["inner"]
+    )
+    inner = Sirena::Diagram::FlowchartSubgraph.new(
+      id: "inner", declared_title: "Inner", parent_id: "outer",
+      node_ids: %w[A B], direction: "LR"
+    )
+    Sirena::Diagram::Flowchart.new(
+      id: "process", direction: "BT",
+      nodes: [
+        Sirena::Diagram::FlowchartNode.new(
+          id: "A", label: "Start", shape: "stadium", classes: ":::hot",
+        ),
+        Sirena::Diagram::FlowchartNode.new(
+          id: "B", label: "Choose", shape: "rhombus", classes: ":::cold",
+        ),
+        Sirena::Diagram::FlowchartNode.new(
+          id: "C", label: "Finish", shape: "rect",
+        ),
+      ],
+      edges: [
+        Sirena::Diagram::FlowchartEdge.new(
+          source_id: "A", target_id: "B", label: "yes",
+          arrow_type: "arrow_both"
+        ),
+        Sirena::Diagram::FlowchartEdge.new(
+          source_id: "A", target_id: "B", label: "retry",
+          arrow_type: "dotted_cross"
+        ),
+      ],
+      subgraphs: [outer, inner]
+    )
+  end
+
+  def shared_graph_evidence(scene)
+    shared_hierarchy_evidence(scene) + shared_edge_evidence(scene)
+  end
+
+  def shared_hierarchy_evidence(scene)
+    outer = scene.children.fetch(0)
+    inner = outer.children.fetch(0)
+    [outer.id, inner.id, inner.children.map(&:id), outer.children.last.id]
+  end
+
+  def shared_edge_evidence(scene)
+    [
+      scene.edges.map(&:id), scene.edges.map(&:arrow_type),
+      scene.edges.map { |edge| edge.labels.map(&:text) }
+    ]
+  end
+
+  def collision_ir_diagram
+    Sirena::Diagram::Flowchart.new(
+      id: "same", direction: "TD",
+      nodes: [
+        Sirena::Diagram::FlowchartNode.new(id: "same", label: "First"),
+        Sirena::Diagram::FlowchartNode.new(id: "same", label: "Second"),
+        Sirena::Diagram::FlowchartNode.new(id: "target", label: "Target"),
+      ],
+      edges: [
+        Sirena::Diagram::FlowchartEdge.new(
+          source_id: "same", target_id: "target",
+        ),
+      ]
+    )
+  end
+
+  def collision_scenes
+    source = collision_ir_diagram
+    graph = Sirena::Notation::Mermaid::IRAdapters::Flowchart.call(source)
+
+    [transform.call(source), transform.call(graph)]
+  end
+
+  def collision_scene_identity(scene)
+    [scene.id, scene.children.map(&:id),
+     scene.edges.map { |edge| [edge.source, edge.target] }]
+  end
+
+  def expected_collision_scene_identity
+    ["same", %w[same same target], [["same", "target"]]]
+  end
+
+  def scene_evidence(scene)
+    [Marshal.dump(scene), collision_scene_identity(scene)]
+  end
+
+  def expected_scene_evidence(scene)
+    [Marshal.dump(scene), expected_collision_scene_identity]
+  end
 end
 
 RSpec.describe Sirena::Layout::Flowchart do
@@ -353,6 +446,45 @@ RSpec.describe Sirena::Layout::Flowchart do
 
     it "is sized for the whole string drawn on one line" do
       expect(label.width).to be_within(0.1).of(291.8)
+    end
+  end
+
+  describe "shared graph input" do
+    let(:diagram) { representative_ir_diagram }
+    let(:ir) do
+      Sirena::Notation::Mermaid::IRAdapters::Flowchart.call(diagram)
+    end
+
+    it "produces a byte-identical Scene from private and shared input" do
+      private_scene = transform.call(diagram)
+      shared_scene = transform.call(ir)
+
+      expect(Marshal.dump(shared_scene)).to eq(Marshal.dump(private_scene))
+    end
+
+    it "retains nested groups and ordered styled multi-edge semantics" do
+      expected = [
+        "outer", "inner", %w[A B], "C", %w[A_to_B A_to_B],
+        %w[arrow_both dotted_cross], [["yes"], ["retry"]]
+      ]
+
+      expect(shared_graph_evidence(transform.call(ir))).to eq(expected)
+    end
+
+    it "leaves both source representations unchanged" do
+      before = [Marshal.dump(diagram), Marshal.dump(ir)]
+
+      transform.call(diagram)
+      transform.call(ir)
+
+      expect([Marshal.dump(diagram), Marshal.dump(ir)]).to eq(before)
+    end
+
+    it "keeps legacy Scene identities after collision-safe IR allocation" do
+      private_scene, shared_scene = collision_scenes
+
+      expect(scene_evidence(shared_scene))
+        .to eq(expected_scene_evidence(private_scene))
     end
   end
 end
