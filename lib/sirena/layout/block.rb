@@ -21,7 +21,7 @@ module Sirena
       DEFAULT_BLOCK_WIDTH = 100
       DEFAULT_BLOCK_HEIGHT = 60
       DEFAULT_SPACING = 20
-      DEFAULT_COMPOUND_PADDING = 20
+      DEFAULT_COMPOUND_PADDING = 8
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -266,23 +266,27 @@ module Sirena
 
       def layout_compound_children(parent_block, parent_x, parent_y)
         positioned = {}
-        child_y = parent_y + DEFAULT_COMPOUND_PADDING
+        child_x = parent_x + DEFAULT_COMPOUND_PADDING
 
         children(parent_block).each do |child|
-          geometry = compound_child_geometry(child, parent_block, parent_x,
-                                             child_y)
+          geometry = compound_child_geometry(child, parent_block, child_x,
+                                             compound_child_y(parent_y))
           positioned[child.id] = geometry
           positioned.merge!(nested_compound_children(child, geometry))
-          child_y += geometry[:height] + DEFAULT_SPACING
+          child_x += geometry[:width] + DEFAULT_COMPOUND_PADDING
         end
 
         positioned
       end
 
-      def compound_child_geometry(child, parent, parent_x, child_y)
+      def compound_child_y(parent_y)
+        parent_y + DEFAULT_COMPOUND_PADDING
+      end
+
+      def compound_child_geometry(child, parent, child_x, child_y)
         dimensions = calculate_block_dimensions(child)
         {
-          block: child, x: parent_x + DEFAULT_COMPOUND_PADDING, y: child_y,
+          block: child, x: child_x, y: child_y,
           width: dimensions[:width], height: dimensions[:height],
           parent_id: parent.id
         }
@@ -309,19 +313,32 @@ module Sirena
         width = [label_dims[:width] + 40, DEFAULT_BLOCK_WIDTH].max
         height = [label_dims[:height] + 30, DEFAULT_BLOCK_HEIGHT].max
 
-        if compound?(block)
-          # Compound blocks need more space
-          child_height = children(block).reduce(0) do |sum, child|
-            child_dims = calculate_block_dimensions(child)
-            sum + child_dims[:height] + DEFAULT_SPACING
-          end
-          height = [height, child_height + (DEFAULT_COMPOUND_PADDING * 2)].max
-        end
+        return compound_dimensions(block, width, height) if compound?(block)
 
         {
           width: width,
           height: height,
         }
+      end
+
+      def compound_dimensions(block, width, height)
+        dimensions = children(block).map do |child|
+          calculate_block_dimensions(child)
+        end
+        {
+          width: [width, compound_width(dimensions)].max,
+          height: [height, compound_height(dimensions)].max,
+        }
+      end
+
+      def compound_width(dimensions)
+        dimensions.sum { |child| child[:width] } +
+          (DEFAULT_COMPOUND_PADDING * (dimensions.length + 1))
+      end
+
+      def compound_height(dimensions)
+        dimensions.map { |child| child[:height] }.max.to_f +
+          (DEFAULT_COMPOUND_PADDING * 2)
       end
 
       def calculate_x_position(col, col_widths)
