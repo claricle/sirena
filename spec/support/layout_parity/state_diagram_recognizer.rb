@@ -35,7 +35,7 @@ module SpecSupport
 
       def terminal(id)
         role = id[REFERENCE_TERMINAL, 1] || id[SIRENA_TERMINAL, 1]
-        [:"terminal-#{role}", "[*]", :id] if role
+        [:"terminal-#{role}", "[*]", :label] if role
       end
 
       def reference_state(group)

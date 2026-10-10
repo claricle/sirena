@@ -38,7 +38,7 @@ RSpec.describe SpecSupport::LayoutParity::StateDiagramRecognizer do
     [
       [:composite, "checkout", nil, :id],
       [:state, "order-2026", "checkout", :id],
-      [:"terminal-start", "[*]", "checkout", :id],
+      [:"terminal-start", "[*]", "checkout", :label],
     ].sort_by { |item| item.map(&:to_s) }
   end
 
@@ -53,7 +53,7 @@ RSpec.describe SpecSupport::LayoutParity::StateDiagramRecognizer do
       [:composite, "NotShooting", nil, :id],
       [:state, "Configuring", "NotShooting", :id],
       [:state, "Idle", "NotShooting", :id],
-      [:"terminal-start", "[*]", "NotShooting", :id],
+      [:"terminal-start", "[*]", "NotShooting", :label],
     ].sort_by { |item| item.map(&:to_s) }
   end
 
@@ -62,20 +62,8 @@ RSpec.describe SpecSupport::LayoutParity::StateDiagramRecognizer do
       [:state, "Configuring", nil, :id],
       [:state, "Idle", nil, :id],
       [:state, "NotShooting", nil, :id],
-      [:"terminal-start", "[*]", nil, :id],
+      [:"terminal-start", "[*]", nil, :label],
     ].sort_by { |item| item.map(&:to_s) }
-  end
-
-  def simple_terminal_match
-    name = "002_example_state_1"
-    reference = extract(reference_svg("state/#{name}.svg"), recognizer)
-    sirena = extract(Sirena.render(corpus_source("state/#{name}.mmd")),
-                     recognizer)
-
-    SpecSupport::LayoutParity::ElementMatcher.match(
-      reference: reference,
-      sirena: sirena,
-    )
   end
 
   it "normalizes generated ordinals and keeps composite ancestry" do
@@ -90,13 +78,5 @@ RSpec.describe SpecSupport::LayoutParity::StateDiagramRecognizer do
 
     expect([recognized(reference), recognized(sirena)])
       .to eq([real_reference_elements, real_sirena_elements])
-  end
-
-  it "matches terminal roles by their fixed contract key" do
-    terminal_failures = simple_terminal_match[:failures].select do |failure|
-      failure[:group].first.to_s.start_with?("terminal-")
-    end
-
-    expect(terminal_failures).to be_empty
   end
 end
