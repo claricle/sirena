@@ -114,7 +114,7 @@ module Sirena
           t.content = label.text
           t.fill = theme_color(:error)
           t.font_family = theme_typography(:font_family) ||
-                          "Arial, sans-serif"
+            "Arial, sans-serif"
           t.font_size = number_string(label.font_size)
           t.text_anchor = label.text_anchor
           t.font_weight = label.font_weight

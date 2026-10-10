@@ -167,7 +167,7 @@ module Sirena
 
             x = padding + (bit_in_row * cell_width) + (cell_width / 2)
             y = padding + @title_offset + (layout[:header_height] / 2) +
-                (row * layout[:cell_height])
+              (row * layout[:cell_height])
 
             text = Svg::Text.new.tap do |t|
               t.x = x
