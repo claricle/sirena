@@ -26,8 +26,7 @@ module Sirena
             @ref = ref
             @top = top
             @measure = measure
-            @width = [span.last - span.first + (2 * SIDE_PAD),
-                      self.class.width_for(ref.label, measure)].max
+            @width = width_over(span)
             @x = ((span.first + span.last) / 2) - (@width / 2)
           end
 
@@ -40,6 +39,11 @@ module Sirena
           end
 
           private
+
+          def width_over(span)
+            [span.last - span.first + (2 * SIDE_PAD),
+             self.class.width_for(@ref.label, @measure)].max
+          end
 
           def tab_width
             @measure.call("ref") + (2 * FragmentShape::TAB_PAD)

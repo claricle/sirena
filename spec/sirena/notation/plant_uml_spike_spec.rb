@@ -442,7 +442,8 @@ RSpec.describe Sirena::Notation::PlantUML do
       stereotype title together
     ].each do |keyword|
       it "names the keyword #{keyword.inspect} as its own construct" do
-        text = keyword.match?(/\A(?:caption|footer|header|legend|title)\z/) ? "*x*" : "x"
+        captioned = /\A(?:caption|footer|header|legend|title)\z/
+        text = keyword.match?(captioned) ? "*x*" : "x"
 
         expect(refusal_of(wrap("class A", "#{keyword} #{text}")))
           .to have_attributes(construct: keyword, line: 3)

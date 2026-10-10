@@ -82,8 +82,8 @@ module Sirena
                          :STEREOTYPE, :CLASS_DECLARATION, :QUOTED_DECLARATION,
                          :QUOTED_NAME, :HIDE_TAG, :PACKAGE, :NOTE, :END_NOTE,
                          :RELATION, :JUNCTION, :METHOD, :FIELD,
-                         :TYPED_FIELD, :TYPED_METHOD, :MODIFIERS, :STYLE_OPEN, :LINE_END,
-                         :NOT_FOUND_MESSAGE
+                         :TYPED_FIELD, :TYPED_METHOD, :MODIFIERS,
+                         :STYLE_OPEN, :LINE_END, :NOT_FOUND_MESSAGE
 
         # @param source [String] PlantUML source
         # @return [Diagram] the parsed diagram; the Diagram, its collections
@@ -117,11 +117,15 @@ module Sirena
           text.delete_prefix("\uFEFF").split(LINE_END)
         end
 
+        def comment?(phase, text)
+          text.start_with?("'") && !%i[note style].include?(phase)
+        end
+
         def step(phase, builder, text, number)
           return phase if text.empty?
 
           refuse_continuation(phase, text, number)
-          return phase if text.start_with?("'") && !%i[note style].include?(phase)
+          return phase if comment?(phase, text)
 
           read_line(phase, builder, text, number)
         end
@@ -153,6 +157,10 @@ module Sirena
           refuse_block_comment(text, number)
           return record(builder, text) if Directives.match?(text)
 
+          line_statement(builder, text, number)
+        end
+
+        def line_statement(builder, text, number)
           caption_or_style(builder, text, number) ||
             block_line(builder, text, number) ||
             quoted_declaration(builder, text, number) ||

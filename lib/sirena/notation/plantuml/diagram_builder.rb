@@ -29,17 +29,10 @@ module Sirena
           /\A(?:caption|footer|header|legend|mainframe|title)[ \t]/i
 
         def initialize
-          @kinds = {}
-          @bodies = {}
-          @explicit = {}
-          @relations = []
-          @junctions = []
-          @directives = []
-          @extras = {}
-          @notes = []
-          @hidden_tags = []
-          @packages = []
-          @captions = {}
+          @kinds, @bodies, @explicit, @extras, @captions =
+            Array.new(5) { {} }
+          @relations, @junctions, @directives, @notes, @hidden_tags,
+            @packages = Array.new(6) { [] }
         end
 
         # A kind written twice keeps the later text, as PlantUML does.

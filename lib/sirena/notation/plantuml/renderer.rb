@@ -15,17 +15,18 @@ module Sirena
         def render(scene)
           document = blank_document(scene)
           render_background(scene, document)
-          content = content_target(scene, document)
-          scene.frames.each { |frame| render_frame(frame, content) }
-          scene.relations.each do |relation|
-            render_relation(relation, content)
-          end
-          scene.boxes.each { |box| render_box(box, content) }
+          render_content(scene, content_target(scene, document))
           scene.panels.to_a.each { |panel| render_panel(panel, document) }
           document
         end
 
         private
+
+        def render_content(scene, content)
+          scene.frames.each { |frame| render_frame(frame, content) }
+          scene.relations.each { |relation| render_relation(relation, content) }
+          scene.boxes.each { |box| render_box(box, content) }
+        end
 
         def render_background(scene, document)
           return unless scene.background
@@ -54,28 +55,35 @@ module Sirena
         end
 
         def panel_rectangle(panel)
-          Svg::Rect.new(x: panel.x, y: panel.y, width: panel.width,
-                        height: panel.height, fill: panel.fill || "none").tap do |rect|
-            next unless panel.bordered
+          rect = Svg::Rect.new(x: panel.x, y: panel.y, width: panel.width,
+                               height: panel.height,
+                               fill: panel.fill || "none")
+          border_panel(rect) if panel.bordered
+          rect
+        end
 
-            rect.rx = 7.5
-            rect.ry = 7.5
-            rect.stroke = "#000000"
-            rect.stroke_width = "1"
-          end
+        def border_panel(rect)
+          rect.rx = 7.5
+          rect.ry = 7.5
+          rect.stroke = "#000000"
+          rect.stroke_width = "1"
         end
 
         def panel_text(panel)
           Svg::Text.new.tap do |text|
             text.x = panel.x + (panel.width / 2)
             text.y = panel.y + 5.0 + (panel.font_size * 0.95)
-            text.content = panel.content
-            text.text_anchor = "middle"
-            text.fill = panel.colour || text_colour
-            text.font_family = font_family("caption")
-            text.font_size = panel.font_size.to_s
-            text.font_weight = "bold" if panel.bold
+            style_panel_text(text, panel)
           end
+        end
+
+        def style_panel_text(text, panel)
+          text.content = panel.content
+          text.text_anchor = "middle"
+          text.fill = panel.colour || text_colour
+          text.font_family = font_family("caption")
+          text.font_size = panel.font_size.to_s
+          text.font_weight = "bold" if panel.bold
         end
 
         def blank_document(scene)

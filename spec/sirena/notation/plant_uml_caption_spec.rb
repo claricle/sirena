@@ -34,6 +34,10 @@ module PlantUmlCaptionHelpers
     element.attributes[name].to_f
   end
 
+  def title_size(svg)
+    number(panel(svg, "title").elements["text"], "font-size")
+  end
+
   def style_block(*properties)
     ["<style>", "document {", *properties, "}", "</style>", "class A"]
   end
@@ -62,9 +66,9 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     [
-      "title", "title **bold**", 'title say "hi"', "title a\\nb", "title <b>x</b>",
-      "title --> T", "legend right", "legend Center", "title a/b", "titles x",
-      "header <-- T", "title a *b*"
+      "title", "title **bold**", 'title say "hi"', "title a\\nb",
+      "title <b>x</b>", "title --> T", "legend right", "legend Center",
+      "title a/b", "titles x", "header <-- T", "title a *b*"
     ].each do |line|
       it "leaves #{line.inspect} to the refusal rules" do
         expect(described_class::Caption.read(line)).to be_nil
@@ -79,13 +83,15 @@ RSpec.describe Sirena::Notation::PlantUML do
   end
 
   describe "reading a style block" do
-    it "reads the canvas and the properties of each caption kind" do
-      diagram = parse_plantuml(wrap(*style_block(
+    let(:styled) do
+      parse_plantuml(wrap(*style_block(
         "BackGroundColor orange", "footer {", "fontsize 15", "FontColor red",
         "BackGroundColor #00f", "}"
       )))
+    end
 
-      expect([diagram.style.background, diagram.style.rule(:footer)])
+    it "reads the canvas and the properties of each caption kind" do
+      expect([styled.style.background, styled.style.rule(:footer)])
         .to eq(["#FFA500", { size: 15, colour: "#FF0000",
                              background: "#0000FF" }])
     end
@@ -188,7 +194,7 @@ RSpec.describe Sirena::Notation::PlantUML do
 
     it "puts the header against the right edge" do
       header = panel(svg, "header").elements["rect"] ||
-               panel(svg, "header").elements["text"]
+        panel(svg, "header").elements["text"]
 
       expect(number(header, "x")).to be > number(svg.root, "width") / 2
     end
@@ -217,7 +223,9 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     it "leaves the diagram alone with no captions" do
-      expect(REXML::XPath.match(drawn("class A"), "//g[@transform]")).to be_empty
+      svg = drawn("class A")
+
+      expect(REXML::XPath.match(svg, "//g[@transform]")).to be_empty
     end
   end
 
@@ -256,9 +264,8 @@ RSpec.describe Sirena::Notation::PlantUML do
       small = drawn("title T", "class A")
       large = drawn("title T", *style_block("title {", "BackGroundColor red",
                                             "FontSize 40", "}"))
-      size = ->(svg) { number(panel(svg, "title").elements["text"], "font-size") }
 
-      expect(size.(large)).to be > size.(small)
+      expect(title_size(large)).to be > title_size(small)
     end
   end
 end

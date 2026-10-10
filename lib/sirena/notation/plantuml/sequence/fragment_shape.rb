@@ -20,8 +20,9 @@ module Sirena
           # The keyword tab hanging in the top left corner of a frame.
           def self.tab_outline(left, top, width)
             right = left + width
+            bottom = top + TAB_HEIGHT
             "M #{left} #{top} L #{right} #{top} L #{right} #{top + 14} " \
-              "L #{right - 6} #{top + TAB_HEIGHT} L #{left} #{top + TAB_HEIGHT} Z"
+              "L #{right - 6} #{bottom} L #{left} #{bottom} Z"
           end
 
           def initialize(block, bottom, centers, measure)
