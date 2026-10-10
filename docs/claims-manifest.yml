@@ -557,15 +557,3 @@
     (only ../../ forms)
   pr: 999999
 
-- claim: examples *.yml metadata is optional; only flowchart/01-basic-flow.yml exists
-  file: examples/README.md, tasks/examples.rake
-  disposition: corrected
-  evidence: test "$(git ls-files examples | grep -c '\.yml$')" = 1
-  pr: 999999
-
-- claim: 'elkrb is called for flowcharts with layout_engine: :elk'
-  file: sirena.gemspec
-  disposition: corrected
-  evidence: 'bundle exec ruby -Ilib -e ''require "sirena"; abort unless Sirena::Engine.new.render("graph
-    TD\nA-->B", layout_engine: :elk).include?("<svg")'''
-  pr: 999999
