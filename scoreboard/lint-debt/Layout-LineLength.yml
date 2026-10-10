@@ -207,8 +207,6 @@ rows:
   count: 4
 - file: spec/scripts/corpus_sweep_malformed_xml_spec.rb
   count: 3
-- file: spec/scripts/corpus_sweep_spec.rb
-  count: 1
 - file: spec/scripts/corpus_sweep_task_spec.rb
   count: 7
 - file: spec/scripts/docs_site_verifier_spec.rb
