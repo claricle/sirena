@@ -29,8 +29,8 @@ colors:
   # Colours renderers drew from a hardcoded fallback; same in every theme.
   border: "#d1d5db"
   edge_color: "#666"
-  field_background: "#e0f2fe"
-  field_border: "#0284c7"
+  field_background: "#efefef"
+  field_border: "#000000"
   field_text: "#000000"
   group_background: "#f0f0f0"
   highlight: "#fbbf24"
