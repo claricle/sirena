@@ -7,8 +7,6 @@ require "open3"
 # event (TODO.foundation/19 step 4). It never fetches: the workflow must have
 # fetched enough history, and a missing commit raises instead of guessing.
 module CiBaseline
-  ZERO_SHA = "0" * 40
-
   Result = Struct.new(:sha, :mode, keyword_init: true) do
     def consistency_only?
       sha.nil?
@@ -50,11 +48,11 @@ module CiBaseline
 
   def push(payload, dir, head)
     before = payload["before"].to_s
-    if before != ZERO_SHA && commit?(dir, before)
+    if commit?(dir, before)
       return Result.new(sha: rev_parse(dir, before), mode: "push")
     end
 
-    # New branch, or a force-push that dropped `before`: use the default branch.
+    # New branch (all-zero before) or a force-push that dropped `before`.
     default = payload.dig("repository", "default_branch")
     return Result.new(sha: nil, mode: "push_no_baseline") if default.to_s.empty?
 
