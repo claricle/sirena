@@ -12,6 +12,8 @@ module Sirena
     class StateDiagram < Base
       DEFAULT_FONT_SIZE = 14.0
       DEFAULT_SMALL_FONT_SIZE = 12.0
+      TERMINAL_RADIUS = 7.0
+      TERMINAL_TYPES = %w[start end].freeze
 
       State = Data.define(
         :id, :label, :state_type, :description, :descriptions
@@ -38,7 +40,8 @@ module Sirena
         ElkOptions::EDGE_EDGE_SPACING => 30,
         ElkOptions::NODE_PLACEMENT => "SIMPLE",
       }.freeze
-      private_constant :STATE_TYPES, :DIRECTIONS, :LAYOUT_SETTINGS
+      private_constant :STATE_TYPES, :DIRECTIONS, :LAYOUT_SETTINGS,
+                       :TERMINAL_RADIUS, :TERMINAL_TYPES
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -117,7 +120,10 @@ module Sirena
         def shape_geometry(state, state_type)
           dimensions = box_geometry(state)
           midpoint = center(dimensions)
-          dimensions.merge(shape_details(dimensions, midpoint, state_type))
+          radius = state.dig(:metadata, :shape_radius)
+          dimensions.merge(
+            shape_details(dimensions, midpoint, state_type, radius),
+          )
         end
 
         def label_geometry(state, label, index, font_sizes)
@@ -166,8 +172,8 @@ module Sirena
           }
         end
 
-        def shape_details(dimensions, midpoint, state_type)
-          radius = [dimensions[:width], dimensions[:height]].min / 2
+        def shape_details(dimensions, midpoint, state_type, radius)
+          radius ||= [dimensions[:width], dimensions[:height]].min / 2
           {
             center_x: midpoint[:x], center_y: midpoint[:y], radius: radius,
             inner_radius: radius - 5,
@@ -217,6 +223,7 @@ module Sirena
       def scene(diagram)
         graph = build_graph(diagram)
         placer.apply(graph)
+        orient_grid_terminals(graph)
         scene_from_graph(graph)
       end
 
@@ -224,6 +231,19 @@ module Sirena
 
       def placer
         placement == :elk ? ElkPlacement : Grid
+      end
+
+      def orient_grid_terminals(graph)
+        return if placement == :elk
+        return unless graph.dig(:layoutOptions, ElkOptions::DIRECTION) ==
+          DIRECTION_DOWN
+
+        graph[:children].each do |state|
+          shape_type = state.dig(:metadata, :shape_type)
+          next unless TERMINAL_TYPES.include?(shape_type)
+
+          state[:x], state[:y] = state[:y], state[:x]
+        end
       end
 
       # Converts a state diagram to a graph structure.
@@ -453,11 +473,15 @@ module Sirena
       end
 
       def state_metadata(state)
-        {
+        metadata = {
           state_type: state.state_type,
           shape_type: state_shape_type(state),
           description: state.description,
         }
+        if TERMINAL_TYPES.include?(metadata[:shape_type])
+          metadata[:shape_radius] = TERMINAL_RADIUS
+        end
+        metadata
       end
 
       def transform_transitions(graph, semantics)

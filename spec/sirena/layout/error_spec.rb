@@ -10,7 +10,8 @@ RSpec.describe Sirena::Layout::Error do
 
   it "keeps a missing message for the renderer's default" do
     expect(scene_geometry).to eq(
-      [described_class::Scene, "error", nil, "Error", 500.0, 220.0],
+      [described_class::Scene, "error", nil, "Error", 2412.0, 512.0,
+       "mermaid version 11.12.0"],
     )
   end
 
@@ -18,7 +19,7 @@ RSpec.describe Sirena::Layout::Error do
     populate_diagram
     expect(scene_geometry).to eq(
       [described_class::Scene, "failure", "Build failed",
-       "Dependency missing", 500.0, 220.0],
+       "Dependency missing", 2412.0, 512.0, "mermaid version 11.12.0"],
     )
   end
 
@@ -32,7 +33,7 @@ RSpec.describe Sirena::Layout::Error do
 
   def scene_geometry(value = scene)
     [value.class, value.id, value.title, value.label.text,
-     value.width, value.height]
+     value.width, value.height, value.version_label.text]
   end
 
   def populate_diagram

@@ -162,7 +162,7 @@ module Sirena
           acc_title: graph[:acc_title],
           acc_description: graph[:acc_description],
           title: title_geometry(graph[:title]),
-          timeline: timeline_geometry(graph),
+          timeline: displayed_timeline(graph),
           sections: section_geometry(graph[:sections])
         }
       end
@@ -265,6 +265,12 @@ module Sirena
         Label.new(text: title, x: MARGIN_LEFT + (TIMELINE_WIDTH / 2),
                   y: TITLE_Y, text_anchor: "middle",
                   font_size: large_font_size, font_weight: "bold")
+      end
+
+      def displayed_timeline(graph)
+        return if graph.dig(:metadata, :task_count).zero?
+
+        timeline_geometry(graph)
       end
 
       def timeline_geometry(graph)

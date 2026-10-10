@@ -47,14 +47,33 @@ RSpec.describe SpecSupport::LayoutParity::KanbanRecognizer do
       [:card, "Create Blog about the new diagram"]],
      [[:section, "Todo"],
       [:card, "Create Documentation"],
-      [:card, "Create Blog about thenew diagram"]]]
+      [:card, "Create Blog about the new diagram"]]]
+  end
+
+  let(:metadata_card_labels) do
+    %w[
+      007_rendering_kanban_spec_kanban_6
+      009_rendering_kanban_spec_kanban_8
+      010_rendering_kanban_spec_kanban_9
+    ].map do |name|
+      reference = reference_svg("kanban/#{name}.svg")
+      sirena = Sirena.render(corpus_source("kanban/#{name}.mmd"))
+      [reference, sirena].map do |svg|
+        recognized(svg).select { |item| item.first == :card }
+      end
+    end
   end
 
   it "recognizes sections and repeated cards by their shared labels" do
     expect(simple_result).to eq(expected_simple_result)
   end
 
-  it "joins a wrapped card's lines without the break space" do
+  it "separates a wrapped card's lines with spaces" do
     expect(real_labels).to eq(expected_real_labels)
+  end
+
+  it "uses the primary card label instead of metadata values" do
+    expect(metadata_card_labels)
+      .to all(satisfy { |reference, sirena| reference == sirena })
   end
 end

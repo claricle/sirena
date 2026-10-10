@@ -16,7 +16,8 @@ module SpecSupport
           markers + reference_labels(extractor, doc) +
             reference_lanes(extractor, doc)
         else
-          markers + sirena_labels(extractor, doc, markers)
+          labels = sirena_labels(extractor, doc, markers)
+          markers + labels + sirena_lanes(labels)
         end
       end
 
@@ -91,8 +92,9 @@ module SpecSupport
       def reference_lanes(extractor, doc)
         labels = branch_labels(extractor, doc)
         lane_nodes(doc).zip(labels).filter_map do |line, label|
-          box = extractor.bbox(line)
-          logical_element(:lane, label.key, box) if box && label
+          next unless label && extractor.bbox(line)
+
+          logical_element(:lane, label.key, lane_anchor(label.bbox))
         end
       end
 
@@ -103,11 +105,24 @@ module SpecSupport
       def sirena_labels(extractor, doc, markers)
         return [] if markers.empty?
 
-        orientation = orientation(markers)
+        orientation = orientation(extractor, doc, markers)
         labels = doc.xpath("//text").filter_map do |text|
           sirena_label(extractor, text, markers, orientation)
         end
         deduplicate_branch_labels(labels)
+      end
+
+      def sirena_lanes(labels)
+        labels.filter_map do |label|
+          next unless label.kind == :branch_label
+
+          logical_element(:lane, label.key, lane_anchor(label.bbox))
+        end
+      end
+
+      def lane_anchor(box)
+        x, y = box.center
+        Bbox.new(x, y, x, y)
       end
 
       def deduplicate_branch_labels(labels)
@@ -166,7 +181,30 @@ module SpecSupport
         distance(label.center, marker.center) <= reach
       end
 
-      def orientation(markers)
+      def orientation(extractor, doc, markers)
+        label_orientation(extractor, doc, markers) ||
+          marker_orientation(markers)
+      end
+
+      def label_orientation(extractor, doc, markers)
+        labels = doc.xpath("//text").select do |text|
+          text["font-weight"] == "bold"
+        end
+        return :lr if labels.any? { |text| text["text-anchor"] == "start" }
+
+        vertical_label_orientation(extractor, labels, markers)
+      end
+
+      def vertical_label_orientation(extractor, labels, markers)
+        node = labels.find { |text| text["text-anchor"] == "middle" }
+        entry = text_entry(extractor, node) if node
+        marker = nearest_element(entry[:box], markers) if entry
+        return unless marker
+
+        entry[:box].center.last > marker.bbox.center.last ? :tb : :bt
+      end
+
+      def marker_orientation(markers)
         centers = markers.map { |marker| marker.bbox.center }
         return :lr if span(centers, 0) >= span(centers, 1)
 

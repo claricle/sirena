@@ -48,6 +48,7 @@ module Sirena
         attribute :mark, Box
         attribute :dot, Circle
         attribute :label, Label
+        attribute :version_label, Label
       end
 
       def self.from_graph(graph, theme: nil)
@@ -89,27 +90,35 @@ module Sirena
       def scene_from_graph(graph)
         Scene.new(
           id: graph[:id] || "error", title: graph[:title],
-          width: 500, height: 220, view_box: "0 0 500 220",
+          width: 2412, height: 512, view_box: "0 0 2412 512",
           box: error_box,
-          icon: Circle.new(x: 100, y: 110, radius: 20),
+          icon: Circle.new(x: 256, y: 256, radius: 256),
           mark: error_mark,
-          dot: Circle.new(x: 100, y: 116, radius: 2),
-          label: error_label(graph)
+          dot: Circle.new(x: 256, y: 384, radius: 16),
+          label: error_label(graph),
+          version_label: version_label
         )
       end
 
       def error_box
-        Box.new(x: 50, y: 50, width: 400, height: 120, corner_radius: 8)
+        Box.new(x: 0, y: 0, width: 2412, height: 512, corner_radius: 8)
       end
 
       def error_mark
-        Box.new(x: 98, y: 100, width: 4, height: 12, corner_radius: 2)
+        Box.new(x: 240, y: 128, width: 32, height: 192, corner_radius: 16)
       end
 
       def error_label(graph)
         Label.new(
-          text: graph[:message] || "Error", x: 140, y: 105,
-          font_size: font_size, text_anchor: "start", font_weight: "bold"
+          text: graph[:message] || "Error", x: 1440, y: 250,
+          font_size: font_size, text_anchor: "middle", font_weight: "bold"
+        )
+      end
+
+      def version_label
+        Label.new(
+          text: "mermaid version 11.12.0", x: 1250, y: 400,
+          font_size: 100, text_anchor: "middle", font_weight: "normal"
         )
       end
 

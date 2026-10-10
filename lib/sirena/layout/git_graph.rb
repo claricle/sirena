@@ -25,13 +25,13 @@ module Sirena
     #   layout = transform.to_graph(diagram)
     class GitGraph < Base
       # Spacing between commits along the time axis
-      COMMIT_SPACING = 80
+      COMMIT_SPACING = 50
 
       # Spacing between branch lanes
-      LANE_SPACING = 60
+      LANE_SPACING = 90
 
       # Radius of commit circles
-      COMMIT_RADIUS = 8
+      COMMIT_RADIUS = 10
 
       # Default branch colors (cycling through these)
       DEFAULT_COLORS = %w[
@@ -269,11 +269,18 @@ module Sirena
       end
 
       def branch_labels(graph)
-        last_commits = graph[:commits].to_h do |commit|
-          [commit[:branch], commit]
-        end
-        last_commits.map do |branch, commit|
+        commits = representative_branch_commits(graph)
+        commits.map do |branch, commit|
           branch_label(branch, commit, graph[:orientation])
+        end
+      end
+
+      def representative_branch_commits(graph)
+        return graph[:commits].to_h { |commit| [commit[:branch], commit] } if
+          vertical?(graph[:orientation])
+
+        graph[:commits].each_with_object({}) do |commit, representatives|
+          representatives[commit[:branch]] ||= commit
         end
       end
 
@@ -281,6 +288,12 @@ module Sirena
         x_coordinate, y_coordinate, anchor = branch_label_position(
           commit[:x], commit[:y], orientation
         )
+        branch_label_geometry(
+          branch, x_coordinate, y_coordinate, anchor
+        )
+      end
+
+      def branch_label_geometry(branch, x_coordinate, y_coordinate, anchor)
         { text: branch, x: x_coordinate + PADDING,
           y: y_coordinate + PADDING, text_anchor: anchor,
           kind: "branch", branch: branch }
@@ -463,12 +476,16 @@ module Sirena
       # @param branch_info [Hash] branch information
       # @return [Hash<String, Integer>] branch name to lane number
       def assign_lanes(branches, branch_info)
-        ordered = branches.sort_by do |branch|
-          [branch_info[branch[:name]][:order] || 999, branch[:name]]
-        end
-        ordered.each_with_index.with_object("main" => 0) do |pair, lanes|
+        ordered_branches(branches, branch_info).each_with_index
+          .with_object("main" => 0) do |pair, lanes|
           branch, index = pair
           lanes[branch[:name]] = index + 1
+        end
+      end
+
+      def ordered_branches(branches, branch_info)
+        branches.reject { |branch| branch[:name] == "main" }.sort_by do |branch|
+          [branch_info[branch[:name]][:order] || 999, branch[:name]]
         end
       end
 
@@ -520,7 +537,7 @@ module Sirena
 
       def commit_coordinates(index, count, lane, orientation)
         time = time_position(index, count, orientation)
-        lane_position = (lane * LANE_SPACING) + LANE_SPACING
+        lane_position = lane * LANE_SPACING
         coordinates(time, lane_position, orientation)
       end
 
@@ -539,8 +556,8 @@ module Sirena
       # `BT` counts down from the last commit, so the first commit is
       # the lowest one.
       def time_position(idx, count, orientation)
-        step = orientation == "BT" ? count - idx : idx + 1
-        step * COMMIT_SPACING
+        step = orientation == "BT" ? count - idx - 1 : idx
+        (step * COMMIT_SPACING) + COMMIT_RADIUS
       end
 
       def coordinates(time, lane, orientation)
@@ -587,7 +604,8 @@ module Sirena
           lane: lane_assignments["main"] || 0,
           color: DEFAULT_COLORS[0],
         }
-        branches.each_with_index.with_object([main]) do |pair, metadata|
+        branches.reject { |branch| branch[:name] == "main" }
+          .each_with_index.with_object([main]) do |pair, metadata|
           branch, index = pair
           metadata << branch_metadata(branch, index, lane_assignments)
         end
@@ -610,7 +628,7 @@ module Sirena
       def calculate_time_span(commit_count)
         return COMMIT_SPACING * 2 if commit_count.zero?
 
-        (commit_count + 1) * COMMIT_SPACING
+        commit_count * COMMIT_SPACING
       end
 
       # Calculates the extent across the lanes.
@@ -618,10 +636,10 @@ module Sirena
       # @param lane_assignments [Hash] lane assignments
       # @return [Numeric] extent in pixels
       def calculate_lane_span(lane_assignments)
-        return LANE_SPACING * 2 if lane_assignments.empty?
+        return COMMIT_RADIUS * 2 if lane_assignments.empty?
 
         max_lane = lane_assignments.values.max
-        ((max_lane + 1) * LANE_SPACING) + LANE_SPACING
+        (max_lane * LANE_SPACING) + (COMMIT_RADIUS * 2)
       end
     end
   end
