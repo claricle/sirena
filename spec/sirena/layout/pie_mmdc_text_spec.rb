@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Layout::Pie, "mmdc text sizes and small slices" do
+RSpec.describe Sirena::Layout::Pie, "#call" do
   subject(:scene) { described_class.new.call(diagram) }
 
   let(:values) { { "Big" => 995, "Tiny" => 5, "Mid" => 50 } }

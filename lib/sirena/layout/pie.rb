@@ -156,8 +156,8 @@ module Sirena
       end
 
       def sweep_scale(slices)
-        shown_total = slices.select { |slice| shown?(slice) }
-                            .sum { |slice| weight(slice) }
+        shown = slices.select { |slice| shown?(slice) }
+        shown_total = shown.sum { |slice| weight(slice) }
         shown_total.zero? ? 0.0 : 360.0 / shown_total
       end
 
