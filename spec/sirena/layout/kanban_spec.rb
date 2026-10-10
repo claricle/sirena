@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "sirena/notation/mermaid/ir_adapters/kanban"
 
 RSpec.describe Sirena::Layout::Kanban do
   let(:transform) { described_class.new }
@@ -91,6 +92,13 @@ RSpec.describe Sirena::Layout::Kanban do
   end
 
   describe "#build_graph" do
+    it "lays out empty shared data IR like the private model" do
+      diagram = Sirena::Diagram::Kanban.new
+      data = Sirena::Notation::Mermaid::IRAdapters::Kanban.call(diagram)
+
+      expect(transform.call(data)).to eq(transform.call(diagram))
+    end
+
     it "treats nil columns the same as empty columns, matching Diagram::Kanban#valid?" do
       diagram = Sirena::Diagram::Kanban.new
       diagram.columns = nil

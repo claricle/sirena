@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../markdown_text"
+require_relative "../notation/mermaid/ir_adapters/kanban"
 
 module Sirena
   module Layout
@@ -16,6 +17,15 @@ module Sirena
       CARD_PADDING = 10
       EXTRA_LINE_HEIGHT = 18
       CANVAS_PADDING = 40
+
+      METADATA_KEYS = {
+        "assignee" => :assigned,
+        "ticket_reference" => :ticket,
+        "icon" => :icon,
+        "secondary_label" => :label,
+        "priority" => :priority,
+      }.freeze
+      private_constant :METADATA_KEYS
 
       class Box < Lutaml::Model::Serializable
         attribute :x, :float
@@ -69,10 +79,11 @@ module Sirena
 
       # Retains the pre-Scene structure for direct callers during conversion.
       def build_graph(diagram)
-        return empty_graph if diagram.columns.nil? || diagram.columns.empty?
+        data = ir_data(diagram)
+        return empty_graph if board_columns(data).empty?
 
-        columns = position_columns(diagram.columns)
-        cards = position_cards(columns)
+        columns = position_columns(data)
+        cards = position_cards(columns, data)
         bounds = calculate_bounds(columns)
         {
           columns: columns, cards: cards,
@@ -81,6 +92,22 @@ module Sirena
       end
 
       private
+
+      def ir_data(diagram)
+        return diagram if diagram.is_a?(IR::Data)
+
+        Notation::Mermaid::IRAdapters::Kanban.call(diagram)
+      end
+
+      def board_columns(data)
+        data.items.select { |item| item.role == "board_column" }
+      end
+
+      def column_cards(data, column)
+        data.items.select do |item|
+          item.role == "work_item" && item.parent_id == column.id
+        end
+      end
 
       def scene(diagram)
         scene_from_graph(build_graph(diagram))
@@ -226,62 +253,71 @@ module Sirena
         { columns: [], cards: [], width: 0, height: 0 }
       end
 
-      def position_columns(columns)
-        columns.map.with_index do |column, index|
-          header_height = calculate_header_height(column)
+      def position_columns(data)
+        board_columns(data).map.with_index do |column, index|
+          cards = column_cards(data, column)
+          header_height = calculate_header_height(column.label)
           {
-            id: column.id, title: column.title,
+            id: column.id, title: column.label,
             x: index * (COLUMN_WIDTH + COLUMN_HORIZONTAL_SPACING), y: 0,
             width: COLUMN_WIDTH,
-            height: calculate_column_height(column, header_height),
-            header_height: header_height, card_count: column.cards.size,
-            original: column
+            height: calculate_column_height(cards, header_height, data),
+            header_height: header_height, card_count: cards.size, cards: cards
           }
         end
       end
 
-      def position_cards(columns)
+      def position_cards(columns, data)
         columns.flat_map do |column_data|
-          positioned_cards(column_data)
+          positioned_cards(column_data, data)
         end
       end
 
-      def positioned_cards(column_data)
+      def positioned_cards(column_data, data)
         current_y = column_data[:header_height] + COLUMN_PADDING
-        column_data[:original].cards.map do |card|
-          positioned = positioned_card(card, column_data, current_y)
+        column_data[:cards].map do |card|
+          positioned = positioned_card(card, column_data, current_y, data)
           current_y += positioned[:height] + CARD_VERTICAL_SPACING
           positioned
         end
       end
 
-      def positioned_card(card, column_data, y_position)
+      def positioned_card(card, column_data, y_position, data)
+        metadata = metadata_for(data, card)
         {
-          id: card.id, text: card.text,
-          column_id: column_data[:original].id,
+          id: card.id, text: card.label, column_id: column_data[:id],
           x: column_data[:x] + COLUMN_PADDING, y: y_position,
           width: COLUMN_WIDTH - (COLUMN_PADDING * 2),
-          height: calculate_card_height(card), metadata: card.metadata,
-          has_metadata: card.has_metadata?, original: card
+          height: calculate_card_height(card.label, metadata),
+          metadata: metadata, has_metadata: !metadata.empty?
         }
       end
 
-      def calculate_header_height(column)
-        COLUMN_HEADER_HEIGHT + (column.title.to_s.count("\n") * line_height)
+      def metadata_for(data, card)
+        data.values.each_with_object({}) do |value, metadata|
+          key = METADATA_KEYS[value.role]
+          metadata[key] = value.value.value if key && value.parent_id == card.id
+        end
       end
 
-      def calculate_column_height(column, header_height)
-        return header_height + COLUMN_PADDING if column.cards.empty?
+      def calculate_header_height(title)
+        COLUMN_HEADER_HEIGHT + (title.to_s.count("\n") * line_height)
+      end
 
-        card_height = column.cards.sum { |card| calculate_card_height(card) }
-        spacing = (column.cards.size - 1) * CARD_VERTICAL_SPACING
+      def calculate_column_height(cards, header_height, data)
+        return header_height + COLUMN_PADDING if cards.empty?
+
+        card_height = cards.sum do |card|
+          calculate_card_height(card.label, metadata_for(data, card))
+        end
+        spacing = (cards.size - 1) * CARD_VERTICAL_SPACING
         header_height + COLUMN_PADDING + card_height + spacing + COLUMN_PADDING
       end
 
-      def calculate_card_height(card)
+      def calculate_card_height(text, metadata)
         height = CARD_HEIGHT
-        height += card.metadata.size * line_height if card.has_metadata?
-        height + ((rendered_lines(card.text).length - 1) * line_height)
+        height += metadata.size * line_height unless metadata.empty?
+        height + ((rendered_lines(text).length - 1) * line_height)
       end
 
       def rendered_lines(text)

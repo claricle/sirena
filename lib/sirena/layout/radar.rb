@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../notation/mermaid/ir_adapters/radar"
 
 module Sirena
   module Layout
@@ -85,16 +86,23 @@ module Sirena
 
       # Retains the pre-Scene structure for direct callers during conversion.
       def build_graph(diagram)
-        return empty_layout if diagram.axes.empty?
+        data = ir_data(diagram)
+        return empty_layout if data.dimensions.empty?
 
-        min_value, max_value = calculate_value_range(diagram)
-        axes = position_axes(diagram.axes)
+        min_value, max_value = calculate_value_range(data)
+        axes = position_axes(data)
         radar_dimensions(min_value, max_value).merge(
-          radar_data(diagram, axes, min_value, max_value),
+          radar_data(data, axes, min_value, max_value),
         )
       end
 
       private
+
+      def ir_data(diagram)
+        return diagram if diagram.is_a?(IR::Data)
+
+        Notation::Mermaid::IRAdapters::Radar.call(diagram)
+      end
 
       def scene(diagram)
         scene_from_graph(build_graph(diagram))
@@ -252,58 +260,72 @@ module Sirena
         }
       end
 
-      def radar_data(diagram, axes, min_value, max_value)
+      def radar_data(data, axes, min_value, max_value)
         {
           axes: axes,
-          curves: position_curves(diagram.curves, axes, min_value, max_value),
+          curves: position_curves(data, axes, min_value, max_value),
           grid_circles: calculate_grid_circles(min_value, max_value),
-          options: diagram.options,
+          options: radar_options(data),
         }
       end
 
-      def calculate_value_range(diagram)
-        values = diagram.curves.flat_map { |curve| curve.values.values }
-        min_value = diagram.options[:min] || values.min || 0
-        max_value = diagram.options[:max] || values.max || 100
+      def calculate_value_range(data)
+        measurements = data.values
+        values = measurements.filter_map do |value|
+          value.value.value if value.role == "measurement"
+        end
+        lower_bound = option_value(data, "lower_bound")
+        upper_bound = option_value(data, "upper_bound")
+        min_value = lower_bound || values.min || 0
+        max_value = upper_bound || inferred_max(values)
         max_value = min_value + 1 if max_value <= min_value
         [min_value, max_value]
       end
 
-      def position_axes(axes)
-        step = 360.0 / axes.length
-        axes.map.with_index do |axis, index|
-          positioned_axis(axis, index, step)
+      def inferred_max(values)
+        values.max || 100
+      end
+
+      def position_axes(data)
+        step = 360.0 / data.dimensions.length
+        data.dimensions.map.with_index do |axis, index|
+          positioned_axis(data, axis, index, step)
         end
       end
 
-      def positioned_axis(axis, index, step)
+      def positioned_axis(data, axis, index, step)
         angle = (index * step) - 90
         radians = angle * Math::PI / 180.0
+        axis_coordinates(radians).merge(
+          id: source_id(data, axis), ir_id: axis.id, label: axis.label,
+          angle_degrees: angle, angle_radians: radians, index: index
+        )
+      end
+
+      def axis_coordinates(radians)
         {
-          id: axis.id, label: axis.label, angle_degrees: angle,
-          angle_radians: radians, end_x: Math.cos(radians) * DEFAULT_RADIUS,
+          end_x: Math.cos(radians) * DEFAULT_RADIUS,
           end_y: Math.sin(radians) * DEFAULT_RADIUS,
           label_x: Math.cos(radians) * (DEFAULT_RADIUS + LABEL_OFFSET),
           label_y: Math.sin(radians) * (DEFAULT_RADIUS + LABEL_OFFSET),
-          index: index
         }
       end
 
-      def position_curves(curves, axes, min_value, max_value)
-        curves.map do |curve|
-          positioned_curve(curve, axes, min_value, max_value)
+      def position_curves(data, axes, min_value, max_value)
+        data.series.map do |series|
+          positioned_curve(data, series, axes, min_value, max_value)
         end
       end
 
-      def positioned_curve(curve, axes, min_value, max_value)
+      def positioned_curve(data, series, axes, min_value, max_value)
         points = axes.map do |axis|
-          positioned_point(curve, axis, min_value, max_value)
+          positioned_point(data, series, axis, min_value, max_value)
         end
-        { id: curve.id, label: curve.label, points: points }
+        { id: source_id(data, series), label: series.label, points: points }
       end
 
-      def positioned_point(curve, axis, min_value, max_value)
-        value = curve.value_for(axis[:id])
+      def positioned_point(data, series, axis, min_value, max_value)
+        value = measurement(data, series.id, axis[:ir_id])
         normalized = normalize_value(value, min_value, max_value)
         radius = normalized * DEFAULT_RADIUS
         {
@@ -312,6 +334,33 @@ module Sirena
           y: Math.sin(axis[:angle_radians]) * radius,
           angle: axis[:angle_radians]
         }
+      end
+
+      def measurement(data, series_id, dimension_id)
+        value = data.values.find do |entry|
+          entry.role == "measurement" && entry.series_id == series_id &&
+            entry.dimension_id == dimension_id
+        end
+        value ? value.value.value : 0.0
+      end
+
+      def radar_options(data)
+        visibility = data.values.find do |value|
+          value.role == "legend_visibility"
+        end
+        visibility ? { show_legend: visibility.value.value } : {}
+      end
+
+      def option_value(data, role)
+        value = data.values.find { |entry| entry.role == role }
+        value&.value&.value
+      end
+
+      def source_id(data, item)
+        identifier = data.values.find do |value|
+          value.role == "identifier" && value.parent_id == item.id
+        end
+        identifier ? identifier.value.value : item.id
       end
 
       def normalize_value(value, min_value, max_value)

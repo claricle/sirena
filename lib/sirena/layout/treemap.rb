@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/treemap"
+require_relative "../notation/mermaid/ir_adapters/treemap"
 
 module Sirena
   module Layout
@@ -13,6 +14,11 @@ module Sirena
       HEADER_HEIGHT = 40
 
       DEPTH_COLORS = %w[#8dd3c7 #ffffb3 #bebada #fb8072].freeze
+      STYLE_PROPERTIES = {
+        "fill_color" => :fill,
+        "stroke_color" => :stroke,
+      }.freeze
+      private_constant :STYLE_PROPERTIES
 
       class Box < Lutaml::Model::Serializable
         attribute :x, :float
@@ -58,36 +64,67 @@ module Sirena
       # @param diagram [Diagram::Treemap] the treemap diagram
       # @return [Hash] layout data with positioned cells and dimensions
       def build_graph(diagram)
-        total_value = diagram.total_value
-        return default_layout(diagram) if total_value <= 0
+        data = ir_data(diagram)
+        hierarchy = partition_hierarchy(data)
+        return default_layout(data) unless hierarchy[:total].positive?
 
-        # Calculate dimensions
-        width = calculate_width(diagram)
-        height = calculate_height(diagram)
-        y_offset = diagram.title ? HEADER_HEIGHT + PADDING : PADDING
-
-        # Layout root nodes
-        cells = []
-        x = PADDING
-        y = y_offset
-
-        diagram.root_nodes.each do |node|
-          cell = layout_node(node, x, y, width - 2 * PADDING,
-                             height - y_offset - PADDING, total_value)
-          cells << cell if cell
-          y += cell[:height] + PADDING if cell
-        end
-
-        {
-          width: width,
-          height: height,
-          title: diagram.title,
-          cells: cells,
-          class_defs: diagram.class_defs,
-        }
+        positioned_layout(data, hierarchy)
       end
 
       private
+
+      def partition_hierarchy(data)
+        partitions = data.series.select { |series| series.role == "partition" }
+        roots = partitions.select { |partition| partition.parent_id.nil? }
+        children = partitions.group_by(&:parent_id)
+        context = { data: data, children: children }
+        total = roots.sum { |root| partition_value(context, root) }
+        { partitions: partitions, roots: roots, context: context, total: total }
+      end
+
+      def positioned_layout(data, hierarchy)
+        roots = hierarchy.fetch(:roots)
+        context = hierarchy.fetch(:context)
+        total = hierarchy.fetch(:total)
+        width = calculate_width(data)
+        partitions = hierarchy.fetch(:partitions)
+        height = calculate_height(partitions)
+        title = data.label
+        y_offset = title ? HEADER_HEIGHT + PADDING : PADDING
+        bounds = canvas_bounds(
+          PADDING, y_offset, width - 2 * PADDING,
+          height - y_offset - PADDING
+        )
+        cells = root_cells(roots, context, total, bounds)
+        definitions = class_definitions(data)
+
+        {
+          width: width, height: height, title: title,
+          cells: cells, class_defs: definitions
+        }
+      end
+
+      def canvas_bounds(x, y, width, height)
+        { x: x, y: y, width: width, height: height }
+      end
+
+      def root_cells(roots, context, total, bounds)
+        current_y = bounds.fetch(:y)
+        roots.filter_map do |root|
+          root_bounds = bounds.merge(y: current_y)
+          cell = layout_partition(
+            context, root, root_bounds, total, 0
+          )
+          current_y += cell[:height] + PADDING if cell
+          cell
+        end
+      end
+
+      def ir_data(diagram)
+        return diagram if diagram.is_a?(IR::Data)
+
+        Notation::Mermaid::IRAdapters::Treemap.call(diagram)
+      end
 
       def scene(diagram)
         scene_from_graph(build_graph(diagram))
@@ -166,6 +203,7 @@ module Sirena
       def style_value(cell, class_defs, property)
         styles = class_defs[cell[:css_class]] if cell[:css_class]
         return unless styles
+        return styles[property] if styles.is_a?(Hash)
 
         match = styles.match(/#{property}:\s*([^;,]+)/)
         match[1].strip if match
@@ -182,72 +220,103 @@ module Sirena
         value == value.to_i ? value.to_i.to_s : format("%.1f", value)
       end
 
-      def layout_node(node, x, y, available_width, available_height, total_value)
-        node_value = node.total_value
+      def layout_partition(hierarchy_context, current_partition, available_bounds, parent_value, depth)
+        node_value = partition_value(hierarchy_context, current_partition)
         return nil if node_value <= 0
 
-        # Calculate proportional height
-        ratio = node_value / total_value
-        height = [available_height * ratio, MIN_CELL_SIZE].max
-
+        height = partition_height(available_bounds, node_value, parent_value)
+        data = hierarchy_context.fetch(:data)
+        label = current_partition.label
+        partition_id = current_partition.id
+        x_position = available_bounds.fetch(:x)
+        y_position = available_bounds.fetch(:y)
+        width = available_bounds.fetch(:width)
+        css_class = style_reference(data, partition_id)
         cell = {
-          label: node.label,
-          value: node_value,
-          x: x,
-          y: y,
-          width: available_width,
-          height: height,
-          css_class: node.css_class,
-          depth: node.depth,
-          children: [],
+          label: label, value: node_value, x: x_position, y: y_position,
+          width: width, height: height, css_class: css_class,
+          depth: depth, children: []
         }
-
-        # If this node has children, layout them recursively
-        if node.branch? && node.children.any?
-          child_y = y + LABEL_HEIGHT
-          child_height = height - LABEL_HEIGHT - PADDING
-
-          node.children.each do |child|
-            child_cell = layout_node(child, x + PADDING, child_y,
-                                     available_width - 2 * PADDING,
-                                     child_height, node_value)
-            if child_cell
-              cell[:children] << child_cell
-              child_y += child_cell[:height] + PADDING
-            end
-          end
-        end
-
+        children = partition_children(
+          hierarchy_context, current_partition, cell, node_value, height, depth
+        )
+        cell[:children] = children
         cell
       end
 
-      def calculate_width(diagram)
-        # Base width calculation
+      def partition_height(bounds, node_value, parent_value)
+        ratio = node_value / parent_value
+        [bounds.fetch(:height) * ratio, MIN_CELL_SIZE].max
+      end
+
+      def partition_children(context, partition, cell, parent_value, height,
+                             depth)
+        child_y = cell.fetch(:y) + LABEL_HEIGHT
+        context.fetch(:children).fetch(partition.id, []).filter_map do |child|
+          child_bounds = child_bounds(cell, child_y, height)
+          child_cell = layout_partition(
+            context, child, child_bounds, parent_value, depth + 1
+          )
+          child_y += child_cell[:height] + PADDING if child_cell
+          child_cell
+        end
+      end
+
+      def child_bounds(bounds, child_y_position, parent_height)
+        {
+          x: bounds.fetch(:x) + PADDING, y: child_y_position,
+          width: bounds.fetch(:width) - 2 * PADDING,
+          height: parent_height - LABEL_HEIGHT - PADDING
+        }
+      end
+
+      def partition_value(context, partition)
+        data = context.fetch(:data)
+        explicit = data.values.find do |value|
+          value.role == "magnitude" && value.series_id == partition.id
+        end
+        return explicit.value.value if explicit
+
+        context.fetch(:children).fetch(partition.id, []).sum do |child|
+          partition_value(context, child)
+        end
+      end
+
+      def style_reference(data, series_id)
+        value = data.values.find do |entry|
+          entry.role == "style_reference" && entry.series_id == series_id
+        end
+        value&.value&.value
+      end
+
+      def class_definitions(data)
+        data.values.each_with_object({}) do |value, definitions|
+          property = STYLE_PROPERTIES[value.role]
+          next unless property
+
+          definitions[value.label] ||= {}
+          definitions[value.label][property] = value.value.value
+        end
+      end
+
+      def calculate_width(data)
         800
       end
 
-      def calculate_height(diagram)
-        # Calculate based on number of nodes
-        node_count = count_nodes(diagram.root_nodes)
+      def calculate_height(partitions)
         base_height = 400
-        additional_height = [node_count * 30, 200].min
+        additional_height = [partitions.size * 30, 200].min
 
         base_height + additional_height
       end
 
-      def count_nodes(nodes)
-        nodes.sum do |node|
-          1 + (node.children ? count_nodes(node.children) : 0)
-        end
-      end
-
-      def default_layout(diagram)
+      def default_layout(data)
         {
           width: 800,
           height: 400,
-          title: diagram.title,
+          title: data.label,
           cells: [],
-          class_defs: diagram.class_defs,
+          class_defs: class_definitions(data),
         }
       end
     end
