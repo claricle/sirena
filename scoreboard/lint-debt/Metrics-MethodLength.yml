@@ -38,7 +38,7 @@ rows:
 - file: lib/sirena/layout/gantt.rb
   count: 6
 - file: lib/sirena/layout/git_graph.rb
-  count: 6
+  count: 5
 - file: lib/sirena/layout/grid.rb
   count: 2
 - file: lib/sirena/layout/kanban.rb

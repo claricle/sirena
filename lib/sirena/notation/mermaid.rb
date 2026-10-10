@@ -86,6 +86,7 @@ module Sirena
         git_graph: {
           pattern: /\A\s*gitGraph/i,
           keyword: "gitGraph",
+          ir_adapter: true,
         },
         mindmap: {
           pattern: /\A\s*mindmap/i,
