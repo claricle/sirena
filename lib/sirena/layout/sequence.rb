@@ -4,6 +4,7 @@ require_relative "base"
 require_relative "../diagram/sequence"
 require_relative "../diagram/sequence_text"
 require_relative "../notation/mermaid/ir_adapters/sequence"
+require_relative "sequence/note_placement"
 
 module Sirena
   module Layout
@@ -80,6 +81,8 @@ module Sirena
         attribute :label, Label
       end
 
+      require_relative "sequence/note"
+
       class Scene < Layout::Scene
         attribute :id, :string
         attribute :view_box, :string
@@ -87,6 +90,7 @@ module Sirena
                                               default: -> { [] }
         attribute :lifelines, Line, collection: true, default: -> { [] }
         attribute :messages, Message, collection: true, default: -> { [] }
+        attribute :notes, Note, collection: true, default: -> { [] }
       end
 
       # Retains the pre-Scene graph shape for direct layout callers.
@@ -120,6 +124,7 @@ module Sirena
           participants: participants.map(&:id),
           message_count: message_edges(graph).length,
           notes: graph.nodes.select { |node| node.role == "note" },
+          note_entries: NotePlacement.entries(graph),
           title: graph.label,
           accessibility_title: graph.accessibility_title,
           accessibility_description: graph.accessibility_description,
@@ -134,20 +139,29 @@ module Sirena
       def build_scene(graph, positions)
         children = graph[:children]
         message_count = graph.dig(:metadata, :message_count) || 0
-        width, height = scene_dimensions(children, message_count)
+        placement = note_placement(graph.dig(:metadata, :note_entries),
+                                   positions)
+        width, height = scene_dimensions(children, message_count, placement)
 
         Scene.new(
           id: graph[:id], width: width, height: height,
           view_box: "0 0 #{width} #{height}",
           participants: typed_participants(children, positions),
-          lifelines: lifeline_geometry(positions, message_count),
-          messages: typed_messages(graph[:edges], positions)
+          lifelines: lifeline_geometry(positions, message_count,
+                                       placement.total_height),
+          messages: typed_messages(graph[:edges], positions, placement),
+          notes: placement.notes
         )
       end
 
-      def scene_dimensions(participants, message_count)
-        [canvas_width(participants) + 40,
-         canvas_height(participants, message_count) + 40]
+      def note_placement(entries, positions)
+        NotePlacement.new(entries, positions, font_size: message_font_size)
+      end
+
+      def scene_dimensions(participants, message_count, placement)
+        [[canvas_width(participants) + 40, placement.right_edge + 20].max,
+         canvas_height(participants, message_count) +
+           placement.total_height + 40]
       end
 
       def transform_participants(graph)
@@ -380,8 +394,8 @@ module Sirena
         ]
       end
 
-      def lifeline_geometry(positions, message_count)
-        length = (message_count * MESSAGE_SPACING) + 100
+      def lifeline_geometry(positions, message_count, note_height = 0)
+        length = (message_count * MESSAGE_SPACING) + 100 + note_height
         positions.values.map do |position|
           line(
             position[:center_x], PARTICIPANT_MARGIN + PARTICIPANT_HEIGHT,
@@ -391,17 +405,17 @@ module Sirena
         end
       end
 
-      def typed_messages(edges, positions)
+      def typed_messages(edges, positions, placement)
         (edges || []).each_with_index.filter_map do |edge, index|
-          typed_message(edge, positions, index)
+          typed_message(edge, positions, index, placement.shift_for(index))
         end
       end
 
-      def typed_message(edge, positions, index)
+      def typed_message(edge, positions, index, shift = 0)
         source, target = message_endpoints(edge, positions)
         return unless source && target
 
-        vertical = message_vertical(index)
+        vertical = message_vertical(index) + shift
         build_typed_message(edge, index, source, target, vertical)
       end
 
