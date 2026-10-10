@@ -20,14 +20,17 @@ RSpec.describe Sirena::Parser::Pie do
         MERMAID
       end
 
+      let(:expected_slices) do
+        [
+          have_attributes(label: "Apples", value: 42.0),
+          have_attributes(label: "Oranges", value: 58.0),
+        ]
+      end
+
       it "parses successfully" do
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Pie)
-        expect(diagram.slices.length).to eq(2)
-        expect(diagram.slices[0].label).to eq("Apples")
-        expect(diagram.slices[0].value).to eq(42.0)
-        expect(diagram.slices[1].label).to eq("Oranges")
-        expect(diagram.slices[1].value).to eq(58.0)
+          .and have_attributes(slices: expected_slices)
       end
     end
 
@@ -42,8 +45,9 @@ RSpec.describe Sirena::Parser::Pie do
 
       it "parses title correctly" do
         diagram = parser.parse(source)
-        expect(diagram.title).to eq("Sales Distribution")
-        expect(diagram.slices.length).to eq(2)
+        expect(diagram).to have_attributes(
+          title: "Sales Distribution", slices: have_attributes(length: 2),
+        )
       end
     end
 
@@ -58,8 +62,9 @@ RSpec.describe Sirena::Parser::Pie do
 
       it "sets show_data flag" do
         diagram = parser.parse(source)
-        expect(diagram.show_data).to be true
-        expect(diagram.slices.length).to eq(2)
+        expect(diagram).to have_attributes(
+          show_data: true, slices: have_attributes(length: 2),
+        )
       end
     end
 
@@ -91,11 +96,11 @@ RSpec.describe Sirena::Parser::Pie do
       end
 
       it "parses accessibility attributes" do
-        diagram = parser.parse(source)
-        expect(diagram.title).to eq("Sales Chart")
-        expect(diagram.acc_title).to eq("Accessible Title")
-        expect(diagram.acc_description)
-          .to eq("This chart shows sales distribution")
+        expect(parser.parse(source)).to have_attributes(
+          title: "Sales Chart",
+          acc_title: "Accessible Title",
+          acc_description: "This chart shows sales distribution",
+        )
       end
     end
 
@@ -110,8 +115,7 @@ RSpec.describe Sirena::Parser::Pie do
 
       it "handles decimal values" do
         diagram = parser.parse(source)
-        expect(diagram.slices[0].value).to eq(42.5)
-        expect(diagram.slices[1].value).to eq(57.5)
+        expect(diagram.slices.map(&:value)).to eq([42.5, 57.5])
       end
     end
 
@@ -136,8 +140,8 @@ RSpec.describe Sirena::Parser::Pie do
       it "parses empty diagram" do
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Pie)
-        expect(diagram.slices).to be_empty
-        expect(diagram.valid?).to be true
+          .and have_attributes(slices: be_empty)
+          .and be_valid
       end
     end
 
@@ -160,6 +164,8 @@ RSpec.describe Sirena::Parser::Pie do
   end
 
   describe "transform and render pipeline" do
+    subject(:svg) { renderer.render(scene) }
+
     let(:source) do
       <<~MERMAID
         pie title Product Distribution
@@ -169,26 +175,17 @@ RSpec.describe Sirena::Parser::Pie do
       MERMAID
     end
 
-    it "produces valid SVG output" do
-      diagram = parser.parse(source)
-      graph = transform.to_graph(diagram)
-      svg = renderer.render(graph)
+    let(:scene) { transform.to_graph(parser.parse(source)) }
 
-      expect(svg).to be_a(Sirena::Svg::Document)
-      expect(svg.width).to be > 0
-      expect(svg.height).to be > 0
-      expect(svg.children).not_to be_empty
+    it "produces valid SVG output" do
+      expect(svg).to be_a(Sirena::Svg::Document).and have_attributes(
+        width: be > 0, height: be > 0, children: satisfy(&:any?),
+      )
     end
 
     it "calculates correct percentages and angles" do
-      diagram = parser.parse(source)
-      scene = transform.to_graph(diagram)
-
-      expect(scene.slices.map(&:percentage)).to eq([45.0, 30.0, 25.0])
-
-      # Total should be 360 degrees
-      total_angle = scene.slices.sum(&:angle)
-      expect(total_angle).to be_within(0.1).of(360.0)
+      values = [scene.slices.map(&:percentage), scene.slices.sum(&:angle)]
+      expect(values).to match([[45.0, 30.0, 25.0], be_within(0.1).of(360.0)])
     end
   end
 end
