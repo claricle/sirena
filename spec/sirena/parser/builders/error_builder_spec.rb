@@ -11,7 +11,7 @@ RSpec.describe Sirena::Parser::Builders::Error do
     "a non-string message" => [[{ message: 7 }], "7"],
     "a blank message" => [[{ message: "  " }], nil],
     "a nil message" => [[{ message: nil }], nil],
-    "noise in an array" => [["noise", { other: 1 }], nil],
+    "an array item without a message" => [[{ other: 1 }], nil],
     "a hash tree" => [{ message: "x" }, "x"],
     "a hash tree without a message" => [{ other: 1 }, nil],
   }.each do |name, (tree, expected)|

@@ -17,15 +17,8 @@ module Sirena
         def apply(tree)
           diagram = Diagram::Error.new
 
-          # Process tree structure
-          if tree.is_a?(Array)
-            tree.each do |item|
-              next unless item.is_a?(Hash)
-
-              process_message(diagram, item) if item.key?(:message)
-            end
-          elsif tree.is_a?(Hash)
-            process_message(diagram, tree) if tree.key?(:message)
+          [tree].flatten(1).each do |item|
+            process_message(diagram, item) if item.key?(:message)
           end
 
           diagram
