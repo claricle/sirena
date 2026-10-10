@@ -4,14 +4,32 @@ require "spec_helper"
 require "sirena/diagram/user_journey"
 
 RSpec.describe Sirena::Diagram::UserJourney do
+  def journey_task(name, score, actors = [])
+    Sirena::Diagram::JourneyTask.new(name: name, score: score, actors: actors)
+  end
+
+  def journey_section(name:, tasks:)
+    Sirena::Diagram::JourneySection.new.tap do |section|
+      section.name = name
+      section.tasks.concat(tasks)
+    end
+  end
+
+  def user_journey(*sections)
+    described_class.new.tap { |diagram| diagram.sections.concat(sections) }
+  end
+
+  def user_journey_with(*task_groups)
+    sections = task_groups.each_with_index.map do |tasks, index|
+      journey_section(name: "Section #{index + 1}", tasks: tasks)
+    end
+    user_journey(*sections)
+  end
+
   describe Sirena::Diagram::JourneyTask do
     describe "#valid?" do
       it "returns true for task with all required fields" do
-        task = described_class.new.tap do |t|
-          t.name = "Browse products"
-          t.score = 5
-          t.actors = ["Customer"]
-        end
+        task = journey_task("Browse products", 5, ["Customer"])
 
         expect(task.valid?).to be true
       end
@@ -35,11 +53,7 @@ RSpec.describe Sirena::Diagram::UserJourney do
       end
 
       it "returns false for task with invalid score" do
-        task = described_class.new.tap do |t|
-          t.name = "Browse products"
-          t.score = 6
-          t.actors = ["Customer"]
-        end
+        task = journey_task("Browse products", 6, ["Customer"])
 
         expect(task.valid?).to be false
       end
@@ -55,13 +69,9 @@ RSpec.describe Sirena::Diagram::UserJourney do
       it "returns true for task with an empty actor list" do
         # mmdc renders `Task: 5` and `Task: 5:` (corpus cases 004/008/012)
         # the same as a task with actors; `actors` defaults to `[]`.
-        task = described_class.new.tap do |t|
-          t.name = "Browse products"
-          t.score = 5
-        end
+        task = described_class.new(name: "Browse products", score: 5)
 
-        expect(task.actors).to eq([])
-        expect(task.valid?).to be true
+        expect(task).to have_attributes(actors: [], valid?: true)
       end
     end
 
@@ -101,14 +111,8 @@ RSpec.describe Sirena::Diagram::UserJourney do
   describe Sirena::Diagram::JourneySection do
     describe "#valid?" do
       it "returns true for section with name and valid tasks" do
-        section = described_class.new.tap do |s|
-          s.name = "Shopping"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Browse"
-            t.score = 5
-            t.actors = ["Customer"]
-          end
-        end
+        task = journey_task("Browse", 5, ["Customer"])
+        section = journey_section(name: "Shopping", tasks: [task])
 
         expect(section.valid?).to be true
       end
@@ -132,16 +136,9 @@ RSpec.describe Sirena::Diagram::UserJourney do
 
     describe "#valid?" do
       it "returns true for valid user journey with sections" do
-        diagram = described_class.new
-        section = Sirena::Diagram::JourneySection.new.tap do |s|
-          s.name = "Shopping"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Browse"
-            t.score = 5
-            t.actors = ["Customer"]
-          end
-        end
-        diagram.sections << section
+        task = journey_task("Browse", 5, ["Customer"])
+        section = journey_section(name: "Shopping", tasks: [task])
+        diagram = user_journey(section)
 
         expect(diagram.valid?).to be true
       end
@@ -181,25 +178,9 @@ RSpec.describe Sirena::Diagram::UserJourney do
 
     describe "#all_tasks" do
       it "returns all tasks across all sections" do
-        diagram = described_class.new
-        section1 = Sirena::Diagram::JourneySection.new.tap do |s|
-          s.name = "Section 1"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Task 1"
-            t.score = 5
-            t.actors = ["Actor 1"]
-          end
-        end
-        section2 = Sirena::Diagram::JourneySection.new.tap do |s|
-          s.name = "Section 2"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Task 2"
-            t.score = 3
-            t.actors = ["Actor 2"]
-          end
-        end
-        diagram.sections << section1
-        diagram.sections << section2
+        task1 = journey_task("Task 1", 5, ["Actor 1"])
+        task2 = journey_task("Task 2", 3, ["Actor 2"])
+        diagram = user_journey_with([task1], [task2])
 
         expect(diagram.all_tasks.length).to eq(2)
       end
@@ -207,51 +188,23 @@ RSpec.describe Sirena::Diagram::UserJourney do
 
     describe "#all_actors" do
       it "returns unique actors from all tasks" do
-        diagram = described_class.new
-        section = Sirena::Diagram::JourneySection.new.tap do |s|
-          s.name = "Section 1"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Task 1"
-            t.score = 5
-            t.actors = ["Actor 1", "Actor 2"]
-          end
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Task 2"
-            t.score = 3
-            t.actors = ["Actor 2", "Actor 3"]
-          end
-        end
-        diagram.sections << section
+        task1 = journey_task("Task 1", 5, ["Actor 1", "Actor 2"])
+        task2 = journey_task("Task 2", 3, ["Actor 2", "Actor 3"])
+        diagram = user_journey_with([task1, task2])
+        expected = ["Actor 1", "Actor 2", "Actor 3"]
 
-        expect(diagram.all_actors).to contain_exactly(
-          "Actor 1",
-          "Actor 2",
-          "Actor 3",
-        )
+        expect(diagram.all_actors).to match_array(expected)
       end
     end
 
     describe "#tasks_by_score" do
       it "filters tasks by score" do
-        diagram = described_class.new
-        section = Sirena::Diagram::JourneySection.new.tap do |s|
-          s.name = "Section 1"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Task 1"
-            t.score = 5
-            t.actors = ["Actor 1"]
-          end
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Task 2"
-            t.score = 3
-            t.actors = ["Actor 2"]
-          end
-        end
-        diagram.sections << section
+        task1 = journey_task("Task 1", 5, ["Actor 1"])
+        task2 = journey_task("Task 2", 3, ["Actor 2"])
+        diagram = user_journey_with([task1, task2])
+        expected = have_attributes(name: "Task 1")
 
-        tasks = diagram.tasks_by_score(5)
-        expect(tasks.length).to eq(1)
-        expect(tasks.first.name).to eq("Task 1")
+        expect(diagram.tasks_by_score(5)).to contain_exactly(expected)
       end
     end
   end
