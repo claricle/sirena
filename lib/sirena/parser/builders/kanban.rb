@@ -201,17 +201,9 @@ module Sirena
             result
           end
 
+          # The grammar captures the indent as a string, "" when absent.
           def get_indent_size(indent_data)
-            return 0 if indent_data.nil?
-            return 0 if indent_data.is_a?(Array) && indent_data.empty?
-
-            indent_str = if indent_data.is_a?(Array)
-                           indent_data.join("")
-                         else
-                           indent_data.to_s
-                         end
-
-            indent_str.length
+            indent_data.to_s.length
           end
         end
 
@@ -323,10 +315,11 @@ module Sirena
         end
         private_class_method :validate_shape
 
-        # An empty repeat captures as [], not as an empty slice.
+        # A subclass grammar whose empty body captures as [] reads as "[]",
+        # which the YAML engine takes as a mapping key with no value:
+        # the same empty metadata as an empty string.
         def self.metadata_body_text(metadata_data)
-          value = metadata_data[:body]
-          value.is_a?(Array) ? "" : value.to_s
+          metadata_data[:body].to_s
         end
         private_class_method :metadata_body_text
 

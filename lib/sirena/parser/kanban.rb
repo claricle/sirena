@@ -84,7 +84,7 @@ module Sirena
         diagram = Diagram::Kanban.new
 
         # Build columns and cards
-        result[:columns]&.each do |column_data|
+        result[:columns].each do |column_data|
           column = build_column(column_data)
           diagram.add_column(column)
         end
@@ -103,7 +103,7 @@ module Sirena
         )
 
         # Add cards to column
-        column_data[:cards]&.each do |card_data|
+        column_data[:cards].each do |card_data|
           card = build_card(card_data)
           column.add_card(card)
         end
