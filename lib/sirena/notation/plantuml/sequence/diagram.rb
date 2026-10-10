@@ -15,13 +15,19 @@ module Sirena
 
           # @param min_head_width [Integer, nil] the narrowest participant head
           #   the source asked for
+          # @param footbox [Boolean] false after `hide footbox`
           def initialize(participants:, items:, boxes: [].freeze,
-                         min_head_width: nil)
+                         min_head_width: nil, footbox: true)
             @participants = participants
             @items = items
             @boxes = boxes
             @min_head_width = min_head_width
+            @footbox = footbox
             freeze
+          end
+
+          def footbox?
+            @footbox
           end
 
           def messages

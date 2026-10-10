@@ -92,6 +92,25 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
   end
 
+  describe "hide footbox" do
+    it "keeps the foot heads by default" do
+      expect(parse("A -> B").footbox?).to be(true)
+    end
+
+    it "drops the foot heads after hide footbox" do
+      expect(parse("hide footbox", "A -> B").footbox?).to be(false)
+    end
+
+    it "reads it in any case and after the messages" do
+      expect(parse("A -> B", "HIDE Footbox").footbox?).to be(false)
+    end
+
+    it "still refuses another hide by name" do
+      expect(refusal_of("hide unlinked", "A -> B"))
+        .to have_attributes(construct: "hide")
+    end
+  end
+
   describe "activation" do
     let(:phases) do
       ->(diagram) { diagram.items.grep(Sirena::Notation::PlantUML::Sequence::Activation).map(&:phase) }

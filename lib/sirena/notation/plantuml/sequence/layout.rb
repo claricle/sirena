@@ -61,13 +61,20 @@ module Sirena
 
           def build(widths)
             Scene.new(width: canvas_width(widths),
-                      height: @flow.y + @head_height + MARGIN,
+                      height: @flow.y + foot_height + MARGIN,
                       frames: frames(widths), heads: heads(widths),
                       lifelines: lifelines, **flow_items)
           end
 
           def heads(widths)
+            return place_heads(widths, @top) unless @diagram.footbox?
+
             place_heads(widths, @top) + place_heads(widths, @flow.y)
+          end
+
+          # The lifelines end where the foot heads would begin.
+          def foot_height
+            @diagram.footbox? ? @head_height : 0.0
           end
 
           def flow_items
@@ -260,7 +267,7 @@ module Sirena
             left, right = frame_edges(box, widths)
             Scene::Frame.new(
               x: left, y: MARGIN, width: right - left,
-              height: @flow.y + @head_height + BOX_PADDING - MARGIN,
+              height: @flow.y + foot_height + BOX_PADDING - MARGIN,
               texts: [text(box.title, (left + right) / 2, MARGIN + 17, "box")]
             )
           end
