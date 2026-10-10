@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "json"
 require "timeout"
@@ -26,6 +27,12 @@ module CorpusOracle
   EXPECTED_CLI = "11.12.0"
 
   class InfrastructureError < StandardError; end
+
+  # What each verdict row records about the tool that gave it: the same
+  # identity fields the file-level provenance carries, so a row stays
+  # attributable when rows from different refreshes are merged.
+  TOOLCHAIN_KEYS = %w[mmdc mermaid chromium].freeze
+  ROW_HASHES = %w[source_sha256].freeze
 
   # A thrown mermaid diagnostic names its class on its first line
   # ("Error: ...", "TypeError: ...", "UnknownDiagramError: ...") and its stack
@@ -73,30 +80,48 @@ module CorpusOracle
     "mmdc #{EXPECTED_CLI} #{what} (oracle-verdicts.yml)"
   end
 
+  # Row keys a verdict row lacks. Rows from before per-row provenance lack all
+  # of them; load_rows still reads those, so a migration can report them.
+  def missing_provenance(row)
+    missing = ROW_HASHES.reject { |key| row[key].is_a?(String) }
+    missing << "svg_sha256" if row["verdict"] == "accepts" &&
+                               !row["svg_sha256"].is_a?(String)
+    toolchain = row["toolchain"]
+    missing << "toolchain.mmdc" unless toolchain.is_a?(Hash) && toolchain["mmdc"]
+    missing
+  end
+
   # Runs one source through mmdc. Returns ["accepts", nil] or
   # ["rejects", reason]; raises InfrastructureError for anything else.
   #
   # A rejection must reproduce: the same diagnostic head on a second run.
   # mmdc funnels Puppeteer and Chromium crashes through the same exit status
   # as a refusal, so one failed run proves nothing.
-  def judge(path, &runner)
+  def judge(path, &)
+    judge_rendering(path, &).first(2)
+  end
+
+  # judge plus the bytes of the SVG mmdc rendered (nil for a rejection).
+  def judge_rendering(path, &runner)
     killed = []
-    watched = watching(runner, killed)
+    rendered = {}
+    watched = watching(runner, killed, rendered)
     first = MmdcOracle.verdict(path, &watched)
-    return ["accepts", nil] if first.verdict == :accepts
+    return ["accepts", nil, rendered[path]] if first.verdict == :accepts
 
     second = MmdcOracle.verdict(path, &watched)
     refuse!(path, "mmdc was killed before it answered") if killed.any?
     reason = reproduced_reason(path, first, second)
-    ["rejects", reason.empty? ? "mermaid error page" : reason[0, 120]]
+    ["rejects", reason.empty? ? "mermaid error page" : reason[0, 120], nil]
   end
 
   # A run mmdc never finished (nil status) proves nothing about the source,
   # whatever it printed before it was killed.
-  def watching(runner, killed)
+  def watching(runner, killed, rendered = {})
     lambda do |input, output|
       runner.call(input, output).tap do |status, _|
         killed << input if status.nil?
+        rendered[input] ||= File.binread(output) if File.file?(output)
       end
     end
   end
@@ -149,16 +174,36 @@ module CorpusOracle
     canary!(&)
     groups = entries.group_by { |e| e[:digest] }.values
     groups = groups.sort_by { |group| group.map { |e| e[:case] }.min }
-    rows = groups.map { |group| row_for(group, &) }
+    rows = groups.map { |group| row_for(group, provenance, &) }
     canary!(&)
+    verify_provenance!(rows)
     write(path, provenance, rows)
     rows
   end
 
-  def row_for(group, &)
-    verdict, reason = judge(group.first.fetch(:path), &)
-    { "sha256" => group.first.fetch(:digest), "verdict" => verdict,
-      "reason" => reason, "cases" => group.map { |e| e[:case] }.sort }.compact
+  # sha256 keys the row; source_sha256 is the hash of the bytes mmdc was
+  # actually given, so a source edited between planning and judging is caught.
+  def row_for(group, provenance, &)
+    path = group.first.fetch(:path)
+    source_sha = Digest::SHA256.hexdigest(File.binread(path))
+    digest = group.first.fetch(:digest)
+    refuse!(path, "source changed since it was hashed") unless source_sha == digest
+    verdict, reason, svg = judge_rendering(path, &)
+    { "sha256" => digest, "verdict" => verdict,
+      "reason" => reason, "cases" => group.map { |e| e[:case] }.sort,
+      "source_sha256" => source_sha,
+      "svg_sha256" => svg && Digest::SHA256.hexdigest(svg),
+      "toolchain" => provenance.slice(*TOOLCHAIN_KEYS) }.compact
+  end
+
+  def verify_provenance!(rows)
+    rows.each do |row|
+      missing = missing_provenance(row)
+      next if missing.empty?
+
+      raise InfrastructureError,
+            "row #{row['sha256']} lacks provenance: #{missing.join(', ')}"
+    end
   end
 
   def write(path, provenance, rows)
