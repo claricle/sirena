@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../elk_placement"
+require_relative "layer_spacing"
 
 module Sirena
   module Layout
@@ -168,19 +169,14 @@ module Sirena
         end
 
         def place_flat(flat)
-          turned = TRANSPOSED.include?(@direction) ||
-            MIRRORED_Y.include?(@direction)
-          unless turned
-            ElkPlacement.apply(flat)
-            return
-          end
-
-          transpose(flat) if TRANSPOSED.include?(@direction)
+          transposed = TRANSPOSED.include?(@direction)
+          transpose(flat) if transposed
           flat[:layoutOptions] = @options.merge(
             Base::ElkOptions::DIRECTION => ElkPlacement::DOWN,
           )
           ElkPlacement.apply(flat)
-          transpose(flat) if TRANSPOSED.include?(@direction)
+          LayerSpacing.apply(flat, label_axis: transposed ? :width : :height)
+          transpose(flat) if transposed
           mirror(flat)
         end
 
