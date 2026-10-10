@@ -15,12 +15,12 @@ RSpec.describe Sirena::Renderer::UserJourney do
       expect(svg).to include(">Lead<")
     end
 
-    it "renders the task score and actor" do
-      expect(svg).to include(">3<").and include(">Me<")
+    it "lists the actor in the legend" do
+      expect(svg).to include(">Me<")
     end
 
     it "draws a header only for the named section" do
-      expect(svg.scan('class="journey-section"').size).to eq(1)
+      expect(svg.scan("<rect class=\"journey-section").size).to eq(1)
     end
   end
 end

@@ -10,9 +10,7 @@ RSpec.describe Sirena::Renderer::UserJourney do
     let(:dark) { Sirena::Theme::Registry.get(:dark) }
     let(:themed) { described_class.new(theme: dark).render(graph) }
     let(:theme_attributes) do
-      [dark.colors.success, dark.colors.node_stroke,
-       dark.typography.font_family, dark.colors.foreground,
-       dark.colors.foreground_secondary]
+      [dark.typography.font_family, dark.colors.foreground]
     end
     let(:graph) do
       {
@@ -52,10 +50,9 @@ RSpec.describe Sirena::Renderer::UserJourney do
     it "includes task boxes in SVG" do
       svg = renderer.render(graph)
 
-      groups = svg.children.grep(Sirena::Svg::Group)
+      ids = svg.children.grep(Sirena::Svg::Group).map(&:id)
 
-      expect(groups.length).to be > 0
-      expect(groups.first.id).to include("task-")
+      expect(ids).to include("task-task_0")
     end
 
     it "renders task boxes as rectangles" do
@@ -68,20 +65,16 @@ RSpec.describe Sirena::Renderer::UserJourney do
       expect(rects).not_to be_empty
     end
 
-    it "uses score-based colors for task boxes" do
+    it "fills a task box with its section colour" do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.include?("task-")
-      end
+      rects = svg.children.grep(Sirena::Svg::Group).flat_map(&:children)
+        .grep(Sirena::Svg::Rect)
 
-      rects = groups.flat_map(&:children).grep(Sirena::Svg::Rect)
-
-      expect(rects.first.fill)
-        .to eq(Sirena::Theme::Registry.get(:default).colors.success)
+      expect(rects.first.fill).to eq("#191970")
     end
 
-    it "uses semantic colors and typography from the active theme" do
+    it "uses foreground colour and typography from the active theme" do
       expect(themed.to_xml).to include(*theme_attributes)
     end
 
@@ -108,44 +101,17 @@ RSpec.describe Sirena::Renderer::UserJourney do
     it "renders section headers as text elements" do
       svg = renderer.render(graph)
 
-      texts = svg.children.grep(Sirena::Svg::Text)
+      texts = svg.children.grep(Sirena::Svg::Group).flat_map(&:children)
+        .grep(Sirena::Svg::Text)
 
       section_text = texts.find { |t| Array(t.content).join == "Shopping" }
       expect(section_text).not_to be_nil
     end
 
-    it "renders timeline arrows between tasks" do
-      graph_with_edges = graph.dup
-      graph_with_edges[:children] << {
-        id: "task_1",
-        x: 300,
-        y: 100,
-        width: 150,
-        height: 80,
-        metadata: {
-          name: "Select item",
-          score: 4,
-          score_color: :green,
-          actors: ["Customer"],
-          section_name: "Shopping",
-        },
-      }
-      graph_with_edges[:edges] = [
-        {
-          id: "flow_0",
-          sources: ["task_0"],
-          targets: ["task_1"],
-          metadata: { type: "sequence" },
-        },
-      ]
+    it "draws the timeline arrow" do
+      svg = renderer.render(graph)
 
-      svg = renderer.render(graph_with_edges)
-
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.include?("arrow-")
-      end
-
-      expect(groups).not_to be_empty
+      expect(svg.children.last).to be_a(Sirena::Svg::Path)
     end
   end
 end

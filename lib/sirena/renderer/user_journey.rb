@@ -7,47 +7,23 @@ module Sirena
   module Renderer
     # User Journey diagram renderer for converting graphs to SVG.
     #
-    # Converts a laid-out graph structure (with computed positions) into
-    # SVG using the Svg builder classes. Handles journey title, section
-    # swimlanes, task boxes with score-based colors, actor lists, and
-    # sequential timeline flow.
+    # Draws what mmdc draws: an actor legend on the left, a coloured band per
+    # section, and for every task a box, a dashed line down to a face whose
+    # height follows the score, and a dot per actor.
     #
     # @example Render a user journey
     #   renderer = UserJourney.new
     #   svg = renderer.render(laid_out_graph)
     class UserJourney < Base
-      # Font size for title
-      TITLE_FONT_SIZE = 20
-
-      # Font size for section headers
-      SECTION_FONT_SIZE = 16
-
-      # Font size for task names
-      TASK_NAME_FONT_SIZE = 14
-
-      # Font size for score
-      SCORE_FONT_SIZE = 18
-
-      # Font size for actors
-      ACTOR_FONT_SIZE = 11
-
-      # Padding for various elements
-      TITLE_PADDING = 20
-      SECTION_PADDING = 10
-      TASK_PADDING = 10
-
-      # Score-based color mapping
-      SCORE_COLORS = {
-        red: "#ff6b6b",
-        yellow: "#feca57",
-        green: "#48dbfb",
-      }.freeze
-
-      SCORE_COLOR_ROLES = {
-        red: :error,
-        yellow: :warning,
-        green: :success,
-      }.freeze
+      TEXT_FONT = '"Open Sans", sans-serif'
+      FACE_RADIUS = 15
+      FACE_TOP = Layout::UserJourneyGeometry::FACE_TOP
+      FACE_STEP = Layout::UserJourneyGeometry::FACE_STEP
+      GREY = "#666"
+      SMILE = "M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818," \
+              "0,1,0,6.818,0Z"
+      FROWN = "M-7.5,0A7.5,7.5,0,1,1,7.5,0L6.818,0A6.818,6.818," \
+              "0,1,0,-6.818,0Z"
 
       # Renders a laid-out graph to SVG.
       #
@@ -56,282 +32,13 @@ module Sirena
       def render(graph)
         scene = typed_scene(graph)
         svg = create_document(scene)
-        render_scene_title(svg, scene)
-        render_section_labels(svg, scene)
-        scene.tasks.each { |task| render_typed_task(svg, task) }
-        scene.arrows.each { |arrow| render_typed_arrow(arrow, svg) }
+        svg.view_box = scene.view_box
+        draw_body(svg, scene)
+        draw_trim(svg, scene)
         svg
       end
 
       protected
-
-      # mmdc draws no header for tasks written before the first section.
-      def render_section_labels(svg, scene)
-        scene.sections.each do |label|
-          svg << label_element(label) unless label.text.to_s.empty?
-        end
-      end
-
-      def calculate_width(graph)
-        return 800 unless graph[:children]
-
-        max_x = graph[:children].map do |node|
-          (node[:x] || 0) + (node[:width] || 120)
-        end.max || 800
-
-        max_x + 40
-      end
-
-      def calculate_height(graph)
-        return 600 unless graph[:children]
-
-        max_y = graph[:children].map do |node|
-          (node[:y] || 0) + (node[:height] || 80)
-        end.max || 600
-
-        # Add space for title and sections
-        metadata = graph[:metadata] || {}
-        title_height = if metadata[:title]
-                         TITLE_FONT_SIZE +
-                           TITLE_PADDING * 2
-                       else
-                         0
-                       end
-        max_y + title_height + 60
-      end
-
-      def render_title(svg, title, y_pos)
-        text = Svg::Text.new.tap do |t|
-          t.x = 20
-          t.y = y_pos + TITLE_FONT_SIZE
-          t.content = title
-          t.fill = "#000000"
-          t.font_family = "Arial, sans-serif"
-          t.font_size = TITLE_FONT_SIZE.to_s
-          t.font_weight = "bold"
-        end
-        svg << text
-
-        y_pos + TITLE_FONT_SIZE + TITLE_PADDING
-      end
-
-      def render_sections_and_tasks(svg, graph, start_y)
-        return start_y unless graph[:children]
-
-        # Group tasks by section
-        sections = group_tasks_by_section(graph[:children])
-
-        current_y = start_y
-
-        sections.each do |section_name, tasks|
-          # Render section header
-          current_y = render_section_header(svg, section_name, current_y)
-
-          # Render tasks in this section
-          tasks.each do |task|
-            render_task(svg, task)
-          end
-
-          current_y += 20
-        end
-
-        current_y
-      end
-
-      def group_tasks_by_section(nodes)
-        grouped = {}
-
-        nodes.each do |node|
-          metadata = node[:metadata] || {}
-          section_name = metadata[:section_name] || "Default"
-
-          grouped[section_name] ||= []
-          grouped[section_name] << node
-        end
-
-        grouped
-      end
-
-      def render_section_header(svg, section_name, y_pos)
-        text = Svg::Text.new.tap do |t|
-          t.x = 20
-          t.y = y_pos + SECTION_FONT_SIZE
-          t.content = section_name
-          t.fill = "#666666"
-          t.font_family = "Arial, sans-serif"
-          t.font_size = SECTION_FONT_SIZE.to_s
-          t.font_weight = "bold"
-        end
-        svg << text
-
-        y_pos + SECTION_FONT_SIZE + SECTION_PADDING
-      end
-
-      def render_task(svg, node)
-        x = node[:x] || 0
-        y = node[:y] || 0
-        width = node[:width] || 120
-        height = node[:height] || 80
-
-        metadata = node[:metadata] || {}
-        score_color = metadata[:score_color] || :yellow
-
-        # Create group for the task
-        group = Svg::Group.new.tap do |g|
-          g.id = "task-#{node[:id]}"
-        end
-
-        # Render task box with score-based color
-        box = Svg::Rect.new.tap do |r|
-          r.x = x
-          r.y = y
-          r.width = width
-          r.height = height
-          r.fill = SCORE_COLORS[score_color]
-          r.stroke = "#333333"
-          r.stroke_width = "2"
-          r.rx = "5"
-          r.ry = "5"
-        end
-        group.children << box
-
-        # Render task content
-        render_task_content(node, metadata, group)
-
-        svg << group
-      end
-
-      def render_task_content(node, metadata, group)
-        x = node[:x] || 0
-        y = node[:y] || 0
-        width = node[:width] || 120
-        node[:height] || 80
-
-        current_y = y + TASK_PADDING
-
-        # Render task name at top
-        name = metadata[:name] || "Task"
-        name_text = Svg::Text.new.tap do |t|
-          t.x = x + width / 2
-          t.y = current_y + TASK_NAME_FONT_SIZE
-          t.content = name
-          t.fill = "#000000"
-          t.font_family = "Arial, sans-serif"
-          t.font_size = TASK_NAME_FONT_SIZE.to_s
-          t.text_anchor = "middle"
-          t.font_weight = "bold"
-        end
-        group.children << name_text
-
-        current_y += TASK_NAME_FONT_SIZE + 10
-
-        # Render score in center
-        score = metadata[:score] || 3
-        score_text = Svg::Text.new.tap do |t|
-          t.x = x + width / 2
-          t.y = current_y + SCORE_FONT_SIZE
-          t.content = score.to_s
-          t.fill = "#000000"
-          t.font_family = "Arial, sans-serif"
-          t.font_size = SCORE_FONT_SIZE.to_s
-          t.text_anchor = "middle"
-          t.font_weight = "bold"
-        end
-        group.children << score_text
-
-        current_y += SCORE_FONT_SIZE + 10
-
-        # Render actors at bottom
-        actors = metadata[:actors] || []
-        actors_text = actors.join(", ")
-        actor_text = Svg::Text.new.tap do |t|
-          t.x = x + width / 2
-          t.y = current_y + ACTOR_FONT_SIZE
-          t.content = actors_text
-          t.fill = "#333333"
-          t.font_family = "Arial, sans-serif"
-          t.font_size = ACTOR_FONT_SIZE.to_s
-          t.text_anchor = "middle"
-        end
-        group.children << actor_text
-      end
-
-      def render_timeline(graph, svg)
-        return unless graph[:edges]
-
-        graph[:edges].each do |edge|
-          render_timeline_arrow(edge, graph, svg)
-        end
-      end
-
-      def render_timeline_arrow(edge, graph, svg)
-        source = find_node(graph, edge[:sources]&.first)
-        target = find_node(graph, edge[:targets]&.first)
-
-        return unless source && target
-
-        # Create arrow group
-        group = Svg::Group.new.tap do |g|
-          g.id = "arrow-#{edge[:id]}"
-        end
-
-        # Calculate connection points (right side of source to
-        # left side of target)
-        from_x = (source[:x] || 0) + (source[:width] || 120)
-        from_y = (source[:y] || 0) + (source[:height] || 80) / 2
-        to_x = target[:x] || 0
-        to_y = (target[:y] || 0) + (target[:height] || 80) / 2
-
-        # Render line
-        line = Svg::Line.new.tap do |l|
-          l.x1 = from_x
-          l.y1 = from_y
-          l.x2 = to_x
-          l.y2 = to_y
-          l.stroke = "#666666"
-          l.stroke_width = "2"
-        end
-        group.children << line
-
-        # Render arrowhead
-        render_arrowhead(to_x, to_y, from_x, from_y, group)
-
-        svg << group
-      end
-
-      def render_arrowhead(to_x, to_y, from_x, from_y, group)
-        # Calculate angle
-        dx = to_x - from_x
-        dy = to_y - from_y
-        angle = Math.atan2(dy, dx)
-
-        # Arrow size
-        arrow_length = 10
-
-        # Calculate arrowhead points
-        point1_x = to_x - arrow_length * Math.cos(angle - Math::PI / 6)
-        point1_y = to_y - arrow_length * Math.sin(angle - Math::PI / 6)
-        point2_x = to_x - arrow_length * Math.cos(angle + Math::PI / 6)
-        point2_y = to_y - arrow_length * Math.sin(angle + Math::PI / 6)
-
-        # Create arrowhead path
-        path_d = "M #{to_x},#{to_y} L #{point1_x},#{point1_y} " \
-                 "M #{to_x},#{to_y} L #{point2_x},#{point2_y}"
-
-        path = Svg::Path.new.tap do |p|
-          p.d = path_d
-          p.stroke = "#666666"
-          p.stroke_width = "2"
-          p.fill = "none"
-        end
-        group.children << path
-      end
-
-      def find_node(graph, node_id)
-        return nil unless graph[:children] && node_id
-
-        graph[:children].find { |n| n[:id] == node_id }
-      end
 
       def typed_scene(graph)
         return graph if graph.is_a?(Layout::UserJourney::Scene)
@@ -339,106 +46,166 @@ module Sirena
         Layout::UserJourney.from_graph(graph, theme: theme)
       end
 
-      def render_scene_title(svg, scene)
-        svg << label_element(scene.title) if scene.title
+      def draw_body(svg, scene)
+        scene.legend.each { |actor| render_actor(svg, actor) }
+        scene.sections.each { |section| render_section(svg, section) }
+        scene.tasks.each { |task| render_task(svg, task) }
       end
 
-      def render_typed_task(svg, task)
-        group = Svg::Group.new.tap { |item| item.id = "task-#{task.id}" }
-        group << task_box(task.box)
-        task.labels.each { |label| group << label_element(label) }
+      def draw_trim(svg, scene)
+        svg << title_text(scene.title) if scene.title
+        scene.arrows.each { |arrow| render_timeline(svg, arrow) }
+      end
+
+      def render_actor(svg, actor)
+        svg << dot_circle(actor.dot)
+        actor.labels.each { |label| svg << legend_text(label) }
+      end
+
+      def legend_text(label)
+        themed_text(label, fill: theme_color(:foreground))
+      end
+
+      def title_text(label)
+        themed_text(label, fill: theme_color(:foreground),
+                           font_weight: label.font_weight)
+      end
+
+      def themed_text(label, **extra)
+        Svg::Text.new(
+          x: label.x, y: label.y, content: label.text,
+          font_family: theme_typography(:font_family),
+          font_size: number_string(label.font_size), **extra
+        )
+      end
+
+      def dot_circle(dot)
+        Svg::Circle.new(
+          cx: dot.x, cy: dot.y, r: 7, class_name: "actor-#{dot.index}",
+          fill: dot.colour, stroke: "#000"
+        )
+      end
+
+      def render_section(svg, section)
+        class_name = "journey-section section-type-#{section.number}"
+        group = Svg::Group.new
+        group << band_rect(section.box, class_name)
+        section.labels.each { |label| group << box_text(label, class_name) }
         svg << group
       end
 
-      def task_box(box)
-        Svg::Rect.new.tap do |rect|
-          set_box_geometry(rect, box)
-          set_box_style(rect, box)
-        end
+      def band_rect(box, class_name)
+        Svg::Rect.new(
+          x: box.x, y: box.y, width: box.width, height: box.height,
+          rx: box.corner_radius, ry: box.corner_radius,
+          class_name: class_name, fill: box.fill, stroke: GREY
+        )
       end
 
-      def set_box_geometry(rect, box)
-        rect.x = box.x
-        rect.y = box.y
-        rect.width = box.width
-        rect.height = box.height
+      def box_text(label, class_name)
+        Svg::Text.new(
+          x: label.x, y: label.y, content: label.text,
+          class_name: class_name, fill: label.fill,
+          text_anchor: "middle", dominant_baseline: "central",
+          font_family: TEXT_FONT, font_size: number_string(label.font_size)
+        )
       end
 
-      def set_box_style(rect, box)
-        style = box.style.to_sym
-        rect.fill = theme_color(SCORE_COLOR_ROLES.fetch(style))
-        rect.stroke = theme_color(:node_stroke)
-        rect.stroke_width = "2"
-        rect.rx = box.corner_radius
-        rect.ry = box.corner_radius
-      end
-
-      def label_element(label)
-        Svg::Text.new.tap do |text|
-          set_label_geometry(text, label)
-          set_label_style(text, label)
-          set_label_class(text, label)
-        end
-      end
-
-      def set_label_geometry(text, label)
-        text.x = label.x
-        text.y = label.y
-        text.text_anchor = label.text_anchor if label.text_anchor
-      end
-
-      def set_label_style(text, label)
-        text.content = label.text
-        text.fill = label_color(label.style)
-        text.font_family = theme_typography(:font_family)
-        text.font_size = number_string(label.font_size)
-        text.font_weight = label.font_weight if label.font_weight
-      end
-
-      def set_label_class(text, label)
-        text.class_name = "journey-section" if label.style == "section"
-      end
-
-      def render_typed_arrow(arrow, svg)
-        group = Svg::Group.new.tap { |item| item.id = "arrow-#{arrow.id}" }
-        group << typed_arrow_line(arrow.line)
-        group << typed_arrow_head(arrow.head_path)
+      def render_task(svg, task)
+        group = Svg::Group.new(id: "task-#{task.id}")
+        group << task_line(task)
+        render_face(group, task)
+        render_task_box(group, task)
         svg << group
       end
 
-      def typed_arrow_line(source)
-        Svg::Line.new.tap do |line|
-          line.x1 = source.x1
-          line.y1 = source.y1
-          line.x2 = source.x2
-          line.y2 = source.y2
-          set_arrow_style(line)
+      def render_task_box(group, task)
+        group << band_rect(task.box, "task task-type-#{task.number}")
+        task.dots.each { |dot| group << dot_circle(dot) }
+        task.labels.each { |label| group << box_text(label, "task") }
+      end
+
+      def task_line(task)
+        center_x = box_center(task.box)
+        Svg::Line.new(
+          x1: center_x, x2: center_x, y1: task.box.y, y2: task.line_end,
+          class_name: "task-line", stroke: GREY, stroke_width: "1px",
+          stroke_dasharray: "4 2"
+        )
+      end
+
+      def box_center(box)
+        box.x + (box.width / 2.0)
+      end
+
+      def render_face(group, task)
+        center_x = box_center(task.box)
+        center_y = FACE_TOP + ((5 - task.score) * FACE_STEP)
+        group << face_circle(center_x, center_y)
+        group << face_features(center_x, center_y, task.score)
+      end
+
+      def face_circle(center_x, center_y)
+        Svg::Circle.new(
+          cx: center_x, cy: center_y, r: FACE_RADIUS, class_name: "face",
+          fill: "#FFF8DC", stroke: "#999", stroke_width: "2"
+        )
+      end
+
+      def face_features(center_x, center_y, score)
+        Svg::Group.new.tap do |group|
+          [-1, 1].each do |side|
+            group << eye(center_x + (side * FACE_RADIUS / 3.0),
+                         center_y - (FACE_RADIUS / 3.0))
+          end
+          group << mouth(center_x, center_y, score)
         end
       end
 
-      def typed_arrow_head(path_data)
-        Svg::Path.new.tap do |path|
-          path.d = path_data
-          path.fill = "none"
-          set_arrow_style(path)
-        end
+      def eye(center_x, center_y)
+        Svg::Circle.new(
+          cx: center_x, cy: center_y, r: 1.5, fill: GREY, stroke: GREY,
+          stroke_width: "2"
+        )
       end
 
-      def set_arrow_style(element)
-        element.stroke = theme_color(:edge_stroke)
-        element.stroke_width = "2"
+      def mouth(center_x, center_y, score)
+        return flat_mouth(center_x, center_y) if score == 3
+
+        smile = score > 3
+        Svg::Path.new(
+          d: smile ? SMILE : FROWN, class_name: "mouth", fill: "#000",
+          stroke: GREY,
+          transform: "translate(#{center_x},#{center_y + (smile ? 2 : 7)})"
+        )
       end
 
-      def label_color(style)
-        if %w[section actors].include?(style)
-          return theme_color(:foreground_secondary)
-        end
+      def flat_mouth(center_x, center_y)
+        Svg::Line.new(
+          x1: center_x - 5, x2: center_x + 5, y1: center_y + 7,
+          y2: center_y + 7, class_name: "mouth", stroke: GREY,
+          stroke_width: "1px"
+        )
+      end
 
-        theme_color(:foreground)
+      def render_timeline(svg, arrow)
+        svg << timeline_line(arrow.line)
+        svg << timeline_head(arrow.head_path)
+      end
+
+      def timeline_line(source)
+        Svg::Line.new(
+          x1: source.x1, y1: source.y1, x2: source.x2, y2: source.y2,
+          stroke: "black", stroke_width: "4"
+        )
       end
 
       def number_string(value)
         value.to_i == value ? value.to_i.to_s : value.to_s
+      end
+
+      def timeline_head(path_data)
+        Svg::Path.new(d: path_data, fill: "black")
       end
     end
   end
