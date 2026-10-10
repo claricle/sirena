@@ -18,7 +18,7 @@ module Sirena
       # @param scene [Layout::Flowchart::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = document(scene)
+        svg = create_document(scene, overflow: "hidden")
 
         # Mermaid paints cluster surfaces first, then edges, then nodes.
         render_clusters(scene.children, svg)
@@ -29,15 +29,6 @@ module Sirena
       end
 
       protected
-
-      def document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-          svg.overflow = "hidden"
-        end
-      end
 
       def render_clusters(nodes, svg)
         nodes.each do |node|

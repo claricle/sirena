@@ -21,7 +21,7 @@ module Sirena
       # @param scene [Layout::Sankey::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = document(scene)
+        svg = create_document(scene)
         render_title(scene.title, svg) if scene.title
         scene.flows.each { |flow| render_flow(flow, svg) unless flow.self_loop }
         scene.nodes.each { |node| render_node(node, svg) }
@@ -29,14 +29,6 @@ module Sirena
       end
 
       protected
-
-      def document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
 
       def render_title(title, svg)
         svg << Svg::Text.new.tap do |text|

@@ -34,7 +34,7 @@ module Sirena
       # @param scene [Layout::Gantt::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = create_document_for_gantt(scene)
+        svg = create_document(scene)
         svg << text_element(scene.title) if scene.title
         render_timeline(scene.timeline, svg) if scene.timeline
         scene.sections.each { |section| render_section(section, svg) }
@@ -42,14 +42,6 @@ module Sirena
       end
 
       protected
-
-      def create_document_for_gantt(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
 
       def render_timeline(timeline, svg)
         svg << timeline_background(timeline.background)

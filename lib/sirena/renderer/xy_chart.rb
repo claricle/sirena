@@ -21,7 +21,7 @@ module Sirena
       # @param scene [Layout::XyChart::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = document(scene)
+        svg = create_document(scene)
         svg << label(scene.title) if scene.title
         scene.lines.each { |line_geometry| svg << line(line_geometry) }
         scene.series.each { |series| render_series(series, svg) }
@@ -31,14 +31,6 @@ module Sirena
       end
 
       protected
-
-      def document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
 
       def line(geometry)
         Svg::Line.new.tap do |item|

@@ -10,8 +10,8 @@ RSpec.describe Sirena::Renderer::Base do
       public :theme_color, :theme_typography, :theme_shape, :theme_spacing,
              :theme_effect, :apply_theme_to_node, :apply_theme_to_edge,
              :apply_theme_to_text, :default_style, :create_path_data,
-             :create_document, :create_document_from_layout,
-             :calculate_width, :calculate_height, :reserved_text_width
+             :create_document, :calculate_width, :calculate_height,
+             :reserved_text_width
     end
   end
   let(:dark) { Sirena::Theme::Registry.get(:dark) }
@@ -169,79 +169,38 @@ RSpec.describe Sirena::Renderer::Base do
         .to eq([800, 600])
     end
 
-    it "grows each dimension by twice the padding and starts the viewBox at zero" do
-      doc = renderer.create_document(nil, padding: 5)
+    it "uses the final Scene dimensions and starts the viewBox at zero" do
+      scene = Sirena::Layout::Sequence::Scene.new(width: 810, height: 610, view_box: "0 0 810 610")
+      doc = renderer.create_document(scene)
 
-      expect([doc.width, doc.height, doc.view_box])
-        .to eq([810, 610, "0 0 810 610"])
+      expect([doc.width, doc.height, doc.view_box, doc.overflow]).to eq([810, 610, "0 0 810 610", nil])
+      expect(renderer.instance_variable_defined?(:@offset_x)).to be(false)
     end
 
-    it "pads by 20 when no padding is given" do
-      expect(renderer.create_document(nil).view_box).to eq("0 0 840 640")
+    it "keeps fractional dimensions in the zero-origin viewBox" do
+      scene = Sirena::Layout::Sequence::Scene.new(width: 100.5, height: 50.25, view_box: "0 0 100.5 50.25")
+
+      expect([scene.width, scene.height, renderer.create_document(scene).view_box]).to eq([100.5, 50.25, "0 0 100.5 50.25"])
+      expect(renderer.instance_variable_defined?(:@offset_y)).to be(false)
+    end
+
+    it "keeps matching dimension spelling but replaces a non-zero origin" do
+      scene = Sirena::Layout::Sequence::Scene.new(width: 100, height: 50, view_box: "5 6 100.0 50.0")
+
+      expect(renderer.create_document(scene).view_box).to eq("0 0 100.0 50.0")
+    end
+
+    it "ignores stale viewBox dimensions" do
+      scene = Sirena::Layout::Sequence::Scene.new(width: 100, height: 50, view_box: "5 6 70 80")
+
+      expect([renderer.create_document(scene).width, renderer.create_document(scene).view_box]).to eq([100, "0 0 100 50"])
     end
 
     it "sets the overflow attribute only when asked" do
-      expect(renderer.create_document(nil).overflow).to be_nil
-      expect(renderer.create_document(nil, overflow: "hidden").overflow)
-        .to eq("hidden")
-    end
-  end
+      scene = Sirena::Layout::Sequence::Scene.new(width: 100, height: 50, view_box: "0 0 100 50")
 
-  describe "#create_document_from_layout" do
-    it "sizes the document straight from layout width/height with no padding" do
-      doc = renderer.create_document_from_layout({ width: 100, height: 50 })
-
-      expect([doc.width, doc.height, doc.view_box])
-        .to eq([100.0, 50.0, "0 0 100.0 50.0"])
-    end
-
-    it "leaves @offset_x/@offset_y unset" do
-      renderer.create_document_from_layout({ width: 100, height: 50 })
-
-      expect(renderer.instance_variable_defined?(:@offset_x)).to be(false)
-      expect(renderer.instance_variable_defined?(:@offset_y)).to be(false)
-    end
-  end
-
-  describe "#build_document_from_layout" do
-    it "sizes the document straight from layout width/height with no padding" do
-      doc = renderer.send(:build_document_from_layout, { width: 100, height: 50 }, padding: 0)
-
-      expect([doc.width, doc.height, doc.view_box])
-        .to eq([100.0, 50.0, "0 0 100.0 50.0"])
-    end
-
-    it "leaves @offset_x/@offset_y unset when padding is zero" do
-      renderer.send(:build_document_from_layout, { width: 100, height: 50 }, padding: 0)
-
-      expect(renderer.instance_variable_defined?(:@offset_x)).to be(false)
-      expect(renderer.instance_variable_defined?(:@offset_y)).to be(false)
-    end
-
-    it "grows by twice the padding and offsets the renderer only when padding is given" do
-      doc = renderer.send(:build_document_from_layout, { width: 100, height: 50 }, padding: 40)
-
-      expect([doc.width, doc.height, renderer.instance_variable_get(:@offset_x),
-              renderer.instance_variable_get(:@offset_y)]).to eq([180.0, 130.0, 40, 40])
-    end
-  end
-
-  # Asserting the padded subclasses' OUTPUT here (as an earlier version of
-  # this file did) can never go red under mutation-check.sh: their output is
-  # byte-identical to origin/main's, only the internal delegation changed.
-  # Asserting the delegation itself does go red -- reverting the diff removes
-  # the build_document_from_layout call entirely, not just its padding value.
-  describe "padded subclasses delegate create_document_from_layout" do
-    { Sirena::Renderer::Kanban => 40 }.each do |renderer_klass, padding|
-      it "calls build_document_from_layout with padding #{padding} for #{renderer_klass}" do
-        instance = renderer_klass.new
-        layout = { width: 100, height: 50 }
-        allow(instance).to receive(:build_document_from_layout).and_call_original
-
-        instance.send(:create_document_from_layout, layout)
-
-        expect(instance).to have_received(:build_document_from_layout).with(layout, padding: padding)
-      end
+      expect(renderer.create_document(scene).overflow).to be_nil
+      expect(renderer.create_document(scene, overflow: "hidden").overflow).to eq("hidden")
     end
   end
 

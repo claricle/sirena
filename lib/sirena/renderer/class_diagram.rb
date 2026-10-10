@@ -58,7 +58,8 @@ module Sirena
       def render(graph)
         return render_scene(graph) if graph.is_a?(Layout::ClassDiagram::Scene)
 
-        svg = create_document(graph)
+        svg = create_document(Layout::ClassDiagram.from_graph(graph,
+                                                              theme: theme))
 
         # Add marker definitions
         add_markers(svg)
@@ -73,7 +74,7 @@ module Sirena
       end
 
       def render_scene(scene)
-        svg = scene_document(scene)
+        svg = create_document(scene)
         add_markers(svg)
         render_relationships(scene, svg)
         render_classes(scene, svg)
@@ -81,14 +82,6 @@ module Sirena
       end
 
       protected
-
-      def scene_document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = svg_number(scene.width)
-          svg.height = svg_number(scene.height)
-          svg.view_box = scene.view_box
-        end
-      end
 
       def render_scene_node(node, svg)
         group = Svg::Group.new.tap { |item| item.id = "class-#{node.id}" }

@@ -19,7 +19,7 @@ module Sirena
       # @param scene [Layout::Quadrant::Scene] final chart geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = document(scene)
+        svg = create_document(scene)
         svg << text_element(scene.title) if scene.title
         scene.quadrants.each { |quadrant| svg << quadrant_element(quadrant) }
         scene.axes.each { |axis| svg << axis_element(axis) }
@@ -30,14 +30,6 @@ module Sirena
       end
 
       protected
-
-      def document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
 
       def quadrant_element(quadrant)
         Svg::Rect.new.tap do |rect|

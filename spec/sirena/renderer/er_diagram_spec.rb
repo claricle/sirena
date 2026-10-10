@@ -79,7 +79,7 @@ module ErDiagramSpecHelpers
 
   def graph_hook_snapshot(renderer, graph)
     scene = Sirena::Layout::ErDiagram.from_graph(graph)
-    svg = renderer.send(:document, scene)
+    svg = renderer.send(:create_document, scene)
     renderer.send(:render_relationships, graph, svg)
     renderer.send(:render_entities, graph, svg)
     texts = svg.children.flat_map(&:children).grep(Sirena::Svg::Text)

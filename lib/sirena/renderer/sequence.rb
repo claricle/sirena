@@ -15,6 +15,7 @@ module Sirena
       MESSAGE_Y_OFFSET = 60
       SELF_LOOP_WIDTH = 56
       SELF_LOOP_HEIGHT = 20
+      LAYOUT_SCENE = Layout::Sequence::Scene
 
       HEAD_ENDS = {
         "target" => [:target].freeze,
@@ -22,6 +23,7 @@ module Sirena
         "both" => %i[source target].freeze,
       }.freeze
       FLUSH_HEADS = %w[cross open stick_top stick_bottom].freeze
+      private_constant :LAYOUT_SCENE
 
       # @param diagram [Layout::Sequence::Scene, Hash] final geometry or graph
       # @return [Svg::Document] rendered SVG document
@@ -34,7 +36,7 @@ module Sirena
       protected
 
       def render_scene(scene)
-        svg = document(scene)
+        svg = create_document(scene)
         scene.lifelines.each { |lifeline| draw_lifeline(lifeline, svg) }
         scene.messages.each { |message| draw_message(message, svg) }
         scene.participants.each do |participant|
@@ -44,7 +46,9 @@ module Sirena
       end
 
       def render_graph(graph)
-        svg = create_document(graph)
+        scene = LAYOUT_SCENE.new(width: calculate_width(graph) + 40,
+                                 height: calculate_height(graph) + 40)
+        svg = create_document(scene)
         metadata = graph[:metadata] || {}
         positions = calculate_participant_positions(graph[:children])
         render_lifelines(positions, metadata[:message_count] || 0, svg)
@@ -52,25 +56,6 @@ module Sirena
         render_participants(graph[:children], positions, svg)
         render_notes(metadata[:notes], positions, svg) if metadata[:notes]
         svg
-      end
-
-      def document(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
-
-      def create_document(graph, padding: 20, overflow: nil)
-        width = calculate_width(graph) + (padding * 2)
-        height = calculate_height(graph) + (padding * 2)
-        Svg::Document.new.tap do |svg|
-          svg.width = width
-          svg.height = height
-          svg.view_box = "0 0 #{number_string(width)} #{number_string(height)}"
-          svg.overflow = overflow
-        end
       end
 
       def draw_lifeline(lifeline, svg)
