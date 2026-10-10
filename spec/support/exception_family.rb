@@ -7,12 +7,38 @@ require "timeout"
 # exception" is a table of what exists and not of the routes someone
 # thought of.
 module ExceptionFamily
+  TIMEOUT_UNWINDING = if Timeout.const_defined?(:ExitException, false)
+                        Timeout::ExitException
+                      else
+                        Timeout::Error
+                      end
+
   # What a plugin's failure must never swallow: the process's and the
   # host's own unwinding. A spec's own list, so editing the library's
   # cannot move it.
   PASSTHROUGH = [
-    NoMemoryError, SignalException, SystemExit, Timeout::ExitException
+    NoMemoryError, SignalException, SystemExit, TIMEOUT_UNWINDING
   ].freeze
+
+  # The timeout gem added ExitException after Ruby 3.2's bundled version.
+  # Older Timeout::Error instances unwind with throw, so exercise that real
+  # path instead of raising the fallback class directly.
+  def self.timeout_passthrough?
+    if Timeout.const_defined?(:ExitException, false)
+      error = TIMEOUT_UNWINDING.new("too slow")
+      yield error
+      false
+    else
+      swallowed = Object.new
+      result = Timeout::Error.catch do |error|
+        yield error
+        swallowed
+      end
+      !result.equal?(swallowed)
+    end
+  rescue TIMEOUT_UNWINDING => e
+    e.equal?(error)
+  end
 
   # Named classes only, so each example has a stable title. An instance is
   # built with `allocate` because constructors disagree on arguments; a
