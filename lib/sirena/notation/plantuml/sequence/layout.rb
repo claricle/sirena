@@ -181,11 +181,16 @@ module Sirena
           def each_note
             previous = nil
             @diagram.items.each do |item|
-              if item.is_a?(Note) && !(item.attached? && previous.is_a?(Fragment))
+              if free_note?(item, previous)
                 yield item, NoteGeometry.span(item, previous, ids)
               end
               previous = item
             end
+          end
+
+          # A note that is not attached to the fragment before it.
+          def free_note?(item, previous)
+            item.is_a?(Note) && !(item.attached? && previous.is_a?(Fragment))
           end
 
           # Room beside a note so it does not cover a neighbour's lifeline.

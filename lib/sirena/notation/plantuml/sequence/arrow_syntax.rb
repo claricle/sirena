@@ -15,8 +15,10 @@ module Sirena
           # The arrow as a part of a longer pattern. A leading or trailing
           # o/x is a decoration only when blanks, or a `[` or `]` or `?` edge,
           # separate it from the names.
-          SOURCE = '(?:(?<=[ \t\[])[oxOX])?(?:<<|<|//|/|\\\\\\\\|\\\\)?-(?i:\[hidden\])?-?' \
-                   '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[oxOX](?=[ \t\]?]|\z))?'
+          SOURCE =
+            '(?:(?<=[ \t\[])[oxOX])?(?:<<|<|//|/|\\\\\\\\|\\\\)?' \
+            '-(?i:\[hidden\])?-?' \
+            '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[oxOX](?=[ \t\]?]|\z))?'
           TOKEN = /\A([oxOX])?(<<|<|\/\/|\/|\\\\|\\)?(--?)
                    (>>|>|\\\\|\\|\/\/|\/)?([oxOX])?\z/x
           HIDDEN = /\[hidden\]/i

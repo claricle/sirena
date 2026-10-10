@@ -31,6 +31,9 @@ module Sirena
           CROSS_HALF = 9.0
           TOP_OFFSET = 20.0
           LEFT_EDGE = 0.0
+          PLACERS = { Message => :message, Activation => :activation,
+                      Destroy => :destroy, Fragment => :fragment,
+                      Ref => :ref }.freeze
 
           attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
                       :right, :y
@@ -123,15 +126,10 @@ module Sirena
           end
 
           def place(item, previous)
-            case item
-            when Message then message(item)
-            when Activation then activation(item)
-            when Destroy then destroy(item)
-            when Note then note(item, previous)
-            when Fragment then fragment(item)
-            when Ref then ref(item)
-            else divider(item)
-            end
+            return note(item, previous) if item.is_a?(Note)
+
+            handler = PLACERS.find { |type, _| item.is_a?(type) }
+            send(handler ? handler.last : :divider, item)
           end
 
           def message(message)
@@ -368,6 +366,10 @@ module Sirena
             @fragments << record.scene
             @closed = { shape: record, top: block[:top] }
             touch(record.x, record.x + record.width)
+            deepen_parent(block)
+          end
+
+          def deepen_parent(block)
             parent = @blocks.last
             parent[:depth] = [parent[:depth], block[:depth] + 1].max if parent
           end

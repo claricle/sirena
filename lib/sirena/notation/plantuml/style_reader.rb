@@ -42,15 +42,7 @@ module Sirena
             return :closed
           end
 
-          if (match = OPENING.match(text))
-            open_selector(match[1], text, number)
-          elsif text == "}" && !@path.empty?
-            @path.pop
-          elsif (match = PROPERTY.match(text))
-            set(match[1].downcase, match[2], text, number)
-          else
-            refuse("style rule form", text, number)
-          end
+          read_rule(text, number)
           :open
         end
 
@@ -60,6 +52,18 @@ module Sirena
         end
 
         private
+
+        def read_rule(text, number)
+          if (match = OPENING.match(text))
+            open_selector(match[1], text, number)
+          elsif text == "}" && !@path.empty?
+            @path.pop
+          elsif (match = PROPERTY.match(text))
+            set(match[1].downcase, match[2], text, number)
+          else
+            refuse("style rule form", text, number)
+          end
+        end
 
         def refuse_open_selector(number)
           return if @path.empty?
@@ -72,7 +76,9 @@ module Sirena
         def open_selector(name, text, number)
           word = name.downcase
           allowed = @path.empty? ? [DOCUMENT] : caption_kinds_at_document
-          refuse("style selector #{name}", text, number) unless allowed.include?(word)
+          unless allowed.include?(word)
+            refuse("style selector #{name}", text, number)
+          end
 
           @path << word
         end
@@ -85,15 +91,20 @@ module Sirena
 
         def set(property, value, text, number)
           name = PROPERTIES[property]
-          scope = @path.size
-          unless name && (scope == 2 || (scope == 1 && name == :background))
+          unless settable?(name)
             refuse("style property #{property}", text, number)
           end
 
           parsed = parse(name, value, text, number)
-          return @background = parsed if scope == 1
+          return @background = parsed if @path.size == 1
 
           (@rules[@path.last.to_sym] ||= {})[name] = parsed
+        end
+
+        # A document sets only its background; a caption kind sets any.
+        def settable?(name)
+          scope = @path.size
+          name && (scope == 2 || (scope == 1 && name == :background))
         end
 
         def parse(name, value, text, number)
