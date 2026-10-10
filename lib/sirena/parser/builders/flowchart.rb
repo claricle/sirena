@@ -85,7 +85,8 @@ module Sirena
         end
 
         def unsupported_shape(name)
-          return "No such shape: #{name}." unless UNDRAWABLE_SHAPES.include?(name)
+          return "No such shape: #{name}." unless
+            UNDRAWABLE_SHAPES.include?(name)
 
           "Shape not supported yet: #{name}."
         end
@@ -415,7 +416,11 @@ module Sirena
               process_node_edge_statement(diagram, stmt, parents.last, context)
             elsif stmt[:node_id]
               # Standalone node
-              node_data = { node_id: stmt[:node_id], shape_type: "rect", label: stmt[:node_id] }
+              node_data = {
+                node_id: stmt[:node_id],
+                shape_type: "rect",
+                label: stmt[:node_id],
+              }
               add_or_update_node(diagram, node_data)
               claim_member(parents.last, stmt[:node_id].to_s, context)
             elsif stmt[:subgraph_keyword]
@@ -454,7 +459,10 @@ module Sirena
         # so `stroke:default`, `stroke:1default` and a bare `interpolate`
         # are refused while `stroke:defaults` and `stroke:x-default` are
         # plain text.
-        LINK_STYLE_KEYWORD = /(?:\A|(?<=[,:;]|#{JS_SPACE}))(?:#|[0-9]+)?(interpolate|default)(?![A-Za-z0-9_])/
+        LINK_STYLE_KEYWORD = Regexp.new(
+          "(?:\\A|(?<=[,:;]|#{JS_SPACE}))" \
+          "(?:#|[0-9]+)?(interpolate|default)(?![A-Za-z0-9_])",
+        )
 
         # mermaid rewrites `#name;` as an entity before it parses, except
         # the last `;` of a lowercase `style ...:#...;` run, then the last
@@ -465,7 +473,8 @@ module Sirena
         CLASS_DEF_RUN = /classDef.*:(?:(?!#{JS_SPACE}).)*#.*;/
         ENTITY = /#\w+;/
 
-        private_constant :LINK_STYLE_KEYWORD, :STYLE_RUN, :CLASS_DEF_RUN, :ENTITY
+        private_constant :LINK_STYLE_KEYWORD, :STYLE_RUN, :CLASS_DEF_RUN,
+                         :ENTITY
 
         def check_link_words(stmt)
           [stmt[:link_curve], stmt[:link_props]].each do |text|
@@ -484,7 +493,8 @@ module Sirena
         private :check_link_words
 
         def check_link_entities(text)
-          entity = text.sub(STYLE_RUN, &:chop).sub(CLASS_DEF_RUN, &:chop)[ENTITY] or return
+          entity = text.sub(STYLE_RUN, &:chop)
+            .sub(CLASS_DEF_RUN, &:chop)[ENTITY] or return
 
           raise Parser::ParseError,
                 "linkStyle reads `#{entity}` as an HTML entity; " \
@@ -916,7 +926,8 @@ module Sirena
         # with that id, so a node sharing an edge's id still takes it.
         def class_shared_node(diagram, node_hash)
           node = diagram.find_node(node_hash[:node_id].to_s)
-          node.classes = node_hash[:inline_class].to_s if node && node_hash[:inline_class]
+          node.classes = node_hash[:inline_class].to_s if
+            node && node_hash[:inline_class]
           node
         end
         private :class_shared_node

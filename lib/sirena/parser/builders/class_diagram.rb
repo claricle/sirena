@@ -47,7 +47,9 @@ module Sirena
         # #mixed_markers_for instead -- add a new combination there, not
         # as a hardcoded entry here.
         MIXED_MARKER_ENDPOINTS = {
-          "o.." => { start_marker: "aggregation", end_marker: nil, dashed: true },
+          "o.." => {
+            start_marker: "aggregation", end_marker: nil, dashed: true
+          },
         }.freeze
 
         # Marker glyph -> the marker type it draws, verified against
@@ -65,7 +67,9 @@ module Sirena
 
         # Longest markers first so `<|`/`|>` win over the `<`/`>` they
         # would otherwise be read as a prefix of.
-        SORTED_MARKER_GLYPHS = Regexp.union(MARKER_TYPES.keys.sort_by { |m| -m.length })
+        SORTED_MARKER_GLYPHS = Regexp.union(
+          MARKER_TYPES.keys.sort_by { |marker| -marker.length },
+        )
 
         # Matches a two-way operator into its left marker, link style, and
         # right marker -- the same [Relation Type][Link][Relation Type]
@@ -137,7 +141,8 @@ module Sirena
           elsif stmt[:stereotype] && stmt[:class_id] && !stmt[:keyword]
             # Standalone stereotype
             process_standalone_stereotype(stmt)
-          elsif stmt[:class_id] && (stmt[:member] || stmt[:raw_member] || stmt[:body_stereotype])
+          elsif stmt[:class_id] &&
+              (stmt[:member] || stmt[:raw_member] || stmt[:body_stereotype])
             # Colon member definition
             process_colon_member(stmt)
           elsif stmt[:from_id] && stmt[:to_id] && stmt[:operator]
@@ -151,7 +156,9 @@ module Sirena
             nil
           elsif stmt[:class_id] && !stmt[:keyword]
             # Standalone class
-            entity = ensure_entity_exists(qualify_name(class_id_text(stmt[:class_id])))
+            entity = ensure_entity_exists(
+              qualify_name(class_id_text(stmt[:class_id])),
+            )
             apply_generic(entity, stmt[:generic])
           end
         end
@@ -177,12 +184,14 @@ module Sirena
 
           # `class C1[]` is an empty label and must fall back to the id, so an
           # empty string counts as absent here.
-          label = extract_text(stmt[:text_label][:string]) if stmt[:text_label].is_a?(Hash)
+          label = extract_text(stmt[:text_label][:string]) if
+            stmt[:text_label].is_a?(Hash)
           label = nil if label.nil? || label.empty?
 
           # Handle stereotype
           if stmt[:stereotype] && stmt[:stereotype][:stereotype_value]
-            entity.stereotype ||= extract_text(stmt[:stereotype][:stereotype_value])
+            entity.stereotype ||=
+              extract_text(stmt[:stereotype][:stereotype_value])
           end
 
           # Handle generic parameters.
@@ -211,7 +220,8 @@ module Sirena
 
           entity = find_or_create_entity(class_id)
 
-          entity.stereotype ||= extract_text(stmt[:stereotype][:stereotype_value])
+          entity.stereotype ||=
+            extract_text(stmt[:stereotype][:stereotype_value])
         end
 
         def process_colon_member(stmt)
@@ -281,10 +291,23 @@ module Sirena
           if call && !call[:name].strip.empty?
             entity.class_methods << raw_method(call, visibility, source_text)
           elsif text.include?(")")
-            raise Parser::ParseError, "Cannot read #{text.inspect} as a class member."
+            unreadable_member!(text)
           else
-            entity.attributes << Diagram::ClassAttribute.new(name: text.sub(/\s*[*$]\z/, ""), visibility: visibility, text: source_text)
+            entity.attributes << raw_attribute(text, visibility, source_text)
           end
+        end
+
+        def unreadable_member!(text)
+          raise Parser::ParseError,
+                "Cannot read #{text.inspect} as a class member."
+        end
+
+        def raw_attribute(text, visibility, source_text)
+          Diagram::ClassAttribute.new(
+            name: text.sub(/\s*[*$]\z/, ""),
+            visibility: visibility,
+            text: source_text,
+          )
         end
 
         # A leading mark names the visibility; the rest is the member.
@@ -311,7 +334,11 @@ module Sirena
 
         def add_method_to_entity(entity, method_data, visibility, source_text)
           method_name = extract_text(method_data[:method_name])
-          parameters = method_data[:parameters] ? extract_text(method_data[:parameters]) : ""
+          parameters = if method_data[:parameters]
+                         extract_text(method_data[:parameters])
+                       else
+                         ""
+                       end
           return_type = nil
 
           if method_data[:return_type] && method_data[:return_type][:type]
@@ -416,7 +443,8 @@ module Sirena
         # structurally via MARKER_TYPES. `nil` for every single-sided
         # operator, which keeps its existing RELATIONSHIP_TYPES rendering.
         def mixed_markers_for(operator)
-          return MIXED_MARKER_ENDPOINTS[operator] if MIXED_MARKER_ENDPOINTS.key?(operator)
+          return MIXED_MARKER_ENDPOINTS[operator] if
+            MIXED_MARKER_ENDPOINTS.key?(operator)
 
           match = MIXED_OPERATOR_PATTERN.match(operator)
           return nil unless match
@@ -458,9 +486,11 @@ module Sirena
         # `A~T~ --> B` then `A~U~ --> C` keeps T.
         def apply_generic(entity, generic)
           creating = @created_in.delete(entity.id) == @statement_count
-          return unless creating && generic.is_a?(Hash) && generic[:generic_type]
+          return unless creating && generic.is_a?(Hash) &&
+            generic[:generic_type]
 
-          entity.name = "#{entity.name}~#{extract_text(generic[:generic_type])}~"
+          generic_type = extract_text(generic[:generic_type])
+          entity.name = "#{entity.name}~#{generic_type}~"
         end
 
         def qualify_name(name)

@@ -6,13 +6,18 @@ require_relative "../../diagram/requirement"
 module Sirena
   module Parser
     module Builders
-      # Transform for converting requirement diagram parse trees to diagram models.
+      # Converts requirement diagram parse trees into diagram models.
       #
       # Handles transformation of requirements, elements, relationships,
       # styling directives, and class definitions from Parslet parse trees
       # into Requirement objects.
       class Requirement < Parslet::Transform
-        JS_WHITESPACE_AT_EDGE = /\A[\t\v\f\r\n\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+|[\t\v\f\r\n\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+\z/
+        JS_WHITESPACE_AT_EDGE = Regexp.new(
+          '\A[\t\v\f\r\n\u0020\u00A0\u1680\u2000-\u200A' \
+          '\u2028\u2029\u202F\u205F\u3000\uFEFF]+|' \
+          '[\t\v\f\r\n\u0020\u00A0\u1680\u2000-\u200A' \
+          '\u2028\u2029\u202F\u205F\u3000\uFEFF]+\z',
+        )
         private_constant :JS_WHITESPACE_AT_EDGE
 
         # Requirement type mapping (for shorthand to full type)

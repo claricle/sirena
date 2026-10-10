@@ -29,7 +29,8 @@ module Sirena
               process_title(diagram, item) if item.key?(:title)
               process_x_axis(diagram, item) if item.key?(:x_axis_left)
               process_y_axis(diagram, item) if item.key?(:y_axis_bottom)
-              process_quadrant_label(diagram, item) if item.key?(:quadrant_label)
+              process_quadrant_label(diagram, item) if
+                item.key?(:quadrant_label)
               process_data_point(diagram, item) if item.key?(:data_point)
             end
           elsif tree.is_a?(Hash)
@@ -102,8 +103,10 @@ module Sirena
               style_hash = extract_styling(styling)
               p.radius = style_hash[:radius] if style_hash[:radius]
               p.color = style_hash[:color] if style_hash[:color]
-              p.stroke_color = style_hash[:stroke_color] if style_hash[:stroke_color]
-              p.stroke_width = style_hash[:stroke_width] if style_hash[:stroke_width]
+              p.stroke_color = style_hash[:stroke_color] if
+                style_hash[:stroke_color]
+              p.stroke_width = style_hash[:stroke_width] if
+                style_hash[:stroke_width]
             end
           end
 
@@ -127,8 +130,10 @@ module Sirena
 
             result[:radius] = extract_float(item[:radius]) if item[:radius]
             result[:color] = extract_text(item[:color]) if item[:color]
-            result[:stroke_color] = extract_text(item[:stroke_color]) if item[:stroke_color]
-            result[:stroke_width] = extract_float(item[:stroke_width]) if item[:stroke_width]
+            result[:stroke_color] = extract_text(item[:stroke_color]) if
+              item[:stroke_color]
+            result[:stroke_width] = extract_float(item[:stroke_width]) if
+              item[:stroke_width]
           end
 
           result
