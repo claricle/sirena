@@ -109,17 +109,17 @@ module Sirena
         # The parsed YAML of a metadata block, before any node rule reads
         # it. An edge's block stops here: `label` and `shape` mean nothing
         # to an edge, so mermaid never checks them there.
+        #
+        # Mermaid wraps a single-line body as a flow mapping and uses a
+        # multiline body as written. It does not normalize a missing space
+        # after a colon: `shape:rect` is an unknown key, so inserting a space
+        # would honor something mermaid ignores.
         def metadata_document(metadata)
           body = line_feeds(metadata_body(metadata))
           body = strip_metadata_comments(body)
           body = break_quoted_newlines(body)
           return {} if body.empty?
 
-          # Mermaid's own wrapping: a single-line body becomes a flow
-          # mapping between braces, a multiline one is used as written. It
-          # does NOT normalise a missing space after a colon — `shape:rect`
-          # is an unknown key there and the node keeps its default, so
-          # inserting one made sirena honour something mermaid ignores.
           document = body.include?("\n") ? "#{body}\n" : "{\n#{body}\n}"
           MetadataYaml.value(document)
         end
@@ -220,13 +220,12 @@ module Sirena
         # `null`, `false`, `0` and `""` are all falsy to mermaid, which
         # skips the key rather than failing on it. An empty collection is
         # NOT falsy in JavaScript, and mmdc does refuse `label: []`.
-        def truthy?(value)
-          return false if value.nil? || value == false
-          return false if value.is_a?(Float) && value.nan?
-          return false if value.is_a?(Numeric) && value.zero?
-          return false if value.is_a?(String) && value.empty?
+        FALSY_VALUES = [nil, false, 0, ""].freeze
+        private_constant :FALSY_VALUES
 
-          true
+        def truthy?(value)
+          !FALSY_VALUES.include?(value) &&
+            !(value.is_a?(Float) && value.nan?)
         end
 
         # Shape delimiter to type mapping
@@ -371,29 +370,14 @@ module Sirena
         end
         private :create_edge
 
-        # Process parsed diagram
+        # Process a parse tree of [header, *statements]. The Context is local
+        # to this call, so its ids and retained parse nodes cannot cross parses.
         def apply(tree, diagram = nil)
           diagram ||= Diagram::Flowchart.new
-
-          # Parse tree is an array: [header_element, *statement_elements]
           tree = [tree] unless tree.is_a?(Array)
-
-          # Extract header (first element)
-          header = tree.first
-          if header.is_a?(Hash) && header[:direction]
-            dir_value = header[:direction][:dir_value] || header[:direction]
-            diagram.direction = canonical_direction(dir_value.to_s) if dir_value
-          end
-
-          # Process statements (remaining elements)
-          statements = tree[1..] || []
-
-          # Made here and passed down, so it belongs to this parse alone.
-          # Nothing outside can reach it, and it is let go — with every
-          # subgraph statement it references — the moment `apply` returns
-          # or raises.
+          apply_header(diagram, tree.first)
+          statements = tree.drop(1)
           context = Context.new
-
           assign_ids(statements, context)
           process_statements(diagram, statements, context)
           reject_ownership_cycles(context)
@@ -401,6 +385,15 @@ module Sirena
 
           diagram
         end
+
+        def apply_header(diagram, header)
+          return unless header.is_a?(Hash) && header[:direction]
+
+          direction = header[:direction]
+          value = direction[:dir_value] || direction
+          diagram.direction = canonical_direction(value.to_s) if value
+        end
+        private :apply_header
 
         def canonical_direction(value)
           DIRECTION_ALIASES.fetch(value, value)
@@ -411,32 +404,70 @@ module Sirena
           statements.each do |stmt|
             next unless stmt.is_a?(Hash)
 
-            if stmt[:node]
-              # Node with edges
-              process_node_edge_statement(diagram, stmt, parents.last, context)
-            elsif stmt[:node_id]
-              # Standalone node
-              node_data = {
-                node_id: stmt[:node_id],
-                shape_type: "rect",
-                label: stmt[:node_id],
-              }
-              add_or_update_node(diagram, node_data)
-              claim_member(parents.last, stmt[:node_id].to_s, context)
-            elsif stmt[:subgraph_keyword]
-              process_subgraph(diagram, stmt, context, parents)
-            elsif stmt[:direction_keyword]
-              set_direction(parents.last, stmt[:dir_value], context)
-            elsif stmt[:style_keyword]
-              declare_styled_node(diagram, stmt[:style_target], context)
-            elsif stmt[:link_style_keyword]
-              check_link_indices(diagram, stmt[:link_targets].to_s)
-              check_link_words(stmt)
-            end
-            # classDef, class, click and linkStyle are parsed but not
-            # modelled.
+            process_statement(diagram, stmt, context, parents)
           end
         end
+
+        STATEMENT_HANDLERS = {
+          node: :process_node_statement,
+          node_id: :process_standalone_statement,
+          subgraph_keyword: :process_subgraph_statement,
+          direction_keyword: :process_direction_statement,
+          style_keyword: :process_style_statement,
+          link_style_keyword: :process_link_style_statement,
+        }.freeze
+        private_constant :STATEMENT_HANDLERS
+
+        def process_statement(diagram, stmt, context, parents)
+          pair = STATEMENT_HANDLERS.find { |key, _handler| stmt[key] }
+          send(pair.last, diagram, stmt, context, parents) if pair
+        end
+        private :process_statement
+
+        def process_node_statement(diagram, stmt, context, parents)
+          process_node_edge_statement(diagram, stmt, parents.last, context)
+        end
+        private :process_node_statement
+
+        def process_standalone_statement(diagram, stmt, context, parents)
+          process_standalone_node(diagram, stmt, parents.last, context)
+        end
+        private :process_standalone_statement
+
+        def process_subgraph_statement(diagram, stmt, context, parents)
+          process_subgraph(diagram, stmt, context, parents)
+        end
+        private :process_subgraph_statement
+
+        def process_direction_statement(_diagram, stmt, context, parents)
+          set_direction(parents.last, stmt[:dir_value], context)
+        end
+        private :process_direction_statement
+
+        def process_style_statement(diagram, stmt, context, _parents)
+          declare_styled_node(diagram, stmt[:style_target], context)
+        end
+        private :process_style_statement
+
+        def process_link_style_statement(diagram, stmt, _context, _parents)
+          process_link_style(diagram, stmt)
+        end
+        private :process_link_style_statement
+
+        def process_standalone_node(diagram, stmt, parent, context)
+          node_data = {
+            node_id: stmt[:node_id], shape_type: "rect", label: stmt[:node_id]
+          }
+          add_or_update_node(diagram, node_data)
+          claim_member(parent, stmt[:node_id].to_s, context)
+        end
+        private :process_standalone_node
+
+        def process_link_style(diagram, stmt)
+          check_link_indices(diagram, stmt[:link_targets].to_s)
+          check_link_words(stmt)
+        end
+        private :process_link_style
 
         # mmdc refuses `linkStyle 1` when only edge 0 has been drawn so
         # far, so the count is the edges written above the statement.
@@ -476,6 +507,10 @@ module Sirena
         private_constant :LINK_STYLE_KEYWORD, :STYLE_RUN, :CLASS_DEF_RUN,
                          :ENTITY
 
+        # Mermaid runs entity stripping over the whole source line, so a curve
+        # name and its properties share one entity check even though the
+        # grammar splits them into fields. A terminating `;` is part of an
+        # entity too.
         def check_link_words(stmt)
           [stmt[:link_curve], stmt[:link_props]].each do |text|
             word = text.to_s[LINK_STYLE_KEYWORD, 1] or next
@@ -483,10 +518,6 @@ module Sirena
                   "linkStyle cannot use `#{word}` here: " \
                   "write `interpolate <curve>` first, then the styles."
           end
-          # mermaid runs the strip over the whole source line, so a curve
-          # name and the styles after it share one entity check even
-          # though the grammar splits them into two fields. The `;` that
-          # ends the statement is part of an entity too.
           text = [stmt[:link_curve], stmt[:link_props]].compact.join(" ")
           check_link_entities("#{text}#{stmt[:link_end]}")
         end
@@ -628,24 +659,19 @@ module Sirena
         # it loses, the box is still built and still holds what it
         # contains — it just does not become anybody's child, and the
         # earlier claimant adopts it once the walk is over.
+        #
+        # The first box wins a duplicated name. When a later declaration is
+        # nested, the winning box—not the just-built empty duplicate—is
+        # parented, matching mermaid's visible containment.
         def record_subgraph(diagram, stmt, id, parent, context)
           box = Diagram::FlowchartSubgraph.new
           box.id = id
           box.declared_title = subgraph_label(stmt)
           diagram.subgraphs << box
-          # First box wins the name, matching how a node is claimed, and
-          # every later mention adds to that one.
           holding = (context.boxes[id] ||= box)
-
           holder = claim(parent, id, context)
           return if holder.nil?
 
-          # The box that HOLDS the id, not the one just built. Writing a
-          # subgraph twice makes a second object, and the second one is
-          # empty — everything inside it is claimed for the first. So
-          # parenting the new object left the drawable box orphaned at
-          # the top level: `subgraph b` at the top, redeclared inside
-          # `a`, drew `a` and `b` side by side where mmdc nests them.
           holding.parent_id = parent
           holder.child_ids << id
         end
@@ -798,52 +824,52 @@ module Sirena
         def process_node_edge_statement(diagram, stmt, parent = nil,
                                              context = Context.new)
           edges = stmt[:edges]
-          sources = declare_group(diagram, stmt[:node], stmt[:group], parent,
-                                  context, linkless: edges.nil?)
-
-          # Process edges if present
+          nodes = [stmt[:node], *stmt[:group]]
+          sources = declare_group(diagram, nodes, parent, context,
+                                  linkless: edges.nil?)
           return unless edges
 
-          edges = [edges] unless edges.is_a?(Array)
-
-          edges.each do |edge_data|
+          edge_list(edges).each do |edge_data|
             next unless edge_data.is_a?(Hash)
 
-            # The capture arrives as {token: slice}, and no Parslet rule
-            # unwraps it. Two reasons, in order. Nothing instantiates this
-            # class — parsing runs through its own class-level `apply`
-            # above — so Parslet's instance `apply`, the only thing that
-            # runs the declared rules, is never called. And even under
-            # that, a rule keyed on `arrow:` could not match: Parslet
-            # matches a hash only when EVERY key matches, and the hash
-            # holding `arrow` carries `label` and `target` too. So the
-            # slice is read here, where the link is the only thing meant.
-            link_token = link_token(edge_data)
-            label = edge_label(edge_data)
-
-            # A diagnostic, not coverage: `rule(:edge)` makes the target
-            # mandatory, so no source reaches this (0 fires across 4,529
-            # edge hashes from 3,006 generated flowcharts). Keep it — it
-            # becomes the only check if a later rule makes the target
-            # optional, and the line below would otherwise pass nil into
-            # `extract_node_data`.
-            next unless edge_data[:target]
-
-            targets = declare_group(diagram, edge_data[:target],
-                                    edge_data[:group], parent, context)
-
-            context.edge_ids << edge_data[:edge_id].to_s if edge_data[:edge_id]
-
-            # `A & B --> C & D` links every source to every target.
-            sources.product(targets).each do |source, target|
-              diagram.edges << create_edge(source[:node_id], target,
-                                           link_token, label)
-            end
-
-            # For chaining, the next edge's sources are these targets
-            sources = targets
+            sources = process_edge(diagram, edge_data, sources, parent, context)
           end
         end
+
+        def edge_list(edges)
+          edges.is_a?(Array) ? edges : [edges]
+        end
+        private :edge_list
+
+        # `arrow` arrives wrapped with the other edge fields, so it cannot be
+        # unwrapped by a Parslet rule that matches only that key. Validate its
+        # token before the defensive target guard; the grammar currently makes
+        # targets mandatory, but the guard protects a future relaxed rule.
+        def process_edge(diagram, edge_data, sources, parent, context)
+          token = link_token(edge_data)
+          label = edge_label(edge_data)
+          return sources unless edge_data[:target]
+
+          nodes = [edge_data[:target], *edge_data[:group]]
+          targets = declare_group(diagram, nodes, parent, context)
+          record_edge_id(edge_data, context)
+          connect_groups(diagram, sources, targets, token, label)
+          targets
+        end
+        private :process_edge
+
+        def record_edge_id(edge_data, context)
+          context.edge_ids << edge_data[:edge_id].to_s if edge_data[:edge_id]
+        end
+        private :record_edge_id
+
+        # `A & B --> C & D` links every source to every target.
+        def connect_groups(diagram, sources, targets, token, label)
+          sources.product(targets).each do |source, target|
+            diagram.edges << create_edge(source[:node_id], target, token, label)
+          end
+        end
+        private :connect_groups
 
         # The text a link carries: nil when it has no label, or when the
         # pipes hold only space. Written around the link,
@@ -889,28 +915,36 @@ module Sirena
         # no node and changes no node that shares the id, except for its
         # class. Such a shared node still belongs to an enclosing subgraph
         # that names it. In a link, the id is still returned as its endpoint.
-        def declare_group(diagram, first, rest, parent, context,
-                               linkless: false)
-          [first, *rest].filter_map do |node_hash|
-            if edge_reference?(node_hash, context)
-              # Validates the YAML (raises on malformed input) and
-              # discards the parsed value — nothing downstream has a
-              # field to receive it yet (see `edge_reference?` below).
-              metadata_document(node_hash[:metadata])
-              shared = class_shared_node(diagram, node_hash)
-              claim_member(parent, shared.id, context) if shared
-              next({ node_id: node_hash[:node_id] }) unless linkless
-
-              next
-            end
-
-            node_data = extract_node_data(node_hash)
-            add_or_update_node(diagram, node_data)
-            claim_member(parent, node_data[:node_id].to_s, context)
-            node_data
+        def declare_group(diagram, nodes, parent, context, linkless: false)
+          nodes.filter_map do |node_hash|
+            declare_node(diagram, node_hash, parent, context, linkless)
           end
         end
         private :declare_group
+
+        def declare_node(diagram, node_hash, parent, context, linkless)
+          if edge_reference?(node_hash, context)
+            return declare_edge_reference(
+              diagram, node_hash, parent, context, linkless
+            )
+          end
+
+          node_data = extract_node_data(node_hash)
+          add_or_update_node(diagram, node_data)
+          claim_member(parent, node_data[:node_id].to_s, context)
+          node_data
+        end
+        private :declare_node
+
+        def declare_edge_reference(
+          diagram, node_hash, parent, context, linkless
+        )
+          metadata_document(node_hash[:metadata])
+          shared = class_shared_node(diagram, node_hash)
+          claim_member(parent, shared.id, context) if shared
+          { node_id: node_hash[:node_id] } unless linkless
+        end
+        private :declare_edge_reference
 
         # Any mention of a known edge id — bare (`e1`), shaped (`e1[x]`),
         # carrying `@{...}`/`:::foo`, or used as a link endpoint — addresses
@@ -948,13 +982,20 @@ module Sirena
           return edge_data[:arrow][:token].to_s if edge_data[:arrow]
 
           open = edge_data[:open].to_s
-          close = edge_data[:close].to_s
-          reject_unmatched_marker(open, close)
-          close = close[1..] if open.start_with?("<") && close.match?(/\A[ox]/)
+          raw_close = edge_data[:close].to_s
+          reject_unmatched_marker(open, raw_close)
+          close = closing_half(open, raw_close)
           return "#{open}#{close}" unless lifts_start_head?(open, close)
 
           "#{close[0]}#{open}#{close[1..]}"
         end
+
+        def closing_half(open, close)
+          return close unless open.start_with?("<") && close.match?(/\A[ox]/)
+
+          close[1..]
+        end
+        private :closing_half
 
         # The start head of the closing half, when the opening half has
         # none, belongs to the whole link: `<` always, `x` or `o` when the
@@ -984,8 +1025,7 @@ module Sirena
         # `A == t <=== B` and `A == t x==> B`, and draws the solid and
         # dotted forms.
         def marker_closed?(marker, close)
-          return false if close.match?(/\A[ox<]=/) &&
-                          close[-1] != head_for(close[0])
+          return false if invalid_thick_closure?(close)
 
           case marker
           when "x", "o" then close[-1] == marker && close[0] != marker
@@ -994,6 +1034,11 @@ module Sirena
           end
         end
         private :marker_closed?
+
+        def invalid_thick_closure?(close)
+          close.match?(/\A[ox<]=/) && close[-1] != head_for(close[0])
+        end
+        private :invalid_thick_closure?
 
         def head_for(start)
           start == "<" ? ">" : start
@@ -1012,20 +1057,24 @@ module Sirena
           existing = diagram.find_node(node_data[:node_id])
           return diagram.nodes << create_node(node_data) unless existing
 
-          existing.label = node_data[:label] if node_data[:label]
-          existing.shape = node_data[:shape_type] if node_data[:shape_type]
-          existing.classes = node_data[:classes] if node_data[:classes]
+          update_node(existing, node_data)
         end
 
-        # Extract node data from parse tree
+        def update_node(node, data)
+          node.label = data[:label] if data[:label]
+          node.shape = data[:shape_type] if data[:shape_type]
+          node.classes = data[:classes] if data[:classes]
+        end
+        private :update_node
+
+        # Extract node data from a parse tree. Metadata wins over the bracket
+        # form when both provide a shape or label, matching mermaid.
         def extract_node_data(node_hash)
           return nil unless node_hash
 
           node_id = node_hash[:node_id].to_s
           shape_type, label = bracket_shape(node_hash[:shape])
 
-          # `@{ shape: ..., label: ... }` wins over the bracket form, which
-          # is what mermaid does when a node carries both.
           entries = metadata_entries(node_hash[:metadata])
 
           {
