@@ -4,27 +4,38 @@ require "spec_helper"
 require "sirena/ir"
 
 RSpec.describe Sirena::Notation::Mermaid do
-  def parsed(source)
-    described_class.parse(source).diagram
+  def fixture(type)
+    File.read("spec/fixtures/contract/#{type}.mmd")
   end
 
-  it "hands migrated graph types to layout as shared IR" do
-    sankey = parsed("sankey-beta\nA,B,1\n")
-    mindmap = parsed("mindmap\n  root\n    child\n")
-
-    expect([sankey, mindmap]).to all(be_a(Sirena::IR::Graph))
+  def private_model(type)
+    Sirena::Parser.for(type).parse(fixture(type))
   end
 
-  it "keeps unmigrated parser models private until their adapter lands" do
-    flowchart = parsed("flowchart TD\nA --> B\n")
-
-    expect(flowchart).to be_a(Sirena::Diagram::Flowchart)
+  def shared_ir?(value)
+    [Sirena::IR::Graph, Sirena::IR::Data, Sirena::IR::Prepositioned]
+      .any? { |shape| value.is_a?(shape) }
   end
 
-  it "renders both migrated types through the shared boundary" do
-    sources = ["sankey-beta\nA,B,1\n", "mindmap\n  root\n    child\n"]
+  it "keeps every Mermaid parser model private before adaptation" do
+    models = described_class.types.map { |type| private_model(type) }
 
-    expect(sources.map { |source| Sirena.render(source) })
-      .to all(start_with("<svg").and(include("</svg>")))
+    expect(models).to all(satisfy { |model| !shared_ir?(model) })
+  end
+
+  it "hands every Mermaid type to layout as shared IR" do
+    diagrams = described_class.types.map do |type|
+      described_class.parse(fixture(type)).diagram
+    end
+
+    expect(diagrams).to all(satisfy { |diagram| shared_ir?(diagram) })
+  end
+
+  it "renders every Mermaid type through the shared boundary" do
+    rendered = described_class.types.map do |type|
+      Sirena.render(fixture(type))
+    end
+
+    expect(rendered).to all(start_with("<svg").and(include("</svg>")))
   end
 end

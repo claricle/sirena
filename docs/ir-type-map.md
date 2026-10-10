@@ -79,11 +79,11 @@ layout behavior; the older survey's `transform/*` wording refers to these
 
 | Type | Shape | Implementation | Evidence |
 |---|---|---|---|
-| `flowchart` | `graph-shaped` | `lib/sirena/layout/flowchart.rb` | `build_graph` emits identified children and source/target edges (164–169); layout later supplies positions and routes. |
-| `sequence` | `graph-shaped` | `lib/sirena/layout/sequence.rb` | Participants are nodes and messages identify their endpoints (91–96, 154–165); message order remains an edge property. |
-| `class_diagram` | `graph-shaped` | `lib/sirena/layout/class_diagram.rb` | Classes become children and relationships carry resolvable source/target ids (120–125, 169–174). |
-| `state_diagram` | `graph-shaped` | `lib/sirena/layout/state_diagram.rb` | States become children and transitions become endpoint-identified edges (196–201, 250–259). |
-| `er_diagram` | `graph-shaped` | `lib/sirena/layout/er_diagram.rb` | Entities become children and relationships resolve source and target entities (223–229, 314–322). |
+| `flowchart` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/flowchart.rb` | Nodes and subgraphs map to ordered identities and containment; links map to resolved directional edges with normalized labels, markers, and styles. Layout owns all geometry. |
+| `sequence` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/sequence.rb` | Participants map to identified nodes; messages and sequence constructs retain ordered, resolved endpoint semantics without lifelines, coordinates, or routes. |
+| `class_diagram` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/class_diagram.rb` | Classes map to identified nodes with members, annotations, namespaces, styles, and notes; relationships retain resolved endpoints and normalized relation semantics. |
+| `state_diagram` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/state_diagram.rb` | States map to identified, nested nodes and transitions to resolved ordered edges; notes, forks, joins, concurrency, styles, and metadata stay semantic. |
+| `er_diagram` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/er_diagram.rb` | Entities and attributes map to identified nodes and semantic values; relationships retain resolved endpoints, cardinalities, roles, identification, and order. |
 | `user_journey` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/user_journey.rb` | Sections and tasks map to ordered contained nodes with scores, actors, styles, and resolved sequential edges; layout owns all geometry. |
 | `gantt` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/gantt.rb` | Sections, tasks, dates, durations, dependencies, exclusions, statuses, and display settings map to shared constraints; layout owns all geometry. |
 | `pie` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/pie.rb` | Ordered slice values and visibility become shared data; layout alone computes percentages, angles, paths, and labels. |
@@ -96,7 +96,7 @@ layout behavior; the older survey's `transform/*` wording refers to these
 | `block` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/block.rb` | Grid columns, ordered spans and spaces, nesting, shapes, and connections map to shared placements and edges; layout owns canvas geometry. |
 | `requirement` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/requirement.rb` | Requirements and elements map to identified nodes with semantic fields, styles, classes, and resolved normalized relationships; layout owns all geometry. |
 | `xychart` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/xychart.rb` | Axes, categories, ranges, series, samples, and colors map to ordered shared placements; layout owns canvas geometry. |
-| `architecture` | `graph-shaped` | `lib/sirena/layout/architecture.rb` | Services/junctions have ids and each embedded edge model retains `from_id`/`to_id` even though the output also has routed coordinates (24–41, 296–317). |
+| `architecture` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/architecture.rb` | Services, junctions, and groups map to identified contained nodes; edges retain resolved endpoints, sides, directionality, styles, and semantic metadata without routes. |
 | `sankey` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/sankey.rb` | Flows map to shared nodes and resolved weighted edges; layout owns layering, positions, and paths. |
 | `packet` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/packet.rb` | Fields map to ordered bit-start placements with inclusive spans; layout owns row, column, and pixel geometry. |
 | `treemap` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/treemap.rb` | Preorder hierarchy, explicit magnitudes, derived totals, and normalized styles map to shared data; layout allocates all rectangles. |
@@ -106,11 +106,12 @@ layout behavior; the older survey's `transform/*` wording refers to these
 
 Summary: **6 pre-positioned, 12 graph-shaped, 6 data-shaped; 24 total.**
 
-Migration status: **18 of 24 Mermaid types use the shared IR boundary** — 6
-graph-shaped (`mindmap`, `sankey`, `requirement`, `user_journey`, `git_graph`, `c4`), 6 data-shaped (`pie`, `info`, `error`,
+Migration status: **all 24 Mermaid types use the shared IR boundary** — 12
+graph-shaped (`flowchart`, `sequence`, `class_diagram`, `state_diagram`,
+`er_diagram`, `user_journey`, `git_graph`, `mindmap`, `requirement`,
+`architecture`, `sankey`, `c4`), 6 data-shaped (`pie`, `info`, `error`,
 `kanban`, `radar`, `treemap`), and 6 pre-positioned (`packet`, `timeline`,
-`quadrant`, `xychart`, `block`, `gantt`); 6 types remain on their private
-layout inputs.
+`quadrant`, `xychart`, `block`, `gantt`).
 
 `rake type:new[<type>]` adds a data-shaped row immediately above this
 summary and recalculates all four counts from the table. The generated adapter
@@ -119,9 +120,9 @@ to another shape means changing that adapter and this row together.
 
 ## Consequence for implementation
 
-Foundation 18 migration adds one notation adapter per private parse model (or
-per type where a notation already splits them), then passes only these shared
-shapes into layout. Existing Mermaid `build_graph` methods currently combine
-adaptation with geometry and must be split during steps 4–5. The PlantUML
-class adapter maps its private classes and relations to the same graph shape;
-its current layout remains responsible for measuring, placing, and routing.
+Mermaid now adapts every private parse model to one of these shared shapes
+before layout. Its layouts remain responsible for measuring, placing, and
+routing; notation adapters carry only normalized semantics and source-domain
+constraints. The PlantUML class adapter must map its private classes and
+relations to the same graph shape while its layout retains the same geometry
+responsibilities.
