@@ -3,6 +3,7 @@
 require_relative "../elk_placement"
 require_relative "layer_spacing"
 require_relative "level_edges"
+require_relative "level_frame"
 require_relative "row_centering"
 
 module Sirena
@@ -24,7 +25,6 @@ module Sirena
         CLUSTER_PADDING = 20.0
         CLUSTER_SIDE = 8.0
         CLUSTER_VERTICAL = 25.0
-        TRANSPOSED = [Base::DIRECTION_RIGHT, Base::DIRECTION_LEFT].freeze
         MIRRORED_X = [Base::DIRECTION_LEFT].freeze
         MIRRORED_Y = [Base::DIRECTION_UP].freeze
 
@@ -36,15 +36,22 @@ module Sirena
 
         def apply(graph)
           @options = graph[:layoutOptions] || {}
-          @direction = @options[Base::ElkOptions::DIRECTION]
           @graph = graph
           @level_edges = LevelEdges.new(graph)
-          place_level(graph[:children] || [], nil)
+          place_level(graph[:children] || [], nil, root_frame)
           margin_page(graph[:children] || [])
           graph
         end
 
         private
+
+        def root_frame
+          LevelFrame.new(
+            @options[Base::ElkOptions::DIRECTION],
+            @options[Base::ElkOptions::LAYER_SPACING] ||
+              Base::DEFAULT_LAYER_SPACING,
+          )
+        end
 
         # mmdc leaves PAGE_MARGIN round the diagram.
         def margin_page(boxes)
@@ -58,12 +65,12 @@ module Sirena
           box.dig(:metadata, :cluster) == true
         end
 
-        def place_level(boxes, container)
-          boxes.each { |box| place_cluster(box) if cluster?(box) }
+        def place_level(boxes, container, frame)
+          boxes.each { |box| place_cluster(box, frame) if cluster?(box) }
           return if boxes.empty?
 
           flat = flat_graph(boxes, @level_edges.at(container))
-          place_flat(flat)
+          place_flat(flat, frame)
           boxes.zip(flat[:children]) do |box, placed|
             box.merge!(x: placed[:x], y: placed[:y])
           end
@@ -95,9 +102,9 @@ module Sirena
           end
         end
 
-        def place_cluster(cluster)
+        def place_cluster(cluster, frame)
           contents = cluster[:children] || []
-          place_level(contents, cluster[:id])
+          place_level(contents, cluster[:id], inner_frame(cluster, frame))
           if contents.empty?
             cluster[:width] = titled_width(cluster)
             cluster[:height] = CLUSTER_VERTICAL * 2
@@ -105,6 +112,22 @@ module Sirena
           end
 
           fit(cluster, contents)
+        end
+
+        # A subgraph with its own `direction`, or with contents and no edge
+        # crossing its border, is laid out as a graph of its own. Any other
+        # is laid out with the level around it.
+        def inner_frame(cluster, frame)
+          direction = cluster.dig(:metadata, :direction)
+          return frame.nested(direction) if direction
+          return frame if external_or_empty?(cluster)
+
+          frame.nested
+        end
+
+        def external_or_empty?(cluster)
+          cluster[:children].to_a.empty? ||
+            @level_edges.external?(cluster[:id])
         end
 
         # The contents sit CLUSTER_SIDE from the left and CLUSTER_VERTICAL
@@ -158,17 +181,18 @@ module Sirena
           label ? label[axis].to_i : 0
         end
 
-        def place_flat(flat)
-          transposed = TRANSPOSED.include?(@direction)
+        def place_flat(flat, frame)
+          transposed = frame.sideways?
           transpose(flat) if transposed
           flat[:layoutOptions] = @options.merge(
             Base::ElkOptions::DIRECTION => ElkPlacement::DOWN,
+            Base::ElkOptions::LAYER_SPACING => frame.rank_spacing,
           )
           ElkPlacement.apply(flat)
           RowCentering.apply(flat)
           LayerSpacing.apply(flat, label_axis: transposed ? :width : :height)
           transpose(flat) if transposed
-          mirror(flat)
+          mirror(flat, frame.direction)
         end
 
         # Swaps the axes of every box. Before the layout it turns the boxes
@@ -180,10 +204,10 @@ module Sirena
           end
         end
 
-        def mirror(flat)
+        def mirror(flat, direction)
           boxes = flat[:children]
-          flip(boxes, :x, :width) if MIRRORED_X.include?(@direction)
-          flip(boxes, :y, :height) if MIRRORED_Y.include?(@direction)
+          flip(boxes, :x, :width) if MIRRORED_X.include?(direction)
+          flip(boxes, :y, :height) if MIRRORED_Y.include?(direction)
         end
 
         def flip(boxes, axis, size)
