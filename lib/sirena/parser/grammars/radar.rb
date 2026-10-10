@@ -11,15 +11,18 @@ module Sirena
         rule(:diagram_type) { str("radar-beta") >> space? }
 
         rule(:title_line) do
-          str("title") >> space >> (newline.absent? >> any).repeat(1).as(:title) >> eol
+          str("title") >> space >>
+            (newline.absent? >> any).repeat(1).as(:title) >> eol
         end
 
         rule(:acc_title_line) do
-          str("accTitle:") >> space >> (newline.absent? >> any).repeat(1).as(:acc_title) >> eol
+          str("accTitle:") >> space >>
+            (newline.absent? >> any).repeat(1).as(:acc_title) >> eol
         end
 
         rule(:acc_descr_line) do
-          str("accDescr:") >> space >> (newline.absent? >> any).repeat(1).as(:acc_descr) >> eol
+          str("accDescr:") >> space >>
+            (newline.absent? >> any).repeat(1).as(:acc_descr) >> eol
         end
 
         # Axis definition: axis A,B,C or axis A["Label"], B["Label"]

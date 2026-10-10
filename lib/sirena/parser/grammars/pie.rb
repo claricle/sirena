@@ -41,7 +41,8 @@ module Sirena
 
         # Pie keyword - case insensitive with optional "chart" suffix
         rule(:pie_keyword) do
-          match["Pp"] >> str("ie") >> (space.repeat(1) >> match["Cc"] >> str("hart")).maybe
+          match["Pp"] >> str("ie") >>
+            (space.repeat(1) >> match["Cc"] >> str("hart")).maybe
         end
 
         rule(:show_data_flag) do
@@ -108,7 +109,8 @@ module Sirena
         rule(:data_entry) do
           (str('\\t') | space).repeat >>
             label_text.as(:label) >>
-            (str('\\t') | space).repeat >> colon >> (str('\\t') | space).repeat >>
+            (str('\\t') | space).repeat >> colon >>
+            (str('\\t') | space).repeat >>
             numeric_value.as(:value) >>
             line_end.as(:data_entry)
         end

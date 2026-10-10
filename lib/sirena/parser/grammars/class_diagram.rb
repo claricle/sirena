@@ -64,7 +64,9 @@ module Sirena
         end
 
         rule(:direction_value) do
-          (str("TD") | str("TB") | str("LR") | str("RL") | str("BT")).as(:dir_value)
+          (
+            str("TD") | str("TB") | str("LR") | str("RL") | str("BT")
+          ).as(:dir_value)
         end
 
         rule(:direction) do
@@ -294,8 +296,8 @@ module Sirena
         end
 
         # A class name with the generic mmdc lets follow it on a standalone
-        # class, a colon member and a relationship end: `Class1~T~ <|-- Class02`,
-        # `Car~T~ : +wheels`.
+        # class, a colon member and a relationship end:
+        # `Class1~T~ <|-- Class02`, `Car~T~ : +wheels`.
         rule(:class_ref) do
           class_name.as(:class_id) >> generic_suffix.as(:generic)
         end
@@ -415,7 +417,10 @@ module Sirena
         end
 
         rule(:colon_annotation_text) do
-          ((str(">>") >> member_end).absent? >> match[":;"].absent? >> body_char).repeat(1)
+          (
+            (str(">>") >> member_end).absent? >>
+              match[":;"].absent? >> body_char
+          ).repeat(1)
         end
 
         rule(:colon_text) do

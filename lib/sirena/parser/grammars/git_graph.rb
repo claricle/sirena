@@ -121,7 +121,9 @@ module Sirena
         # this with `match('[...]').repeat`, which cannot express that
         # boundary. Use `TrimmedRun`, not a plain `GreedyRun`, for the
         # tail: see `atoms/trimmed_run.rb`.
-        rule(:branch_name) { match['\w'] >> TrimmedRun.new('[-.\/\w]', '[.\/]') }
+        rule(:branch_name) do
+          match['\w'] >> TrimmedRun.new('[-.\/\w]', '[.\/]')
+        end
 
         # The branch operand of a statement, with the whitespace after its
         # keyword. A quoted name allows spaces and any other character but the

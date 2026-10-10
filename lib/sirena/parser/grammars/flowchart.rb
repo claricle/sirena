@@ -82,7 +82,9 @@ module Sirena
         # `flowchart` alternative, or the bare keyword would match first
         # and leave `-elk` to fail against the direction.
         rule(:header) do
-          (str("flowchart-elk") | str("flowchart") | str("graph")).as(:header) >>
+          (
+            str("flowchart-elk") | str("flowchart") | str("graph")
+          ).as(:header) >>
             (directed_header | undirected_header)
         end
 
@@ -514,7 +516,8 @@ module Sirena
         # would be mistaken for the marker `hashed_head`/`empty_comma_item`
         # scan for.
         def hash_terminated_run(*extra_guards)
-          ordinary_char = (extra_guards + [hash_char, semicolon, newline, space])
+          guards = extra_guards + [hash_char, semicolon, newline, space]
+          ordinary_char = guards
             .map(&:absent?).reduce(:>>) >> any
           ordinary_char.repeat(1) |
             (space.repeat(1) >> (hash_char | (newline | eof).absent?))
@@ -1014,8 +1017,10 @@ module Sirena
         # shared `space` rule's business, and it is narrower than mermaid's
         # `\s`: a tab passes here, an NBSP does not.
         rule(:amp_group) do
-          (space.repeat(1) >> edge_id_ahead.absent? >> str("&") >> space.repeat(1) >>
-            reserved_keyword.absent? >> node_with_shape).repeat
+          (
+            space.repeat(1) >> edge_id_ahead.absent? >> str("&") >>
+              space.repeat(1) >> reserved_keyword.absent? >> node_with_shape
+          ).repeat
         end
 
         # `A e1@--> B` names the edge, so a later `e1@{ animate: true }`
@@ -1098,7 +1103,8 @@ module Sirena
         def edge_id_end?(source)
           pos = source.bytepos
           cached, first, last = @edge_id_end
-          return pos == last if cached.equal?(source) && pos.between?(first, last)
+          cached_position = cached.equal?(source) && pos.between?(first, last)
+          return pos == last if cached_position
           return false unless source.matches?(EDGE_ID_END_AHEAD)
 
           last = pos + source.matches?(EDGE_ID_LAST_END)
@@ -1136,17 +1142,21 @@ module Sirena
         # A thick or dotted label cannot carry even one of its own body
         # characters, `=` or `.`: mmdc refuses `A == a=b ==> B` and
         # `A -. a.b .-> B`. Only the solid body may hold a single hyphen.
-        rule(:inline_dotted) { inline_halves(str("-."), dotted_close, str(".")) }
+        rule(:inline_dotted) do
+          inline_halves(str("-."), dotted_close, str("."))
+        end
 
         # A closing link carries at least one character more than the
         # opening half, a head or another body character, so `--` alone
         # never closes.
         rule(:solid_close) do
-          str("--") >> (match[">xo"] | (str("-").repeat(1) >> match[">xo"].maybe))
+          str("--") >>
+            (match[">xo"] | (str("-").repeat(1) >> match[">xo"].maybe))
         end
 
         rule(:thick_close) do
-          str("==") >> (match[">xo"] | (str("=").repeat(1) >> match[">xo"].maybe))
+          str("==") >>
+            (match[">xo"] | (str("=").repeat(1) >> match[">xo"].maybe))
         end
 
         rule(:dotted_close) do
