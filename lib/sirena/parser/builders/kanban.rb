@@ -206,10 +206,10 @@ module Sirena
             return 0 if indent_data.is_a?(Array) && indent_data.empty?
 
             indent_str = if indent_data.is_a?(Array)
-                          indent_data.join("")
-                        else
-                          indent_data.to_s
-                        end
+                           indent_data.join("")
+                         else
+                           indent_data.to_s
+                         end
 
             indent_str.length
           end

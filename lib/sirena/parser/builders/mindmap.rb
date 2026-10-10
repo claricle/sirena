@@ -58,7 +58,7 @@ module Sirena
               icon: nil,
               classes: [],
               children: [],
-              _indent_size: indent_size,  # Store for later adjustment
+              _indent_size: indent_size, # Store for later adjustment
             }
 
             @all_nodes << node
@@ -164,10 +164,10 @@ module Sirena
             return 0 if indent_data.is_a?(Array) && indent_data.empty?
 
             indent_str = if indent_data.is_a?(Array)
-                          indent_data.join("")
-                        else
-                          indent_data.to_s
-                        end
+                           indent_data.join("")
+                         else
+                           indent_data.to_s
+                         end
 
             indent_str.length
           end
@@ -179,10 +179,10 @@ module Sirena
 
             # Convert to string and count length
             indent_str = if indent_data.is_a?(Array)
-                          indent_data.join("")
-                        else
-                          indent_data.to_s
-                        end
+                           indent_data.join("")
+                         else
+                           indent_data.to_s
+                         end
 
             return 0 if indent_str.empty?
 
@@ -237,11 +237,13 @@ module Sirena
             return "cloud" if node_data[:shape_cloud]
             return "hexagon" if node_data[:shape_hexagon]
             return "square" if node_data[:shape_square]
+
             "default"
           end
 
           def find_parent(level)
             return nil if level.zero?
+
             # Parent is the last node at level - 1
             @level_stack[level - 1]
           end
