@@ -289,13 +289,7 @@ module Sirena
         # `clAsS` alike, so every letter has to vary.
         def word_ci(word)
           word.each_char
-            .map do |char|
-              if char.match?(/[a-z]/i)
-                match["#{char.downcase}#{char.upcase}"]
-              else
-                str(char)
-              end
-            end
+            .map { |ch| match["#{ch.downcase}#{ch.upcase}"] }
             .reduce(:>>)
         end
 
