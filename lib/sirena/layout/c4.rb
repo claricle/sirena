@@ -633,10 +633,20 @@ module Sirena
       # One entry per drawn line: mermaid centres each line on its offset
       # from the top of the box, spread by the font size.
       def element_labels(element, metrics)
-        label_lines(element.label, metrics.label_offset, 16, "bold") +
+        name_lines(element, metrics) +
           label_lines(bracket(element.technology),
                       metrics.technology_offset, 14, "normal", "italic") +
           label_lines(element.description, metrics.description_offset, 14)
+      end
+
+      # Mermaid draws the name even when it is empty, which keeps the
+      # description from standing in as the second text of the box.
+      def name_lines(element, metrics)
+        lines = label_lines(element.label, metrics.label_offset, 16, "bold")
+        return lines unless lines.empty?
+
+        [{ text: "", width: 0, height: 0, offset: metrics.label_offset,
+           font_size: 16, font_weight: "bold", font_style: "normal" }]
       end
 
       def label_lines(text, offset, size, weight = "normal", style = "normal")

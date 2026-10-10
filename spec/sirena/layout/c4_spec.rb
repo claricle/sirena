@@ -169,6 +169,13 @@ RSpec.describe Sirena::Layout::C4 do
     )
   end
 
+  it "keeps an empty name as the second text, ahead of the description" do
+    source = "C4Context\nPerson(p, \"\", \"About\")\n"
+    texts = Sirena::Engine.new.render(source).scan(%r{<text[^>]*>([^<]*)</text>})
+
+    expect(texts.flatten).to eq(["&lt;&lt;person&gt;&gt;", "", "About"])
+  end
+
   it "refuses a relationship with a missing endpoint" do
     relation = Sirena::Diagram::C4Relationship.new(from_id: nil, to_id: "b")
     invalid = diagram(elements: [element("b")], relationships: [relation])
