@@ -55,10 +55,10 @@ RSpec.describe Sirena::Renderer::Quadrant, :aggregate_failures do
       svg = renderer.render(graph)
       xml = svg.to_xml
 
-      # Should contain four quadrant rectangles
-      expect(xml.scan(/<rect/).length).to be >= 4
-      expect(xml).to include("fill")
-      expect(xml).to include("opacity")
+      # mmdc draws four opaque quadrant rectangles, one per g.quadrant
+      expect(xml.scan(/<g class="quadrant">/).length).to eq(4)
+      expect(xml.scan(/<rect fill="#[0-9A-Fa-f]{6}"/).length).to eq(4)
+      expect(xml).not_to include("opacity")
     end
 
     it "renders axis lines and labels" do
@@ -183,7 +183,7 @@ RSpec.describe Sirena::Renderer::Quadrant, :aggregate_failures do
       point = graph.points.first
       expect(point.x).to be > 0
       expect(point.y).to be > 0
-      expect([point.x, point.y]).to eq([400.0, 300.0])
+      expect([point.x, point.y]).to eq([263.0, 237.0])
     end
   end
 end
