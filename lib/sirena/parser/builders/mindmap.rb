@@ -236,16 +236,14 @@ module Sirena
             return "bang" if node_data[:shape_bang]
             return "cloud" if node_data[:shape_cloud]
             return "hexagon" if node_data[:shape_hexagon]
-            return "square" if node_data[:shape_square]
 
-            "default"
+            node_data[:shape_square] ? "square" : "default"
           end
 
           def find_parent(level)
-            return nil if level.zero?
-
             # Parent is the last node at level - 1
-            @level_stack[level - 1]
+
+            level.zero? ? nil : @level_stack[level - 1]
           end
         end
 
