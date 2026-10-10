@@ -153,9 +153,11 @@ module Sirena
 
         def position_boxes(rows, box_width)
           tops = row_tops(rows)
+          left = left_margin(rows)
           rows.each_with_index.flat_map do |row, row_index|
             row.each_with_index.filter_map do |item, column|
-              build_box(item, column, tops[row_index], box_width) if item
+              x = left + (column * (box_width + COLUMN_GAP))
+              build_box(item, x, tops[row_index], box_width) if item
             end
           end
         end
@@ -192,12 +194,19 @@ module Sirena
           items.compact.size > 1 ? 2 : 1
         end
 
-        def build_box(item, column, top, box_width)
-          x = MARGIN + (column * (box_width + COLUMN_GAP))
-          texts, separators = box_contents(item, x, top, box_width)
+        # Room on the left for the deepest stack of package frames.
+        def left_margin(rows)
+          items = rows.flat_map(&:compact)
+          chains = items.map { |item| item[:chain] }
+          depth = chains.compact.map(&:size).max.to_i
+          [MARGIN, (depth * PackageFrames::SIDE) + 8.0].max
+        end
+
+        def build_box(item, left, top, box_width)
+          texts, separators = box_contents(item, left, top, box_width)
 
           Scene::Box.new(
-            id: item[:id], x: x, y: top, width: box_width,
+            id: item[:id], x: left, y: top, width: box_width,
             height: item[:height], texts: texts, separators: separators,
             kind: item[:note] ? "note" : "class", fill: item[:note]&.color
           )
@@ -512,7 +521,7 @@ module Sirena
         end
 
         def canvas_width(boxes, box_width)
-          (MARGIN * 2) + (column_count(boxes) * box_width) +
+          (boxes.map(&:x).min * 2) + (column_count(boxes) * box_width) +
             ((column_count(boxes) - 1) * COLUMN_GAP)
         end
 

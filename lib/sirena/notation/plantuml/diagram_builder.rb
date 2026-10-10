@@ -56,7 +56,8 @@ module Sirena
             refuse(text, number, "package declared twice")
           end
 
-          @packages << package.inside(scopes.last&.first&.id)
+          parent = implicit_parents(package, number, text)
+          @packages << package.inside(parent)
           scopes.push([package, number, text])
         end
 
@@ -196,6 +197,28 @@ module Sirena
 
         def chain_of(id)
           Package.chain(id, @packages)
+        end
+
+        # `package a.b.c` also opens `a` and `a.b`, each inside the one
+        # before. Returns the id the package itself sits inside.
+        def implicit_parents(package, number, text)
+          *outer, _leaf = package.id.split(".")
+          outer.each_index.reduce(scope_id) do |parent, index|
+            id = outer.first(index + 1).join(".")
+            open_implicit(id, parent, number, text)
+            id
+          end
+        end
+
+        def open_implicit(id, parent, number, text)
+          known = @packages.find { |other| other.id == id }
+          if known.nil?
+            @packages << Package.new(id: id, title: id.split(".").last,
+                                     shape: :folder, icon: false,
+                                     parent: parent)
+          elsif known.parent != parent
+            refuse(text, number, "package name shared by two packages")
+          end
         end
 
         def scopes

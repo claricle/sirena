@@ -16,7 +16,7 @@ module Sirena
         SIDE = 16.0
         TAB_HEIGHT = 22.0
         ICON_WIDTH = 14.0
-        private_constant :SIDE, :TAB_HEIGHT, :ICON_WIDTH
+        private_constant :TAB_HEIGHT, :ICON_WIDTH
 
         # @param diagram [Diagram]
         # @param measure [#call] text width in drawing units
