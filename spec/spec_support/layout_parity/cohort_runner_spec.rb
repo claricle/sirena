@@ -155,17 +155,23 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
 
   def seed_conflicting_references
     source = "classDiagram\nclass A"
+    write_conflicting_cases(source)
+    write_scoreboard(row("class/first.mmd"), row("class/second.mmd"),
+                     row("class_diagram/missing.mmd"))
+    stub_conflicting_render(source)
+    write_reference("class/first.svg", candidate_svg)
+    write_reference("class/second.svg", '<svg viewBox="0 0 2 2"/>')
+  end
+
+  def write_conflicting_cases(source)
     paths = %w[
       class/first.mmd class/second.mmd class_diagram/missing.mmd
     ]
-    paths.each do |path|
-      write_case(path, source)
-    end
-    write_scoreboard(row("class/first.mmd"), row("class/second.mmd"),
-                     row("class_diagram/missing.mmd"))
+    paths.each { |path| write_case(path, source) }
+  end
+
+  def stub_conflicting_render(source)
     allow(renderer).to receive(:render).with(source).and_return(candidate_svg)
-    write_reference("class/first.svg", candidate_svg)
-    write_reference("class/second.svg", '<svg viewBox="0 0 2 2"/>')
   end
 
   def alias_summary(reference_path)
