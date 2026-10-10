@@ -36,7 +36,7 @@ RSpec.describe Sirena::Layout::Pie do
     scene = layout.call(diagram("Small" => 1, "Large" => 3))
 
     expect(scene.slices.map { |item| item.path[/L (\S+ \S+) A/, 1] })
-      .to eq(["40.0 225.00000000000003", "225.0 40.0"])
+      .to eq(["40.0 225.0", "225.0 40.0"])
   end
 
   it "colors sectors by size rank" do

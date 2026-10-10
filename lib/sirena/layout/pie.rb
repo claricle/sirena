@@ -30,6 +30,10 @@ module Sirena
       TITLE_SIZE = 25
       # mmdc drops a slice under this share of the total, label and all.
       MIN_PERCENT = 1.0
+      # Math.cos and Math.sin differ in the last digit between platforms
+      # (Windows renders 225.0 where Linux renders 224.99999999999997), so
+      # points are rounded before they reach the SVG text.
+      POINT_DIGITS = 4
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -202,12 +206,27 @@ module Sirena
       end
 
       def slice_path(start_angle, finish_angle)
+        return full_circle_path(start_angle) if finish_angle - start_angle >= 360
+
         start_x, start_y = circle_point(start_angle, RADIUS)
         finish_x, finish_y = circle_point(finish_angle, RADIUS)
         large_arc = (finish_angle - start_angle) > 180 ? 1 : 0
         [
           "M #{CENTER_X} #{CENTER_Y}", "L #{start_x} #{start_y}",
           "A #{RADIUS} #{RADIUS} 0 #{large_arc} 1 #{finish_x} #{finish_y}",
+          "Z"
+        ].join(" ")
+      end
+
+      # An arc whose ends meet draws nothing, so a lone slice is two half
+      # arcs, as mmdc draws it.
+      def full_circle_path(start_angle)
+        start_x, start_y = circle_point(start_angle, RADIUS)
+        half_x, half_y = circle_point(start_angle + 180, RADIUS)
+        [
+          "M #{CENTER_X} #{CENTER_Y}", "L #{start_x} #{start_y}",
+          "A #{RADIUS} #{RADIUS} 0 1 1 #{half_x} #{half_y}",
+          "A #{RADIUS} #{RADIUS} 0 1 1 #{start_x} #{start_y}",
           "Z"
         ].join(" ")
       end
@@ -223,8 +242,8 @@ module Sirena
 
       def circle_point(angle, radius)
         radians = angle * Math::PI / 180.0
-        [CENTER_X + (radius * Math.cos(radians)),
-         CENTER_Y + (radius * Math.sin(radians))]
+        [(CENTER_X + (radius * Math.cos(radians))).round(POINT_DIGITS),
+         (CENTER_Y + (radius * Math.sin(radians))).round(POINT_DIGITS)]
       end
 
       def transform_slices(data)
