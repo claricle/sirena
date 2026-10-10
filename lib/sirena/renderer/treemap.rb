@@ -80,30 +80,23 @@ module Sirena
       end
 
       def add_section_total(group, cell)
-        return if cell.children.empty?
+        return unless cell.total_label
 
         total = SectionTotal.new(cell).text
         return unless total
 
-        group << label_element(section_total_label(cell, total))
+        group << label_element(cell.total_label, content: total)
       end
 
-      def section_total_label(cell, total)
-        Layout::Treemap::Label.new(
-          text: total, x: cell.box.x + cell.box.width - 5, y: cell.label.y,
-          font_size: 10, style: "value", text_anchor: "end"
-        )
-      end
-
-      def label_element(label)
+      def label_element(label, content: label.text)
         Svg::Text.new.tap do |text|
-          set_label_geometry(text, label)
+          set_label_geometry(text, label, content)
           set_label_style(text, label)
         end
       end
 
-      def set_label_geometry(text, label)
-        text.content = label.text
+      def set_label_geometry(text, label, content)
+        text.content = content
         text.x = label.x
         text.y = label.y
         text.text_anchor = label.text_anchor if label.text_anchor
