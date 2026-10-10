@@ -47,6 +47,7 @@ module Sirena
         # Add all nodes to diagram
         result[:nodes]&.each do |node_data|
           next if node_data == result[:root]
+
           node = find_or_create_node(diagram, node_data)
           diagram.add_node(node) unless diagram.nodes.include?(node)
         end

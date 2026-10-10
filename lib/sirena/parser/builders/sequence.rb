@@ -59,6 +59,7 @@ module Sirena
           if tree.is_a?(Array)
             tree.each do |item|
               next if item.is_a?(Hash) && item[:header] # Skip header
+
               process_statement(diagram, item) if item.is_a?(Hash)
             end
           elsif tree.is_a?(Hash) && tree[:statements]
