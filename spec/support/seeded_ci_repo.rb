@@ -11,10 +11,7 @@ require "open3"
 # +origin+ holds every branch; +checkout+ clones it the way actions/checkout
 # does, leaving the branches under refs/remotes/origin.
 class SeededCiRepo
-  IDENTITY = %w[AUTHOR COMMITTER].flat_map do |role|
-    [[["GIT", role, "NAME"].join("_"), "t"],
-     [["GIT", role, "EMAIL"].join("_"), "t@example.com"]]
-  end.to_h.freeze
+  IDENTITY = %w[-c user.name=t -c user.email=t@example.com].freeze
 
   attr_reader :origin, :shas
 
@@ -35,7 +32,7 @@ class SeededCiRepo
   end
 
   def git(dir, *args)
-    out, err, status = Open3.capture3(IDENTITY, "git", *args, chdir: dir)
+    out, err, status = Open3.capture3("git", *IDENTITY, *args, chdir: dir)
     raise "git #{args.join(' ')} failed: #{err}" unless status.success?
 
     out.strip
