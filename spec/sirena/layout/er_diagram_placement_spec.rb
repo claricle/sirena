@@ -94,13 +94,16 @@ module ErPlacementCases
     },
   }.freeze
 
-  CORPUS = %w[
-    002_platform_yari2_er_1 003_example_er_2
-    058_parser_should_handle_attributes_with_numbers_in_names_but_not_starting__57
-  ].freeze
+  # Corpus case numbers that have a reference SVG in fixtures_mermaid/er.
+  CORPUS = %w[002 003 058].freeze
+
+  def corpus_path(number, directory, extension)
+    Dir["spec/#{directory}/er/#{number}_*.#{extension}"].fetch(0)
+  end
 
   def scene_for(source)
-    Sirena::Layout::ErDiagram.new.call(Sirena::Parser::ErDiagram.new.parse(source))
+    diagram = Sirena::Parser::ErDiagram.new.parse(source)
+    Sirena::Layout::ErDiagram.new.call(diagram)
   end
 
   def centres_of(scene)
@@ -110,7 +113,8 @@ module ErPlacementCases
   end
 
   def reference_centres(svg)
-    svg.scan(/id="(?:my-svg-)?entity-(.+?)-\d+"[^>]*transform="translate\(([\d.]+), ([\d.]+)\)"/)
+    svg.scan(/id="(?:my-svg-)?entity-(.+?)-\d+"
+              [^>]*transform="translate\(([\d.]+),\s([\d.]+)\)"/x)
       .to_h { |name, x, y| [name, [x.to_f, y.to_f]] }
   end
 
@@ -120,12 +124,19 @@ module ErPlacementCases
 
   def expect_scene_to_match(scene, centres, canvas)
     expect(centres_of(scene).keys).to match_array(centres.keys)
-    centres.each do |name, (x, y)|
-      expect(centres_of(scene)[name])
-        .to match([be_within(1).of(x), be_within(0.1).of(y)])
-    end
+    expect_centres(centres_of(scene), centres)
+    expect_canvas(scene, canvas)
+  end
+
+  def expect_canvas(scene, canvas)
     expect([scene.width, scene.height])
       .to match([be_within(1).of(canvas[0]), be_within(0.1).of(canvas[1])])
+  end
+
+  def expect_centres(actual, expected)
+    expected.each do |name, (x, y)|
+      expect(actual[name]).to match([be_within(1).of(x), be_within(0.1).of(y)])
+    end
   end
 end
 
@@ -134,21 +145,25 @@ RSpec.describe Sirena::Layout::ErDiagramPlacement do
 
   ErPlacementCases::CASES.each do |title, mmdc|
     it "places #{title} where mmdc does" do
-      expect_scene_to_match(scene_for(mmdc[:source]), mmdc[:centres], mmdc[:canvas])
+      scene = scene_for(mmdc[:source])
+
+      expect_scene_to_match(scene, mmdc[:centres], mmdc[:canvas])
     end
   end
 
-  ErPlacementCases::CORPUS.each do |name|
-    it "places corpus case #{name[0, 3]} where mmdc does" do
-      svg = File.read("spec/fixtures_mermaid/er/#{name}.svg")
-      source = File.read("spec/mermaid/er/#{name}.mmd")
+  ErPlacementCases::CORPUS.each do |number|
+    it "places corpus case #{number} where mmdc does" do
+      svg = File.read(corpus_path(number, "fixtures_mermaid", "svg"))
+      source = File.read(corpus_path(number, "mermaid", "mmd"))
 
-      expect_scene_to_match(scene_for(source), reference_centres(svg), reference_canvas(svg))
+      expect_scene_to_match(
+        scene_for(source), reference_centres(svg), reference_canvas(svg)
+      )
     end
   end
 
   ErPlacementCases::UNREFERENCED.each do |name, mmdc|
-    it "places corpus case #{name[0, 3]} where mmdc does without a stored reference" do
+    it "places corpus case #{name[0, 3]} where mmdc does, unreferenced" do
       source = File.read("spec/mermaid/er/#{name}.mmd")
 
       expect_scene_to_match(scene_for(source), mmdc[:centres], mmdc[:canvas])
@@ -158,6 +173,7 @@ RSpec.describe Sirena::Layout::ErDiagramPlacement do
   it "leaves a graph with no entities untouched" do
     graph = { children: [], edges: [] }
 
-    expect(described_class.apply(graph)).to equal(graph).and eq(children: [], edges: [])
+    expect(described_class.apply(graph))
+      .to equal(graph).and eq(children: [], edges: [])
   end
 end

@@ -119,7 +119,7 @@ RSpec.describe Sirena::Layout::ErDiagram, :aggregate_failures do
         .to match([be_within(0.1).of(188.67), 329.25])
     end
 
-    it "centres the name over the box and steps attribute rows by mmdc's row height" do
+    it "centres the name and steps attribute rows by mmdc's row height" do
       customer = layout.call(diagram).children.first
 
       expect(customer.labels.first.x)
@@ -167,7 +167,8 @@ RSpec.describe Sirena::Layout::ErDiagram, :aggregate_failures do
       )
       narrow = Sirena::Diagram::ErDiagram.new.tap { |value| value.entities << entity }
 
-      # mmdc draws this diagram in a 288.875 x 101.5 viewBox, 8px margin each side.
+      # mmdc draws this diagram in a 288.875 x 101.5 viewBox, 8px margin
+      # each side.
       expect(layout.call(narrow).children.first.width)
         .to be_within(0.5).of(288.875 - 16)
     end

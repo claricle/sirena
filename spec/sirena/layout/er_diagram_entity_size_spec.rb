@@ -45,10 +45,9 @@ RSpec.describe Sirena::Layout::ErDiagramEntitySize do
   # The key column and the attribute-less box follow mmdc's erBox source;
   # no reference SVG in the corpus has either.
   it "adds a key column only when an attribute has a key" do
-    plain = described_class.call("E", cells(%w[int id]))
-    keyed = described_class.call(
-      "E", [{ attribute_type: "int", name: "id", key_type: "PK" }]
-    )
+    attributes = cells(%w[int id])
+    plain = described_class.call("E", attributes)
+    keyed = described_class.call("E", [attributes.first.merge(key_type: "PK")])
 
     expect(keyed[:width] - plain[:width])
       .to be_within(0.001).of(described_class.text_width("PK") + 25)
