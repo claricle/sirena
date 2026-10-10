@@ -26,6 +26,8 @@ module Sirena
           "}|" => "one_or_more",
         }.freeze
 
+        KEY_TYPES = %w[PK FK UK].freeze
+
         # Transform parse tree into ER diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
@@ -274,9 +276,12 @@ module Sirena
           end
         end
 
+        # Several keys join into one comma-separated string, "PK,FK",
+        # which is also how mermaid prints them.
         def extract_key_type(value)
-          text = extract_text(value)
-          text if %w[PK FK UK].include?(text)
+          keys = [value].flatten.map { |key| extract_text(key) }
+          keys = keys.select { |key| KEY_TYPES.include?(key) }
+          keys.join(",") unless keys.empty?
         end
       end
     end

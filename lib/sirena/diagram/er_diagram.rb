@@ -16,7 +16,8 @@ module Sirena
       # Attribute type (e.g., 'string', 'int', 'date')
       attribute :attribute_type, :string
 
-      # Key type: 'PK' (primary key), 'FK' (foreign key), or nil
+      # Key types: 'PK', 'FK', 'UK', or several joined by a comma
+      # ('PK,FK'), or nil
       attribute :key_type, :string
 
       # Optional quoted comment trailing the attribute, e.g. `"NN"` in
@@ -37,16 +38,21 @@ module Sirena
 
       # Checks if this is a primary key.
       #
-      # @return [Boolean] true if key_type is 'PK'
+      # @return [Boolean] true if key_type includes 'PK'
       def primary_key?
-        key_type == "PK"
+        key_types.include?("PK")
       end
 
       # Checks if this is a foreign key.
       #
-      # @return [Boolean] true if key_type is 'FK'
+      # @return [Boolean] true if key_type includes 'FK'
       def foreign_key?
-        key_type == "FK"
+        key_types.include?("FK")
+      end
+
+      # @return [Array<String>] each key in key_type, e.g. ["PK", "FK"]
+      def key_types
+        key_type.to_s.split(",")
       end
     end
 
