@@ -3325,31 +3325,31 @@
   },
   {
     "case": "kanban/001_rendering_kanban_spec_kanban_0.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "kanban/002_rendering_kanban_spec_kanban_1.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "kanban/003_rendering_kanban_spec_kanban_2.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "kanban/004_rendering_kanban_spec_kanban_3.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "kanban/005_rendering_kanban_spec_kanban_4.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "kanban/006_rendering_kanban_spec_kanban_5.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "kanban/007_rendering_kanban_spec_kanban_6.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "kanban/008_rendering_kanban_spec_kanban_7.mmd",
@@ -3357,11 +3357,11 @@
   },
   {
     "case": "kanban/009_rendering_kanban_spec_kanban_8.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "kanban/010_rendering_kanban_spec_kanban_9.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "kanban/012_parser_knbn-23_rows_with_only_spaces_should_not_interfere_11.mmd",
@@ -3513,7 +3513,7 @@
   },
   {
     "case": "mindmap/010_rendering_mindmap_spec_mindmap_9.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "mindmap/011_rendering_mindmap_spec_mindmap_10.mmd",
@@ -3553,7 +3553,7 @@
   },
   {
     "case": "mindmap/021_platform_knsv3_mindmap_20.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "mindmap/022_platform_knsv3_mindmap_21.mmd",
@@ -3561,7 +3561,7 @@
   },
   {
     "case": "mindmap/023_example_mindmap_22.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "mindmap/024_parser_mmp-23_rows_with_only_spaces_should_not_interfere_23.mmd",
@@ -4737,11 +4737,11 @@
   },
   {
     "case": "timeline/002_rendering_timeline_spec_timeline_1.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "timeline/003_rendering_timeline_spec_timeline_2.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "timeline/004_rendering_timeline_spec_timeline_3.mmd",
@@ -4901,7 +4901,7 @@
   },
   {
     "case": "unknown/019_platform_knsv3_18.mmd",
-    "status": "nonconformant"
+    "status": "conformant"
   },
   {
     "case": "unknown/020_platform_knsv3_19.mmd",
