@@ -136,12 +136,9 @@ module Sirena
         def add_participant(diagram, stmt, actor_type)
           id = actor_id(stmt[:id])
           @known_actor_ids << id
-          label = if stmt[:label]
-                    decoded_text(stmt[:label])
-                  else
-                    id
-                  end
-          label = id if label.empty?
+          shown_id = Diagram::SequenceText.decode(id)
+          label = stmt[:label] ? decoded_text(stmt[:label]) : shown_id
+          label = shown_id if label.empty?
 
           participant = Diagram::SequenceParticipant.new.tap do |p|
             p.id = id
@@ -378,11 +375,9 @@ module Sirena
         # `.strip`, because each is reachable from legal mermaid and each
         # unstripped id creates a phantom duplicate participant.
         #
-        # Character references are decoded here too: mermaid decodes them
-        # before it parses, so `A#59;B` and `A;B` are one actor.
-        def actor_id(slice)
-          Diagram::SequenceText.decode(slice.to_s.strip)
-        end
+        # The id stays as written: mmdc keeps `participant EA` and
+        # `E#65;` as two actors and decodes only the text it draws.
+        def actor_id(slice) = slice.to_s.strip
 
         # `track:` is false only from `track_activation`: an `activate`/
         # `deactivate` reference introduces a participant for RENDERING
@@ -398,7 +393,7 @@ module Sirena
 
           participant = Diagram::SequenceParticipant.new.tap do |p|
             p.id = participant_id
-            p.label = participant_id
+            p.label = Diagram::SequenceText.decode(participant_id)
             p.actor_type = "participant"
           end
 
