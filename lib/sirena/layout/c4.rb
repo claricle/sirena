@@ -4,6 +4,7 @@ require_relative "base"
 require_relative "c4_boundary_metrics"
 require_relative "c4_intersection"
 require_relative "c4_placement"
+require_relative "c4_shape_outline"
 require_relative "c4_shape_metrics"
 require_relative "c4_stereotype"
 require_relative "c4_text"
@@ -119,6 +120,8 @@ module Sirena
         attribute :kind, :string
         attribute :external, :boolean, default: false
         attribute :shape, :string
+        attribute :outline, :string
+        attribute :rim, :string
         attribute :head_center, Point
         attribute :body_center, Point
         attribute :children, Node, collection: true, default: -> { [] }
@@ -354,14 +357,24 @@ module Sirena
       end
 
       def node_attributes(node, kind)
+        shape = C4Stereotype.shape(node.dig(:metadata, :element_type))
         node.slice(:id, :x, :y, :width, :height).merge(
           kind: kind, external: node.dig(:metadata, :external) || false,
-          shape: C4Stereotype.shape(node.dig(:metadata, :element_type)),
+          shape: shape, **shape_paths(node, shape),
           labels: positioned_node_labels(node),
           stereotype: positioned_stereotype(node, kind),
           head_center: person_head(node, kind),
           body_center: person_body(node, kind)
         )
+      end
+
+      def shape_paths(node, shape)
+        return {} unless node.values_at(:x, :y, :width, :height).all?
+
+        outline = C4ShapeOutline.new(shape: shape, left: node[:x],
+                                     top: node[:y], width: node[:width],
+                                     height: node[:height])
+        { outline: outline.body, rim: outline.rim }
       end
 
       def node_kind(node)
