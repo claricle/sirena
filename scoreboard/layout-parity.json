@@ -72697,10 +72697,10 @@
             47.0
           ],
           "bbox_sirena": [
-            40.0,
-            130.0,
-            370.0,
-            170.0
+            1.0,
+            15.0,
+            348.0,
+            47.0
           ],
           "key": [
             "field",
@@ -72710,10 +72710,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.239193083573,
-      "worst_e_c": 0.0269580823,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.048991354467,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -72746,10 +72746,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.0269580823,
-        "worst_e_w": 0.048991354467,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.239193083573,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
