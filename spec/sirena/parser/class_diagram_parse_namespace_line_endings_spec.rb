@@ -40,7 +40,8 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse namespace line endings" do
   # rejects the shape that mutant would wrongly accept; mmdc 11.12.0
   # rejects it too (parse error on the stray `#`, confirmed against a
   # local mmdc render).
-  it "does not let anything but spaces stand between the declaration and the brace" do
+  it "does not let anything but spaces stand between the declaration " \
+     "and the brace" do
     source = "classDiagram\nnamespace Namespace6 { class Class1 # }\n"
 
     expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)

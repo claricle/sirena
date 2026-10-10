@@ -93,7 +93,10 @@ module Sirena
         # node and leave its own close paren unconsumed.
         rule(:node_with_shape) do
           match["a-zA-Z0-9_"].repeat >>
-            (circle_shape | bang_shape | cloud_shape | hexagon_shape | square_shape | round_shape)
+            (
+              circle_shape | bang_shape | cloud_shape | hexagon_shape |
+                square_shape | round_shape
+            )
         end
 
         # ((text)) - circle
@@ -156,7 +159,8 @@ module Sirena
         # space and the other Unicode space separators below. Mirrors
         # Builders::Flowchart::JS_SPACE (flowchart.rb), the same character
         # set for the identical "indentation before %%" problem.
-        COMMENT_INDENT = '\t\n\v\f\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff'
+        COMMENT_INDENT = '\t\n\v\f\r \u00a0\u1680\u2000-\u200a' \
+                         '\u2028\u2029\u202f\u205f\u3000\ufeff'
 
         rule(:round_comment_line) do
           newline >>

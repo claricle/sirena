@@ -88,14 +88,18 @@ module Sirena
           acc_title: data.accessibility_title,
           acc_description: data.accessibility_description,
           slices: slices,
-          metadata: {
-            total_value: slices.sum { |slice| slice[:value] },
-            slice_count: slices.length,
-          }
+          metadata: slice_metadata(slices)
         }
       end
 
       private
+
+      def slice_metadata(slices)
+        {
+          total_value: slices.sum { |slice| slice[:value] },
+          slice_count: slices.length,
+        }
+      end
 
       def scene(diagram)
         scene_from_graph(build_graph(diagram))
@@ -251,15 +255,18 @@ module Sirena
         segments = segment_values(data)
         total = segment_total(segments)
         segments.map.with_index do |segment, index|
-          value = segment.value.value
-          share = proportional_share(value, total)
-          {
-            id: segment.id, label: segment.label, value: value,
-            percentage: share * 100.0,
-            angle: share * 360.0,
-            index: index
-          }
+          transformed_slice(segment, index, total)
         end
+      end
+
+      def transformed_slice(segment, index, total)
+        value = segment.value.value
+        share = proportional_share(value, total)
+        {
+          id: segment.id, label: segment.label, value: value,
+          percentage: share * 100.0, angle: share * 360.0,
+          index: index
+        }
       end
 
       def segment_values(data)
