@@ -72,12 +72,13 @@ module Sirena
           STARTUML = /\A@startuml(?![A-Za-z0-9_])/
           LINE_END = /\r\n|\r|\n/
           PARALLEL = /\A&[ \t]*(.*)\z/
+          NEWPAGE = /\Anewpage\z/i
 
           PARALLEL_KINDS = [MESSAGE, NOTE, BLOCK].freeze
           TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
                       [REF, :ref], [BRANCH, :branch], [ACTIVATION, :activation],
                       [RETURN, :reply], [DIVIDER, :divider],
-                      [DESTROY, :destroy]].freeze
+                      [DESTROY, :destroy], [NEWPAGE, :newpage]].freeze
 
           private_constant :TIMELINE, :NAME, :QUOTED, :KINDS,
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
@@ -85,7 +86,7 @@ module Sirena
                            :NOTE, :END_NOTE, :REF, :BLOCK, :BRANCH, :RETURN,
                            :DIVIDER, :DESTROY, :COLOUR, :SKINPARAM_WIDTH,
                            :STYLE_OPEN, :STYLE_CLOSE, :PARALLEL,
-                           :PARALLEL_KINDS, :HIDE_FOOTBOX
+                           :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -284,6 +285,10 @@ module Sirena
 
           def destroy(match)
             @outline.destroy(mention(match[1]))
+          end
+
+          def newpage(_match)
+            @outline.newpage
           end
 
           def divider(match)

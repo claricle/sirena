@@ -619,4 +619,28 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       expect(head.height).to eq(56.0)
     end
   end
+
+  describe "newpage" do
+    it "draws a dotted line across the page between the rows" do
+      scene = scene_of("A -> B", "newpage", "A -> B")
+
+      expect(scene.page_breaks.size).to eq(1)
+    end
+
+    it "draws the first page only" do
+      scene = scene_of("A -> B", "newpage", "A -> B")
+
+      expect(scene.arrows.size).to eq(1)
+    end
+
+    it "draws no line without a newpage" do
+      expect(scene_of("A -> B").page_breaks).to be_empty
+    end
+
+    it "places the line below the row before it" do
+      scene = scene_of("A -> B", "newpage")
+
+      expect(scene.page_breaks.first.y1).to be > arrow_ys(scene).first
+    end
+  end
 end

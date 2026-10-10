@@ -555,7 +555,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
 
   describe "constructs outside the slice" do
     {
-      "newpage" => "newpage",
+      "newpage Next" => "newpage",
       "!pragma layout smetana" => "preprocessor directive",
       "A -[#red]> B" => "message arrow",
       "[<- A" => "message arrow",
@@ -605,7 +605,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
 
     it "reports the line of the refusal" do
-      expect(refusal_of("A -> B", "newpage"))
+      expect(refusal_of("A -> B", "newpage Next"))
         .to have_attributes(line: 3)
     end
   end
@@ -770,6 +770,40 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       divider = parse("A -> B", "== Phase ==").items.last
 
       expect(divider.label).to eq("Phase")
+    end
+  end
+
+  describe "newpage" do
+    let(:page_break) { Sirena::Notation::PlantUML::Sequence::PageBreak }
+
+    it "ends the items at the first page break" do
+      items = parse("A -> B : one", "newpage", "A -> B : two").items
+
+      expect(items.map(&:class)).to eq(
+        [Sirena::Notation::PlantUML::Sequence::Message, page_break],
+      )
+    end
+
+    it "keeps a participant that only a later page mentions" do
+      diagram = parse("A -> B", "newpage", "C -> D")
+
+      expect(diagram.participants.map(&:id)).to eq(%w[A B C D])
+    end
+
+    it "keeps one break for two" do
+      items = parse("A -> B", "newpage", "A -> B", "newpage", "B -> A").items
+
+      expect(items.count { |item| item.is_a?(page_break) }).to eq(1)
+    end
+
+    it "refuses a newpage inside a block" do
+      expect { parse("alt a", "A -> B", "newpage", "end") }
+        .to raise_error(unsupported, /newpage/)
+    end
+
+    it "refuses a newpage with a title" do
+      expect { parse("A -> B", "newpage Next") }
+        .to raise_error(unsupported, /newpage/)
     end
   end
 end

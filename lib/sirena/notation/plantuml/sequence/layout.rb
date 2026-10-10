@@ -25,10 +25,12 @@ module Sirena
           MIN_WIDTH_PADDING = 14.0
           EDGE_GAP = 5.0
           EDGE_MARGIN = 10.0
+          PAGE_BREAK_INSET = 6.0
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
                            :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT,
-                           :MIN_WIDTH_PADDING, :EDGE_GAP, :EDGE_MARGIN
+                           :MIN_WIDTH_PADDING, :EDGE_GAP, :EDGE_MARGIN,
+                           :PAGE_BREAK_INSET
 
           def scene(diagram)
             @diagram = diagram
@@ -93,7 +95,16 @@ module Sirena
             Scene.new(width: canvas_width(widths),
                       height: @flow.y + foot_height + MARGIN,
                       frames: frames(widths), heads: heads(widths),
-                      lifelines: lifelines, **flow_items)
+                      lifelines: lifelines, page_breaks: page_breaks(widths),
+                      **flow_items)
+          end
+
+          # A dotted line across the page where the first page ends.
+          def page_breaks(widths)
+            right = canvas_width(widths) - PAGE_BREAK_INSET
+            @flow.page_breaks.map do |y|
+              PlantUML::Scene::Segment.new(x1: 0.0, y1: y, x2: right, y2: y)
+            end
           end
 
           def heads(widths)

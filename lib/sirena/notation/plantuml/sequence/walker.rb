@@ -13,6 +13,7 @@ require_relative "message"
 require_relative "note"
 require_relative "fragment_shape"
 require_relative "note_geometry"
+require_relative "page_break"
 require_relative "note_shape"
 require_relative "ref"
 require_relative "ref_shape"
@@ -35,10 +36,10 @@ module Sirena
           LEFT_EDGE = 0.0
           PLACERS = { Message => :message, Activation => :activation,
                       Destroy => :destroy, Fragment => :fragment,
-                      Ref => :ref }.freeze
+                      Ref => :ref, PageBreak => :page_break }.freeze
 
           attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
-                      :right, :y
+                      :right, :y, :page_breaks
 
           # @param lifelines [Hash{String => Float}] centre of each
           #   participant's lifeline, in participant order
@@ -83,6 +84,7 @@ module Sirena
             @fragments = []
             @dividers = []
             @crosses = []
+            @page_breaks = []
             @tracker = BarTracker.new(method(:centre))
             @blocks = []
             @left = Float::INFINITY
@@ -326,6 +328,11 @@ module Sirena
               baseline = top + 7 + (index * step) + @font_size
               text(line, left, baseline, "note", "start")
             end
+          end
+
+          # Between the rows on either side of the line, like a divider.
+          def page_break(_item)
+            @page_breaks << @y - 20
           end
 
           def ref(item)

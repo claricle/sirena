@@ -93,6 +93,7 @@ module Sirena
           attribute :dividers, Divider, collection: true
           attribute :bars, Bar, collection: true
           attribute :crosses, PlantUML::Scene::Segment, collection: true
+          attribute :page_breaks, PlantUML::Scene::Segment, collection: true
           attribute :heads, Head, collection: true
           attribute :lifelines, PlantUML::Scene::Segment, collection: true
           attribute :arrows, Arrow, collection: true
