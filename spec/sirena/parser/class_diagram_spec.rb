@@ -378,4 +378,12 @@ RSpec.describe Sirena::Parser::ClassDiagram do
       )
     end
   end
+
+  describe "#parse names inside a namespace" do
+    it "leaves a dotted class name unqualified" do
+      source = "classDiagram\n  namespace N {\n    class A.B\n  }\n"
+
+      expect(entities(source)).to eq([["A.B", "A.B"]])
+    end
+  end
 end
