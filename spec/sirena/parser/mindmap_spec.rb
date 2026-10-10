@@ -502,4 +502,14 @@ RSpec.describe Sirena::Parser::Mindmap do
       end
     end
   end
+
+  describe "#parse a header with no nodes" do
+    it "has no root" do
+      expect(parser.parse("mindmap\n").root).to be_nil
+    end
+
+    it "has no nodes" do
+      expect(parser.parse("mindmap\n").nodes).to be_empty
+    end
+  end
 end
