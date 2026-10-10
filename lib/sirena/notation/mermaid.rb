@@ -74,6 +74,7 @@ module Sirena
         timeline: {
           pattern: /\A\s*timeline(\s|$)/i,
           keyword: "timeline",
+          ir_adapter: true,
         },
         quadrant: {
           pattern: /\A\s*quadrantChart/i,
@@ -121,6 +122,7 @@ module Sirena
         packet: {
           pattern: /\A\s*packet-beta/i,
           keyword: "packet-beta",
+          ir_adapter: true,
         },
         treemap: {
           pattern: /\A\s*treemap(-beta)?/i,

@@ -82,9 +82,11 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapter do
   end
 
   it "leaves an unmigrated diagram unchanged" do
-    diagram = Sirena::Parser::Timeline.new.parse("timeline\n  A\n")
+    diagram = Sirena::Parser::Gantt.new.parse(
+      File.read("spec/fixtures/contract/gantt.mmd"),
+    )
 
-    expect(described_class.call(:timeline, diagram)).to equal(diagram)
+    expect(described_class.call(:gantt, diagram)).to equal(diagram)
   end
 
   it "discovers opted-in adapters by the registered type name" do
@@ -93,7 +95,7 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapter do
   end
 
   def opted_in_types
-    %i[mindmap sankey pie info error].to_h do |type|
+    %i[mindmap sankey pie info error packet timeline].to_h do |type|
       source = File.read("spec/fixtures/contract/#{type}.mmd")
       [type, Sirena::Notation::Mermaid.parse(source).diagram.class]
     end
@@ -102,7 +104,9 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapter do
   def expected_opted_in_types
     {
       mindmap: Sirena::IR::Graph, sankey: Sirena::IR::Graph,
-      pie: Sirena::IR::Data, info: Sirena::IR::Data, error: Sirena::IR::Data
+      pie: Sirena::IR::Data, info: Sirena::IR::Data, error: Sirena::IR::Data,
+      packet: Sirena::IR::Prepositioned,
+      timeline: Sirena::IR::Prepositioned
     }
   end
 end
