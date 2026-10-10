@@ -61,16 +61,16 @@ RSpec.describe Sirena::Layout::Gantt do
   end
 
   describe "the timeline" do
-    let(:reversed) do
-      helper.scene("section A\nT1 :a, 2024-01-10, 2024-01-05\n")
+    let(:flat) do
+      helper.scene("section A\nT1 :a, 2024-01-10, 2024-01-08\n")
     end
 
-    it "draws no date labels when the dates run backwards" do
-      expect(reversed.timeline.labels).to be_empty
+    it "draws no date labels when the span is zero days" do
+      expect(flat.timeline.labels).to be_empty
     end
 
-    it "draws no grid lines when the dates run backwards" do
-      expect(reversed.timeline.grid_lines).to be_empty
+    it "draws no grid lines when the span is zero days" do
+      expect(flat.timeline.grid_lines).to be_empty
     end
 
     {
