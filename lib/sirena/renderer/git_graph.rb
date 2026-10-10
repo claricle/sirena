@@ -62,15 +62,11 @@ module Sirena
       end
 
       def normal_connection(connection, colour)
-        Svg::Line.new.tap do |line|
-          line.x1 = connection.from_x
-          line.y1 = connection.from_y
-          line.x2 = connection.to_x
-          line.y2 = connection.to_y
-          line.stroke = colour
-          line.stroke_width = "2"
-          line.fill = "none"
-        end
+        Svg::Line.new(
+          x1: connection.from_x, y1: connection.from_y,
+          x2: connection.to_x, y2: connection.to_y,
+          stroke: colour, stroke_width: "2", fill: "none"
+        )
       end
 
       def connection_colour(connection, branch_colours)
@@ -105,10 +101,22 @@ module Sirena
 
       def commit_fill(commit, branch_colours)
         case commit.type
-        when "HIGHLIGHT" then theme_color(:highlight) || "#fbbf24"
-        when "REVERSE" then theme_color(:background) || "#ffffff"
-        else branch_colours[commit.branch] || theme_color(:primary) || "#2563eb"
+        when "HIGHLIGHT" then highlight_fill
+        when "REVERSE" then reverse_fill
+        else standard_commit_fill(commit, branch_colours)
         end
+      end
+
+      def highlight_fill
+        theme_color(:highlight) || "#fbbf24"
+      end
+
+      def reverse_fill
+        theme_color(:background) || "#ffffff"
+      end
+
+      def standard_commit_fill(commit, branch_colours)
+        branch_colours[commit.branch] || theme_color(:primary) || "#2563eb"
       end
 
       def commit_stroke(commit, branch_colours)

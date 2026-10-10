@@ -35,7 +35,8 @@ module Sirena
       #
       # @return [String] XML string
       def element_markup
-        "<tspan#{build_attributes}>#{Escaping.escape_text(Array(content).join)}</tspan>"
+        escaped_content = Escaping.escape_text(Array(content).join)
+        "<tspan#{build_attributes}>#{escaped_content}</tspan>"
       end
     end
   end

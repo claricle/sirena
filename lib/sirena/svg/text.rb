@@ -129,7 +129,8 @@ module Sirena
       # @return [String]
       def body
         place_lines
-        Escaping.escape_text(Array(content).join) + Array(tspans).map(&:to_xml).join
+        escaped_content = Escaping.escape_text(Array(content).join)
+        escaped_content + Array(tspans).map(&:to_xml).join
       end
 
       # Gives each run that starts a new line an absolute `y`: this text's
