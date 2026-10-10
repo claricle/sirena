@@ -17,19 +17,23 @@ RSpec.describe LaneVerdict do
   describe ".failures" do
     {
       "all children succeeded" => [
-        { "unit" => { "result" => "success" }, "lint" => { "result" => "success" } },
+        { "unit" => { "result" => "success" },
+          "lint" => { "result" => "success" } },
         [],
       ],
       "a failed child" => [
-        { "unit" => { "result" => "success" }, "lint" => { "result" => "failure" } },
+        { "unit" => { "result" => "success" },
+          "lint" => { "result" => "failure" } },
         ['lint: "failure"'],
       ],
       "a skipped child (dependency of a failed job)" => [
-        { "unit" => { "result" => "failure" }, "docs" => { "result" => "skipped" } },
+        { "unit" => { "result" => "failure" },
+          "docs" => { "result" => "skipped" } },
         ['unit: "failure"', 'docs: "skipped"'],
       ],
       "a cancelled child" => [
-        { "unit" => { "result" => "success" }, "lint" => { "result" => "cancelled" } },
+        { "unit" => { "result" => "success" },
+          "lint" => { "result" => "cancelled" } },
         ['lint: "cancelled"'],
       ],
       "no child jobs wired yet" => [
@@ -53,15 +57,18 @@ RSpec.describe LaneVerdict do
       expect(status).to be_success
     end
 
-    it "exits nonzero when a child failed -- the aggregator must not false-green" do
+    it "exits nonzero when a child failed -- the aggregator must not " \
+       "false-green" do
       _stdout, stderr, status = run("unit" => { "result" => "failure" })
 
       expect(stderr).to include('unit: "failure"')
       expect(status).not_to be_success
     end
 
-    it "exits nonzero when a child was skipped -- GitHub skips dependents of a failed job" do
-      _stdout, stderr, status = run("unit" => { "result" => "success" }, "docs" => { "result" => "skipped" })
+    it "exits nonzero when a child was skipped -- GitHub skips dependents " \
+       "of a failed job" do
+      _stdout, stderr, status = run("unit" => { "result" => "success" },
+                                    "docs" => { "result" => "skipped" })
 
       expect(stderr).to include('docs: "skipped"')
       expect(status).not_to be_success

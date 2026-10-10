@@ -42,7 +42,10 @@ RSpec.describe Sirena::ChangelogCheck do
     end
 
     it "refuses pre-release keywords" do
-      expect { described_class.target_version("rc", "0.1.0") }.to raise_error(ArgumentError, /rc/)
+      expect do
+        described_class.target_version("rc",
+                                       "0.1.0")
+      end.to raise_error(ArgumentError, /rc/)
     end
   end
 
@@ -52,11 +55,14 @@ RSpec.describe Sirena::ChangelogCheck do
     end
 
     it "blocks a version with no section" do
-      expect(described_class.problems(good, "0.3.0")).to eq(["no `## [0.3.0] - YYYY-MM-DD` section in the changelog"])
+      expected = ["no `## [0.3.0] - YYYY-MM-DD` section in the changelog"]
+
+      expect(described_class.problems(good, "0.3.0")).to eq(expected)
     end
 
     it "blocks an empty Unreleased section, the seeded no-entry release" do
-      expect(described_class.problems(good, "Unreleased")).to include(/no bullet/)
+      expect(described_class.problems(good,
+                                      "Unreleased")).to include(/no bullet/)
     end
 
     it "blocks a section with a bullet outside any category" do
@@ -70,7 +76,8 @@ RSpec.describe Sirena::ChangelogCheck do
     end
 
     it "does not count a bullet from the next section" do
-      text = "## [0.2.0] - 2026-10-01\n\n### Fixed\n\n## [0.1.0] - 2026-09-01\n\n### Fixed\n- old\n"
+      text = "## [0.2.0] - 2026-10-01\n\n### Fixed\n\n" \
+             "## [0.1.0] - 2026-09-01\n\n### Fixed\n- old\n"
       expect(described_class.problems(text, "0.2.0")).to include(/no bullet/)
     end
 
