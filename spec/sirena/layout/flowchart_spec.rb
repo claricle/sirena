@@ -237,11 +237,12 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
       expect(edge.sections.first.end_point).to be_a(described_class::Point)
     end
 
+    # The page padding elkrb leaves round the first node.
     it "places nodes in final canvas coordinates" do
       node = transform.to_graph(diagram).children.first
 
-      expect(node.x).to eq(50.0)
-      expect(node.y).to eq(50.0)
+      expect(node.x).to eq(12.0)
+      expect(node.y).to eq(12.0)
     end
 
     it "flattens nested coordinates into the final canvas frame" do

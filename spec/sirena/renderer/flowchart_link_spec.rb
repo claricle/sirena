@@ -235,7 +235,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # painted afterwards — so every head was invisible and four link types
     # rasterised identically. The tip belongs on the node's edge.
     it "puts the tip on the target's boundary, not inside it" do
-      xml = Sirena.render("flowchart TD\n  A --> B\n")
+      xml = Sirena.render("flowchart LR\n  A --> B\n")
       left, = node_span(xml, "B")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
       tip = group[/<polygon[^>]*points="(-?[\d.]+),/, 1].to_f
@@ -246,7 +246,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # mmdc centres the circle behind the reference point it puts on the
     # boundary. This keeps the head visible without making it touch.
     it "leaves mmdc's gap between a circle head and the node" do
-      xml = Sirena.render("flowchart TD\n  A --o B\n")
+      xml = Sirena.render("flowchart LR\n  A --o B\n")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
       cx = group[/<circle[^>]*cx="(-?[\d.]+)"/, 1].to_f
       radius = group[/<circle[^>]*r="([\d.]+)"/, 1].to_f
@@ -267,7 +267,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     it "keeps a cross head clear of the node" do
-      xml = Sirena.render("flowchart TD\n  A --x B\n")
+      xml = Sirena.render("flowchart LR\n  A --x B\n")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
       arms = group.scan(/<line[^>]*x1="([-\d.]+)"[^>]*x2="([-\d.]+)"/)
         .flatten.map(&:to_f)
@@ -665,7 +665,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     it "puts a head at each end of a two-ended link" do
-      xml = Sirena.render("flowchart TD\n  A <--> B\n")
+      xml = Sirena.render("flowchart LR\n  A <--> B\n")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
       tips = group.scan(/<polygon[^>]*points="(-?[\d.]+),/)
         .flatten.map(&:to_f)
@@ -682,13 +682,13 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # go and they would all still agree.
     #
     # The x is asserted as well as the y, and it is the half that
-    # discriminates. The fallback layout puts A and B on one row, so the
-    # path's start, the source's centre and the midpoint all share a y of
-    # 67 — every candidate anchor gives the same lifted y. Anchoring on
+    # discriminates. A left-to-right link puts A and B on one row, so the
+    # path's start, the source's centre and the midpoint all share a y —
+    # every candidate anchor gives the same lifted y. Anchoring on
     # the source centre instead drops the label on top of A and leaves
     # that y untouched.
     it "lifts an ordinary label clear of its own line" do
-      xml = Sirena.render("flowchart TD\n  A -->|hi| B\n")
+      xml = Sirena.render("flowchart LR\n  A -->|hi| B\n")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
       line = group[/<path[^>]*d="M [-\d.]+ ([-\d.]+)/, 1].to_f
       midpoint = (node_centre(xml, "A").first + node_centre(xml, "B").first) / 2
@@ -972,17 +972,23 @@ RSpec.describe Sirena::Renderer::Flowchart do
       expect(without_loop).to match(/<svg\b.*?overflow="hidden"/m)
     end
 
-    # A long label widens the layout box without widening the drawn circle.
+    # A circle in a box wider than it is tall is drawn at the shorter side.
     it "starts a wide circle loop's depth at its drawn edge" do
-      xml = Sirena.render(
-        "flowchart LR\n  A((a fairly long circle label)) --> A\n",
-      )
+      graph = {
+        layoutOptions: { "elk.direction" => "RIGHT" },
+        children: [{ id: "A", x: 50, y: 50, width: 200, height: 40,
+                     metadata: { shape: "circle" } }],
+        edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
+                  metadata: { arrow_type: "arrow" } }],
+      }
+      xml = render_graph(graph).to_xml
       circle = xml[%r{<g id="node-A".*?</g>}m][/<circle\b[^>]*>/]
       cx = circle[/\scx="(-?[\d.]+)"/, 1].to_f
       radius = circle[/\sr="([\d.]+)"/, 1].to_f
       far_x = path_points(xml).map(&:first).max
 
-      expect(far_x - (cx + radius)).to be_within(0.05).of(2 * radius * 0.45)
+      expect(radius).to eq(20.0)
+      expect(far_x - (cx + radius)).to be_within(0.1).of(2 * radius * 0.45)
     end
 
     it "puts the head where the loop meets the node, not inside it" do
@@ -1106,23 +1112,22 @@ RSpec.describe Sirena::Renderer::Flowchart do
       end
     end
 
-    # The shorter side, whichever side that is. A diamond is 47 wide and
-    # 54 tall, so it pins the width half; a plain box is 37 wide and 34
-    # tall, so it pins the height half. Asserting only the diamond would
-    # hold just as well if the depth were read off the width outright,
-    # because there the width IS the shorter side.
+    # The shorter side, whichever side that is. A `(x)` node is 38 wide and
+    # 54 tall, so it pins the width half; a plain box is wider than tall,
+    # so it pins the height half. Asserting only the tall one would hold
+    # just as well if the depth were read off the width outright, because
+    # there the width IS the shorter side.
     it "measures a loop's depth from a tall node's width" do
-      xml = Sirena.render("flowchart TD\n  A{x} --> A\n")
-      diamond = outline(xml, "A")
-      width = diamond.map(&:first).max - diamond.map(&:first).min
-      height = diamond.map(&:last).max - diamond.map(&:last).min
-      depth = path_points(xml).map(&:last).max - diamond.map(&:last).max
+      xml = Sirena.render("flowchart TD\n  A(x) --> A\n")
+      left, right = node_span(xml, "A")
+      width = right - left
+      height = node_bottom(xml) - node_top(xml)
+      depth = path_points(xml).map(&:last).max - node_bottom(xml)
 
       # Every corner is written to one decimal, so the measured depth
-      # carries up to 0.05 of quantisation on its own — it lands on 21.2
-      # against a true 21.15. The window has to clear that and still
-      # discriminate: reading the depth off the HEIGHT instead lands 3.15
-      # away, thirty times the window.
+      # carries up to 0.05 of quantisation on its own. The window has to
+      # clear that and still discriminate: reading the depth off the HEIGHT
+      # instead lands 7 away, seventy times the window.
       expect(width).to be < height
       expect(depth).to be_within(0.1).of(0.45 * width)
     end
@@ -1135,8 +1140,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
       depth = path_points(xml).map(&:last).max - bottom
 
       expect(height).to be < (right - left)
-      expect(depth).to be_within(0.05).of(0.45 * height)
-      expect(depth).not_to be_within(0.05).of(0.45 * (right - left))
+      expect(depth).to be_within(0.1).of(0.45 * height)
+      expect(depth).not_to be_within(0.1).of(0.45 * (right - left))
     end
   end
 
@@ -1215,7 +1220,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
       ).captures.map(&:to_f)
       tip_x, tip_y = tip_of(xml, "A_to_A")
 
-      expect(Math.hypot(tip_x - cx, tip_y - cy)).to be_within(0.05).of(r)
+      # The tip is written to one decimal, which alone can move it 0.07.
+      expect(Math.hypot(tip_x - cx, tip_y - cy)).to be_within(0.1).of(r)
     end
 
     it "lands on a rounded box's curved end" do

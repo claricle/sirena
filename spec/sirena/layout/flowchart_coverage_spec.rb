@@ -130,7 +130,7 @@ RSpec.describe Sirena::Layout::Flowchart do
   end
 
   describe "a graph without settings" do
-    let(:graph) { graphs.settingless_graph("flowchart LR\nA-->B") }
+    let(:graph) { graphs.settingless_graph("flowchart TD\nA-->B") }
     let(:scene) { described_class.new.call(graph) }
 
     it "takes the graph id as the scene id" do
@@ -138,7 +138,7 @@ RSpec.describe Sirena::Layout::Flowchart do
     end
 
     it "places the nodes where the full graph places them" do
-      full = graphs.settingless_graph("flowchart LR\nA-->B", keep: true)
+      full = graphs.settingless_graph("flowchart TD\nA-->B", keep: true)
 
       expected = coordinates(described_class.new.call(full))
 
