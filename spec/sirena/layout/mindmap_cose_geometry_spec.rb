@@ -24,7 +24,7 @@ RSpec.describe Sirena::Layout::MindmapCoseGeometry do
         .to eq([-35.0, -35.0])
     end
 
-    it "separates on the horizontal overlap when the centres are nearly level" do
+    it "separates on the horizontal overlap when the centres are near level" do
       expect(described_class.separation(box(0.0, 0.0), box(10.0, 2.0), 25.0))
         .to eq([40.0, 28.0])
     end
