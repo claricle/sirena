@@ -335,16 +335,11 @@ module Sirena
       end
     end
 
+    # Jekyll's config loader accepts YAML aliases, so this direct loader must
+    # too; otherwise a config Jekyll builds successfully would crash here.
     def initialize(docs_dir:, site_dir:, baseurl: nil)
       @docs_dir = Pathname.new(docs_dir)
       @site_dir = Pathname.new(site_dir)
-      # Jekyll's own config loader (backed by the `safe_yaml` gem) accepts
-      # YAML anchors/aliases -- an ordinary way to avoid repeating
-      # `permalink:` across every collection -- and resolves them. Plain
-      # `YAML.safe_load_file` refuses aliases by default and raises
-      # `Psych::AliasesNotEnabled` instead of returning a Hash, so a
-      # `_config.yml` Jekyll itself builds successfully would crash this
-      # verifier instead of being checked.
       @config = load_config
       @baseurl = (baseurl || @config["baseurl"]).to_s
     end
@@ -380,19 +375,7 @@ module Sirena
     # R1, R2
     def a0_config_guard
       failures = []
-
-      # Jekyll accepts a documented array shorthand for `collections:`
-      # (e.g. `collections: [diagram_types]`) and normalizes it to a Hash
-      # itself before a real build ever sees it -- but that normalization
-      # never runs here, since this script parses `_config.yml` directly
-      # with `YAML.safe_load_file`. An Array in that shape would make
-      # `Hash#dig` call `Array#dig` with a String key, which raises
-      # TypeError instead of returning nil, so the guard is required
-      # before digging any further, not just an optimization.
-      collections = @config["collections"]
-      permalink = if collections.is_a?(Hash)
-                    collections.dig("diagram_types", "permalink")
-                  end
+      permalink = configured_permalink
       if permalink != REQUIRED_DIAGRAM_PERMALINK
         failures << "config: collections.diagram_types.permalink is " \
                     "#{permalink.inspect}, expected " \
@@ -405,28 +388,31 @@ module Sirena
       failures
     end
 
+    # Jekyll accepts an Array shorthand for collections, but this verifier
+    # reads YAML directly; guard the Hash-only dig instead of raising.
+    def configured_permalink
+      collections = @config["collections"]
+      return unless collections.is_a?(Hash)
+
+      collections.dig("diagram_types", "permalink")
+    end
+
     # R3-R7
     def a1_manifest_completeness
-      failures = []
       include_active = Array(@config["include"]).include?("_diagram_types")
-
-      diagram_sources.each do |rel|
-        collection_path = "diagram_types/#{rel}/index.html"
-        unless @site_dir.join(collection_path).file?
-          failures << "manifest: _diagram_types/#{rel}.adoc missing at " \
-                      "#{collection_path}"
-        end
-
-        next unless include_active
-
-        include_path = include_path_for(rel)
-        unless @site_dir.join(include_path).file?
-          failures << "manifest: _diagram_types/#{rel}.adoc missing at " \
-                      "#{include_path}"
-        end
+      diagram_sources.flat_map do |rel|
+        manifest_failures(rel, include_active)
       end
+    end
 
-      failures
+    def manifest_failures(rel, include_active)
+      paths = ["diagram_types/#{rel}/index.html"]
+      paths << include_path_for(rel) if include_active
+      paths.filter_map do |path|
+        next if @site_dir.join(path).file?
+
+        "manifest: _diagram_types/#{rel}.adoc missing at #{path}"
+      end
     end
 
     def diagram_sources
@@ -509,35 +495,36 @@ module Sirena
 
     # R17-R24
     def a4_theme_assets(pages)
-      failures = []
-      refs = collect_asset_refs(pages)
-
-      refs.each do |ref, referencing_page|
-        next unless site_absolute?(ref)
-        next if protocol_relative?(ref)
-
-        resolved = strip_baseurl(ref)
-        if resolved.nil?
-          failures << "asset: #{ref} (referenced by #{referencing_page}) " \
-                      "does not begin with baseurl #{@baseurl.inspect}"
-          next
-        end
-
-        # Only the path component resolves to a file -- a query string or
-        # fragment is not part of the filename a server looks up.
-        file_path = resolved.split(/[?#]/, 2).first.to_s
-        next if resolves_within_site_dir?(file_path)
-
-        failures << "asset: #{ref} (referenced by #{referencing_page}) " \
-                    "does not resolve to #{file_path}"
+      failures = collect_asset_refs(pages).filter_map do |ref, page|
+        asset_failure(ref, page)
       end
-
-      search_enabled = @config["search_enabled"] == true
-      if search_enabled && !@site_dir.join(SEARCH_INDEX_PATH).file?
+      if missing_search_index?
         failures << "asset: search index #{SEARCH_INDEX_PATH.inspect} missing"
       end
-
       failures
+    end
+
+    def asset_failure(ref, referencing_page)
+      return unless site_absolute?(ref) && !protocol_relative?(ref)
+
+      resolved = strip_baseurl(ref)
+      return missing_baseurl(ref, referencing_page) unless resolved
+
+      file_path = resolved.split(/[?#]/, 2).first.to_s
+      return if resolves_within_site_dir?(file_path)
+
+      "asset: #{ref} (referenced by #{referencing_page}) " \
+        "does not resolve to #{file_path}"
+    end
+
+    def missing_baseurl(ref, referencing_page)
+      "asset: #{ref} (referenced by #{referencing_page}) " \
+        "does not begin with baseurl #{@baseurl.inspect}"
+    end
+
+    def missing_search_index?
+      @config["search_enabled"] == true &&
+        !@site_dir.join(SEARCH_INDEX_PATH).file?
     end
 
     # Distinct ref -> first referencing page, so each distinct asset is
