@@ -5,10 +5,10 @@ require "spec_helper"
 RSpec.describe Sirena::Parser::Builders::Timeline do
   subject(:diagram) { described_class.new.apply(tree) }
 
-  context "with an array tree and noise" do
+  context "with an array tree" do
     let(:tree) do
-      ["noise", { header: "timeline" },
-       { event_entry: { time: "2021", descriptions: "single" } }]
+      [{ header: "timeline" },
+       { event_entry: { time: "2021", descriptions: { desc: "single" } } }]
     end
 
     it "adds section-less events to the diagram" do

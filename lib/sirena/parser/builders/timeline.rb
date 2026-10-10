@@ -19,16 +19,8 @@ module Sirena
           @current_section = nil
           @last_event = nil
 
-          # Tree structure: array with header and statements
-          if tree.is_a?(Array)
-            tree.each do |item|
-              next unless item.is_a?(Hash)
-
-              process_item(diagram, item)
-            end
-          elsif tree.is_a?(Hash)
-            process_item(diagram, tree)
-          end
+          # A bare header parses to one Hash; header plus statements to an Array.
+          [tree].flatten(1).each { |item| process_item(diagram, item) }
 
           diagram
         end
@@ -36,9 +28,6 @@ module Sirena
         private
 
         def process_item(diagram, item)
-          return unless item.is_a?(Hash)
-
-          process_header(diagram, item) if item.key?(:header)
           process_title(diagram, item) if item.key?(:title)
           process_acc_title(diagram, item) if item.key?(:acc_title)
           process_acc_descr(diagram, item) if item.key?(:acc_descr)
@@ -46,10 +35,6 @@ module Sirena
           process_event(diagram, item) if item.key?(:event_entry)
           process_continuation(diagram, item) if item.key?(:continuation_entry)
           process_task(diagram, item) if item.key?(:task)
-        end
-
-        def process_header(diagram, item)
-          # Header is just the 'timeline' keyword, nothing to extract
         end
 
         def process_title(diagram, item)
@@ -135,30 +120,16 @@ module Sirena
         def extract_descriptions(descriptions_data)
           return [] unless descriptions_data
 
-          # descriptions_data is an array of {:desc => text} hashes
-          if descriptions_data.is_a?(Array)
-            descriptions_data.map do |item|
-              if item.is_a?(Hash) && item[:desc]
-                extract_text(item[:desc])
-              else
-                extract_text(item)
-              end
-            end.reject(&:empty?)
-          elsif descriptions_data.is_a?(Hash) && descriptions_data[:desc]
-            [extract_text(descriptions_data[:desc])].reject(&:empty?)
-          else
-            [extract_text(descriptions_data)].reject(&:empty?)
-          end
+          # One description parses to a Hash, several to an Array of Hashes.
+          [descriptions_data].flatten(1).map do |item|
+            extract_text(item[:desc])
+          end.reject(&:empty?)
         end
 
         def extract_text(value)
           case value
-          when Hash
-            value.values.first.to_s
-          when String
-            value
-          else
-            value.to_s
+          when String then value
+          else value.to_s
           end.strip
         end
       end
