@@ -254,8 +254,11 @@ RSpec.describe Sirena::Commands::BatchCommand do
   # class. Swallowing it would make the timeout report a file failure, carry
   # on with the next file, and never fire.
   it "lets a host timeout unwind through it" do
-    expect(&batching(Timeout::ExitException.new("too slow")))
-      .to raise_error(Timeout::ExitException)
+    passed = ExceptionFamily.timeout_passthrough? do |error|
+      batching(error).call
+    end
+
+    expect(passed).to be(true)
   end
 
   # `NotImplementedError` rather than a `Class.new(Exception)`: the

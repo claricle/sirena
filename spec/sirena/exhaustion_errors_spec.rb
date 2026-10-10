@@ -70,12 +70,12 @@ RSpec.describe Sirena::Engine do
     # them passes this example untouched. The site examples are what cover
     # that direction: four for the engine below, four more for the batch
     # command in its own spec.
-    it "excludes every control-flow class the hierarchy has" do
-      control_flow = [SystemExit, SignalException, Interrupt,
-                      Timeout::ExitException]
+    it "excludes process and host control flow" do
+      process_control_flow = [SystemExit, SignalException, Interrupt]
+      protected = [*process_control_flow, ExceptionFamily::TIMEOUT_UNWINDING]
 
-      expect(outside_standard_error).to include(*control_flow)
-      expect(Sirena::EXHAUSTION_ERRORS).not_to include(*control_flow)
+      expect(outside_standard_error).to include(*process_control_flow)
+      expect(Sirena::EXHAUSTION_ERRORS).not_to include(*protected)
     end
   end
 
@@ -133,8 +133,11 @@ RSpec.describe Sirena::Engine do
     # class. Swallowing it would make the timeout report a render failure
     # and never fire.
     it "lets a host timeout unwind through it" do
-      expect(&rendering(Timeout::ExitException.new("too slow")))
-        .to raise_error(Timeout::ExitException)
+      passed = ExceptionFamily.timeout_passthrough? do |error|
+        rendering(error).call
+      end
+
+      expect(passed).to be(true)
     end
 
     # Only control flow passes; the whole table is in

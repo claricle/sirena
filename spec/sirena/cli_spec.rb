@@ -68,8 +68,11 @@ RSpec.describe Sirena::Cli do
     # through this class. Swallowing it would print a render failure and
     # never let the timeout fire.
     it "lets a host timeout unwind through it" do
-      expect(&rendering(Timeout::ExitException.new("too slow")))
-        .to raise_error(Timeout::ExitException)
+      passed = ExceptionFamily.timeout_passthrough? do |error|
+        rendering(error).call
+      end
+
+      expect(passed).to be(true)
     end
 
     # `NotImplementedError` rather than a `Class.new(Exception)`: the
