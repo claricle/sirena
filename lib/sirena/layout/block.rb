@@ -6,7 +6,8 @@ require_relative "../notation/mermaid/ir_adapters/block"
 
 module Sirena
   module Layout
-    # Block diagram transformer for converting block models to positioned layouts.
+    # Block diagram transformer for converting block models to positioned
+    # layouts.
     #
     # Converts a typed block diagram model into a column-based layout structure.
     # Handles block dimension calculation, column-based positioning, and
@@ -237,11 +238,14 @@ module Sirena
 
           # Update column widths
           (current_col...(current_col + block_width)).each do |col|
-            col_widths[col] = [col_widths[col], dims[:width]].max if col < columns
+            next unless col < columns
+
+            col_widths[col] = [col_widths[col], dims[:width]].max
           end
 
           # Update row height
-          row_heights[current_row] = [row_heights[current_row] || 0, dims[:height]].max
+          current_height = row_heights[current_row] || 0
+          row_heights[current_row] = [current_height, dims[:height]].max
 
           # Handle compound blocks
           if compound?(block) && !children(block).empty?

@@ -6,7 +6,8 @@ require_relative "../notation/mermaid/ir_adapters/requirement"
 
 module Sirena
   module Layout
-    # Requirement diagram transformer for converting requirement models to positioned layouts.
+    # Requirement diagram transformer for converting requirement models to
+    # positioned layouts.
     #
     # Converts a requirement diagram model into a positioned layout structure.
     # Handles requirement and element positioning, relationship routing,
@@ -115,7 +116,8 @@ module Sirena
 
       # Converts a requirement diagram to a positioned layout structure.
       #
-      # @param diagram [Diagram::Requirement] the requirement diagram to transform
+      # @param diagram [Diagram::Requirement] the requirement diagram to
+      #   transform
       # @return [Hash] positioned layout hash
       def build_graph(diagram)
         diagram = semantic_diagram(ir_graph(diagram))
@@ -536,8 +538,16 @@ module Sirena
         # Level 2+: Requirements that depend on other requirements
 
         nodes_by_name = {}
-        requirements.each { |r| nodes_by_name[r.name] = { type: :requirement, object: r, level: nil } }
-        elements.each { |e| nodes_by_name[e.name] = { type: :element, object: e, level: 0 } }
+        requirements.each do |requirement|
+          nodes_by_name[requirement.name] = {
+            type: :requirement, object: requirement, level: nil
+          }
+        end
+        elements.each do |element|
+          nodes_by_name[element.name] = {
+            type: :element, object: element, level: 0
+          }
+        end
 
         # Build dependency map
         dependencies = Hash.new { |h, k| h[k] = [] }
@@ -566,7 +576,9 @@ module Sirena
               changed = true
             else
               # Check if all dependencies have levels
-              dep_levels = deps.map { |d| nodes_by_name[d]&.dig(:level) }.compact
+              dep_levels = deps.filter_map do |dependency|
+                nodes_by_name[dependency]&.dig(:level)
+              end
               if dep_levels.size == deps.size
                 # All dependencies have levels
                 max_dep_level = dep_levels.max || 0
@@ -584,7 +596,8 @@ module Sirena
 
         # Group by level
         levels = []
-        nodes_by_name.values.group_by { |n| n[:level] }.sort.each do |_level, nodes|
+        grouped_nodes = nodes_by_name.values.group_by { |node| node[:level] }
+        grouped_nodes.sort.each do |_level, nodes|
           levels << nodes
         end
 
