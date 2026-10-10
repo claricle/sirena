@@ -59,6 +59,39 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapters::StructuredDataTypes do
     end
 
     it { is_expected.to eq(expected_evidence) }
+
+    context "when Mermaid repeats a card identifier across columns" do
+      subject(:adapter_evidence) do
+        data = described_class.call(diagram)
+        items = data.items.map { |item| [item.id, item.parent_id] }
+        assigned = data.values.find { |value| value.role == "assignee" }
+
+        [data.valid?, items, assigned.parent_id]
+      end
+
+      let(:diagram) do
+        first = Sirena::Diagram::KanbanColumn.new(
+          id: "todo", title: "Todo",
+          cards: [Sirena::Diagram::KanbanCard.new(id: "docs", text: "Write")]
+        )
+        second = Sirena::Diagram::KanbanColumn.new(
+          id: "doing", title: "Doing",
+          cards: [Sirena::Diagram::KanbanCard.new(
+            id: "docs", text: "Publish", assigned: "Alice",
+          )]
+        )
+        Sirena::Diagram::Kanban.new(columns: [first, second])
+      end
+
+      let(:expected_evidence) do
+        [true,
+         [["todo", nil], ["docs", "todo"],
+          ["doing", nil], ["docs_2", "doing"]],
+         "docs_2"]
+      end
+
+      it { is_expected.to eq(expected_evidence) }
+    end
   end
 
   describe Sirena::Notation::Mermaid::IRAdapters::Radar do

@@ -238,7 +238,7 @@ rows:
 - file: spec/tasks/benchmark_rake_spec.rb
   count: 8
 - file: spec/tasks/corpus_spec.rb
-  count: 15
+  count: 14
 - file: spec/tasks/coverage_rake_spec.rb
   count: 8
 - file: spec/workflows/workflows_spec.rb

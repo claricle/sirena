@@ -103,12 +103,10 @@ RSpec.describe Sirena::Corpus do
       expect(result[:exception_class]).to eq("Sirena::Parser::ParseError")
     end
 
-    it "reports the layout stage for a real transform-validity failure" do
+    it "reports pass after C4 IR preserves optional link data" do
       result = described_class.render_case("c4/012_parser_should_parse_a_link_11.mmd")
 
-      expect(result[:pass]).to be(false)
-      expect(result[:stage]).to eq("layout")
-      expect(result[:exception_class]).to eq("Sirena::Layout::LayoutError")
+      expect(result).to eq(pass: true)
     end
   end
 
