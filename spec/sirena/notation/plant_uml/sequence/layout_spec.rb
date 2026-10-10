@@ -14,6 +14,13 @@ module PlantUmlSequenceSceneHelpers
     scene.heads.first(scene.lifelines.size)
   end
 
+  def stereotyped_head(alignment, *more)
+    style = ["<style>", "sequenceDiagram {", "participant {",
+             "HorizontalAlignment #{alignment}", "}", "}", "</style>"]
+    scene = scene_of(*style, *more, 'participant "C" as C <<stereo>>', "C -> D")
+    top_heads(scene).first
+  end
+
   def teoz_scene(*lines)
     scene_of("!pragma teoz true", *lines)
   end
@@ -542,6 +549,35 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       head = top_heads(scene_of("participant C <<st>>", "C -> D")).first
 
       expect(head.texts.map(&:content)).to eq(["«st»", "C"])
+    end
+
+    it "starts both lines of a left-aligned head at one edge" do
+      head = stereotyped_head("left")
+
+      expect(head.texts.map { |t| [t.anchor, t.x] }.uniq.size).to eq(1)
+    end
+
+    it "ends both lines of a right-aligned head at one edge" do
+      head = stereotyped_head("right")
+
+      expect(head.texts.map { |t| [t.anchor, t.x] }.uniq.size).to eq(1)
+    end
+
+    it "anchors a left-aligned head at start and a right one at end" do
+      anchors = %w[left right].map { |a| stereotyped_head(a).texts.first.anchor }
+
+      expect(anchors).to eq(%w[start end])
+    end
+
+    it "puts the left edge of the block left of the right edge" do
+      xs = %w[left right].map { |a| stereotyped_head(a).texts.first.x }
+
+      expect(xs.first).to be < xs.last
+    end
+
+    it "keeps the lines of a centred head on the middle" do
+      expect(stereotyped_head("center").texts.map(&:anchor).uniq)
+        .to eq(["middle"])
     end
 
     it "makes the heads taller for a stereotype" do

@@ -217,6 +217,62 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
   end
 
+  describe "fragment tab colours" do
+    let(:header) do
+      lambda do |*properties|
+        ["<style>", "sequenceDiagram {", "groupHeader {", *properties, "}",
+         "}", "</style>", "A -> B"]
+      end
+    end
+
+    it "reads BackGroundColor and FontColor of groupHeader" do
+      lines = header.call("FontColor blue", "BackGroundColor lightyellow")
+      appearance = parse(*lines).appearance
+
+      expect([appearance.tab_colour, appearance.tab_fill])
+        .to eq(%w[#0000FF #FFFFE0])
+    end
+
+    it "reads a hex colour written with its hash" do
+      lines = header.call("BackGroundColor #abc")
+
+      expect(parse(*lines).appearance.tab_fill).to eq("#AABBCC")
+    end
+
+    [
+      ["FontSize 20"],
+      ["FontColor notacolour"],
+      ["FontColor add"],
+      ["FontColor"],
+    ].each do |properties|
+      it "refuses a groupHeader holding #{properties.inspect}" do
+        expect { parse(*header.call(*properties)) }
+          .to raise_error(unsupported, /style block/)
+      end
+    end
+
+    it "refuses the nested group { header } form, which 1.2026.6 ignores" do
+      nested = ["<style>", "sequenceDiagram {", "group {", "header {",
+                "FontColor red", "}", "}", "}", "</style>", "A -> B"]
+
+      expect { parse(*nested) }.to raise_error(unsupported, /style block/)
+    end
+
+    it "refuses a block that closes more than it opened" do
+      lines = ["<style>", "sequenceDiagram {", "}", "}", "</style>"]
+
+      expect { parse(*lines, "A -> B") }
+        .to raise_error(unsupported, /style block/)
+    end
+
+    it "refuses a block that never closes its selector" do
+      lines = ["<style>", "sequenceDiagram {", "</style>"]
+
+      expect { parse(*lines, "A -> B") }
+        .to raise_error(unsupported, /style block/)
+    end
+  end
+
   describe "minimum participant width" do
     let(:style) do
       lambda do |body|
@@ -247,8 +303,9 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
 
     [
-      "MinimumWidth 90\nHorizontalAlignment right",
+      "MinimumWidth 90\nHorizontalAlignment middle",
       "MinimumWidth 90\nFontColor red",
+      "MinimumWidth: 90;",
       "FontColor red",
       "MinimumWidth wide",
     ].each do |body|
@@ -256,6 +313,30 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
         expect { parse(*style.call(body), "A -> B") }
           .to raise_error(unsupported, /style block/)
       end
+    end
+
+    it "reads HorizontalAlignment" do
+      lines = style.call("HorizontalAlignment right")
+
+      expect(parse(*lines, "A -> B").appearance.alignment).to eq(:right)
+    end
+
+    it "aligns centre when none is written" do
+      expect(parse("A -> B").appearance.alignment).to eq(:center)
+    end
+
+    it "reads a one-line style block" do
+      line = "sequenceDiagram { participant { MinimumWidth 70 } }"
+
+      expect(parse("<style>", line, "</style>", "A -> B").min_head_width)
+        .to eq(70)
+    end
+
+    it "lets a later style block change one setting and keep the rest" do
+      lines = [*style.call("MinimumWidth 90"),
+               *style.call("HorizontalAlignment left")]
+
+      expect(parse(*lines, "A -> B").appearance.min_width).to eq(90)
     end
 
     it "refuses a style block for another element" do

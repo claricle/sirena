@@ -25,10 +25,11 @@ module Sirena
               "L #{right - 6} #{bottom} L #{left} #{bottom} Z"
           end
 
-          def initialize(block, bottom, centers, measure)
+          def initialize(block, bottom, centers, measure, appearance)
             @block = block
             @bottom = bottom
             @measure = measure
+            @appearance = appearance
             low, high = extent(block, centers)
             pad = BASE_PAD + (NEST_PAD * block[:depth])
             @x = low - pad
@@ -39,6 +40,7 @@ module Sirena
             Scene::Fragment.new(
               x: x, y: @block[:top], width: width,
               height: @bottom - @block[:top], tab_path: tab_path,
+              tab_fill: @appearance.tab_fill,
               separators: separators, texts: texts
             )
           end
@@ -91,8 +93,13 @@ module Sirena
 
           def texts
             top = @block[:top] + 14
-            [text(tab_text, x + TAB_PAD, top, "fragment_tab"),
-             *guard_texts(top), *branch_texts]
+            [tab_label(top), *guard_texts(top), *branch_texts]
+          end
+
+          def tab_label(top)
+            text(tab_text, x + TAB_PAD, top, "fragment_tab").tap do |label|
+              label.colour = @appearance.tab_colour
+            end
           end
 
           def guard_texts(top)

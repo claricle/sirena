@@ -122,7 +122,8 @@ module Sirena
 
           def fragment_group(fragment)
             children = [frame_rectangle(fragment),
-                        outlined_path(fragment.tab_path, node_fill),
+                        outlined_path(fragment.tab_path,
+                                      fragment.tab_fill || node_fill),
                         *fragment.separators.map { |line| dashed(line) }]
             group("fragment-#{fragment.x}-#{fragment.y}", children,
                   fragment.texts)
@@ -177,7 +178,8 @@ module Sirena
             element(Svg::Text, x: scene_text.x, y: scene_text.y,
                                content: scene_text.content,
                                text_anchor: scene_text.anchor,
-                               fill: text_colour, font_family: font_family,
+                               fill: scene_text.colour || text_colour,
+                               font_family: font_family,
                                font_size: font_size(scene_text.role),
                                font_style: text_style(scene_text.role),
                                font_weight: text_weight(scene_text.role))

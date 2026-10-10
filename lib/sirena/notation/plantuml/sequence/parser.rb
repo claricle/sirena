@@ -4,6 +4,7 @@ require_relative "../../../error"
 require_relative "../../../error/diagram_type_error"
 require_relative "../../../error/parse_error"
 require_relative "../unsupported_construct_error"
+require_relative "appearance"
 require_relative "arrow_syntax"
 require_relative "box"
 require_relative "diagram"
@@ -110,7 +111,7 @@ module Sirena
             @open_boxes = []
             @pending_note = nil
             @pending_style = nil
-            @min_head_width = nil
+            @appearance = Appearance.new
             @teoz = false
             @parallel = false
             @footbox = true
@@ -178,7 +179,7 @@ module Sirena
 
           def read_setting(text, number)
             if (match = SKINPARAM_WIDTH.match(text))
-              @min_head_width = match[1].to_i
+              set(min_width: match[1].to_i)
             elsif HIDE_FOOTBOX.match?(text)
               @footbox = false
             elsif STYLE_OPEN.match?(text)
@@ -206,10 +207,14 @@ module Sirena
           def close_style
             style = @pending_style
             @pending_style = nil
-            width = Style.minimum_width(style[:lines].join("\n"))
-            raise refusal(style[:text], style[:line]) unless width
+            read = Style.read(style[:lines].join("\n"))
+            raise refusal(style[:text], style[:line]) unless read
 
-            @min_head_width = width
+            @appearance = @appearance.merge(read)
+          end
+
+          def set(**settings)
+            @appearance = @appearance.merge(Appearance.new(**settings))
           end
 
           def read_structure(text, number)
@@ -441,7 +446,7 @@ module Sirena
             check_boxes
             Diagram.new(participants: @participants.values.freeze,
                         items: @outline.items.freeze, boxes: @boxes.freeze,
-                        min_head_width: @min_head_width, footbox: @footbox)
+                        appearance: @appearance, footbox: @footbox)
           end
 
           def unclosed_block

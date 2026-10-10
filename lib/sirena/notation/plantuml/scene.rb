@@ -16,6 +16,7 @@ module Sirena
           attribute :y, :float
           attribute :role, :string
           attribute :anchor, :string
+          attribute :colour, :string
         end
 
         class Segment < Lutaml::Model::Serializable

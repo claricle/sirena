@@ -24,7 +24,8 @@ module PlantUmlSequenceCorpus
     3d52db0edecd 54dfdd51ac5d 62b7d8792525 7624adcaae49 80894b73726a
     846af1d12917 920d4bcaa3e9 d783321e2c62
     559333843e38 184d55bcfb9c 2dd4eecfa67b f985a9b8f0de
-    0385427ea4be 24072f84b995 577feb6055fb
+    0385427ea4be 24072f84b995 577feb6055fb 4f6a53784edf 4f323bdad314
+    5bcc726e80b1
     6893700e037a 18d6381b866f f602d00329ee
     7ff458de0156 2a2a7bb5aacc f0cf331472b7 e76e451484c6
     ddc664f08110 d918f796209f ae1299794d0b fcaf69429c9c
@@ -110,6 +111,27 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     end
 
     expect(widths).to all(be >= 114.0)
+  end
+
+  it "fills the tab of the group header case with its style colours" do
+    svg = Sirena.render(source_of("5bcc726e80b1"), notation: :plantuml)
+    fills = matches(svg, "//path/@fill").map(&:value)
+
+    expect(fills).to include("#FFFFE0")
+  end
+
+  it "colours the group tab text of that case" do
+    svg = Sirena.render(source_of("5bcc726e80b1"), notation: :plantuml)
+
+    expect(matches(svg, "//text[.='Setup']/@fill").map(&:value))
+      .to eq(["#0000FF"])
+  end
+
+  it "draws the stereotype of the left-aligned case at the block edge" do
+    svg = Sirena.render(source_of("4f6a53784edf"), notation: :plantuml)
+
+    expect(matches(svg, "//text[.='«st»']/@text-anchor").map(&:value).uniq)
+      .to eq(["start"])
   end
 
   it "fills the bar of a rendered case with its colour" do

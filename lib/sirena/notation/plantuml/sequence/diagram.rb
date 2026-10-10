@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "appearance"
 require_relative "message"
 
 module Sirena
@@ -11,19 +12,23 @@ module Sirena
         # source order and the boxes around neighbouring participants.
         # Private to this notation.
         class Diagram
-          attr_reader :participants, :items, :boxes, :min_head_width
+          attr_reader :participants, :items, :boxes, :appearance
 
-          # @param min_head_width [Integer, nil] the narrowest participant head
-          #   the source asked for
+          # @param appearance [Appearance] what skinparam and `<style>` set
           # @param footbox [Boolean] false after `hide footbox`
           def initialize(participants:, items:, boxes: [].freeze,
-                         min_head_width: nil, footbox: true)
+                         appearance: Appearance.new, footbox: true)
             @participants = participants
             @items = items
             @boxes = boxes
-            @min_head_width = min_head_width
+            @appearance = appearance
             @footbox = footbox
             freeze
+          end
+
+          # @return [Integer, nil] the narrowest participant head asked for
+          def min_head_width
+            appearance.min_width
           end
 
           def footbox?
