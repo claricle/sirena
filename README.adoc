@@ -156,6 +156,22 @@ Then render it by loading the bundled notation:
 sirena render --require sirena/notation/plantuml diagram.puml -o output.svg
 ----
 
+The same notation renders PlantUML sequence diagrams. Create
+`sequence.puml`:
+
+----
+@startuml
+Alice -> Bob : hello
+Bob --> Alice : hi
+@enduml
+----
+
+Then render it the same way:
+
+----
+sirena render --require sirena/notation/plantuml sequence.puml -o sequence.svg
+----
+
 Render all Mermaid files in a directory:
 
 [source,shell]
