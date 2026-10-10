@@ -21,10 +21,16 @@ RSpec.describe Sirena::Renderer::Base do
   let(:themeless) { renderer_class.new.tap { |r| r.theme = nil } }
   let(:hostile) { renderer_class.new.tap { |r| r.theme = Object.new } }
 
+  def sequence_scene(width, height, view_box)
+    Sirena::Layout::Sequence::Scene.new(width:, height:, view_box:)
+  end
+
   describe "#render" do
     it "names the subclass that forgot to implement it" do
+      error = /#{Regexp.escape(renderer_class.to_s)} must implement #render/
+
       expect { renderer_class.new.render(nil) }
-        .to raise_error(NotImplementedError, /#{Regexp.escape(renderer_class.to_s)} must implement #render/)
+        .to raise_error(NotImplementedError, error)
     end
   end
 
@@ -36,9 +42,11 @@ RSpec.describe Sirena::Renderer::Base do
 
     it "reads each accessor from its own section of the theme" do
       expect([
-               renderer.theme_color(:node_fill), renderer.theme_typography(:font_family),
-               renderer.theme_shape(:stroke_width), renderer.theme_spacing(:rank_spacing),
-               renderer.theme_effect(:shadow_blur)
+               renderer.theme_color(:node_fill),
+               renderer.theme_typography(:font_family),
+               renderer.theme_shape(:stroke_width),
+               renderer.theme_spacing(:rank_spacing),
+               renderer.theme_effect(:shadow_blur),
              ]).to eq([
                         dark.colors.node_fill, dark.typography.font_family,
                         dark.shapes.stroke_width, dark.spacing.rank_spacing,
@@ -53,7 +61,8 @@ RSpec.describe Sirena::Renderer::Base do
       theme_spacing: :rank_spacing,
       theme_effect: :shadow_blur,
     }.each do |accessor, property|
-      it "#{accessor} is nil for an unknown property, no theme, or a theme without the section" do
+      it "#{accessor} is nil for an unknown property, no theme, " \
+         "or a theme without the section" do
         expect(renderer.public_send(accessor, :no_such_property)).to be_nil
         expect(themeless.public_send(accessor, property)).to be_nil
         expect(hostile.public_send(accessor, property)).to be_nil
@@ -72,7 +81,8 @@ RSpec.describe Sirena::Renderer::Base do
       )
     end
 
-    it "paints an edge with the theme stroke and stroke width, leaving fill alone" do
+    it "paints an edge with the theme stroke and stroke width, " \
+       "leaving fill alone" do
       element = Sirena::Svg::Path.new
       renderer.apply_theme_to_edge(element)
 
@@ -152,7 +162,8 @@ RSpec.describe Sirena::Renderer::Base do
 
   describe "#create_path_data" do
     it "runs a straight line when there are no bend points" do
-      expect(renderer.create_path_data({ x: 1, y: 2 }, { x: 9, y: 8 })).to eq("M 1 2 L 9 8")
+      expect(renderer.create_path_data({ x: 1, y: 2 }, { x: 9, y: 8 }))
+        .to eq("M 1 2 L 9 8")
     end
 
     it "visits the bend points in order between start and end" do
@@ -170,37 +181,43 @@ RSpec.describe Sirena::Renderer::Base do
     end
 
     it "uses the final Scene dimensions and starts the viewBox at zero" do
-      scene = Sirena::Layout::Sequence::Scene.new(width: 810, height: 610, view_box: "0 0 810 610")
+      scene = sequence_scene(810, 610, "0 0 810 610")
       doc = renderer.create_document(scene)
 
-      expect([doc.width, doc.height, doc.view_box, doc.overflow]).to eq([810, 610, "0 0 810 610", nil])
+      expect([doc.width, doc.height, doc.view_box, doc.overflow])
+        .to eq([810, 610, "0 0 810 610", nil])
       expect(renderer.instance_variable_defined?(:@offset_x)).to be(false)
     end
 
     it "keeps fractional dimensions in the zero-origin viewBox" do
-      scene = Sirena::Layout::Sequence::Scene.new(width: 100.5, height: 50.25, view_box: "0 0 100.5 50.25")
+      scene = sequence_scene(100.5, 50.25, "0 0 100.5 50.25")
 
-      expect([scene.width, scene.height, renderer.create_document(scene).view_box]).to eq([100.5, 50.25, "0 0 100.5 50.25"])
+      expect([scene.width, scene.height,
+              renderer.create_document(scene).view_box])
+        .to eq([100.5, 50.25, "0 0 100.5 50.25"])
       expect(renderer.instance_variable_defined?(:@offset_y)).to be(false)
     end
 
     it "keeps matching dimension spelling but replaces a non-zero origin" do
-      scene = Sirena::Layout::Sequence::Scene.new(width: 100, height: 50, view_box: "5 6 100.0 50.0")
+      scene = sequence_scene(100, 50, "5 6 100.0 50.0")
 
       expect(renderer.create_document(scene).view_box).to eq("0 0 100.0 50.0")
     end
 
     it "ignores stale viewBox dimensions" do
-      scene = Sirena::Layout::Sequence::Scene.new(width: 100, height: 50, view_box: "5 6 70 80")
+      scene = sequence_scene(100, 50, "5 6 70 80")
 
-      expect([renderer.create_document(scene).width, renderer.create_document(scene).view_box]).to eq([100, "0 0 100 50"])
+      expect([renderer.create_document(scene).width,
+              renderer.create_document(scene).view_box])
+        .to eq([100, "0 0 100 50"])
     end
 
     it "sets the overflow attribute only when asked" do
-      scene = Sirena::Layout::Sequence::Scene.new(width: 100, height: 50, view_box: "0 0 100 50")
+      scene = sequence_scene(100, 50, "0 0 100 50")
 
       expect(renderer.create_document(scene).overflow).to be_nil
-      expect(renderer.create_document(scene, overflow: "hidden").overflow).to eq("hidden")
+      expect(renderer.create_document(scene, overflow: "hidden").overflow)
+        .to eq("hidden")
     end
   end
 

@@ -123,7 +123,9 @@ RSpec.describe Sirena::Engine do
       # 007 is excluded: it fails at parse and is flagged
       # probably-oracle-invalid (pending item 02's verdict).
       Dir.glob(File.expand_path("../mermaid/treemap/*.mmd", __dir__))
-        .reject { |path| path.end_with?("007_rendering_treemap_spec_treemap_6.mmd") }
+        .reject do |path|
+          path.end_with?("007_rendering_treemap_spec_treemap_6.mmd")
+        end
         .each do |fixture_file|
         it "renders #{File.basename(fixture_file)}" do
           result = engine.render(File.read(fixture_file))
@@ -139,6 +141,10 @@ RSpec.describe Sirena::Engine do
     # wanted whitespace there, so mmdc drew these and Sirena refused to
     # name the type at all.
     context "with a flowchart header the direction touches" do
+      let(:invalid_elk_headers) do
+        %w[graph-elk flowchart-bogus flowchart-ELK FLOWCHART-elk]
+      end
+
       %w[> < ^].each do |glyph|
         it "renders graph#{glyph}" do
           expect(engine.render("graph#{glyph}\nA --- B\n")).to include("<svg")
@@ -161,7 +167,8 @@ RSpec.describe Sirena::Engine do
         expect(engine.render(source)).to include("<svg")
       end
 
-      it "raises DiagramTypeError for every header only the -elk suffix would license" do
+      it "raises DiagramTypeError for every header only the -elk suffix " \
+         "would license" do
         # mmdc recognises exactly one flowchart suffix, spelled exactly
         # `-elk` (its own detector is `/^\s*flowchart-elk/`, no `i` flag).
         # A detector that widened any of these three axes -- attaching the
@@ -170,7 +177,7 @@ RSpec.describe Sirena::Engine do
         # source to the flowchart parser and raise ParseError there instead
         # of DiagramTypeError at detection, the wrong failure for an
         # unsupported header.
-        %w[graph-elk flowchart-bogus flowchart-ELK FLOWCHART-elk].each do |keyword|
+        invalid_elk_headers.each do |keyword|
           source = "#{keyword}\nA --- B\n"
 
           expect { engine.render(source) }
@@ -322,7 +329,8 @@ RSpec.describe Sirena::Engine do
         end.new
 
         expect do
-          described_class.new(logger: minimal_logger).render(source, verbose: true)
+          described_class.new(logger: minimal_logger)
+            .render(source, verbose: true)
         end.not_to raise_error
       end
 

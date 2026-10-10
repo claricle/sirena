@@ -14,9 +14,17 @@ RSpec.describe Sirena::Layout::Base do
     end.new
   end
   let(:engine) { Sirena::Engine.new }
+  let(:date_layout_class) do
+    Class.new(described_class) do
+      def scene(_diagram)
+        Sirena::Layout::Scene.new(width: today.year, height: 0)
+      end
+    end
+  end
 
   describe "#call" do
-    it "dispatches the converted flowchart and a legacy layout through one entry point" do
+    it "dispatches the converted flowchart and a legacy layout " \
+       "through one entry point" do
       flowchart = Sirena::Parser::Flowchart.new.parse("flowchart TD\nA-->B\n")
 
       converted = Sirena::Layout::Flowchart.new.call(flowchart)
@@ -40,38 +48,32 @@ RSpec.describe Sirena::Layout::Base do
     end
 
     it "treats today: nil as the real date and a pinned date as different" do
-      dates = Class.new(described_class) do
-        def scene(_diagram) = Sirena::Layout::Scene.new(width: today.year, height: 0)
-      end.new
+      dates = date_layout_class.new
 
       expect(dates.call(diagram, today: nil).width).to eq(Date.today.year)
       expect(dates.call(diagram, today: Date.new(1999, 1, 1)).width).to eq(1999)
     end
 
     it "keeps a date pinned with today= when called with today: nil" do
-      dates = Class.new(described_class) do
-        def scene(_diagram) = Sirena::Layout::Scene.new(width: today.year, height: 0)
-      end.new
+      dates = date_layout_class.new
 
       dates.today = Date.new(1999, 1, 1)
 
       expect(dates.call(diagram, today: nil).width).to eq(1999)
     end
 
-    it "does not leak a today: kwarg from one call into the next call on the same instance" do
-      dates = Class.new(described_class) do
-        def scene(_diagram) = Sirena::Layout::Scene.new(width: today.year, height: 0)
-      end.new
+    it "does not leak a today: kwarg from one call into the next call " \
+       "on the same instance" do
+      dates = date_layout_class.new
 
       dates.call(diagram, today: Date.new(1999, 1, 1))
 
       expect(dates.call(diagram, today: nil).width).to eq(Date.today.year)
     end
 
-    it "does not clobber a today= pin when a call with today: raises on an invalid diagram" do
-      dates = Class.new(described_class) do
-        def scene(_diagram) = Sirena::Layout::Scene.new(width: today.year, height: 0)
-      end.new
+    it "does not clobber a today= pin when a call with today: raises " \
+       "on an invalid diagram" do
+      dates = date_layout_class.new
       dates.today = Date.new(1999, 1, 1)
       invalid = instance_double(Sirena::Diagram::Base, valid?: false)
 
@@ -81,7 +83,8 @@ RSpec.describe Sirena::Layout::Base do
       expect(dates.call(diagram, today: nil).width).to eq(1999)
     end
 
-    it "treats a #scene supplied by a module mixed into the layout as converted" do
+    it "treats a #scene supplied by a module mixed into the layout " \
+       "as converted" do
       scene_hook = Module.new do
         def scene(_diagram) = Sirena::Layout::Scene.new(width: 3, height: 4)
       end
@@ -90,7 +93,8 @@ RSpec.describe Sirena::Layout::Base do
       expect(mixed_in.call(diagram)).to be_a(Sirena::Layout::Scene)
     end
 
-    it "is not fooled by a private #scene inherited from outside the layout hierarchy" do
+    it "is not fooled by a private #scene inherited from outside " \
+       "the layout hierarchy" do
       # Simulates a host app or gem monkeypatching Kernel with a method of
       # this exact name -- not a layout-defined #scene. respond_to?(:scene,
       # true) alone would match this too, since it walks the WHOLE
@@ -139,7 +143,8 @@ RSpec.describe Sirena::Layout::Base do
   end
 
   describe "Engine#transform_diagram" do
-    it "passes the layout result through and hands the layout the theme and date" do
+    it "passes the layout result through and hands the layout " \
+       "the theme and date" do
       theme = Sirena::Theme::Registry.get(:high_contrast)
       result = engine.send(:transform_diagram, diagram, converted_layout.class,
                            Date.new(2001, 2, 3), theme)
