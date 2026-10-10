@@ -3,6 +3,7 @@
 # Helpers for the PlantUML class IR specs.
 module PlantUmlIrHelpers
   CORPUS_GLOB = File.expand_path("../plantuml/class/*.puml", __dir__)
+  PLAIN = [Symbol, String, Numeric, true, false, nil].freeze
 
   # A class diagram that uses every construct the IR must carry.
   def feature_source
@@ -82,11 +83,14 @@ module PlantUmlIrHelpers
     case value
     when Array then value.map { |item| summary(item) }
     when Hash then value.transform_values { |item| summary(item) }
-    when Symbol, String, Numeric, true, false, nil then value
-    else
-      value.instance_variables.to_h do |name|
-        [name, summary(value.instance_variable_get(name))]
-      end
+    when *PLAIN then value
+    else instance_summary(value)
+    end
+  end
+
+  def instance_summary(value)
+    value.instance_variables.to_h do |name|
+      [name, summary(value.instance_variable_get(name))]
     end
   end
 end
