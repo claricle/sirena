@@ -22,6 +22,10 @@ module Sirena
 
         # The bracketed title, nil when the block has none
         attribute :title, :string
+
+        # The title as drawn, one entry per wrapped line
+        attribute :title_lines, :string, collection: true,
+                                         default: -> { [] }
         attribute :dividers, FrameDivider, collection: true,
                                            default: -> { [] }
       end

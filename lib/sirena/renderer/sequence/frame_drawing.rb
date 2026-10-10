@@ -14,6 +14,7 @@ module Sirena
         DEFAULT_BOX_FILL = "none"
         DEFAULT_RECT_FILL = "#cccccc"
         FRAME_FONT_SIZE = "16"
+        TITLE_PITCH = 19
 
         private
 
@@ -92,7 +93,15 @@ module Sirena
                  frame_text(frame.kind, kind_center(frame), frame.y + 14)]
           return tab unless frame.title
 
-          tab << frame_text(frame.title, title_center(frame), frame.y + 18)
+          tab.concat(title_texts(frame))
+        end
+
+        def title_texts(frame)
+          lines = frame.title_lines.empty? ? [frame.title] : frame.title_lines
+          lines.each_with_index.map do |line, index|
+            frame_text(line, title_center(frame),
+                       frame.y + 18 + (TITLE_PITCH * index))
+          end
         end
 
         def kind_center(frame)
