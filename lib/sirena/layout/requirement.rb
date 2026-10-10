@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/requirement"
+require_relative "../notation/mermaid/ir_adapters/requirement"
 
 module Sirena
   module Layout
@@ -15,6 +16,22 @@ module Sirena
     #   transform = Requirement.new
     #   layout = transform.to_layout(requirement_diagram)
     class Requirement < Base
+      SemanticRequirement = Struct.new(
+        :name, :type, :id, :text, :risk, :verifymethod,
+        keyword_init: true
+      )
+      SemanticElement = Struct.new(
+        :name, :type, :docref, keyword_init: true
+      )
+      SemanticRelationship = Struct.new(
+        :source, :target, :type, keyword_init: true
+      )
+      SemanticDiagram = Struct.new(
+        :requirements, :elements, :relationships, keyword_init: true
+      )
+      private_constant :SemanticRequirement, :SemanticElement,
+                       :SemanticRelationship, :SemanticDiagram
+
       # Default dimensions
       DEFAULT_REQ_WIDTH = 180
       DEFAULT_REQ_HEIGHT = 140
@@ -101,12 +118,15 @@ module Sirena
       # @param diagram [Diagram::Requirement] the requirement diagram to transform
       # @return [Hash] positioned layout hash
       def build_graph(diagram)
-        # Calculate positions for requirements and elements
+        diagram = semantic_diagram(ir_graph(diagram))
         nodes_layout = calculate_node_positions(diagram)
-
-        # Calculate relationship routes
         relationships_layout = calculate_relationships(diagram, nodes_layout)
+        graph_result(nodes_layout, relationships_layout)
+      end
 
+      private
+
+      def graph_result(nodes_layout, relationships_layout)
         {
           requirements: nodes_layout[:requirements],
           elements: nodes_layout[:elements],
@@ -116,7 +136,88 @@ module Sirena
         }
       end
 
-      private
+      NORMALIZED_REQUIREMENT_TYPES = {
+        "requirement" => "requirement",
+        "functional_requirement" => "functionalRequirement",
+        "interface_requirement" => "interfaceRequirement",
+        "performance_requirement" => "performanceRequirement",
+        "physical_requirement" => "physicalRequirement",
+        "design_constraint" => "designConstraint",
+      }.freeze
+      ENTITY_ROLES = %w[requirement element].freeze
+      private_constant :NORMALIZED_REQUIREMENT_TYPES
+      private_constant :ENTITY_ROLES
+
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::Requirement.call(diagram)
+      end
+
+      def semantic_diagram(graph)
+        entity_nodes = graph.nodes.select do |node|
+          ENTITY_ROLES.include?(node.role)
+        end
+        children = graph.nodes.group_by(&:parent_id)
+        SemanticDiagram.new(
+          requirements: requirement_models(entity_nodes, children),
+          elements: element_models(entity_nodes, children),
+          relationships: relationship_models(graph.edges, entity_nodes),
+        )
+      end
+
+      def requirement_models(nodes, children)
+        nodes.select { |node| node.role == "requirement" }.map do |node|
+          requirement_model(node, children[node.id])
+        end
+      end
+
+      def requirement_model(node, child_nodes)
+        fields = semantic_fields(child_nodes)
+        normalized_type = fields["requirement_type"]
+        SemanticRequirement.new(
+          name: node.label,
+          type: requirement_type(normalized_type),
+          id: fields["external_identifier"], text: fields["description"],
+          risk: fields["risk"],
+          verifymethod: fields["verification_method"]
+        )
+      end
+
+      def requirement_type(normalized_type)
+        NORMALIZED_REQUIREMENT_TYPES.fetch(normalized_type, normalized_type)
+      end
+
+      def element_models(nodes, children)
+        nodes.filter_map do |node|
+          next unless node.role == "element"
+
+          fields = semantic_fields(children[node.id])
+          SemanticElement.new(
+            name: node.label, type: fields["element_type"],
+            docref: fields["document_reference"]
+          )
+        end
+      end
+
+      def semantic_fields(nodes)
+        Array(nodes).to_h { |node| [node.role, node.label] }
+      end
+
+      def relationship_models(edges, nodes)
+        nodes_by_id = nodes.to_h { |node| [node.id, node] }
+        edges.filter_map { |edge| relationship_model(edge, nodes_by_id) }
+      end
+
+      def relationship_model(edge, nodes_by_id)
+        source = nodes_by_id[edge.source_id]
+        target = nodes_by_id[edge.target_id]
+        return unless source && target
+
+        SemanticRelationship.new(
+          source: source.label, target: target.label, type: edge.role,
+        )
+      end
 
       def scene(diagram)
         graph = build_graph(diagram)
