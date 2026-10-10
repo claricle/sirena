@@ -30,6 +30,15 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     expect(doubled.notes.first.path[/M \S+ (\S+)/, 1].to_f).to be >= top
   end
 
+  it "sizes the note to the picture plus its padding" do
+    note = doubled.notes.first
+    ys = note.path.scan(/-?\d+\.?\d*/).map(&:to_f).each_slice(2).map(&:last)
+
+    inner = note.picture.scene.height * note.picture.scale
+
+    expect(ys.max - ys.min).to be_within(0.01).of(inner + 14)
+  end
+
   it "lays out a note inside the embedded diagram too" do
     inner = laid_out(*nested_note("X -> Y", *nested_note("P -> Q")))
     picture = inner.notes.first.picture
