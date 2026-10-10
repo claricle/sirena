@@ -12,6 +12,41 @@ RSpec.describe Sirena::Layout::StateDiagram do
     }
   end
 
+  def default_metadata
+    graph = Sirena::IR::Graph.new(id: "states", role: "state_machine")
+    semantics = graph.nodes.group_by(&:parent_id)
+    [layout.send(:diagram_identifier, graph, semantics),
+     layout.send(:layout_direction, graph, semantics)]
+  end
+
+  def missing_transition_edge
+    node = Sirena::IR::Node.new(id: "state-a", label: "A", role: "state")
+    graph = Sirena::IR::Graph.new(
+      id: "states", role: "state_machine", nodes: [node],
+      edges: [annotation_edge(node), absent_source_edge(node)]
+    )
+    layout.send(:build_graph, graph).fetch(:edges).first
+  end
+
+  def annotation_edge(node)
+    Sirena::IR::Edge.new(
+      id: "note", role: "annotation_edge",
+      source_id: node.id, target_id: node.id
+    )
+  end
+
+  def absent_source_edge(node)
+    Sirena::IR::Edge.new(
+      id: "missing", role: "state_transition",
+      source_id: "absent", target_id: node.id
+    )
+  end
+
+  def fallback_sizes
+    layout.theme = double(typography: nil)
+    [layout.send(:normal_font_size), layout.send(:small_font_size)]
+  end
+
   it "measures renderer extents from a typed scene" do
     scene = described_class::Scene.new(width: 640, height: 480)
 
@@ -19,14 +54,7 @@ RSpec.describe Sirena::Layout::StateDiagram do
   end
 
   it "defaults graph metadata when no settings node exists" do
-    graph = Sirena::IR::Graph.new(id: "states", role: "state_machine")
-    semantics = graph.nodes.group_by(&:parent_id)
-    evidence = [
-      layout.send(:diagram_identifier, graph, semantics),
-      layout.send(:layout_direction, graph, semantics),
-    ]
-
-    expect(evidence).to eq(["state_diagram", nil])
+    expect(default_metadata).to eq(["state_diagram", nil])
   end
 
   it "uses the no-children canvas defaults" do
@@ -45,32 +73,11 @@ RSpec.describe Sirena::Layout::StateDiagram do
   end
 
   it "filters non-transitions and preserves an absent state endpoint" do
-    node = Sirena::IR::Node.new(id: "state-a", label: "A", role: "state")
-    edges = [
-      Sirena::IR::Edge.new(
-        id: "note", role: "annotation_edge",
-        source_id: node.id, target_id: node.id
-      ),
-      Sirena::IR::Edge.new(
-        id: "missing", role: "state_transition",
-        source_id: "absent", target_id: node.id
-      ),
-    ]
-    graph = Sirena::IR::Graph.new(
-      id: "states", role: "state_machine", nodes: [node], edges: edges,
-    )
-
-    expect(layout.send(:build_graph, graph).fetch(:edges).first)
-      .to include(sources: [nil], targets: [node.id])
+    expect(missing_transition_edge)
+      .to include(sources: [nil], targets: ["state-a"])
   end
 
   it "falls back when theme typography is absent" do
-    layout.theme = double(typography: nil)
-    sizes = [
-      layout.send(:normal_font_size),
-      layout.send(:small_font_size),
-    ]
-
-    expect(sizes).to eq([14.0, 12.0])
+    expect(fallback_sizes).to eq([14.0, 12.0])
   end
 end
