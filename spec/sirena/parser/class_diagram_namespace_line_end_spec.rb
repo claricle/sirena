@@ -11,18 +11,18 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse namespace line endings" do
 
   {
     "bodyless class declaration closes the namespace on the same line" =>
-      ["namespace Namespace1 { class Class1 }", ["Namespace1.Class1"]],
+      ["namespace Namespace1 { class Class1 }", ["Class1"]],
     "bodyless class declaration with no space before the brace" =>
-      ["namespace Namespace1b { class Class1}", ["Namespace1b.Class1"]],
+      ["namespace Namespace1b { class Class1}", ["Class1"]],
     "the closing brace can instead follow a newline" =>
-      ["namespace Namespace2 { class Class1\n}", ["Namespace2.Class1"]],
+      ["namespace Namespace2 { class Class1\n}", ["Class1"]],
     "a class with a body still closes the namespace after its own brace" =>
       ["namespace Namespace3 {\nclass Class1 {\nint : test\n}\n}",
-       ["Namespace3.Class1"]],
+       ["Class1"]],
     "a bodied class closes the namespace on the same line with a space" =>
-      ["namespace Namespace4 { class Class1 {} }", ["Namespace4.Class1"]],
+      ["namespace Namespace4 { class Class1 {} }", ["Class1"]],
     "a bodied class closes the namespace on the same line with no space" =>
-      ["namespace Namespace5 { class Class1 {}}", ["Namespace5.Class1"]],
+      ["namespace Namespace5 { class Class1 {}}", ["Class1"]],
   }.each do |name, (statement, expected_ids)|
     it(name.to_s) do
       source = "classDiagram\n#{statement}\n"

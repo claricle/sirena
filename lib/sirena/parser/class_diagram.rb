@@ -34,21 +34,7 @@ module Sirena
         diagram = Builders::ClassDiagram.new.apply(tree, source)
         diagram.notes = ClassNotes.collect(tree, diagram)
         diagram.namespaces = ClassNamespaces.collect(tree, diagram)
-        shorten_namespaced_names(diagram)
         diagram
-      end
-
-      private
-
-      # mmdc titles the box with the namespace and shows the class by its
-      # own name; the qualified id stays what relationships refer to.
-      def shorten_namespaced_names(diagram)
-        diagram.namespaces.each do |namespace|
-          namespace.class_ids.each do |id|
-            entity = diagram.find_entity(id)
-            entity.name = entity.name.delete_prefix("#{namespace.name}.")
-          end
-        end
       end
     end
   end

@@ -26,29 +26,36 @@ module Sirena
           item.is_a?(Hash) && item[:namespace_keyword]
         end
         grouped = blocks.group_by { |block| block[:namespace_name].to_s }
-        grouped.map { |name, group| namespace(name, group) }
+        claim_last(grouped.map { |name, group| namespace(name, group) })
       end
 
       private
 
       def namespace(name, blocks)
-        ids = blocks.flat_map { |block| member_ids(name, block) }
+        ids = blocks.flat_map { |block| member_ids(block) }
         Diagram::ClassNamespace.new(name: name, class_ids: ids.uniq)
       end
 
-      def member_ids(name, block)
+      def member_ids(block)
         Array(block[:namespace_body]).flat_map do |statement|
-          ID_KEYS.filter_map { |key| qualified(name, statement[key]) }
+          ID_KEYS.filter_map { |key| known(statement[key]) }
         end
       end
 
-      # Mirrors the builder: a dotted name is already qualified.
-      def qualified(namespace, slice)
+      def known(slice)
         return unless slice
 
-        name = slice.to_s.delete("`")
-        id = name.include?(".") ? name : "#{namespace}.#{name}"
+        id = slice.to_s.delete("`")
         id if @ids.include?(id)
+      end
+
+      # mmdc gives a class one parent: the last namespace that lists it.
+      def claim_last(namespaces)
+        namespaces.reverse_each.with_object([]) do |item, claimed|
+          item.class_ids -= claimed
+          claimed.concat(item.class_ids)
+        end
+        namespaces
       end
     end
   end
