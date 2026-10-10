@@ -5,45 +5,34 @@ require "spec_helper"
 RSpec.describe Sirena::Renderer::Packet do
   subject(:renderer) { described_class.new }
 
-  let(:svg) { Sirena::Svg::Document.new }
-  let(:layout) { { title: "T", width: 400, padding: 10, title_height: 20 } }
-
-  def hook(name, *arguments)
-    renderer.send(name, *arguments)
+  let(:source) { "packet-beta\n  title T\n  0-7: \"f\"\n" }
+  let(:scene) do
+    Sirena::Layout::Packet.new.call(Sirena::Parser::Packet.new.parse(source))
   end
+  let(:svg) { renderer.render(scene) }
 
   def texts
     svg.children.grep(Sirena::Svg::Text).map { |t| Array(t.content).join }
   end
 
-  def field(width)
-    { label: "f", bit_start: 0, bit_end: 7, x: 0, y: 0,
-      width: width, height: 20 }
+  it "writes the block label, both bit numbers, then the title" do
+    expect(texts).to eq(%w[f 0 7 T])
   end
 
-  it "writes the title when the layout has one" do
-    hook(:render_title, layout, svg)
+  it "writes no title when the diagram has none" do
+    scene.title = nil
 
-    expect(texts).to eq(["T"])
+    expect(texts).to eq(%w[f 0 7])
   end
 
-  it "writes no title when the layout has none" do
-    hook(:render_title, layout.merge(title: nil), svg)
-
-    expect(texts).to be_empty
+  it "draws no grid lines and no per-column bit markers" do
+    expect(svg.children.grep(Sirena::Svg::Line)).to be_empty
   end
 
-  it "adds a bit range to a wide field" do
-    renderer.instance_variable_set(:@title_offset, 0)
-    hook(:render_field, field(200), {}, svg)
+  it "fills blocks with mmdc's grey and black one-pixel stroke" do
+    rect = svg.children.grep(Sirena::Svg::Rect).first
 
-    expect(texts).to eq(%w[f 0-7])
-  end
-
-  it "leaves the bit range off a narrow field" do
-    renderer.instance_variable_set(:@title_offset, 0)
-    hook(:render_field, field(100), {}, svg)
-
-    expect(texts).to eq(%w[f])
+    expect([rect.fill, rect.stroke, rect.stroke_width])
+      .to eq(["#efefef", "#000000", "1"])
   end
 end

@@ -19,15 +19,15 @@ RSpec.describe Sirena::Layout::Packet do
 
   it "retains title framing on an empty packet" do
     scene = titled_empty_scene
-    expect([scene.width, scene.height, scene.title.text, scene.fields,
-            scene.bit_markers, scene.grid_lines.length])
-      .to eq([80.0, 140.0, "Empty header", [], [], 34])
+    expect([scene.width, scene.height, scene.title.text, scene.title.y,
+            scene.fields])
+      .to eq([1026.0, 47.0, "Empty header", 23.5, []])
   end
 
-  it "omits a bit-range label when a field is too narrow" do
-    scene = narrow_field_scene
-    field = scene.fields.fetch(0)
-    expect([field.box.width, field.label.text, field.range_label,
-            scene.bit_markers.length]).to eq([30.0, "flag", nil, 32])
+  it "numbers a one-bit field once, centred over its block" do
+    field = narrow_field_scene.fields.fetch(0)
+    expect([field.box.width, field.label.text, field.start_label.text,
+            field.start_label.x, field.start_label.text_anchor,
+            field.end_label]).to eq([27.0, "flag", "0", 14.5, "middle", nil])
   end
 end
