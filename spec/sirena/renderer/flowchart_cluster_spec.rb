@@ -719,17 +719,17 @@ RSpec.describe Sirena::Engine do
     # Three decimals at most. The trimming arithmetic lands on seventeen
     # digits behind the point, and this output goes into a document.
     it "does not write full float precision into the path" do
-      # A crossing that does NOT land on a whole number. Two boxes side
-      # by side trim to exact coordinates, so they never showed this.
+      # A crossing that does NOT land on a whole number. Boxes in line
+      # trim to exact coordinates, so a second target keeps this one slanted.
       xml = render("flowchart TD\nsubgraph one [A Fairly Long Title]\nA\n" \
-                   "end\none --> Z\n")
+                   "end\none --> Z\none --> Y\n")
       path = xml[/<g id="edge-one_to_Z">\s*<path[^>]*\bd="([^"]*)"/, 1]
 
       # The whole path. Counting decimal places only proves the number is
       # no longer than three, which rounding to two or fewer also
       # satisfies. The start is where the ray between the two boxes' exact
       # centres leaves `one`.
-      expect(path).to eq("M 71.28 113.0 L 46.277 188.5")
+      expect(path).to eq("M 82.03 113.0 L 46.277 188.5")
     end
 
     it "joins a box to a plain node" do

@@ -2,6 +2,8 @@
 
 require_relative "../elk_placement"
 require_relative "layer_spacing"
+require_relative "route_points"
+require_relative "row_centering"
 
 module Sirena
   module Layout
@@ -175,6 +177,7 @@ module Sirena
             Base::ElkOptions::DIRECTION => ElkPlacement::DOWN,
           )
           ElkPlacement.apply(flat)
+          RowCentering.apply(flat)
           LayerSpacing.apply(flat, label_axis: transposed ? :width : :height)
           transpose(flat) if transposed
           mirror(flat)
@@ -187,7 +190,7 @@ module Sirena
             box[:x], box[:y] = box[:y], box[:x] if box[:x]
             box[:width], box[:height] = box[:height], box[:width]
           end
-          each_point(flat) { |point| point[:x], point[:y] = point[:y], point[:x] }
+          RoutePoints.of(flat).each { |point| point[:x], point[:y] = point[:y], point[:x] }
         end
 
         def mirror(flat)
@@ -202,19 +205,9 @@ module Sirena
             box[:x] = extent_x - box[:x] - box[:width] if horizontal
             box[:y] = extent_y - box[:y] - box[:height] if vertical
           end
-          each_point(flat) do |point|
+          RoutePoints.of(flat).each do |point|
             point[:x] = extent_x - point[:x] if horizontal
             point[:y] = extent_y - point[:y] if vertical
-          end
-        end
-
-        def each_point(flat)
-          (flat[:edges] || []).each do |edge|
-            (edge[:sections] || []).each do |section|
-              yield section[:startPoint]
-              yield section[:endPoint]
-              section[:bendPoints].each { |point| yield point }
-            end
           end
         end
       end
