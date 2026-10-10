@@ -98,6 +98,62 @@ RSpec.describe SpecSupport::LayoutParity::CaseComparator do
     end
   end
 
+  context "with empty extracted figures" do
+    let(:empty_svg) { '<svg viewBox="0 0 100 100"></svg>' }
+    let(:arguments) do
+      super().merge(reference_svg: empty_svg, sirena_svg: empty_svg)
+    end
+    let(:empty_summary) do
+      [
+        comparison.hard_failure?,
+        *comparison.geometry.values_at(
+          :reference_elements, :sirena_elements, :matched
+        ),
+      ]
+    end
+
+    it "passes when both extracted figures are empty" do
+      expect(empty_summary).to eq([false, 0, 0, 0])
+    end
+
+    context "when only the candidate figure is empty" do
+      let(:reference_svg) do
+        <<~SVG
+          <svg viewBox="0 0 100 100">
+            <g class="node" id="flowchart-a-0">
+              <rect x="0" y="0" width="10" height="10"/>
+            </g>
+          </svg>
+        SVG
+      end
+      let(:arguments) do
+        super().merge(reference_svg: reference_svg, sirena_svg: empty_svg)
+      end
+      let(:failure_summary) do
+        rules = comparison.invariants.map { |failure| failure.fetch(:rule) }
+        counts = comparison.geometry.values_at(
+          :reference_elements, :sirena_elements
+        )
+        without_invariants = comparison.with(invariants: [])
+        [comparison.hard_failure?, without_invariants.hard_failure?,
+         rules, counts]
+      end
+
+      it "keeps the one-sided empty comparison as a hard failure" do
+        expect(failure_summary)
+          .to eq([true, true, ["element-presence"], [1, 0]])
+      end
+    end
+
+    context "when the empty comparison has an invariant failure" do
+      it "keeps the invariant failure hard" do
+        failed = comparison.with(invariants: [{ rule: "fixture-invariant" }])
+
+        expect(failed.hard_failure?).to be(true)
+      end
+    end
+  end
+
   context "with caller-selected node-like elements" do
     let(:arguments) do
       overlapping = super().fetch(:sirena_svg).sub('x="30"', 'x="5"')

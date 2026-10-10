@@ -43,9 +43,11 @@ module SpecSupport
                   :spatial_kinds
 
       def compare_rendered
-        reference_figure, match = extract_and_match
+        reference_figure, sirena_figure, match = extract_and_match
         invariants = invariants_for(match)
-        geometry = geometry_for(reference_figure, match)
+        geometry = geometry_for(reference_figure, match).merge(
+          element_counts(reference_figure, sirena_figure),
+        )
 
         result("rendered", invariants, with_analogs(geometry))
       end
@@ -55,7 +57,14 @@ module SpecSupport
         sirena_figure = extractor.extract(sirena_svg)
         match = ElementMatcher.match(reference: reference_figure,
                                      sirena: sirena_figure)
-        [reference_figure, match]
+        [reference_figure, sirena_figure, match]
+      end
+
+      def element_counts(reference_figure, sirena_figure)
+        {
+          reference_elements: reference_figure.elements.length,
+          sirena_elements: sirena_figure.elements.length,
+        }
       end
 
       def invariants_for(match)
