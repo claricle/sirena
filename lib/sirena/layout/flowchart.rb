@@ -23,7 +23,6 @@ module Sirena
       # exists to close, just for the no-typography case instead of the
       # has-typography one.
       DEFAULT_FONT_SIZE = 16.0
-      NODE_PADDING = 15.0
       NODE_LINE_HEIGHT = 1.5
 
       CLUSTER_CORNER = FlowchartEdgeRouter::CLUSTER_CORNER
@@ -817,8 +816,7 @@ module Sirena
         text = display_text(label)
         label_dims = measure_text(text, font_size: layout_font_size)
         line_height = label_dims[:height] * NODE_LINE_HEIGHT
-        node_dims = node_box(label_dims[:width], line_height,
-                             shape_to_type(shape))
+        node_dims = node_box(label_dims[:width], line_height, shape)
 
         {
           width: node_dims[:width],
@@ -828,18 +826,35 @@ module Sirena
         }
       end
 
-      # mermaid sizes a box node as its label plus 30 either side
-      # horizontally and 15 vertically; a diamond is a square whose side is
-      # label width + label height + 30.
-      def node_box(label_width, label_height, type)
-        case type
-        when :diamond
-          side = label_width + label_height + (2 * NODE_PADDING)
-          { width: side, height: side }
-        else
-          { width: label_width + (4 * NODE_PADDING),
-            height: label_height + (2 * NODE_PADDING) }
+      # What mmdc adds to the label, measured on its output, as
+      # [width, height]. A shape not listed is sized as a box.
+      SHAPE_PADDING = {
+        "rounded" => [30.0, 30.0],
+        "asymmetric" => [24.75, 15.0],
+        "hexagon" => [45.0, 15.0],
+        "parallelogram" => [60.0, 15.0],
+        "parallelogram_alt" => [60.0, 15.0],
+        "trapezoid" => [60.0, 15.0],
+        "trapezoid_alt" => [60.0, 15.0],
+      }.freeze
+      BOX_PADDING = [60.0, 30.0].freeze
+      # Square shapes: a rhombus is label width + label height + 30 on a
+      # side; a circle is label width + 15 across (25 for a double one).
+      CIRCLE_PADDING = { "circle" => 15.0, "double_circle" => 25.0 }.freeze
+      RHOMBUS_PADDING = 30.0
+
+      def node_box(label_width, label_height, shape)
+        if shape == "rhombus"
+          side = label_width + label_height + RHOMBUS_PADDING
+          return { width: side, height: side }
         end
+        if CIRCLE_PADDING.key?(shape)
+          return { width: label_width + CIRCLE_PADDING[shape],
+                   height: label_width + CIRCLE_PADDING[shape] }
+        end
+
+        extra_width, extra_height = SHAPE_PADDING.fetch(shape, BOX_PADDING)
+        { width: label_width + extra_width, height: label_height + extra_height }
       end
 
       # The size node and cluster-title measure_text calls size against:
@@ -875,19 +890,6 @@ module Sirena
       # the same way a missing value does.
       def valid_font_size(value)
         value if value.is_a?(Numeric) && value.finite? && value.positive?
-      end
-
-      def shape_to_type(shape)
-        case shape
-        when "rect", "subroutine"
-          :rect
-        when "circle", "double_circle"
-          :circle
-        when "rhombus", "hexagon"
-          :diamond
-        else
-          :rect
-        end
       end
 
       def layout_options(graph)
