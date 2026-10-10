@@ -9,6 +9,10 @@ RSpec.describe Sirena::Renderer::Packet do
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:renderer) { described_class.new(theme: theme) }
 
+  def text_content(text)
+    Array(text.content).join
+  end
+
   describe "#render" do
     context "with a simple packet" do
       let(:layout) do
@@ -56,7 +60,7 @@ RSpec.describe Sirena::Renderer::Packet do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
         # `content` is `collection: true`, so read it through Array(...).
-        title_texts = texts.select { |t| Array(t.content).join == "Hello world" }
+        title_texts = texts.select { |t| text_content(t) == "Hello world" }
         expect(title_texts.length).to eq(1)
       end
 
@@ -145,9 +149,9 @@ RSpec.describe Sirena::Renderer::Packet do
       it "includes all field labels" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        expect(texts.any? { |t| Array(t.content).join == "Source Port" }).to be true
-        expect(texts.any? { |t| Array(t.content).join == "Destination Port" }).to be true
-        expect(texts.any? { |t| Array(t.content).join == "Sequence Number" }).to be true
+        contents = texts.map { |t| text_content(t) }
+        expect(contents).to include("Source Port", "Destination Port",
+                                    "Sequence Number")
       end
     end
 
@@ -307,7 +311,7 @@ RSpec.describe Sirena::Renderer::Packet do
       it "includes labels for all segments" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        long_field_texts = texts.select { |t| Array(t.content).join == "Long Field" }
+        long_field_texts = texts.select { |t| text_content(t) == "Long Field" }
         expect(long_field_texts.length).to eq(2)
       end
     end

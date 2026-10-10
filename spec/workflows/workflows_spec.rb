@@ -7,10 +7,25 @@ require "rbconfig"
 require_relative "../../scripts/check_workflow_pins"
 require_relative "../../scripts/lane_verdict"
 
-# Builders for the workflow-shaped hashes the CI workflow specs feed to scripts/.
+# Builders for the workflow-shaped hashes the CI workflow specs feed to
+# scripts/.
 module WorkflowHelpers
   def workflow_with(uses)
-    { "jobs" => { "j" => { "timeout-minutes" => 1, "steps" => [{ "uses" => uses }] } } }
+    { "jobs" => { "j" => { "timeout-minutes" => 1,
+                           "steps" => [{ "uses" => uses }] } } }
+  end
+
+  def reusable_workflow(uses)
+    { "jobs" => { "j" => { "uses" => uses } } }
+  end
+
+  def workflow_without_timeout
+    jobs = {
+      "a" => { "steps" => [] },
+      "b" => { "uses" => "./w.yml" },
+      "c" => { "timeout-minutes" => 3 },
+    }
+    { "jobs" => jobs }
   end
 
   def result(name, outcome)
@@ -149,9 +164,11 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
   include WorkflowHelpers
 
   describe WorkflowPins do
-    it "finds no unpinned external reference and no missing timeout in the tracked workflows" do
+    it "finds no unpinned external reference and no missing timeout in the " \
+       "tracked workflows" do
       expect(workflow_files).not_to be_empty
-      expect(workflow_files.flat_map { |f| described_class.problems(f) }).to eq([])
+      problems = workflow_files.flat_map { |f| described_class.problems(f) }
+      expect(problems).to eq([])
     end
 
     {
@@ -165,29 +182,32 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
       "metanorma/ci/.github/workflows/x.yml@main" => true,
     }.each do |ref, rejected|
       it "#{rejected ? 'rejects' : 'accepts'} #{ref}" do
-        expect(described_class.unpinned(workflow_with(ref))).to eq(rejected ? [ref] : [])
+        expect(described_class.unpinned(workflow_with(ref)))
+          .to eq(rejected ? [ref] : [])
       end
     end
 
     it "sees a job-level reusable workflow reference too" do
-      wf = { "jobs" => { "j" => { "uses" => "o/r/.github/workflows/w.yml@main" } } }
-      expect(described_class.unpinned(wf)).to eq(["o/r/.github/workflows/w.yml@main"])
+      ref = "o/r/.github/workflows/w.yml@main"
+      expect(described_class.unpinned(reusable_workflow(ref))).to eq([ref])
     end
 
     it "flags a job with no timeout-minutes but not a reusable-workflow call" do
-      wf = { "jobs" => { "a" => { "steps" => [] }, "b" => { "uses" => "./w.yml" },
-                         "c" => { "timeout-minutes" => 3 } } }
-      expect(described_class.without_timeout(wf)).to eq(["a"])
+      expect(described_class.without_timeout(workflow_without_timeout))
+        .to eq(["a"])
     end
 
     it "exits non-zero from the script when a seeded workflow is unpinned" do
       Dir.mktmpdir do |dir|
-        FileUtils.mkdir_p(File.join(dir, "scripts"))
-        FileUtils.mkdir_p(File.join(dir, ".github/workflows"))
-        FileUtils.cp(File.join(root, "scripts/check_workflow_pins.rb"), File.join(dir, "scripts"))
-        File.write(File.join(dir, ".github/workflows/x.yml"),
-                   "on: push\njobs:\n  j:\n    timeout-minutes: 1\n    steps:\n      - uses: actions/checkout@v4\n")
-        _, err, status = Open3.capture3(RbConfig.ruby, File.join(dir, "scripts/check_workflow_pins.rb"))
+        scripts = File.join(dir, "scripts")
+        workflows = File.join(dir, ".github/workflows")
+        FileUtils.mkdir_p([scripts, workflows])
+        script = File.join(scripts, "check_workflow_pins.rb")
+        FileUtils.cp(File.join(root, "scripts/check_workflow_pins.rb"), script)
+        workflow = "on: push\njobs:\n  j:\n    timeout-minutes: 1\n    " \
+                   "steps:\n      - uses: actions/checkout@v4\n"
+        File.write(File.join(workflows, "x.yml"), workflow)
+        _, err, status = Open3.capture3(RbConfig.ruby, script)
         expect(status.exitstatus).to eq(1)
         expect(err).to include("unpinned actions/checkout@v4")
       end
@@ -232,9 +252,11 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
         .to eq("${{ matrix.os == 'windows-latest' && matrix.shard || '' }}")
     end
 
-    it "runs on pull requests, merge queue, push, dispatch and a nightly schedule" do
+    it "runs on pull requests, merge queue, push, dispatch and a nightly " \
+       "schedule" do
       triggers = ci["on"] || ci[true]
-      expect(triggers.keys).to include("pull_request", "merge_group", "push", "workflow_dispatch", "schedule")
+      expect(triggers.keys).to include("pull_request", "merge_group", "push",
+                                       "workflow_dispatch", "schedule")
     end
 
     it "names both aggregators with stable job names, always() and a timeout" do
@@ -256,19 +278,22 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
       expect(jobs["fast-lane"]["needs"]).not_to include("docs-build", "links")
     end
 
-    it "gates the release cascade on the fast lane only, so a links outage cannot suppress it" do
+    it "gates the release cascade on the fast lane only, so a links outage " \
+       "cannot suppress it" do
       expect(Array(jobs.fetch("cascade")["needs"])).to eq(["fast-lane"])
       expect(jobs.fetch("fast-lane")["needs"]).to include("unit")
     end
 
     it "feeds each aggregator the whole needs context" do
       aggregators.each do |name|
-        env = jobs.fetch(name)["steps"].filter_map { |s| s["env"] }.reduce({}, :merge)
+        steps = jobs.fetch(name)["steps"]
+        env = steps.filter_map { |s| s["env"] }.reduce({}, :merge)
         expect(env["NEEDS_JSON"]).to eq("${{ toJSON(needs) }}")
       end
     end
 
-    it "wires lint into the fast lane, with parity and a standalone corpus job still unfilled" do
+    it "wires lint into the fast lane, with parity and a standalone corpus " \
+       "job still unfilled" do
       expect(jobs.keys).to include("lint")
       expect(jobs.keys).not_to include("corpus", "parity")
     end
@@ -292,7 +317,8 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
 
     it "runs rubocop as the lint job, hung off fast-lane" do
       lint = jobs.fetch("lint")
-      expect(lint["steps"].filter_map { |s| s["run"] }).to include("bundle exec rubocop")
+      commands = lint["steps"].filter_map { |s| s["run"] }
+      expect(commands).to include("bundle exec rubocop")
       expect(jobs.fetch("fast-lane")["needs"]).to include("lint")
     end
 
@@ -303,7 +329,8 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
     end
 
     it "has no standalone lint workflow file any more" do
-      expect(workflow_files.map { |f| File.basename(f) }).not_to include("lint.yml")
+      basenames = workflow_files.map { |f| File.basename(f) }
+      expect(basenames).not_to include("lint.yml")
     end
 
     it "keeps tests-passed without a tag-triggered release cascade" do
