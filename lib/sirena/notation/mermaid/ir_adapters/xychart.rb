@@ -7,7 +7,7 @@ module Sirena
     module Mermaid
       module IRAdapters
         # Maps an XY chart model to ordered axis and series constraints.
-        module Xychart
+        module XyChart
           module_function
 
           def call(diagram)

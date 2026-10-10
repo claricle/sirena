@@ -353,7 +353,7 @@ module Sirena
       def ir_document(diagram)
         return diagram if diagram.is_a?(IR::Prepositioned)
 
-        Notation::Mermaid::IRAdapters::Xychart.call(diagram)
+        Notation::Mermaid::IRAdapters::XyChart.call(diagram)
       end
 
       def axis_data(data, role)

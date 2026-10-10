@@ -79,6 +79,7 @@ module Sirena
         quadrant: {
           pattern: /\A\s*quadrantChart/i,
           keyword: "quadrantChart",
+          ir_adapter: true,
         },
         git_graph: {
           pattern: /\A\s*gitGraph/i,
@@ -102,6 +103,7 @@ module Sirena
         block: {
           pattern: /\A\s*block-beta/i,
           keyword: "block-beta",
+          ir_adapter: true,
         },
         requirement: {
           pattern: /\A\s*requirementDiagram/i,
@@ -111,6 +113,7 @@ module Sirena
           pattern: /\A\s*xychart-beta/i,
           keyword: "xychart-beta",
           name: "XyChart",
+          ir_adapter: true,
         },
         architecture: {
           pattern: /\A\s*architecture-beta/i,
