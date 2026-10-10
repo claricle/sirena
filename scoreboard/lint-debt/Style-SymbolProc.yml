@@ -1,5 +1,0 @@
----
-cop: Style/SymbolProc
-rows:
-- file: spec/integration/git_graph_integration_spec.rb
-  count: 1

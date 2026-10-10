@@ -155,7 +155,7 @@ RSpec.describe "Git Graph Integration" do
     it "parses and preserves tags" do
       diagram = parser.parse(source)
 
-      tagged_commits = diagram.commits.select { |c| c.tag }
+      tagged_commits = diagram.commits.select(&:tag)
       expect(tagged_commits.length).to eq(2)
       expect(tagged_commits.map(&:tag)).to include("v1.0.0", "v2.0.0")
     end

@@ -360,10 +360,3 @@ Style/SoleNestedConditional:
   Exclude:
     - 'lib/sirena/layout/gantt.rb'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: AllowMethodsWithArguments, AllowedMethods, AllowedPatterns, AllowComments.
-# AllowedMethods: define_method
-Style/SymbolProc:
-  Exclude:
-    - 'spec/integration/git_graph_integration_spec.rb'
