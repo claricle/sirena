@@ -5,7 +5,8 @@ require "spec_helper"
 # Parses a class body and returns the first entity.
 module ClassBodyParsing
   def parse_class(body)
-    described_class.new.parse("classDiagram\nclass A {\n#{body}\n}\n").entities.first
+    source = "classDiagram\nclass A {\n#{body}\n}\n"
+    described_class.new.parse(source).entities.first
   end
 end
 
@@ -37,7 +38,9 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
     end
 
     it "keeps the first annotation over a later header or standalone one" do
-      diagram = parser.parse("classDiagram\nclass A {\n<<interface>>\n}\nclass A <<abstract>>\n<<enum>> A\n")
+      source = "classDiagram\nclass A {\n<<interface>>\n}\n" \
+               "class A <<abstract>>\n<<enum>> A\n"
+      diagram = parser.parse(source)
 
       expect(diagram.entities.first.stereotype).to eq("interface")
     end
@@ -45,11 +48,14 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
     it "reads an annotation after a colon at the end of the source" do
       diagram = parser.parse("classDiagram\nA : <<interface>>")
 
-      expect([diagram.entities.first.stereotype, diagram.entities.first.attributes]).to eq(["interface", []])
+      expect([diagram.entities.first.stereotype,
+              diagram.entities.first.attributes]).to eq(["interface", []])
     end
 
     it "keeps the annotation on the class header over one in the body" do
-      diagram = parser.parse("classDiagram\nclass A <<interface>> {\n<<abstract>>\n}\n")
+      source = "classDiagram\nclass A <<interface>> {\n" \
+               "<<abstract>>\n}\n"
+      diagram = parser.parse(source)
 
       expect(diagram.entities.first.stereotype).to eq("interface")
     end
@@ -84,11 +90,14 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
   describe "a free-text member in a class body" do
     {
       "a return type first" => ["void methods()", "void methods", "", nil],
-      "a return type after" => ["+getWheels() List~Wheel~", "getWheels", "", "List~Wheel~"],
-      "a generic parameter" => ["setWheels(List~Wheel~ wheels)", "setWheels", "List~Wheel~ wheels", nil],
+      "a return type after" => ["+getWheels() List~Wheel~", "getWheels", "",
+                                "List~Wheel~"],
+      "a generic parameter" => ["setWheels(List~Wheel~ wheels)", "setWheels",
+                                "List~Wheel~ wheels", nil],
       "an abstract mark" => ["someMethod()*", "someMethod", "", nil],
       "a static mark" => ["someMethod()$", "someMethod", "", nil],
-      "a return type after a mark" => ["getPoints()* List~int~", "getPoints", "", "List~int~"],
+      "a return type after a mark" => ["getPoints()* List~int~", "getPoints",
+                                       "", "List~int~"],
     }.each do |name, (line, method_name, parameters, return_type)|
       it "reads #{name} as a method" do
         method = parse_class(line).class_methods.first
@@ -99,10 +108,12 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
     end
 
     {
-      "an entity-encoded annotation" => ["&lt;&lt;interface&gt;&gt;", "&lt;&lt;interface&gt;&gt;"],
+      "an entity-encoded annotation" => ["&lt;&lt;interface&gt;&gt;",
+                                         "&lt;&lt;interface&gt;&gt;"],
       "a separator" => [".. Simple Getter ..", ".. Simple Getter .."],
       "a bare rule" => ["==", "=="],
-      "a spaced visibility" => ["-            attribute : type", "attribute : type"],
+      "a spaced visibility" => ["-            attribute : type",
+                                "attribute : type"],
       "a lone visibility symbol" => ["-", "-"],
       "text with a quote inside" => ['a "b" c', 'a "b" c'],
     }.each do |name, (line, attribute_name)|
@@ -114,7 +125,8 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
     it "reads the visibility symbol off a free-text member" do
       entity = parse_class("-   void hidden()\n#guarded")
 
-      expect([entity.class_methods.first.visibility, entity.attributes.first.visibility])
+      expect([entity.class_methods.first.visibility,
+              entity.attributes.first.visibility])
         .to eq(%w[private protected])
     end
 
@@ -134,11 +146,15 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
     end
 
     it "reads an indented quoted line as a member, as mmdc does" do
-      expect(parse_class(' "quoted"').attributes.map(&:name)).to eq(['"quoted"'])
+      names = parse_class(' "quoted"').attributes.map(&:name)
+
+      expect(names).to eq(['"quoted"'])
     end
 
     it "drops a static or abstract mark from an attribute name" do
-      expect(parse_class("field$\nfield2*").attributes.map(&:name)).to eq(%w[field field2])
+      names = parse_class("field$\nfield2*").attributes.map(&:name)
+
+      expect(names).to eq(%w[field field2])
     end
 
     it "drops a static or abstract mark from the return type" do
@@ -177,10 +193,13 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
     end
 
     it "strips a comment after an annotation, keeping the stereotype" do
-      expect(parse_class("<<interface>> %% comment").stereotype).to eq("interface")
+      stereotype = parse_class("<<interface>> %% comment").stereotype
+
+      expect(stereotype).to eq("interface")
     end
 
-    it "strips a comment after a static-mark attribute, dropping the mark and the comment" do
+    it "strips a comment after a static-mark attribute, dropping the mark " \
+       "and the comment" do
       attribute = parse_class("field$ %% comment").attributes.first
 
       expect([attribute.name, attribute.type]).to eq(["field", nil])
@@ -189,15 +208,20 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
 
   describe "a free-text member after a colon" do
     {
-      "a return type after" => ["Object : getObject() Object", "getObject", "", "Object"],
-      "a return type as an array" => ["Object : getObjects() Object[]", "getObjects", "", "Object[]"],
-      "a type before the name" => ["Car : +ArrayList size()", "ArrayList size", "", nil],
+      "a return type after" => ["Object : getObject() Object", "getObject", "",
+                                "Object"],
+      "a return type as an array" => ["Object : getObjects() Object[]",
+                                      "getObjects", "", "Object[]"],
+      "a type before the name" => ["Car : +ArrayList size()", "ArrayList size",
+                                   "", nil],
       "an abstract mark" => ["Class1 : someMethod()*", "someMethod", "", nil],
       "a static mark" => ["Class1 : someMethod()$", "someMethod", "", nil],
-      "a generic return type" => ["Car : +getWheels() List~Wheel~", "getWheels", "", "List~Wheel~"],
+      "a generic return type" => ["Car : +getWheels() List~Wheel~",
+                                  "getWheels", "", "List~Wheel~"],
     }.each do |name, (statement, method_name, parameters, return_type)|
       it "reads #{name} as a method" do
-        method = parser.parse("classDiagram\n#{statement}\n").entities.first.class_methods.first
+        entity = parser.parse("classDiagram\n#{statement}\n").entities.first
+        method = entity.class_methods.first
 
         expect([method.name, method.parameters, method.return_type])
           .to eq([method_name, parameters, return_type])
@@ -229,7 +253,8 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
   end
 
   describe "a mark that does not touch the closing paren" do
-    it "keeps a $ that is separated from the paren by a space, as return type text" do
+    it "keeps a $ that is separated from the paren by a space, as return " \
+       "type text" do
       method = parse_class("foo() $bar").class_methods.first
 
       expect(method.return_type).to eq("$bar")
@@ -247,7 +272,8 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
     %w[003 009 015 021 033 035 065 076 077 092 093 099 100 102 103 105 106
        111 112 129 130 132 133 160 166].each do |number|
       it "parses class case #{number}" do
-        path = Dir[File.expand_path("../../mermaid/class/#{number}_*.mmd", __dir__)].first
+        path = Dir[File.expand_path("../../mermaid/class/#{number}_*.mmd",
+                                    __dir__)].first
 
         expect { parser.parse(File.read(path)) }.not_to raise_error
       end
