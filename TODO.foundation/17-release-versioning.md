@@ -5,6 +5,22 @@ first cut would otherwise run through `metanorma/ci@main`, mutable
 external code publishing our gem. Small. Blocks: 12 (a demo needs an
 installable cut).
 
+Status (reconciled 2026-10-10): **repository mechanics complete; card remains
+open for owner configuration and two real releases.** `VERSIONING.md` defines
+the 0.x public/internal contract and the manual release convention. The tracked
+repository-owned workflow accepts only `workflow_dispatch`, runs the changelog
+preflight as a prerequisite job, requires the current `main` SHA to have green
+`fast-lane` and `full-lane` checks, permits only the generated version-file
+change, pushes the commit and tag atomically, and publishes the built gem.
+Focused specs execute those invariants, including rejection of a release with
+no releasable changelog entry.
+
+The chosen protected-`main` mechanism is the narrow release-workflow bypass
+documented in `VERSIONING.md`, but applying that repository setting remains an
+owner/19a action. The repository is still at `Sirena::VERSION = "0.1.0"` and
+its only release tag is `v0.1.0`, so neither required pre-12 cut nor the
+end-to-end release demonstration is complete.
+
 ## Problem
 
 Pre-1.0 gem with release automation (`release.yml` → metanorma/ci
@@ -58,6 +74,13 @@ what this version promises".
    there), NOT this item's — otherwise 17-blocks-12 becomes a cycle.
 
 ## Done when
+
+**Repository-side criteria satisfied:** the versioning contract, changelog
+predicate and executable preflight, manual-only entrypoint, checked-source and
+version-only guards, atomic push, and repository-owned publishing path are
+implemented and covered by focused specs. The remaining criteria below require
+external configuration or real release effects; this reconciliation does not
+substitute documentation or seeded tests for either one.
 
 Both pre-12 cuts released with changelog entries; the changelog
 preflight job exists in the tracked source and a seeded release with no
