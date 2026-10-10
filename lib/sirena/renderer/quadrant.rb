@@ -142,13 +142,14 @@ module Sirena
         point.stroke_color || theme_color(:node_stroke) || "#ffffff"
       end
 
-      # mmdc places every text at the origin and moves it with a transform.
+      # Scene labels already carry final canvas coordinates. A rotated label
+      # turns around its own anchor instead of moving from a local origin.
       def text_element(label)
         Svg::Text.new.tap do |text|
-          text.x = 0
-          text.y = 0
+          text.x = label.x
+          text.y = label.y
           text.content = label.text
-          text.transform = transform(label)
+          text.transform = rotation_transform(label)
           apply_text_alignment(text, label)
           apply_text_style(text, label)
         end
@@ -159,9 +160,13 @@ module Sirena
         text.text_anchor = label.text_anchor if label.text_anchor
       end
 
-      def transform(label)
-        "translate(#{number_string(label.x)}, #{number_string(label.y)}) " \
-          "rotate(#{number_string(label.rotation || 0)})"
+      def rotation_transform(label)
+        return if label.rotation.nil? || label.rotation.zero?
+
+        values = [label.rotation, label.x, label.y].map do |value|
+          number_string(value)
+        end
+        "rotate(#{values.join(' ')})"
       end
 
       def apply_text_style(text, label)
