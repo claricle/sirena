@@ -2,15 +2,13 @@
 cop: Metrics/PerceivedComplexity
 rows:
 - file: lib/sirena/layout/architecture.rb
-  count: 3
+  count: 2
 - file: lib/sirena/layout/block.rb
   count: 1
 - file: lib/sirena/layout/flowchart.rb
   count: 3
 - file: lib/sirena/layout/flowchart/edge_router.rb
   count: 4
-- file: lib/sirena/layout/requirement.rb
-  count: 1
 - file: lib/sirena/renderer/packet.rb
   count: 1
 - file: scripts/corpus_sweep.rb
