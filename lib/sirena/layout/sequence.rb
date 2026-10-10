@@ -155,7 +155,7 @@ module Sirena
           lifelines: lifeline_geometry(positions, count,
                                        placement.total_height),
           messages: typed_messages(graph[:edges], positions, placement),
-          notes: placement.notes
+          notes: placement.notes,
         }
       end
 

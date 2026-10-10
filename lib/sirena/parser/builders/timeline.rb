@@ -19,7 +19,8 @@ module Sirena
           @current_section = nil
           @last_event = nil
 
-          # A bare header parses to one Hash; header plus statements to an Array.
+          # A bare header parses to one Hash; header plus statements
+          # to an Array.
           [tree].flatten(1).each { |item| process_item(diagram, item) }
 
           diagram

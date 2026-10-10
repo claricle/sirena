@@ -57,16 +57,20 @@ module Sirena
         scene = typed_scene(graph)
         svg = create_document(scene)
         render_scene_title(svg, scene)
-        scene.sections.each do |label|
-          # mmdc draws no header for tasks written before the first section.
-          svg << label_element(label) unless label.text.to_s.empty?
-        end
+        render_section_labels(svg, scene)
         scene.tasks.each { |task| render_typed_task(svg, task) }
         scene.arrows.each { |arrow| render_typed_arrow(arrow, svg) }
         svg
       end
 
       protected
+
+      # mmdc draws no header for tasks written before the first section.
+      def render_section_labels(svg, scene)
+        scene.sections.each do |label|
+          svg << label_element(label) unless label.text.to_s.empty?
+        end
+      end
 
       def calculate_width(graph)
         return 800 unless graph[:children]

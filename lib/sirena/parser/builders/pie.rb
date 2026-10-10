@@ -20,7 +20,8 @@ module Sirena
         def apply(tree)
           diagram = Diagram::Pie.new
 
-          # A bare header parses to one Hash; header plus statements to an Array.
+          # A bare header parses to one Hash; header plus statements
+          # to an Array.
           [tree].flatten(1).each do |item|
             process_title(diagram, item) if item.key?(:title)
             process_show_data(diagram, item) if item.key?(:show_data)
