@@ -11,6 +11,20 @@ module Sirena
     # Represents complex shapes and lines using SVG path data syntax.
     # Commonly used for drawing edges in diagrams with curves and bend points.
     class Path < Element
+      COMMAND_FORMATTERS = {
+        move: ->(command) { "M #{command[:x]} #{command[:y]}" },
+        line: ->(command) { "L #{command[:x]} #{command[:y]}" },
+        curve: lambda do |command|
+          "Q #{command[:cx]} #{command[:cy]} #{command[:x]} #{command[:y]}"
+        end,
+        bezier: lambda do |command|
+          controls = command.values_at(:c1x, :c1y, :c2x, :c2y).join(" ")
+          "C #{controls} #{command[:x]} #{command[:y]}"
+        end,
+        close: ->(_command) { "Z" },
+      }.freeze
+      private_constant :COMMAND_FORMATTERS
+
       attribute :d, :string
       attribute :stroke_dasharray, :string
       attribute :stroke_linecap, :string
@@ -28,25 +42,13 @@ module Sirena
       # @param commands [Array<Hash>] Path commands
       # @return [String] Path data string
       def self.build_path_data(commands)
-        commands.map do |cmd|
-          case cmd[:type]
-          when :move
-            "M #{cmd[:x]} #{cmd[:y]}"
-          when :line
-            "L #{cmd[:x]} #{cmd[:y]}"
-          when :curve
-            "Q #{cmd[:cx]} #{cmd[:cy]} #{cmd[:x]} #{cmd[:y]}"
-          when :bezier
-            c1x = cmd[:c1x]
-            c1y = cmd[:c1y]
-            c2x = cmd[:c2x]
-            c2y = cmd[:c2y]
-            "C #{c1x} #{c1y} #{c2x} #{c2y} #{cmd[:x]} #{cmd[:y]}"
-          when :close
-            "Z"
-          end
-        end.join(" ")
+        commands.map { |command| format_command(command) }.join(" ")
       end
+
+      def self.format_command(command)
+        COMMAND_FORMATTERS[command[:type]]&.call(command)
+      end
+      private_class_method :format_command
 
       protected
 

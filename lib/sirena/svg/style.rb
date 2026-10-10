@@ -21,23 +21,29 @@ module Sirena
       attribute :font_weight, :string
       attribute :text_anchor, :string
 
+      CSS_PROPERTIES = {
+        fill: "fill",
+        stroke: "stroke",
+        stroke_width: "stroke-width",
+        stroke_dasharray: "stroke-dasharray",
+        opacity: "opacity",
+        fill_opacity: "fill-opacity",
+        stroke_opacity: "stroke-opacity",
+        font_family: "font-family",
+        font_size: "font-size",
+        font_weight: "font-weight",
+        text_anchor: "text-anchor",
+      }.freeze
+      private_constant :CSS_PROPERTIES
+
       # Convert style to CSS string for inline style attribute
       #
       # @return [String] CSS style string
       def to_css
-        properties = []
-        properties << "fill:#{fill}" if fill
-        properties << "stroke:#{stroke}" if stroke
-        properties << "stroke-width:#{stroke_width}" if stroke_width
-        properties << "stroke-dasharray:#{stroke_dasharray}" if stroke_dasharray
-        properties << "opacity:#{opacity}" if opacity
-        properties << "fill-opacity:#{fill_opacity}" if fill_opacity
-        properties << "stroke-opacity:#{stroke_opacity}" if stroke_opacity
-        properties << "font-family:#{font_family}" if font_family
-        properties << "font-size:#{font_size}" if font_size
-        properties << "font-weight:#{font_weight}" if font_weight
-        properties << "text-anchor:#{text_anchor}" if text_anchor
-        properties.join(";")
+        CSS_PROPERTIES.filter_map do |attribute, property|
+          value = public_send(attribute)
+          "#{property}:#{value}" if value
+        end.join(";")
       end
     end
   end

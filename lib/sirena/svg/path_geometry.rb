@@ -29,7 +29,8 @@ module Sirena
       }.freeze
       private_constant :ARITY
 
-      TOKEN = /([MmLlHhVvCcSsQqTtAaZz])|([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)/
+      TOKEN = /([MmLlHhVvCcSsQqTtAaZz])|
+               ([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)/x
       private_constant :TOKEN
 
       # Arc flags are single digits even when no separator follows, so they
@@ -40,7 +41,16 @@ module Sirena
       # A move followed by more coordinates draws lines: only the first
       # group of `M 1 2 3 4` is a move. Every other command simply repeats.
       AFTER_FIRST = { "M" => "L", "m" => "l" }.freeze
-      private_constant :AFTER_FIRST
+      REFERENCE_BUILDERS = {
+        "l" => :line_references,
+        "h" => :horizontal_references,
+        "v" => :vertical_references,
+        "c" => :cubic_references,
+        "s" => :smooth_cubic_references,
+        "q" => :quadratic_references,
+        "t" => :smooth_quadratic_references,
+      }.freeze
+      private_constant :AFTER_FIRST, :REFERENCE_BUILDERS
 
       # @param data [String, nil] the `d` attribute
       def initialize(data)
@@ -85,34 +95,37 @@ module Sirena
       # repeating the letter while arguments remain. A bare `M` with four
       # numbers draws a line after the move, which is the SVG rule and the
       # reason this cannot just split on letters.
-      def each_command(data, &block)
+      def each_command(data, &)
         letter = nil
         numbers = []
         scanner = StringScanner.new(data)
-        loop do
-          token = arc_flag_position?(letter, numbers) ? ARC_FLAG_TOKEN : TOKEN
-          # An invalid byte sequence makes the scan regex itself raise rather
-          # than simply fail to match -- stop here the same way a genuine
-          # non-match does, rather than letting a foreign document's garbage
-          # encoding escape as an uncaught ArgumentError.
-          matched = begin
-            scanner.scan_until(token)
-          rescue ArgumentError
-            nil
-          end
-          break unless matched
-
-          command = scanner[1]
-          number = scanner[2]
-          if command
-            flush(letter, numbers, &block)
-            letter = command
-            numbers = []
-          else
-            numbers << number.to_f
-          end
+        while scan_token(scanner, letter, numbers)
+          letter, numbers = consume_token(scanner, letter, numbers, &)
         end
-        flush(letter, numbers, &block)
+        flush(letter, numbers, &)
+      end
+
+      # An invalid byte sequence makes the scan regex itself raise rather
+      # than simply fail to match. Stop as a genuine non-match would instead
+      # of letting a foreign document's garbage encoding escape raw.
+      def scan_token(scanner, letter, numbers)
+        token = arc_flag_position?(letter, numbers) ? ARC_FLAG_TOKEN : TOKEN
+        scanner.scan_until(token)
+      rescue ArgumentError
+        nil
+      end
+
+      def consume_token(scanner, letter, numbers, &)
+        command = scanner[1]
+        return append_number(scanner[2], letter, numbers) unless command
+
+        flush(letter, numbers, &)
+        [command, []]
+      end
+
+      def append_number(number, letter, numbers)
+        numbers << number.to_f
+        [letter, numbers]
       end
 
       def arc_flag_position?(letter, numbers)
@@ -168,7 +181,8 @@ module Sirena
       # not disturb the anchors either: the segment before it is still the end
       # of the path and the segment after it is still the start. Only the
       # zero-radius form becomes a straight line. Handling one and not the
-      # other silently dropped the arrowhead off `M 0 0 L 10 0 A 5 5 0 0 1 10 0`.
+      # other silently dropped the arrowhead off
+      # `M 0 0 L 10 0 A 5 5 0 0 1 10 0`.
       #
       # Exact equality, because a relative endpoint of `0 0` is computed as
       # `@point + 0.0` and lands on the current point exactly.
@@ -206,24 +220,41 @@ module Sirena
       # relative and absolute commands follow the same geometry. An arc gives
       # no references at all — see the note on the class.
       def references(lower, args)
-        case lower
-        when "l" then straight([args[0], args[1]])
-        when "h" then straight([args[0], @point[1]])
-        when "v" then straight([@point[0], args[0]])
-        when "c"
-          @cubic_control = [args[2], args[3]]
-          [[args[0], args[1]], @cubic_control, [args[4], args[5]]]
-        when "s"
-          out_reference = reflection(@cubic_control)
-          @cubic_control = [args[0], args[1]]
-          [out_reference, @cubic_control, [args[2], args[3]]]
-        when "q"
-          @quadratic_control = [args[0], args[1]]
-          [@quadratic_control, @quadratic_control, [args[2], args[3]]]
-        else # "t": ARITY and TOKEN admit no other letter here
-          @quadratic_control = reflection(@quadratic_control)
-          [@quadratic_control, @quadratic_control, [args[0], args[1]]]
-        end
+        send(REFERENCE_BUILDERS.fetch(lower), args)
+      end
+
+      def line_references(args)
+        straight(args.values_at(0, 1))
+      end
+
+      def horizontal_references(args)
+        straight([args[0], @point[1]])
+      end
+
+      def vertical_references(args)
+        straight([@point[0], args[0]])
+      end
+
+      def cubic_references(args)
+        @cubic_control = args.values_at(2, 3)
+        [args.values_at(0, 1), @cubic_control, args.values_at(4, 5)]
+      end
+
+      def smooth_cubic_references(args)
+        outgoing = reflection(@cubic_control)
+        @cubic_control = args.values_at(0, 1)
+        [outgoing, @cubic_control, args.values_at(2, 3)]
+      end
+
+      def quadratic_references(args)
+        @quadratic_control = args.values_at(0, 1)
+        [@quadratic_control, @quadratic_control, args.values_at(2, 3)]
+      end
+
+      # ARITY and TOKEN admit no other reference-bearing command here.
+      def smooth_quadratic_references(args)
+        @quadratic_control = reflection(@quadratic_control)
+        [@quadratic_control, @quadratic_control, args.values_at(0, 1)]
       end
 
       # Reflecting a control point through the current point. Written as
@@ -233,7 +264,7 @@ module Sirena
       # doubling it reached Infinity and pointed the head backwards.
       def reflection(control)
         source = control || @point
-        [@point[0] + (@point[0] - source[0]), @point[1] + (@point[1] - source[1])]
+        @point.zip(source).map { |point, original| point + (point - original) }
       end
 
       def straight(destination)
@@ -246,10 +277,24 @@ module Sirena
         return args if letter == letter.upcase
 
         case lower
-        when "h" then [args[0] + @point[0]]
-        when "v" then [args[0] + @point[1]]
-        when "a" then args[0, 5] + [args[5] + @point[0], args[6] + @point[1]]
-        else args.each_slice(2).flat_map { |x, y| [x + @point[0], y + @point[1]] }
+        when "h" then offset_coordinate(args, 0)
+        when "v" then offset_coordinate(args, 1)
+        when "a" then relative_arc(args)
+        else relative_points(args)
+        end
+      end
+
+      def offset_coordinate(args, axis)
+        [args[0] + @point[axis]]
+      end
+
+      def relative_arc(args)
+        args[0, 5] + relative_points(args.drop(5))
+      end
+
+      def relative_points(args)
+        args.each_slice(2).flat_map do |x, y|
+          [x + @point[0], y + @point[1]]
         end
       end
 
@@ -301,25 +346,31 @@ module Sirena
       # @return [Anchor, nil] nil when the two coincide, which leaves no
       #   direction to point an arrowhead along
       def heading(at, from, to)
-        dx = to[0] - from[0]
-        dy = to[1] - from[1]
+        dx, dy = direction(from, to)
+        length = Math.hypot(dx, dy)
+        return nil unless usable_heading?(at, length)
+
+        Anchor.new(at[0], at[1], dx / length, dy / length)
+      end
+
+      def direction(from, to)
+        delta = to.zip(from).map { |finish, start| finish - start }
+        return delta if delta.all?(&:finite?)
+
         # Two finite coordinates can still overflow the distance between them:
         # `M -1e308 0 L 1e308 0` is 2e308 apart. A direction does not change
         # with scale, so halving both ends brings the difference back into
         # range and answers the same question. Only reached on overflow, so
         # nothing else loses precision to it.
-        if !dx.finite? || !dy.finite?
-          dx = (to[0] / 2) - (from[0] / 2)
-          dy = (to[1] / 2) - (from[1] / 2)
-        end
-        length = Math.hypot(dx, dy)
+        to.zip(from).map { |finish, start| (finish / 2) - (start / 2) }
+      end
+
+      def usable_heading?(at, length)
         # Not merely non-zero: path data carrying an out-of-range exponent
         # can put Infinity in the anchor or in a coordinate delta. The guard
         # keeps Infinity/Infinity out of the heading and a non-finite anchor
         # out of the polygon's points.
-        return nil unless at.all?(&:finite?) && length.finite? && length.positive?
-
-        Anchor.new(at[0], at[1], dx / length, dy / length)
+        at.all?(&:finite?) && length.finite? && length.positive?
       end
     end
   end
