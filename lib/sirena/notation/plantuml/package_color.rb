@@ -11,8 +11,8 @@ module Sirena
         NAMED = {
           "blue" => "#0000FF", "gray" => "#808080", "green" => "#008000",
           "lightgray" => "#D3D3D3", "orange" => "#FFA500",
-          "pink" => "#FFC0CB", "red" => "#FF0000", "white" => "#FFFFFF",
-          "yellow" => "#FFFF00"
+          "pink" => "#FFC0CB", "purple" => "#800080", "red" => "#FF0000",
+          "white" => "#FFFFFF", "yellow" => "#FFFF00"
         }.freeze
 
         HEX = /\A\h{3}(?:\h{3})?\z/

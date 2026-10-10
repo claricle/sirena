@@ -337,7 +337,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       "+package Domain #teal {" => ["package colour name", 3],
       "namespace Domain {" => ["namespace", 3],
       "enum Color" => ["enum", 3],
-      "title My diagram" => ["title", 3],
+      "title **My** diagram" => ["title", 3],
       "!include other.puml" => ["preprocessor directive", 3],
       "/' block comment '/" => ["block comment", 3],
       "class A extends B" => ["class declaration form", 3],
@@ -442,7 +442,9 @@ RSpec.describe Sirena::Notation::PlantUML do
       stereotype title together
     ].each do |keyword|
       it "names the keyword #{keyword.inspect} as its own construct" do
-        expect(refusal_of(wrap("class A", "#{keyword} x")))
+        text = keyword.match?(/\A(?:caption|footer|header|legend|title)\z/) ? "*x*" : "x"
+
+        expect(refusal_of(wrap("class A", "#{keyword} #{text}")))
           .to have_attributes(construct: keyword, line: 3)
       end
     end

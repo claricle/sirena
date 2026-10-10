@@ -6,6 +6,7 @@ require_relative "klass"
 require_relative "member"
 require_relative "note"
 require_relative "package"
+require_relative "style_reader"
 require_relative "relation"
 require_relative "unsupported_construct_error"
 
@@ -38,6 +39,31 @@ module Sirena
           @notes = []
           @hidden_tags = []
           @packages = []
+          @captions = {}
+        end
+
+        # A kind written twice keeps the later text, as PlantUML does.
+        def caption(caption)
+          @captions[caption.kind] = caption
+        end
+
+        # @raise [UnsupportedConstructError] on a second block, whose
+        #   precedence over the first is not read
+        def open_style(number, text)
+          refuse(text, number, "second style block") if @style_reader
+
+          @style_line = number
+          @style_reader = StyleReader.new
+        end
+
+        # @return [Symbol] :closed when the line ended the block, else :open
+        def style_line(text, number)
+          @style_reader.feed(text, number)
+        end
+
+        # @return [Integer, nil] the line of the style block opened last
+        def open_style_line
+          @style_line
         end
 
         def directive(text)
@@ -191,8 +217,13 @@ module Sirena
             classes: classes.freeze, relations: relations.freeze,
             junctions: @junctions.map(&:first).freeze,
             directives: @directives.dup.freeze, notes: @notes.dup.freeze,
-            packages: occupied_packages(classes).freeze
+            packages: occupied_packages(classes).freeze,
+            captions: @captions.values.freeze, style: style_sheet
           )
+        end
+
+        def style_sheet
+          @style_reader ? @style_reader.sheet : StyleSheet.new
         end
 
         # A package whose every class is hidden draws no frame.
