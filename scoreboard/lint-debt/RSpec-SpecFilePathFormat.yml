@@ -17,10 +17,6 @@ rows:
   count: 1
 - file: spec/sirena/determinism_spec.rb
   count: 1
-- file: spec/sirena/diagram/kanban_spec.rb
-  count: 1
-- file: spec/sirena/diagram/xy_chart_spec.rb
-  count: 1
 - file: spec/sirena/error_taxonomy_spec.rb
   count: 1
 - file: spec/sirena/exhaustion_errors_spec.rb

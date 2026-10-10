@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/diagram/user_journey"
 
-RSpec.describe Sirena::Diagram do
+RSpec.describe Sirena::Diagram::UserJourney do
   describe Sirena::Diagram::JourneyTask do
     describe "#valid?" do
       it "returns true for task with all required fields" do
