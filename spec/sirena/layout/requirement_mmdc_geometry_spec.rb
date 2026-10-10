@@ -43,7 +43,17 @@ RSpec.describe Sirena::Layout::Requirement do
   end
 
   it "puts the relationship source above its target" do
-    expect(node("test_entity").y).to be < node("test_req").y
+    reversed = layout.call(
+      Sirena::Diagram::Requirement.new(
+        requirements: [Sirena::Diagram::RequirementNode.new(name: "r")],
+        elements: [Sirena::Diagram::RequirementElement.new(name: "e")],
+        relationships: [Sirena::Diagram::RequirementRelationship.new(
+          source: "r", target: "e", type: "verifies"
+        )],
+      ),
+    )
+    ys = reversed.children.to_h { |child| [child.id, child.y] }
+    expect(ys["r"]).to be < ys["e"]
   end
 
   it "centres boxes of different widths on one axis" do
