@@ -14,8 +14,8 @@ module Sirena
     # rendering.
     #
     # @example Transform an info diagram
-    #   transform = Info.new
-    #   data = transform.to_graph(info_diagram)
+    #   layout = Info.new
+    #   scene = layout.call(info_diagram)
     class Info < Base
       class Box < Lutaml::Model::Serializable
         attribute :x, :float

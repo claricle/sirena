@@ -13,8 +13,8 @@ module Sirena
     # an error message. This transformer prepares basic data for rendering.
     #
     # @example Transform an error diagram
-    #   transform = Error.new
-    #   data = transform.to_graph(error_diagram)
+    #   layout = Error.new
+    #   scene = layout.call(error_diagram)
     class Error < Base
       class Box < Lutaml::Model::Serializable
         attribute :x, :float
