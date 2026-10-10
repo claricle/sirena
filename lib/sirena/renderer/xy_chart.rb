@@ -56,12 +56,12 @@ module Sirena
       def apply_line_style(item, kind)
         return apply_grid_line_style(item) if kind == "grid"
 
-        item.stroke = theme_color(:axis_line) || "#000000"
+        item.stroke = theme_color(:xy_axis_line)
         item.stroke_width = "2"
       end
 
       def apply_grid_line_style(item)
-        item.stroke = theme_color(:grid_line) || "#e5e7eb"
+        item.stroke = theme_color(:xy_grid_line)
         item.stroke_width = "1"
         item.stroke_dasharray = "3,3"
       end

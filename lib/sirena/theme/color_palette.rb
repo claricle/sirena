@@ -39,6 +39,9 @@ module Sirena
       attribute :note_fill, :string
       attribute :section_bg, :string
       attribute :title_text, :string
+      attribute :card_text, :string
+      attribute :xy_axis_line, :string
+      attribute :xy_grid_line, :string
 
       PALETTES = %i[flow xy timeline_fill timeline_text timeline_rule].freeze
 
@@ -78,6 +81,9 @@ module Sirena
         map "note_fill", to: :note_fill
         map "section_bg", to: :section_bg
         map "title_text", to: :title_text
+        map "card_text", to: :card_text
+        map "xy_axis_line", to: :xy_axis_line
+        map "xy_grid_line", to: :xy_grid_line
         PALETTES.each { |name| map "#{name}_palette", to: :"#{name}_palette" }
       end
 

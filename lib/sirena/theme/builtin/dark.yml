@@ -39,6 +39,9 @@ colors:
   note_fill: "#fefecd"
   section_bg: "#f0f0f0"
   title_text: "#000000"
+  card_text: "#1f2937"
+  xy_axis_line: "#000000"
+  xy_grid_line: "#e5e7eb"
 
   # Categorical palettes: same in every theme, indexed modulo length.
   flow_palette:

@@ -19,7 +19,8 @@ RSpec.describe Sirena::Theme::ColorPalette do
   let(:pinned) do
     { border: "#d1d5db", field_background: "#efefef",
       field_border: "#000000", field_text: "#000000", node_text: "#FFFFFF",
-      title_text: "#000000" }
+      title_text: "#000000", card_text: "#1f2937", xy_axis_line: "#000000",
+      xy_grid_line: "#e5e7eb" }
   end
 
   it "defines every colour a renderer asks the theme for" do
