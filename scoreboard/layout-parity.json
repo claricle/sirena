@@ -96088,125 +96088,125 @@
         {
           "bbox_reference": [
             200.0,
+            50.0,
+            390.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            100.0,
+            111.0,
+            290.0,
+            178.8
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "2002"
+          ]
+        },
+        {
+          "bbox_reference": [
+            400.0,
+            50.0,
+            590.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            300.0,
+            111.0,
+            490.0,
+            178.8
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "2004"
+          ]
+        },
+        {
+          "bbox_reference": [
+            600.0,
+            50.0,
+            790.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            500.0,
+            111.0,
+            690.0,
+            178.8
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "2005"
+          ]
+        },
+        {
+          "bbox_reference": [
+            800.0,
+            50.0,
+            990.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            700.0,
+            111.0,
+            890.0,
+            178.8
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "2006"
+          ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
             250.0,
             390.0,
             300.0
           ],
           "bbox_sirena": [
-            213.33333333333331,
-            135.0,
-            213.33333333333331,
-            135.0
+            100.0,
+            311.0,
+            290.0,
+            361.0
           ],
           "key": [
             "timeline_event",
             null,
             "LinkedIn"
           ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            250.0,
-            590.0,
-            300.0
-          ],
-          "bbox_sirena": [
-            480.0,
-            135.0,
-            480.0,
-            135.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "Facebook"
-          ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            310.0,
-            590.0,
-            360.0
-          ],
-          "bbox_sirena": [
-            480.0,
-            151.0,
-            480.0,
-            151.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "Google"
-          ]
-        },
-        {
-          "bbox_reference": [
-            600.0,
-            250.0,
-            790.0,
-            300.0
-          ],
-          "bbox_sirena": [
-            613.3333333333333,
-            135.0,
-            613.3333333333333,
-            135.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "YouTube"
-          ]
-        },
-        {
-          "bbox_reference": [
-            800.0,
-            250.0,
-            990.0,
-            300.0
-          ],
-          "bbox_sirena": [
-            746.6666666666667,
-            135.0,
-            746.6666666666667,
-            135.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "Twitter"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.283388187512,
-      "worst_e_h": 1.0,
-      "worst_e_w": 1.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "LinkedIn"
+          "2002"
         ],
         "e_c": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "Twitter"
+          "2002"
         ],
         "e_h": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "LinkedIn"
+          "2002"
         ],
         "e_w": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "LinkedIn"
+          "2002"
         ]
       }
     },
@@ -96218,10 +96218,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.283388187512,
-        "worst_e_w": 1.0,
-        "worst_e_h": 1.0,
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -96230,125 +96230,125 @@
     "case": "timeline/002_rendering_timeline_spec_timeline_1.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 5,
+      "matched": 10,
       "top5": [
         {
           "bbox_reference": [
             200.0,
-            167.8,
+            367.8,
             390.0,
-            235.60000000000002
+            450.7999969482422
           ],
           "bbox_sirena": [
-            205.33333333333331,
-            135.0,
-            221.33333333333331,
-            151.0
+            100.0,
+            428.8,
+            290.0,
+            511.8
           ],
           "key": [
-            "timeline_period",
+            "timeline_event",
             null,
-            "Industry 1.0"
+            "Machinery, Waterpower, Steampower"
           ]
         },
         {
           "bbox_reference": [
             400.0,
-            167.8,
+            367.8,
             590.0,
-            235.60000000000002
+            450.7999969482422
           ],
           "bbox_sirena": [
-            338.66666666666663,
-            135.0,
-            354.66666666666663,
-            151.0
+            300.0,
+            428.8,
+            490.0,
+            511.8
           ],
           "key": [
-            "timeline_period",
+            "timeline_event",
             null,
-            "Industry 2.0"
+            "Electricity, Internalcombustion engine,Mass production"
           ]
         },
         {
           "bbox_reference": [
             600.0,
-            167.8,
+            367.8,
             790.0,
-            235.60000000000002
+            450.7999969482422
           ],
           "bbox_sirena": [
-            472.0,
-            135.0,
-            488.0,
-            151.0
+            500.0,
+            428.8,
+            690.0,
+            511.8
           ],
           "key": [
-            "timeline_period",
+            "timeline_event",
             null,
-            "Industry 3.0"
-          ]
-        },
-        {
-          "bbox_reference": [
-            800.0,
-            167.8,
-            990.0,
-            235.60000000000002
-          ],
-          "bbox_sirena": [
-            605.3333333333333,
-            195.0,
-            621.3333333333333,
-            211.0
-          ],
-          "key": [
-            "timeline_period",
-            null,
-            "Industry 4.0"
+            "Electronics,Computers,Automation"
           ]
         },
         {
           "bbox_reference": [
             1000.0,
-            167.8,
+            367.8,
             1190.0,
-            235.60000000000002
+            450.7999969482422
           ],
           "bbox_sirena": [
-            738.6666666666667,
-            195.0,
-            754.6666666666667,
-            211.0
+            900.0,
+            428.8,
+            1090.0,
+            511.8
           ],
           "key": [
-            "timeline_period",
+            "timeline_event",
             null,
-            "Industry 5.0"
+            "Artificialintelligence, Bigdata,3D printing"
+          ]
+        },
+        {
+          "bbox_reference": [
+            800.0,
+            367.8,
+            990.0,
+            433.1999984741211
+          ],
+          "bbox_sirena": [
+            700.0,
+            428.8,
+            890.0,
+            494.20000000000005
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            "Internet, Robotics,Internet of Things"
           ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.643157894737,
-      "worst_e_c": 0.358057063337,
-      "worst_e_h": 0.76401179941,
-      "worst_e_w": 0.915789473684,
+      "worst_e_a": 0.000000036768,
+      "worst_e_c": 0.000000001482,
+      "worst_e_h": 0.000000036768,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "timeline_period",
+          "timeline_event",
           null,
-          "Industry 1.0"
+          "Machinery, Waterpower, Steampower"
         ],
         "e_c": [
-          "timeline_period",
+          "timeline_event",
           null,
-          "Industry 5.0"
+          "Machinery, Waterpower, Steampower"
         ],
         "e_h": [
-          "timeline_period",
+          "timeline_event",
           null,
-          "Industry 1.0"
+          "Machinery, Waterpower, Steampower"
         ],
         "e_w": [
           "timeline_period",
@@ -96357,189 +96357,18 @@
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Machinery, Waterpower, Steampower"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Electricity, Internalcombustion engine,Mass production"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Electronics,Computers,Automation"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Internet, Robotics,Internet of Things"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Artificialintelligence, Bigdata,3D printing"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Machinery, Water power, Steampower"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Electricity, Internal combustion engine, Mass production"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Electronics, Computers, Automation"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Internet, Robotics, Internet of Things"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Artificial intelligence, Big data,3D printing"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/timeline/002_rendering_timeline_spec_timeline_1.svg",
     "reproduce": "bundle exec rake 'corpus[timeline,valid]'",
     "sirena_status": "rendered",
     "type": "timeline",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.358057063337,
-        "worst_e_w": 0.915789473684,
-        "worst_e_h": 0.76401179941,
-        "worst_e_a": 0.643157894737,
+        "worst_e_c": 0.000000001482,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.000000036768,
+        "worst_e_a": 0.000000036768,
         "worst_analog": null
       }
     }
@@ -96548,106 +96377,125 @@
     "case": "timeline/003_rendering_timeline_spec_timeline_2.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 4,
+      "matched": 10,
       "top5": [
         {
           "bbox_reference": [
-            200.0,
-            167.8,
-            390.0,
-            235.60000000000002
+            800.0,
+            367.8,
+            990.0,
+            521.1999908447266
           ],
           "bbox_sirena": [
-            805.3333333333333,
-            135.0,
-            821.3333333333333,
-            151.0
+            700.0,
+            428.8,
+            890.0,
+            582.2
           ],
           "key": [
-            "timeline_period",
+            "timeline_event",
             null,
-            "7600 BC"
+            "The last majorbuilding works arecompleted atStonehenge.People now burytheir dead in stonecircles."
           ]
         },
         {
           "bbox_reference": [
             400.0,
-            167.8,
+            367.8,
             590.0,
-            235.60000000000002
+            503.5999923706055
           ],
           "bbox_sirena": [
-            607.8024691358024,
-            135.0,
-            623.8024691358024,
-            151.0
+            300.0,
+            428.8,
+            490.0,
+            564.6
           ],
           "key": [
-            "timeline_period",
+            "timeline_event",
             null,
-            "6000 BC"
-          ]
-        },
-        {
-          "bbox_reference": [
-            600.0,
-            167.8,
-            790.0,
-            235.60000000000002
-          ],
-          "bbox_sirena": [
-            151.01234567901236,
-            195.0,
-            167.01234567901236,
-            211.0
-          ],
-          "key": [
-            "timeline_period",
-            null,
-            "2300 BC"
+            "Sea levels rise andBritain becomes anisland.The people who livehere arehunter-gatherers."
           ]
         },
         {
           "bbox_reference": [
             800.0,
-            167.8,
+            531.1999908447266,
             990.0,
-            235.60000000000002
+            666.9999832153321
           ],
           "bbox_sirena": [
-            138.66666666666666,
-            195.0,
-            154.66666666666666,
-            211.0
+            700.0,
+            592.2,
+            890.0,
+            728.0
           ],
           "key": [
-            "timeline_period",
+            "timeline_event",
             null,
-            "2200 BC"
+            "The first metalobjects are made inBritain.Some othernice things happen.it is a good time tobe alive."
+          ]
+        },
+        {
+          "bbox_reference": [
+            600.0,
+            367.8,
+            790.0,
+            485.9999938964844
+          ],
+          "bbox_sirena": [
+            500.0,
+            428.8,
+            690.0,
+            547.0
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            "People arrive fromEurope and settle inBritain.They bring farmingand metalworking."
+          ]
+        },
+        {
+          "bbox_reference": [
+            600.0,
+            495.9999938964844,
+            790.0,
+            596.5999893188476
+          ],
+          "bbox_sirena": [
+            500.0,
+            557.0,
+            690.0,
+            657.6
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            "New styles ofpottery and ways ofburying the deadappear."
           ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.643157894737,
-      "worst_e_c": 0.867501901101,
-      "worst_e_h": 0.76401179941,
-      "worst_e_w": 0.915789473684,
+      "worst_e_a": 0.000000059682,
+      "worst_e_c": 0.000000013879,
+      "worst_e_h": 0.000000059682,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "timeline_period",
+          "timeline_event",
           null,
-          "7600 BC"
+          "The last majorbuilding works arecompleted atStonehenge.People now burytheir dead in stonecircles."
         ],
         "e_c": [
-          "timeline_period",
+          "timeline_event",
           null,
-          "2200 BC"
+          "The first metalobjects are made inBritain.Some othernice things happen.it is a good time tobe alive."
         ],
         "e_h": [
-          "timeline_period",
+          "timeline_event",
           null,
-          "7600 BC"
+          "The last majorbuilding works arecompleted atStonehenge.People now burytheir dead in stonecircles."
         ],
         "e_w": [
           "timeline_period",
@@ -96656,223 +96504,18 @@
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Britain's oldestknown house wasbuilt in Orkney,Scotland"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Sea levels rise andBritain becomes anisland.The people who livehere arehunter-gatherers."
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "People arrive fromEurope and settle inBritain.They bring farmingand metalworking."
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "New styles ofpottery and ways ofburying the deadappear."
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "The last majorbuilding works arecompleted atStonehenge.People now burytheir dead in stonecircles."
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "The first metalobjects are made inBritain.Some othernice things happen.it is a good time tobe alive."
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Britain's oldest known house was built in Orkney, Scotland"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Sea levels rise and Britain becomes an island.The people who live here are hunter-gatherers."
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "People arrive from Europe and settle in Britain.They bring farming and metalworking."
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "New styles of pottery and ways of burying the dead appear."
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "The last major building works are completed at Stonehenge.People now bury their dead in stone circles."
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "The first metal objects are made in Britain.Some other nice things happen. it is a good time to be alive."
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/timeline/003_rendering_timeline_spec_timeline_2.svg",
     "reproduce": "bundle exec rake 'corpus[timeline,valid]'",
     "sirena_status": "rendered",
     "type": "timeline",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.867501901101,
-        "worst_e_w": 0.915789473684,
-        "worst_e_h": 0.76401179941,
-        "worst_e_a": 0.643157894737,
+        "worst_e_c": 0.000000013879,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.000000059682,
+        "worst_e_a": 0.000000059682,
         "worst_analog": null
       }
     }
@@ -96881,520 +96524,145 @@
     "case": "timeline/004_rendering_timeline_spec_timeline_3.mmd",
     "geometry": {
       "ambiguous": 2,
-      "matched": 11,
+      "matched": 22,
       "top5": [
         {
           "bbox_reference": [
             200.0,
-            443.1999984741211,
-            390.0,
-            493.1999984741211
-          ],
-          "bbox_sirena": [
-            80.0,
-            191.0,
-            80.0,
-            191.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "Risk Management"
-          ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
             367.8,
-            590.0,
-            417.8
+            390.0,
+            433.1999984741211
           ],
           "bbox_sirena": [
-            80.0,
-            235.0,
-            80.0,
-            235.0
+            100.0,
+            428.8,
+            290.0,
+            494.20000000000005
           ],
           "key": [
             "timeline_event",
             null,
-            "Planning Activities"
-          ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            427.8,
-            590.0,
-            477.8
-          ],
-          "bbox_sirena": [
-            80.0,
-            251.0,
-            80.0,
-            251.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "Human Resources"
+            "RegulatoryCompliance"
           ]
         },
         {
           "bbox_reference": [
             600.0,
-            443.1999984741211,
+            367.8,
             790.0,
-            493.1999984741211
+            433.1999984741211
           ],
           "bbox_sirena": [
-            80.0,
-            251.0,
-            80.0,
-            251.0
+            500.0,
+            428.8,
+            690.0,
+            494.20000000000005
           ],
           "key": [
             "timeline_event",
             null,
-            "Infrastructure"
+            "ManagementReviews"
           ]
         },
         {
           "bbox_reference": [
             800.0,
-            367.8,
+            427.8,
             990.0,
-            417.8
+            493.1999984741211
           ],
           "bbox_sirena": [
-            80.0,
-            295.0,
-            80.0,
-            295.0
+            700.0,
+            488.8,
+            890.0,
+            554.2
           ],
           "key": [
             "timeline_event",
             null,
-            "Planning Activities"
+            "Customer-relatedProcesses"
+          ]
+        },
+        {
+          "bbox_reference": [
+            1000.0,
+            547.8,
+            1190.0,
+            613.199998474121
+          ],
+          "bbox_sirena": [
+            900.0,
+            608.8,
+            1090.0,
+            674.1999999999999
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            "Research andDevelopment"
+          ]
+        },
+        {
+          "bbox_reference": [
+            1000.0,
+            743.199998474121,
+            1190.0,
+            808.599996948242
+          ],
+          "bbox_sirena": [
+            900.0,
+            804.2,
+            1090.0,
+            869.6
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            "InstallationActivities"
           ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.83999881474,
-      "worst_e_h": 1.0,
-      "worst_e_w": 1.0,
+      "worst_e_a": 0.000000023331,
+      "worst_e_c": 0.000000003032,
+      "worst_e_h": 0.000000023331,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "timeline_event",
           null,
-          "Risk Management"
+          "RegulatoryCompliance"
         ],
         "e_c": [
           "timeline_event",
           null,
-          "Servicing Activities"
+          "Post-MarketSurveillance"
         ],
         "e_h": [
           "timeline_event",
           null,
-          "Risk Management"
+          "RegulatoryCompliance"
         ],
         "e_w": [
-          "timeline_event",
-          null,
-          "Risk Management"
-        ]
-      }
-    },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
           "timeline_period",
           null,
           "Quality ManagementSystem"
         ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "ManagementResponsibility"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "ResourceManagement"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "Product RealizationActivities"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "Post-ProductionActivities"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "Quality Management System"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "Management Responsibility"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "Resource Management"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "Product Realization Activities"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "Post-Production Activities"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "RegulatoryCompliance"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "ManagementReviews"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Customer-relatedProcesses"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Research andDevelopment"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "InstallationActivities"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Post-MarketSurveillance"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Regulatory Compliance"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Management Reviews"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Customer-related Processes"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Research and Development"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Installation Activities"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "Post-Market Surveillance"
-        ]
       }
-    ],
+    },
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/timeline/004_rendering_timeline_spec_timeline_3.svg",
     "reproduce": "bundle exec rake 'corpus[timeline,valid]'",
     "sirena_status": "rendered",
     "type": "timeline",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.83999881474,
-        "worst_e_w": 1.0,
-        "worst_e_h": 1.0,
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.000000003032,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.000000023331,
+        "worst_e_a": 0.000000023331,
         "worst_analog": null
       }
     }
@@ -97443,125 +96711,125 @@
         {
           "bbox_reference": [
             200.0,
+            50.0,
+            390.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            100.0,
+            111.0,
+            290.0,
+            178.8
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "2002"
+          ]
+        },
+        {
+          "bbox_reference": [
+            400.0,
+            50.0,
+            590.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            300.0,
+            111.0,
+            490.0,
+            178.8
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "2004"
+          ]
+        },
+        {
+          "bbox_reference": [
+            600.0,
+            50.0,
+            790.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            500.0,
+            111.0,
+            690.0,
+            178.8
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "2005"
+          ]
+        },
+        {
+          "bbox_reference": [
+            800.0,
+            50.0,
+            990.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            700.0,
+            111.0,
+            890.0,
+            178.8
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "2006"
+          ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
             250.0,
             390.0,
             300.0
           ],
           "bbox_sirena": [
-            213.33333333333331,
-            135.0,
-            213.33333333333331,
-            135.0
+            100.0,
+            311.0,
+            290.0,
+            361.0
           ],
           "key": [
             "timeline_event",
             null,
             "LinkedIn"
           ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            250.0,
-            590.0,
-            300.0
-          ],
-          "bbox_sirena": [
-            480.0,
-            135.0,
-            480.0,
-            135.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "Facebook"
-          ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            310.0,
-            590.0,
-            360.0
-          ],
-          "bbox_sirena": [
-            480.0,
-            151.0,
-            480.0,
-            151.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "Google"
-          ]
-        },
-        {
-          "bbox_reference": [
-            600.0,
-            250.0,
-            790.0,
-            300.0
-          ],
-          "bbox_sirena": [
-            613.3333333333333,
-            135.0,
-            613.3333333333333,
-            135.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "YouTube"
-          ]
-        },
-        {
-          "bbox_reference": [
-            800.0,
-            250.0,
-            990.0,
-            300.0
-          ],
-          "bbox_sirena": [
-            746.6666666666667,
-            135.0,
-            746.6666666666667,
-            135.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "Twitter"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.283388187512,
-      "worst_e_h": 1.0,
-      "worst_e_w": 1.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "LinkedIn"
+          "2002"
         ],
         "e_c": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "Twitter"
+          "2002"
         ],
         "e_h": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "LinkedIn"
+          "2002"
         ],
         "e_w": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "LinkedIn"
+          "2002"
         ]
       }
     },
@@ -97573,10 +96841,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.283388187512,
-        "worst_e_w": 1.0,
-        "worst_e_h": 1.0,
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -97620,7 +96888,7 @@
     "case": "timeline/009_parser_should_handle_a_simple_section_and_only_two_tasks_8.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 1,
+      "matched": 2,
       "top5": [
         {
           "bbox_reference": [
@@ -97630,23 +96898,42 @@
             235.60000000000002
           ],
           "bbox_sirena": [
-            338.6666666666667,
-            135.0,
-            354.6666666666667,
-            151.0
+            100.0,
+            167.8,
+            290.0,
+            235.60000000000002
           ],
           "key": [
             "timeline_period",
             null,
             "task1"
           ]
+        },
+        {
+          "bbox_reference": [
+            400.0,
+            167.8,
+            590.0,
+            235.60000000000002
+          ],
+          "bbox_sirena": [
+            300.0,
+            167.8,
+            490.0,
+            235.60000000000002
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "task2"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.643157894737,
-      "worst_e_c": 0.449964503079,
-      "worst_e_h": 0.76401179941,
-      "worst_e_w": 0.915789473684,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -97671,104 +96958,18 @@
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "task2"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "2012"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "task2"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "2000"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "2024"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/timeline/009_parser_should_handle_a_simple_section_and_only_two_tasks_8.svg",
     "reproduce": "bundle exec rake 'corpus[timeline,valid]'",
     "sirena_status": "rendered",
     "type": "timeline",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.449964503079,
-        "worst_e_w": 0.915789473684,
-        "worst_e_h": 0.76401179941,
-        "worst_e_a": 0.643157894737,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -97777,7 +96978,7 @@
     "case": "timeline/010_parser_should_handle_a_two_section_and_two_corresponding_tasks_9.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 3,
+      "matched": 4,
       "top5": [
         {
           "bbox_reference": [
@@ -97787,15 +96988,34 @@
             235.60000000000002
           ],
           "bbox_sirena": [
-            338.6666666666667,
-            135.0,
-            354.6666666666667,
-            151.0
+            100.0,
+            167.8,
+            290.0,
+            235.60000000000002
           ],
           "key": [
             "timeline_period",
             null,
             "task1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            400.0,
+            167.8,
+            590.0,
+            235.60000000000002
+          ],
+          "bbox_sirena": [
+            300.0,
+            167.8,
+            490.0,
+            235.60000000000002
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "task2"
           ]
         },
         {
@@ -97806,10 +97026,10 @@
             235.60000000000002
           ],
           "bbox_sirena": [
-            338.6666666666667,
-            195.0,
-            354.6666666666667,
-            211.0
+            500.0,
+            167.8,
+            690.0,
+            235.60000000000002
           ],
           "key": [
             "timeline_period",
@@ -97825,10 +97045,10 @@
             235.60000000000002
           ],
           "bbox_sirena": [
-            605.3333333333334,
-            195.0,
-            621.3333333333334,
-            211.0
+            700.0,
+            167.8,
+            890.0,
+            235.60000000000002
           ],
           "key": [
             "timeline_period",
@@ -97838,10 +97058,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.643157894737,
-      "worst_e_c": 0.615701720082,
-      "worst_e_h": 0.76401179941,
-      "worst_e_w": 0.915789473684,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -97852,7 +97072,7 @@
         "e_c": [
           "timeline_period",
           null,
-          "task3"
+          "task1"
         ],
         "e_h": [
           "timeline_period",
@@ -97866,121 +97086,18 @@
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "task2"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_period",
-          null,
-          "abc-456"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "task2"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "2000"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "2024"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "2012"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/timeline/010_parser_should_handle_a_two_section_and_two_corresponding_tasks_9.svg",
     "reproduce": "bundle exec rake 'corpus[timeline,valid]'",
     "sirena_status": "rendered",
     "type": "timeline",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.615701720082,
-        "worst_e_w": 0.915789473684,
-        "worst_e_h": 0.76401179941,
-        "worst_e_a": 0.643157894737,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -97994,15 +97111,53 @@
         {
           "bbox_reference": [
             200.0,
+            167.8,
+            390.0,
+            235.60000000000002
+          ],
+          "bbox_sirena": [
+            100.0,
+            167.8,
+            290.0,
+            235.60000000000002
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "task1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            400.0,
+            167.8,
+            590.0,
+            235.60000000000002
+          ],
+          "bbox_sirena": [
+            300.0,
+            167.8,
+            490.0,
+            235.60000000000002
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "task2"
+          ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
             367.8,
             390.0,
             417.8
           ],
           "bbox_sirena": [
-            346.66666666666663,
-            175.0,
-            346.66666666666663,
-            175.0
+            100.0,
+            367.8,
+            290.0,
+            417.8
           ],
           "key": [
             "timeline_event",
@@ -98018,10 +97173,10 @@
             417.8
           ],
           "bbox_sirena": [
-            613.3333333333333,
-            175.0,
-            613.3333333333333,
-            175.0
+            300.0,
+            367.8,
+            490.0,
+            417.8
           ],
           "key": [
             "timeline_event",
@@ -98037,82 +97192,44 @@
             477.8
           ],
           "bbox_sirena": [
-            613.3333333333333,
-            191.0,
-            613.3333333333333,
-            191.0
+            300.0,
+            427.8,
+            490.0,
+            477.8
           ],
           "key": [
             "timeline_event",
             null,
             "event3"
           ]
-        },
-        {
-          "bbox_reference": [
-            200.0,
-            167.8,
-            390.0,
-            235.60000000000002
-          ],
-          "bbox_sirena": [
-            338.66666666666663,
-            135.0,
-            354.66666666666663,
-            151.0
-          ],
-          "key": [
-            "timeline_period",
-            null,
-            "task1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            167.8,
-            590.0,
-            235.60000000000002
-          ],
-          "bbox_sirena": [
-            605.3333333333333,
-            135.0,
-            621.3333333333333,
-            151.0
-          ],
-          "key": [
-            "timeline_period",
-            null,
-            "task2"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.46146616903,
-      "worst_e_h": 1.0,
-      "worst_e_w": 1.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event1"
+          "task1"
         ],
         "e_c": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event3"
+          "task1"
         ],
         "e_h": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event1"
+          "task1"
         ],
         "e_w": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event1"
+          "task1"
         ]
       }
     },
@@ -98124,10 +97241,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.46146616903,
-        "worst_e_w": 1.0,
-        "worst_e_h": 1.0,
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -98136,46 +97253,8 @@
     "case": "timeline/012_parser_should_handle_a_section_and_task_and_its_events_including_markdown_link_11.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 4,
+      "matched": 5,
       "top5": [
-        {
-          "bbox_reference": [
-            400.0,
-            367.8,
-            590.0,
-            417.8
-          ],
-          "bbox_sirena": [
-            613.3333333333333,
-            175.0,
-            613.3333333333333,
-            175.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "event2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            427.8,
-            590.0,
-            477.8
-          ],
-          "bbox_sirena": [
-            613.3333333333333,
-            191.0,
-            613.3333333333333,
-            191.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "event3"
-          ]
-        },
         {
           "bbox_reference": [
             200.0,
@@ -98184,10 +97263,10 @@
             235.60000000000002
           ],
           "bbox_sirena": [
-            338.66666666666663,
-            135.0,
-            354.66666666666663,
-            151.0
+            100.0,
+            167.8,
+            290.0,
+            235.60000000000002
           ],
           "key": [
             "timeline_period",
@@ -98203,111 +97282,116 @@
             235.60000000000002
           ],
           "bbox_sirena": [
-            605.3333333333333,
-            135.0,
-            621.3333333333333,
-            151.0
+            300.0,
+            167.8,
+            490.0,
+            235.60000000000002
           ],
           "key": [
             "timeline_period",
             null,
             "task2"
           ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
+            367.8,
+            390.0,
+            417.8
+          ],
+          "bbox_sirena": [
+            100.0,
+            367.8,
+            290.0,
+            417.8
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            "[event1](http://example.com)"
+          ]
+        },
+        {
+          "bbox_reference": [
+            400.0,
+            367.8,
+            590.0,
+            417.8
+          ],
+          "bbox_sirena": [
+            300.0,
+            367.8,
+            490.0,
+            417.8
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            "event2"
+          ]
+        },
+        {
+          "bbox_reference": [
+            400.0,
+            427.8,
+            590.0,
+            477.8
+          ],
+          "bbox_sirena": [
+            300.0,
+            427.8,
+            490.0,
+            477.8
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            "event3"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.46146616903,
-      "worst_e_h": 1.0,
-      "worst_e_w": 1.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event2"
+          "task1"
         ],
         "e_c": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event3"
+          "task1"
         ],
         "e_h": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event2"
+          "task1"
         ],
         "e_w": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event2"
+          "task1"
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "[event1](http://example.com)"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "[event1](http"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          "//example.com)"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/timeline/012_parser_should_handle_a_section_and_task_and_its_events_including_markdown_link_11.svg",
     "reproduce": "bundle exec rake 'corpus[timeline,valid]'",
     "sirena_status": "rendered",
     "type": "timeline",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.46146616903,
-        "worst_e_w": 1.0,
-        "worst_e_h": 1.0,
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -98321,15 +97405,53 @@
         {
           "bbox_reference": [
             200.0,
+            167.8,
+            390.0,
+            235.60000000000002
+          ],
+          "bbox_sirena": [
+            100.0,
+            167.8,
+            290.0,
+            235.60000000000002
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "task1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            400.0,
+            167.8,
+            590.0,
+            235.60000000000002
+          ],
+          "bbox_sirena": [
+            300.0,
+            167.8,
+            490.0,
+            235.60000000000002
+          ],
+          "key": [
+            "timeline_period",
+            null,
+            "task2"
+          ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
             367.8,
             390.0,
             417.8
           ],
           "bbox_sirena": [
-            346.66666666666663,
-            175.0,
-            346.66666666666663,
-            175.0
+            100.0,
+            367.8,
+            290.0,
+            417.8
           ],
           "key": [
             "timeline_event",
@@ -98345,10 +97467,10 @@
             417.8
           ],
           "bbox_sirena": [
-            613.3333333333333,
-            175.0,
-            613.3333333333333,
-            175.0
+            300.0,
+            367.8,
+            490.0,
+            417.8
           ],
           "key": [
             "timeline_event",
@@ -98364,82 +97486,44 @@
             477.8
           ],
           "bbox_sirena": [
-            613.3333333333333,
-            191.0,
-            613.3333333333333,
-            191.0
+            300.0,
+            427.8,
+            490.0,
+            477.8
           ],
           "key": [
             "timeline_event",
             null,
             "event3"
           ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            487.8,
-            590.0,
-            537.8
-          ],
-          "bbox_sirena": [
-            613.3333333333333,
-            207.0,
-            613.3333333333333,
-            207.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "event4"
-          ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            547.8,
-            590.0,
-            597.8
-          ],
-          "bbox_sirena": [
-            613.3333333333333,
-            223.0,
-            613.3333333333333,
-            223.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "event5"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.547187154212,
-      "worst_e_h": 1.0,
-      "worst_e_w": 1.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event1"
+          "task1"
         ],
         "e_c": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event5"
+          "task1"
         ],
         "e_h": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event1"
+          "task1"
         ],
         "e_w": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "event1"
+          "task1"
         ]
       }
     },
@@ -98451,10 +97535,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.547187154212,
-        "worst_e_w": 1.0,
-        "worst_e_h": 1.0,
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -98463,25 +97547,25 @@
     "case": "timeline/014_parser_should_handle_a_title_section_task_and_events_with_semicolons_13.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 3,
+      "matched": 4,
       "top5": [
         {
           "bbox_reference": [
             200.0,
-            367.8,
+            487.8,
             390.0,
-            417.8
+            537.8
           ],
           "bbox_sirena": [
-            480.0,
-            175.0,
-            480.0,
-            175.0
+            305.0,
+            548.8,
+            495.0,
+            598.8
           ],
           "key": [
             "timeline_event",
             null,
-            ";ev;ent1;"
+            ";ev;ent3;"
           ]
         },
         {
@@ -98492,10 +97576,10 @@
             477.8
           ],
           "bbox_sirena": [
-            480.0,
-            191.0,
-            480.0,
-            191.0
+            305.0,
+            488.8,
+            495.0,
+            538.8
           ],
           "key": [
             "timeline_event",
@@ -98511,29 +97595,48 @@
             235.60000000000002
           ],
           "bbox_sirena": [
-            472.0,
-            135.0,
-            488.0,
-            151.0
+            305.0,
+            228.8,
+            495.0,
+            296.6
           ],
           "key": [
             "timeline_period",
             null,
             ";ta;sk1;"
           ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
+            367.8,
+            390.0,
+            417.8
+          ],
+          "bbox_sirena": [
+            305.0,
+            428.8,
+            495.0,
+            478.8
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            ";ev;ent1;"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.673745823134,
-      "worst_e_h": 1.0,
-      "worst_e_w": 1.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "timeline_event",
           null,
-          ";ev;ent1;"
+          ";ev;ent3;"
         ],
         "e_c": [
           "timeline_event",
@@ -98543,62 +97646,27 @@
         "e_h": [
           "timeline_event",
           null,
-          ";ev;ent1;"
+          ";ev;ent2;"
         ],
         "e_w": [
-          "timeline_event",
+          "timeline_period",
           null,
-          ";ev;ent1;"
+          ";ta;sk1;"
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          ";ev;ent3;"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "timeline_event",
-          null,
-          ";ev;ent3"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/timeline/014_parser_should_handle_a_title_section_task_and_events_with_semicolons_13.svg",
     "reproduce": "bundle exec rake 'corpus[timeline,valid]'",
     "sirena_status": "rendered",
     "type": "timeline",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.673745823134,
-        "worst_e_w": 1.0,
-        "worst_e_h": 1.0,
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -98612,53 +97680,15 @@
         {
           "bbox_reference": [
             200.0,
-            367.8,
-            390.0,
-            417.8
-          ],
-          "bbox_sirena": [
-            480.0,
-            175.0,
-            480.0,
-            175.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "#ev#ent1#"
-          ]
-        },
-        {
-          "bbox_reference": [
-            200.0,
-            427.8,
-            390.0,
-            477.8
-          ],
-          "bbox_sirena": [
-            480.0,
-            191.0,
-            480.0,
-            191.0
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "#ev#ent2#"
-          ]
-        },
-        {
-          "bbox_reference": [
-            200.0,
             487.8,
             390.0,
             537.8
           ],
           "bbox_sirena": [
-            480.0,
-            207.0,
-            480.0,
-            207.0
+            305.0,
+            548.8,
+            495.0,
+            598.8
           ],
           "key": [
             "timeline_event",
@@ -98669,49 +97699,87 @@
         {
           "bbox_reference": [
             200.0,
+            427.8,
+            390.0,
+            477.8
+          ],
+          "bbox_sirena": [
+            305.0,
+            488.8,
+            495.0,
+            538.8
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            "#ev#ent2#"
+          ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
             167.8,
             390.0,
             235.60000000000002
           ],
           "bbox_sirena": [
-            472.0,
-            135.0,
-            488.0,
-            151.0
+            305.0,
+            228.8,
+            495.0,
+            296.6
           ],
           "key": [
             "timeline_period",
             null,
             "task1"
           ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
+            367.8,
+            390.0,
+            417.8
+          ],
+          "bbox_sirena": [
+            305.0,
+            428.8,
+            495.0,
+            478.8
+          ],
+          "key": [
+            "timeline_event",
+            null,
+            "#ev#ent1#"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.688879462094,
-      "worst_e_h": 1.0,
-      "worst_e_w": 1.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "timeline_event",
           null,
-          "#ev#ent1#"
+          "#ev#ent3#"
         ],
         "e_c": [
           "timeline_event",
           null,
-          "#ev#ent3#"
+          "#ev#ent2#"
         ],
         "e_h": [
           "timeline_event",
           null,
-          "#ev#ent1#"
+          "#ev#ent2#"
         ],
         "e_w": [
-          "timeline_event",
+          "timeline_period",
           null,
-          "#ev#ent1#"
+          "task1"
         ]
       }
     },
@@ -98723,10 +97791,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.688879462094,
-        "worst_e_w": 1.0,
-        "worst_e_h": 1.0,
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }

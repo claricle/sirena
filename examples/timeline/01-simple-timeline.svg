@@ -1,37 +1,203 @@
 <svg
- width="960.0"
- height="440.0"
- viewBox="0 0 960 440"
+ width="1590.0"
+ height="612.0"
+ viewBox="0 0 1590.0 612.0"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
-<text fill="#000000" x="480.0" y="40.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">History of Programming Languages</text>
-<text fill="#4472C4" x="80.0" y="100.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Early Years</text>
-<rect fill="#ffffff" stroke="none" x="80.0" y="140.0" width="800.0" height="6.0" rx="3.0" ry="3.0"/>
-<circle fill="#4472C4" stroke="#000000" stroke-width="2" cx="149.56521739130434" cy="143.0" r="8.0"/>
-<text fill="#000000" x="149.56521739130434" y="175.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Fortran released</text>
-<text fill="#000000" x="149.56521739130434" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">1957</text>
-<circle fill="#4472C4" stroke="#000000" stroke-width="2" cx="323.47826086956525" cy="143.0" r="8.0"/>
-<text fill="#000000" x="323.47826086956525" y="175.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">C language created</text>
-<text fill="#000000" x="323.47826086956525" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">1972</text>
-<text fill="#000000" x="80.0" y="166.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">1951</text>
-<text fill="#000000" x="880.0" y="166.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">2020</text>
-<text fill="#000000" x="480.0" y="166.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">1986</text>
-<text fill="#ED7D31" x="80.0" y="160.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Modern Era</text>
-<rect fill="#ffffff" stroke="none" x="80.0" y="200.0" width="800.0" height="6.0" rx="3.0" ry="3.0"/>
-<circle fill="#ED7D31" stroke="#000000" stroke-width="2" cx="543.768115942029" cy="203.0" r="8.0"/>
-<text fill="#000000" x="543.768115942029" y="235.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Python released</text>
-<text fill="#000000" x="543.768115942029" y="185.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">1991</text>
-<circle fill="#ED7D31" stroke="#000000" stroke-width="2" cx="590.1449275362318" cy="203.0" r="8.0"/>
-<text fill="#000000" x="590.1449275362318" y="235.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Java and JavaScript released</text>
-<text fill="#000000" x="590.1449275362318" y="185.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">1995</text>
-<text fill="#A5A5A5" x="80.0" y="220.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Contemporary</text>
-<rect fill="#ffffff" stroke="none" x="80.0" y="260.0" width="800.0" height="6.0" rx="3.0" ry="3.0"/>
-<circle fill="#A5A5A5" stroke="#000000" stroke-width="2" cx="752.463768115942" cy="263.0" r="8.0"/>
-<text fill="#000000" x="752.463768115942" y="295.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Go language released</text>
-<text fill="#000000" x="752.463768115942" y="245.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">2009</text>
-<circle fill="#A5A5A5" stroke="#000000" stroke-width="2" cx="810.4347826086956" cy="263.0" r="8.0"/>
-<text fill="#000000" x="810.4347826086956" y="295.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Swift released</text>
-<text fill="#000000" x="810.4347826086956" y="245.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">2014</text>
+<g transform="translate(100, 111)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#8686ff" d="M0 62.8 v-57.8 q0,-5 5,-5 h380 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ffffb9" stroke-width="3" x1="0.0" y1="67.8" x2="390.0" y2="67.8"/>
+    </g>
+    <g transform="translate(195, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Early Years</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(100, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#8686ff" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ffffb9" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">1957</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 195 296.6 L 195 562" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="195.0,562.0 191.0,554.0 199.0,554.0"/>
+</g>
+<g class="eventWrapper" transform="translate(100, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#8686ff" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#ffffb9" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Fortran released</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(300, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#8686ff" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ffffb9" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">1972</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 395 296.6 L 395 562" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="395.0,562.0 391.0,554.0 399.0,554.0"/>
+</g>
+<g class="eventWrapper" transform="translate(300, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#8686ff" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#ffffb9" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">C language created</text>
+    </g>
+  </g>
+</g>
+<g transform="translate(500, 111)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 62.8 v-57.8 q0,-5 5,-5 h380 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="67.8" x2="390.0" y2="67.8"/>
+    </g>
+    <g transform="translate(195, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Modern Era</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(500, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">1991</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 595 296.6 L 595 562" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="595.0,562.0 591.0,554.0 599.0,554.0"/>
+</g>
+<g class="eventWrapper" transform="translate(500, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Python released</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(700, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">1995</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 795 296.6 L 795 562" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="795.0,562.0 791.0,554.0 799.0,554.0"/>
+</g>
+<g class="eventWrapper" transform="translate(700, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 60.4 v-55.4 q0,-5 5,-5 h180 q5,0 5,5 v60.4 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="65.4" x2="190.0" y2="65.4"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16"><tspan x="0.0">Java and JavaScript</tspan><tspan x="0.0" y="38.6">released</tspan></text>
+    </g>
+  </g>
+</g>
+<g transform="translate(900, 111)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#d7ff86" d="M0 62.8 v-57.8 q0,-5 5,-5 h380 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="0.0" y1="67.8" x2="390.0" y2="67.8"/>
+    </g>
+    <g transform="translate(195, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Contemporary</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(900, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#d7ff86" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">2009</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 995 296.6 L 995 562" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="995.0,562.0 991.0,554.0 999.0,554.0"/>
+</g>
+<g class="eventWrapper" transform="translate(900, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#d7ff86" d="M0 60.4 v-55.4 q0,-5 5,-5 h180 q5,0 5,5 v60.4 H0 Z"/>
+      <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="0.0" y1="65.4" x2="190.0" y2="65.4"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16"><tspan x="0.0">Go language</tspan><tspan x="0.0" y="38.6">released</tspan></text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(1100, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#d7ff86" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">2014</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 1195 296.6 L 1195 562" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="1195.0,562.0 1191.0,554.0 1199.0,554.0"/>
+</g>
+<g class="eventWrapper" transform="translate(1100, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#d7ff86" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Swift released</text>
+    </g>
+  </g>
+</g>
+<text fill="#333333" x="345.0" y="81.0" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="33" font-weight="bold">History of Programming Languages</text>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="4" d="M 50 346.6 L 1540 346.6"/>
+  <polygon fill="#000000" points="1540.0,346.6 1524.0,354.6 1524.0,338.6"/>
+</g>
 </svg>
