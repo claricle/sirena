@@ -13,7 +13,7 @@ module Sirena
         TAB_HEIGHT = 20
         DEFAULT_BOX_FILL = "none"
         DEFAULT_RECT_FILL = "#cccccc"
-        FRAME_FONT_SIZE = "14"
+        FRAME_FONT_SIZE = "16"
 
         private
 

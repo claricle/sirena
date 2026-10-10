@@ -12,8 +12,8 @@ module Sirena
   module Layout
     # Builds final sequence-diagram geometry without an external layout pass.
     class Sequence < Base
-      DEFAULT_FONT_SIZE = 14
-      MESSAGE_FONT_SIZE = 12
+      # mmdc draws every sequence text at 16px.
+      DEFAULT_FONT_SIZE = 16
       PARTICIPANT_SPACING = 150
       PARTICIPANT_WIDTH = 120
       PARTICIPANT_HEIGHT = 40
@@ -283,16 +283,16 @@ module Sirena
       end
 
       def participant_font_size
-        theme_font_size(:font_size_normal, DEFAULT_FONT_SIZE)
+        text_font_size
       end
 
       def message_font_size
-        theme_font_size(:font_size_small, MESSAGE_FONT_SIZE)
+        text_font_size
       end
 
-      def theme_font_size(name, fallback)
-        value = theme&.typography&.public_send(name)
-        value&.positive? ? value : fallback
+      def text_font_size
+        value = theme&.typography&.sequence_font_size
+        value&.positive? ? value : DEFAULT_FONT_SIZE
       end
 
       def calculate_lifeline_length(graph)

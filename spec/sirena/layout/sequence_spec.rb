@@ -70,15 +70,23 @@ RSpec.describe Sirena::Layout::Sequence do
 
     let(:expected_theme_evidence) do
       [
-        16.0,
-        Sirena::TextMeasurement.measure("A", font_size: 16.0)[:width],
-        14.0,
-        Sirena::TextMeasurement.measure("hello", font_size: 14.0)[:width],
+        18.0,
+        Sirena::TextMeasurement.measure("A", font_size: 18.0)[:width],
+        18.0,
+        Sirena::TextMeasurement.measure("hello", font_size: 18.0)[:width],
       ]
     end
 
     it "uses the injected sizes for measurement and final labels" do
       expect(theme_evidence).to eq(expected_theme_evidence)
+    end
+  end
+
+  describe "default text size" do
+    it "sets participant and message text at mmdc's 16px" do
+      labels = [scene.participants.first.label, scene.messages.first.label]
+
+      expect(labels.map(&:font_size)).to eq([16.0, 16.0])
     end
   end
 
@@ -131,7 +139,7 @@ RSpec.describe Sirena::Layout::Sequence do
     end
 
     it "adds a note slot but no activation geometry" do
-      expect(omission_evidence).to eq([337.0, 1, [277.0, 277.0], 1, false])
+      expect(omission_evidence).to eq([339.0, 1, [279.0, 279.0], 1, false])
     end
   end
 

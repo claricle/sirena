@@ -40,6 +40,18 @@ RSpec.describe Sirena::Layout::Sequence do
     expect(first_note.y + first_note.height).to be < rows.last
   end
 
+  it "draws a two-line note 58 tall, as mmdc does at 16px" do
+    expect(first_note.height).to eq(58)
+  end
+
+  it "draws a one-line note 39 tall, as mmdc does at 16px" do
+    expect(scene.notes.last.height).to eq(39)
+  end
+
+  it "sets note text at 16px by default" do
+    expect(first_note.lines.map(&:font_size).uniq).to eq([16.0])
+  end
+
   it "pushes later messages down by the note slot" do
     shift = rows.last - plain.messages.last.shaft.y1
     expect(shift).to eq(first_note.height + 20)
