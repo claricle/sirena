@@ -71,6 +71,12 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
     )
   end
 
+  it "passes the registered analog and spatial policy to the comparator" do
+    seed_alias_case
+    results
+    expect(captured_arguments.fetch(0)).to include(policy_arguments)
+  end
+
   it "records a candidate render failure with its pipeline stage" do
     seed_render_failure
     results
@@ -86,6 +92,12 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
                      row("flowchart/invalid.mmd", verdict: "invalid"),
                      row("flowchart/failing.mmd", pass: false))
     write_reference("flowchart/kept.svg")
+  end
+
+  def policy_arguments
+    policy = SpecSupport::LayoutParity::MeasurementPolicy.for(:class_diagram)
+    { analog_measurements: policy.analog_measurements,
+      spatial_kinds: policy.spatial_kinds }
   end
 
   def partitioned_case_ids

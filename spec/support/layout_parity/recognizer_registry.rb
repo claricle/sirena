@@ -5,7 +5,12 @@ module SpecSupport
     # Maps every registered Mermaid type to its shared SVG recognizer and the
     # historical fixture directory that stores that type's references.
     class RecognizerRegistry
-      Entry = Data.define(:type, :recognizer, :reference_directory)
+      Entry = Data.define(
+        :type,
+        :recognizer,
+        :reference_directory,
+        :measurement_policy,
+      )
 
       RECOGNIZER_NAMES = {
         architecture: "ArchitectureRecognizer",
@@ -50,7 +55,8 @@ module SpecSupport
         directory = REFERENCE_DIRECTORIES.fetch(key, key.to_s)
 
         Entry.new(type: key, recognizer: recognizer,
-                  reference_directory: directory)
+                  reference_directory: directory,
+                  measurement_policy: MeasurementPolicy.for(key))
       end
     end
   end

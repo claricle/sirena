@@ -26,4 +26,5 @@ task default: [
   :benchmark,
   "corpus:check",
   "claims_manifest:check",
+  "layout_parity:check",
 ]

@@ -41,6 +41,13 @@ RSpec.describe SpecSupport::LayoutParity::RecognizerRegistry do
       .to raise_error(KeyError, "no parity recognizer for not_registered")
   end
 
+  it "carries the type measurement policy with each recognizer" do
+    entry = described_class.fetch(:quadrant)
+
+    expect(entry.measurement_policy)
+      .to equal(SpecSupport::LayoutParity::MeasurementPolicy.for(:quadrant))
+  end
+
   def actual_mapping
     Sirena::Notation::Mermaid.types.to_h do |type|
       entry = described_class.fetch(type)
