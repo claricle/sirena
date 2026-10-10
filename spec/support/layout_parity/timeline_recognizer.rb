@@ -4,15 +4,25 @@ module SpecSupport
   module LayoutParity
     # Timeline periods and events keyed by their visible labels.
     class TimelineRecognizer
+      NODE = "contains(concat(' ', @class, ' '), ' timeline-node ')"
+      SECTION_NODES = "//g[#{NODE}]" \
+                      "[not(ancestor::g[contains(@class, 'Wrapper')])]".freeze
+      AXIS_LINE = "(//g[@class='lineWrapper'])[last()]" \
+                  "/*[self::line or self::path][1]"
+
       def container_kinds
         []
       end
 
       def elements(extractor, doc)
         tasks = nodes_with_class(doc, "taskWrapper")
-        return reference_elements(extractor, doc, tasks) if tasks.any?
-
-        candidate_elements(extractor, doc)
+        items = if tasks.any?
+                  reference_elements(extractor, doc, tasks)
+                else
+                  candidate_elements(extractor, doc)
+                end
+        items + section_elements(extractor, doc) +
+          axis_elements(extractor, doc)
       end
 
       private
@@ -25,6 +35,18 @@ module SpecSupport
           element(extractor, node, extractor.label(node), :timeline_event)
         end
         periods + events
+      end
+
+      def section_elements(extractor, doc)
+        doc.xpath(SECTION_NODES).filter_map do |node|
+          element(extractor, node, normalized(node), :timeline_section)
+        end
+      end
+
+      def axis_elements(extractor, doc)
+        doc.xpath(AXIS_LINE).filter_map do |node|
+          element(extractor, node, "axis", :timeline_axis)
+        end
       end
 
       def candidate_elements(extractor, doc)
