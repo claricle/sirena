@@ -44,20 +44,23 @@ module SpecSupport
           return reference.map { |rect| rect.ancestors("g").first }
         end
 
-        doc.xpath("//g[starts-with(@id, 'block-compound-')]")
+        block_nodes(doc).select { |node| block_nodes(node).any? }
       end
 
       def leaf_nodes(doc)
         reference = nodes_with_class(doc, "node", tag: "g")
         return reference.reject { |node| composite?(node) } if reference.any?
 
-        prefix = "starts-with(@id, 'block-')"
-        noncompound = "not(contains(@id, 'compound'))"
-        doc.xpath("//g[#{prefix} and #{noncompound}]")
+        block_nodes(doc).reject { |node| composite?(node) }
       end
 
       def composite?(node)
-        nodes_with_class(node, "composite", tag: "rect").any?
+        nodes_with_class(node, "composite", tag: "rect").any? ||
+          block_nodes(node).any?
+      end
+
+      def block_nodes(node)
+        node.xpath(".//g[starts-with(@id, 'block-')]")
       end
 
       def semantic_key(node)

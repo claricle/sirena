@@ -57,7 +57,7 @@ RSpec.describe Sirena::Layout::Block do
       children = nested_scene.children.first.children
       inner = children.find { |node| node.id == "inner" }
       expect([inner.children.map(&:id), inner.children.map(&:x).uniq])
-        .to eq([%w[B C], [60.0]])
+        .to eq([%w[B C], [144.0, 252.0]])
     end
 
     context "with a block whose span never fits the column count" do
