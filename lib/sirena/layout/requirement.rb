@@ -499,9 +499,6 @@ module Sirena
                 height: dims[:height],
                 level: level_idx,
               }
-
-              current_x += dims[:width] + DEFAULT_SPACING_X
-              max_height = [max_height, dims[:height]].max
             else
               elem = node[:object]
               dims = calculate_element_dimensions(elem)
@@ -514,10 +511,10 @@ module Sirena
                 height: dims[:height],
                 level: level_idx,
               }
-
-              current_x += dims[:width] + DEFAULT_SPACING_X
-              max_height = [max_height, dims[:height]].max
             end
+
+            current_x += dims[:width] + DEFAULT_SPACING_X
+            max_height = [max_height, dims[:height]].max
           end
 
           max_width = [max_width, current_x].max
@@ -540,10 +537,7 @@ module Sirena
 
         nodes_by_name = {}
         requirements.each { |r| nodes_by_name[r.name] = { type: :requirement, object: r, level: nil } }
-        elements.each { |e| nodes_by_name[e.name] = { type: :element, object: e, level: nil } }
-
-        # Start with elements at level 0
-        elements.each { |e| nodes_by_name[e.name][:level] = 0 }
+        elements.each { |e| nodes_by_name[e.name] = { type: :element, object: e, level: 0 } }
 
         # Build dependency map
         dependencies = Hash.new { |h, k| h[k] = [] }
