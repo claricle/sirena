@@ -122,11 +122,11 @@ RSpec.describe SpecSupport::LayoutParity::SvgFigureExtractor do
         .to eq([expected_tops, expected_tops])
     end
 
-    it "separates a reference participant's top and bottom boxes" do
+    it "collapses a reference participant's presentation copies" do
       reference, = sequence_sides
       kinds = extract(reference, sequence).keys.map(&:first)
 
-      expect(kinds.uniq.sort).to eq(%i[participant-bottom participant-top])
+      expect(kinds.uniq).to eq([:"participant-top"])
     end
   end
 end
