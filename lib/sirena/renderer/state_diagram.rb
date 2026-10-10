@@ -124,10 +124,13 @@ module Sirena
         )
       end
 
-      def create_path_with_bends(sx, sy, tx, ty, bend_points)
+      def create_path_with_bends(
+        source_x, source_y, target_x, target_y, bend_points
+      )
         Layout::StateDiagram.path_data(
-          point(x: sx, y: sy), point(x: tx, y: ty),
-          bend_points.map { |item| point(item) }
+          point(x: source_x, y: source_y),
+          point(x: target_x, y: target_y),
+          bend_points.map { |item| point(item) },
         )
       end
 
@@ -148,25 +151,29 @@ module Sirena
         compatibility_state_shape(state_type, coordinates)
       end
 
-      def create_normal_state(x, y, width, height)
-        normal_state_shape(x, y, width, height)
+      def create_normal_state(x_position, y_position, width, height)
+        normal_state_shape(x_position, y_position, width, height)
       end
 
-      def create_start_state(x, y, width, height)
-        start_state_shape(compatibility_state([x, y, width, height], "start"))
+      def create_start_state(x_position, y_position, width, height)
+        coordinates = [x_position, y_position, width, height]
+        start_state_shape(compatibility_state(coordinates, "start"))
       end
 
-      def create_end_state(x, y, width, height)
-        end_state_shape(compatibility_state([x, y, width, height], "end"))
+      def create_end_state(x_position, y_position, width, height)
+        coordinates = [x_position, y_position, width, height]
+        end_state_shape(compatibility_state(coordinates, "end"))
       end
 
-      def create_choice_state(x, y, width, height)
-        state = compatibility_state([x, y, width, height], "choice")
+      def create_choice_state(x_position, y_position, width, height)
+        coordinates = [x_position, y_position, width, height]
+        state = compatibility_state(coordinates, "choice")
         choice_state_shape(state)
       end
 
-      def create_fork_join_state(x, y, width, height)
-        state = compatibility_state([x, y, width, height], "fork")
+      def create_fork_join_state(x_position, y_position, width, height)
+        coordinates = [x_position, y_position, width, height]
+        state = compatibility_state(coordinates, "fork")
         fork_join_state_shape(state)
       end
 
