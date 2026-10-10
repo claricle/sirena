@@ -26,7 +26,7 @@ jobs:
   # ---- fast lane: unit suite, budget < 10 min ---------------------------
   unit:
     # Everything generic-rake ran before: `bundle exec rake` (spec, benchmark,
-    # corpus:check) on the same Ruby x OS matrix.
+    # corpus:check) on the repository-owned Ruby x OS matrix.
     name: unit (ruby ${{ matrix.ruby }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -35,7 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        ruby: ['3.3', '3.4']
+        ruby: ['3.2', '3.3', '3.4']
         experimental: [false]
         include:
           - {os: ubuntu-latest, ruby: '4.0', experimental: true}

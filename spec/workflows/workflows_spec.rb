@@ -98,6 +98,18 @@ module WorkflowHelpers
       step.fetch("env", nil)
     end
   end
+
+  def expected_unit_matrix
+    stable_oses = %w[ubuntu-latest macos-latest windows-latest]
+    {
+      "os" => stable_oses,
+      "ruby" => %w[3.2 3.3 3.4],
+      "experimental" => [false],
+      "include" => stable_oses.map do |os|
+        { "os" => os, "ruby" => "4.0", "experimental" => true }
+      end,
+    }
+  end
 end
 
 # The subject is a set of YAML files, not a class.
@@ -180,6 +192,11 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
   describe "ci.yml topology" do
     def jobs
       ci.fetch("jobs")
+    end
+
+    it "runs every stable Ruby on every OS and keeps Ruby 4 experimental" do
+      expect(jobs.fetch("unit").dig("strategy", "matrix"))
+        .to eq(expected_unit_matrix)
     end
 
     it "runs on pull requests, merge queue, push, dispatch and a nightly schedule" do
