@@ -425,8 +425,8 @@ module Sirena
       # @return [Array<ClassEntity>] parent entities
       def parent_entities(entity_id)
         parent_ids = relationships
-                     .select { |r| r.from_id == entity_id && r.inheritance? }
-                     .map(&:to_id)
+          .select { |r| r.from_id == entity_id && r.inheritance? }
+          .map(&:to_id)
         entities.select { |e| parent_ids.include?(e.id) }
       end
 
@@ -436,8 +436,8 @@ module Sirena
       # @return [Array<ClassEntity>] child entities
       def child_entities(entity_id)
         child_ids = relationships
-                    .select { |r| r.to_id == entity_id && r.inheritance? }
-                    .map(&:from_id)
+          .select { |r| r.to_id == entity_id && r.inheritance? }
+          .map(&:from_id)
         entities.select { |e| child_ids.include?(e.id) }
       end
     end
