@@ -30,13 +30,16 @@ RSpec.describe Sirena::Layout::Pie do
     diagram.slices = [slice("ash", 100)]
 
     expect(scene.slices.map(&:path)).to eq(
-      ["M 225 225 L 225.0 40.0 A 185 185 0 1 1 225.0 410.0 A 185 185 0 1 1 225.0 40.0 Z"],
+      ["M 225 225 L 225.0 40.0 A 185 185 0 1 1 225.0 410.0 " \
+       "A 185 185 0 1 1 225.0 40.0 Z"],
     )
   end
 
-  it "rounds slice points to four decimals so every platform emits the same text" do
-    diagram.slices = [42.5, 28.3, 18.7, 10.5].map { |share| slice("part", share) }
-    points = scene.slices.flat_map { |part| part.path.scan(/\d+\.\d+/) << part.label.x.to_s }
+  it "rounds slice points to four decimals for every platform" do
+    diagram.slices = [42.5, 28.3, 18.7, 10.5].map { |part| slice("p", part) }
+    points = scene.slices.flat_map do |part|
+      part.path.scan(/\d+\.\d+/) << part.label.x.to_s
+    end
 
     expect(points.map { |point| point.split(".").last.size }.max).to be <= 4
   end

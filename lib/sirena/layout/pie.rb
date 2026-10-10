@@ -206,11 +206,12 @@ module Sirena
       end
 
       def slice_path(start_angle, finish_angle)
-        return full_circle_path(start_angle) if finish_angle - start_angle >= 360
+        sweep = finish_angle - start_angle
+        return full_circle_path(start_angle) if sweep >= 360
 
         start_x, start_y = circle_point(start_angle, RADIUS)
         finish_x, finish_y = circle_point(finish_angle, RADIUS)
-        large_arc = (finish_angle - start_angle) > 180 ? 1 : 0
+        large_arc = sweep > 180 ? 1 : 0
         [
           "M #{CENTER_X} #{CENTER_Y}", "L #{start_x} #{start_y}",
           "A #{RADIUS} #{RADIUS} 0 #{large_arc} 1 #{finish_x} #{finish_y}",
