@@ -123,7 +123,7 @@ module Sirena
           label: block_label(field[:label], x_position + (width / 2.0),
                              y_position + (ROW_HEIGHT / 2.0)),
           start_label: start_label(first, last, x_position, width, y_position),
-          end_label: end_label(first, last, x_position, width, y_position)
+          end_label: end_label(first, last, x_position, width, y_position),
         )
       end
 

@@ -12,13 +12,13 @@ RSpec.describe Sirena::Renderer::Packet, "#render" do
 
   def anchors
     renderer.render(scene).children.grep(Sirena::Svg::Text)
-            .select { |t| Array(t.content).join.match?(/\A\d+\z/) }
-            .map { |t| [Array(t.content).join, t.text_anchor] }
+      .select { |t| Array(t.content).join.match?(/\A\d+\z/) }
+      .map { |t| [Array(t.content).join, t.text_anchor] }
   end
 
   it "writes start and end numbers for a multi-bit block, one for a single bit" do
     expect(anchors).to eq(
-      [["0", "start"], ["31", "end"], ["32", "middle"]]
+      [["0", "start"], ["31", "end"], ["32", "middle"]],
     )
   end
 end
