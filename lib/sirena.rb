@@ -8,7 +8,6 @@ module Sirena
   # Faults a hostile DOCUMENT can provoke that are not `StandardError`, so
   # every ordinary rescue in this gem -- and in any host embedding it --
   # lets them past and the process goes down.
-  #
   # Derived rather than collected a name at a time: every `Exception`
   # descendant loaded in this process that is not a `StandardError` was
   # enumerated and classified, and exactly these two are exhaustion caused
