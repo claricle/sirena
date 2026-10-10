@@ -326,16 +326,12 @@
   {
     "case": "c4/012_parser_should_parse_a_link_11.mmd",
     "verdict": "artifact",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/013_parser_should_parse_tags_12.mmd",
     "verdict": "artifact",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/014_parser_should_parse_a_c4_diagram_with_one_container_correctly_13.mmd",
@@ -365,23 +361,17 @@
   {
     "case": "c4/019_parser_should_parse_a_sprite_18.mmd",
     "verdict": "artifact",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/020_parser_should_parse_a_link_19.mmd",
     "verdict": "artifact",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/021_parser_should_parse_tags_20.mmd",
     "verdict": "artifact",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/022_parser_should_handle_a_trailing_whitespaces_after_statements_21.mmd",
@@ -421,23 +411,17 @@
   {
     "case": "c4/029_parser_should_parse_a_sprite_28.mmd",
     "verdict": "invalid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/030_parser_should_parse_a_link_29.mmd",
     "verdict": "invalid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/031_parser_should_parse_tags_30.mmd",
     "verdict": "invalid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/032_parser_should_parse_a_c4_diagram_with_one_person_ext_correctly_31.mmd",
@@ -462,23 +446,17 @@
   {
     "case": "c4/036_parser_should_parse_a_sprite_35.mmd",
     "verdict": "invalid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/037_parser_should_parse_a_link_36.mmd",
     "verdict": "invalid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/038_parser_should_parse_tags_37.mmd",
     "verdict": "invalid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/039_parser_should_parse_a_c4_diagram_with_one_system_correctly_38.mmd",
@@ -503,23 +481,17 @@
   {
     "case": "c4/043_parser_should_parse_a_sprite_42.mmd",
     "verdict": "artifact",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/044_parser_should_parse_a_link_43.mmd",
     "verdict": "artifact",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/045_parser_should_parse_tags_44.mmd",
     "verdict": "artifact",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "c4/046_spec_diagram-orchestration_spec_45.mmd",
