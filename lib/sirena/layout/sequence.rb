@@ -136,9 +136,15 @@ module Sirena
           notes: graph.nodes.select { |node| node.role == "note" },
           note_entries: NotePlacement.entries(graph),
           title: graph.label,
+          wrap: wrap_setting?(graph),
           accessibility_title: graph.accessibility_title,
           accessibility_description: graph.accessibility_description,
         }.merge(FrameReader.call(graph))
+      end
+
+      def wrap_setting?(graph)
+        settings = graph.nodes.find { |node| node.role == "diagram_settings" }
+        semantic_value(graph, settings&.id, "wrap") == "true"
       end
 
       def scene(diagram)
@@ -155,7 +161,8 @@ module Sirena
       def build_gaps(graph)
         ActorGaps.new(graph[:children], graph[:edges],
                       graph.dig(:metadata, :note_entries),
-                      font_size: message_font_size)
+                      font_size: message_font_size,
+                      wrap: graph.dig(:metadata, :wrap))
       end
 
       def gaps

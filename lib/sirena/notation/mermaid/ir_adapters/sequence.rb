@@ -228,6 +228,7 @@ module Sirena
               ["layout_direction", diagram.direction],
               ["theme_reference", diagram.theme],
               ["autonumber", optional_value(diagram, :autonumber)],
+              ["wrap", ("true" if diagram.wrap)],
             ]
             [IR::Node.new(id: settings_id, role: "diagram_settings"),
              *semantic_nodes(settings_id, values, occupied)]

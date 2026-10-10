@@ -16,6 +16,7 @@ module Sirena
         LINE_BREAK = Diagram::SequenceText::LINE_BREAK
         TEXT_PADDING = 10
         WRAP_ON = /\A\s*wrap:/i
+        WRAP_OFF = /\A\s*nowrap:/i
         # `wrap:` text is broken into lines this wide at most.
         WRAP_LIMIT = Geometry::ACTOR_WIDTH - (2 * TEXT_PADDING)
 
@@ -24,12 +25,14 @@ module Sirena
         # @param notes [Array<Hash>] note entries: text, position,
         #   participant_ids
         # @param font_size [Numeric] message and note text size
-        def initialize(children, edges, notes, font_size:)
+        # @param wrap [Boolean] the global wrap setting
+        def initialize(children, edges, notes, font_size:, wrap: false)
           @ids = children.map { |child| child[:id] }
           @widths = children.to_h { |child| [child[:id], child[:width]] }
           @edges = edges
           @notes = notes || []
           @font_size = font_size
+          @wrap = wrap
         end
 
         # @param id [String] participant id
@@ -118,8 +121,14 @@ module Sirena
             source.to_s.sub(Diagram::SequenceText::WRAP_PREFIX, ""),
           )
           width = widest_line(body)
-          width = [width, WRAP_LIMIT].min if source.to_s.match?(WRAP_ON)
+          width = [width, WRAP_LIMIT].min if wrapped?(source.to_s)
           width + (2 * TEXT_PADDING)
+        end
+
+        def wrapped?(source)
+          return true if source.match?(WRAP_ON)
+
+          @wrap && !source.match?(WRAP_OFF)
         end
 
         def widest_line(body)

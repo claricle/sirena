@@ -180,6 +180,9 @@ module Sirena
       attribute :notes, SequenceNote, collection: true,
                                       default: -> { [] }
 
+      # Whether `%%{wrap}%%` made every message and note wrap
+      attribute :wrap, :boolean, default: -> { false }
+
       # Control blocks (loop, alt, opt, par, critical, break, rect)
       attribute :frames, SequenceFrame, collection: true,
                                         default: -> { [] }

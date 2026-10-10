@@ -149,7 +149,8 @@ module Sirena
         end
 
         def text_lines(entry)
-          entry[:text].split(LINE_BREAK, -1)
+          shown = entry[:text].sub(Diagram::SequenceText::WRAP_PREFIX, "")
+          shown.split(LINE_BREAK, -1)
         end
 
         def line_height
