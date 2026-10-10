@@ -69,7 +69,9 @@ module ExampleTasks
     # Enumerated the same way :generate walks sources -- diagram_dirs skips a
     # symlinked diagram directory and mmd_files_in skips a symlinked .mmd --
     # not a raw Dir.glob, which followed both and read whatever they pointed at.
-    mmd_files = diagram_dirs(examples_dir).flat_map { |dir| mmd_files_in(dir) }.sort
+    mmd_files = diagram_dirs(examples_dir)
+      .flat_map { |dir| mmd_files_in(dir) }
+      .sort
 
     mmd_files.each do |mmd_file|
       total += 1
@@ -84,7 +86,9 @@ module ExampleTasks
       # this task's threat model changes (e.g. moves to a shared machine).
       source = File.read(mmd_file)
       relative_path = mmd_file.sub("#{examples_dir}/", "")
-      expected_unrenderable = EXPECTED_UNRENDERABLE_SOURCES.include?(relative_path)
+      expected_unrenderable = EXPECTED_UNRENDERABLE_SOURCES.include?(
+        relative_path,
+      )
       # Read outside the render-failure rescue below, the same as generation:
       # a malformed .yml is a metadata problem, not evidence the source fails
       # to render, and folding it into the rescue gave a bad .yml on an
@@ -133,8 +137,12 @@ module ExampleTasks
     puts "=" * 60
     renderable = total - known_unrenderable.size
     puts "Total:  #{total}"
-    puts "Passed: #{passed} of #{renderable} renderable " \
-         "(#{renderable.zero? ? 'n/a' : "#{(passed.to_f / renderable * 100).round(1)}%"})"
+    percentage = if renderable.zero?
+                   "n/a"
+                 else
+                   "#{(passed.to_f / renderable * 100).round(1)}%"
+                 end
+    puts "Passed: #{passed} of #{renderable} renderable (#{percentage})"
     puts "Known unrenderable: #{known_unrenderable.size}"
     puts "Failed: #{failure_count}"
     puts "=" * 60
@@ -158,7 +166,8 @@ module ExampleTasks
         puts "    listed as known unrenderable but rendered successfully"
       end
       raise ValidationFailed, "validation failed: #{failed.size} failing, " \
-                              "#{unexpectedly_renderable.size} unexpectedly renderable"
+                              "#{unexpectedly_renderable.size} " \
+                              "unexpectedly renderable"
     else
       puts "\n✅ All renderable examples validated successfully!"
     end
@@ -218,7 +227,9 @@ module ExampleTasks
     lock_path = examples_lock_path(root)
     flags = File::RDWR | File::CREAT
     flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
-    raise "examples lock became unsafe to open: #{lock_path}" if !File.const_defined?(:NOFOLLOW) && File.symlink?(lock_path)
+    if !File.const_defined?(:NOFOLLOW) && File.symlink?(lock_path)
+      raise "examples lock became unsafe to open: #{lock_path}"
+    end
 
     handle =
       begin
@@ -256,16 +267,37 @@ module ExampleTasks
   #
   # @return [Array<Array(String, Integer)>] diagram type and count copied
   def copy_to_docs(examples_dir, docs_assets_dir)
-    docs_identity = create_real_directory(docs_assets_dir, label: "docs assets root")
+    docs_identity = docs_directory_identity(docs_assets_dir)
+    work = docs_copy_work(examples_dir)
+    within_docs_root(docs_assets_dir, docs_identity) { copy_docs_work(work) }
+  end
 
-    dirs = children(verified_root(examples_dir)).select { |path| plain_directory?(path) }
-    work = dirs.filter_map do |dir|
+  def docs_directory_identity(docs_assets_dir)
+    create_real_directory(docs_assets_dir, label: "docs assets root")
+  end
+
+  def docs_copy_work(examples_dir)
+    dirs = children(verified_root(examples_dir)).select do |path|
+      plain_directory?(path)
+    end
+    dirs.filter_map do |dir|
       svg_files = children(dir).select { |path| plain_svg?(path) }
       svg_files.empty? ? nil : [File.basename(dir), svg_files]
     end
+  end
 
-    within_pinned_directory(docs_assets_dir, expected_identity: docs_identity, label: "docs assets root") do
-      work.filter_map { |type, svg_files| copy_type_into_pinned_docs_root(type, svg_files) }
+  def within_docs_root(docs_assets_dir, docs_identity, &)
+    within_pinned_directory(
+      docs_assets_dir,
+      expected_identity: docs_identity,
+      label: "docs assets root",
+      &
+    )
+  end
+
+  def copy_docs_work(work)
+    work.filter_map do |type, svg_files|
+      copy_type_into_pinned_docs_root(type, svg_files)
     end
   end
 
@@ -279,14 +311,22 @@ module ExampleTasks
       return nil
     end
 
-    type_identity = create_real_directory(type, label: "docs target for #{type}")
+    type_identity = create_real_directory(
+      type,
+      label: "docs target for #{type}",
+    )
 
-    copied = within_pinned_directory(type, expected_identity: type_identity, label: "docs target for #{type}") do
+    copied = within_pinned_directory(
+      type,
+      expected_identity: type_identity,
+      label: "docs target for #{type}",
+    ) do
       svg_files.count do |svg_file|
         destination = File.basename(svg_file)
         unless manageable_relative?(destination)
           puts "  ⚠️  skipped #{type}/#{destination}, " \
-               "its docs copy target is a symlink or already exists as something other than a plain file"
+               "its docs copy target is a symlink or already exists as " \
+               "something other than a plain file"
           next false
         end
 
@@ -354,7 +394,8 @@ module ExampleTasks
   # returns rather than a fresh by-name lookup -- a symlink raced into an
   # ancestor between the check above and `Dir.mkdir` is followed silently
   # (mkdir succeeds, EEXIST never fires) unless the check runs again here.
-  # @return [Array(Integer, Integer)] PATH's directory identity as of this check.
+  # @return [Array(Integer, Integer)] PATH's directory identity as of this
+  #   check.
   def create_real_directory(path, label:)
     verified_root(path, label: label)
     FileUtils.mkdir_p(File.dirname(path))
@@ -362,10 +403,17 @@ module ExampleTasks
       Dir.mkdir(path)
     rescue Errno::EEXIST
       raise "#{label} became a symlink: #{path}" if File.lstat(path).symlink?
-      raise "#{label} exists but is not a directory: #{path}" unless File.lstat(path).directory?
+
+      ensure_directory(path, label: label)
     end
 
     verified_directory_identity(path, label: label)
+  end
+
+  def ensure_directory(path, label:)
+    return if File.lstat(path).directory?
+
+    raise "#{label} exists but is not a directory: #{path}"
   end
 
   # A non-creating sibling of create_real_directory: PATH is expected to
@@ -391,7 +439,10 @@ module ExampleTasks
   # fixed-length, independent of DESTINATION's basename, or a legal 255-byte
   # target name can produce an illegal temporary one (ENAMETOOLONG).
   def atomic_write(destination)
-    temporary = File.join(File.dirname(destination), ".sirena-#{Process.pid}-#{SecureRandom.hex(8)}.tmp")
+    temporary = File.join(
+      File.dirname(destination),
+      ".sirena-#{Process.pid}-#{SecureRandom.hex(8)}.tmp",
+    )
     created = false
     begin
       File.open(temporary, File::WRONLY | File::CREAT | File::EXCL) do |file|
@@ -420,7 +471,9 @@ module ExampleTasks
     read_flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
 
     atomic_write(destination) do |file|
-      raise "source became unsafe to read: #{source}" if !File.const_defined?(:NOFOLLOW) && File.symlink?(source)
+      if !File.const_defined?(:NOFOLLOW) && File.symlink?(source)
+        raise "source became unsafe to read: #{source}"
+      end
 
       begin
         File.open(source, read_flags) { |src| IO.copy_stream(src, file) }
@@ -477,7 +530,11 @@ module ExampleTasks
       # introduced below it. Only a symlink on the portion BELOW GEM_ROOT
       # (the part this task actually owns) is checked.
       real_gem_root = File.realpath(GEM_ROOT)
-      suffix = existing == GEM_ROOT ? nil : existing.delete_prefix("#{GEM_ROOT}#{File::SEPARATOR}")
+      suffix = if existing == GEM_ROOT
+                 nil
+               else
+                 existing.delete_prefix("#{GEM_ROOT}#{File::SEPARATOR}")
+               end
       expected = suffix ? File.join(real_gem_root, suffix) : real_gem_root
       if File.realpath(existing) != expected
         raise "#{label} sits beneath a symlinked directory: #{path}"
@@ -549,7 +606,8 @@ module ExampleTasks
     orphans = orphan_svgs(examples_dir)
     return if orphans.empty?
 
-    puts "\n\u26a0\ufe0f  #{orphans.size} SVG(s) have no source and are still tracked:"
+    puts "\n\u26a0\ufe0f  #{orphans.size} SVG(s) have no source and are " \
+         "still tracked:"
     orphans.each { |svg| puts "    #{svg.sub("#{examples_dir}/", '')}" }
     puts "   Run 'rake examples:prune' to delete them."
   end
@@ -564,7 +622,8 @@ module ExampleTasks
 
       File.delete(svg_file)
       removed += 1
-      puts "    removed #{svg_file.sub("#{examples_dir}/", '')}, which no longer has a source"
+      puts "    removed #{svg_file.sub("#{examples_dir}/", '')}, which " \
+           "no longer has a source"
     end
     removed
   end
@@ -593,7 +652,8 @@ module ExampleTasks
     stale = known_unrenderable_svgs(examples_dir)
     stale.each do |svg_file|
       File.delete(svg_file)
-      puts "    removed #{svg_file.sub("#{examples_dir}/", '')}, beside a source that never renders"
+      puts "    removed #{svg_file.sub("#{examples_dir}/", '')}, beside " \
+           "a source that never renders"
     end
     stale.size
   end
@@ -619,19 +679,26 @@ module ExampleTasks
   # not just write. Deleting the stale SVG is `rake examples:prune`'s job — a
   # deliberate, standalone run with no concurrent writer to race.
   def handle_failed_svgs(failed_renders, examples_dir)
-    unexpected_sources = failed_renders.map(&:first) - EXPECTED_UNRENDERABLE_SOURCES
+    unexpected_sources = failed_renders.map(&:first) -
+      EXPECTED_UNRENDERABLE_SOURCES
     unless unexpected_sources.empty?
       puts "\n⚠️  Unexpected render failure: example sources failed to render."
-      puts "   Unexpected: #{unexpected_sources.sort.join(', ')}; SVGs that did render have " \
+      puts "   Unexpected: #{unexpected_sources.sort.join(', ')}; SVGs that " \
+           "did render have " \
            "already been rewritten, while nothing was deleted."
-      raise UnexpectedRenderFailure, "unexpected render failure: #{unexpected_sources.sort.join(', ')}"
+      raise UnexpectedRenderFailure,
+            "unexpected render failure: #{unexpected_sources.sort.join(', ')}"
     end
 
-    stale = failed_renders.map(&:last).select { |svg_file| File.exist?(svg_file) }
+    stale = failed_renders.map(&:last).select do |svg_file|
+      File.exist?(svg_file)
+    end
     return if stale.empty?
 
     puts "\n⚠️  #{stale.size} SVG(s) no longer render and are still tracked:"
-    stale.each { |svg_file| puts "    #{svg_file.delete_prefix("#{examples_dir}/")}" }
+    stale.each do |svg_file|
+      puts "    #{svg_file.delete_prefix("#{examples_dir}/")}"
+    end
     puts "   Run 'rake examples:prune' to delete them."
   end
 
@@ -644,8 +711,11 @@ module ExampleTasks
   # only up through `<svg` accepts an error page that merely embeds one, or
   # a truncated `<svg/garbage` or unclosed `<svg width="1"`.
   def svg_document?(svg)
+    svg_start = %r{
+      \A\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--.*?-->\s*)*<svg(?:\s[^>]*)?/?>
+    }mx
     svg.is_a?(String) &&
-      svg.match?(%r{\A\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--.*?-->\s*)*<svg(?:\s[^>]*)?/?>}m)
+      svg.match?(svg_start)
   end
 
   # Pins the diagram directory's identity for this write the same way
@@ -656,18 +726,44 @@ module ExampleTasks
   # through that pin rather than re-walking SVG_FILE's name, so a swap of
   # the outer name afterward cannot redirect the write that follows.
   def write_svg(svg_file, svg, examples_dir)
-    raise "refused an unsafe SVG target: #{svg_file}" unless manageable?(examples_dir, svg_file)
+    ensure_manageable_svg_target(examples_dir, svg_file)
     raise "rendered no SVG document" unless svg_document?(svg)
 
     directory = File.dirname(svg_file)
-    identity = verified_directory_identity(directory, label: "diagram directory")
-
-    within_pinned_directory(directory, expected_identity: identity, label: "diagram directory") do
-      basename = File.basename(svg_file)
-      raise "refused an unsafe SVG target: #{svg_file}" unless manageable_relative?(basename)
-
-      atomic_write(basename) { |file| file.write(svg) }
+    within_diagram_directory(directory) do
+      write_svg_in_directory(svg_file, svg)
     end
+  end
+
+  def ensure_manageable_svg_target(examples_dir, svg_file)
+    return if manageable?(examples_dir, svg_file)
+
+    raise "refused an unsafe SVG target: #{svg_file}"
+  end
+
+  def within_diagram_directory(directory, &)
+    identity = verified_directory_identity(
+      directory,
+      label: "diagram directory",
+    )
+    within_pinned_directory(
+      directory,
+      expected_identity: identity,
+      label: "diagram directory",
+      &
+    )
+  end
+
+  def write_svg_in_directory(svg_file, svg)
+    basename = File.basename(svg_file)
+    ensure_manageable_relative(basename, svg_file)
+    atomic_write(basename) { |file| file.write(svg) }
+  end
+
+  def ensure_manageable_relative(basename, svg_file)
+    return if manageable_relative?(basename)
+
+    raise "refused an unsafe SVG target: #{svg_file}"
   end
 
   # Takes the root as an argument so a test can drive the real task against a
@@ -703,7 +799,11 @@ module ExampleTasks
           # `mmd_files_in` checked `plain_mmd?` once when the list was built,
           # this reads by name later with no re-check, and the payload still
           # has to survive Mermaid parsing before it reaches output.
-          svg = Sirena.render(File.read(mmd_file), theme: theme, today: EXAMPLE_TODAY)
+          svg = Sirena.render(
+            File.read(mmd_file),
+            theme: theme,
+            today: EXAMPLE_TODAY,
+          )
           write_svg(svg_file, svg, examples_dir)
           puts "  \u2713 #{basename}.svg"
           total_generated += 1
@@ -719,7 +819,10 @@ module ExampleTasks
           raise
         rescue StandardError => e
           puts "  \u2717 #{basename}.svg - ERROR: #{e.message}"
-          failed_renders << [mmd_file.delete_prefix("#{examples_dir}/"), svg_file]
+          failed_renders << [
+            mmd_file.delete_prefix("#{examples_dir}/"),
+            svg_file,
+          ]
         end
       end
     end
@@ -743,7 +846,7 @@ module ExampleTasks
       next false if name.start_with?(".")
 
       if File.symlink?(entry)
-        puts "  \u26a0\ufe0f  skipped #{name}, a symlinked directory that leaves examples/"
+        warn_symlinked_directory(name)
         next false
       end
       next false unless File.directory?(entry)
@@ -752,12 +855,24 @@ module ExampleTasks
     end
   end
 
+  def warn_symlinked_directory(name)
+    puts "  \u26a0\ufe0f  skipped #{name}, a symlinked directory that " \
+         "leaves examples/"
+  end
+
   # Internal plumbing only reachable through the task-facing API above
   # (copy_to_docs, generate_examples, validate_examples, write_svg, the
   # prune_* methods) -- none of these is called directly by anything outside
   # this module (confirmed: no spec calls one via `described_class.<name>`),
   # so nothing needs `.send` to keep working once these are no longer public.
-  private_class_method :directory_identity, :within_pinned_directory, :manageable_relative?,
-                       :create_real_directory, :verified_directory_identity, :copy_through_rename,
-                       :copy_type_into_pinned_docs_root, :atomic_write
+  private_class_method :directory_identity, :within_pinned_directory,
+                       :manageable_relative?, :create_real_directory,
+                       :verified_directory_identity, :copy_through_rename,
+                       :copy_type_into_pinned_docs_root, :atomic_write,
+                       :docs_directory_identity, :docs_copy_work,
+                       :within_docs_root, :copy_docs_work, :ensure_directory,
+                       :ensure_manageable_svg_target,
+                       :within_diagram_directory, :write_svg_in_directory,
+                       :ensure_manageable_relative,
+                       :warn_symlinked_directory
 end
