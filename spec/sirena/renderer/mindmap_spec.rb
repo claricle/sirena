@@ -45,9 +45,11 @@ RSpec.describe Sirena::Renderer::Mindmap do
     coordinates = [root.x, root.y, root.labels.first.x, root.labels.first.y]
     padding = Sirena::Layout::Mindmap::PADDING
     framing = coordinates.all? { |value| value >= padding }
-    start_aligned = link.sections.first.start_point.x == root.center_x
-    expect([framing, start_aligned, link.path.include?(root.center_x.to_s)])
-      .to eq([true, true, true])
+    start = link.sections.first.start_point
+    centre_gap = Math.hypot(start.x - root.center_x,
+                            start.y - (root.y + (root.height / 2)))
+    expect([framing, centre_gap.round(6), link.path.start_with?("M #{start.x} ")])
+      .to eq([true, Sirena::Layout::Mindmap::EDGE_INSET, true])
   end
 
   it "renders all node shapes and labels inside node groups" do

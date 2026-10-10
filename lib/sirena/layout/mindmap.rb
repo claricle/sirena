@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "mindmap_cose"
 require_relative "mindmap_node_size"
 require_relative "../notation/mermaid/ir_adapters/mindmap"
 
@@ -8,26 +9,18 @@ module Sirena
   module Layout
     # Transforms a Mindmap diagram into a positioned layout structure.
     #
-    # The layout algorithm handles:
-    # - Tree-based layout with root at center
-    # - Radial positioning of branches
-    # - Level-based spacing
-    # - Connection path calculation
+    # Nodes are placed by the cose-bilkent force layout mmdc uses
+    # (MindmapCose); edges are drawn centre to centre like mmdc's.
     #
     # @example Transform a mindmap
     #   transform = Layout::Mindmap.new
     #   layout = transform.to_graph(diagram)
     class Mindmap < Base
-      PADDING = 40
+      # Space between the node bounding box and the canvas edge.
+      PADDING = 10
 
-      # Horizontal spacing between sibling nodes
-      NODE_HORIZONTAL_SPACING = 120
-
-      # Vertical spacing between levels
-      LEVEL_VERTICAL_SPACING = 80
-
-      # Padding for root node
-      ROOT_PADDING = 20
+      # Distance from a node's centre at which an edge starts or ends.
+      EDGE_INSET = 15.0
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -88,26 +81,23 @@ module Sirena
         return empty_graph unless root
 
         prepare_graph(graph)
-        positioned_graph(graph, root)
+        positioned_graph(graph)
       end
 
       private
 
       def prepare_graph(graph)
-        @children_by_parent = graph.nodes.group_by(&:parent_id)
         @nodes_by_id = graph.nodes.to_h { |node| [node.id, node] }
         @levels = {}
         @sizes = {}
       end
 
-      def positioned_graph(graph, root)
-        positioned_nodes = position_tree(root)
-        bounds = calculate_bounds(positioned_nodes)
+      def positioned_graph(graph)
+        positioned_nodes = position_nodes(graph)
         {
           nodes: positioned_nodes,
           connections: graph_connections(graph),
-          width: bounds[:width],
-          height: bounds[:height],
+          **canvas_size(positioned_nodes),
           root: positioned_nodes.first,
         }
       end
@@ -127,17 +117,14 @@ module Sirena
       def scene(diagram)
         graph = build_graph(diagram)
         nodes = typed_nodes(graph[:nodes])
-        width, height = canvas_dimensions(graph)
+        width = graph[:width]
+        height = graph[:height]
         Scene.new(
           width: width, height: height,
           view_box: "0 0 #{width.to_f} #{height.to_f}",
           children: nodes,
           edges: typed_edges(graph[:connections], nodes)
         )
-      end
-
-      def canvas_dimensions(graph)
-        [graph[:width] + (PADDING * 2), graph[:height] + (PADDING * 2)]
       end
 
       def typed_nodes(nodes)
@@ -165,8 +152,8 @@ module Sirena
       def node_geometry(node)
         width = node[:width]
         height = node[:height]
-        center_x = node[:x] + PADDING
-        top_y = node[:y] + PADDING
+        center_x = node[:x]
+        top_y = node[:y]
         radius = [width, height].max / 2
         { x: center_x - (width / 2), y: top_y, width: width, height: height,
           center_x: center_x, center_y: top_y + radius, radius: radius }
@@ -203,22 +190,35 @@ module Sirena
         return unless source && target
 
         start_point, end_point = edge_points(source, target)
-        bends = edge_bends(start_point, end_point)
+        bends = [midpoint(start_point, end_point)]
         Edge.new(**edge_attributes(source, target, [start_point, end_point],
                                    bends, index))
       end
 
+      # An edge runs along the line between the node centres, EDGE_INSET
+      # short of each centre.
       def edge_points(source, target)
-        start_point = Point.new(
-          x: source.center_x, y: source.y + (source.height / 2),
-        )
-        [start_point, Point.new(x: target.center_x, y: target.y)]
+        from = [source.center_x, node_middle(source)]
+        to = [target.center_x, node_middle(target)]
+        [inset_point(from, to), inset_point(to, from)]
       end
 
-      def edge_bends(start_point, end_point)
-        control_y = start_point.y + ((end_point.y - start_point.y) / 2)
-        [Point.new(x: start_point.x, y: control_y),
-         Point.new(x: end_point.x, y: control_y)]
+      def node_middle(node)
+        node.y + (node.height / 2)
+      end
+
+      def inset_point(from, toward)
+        dx = toward[0] - from[0]
+        dy = toward[1] - from[1]
+        distance = Math.hypot(dx, dy)
+        return Point.new(x: from[0], y: from[1]) if distance.zero?
+
+        Point.new(x: from[0] + (dx * EDGE_INSET / distance),
+                  y: from[1] + (dy * EDGE_INSET / distance))
+      end
+
+      def midpoint(first, second)
+        Point.new(x: (first.x + second.x) / 2, y: (first.y + second.y) / 2)
       end
 
       def edge_attributes(source, target, points, bends, index)
@@ -227,15 +227,29 @@ module Sirena
           start_point: start_point, end_point: end_point, bend_points: bends,
         )
         { id: "edge_#{index}", source: source.id, target: target.id,
-          path: bezier_path(start_point, bends, end_point),
+          path: basis_path(start_point, bends.first, end_point),
           colour_level: source.level, sections: [section] }
       end
 
-      def bezier_path(start_point, bends, end_point)
-        "M #{start_point.x} #{start_point.y} " \
-          "C #{bends[0].x} #{bends[0].y}, " \
-          "#{bends[1].x} #{bends[1].y}, " \
-          "#{end_point.x} #{end_point.y}"
+      # A uniform cubic B-spline through three points, as d3's curveBasis
+      # draws it.
+      def basis_path(first, middle, last)
+        points = [first, middle, last]
+        beginning = blend(points, [5, 1, 0])
+        [
+          "M #{first.x} #{first.y} L #{beginning}",
+          "C #{blend(points, [2, 1, 0], 3)}, #{blend(points, [1, 2, 0], 3)}, " \
+          "#{blend(points, [1, 4, 1])}",
+          "C #{blend(points, [0, 2, 1], 3)}, #{blend(points, [0, 1, 2], 3)}, " \
+          "#{blend(points, [0, 1, 5])}",
+          "L #{last.x} #{last.y}",
+        ].join(" ")
+      end
+
+      def blend(points, weights, divisor = 6)
+        x = points.zip(weights).sum { |point, weight| point.x * weight }
+        y = points.zip(weights).sum { |point, weight| point.y * weight }
+        "#{x / divisor} #{y / divisor}"
       end
 
       def hexagon_points(center_x:, top_y:, width:, height:)
@@ -286,89 +300,50 @@ module Sirena
         {
           nodes: [],
           connections: [],
-          width: 0,
-          height: 0,
+          width: PADDING * 2,
+          height: PADDING * 2,
           root: nil,
         }
       end
 
-      # Positions nodes in a tree layout
+      # Places every node with the cose-bilkent layout, then frames the
+      # result with PADDING.
       #
-      # @param root [Diagram::Mindmap::MindmapNode] root node
-      # @return [Array<Hash>] positioned nodes
-      def position_tree(root)
-        root_x, width, height = root_geometry(root)
-        nodes = [root_entry(root, root_x, width, height)]
-        position_root_children(root, root_x, height, nodes)
-        nodes
+      # @param graph [IR::Graph] mindmap graph in depth-first order
+      # @return [Array<Hash>] positioned nodes, x = centre, y = top
+      def position_nodes(graph)
+        centres = MindmapCose.call(cose_sizes(graph), cose_edges(graph))
+        nodes = graph.nodes.map { |node| node_entry(node, centres[node.id]) }
+        frame(nodes)
       end
 
-      def root_geometry(root)
-        [calculate_tree_width(root) / 2,
-         estimate_node_width(root), estimate_node_height(root)]
-      end
-
-      def position_root_children(root, root_x, root_height, nodes)
-        return if children_of(root).empty?
-
-        children_y = ROOT_PADDING + root_height + LEVEL_VERTICAL_SPACING
-        position_children(root, root_x, children_y, nodes)
-      end
-
-      def root_entry(root, x_position, width, height)
-        {
-          id: root.id, content: root.label, x: x_position, y: ROOT_PADDING,
-          width: width, height: height, lines: node_size(root)[:lines],
-          level: level_for(root), shape: root.role
-        }
-      end
-
-      # Positions children of a node
-      #
-      # @param parent [Diagram::Mindmap::MindmapNode] parent node
-      # @param parent_x [Numeric] parent X position
-      # @param y_position [Numeric] Y position for this level
-      # @param nodes [Array<Hash>] accumulator for positioned nodes
-      def position_children(parent, parent_x, y_position, nodes)
-        children = children_of(parent)
-        return if children.empty?
-
-        current_x = parent_x - (children_width(children) / 2)
-        children.each do |child|
-          current_x = position_child(
-            child, parent, current_x, y_position, nodes
-          )
+      def cose_sizes(graph)
+        graph.nodes.map do |node|
+          size = node_size(node)
+          [node.id, size[:width], size[:height]]
         end
       end
 
-      def children_width(children)
-        subtree_widths = children.sum { |child| estimate_subtree_width(child) }
-        subtree_widths + ((children.size - 1) * NODE_HORIZONTAL_SPACING)
+      def cose_edges(graph)
+        graph.edges.map { |edge| [edge.source_id, edge.target_id] }
       end
 
-      def position_child(child, parent, current_x, y_position, nodes)
-        subtree_width = estimate_subtree_width(child)
-        node_x = current_x + (subtree_width / 2)
-        height = estimate_node_height(child)
-        nodes << child_entry(child, parent, node_x, y_position, height)
-        position_descendants(child, node_x, y_position, height, nodes)
-        current_x + subtree_width + NODE_HORIZONTAL_SPACING
+      def node_entry(node, centre)
+        size = node_size(node)
+        { id: node.id, content: node.label, x: centre[0],
+          y: centre[1] - (size[:height] / 2), width: size[:width],
+          height: size[:height], lines: size[:lines],
+          level: level_for(node), shape: node.role }
       end
 
-      def child_entry(child, parent, node_x, y_position, height)
-        {
-          id: child.id, content: child.label, x: node_x, y: y_position,
-          width: estimate_node_width(child), height: height,
-          lines: node_size(child)[:lines], level: level_for(child),
-          shape: child.role, parent_id: parent.id
-        }
-      end
-
-      def position_descendants(child, node_x, y_position, height, nodes)
-        return if children_of(child).empty?
-
-        child_y = y_position + height + LEVEL_VERTICAL_SPACING
-        position_children(child, node_x, child_y, nodes)
+      # Moves the nodes so their bounding box starts PADDING from the
+      # canvas origin.
+      def frame(nodes)
+        left = nodes.map { |node| node[:x] - (node[:width] / 2) }.min
+        top = nodes.map { |node| node[:y] }.min
+        nodes.map do |node|
+          node.merge(x: node[:x] - left + PADDING, y: node[:y] - top + PADDING)
+        end
       end
 
       # The mmdc box of a node: width, height and wrapped label lines.
@@ -379,42 +354,6 @@ module Sirena
         @sizes[node.id] ||= MindmapNodeSize.call(node.label, node.role)
       end
 
-      def estimate_node_width(node)
-        node_size(node)[:width]
-      end
-
-      def estimate_node_height(node)
-        node_size(node)[:height]
-      end
-
-      # Calculates the total width needed for a subtree
-      #
-      # @param node [Diagram::Mindmap::MindmapNode] root of subtree
-      # @return [Numeric] total width
-      def estimate_subtree_width(node)
-        node_width = estimate_node_width(node)
-        children = children_of(node)
-        return node_width if children.empty?
-
-        # Width is max of node width or sum of children widths
-        children_width = children.sum { |child| estimate_subtree_width(child) }
-        children_width += (children.size - 1) * NODE_HORIZONTAL_SPACING
-
-        [node_width, children_width].max
-      end
-
-      # Calculates the total width of the entire tree
-      #
-      # @param root [Diagram::Mindmap::MindmapNode] root node
-      # @return [Numeric] tree width
-      def calculate_tree_width(root)
-        estimate_subtree_width(root) + (ROOT_PADDING * 2)
-      end
-
-      def children_of(node)
-        @children_by_parent.fetch(node.id, [])
-      end
-
       def level_for(node)
         @levels[node.id] ||= begin
           parent = @nodes_by_id[node.parent_id]
@@ -422,20 +361,14 @@ module Sirena
         end
       end
 
-      # Calculates the bounding box for all positioned nodes
+      # The canvas: the node bounding box plus PADDING on every side.
       #
-      # @param nodes [Array<Hash>] positioned nodes
-      # @return [Hash] width and height
-      def calculate_bounds(nodes)
-        return { width: 0, height: 0 } if nodes.empty?
-
-        max_x = nodes.map { |n| n[:x] + (n[:width] / 2) }.max
-        max_y = nodes.map { |n| n[:y] + n[:height] }.max
-
-        {
-          width: max_x + ROOT_PADDING,
-          height: max_y + ROOT_PADDING,
-        }
+      # @param nodes [Array<Hash>] framed nodes
+      # @return [Hash] :width and :height
+      def canvas_size(nodes)
+        right = nodes.map { |node| node[:x] + (node[:width] / 2) }.max
+        bottom = nodes.map { |node| node[:y] + node[:height] }.max
+        { width: right + PADDING, height: bottom + PADDING }
       end
     end
   end
