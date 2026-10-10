@@ -326,13 +326,20 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       "o->" => [:filled, nil], "<->" => %i[filled filled],
       "x<->x" => %i[cross cross], "-\\" => [:upper, nil],
       "-//" => [:lower_open, nil], "-/" => [:lower, nil],
-      "-\\\\" => [:upper_open, nil]
+      "-\\\\" => [:upper_open, nil], "<-X" => %i[filled cross],
+      "X->" => %i[filled cross], "->X" => [:cross, nil]
     }.each do |arrow, (head, tail)|
       it "reads #{arrow} as head #{head.inspect}, tail #{tail.inspect}" do
         style = parse("A #{arrow} B").messages.first.style
 
         expect([style.head.glyph, style.tail.glyph]).to eq([head, tail])
       end
+    end
+
+    it "reads a capital O as the ring of an o" do
+      style = parse("A O-> B").messages.first.style
+
+      expect(style.tail.circle).to be(true)
     end
 
     it "reads x glued to a name as part of the name" do

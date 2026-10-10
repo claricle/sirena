@@ -14,10 +14,10 @@ module Sirena
 
           # The arrow as a part of a longer pattern. A leading or trailing
           # o/x is a decoration only when blanks separate it from the names.
-          SOURCE = '(?:(?<=[ \t])[ox])?(?:<<|<|//|/|\\\\\\\\|\\\\)?--?' \
-                   '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[ox](?=[ \t]|\z))?'
-          TOKEN = /\A([ox])?(<<|<|\/\/|\/|\\\\|\\)?(--?)
-                   (>>|>|\\\\|\\|\/\/|\/)?([ox])?\z/x
+          SOURCE = '(?:(?<=[ \t])[oxOX])?(?:<<|<|//|/|\\\\\\\\|\\\\)?--?' \
+                   '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[oxOX](?=[ \t]|\z))?'
+          TOKEN = /\A([oxOX])?(<<|<|\/\/|\/|\\\\|\\)?(--?)
+                   (>>|>|\\\\|\\|\/\/|\/)?([oxOX])?\z/x
           LEFT = { "<<" => :open, "<" => :filled, "//" => :upper_open,
                    "/" => :upper, "\\\\" => :lower_open,
                    "\\" => :lower }.freeze
@@ -41,10 +41,10 @@ module Sirena
           # Pairs of glyph and decoration for one side; `x` beside a head
           # replaces it, `x` alone and `o` are decorations.
           def ends(mark, glyph, table)
-            cross = mark == "x" && glyph
-            kind = cross ? :cross : table[glyph]
-            ArrowEnd.new(glyph: kind || (:cross if mark == "x"),
-                         circle: mark == "o")
+            cross = mark&.downcase == "x"
+            kind = cross && glyph ? :cross : table[glyph]
+            ArrowEnd.new(glyph: kind || (:cross if cross),
+                         circle: mark&.downcase == "o")
           end
 
           def build(left, right, dashed, reversed)
@@ -67,7 +67,7 @@ module Sirena
 
           # `x` replaces a plain head only.
           def crossable?(mark, glyph, plain)
-            mark != "x" || glyph.nil? || glyph == plain
+            mark&.downcase != "x" || glyph.nil? || glyph == plain
           end
         end
       end
