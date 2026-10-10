@@ -12,7 +12,23 @@ module Sirena
       class Gantt
         TAG_KEYWORDS = %w[done active crit milestone].freeze
         DURATION_PATTERN = /\A\d+[dwMh]\z/
-        private_constant :TAG_KEYWORDS, :DURATION_PATTERN
+        ITEM_HANDLERS = {
+          header: :process_header,
+          title: :process_title,
+          date_format: :process_date_format,
+          axis_format: :process_axis_format,
+          tick_interval: :process_tick_interval,
+          excludes: :process_excludes,
+          weekend: :process_weekend,
+          inclusive_end_dates: :process_inclusive_end_dates,
+          today_marker: :process_today_marker,
+          acc_title: :process_acc_title,
+          acc_descr: :process_acc_descr,
+          section: :process_section,
+          click_id: :process_click,
+          task_entry: :process_task,
+        }.freeze
+        private_constant :TAG_KEYWORDS, :DURATION_PATTERN, :ITEM_HANDLERS
 
         # Transform parse tree into Gantt diagram.
         #
@@ -22,45 +38,27 @@ module Sirena
           diagram = Diagram::Gantt.new
           @current_section = nil
           @click_map = {}
-
-          # Tree structure: array with header and statements
-          if tree.is_a?(Array)
-            tree.each do |item|
-              next unless item.is_a?(Hash)
-
-              process_item(diagram, item)
-            end
-          elsif tree.is_a?(Hash)
-            process_item(diagram, tree)
-          end
-
-          # Apply click handlers to tasks
+          process_tree(diagram, tree)
           apply_click_handlers(diagram)
-
           diagram
         end
 
         private
 
+        # Tree structure: array with header and statements
+        def process_tree(diagram, tree)
+          return tree.each { |item| process_item(diagram, item) } if
+            tree.is_a?(Array)
+
+          process_item(diagram, tree) if tree.is_a?(Hash)
+        end
+
         def process_item(diagram, item)
           return unless item.is_a?(Hash)
 
-          process_header(diagram, item) if item.key?(:header)
-          process_title(diagram, item) if item.key?(:title)
-          process_date_format(diagram, item) if item.key?(:date_format)
-          process_axis_format(diagram, item) if item.key?(:axis_format)
-          process_tick_interval(diagram, item) if item.key?(:tick_interval)
-          process_excludes(diagram, item) if item.key?(:excludes)
-          process_weekend(diagram, item) if item.key?(:weekend)
-          if item.key?(:inclusive_end_dates)
-            process_inclusive_end_dates(diagram, item)
+          ITEM_HANDLERS.each do |key, handler|
+            send(handler, diagram, item) if item.key?(key)
           end
-          process_today_marker(diagram, item) if item.key?(:today_marker)
-          process_acc_title(diagram, item) if item.key?(:acc_title)
-          process_acc_descr(diagram, item) if item.key?(:acc_descr)
-          process_section(diagram, item) if item.key?(:section)
-          process_click(item) if item.key?(:click_id)
-          process_task(diagram, item) if item.key?(:task_entry)
         end
 
         def process_header(diagram, item)
@@ -114,7 +112,7 @@ module Sirena
           diagram.sections << @current_section
         end
 
-        def process_click(item)
+        def process_click(_diagram, item)
           click_id = extract_text(item[:click_id])
           if item[:href]
             @click_map[click_id] = {
@@ -128,22 +126,25 @@ module Sirena
         end
 
         def process_task(diagram, item)
-          # Ensure we have a section
-          unless @current_section
-            @current_section = Diagram::GanttSection.new("Default")
-            diagram.sections << @current_section
-          end
-
+          ensure_current_section(diagram)
           task_entry = item[:task_entry]
+          task = build_task(task_entry)
+          @current_section.tasks << task
+        end
+
+        def ensure_current_section(diagram)
+          return if @current_section
+
+          @current_section = Diagram::GanttSection.new("Default")
+          diagram.sections << @current_section
+        end
+
+        def build_task(task_entry)
           task = Diagram::GanttTask.new
           task.description = extract_text(task_entry[:description])
-
-          # Process task details
-          if task_entry[:task_details]
-            process_task_details(task, task_entry[:task_details])
-          end
-
-          @current_section.tasks << task
+          process_task_details(task, task_entry[:task_details]) if
+            task_entry[:task_details]
+          task
         end
 
         # Task details are a comma-separated list of fields (mermaid allows
@@ -234,17 +235,19 @@ module Sirena
         end
 
         def apply_click_handlers(diagram)
-          diagram.sections.each do |section|
-            section.tasks.each do |task|
-              next unless task.id && @click_map[task.id]
+          diagram.sections.flat_map(&:tasks).each do |task|
+            apply_click_handler(task)
+          end
+        end
 
-              click_info = @click_map[task.id]
-              if click_info[:type] == :href
-                task.click_href = click_info[:value]
-              elsif click_info[:type] == :callback
-                task.click_callback = click_info[:value]
-              end
-            end
+        def apply_click_handler(task)
+          click_info = @click_map[task.id]
+          return unless task.id && click_info
+
+          if click_info[:type] == :href
+            task.click_href = click_info[:value]
+          elsif click_info[:type] == :callback
+            task.click_callback = click_info[:value]
           end
         end
 
