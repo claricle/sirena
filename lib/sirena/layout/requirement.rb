@@ -52,6 +52,8 @@ module Sirena
       TEXT_WRAP_WIDTH = 300
       EMPTY_WIDTH = 20
       EMPTY_HEIGHT = 40
+      # Font size by [role, row index]; every other row uses 11.
+      FIXED_FONT_SIZES = { ["element", 1] => 14, ["header", 0] => 12 }.freeze
       REQUIREMENT_TYPE_LABELS = {
         "requirement" => "Requirement",
         "functionalRequirement" => "Functional Requirement",
@@ -273,18 +275,22 @@ module Sirena
           text: row[:text], font_weight: row[:weight],
           font_size: row_font_size(row, index, default_role),
           role: row[:role] || default_role,
-          x: header ? geometry[:x] + (geometry[:width] / 2) : geometry[:x] + PADDING_X,
+          x: row_x(geometry, header),
           y: default_role == "property" ? center_y + 5 : center_y,
           text_anchor: header ? "middle" : nil
         )
       end
 
-      def row_font_size(row, index, role)
-        return property_font_size if %w[property].include?(role) || row[:role] == "risk"
-        return 14 if role == "element" && index == 1
-        return 12 if role == "header" && index.zero?
+      def row_x(geometry, header)
+        return geometry[:x] + PADDING_X unless header
 
-        11
+        geometry[:x] + (geometry[:width] / 2)
+      end
+
+      def row_font_size(row, index, role)
+        return property_font_size if role == "property" || row[:role] == "risk"
+
+        FIXED_FONT_SIZES.fetch([role, index], 11)
       end
 
       def row_center_y(index, geometry)
@@ -430,21 +436,34 @@ module Sirena
       end
 
       def calculate_node_positions(diagram)
-        ranks = rank_nodes(diagram)
-        sized = ranks.map { |rank| rank.map { |node| size_node(node) } }
+        sized = rank_nodes(diagram).map do |rank|
+          rank.map { |node| size_node(node) }
+        end
+        return empty_node_positions if sized.empty?
+
         canvas_width = sized.map { |rank| rank_width(rank) }.max.to_f
         positioned = { requirements: {}, elements: {} }
+        top = place_ranks(sized, canvas_width, positioned)
+        positioned.merge(
+          width: canvas_width + (2 * CANVAS_MARGIN),
+          height: top - RANK_SEPARATION + CANVAS_MARGIN,
+        )
+      end
+
+      def empty_node_positions
+        { requirements: {}, elements: {},
+          width: EMPTY_WIDTH, height: EMPTY_HEIGHT }
+      end
+
+      # Fills `positioned` rank by rank; returns the y below the last rank,
+      # including the separation that follows it.
+      def place_ranks(sized, canvas_width, positioned)
         top = CANVAS_MARGIN
         sized.each_with_index do |rank, level|
           place_rank(rank, level, top, canvas_width, positioned)
           top += rank.map { |node| node[:height] }.max + RANK_SEPARATION
         end
-        return positioned.merge(width: EMPTY_WIDTH, height: EMPTY_HEIGHT) if sized.empty?
-
-        positioned.merge(
-          width: canvas_width + (2 * CANVAS_MARGIN),
-          height: top - RANK_SEPARATION + CANVAS_MARGIN,
-        )
+        top
       end
 
       def rank_width(rank)
@@ -464,37 +483,56 @@ module Sirena
       # Sources sit above their targets, as in mmdc: rank = longest path
       # from any root. Edges that close a cycle are ignored.
       def rank_nodes(diagram)
-        nodes = diagram.requirements.map do |req|
-          { name: req.name, requirement: req }
-        end + diagram.elements.map do |elem|
-          { name: elem.name, element: elem }
-        end
+        nodes = diagram_nodes(diagram)
         levels = node_levels(nodes.map { |node| node[:name] },
                              diagram.relationships)
         nodes.group_by { |node| levels[node[:name]] }.sort.map(&:last)
       end
 
+      def diagram_nodes(diagram)
+        requirements = diagram.requirements.map do |req|
+          { name: req.name, requirement: req }
+        end
+        elements = diagram.elements.map do |elem|
+          { name: elem.name, element: elem }
+        end
+        requirements + elements
+      end
+
       # Nodes on a cycle never resolve; they share the level below the rest.
       def node_levels(names, relationships)
-        edges = relationships.select do |rel|
-          names.include?(rel.source) && names.include?(rel.target) &&
-            rel.source != rel.target
-        end
+        edges = resolvable_edges(names, relationships)
         levels = {}
         loop do
-          ready = names.reject { |name| levels.key?(name) }.select do |name|
-            edges.select { |rel| rel.target == name }
-              .all? { |rel| levels.key?(rel.source) }
-          end
+          ready = ready_names(names, edges, levels)
           break if ready.empty?
 
-          ready.each do |name|
-            levels[name] = edges.select { |rel| rel.target == name }
-              .map { |rel| levels[rel.source] + 1 }.max || 0
-          end
+          ready.each { |name| levels[name] = level_of(name, edges, levels) }
         end
         stuck = (levels.values.max || -1) + 1
         names.to_h { |name| [name, levels.fetch(name, stuck)] }
+      end
+
+      def resolvable_edges(names, relationships)
+        relationships.select do |rel|
+          names.include?(rel.source) && names.include?(rel.target) &&
+            rel.source != rel.target
+        end
+      end
+
+      # Unlevelled names whose every source is already levelled.
+      def ready_names(names, edges, levels)
+        names.reject { |name| levels.key?(name) }.select do |name|
+          incoming(edges, name).all? { |rel| levels.key?(rel.source) }
+        end
+      end
+
+      def level_of(name, edges, levels)
+        incoming(edges, name).map { |rel| levels[rel.source] + 1 }.max || 0
+      end
+
+      def incoming(edges, name)
+        edges.select { |rel| rel.target == name }
       end
 
       def size_node(node)

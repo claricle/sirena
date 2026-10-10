@@ -42,8 +42,8 @@ RSpec.describe Sirena::Layout::Requirement do
     expect(node("test_req").width).to be_within(15).of(157.7)
   end
 
-  it "puts the relationship source above its target" do
-    reversed = layout.call(
+  let(:reversed) do
+    layout.call(
       Sirena::Diagram::Requirement.new(
         requirements: [Sirena::Diagram::RequirementNode.new(name: "r")],
         elements: [Sirena::Diagram::RequirementElement.new(name: "e")],
@@ -52,6 +52,9 @@ RSpec.describe Sirena::Layout::Requirement do
         )],
       ),
     )
+  end
+
+  it "puts the relationship source above its target" do
     ys = reversed.children.to_h { |child| [child.id, child.y] }
     expect(ys["r"]).to be < ys["e"]
   end
