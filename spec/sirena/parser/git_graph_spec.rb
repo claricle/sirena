@@ -33,7 +33,7 @@ RSpec.describe Sirena::Parser::GitGraph do
 
   describe "#parse" do
     context "with simple commits" do
-      it "parses a single commit" do
+      it "parses a single commit", :aggregate_failures do
         source = <<~MERMAID
           gitGraph
             commit
@@ -45,7 +45,7 @@ RSpec.describe Sirena::Parser::GitGraph do
         expect(diagram.commits.first.branch_name).to eq("main")
       end
 
-      it "parses multiple commits with IDs" do
+      it "parses multiple commits with IDs", :aggregate_failures do
         source = <<~MERMAID
           gitGraph
             commit id: "One"
@@ -58,7 +58,7 @@ RSpec.describe Sirena::Parser::GitGraph do
         expect(diagram.commits.map(&:id)).to eq(["One", "Two", "Three"])
       end
 
-      it "parses commits with types" do
+      it "parses commits with types", :aggregate_failures do
         source = <<~MERMAID
           gitGraph
             commit type: NORMAL
@@ -73,7 +73,7 @@ RSpec.describe Sirena::Parser::GitGraph do
         )
       end
 
-      it "parses commits with tags" do
+      it "parses commits with tags", :aggregate_failures do
         source = <<~MERMAID
           gitGraph
             commit tag: "v1.0"
@@ -87,7 +87,7 @@ RSpec.describe Sirena::Parser::GitGraph do
     end
 
     context "with branches" do
-      it "parses branch creation" do
+      it "parses branch creation", :aggregate_failures do
         source = <<~MERMAID
           gitGraph
             commit
@@ -106,7 +106,7 @@ RSpec.describe Sirena::Parser::GitGraph do
       # mermaid accepts real git branch names, not just identifiers.
       # Corpus case unknown/013_platform_gitgraph_12.mmd checks out
       # "release/1.0.0".
-      it "parses a branch name with a slash and dots" do
+      it "parses a branch name with a slash and dots", :aggregate_failures do
         source = <<~MERMAID
           gitGraph
             commit
@@ -125,7 +125,8 @@ RSpec.describe Sirena::Parser::GitGraph do
       # `.` and `/` are only legal in the middle. A Codex review found an
       # earlier version of `branch_name` accepted all four leading/trailing
       # forms mermaid rejects.
-      it "rejects a branch name starting or ending with a dot or slash" do
+      it "rejects a branch name starting or ending with a dot or slash",
+         :aggregate_failures do
         grammar = Sirena::Parser::Grammars::GitGraph.new
 
         # Proves the rejections below are about the boundary specifically,
@@ -240,7 +241,7 @@ RSpec.describe Sirena::Parser::GitGraph do
         expect(large_time / small_time).to be < 30
       end
 
-      it "parses branch with order" do
+      it "parses branch with order", :aggregate_failures do
         source = <<~MERMAID
           gitGraph
             commit
@@ -270,7 +271,7 @@ RSpec.describe Sirena::Parser::GitGraph do
     end
 
     context "with merges" do
-      it "parses merge operations" do
+      it "parses merge operations", :aggregate_failures do
         source = <<~MERMAID
           gitGraph
             commit
@@ -287,7 +288,7 @@ RSpec.describe Sirena::Parser::GitGraph do
         expect(merge_commit.merge_branch).to eq("develop")
       end
 
-      it "parses merge with id and tag" do
+      it "parses merge with id and tag", :aggregate_failures do
         source = <<~MERMAID
           gitGraph
             commit
@@ -323,7 +324,7 @@ RSpec.describe Sirena::Parser::GitGraph do
         expect(cp_commit.is_cherry_pick).to be true
       end
 
-      it "parses cherry-pick with parent and tag" do
+      it "parses cherry-pick with parent and tag", :aggregate_failures do
         source = <<~MERMAID
           gitGraph
             commit id: "ZERO"
@@ -343,7 +344,7 @@ RSpec.describe Sirena::Parser::GitGraph do
     end
 
     context "with orientation" do
-      it "parses TB orientation" do
+      it "parses TB orientation", :aggregate_failures do
         source = <<~MERMAID
           gitGraph TB:
             commit
@@ -354,7 +355,7 @@ RSpec.describe Sirena::Parser::GitGraph do
         expect(diagram.commits.size).to eq(1)
       end
 
-      it "parses LR orientation" do
+      it "parses LR orientation", :aggregate_failures do
         source = <<~MERMAID
           gitGraph LR:
             commit
@@ -374,7 +375,7 @@ RSpec.describe Sirena::Parser::GitGraph do
   # constant ...GitGraph::GreedyRun`. In-process this is silently masked once
   # spec_helper has loaded the whole gem ($LOADED_FEATURES makes a
   # second `require` a no-op), so this shells out to a real subprocess.
-  describe "grammar file, required standalone" do
+  describe "grammar file, required standalone", :aggregate_failures do
     it "loads sirena/parser/grammars/git_graph and parses a branch name " \
        "without the ER grammar loaded first" do
       out, status = Open3.capture2e(
