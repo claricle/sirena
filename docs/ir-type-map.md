@@ -91,25 +91,25 @@ layout behavior; the older survey's `transform/*` wording refers to these
 | `quadrant` | `pre-positioned` | `lib/sirena/layout/quadrant.rb` | Each point's source x/y values determine its place in the fixed 2x2 chart (28–48, 138–158). |
 | `git_graph` | `graph-shaped` | `lib/sirena/layout/git_graph.rb` | Commits identify parents and emitted connections identify from/to commits (45–82, 226–257); branch order only influences layout. |
 | `mindmap` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/mindmap.rb` | Tree nodes map to shared identities, containment, and resolved parent/child edges; layout owns their geometry. |
-| `kanban` | `data-shaped` | `lib/sirena/layout/kanban.rb` | Columns contain ordered cards but no identity-based edges; layout chooses stacking and dimensions (42–59, 79–130). |
-| `radar` | `data-shaped` | `lib/sirena/layout/radar.rb` | Axes and curve values are data series without endpoint connectivity; layout derives polar geometry (36–64, 108–139). |
+| `kanban` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/kanban.rb` | Columns, cards, metadata, and style references map to ordered contained items and values; layout owns stacking and dimensions. |
+| `radar` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/radar.rb` | Axes, datasets, measurements, options, and accessibility map to ordered shared data; layout derives all polar geometry. |
 | `block` | `pre-positioned` | `lib/sirena/layout/block.rb` | The grammar's column count, spaces, order, and spans fix the grid (28–38, 43–109); its from/to connections do not override the first test (182–198). |
 | `requirement` | `graph-shaped` | `lib/sirena/layout/requirement.rb` | Requirements/elements are identified nodes and relationships name source and target (31–41, 113–133, 199–224). |
 | `xychart` | `pre-positioned` | `lib/sirena/layout/xy_chart.rb` | Axis domains and data values determine plot positions in source-domain coordinates (33–58, 190–224). |
 | `architecture` | `graph-shaped` | `lib/sirena/layout/architecture.rb` | Services/junctions have ids and each embedded edge model retains `from_id`/`to_id` even though the output also has routed coordinates (24–41, 296–317). |
 | `sankey` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/sankey.rb` | Flows map to shared nodes and resolved weighted edges; layout owns layering, positions, and paths. |
 | `packet` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/packet.rb` | Fields map to ordered bit-start placements with inclusive spans; layout owns row, column, and pixel geometry. |
-| `treemap` | `data-shaped` | `lib/sirena/layout/treemap.rb` | Nested values have containment but no endpoint connectivity; layout allocates space from values (19–44, 47–85). |
+| `treemap` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/treemap.rb` | Preorder hierarchy, explicit magnitudes, derived totals, and normalized styles map to shared data; layout allocates all rectangles. |
 | `c4` | `graph-shaped` | `lib/sirena/layout/c4.rb` | Elements/boundaries become identified children and relationships carry source/target ids (40–50, 178–206). |
 | `info` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/info.rb` | The title and show-information flag map to shared data without nodes or connectivity; layout owns panel geometry. |
 | `error` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/error.rb` | The title and message map to shared ordered content without connectivity; layout owns panel geometry. |
 
 Summary: **6 pre-positioned, 12 graph-shaped, 6 data-shaped; 24 total.**
 
-Migration status: **7 of 24 Mermaid types use the shared IR boundary** — 2
-graph-shaped (`mindmap`, `sankey`), 3 data-shaped (`pie`, `info`, `error`),
-and 2 pre-positioned (`packet`, `timeline`); 17 types remain on their private
-layout inputs.
+Migration status: **10 of 24 Mermaid types use the shared IR boundary** — 2
+graph-shaped (`mindmap`, `sankey`), 6 data-shaped (`pie`, `info`, `error`,
+`kanban`, `radar`, `treemap`), and 2 pre-positioned (`packet`, `timeline`); 14
+types remain on their private layout inputs.
 
 `rake type:new[<type>]` adds a data-shaped row immediately above this
 summary and recalculates all four counts from the table. The generated adapter
