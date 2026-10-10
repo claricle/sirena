@@ -117,7 +117,9 @@ module Sirena
       def label
         parts = []
         parts << trigger if trigger && !trigger.empty?
-        parts << "[#{guard_condition}]" if guard_condition && !guard_condition.empty?
+        if guard_condition && !guard_condition.empty?
+          parts << "[#{guard_condition}]"
+        end
         parts.join(" ")
       end
     end
@@ -175,18 +177,8 @@ module Sirena
       # @return [Boolean] true if state diagram is valid
       def valid?
         return false if states.nil?
-        return false unless states.all?(&:valid?)
-        return false unless transitions.nil? ||
-          transitions.all?(&:valid?)
 
-        # Validate transition references
-        state_ids = states.map(&:id)
-        transitions&.each do |transition|
-          return false unless state_ids.include?(transition.from_id)
-          return false unless state_ids.include?(transition.to_id)
-        end
-
-        true
+        states.all?(&:valid?) && valid_transitions?
       end
 
       # Finds a state by its identifier.
@@ -239,6 +231,20 @@ module Sirena
       # @return [Array<StateNode>] choice states
       def choice_states
         states.select(&:choice_state?)
+      end
+
+      private
+
+      def valid_transitions?
+        transitions.nil? || transitions.all? do |transition|
+          transition.valid? && transition_references_resolve?(transition)
+        end
+      end
+
+      def transition_references_resolve?(transition)
+        state_ids = states.map(&:id)
+        state_ids.include?(transition.from_id) &&
+          state_ids.include?(transition.to_id)
       end
     end
   end

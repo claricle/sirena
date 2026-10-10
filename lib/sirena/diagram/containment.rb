@@ -64,25 +64,44 @@ module Sirena
         colour[root] = :grey
         stack = [[root, 0]]
         until stack.empty?
-          box, taken = stack.last
-          children = graph.fetch(box, [])
-          if taken >= children.size
-            colour[box] = :black
-            stack.pop
-            next
-          end
-
-          stack.last[1] = taken + 1
-          child = children[taken]
-          return [box, child] if colour[child] == :grey
-          next if colour.key?(child)
-
-          colour[child] = :grey
-          stack << [child, 0]
+          found = advance_walk(graph, colour, stack)
+          return found unless found.nil?
         end
         nil
       end
+
+      def advance_walk(graph, colour, stack)
+        box, taken = stack.last
+        children = graph.fetch(box, [])
+        return finish_box(colour, stack, box) if taken >= children.size
+
+        child = take_child(stack, children, taken)
+        return [box, child] if colour[child] == :grey
+
+        visit_child(colour, stack, child) unless colour.key?(child)
+        nil
+      end
+
+      def finish_box(colour, stack, box)
+        colour[box] = :black
+        stack.pop
+        nil
+      end
+
+      def take_child(stack, children, taken)
+        stack.last[1] = taken + 1
+        children[taken]
+      end
+
+      def visit_child(colour, stack, child)
+        colour[child] = :grey
+        stack << [child, 0]
+      end
       private_class_method :back_edge
+      private_class_method :advance_walk
+      private_class_method :finish_box
+      private_class_method :take_child
+      private_class_method :visit_child
     end
   end
 end

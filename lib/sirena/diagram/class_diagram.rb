@@ -13,6 +13,12 @@ module Sirena
     # An attribute has a name, type, and visibility modifier that
     # controls its access level.
     class ClassAttribute < Lutaml::Model::Serializable
+      VISIBILITY_SYMBOLS = {
+        "private" => "-",
+        "protected" => "#",
+        "package" => "~",
+      }.freeze
+
       # Attribute name
       attribute :name, :string
 
@@ -53,13 +59,7 @@ module Sirena
       #
       # @return [String] the visibility symbol (+, -, #, ~)
       def visibility_symbol
-        case visibility
-        when "public" then "+"
-        when "private" then "-"
-        when "protected" then "#"
-        when "package" then "~"
-        else "+"
-        end
+        VISIBILITY_SYMBOLS.fetch(visibility, "+")
       end
 
       private
@@ -76,6 +76,8 @@ module Sirena
     # A method has a name, optional parameters, optional return type,
     # and visibility modifier.
     class ClassMethod < Lutaml::Model::Serializable
+      VISIBILITY_SYMBOLS = ClassAttribute::VISIBILITY_SYMBOLS
+
       # Method name
       attribute :name, :string
 
@@ -122,13 +124,7 @@ module Sirena
       #
       # @return [String] the visibility symbol (+, -, #, ~)
       def visibility_symbol
-        case visibility
-        when "public" then "+"
-        when "private" then "-"
-        when "protected" then "#"
-        when "package" then "~"
-        else "+"
-        end
+        VISIBILITY_SYMBOLS.fetch(visibility, "+")
       end
 
       # Returns the full method signature.
@@ -177,8 +173,8 @@ module Sirena
       #
       # @return [Boolean] true if class entity is valid
       def valid?
-        !id.nil? && !id.empty? && !name.nil? && !name.empty? &&
-          attributes.all?(&:valid?) && class_methods.all?(&:valid?)
+        present?(id) && present?(name) && attributes.all?(&:valid?) &&
+          class_methods.all?(&:valid?)
       end
 
       # Checks if this is an interface.
@@ -200,6 +196,12 @@ module Sirena
       # @return [Boolean] true if stereotype is 'enum'
       def enum?
         stereotype == "enum"
+      end
+
+      private
+
+      def present?(value)
+        !value.nil? && !value.empty?
       end
     end
 
@@ -253,9 +255,9 @@ module Sirena
       #
       # @return [Boolean] true if relationship is valid
       def valid?
-        !from_id.nil? && !from_id.empty? &&
-          !to_id.nil? && !to_id.empty? &&
-          !relationship_type.nil? && !relationship_type.empty?
+        [from_id, to_id, relationship_type].all? do |value|
+          value && !value.empty?
+        end
       end
 
       # Checks if this is an inheritance relationship.
@@ -369,18 +371,7 @@ module Sirena
       #
       # @return [Boolean] true if class diagram is valid
       def valid?
-        return false unless entities.all?(&:valid?)
-        return false unless relationships.nil? ||
-                            relationships.all?(&:valid?)
-
-        # Validate relationship references
-        entity_ids = entities.map(&:id)
-        relationships&.each do |rel|
-          return false unless entity_ids.include?(rel.from_id)
-          return false unless entity_ids.include?(rel.to_id)
-        end
-
-        true
+        entities.all?(&:valid?) && valid_relationships?
       end
 
       # Finds an entity by its identifier.
@@ -448,6 +439,20 @@ module Sirena
           .select { |r| r.to_id == entity_id && r.inheritance? }
           .map(&:from_id)
         entities.select { |e| child_ids.include?(e.id) }
+      end
+
+      private
+
+      def valid_relationships?
+        relationships.nil? || relationships.all? do |relationship|
+          relationship.valid? && relationship_references_resolve?(relationship)
+        end
+      end
+
+      def relationship_references_resolve?(relationship)
+        entity_ids = entities.map(&:id)
+        entity_ids.include?(relationship.from_id) &&
+          entity_ids.include?(relationship.to_id)
       end
     end
   end

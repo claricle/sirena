@@ -204,29 +204,8 @@ module Sirena
       def valid?
         return false if nodes.nil?
 
-        drawn_nodes = nodes
         boxes = subgraphs || []
-        return false if parent_cycle?(boxes)
-        return false unless drawn_nodes.all?(&:valid?)
-        return false unless edges.nil? || edges.all?(&:valid?)
-        return false unless boxes.all?(&:valid?)
-        return false unless members_named?(boxes, drawn_nodes)
-        return false unless nesting_agrees?(boxes)
-
-        # An edge may name a subgraph rather than a node: mermaid joins
-        # the cluster boxes and draws no node for either end. Only a box
-        # that gets drawn, because that is what an edge can reach — an
-        # empty one is not carried into the layout at all.
-        drawn_boxes = boxes.filter_map { |box| box.id if box.drawable? }
-        return false if boxes.any? && drawn_nodes.empty? && drawn_boxes.empty?
-
-        known = drawn_nodes.map(&:id) + drawn_boxes
-        edges&.each do |edge|
-          return false unless known.include?(edge.source_id)
-          return false unless known.include?(edge.target_id)
-        end
-
-        true
+        structure_valid?(boxes) && references_resolve?(boxes)
       end
 
       # Finds a node by its identifier.
@@ -254,6 +233,48 @@ module Sirena
       end
 
       private
+
+      def structure_valid?(boxes)
+        !parent_cycle?(boxes) && collections_valid?(boxes) &&
+          containment_valid?(boxes)
+      end
+
+      def collections_valid?(boxes)
+        nodes.all?(&:valid?) && valid_collection?(edges) &&
+          boxes.all?(&:valid?)
+      end
+
+      def containment_valid?(boxes)
+        members_named?(boxes, nodes) && nesting_agrees?(boxes)
+      end
+
+      def valid_collection?(items)
+        items.nil? || items.all?(&:valid?)
+      end
+
+      # An edge may name a subgraph rather than a node: mermaid joins
+      # the cluster boxes and draws no node for either end. Only a box
+      # that gets drawn is carried into the layout and can be reached.
+      def references_resolve?(boxes)
+        drawn_box_ids = drawable_box_ids(boxes)
+        return false if only_undrawable_boxes?(boxes, drawn_box_ids)
+
+        edge_references_resolve?(nodes.map(&:id) + drawn_box_ids)
+      end
+
+      def drawable_box_ids(boxes)
+        boxes.filter_map { |box| box.id if box.drawable? }
+      end
+
+      def only_undrawable_boxes?(boxes, drawn_box_ids)
+        boxes.any? && nodes.empty? && drawn_box_ids.empty?
+      end
+
+      def edge_references_resolve?(known)
+        edges.nil? || edges.all? do |edge|
+          known.include?(edge.source_id) && known.include?(edge.target_id)
+        end
+      end
 
       # A box names its members rather than owning them, so a name that
       # matches nothing leaves the box holding an empty seat: the box

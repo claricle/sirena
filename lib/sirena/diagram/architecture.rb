@@ -92,15 +92,16 @@ module Sirena
       def group_references_resolve?
         known = groups.map(&:id)
 
-        groups.all? do |group|
-          group.parent_id.nil? || known.include?(group.parent_id)
-        end &&
-          services.all? do |service|
-            service.group_id.nil? || known.include?(service.group_id)
-          end &&
-          junctions.all? do |junction|
-            junction.group_id.nil? || known.include?(junction.group_id)
-          end
+        references_resolve?(groups, :parent_id, known) &&
+          references_resolve?(services, :group_id, known) &&
+          references_resolve?(junctions, :group_id, known)
+      end
+
+      def references_resolve?(items, attribute, known)
+        items.all? do |item|
+          reference = item.public_send(attribute)
+          reference.nil? || known.include?(reference)
+        end
       end
     end
   end
