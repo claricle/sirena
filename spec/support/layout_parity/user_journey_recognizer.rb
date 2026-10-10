@@ -48,10 +48,7 @@ module SpecSupport
       end
 
       def candidate_sections(doc)
-        doc.xpath("//text").select do |text|
-          sibling = text.next_element
-          sibling&.name == "g" && sibling["id"].to_s.start_with?("task-")
-        end
+        nodes_with_class(doc, "journey-section", tag: "text")
       end
 
       def element(extractor, node, label_node, kind)

@@ -26,32 +26,24 @@ RSpec.describe Sirena::Layout::UserJourney do
     diagram.sections << section("Buy", [task("Pay", 3, ["Buyer", "Bank"])])
   end
 
-  def flattened_layout
-    {
-      children: [hash_including(id: "task_0"), hash_including(id: "task_1")],
-      edges: [hash_including(sources: ["task_0"], targets: ["task_1"])],
-      metadata: hash_including(sections: %w[Find Buy]),
-      id: "user_journey", layoutOptions: kind_of(Hash)
-    }
-  end
-
-  def pay_task_node
-    {
-      id: "task_0", width: kind_of(Numeric), height: 80,
-      labels: [hash_including(text: "Pay", position: :top),
-               hash_including(text: "3", position: :center),
-               hash_including(text: "Buyer, Bank", position: :bottom)],
-      metadata: {
-        name: "Pay", score: 3, score_color: :yellow,
-        actors: ["Buyer", "Bank"], section_name: "Buy", section_index: 0
-      }
-    }
-  end
-
   def task_widths
     long_name = "A task name long enough to exceed the minimum width"
     diagram.sections << section("Work", [task("A", 4), task(long_name, 4)])
-    graph[:children].map { |node| node[:width] }
+    graph.tasks.map { |node| node.box.width }
+  end
+
+  def flattened_scene_summary
+    arrow = graph.arrows.first
+    [graph.tasks.map(&:id), [arrow.source, arrow.target],
+     graph.sections.map(&:text)]
+  end
+
+  def pay_task_summary
+    journey_task = graph.tasks.first
+    [[journey_task.id, journey_task.box.width,
+      journey_task.box.height, journey_task.box.style],
+     journey_task.labels.map(&:text),
+     [journey_task.section_name, journey_task.section_index]]
   end
 
   def journey_layout_policy
@@ -68,31 +60,29 @@ RSpec.describe Sirena::Layout::UserJourney do
 
   describe "graph branches" do
     it "uses the fallback id and complete metadata for an empty journey" do
-      expect(graph).to include(
-        id: "user_journey", children: [], edges: [],
-        metadata: { title: nil, sections: [] }
-      )
+      expect([graph.id, graph.title, graph.sections, graph.tasks, graph.arrows])
+        .to eq(["user_journey", nil, [], [], []])
     end
 
     it "preserves an explicit diagram id and section metadata" do
       checkout_diagram
 
-      expect(graph).to include(
-        id: "checkout",
-        metadata: { title: "Checkout", sections: ["Find"] },
-      )
+      expect([graph.id, graph.title.text, graph.sections.map(&:text)])
+        .to eq(["checkout", "Checkout", ["Find"]])
     end
 
     it "flattens sections into sequential nodes and cross-section edges" do
       two_section_journey
-
-      expect(graph).to match(flattened_layout)
+      expect(flattened_scene_summary)
+        .to eq([%w[task_0 task_1], %w[task_0 task_1], %w[Find Buy]])
     end
 
     it "carries task labels, score color, actors, and section index" do
       diagram.sections << section("Buy", [task("Pay", 3, ["Buyer", "Bank"])])
-
-      expect(graph[:children].first).to match(pay_task_node)
+      expect(pay_task_summary).to match(
+        [["task_0", kind_of(Numeric), 80, "yellow"],
+         ["Pay", "3", "Buyer, Bank"], ["Buy", 0]],
+      )
     end
 
     it "uses minimum width for short content, measured for long content" do
@@ -102,7 +92,9 @@ RSpec.describe Sirena::Layout::UserJourney do
     end
 
     it "sets the complete horizontal journey layout policy" do
-      expect(graph[:layoutOptions]).to include(journey_layout_policy)
+      layout_options = described_class.new.build_graph(diagram)[:layoutOptions]
+
+      expect(layout_options).to include(journey_layout_policy)
     end
   end
 end

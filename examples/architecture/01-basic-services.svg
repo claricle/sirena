@@ -7,15 +7,15 @@
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="edge-frontend-backend">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 160 80 L 200 80"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 160.0 80.0 L 200.0 80.0"/>
   <polygon fill="#000000" points="200.0,80.0 192.0,84.0 192.0,76.0"/>
 </g>
 <g id="edge-backend-db">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 320.93399999999997 80 L 360.93399999999997 80"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 320.93399999999997 80.0 L 360.93399999999997 80.0"/>
   <polygon fill="#000000" points="360.934,80.0 352.934,84.0 352.934,76.0"/>
 </g>
 <g id="edge-backend-cache">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 320.93399999999997 80 L 360.93399999999997 80 L 360.93399999999997 120 L 480.93399999999997 120 L 480.93399999999997 80 L 520.934 80"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 320.93399999999997 80.0 L 360.93399999999997 80.0 L 360.93399999999997 120.0 L 480.93399999999997 120.0 L 480.93399999999997 80.0 L 520.934 80.0"/>
   <polygon fill="#000000" points="520.934,80.0 512.934,84.0 512.934,76.0"/>
 </g>
 <g id="service-frontend">

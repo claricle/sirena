@@ -181,15 +181,12 @@ RSpec.describe Sirena::Parser::Pie do
 
     it "calculates correct percentages and angles" do
       diagram = parser.parse(source)
-      graph = transform.to_graph(diagram)
+      scene = transform.to_graph(diagram)
 
-      expect(graph[:slices].length).to eq(3)
-      expect(graph[:slices][0][:percentage]).to eq(45.0)
-      expect(graph[:slices][1][:percentage]).to eq(30.0)
-      expect(graph[:slices][2][:percentage]).to eq(25.0)
+      expect(scene.slices.map(&:percentage)).to eq([45.0, 30.0, 25.0])
 
       # Total should be 360 degrees
-      total_angle = graph[:slices].sum { |s| s[:angle] }
+      total_angle = scene.slices.sum(&:angle)
       expect(total_angle).to be_within(0.1).of(360.0)
     end
   end

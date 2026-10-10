@@ -35,6 +35,8 @@ module Sirena
         attribute :id, :string
         attribute :path, :string
         attribute :color_index, :integer
+        attribute :percentage, :float
+        attribute :angle, :float
         attribute :label, Label
       end
 
@@ -120,6 +122,7 @@ module Sirena
         Slice.new(
           id: slice[:id] || "slice_#{index}",
           path: slice_path(start_angle, finish_angle), color_index: index,
+          percentage: slice[:percentage], angle: slice[:angle],
           label: slice_label(slice, (start_angle + finish_angle) / 2.0,
                              show_data)
         )

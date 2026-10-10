@@ -7,19 +7,19 @@
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="connection-Frontend-Backend">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 82.413 80 L 225.293 20"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 82.413 80.0 L 225.293 20.0"/>
   <polygon fill="#000000" points="225.293,20.0 219.4657,26.7855 216.3682,19.4094"/>
 </g>
 <g id="connection-Backend-Database">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 225.293 80 L 355.76 20"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 225.293 80.0 L 355.76 20.0"/>
   <polygon fill="#000000" points="355.76,20.0 350.163,26.9767 346.8205,19.7084"/>
 </g>
 <g id="connection-Backend-Cache">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 225.293 80 L 224.894 100"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 225.293 80.0 L 224.894 100.0"/>
   <polygon fill="#000000" points="224.894,100.0 221.0544,91.9218 229.0528,92.0814"/>
 </g>
 <g id="connection-Backend-Queue">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 225.293 80 L 377.119 100"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 225.293 80.0 L 377.119 100.0"/>
   <polygon fill="#000000" points="377.119,100.0 368.6651,102.9209 369.7099,94.9894"/>
 </g>
 <g id="block-Frontend">

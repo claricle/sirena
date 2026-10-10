@@ -2,7 +2,7 @@
 cop: Lint/UnusedMethodArgument
 rows:
 - file: lib/sirena/layout/block.rb
-  count: 2
+  count: 1
 - file: lib/sirena/layout/git_graph.rb
   count: 3
 - file: lib/sirena/layout/mindmap.rb
