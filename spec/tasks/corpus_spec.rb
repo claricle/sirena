@@ -15,7 +15,9 @@ load File.expand_path("../../tasks/corpus.rake", __dir__)
 # scoreboard. Include in a spec that defines `committed`.
 module CorpusCheckStubs
   def stub_fresh_run(passes)
-    results = passes.transform_values { |pass| { pass: pass, stage: "parse", exception_class: "X" } }
+    results = passes.transform_values do |pass|
+      { pass: pass, stage: "parse", exception_class: "X" }
+    end
     allow(described_class).to receive_messages(
       load_scoreboard: committed, cases: results.keys, run_cases: results,
       verdicts: results.keys.to_h { |path| [path, "valid"] }
@@ -34,7 +36,8 @@ end
 RSpec.describe Sirena::Corpus do
   describe ".types" do
     it "lists the real corpus type directories" do
-      expect(described_class.types).to include("pie", "flowchart", "architecture")
+      expect(described_class.types).to include("pie", "flowchart",
+                                               "architecture")
     end
 
     it "excludes non-directory siblings, such as corpus-verdicts.yml" do
@@ -48,11 +51,15 @@ RSpec.describe Sirena::Corpus do
 
       expect(pie_cases).not_to be_empty
       expect(pie_cases).to all(start_with("pie/"))
-      expect(pie_cases.size).to eq(Dir.glob(File.join(described_class::CORPUS_ROOT, "pie", "*.mmd")).size)
+      pattern = File.join(described_class::CORPUS_ROOT, "pie", "*.mmd")
+      expect(pie_cases.size).to eq(Dir.glob(pattern).size)
     end
 
     it "returns every case in the corpus when no type is given" do
-      expect(described_class.cases(nil).size).to eq(described_class.types.sum { |t| described_class.cases(t).size })
+      expected = described_class.types.sum do |type|
+        described_class.cases(type).size
+      end
+      expect(described_class.cases(nil).size).to eq(expected)
     end
 
     it "raises naming the type for an unknown one" do
@@ -74,21 +81,33 @@ RSpec.describe Sirena::Corpus do
       end
     end
 
-    it "classifies anything else as unknown -- the residual PipelineError bucket" do
+    it "classifies anything else as unknown -- the residual PipelineError " \
+       "bucket" do
       expect(described_class.stage_for(RuntimeError.new)).to eq("unknown")
-      expect(described_class.stage_for(Sirena::Engine::PipelineError.new)).to eq("unknown")
+      error = Sirena::Engine::PipelineError.new
+      expect(described_class.stage_for(error)).to eq("unknown")
     end
   end
 
   describe ".render_case" do
-    it "reports pass with no stage or exception_class for a real passing case" do
-      result = described_class.render_case("pie/001_rendering_theme_spec_pie_0.mmd")
+    let(:passing_case) { "pie/001_rendering_theme_spec_pie_0.mmd" }
+    let(:detection_failure_case) do
+      "architecture/012_rendering_architecture_spec_architecture_11.mmd"
+    end
+    let(:parse_failure_case) do
+      "architecture/005_rendering_architecture_spec_architecture_4.mmd"
+    end
+    let(:c4_case) { "c4/012_parser_should_parse_a_link_11.mmd" }
+
+    it "reports pass with no stage or exception_class for a real passing " \
+       "case" do
+      result = described_class.render_case(passing_case)
 
       expect(result).to eq(pass: true)
     end
 
     it "reports the detect stage for a real detection failure" do
-      result = described_class.render_case("architecture/012_rendering_architecture_spec_architecture_11.mmd")
+      result = described_class.render_case(detection_failure_case)
 
       expect(result[:pass]).to be(false)
       expect(result[:stage]).to eq("detect")
@@ -96,7 +115,7 @@ RSpec.describe Sirena::Corpus do
     end
 
     it "reports the parse stage for a real parse failure" do
-      result = described_class.render_case("architecture/005_rendering_architecture_spec_architecture_4.mmd")
+      result = described_class.render_case(parse_failure_case)
 
       expect(result[:pass]).to be(false)
       expect(result[:stage]).to eq("parse")
@@ -104,7 +123,7 @@ RSpec.describe Sirena::Corpus do
     end
 
     it "reports pass after C4 IR preserves optional link data" do
-      result = described_class.render_case("c4/012_parser_should_parse_a_link_11.mmd")
+      result = described_class.render_case(c4_case)
 
       expect(result).to eq(pass: true)
     end
@@ -202,17 +221,20 @@ RSpec.describe Sirena::Corpus do
   end
 
   describe ".rows_for_scoreboard" do
-    it "carries the verdict and pass on a passing case, without stage or exception_class" do
+    it "carries the verdict and pass on a passing case, without stage or " \
+       "exception_class" do
       rows = described_class.rows_for_scoreboard(
         { "a/1.mmd" => { pass: true } }, { "a/1.mmd" => "valid" }
       )
 
-      expect(rows).to eq([{ "case" => "a/1.mmd", "verdict" => "valid", "pass" => true }])
+      expect(rows).to eq([{ "case" => "a/1.mmd", "verdict" => "valid",
+                            "pass" => true }])
     end
 
     it "carries stage and exception_class on a failing case" do
       rows = described_class.rows_for_scoreboard(
-        { "a/1.mmd" => { pass: false, stage: "parse", exception_class: "X", message: "boom" } },
+        { "a/1.mmd" => { pass: false, stage: "parse", exception_class: "X",
+                         message: "boom" } },
         { "a/1.mmd" => "valid" },
       )
 
@@ -222,7 +244,9 @@ RSpec.describe Sirena::Corpus do
     end
 
     it "defaults an unrecorded verdict to unknown rather than raising" do
-      rows = described_class.rows_for_scoreboard({ "a/1.mmd" => { pass: true } }, {})
+      rows = described_class.rows_for_scoreboard(
+        { "a/1.mmd" => { pass: true } }, {}
+      )
 
       expect(rows.first["verdict"]).to eq("unknown")
     end
@@ -273,7 +297,8 @@ RSpec.describe Sirena::Corpus do
       expect(diff[:regressed]).to eq([])
     end
 
-    it "flags a case missing from the committed file entirely, if it now passes" do
+    it "flags a case missing from the committed file entirely, if it now " \
+       "passes" do
       committed = []
       fresh = [{ "case" => "a", "pass" => true }]
 
@@ -282,7 +307,8 @@ RSpec.describe Sirena::Corpus do
       expect(diff[:unrecorded]).to eq(["a"])
     end
 
-    it "flags a case that passed before and is now entirely missing from the fresh run as regressed" do
+    it "flags a case that passed before and is now entirely missing from " \
+       "the fresh run as regressed" do
       # A case can vanish from the fresh run by deletion (or rename) under
       # spec/mermaid, not just by failing outright. Iterating fresh_pass
       # alone (as the first version of this method did) misses this
@@ -297,7 +323,8 @@ RSpec.describe Sirena::Corpus do
       expect(diff[:unrecorded]).to eq([])
     end
 
-    it "does not flag a case that failed before and is now entirely missing from the fresh run" do
+    it "does not flag a case that failed before and is now entirely missing " \
+       "from the fresh run" do
       committed = [{ "case" => "a", "pass" => false }]
       fresh = []
 
@@ -308,10 +335,10 @@ RSpec.describe Sirena::Corpus do
     end
 
     it "reports nothing when every case matches the committed file" do
-      committed = [{ "case" => "a", "pass" => true }, { "case" => "b", "pass" => false }]
-      fresh = [{ "case" => "a", "pass" => true }, { "case" => "b", "pass" => false }]
+      rows = [{ "case" => "a", "pass" => true },
+              { "case" => "b", "pass" => false }]
 
-      diff = described_class.diff_scoreboards(committed, fresh)
+      diff = described_class.diff_scoreboards(rows, rows)
 
       expect(diff[:regressed]).to eq([])
       expect(diff[:unrecorded]).to eq([])
@@ -342,7 +369,8 @@ RSpec.describe Sirena::Corpus do
         .to include(reclassified: [])
     end
 
-    it "does not flag a case still failing the same way as either kind of drift" do
+    it "does not flag a case still failing the same way as either kind of " \
+       "drift" do
       committed = [{ "case" => "a", "pass" => false }]
       fresh = [{ "case" => "a", "pass" => false }]
 
@@ -363,7 +391,6 @@ RSpec.describe Sirena::Corpus do
       "VERDICT CHANGED (run `rake corpus` and commit " \
         "scoreboard/corpus.json):\n  b\n"
     end
-
     # "c" stays passing in both committed and fresh in every example below --
     # it never regresses and is always already recorded, so it must never
     # appear in either printed block. Asserting exact stdout (not a loose
@@ -379,6 +406,15 @@ RSpec.describe Sirena::Corpus do
       ]
     end
 
+    def regression_report
+      "REGRESSED (passed in the committed scoreboard, fails now):\n  a\n"
+    end
+
+    def improvement_report
+      "IMPROVED BUT NOT RECORDED (run `rake corpus` and commit " \
+        "scoreboard/corpus.json):\n  b\n"
+    end
+
     it "exits non-zero and names only the case that regressed" do
       fresh = [
         { "case" => "a", "pass" => false },
@@ -388,10 +424,11 @@ RSpec.describe Sirena::Corpus do
 
       expect { described_class.fail_on_drift!(committed, fresh) }
         .to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
-        .and output("REGRESSED (passed in the committed scoreboard, fails now):\n  a\n").to_stdout
+        .and output(regression_report).to_stdout
     end
 
-    it "exits non-zero and names only the case that improved without being recorded" do
+    it "exits non-zero and names only the case that improved without being " \
+       "recorded" do
       fresh = [
         { "case" => "a", "pass" => true },
         { "case" => "b", "pass" => true },
@@ -400,7 +437,7 @@ RSpec.describe Sirena::Corpus do
 
       expect { described_class.fail_on_drift!(committed, fresh) }
         .to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
-        .and output("IMPROVED BUT NOT RECORDED (run `rake corpus` and commit scoreboard/corpus.json):\n  b\n").to_stdout
+        .and output(improvement_report).to_stdout
     end
 
     it "exits non-zero and names only the case whose verdict changed" do
@@ -409,18 +446,24 @@ RSpec.describe Sirena::Corpus do
     end
 
     it "returns without exiting when the fresh run matches" do
-      expect { described_class.fail_on_drift!(committed, committed) }.to output(/corpus:check: clean/).to_stdout
+      expect do
+        described_class.fail_on_drift!(committed,
+                                       committed)
+      end.to output(/corpus:check: clean/).to_stdout
     end
   end
 
   describe ".check!" do
     # The abort path corpus:check gates CI on, driven with stubbed renders
     # so it needs neither the real corpus nor the committed scoreboard.
-    let(:committed) { [{ "case" => "a/1.mmd", "verdict" => "valid", "pass" => true }] }
+    let(:committed) do
+      [{ "case" => "a/1.mmd", "verdict" => "valid", "pass" => true }]
+    end
 
     include CorpusCheckStubs
 
-    it "exits non-zero and names a case that passed in the scoreboard and fails now" do
+    it "exits non-zero and names a case that passed in the scoreboard and " \
+       "fails now" do
       stub_fresh_run("a/1.mmd" => false)
 
       status = nil
@@ -429,7 +472,8 @@ RSpec.describe Sirena::Corpus do
       expect(status).to eq(1)
     end
 
-    it "exits non-zero and names a passing case the scoreboard does not record" do
+    it "exits non-zero and names a passing case the scoreboard does not " \
+       "record" do
       stub_fresh_run("a/1.mmd" => true, "a/2.mmd" => true)
 
       status = nil
@@ -441,7 +485,9 @@ RSpec.describe Sirena::Corpus do
     it "exits non-zero when the committed scoreboard is missing or empty" do
       # A fresh run of nothing diffs clean against nothing, so only the
       # explicit empty-file abort can make this exit non-zero.
-      allow(described_class).to receive_messages(load_scoreboard: [], cases: [], run_cases: {}, verdicts: {})
+      allow(described_class).to receive_messages(
+        load_scoreboard: [], cases: [], run_cases: {}, verdicts: {},
+      )
 
       expect(exit_status_of { described_class.check! }).to eq(1)
     end
@@ -449,28 +495,34 @@ RSpec.describe Sirena::Corpus do
     it "returns normally when fresh results match the committed scoreboard" do
       stub_fresh_run("a/1.mmd" => true)
 
-      expect { described_class.check! }.to output(/corpus:check: clean \(1 cases/).to_stdout
+      expect do
+        described_class.check!
+      end.to output(/corpus:check: clean \(1 cases/).to_stdout
     end
   end
 
   describe "a seeded detection failure" do
     let(:root) { Dir.mktmpdir }
+    let(:detection_row) do
+      [{ "case" => "seeded/1.mmd", "verdict" => "unknown",
+         "pass" => false, "stage" => "detect",
+         "exception_class" => "Sirena::Engine::DiagramTypeError" }]
+    end
 
     before do
       FileUtils.mkdir_p(File.join(root, "seeded"))
-      File.write(File.join(root, "seeded", "1.mmd"), "notADiagramType\n  A --> B\n")
+      File.write(File.join(root, "seeded", "1.mmd"),
+                 "notADiagramType\n  A --> B\n")
       stub_const("Sirena::Corpus::CORPUS_ROOT", root)
     end
 
     after { FileUtils.remove_entry(root) }
 
     it "lands in the scoreboard row with stage detect" do
-      rows = described_class.rows_for_scoreboard(described_class.run_cases(["seeded/1.mmd"]), {})
-      error_class = "Sirena::Engine::DiagramTypeError"
+      results = described_class.run_cases(["seeded/1.mmd"])
+      rows = described_class.rows_for_scoreboard(results, {})
 
-      expect(rows).to eq([{ "case" => "seeded/1.mmd", "verdict" => "unknown",
-                            "pass" => false, "stage" => "detect",
-                            "exception_class" => error_class }])
+      expect(rows).to eq(detection_row)
     end
   end
 end
