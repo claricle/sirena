@@ -40,15 +40,18 @@ module SpecSupport
       end
 
       def reference_element(extractor, node)
-        label = node.xpath(".//text")[1]&.text
-        labeled_element(extractor, node, label, :c4_element)
+        labeled_element(extractor, node, name_text(node), :c4_element)
       end
 
       def candidate_elements(extractor, doc)
         doc.xpath("//g[starts-with(@id, 'element-')]").filter_map do |node|
-          label = node.xpath(".//text").first&.text
-          labeled_element(extractor, node, label, :c4_element)
+          labeled_element(extractor, node, name_text(node), :c4_element)
         end
+      end
+
+      # The first text of an element is its "<<stereotype>>"; the name is next.
+      def name_text(node)
+        node.xpath(".//text")[1]&.text
       end
 
       def labeled_element(extractor, node, raw_label, kind)
