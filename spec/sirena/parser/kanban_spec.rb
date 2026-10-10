@@ -28,6 +28,49 @@ module KanbanSpecHelpers
     parser.parse(source).columns.first.cards.first
   end
 
+  def expect_single_root_column(diagram, corpus_id)
+    aggregate_failures do
+      expect(diagram.columns.size).to eq(1), "corpus #{corpus_id}"
+      expect(diagram.columns.first.title).to eq("root"), "corpus #{corpus_id}"
+    end
+  end
+
+  def nested_quoted_parens_source
+    <<~MERMAID
+      kanban
+        col("Todo (urgent)")
+          ("Fix (today)")
+    MERMAID
+  end
+
+  def class_then_icon_source
+    <<~MERMAID
+      kanban
+          root[The root]
+          :::m-4 p-8
+          ::icon(fa-rocket)
+    MERMAID
+  end
+
+  def icon_then_class_source
+    <<~MERMAID
+      kanban
+          root[The root]
+          ::icon(fa-flag)
+          :::m-4 p-8
+    MERMAID
+  end
+
+  def separated_zeroes
+    %w[0_0 0__0 0___0 0_0_0 00__00 -0_0 0x_0 0x0_0 0b0_0 0o0_0]
+  end
+
+  def icon_greedy_run = Sirena::Parser::Atoms::GreedyRun.new("[^)]")
+
+  def label_greedy_run = Sirena::Parser::Atoms::GreedyRun.new('[^\]]')
+
+  def empty_match_error = /Expected at least one matching character/
+
   def column_of(key, value)
     body = metadata_body(key, value)
     source = "kanban\n  col[Todo]@{#{body}}\n    task1[Task]\n"
@@ -253,7 +296,8 @@ RSpec.describe Sirena::Parser::Kanban do
       it "creates all columns" do
         diagram = parser.parse(source)
         expect(diagram.columns.size).to eq(3)
-        expect(diagram.columns.map(&:title)).to eq(["Todo", "In Progress", "Done"])
+        expect(diagram.columns.map(&:title))
+          .to eq(["Todo", "In Progress", "Done"])
       end
 
       it "creates all cards in correct columns" do
@@ -410,16 +454,16 @@ RSpec.describe Sirena::Parser::Kanban do
       }.each do |corpus_id, payload|
         it "titles the column by its id (corpus #{corpus_id})" do
           diagram = parser.parse("kanban\n        root@{ #{payload} }\n")
-          aggregate_failures do
-            expect(diagram.columns.size).to eq(1), "corpus #{corpus_id}"
-            expect(diagram.columns.first.title).to eq("root"), "corpus #{corpus_id}"
-          end
+
+          expect_single_root_column(diagram, corpus_id)
         end
       end
     end
 
     context "with a label: override on a bare column (corpus 040)" do
-      let(:source) { "kanban\n        root@{ icon: star, label: 'fix things' }\n" }
+      let(:source) do
+        "kanban\n        root@{ icon: star, label: 'fix things' }\n"
+      end
 
       it "prefers the label metadata over the id" do
         diagram = parser.parse(source)
@@ -435,7 +479,9 @@ RSpec.describe Sirena::Parser::Kanban do
       # 'with an icon/class directive line' context below, now that they
       # are parsed rather than refused.
       it "accepts a bare identifier" do
-        expect(parser.parse("kanban\n  root\n").columns.map(&:id)).to eq(["root"])
+        ids = parser.parse("kanban\n  root\n").columns.map(&:id)
+
+        expect(ids).to eq(["root"])
       end
 
       it "still refuses trailing free text after a bare id" do
@@ -461,7 +507,8 @@ RSpec.describe Sirena::Parser::Kanban do
         expect(diagram.columns.first.title).to eq("root")
       end
 
-      it "assigns the next id deterministically for a second unlabelled shape" do
+      it "assigns the next id deterministically " \
+         "for a second unlabelled shape" do
         diagram = parser.parse("kanban\n  (Col A)\n  (Col B)\n")
         expect(diagram.columns.map(&:id)).to eq(%w[kanban-1 kanban-2])
         expect(diagram.columns.map(&:title)).to eq(["Col A", "Col B"])
@@ -523,8 +570,9 @@ RSpec.describe Sirena::Parser::Kanban do
         expect(column.cards.first.text).to eq("Task")
       end
 
-      it "parses a paren inside quotes on both the column and its child, where the unquoted form failed to parse at all" do
-        diagram = parser.parse("kanban\n  col(\"Todo (urgent)\")\n    (\"Fix (today)\")\n")
+      it "parses a paren inside quotes on both the column and its child, " \
+         "where the unquoted form failed to parse at all" do
+        diagram = parser.parse(nested_quoted_parens_source)
         column = diagram.columns.first
         expect(column.title).to eq("Todo (urgent)")
         expect(column.cards.first.text).to eq("Fix (today)")
@@ -543,7 +591,8 @@ RSpec.describe Sirena::Parser::Kanban do
           .to raise_error(Sirena::Parser::ParseError)
       end
 
-      it "refuses an unterminated quoted body rather than keeping the leading quote" do
+      it "refuses an unterminated quoted body " \
+         "rather than keeping the leading quote" do
         expect { parser.parse("kanban\n  col(\"unterminated)\n") }
           .to raise_error(Sirena::Parser::ParseError)
       end
@@ -587,7 +636,8 @@ RSpec.describe Sirena::Parser::Kanban do
       # mmdc 11.12.0 actually lexer-errors on this one too ("Unrecognized
       # text"), a pre-existing gap this High does not cover - it is about
       # the closed backtick pair, not a lone backtick.
-      it "keeps a quoted body that opens with a backtick but never closes one" do
+      it "keeps a quoted body that opens with a backtick " \
+         "but never closes one" do
         diagram = parser.parse("kanban\n  col(\"`Hello\")\n")
         expect(diagram.columns.first.title).to eq("`Hello")
       end
@@ -660,7 +710,8 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
-    context "with a shape-delimiter character in an unquoted round-shaped label" do
+    context "with a shape-delimiter character " \
+            "in an unquoted round-shaped label" do
       # Not from the corpus - a Codex-constructed input. `round_text`'s
       # unquoted alternative excluded only `)`, the shape's own closer, so
       # it accepted `(`, `]` and `}` too - mermaid's lexer treats all
@@ -668,7 +719,8 @@ RSpec.describe Sirena::Parser::Kanban do
       # (measured against mmdc 11.12.0). `[` and `{` are not delimiters to
       # mermaid there, so they stay accepted on both sides.
       ["(", "]", "}"].each do |delimiter|
-        it "refuses an unquoted label carrying a literal #{delimiter.inspect}" do
+        it "refuses an unquoted label carrying a literal " \
+           "#{delimiter.inspect}" do
           expect { parser.parse("kanban\n  col(a#{delimiter}b)\n") }
             .to raise_error(Sirena::Parser::ParseError)
         end
@@ -684,7 +736,8 @@ RSpec.describe Sirena::Parser::Kanban do
 
     context "with round-shaped items and a blank row together (corpus 031)" do
       let(:source) do
-        "kanban\n  root(Root)\n    Child(Child)\n      a(a)\n\n      b[New Stuff]\n"
+        "kanban\n  root(Root)\n    Child(Child)\n      " \
+          "a(a)\n\n      b[New Stuff]\n"
       end
 
       it "keeps every card across the blank row" do
@@ -1128,14 +1181,17 @@ RSpec.describe Sirena::Parser::Kanban do
     end
 
     context "with a node three levels deep (corpus 018)" do
-      let(:source) { "kanban\n    root\n      child1\n        leaf1\n      child2\n" }
+      let(:source) do
+        "kanban\n    root\n      child1\n        leaf1\n      child2\n"
+      end
 
       it "flattens every deeper level into the column card list" do
         # Mermaid does not distinguish deeper levels here, and neither does
         # the builder: anything not at the first item's indent is a card.
         diagram = parser.parse(source)
         expect(diagram.columns.map(&:id)).to eq(["root"])
-        expect(diagram.columns.first.cards.map(&:id)).to eq(%w[child1 leaf1 child2])
+        expect(diagram.columns.first.cards.map(&:id))
+          .to eq(%w[child1 leaf1 child2])
       end
     end
 
@@ -1165,7 +1221,9 @@ RSpec.describe Sirena::Parser::Kanban do
 
       it "keeps a repeated card id in its own column" do
         diagram = parser.parse(source)
-        expect(diagram.columns.map { |c| c.cards.map(&:id) }).to eq([["docs"], ["docs"]])
+        card_ids = diagram.columns.map { |column| column.cards.map(&:id) }
+
+        expect(card_ids).to eq([["docs"], ["docs"]])
       end
     end
 
@@ -1288,7 +1346,8 @@ RSpec.describe Sirena::Parser::Kanban do
       # `node_with_icon` / `node_with_class`, already parsed the same way
       # there.
       it "sets the icon on the item above it (corpus 024)" do
-        diagram = parser.parse("kanban\n    root[The root]\n    ::icon(fa-house)\n")
+        source = "kanban\n    root[The root]\n    ::icon(fa-house)\n"
+        diagram = parser.parse(source)
         expect(diagram.columns.first.icon).to eq("fa-house")
       end
 
@@ -1297,7 +1356,8 @@ RSpec.describe Sirena::Parser::Kanban do
         expect(diagram.columns.first.classes).to eq(%w[m-4 p-8])
       end
 
-      it "splits classes on whitespace regardless of $; (Ruby global field separator)" do
+      it "splits classes on whitespace regardless of $; " \
+         "(Ruby global field separator)" do
         old_fs = $;
         $; = ","
         diagram = parser.parse("kanban\n    root[The root]\n    :::m-4 p-8\n")
@@ -1307,21 +1367,23 @@ RSpec.describe Sirena::Parser::Kanban do
       end
 
       it "accepts a class line followed by an icon line (corpus 026)" do
-        diagram = parser.parse("kanban\n    root[The root]\n    :::m-4 p-8\n    ::icon(fa-rocket)\n")
+        diagram = parser.parse(class_then_icon_source)
         column = diagram.columns.first
         expect(column.classes).to eq(%w[m-4 p-8])
         expect(column.icon).to eq("fa-rocket")
       end
 
       it "accepts an icon line followed by a class line (corpus 027)" do
-        diagram = parser.parse("kanban\n    root[The root]\n    ::icon(fa-flag)\n    :::m-4 p-8\n")
+        diagram = parser.parse(icon_then_class_source)
         column = diagram.columns.first
         expect(column.icon).to eq("fa-flag")
         expect(column.classes).to eq(%w[m-4 p-8])
       end
 
-      it "applies a class line to a card, and a later card stays unaffected (corpus 030)" do
-        source = "kanban\n  root(Root)\n    Child(Child)\n    :::hot\n      a(a)\n      b[New Stuff]\n"
+      it "applies a class line to a card, " \
+         "and a later card stays unaffected (corpus 030)" do
+        source = "kanban\n  root(Root)\n    Child(Child)\n    " \
+                 ":::hot\n      a(a)\n      b[New Stuff]\n"
         diagram = parser.parse(source)
         cards = diagram.columns.first.cards.to_h { |c| [c.id, c] }
 
@@ -1330,8 +1392,10 @@ RSpec.describe Sirena::Parser::Kanban do
         expect(cards.fetch("b").classes).to eq([])
       end
 
-      it "strips leading/trailing space around the class list rather than splitting an empty entry" do
-        diagram = parser.parse("kanban\n    root[The root]\n    :::  m-4  p-8  \n")
+      it "strips leading/trailing space around the class list " \
+         "rather than splitting an empty entry" do
+        source = "kanban\n    root[The root]\n    :::  m-4  p-8  \n"
+        diagram = parser.parse(source)
         expect(diagram.columns.first.classes).to eq(%w[m-4 p-8])
       end
 
@@ -1342,9 +1406,16 @@ RSpec.describe Sirena::Parser::Kanban do
       # @mermaid-js/mermaid-cli 11.12.0 kanban-definition bundle).
       {
         "a second `:::` line replaces the first" =>
-          ["kanban\n    root[The root]\n    :::first\n    :::second\n", %w[second]],
+          [
+            "kanban\n    root[The root]\n    :::first\n    :::second\n",
+            %w[second],
+          ],
         "a `@{ classes: }` entry is ignored, the `:::` line wins" =>
-          ["kanban\n    root[The root]@{ classes: 'existing' }\n    :::added\n", %w[added]],
+          [
+            "kanban\n    root[The root]@{ classes: 'existing' }\n    " \
+            ":::added\n",
+            %w[added],
+          ],
         "a repeated identical class line has no visible effect" =>
           ["kanban\n    root[The root]\n    :::hot\n    :::hot\n", %w[hot]],
       }.each do |description, (source, expected)|
@@ -1377,15 +1448,19 @@ RSpec.describe Sirena::Parser::Kanban do
         expect(diagram.columns.first.icon).to eq("fa-tab")
       end
 
-      it "accepts trailing horizontal whitespace after the directive (mmdc 11.12.0)" do
-        diagram = parser.parse("kanban\n    root[The root]\n    ::icon(fa-trail)   \n")
+      it "accepts trailing horizontal whitespace after the directive " \
+         "(mmdc 11.12.0)" do
+        source = "kanban\n    root[The root]\n    ::icon(fa-trail)   \n"
+        diagram = parser.parse(source)
         expect(diagram.columns.first.icon).to eq("fa-trail")
       end
 
       # mmdc's lexer matches the `icon` keyword case-insensitively, the same
       # way kanban_keyword already does for the `kanban` header.
-      it "accepts the icon directive spelled in a different case (mmdc 11.12.0)" do
-        diagram = parser.parse("kanban\n    root[The root]\n    ::ICON(fa-case)\n")
+      it "accepts the icon directive spelled in a different case " \
+         "(mmdc 11.12.0)" do
+        source = "kanban\n    root[The root]\n    ::ICON(fa-case)\n"
+        diagram = parser.parse(source)
         expect(diagram.columns.first.icon).to eq("fa-case")
       end
     end
@@ -1403,7 +1478,9 @@ RSpec.describe Sirena::Parser::Kanban do
       end
 
       it "ignores a classes: metadata value on a card" do
-        diagram = parser.parse("kanban\n  col[Todo]\n    card@{ classes: 'hot cold' }\n")
+        source = "kanban\n  col[Todo]\n    " \
+                 "card@{ classes: 'hot cold' }\n"
+        diagram = parser.parse(source)
         expect(diagram.columns.first.cards.first.classes).to eq([])
       end
     end
@@ -1415,7 +1492,8 @@ RSpec.describe Sirena::Parser::Kanban do
       # the bare form only adds a second route to it. Reachable either way,
       # so neither route may emit wrong output.
       it "does not let text: overwrite the card text" do
-        diagram = parser.parse("kanban\n  col[C]\n    card[K]@{ text: 'CLOB' }\n")
+        source = "kanban\n  col[C]\n    card[K]@{ text: 'CLOB' }\n"
+        diagram = parser.parse(source)
         expect(diagram.columns.first.cards.first.text).to eq("K")
       end
 
@@ -1503,7 +1581,8 @@ RSpec.describe Sirena::Parser::Kanban do
         end
       end
 
-      it "falls back for false and null in the three casings js-yaml resolves" do
+      it "falls back for false and null " \
+         "in the three casings js-yaml resolves" do
         # lowercase, Capitalised and UPPERCASE - and no others.
         aggregate_failures do
           %w[false False FALSE null Null NULL].each do |word|
@@ -1559,13 +1638,14 @@ RSpec.describe Sirena::Parser::Kanban do
         # charset, so these reach here. A run of any length counts, and
         # `0x_0` shows one directly after a radix prefix.
         aggregate_failures do
-          %w[0_0 0__0 0___0 0_0_0 00__00 -0_0 0x_0 0x0_0 0b0_0 0o0_0].each do |zero|
+          separated_zeroes.each do |zero|
             expect(title_for(zero)).to eq("A"), "expected #{zero} to be dropped"
           end
         end
       end
 
-      it "strips the separators before converting, so a non-zero payload survives" do
+      it "strips the separators before converting, " \
+         "so a non-zero payload survives" do
         # The other half of the separator rule, and the only half that can
         # tell stripping from tolerating. Every value in the drop example
         # above has a ZERO payload, where Ruby's own `to_i` already reaches
@@ -1605,7 +1685,8 @@ RSpec.describe Sirena::Parser::Kanban do
         end
       end
 
-      it "honours a separator anywhere in the mantissa, trailing edge included" do
+      it "honours a separator anywhere in the mantissa, " \
+         "trailing edge included" do
         # The float pattern is `[0-9][0-9_]*`, so a mantissa may even END in
         # separators - unlike the int pattern, where `0_` stays a string.
         aggregate_failures do
@@ -1635,7 +1716,8 @@ RSpec.describe Sirena::Parser::Kanban do
         end
       end
 
-      it "drops a falsy value on each of the five gated fields, and keeps a truthy one" do
+      it "drops a falsy value on each of the five gated fields, " \
+         "and keeps a truthy one" do
         # The positive control matters: KanbanCard#metadata is a `.compact`
         # over five attributes, so an empty hash cannot by itself tell
         # "dropped" from "never parsed". The truthy row proves the fields do
@@ -1651,8 +1733,10 @@ RSpec.describe Sirena::Parser::Kanban do
           expect(card.text).to eq("K")
 
           kept = parser.parse(truthy).columns.first.cards.first
-          expect(kept.metadata).to eq(assigned: "knsv", ticket: "MC-1",
-                                      icon: "star", priority: "High", label: "Fix")
+          expect(kept.metadata).to eq(
+            assigned: "knsv", ticket: "MC-1", icon: "star",
+            priority: "High", label: "Fix"
+          )
         end
       end
     end
@@ -1781,14 +1865,20 @@ RSpec.describe Sirena::Parser::Kanban do
     # closing delimiter and the parse failed outright - not a symptom, a
     # straight parse failure on legitimate Unicode input.
     context "with a multibyte label, icon or class body" do
-      it "parses a label, icon and class body containing multibyte characters" do
-        label = parser.parse("kanban\n  id1[Todo]\n    root[café]\n").columns.first.cards.first
+      it "parses a label, icon and class body " \
+         "containing multibyte characters" do
+        label = parser.parse("kanban\n  id1[Todo]\n    root[café]\n")
+          .columns.first.cards.first
         expect(label.text).to eq("café")
 
-        icon = parser.parse("kanban\n  id1[Todo]\n    root[Task]\n    ::icon(fa-café)\n").columns.first.cards.first
+        icon = parser.parse(
+          "kanban\n  id1[Todo]\n    root[Task]\n    ::icon(fa-café)\n",
+        ).columns.first.cards.first
         expect(icon.icon).to eq("fa-café")
 
-        classed = parser.parse("kanban\n  id1[Todo]\n    root[Task]\n    :::café-class\n").columns.first.cards.first
+        classed = parser.parse(
+          "kanban\n  id1[Todo]\n    root[Task]\n    :::café-class\n",
+        ).columns.first.cards.first
         expect(classed.classes).to eq(["café-class"])
       end
     end
@@ -1799,19 +1889,22 @@ RSpec.describe Sirena::Parser::Kanban do
     # missing delimiter fails to parse for the same reason whether or not the
     # guard exists. Calling GreedyRun directly, with the exact char classes
     # those rules construct it with, exercises the guard itself.
-    context "with an unterminated icon or bracket body, GreedyRun called directly" do
-      it "consumes to EOF without hanging, using the icon_modifier char class" do
+    context "with an unterminated icon or bracket body, " \
+            "GreedyRun called directly" do
+      it "consumes to EOF without hanging, " \
+         "using the icon_modifier char class" do
         result = nil
         expect do
-          Timeout.timeout(2) { result = Sirena::Parser::Atoms::GreedyRun.new("[^)]").parse("unterminated") }
+          Timeout.timeout(2) { result = icon_greedy_run.parse("unterminated") }
         end.not_to raise_error
         expect(result.to_s).to eq("unterminated")
       end
 
-      it "consumes to EOF without hanging, using the labelled_item char class" do
+      it "consumes to EOF without hanging, " \
+         "using the labelled_item char class" do
         result = nil
         expect do
-          Timeout.timeout(2) { result = Sirena::Parser::Atoms::GreedyRun.new('[^\]]').parse("unterminated") }
+          Timeout.timeout(2) { result = label_greedy_run.parse("unterminated") }
         end.not_to raise_error
         expect(result.to_s).to eq("unterminated")
       end
@@ -1820,9 +1913,12 @@ RSpec.describe Sirena::Parser::Kanban do
       # at all - `:::classes` runs to end of line or EOF - so this shape
       # does not fail to parse; it exercises the same EOF-terminated loop
       # without hanging, which is the property this context is about.
-      it "returns promptly (no closing delimiter to miss) for a class body running to EOF" do
+      it "returns promptly (no closing delimiter to miss) " \
+         "for a class body running to EOF" do
+        source = "kanban\n  id1[Task]\n  :::unterminated"
+
         expect do
-          Timeout.timeout(2) { parser.parse("kanban\n  id1[Task]\n  :::unterminated") }
+          Timeout.timeout(2) { parser.parse(source) }
         end.not_to raise_error
       end
     end
@@ -1834,15 +1930,17 @@ RSpec.describe Sirena::Parser::Kanban do
     # reason with or without this guard. Calling GreedyRun directly on an
     # empty string exercises `total.empty?` itself.
     context "with an empty icon body" do
-      it "raises Parslet::ParseFailed for GreedyRun's own empty match, using the icon_modifier char class" do
+      it "raises Parslet::ParseFailed for GreedyRun's own empty match, " \
+         "using the icon_modifier char class" do
         expect do
           Sirena::Parser::Atoms::GreedyRun.new("[^)]").parse("")
-        end.to raise_error(Parslet::ParseFailed, /Expected at least one matching character/)
+        end.to raise_error(Parslet::ParseFailed, empty_match_error)
       end
     end
 
-    # `GreedyRun#to_s_inner` (atoms/greedy_run.rb:64) feeds `Atoms::Base#to_s`, which
-    # Parslet calls to describe an unlabelled atom (e.g. inside
+    # `GreedyRun#to_s_inner` (atoms/greedy_run.rb:64) feeds
+    # `Atoms::Base#to_s`, which Parslet calls to describe an unlabelled atom
+    # (e.g. inside
     # `Alternative#error_msg`'s "Expected one of [...]" listing, built from
     # `alternatives.inspect` -> each atom's `#inspect` -> `#to_s` ->
     # `#to_s_inner`). Exercised here directly on the same `GreedyRun`
@@ -1850,7 +1948,8 @@ RSpec.describe Sirena::Parser::Kanban do
     # `icon_modifier`'s own construction), rather than fishing the exact
     # instance back out of a failed parse tree.
     context "with GreedyRun#to_s_inner called directly" do
-      it "describes the atom by its anchored regexp, matching icon_modifier's construction" do
+      it "describes the atom by its anchored regexp, " \
+         "matching icon_modifier's construction" do
         atom = Sirena::Parser::Atoms::GreedyRun.new("[^)]")
 
         # Asserted as a literal string, not `Regexp.new(...).inspect`, so the
