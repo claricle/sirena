@@ -142,29 +142,28 @@ RSpec.describe Sirena::Layout::ErDiagram, :aggregate_failures do
       expect(layout.call(diagram).children.first.width).to be > narrow
     end
 
-    it "uses monospace theme sizing for attribute width" do
-      name = "i" * 40
-      entity = Sirena::Diagram::ErEntity.new(id: "NARROW", name: "N")
-      entity.attributes << Sirena::Diagram::ErAttribute.new(name: name)
+    it "sizes an entity to mmdc's Trebuchet measure of its widest cell" do
+      entity = Sirena::Diagram::ErEntity.new(id: "NARROW", name: "NARROW")
+      entity.attributes << Sirena::Diagram::ErAttribute.new(
+        name: "i" * 40, attribute_type: "string",
+      )
       narrow = Sirena::Diagram::ErDiagram.new.tap { |value| value.entities << entity }
-      node = layout.call(narrow).children.first
-      font_size = Sirena::Theme::Registry.get(:default).typography.font_size_small
-      drawn = Sirena::TextMeasurement.measure(
-        name, font_size: font_size, monospace: true
-      )[:width] + 20
 
-      expect(node.width).to be_within(0.01).of(drawn)
+      # mmdc draws this diagram in a 288.875 x 101.5 viewBox, 8px margin each side.
+      expect(layout.call(narrow).children.first.width)
+        .to be_within(0.5).of(288.875 - 16)
     end
 
-    it "sizes and positions text from the injected theme" do
+    it "sizes entity boxes the same under every theme, as mmdc does" do
       diagram.entities.first.name = "W" * 40
       ordinary = layout.call(diagram, theme: Sirena::Theme::Registry.get(:default))
       contrast = layout.call(diagram, theme: Sirena::Theme::Registry.get(:high_contrast))
 
       expect(contrast.children.first.labels.first.font_size)
         .to eq(Sirena::Theme::Registry.get(:high_contrast).typography.font_size_large)
-      expect(contrast.children.first.width)
-        .not_to eq(ordinary.children.first.width)
+      # mmdc draws a 40-W entity 595.3125 wide.
+      expect([ordinary, contrast].map { |scene| scene.children.first.width })
+        .to all(be_within(0.5).of(595.3125))
     end
 
     it "preserves assigned classes and declarations in source order" do
