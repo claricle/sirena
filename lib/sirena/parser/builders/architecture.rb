@@ -7,6 +7,18 @@ module Sirena
     module Builders
       # Transform for architecture diagrams
       class Architecture
+        TEXT_ATTRIBUTES = {
+          title: :title,
+          acc_title: :acc_title,
+          acc_descr: :acc_descr,
+        }.freeze
+
+        ENTITY_BUILDERS = {
+          "group" => %i[groups create_group],
+          "service" => %i[services create_service],
+          "junction" => %i[junctions create_junction],
+        }.freeze
+
         def apply(tree)
           diagram = Diagram::Architecture.new
 
@@ -26,70 +38,78 @@ module Sirena
 
         def process_statement(diagram, stmt)
           return unless stmt.is_a?(Hash)
+          return if stmt[:header]
 
-          if stmt[:header]
-            # Skip header marker
-            nil
-          elsif stmt[:title]
-            diagram.title = extract_text(stmt[:title])
-          elsif stmt[:acc_title]
-            diagram.acc_title = extract_text(stmt[:acc_title])
-          elsif stmt[:acc_descr]
-            diagram.acc_descr = extract_text(stmt[:acc_descr])
-          elsif stmt[:from] && stmt[:to]
-            # Edge: has from and to
-            diagram.edges << create_edge(stmt)
-          elsif stmt[:stmt_type]
-            case extract_text(stmt[:stmt_type])
-            when "group"
-              diagram.groups << create_group(stmt)
-            when "service"
-              diagram.services << create_service(stmt)
-            when "junction"
-              diagram.junctions << create_junction(stmt)
-            end
-          end
+          text_attribute = TEXT_ATTRIBUTES.find { |key, _| stmt[key] }
+          return assign_text(diagram, stmt, *text_attribute) if text_attribute
+          return diagram.edges << create_edge(stmt) if edge?(stmt)
+
+          add_entity(diagram, stmt)
+        end
+
+        def assign_text(diagram, stmt, source, target)
+          diagram.public_send("#{target}=", extract_text(stmt[source]))
+        end
+
+        def edge?(stmt)
+          stmt[:from] && stmt[:to]
+        end
+
+        def add_entity(diagram, stmt)
+          collection, builder = ENTITY_BUILDERS[extract_text(stmt[:stmt_type])]
+          return unless collection
+
+          diagram.public_send(collection) << send(builder, stmt)
         end
 
         def create_group(data)
-          group = Diagram::Architecture::Group.new
-          group.id = extract_text(data[:id]) if data[:id]
-          group.label = extract_text(data[:label]) if data[:label]
-          group.icon = extract_text(data[:icon]) if data[:icon]
-          if data[:parent] && !data[:parent].to_s.empty?
-            group.parent_id = extract_text(data[:parent])
+          Diagram::Architecture::Group.new.tap do |group|
+            assign_attributes(group, data, id: :id, label: :label, icon: :icon)
+            assign_reference(group, :parent_id, data[:parent])
           end
-          group
         end
 
         def create_service(data)
-          service = Diagram::Architecture::Service.new
-          service.id = extract_text(data[:id]) if data[:id]
-          service.label = extract_text(data[:label]) if data[:label]
-          service.icon = extract_text(data[:icon]) if data[:icon]
-          if data[:group] && !data[:group].to_s.empty?
-            service.group_id = extract_text(data[:group])
+          Diagram::Architecture::Service.new.tap do |service|
+            assign_attributes(
+              service, data, id: :id, label: :label, icon: :icon
+            )
+            assign_reference(service, :group_id, data[:group])
           end
-          service
         end
 
         def create_junction(data)
-          junction = Diagram::Architecture::Junction.new
-          junction.id = extract_text(data[:id]) if data[:id]
-          if data[:group] && !data[:group].to_s.empty?
-            junction.group_id = extract_text(data[:group])
+          Diagram::Architecture::Junction.new.tap do |junction|
+            assign_attributes(junction, data, id: :id)
+            assign_reference(junction, :group_id, data[:group])
           end
-          junction
         end
 
         def create_edge(data)
-          edge = Diagram::Architecture::Edge.new
-          edge.from_id = extract_text(data[:from]) if data[:from]
-          edge.to_id = extract_text(data[:to]) if data[:to]
-          edge.from_position = extract_text(data[:from_pos]) if data[:from_pos]
-          edge.to_position = extract_text(data[:to_pos]) if data[:to_pos]
-          edge.label = extract_text(data[:label]) if data[:label]
-          edge
+          Diagram::Architecture::Edge.new.tap do |edge|
+            assign_attributes(
+              edge,
+              data,
+              from_id: :from,
+              to_id: :to,
+              from_position: :from_pos,
+              to_position: :to_pos,
+              label: :label,
+            )
+          end
+        end
+
+        def assign_attributes(model, data, attributes)
+          attributes.each do |target, source|
+            value = data[source]
+            model.public_send("#{target}=", extract_text(value)) if value
+          end
+        end
+
+        def assign_reference(model, target, value)
+          return if value.nil? || value.to_s.empty?
+
+          model.public_send("#{target}=", extract_text(value))
         end
 
         def extract_text(value)

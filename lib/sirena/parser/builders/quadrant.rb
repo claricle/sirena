@@ -13,39 +13,61 @@ module Sirena
       class Quadrant
         include CaptureString
 
+        STATEMENT_HANDLERS = {
+          header: :process_header,
+          title: :process_title,
+          x_axis_left: :process_x_axis,
+          y_axis_bottom: :process_y_axis,
+          quadrant_label: :process_quadrant_label,
+          data_point: :process_data_point,
+        }.freeze
+
+        HASH_STATEMENTS = %i[header title x_axis_left y_axis_bottom].freeze
+
+        STYLE_EXTRACTORS = {
+          radius: :extract_float,
+          color: :extract_text,
+          stroke_color: :extract_text,
+          stroke_width: :extract_float,
+        }.freeze
+
+        QUADRANT_LABELS = {
+          "1" => :quadrant_1_label,
+          "2" => :quadrant_2_label,
+          "3" => :quadrant_3_label,
+          "4" => :quadrant_4_label,
+        }.freeze
+
         # Transform parse tree into Quadrant diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
         # @return [Diagram::Quadrant] the quadrant chart diagram model
         def apply(tree)
           diagram = Diagram::Quadrant.new
-
-          # Tree structure: array with header and statements
-          if tree.is_a?(Array)
-            tree.each do |item|
-              next unless item.is_a?(Hash)
-
-              process_header(diagram, item) if item.key?(:header)
-              process_title(diagram, item) if item.key?(:title)
-              process_x_axis(diagram, item) if item.key?(:x_axis_left)
-              process_y_axis(diagram, item) if item.key?(:y_axis_bottom)
-              process_quadrant_label(diagram, item) if
-                item.key?(:quadrant_label)
-              process_data_point(diagram, item) if item.key?(:data_point)
-            end
-          elsif tree.is_a?(Hash)
-            process_header(diagram, tree) if tree.key?(:header)
-            process_title(diagram, tree) if tree.key?(:title)
-            process_x_axis(diagram, tree) if tree.key?(:x_axis_left)
-            process_y_axis(diagram, tree) if tree.key?(:y_axis_bottom)
-          end
-
+          process_tree(diagram, tree)
           diagram
         end
 
         private
 
-        def process_header(diagram, item)
+        def process_tree(diagram, tree)
+          if tree.is_a?(Array)
+            tree.each { |item| process_item(diagram, item, STATEMENT_HANDLERS) }
+          elsif tree.is_a?(Hash)
+            handlers = STATEMENT_HANDLERS.slice(*HASH_STATEMENTS)
+            process_item(diagram, tree, handlers)
+          end
+        end
+
+        def process_item(diagram, item, handlers)
+          return unless item.is_a?(Hash)
+
+          handlers.each do |key, handler|
+            send(handler, diagram, item) if item.key?(key)
+          end
+        end
+
+        def process_header(_diagram, _item)
           # Header is just the 'quadrantChart' keyword
         end
 
@@ -68,90 +90,64 @@ module Sirena
         end
 
         def process_quadrant_label(diagram, item)
-          quadrant_num = item[:quadrant_number].to_s
-          label_text = extract_text(item[:quadrant_label])
+          attribute = QUADRANT_LABELS[item[:quadrant_number].to_s]
+          return unless attribute
 
-          case quadrant_num
-          when "1"
-            diagram.quadrant_1_label = label_text
-          when "2"
-            diagram.quadrant_2_label = label_text
-          when "3"
-            diagram.quadrant_3_label = label_text
-          when "4"
-            diagram.quadrant_4_label = label_text
-          end
+          label_text = extract_text(item[:quadrant_label])
+          diagram.public_send("#{attribute}=", label_text)
         end
 
         def process_data_point(diagram, item)
           label = extract_text(item[:label])
           coords = item[:coordinates]
-          styling = item[:styling]
-
           return if label.empty? || coords.nil?
 
-          x = extract_float(coords[:x])
-          y = extract_float(coords[:y])
-
-          point = Diagram::QuadrantPoint.new.tap do |p|
-            p.label = label
-            p.x = x
-            p.y = y
-
-            # Process optional styling parameters
-            if styling
-              style_hash = extract_styling(styling)
-              p.radius = style_hash[:radius] if style_hash[:radius]
-              p.color = style_hash[:color] if style_hash[:color]
-              p.stroke_color = style_hash[:stroke_color] if
-                style_hash[:stroke_color]
-              p.stroke_width = style_hash[:stroke_width] if
-                style_hash[:stroke_width]
-            end
-          end
-
+          point = build_point(label, coords, item[:styling])
           diagram.points << point
         end
 
+        def build_point(label, coords, styling)
+          Diagram::QuadrantPoint.new.tap do |point|
+            point.label = label
+            point.x = extract_float(coords[:x])
+            point.y = extract_float(coords[:y])
+            assign_point_style(point, extract_styling(styling))
+          end
+        end
+
+        def assign_point_style(point, styling)
+          styling.each do |attribute, value|
+            point.public_send("#{attribute}=", value) if value
+          end
+        end
+
         def extract_styling(styling)
-          result = {}
-
-          # Styling can be a Hash or Array depending on parse tree structure
-          items = if styling.is_a?(Array)
-                    styling
-                  elsif styling.is_a?(Hash)
-                    [styling]
-                  else
-                    []
-                  end
-
-          items.each do |item|
+          styling_items(styling).each_with_object({}) do |item, result|
             next unless item.is_a?(Hash)
 
-            result[:radius] = extract_float(item[:radius]) if item[:radius]
-            result[:color] = extract_text(item[:color]) if item[:color]
-            result[:stroke_color] = extract_text(item[:stroke_color]) if
-              item[:stroke_color]
-            result[:stroke_width] = extract_float(item[:stroke_width]) if
-              item[:stroke_width]
+            STYLE_EXTRACTORS.each do |attribute, extractor|
+              value = item[attribute]
+              result[attribute] = send(extractor, value) if value
+            end
           end
+        end
 
-          result
+        def styling_items(styling)
+          return styling if styling.is_a?(Array)
+          return [styling] if styling.is_a?(Hash)
+
+          []
         end
 
         def extract_text(value)
-          case value
-          when Hash
-            if value[:string]
-              capture_string(value[:string])
-            else
-              value.values.first.to_s
-            end
-          when String
-            value
-          else
-            value.to_s
-          end.strip
+          text = value.is_a?(Hash) ? extract_hash_text(value) : value.to_s
+          text.strip
+        end
+
+        def extract_hash_text(value)
+          return capture_string(value[:string]) if value[:string]
+
+          value.values.first.to_s
         end
 
         def extract_float(value)
