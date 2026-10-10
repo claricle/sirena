@@ -58,11 +58,9 @@ module Sirena
           # Tree is an array: [header, ...statements]
           if tree.is_a?(Array)
             tree.each do |item|
-              process_statement(diagram, item) if item.is_a?(Hash) &&
-                !item[:header]
+              next if item[:header] # Skip header
+              process_statement(diagram, item)
             end
-          elsif tree.is_a?(Hash) && tree[:statements]
-            process_statements(diagram, tree[:statements])
           end
 
           diagram
@@ -88,8 +86,6 @@ module Sirena
         end
 
         def process_statement(diagram, stmt)
-          return unless stmt.is_a?(Hash)
-
           # `create` applies on top of the `participant`/`actor` branch
           # below, not instead of it (`create_statement` delegates to the
           # same declaration rules, so both keys are set on one `stmt`) —
@@ -163,7 +159,7 @@ module Sirena
 
           from_id = actor_id(stmt[:from])
           to_id = actor_id(stmt[:to])
-          message_text = stmt[:text] ? extract_text(stmt[:text]) : ""
+          message_text = extract_text(stmt[:text])
 
           base = arrow_base(stmt[:arrow])
           line_style, head_style, head_side =
@@ -240,13 +236,13 @@ module Sirena
         end
 
         def arrow_base(arrow)
-          arrow.is_a?(Hash) ? arrow[:arrow_base].to_s : arrow.to_s
+          arrow[:arrow_base].to_s
         end
 
         def activation(arrow)
           # Stripped: mermaid allows whitespace before the suffix, so the
           # capture can arrive as " +" and never matched a bare "+".
-          arrow.is_a?(Hash) ? arrow[:activation].to_s.strip : ""
+          arrow[:activation].to_s.strip
         end
 
         def handle_arrow_activation(diagram, from_id, to_id, suffix)
@@ -258,28 +254,20 @@ module Sirena
 
         def add_note(diagram, stmt)
           position_data = stmt[:position]
-          position = if position_data.is_a?(Hash)
-                       if position_data[:left_of]
-                         "left_of"
-                       elsif position_data[:right_of]
-                         "right_of"
-                       elsif position_data[:over]
-                         "over"
-                       else
-                         "over"
-                       end
+          position = if position_data[:left_of]
+                       "left_of"
+                     elsif position_data[:right_of]
+                       "right_of"
                      else
                        "over"
                      end
 
           participants = if stmt[:participants].is_a?(Array)
                            stmt[:participants].map do |p|
-                             actor_id(p.is_a?(Hash) ? p[:participant] : p)
+                             actor_id(p[:participant])
                            end
-                         elsif stmt[:participants].is_a?(Hash)
-                           [actor_id(stmt[:participants][:participant])]
                          else
-                           []
+                           [actor_id(stmt[:participants][:participant])]
                          end
 
           text = extract_text(stmt[:note_text])
@@ -321,102 +309,61 @@ module Sirena
                     "(#{participant_id})"
             end
 
-            if active && !active[:end]
-              active[:end] = @message_index
+            active[:end] = @message_index
 
-              # Create activation record
-              activation = Diagram::SequenceActivation.new.tap do |a|
-                a.participant_id = participant_id
-                a.start_index = active[:start]
-                a.end_index = active[:end]
-              end
-
-              diagram.activations << activation
+            # Create activation record
+            activation = Diagram::SequenceActivation.new.tap do |a|
+              a.participant_id = participant_id
+              a.start_index = active[:start]
+              a.end_index = active[:end]
             end
+
+            diagram.activations << activation
           end
         end
 
+        # Each block rule names its statement list with `.as`, so the key is
+        # always present; the else/and/option continuations are a named
+        # `repeat` (an Array, possibly empty) of hashes that name theirs.
         def process_box(diagram, stmt)
-          # Box statements contain nested participants/messages
-          # Process the nested statements
-          if stmt[:box_statements]
-            process_statements(diagram, stmt[:box_statements])
-          end
+          process_statements(diagram, stmt[:box_statements])
         end
 
         def process_loop(diagram, stmt)
-          # Process loop statements
-          if stmt[:loop_statements]
-            process_statements(diagram, stmt[:loop_statements])
-          end
+          process_statements(diagram, stmt[:loop_statements])
         end
 
         def process_alt(diagram, stmt)
-          # Process alt statements
-          if stmt[:alt_statements]
-            process_statements(diagram, stmt[:alt_statements])
-          end
-
-          # Process else blocks
-          if stmt[:else_blocks]
-            Array(stmt[:else_blocks]).each do |else_block|
-              if else_block[:else_statements]
-                process_statements(diagram, else_block[:else_statements])
-              end
-            end
+          process_statements(diagram, stmt[:alt_statements])
+          stmt[:else_blocks].each do |block|
+            process_statements(diagram, block[:else_statements])
           end
         end
 
         def process_opt(diagram, stmt)
-          # Process opt statements
-          if stmt[:opt_statements]
-            process_statements(diagram, stmt[:opt_statements])
-          end
+          process_statements(diagram, stmt[:opt_statements])
         end
 
         def process_rect(diagram, stmt)
-          if stmt[:rect_statements]
-            process_statements(diagram, stmt[:rect_statements])
-          end
+          process_statements(diagram, stmt[:rect_statements])
         end
 
         def process_par(diagram, stmt)
-          # Process par statements
-          if stmt[:par_statements]
-            process_statements(diagram, stmt[:par_statements])
-          end
-
-          # Process and blocks
-          if stmt[:and_blocks]
-            Array(stmt[:and_blocks]).each do |and_block|
-              if and_block[:and_statements]
-                process_statements(diagram, and_block[:and_statements])
-              end
-            end
+          process_statements(diagram, stmt[:par_statements])
+          stmt[:and_blocks].each do |block|
+            process_statements(diagram, block[:and_statements])
           end
         end
 
         def process_critical(diagram, stmt)
-          # Process critical statements
-          if stmt[:critical_statements]
-            process_statements(diagram, stmt[:critical_statements])
-          end
-
-          # Process option blocks
-          if stmt[:option_blocks]
-            Array(stmt[:option_blocks]).each do |option_block|
-              if option_block[:option_statements]
-                process_statements(diagram, option_block[:option_statements])
-              end
-            end
+          process_statements(diagram, stmt[:critical_statements])
+          stmt[:option_blocks].each do |block|
+            process_statements(diagram, block[:option_statements])
           end
         end
 
         def process_break(diagram, stmt)
-          # Process break statements
-          if stmt[:break_statements]
-            process_statements(diagram, stmt[:break_statements])
-          end
+          process_statements(diagram, stmt[:break_statements])
         end
 
         # An actor name is a bounded run of text, so a name that abuts a
@@ -459,13 +406,10 @@ module Sirena
           when Hash
             if value[:string]
               value[:string].to_s
-            elsif value[:message_text]
-              extract_text(value[:message_text])
             else
-              extract_text(value.values.first)
+              extract_text(value[:message_text])
             end
           when Array then ""
-          when String then value
           else value.to_s
           end.strip
         end
