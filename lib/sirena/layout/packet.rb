@@ -292,7 +292,7 @@ module Sirena
       # @param fields [Array<Diagram::PacketField>] fields to position
       # @param row_count [Integer] total number of rows
       # @return [Array<Hash>] positioned fields with coordinates
-      def position_fields(fields, row_count)
+      def position_fields(fields, _row_count)
         positioned = []
 
         fields.each do |field|

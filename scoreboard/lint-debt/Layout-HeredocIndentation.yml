@@ -1,5 +1,0 @@
----
-cop: Layout/HeredocIndentation
-rows:
-- file: tasks/benchmark.rake
-  count: 4

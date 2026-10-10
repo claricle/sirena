@@ -610,7 +610,7 @@ module Sirena
         wrap_text(text, DEFAULT_REQ_WIDTH - 20, property_font_size).length
       end
 
-      def calculate_element_dimensions(element)
+      def calculate_element_dimensions(_element)
         {
           width: DEFAULT_ELEM_WIDTH,
           height: DEFAULT_ELEM_HEIGHT,

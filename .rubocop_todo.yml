@@ -57,23 +57,6 @@ Layout/ExtraSpacing:
 Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
 
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowMultipleStyles, EnforcedHashRocketStyle, EnforcedColonStyle, EnforcedLastArgumentHashStyle.
-# SupportedHashRocketStyles: key, separator, table
-# SupportedColonStyles: key, separator, table
-# SupportedLastArgumentHashStyles: always_inspect, always_ignore, ignore_implicit, ignore_explicit
-Layout/HashAlignment:
-  Exclude:
-    - 'lib/sirena/diagram/c4.rb'
-    - 'lib/sirena/diagram/timeline.rb'
-
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-Layout/HeredocIndentation:
-  Exclude:
-    - 'tasks/benchmark.rake'
-
 # Offense count: 11
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: Width, AllowedPatterns.
@@ -134,20 +117,6 @@ Lint/AmbiguousOperatorPrecedence:
 # Configuration parameters: IgnoreLiteralBranches, IgnoreConstantBranches, IgnoreDuplicateElseBranch.
 Lint/DuplicateBranch:
   Enabled: false
-
-# Offense count: 10
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods, IgnoreNotImplementedMethods, NotImplementedExceptions.
-# NotImplementedExceptions: NotImplementedError
-Lint/UnusedMethodArgument:
-  Exclude:
-    - 'lib/sirena/renderer/packet.rb'
-    - 'lib/sirena/layout/block.rb'
-    - 'lib/sirena/layout/git_graph.rb'
-    - 'lib/sirena/layout/mindmap.rb'
-    - 'lib/sirena/layout/packet.rb'
-    - 'lib/sirena/layout/requirement.rb'
-    - 'lib/sirena/layout/treemap.rb'
 
 # Offense count: 4
 # This cop supports safe autocorrection (--autocorrect).
@@ -337,12 +306,5 @@ Style/SafeNavigation:
   Exclude:
     - 'lib/sirena/parser/builders/flowchart.rb'
     - 'lib/sirena/renderer/pie.rb'
-    - 'lib/sirena/layout/gantt.rb'
-
-# Offense count: 3
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowModifier.
-Style/SoleNestedConditional:
-  Exclude:
     - 'lib/sirena/layout/gantt.rb'
 

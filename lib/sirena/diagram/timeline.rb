@@ -49,7 +49,7 @@ module Sirena
 
       # Events within this section
       attribute :events, TimelineEvent, collection: true,
-                default: -> { [] }
+                                        default: -> { [] }
 
       # Task names (for sections without timestamps)
       attribute :tasks, :string, collection: true, default: -> { [] }
@@ -103,11 +103,11 @@ module Sirena
     class Timeline < Base
       # Collection of sections in the timeline
       attribute :sections, TimelineSection, collection: true,
-                default: -> { [] }
+                                            default: -> { [] }
 
       # Collection of events not in any section
       attribute :events, TimelineEvent, collection: true,
-                default: -> { [] }
+                                        default: -> { [] }
 
       # Accessibility title (for screen readers)
       attribute :acc_title, :string

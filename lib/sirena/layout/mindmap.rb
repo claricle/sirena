@@ -395,7 +395,7 @@ module Sirena
       #
       # @param node [Diagram::Mindmap::MindmapNode] node
       # @return [Numeric] estimated height
-      def estimate_node_height(node)
+      def estimate_node_height(_node)
         DEFAULT_NODE_HEIGHT
       end
 

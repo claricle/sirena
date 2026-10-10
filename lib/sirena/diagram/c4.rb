@@ -227,7 +227,7 @@ module Sirena
 
       # Collection of relationships
       attribute :relationships, C4Relationship, collection: true,
-                                                 default: -> { [] }
+                                                default: -> { [] }
 
       # Collection of boundaries
       attribute :boundaries, C4Boundary, collection: true, default: -> { [] }

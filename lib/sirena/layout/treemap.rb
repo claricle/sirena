@@ -299,7 +299,7 @@ module Sirena
         end
       end
 
-      def calculate_width(data)
+      def calculate_width(_data)
         800
       end
 

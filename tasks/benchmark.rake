@@ -340,210 +340,210 @@ class PerformanceBenchmarker
 
   def generate_report(results)
     <<~ADOC
-= Sirena Performance Benchmark Report
-:toc:
-:toclevels: 2
+      = Sirena Performance Benchmark Report
+      :toc:
+      :toclevels: 2
 
-== Overview
+      == Overview
 
-This document presents comprehensive performance benchmarks comparing Sirena
-(Ruby-native Mermaid renderer) with the official Mermaid.js CLI (mmdc).
+      This document presents comprehensive performance benchmarks comparing Sirena
+      (Ruby-native Mermaid renderer) with the official Mermaid.js CLI (mmdc).
 
-== System Information
+      == System Information
 
-*Benchmark Date:* #{results[:system_info][:timestamp]}
+      *Benchmark Date:* #{results[:system_info][:timestamp]}
 
-*System Configuration:*
+      *System Configuration:*
 
-* Ruby Version: #{results[:system_info][:ruby_version]}
-* Platform: #{results[:system_info][:platform]}
-* Sirena Version: #{results[:system_info][:sirena_version]}
-* Mermaid CLI Version: #{results[:system_info][:mermaid_cli_version]}
-* CPU: #{results[:system_info][:cpu_info]}
+      * Ruby Version: #{results[:system_info][:ruby_version]}
+      * Platform: #{results[:system_info][:platform]}
+      * Sirena Version: #{results[:system_info][:sirena_version]}
+      * Mermaid CLI Version: #{results[:system_info][:mermaid_cli_version]}
+      * CPU: #{results[:system_info][:cpu_info]}
 
-== Benchmark Methodology
+      == Benchmark Methodology
 
-All benchmarks were performed:
+      All benchmarks were performed:
 
-* Single-diagram and startup timings: 10 iterations per test (averaged)
-* Batch rendering: one timed pass over 50 diagrams (not averaged across repeats)
-* Using identical input diagrams
-* On the same system
-* With default settings for both tools
-* Cold start for startup time tests
+      * Single-diagram and startup timings: 10 iterations per test (averaged)
+      * Batch rendering: one timed pass over 50 diagrams (not averaged across repeats)
+      * Using identical input diagrams
+      * On the same system
+      * With default settings for both tools
+      * Cold start for startup time tests
 
-== Single Diagram Rendering
+      == Single Diagram Rendering
 
-Performance for rendering individual diagrams:
+      Performance for rendering individual diagrams:
 
-[cols="2,2,2,2"]
-|===
-|Diagram Type |Sirena |Mermaid.js |Speedup
+      [cols="2,2,2,2"]
+      |===
+      |Diagram Type |Sirena |Mermaid.js |Speedup
 
-#{results[:single_diagram].map do |type, data|
-  speedup = data[:mermaid_time] ? speedup_label(data[:mermaid_time] / data[:sirena_time]) : 'N/A'
-  "
-|#{type}
-|#{format_time(data[:sirena_time])}
-|#{data[:mermaid_time] ? format_time(data[:mermaid_time]) : 'N/A'}
-|#{speedup}"
-end.join("\n")}
-|===
+      #{results[:single_diagram].map do |type, data|
+        speedup = data[:mermaid_time] ? speedup_label(data[:mermaid_time] / data[:sirena_time]) : 'N/A'
+        "
+      |#{type}
+      |#{format_time(data[:sirena_time])}
+      |#{data[:mermaid_time] ? format_time(data[:mermaid_time]) : 'N/A'}
+      |#{speedup}"
+      end.join("\n")}
+      |===
 
-*Average speedup:* #{calculate_average_speedup(results[:single_diagram])}
+      *Average speedup:* #{calculate_average_speedup(results[:single_diagram])}
 
-== Batch Rendering Performance
+      == Batch Rendering Performance
 
-#{if results[:batch_rendering] && !results[:batch_rendering].empty?
-  batch = results[:batch_rendering]
-  <<~BATCH
-Performance rendering #{batch[:diagram_count]} diagrams:
+      #{if results[:batch_rendering] && !results[:batch_rendering].empty?
+        batch = results[:batch_rendering]
+        <<~BATCH
+          Performance rendering #{batch[:diagram_count]} diagrams:
 
-[cols="2,2,2"]
-|===
-|Metric |Sirena |Mermaid.js
+          [cols="2,2,2"]
+          |===
+          |Metric |Sirena |Mermaid.js
 
-|Total Time
-|#{format_time(batch[:sirena_total])}
-|#{format_time(batch[:mermaid_total])}
+          |Total Time
+          |#{format_time(batch[:sirena_total])}
+          |#{format_time(batch[:mermaid_total])}
 
-|Per Diagram
-|#{format_time(batch[:sirena_per_diagram])}
-|#{format_time(batch[:mermaid_per_diagram])}
+          |Per Diagram
+          |#{format_time(batch[:sirena_per_diagram])}
+          |#{format_time(batch[:mermaid_per_diagram])}
 
-|Throughput
-|#{(batch[:diagram_count] / batch[:sirena_total]).round(1)} diagrams/sec
-|#{batch[:mermaid_total] ? "#{(batch[:diagram_count] / batch[:mermaid_total]).round(1)} diagrams/sec" : 'N/A'}
-|===
+          |Throughput
+          |#{(batch[:diagram_count] / batch[:sirena_total]).round(1)} diagrams/sec
+          |#{batch[:mermaid_total] ? "#{(batch[:diagram_count] / batch[:mermaid_total]).round(1)} diagrams/sec" : 'N/A'}
+          |===
 
-#{if batch[:mermaid_total]
-  "*Batch speedup:* #{speedup_label(batch[:mermaid_total] / batch[:sirena_total])}"
-else
-  '*Batch speedup:* not measured (mermaid-cli failed during this run)'
-end}
+          #{if batch[:mermaid_total]
+            "*Batch speedup:* #{speedup_label(batch[:mermaid_total] / batch[:sirena_total])}"
+          else
+            '*Batch speedup:* not measured (mermaid-cli failed during this run)'
+          end}
 
-  BATCH
-else
-  '*Batch benchmarking requires mermaid-cli installation*'
-end}
+        BATCH
+      else
+        '*Batch benchmarking requires mermaid-cli installation*'
+      end}
 
-== Startup Time
+      == Startup Time
 
-Cold start performance (time to render first diagram):
+      Cold start performance (time to render first diagram):
 
-[cols="2,2"]
-|===
-|Tool |Average Startup Time
+      [cols="2,2"]
+      |===
+      |Tool |Average Startup Time
 
-|Sirena
-|#{format_time(results[:startup_time][:sirena])}
+      |Sirena
+      |#{format_time(results[:startup_time][:sirena])}
 
-|Mermaid.js
-|#{results[:startup_time][:mermaid] ? format_time(results[:startup_time][:mermaid]) : 'N/A'}
-|===
+      |Mermaid.js
+      |#{results[:startup_time][:mermaid] ? format_time(results[:startup_time][:mermaid]) : 'N/A'}
+      |===
 
-#{if results[:startup_time][:mermaid]
-  speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
-  "*Startup speedup:* #{speedup_label(speedup)}"
-end}
+      #{if results[:startup_time][:mermaid]
+        speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
+        "*Startup speedup:* #{speedup_label(speedup)}"
+      end}
 
-== Memory Usage
+      == Memory Usage
 
-#{if results[:memory_usage] && !results[:memory_usage].empty?
-  mem = results[:memory_usage]
-  <<~MEMORY
-Note: #{mem[:note]}
+      #{if results[:memory_usage] && !results[:memory_usage].empty?
+        mem = results[:memory_usage]
+        <<~MEMORY
+          Note: #{mem[:note]}
 
-  MEMORY
-end}
+        MEMORY
+      end}
 
-== Analysis
+      == Analysis
 
-=== Key Findings
+      === Key Findings
 
-*Measured Results:*
+      *Measured Results:*
 
-#{if results[:single_diagram]
-  avg_speedup = calculate_average_speedup(results[:single_diagram])
-  <<~FINDINGS
-. *Rendering Speed:* #{avg_speedup} on average for single diagrams
-#{if results[:batch_rendering] && results[:batch_rendering][:sirena_total] && results[:batch_rendering][:mermaid_total]
-  batch_speedup = results[:batch_rendering][:mermaid_total] / results[:batch_rendering][:sirena_total]
-  ". *Batch Processing:* #{speedup_label(batch_speedup)} for rendering #{results[:batch_rendering][:diagram_count]} diagrams"
-end}
-#{if results[:startup_time][:mermaid]
-  startup_speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
-  ". *Startup Time (cold start):* #{speedup_label(startup_speedup)}"
-end}
-. *Dependencies:* No Node.js, Puppeteer, or Chrome required
+      #{if results[:single_diagram]
+        avg_speedup = calculate_average_speedup(results[:single_diagram])
+        <<~FINDINGS
+          . *Rendering Speed:* #{avg_speedup} on average for single diagrams
+          #{if results[:batch_rendering] && results[:batch_rendering][:sirena_total] && results[:batch_rendering][:mermaid_total]
+            batch_speedup = results[:batch_rendering][:mermaid_total] / results[:batch_rendering][:sirena_total]
+            ". *Batch Processing:* #{speedup_label(batch_speedup)} for rendering #{results[:batch_rendering][:diagram_count]} diagrams"
+          end}
+          #{if results[:startup_time][:mermaid]
+            startup_speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
+            ". *Startup Time (cold start):* #{speedup_label(startup_speedup)}"
+          end}
+          . *Dependencies:* No Node.js, Puppeteer, or Chrome required
 
-  FINDINGS
-end}
+        FINDINGS
+      end}
 
-=== Architectural Differences
+      === Architectural Differences
 
-These are structural facts about the two tools, not a restatement of the
-measured numbers above -- a difference here does not imply a "faster" result
-on every metric or every machine.
+      These are structural facts about the two tools, not a restatement of the
+      measured numbers above -- a difference here does not imply a "faster" result
+      on every metric or every machine.
 
-. *No Browser Overhead:* Direct SVG generation without browser engine
-. *Native Ruby:* No V8/Node.js context switching
-. *Parslet-Based Parsers:* No separate JS runtime for grammar parsing
-. *No IPC:* Everything runs in a single process
-. *No Chrome instance required* (memory usage itself was not measured in this run)
+      . *No Browser Overhead:* Direct SVG generation without browser engine
+      . *Native Ruby:* No V8/Node.js context switching
+      . *Parslet-Based Parsers:* No separate JS runtime for grammar parsing
+      . *No IPC:* Everything runs in a single process
+      . *No Chrome instance required* (memory usage itself was not measured in this run)
 
-=== Where This Can Matter
+      === Where This Can Matter
 
-. *CI/CD Pipelines:* Fewer runtime dependencies to install in a build image
-. *Batch Documentation Generation:* No per-process browser-launch overhead
-. *Server-Side Rendering:* No browser process to launch per request
-. *Ruby-Native Applications:* No external dependencies
+      . *CI/CD Pipelines:* Fewer runtime dependencies to install in a build image
+      . *Batch Documentation Generation:* No per-process browser-launch overhead
+      . *Server-Side Rendering:* No browser process to launch per request
+      . *Ruby-Native Applications:* No external dependencies
 
-=== When to Consider Mermaid.js
+      === When to Consider Mermaid.js
 
-. *Interactive Features:* Browser-based editing and interaction
-. *Live Preview:* Real-time diagram editing
-. *Client-Side Rendering:* When rendering must happen in browser
+      . *Interactive Features:* Browser-based editing and interaction
+      . *Live Preview:* Real-time diagram editing
+      . *Client-Side Rendering:* When rendering must happen in browser
 
-== Reproduction
+      == Reproduction
 
-To reproduce these benchmarks:
+      To reproduce these benchmarks:
 
-[source,shell]
-----
-# Install mermaid-cli (optional but recommended for comparison)
-npm install -g @mermaid-js/mermaid-cli
+      [source,shell]
+      ----
+      # Install mermaid-cli (optional but recommended for comparison)
+      npm install -g @mermaid-js/mermaid-cli
 
-# Run full benchmark
-bundle exec rake benchmark:compare
+      # Run full benchmark
+      bundle exec rake benchmark:compare
 
-# Run quick benchmark
-bundle exec rake benchmark:quick
-----
+      # Run quick benchmark
+      bundle exec rake benchmark:quick
+      ----
 
-== Conclusion
+      == Conclusion
 
-Measured against mermaid-cli (mmdc) on this machine:
+      Measured against mermaid-cli (mmdc) on this machine:
 
-* **#{calculate_average_speedup(results[:single_diagram])}** rendering, averaged over the sample diagrams above
-#{if results[:startup_time][:mermaid]
-  startup_speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
-  explanation = if startup_speedup >= 1
-    '(Sirena pays Ruby interpreter + gem load per process, but still starts faster here)'
-  else
-    "(Sirena pays Ruby interpreter + gem load per process; mmdc's Node process starts faster here)"
-  end
-  "* **Cold start: #{speedup_label(startup_speedup)}** than launching mmdc #{explanation}"
-end}
-* **Memory usage:** not measured in this run
-* **Native Ruby integration** (no Node.js required at render time)
+      * **#{calculate_average_speedup(results[:single_diagram])}** rendering, averaged over the sample diagrams above
+      #{if results[:startup_time][:mermaid]
+        startup_speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
+        explanation = if startup_speedup >= 1
+          '(Sirena pays Ruby interpreter + gem load per process, but still starts faster here)'
+        else
+          "(Sirena pays Ruby interpreter + gem load per process; mmdc's Node process starts faster here)"
+        end
+        "* **Cold start: #{speedup_label(startup_speedup)}** than launching mmdc #{explanation}"
+      end}
+      * **Memory usage:** not measured in this run
+      * **Native Ruby integration** (no Node.js required at render time)
 
-These are single-machine measurements from one run, not a general claim; reproduce
-with the commands above before citing a number elsewhere.
+      These are single-machine measurements from one run, not a general claim; reproduce
+      with the commands above before citing a number elsewhere.
 
----
+      ---
 
-_Benchmark generated by Sirena Performance Suite_
+      _Benchmark generated by Sirena Performance Suite_
     ADOC
   end
 
