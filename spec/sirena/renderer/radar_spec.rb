@@ -9,6 +9,10 @@ RSpec.describe Sirena::Renderer::Radar do
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:renderer) { described_class.new(theme: theme) }
 
+  def team_legend_text?(text)
+    /\ATeam [AB]\z/.match?(Array(text.content).join)
+  end
+
   describe "model fallbacks" do
     it "uses identifiers when axis and curve labels are nil" do
       axis = Sirena::Diagram::RadarAxis.new("speed")
@@ -68,9 +72,18 @@ RSpec.describe Sirena::Renderer::Radar do
               id: "curve1",
               label: "Dataset 1",
               points: [
-                { axis_id: "A", value: 80, normalized: 0.8, x: 0, y: -160, angle: -Math::PI / 2 },
-                { axis_id: "B", value: 70, normalized: 0.7, x: 121.24, y: -70, angle: Math::PI / 6 },
-                { axis_id: "C", value: 90, normalized: 0.9, x: -155.88, y: -90, angle: 5 * Math::PI / 6 },
+                {
+                  axis_id: "A", value: 80, normalized: 0.8,
+                  x: 0, y: -160, angle: -Math::PI / 2
+                },
+                {
+                  axis_id: "B", value: 70, normalized: 0.7,
+                  x: 121.24, y: -70, angle: Math::PI / 6
+                },
+                {
+                  axis_id: "C", value: 90, normalized: 0.9,
+                  x: -155.88, y: -90, angle: 5 * Math::PI / 6
+                },
               ],
             },
           ],
@@ -161,16 +174,28 @@ RSpec.describe Sirena::Renderer::Radar do
               id: "team1",
               label: "Team A",
               points: [
-                { axis_id: "A", value: 80, normalized: 0.8, x: 0, y: -160, angle: -Math::PI / 2 },
-                { axis_id: "B", value: 70, normalized: 0.7, x: 121.24, y: -70, angle: Math::PI / 6 },
+                {
+                  axis_id: "A", value: 80, normalized: 0.8,
+                  x: 0, y: -160, angle: -Math::PI / 2
+                },
+                {
+                  axis_id: "B", value: 70, normalized: 0.7,
+                  x: 121.24, y: -70, angle: Math::PI / 6
+                },
               ],
             },
             {
               id: "team2",
               label: "Team B",
               points: [
-                { axis_id: "A", value: 60, normalized: 0.6, x: 0, y: -120, angle: -Math::PI / 2 },
-                { axis_id: "B", value: 90, normalized: 0.9, x: 155.88, y: -90, angle: Math::PI / 6 },
+                {
+                  axis_id: "A", value: 60, normalized: 0.6,
+                  x: 0, y: -120, angle: -Math::PI / 2
+                },
+                {
+                  axis_id: "B", value: 90, normalized: 0.9,
+                  x: 155.88, y: -90, angle: Math::PI / 6
+                },
               ],
             },
           ],
@@ -209,7 +234,7 @@ RSpec.describe Sirena::Renderer::Radar do
         texts = svg.children.grep(Sirena::Svg::Text)
         # Should include axis labels + legend labels
         # `content` is `collection: true`, so read it through Array(...).
-        legend_texts = texts.select { |text| /\ATeam [AB]\z/.match?(Array(text.content).join) }
+        legend_texts = texts.select { |text| team_legend_text?(text) }
         expect(legend_texts.length).to eq(2)
       end
     end
@@ -261,7 +286,10 @@ RSpec.describe Sirena::Renderer::Radar do
               id: "curve1",
               label: "Dataset 1",
               points: [
-                { axis_id: "A", value: 80, normalized: 0.8, x: 0, y: -160, angle: -Math::PI / 2 },
+                {
+                  axis_id: "A", value: 80, normalized: 0.8,
+                  x: 0, y: -160, angle: -Math::PI / 2
+                },
               ],
             },
           ],
