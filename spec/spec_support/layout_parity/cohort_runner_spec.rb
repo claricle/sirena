@@ -55,6 +55,27 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
     expect(argument_summary).to eq(alias_summary(reference_path))
   end
 
+  it "reuses a reference for a byte-identical selected corpus case" do
+    reference_path = seed_deduplicated_reference_case
+    results
+    expect(deduplicated_summary).to eq(
+      reference_summary("class/original.svg", reference_path),
+    )
+  end
+
+  it "keeps a reference missing when its identical owner is not selected" do
+    seed_unselected_reference_owner
+    results
+    expect(missing_summary).to eq(missing_reference_summary)
+  end
+
+  it "rejects conflicting references for byte-identical selected cases" do
+    seed_conflicting_references
+    expect { runner.candidate_cases }.to raise_error(
+      ArgumentError, /conflicting references for duplicate corpus source/
+    )
+  end
+
   it "detects the real Mermaid type for an unknown-directory case" do
     seed_unknown_case
     results
@@ -114,10 +135,53 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
     reference_path
   end
 
+  def seed_deduplicated_reference_case
+    source = "classDiagram\nclass A"
+    write_case("class/original.mmd", source)
+    write_case("class_diagram/duplicate.mmd", source)
+    write_scoreboard(row("class/original.mmd"),
+                     row("class_diagram/duplicate.mmd"))
+    allow(renderer).to receive(:render).with(source).and_return(candidate_svg)
+    write_reference("class/original.svg")
+  end
+
+  def seed_unselected_reference_owner
+    source = "flowchart LR\nA"
+    write_case("flowchart/owner.mmd", source)
+    write_case("flowchart/missing.mmd", source)
+    write_scoreboard(row("flowchart/owner.mmd", verdict: "invalid"),
+                     row("flowchart/missing.mmd"))
+    write_reference("flowchart/owner.svg")
+  end
+
+  def seed_conflicting_references
+    source = "classDiagram\nclass A"
+    paths = %w[
+      class/first.mmd class/second.mmd class_diagram/missing.mmd
+    ]
+    paths.each do |path|
+      write_case(path, source)
+    end
+    write_scoreboard(row("class/first.mmd"), row("class/second.mmd"),
+                     row("class_diagram/missing.mmd"))
+    write_reference("class/first.svg", candidate_svg)
+    write_reference("class/second.svg", '<svg viewBox="0 0 2 2"/>')
+  end
+
   def alias_summary(reference_path)
-    ["class_diagram", "spec/fixtures_mermaid/class/example.svg",
+    reference_summary("class/example.svg", reference_path)
+  end
+
+  def reference_summary(relative_path, reference_path)
+    ["class_diagram", "spec/fixtures_mermaid/#{relative_path}",
      File.read(reference_path),
      SpecSupport::LayoutParity::ClassDiagramRecognizer]
+  end
+
+  def deduplicated_summary
+    arguments = captured_arguments.fetch(1)
+    arguments.values_at(:type, :reference, :reference_svg) +
+      [arguments[:recognizer].class]
   end
 
   def seed_unknown_case
@@ -142,6 +206,10 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
   def missing_summary
     captured_arguments.fetch(0)
       .values_at(:reference, :reference_svg, :sirena_svg)
+  end
+
+  def missing_reference_summary
+    ["spec/fixtures_mermaid/flowchart/missing.svg", nil, nil]
   end
 
   def seed_render_failure
@@ -188,10 +256,10 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
     File.write(path, source)
   end
 
-  def write_reference(relative_path)
+  def write_reference(relative_path, svg = candidate_svg)
     path = File.join(paths.fetch(:references), relative_path)
     FileUtils.mkdir_p(File.dirname(path))
-    File.write(path, '<svg viewBox="0 0 1 1"/>')
+    File.write(path, svg)
     path
   end
 end

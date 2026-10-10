@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "digest"
 
 module SpecSupport
   module LayoutParity
@@ -78,7 +79,9 @@ module SpecSupport
         validate_case_id!(case_id)
         source = source_for(case_id)
         entry = recognizer_for(source)
-        relative_reference, reference_path = reference_paths(case_id, entry)
+        relative_reference, reference_path = reference_paths(
+          case_id, entry, source
+        )
 
         Candidate.new(case_id: case_id, source: source, type: entry.type,
                       recognizer: entry.recognizer,
@@ -96,12 +99,68 @@ module SpecSupport
         RecognizerRegistry.fetch(detector.call(body))
       end
 
-      def reference_paths(case_id, entry)
+      def reference_paths(case_id, entry, source)
+        direct = direct_reference_paths(case_id, entry)
+        return direct if File.file?(direct.last)
+
+        duplicate_reference_paths(source) || direct
+      end
+
+      def direct_reference_paths(case_id, entry)
         name = "#{File.basename(case_id, '.mmd')}.svg"
         directory = entry.reference_directory
         relative = File.join("spec/fixtures_mermaid", directory, name)
 
         [relative, File.join(reference_root, directory, name)]
+      end
+
+      def duplicate_reference_paths(source)
+        digest = Digest::SHA256.hexdigest(source)
+        matches = reference_index.fetch(digest, []).select do |candidate|
+          candidate.fetch(:source) == source
+        end
+        return if matches.empty?
+
+        reject_conflicting_references(matches)
+        selected = matches.min_by { |candidate| candidate.fetch(:relative) }
+        selected.values_at(:relative, :path)
+      end
+
+      def reference_index
+        rows = selected_rows
+        @reference_index ||= rows.each_with_object(empty_index) do |row, index|
+          reference = indexed_reference(row)
+          next unless reference
+
+          digest = Digest::SHA256.hexdigest(reference.fetch(:source))
+          index[digest] << reference
+        end
+      end
+
+      def empty_index
+        Hash.new { |hash, key| hash[key] = [] }
+      end
+
+      def indexed_reference(row)
+        case_id = row.fetch("case")
+        validate_case_id!(case_id)
+        source = source_for(case_id)
+        paths = direct_reference_paths(case_id, recognizer_for(source))
+        return unless File.file?(paths.last)
+
+        { source: source, relative: paths.first, path: paths.last }
+      end
+
+      def reject_conflicting_references(matches)
+        contents = matches.map do |candidate|
+          File.binread(candidate.fetch(:path))
+        end
+        return if contents.uniq.one?
+
+        paths = matches.map { |candidate| candidate.fetch(:relative) }.sort
+        message = "conflicting references for duplicate corpus source: " \
+                  "#{paths.join(', ')}"
+        raise ArgumentError, message
       end
 
       def validate_case_id!(case_id)
