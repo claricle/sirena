@@ -6,82 +6,112 @@ require_relative "../svg/document"
 require_relative "../svg/rect"
 require_relative "../svg/line"
 require_relative "../svg/circle"
+require_relative "../svg/group"
 require_relative "../svg/text"
 
 module Sirena
   module Renderer
     # Emits SVG from final, typed quadrant-chart geometry.
     class Quadrant < Base
+      # mmdc's default-theme quadrant fills and text colour.
       QUADRANT_COLORS = {
-        1 => "#e3f2fd", 2 => "#fff3e0", 3 => "#f3e5f5", 4 => "#e8f5e9"
+        1 => "#ECECFF", 2 => "#f1f1ff", 3 => "#f6f6ff", 4 => "#fbfbff"
       }.freeze
+      BORDER_COLOR = "#c7c7f1"
+      TEXT_COLOR = "#131300"
 
       # @param scene [Layout::Quadrant::Scene] final chart geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
         svg = create_document(scene)
-        svg << text_element(scene.title) if scene.title
-        render_chart(scene, svg)
+        svg << quadrants_group(scene)
+        svg << border_group(scene.axes)
+        svg << points_group(scene.points)
+        svg << labels_group(scene.axis_labels)
+        svg << title_group(scene.title)
         svg
-      end
-
-      def render_chart(scene, svg)
-        render_quadrants(scene.quadrants, svg)
-        render_axes(scene.axes, svg)
-        render_labels(scene.axis_labels, svg)
-        render_labels(scene.quadrant_labels, svg)
-        scene.points.each { |point| render_point(point, svg) }
-      end
-
-      def render_quadrants(quadrants, svg)
-        quadrants.each { |quadrant| svg << quadrant_element(quadrant) }
-      end
-
-      def render_axes(axes, svg)
-        axes.each { |axis| svg << axis_element(axis) }
-      end
-
-      def render_labels(labels, svg)
-        labels.each { |label| svg << text_element(label) }
       end
 
       protected
 
-      def quadrant_element(quadrant)
+      def group(name)
+        Svg::Group.new(class_name: name)
+      end
+
+      # One `g.quadrant` per region: its rect, then its label when written.
+      def quadrants_group(scene)
+        group("quadrants").tap do |quadrants|
+          scene.quadrants.each do |quadrant|
+            quadrants << quadrant_group(quadrant, scene.quadrant_labels)
+          end
+        end
+      end
+
+      def quadrant_group(quadrant, labels)
+        group("quadrant").tap do |cell|
+          cell << quadrant_rect(quadrant)
+          label = labels.find { |item| centred_in?(item, quadrant) }
+          cell << text_element(label) if label
+        end
+      end
+
+      def centred_in?(label, quadrant)
+        label.x == quadrant.x + (quadrant.width / 2.0) &&
+          label.y.between?(quadrant.y, quadrant.y + quadrant.height)
+      end
+
+      def quadrant_rect(quadrant)
         Svg::Rect.new.tap do |rect|
-          assign_quadrant_geometry(rect, quadrant)
-          apply_quadrant_style(rect, quadrant)
+          rect.x = quadrant.x
+          rect.y = quadrant.y
+          rect.width = quadrant.width
+          rect.height = quadrant.height
+          rect.fill = quadrant_color(quadrant.number)
         end
       end
 
-      def assign_quadrant_geometry(rect, quadrant)
-        rect.x = quadrant.x
-        rect.y = quadrant.y
-        rect.width = quadrant.width
-        rect.height = quadrant.height
-      end
-
-      def apply_quadrant_style(rect, quadrant)
-        rect.fill = quadrant_color(quadrant.number)
-        rect.stroke = theme_color(:grid_line) || "#cccccc"
-        rect.stroke_width = "1"
-        rect.opacity = "0.3"
-      end
-
-      def axis_element(axis)
-        Svg::Line.new.tap do |line|
-          line.x1 = axis.x1
-          line.y1 = axis.y1
-          line.x2 = axis.x2
-          line.y2 = axis.y2
-          line.stroke = theme_color(:grid_line) || "#666666"
-          line.stroke_width = "2"
+      def border_group(lines)
+        group("border").tap do |border|
+          lines.each { |line| border << border_line(line) }
         end
       end
 
-      def render_point(point, svg)
-        svg << point_element(point)
-        svg << text_element(point.label)
+      def border_line(line)
+        Svg::Line.new.tap do |element|
+          element.x1 = line.x1
+          element.y1 = line.y1
+          element.x2 = line.x2
+          element.y2 = line.y2
+          element.stroke = theme_color(:grid_line) || BORDER_COLOR
+          element.stroke_width = number_string(line.stroke_width)
+        end
+      end
+
+      def points_group(points)
+        group("data-points").tap do |container|
+          points.each { |point| container << point_group(point) }
+        end
+      end
+
+      def point_group(point)
+        group("data-point").tap do |cell|
+          cell << point_element(point)
+          cell << text_element(point.label)
+        end
+      end
+
+      def labels_group(labels)
+        group("labels").tap do |container|
+          labels.each do |label|
+            container << group("label").tap { |cell| cell << text_element(label) }
+          end
+        end
+      end
+
+      def title_group(title)
+        group("title").tap do |container|
+          container << text_element(title) if title
+        end
       end
 
       def point_element(point)
@@ -104,33 +134,29 @@ module Sirena
         point.stroke_color || theme_color(:node_stroke) || "#ffffff"
       end
 
+      # mmdc places every text at the origin and moves it with a transform.
       def text_element(label)
         Svg::Text.new.tap do |text|
-          assign_text_geometry(text, label)
+          text.x = 0
+          text.y = 0
+          text.content = label.text
+          text.transform = transform(label)
+          text.dominant_baseline = label.baseline
+          text.text_anchor = label.text_anchor if label.text_anchor
           apply_text_style(text, label)
         end
       end
 
-      def assign_text_geometry(text, label)
-        text.x = label.x
-        text.y = label.y
-        text.content = label.text
-        text.text_anchor = label.text_anchor if label.text_anchor
+      def transform(label)
+        "translate(#{number_string(label.x)}, #{number_string(label.y)}) " \
+          "rotate(#{number_string(label.rotation || 0)})"
       end
 
       def apply_text_style(text, label)
-        text.fill = label_color(label.style)
+        text.fill = theme_color(:label_text) || TEXT_COLOR
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         text.font_size = number_string(label.font_size)
         text.font_weight = label.font_weight if label.font_weight
-        text.opacity = "0.7" if label.style == "quadrant"
-      end
-
-      def label_color(style)
-        return theme_color(:label_text) || "#666666" if style == "axis"
-        return theme_color(:label_text) || "#333333" if style == "quadrant"
-
-        theme_color(:label_text) || "#000000"
       end
 
       def quadrant_color(number)
@@ -147,6 +173,7 @@ module Sirena
       end
 
       def number_string(value)
+        value = value.to_f.round(4)
         value.to_i == value ? value.to_i.to_s : value.to_s
       end
     end

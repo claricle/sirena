@@ -10,7 +10,11 @@ RSpec.describe Sirena::Renderer::Quadrant, "#render" do
     diagram = Sirena::Parser::Quadrant.new.parse(source)
     Sirena::Layout::Quadrant.new.call(diagram)
   end
-  let(:title) { described_class.new.render(scene).children.grep(Sirena::Svg::Text).first }
+  let(:title) do
+    group = described_class.new.render(scene).children
+      .grep(Sirena::Svg::Group).find { |item| item.class_name == "title" }
+    group.children.grep(Sirena::Svg::Text).first
+  end
 
   it "anchors a label that names an anchor" do
     expect(title.text_anchor).to eq(scene.title.text_anchor)
