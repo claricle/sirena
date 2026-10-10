@@ -50,7 +50,7 @@ end
 # rubocop:disable RSpec/DescribeClass -- no single class to describe (whole rake
 # namespace + PerformanceBenchmarker); same shape as
 # spec/tasks/coverage_rake_spec.rb.
-RSpec.describe "tasks/benchmark.rake" do
+RSpec.describe "tasks/benchmark.rake", :aggregate_failures do
   include BareSirenaModuleHelper
   include FakeExecutableHelper
 
