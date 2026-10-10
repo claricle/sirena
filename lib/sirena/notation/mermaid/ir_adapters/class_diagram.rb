@@ -34,6 +34,7 @@ module Sirena
               Array(diagram.relationships), entities, occupied
             )
             nodes += relationship_nodes + note_nodes(diagram, occupied) +
+              namespace_nodes(diagram, occupied) +
               settings_nodes(diagram, occupied)
             [nodes, edges]
           end
@@ -188,6 +189,16 @@ module Sirena
             end
           end
 
+          def namespace_nodes(diagram, occupied)
+            Array(diagram.namespaces).flat_map do |namespace|
+              id = reserve_id("namespace_#{namespace.name}", occupied)
+              node = IR::Node.new(id: id, label: namespace.name,
+                                  role: "namespace")
+              members = namespace.class_ids.map { |value| ["member", value] }
+              [node, *semantic_nodes(id, members, occupied)]
+            end
+          end
+
           def settings_nodes(diagram, occupied)
             id = reserve_id("diagram_settings", occupied)
             values = [
@@ -234,7 +245,8 @@ module Sirena
                                :relationship_record, :relationship_edge,
                                :relationship_details,
                                :relationship_properties, :explicit_markers,
-                               :implied_markers, :note_nodes, :settings_nodes,
+                               :implied_markers, :note_nodes, :namespace_nodes,
+                               :settings_nodes,
                                :semantic_nodes, :reserve_id, :unique_id
         end
       end

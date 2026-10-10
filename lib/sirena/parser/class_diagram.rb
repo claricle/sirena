@@ -4,6 +4,7 @@ require_relative "base"
 require_relative "grammars/class_diagram"
 require_relative "builders/class_diagram"
 require_relative "class_notes"
+require_relative "class_namespaces"
 require_relative "../diagram/class_diagram"
 
 module Sirena
@@ -32,7 +33,22 @@ module Sirena
         tree = parse_with_grammar(Grammars::ClassDiagram.new, source)
         diagram = Builders::ClassDiagram.new.apply(tree, source)
         diagram.notes = ClassNotes.collect(tree, diagram)
+        diagram.namespaces = ClassNamespaces.collect(tree, diagram)
+        shorten_namespaced_names(diagram)
         diagram
+      end
+
+      private
+
+      # mmdc titles the box with the namespace and shows the class by its
+      # own name; the qualified id stays what relationships refer to.
+      def shorten_namespaced_names(diagram)
+        diagram.namespaces.each do |namespace|
+          namespace.class_ids.each do |id|
+            entity = diagram.find_entity(id)
+            entity.name = entity.name.delete_prefix("#{namespace.name}.")
+          end
+        end
       end
     end
   end
