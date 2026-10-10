@@ -3,6 +3,7 @@
 require "lutaml/model"
 require_relative "base"
 require_relative "generic_text"
+require_relative "class_note"
 
 module Sirena
   module Diagram
@@ -343,6 +344,9 @@ module Sirena
       # Collection of relationships between entities
       attribute :relationships, ClassRelationship, collection: true,
                                                    default: -> { [] }
+
+      # Notes written with `note` / `note for`, in source order
+      attribute :notes, ClassNote, collection: true, default: -> { [] }
 
       # Returns the diagram type identifier.
       #

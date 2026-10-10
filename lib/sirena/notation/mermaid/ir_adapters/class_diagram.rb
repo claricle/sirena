@@ -33,7 +33,7 @@ module Sirena
             relationship_nodes, edges = relationship_records(
               Array(diagram.relationships), entities, occupied
             )
-            nodes += relationship_nodes +
+            nodes += relationship_nodes + note_nodes(diagram, occupied) +
               settings_nodes(diagram, occupied)
             [nodes, edges]
           end
@@ -179,6 +179,15 @@ module Sirena
             [nil, marker]
           end
 
+          def note_nodes(diagram, occupied)
+            Array(diagram.notes).flat_map.with_index do |note, index|
+              id = reserve_id("note_#{index}", occupied)
+              node = IR::Node.new(id: id, label: note.text, role: "note")
+              [node, *semantic_nodes(id, [["target", note.target_id]],
+                                     occupied)]
+            end
+          end
+
           def settings_nodes(diagram, occupied)
             id = reserve_id("diagram_settings", occupied)
             values = [
@@ -225,7 +234,7 @@ module Sirena
                                :relationship_record, :relationship_edge,
                                :relationship_details,
                                :relationship_properties, :explicit_markers,
-                               :implied_markers, :settings_nodes,
+                               :implied_markers, :note_nodes, :settings_nodes,
                                :semantic_nodes, :reserve_id, :unique_id
         end
       end

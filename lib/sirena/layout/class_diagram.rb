@@ -2,6 +2,8 @@
 
 require_relative "base"
 require_relative "grid"
+require_relative "class_note_nodes"
+require_relative "class_diagram_notes"
 require_relative "../diagram/class_diagram"
 require_relative "../diagram/generic_text"
 require_relative "../notation/mermaid/ir_adapters/class_diagram"
@@ -117,6 +119,8 @@ module Sirena
         attribute :view_box, :string
         attribute :children, Node, collection: true, default: -> { [] }
         attribute :edges, Edge, collection: true, default: -> { [] }
+        attribute :notes, Layout::ClassNote, collection: true,
+                                             default: -> { [] }
       end
 
       def self.from_graph(graph, theme: nil)
@@ -149,14 +153,32 @@ module Sirena
 
       private
 
-      def build_graph(diagram)
-        diagram = semantic_diagram(ir_graph(diagram))
+      def build_graph(source)
+        graph = ir_graph(source)
+        diagram = semantic_diagram(graph)
         {
           id: diagram.id || "class_diagram",
-          children: transform_entities(diagram),
+          children: transform_entities(diagram) + note_nodes(graph),
           edges: transform_relationships(diagram),
           layoutOptions: layout_options(diagram),
         }
+      end
+
+      # Notes sit after the classes so adding one never moves a class.
+      def note_nodes(graph)
+        note_layout.nodes(ClassDiagramNotes.call(graph))
+      end
+
+      def text_width(text, size)
+        measure_text(text, font_size: size)[:width]
+      end
+
+      def note_layout
+        ClassNoteNodes.new(
+          font_size: name_font_size,
+          measure: method(:text_width),
+          connect: ->(from, to) { connection_point(from, to) },
+        )
       end
 
       def ir_graph(diagram)
@@ -299,17 +321,23 @@ module Sirena
       end
 
       def scene_from_graph(graph)
-        children = graph[:children] || []
-        width, height = scene_dimensions(children)
+        all = graph[:children] || []
+        notes, classes = all.partition { |node| note_layout.note?(node) }
+        width, height = scene_dimensions(all)
 
         Scene.new(
           id: graph[:id] || "class_diagram",
           width: width,
           height: height,
           view_box: "0 0 #{width} #{height}",
-          children: children.map { |node| typed_node(node) },
-          edges: typed_edges(graph[:edges] || [], children),
+          children: classes.map { |node| typed_node(node) },
+          edges: typed_edges(graph[:edges] || [], classes),
+          notes: typed_notes(notes, classes),
         )
+      end
+
+      def typed_notes(notes, classes)
+        note_layout.notes(notes, classes.to_h { |node| [node[:id], node] })
       end
 
       def scene_dimensions(children)
