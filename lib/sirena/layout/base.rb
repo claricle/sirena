@@ -36,6 +36,8 @@ module Sirena
       # only when nothing was injected. Gantt needs a reference date when the
       # source gives none. Pin it and rendering is a pure function of its
       # input; leave it unset and the one read below supplies the real date.
+      # The writer is public; the reader is private (see below), so a
+      # subclass reads `today` and nothing outside the layout can.
       # Only spec/sirena/determinism_spec.rb pins it today. The byte-identity
       # gate and the layout comparator that would also want it do not exist
       # yet — do not read this as "already covered".
@@ -193,11 +195,11 @@ module Sirena
 
       protected
 
-      # #theme (writer + defaulting reader defined above, for D10 text
-      # sizing) is also the theme #call injected. Private from here down
-      # so a converted layout's own #scene can read it without exposing
-      # it on the public interface.
-      private :theme
+      # The defaulting readers #today and #theme (defined above; #theme
+      # sizes text for D10) are also what #call injected. Private so a
+      # layout's own #scene or #build_graph can read them without exposing
+      # them on the public interface. Their writers stay public.
+      private :today, :theme
 
       # Measures text dimensions for node sizing.
       #
