@@ -104,19 +104,30 @@ RSpec.describe Sirena::Layout::ErDiagram, :aggregate_failures do
       expect(inputs_unchanged_after_layout?).to be(true)
     end
 
-    it "places entities and their text in final canvas coordinates" do
-      customer = layout.call(diagram).children.find do |node|
-        node.id == "CUSTOMER"
-      end
+    # mmdc lays this diagram out as CUSTOMER 172.67 x 128.25 centred at
+    # (94.336, 72.125) and ORDER 100 x 84 centred at (94.336, 279.25),
+    # inside a 188.67 x 329.25 viewBox.
+    it "places entities where mmdc does" do
+      scene = layout.call(diagram)
+      customer, order = scene.children
 
       expect([customer.x, customer.y, customer.width, customer.height])
-        .to eq([50.0, 50.0, 170.0, 80.0])
-      expect([customer.labels.first.x, customer.labels.first.y])
-        .to eq([135.0, 76.0])
+        .to match([be_within(0.1).of(8), 8, be_within(0.1).of(172.67), 128.25])
+      expect([order.x, order.y, order.width, order.height])
+        .to match([be_within(0.1).of(44.336), 237.25, 100, 84])
+      expect([scene.width, scene.height])
+        .to match([be_within(0.1).of(188.67), 329.25])
+    end
+
+    it "centres the name over the box and steps attribute rows by mmdc's row height" do
+      customer = layout.call(diagram).children.first
+
+      expect(customer.labels.first.x)
+        .to be_within(0.1).of(customer.x + (customer.width / 2))
       expect(customer.attributes.map(&:text))
         .to eq(["PK int id", "string name"])
-      expect(customer.attributes.map { |row| [row.x, row.y] })
-        .to eq([[60.0, 116.0], [60.0, 134.0]])
+      expect(customer.attributes.map(&:y).each_cons(2).map { |a, b| b - a })
+        .to eq([42.75])
     end
 
     it "includes canonical relationship sections and markers" do
