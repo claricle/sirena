@@ -26,6 +26,53 @@ RSpec.describe Sirena::Layout::ErDiagram do
     end
   end
 
+  def ir_customer
+    Sirena::Diagram::ErEntity.new(
+      id: "CUSTOMER", name: "Customer", classes: %w[primary audited],
+      attributes: [Sirena::Diagram::ErAttribute.new(
+        name: "id", attribute_type: "int", key_type: "PK", note: "generated",
+      )]
+    )
+  end
+
+  def ir_order
+    Sirena::Diagram::ErEntity.new(
+      id: "ORDER", name: "Order", classes: ["audited"],
+      attributes: [Sirena::Diagram::ErAttribute.new(
+        name: "customer_id", attribute_type: "int", key_type: "FK",
+      )]
+    )
+  end
+
+  def ir_relationships
+    [Sirena::Diagram::ErRelationship.new(
+      from_id: "CUSTOMER", to_id: "ORDER", relationship_type: "identifying",
+      cardinality_from: "one", cardinality_to: "zero_or_more",
+      label: "places"
+    )]
+  end
+
+  def ir_equivalence_diagram
+    value = Sirena::Diagram::ErDiagram.new(
+      id: "commerce", title: "Commerce model", direction: "LR",
+      theme: "forest", entities: [ir_customer, ir_order],
+      relationships: ir_relationships
+    )
+    value.add_class_def("primary", "fill:red")
+    value.add_class_def("audited", "stroke:blue")
+    value
+  end
+
+  def inputs_unchanged_after_layout?
+    private_diagram = ir_equivalence_diagram
+    graph = Sirena::Notation::Mermaid::IRAdapters::ErDiagram
+      .call(private_diagram)
+    before = [Marshal.dump(private_diagram), Marshal.dump(graph)]
+    layout.call(private_diagram)
+    layout.call(graph)
+    [Marshal.dump(private_diagram), Marshal.dump(graph)] == before
+  end
+
   describe "#call" do
     it "returns final typed scene geometry" do
       scene = layout.call(diagram)
@@ -35,6 +82,19 @@ RSpec.describe Sirena::Layout::ErDiagram do
       expect(scene.edges).to all(be_a(described_class::Edge))
       expect([scene.width, scene.height, scene.view_box])
         .to eq([550.0, 210.0, "0 0 550 210"])
+    end
+
+    it "lays out direct graph IR byte-identically to its private model" do
+      private_diagram = ir_equivalence_diagram
+      graph = Sirena::Notation::Mermaid::IRAdapters::ErDiagram
+        .call(private_diagram)
+
+      expect(Marshal.dump(layout.call(graph)))
+        .to eq(Marshal.dump(layout.call(private_diagram)))
+    end
+
+    it "does not mutate either private or graph input during layout" do
+      expect(inputs_unchanged_after_layout?).to be(true)
     end
 
     it "places entities and their text in final canvas coordinates" do

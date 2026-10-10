@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grid"
 require_relative "../diagram/er_diagram"
+require_relative "../notation/mermaid/ir_adapters/er_diagram"
 
 module Sirena
   module Layout
@@ -16,6 +17,23 @@ module Sirena
       CARDINALITY_SIZE = 15
       DIAGRAM_PADDING = 20
       EMPTY_DIAGRAM_PADDING = 8
+
+      SemanticAttribute = Struct.new(
+        :name, :attribute_type, :key_type, :note, keyword_init: true
+      )
+      SemanticEntity = Struct.new(
+        :id, :name, :attributes, :classes, keyword_init: true
+      )
+      SemanticRelationship = Struct.new(
+        :from_id, :to_id, :relationship_type, :cardinality_from,
+        :cardinality_to, :label, keyword_init: true
+      )
+      SemanticDiagram = Struct.new(
+        :id, :title, :direction, :theme, :entities, :relationships,
+        :class_defs, keyword_init: true
+      )
+      private_constant :SemanticAttribute, :SemanticEntity,
+                       :SemanticRelationship, :SemanticDiagram
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -221,6 +239,7 @@ module Sirena
       private
 
       def build_graph(diagram)
+        diagram = semantic_diagram(ir_graph(diagram))
         {
           id: diagram.id || "er_diagram",
           children: transform_entities(diagram),
@@ -228,6 +247,110 @@ module Sirena
           class_defs: diagram.class_defs,
           layoutOptions: layout_options,
         }
+      end
+
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::ErDiagram.call(diagram)
+      end
+
+      def semantic_diagram(graph)
+        children, nodes_by_id = semantic_context(graph)
+        SemanticDiagram.new(
+          **semantic_metadata(graph, children),
+          entities: semantic_entities(graph, children),
+          relationships: semantic_relationships(graph, children, nodes_by_id),
+          class_defs: semantic_class_defs(graph, children),
+        )
+      end
+
+      def semantic_context(graph)
+        children = graph.nodes.group_by(&:parent_id)
+        nodes_by_id = graph.nodes.to_h { |node| [node.id, node] }
+        [children, nodes_by_id]
+      end
+
+      def semantic_metadata(graph, children)
+        settings = graph.nodes.find { |node| node.role == "diagram_settings" }
+        fields = semantic_fields(children[settings&.id])
+        {
+          id: fields["diagram_identifier"], title: graph.label,
+          direction: fields["layout_direction"],
+          theme: fields["theme_reference"]
+        }
+      end
+
+      def semantic_entities(graph, children)
+        graph.nodes.select { |node| node.role == "entity" }.map do |node|
+          semantic_entity(node, children)
+        end
+      end
+
+      def semantic_entity(node, children)
+        child_nodes = children[node.id] || []
+        SemanticEntity.new(
+          id: source_identifier(node, children), name: node.label,
+          classes: child_nodes
+            .select { |child| child.role == "style_reference" }.map(&:label),
+          attributes: child_nodes.select { |child| child.role == "attribute" }
+            .map { |attribute| semantic_attribute(attribute, children) }
+        )
+      end
+
+      def semantic_attribute(node, children)
+        fields = semantic_fields(children[node.id])
+        SemanticAttribute.new(
+          name: node.label, attribute_type: fields["attribute_type"],
+          key_type: fields["key_type"], note: fields["note"]
+        )
+      end
+
+      def semantic_relationships(graph, children, nodes_by_id)
+        graph.edges.map do |edge|
+          semantic_relationship(edge, children, nodes_by_id)
+        end
+      end
+
+      def semantic_relationship(edge, children, nodes_by_id)
+        fields = semantic_fields(children[edge.parent_id])
+        SemanticRelationship.new(
+          from_id: source_identifier(nodes_by_id[edge.source_id], children),
+          to_id: source_identifier(nodes_by_id[edge.target_id], children),
+          relationship_type: relationship_type(edge, fields),
+          cardinality_from: cardinality(edge, fields, :source),
+          cardinality_to: cardinality(edge, fields, :target),
+          label: edge.label,
+        )
+      end
+
+      def cardinality(edge, fields, endpoint)
+        fields["#{endpoint}_cardinality"] ||
+          edge.properties.public_send("#{endpoint}_marker")
+      end
+
+      def relationship_type(edge, fields)
+        return fields["relationship_type"] if fields["relationship_type"]
+        return "identifying" if edge.role == "identifying_relationship"
+
+        "non-identifying"
+      end
+
+      def semantic_class_defs(graph, children)
+        graph.nodes.select { |node| node.role == "style_class" }.to_h do |node|
+          fields = semantic_fields(children[node.id])
+          [node.label, fields["style_declaration"]]
+        end
+      end
+
+      def semantic_fields(nodes)
+        Array(nodes).to_h { |node| [node.role, node.label] }
+      end
+
+      def source_identifier(node, children)
+        return unless node
+
+        semantic_fields(children[node.id]).fetch("original_identifier", node.id)
       end
 
       def scene_from_graph(graph)
