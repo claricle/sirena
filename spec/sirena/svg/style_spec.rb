@@ -4,6 +4,12 @@ require "spec_helper"
 
 RSpec.describe Sirena::Svg::Style do
   describe "#to_css" do
+    let(:complete_style) do
+      described_class.new(
+        text_anchor: "end", fill: "red", stroke_width: 1.5, stroke: "blue",
+      )
+    end
+
     # One row per attribute: the CSS property it must emit, and a value.
     {
       fill: ["fill", "#123456"],
@@ -30,11 +36,7 @@ RSpec.describe Sirena::Svg::Style do
     end
 
     it "joins every set property with semicolons, in a fixed order" do
-      style = described_class.new(
-        text_anchor: "end", fill: "red", stroke_width: 1.5, stroke: "blue",
-      )
-
-      expect(style.to_css).to eq(
+      expect(complete_style.to_css).to eq(
         "fill:red;stroke:blue;stroke-width:1.5;text-anchor:end",
       )
     end

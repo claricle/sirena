@@ -23,11 +23,16 @@ RSpec.describe Sirena::Svg::Element do
       end.to_xml
     end
 
+    let(:ordered_circle) do
+      Sirena::Svg::Circle.new(
+        id: "a", class_name: "b", fill: "red", stroke: "blue",
+      )
+    end
+
     it "emits class_name as class, not class-name" do
       # The one reader whose SVG name is not its own hyphenated. Getting this
       # wrong emits class-name, which no SVG consumer honours.
-      expect(xml).to include(%( class="node"))
-      expect(xml).not_to include("class-name")
+      expect(xml).to match(/\A(?!.*class-name).* class="node"/)
     end
 
     it "hyphenates stroke_width" do
@@ -43,28 +48,19 @@ RSpec.describe Sirena::Svg::Element do
     end
 
     it "keeps the base attributes in their established order" do
-      circle = Sirena::Svg::Circle.new.tap do |c|
-        c.id = "a"
-        c.class_name = "b"
-        c.fill = "red"
-        c.stroke = "blue"
-      end
-
-      expect(circle.to_xml)
+      expect(ordered_circle.to_xml)
         .to match(/id="a".*class="b".*fill="red".*stroke="blue"/)
     end
   end
 
   describe "declared subclass attributes" do
-    it "hyphenates a declared name too" do
-      line = Sirena::Svg::Line.new.tap do |l|
-        l.x1 = 0
-        l.y1 = 0
-        l.x2 = 10
-        l.y2 = 10
-        l.stroke_dasharray = "5,5"
-      end
+    subject(:line) do
+      Sirena::Svg::Line.new(
+        x1: 0, y1: 0, x2: 10, y2: 10, stroke_dasharray: "5,5",
+      )
+    end
 
+    it "hyphenates a declared name too" do
       expect(line.to_xml).to include(%( stroke-dasharray="5,5"))
     end
   end
