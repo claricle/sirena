@@ -123,7 +123,7 @@ module Sirena
         direction_x = first.center_x < second.center_x ? -1 : 1
         direction_y = first.center_y < second.center_y ? -1 : 1
         [-1 * direction_x * ((move_x / 2) + buffer),
-         -1 * direction_y * ((move_y / 2) + buffer),]
+         -1 * direction_y * ((move_y / 2) + buffer)]
       end
 
       def centre_slope(first, second)
@@ -136,7 +136,7 @@ module Sirena
 
       def overlaps(first, second)
         [axis_overlap(first.x, first.right, second.x, second.right),
-         axis_overlap(first.y, first.bottom, second.y, second.bottom),]
+         axis_overlap(first.y, first.bottom, second.y, second.bottom)]
       end
 
       def axis_overlap(low_a, high_a, low_b, high_b)
