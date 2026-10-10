@@ -1,48 +1,292 @@
 <svg
- width="960.0"
- height="500.0"
- viewBox="0 0 960 500"
+ width="2190.0"
+ height="594.4"
+ viewBox="0 0 2190.0 594.4"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
-<text fill="#000000" x="480.0" y="40.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Software Development Lifecycle</text>
-<text fill="#4472C4" x="80.0" y="100.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Planning</text>
-<rect fill="#ffffff" stroke="none" x="80.0" y="140.0" width="800.0" height="6.0" rx="3.0" ry="3.0"/>
-<circle fill="#4472C4" stroke="#000000" stroke-width="2" cx="80.0" cy="143.0" r="8.0"/>
-<text fill="#000000" x="80.0" y="175.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">2 weeks</text>
-<text fill="#000000" x="80.0" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Requirements Gathering</text>
-<circle fill="#4472C4" stroke="#000000" stroke-width="2" cx="80.0" cy="143.0" r="8.0"/>
-<text fill="#000000" x="80.0" y="175.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">3 weeks</text>
-<text fill="#000000" x="80.0" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Design Phase</text>
-<text fill="#000000" x="80.0" y="166.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">0</text>
-<text fill="#000000" x="880.0" y="166.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">4</text>
-<text fill="#000000" x="480.0" y="166.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">2</text>
-<text fill="#ED7D31" x="80.0" y="160.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Development</text>
-<rect fill="#ffffff" stroke="none" x="80.0" y="200.0" width="800.0" height="6.0" rx="3.0" ry="3.0"/>
-<circle fill="#ED7D31" stroke="#000000" stroke-width="2" cx="280.0" cy="203.0" r="8.0"/>
-<text fill="#000000" x="280.0" y="235.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">2 weeks</text>
-<text fill="#000000" x="280.0" y="185.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Sprint 1</text>
-<circle fill="#ED7D31" stroke="#000000" stroke-width="2" cx="480.0" cy="203.0" r="8.0"/>
-<text fill="#000000" x="480.0" y="235.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">2 weeks</text>
-<text fill="#000000" x="480.0" y="185.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Sprint 2</text>
-<circle fill="#ED7D31" stroke="#000000" stroke-width="2" cx="680.0" cy="203.0" r="8.0"/>
-<text fill="#000000" x="680.0" y="235.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">2 weeks</text>
-<text fill="#000000" x="680.0" y="185.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Sprint 3</text>
-<text fill="#A5A5A5" x="80.0" y="220.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Testing</text>
-<rect fill="#ffffff" stroke="none" x="80.0" y="260.0" width="800.0" height="6.0" rx="3.0" ry="3.0"/>
-<circle fill="#A5A5A5" stroke="#000000" stroke-width="2" cx="80.0" cy="263.0" r="8.0"/>
-<text fill="#000000" x="80.0" y="295.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">1 week</text>
-<text fill="#000000" x="80.0" y="245.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">QA Testing</text>
-<circle fill="#A5A5A5" stroke="#000000" stroke-width="2" cx="80.0" cy="263.0" r="8.0"/>
-<text fill="#000000" x="80.0" y="295.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">1 week</text>
-<text fill="#000000" x="80.0" y="245.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">User Acceptance</text>
-<text fill="#FFC000" x="80.0" y="280.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Deployment</text>
-<rect fill="#ffffff" stroke="none" x="80.0" y="320.0" width="800.0" height="6.0" rx="3.0" ry="3.0"/>
-<circle fill="#FFC000" stroke="#000000" stroke-width="2" cx="80.0" cy="323.0" r="8.0"/>
-<text fill="#000000" x="80.0" y="355.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">3 days</text>
-<text fill="#000000" x="80.0" y="305.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Staging</text>
-<circle fill="#FFC000" stroke="#000000" stroke-width="2" cx="80.0" cy="323.0" r="8.0"/>
-<text fill="#000000" x="80.0" y="355.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">2 days</text>
-<text fill="#000000" x="80.0" y="305.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Production</text>
+<g transform="translate(100, 111)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#8686ff" d="M0 62.8 v-57.8 q0,-5 5,-5 h380 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ffffb9" stroke-width="3" x1="0.0" y1="67.8" x2="390.0" y2="67.8"/>
+    </g>
+    <g transform="translate(195, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Planning</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(100, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#8686ff" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ffffb9" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16"><tspan x="0.0">Requirements</tspan><tspan x="0.0" y="38.6">Gathering</tspan></text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 195 296.6 L 195 544.4" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="195.0,544.4 191.0,536.4 199.0,536.4"/>
+</g>
+<g class="eventWrapper" transform="translate(100, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#8686ff" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#ffffb9" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">2 weeks</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(300, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#8686ff" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ffffb9" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Design Phase</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 395 296.6 L 395 544.4" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="395.0,544.4 391.0,536.4 399.0,536.4"/>
+</g>
+<g class="eventWrapper" transform="translate(300, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#8686ff" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#ffffb9" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">3 weeks</text>
+    </g>
+  </g>
+</g>
+<g transform="translate(500, 111)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 62.8 v-57.8 q0,-5 5,-5 h580 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="67.8" x2="590.0" y2="67.8"/>
+    </g>
+    <g transform="translate(295, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Development</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(500, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Sprint 1</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 595 296.6 L 595 544.4" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="595.0,544.4 591.0,536.4 599.0,536.4"/>
+</g>
+<g class="eventWrapper" transform="translate(500, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">2 weeks</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(700, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Sprint 2</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 795 296.6 L 795 544.4" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="795.0,544.4 791.0,536.4 799.0,536.4"/>
+</g>
+<g class="eventWrapper" transform="translate(700, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">2 weeks</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(900, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Sprint 3</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 995 296.6 L 995 544.4" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="995.0,544.4 991.0,536.4 999.0,536.4"/>
+</g>
+<g class="eventWrapper" transform="translate(900, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#ffff78" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#ababff" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">2 weeks</text>
+    </g>
+  </g>
+</g>
+<g transform="translate(1100, 111)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#d7ff86" d="M0 62.8 v-57.8 q0,-5 5,-5 h380 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="0.0" y1="67.8" x2="390.0" y2="67.8"/>
+    </g>
+    <g transform="translate(195, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Testing</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(1100, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#d7ff86" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">QA Testing</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 1195 296.6 L 1195 544.4" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="1195.0,544.4 1191.0,536.4 1199.0,536.4"/>
+</g>
+<g class="eventWrapper" transform="translate(1100, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#d7ff86" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">1 week</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(1300, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#d7ff86" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">User Acceptance</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 1395 296.6 L 1395 544.4" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="1395.0,544.4 1391.0,536.4 1399.0,536.4"/>
+</g>
+<g class="eventWrapper" transform="translate(1300, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#d7ff86" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#000000" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">1 week</text>
+    </g>
+  </g>
+</g>
+<g transform="translate(1500, 111)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#c286ff" d="M0 62.8 v-57.8 q0,-5 5,-5 h380 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#dcffb9" stroke-width="3" x1="0.0" y1="67.8" x2="390.0" y2="67.8"/>
+    </g>
+    <g transform="translate(195, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Deployment</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(1500, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#c286ff" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#dcffb9" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Staging</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 1595 296.6 L 1595 544.4" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="1595.0,544.4 1591.0,536.4 1599.0,536.4"/>
+</g>
+<g class="eventWrapper" transform="translate(1500, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#c286ff" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#dcffb9" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">3 days</text>
+    </g>
+  </g>
+</g>
+<g class="taskWrapper" transform="translate(1700, 228.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#c286ff" d="M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z"/>
+      <line class="node-line" stroke="#dcffb9" stroke-width="3" x1="0.0" y1="67.8" x2="190.0" y2="67.8"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">Production</text>
+    </g>
+  </g>
+</g>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 1795 296.6 L 1795 544.4" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" points="1795.0,544.4 1791.0,536.4 1799.0,536.4"/>
+</g>
+<g class="eventWrapper" transform="translate(1700, 428.8)">
+  <g class="timeline-node">
+    <g>
+      <path class="node-bkg" fill="#c286ff" d="M0 45 v-40 q0,-5 5,-5 h180 q5,0 5,5 v45 H0 Z"/>
+      <line class="node-line" stroke="#dcffb9" stroke-width="3" x1="0.0" y1="50.0" x2="190.0" y2="50.0"/>
+    </g>
+    <g transform="translate(95, 10)">
+      <text fill="#ffffff" x="0.0" y="21.0" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16">2 days</text>
+    </g>
+  </g>
+</g>
+<text fill="#333333" x="645.0" y="81.0" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="33" font-weight="bold">Software Development Lifecycle</text>
+<g class="lineWrapper">
+  <path fill="none" stroke="#000000" stroke-width="4" d="M 50 346.6 L 2140 346.6"/>
+  <polygon fill="#000000" points="2140.0,346.6 2124.0,354.6 2124.0,338.6"/>
+</g>
 </svg>
