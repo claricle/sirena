@@ -11,7 +11,9 @@ RSpec.describe Sirena::Layout::Sequence do
     layout_scene("Service-->DB: connect\ncritical Establish a connection to " \
                  "the DB\nService-->DB: x\nend")
   end
-  let(:short) { layout_scene("Service-->DB: connect\nloop L\nService-->DB: x\nend") }
+  let(:short) do
+    layout_scene("Service-->DB: connect\nloop L\nService-->DB: x\nend")
+  end
 
   it "wraps a long title at the title area, brackets included" do
     expect(wide.frames.first.title_lines)
