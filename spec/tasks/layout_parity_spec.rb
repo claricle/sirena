@@ -20,6 +20,12 @@ RSpec.describe LayoutParity do
       .to eq(["2 cases, 1 hard failures", fresh, []])
   end
 
+  it "closes the temporary file before replacing the scoreboard" do
+    calls = observe_temporary_replacement
+    scoreboard.record!(fresh: [row("a")], path: path)
+    expect(calls).to eq(%i[closed renamed])
+  end
+
   it "keeps the committed baseline intact when replacement fails" do
     File.write(path, "old baseline\n")
     allow(File).to receive(:rename).and_raise(Errno::EIO)
@@ -68,6 +74,15 @@ RSpec.describe LayoutParity do
     message = scoreboard.record!(fresh: fresh, path: path)
     [message[/\d+ cases, \d+ hard failures/],
      JSON.parse(File.read(path)), temporary_files]
+  end
+
+  def observe_temporary_replacement
+    calls = []
+    temporary = instance_spy(Tempfile, path: "temporary")
+    allow(Tempfile).to receive(:create).and_yield(temporary)
+    allow(temporary).to receive(:close) { calls << :closed }
+    allow(File).to receive(:rename) { calls << :renamed }
+    calls
   end
 
   def failed_record_summary

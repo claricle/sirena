@@ -75,6 +75,7 @@ module Sirena
         file.write("#{JSON.pretty_generate(rows)}\n")
         file.flush
         file.fsync
+        file.close
         File.rename(file.path, path)
       end
     end
