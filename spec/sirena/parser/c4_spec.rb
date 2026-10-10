@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/c4"
 
-RSpec.describe Sirena::Parser::C4 do
+RSpec.describe Sirena::Parser::C4, :aggregate_failures do
   let(:parser) { described_class.new }
 
   describe "#parse" do
