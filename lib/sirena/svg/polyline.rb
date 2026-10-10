@@ -11,8 +11,9 @@ module Sirena
     class Polyline < Element
       attribute :points, :string
 
-      # Emitted nothing before this: a Polyline rendered as `<polyline stroke="blue"/>`
-      # with no points, and renderer/xy_chart.rb:337 draws line series with it.
+      # Emitted nothing before this: a Polyline rendered as
+      # `<polyline stroke="blue"/>` with no points, and
+      # renderer/xy_chart.rb:337 draws line series with it.
       writes_attributes :points
 
       # Helper to build points string from coordinates array

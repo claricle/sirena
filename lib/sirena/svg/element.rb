@@ -73,9 +73,9 @@ module Sirena
 
       # Declares the attributes an element writes, in output order.
       #
-      # Several subclasses were each carrying the same shape of method — a list of
-      # names paired with the matching reader. Declaring them removes that
-      # repetition and, more usefully, removes the chance of one class's
+      # Several subclasses were each carrying the same shape of method — a
+      # list of names paired with the matching reader. Declaring them removes
+      # that repetition and, more usefully, removes the chance of one class's
       # version drifting into a different shape.
       #
       # Ruby names map to SVG names by turning underscores into hyphens, which
@@ -114,7 +114,8 @@ module Sirena
       # rewritten. Group indents entries instead, and Text#element_markup is
       # the only entry that may carry a newline of its own.
       #
-      # @return [Array<String>] this element's markup, then each sibling's markup
+      # @return [Array<String>] this element's markup, then each sibling's
+      #   markup
       def xml_lines
         [element_markup, *sibling_markup]
       end
