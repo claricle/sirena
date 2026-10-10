@@ -14,6 +14,8 @@ module Sirena
       attribute :y, :float
       attribute :width, :float
       attribute :height, :float
+      attribute :title_x, :float
+      attribute :title_y, :float
     end
   end
 end

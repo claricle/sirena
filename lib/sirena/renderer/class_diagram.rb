@@ -137,7 +137,7 @@ module Sirena
 
       def scene_namespace_title(box)
         Svg::Text.new(
-          x: svg_number(box.x + (box.width / 2)), y: svg_number(box.y + 22),
+          x: svg_number(box.title_x), y: svg_number(box.title_y),
           content: box.title, fill: "#000000",
           font_family: "Arial, sans-serif", font_size: "16",
           text_anchor: "middle"
@@ -173,8 +173,8 @@ module Sirena
 
       def scene_note_text(note)
         text = Svg::Text.new(
-          x: svg_number(note.x + (note.width / 2)),
-          y: svg_number(note.y + 23), fill: "#000000",
+          x: svg_number(note.text_x), y: svg_number(note.text_y),
+          fill: "#000000",
           font_family: "Arial, sans-serif", font_size: "16",
           text_anchor: "middle"
         )

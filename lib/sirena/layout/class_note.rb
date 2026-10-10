@@ -13,6 +13,8 @@ module Sirena
       attribute :y, :float
       attribute :width, :float
       attribute :height, :float
+      attribute :text_x, :float
+      attribute :text_y, :float
 
       # The id of the class the note hangs from; nil for a general note
       attribute :target_id, :string
