@@ -13,7 +13,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
   let(:parser) { described_class.new }
 
-  describe "#parse" do
+  describe "#parse", :aggregate_failures do
     it "parses simple state diagram with two states" do
       source = "stateDiagram-v2\nIdle-->Active"
       diagram = parser.parse(source)
@@ -175,7 +175,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
   # One example per corpus case the statement form was added for. Every
   # claim about mermaid below was measured against mmdc 11.12.0.
-  describe "mermaid corpus statement forms" do
+  describe "mermaid corpus statement forms", :aggregate_failures do
     describe 'state "Label" as Id' do
       it "names and labels a state (state_diagram/019)" do
         diagram = corpus(
