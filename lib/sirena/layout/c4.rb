@@ -456,7 +456,7 @@ module Sirena
           id: edge[:id], source: source.id, target: target.id,
           sections: [section], line_end: section.end_point,
           arrowheads: edge_arrowheads(edge, section),
-          labels: relationship_labels(edge[:labels], *ends),
+          labels: relationship_labels(edge[:labels], *ends)
         }
       end
 

@@ -24,9 +24,13 @@ RSpec.describe Sirena::Layout::C4Text do
     expect(described_class.height("a<br/>b<br/>", 16)).to eq(34)
   end
 
-  it "rounds the widest line to a whole pixel" do
-    width = described_class.width("short<br/>a longer line", 14)
-    measured = Sirena::TextMeasurement.measure("a longer line", font_size: 14)
-    expect(width).to eq(measured[:width].round)
+  it "rounds a width of 184.976 up to the whole pixel" do
+    expect(described_class.width("Banking System G Queue", 16)).to eq(185)
+  end
+
+  it "takes the widest of several lines" do
+    wide = described_class.width("Banking System G Queue", 16)
+    expect(described_class.width("a<br/>Banking System G Queue", 16))
+      .to eq(wide)
   end
 end
