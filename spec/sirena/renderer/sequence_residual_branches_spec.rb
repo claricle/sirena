@@ -131,15 +131,17 @@ RSpec.describe Sirena::Renderer::Sequence do
     it "dashes a dotted message line" do
       span = { x1: 10, y1: 50, x2: 90, y2: 50 }
 
-      expect(hook(:message_line, span, style("dotted"), [:target]).stroke_dasharray)
-        .to eq("5,5")
+      line = hook(:message_line, span, style("dotted"), [:target])
+
+      expect(line.stroke_dasharray).to eq("5,5")
     end
 
     it "leaves a solid message line undashed" do
       span = { x1: 10, y1: 50, x2: 90, y2: 50 }
 
-      expect(hook(:message_line, span, style("solid"), [:target]).stroke_dasharray)
-        .to be_nil
+      line = hook(:message_line, span, style("solid"), [:target])
+
+      expect(line.stroke_dasharray).to be_nil
     end
   end
 end
