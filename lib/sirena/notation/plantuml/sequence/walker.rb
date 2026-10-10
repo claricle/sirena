@@ -36,6 +36,7 @@ module Sirena
           TAB_HEIGHT = 20.0
           CROSS_HALF = 9.0
           TOP_OFFSET = 20.0
+          NOTE_ABOVE = 35.0
           LEFT_EDGE = 0.0
           PLACERS = { Message => :message, Activation => :activation,
                       Destroy => :destroy, Fragment => :fragment,
@@ -66,8 +67,9 @@ module Sirena
             @edge_right = edge_right
             @appearance = appearance
             previous = nil
-            items.each do |item|
+            items.each_with_index do |item, index|
               @mark_y = nil unless anchoring?(item)
+              @headroom = headroom(items, index)
               visit(item, previous)
               previous = item unless item.is_a?(Activation)
             end
@@ -88,6 +90,7 @@ module Sirena
             @dividers = []
             @crosses = []
             @page_breaks = []
+            @headroom = 0.0
             @tracker = BarTracker.new(method(:centre))
             @blocks = []
             @left = Float::INFINITY
@@ -153,7 +156,21 @@ module Sirena
             @y += message.self_message? ? ROW * 1.5 : ROW
           end
 
+          # A note hanging off a message reaches above it; a tall one pushes
+          # the message down instead of out over the heads.
+          def headroom(items, index)
+            return 0.0 unless items[index].is_a?(Message)
+
+            following = items.drop(index + 1).find do |other|
+              !other.is_a?(Activation)
+            end
+            return 0.0 unless following.is_a?(Note) && following.attached?
+
+            [NoteGeometry.height(following, @font_size) - NOTE_ABOVE, 0.0].max
+          end
+
           def start_row(message)
+            @y += @headroom
             @y += [label_lines(message).size - 1, 0].max * line_step
             @self_drop = message.self_message? ? SELF_HEIGHT : 0.0
             @last_y = @mark_y = @y
@@ -362,11 +379,21 @@ module Sirena
               path: NoteShape.outline(note.shape, x, top, width, height),
               fold_path: NoteShape.fold(note.shape, x, top, width),
               fill: note.fill&.colour, fill_opacity: note.fill&.opacity,
-              texts: note_texts(note, x + NoteGeometry::PAD, top)
+              texts: note_texts(note, x + NoteGeometry::PAD, top),
+              picture: note_picture(note, x + NoteGeometry::PAD, top + 7)
             )
           end
 
+          def note_picture(note, left, top)
+            return unless note.picture
+
+            Scene::Picture.new(x: left, y: top, scale: note.picture.scale,
+                               scene: note.picture.scene)
+          end
+
           def note_texts(note, left, top)
+            return [] if note.picture
+
             step = NoteGeometry.line_height(@font_size)
             note.lines.each_with_index.map do |line, index|
               baseline = top + 7 + (index * step) + @font_size

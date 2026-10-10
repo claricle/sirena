@@ -30,6 +30,7 @@ module Sirena
 
           def render(scene)
             document = blank_document(scene)
+            document << title_group(scene.title) if scene.title
             LAYERS.each do |collection, drawer|
               items = scene.public_send(collection)
               items.each { |item| document << send(drawer, item) }
@@ -60,6 +61,10 @@ module Sirena
               children.each { |child| group << child }
               texts.each { |text| group << text_element(text) }
             end
+          end
+
+          def title_group(title)
+            group("title", [], title.texts)
           end
 
           def banner_group(banner)
@@ -154,7 +159,18 @@ module Sirena
           def note_group(note)
             paths = [note.path, note.fold_path].compact
             children = paths.map { |data| note_path(data, note) }
+            children << picture_group(note.picture) if note.picture
             group("note-#{Zlib.crc32(note.path)}", children, note.texts)
+          end
+
+          # The embedded diagram is drawn by a renderer of its own, in its
+          # own units, and scaled into the note.
+          def picture_group(picture)
+            inner = self.class.new(theme: theme).render(picture.scene)
+            at = "translate(#{picture.x}, #{picture.y}) scale(#{picture.scale})"
+            Svg::Group.new(transform: at).tap do |group|
+              inner.children.each { |child| group << child }
+            end
           end
 
           def note_path(data, note)
@@ -236,7 +252,7 @@ module Sirena
           end
 
           def text_weight(role)
-            "bold" if role == "fragment_tab"
+            "bold" if %w[fragment_tab title].include?(role)
           end
 
           def text_size(scene_text)

@@ -3,11 +3,13 @@
 require_relative "../../../error"
 require_relative "../../../error/diagram_type_error"
 require_relative "../../../error/parse_error"
+require_relative "../caption"
 require_relative "../unsupported_construct_error"
 require_relative "appearance"
 require_relative "arrow_syntax"
 require_relative "box"
 require_relative "diagram"
+require_relative "embedded"
 require_relative "edge"
 require_relative "fill"
 require_relative "message"
@@ -49,6 +51,7 @@ module Sirena
           SKINPARAM_OPEN = /\Askinparam[ \t]*\{\z/i
           HIDE_FOOTBOX = /\Ahide[ \t]+footbox\z/i
           AUTOACTIVATE = /\Aautoactivate[ \t]+(on|off)\z/i
+          TITLE = /\Atitle[ \t]+(?!\S*(?:--|\.\.|->|<-))\S/i
           STYLE_OPEN = /\A<style>\z/i
           STYLE_CLOSE = /\A<\/style>\z/i
           MESSAGE = /\A(#{QUOTED}|#{NAME}|[\[?](?=[-<\\\/oxOX]))[ \t]*
@@ -94,6 +97,7 @@ module Sirena
                       [SKINPARAM_OPEN, :open_skinparam],
                       [HIDE_FOOTBOX, :hide_footbox],
                       [AUTOACTIVATE, :autoactivate],
+                      [TITLE, :title],
                       [STYLE_OPEN, :open_style]].freeze
 
           private_constant :TIMELINE, :SETTINGS, :NAME, :QUOTED, :KINDS,
@@ -103,7 +107,7 @@ module Sirena
                            :DIVIDER, :DESTROY, :COLOUR, :SKINPARAM_WIDTH,
                            :STYLE_OPEN, :STYLE_CLOSE, :PARALLEL,
                            :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE,
-                           :AUTOACTIVATE, :AUTONUMBER
+                           :AUTOACTIVATE, :AUTONUMBER, :TITLE
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -139,6 +143,7 @@ module Sirena
             @parallel = false
             @footbox = true
             @autoactivate = false
+            @title = nil
             @warnings = []
           end
 
@@ -153,6 +158,7 @@ module Sirena
           end
 
           def step(phase, text, number)
+            @line = number
             return phase if skippable?(text)
 
             case phase
@@ -229,6 +235,14 @@ module Sirena
 
           def autoactivate(match, *)
             @autoactivate = match[1].casecmp?("on")
+          end
+
+          # Only the one plain line, as {Caption} reads it; markup and
+          # the block form stay refused.
+          def title(_match, number, text)
+            caption = Caption.read(text) or raise refusal(text, number)
+
+            @title = caption.text
           end
 
           def open_style(_match, number, text)
@@ -399,7 +413,7 @@ module Sirena
 
             { shape: match[1].downcase.to_sym, side: match[2].downcase.to_sym,
               targets: targets_of(match[3]), lines: [], parallel: @parallel,
-              fill: fill }
+              fill: fill, depth: 0, line: @line }
           end
 
           def targets_of(list)
@@ -411,17 +425,55 @@ module Sirena
           end
 
           def collect_note(text, inline: false)
-            if inline || END_NOTE.match?(text)
+            if inline || closes_note?(text)
               finish_note(inline ? text : @pending_note[:lines].join("\n"))
             else
+              track_embedded(text)
               @pending_note[:lines] << text
             end
             :statements
           end
 
+          # An `end note` inside `{{ }}` belongs to the embedded diagram.
+          def closes_note?(text)
+            END_NOTE.match?(text) && @pending_note[:depth].zero?
+          end
+
+          def track_embedded(text)
+            pending = @pending_note
+            pending[:depth] += 1 if Embedded.opens?(text)
+            pending[:depth] -= 1 if Embedded.closes?(text) &&
+                                    pending[:depth].positive?
+          end
+
+          # A body with a `{{` line is one embedded diagram and nothing
+          # else; its own lines are read by a parser of their own.
+          def check_embedded(text, line)
+            return unless text.lines.any? { |row| Embedded.opens?(row) }
+
+            embedded = Embedded.read(text)
+            unless embedded
+              raise UnsupportedConstructError.new(
+                construct: "embedded diagram beside other note text",
+                line: line, text: "{{"
+              )
+            end
+            parse_embedded(embedded, line)
+          end
+
+          def parse_embedded(embedded, line)
+            Parser.new.parse(embedded.document)
+          rescue UnsupportedConstructError => e
+            raise UnsupportedConstructError.new(
+              construct: "#{e.construct} in an embedded diagram",
+              line: line, text: "{{"
+            )
+          end
+
           def finish_note(text)
             pending = @pending_note
             @pending_note = nil
+            check_embedded(text, pending[:line])
             @outline.note(Note.new(shape: pending[:shape],
                                    side: pending[:side],
                                    targets: pending[:targets], text: text,
@@ -569,7 +621,7 @@ module Sirena
             Diagram.new(participants: @participants.values.freeze,
                         items: @outline.items.freeze, boxes: @boxes.freeze,
                         appearance: @appearance, footbox: @footbox,
-                        warnings: @warnings.freeze)
+                        warnings: @warnings.freeze, title: @title)
           end
 
           # The number of a wrapped label would sit on one of its lines,

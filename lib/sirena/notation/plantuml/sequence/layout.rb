@@ -2,14 +2,18 @@
 
 require_relative "../../../layout/base"
 require_relative "edge"
+require_relative "ir_adapter"
 require_relative "ir_reader"
 require_relative "message_wrap"
 require_relative "note"
 require_relative "note_geometry"
 require_relative "numbered_label"
+require_relative "parser"
+require_relative "picture"
 require_relative "ref"
 require_relative "ref_shape"
 require_relative "scene"
+require_relative "title_row"
 require_relative "walker"
 
 module Sirena
@@ -47,9 +51,9 @@ module Sirena
 
           # @param graph [IR::Graph] from {IRAdapter}
           def scene(graph)
-            @diagram = IRReader.call(graph)
+            @diagram = pictured(IRReader.call(graph))
             measure_heads
-            @origin = MARGIN + banner_room
+            @origin = MARGIN + banner_room + TitleRow.room(@diagram.title)
             @top = @origin + (@diagram.boxes.empty? ? 0 : BOX_TITLE_HEIGHT)
             @flow = walk
             recentre if @flow.left < MARGIN
@@ -57,6 +61,33 @@ module Sirena
           end
 
           private
+
+          # Lays out each note's embedded diagram, so the notes know their
+          # size before the participants are spaced.
+          def pictured(diagram)
+            return diagram unless diagram.items.any? { |i| embedding?(i) }
+
+            diagram.with_items(diagram.items.map { |item| picture(item) })
+          end
+
+          def embedding?(item)
+            item.is_a?(Note) && !item.embedded.nil?
+          end
+
+          def picture(item)
+            return item unless embedding?(item)
+
+            embedded = item.embedded
+            item.with_picture(Picture.new(inner_scene(embedded),
+                                          embedded.scale))
+          end
+
+          def inner_scene(embedded)
+            inner = self.class.new
+            inner.theme = theme
+            parsed = Parser.new.parse(embedded.document)
+            inner.scene(IRAdapter.call(parsed))
+          end
 
           def measure_heads
             @widths = @diagram.participants.map { |p| head_width(p) }
@@ -113,7 +144,8 @@ module Sirena
           def build(widths)
             Scene.new(width: canvas_width(widths),
                       height: @flow.y + foot_height + MARGIN,
-                      banners: banners, frames: frames(widths),
+                      banners: banners, title: title_scene(widths),
+                      frames: frames(widths),
                       heads: heads(widths),
                       lifelines: lifelines, page_breaks: page_breaks(widths),
                       **flow_items)
@@ -332,7 +364,20 @@ module Sirena
 
           def canvas_width(widths)
             padded = [head_extent(widths), @flow.right].max + MARGIN
-            [padded, edge_extent, banner_extent].max
+            [padded, edge_extent, banner_extent, title_extent].max
+          end
+
+          def title_extent
+            TitleRow.width(@diagram.title, method(:caption_width))
+          end
+
+          def caption_width(text)
+            measure_text(text, font_size: font_size)[:width]
+          end
+
+          def title_scene(widths)
+            top = MARGIN + banner_room
+            TitleRow.scene(@diagram.title, top, canvas_width(widths))
           end
 
           def banner_room

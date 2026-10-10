@@ -68,7 +68,16 @@ module Sirena
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
+          # A laid-out diagram drawn inside a note, `scale` times larger.
+          class Picture < Lutaml::Model::Serializable
+            attribute :x, :float
+            attribute :y, :float
+            attribute :scale, :float
+            attribute :scene, Sirena::Layout::Scene
+          end
+
           class Note < Lutaml::Model::Serializable
+            attribute :picture, Picture
             attribute :path, :string
             attribute :fold_path, :string
             attribute :fill, :string
@@ -82,6 +91,11 @@ module Sirena
             attribute :y, :float
             attribute :width, :float
             attribute :height, :float
+            attribute :texts, PlantUML::Scene::Text, collection: true
+          end
+
+          # The title above the diagram.
+          class Title < Lutaml::Model::Serializable
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
@@ -103,6 +117,7 @@ module Sirena
           end
 
           attribute :banners, Banner, collection: true
+          attribute :title, Title
           attribute :frames, Frame, collection: true
           attribute :fragments, Fragment, collection: true
           attribute :notes, Note, collection: true

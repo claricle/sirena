@@ -666,7 +666,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       "A ->?B" => "message arrow",
       "A ->o?" => "message arrow",
       "[-> A ++" => "message arrow",
-      "title T" => "title",
+      "title **T**" => "title",
     }.each do |line, name|
       it "refuses #{line.inspect} as #{name}" do
         expect(refusal_of("A -> B", line)).to have_attributes(construct: name)
