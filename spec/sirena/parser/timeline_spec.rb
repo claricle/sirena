@@ -126,6 +126,12 @@ RSpec.describe Sirena::Parser::Timeline do
       expect(diagram.has_events?).to be true
     end
 
+    it "keeps no task for a line of only a vertical tab" do
+      diagram = parser.parse("timeline\n\v\nsection S\n\v\n")
+
+      expect(diagram.sections.map(&:tasks)).to eq([[], []])
+    end
+
     it "raises error on invalid syntax" do
       source = "invalid timeline syntax"
 
