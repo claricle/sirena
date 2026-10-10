@@ -67,6 +67,15 @@ RSpec.describe SurfaceManifest do
     end
   end
 
+  describe ".scrub" do
+    it "masks the checkout path and per-run object addresses" do
+      text = "/r/lib: #<Position:0x0000000123cf3540>"
+
+      expect(described_class.scrub(text, "/r"))
+        .to eq("<ROOT>/lib: #<Position:0xADDR>")
+    end
+  end
+
   describe ".compare" do
     let(:baseline) { record_with("before") }
 

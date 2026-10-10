@@ -28,6 +28,8 @@ module SurfaceManifest
   API_TIMEOUT = 1800
   TODAY = "2026-01-01"
   ROOT_MARK = "<ROOT>"
+  # Object addresses differ on every run (Parslet::Position inspect, etc.).
+  ADDRESS = /0x\h{8,16}/
 
   # Runs inside the checkout under test, so it must not reference this file.
   API_PROBE = <<~RUBY
@@ -146,7 +148,8 @@ module SurfaceManifest
   end
 
   def scrub(text, root)
-    text.dup.force_encoding(Encoding::UTF_8).scrub.gsub(root, ROOT_MARK)
+    clean = text.dup.force_encoding(Encoding::UTF_8).scrub
+    clean.gsub(root, ROOT_MARK).gsub(ADDRESS, "0xADDR")
   end
 
   def api_results(root, cases, launcher: LAUNCHER, timeout: API_TIMEOUT)
