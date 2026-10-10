@@ -55,4 +55,17 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
       .of(cluster[0] + cluster[2] - 20)
     expect(inner.map { |x, *| x }.min).to be_within(0.01).of(cluster[0] + 20)
   end
+
+  it "places every node when a model repeats an id" do
+    diagram = Sirena::Diagram::Flowchart.new(direction: "TD")
+    diagram.nodes.push(
+      Sirena::Diagram::FlowchartNode.new(id: "same", label: "First"),
+      Sirena::Diagram::FlowchartNode.new(id: "same", label: "Second"),
+    )
+
+    scene = Sirena::Layout::Flowchart.new.to_graph(diagram)
+
+    expect(scene.children.map(&:x)).to all(be_a(Float))
+    expect(scene.children.map { |node| [node.x, node.y] }.uniq.size).to eq(2)
+  end
 end

@@ -87,30 +87,38 @@ module Sirena
           keep_sections(flat) if container.nil?
         end
 
+        # Boxes go to elkrb under their position, because a model may repeat
+        # an id and elkrb needs each box named apart.
         def flat_graph(boxes, level_edges)
+          names = {}
+          boxes.each_with_index { |box, index| names[box[:id]] ||= "box-#{index}" }
           {
             id: @graph[:id],
-            children: boxes.map do |box|
-              { id: box[:id], width: box[:width], height: box[:height] }
+            children: boxes.each_with_index.map do |box, index|
+              { id: "box-#{index}", width: box[:width], height: box[:height] }
             end,
-            edges: level_edges.each_with_index.map do |(edge, from, to), index|
-              flat_edge(edge, from, to, index)
-            end,
+            edges: flat_edges(level_edges, names),
             layoutOptions: @options,
           }
         end
 
-        def flat_edge(edge, from, to, index)
-          { id: "edge-#{index}", sources: [from], targets: [to],
-            labels: edge[:labels] || [] }
+        def flat_edges(level_edges, names)
+          @routed = {}
+          level_edges.each_with_index.filter_map do |(edge, from, to), index|
+            next unless names[from] && names[to]
+
+            @routed["edge-#{index}"] = edge if edge[:sources] == [from] &&
+              edge[:targets] == [to]
+            { id: "edge-#{index}", sources: [names[from]],
+              targets: [names[to]], labels: edge[:labels] || [] }
+          end
         end
 
         # An edge between two boxes of the page keeps the route elkrb found.
         def keep_sections(flat)
-          @level_edges[nil].zip(flat[:edges]) do |(edge, from, to), placed|
-            next unless edge[:sources] == [from] && edge[:targets] == [to]
-
-            edge[:sections] = placed[:sections] if placed[:sections]
+          flat[:edges].each do |placed|
+            edge = @routed[placed[:id]]
+            edge[:sections] = placed[:sections] if edge && placed[:sections]
           end
         end
 
