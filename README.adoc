@@ -50,11 +50,10 @@ varies (see below).
 === Mermaid diagram types
 
 Sirena registers 24 Mermaid diagram types end-to-end (parser, transform, and
-renderer). Registration is not the same as full compatibility: measured
-per-type pass rates against the mermaid-js corpus range from 66.7% to 100%
-and are documented on the
-https://claricle.github.io/sirena/pages/compatibility/[compatibility page]
-and in `scoreboard/corpus.json`.
+renderer). Registration is not the same as full compatibility: the
+per-type pass rates against the mermaid-js corpus are generated from
+`scoreboard/corpus.json` onto the
+https://claricle.github.io/sirena/pages/compatibility/[compatibility page].
 
 * **Flowchart** - Directional graphs with various node shapes and edge types
 * **Sequence diagram** - Message flows between participants over time
