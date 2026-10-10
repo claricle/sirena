@@ -35,7 +35,7 @@ ruby scripts/audit_singleton_captures.rb --check
 
 **Result:** 1 executable `Array(...)` hit
 
-- `lib/sirena/parser/builders/class_diagram.rb:173` — `statements = Array(stmt[:namespace_body])`
+- `lib/sirena/parser/builders/class_diagram.rb:166` — `Array(stmt[:namespace_body]).each { |s| process_statement(s) }`
 
 ## 07b — sequence
 
@@ -139,7 +139,7 @@ ruby scripts/audit_singleton_captures.rb --check
 
 **Result:** 11 executable `Array(...)` hits
 
-- `lib/sirena/parser/builders/mindmap.rb:253` — `nodes_array = Array(nodes)`
+- `lib/sirena/parser/builders/mindmap.rb:251` — `nodes_array = Array(nodes)`
 - `lib/sirena/parser/builders/packet.rb:44` — `Array(statements).each do |stmt|`
 - `lib/sirena/parser/builders/requirement.rb:277` — `Array(class_data)`
 - `lib/sirena/parser/builders/sankey.rb:54` — `Array(statements).each do |stmt|`

@@ -1,130 +1,184 @@
 <svg
- width="770.0"
- height="890.0"
- viewBox="0 0 770 890"
+ width="2961.4400000000005"
+ height="565.0"
+ viewBox="0 -25 2961.4400000000005 540"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
-<text fill="#000000" x="20.0" y="40.0" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold">E-commerce Purchase Flow</text>
-<text class="journey-section" fill="#666666" x="20.0" y="76.0" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Browse</text>
-<text class="journey-section" fill="#666666" x="20.0" y="122.0" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Purchase</text>
-<text class="journey-section" fill="#666666" x="20.0" y="168.0" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Checkout</text>
-<text class="journey-section" fill="#666666" x="20.0" y="214.0" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Fulfillment</text>
+<circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="20.0" cy="60.0" r="7.0"/>
+<text fill="#000000" x="50.0" y="67.0" font-family="Arial, Helvetica, sans-serif" font-size="16">Courier</text>
+<circle class="actor-1" fill="#7CFC00" stroke="#000" cx="20.0" cy="80.0" r="7.0"/>
+<text fill="#000000" x="50.0" y="87.0" font-family="Arial, Helvetica, sans-serif" font-size="16">Customer</text>
+<circle class="actor-2" fill="#00FFFF" stroke="#000" cx="20.0" cy="100.0" r="7.0"/>
+<text fill="#000000" x="50.0" y="107.0" font-family="Arial, Helvetica, sans-serif" font-size="16">Payment Gateway</text>
+<circle class="actor-3" fill="#20B2AA" stroke="#000" cx="20.0" cy="120.0" r="7.0"/>
+<text fill="#000000" x="50.0" y="127.0" font-family="Arial, Helvetica, sans-serif" font-size="16">System</text>
+<circle class="actor-4" fill="#B0E0E6" stroke="#000" cx="20.0" cy="140.0" r="7.0"/>
+<text fill="#000000" x="50.0" y="147.0" font-family="Arial, Helvetica, sans-serif" font-size="16">Warehouse</text>
+<g>
+  <rect class="journey-section section-type-0" fill="#191970" stroke="#666" x="280.72" y="50.0" width="550.0" height="50.0" rx="3.0" ry="3.0"/>
+  <text class="journey-section section-type-0" fill="#fff" x="555.72" y="79.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Browse</text>
+</g>
+<g>
+  <rect class="journey-section section-type-1" fill="#8B008B" stroke="#666" x="880.72" y="50.0" width="550.0" height="50.0" rx="3.0" ry="3.0"/>
+  <text class="journey-section section-type-1" fill="#fff" x="1155.72" y="79.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Purchase</text>
+</g>
+<g>
+  <rect class="journey-section section-type-2" fill="#4B0082" stroke="#666" x="1480.72" y="50.0" width="550.0" height="50.0" rx="3.0" ry="3.0"/>
+  <text class="journey-section section-type-2" fill="#fff" x="1755.72" y="79.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Checkout</text>
+</g>
+<g>
+  <rect class="journey-section section-type-3" fill="#2F4F4F" stroke="#666" x="2080.7200000000003" y="50.0" width="550.0" height="50.0" rx="3.0" ry="3.0"/>
+  <text class="journey-section section-type-3" fill="#fff" x="2355.7200000000003" y="79.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Fulfillment</text>
+</g>
 <g id="task-task_0">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="50.0" y="50.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="120.0" y="74.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">View Products</text>
-  <text fill="#000000" x="120.0" y="102.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="120.0" y="123.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="355.72" y1="110.0" x2="355.72" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="355.72" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="350.72" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="360.72" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(355.72,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-0" fill="#191970" stroke="#666" x="280.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="294.72" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="355.72" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">View Products</text>
 </g>
 <g id="task-task_1">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="300.0" y="50.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="370.0" y="74.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Search Items</text>
-  <text fill="#000000" x="370.0" y="102.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">4</text>
-  <text fill="#666666" x="370.0" y="123.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="555.72" y1="110.0" x2="555.72" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="555.72" cy="330.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="550.72" cy="325.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="560.72" cy="325.0" r="1.5"/>
+    <path class="mouth" transform="translate(555.72,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-0" fill="#191970" stroke="#666" x="480.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="494.72" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="555.72" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Search Items</text>
 </g>
 <g id="task-task_2">
-  <rect fill="#ffc107" stroke="#000000" stroke-width="2" x="550.0" y="50.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="620.0" y="74.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Filter Results</text>
-  <text fill="#000000" x="620.0" y="102.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">3</text>
-  <text fill="#666666" x="620.0" y="123.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="755.72" y1="110.0" x2="755.72" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="755.72" cy="360.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="750.72" cy="355.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="760.72" cy="355.0" r="1.5"/>
+    <line class="mouth" stroke="#666" stroke-width="1px" x1="750.72" y1="367.0" x2="760.72" y2="367.0"/>
+  </g>
+  <rect class="task task-type-0" fill="#191970" stroke="#666" x="680.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="694.72" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="755.72" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Filter Results</text>
 </g>
 <g id="task-task_3">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="50.0" y="250.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="120.0" y="274.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Add to Cart</text>
-  <text fill="#000000" x="120.0" y="302.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="120.0" y="323.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="955.72" y1="110.0" x2="955.72" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="955.72" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="950.72" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="960.72" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(955.72,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-1" fill="#8B008B" stroke="#666" x="880.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="894.72" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="955.72" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Add to Cart</text>
 </g>
 <g id="task-task_4">
-  <rect fill="#ffc107" stroke="#000000" stroke-width="2" x="300.0" y="250.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="370.0" y="274.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Verify Stock</text>
-  <text fill="#000000" x="370.0" y="302.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">3</text>
-  <text fill="#666666" x="370.0" y="323.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">System</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="1155.72" y1="110.0" x2="1155.72" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="1155.72" cy="360.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1150.72" cy="355.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1160.72" cy="355.0" r="1.5"/>
+    <line class="mouth" stroke="#666" stroke-width="1px" x1="1150.72" y1="367.0" x2="1160.72" y2="367.0"/>
+  </g>
+  <rect class="task task-type-1" fill="#8B008B" stroke="#666" x="1080.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-3" fill="#20B2AA" stroke="#000" cx="1094.72" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="1155.72" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Verify Stock</text>
 </g>
 <g id="task-task_5">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="550.0" y="250.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="620.0" y="274.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Apply Discount</text>
-  <text fill="#000000" x="620.0" y="302.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">4</text>
-  <text fill="#666666" x="620.0" y="323.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer, System</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="1355.72" y1="110.0" x2="1355.72" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="1355.72" cy="330.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1350.72" cy="325.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1360.72" cy="325.0" r="1.5"/>
+    <path class="mouth" transform="translate(1355.72,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-1" fill="#8B008B" stroke="#666" x="1280.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="1294.72" cy="110.0" r="7.0"/>
+  <circle class="actor-3" fill="#20B2AA" stroke="#000" cx="1304.72" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="1355.72" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Apply Discount</text>
 </g>
 <g id="task-task_6">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="50.0" y="450.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="120.0" y="474.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Enter Payment</text>
-  <text fill="#000000" x="120.0" y="502.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">4</text>
-  <text fill="#666666" x="120.0" y="523.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="1555.72" y1="110.0" x2="1555.72" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="1555.72" cy="330.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1550.72" cy="325.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1560.72" cy="325.0" r="1.5"/>
+    <path class="mouth" transform="translate(1555.72,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-2" fill="#4B0082" stroke="#666" x="1480.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="1494.72" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="1555.72" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Enter Payment</text>
 </g>
 <g id="task-task_7">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="300.0" y="450.0" width="145.376" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="372.688" y="474.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Process Payment</text>
-  <text fill="#000000" x="372.688" y="502.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="372.688" y="523.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Payment Gateway</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="1755.72" y1="110.0" x2="1755.72" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="1755.72" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1750.72" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1760.72" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(1755.72,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-2" fill="#4B0082" stroke="#666" x="1680.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-2" fill="#00FFFF" stroke="#000" cx="1694.72" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="1755.72" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Process Payment</text>
 </g>
 <g id="task-task_8">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="550.0" y="450.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="620.0" y="474.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Confirm Order</text>
-  <text fill="#000000" x="620.0" y="502.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="620.0" y="523.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer, System</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="1955.72" y1="110.0" x2="1955.72" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="1955.72" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1950.72" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1960.72" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(1955.72,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-2" fill="#4B0082" stroke="#666" x="1880.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="1894.72" cy="110.0" r="7.0"/>
+  <circle class="actor-3" fill="#20B2AA" stroke="#000" cx="1904.72" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="1955.72" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Confirm Order</text>
 </g>
 <g id="task-task_9">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="50.0" y="650.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="120.0" y="674.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Pack Order</text>
-  <text fill="#000000" x="120.0" y="702.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">4</text>
-  <text fill="#666666" x="120.0" y="723.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Warehouse</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="2155.7200000000003" y1="110.0" x2="2155.7200000000003" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="2155.7200000000003" cy="330.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2150.7200000000003" cy="325.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2160.7200000000003" cy="325.0" r="1.5"/>
+    <path class="mouth" transform="translate(2155.7200000000003,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-3" fill="#2F4F4F" stroke="#666" x="2080.7200000000003" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-4" fill="#B0E0E6" stroke="#000" cx="2094.7200000000003" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="2155.7200000000003" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Pack Order</text>
 </g>
 <g id="task-task_10">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="300.0" y="650.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="370.0" y="674.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Ship Order</text>
-  <text fill="#000000" x="370.0" y="702.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="370.0" y="723.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Courier</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="2355.7200000000003" y1="110.0" x2="2355.7200000000003" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="2355.7200000000003" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2350.7200000000003" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2360.7200000000003" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(2355.7200000000003,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-3" fill="#2F4F4F" stroke="#666" x="2280.7200000000003" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="2294.7200000000003" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="2355.7200000000003" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Ship Order</text>
 </g>
 <g id="task-task_11">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="550.0" y="650.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="620.0" y="674.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Track Shipment</text>
-  <text fill="#000000" x="620.0" y="702.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="620.0" y="723.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="2555.7200000000003" y1="110.0" x2="2555.7200000000003" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="2555.7200000000003" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2550.7200000000003" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2560.7200000000003" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(2555.7200000000003,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-3" fill="#2F4F4F" stroke="#666" x="2480.7200000000003" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="2494.7200000000003" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="2555.7200000000003" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Track Shipment</text>
 </g>
-<g id="arrow-flow_0">
-  <line stroke="#000000" stroke-width="2" x1="190.0" y1="90.0" x2="300.0" y2="90.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 300,90.0 L 291.33974596215563,95.0 M 300,90.0 L 291.33974596215563,85.0"/>
-</g>
-<g id="arrow-flow_1">
-  <line stroke="#000000" stroke-width="2" x1="440.0" y1="90.0" x2="550.0" y2="90.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 550,90.0 L 541.3397459621556,95.0 M 550,90.0 L 541.3397459621556,85.0"/>
-</g>
-<g id="arrow-flow_2">
-  <line stroke="#000000" stroke-width="2" x1="690.0" y1="90.0" x2="50.0" y2="290.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 50,290.0 L 56.774664118139754,282.64446289613124 M 50,290.0 L 59.75741404949922,292.1892626764816"/>
-</g>
-<g id="arrow-flow_3">
-  <line stroke="#000000" stroke-width="2" x1="190.0" y1="290.0" x2="300.0" y2="290.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 300,290.0 L 291.33974596215563,295.0 M 300,290.0 L 291.33974596215563,285.0"/>
-</g>
-<g id="arrow-flow_4">
-  <line stroke="#000000" stroke-width="2" x1="440.0" y1="290.0" x2="550.0" y2="290.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 550,290.0 L 541.3397459621556,295.0 M 550,290.0 L 541.3397459621556,285.0"/>
-</g>
-<g id="arrow-flow_5">
-  <line stroke="#000000" stroke-width="2" x1="690.0" y1="290.0" x2="50.0" y2="490.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 50,490.0 L 56.774664118139754,482.64446289613124 M 50,490.0 L 59.75741404949922,492.1892626764816"/>
-</g>
-<g id="arrow-flow_6">
-  <line stroke="#000000" stroke-width="2" x1="190.0" y1="490.0" x2="300.0" y2="490.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 300,490.0 L 291.33974596215563,495.0 M 300,490.0 L 291.33974596215563,485.0"/>
-</g>
-<g id="arrow-flow_7">
-  <line stroke="#000000" stroke-width="2" x1="445.376" y1="490.0" x2="550.0" y2="490.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 550,490.0 L 541.3397459621556,495.0 M 550,490.0 L 541.3397459621556,485.0"/>
-</g>
-<g id="arrow-flow_8">
-  <line stroke="#000000" stroke-width="2" x1="690.0" y1="490.0" x2="50.0" y2="690.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 50,690.0 L 56.774664118139754,682.6444628961312 M 50,690.0 L 59.75741404949922,692.1892626764816"/>
-</g>
-<g id="arrow-flow_9">
-  <line stroke="#000000" stroke-width="2" x1="190.0" y1="690.0" x2="300.0" y2="690.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 300,690.0 L 291.33974596215563,695.0 M 300,690.0 L 291.33974596215563,685.0"/>
-</g>
-<g id="arrow-flow_10">
-  <line stroke="#000000" stroke-width="2" x1="440.0" y1="690.0" x2="550.0" y2="690.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 550,690.0 L 541.3397459621556,695.0 M 550,690.0 L 541.3397459621556,685.0"/>
-</g>
+<text fill="#000000" x="280.72" y="25.0" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="bold">E-commerce Purchase Flow</text>
+<line stroke="black" stroke-width="4" x1="280.72" y1="200.0" x2="2676.7200000000003" y2="200.0"/>
+<path fill="black" d="M 2656.7200000000003,192 V 208 L 2680.7200000000003,200 Z"/>
 </svg>

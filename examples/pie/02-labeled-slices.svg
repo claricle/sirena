@@ -1,30 +1,31 @@
 <svg
- width="544.672"
- height="460.0"
- viewBox="0 0 544.672 460"
+ width="572.452"
+ height="450.0"
+ viewBox="0 0 572.452 450"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
-<text fill="#000000" x="250.0" y="40.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Browser Market Share 2024</text>
-<path id="slice-0" fill="#4472C4" stroke="#000000" stroke-width="2" d="M 250 200 L 250.0 50.0 A 150 150 0 1 1 128.6474508437579 288.167787843871 Z"/>
-<text fill="#000000" x="410.3811743539062" y="285.9183" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">65%</text>
-<path id="slice-1" fill="#ED7D31" stroke="#000000" stroke-width="2" d="M 250 200 L 128.6474508437579 288.167787843871 A 150 150 0 0 1 118.55399799342047 127.73694888474269 Z"/>
-<text fill="#000000" x="70.35518888291111" y="215.5023" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">18%</text>
-<path id="slice-2" fill="#A5A5A5" stroke="#000000" stroke-width="2" d="M 250 200 L 118.55399799342047 127.73694888474269 A 150 150 0 0 1 169.62598075315054 73.35081117469771 Z"/>
-<text fill="#000000" x="118.78564706414599" y="80.9815" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">8%</text>
-<path id="slice-3" fill="#FFC000" stroke="#000000" stroke-width="2" d="M 250 200 L 169.62598075315054 73.35081117469771 A 150 150 0 0 1 221.89280281214144 52.656912390696675 Z"/>
-<text fill="#000000" x="183.73758051675816" y="36.8402" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">6%</text>
-<path id="slice-4" fill="#5B9BD5" stroke="#000000" stroke-width="2" d="M 250 200 L 221.89280281214144 52.656912390696675 A 150 150 0 0 1 250.0000000000001 50.0 Z"/>
-<text fill="#000000" x="233.0605036026675" y="24.9988" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">3%</text>
-<rect fill="#4472C4" stroke="#4472C4" x="460.0" y="145.0" width="18.0" height="18.0"/>
-<text fill="#000000" x="482.0" y="159.0" font-family="Arial, Helvetica, sans-serif" font-size="12">Chrome</text>
-<rect fill="#ED7D31" stroke="#ED7D31" x="460.0" y="167.0" width="18.0" height="18.0"/>
-<text fill="#000000" x="482.0" y="181.0" font-family="Arial, Helvetica, sans-serif" font-size="12">Safari</text>
-<rect fill="#A5A5A5" stroke="#A5A5A5" x="460.0" y="189.0" width="18.0" height="18.0"/>
-<text fill="#000000" x="482.0" y="203.0" font-family="Arial, Helvetica, sans-serif" font-size="12">Firefox</text>
-<rect fill="#FFC000" stroke="#FFC000" x="460.0" y="211.0" width="18.0" height="18.0"/>
-<text fill="#000000" x="482.0" y="225.0" font-family="Arial, Helvetica, sans-serif" font-size="12">Edge</text>
-<rect fill="#5B9BD5" stroke="#5B9BD5" x="460.0" y="233.0" width="18.0" height="18.0"/>
-<text fill="#000000" x="482.0" y="247.0" font-family="Arial, Helvetica, sans-serif" font-size="12">Others</text>
+<circle fill="none" stroke="#000000" stroke-width="2" cx="225.0" cy="225.0" r="186.0"/>
+<text fill="#000000" x="225.0" y="25.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="bold">Browser Market Share 2024</text>
+<path id="slice-0" fill="#4472C4" stroke="#000000" stroke-width="2" d="M 225 225 L 225.0 40.0 A 185 185 0 1 1 75.33185604063473 333.74027167410753 Z"/>
+<text fill="#000000" x="348.62715523113604" y="293.9412" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">65%</text>
+<path id="slice-1" fill="#ED7D31" stroke="#000000" stroke-width="2" d="M 225 225 L 75.33185604063473 333.74027167410753 A 185 185 0 0 1 62.883264191885246 135.87557029118267 Z"/>
+<text fill="#000000" x="86.52379143057732" y="239.6622" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">18%</text>
+<path id="slice-2" fill="#A5A5A5" stroke="#000000" stroke-width="2" d="M 225 225 L 62.883264191885246 135.87557029118267 A 185 185 0 0 1 125.87204292888568 68.79933378212718 Z"/>
+<text fill="#000000" x="123.85560294527919" y="135.9691" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">8%</text>
+<path id="slice-3" fill="#FFC000" stroke="#000000" stroke-width="2" d="M 225 225 L 125.87204292888568 68.79933378212718 A 185 185 0 0 1 190.3344568016411 43.276858615192566 Z"/>
+<text fill="#000000" x="173.92271831500108" y="101.9435" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">6%</text>
+<path id="slice-4" fill="#5B9BD5" stroke="#000000" stroke-width="2" d="M 225 225 L 190.3344568016411 43.276858615192566 A 185 185 0 0 1 225.00000000000014 40.0 Z"/>
+<text fill="#000000" x="211.9424715270562" y="92.8158" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">3%</text>
+<rect fill="#4472C4" stroke="#4472C4" x="441.0" y="170.0" width="18.0" height="18.0"/>
+<text fill="#000000" x="463.0" y="184.0" font-family="Arial, Helvetica, sans-serif" font-size="17">Chrome</text>
+<rect fill="#ED7D31" stroke="#ED7D31" x="441.0" y="192.0" width="18.0" height="18.0"/>
+<text fill="#000000" x="463.0" y="206.0" font-family="Arial, Helvetica, sans-serif" font-size="17">Safari</text>
+<rect fill="#A5A5A5" stroke="#A5A5A5" x="441.0" y="214.0" width="18.0" height="18.0"/>
+<text fill="#000000" x="463.0" y="228.0" font-family="Arial, Helvetica, sans-serif" font-size="17">Firefox</text>
+<rect fill="#FFC000" stroke="#FFC000" x="441.0" y="236.0" width="18.0" height="18.0"/>
+<text fill="#000000" x="463.0" y="250.0" font-family="Arial, Helvetica, sans-serif" font-size="17">Edge</text>
+<rect fill="#5B9BD5" stroke="#5B9BD5" x="441.0" y="258.0" width="18.0" height="18.0"/>
+<text fill="#000000" x="463.0" y="272.0" font-family="Arial, Helvetica, sans-serif" font-size="17">Others</text>
 </svg>

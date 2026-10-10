@@ -1,171 +1,240 @@
 <svg
- width="842.064"
- height="1290.0"
- viewBox="0 0 842.064 1290"
+ width="3500.0"
+ height="565.0"
+ viewBox="0 -25 3500 540"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
-<text fill="#000000" x="20.0" y="40.0" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold">Customer Support Interaction Journey</text>
-<text class="journey-section" fill="#666666" x="20.0" y="76.0" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Discovery</text>
-<text class="journey-section" fill="#666666" x="20.0" y="122.0" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Initial Contact</text>
-<text class="journey-section" fill="#666666" x="20.0" y="168.0" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Diagnosis</text>
-<text class="journey-section" fill="#666666" x="20.0" y="214.0" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Resolution</text>
-<text class="journey-section" fill="#666666" x="20.0" y="260.0" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Follow-up</text>
+<circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="20.0" cy="60.0" r="7.0"/>
+<text fill="#000000" x="50.0" y="67.0" font-family="Arial, Helvetica, sans-serif" font-size="16">Agent</text>
+<circle class="actor-1" fill="#7CFC00" stroke="#000" cx="20.0" cy="80.0" r="7.0"/>
+<text fill="#000000" x="50.0" y="87.0" font-family="Arial, Helvetica, sans-serif" font-size="16">Customer</text>
+<circle class="actor-2" fill="#00FFFF" stroke="#000" cx="20.0" cy="100.0" r="7.0"/>
+<text fill="#000000" x="50.0" y="107.0" font-family="Arial, Helvetica, sans-serif" font-size="16">System</text>
+<g>
+  <rect class="journey-section section-type-0" fill="#191970" stroke="#666" x="150.0" y="50.0" width="550.0" height="50.0" rx="3.0" ry="3.0"/>
+  <text class="journey-section section-type-0" fill="#fff" x="425.0" y="79.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Discovery</text>
+</g>
+<g>
+  <rect class="journey-section section-type-1" fill="#8B008B" stroke="#666" x="750.0" y="50.0" width="550.0" height="50.0" rx="3.0" ry="3.0"/>
+  <text class="journey-section section-type-1" fill="#fff" x="1025.0" y="79.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Initial Contact</text>
+</g>
+<g>
+  <rect class="journey-section section-type-2" fill="#4B0082" stroke="#666" x="1350.0" y="50.0" width="750.0" height="50.0" rx="3.0" ry="3.0"/>
+  <text class="journey-section section-type-2" fill="#fff" x="1725.0" y="79.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Diagnosis</text>
+</g>
+<g>
+  <rect class="journey-section section-type-3" fill="#2F4F4F" stroke="#666" x="2150.0" y="50.0" width="550.0" height="50.0" rx="3.0" ry="3.0"/>
+  <text class="journey-section section-type-3" fill="#fff" x="2425.0" y="79.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Resolution</text>
+</g>
+<g>
+  <rect class="journey-section section-type-4" fill="#800000" stroke="#666" x="2750.0" y="50.0" width="550.0" height="50.0" rx="3.0" ry="3.0"/>
+  <text class="journey-section section-type-4" fill="#fff" x="3025.0" y="79.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Follow-up</text>
+</g>
 <g id="task-task_0">
-  <rect fill="#ffc107" stroke="#000000" stroke-width="2" x="50.0" y="50.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="120.0" y="74.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Visit help center</text>
-  <text fill="#000000" x="120.0" y="102.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">3</text>
-  <text fill="#666666" x="120.0" y="123.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="225.0" y1="110.0" x2="225.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="225.0" cy="360.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="220.0" cy="355.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="230.0" cy="355.0" r="1.5"/>
+    <line class="mouth" stroke="#666" stroke-width="1px" x1="220.0" y1="367.0" x2="230.0" y2="367.0"/>
+  </g>
+  <rect class="task task-type-0" fill="#191970" stroke="#666" x="150.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="164.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="225.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Visit help center</text>
 </g>
 <g id="task-task_1">
-  <rect fill="#dc3545" stroke="#000000" stroke-width="2" x="300.0" y="50.0" width="153.392" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="376.696" y="74.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Search for solution</text>
-  <text fill="#000000" x="376.696" y="102.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">2</text>
-  <text fill="#666666" x="376.696" y="123.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="425.0" y1="110.0" x2="425.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="425.0" cy="390.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="420.0" cy="385.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="430.0" cy="385.0" r="1.5"/>
+    <path class="mouth" transform="translate(425.0,397.0)" fill="#000" stroke="#666" d="M-7.5,0A7.5,7.5,0,1,1,7.5,0L6.818,0A6.818,6.818,0,1,0,-6.818,0Z"/>
+  </g>
+  <rect class="task task-type-0" fill="#191970" stroke="#666" x="350.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="364.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="425.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Search for solution</text>
 </g>
 <g id="task-task_2">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="550.0" y="50.0" width="147.152" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="623.576" y="74.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Click support chat</text>
-  <text fill="#000000" x="623.576" y="102.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">4</text>
-  <text fill="#666666" x="623.576" y="123.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="625.0" y1="110.0" x2="625.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="625.0" cy="330.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="620.0" cy="325.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="630.0" cy="325.0" r="1.5"/>
+    <path class="mouth" transform="translate(625.0,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-0" fill="#191970" stroke="#666" x="550.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="564.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="625.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Click support chat</text>
 </g>
 <g id="task-task_3">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="50.0" y="250.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="120.0" y="274.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Greet customer</text>
-  <text fill="#000000" x="120.0" y="302.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="120.0" y="323.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer, Agent</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="825.0" y1="110.0" x2="825.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="825.0" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="820.0" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="830.0" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(825.0,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-1" fill="#8B008B" stroke="#666" x="750.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="764.0" cy="110.0" r="7.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="774.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="825.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Greet customer</text>
 </g>
 <g id="task-task_4">
-  <rect fill="#ffc107" stroke="#000000" stroke-width="2" x="300.0" y="250.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="370.0" y="274.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Describe issue</text>
-  <text fill="#000000" x="370.0" y="302.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">3</text>
-  <text fill="#666666" x="370.0" y="323.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer, Agent</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="1025.0" y1="110.0" x2="1025.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="1025.0" cy="360.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1020.0" cy="355.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1030.0" cy="355.0" r="1.5"/>
+    <line class="mouth" stroke="#666" stroke-width="1px" x1="1020.0" y1="367.0" x2="1030.0" y2="367.0"/>
+  </g>
+  <rect class="task task-type-1" fill="#8B008B" stroke="#666" x="950.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="964.0" cy="110.0" r="7.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="974.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="1025.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Describe issue</text>
 </g>
 <g id="task-task_5">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="550.0" y="250.0" width="180.96" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="640.48" y="274.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Agent reviews account</text>
-  <text fill="#000000" x="640.48" y="302.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">4</text>
-  <text fill="#666666" x="640.48" y="323.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Agent, System</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="1225.0" y1="110.0" x2="1225.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="1225.0" cy="330.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1220.0" cy="325.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1230.0" cy="325.0" r="1.5"/>
+    <path class="mouth" transform="translate(1225.0,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-1" fill="#8B008B" stroke="#666" x="1150.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="1164.0" cy="110.0" r="7.0"/>
+  <circle class="actor-2" fill="#00FFFF" stroke="#000" cx="1174.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="1225.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Agent reviews account</text>
 </g>
 <g id="task-task_6">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="50.0" y="450.0" width="239.648" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="169.824" y="474.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Agent asks clarifying questions</text>
-  <text fill="#000000" x="169.824" y="502.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">4</text>
-  <text fill="#666666" x="169.824" y="523.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer, Agent</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="1425.0" y1="110.0" x2="1425.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="1425.0" cy="330.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1420.0" cy="325.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1430.0" cy="325.0" r="1.5"/>
+    <path class="mouth" transform="translate(1425.0,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-2" fill="#4B0082" stroke="#666" x="1350.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="1364.0" cy="110.0" r="7.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="1374.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="1425.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Agent asks clarifying questions</text>
 </g>
 <g id="task-task_7">
-  <rect fill="#ffc107" stroke="#000000" stroke-width="2" x="300.0" y="450.0" width="204.944" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="402.472" y="474.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Customer provides details</text>
-  <text fill="#000000" x="402.472" y="502.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">3</text>
-  <text fill="#666666" x="402.472" y="523.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer, Agent</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="1625.0" y1="110.0" x2="1625.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="1625.0" cy="360.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1620.0" cy="355.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1630.0" cy="355.0" r="1.5"/>
+    <line class="mouth" stroke="#666" stroke-width="1px" x1="1620.0" y1="367.0" x2="1630.0" y2="367.0"/>
+  </g>
+  <rect class="task task-type-2" fill="#4B0082" stroke="#666" x="1550.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="1564.0" cy="110.0" r="7.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="1574.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="1625.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Customer provides details</text>
 </g>
 <g id="task-task_8">
-  <rect fill="#dc3545" stroke="#000000" stroke-width="2" x="550.0" y="450.0" width="149.84" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="624.92" y="474.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Agent checks logs</text>
-  <text fill="#000000" x="624.92" y="502.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">2</text>
-  <text fill="#666666" x="624.92" y="523.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Agent, System</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="1825.0" y1="110.0" x2="1825.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="1825.0" cy="390.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1820.0" cy="385.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="1830.0" cy="385.0" r="1.5"/>
+    <path class="mouth" transform="translate(1825.0,397.0)" fill="#000" stroke="#666" d="M-7.5,0A7.5,7.5,0,1,1,7.5,0L6.818,0A6.818,6.818,0,1,0,-6.818,0Z"/>
+  </g>
+  <rect class="task task-type-2" fill="#4B0082" stroke="#666" x="1750.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="1764.0" cy="110.0" r="7.0"/>
+  <circle class="actor-2" fill="#00FFFF" stroke="#000" cx="1774.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="1825.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Agent checks logs</text>
 </g>
 <g id="task-task_9">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="50.0" y="650.0" width="208.544" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="154.272" y="674.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Agent identifies root cause</text>
-  <text fill="#000000" x="154.272" y="702.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="154.272" y="723.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Agent</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="2025.0" y1="110.0" x2="2025.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="2025.0" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2020.0" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2030.0" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(2025.0,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-2" fill="#4B0082" stroke="#666" x="1950.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="1964.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="2025.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Agent identifies root cause</text>
 </g>
 <g id="task-task_10">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="300.0" y="650.0" width="184.528" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="392.264" y="674.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Agent explains solution</text>
-  <text fill="#000000" x="392.264" y="702.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="392.264" y="723.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer, Agent</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="2225.0" y1="110.0" x2="2225.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="2225.0" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2220.0" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2230.0" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(2225.0,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-3" fill="#2F4F4F" stroke="#666" x="2150.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="2164.0" cy="110.0" r="7.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="2174.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="2225.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Agent explains solution</text>
 </g>
 <g id="task-task_11">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="550.0" y="650.0" width="185.376" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="642.688" y="674.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Customer follows steps</text>
-  <text fill="#000000" x="642.688" y="702.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">4</text>
-  <text fill="#666666" x="642.688" y="723.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="2425.0" y1="110.0" x2="2425.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="2425.0" cy="330.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2420.0" cy="325.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2430.0" cy="325.0" r="1.5"/>
+    <path class="mouth" transform="translate(2425.0,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-3" fill="#2F4F4F" stroke="#666" x="2350.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="2364.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="2425.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Customer follows steps</text>
 </g>
 <g id="task-task_12">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="50.0" y="850.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="120.0" y="874.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Issue resolved</text>
-  <text fill="#000000" x="120.0" y="902.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="120.0" y="923.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer, Agent</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="2625.0" y1="110.0" x2="2625.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="2625.0" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2620.0" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2630.0" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(2625.0,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-3" fill="#2F4F4F" stroke="#666" x="2550.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="2564.0" cy="110.0" r="7.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="2574.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="2625.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Issue resolved</text>
 </g>
 <g id="task-task_13">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="300.0" y="850.0" width="200.512" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="400.256" y="874.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Agent confirms resolution</text>
-  <text fill="#000000" x="400.256" y="902.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="400.256" y="923.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer, Agent</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="2825.0" y1="110.0" x2="2825.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="2825.0" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2820.0" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="2830.0" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(2825.0,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-4" fill="#800000" stroke="#666" x="2750.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="2764.0" cy="110.0" r="7.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="2774.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="2825.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Agent confirms resolution</text>
 </g>
 <g id="task-task_14">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="550.0" y="850.0" width="212.064" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="656.032" y="874.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Customer rates experience</text>
-  <text fill="#000000" x="656.032" y="902.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#666666" x="656.032" y="923.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Customer</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="3025.0" y1="110.0" x2="3025.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="3025.0" cy="300.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="3020.0" cy="295.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="3030.0" cy="295.0" r="1.5"/>
+    <path class="mouth" transform="translate(3025.0,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-4" fill="#800000" stroke="#666" x="2950.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="2964.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="3025.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Customer rates experience</text>
 </g>
 <g id="task-task_15">
-  <rect fill="#28a745" stroke="#000000" stroke-width="2" x="50.0" y="1050.0" width="182.752" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="141.376" y="1074.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Agent documents case</text>
-  <text fill="#000000" x="141.376" y="1102.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold">4</text>
-  <text fill="#666666" x="141.376" y="1123.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11">Agent, System</text>
+  <line class="task-line" stroke="#666" stroke-width="1px" x1="3225.0" y1="110.0" x2="3225.0" y2="450.0" stroke-dasharray="4 2"/>
+  <circle class="face" fill="#FFF8DC" stroke="#999" stroke-width="2" cx="3225.0" cy="330.0" r="15.0"/>
+  <g>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="3220.0" cy="325.0" r="1.5"/>
+    <circle fill="#666" stroke="#666" stroke-width="2" cx="3230.0" cy="325.0" r="1.5"/>
+    <path class="mouth" transform="translate(3225.0,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+  </g>
+  <rect class="task task-type-4" fill="#800000" stroke="#666" x="3150.0" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
+  <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="3164.0" cy="110.0" r="7.0"/>
+  <circle class="actor-2" fill="#00FFFF" stroke="#000" cx="3174.0" cy="110.0" r="7.0"/>
+  <text class="task" fill="#fff" x="3225.0" y="139.9" text-anchor="middle" font-family="&quot;Open Sans&quot;, sans-serif" font-size="14">Agent documents case</text>
 </g>
-<g id="arrow-flow_0">
-  <line stroke="#000000" stroke-width="2" x1="190.0" y1="90.0" x2="300.0" y2="90.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 300,90.0 L 291.33974596215563,95.0 M 300,90.0 L 291.33974596215563,85.0"/>
-</g>
-<g id="arrow-flow_1">
-  <line stroke="#000000" stroke-width="2" x1="453.392" y1="90.0" x2="550.0" y2="90.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 550,90.0 L 541.3397459621556,95.0 M 550,90.0 L 541.3397459621556,85.0"/>
-</g>
-<g id="arrow-flow_2">
-  <line stroke="#000000" stroke-width="2" x1="697.152" y1="90.0" x2="50.0" y2="290.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 50,290.0 L 56.79779616133385,282.66583560663145 M 50,290.0 L 59.75047076085536,292.21998196877917"/>
-</g>
-<g id="arrow-flow_3">
-  <line stroke="#000000" stroke-width="2" x1="190.0" y1="290.0" x2="300.0" y2="290.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 300,290.0 L 291.33974596215563,295.0 M 300,290.0 L 291.33974596215563,285.0"/>
-</g>
-<g id="arrow-flow_4">
-  <line stroke="#000000" stroke-width="2" x1="440.0" y1="290.0" x2="550.0" y2="290.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 550,290.0 L 541.3397459621556,295.0 M 550,290.0 L 541.3397459621556,285.0"/>
-</g>
-<g id="arrow-flow_5">
-  <line stroke="#000000" stroke-width="2" x1="730.96" y1="290.0" x2="50.0" y2="490.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 50,490.0 L 56.90028030006952,482.7621735458445 M 50,490.0 L 59.71828172751643,492.3569048060158"/>
-</g>
-<g id="arrow-flow_6">
-  <line stroke="#000000" stroke-width="2" x1="289.648" y1="490.0" x2="300.0" y2="490.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 300,490.0 L 291.33974596215563,495.0 M 300,490.0 L 291.33974596215563,485.0"/>
-</g>
-<g id="arrow-flow_7">
-  <line stroke="#000000" stroke-width="2" x1="504.94399999999996" y1="490.0" x2="550.0" y2="490.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 550,490.0 L 541.3397459621556,495.0 M 550,490.0 L 541.3397459621556,485.0"/>
-</g>
-<g id="arrow-flow_8">
-  <line stroke="#000000" stroke-width="2" x1="699.84" y1="490.0" x2="50.0" y2="690.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 50,690.0 L 56.80635278215909,682.6737757470307 M 50,690.0 L 59.74787270797261,692.231362289984"/>
-</g>
-<g id="arrow-flow_9">
-  <line stroke="#000000" stroke-width="2" x1="258.544" y1="690.0" x2="300.0" y2="690.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 300,690.0 L 291.33974596215563,695.0 M 300,690.0 L 291.33974596215563,685.0"/>
-</g>
-<g id="arrow-flow_10">
-  <line stroke="#000000" stroke-width="2" x1="484.528" y1="690.0" x2="550.0" y2="690.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 550,690.0 L 541.3397459621556,695.0 M 550,690.0 L 541.3397459621556,685.0"/>
-</g>
-<g id="arrow-flow_11">
-  <line stroke="#000000" stroke-width="2" x1="735.376" y1="690.0" x2="50.0" y2="890.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 50,890.0 L 56.91288530399028,882.7742116849527 M 50,890.0 L 59.71415889519493,892.37384012918"/>
-</g>
-<g id="arrow-flow_12">
-  <line stroke="#000000" stroke-width="2" x1="190.0" y1="890.0" x2="300.0" y2="890.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 300,890.0 L 291.33974596215563,895.0 M 300,890.0 L 291.33974596215563,885.0"/>
-</g>
-<g id="arrow-flow_13">
-  <line stroke="#000000" stroke-width="2" x1="500.512" y1="890.0" x2="550.0" y2="890.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 550,890.0 L 541.3397459621556,895.0 M 550,890.0 L 541.3397459621556,885.0"/>
-</g>
-<g id="arrow-flow_14">
-  <line stroke="#000000" stroke-width="2" x1="762.064" y1="890.0" x2="50.0" y2="1090.0"/>
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 50,1090.0 L 56.98557019793433,1082.8444560647195 M 50,1090.0 L 59.689667924815886,1092.4719092836904"/>
-</g>
+<text fill="#000000" x="150.0" y="25.0" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="bold">Customer Support Interaction Journey</text>
+<line stroke="black" stroke-width="4" x1="150.0" y1="200.0" x2="3346.0" y2="200.0"/>
+<path fill="black" d="M 3326,192 V 208 L 3350,200 Z"/>
 </svg>

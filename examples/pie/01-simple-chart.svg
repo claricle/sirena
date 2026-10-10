@@ -1,26 +1,27 @@
 <svg
- width="555.352"
- height="460.0"
- viewBox="0 0 555.352 460"
+ width="587.582"
+ height="450.0"
+ viewBox="0 0 587.582 450"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
-<text fill="#000000" x="250.0" y="40.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Market Share Distribution</text>
-<path id="slice-0" fill="#4472C4" stroke="#000000" stroke-width="2" d="M 250 200 L 250.0 50.0 A 150 150 0 0 1 318.098574960932 333.6509786282552 Z"/>
-<text fill="#000000" x="425.02658567158176" y="162.1798" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">43%</text>
-<path id="slice-1" fill="#ED7D31" stroke="#000000" stroke-width="2" d="M 250 200 L 318.098574960932 333.6509786282552 A 150 150 0 0 1 105.19275417500893 239.12622594348454 Z"/>
-<text fill="#000000" x="176.95964362008402" y="368.7148" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">28%</text>
-<path id="slice-2" fill="#A5A5A5" stroke="#000000" stroke-width="2" d="M 250 200 L 105.19275417500893 239.12622594348454 A 150 150 0 0 1 158.06394195205354 81.47674814364643 Z"/>
-<text fill="#000000" x="79.34165733687422" y="146.966" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">19%</text>
-<path id="slice-3" fill="#FFC000" stroke="#000000" stroke-width="2" d="M 250 200 L 158.06394195205354 81.47674814364643 A 150 150 0 0 1 249.99999999999997 50.0 Z"/>
-<text fill="#000000" x="191.69486472433294" y="33.9046" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">11%</text>
-<rect fill="#4472C4" stroke="#4472C4" x="460.0" y="156.0" width="18.0" height="18.0"/>
-<text fill="#000000" x="482.0" y="170.0" font-family="Arial, Helvetica, sans-serif" font-size="12">Product A</text>
-<rect fill="#ED7D31" stroke="#ED7D31" x="460.0" y="178.0" width="18.0" height="18.0"/>
-<text fill="#000000" x="482.0" y="192.0" font-family="Arial, Helvetica, sans-serif" font-size="12">Product B</text>
-<rect fill="#A5A5A5" stroke="#A5A5A5" x="460.0" y="200.0" width="18.0" height="18.0"/>
-<text fill="#000000" x="482.0" y="214.0" font-family="Arial, Helvetica, sans-serif" font-size="12">Product C</text>
-<rect fill="#FFC000" stroke="#FFC000" x="460.0" y="222.0" width="18.0" height="18.0"/>
-<text fill="#000000" x="482.0" y="236.0" font-family="Arial, Helvetica, sans-serif" font-size="12">Product D</text>
+<circle fill="none" stroke="#000000" stroke-width="2" cx="225.0" cy="225.0" r="186.0"/>
+<text fill="#000000" x="225.0" y="25.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="bold">Market Share Distribution</text>
+<path id="slice-0" fill="#4472C4" stroke="#000000" stroke-width="2" d="M 225 225 L 225.0 40.0 A 185 185 0 0 1 308.9882424518162 389.8362069748481 Z"/>
+<text fill="#000000" x="359.9163264551776" y="198.5595" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">43%</text>
+<path id="slice-1" fill="#ED7D31" stroke="#000000" stroke-width="2" d="M 225 225 L 308.9882424518162 389.8362069748481 A 185 185 0 0 1 46.404396815844336 273.25567866363093 Z"/>
+<text fill="#000000" x="168.69805862381477" y="357.7635" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">28%</text>
+<path id="slice-2" fill="#A5A5A5" stroke="#000000" stroke-width="2" d="M 225 225 L 46.404396815844336 273.25567866363093 A 185 185 0 0 1 111.61219507419935 78.82132271049727 Z"/>
+<text fill="#000000" x="93.45086086384055" y="186.8321" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">19%</text>
+<path id="slice-3" fill="#FFC000" stroke="#000000" stroke-width="2" d="M 225 225 L 111.61219507419935 78.82132271049727 A 185 185 0 0 1 224.99999999999997 40.0 Z"/>
+<text fill="#000000" x="180.05645822500662" y="99.6807" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17">11%</text>
+<rect fill="#4472C4" stroke="#4472C4" x="441.0" y="181.0" width="18.0" height="18.0"/>
+<text fill="#000000" x="463.0" y="195.0" font-family="Arial, Helvetica, sans-serif" font-size="17">Product A</text>
+<rect fill="#ED7D31" stroke="#ED7D31" x="441.0" y="203.0" width="18.0" height="18.0"/>
+<text fill="#000000" x="463.0" y="217.0" font-family="Arial, Helvetica, sans-serif" font-size="17">Product B</text>
+<rect fill="#A5A5A5" stroke="#A5A5A5" x="441.0" y="225.0" width="18.0" height="18.0"/>
+<text fill="#000000" x="463.0" y="239.0" font-family="Arial, Helvetica, sans-serif" font-size="17">Product C</text>
+<rect fill="#FFC000" stroke="#FFC000" x="441.0" y="247.0" width="18.0" height="18.0"/>
+<text fill="#000000" x="463.0" y="261.0" font-family="Arial, Helvetica, sans-serif" font-size="17">Product D</text>
 </svg>
