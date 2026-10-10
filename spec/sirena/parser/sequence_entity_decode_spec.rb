@@ -3,8 +3,8 @@
 require "spec_helper"
 require "sirena/parser/sequence"
 
-# Texts measured with mmdc: character references are decoded in actor
-# ids, `as` aliases and notes before anything is drawn.
+# Texts measured with mmdc: character references are decoded in the
+# text drawn for an actor (alias or id) and in notes; ids stay as written.
 module SequenceEntityHelpers
   def parse_diagram(body)
     described_class.new.parse("sequenceDiagram\n#{body}\n")
@@ -33,13 +33,17 @@ RSpec.describe Sirena::Parser::Sequence do
   end
 
   it "decodes a bare actor id used as its own label" do
-    expect(label_of("participant K#65;", "KA")).to eq("KA")
+    expect(label_of("participant K#65;", "K#65;")).to eq("KA")
   end
 
-  it "treats a referenced and a decoded id as one actor" do
-    diagram = parse_diagram("participant E#65;\nEA->>B: hi")
+  it "decodes the label of an actor named only by a message" do
+    expect(label_of("K#65;->>B: hi", "K#65;")).to eq("KA")
+  end
 
-    expect(diagram.participants.map(&:id)).to eq(%w[EA B])
+  it "keeps an id as written, as mmdc keeps two actors" do
+    diagram = parse_diagram("participant EA\nE#65;->>B: hi")
+
+    expect(diagram.participants.map(&:id)).to eq(%w[EA E#65; B])
   end
 
   it "decodes the text of a note" do
@@ -48,10 +52,10 @@ RSpec.describe Sirena::Parser::Sequence do
     expect(diagram.notes.first.text).to eq("n;1 &")
   end
 
-  it "decodes a note's actor ids" do
+  it "reads a note's actor name with a reference in it" do
     diagram = parse_diagram("Note over A#65;: n")
 
-    expect(diagram.notes.first.participant_ids).to eq(%w[AA])
+    expect(diagram.notes.first.participant_ids).to eq(%w[A#65;])
   end
 
   it "leaves message text for display to decode once" do
@@ -60,9 +64,9 @@ RSpec.describe Sirena::Parser::Sequence do
     expect(diagram.messages.first.message_text).to eq("#35;59")
   end
 
-  it "decodes an id in activate" do
-    diagram = parse_diagram("activate K#65;\nKA->>B: hi")
+  it "reads an activate target with a reference in it" do
+    diagram = parse_diagram("activate K#65;\nB->>B: hi")
 
-    expect(diagram.participants.map(&:id)).to eq(%w[KA B])
+    expect(diagram.participants.map(&:id)).to eq(%w[K#65; B])
   end
 end
