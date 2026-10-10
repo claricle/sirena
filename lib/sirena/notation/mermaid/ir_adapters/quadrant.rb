@@ -66,7 +66,7 @@ module Sirena
           def point_placements(point, index)
             values = {
               x_value: point.x, y_value: point.y,
-              marker_size: point.radius || 6,
+              marker_size: point.radius || 5,
               stroke_width: point.stroke_width || 2,
               fill_color: point.color, stroke_color: point.stroke_color
             }
