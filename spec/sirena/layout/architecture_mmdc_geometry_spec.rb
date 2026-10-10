@@ -32,6 +32,17 @@ RSpec.describe Sirena::Layout::Architecture do
     )
   end
 
+  def pair_scene(from_side, to_side)
+    scene_for(services: [service("a"), service("b")],
+              edges: [edge("a", "b", from_side, to_side)])
+  end
+
+  def pair_centres(from_side, to_side)
+    nodes(pair_scene(from_side, to_side)).values_at("a", "b").map do |node|
+      centre(node)
+    end
+  end
+
   def nodes(scene)
     scene.children.to_h { |node| [node.id, node] }
   end
@@ -53,23 +64,17 @@ RSpec.describe Sirena::Layout::Architecture do
   end
 
   it "places the target to the right when the source leaves on R" do
-    scene = scene_for(services: [service("a"), service("b")],
-                      edges: [edge("a", "b", "R", "L")])
-    left, right = nodes(scene).values_at("a", "b").map { |n| centre(n) }
+    left, right = pair_centres("R", "L")
     expect([right[0] - left[0], right[1]]).to eq([201, left[1]])
   end
 
   it "places the target below when the source leaves on B" do
-    scene = scene_for(services: [service("a"), service("b")],
-                      edges: [edge("a", "b", "B", "T")])
-    top, bottom = nodes(scene).values_at("a", "b").map { |n| centre(n) }
+    top, bottom = pair_centres("B", "T")
     expect([bottom[1] - top[1], bottom[0]]).to eq([201, top[0]])
   end
 
   it "draws an edge between facing sides as one straight segment" do
-    scene = scene_for(services: [service("a"), service("b")],
-                      edges: [edge("a", "b", "R", "L")])
-    section = scene.edges.first.sections.first
+    section = pair_scene("R", "L").edges.first.sections.first
     expect([section.bend_points, section.start_point.y,
             section.end_point.y]).to eq([[], 60, 60])
   end
@@ -90,17 +95,19 @@ RSpec.describe Sirena::Layout::Architecture do
       .to eq([112, 112, 98])
   end
 
-  it "keeps a group box off services that are not in it" do
-    scene = scene_for(
-      services: [service("in", group_id: "g"), service("out"),
-                 service("also_in", group_id: "g")],
-      groups: [group("g")],
-      edges: [edge("in", "out", "R", "L"), edge("out", "also_in", "R", "L")],
-    )
-    box = nodes(scene)["g"]
-    out = nodes(scene)["out"]
-    overlap = box.x < out.x + out.width && out.x < box.x + box.width &&
-              box.y < out.y + out.height && out.y < box.y + box.height
-    expect(overlap).to be(false)
+  context "with a service between two members of a group" do
+    let(:by_id) do
+      nodes(scene_for(
+              services: [service("in", group_id: "g"), service("out"),
+                         service("also_in", group_id: "g")],
+              groups: [group("g")],
+              edges: [edge("in", "out", "R", "L"),
+                      edge("out", "also_in", "R", "L")],
+            ))
+    end
+
+    it "keeps the group box off services that are not in it" do
+      expect(BoxOverlap.overlap?(by_id["g"], by_id["out"])).to be(false)
+    end
   end
 end

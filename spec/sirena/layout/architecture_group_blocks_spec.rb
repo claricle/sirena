@@ -26,21 +26,16 @@ RSpec.describe Sirena::Layout::Architecture do
     end
   end
   let(:edges) do
-    [["a", "tail", "R", "L"], ["tail", "head", "R", "L"],
-     ["head", "c", "B", "T"], ["c", "d", "L", "R"]].map do |from, to, from_side, to_side|
+    [%w[a tail R L], %w[tail head R L], %w[head c B T], %w[c d L R]]
+      .map do |from, to, from_side, to_side|
       arch::Edge.new(from_id: from, to_id: to, from_position: from_side,
                      to_position: to_side)
     end
   end
   let(:by_id) { scene.children.to_h { |node| [node.id, node] } }
 
-  def overlap?(first, second)
-    first.x < second.x + second.width && second.x < first.x + first.width &&
-      first.y < second.y + second.height && second.y < first.y + first.height
-  end
-
   it "keeps the two group boxes apart" do
-    expect(overlap?(by_id["left"], by_id["right"])).to be(false)
+    expect(BoxOverlap.overlap?(by_id["left"], by_id["right"])).to be(false)
   end
 
   it "keeps the group joined on R to the left of the other" do
@@ -49,6 +44,6 @@ RSpec.describe Sirena::Layout::Architecture do
   end
 
   it "keeps every service inside its own group box only" do
-    expect(overlap?(by_id["d"], by_id["left"])).to be(false)
+    expect(BoxOverlap.overlap?(by_id["d"], by_id["left"])).to be(false)
   end
 end
