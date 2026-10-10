@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::Block do
+RSpec.describe Sirena::Renderer::Block, :aggregate_failures do
   subject(:renderer) { described_class.new }
 
   let(:source) { File.read("examples/block/01-basic-blocks.mmd") }

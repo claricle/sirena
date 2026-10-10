@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::StateDiagram do
+RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
   let(:renderer) { described_class.new }
   let(:expected_hook_calls) do
     {

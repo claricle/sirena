@@ -4,7 +4,7 @@ require "spec_helper"
 require "open3"
 require "rbconfig"
 
-RSpec.describe Sirena::Theme do
+RSpec.describe Sirena::Theme, :aggregate_failures do
   describe "sub-model load order" do
     let(:sub_models) do
       %w[

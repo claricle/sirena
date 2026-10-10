@@ -5,7 +5,7 @@ require "sirena/renderer/quadrant"
 require "sirena/layout/quadrant"
 require "sirena/parser/quadrant"
 
-RSpec.describe Sirena::Renderer::Quadrant do
+RSpec.describe Sirena::Renderer::Quadrant, :aggregate_failures do
   let(:renderer) { described_class.new }
 
   describe "#render" do

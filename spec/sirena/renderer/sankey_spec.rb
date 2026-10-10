@@ -5,7 +5,7 @@ require "sirena/renderer/sankey"
 require "sirena/layout/sankey"
 require "sirena/parser/sankey"
 
-RSpec.describe Sirena::Renderer::Sankey do
+RSpec.describe Sirena::Renderer::Sankey, :aggregate_failures do
   let(:renderer) { described_class.new }
   let(:parser) { Sirena::Parser::Sankey.new }
   let(:layout) { Sirena::Layout::Sankey.new }
