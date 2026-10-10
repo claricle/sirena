@@ -145,8 +145,6 @@ module Sirena
           end
 
           def reserve_id(preferred, occupied)
-            preferred = preferred.to_s
-            preferred = "item" if preferred.empty?
             candidate = preferred
             suffix = 2
             while occupied.include?(candidate)
