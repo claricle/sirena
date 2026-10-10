@@ -5,6 +5,55 @@ require "sirena/parser/sequence"
 require "rexml/document"
 
 module SequenceSpecHelpers
+  CASE_026 = "026_parser_should_handle_semicolons_25"
+  CASE_026_SHAPE = [
+    ["Hello Bob, how are you?", "I am good thanks!"],
+    ["Bob thinks"],
+  ].freeze
+
+  NESTED_ACTIVATIONS = <<~MERMAID
+    sequenceDiagram
+        A->>+B: one
+        A->>+B: two
+        B-->>-A: close one
+        B-->>-A: close two
+  MERMAID
+
+  INTERLEAVED_ACTIVATIONS = <<~MERMAID
+    sequenceDiagram
+        A->>+B: open b
+        B->>+C: open c
+        C-->>-B: close c
+        B-->>-A: close b
+  MERMAID
+
+  CRITICAL_OPTIONS = <<~MERMAID
+    sequenceDiagram
+    critical Establish a connection to the DB
+    Service-->DB: connect
+    option Network timeout
+    Service-->Service: Log error
+    option Credentials rejected
+    Service-->Service: Log different error
+    end
+  MERMAID
+
+  CREATE_ACROSS_LOOP = <<~MERMAID
+    sequenceDiagram
+    create participant Carl
+    loop Retry
+    A->>Carl: hi
+    end
+  MERMAID
+
+  DESTROY_ACROSS_LOOP = <<~MERMAID
+    sequenceDiagram
+    destroy Bob
+    loop Retry
+    A->>C: hi
+    end
+  MERMAID
+
   def message_for(arrow, suffix = "")
     source = if suffix == "-"
                "sequenceDiagram\n    A->>+B: open\n    " \
@@ -21,6 +70,61 @@ module SequenceSpecHelpers
   # the spaced form for the deactivation.
   def gap(arrow)
     arrow.end_with?("-") ? " " : ""
+  end
+
+  def activation_spans(source)
+    parser.parse(source).activations.map do |activation|
+      [activation.participant_id, activation.start_index, activation.end_index]
+    end
+  end
+
+  def message_details(diagram)
+    diagram.messages.map do |message|
+      [message.from_id, message.to_id, message.message_text]
+    end
+  end
+
+  def message_routes(diagram)
+    diagram.messages.map { |message| [message.from_id, message.to_id] }
+  end
+
+  def sequence_source(*statements)
+    (["sequenceDiagram"] + statements + [""]).join("\n")
+  end
+
+  def parse_sequence(*statements)
+    parser.parse(sequence_source(*statements))
+  end
+
+  def text_shape(diagram)
+    [diagram.messages.map(&:message_text), diagram.notes.map(&:text)]
+  end
+
+  def sequence_fixture(case_name)
+    File.read(
+      File.expand_path("../../mermaid/sequence/#{case_name}.mmd", __dir__),
+    )
+  end
+
+  def expect_semicolon_split(source, path, label, messages)
+    tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
+    diagram = parser.parse(source)
+
+    expect(tree[1].dig(*path).to_s).to eq(label)
+    expect(message_details(diagram)).to eq(messages)
+  end
+
+  def reused_builder_diagram(first_source)
+    builder = Sirena::Parser::Builders::Sequence.new
+    grammar = Sirena::Parser::Grammars::Sequence.new
+
+    builder.apply(grammar.parse(first_source))
+    builder.apply(grammar.parse("sequenceDiagram\nA->>B: m\n"))
+  end
+
+  def expect_parse_error(source, message)
+    expect { parser.parse(source) }
+      .to raise_error(Sirena::Parser::ParseError, message)
   end
 
   module_function
@@ -63,19 +167,19 @@ module SequenceSpecHelpers
   end
 end
 
-RSpec.describe Sirena::Parser::Sequence do
+RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
   include SequenceSpecHelpers
 
   let(:parser) { described_class.new }
 
   describe "#parse arrow set" do
-    SequenceSpecHelpers.arrows.each do |arrow, (line_style, head_style, head_side)|
-      it "parses #{arrow} as #{line_style}/#{head_style} on the #{head_side}" do
+    SequenceSpecHelpers.arrows.each do |arrow, (line, head, side)|
+      it "parses #{arrow} as #{line}/#{head} on the #{side}" do
         message = message_for(arrow)
 
         expect(
           [message.line_style, message.head_style, message.head_side],
-        ).to eq([line_style, head_style, head_side])
+        ).to eq([line, head, side])
       end
 
       # A mis-read arrow still parses — the leftover characters just land
@@ -88,7 +192,9 @@ RSpec.describe Sirena::Parser::Sequence do
     end
 
     it "puts a head on both ends only for the << >> arrows" do
-      both = SequenceSpecHelpers.arrows.keys.select { |a| message_for(a).bidirectional? }
+      both = SequenceSpecHelpers.arrows.keys.select do |a|
+        message_for(a).bidirectional?
+      end
 
       expect(both).to eq(["<<->>", "<<-->>"])
     end
@@ -174,38 +280,16 @@ RSpec.describe Sirena::Parser::Sequence do
     it "closes the most recent activation still open" do
       # Two opens then two closes is ordinary mermaid. Reading only the
       # last entry closed the same activation twice.
-      source = <<~MERMAID
-        sequenceDiagram
-            A->>+B: one
-            A->>+B: two
-            B-->>-A: close one
-            B-->>-A: close two
-      MERMAID
-
       # The count alone passes with FIFO too: two opens and two closes
       # give two activations either way. The end indexes are the tell —
       # LIFO closes the inner one first.
-      spans = parser.parse(source).activations.map do |a|
-        [a.participant_id, a.start_index, a.end_index]
-      end
-
-      expect(spans).to eq([["B", 1, 2], ["B", 0, 3]])
+      expect(activation_spans(SequenceSpecHelpers::NESTED_ACTIVATIONS))
+        .to eq([["B", 1, 2], ["B", 0, 3]])
     end
 
     it "closes the most recent when two participants interleave" do
-      source = <<~MERMAID
-        sequenceDiagram
-            A->>+B: open b
-            B->>+C: open c
-            C-->>-B: close c
-            B-->>-A: close b
-      MERMAID
-
-      spans = parser.parse(source).activations.map do |a|
-        [a.participant_id, a.start_index, a.end_index]
-      end
-
-      expect(spans).to eq([["C", 1, 2], ["B", 0, 3]])
+      expect(activation_spans(SequenceSpecHelpers::INTERLEAVED_ACTIVATIONS))
+        .to eq([["C", 1, 2], ["B", 0, 3]])
     end
 
     it "rejects deactivating a participant with nothing open" do
@@ -294,11 +378,12 @@ RSpec.describe Sirena::Parser::Sequence do
       expect(diagram.messages.map(&:message_text)).to eq(%w[hi bye])
     end
 
-    it "treats a doubled inline semicolon as an empty statement, not a syntax error" do
+    it "treats a doubled inline semicolon as an empty statement, " \
+       "not a syntax error" do
       # Guards `statements`' tolerance for a bare `;` with nothing between
       # it and the previous one: reverting to `(statement >> ws?).repeat(1)`
       # turns this red (mermaid 11.16.1 accepts it, giving 2 messages).
-      diagram = parser.parse("sequenceDiagram\nAlice->>Bob: m;;Alice->>Bob: m2\n")
+      diagram = parse_sequence("Alice->>Bob: m;;Alice->>Bob: m2")
 
       expect(diagram.messages.map(&:message_text)).to eq(%w[m m2])
     end
@@ -312,41 +397,37 @@ RSpec.describe Sirena::Parser::Sequence do
     end
 
     it "matches case 026's full shape: two messages and one note" do
-      source = File.read(
-        File.expand_path(
-          "../../mermaid/sequence/026_parser_should_handle_semicolons_25.mmd", __dir__
-        ),
-      )
+      diagram = parser.parse(sequence_fixture(SequenceSpecHelpers::CASE_026))
 
-      diagram = parser.parse(source)
-
-      expect(diagram.messages.map(&:message_text))
-        .to eq(["Hello Bob, how are you?", "I am good thanks!"])
-      expect(diagram.notes.map(&:text)).to eq(["Bob thinks"])
+      expect(text_shape(diagram)).to eq(SequenceSpecHelpers::CASE_026_SHAPE)
     end
 
-    it "keeps a character reference in message text intact, not split at its semicolon" do
-      diagram = parser.parse("sequenceDiagram\nA->>B: I #9829; you!;A->>C: bye\n")
+    it "keeps a character reference in message text intact, " \
+       "not split at its semicolon" do
+      diagram = parse_sequence("A->>B: I #9829; you!;A->>C: bye")
 
       expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
         .to eq([["A", "B", "I #9829; you!"], %w[A C bye]])
     end
 
-    it "treats a trailing # comment on message text as running to line end, ; included" do
+    it "treats a trailing # comment on message text as running to line " \
+       "end, ; included" do
       diagram = parser.parse("sequenceDiagram\nA->>B: hi # c; B->>C: yo\n")
 
       expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
         .to eq([%w[A B hi]])
     end
 
-    it "treats a trailing # comment on a note's text as running to line end, ; included" do
-      diagram = parser.parse("sequenceDiagram\nNote over A: hi # c; B->>C: yo\n")
+    it "treats a trailing # comment on a note's text as running to line " \
+       "end, ; included" do
+      diagram = parse_sequence("Note over A: hi # c; B->>C: yo")
 
       expect(diagram.notes.map(&:text)).to eq(["hi"])
       expect(diagram.messages).to be_empty
     end
 
-    it "keeps a literal %% inside message and note text, not stripped as a comment opener" do
+    it "keeps a literal %% inside message and note text, not stripped " \
+       "as a comment opener" do
       # `text_run` (unlike the older `message_text`/`note_text` this
       # replaced) has no special case for `%%` — only `content_boundary`'s
       # own `#` handling stops a capture early. Guards `message_text`/
@@ -373,7 +454,8 @@ RSpec.describe Sirena::Parser::Sequence do
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "accepts a message whose text ends in a bare \\r with no following newline, at EOF" do
+    it "accepts a message whose text ends in a bare \\r with no following " \
+       "newline, at EOF" do
       # `content_boundary`'s `(str("\r") >> eof)` alternative is what makes
       # `text_run` stopping at every `\r` correct rather than a dead end at
       # true EOF — dropping it turns this red (verified via a targeted
@@ -389,14 +471,16 @@ RSpec.describe Sirena::Parser::Sequence do
       expect(diagram.messages.last.message_text).to eq("a")
     end
 
-    it "accepts a note whose text ends in a bare \\r with no following newline, at EOF" do
+    it "accepts a note whose text ends in a bare \\r with no following " \
+       "newline, at EOF" do
       # Same guard as above, applied to `note_statement`.
       diagram = parser.parse("sequenceDiagram\nNote over A: a\r")
 
       expect(diagram.notes.last.text).to eq("a")
     end
 
-    it "treats a trailing # comment on an alt's opening label as running to line end, ; included" do
+    it "treats a trailing # comment on an alt's opening label as running " \
+       "to line end, ; included" do
       # Guards `content_boundary` consuming `trailing_comment` before
       # checking for `;`/line end: reverting content_boundary to its
       # pre-comment-aware body (`line_end | semicolon`, the actual bug this
@@ -404,19 +488,21 @@ RSpec.describe Sirena::Parser::Sequence do
       # though — origin/main's `alt_label` never splits at `;` at all, so
       # it swallows the whole line (fake message included) and lands on
       # the same single real message by a different, cruder route.
-      diagram = parser.parse("sequenceDiagram\nalt x # c; B->>C: yo\nA->>B: m\nend\n")
+      diagram = parse_sequence("alt x # c; B->>C: yo", "A->>B: m", "end")
 
       expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([%w[A B]])
     end
 
-    it "treats a trailing # comment on a par's opening label as running to line end, ; included" do
+    it "treats a trailing # comment on a par's opening label as running " \
+       "to line end, ; included" do
       # Same guard as above, applied to `par`.
-      diagram = parser.parse("sequenceDiagram\npar x # c; B->>C: yo\nA->>B: m\nend\n")
+      diagram = parse_sequence("par x # c; B->>C: yo", "A->>B: m", "end")
 
       expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([%w[A B]])
     end
 
-    it "splits an alt's opening label at an inline semicolon, matching case 053" do
+    it "splits an alt's opening label at an inline semicolon, matching " \
+       "case 053" do
       source = "sequenceDiagram\nalt;A->>B: m\nend\n"
 
       diagram = parser.parse(source)
@@ -424,7 +510,8 @@ RSpec.describe Sirena::Parser::Sequence do
       expect(diagram.messages.map(&:message_text)).to eq(["m"])
     end
 
-    it "splits a par's opening label at an inline semicolon, matching case 054" do
+    it "splits a par's opening label at an inline semicolon, matching " \
+       "case 054" do
       source = "sequenceDiagram\npar;A->>B: m\nend\n"
 
       diagram = parser.parse(source)
@@ -432,7 +519,8 @@ RSpec.describe Sirena::Parser::Sequence do
       expect(diagram.messages.map(&:message_text)).to eq(["m"])
     end
 
-    it "parses a bare hash-comment line left over after a label's semicolon split" do
+    it "parses a bare hash-comment line left over after a label's " \
+       "semicolon split" do
       # Guards `hash_comment_statement`, which doesn't exist on origin/main
       # at all: deleting the rule turns this red. It can't tell HEAD apart
       # from origin/main, though — origin/main's `alt_label` never splits
@@ -451,17 +539,20 @@ RSpec.describe Sirena::Parser::Sequence do
       # "splits else_label at an inline semicolon" below for that. This
       # case only pins that a punctuation-heavy else label parses at all.
       source = "sequenceDiagram\nalt -:<>,;# comment\nA->>B: m\n" \
-                "else ,<>:-#; comment\nA->>B: m\nend\n"
+               "else ,<>:-#; comment\nA->>B: m\nend\n"
 
       diagram = parser.parse(source)
 
       expect(diagram.messages.map(&:message_text)).to eq(%w[m m])
     end
 
-    it "reads a message whose sender opens with a character reference, not as a comment line" do
+    it "reads a message whose sender opens with a character reference, " \
+       "not as a comment line" do
       diagram = parser.parse("sequenceDiagram\n#9829;B->>C: m\n")
 
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([["#9829;B", "C"]])
+      expect(diagram.messages.map do |m|
+        [m.from_id, m.to_id]
+      end).to eq([["#9829;B", "C"]])
     end
   end
 
@@ -471,7 +562,8 @@ RSpec.describe Sirena::Parser::Sequence do
   # "#parse inline semicolons in block-opening and continuation labels"
   # instead). Check `rule(:statement)` before adding a new statement kind.
   describe "#parse inline semicolons across every dispatched statement kind" do
-    it "keeps title_statement's own text and the message that follows a semicolon" do
+    it "keeps title_statement's own text and the message that follows " \
+       "a semicolon" do
       diagram = parser.parse("sequenceDiagram\ntitle T;A->>B: m\n")
 
       expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
@@ -484,48 +576,55 @@ RSpec.describe Sirena::Parser::Sequence do
     # swallowed into the (unrendered) title text. Sirena's `rest_of_line`-
     # based `acc_title_statement`/`acc_descr_statement` already match that
     # and are untouched by this diff — nothing here needed fixing.
-    it "swallows an inline semicolon into acc_title_statement's text, matching mermaid" do
+    it "swallows an inline semicolon into acc_title_statement's text, " \
+       "matching mermaid" do
       diagram = parser.parse("sequenceDiagram\naccTitle: T;A->>B: m\n")
 
       expect(diagram.messages).to be_empty
     end
 
-    it "swallows an inline semicolon into acc_descr_statement's text, matching mermaid" do
+    it "swallows an inline semicolon into acc_descr_statement's text, " \
+       "matching mermaid" do
       diagram = parser.parse("sequenceDiagram\naccDescr: T;A->>B: m\n")
 
       expect(diagram.messages).to be_empty
     end
 
-    it "keeps acc_descr_block's own text and the message that follows a semicolon" do
+    it "keeps acc_descr_block's own text and the message that follows " \
+       "a semicolon" do
       diagram = parser.parse("sequenceDiagram\naccDescr {T};A->>B: m\n")
 
       expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
         .to eq([%w[A B m]])
     end
 
-    it "keeps autonumber_statement's own effect and the message that follows a semicolon" do
+    it "keeps autonumber_statement's own effect and the message that " \
+       "follows a semicolon" do
       diagram = parser.parse("sequenceDiagram\nautonumber;A->>B: m\n")
 
       expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
         .to eq([%w[A B m]])
     end
 
-    it "labels a create_statement's alias and keeps the message that follows a semicolon" do
-      diagram = parser.parse("sequenceDiagram\ncreate participant B as Bee;A->>B: m\n")
+    it "labels a create_statement's alias and keeps the message that " \
+       "follows a semicolon" do
+      diagram = parse_sequence("create participant B as Bee;A->>B: m")
 
       expect(diagram.find_participant("B").label).to eq("Bee")
       expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
         .to eq([%w[A B m]])
     end
 
-    it "resolves a destroy_statement's target and keeps the message that follows a semicolon" do
-      diagram = parser.parse("sequenceDiagram\nparticipant B\ndestroy B;A->>B: m\n")
+    it "resolves a destroy_statement's target and keeps the message that " \
+       "follows a semicolon" do
+      diagram = parse_sequence("participant B", "destroy B;A->>B: m")
 
       expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
         .to eq([%w[A B m]])
     end
 
-    it "declares a links_statement's target and keeps the message that follows a semicolon" do
+    it "declares a links_statement's target and keeps the message that " \
+       "follows a semicolon" do
       diagram = parser.parse("sequenceDiagram\nlinks A: {};A->>B: m\n")
 
       expect(diagram.participants.map(&:id)).to eq(%w[A B])
@@ -533,15 +632,17 @@ RSpec.describe Sirena::Parser::Sequence do
         .to eq([%w[A B m]])
     end
 
-    it "declares two participant_declarations and keeps the message after the second semicolon" do
-      diagram = parser.parse("sequenceDiagram\nparticipant A;participant B;A->>B: m\n")
+    it "declares two participant_declarations and keeps the message after " \
+       "the second semicolon" do
+      diagram = parse_sequence("participant A;participant B;A->>B: m")
 
       expect(diagram.participants.map(&:id)).to eq(%w[A B])
       expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
         .to eq([%w[A B m]])
     end
 
-    it "declares an actor_declaration and keeps the message that follows a semicolon" do
+    it "declares an actor_declaration and keeps the message that follows " \
+       "a semicolon" do
       diagram = parser.parse("sequenceDiagram\nactor B;A->>B: m\n")
 
       expect(diagram.find_participant("B").actor_type).to eq("actor")
@@ -549,14 +650,14 @@ RSpec.describe Sirena::Parser::Sequence do
         .to eq([%w[A B m]])
     end
 
-    it "keeps a note_statement's own text and the message that follows a semicolon" do
-      diagram = parser.parse(
-        "sequenceDiagram\nparticipant A\nparticipant B\nNote over A: n;A->>B: m\n",
+    it "keeps a note_statement's own text and the message that follows " \
+       "a semicolon" do
+      diagram = parse_sequence(
+        "participant A", "participant B", "Note over A: n;A->>B: m"
       )
 
-      expect(diagram.notes.map(&:text)).to eq(["n"])
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[A B m]])
+      expect([diagram.notes.map(&:text), message_details(diagram)])
+        .to eq([["n"], [%w[A B m]]])
     end
 
     # `activate`/`deactivate` share this exact shape (measured against
@@ -564,14 +665,18 @@ RSpec.describe Sirena::Parser::Sequence do
     # `line_end` terminator is untouched by this diff (`git diff
     # f532168e HEAD` — identical to origin/main) — pre-existing, same
     # status as singular `link`, out of scope here.
-    it "documents activation_command's inline semicolon as a known, pre-existing gap" do
+    it "documents activation_command's inline semicolon as a known, " \
+       "pre-existing gap" do
       source = "sequenceDiagram\nparticipant A\nactivate A;A->>B: m\n"
 
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "documents deactivation_command's inline semicolon as a known, pre-existing gap" do
-      source = "sequenceDiagram\nparticipant A\nactivate A\ndeactivate A;A->>B: m\n"
+    it "documents deactivation_command's inline semicolon as a known, " \
+       "pre-existing gap" do
+      source = sequence_source(
+        "participant A", "activate A", "deactivate A;A->>B: m"
+      )
 
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
@@ -582,115 +687,74 @@ RSpec.describe Sirena::Parser::Sequence do
   # through the full parser — checking only one of the two would miss a
   # regression that either swallows "lost" into the label or drops the
   # message. `rect` is excluded: it has no rule in this grammar at all.
-  describe "#parse inline semicolons in block-opening and continuation labels" do
+  describe "#parse inline semicolons in block-opening and continuation " \
+           "labels" do
     it "splits box_label at an inline semicolon" do
       source = "sequenceDiagram\nbox B;A->>B: lost\nend\n"
 
-      tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
-      diagram = parser.parse(source)
-
-      expect(tree[1][:box_label].to_s).to eq("B")
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[A B lost]])
+      expect_semicolon_split(source, [:box_label], "B", [%w[A B lost]])
     end
 
     it "splits loop_label at an inline semicolon" do
       source = "sequenceDiagram\nloop L;A->>B: lost\nend\n"
 
-      tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
-      diagram = parser.parse(source)
-
-      expect(tree[1][:loop_label].to_s).to eq("L")
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[A B lost]])
+      expect_semicolon_split(source, [:loop_label], "L", [%w[A B lost]])
     end
 
     it "splits alt_label at an inline semicolon" do
       source = "sequenceDiagram\nalt X;A->>B: lost\nend\n"
 
-      tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
-      diagram = parser.parse(source)
-
-      expect(tree[1][:alt_label].to_s).to eq("X")
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[A B lost]])
+      expect_semicolon_split(source, [:alt_label], "X", [%w[A B lost]])
     end
 
     it "splits else_label at an inline semicolon" do
       source = "sequenceDiagram\nalt X\nC->>D: k1\nelse Y;A->>B: lost\nend\n"
 
-      tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
-      diagram = parser.parse(source)
+      path = [:else_blocks, 0, :else_label]
 
-      expect(tree[1][:else_blocks].first[:else_label].to_s).to eq("Y")
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[C D k1], %w[A B lost]])
+      expect_semicolon_split(source, path, "Y", [%w[C D k1], %w[A B lost]])
     end
 
     it "splits opt_label at an inline semicolon" do
       source = "sequenceDiagram\nopt O;A->>B: lost\nend\n"
 
-      tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
-      diagram = parser.parse(source)
-
-      expect(tree[1][:opt_label].to_s).to eq("O")
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[A B lost]])
+      expect_semicolon_split(source, [:opt_label], "O", [%w[A B lost]])
     end
 
     it "splits par_label at an inline semicolon" do
       source = "sequenceDiagram\npar X;A->>B: lost\nend\n"
 
-      tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
-      diagram = parser.parse(source)
-
-      expect(tree[1][:par_label].to_s).to eq("X")
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[A B lost]])
+      expect_semicolon_split(source, [:par_label], "X", [%w[A B lost]])
     end
 
     it "splits and_label at an inline semicolon" do
       source = "sequenceDiagram\npar X\nC->>D: k1\nand Y;A->>B: lost\nend\n"
 
-      tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
-      diagram = parser.parse(source)
+      path = [:and_blocks, 0, :and_label]
 
-      expect(tree[1][:and_blocks].first[:and_label].to_s).to eq("Y")
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[C D k1], %w[A B lost]])
+      expect_semicolon_split(source, path, "Y", [%w[C D k1], %w[A B lost]])
     end
 
     it "splits critical_label at an inline semicolon" do
       source = "sequenceDiagram\ncritical X;A->>B: lost\nend\n"
 
-      tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
-      diagram = parser.parse(source)
-
-      expect(tree[1][:critical_label].to_s).to eq("X")
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[A B lost]])
+      expect_semicolon_split(source, [:critical_label], "X", [%w[A B lost]])
     end
 
     it "splits option_label at an inline semicolon (H1)" do
-      source = "sequenceDiagram\ncritical X\nC->>D: k1\noption Y;A->>B: lost\nend\n"
+      source = sequence_source(
+        "critical X", "C->>D: k1", "option Y;A->>B: lost", "end"
+      )
 
-      tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
-      diagram = parser.parse(source)
+      path = [:option_blocks, 0, :option_label]
 
-      expect(tree[1][:option_blocks].first[:option_label].to_s).to eq("Y")
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[C D k1], %w[A B lost]])
+      expect_semicolon_split(source, path, "Y", [%w[C D k1], %w[A B lost]])
     end
 
     it "splits break_label at an inline semicolon" do
       source = "sequenceDiagram\nbreak Br;A->>B: lost\nend\n"
 
-      tree = Sirena::Parser::Grammars::Sequence.new.parse(source)
-      diagram = parser.parse(source)
-
-      expect(tree[1][:break_label].to_s).to eq("Br")
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
-        .to eq([%w[A B lost]])
+      expect_semicolon_split(source, [:break_label], "Br", [%w[A B lost]])
     end
   end
 
@@ -721,19 +785,9 @@ RSpec.describe Sirena::Parser::Sequence do
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "parses a critical block with two option blocks, matching case 041's shape" do
-      source = <<~MERMAID
-        sequenceDiagram
-        critical Establish a connection to the DB
-        Service-->DB: connect
-        option Network timeout
-        Service-->Service: Log error
-        option Credentials rejected
-        Service-->Service: Log different error
-        end
-      MERMAID
-
-      diagram = parser.parse(source)
+    it "parses a critical block with two option blocks, matching case " \
+       "041's shape" do
+      diagram = parser.parse(SequenceSpecHelpers::CRITICAL_OPTIONS)
 
       expect(diagram.messages.size).to eq(3)
     end
@@ -781,12 +835,15 @@ RSpec.describe Sirena::Parser::Sequence do
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "accepts a destroy of an established participant, resolved by a later message" do
+    it "accepts a destroy of an established participant, resolved by " \
+       "a later message" do
       source = "sequenceDiagram\nparticipant Bob\ndestroy Bob\nA->>Bob: m\n"
 
       diagram = parser.parse(source)
 
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([%w[A Bob]])
+      expect(diagram.messages.map do |m|
+        [m.from_id, m.to_id]
+      end).to eq([%w[A Bob]])
     end
 
     it "rejects destroy with no target" do
@@ -815,21 +872,22 @@ RSpec.describe Sirena::Parser::Sequence do
         ["sequenceDiagram\ndestroy B;B->>A: m\n", %w[B A], 1],
     }
 
-    inline_semicolon.each do |description, (source, expected_ids, expected_count)|
+    inline_semicolon.each do |description, (source, ids, count)|
       it "accepts #{description}" do
         diagram = parser.parse(source)
 
         expect([diagram.participants.map(&:id), diagram.messages.size])
-          .to eq([expected_ids, expected_count])
+          .to eq([ids, count])
       end
     end
   end
 
   describe "#parse character references in declaration and destroy targets" do
-    it "accepts a character reference as a create alias id, keeping the alias label" do
-      source = "sequenceDiagram\ncreate participant #9829;B as Heart\nA->>#9829;B: hi\n"
-
-      diagram = parser.parse(source)
+    it "accepts a character reference as a create alias id, keeping the " \
+       "alias label" do
+      diagram = parse_sequence(
+        "create participant #9829;B as Heart", "A->>#9829;B: hi"
+      )
       heart = diagram.find_participant("#9829;B")
 
       expect([heart.id, heart.label]).to eq(["#9829;B", "Heart"])
@@ -843,7 +901,8 @@ RSpec.describe Sirena::Parser::Sequence do
       expect(tree[1][:destroy].to_s).to eq("#9829;B")
     end
 
-    it "rejects a bare hash (not a valid character reference) as a destroy target" do
+    it "rejects a bare hash (not a valid character reference) as a " \
+       "destroy target" do
       # No following message: with one present, removing `hash_char.
       # absent?` from `hash_free_lead` still raises ParseError, but via a
       # DIFFERENT path — `#B` no longer matches `content_boundary` right
@@ -862,7 +921,8 @@ RSpec.describe Sirena::Parser::Sequence do
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "rejects a leading bare hash in a participant declaration even with an alias" do
+    it "rejects a leading bare hash in a participant declaration even " \
+       "with an alias" do
       # Guards the alias branch's own hash-char ban specifically
       # (`declaration_word_lead`, tried only when an `as` keyword
       # follows): the sibling case above only exercises the fallback
@@ -875,7 +935,8 @@ RSpec.describe Sirena::Parser::Sequence do
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "consumes a character reference past the first character of a declared id, with no alias" do
+    it "consumes a character reference past the first character of a " \
+       "declared id, with no alias" do
       # Guards the `char_ref` alternative in `declaration_name`'s fallback
       # tail (grammar's alias-less branch): dropping it there makes
       # `declaration_char` stop reading at the `;` inside `#9829;`,
@@ -885,7 +946,8 @@ RSpec.describe Sirena::Parser::Sequence do
       expect(diagram.participants.map(&:id)).to eq(["X#9829;Y"])
     end
 
-    it "consumes a character reference past the first character of a declared id, with an alias" do
+    it "consumes a character reference past the first character of a " \
+       "declared id, with an alias" do
       # Guards the `char_ref` alternative in `declaration_name`'s
       # alias-branch tail specifically: dropping only that one (leaving
       # the fallback-branch alternative above untouched) makes the
@@ -918,7 +980,9 @@ RSpec.describe Sirena::Parser::Sequence do
 
       diagram = parser.parse(source)
 
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([["A", "B#C"]])
+      expect(diagram.messages.map do |m|
+        [m.from_id, m.to_id]
+      end).to eq([["A", "B#C"]])
     end
   end
 
@@ -935,7 +999,8 @@ RSpec.describe Sirena::Parser::Sequence do
       expect(diagram.messages.last.to_id).to eq("#9829;")
     end
 
-    it "consumes a character reference in the middle of a message recipient's name" do
+    it "consumes a character reference in the middle of a message " \
+       "recipient's name" do
       # Guards the `char_ref` alternative in `message_actor_name`'s
       # repeated tail: dropping it makes the plain character rule stop at
       # the `;` inside `#9829;`, truncating the name. mermaid 11.16.1
@@ -1036,18 +1101,15 @@ RSpec.describe Sirena::Parser::Sequence do
 
     rejected.each do |description, source|
       it "rejects #{description}" do
-        expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
       end
     end
 
     it "matches case 056's full shape: a links line after a closed box" do
-      source = File.read(
-        File.expand_path(
-          "../../mermaid/sequence/056_parser_should_handle_box_55.mmd", __dir__
-        ),
+      diagram = parser.parse(
+        sequence_fixture("056_parser_should_handle_box_55"),
       )
-
-      diagram = parser.parse(source)
 
       expect(diagram.participants.map(&:id)).to eq(%w[a b c])
     end
@@ -1062,7 +1124,8 @@ RSpec.describe Sirena::Parser::Sequence do
   end
 
   describe "#parse create/destroy lifecycle" do
-    it "rejects a create whose next message has the created id as the source, not the target" do
+    it "rejects a create whose next message has the created id as the " \
+       "source, not the target" do
       source = "sequenceDiagram\ncreate participant Carl\nCarl->>A: m\n"
 
       expect { parser.parse(source) }
@@ -1083,20 +1146,26 @@ RSpec.describe Sirena::Parser::Sequence do
         .to raise_error(Sirena::Parser::ParseError, /destroyed participant Bob/)
     end
 
-    it "accepts a destroy resolved by the following message naming it as the target" do
+    it "accepts a destroy resolved by the following message naming it " \
+       "as the target" do
       source = "sequenceDiagram\ndestroy Bob\nA->>Bob: m\n"
 
       diagram = parser.parse(source)
 
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([%w[A Bob]])
+      expect(diagram.messages.map do |m|
+        [m.from_id, m.to_id]
+      end).to eq([%w[A Bob]])
     end
 
-    it "accepts a destroy resolved by the following message naming it as the source" do
+    it "accepts a destroy resolved by the following message naming it " \
+       "as the source" do
       source = "sequenceDiagram\ndestroy Bob\nBob->>A: m\n"
 
       diagram = parser.parse(source)
 
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([%w[Bob A]])
+      expect(diagram.messages.map do |m|
+        [m.from_id, m.to_id]
+      end).to eq([%w[Bob A]])
     end
 
     # `register_created`'s duplicate-id check reads `@known_actor_ids`,
@@ -1122,71 +1191,42 @@ RSpec.describe Sirena::Parser::Sequence do
       end
     end
 
-    it "gives create priority over a still-pending destroy on the same message" do
+    it "gives create priority over a still-pending destroy on the same " \
+       "message" do
       source = "sequenceDiagram\nparticipant Bob\ndestroy Bob\n" \
-                "create participant Carl\nA->>Carl: m\n"
+               "create participant Carl\nA->>Carl: m\n"
 
       diagram = parser.parse(source)
 
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([%w[A Carl]])
+      expect(message_routes(diagram)).to eq([%w[A Carl]])
     end
 
     it "resolves a create across a loop boundary" do
       # Asserts the nested message itself, not just the absence of an
       # exception: dropping `process_loop` entirely still parses without
       # raising, producing zero messages — verified via mutation-check.sh.
-      source = <<~MERMAID
-        sequenceDiagram
-        create participant Carl
-        loop Retry
-        A->>Carl: hi
-        end
-      MERMAID
+      diagram = parser.parse(SequenceSpecHelpers::CREATE_ACROSS_LOOP)
 
-      diagram = parser.parse(source)
-
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([%w[A Carl]])
+      expect(message_routes(diagram)).to eq([%w[A Carl]])
     end
 
     it "rejects an unresolved destroy declared outside a loop it spans into" do
-      source = <<~MERMAID
-        sequenceDiagram
-        destroy Bob
-        loop Retry
-        A->>C: hi
-        end
-      MERMAID
-
-      expect { parser.parse(source) }
+      expect { parser.parse(SequenceSpecHelpers::DESTROY_ACROSS_LOOP) }
         .to raise_error(Sirena::Parser::ParseError, /destroyed participant Bob/)
     end
 
     it "clears a pending destroy between diagrams on a reused builder" do
-      builder = Sirena::Parser::Builders::Sequence.new
+      diagram = reused_builder_diagram("sequenceDiagram\ndestroy Bob\n")
 
-      first_tree = Sirena::Parser::Grammars::Sequence.new
-        .parse("sequenceDiagram\ndestroy Bob\n")
-      builder.apply(first_tree)
-
-      second_tree = Sirena::Parser::Grammars::Sequence.new
-        .parse("sequenceDiagram\nA->>B: m\n")
-      diagram = builder.apply(second_tree)
-
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([%w[A B]])
+      expect(message_routes(diagram)).to eq([%w[A B]])
     end
 
     it "clears a pending create between diagrams on a reused builder" do
-      builder = Sirena::Parser::Builders::Sequence.new
+      diagram = reused_builder_diagram(
+        "sequenceDiagram\ncreate participant Carl\n",
+      )
 
-      first_tree = Sirena::Parser::Grammars::Sequence.new
-        .parse("sequenceDiagram\ncreate participant Carl\n")
-      builder.apply(first_tree)
-
-      second_tree = Sirena::Parser::Grammars::Sequence.new
-        .parse("sequenceDiagram\nA->>B: m\n")
-      diagram = builder.apply(second_tree)
-
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([%w[A B]])
+      expect(message_routes(diagram)).to eq([%w[A B]])
     end
 
     it "accepts a create whose id was only referenced by an earlier activate" do
@@ -1223,28 +1263,22 @@ RSpec.describe Sirena::Parser::Sequence do
     end
 
     it "case 019 parses every create/destroy declaration into a participant" do
-      source = File.read(
-        File.expand_path(
-          "../../mermaid/sequence/019_rendering_sequencediagram_spec_sequence_18.mmd", __dir__
-        ),
+      diagram = parser.parse(
+        sequence_fixture("019_rendering_sequencediagram_spec_sequence_18"),
       )
-
-      diagram = parser.parse(source)
 
       expect(diagram.participants.map(&:id)).to eq(%w[Alice Bob Carl D])
     end
   end
 
   describe "#parse case 018, not one of the 8 targets" do
-    it "raises because the destroy target does not match the following message" do
-      source = File.read(
-        File.expand_path(
-          "../../mermaid/sequence/018_rendering_sequencediagram_spec_sequence_17.mmd", __dir__
-        ),
+    it "raises because the destroy target does not match the following " \
+       "message" do
+      source = sequence_fixture(
+        "018_rendering_sequencediagram_spec_sequence_17",
       )
 
-      expect { parser.parse(source) }
-        .to raise_error(Sirena::Parser::ParseError, /destroyed participant Bo does not/)
+      expect_parse_error(source, /destroyed participant Bo does not/)
     end
   end
 
