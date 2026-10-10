@@ -280,12 +280,24 @@ module Sirena
           end
 
           def note(note, previous)
-            x, width = note_box(note, previous)
+            on_block = note.attached? && previous.is_a?(Fragment)
+            x, width = on_block ? block_box(note) : note_box(note, previous)
             height = NoteGeometry.height(note, @font_size)
-            top = note.attached? ? @last_y - height + 10 : @y - 20
+            top = note_top(note, on_block, height)
             @notes << note_record(note, [x, top, width, height])
             touch(x, x + width)
             @y = [@y, top + height + 22].max
+          end
+
+          def note_top(note, on_block, height)
+            return @closed[:top] + 5 if on_block
+
+            note.attached? ? @last_y - height + 10 : @y - 20
+          end
+
+          def block_box(note)
+            natural = NoteGeometry.natural_width(note, @measure)
+            NoteGeometry.beside(@closed[:shape], natural)
           end
 
           def note_box(note, previous)
@@ -343,6 +355,7 @@ module Sirena
           def emit_fragment(block, bottom)
             record = FragmentShape.new(block, bottom, @centers, @measure)
             @fragments << record.scene
+            @closed = { shape: record, top: block[:top] }
             touch(record.x, record.x + record.width)
             parent = @blocks.last
             parent[:depth] = [parent[:depth], block[:depth] + 1].max if parent

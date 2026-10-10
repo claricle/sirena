@@ -68,6 +68,11 @@ module Sirena
             @items.last.is_a?(Message)
           end
 
+          def after_block?
+            last = @items.last
+            last.is_a?(Fragment) && last.phase == :close
+          end
+
           # Whether a line starting with `&` has an element to share a row
           # with: a message, a note or a block that has just closed.
           def anchored?

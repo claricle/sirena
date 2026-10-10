@@ -178,7 +178,7 @@ module Sirena
           def each_note
             previous = nil
             @diagram.items.each do |item|
-              if item.is_a?(Note)
+              if item.is_a?(Note) && !(item.attached? && previous.is_a?(Fragment))
                 yield item, NoteGeometry.span(item, previous, ids)
               end
               previous = item

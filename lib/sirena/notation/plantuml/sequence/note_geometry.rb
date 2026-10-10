@@ -12,6 +12,7 @@ module Sirena
           PAD = 8.0
           OFFSET = 6.0
           OVER_MARGIN = 10.0
+          BLOCK_GAP = 5.0
 
           # Width the text needs, without regard to the participants.
           def natural_width(note, measure)
@@ -33,6 +34,15 @@ module Sirena
             return message_span(previous, ids) if note.attached?
 
             note.targets.map { |id| ids.index(id) }.minmax
+          end
+
+          # Where a note on a closed block goes: right of the block, whichever
+          # side the source names, level with its top. `block` is the
+          # {FragmentShape}.
+          #
+          # @return [Array<Float>] left edge and width
+          def beside(block, natural)
+            [block.x + block.width + BLOCK_GAP, natural]
           end
 
           # @return [Array<Float>] left edge and width

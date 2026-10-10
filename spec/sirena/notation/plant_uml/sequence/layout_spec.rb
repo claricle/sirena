@@ -258,6 +258,30 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       expect(scene.notes.first.texts.first.x).to be > head.x + (head.width / 2)
     end
 
+    context "when it follows the end of a block" do
+      let(:lines) { ["A -> B", "alt x", "B -> A", "end", "NOTE: x"] }
+
+      def block_note(side)
+        scene = scene_of(*lines.map { |l| l.sub("NOTE", "note #{side}") })
+        [scene.fragments.first, scene.notes.first]
+      end
+
+      it "sits right of the block, level with its top" do
+        block, note = block_note("right")
+
+        expect([note.path[/M (\S+) (\S+)/, 1].to_f,
+                note.path[/M (\S+) (\S+)/, 2].to_f])
+          .to eq([block.x + block.width + 5, block.y + 5])
+      end
+
+      it "sits right of the block for a left note too" do
+        block = block_note("left").first
+
+        expect(block_note("left").last.path[/M (\S+)/, 1].to_f)
+          .to eq(block.x + block.width + 5)
+      end
+    end
+
     it "gives a hnote no fold and a note one" do
       folds = %w[note hnote].map do |word|
         scene_of("A -> B", "#{word} over A: x").notes.first.fold_path
