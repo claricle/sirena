@@ -145,7 +145,9 @@ module BatchCommandRunner
   # raises for the same two classes -- not load-bearing to the assertion
   # below, only to reading the report as a person would.
   def exhaustion_message_for(exhaustion_class)
-    exhaustion_class == SystemStackError ? "stack level too deep" : "failed to allocate memory"
+    return "stack level too deep" if exhaustion_class == SystemStackError
+
+    "failed to allocate memory"
   end
   module_function :exhaustion_message_for
 end
@@ -181,7 +183,8 @@ RSpec.describe Sirena::Commands::BatchCommand do
     in_batch_dir do |input, output|
       report = run_batch(input, output)
 
-      expect(report).to include("2-bomb.mmd: Diagram nests too deeply to parse.")
+      expect(report)
+        .to include("2-bomb.mmd: Diagram nests too deeply to parse.")
     end
   end
 
@@ -214,7 +217,8 @@ RSpec.describe Sirena::Commands::BatchCommand do
   # than a name copied from it, so a future third member is covered
   # without anyone remembering to add a case.
   Sirena::EXHAUSTION_ERRORS.each do |exhaustion_class|
-    it "survives #{exhaustion_class} raised while reading a file, not only while rendering" do
+    it "survives #{exhaustion_class} raised while reading a file, " \
+       "not only while rendering" do
       in_batch_dir do |input, output|
         bomb_path = File.join(input, "2-bomb.mmd")
         message = exhaustion_message_for(exhaustion_class)

@@ -80,7 +80,8 @@ RSpec.describe Sirena::Cli do
     # `StandardError`, which would quietly turn this into a test of
     # nothing.
     it "lets a class outside the exhaustion family through untouched" do
-      expect(&rendering(NotImplementedError)).to raise_error(NotImplementedError)
+      expect(&rendering(NotImplementedError))
+        .to raise_error(NotImplementedError)
     end
 
     # A real allocation can reach the VM's C-level memory error path

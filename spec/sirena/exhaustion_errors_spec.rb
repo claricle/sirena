@@ -32,7 +32,12 @@ RSpec.describe Sirena::Engine do
   # rather than a `Class.new(Exception)` because `Lint/InheritException`
   # rewrites the latter to `StandardError`, which would quietly turn every
   # example below into a test of nothing.
+  let(:constructed_theme_error) { /Theme loading failed: constructed/ }
   let(:foreign) { NotImplementedError }
+
+  def stub_theme_registry_error(error)
+    allow(Sirena::Theme::Registry).to receive(:get).and_raise(error)
+  end
 
   describe "Sirena::EXHAUSTION_ERRORS" do
     # Ask the loaded hierarchy what exists rather than listing the routes we
@@ -48,7 +53,9 @@ RSpec.describe Sirena::Engine do
 
     it "names only classes that really are outside StandardError" do
       expect(Sirena::EXHAUSTION_ERRORS)
-        .to all(satisfy { |klass| klass <= Exception && !(klass <= StandardError) })
+        .to all(
+          satisfy { |klass| klass <= Exception && !(klass <= StandardError) },
+        )
     end
 
     # Ruby raises exactly these two for resource exhaustion. Everything else
@@ -107,14 +114,16 @@ RSpec.describe Sirena::Engine do
     # the message excludes whatever `backtrace` holds -- for a fraction of
     # the cost, and it lets the assertion pin an EXACT frame list on the
     # cause instead of merely a frame count.
-    it "keeps the message short and the backtrace on the cause, not the message" do
+    it "keeps the message short and the backtrace on the cause, " \
+       "not the message" do
       overflow = SystemStackError.new("stack level too deep")
       overflow.set_backtrace(%w[fake:1 fake:2 fake:3])
 
       # The block form, not a bare `begin`/`rescue`: a rescue whose body holds
       # the assertions runs NOTHING when nothing raises, so the example passes
       # while asserting zero things.
-      expect(&rendering(overflow)).to raise_error(Sirena::Engine::PipelineError) do |e|
+      expect(&rendering(overflow))
+        .to raise_error(Sirena::Engine::PipelineError) do |e|
         expect(e.message).to eq("Rendering failed: stack level too deep")
         expect(e.cause).to be(overflow)
         expect(e.cause.backtrace).to eq(%w[fake:1 fake:2 fake:3])
@@ -180,7 +189,8 @@ RSpec.describe Sirena::Engine do
   # used -- parses cleanly once the stack is that generous, which flipped
   # this example green-then-red across the three sizes it has to hold
   # under.
-  it "reports a real stack overflow from an unguarded type as an ordinary error" do
+  it "reports a real stack overflow from an unguarded type " \
+     "as an ordinary error" do
     opens = (1..4000).map { |i| "state s#{i} {" }.join("\n")
     source = "stateDiagram-v2\n#{opens}\n[*] --> A\n#{"}\n" * 4000}"
 
@@ -207,11 +217,13 @@ RSpec.describe Sirena::Engine do
     # longer demonstrates what this example needs to pin: that a genuine,
     # uncontrolled `SystemStackError` reaching `Theme.load` still becomes a
     # `PipelineError` instead of killing the host.
-    it "turns an exhausting theme into a PipelineError instead of killing the host" do
+    it "turns an exhausting theme into a PipelineError " \
+       "instead of killing the host" do
       Tempfile.create(["bomb", ".yml"]) do |file|
         file.write("name: value\n")
         file.flush
-        allow(Sirena::Theme).to receive(:load).and_raise(SystemStackError.new("stack level too deep"))
+        allow(Sirena::Theme).to receive(:load)
+          .and_raise(SystemStackError.new("stack level too deep"))
 
         expect { described_class.new(theme: file.path) }
           .to raise_error(Sirena::Engine::PipelineError, /Theme loading failed/)
@@ -222,7 +234,8 @@ RSpec.describe Sirena::Engine do
       Tempfile.create(["bomb", ".yml"]) do |file|
         file.write("name: value\n")
         file.flush
-        allow(Sirena::Theme).to receive(:load).and_raise(SystemStackError.new("stack level too deep"))
+        allow(Sirena::Theme).to receive(:load)
+          .and_raise(SystemStackError.new("stack level too deep"))
 
         cause = begin
           described_class.new(theme: file.path)
@@ -246,10 +259,10 @@ RSpec.describe Sirena::Engine do
     # `RUBY_THREAD_VM_STACK_SIZE=33554432` and raises a lutaml parse error
     # instead. That makes it fine as a demonstration and useless as a pin.
     it "wraps a NoMemoryError raised while loading the theme" do
-      allow(Sirena::Theme::Registry).to receive(:get).and_raise(NoMemoryError.new("constructed"))
+      stub_theme_registry_error(NoMemoryError.new("constructed"))
 
       expect { described_class.new }
-        .to raise_error(Sirena::Engine::PipelineError, /Theme loading failed: constructed/)
+        .to raise_error(Sirena::Engine::PipelineError, constructed_theme_error)
     end
 
     it "lets an Interrupt through instead of wrapping it" do

@@ -4,6 +4,9 @@ require "spec_helper"
 require "timeout"
 
 RSpec.describe Sirena::ErrorReport do
+  let(:nil_backtrace_diagnostic) do
+    "Caused by: ArgumentError: never raised, so never given a backtrace"
+  end
   let(:cyclic_error_chain) do
     outer = RuntimeError.new("outer")
     middle = TypeError.new("middle")
@@ -16,7 +19,8 @@ RSpec.describe Sirena::ErrorReport do
 
   describe ".cause_diagnostics" do
     it "is empty for an error with no cause" do
-      expect(described_class.cause_diagnostics(RuntimeError.new("lonely"))).to eq("")
+      expect(described_class.cause_diagnostics(RuntimeError.new("lonely")))
+        .to eq("")
     end
 
     it "names the cause class and message the wrapper dropped" do
@@ -52,7 +56,8 @@ RSpec.describe Sirena::ErrorReport do
 
       report = described_class.cause_diagnostics(error)
 
-      expect(report.scan(/^Caused by: (\w+)/).flatten).to eq(%w[TypeError ArgumentError])
+      expect(report.scan(/^Caused by: (\w+)/).flatten)
+        .to eq(%w[TypeError ArgumentError])
     end
 
     it "stops when an error names itself as its cause" do
@@ -77,8 +82,8 @@ RSpec.describe Sirena::ErrorReport do
       error = RuntimeError.new("wrapper")
       allow(error).to receive(:cause).and_return(cause)
 
-      expect(described_class.cause_diagnostics(error))
-        .to eq("Caused by: ArgumentError: never raised, so never given a backtrace")
+      diagnostics = described_class.cause_diagnostics(error)
+      expect(diagnostics).to eq(nil_backtrace_diagnostic)
     end
 
     # The exhaustion path is the one this module exists for, and it is
@@ -86,7 +91,10 @@ RSpec.describe Sirena::ErrorReport do
     # report would make `--verbose` useless on the failure that needed it.
     it "caps a long cause backtrace and says how many frames it dropped" do
       cause = ArgumentError.new("deep")
-      cause.set_backtrace(Array.new(Sirena::ErrorReport::CAUSE_FRAME_LIMIT + 7) { |i| "frame_#{i}" })
+      frames = Array.new(Sirena::ErrorReport::CAUSE_FRAME_LIMIT + 7) do |i|
+        "frame_#{i}"
+      end
+      cause.set_backtrace(frames)
       error = RuntimeError.new("wrapper")
       allow(error).to receive(:cause).and_return(cause)
 

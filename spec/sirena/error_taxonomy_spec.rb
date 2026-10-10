@@ -14,6 +14,12 @@ require "spec_helper"
 RSpec.describe Sirena::Engine do
   let(:engine) { described_class.new }
 
+  def stub_renderer_failure(renderer)
+    allow(Sirena::Renderer::Flowchart).to receive(:new).and_return(renderer)
+    allow(renderer).to receive(:render)
+      .and_raise(Sirena::Renderer::RenderError, "boom")
+  end
+
   describe "layer errors are Sirena::Error" do
     it "ParseError is a Sirena::Error" do
       expect(Sirena::Parser::ParseError.ancestors).to include(Sirena::Error)
@@ -50,7 +56,8 @@ RSpec.describe Sirena::Engine do
         end
     end
 
-    it "raises LayoutError, not PipelineError, when a diagram fails its own validity check" do
+    it "raises LayoutError, not PipelineError, when a diagram fails " \
+       "its own validity check" do
       # A bare `graph` header is a valid empty flowchart (mmdc renders it
       # as a blank canvas). A subgraph declared with no members is not:
       # mmdc draws that as a fallback node this model can't represent, so
@@ -59,13 +66,13 @@ RSpec.describe Sirena::Engine do
         .to raise_error(Sirena::Layout::LayoutError, "Invalid diagram")
     end
 
-    it "raises RenderError, not PipelineError, when the renderer itself fails" do
+    it "raises RenderError, not PipelineError, when the renderer " \
+       "itself fails" do
       # Real input does reach the renderer stage, but nothing in lib/
       # currently raises RenderError from it -- so this is stubbed, the same
       # way the "no layer of its own" example below stubs Layout::Grid.
       broken_renderer = instance_double(Sirena::Renderer::Flowchart)
-      allow(Sirena::Renderer::Flowchart).to receive(:new).and_return(broken_renderer)
-      allow(broken_renderer).to receive(:render).and_raise(Sirena::Renderer::RenderError, "boom")
+      stub_renderer_failure(broken_renderer)
 
       expect { engine.render("graph TD\nA-->B\n") }
         .to raise_error(Sirena::Renderer::RenderError, "boom")
@@ -78,7 +85,8 @@ RSpec.describe Sirena::Engine do
   end
 
   describe "#render wraps only a failure with no layer of its own" do
-    it "wraps it in PipelineError with the class and message, and no backtrace" do
+    it "wraps it in PipelineError with the class and message, " \
+       "and no backtrace" do
       allow(Sirena::Layout::Grid).to receive(:apply)
         .and_raise(RuntimeError, "boom")
 

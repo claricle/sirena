@@ -42,7 +42,9 @@ RSpec.describe Sirena::Commands::RenderCommand do
   let(:options) { { format: "svg" } }
   let(:dir) { Dir.mktmpdir("sirena-render") }
   let(:input_path) do
-    File.join(dir, "in.mmd").tap { |path| File.write(path, "pie title Pets\n  \"Dogs\" : 3\n  \"Cats\" : 2\n") }
+    source = "pie title Pets\n  \"Dogs\" : 3\n  \"Cats\" : 2\n"
+
+    File.join(dir, "in.mmd").tap { |path| File.write(path, source) }
   end
   let(:run_command) do
     ->(file, opts) { described_class.new(file, opts).run }
@@ -131,7 +133,9 @@ RSpec.describe Sirena::Commands::RenderCommand do
     let(:output_path) { File.join(dir, "out.svg") }
 
     it "writes the SVG to the requested path and keeps stdout empty" do
-      expect { run_command.call(input_path, options.merge(output: output_path)) }
+      expect do
+        run_command.call(input_path, options.merge(output: output_path))
+      end
         .not_to output.to_stdout
 
       expect(File.read(output_path)).to start_with("<svg")
@@ -139,7 +143,8 @@ RSpec.describe Sirena::Commands::RenderCommand do
 
     it "announces the written path only when verbose" do
       expect do
-        run_command.call(input_path, options.merge(output: output_path, verbose: true))
+        verbose_options = options.merge(output: output_path, verbose: true)
+        run_command.call(input_path, verbose_options)
       end.to output(/SVG written to #{Regexp.escape(output_path)}/).to_stdout
     end
 
@@ -154,7 +159,9 @@ RSpec.describe Sirena::Commands::RenderCommand do
       input_path
       allow(File).to receive(:binwrite).and_raise(Errno::EACCES)
 
-      expect { run_command.call(input_path, options.merge(output: output_path)) }
+      expect do
+        run_command.call(input_path, options.merge(output: output_path))
+      end
         .to raise_error(
           ArgumentError, "Permission denied writing to: #{output_path}"
         )
