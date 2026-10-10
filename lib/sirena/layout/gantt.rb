@@ -465,10 +465,10 @@ module Sirena
       end
 
       def calculate_task_dates
-        task_sequence = @diagram.sections.flat_map(&:tasks)
+        tasks = @diagram.sections.flat_map(&:tasks)
 
         # First pass: calculate tasks with explicit dates
-        task_sequence.each do |task|
+        tasks.each do |task|
           calculate_task_date(task) if task.start_date && !task.after_task
         end
 
@@ -485,13 +485,13 @@ module Sirena
         iteration = 0
         loop do
           changed = false
-          task_sequence.each_with_index do |task, index|
+          tasks.each_with_index do |task, index|
             next if task.calculated_start
 
             if task.after_task || task.until_task
               changed = true if resolve_task_dependency(task)
             elsif task.duration && index.positive?
-              changed = true if chain_from_previous_task(task, task_sequence[index - 1])
+              changed = true if chain_from_previous_task(task, tasks[index - 1])
             end
           end
 
@@ -510,7 +510,7 @@ module Sirena
         return false unless previous_task&.calculated_end
 
         task.calculated_start = previous_task.calculated_end
-        task.calculated_end = add_duration(task.calculated_start, task.duration)
+        task.calculated_end = end_for(task.calculated_start, task.duration)
         true
       end
 
@@ -524,7 +524,7 @@ module Sirena
         if task.end_date
           task.calculated_end = parse_date(task.end_date)
         elsif task.duration && task.calculated_start
-          task.calculated_end = add_duration(task.calculated_start, task.duration)
+          task.calculated_end = end_for(task.calculated_start, task.duration)
         end
 
         task.calculated_start
@@ -537,7 +537,7 @@ module Sirena
 
           task.calculated_start = ref_task.calculated_end
           if task.duration
-            task.calculated_end = add_duration(task.calculated_start, task.duration)
+            task.calculated_end = end_for(task.calculated_start, task.duration)
           elsif task.end_date
             task.calculated_end = parse_date(task.end_date)
           elsif task.until_task
@@ -587,7 +587,8 @@ module Sirena
         # Ordinal dates such as 2024-032 carry a day-of-year instead of a
         # month and day. The grammar accepts them, so they need their own
         # branch or the guard below would discard them.
-        return Date.ordinal(parts[:year] || today.year, parts[:yday]) if parts[:yday]
+        yday = parts[:yday]
+        return Date.ordinal(parts[:year] || today.year, yday) if yday
         return today unless parts[:mon] || parts[:mday]
 
         # An explicit year anchors the month to January, which is what
@@ -602,14 +603,12 @@ module Sirena
         today
       end
 
-      def add_duration(start_date, duration_str)
+      def end_for(start_date, duration_str)
         # Parse duration string (e.g., "30d", "2w", "48h", "1M")
         value = duration_str.to_i
         unit = duration_str[-1]
 
         case unit
-        when "d"
-          start_date + value
         when "w"
           start_date + (value * 7)
         when "h"
@@ -629,12 +628,11 @@ module Sirena
 
         @diagram.sections.each do |section|
           section.tasks.each do |task|
-            if task.calculated_start && (!min_date || task.calculated_start < min_date)
-              min_date = task.calculated_start
-            end
-            if task.calculated_end && (!max_date || task.calculated_end > max_date)
-              max_date = task.calculated_end
-            end
+            start = task.calculated_start
+            min_date = start if start && (!min_date || start < min_date)
+
+            finish = task.calculated_end
+            max_date = finish if finish && (!max_date || finish > max_date)
           end
         end
 
@@ -663,7 +661,7 @@ module Sirena
         end
       end
 
-      def transform_tasks(section, timeline, section_index)
+      def transform_tasks(section, axis, section_index)
         section.tasks.map.with_index do |task, task_index|
           {
             id: task.id || "task_#{section_index}_#{task_index}",
@@ -675,8 +673,8 @@ module Sirena
             milestone: task.milestone?,
             start_date: task.calculated_start,
             end_date: task.calculated_end,
-            start_x: calculate_x_position(task.calculated_start, timeline),
-            width: calculate_width(task.calculated_start, task.calculated_end, timeline),
+            start_x: calculate_x_position(task.calculated_start, axis),
+            width: task_width(task.calculated_start, task.calculated_end, axis),
             click_href: task.click_href,
             click_callback: task.click_callback,
           }
@@ -687,10 +685,11 @@ module Sirena
         return 0 unless date
 
         days_from_start = (date - timeline[:start_date]).to_i
-        (days_from_start.to_f / timeline[:total_days]) * 800 # 800 is the timeline width
+        # The timeline is 800 pixels wide.
+        (days_from_start.to_f / timeline[:total_days]) * 800
       end
 
-      def calculate_width(start_date, end_date, timeline)
+      def task_width(start_date, end_date, timeline)
         return 20 unless start_date && end_date # Minimum width for milestones
 
         duration_days = (end_date - start_date).to_i
