@@ -37,7 +37,13 @@ module Sirena
         end
 
         rule(:node_line) do
-          empty_line | node_with_content
+          empty_line | comment_line | node_with_content
+        end
+
+        # A whole-line "%%" comment is a blank line to mermaid's lexer
+        # (SPACELINE), so it never becomes a node.
+        rule(:comment_line) do
+          space? >> comment >> (newline | eof)
         end
 
         rule(:empty_line) do
