@@ -34,12 +34,12 @@ RSpec.describe Sirena::Layout::Sequence do
 
     let(:expected_scene_evidence) do
       [
-        described_class::Scene, 400.0, 280.0, "0 0 400 280",
-        ["A", 20.0, 20.0, 120.0, 40.0],
-        [80.0, 60.0, 80.0, 220.0],
-        [80.0, 120.0, 212.0, 120.0],
-        "220,120 212,116 212,124",
-        ["hello", 150.0, 110.0]
+        described_class::Scene, 450.0, 215.0, "0 0 450 215",
+        ["A", 50.0, 10.0, 150.0, 65.0],
+        [125.0, 75.0, 125.0, 139.0],
+        [125.0, 119.0, 317.0, 119.0],
+        "325,119 317,115 317,123",
+        ["hello", 225.0, 109.0]
       ]
     end
 
@@ -139,7 +139,7 @@ RSpec.describe Sirena::Layout::Sequence do
     end
 
     it "adds a note slot but no activation geometry" do
-      expect(omission_evidence).to eq([339.0, 1, [279.0, 279.0], 1, false])
+      expect(omission_evidence).to eq([264.0, 1, [188.0, 188.0], 1, false])
     end
   end
 

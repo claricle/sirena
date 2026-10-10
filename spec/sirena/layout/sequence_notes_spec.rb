@@ -54,7 +54,7 @@ RSpec.describe Sirena::Layout::Sequence do
 
   it "pushes later messages down by the note slot" do
     shift = rows.last - plain.messages.last.shaft.y1
-    expect(shift).to eq(first_note.height + 20)
+    expect(shift).to eq(first_note.height + 10)
   end
 
   it "leaves earlier messages where they were" do

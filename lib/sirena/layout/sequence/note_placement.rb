@@ -2,6 +2,7 @@
 
 require_relative "../../text_measurement"
 require_relative "../../diagram/sequence_text"
+require_relative "geometry"
 require_relative "frame_placement"
 
 module Sirena
@@ -11,13 +12,13 @@ module Sirena
       # reports how far that slot pushes the later rows down.
       class NotePlacement
         LINE_BREAK = Diagram::SequenceText::LINE_BREAK
-        FIRST_ROW = 60
-        ROW_SPACING = 60
-        TOP_GAP = 15
-        SLOT_GAP = 20
+        FIRST_ROW = Geometry::FIRST_ROW
+        ROW_SPACING = Geometry::MESSAGE_PITCH
+        TOP_GAP = Geometry::NOTE_MARGIN
+        SLOT_GAP = Geometry::NOTE_MARGIN
         PADDING = 20
         SIDE_GAP = 25
-        MIN_WIDTH = 100
+        MIN_WIDTH = Geometry::ACTOR_WIDTH
         LINE_SPACING = 1.2
 
         # @param graph [Sirena::IR::Graph] the sequence graph
