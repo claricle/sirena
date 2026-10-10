@@ -37,33 +37,39 @@ module Sirena
       end
 
       def run
-        nil until tick
+        loop do
+          @iterations += 1
+          break if @iterations == @max_iterations
+
+          if cooling_check_due?
+            break if converged?
+
+            cool
+          end
+          step
+        end
       end
 
       private
 
       attr_reader :bodies, :links
 
-      def tick
-        @iterations += 1
-        return true if @iterations == @max_iterations
-        return true if (@iterations % CHECK_PERIOD).zero? && settled?
+      def cooling_check_due?
+        (@iterations % CHECK_PERIOD).zero?
+      end
 
+      def step
         @displacement = 0.0
         spring_forces
         repulsion_forces
         bodies.each { |body| @displacement += body.move(@cooling, MAX_DISPLACEMENT) }
-        false
       end
 
-      def settled?
-        return true if converged?
-
+      def cool
         @cycle += 1
         decay = (@cycle**(Math.log(100 * (1.0 - FINAL_COOLING)) /
                           Math.log(COOLING_CYCLES))) / 100
         @cooling = [1.0 - decay, FINAL_COOLING].max
-        false
       end
 
       def converged?
@@ -76,11 +82,12 @@ module Sirena
 
       def spring_forces
         links.each do |link|
-          next unless link.measure && link.length != 0
+          length = link.measure
+          next if length.nil? || length.zero?
 
-          pull = SPRING_STRENGTH * (link.length - IDEAL_LENGTH)
-          apply_spring(link, pull * (link.length_x / link.length),
-                       pull * (link.length_y / link.length))
+          pull = SPRING_STRENGTH * (length - IDEAL_LENGTH)
+          apply_spring(link, pull * (link.length_x / length),
+                       pull * (link.length_y / length))
         end
       end
 
@@ -126,7 +133,7 @@ module Sirena
         gap_y = minimum_gap(clip[3] - clip[1])
         squared = (gap_x * gap_x) + (gap_y * gap_y)
         distance = Math.sqrt(squared)
-        force = REPULSION_STRENGTH * 1.0 * 1.0 / squared
+        force = REPULSION_STRENGTH / squared
         force_x = force * gap_x / distance
         force_y = force * gap_y / distance
         first.repulsion_x -= force_x

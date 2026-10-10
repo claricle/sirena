@@ -41,7 +41,7 @@ module Sirena
         width = @bodies.map(&:right).max - left
         height = @bodies.map(&:bottom).max - top
         [left - MARGIN, top - MARGIN, left + width + MARGIN,
-         top + height + MARGIN,]
+         top + height + MARGIN]
       end
 
       def add(body, left, top)

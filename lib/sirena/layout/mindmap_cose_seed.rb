@@ -70,18 +70,17 @@ module Sirena
         width = bodies.map(&:right).max - left
         height = bodies.map(&:bottom).max - top
         bodies.each do |body|
-          body.x = 0.0 + (body.x - left)
-          body.y = 0.0 + (body.y - top)
+          body.x -= left
+          body.y -= top
         end
-        [left + width - left, top + height - top]
+        [width, height]
       end
 
       def branch(body, parent, start_angle, end_angle, distance, ring)
-        angle = (angle_midpoint(start_angle, end_angle) + start_angle)
-                .remainder(360)
+        angle = (angle_midpoint(start_angle, end_angle) + start_angle).remainder(360)
         radians = (angle * (2.0 * Math::PI)) / 360
         body.center = [distance * Math.cos(radians),
-                       distance * Math.sin(radians),]
+                       distance * Math.sin(radians)]
         place_children(body, parent, start_angle, end_angle,
                        distance + ring, ring)
       end
