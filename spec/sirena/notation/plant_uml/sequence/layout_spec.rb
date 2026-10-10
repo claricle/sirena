@@ -722,7 +722,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     let(:label) { "alpha beta gamma delta epsilon zeta eta theta iota" }
     let(:plain) { scene_of("A -> B : #{label}", "B -> A : x") }
     let(:wrapped) do
-      scene_of("skinparam maxmessagesize 100", "A -> B : #{label}", "B -> A : x")
+      scene_of("skinparam maxmessagesize 100", "A -> B : #{label}",
+               "B -> A : x")
     end
 
     it "breaks the label into lines" do
@@ -739,6 +740,21 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
     it "pushes the next message down" do
       expect(arrow_ys(wrapped).last).to be > arrow_ys(plain).last
+    end
+
+    it "narrows the room a wrapped self message needs" do
+      lines = ["A -> A : #{label}", "A -> B"]
+
+      expect(scene_of("skinparam maxmessagesize 100", *lines).width)
+        .to be < scene_of(*lines).width
+    end
+
+    it "shortens the run of a wrapped ->? message" do
+      ends = ->(scene) { scene.arrows.first.path.scan(/\d+\.\d+/).max }
+      narrow = scene_of("skinparam maxmessagesize 100", "A ->? : #{label}")
+
+      expect(ends.call(narrow).to_f)
+        .to be < ends.call(scene_of("A ->? : #{label}")).to_f
     end
 
     it "stacks the lines above the arrow" do
