@@ -113,7 +113,8 @@ RSpec.describe Sirena::Engine do
     # Date.today, both of these would render against the real date and
     # match, hiding the bug.
     it "reflects the pinned date, so it is genuinely consumed" do
-      expect(render(source, today: early)).not_to eq(render(source, today: late))
+      expect(render(source, today: early))
+        .not_to eq(render(source, today: late))
     end
 
     it "falls back to the real date when none is given" do
@@ -162,7 +163,8 @@ RSpec.describe Sirena::Engine do
     it "lets a render option override the constructor" do
       engine = described_class.new(today: early)
 
-      expect(engine.render(source, today: late)).to eq(render(source, today: late))
+      expect(engine.render(source, today: late))
+        .to eq(render(source, today: late))
     end
 
     # Injecting the clock must not change how a complete-enough date reads.
@@ -208,7 +210,8 @@ RSpec.describe Sirena::Engine do
         source = File.read(file)
         next if outcome(source) == outcome(source, today: early)
 
-        "#{type}: #{outcome(source)} unpinned vs #{outcome(source, today: early)} pinned"
+        "#{type}: #{outcome(source)} unpinned vs " \
+          "#{outcome(source, today: early)} pinned"
       end
 
       expect(differing).to be_empty, "pinning altered:\n#{differing.join("\n")}"
@@ -270,8 +273,9 @@ RSpec.describe Sirena::Engine do
       offenders = Dir.glob(File.expand_path("../../lib/**/*.rb", __dir__))
         .flat_map { |file| ambient_reads_in(file) }
 
-      expect(offenders).to be_empty,
-                           "ambient state on a render path:\n#{offenders.join("\n")}"
+      message = "ambient state on a render path:\n#{offenders.join("\n")}"
+
+      expect(offenders).to be_empty, message
     end
   end
 end
