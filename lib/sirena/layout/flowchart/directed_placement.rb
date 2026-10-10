@@ -74,11 +74,10 @@ module Sirena
         end
 
         # Where two box paths part: [container id, source box id, target box
-        # id]. Nil when one box holds the other.
+        # id]. When one box holds the other, one end is nil and flat_edges
+        # drops the edge.
         def divergence(source, target)
           shared = common_prefix(source, target)
-          return if shared == source.length || shared == target.length
-
           [shared.zero? ? nil : source[shared - 1], source[shared],
            target[shared]]
         end

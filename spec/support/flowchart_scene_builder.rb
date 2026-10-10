@@ -51,12 +51,15 @@ module FlowchartSceneBuilder
   # How far a flowchart's one subgraph box sits outside the boxes it
   # holds, as [left, right, top, bottom], read off the rendered SVG.
   def cluster_margins(source)
-    rects = Sirena::Engine.new.render(source).scan(/<rect[^>]*>/).map do |tag|
+    rects = svg_rects(source)
+    cluster = rects.max_by { |_, _, width, height| width * height }
+    margins(cluster, rects.reject { |rect| rect == cluster })
+  end
+
+  def svg_rects(source)
+    Sirena::Engine.new.render(source).scan(/<rect[^>]*>/).map do |tag|
       BOX_ATTRIBUTES.map { |name| tag[/\s#{name}="(-?[\d.]+)"/, 1].to_f }
     end
-    cluster = rects.max_by { |_, _, width, height| width * height }
-    inner = rects.reject { |rect| rect == cluster }
-    margins(cluster, inner)
   end
 
   def margins(cluster, inner)
