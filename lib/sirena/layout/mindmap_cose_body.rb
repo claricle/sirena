@@ -37,6 +37,14 @@ module Sirena
         y + (height / 2)
       end
 
+      def half_width
+        width / 2
+      end
+
+      def half_height
+        height / 2
+      end
+
       def diagonal
         Math.sqrt((width * width) + (height * height))
       end
@@ -54,8 +62,8 @@ module Sirena
       # displacement limit, and returns the distance moved.
       def move(cooling, max_displacement)
         limit = cooling * max_displacement
-        moved_x = clamp(cooling * (spring_x + repulsion_x), limit)
-        moved_y = clamp(cooling * (spring_y + repulsion_y), limit)
+        moved_x = step(cooling, spring_x + repulsion_x, limit)
+        moved_y = step(cooling, spring_y + repulsion_y, limit)
         @x += moved_x
         @y += moved_y
         clear_forces
@@ -63,6 +71,10 @@ module Sirena
       end
 
       private
+
+      def step(cooling, force, limit)
+        clamp(cooling * force, limit)
+      end
 
       def clamp(displacement, limit)
         return displacement unless displacement.abs > limit

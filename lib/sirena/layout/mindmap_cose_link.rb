@@ -25,10 +25,14 @@ module Sirena
 
         @length_x = unit_floor(clip[0] - clip[2])
         @length_y = unit_floor(clip[1] - clip[3])
-        @length = Math.sqrt((length_x * length_x) + (length_y * length_y))
+        @length = hypotenuse
       end
 
       private
+
+      def hypotenuse
+        Math.sqrt((length_x * length_x) + (length_y * length_y))
+      end
 
       def unit_floor(value)
         value.abs < 1.0 ? (value <=> 0).to_f : value

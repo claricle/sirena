@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "mindmap_cose_body"
+require_relative "mindmap_cose_geometry"
 require_relative "mindmap_cose_link"
 require_relative "mindmap_cose_seed"
 require_relative "mindmap_cose_relaxation"
@@ -28,21 +29,25 @@ module Sirena
       end
 
       def initialize(sizes, edges)
-        @bodies = sizes.map { |id, width, height| MindmapCoseBody.new(id, width, height) }
+        @bodies = sizes.map { |size| MindmapCoseBody.new(*size) }
         @links = connect(edges)
       end
 
       def call
         return {} if @bodies.empty?
 
-        width, height = MindmapCoseSeed.new(@bodies).place
-        shift_to(WORLD_CENTRE[0] - (width / 2), WORLD_CENTRE[1] - (height / 2))
+        seed_at_world_centre
         MindmapCoseRelaxation.new(@bodies, @links).run
         shift_to(0.0, 0.0)
         @bodies.to_h { |body| [body.id, [body.center_x, body.center_y]] }
       end
 
       private
+
+      def seed_at_world_centre
+        width, height = MindmapCoseSeed.new(@bodies).place
+        shift_to(WORLD_CENTRE[0] - (width / 2), WORLD_CENTRE[1] - (height / 2))
+      end
 
       def connect(edges)
         by_id = @bodies.to_h { |body| [body.id, body] }
@@ -51,19 +56,19 @@ module Sirena
           second = by_id.fetch(target)
           next if first.equal?(second) || first.neighbors.include?(second)
 
-          MindmapCoseLink.new(first, second).tap do |link|
-            first.links << link
-            second.links << link
-          end
+          link_bodies(first, second)
         end
       end
 
-      def origin
-        [@bodies.map(&:x).min, @bodies.map(&:y).min]
+      def link_bodies(first, second)
+        MindmapCoseLink.new(first, second).tap do |link|
+          first.links << link
+          second.links << link
+        end
       end
 
       def shift_to(world_x, world_y)
-        left, top = origin
+        left, top = MindmapCoseGeometry.bounding_box(@bodies)
         device_x = left - MARGIN
         device_y = top - MARGIN
         @bodies.each do |body|
