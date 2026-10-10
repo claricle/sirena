@@ -847,4 +847,55 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
         .to raise_error(unsupported, /note/)
     end
   end
+
+  describe "autoactivate" do
+    def marks(*lines)
+      activations(parse("autoactivate on", *lines))
+        .map { |item| [item.phase, item.participant] }
+    end
+
+    it "activates the receiver of a call" do
+      expect(marks("A -> B")).to eq([[:on, "B"]])
+    end
+
+    it "deactivates the sender of a dashed answer" do
+      expect(marks("A -> B", "B --> A")).to eq([[:on, "B"], [:off, "B"]])
+    end
+
+    it "ignores a dashed message from a participant that is not active" do
+      expect(marks("A --> B")).to eq([])
+    end
+
+    it "leaves a lost message alone" do
+      expect(marks("A ->x B")).to eq([])
+    end
+
+    it "activates the receiver of a message with a lost tail" do
+      expect(marks("A x-> B")).to eq([[:on, "B"]])
+    end
+
+    it "leaves an explicit ++ to say it once" do
+      expect(marks("A -> B++")).to eq([[:on, "B"]])
+    end
+
+    it "stops after autoactivate off" do
+      lines = ["autoactivate on", "A -> B", "autoactivate off", "A -> B"]
+
+      expect(activations(parse(*lines)).size).to eq(1)
+    end
+
+    it "does nothing before autoactivate on" do
+      expect(activations(parse("A -> B"))).to be_empty
+    end
+
+    it "refuses a message to the diagram edge" do
+      expect { parse("autoactivate on", "participant A", "[-> A") }
+        .to raise_error(unsupported, /message arrow/)
+    end
+
+    it "refuses a coloured message that has no ++" do
+      expect { parse("autoactivate on", "A -> B #red") }
+        .to raise_error(unsupported, /message arrow/)
+    end
+  end
 end

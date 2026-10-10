@@ -41,6 +41,7 @@ module Sirena
                          (?:[ \t]+<<[ \t]*([^<>\n]+?)[ \t]*>>)?\z/xio
           SKINPARAM_WIDTH = /\Askinparam[ \t]+MinClassWidth[ \t]+(\d+)\z/i
           HIDE_FOOTBOX = /\Ahide[ \t]+footbox\z/i
+          AUTOACTIVATE = /\Aautoactivate[ \t]+(on|off)\z/i
           STYLE_OPEN = /\A<style>\z/i
           STYLE_CLOSE = /\A<\/style>\z/i
           MESSAGE = /\A(#{QUOTED}|#{NAME}|[\[?](?=[-<\\\/oxOX]))[ \t]*
@@ -86,7 +87,8 @@ module Sirena
                            :NOTE, :END_NOTE, :REF, :BLOCK, :BRANCH, :RETURN,
                            :DIVIDER, :DESTROY, :COLOUR, :SKINPARAM_WIDTH,
                            :STYLE_OPEN, :STYLE_CLOSE, :PARALLEL,
-                           :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE
+                           :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE,
+                           :AUTOACTIVATE
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -116,6 +118,7 @@ module Sirena
             @teoz = false
             @parallel = false
             @footbox = true
+            @autoactivate = false
             @warnings = []
           end
 
@@ -184,6 +187,8 @@ module Sirena
               set(min_width: match[1].to_i)
             elsif HIDE_FOOTBOX.match?(text)
               @footbox = false
+            elsif (match = AUTOACTIVATE.match(text))
+              @autoactivate = match[1].casecmp?("on")
             elsif STYLE_OPEN.match?(text)
               @pending_style = { line: number, text: text, lines: [] }
             else
@@ -396,7 +401,7 @@ module Sirena
             message = build_message(match) or return false
             return false if unplaceable?(message, match[4])
 
-            marks = marks(match[4], message, colour(match[6]))
+            marks = marks_of(match, message)
             return false if match[5] && marks.none? { |phase,| phase == :on }
 
             @outline.message(message, marks)
@@ -428,7 +433,8 @@ module Sirena
           def unplaceable?(message, suffix)
             edge = message.edge or return false
 
-            !suffix.nil? || (edge.local? && message.edge_end.circle)
+            @autoactivate || !suffix.nil? ||
+              (edge.local? && message.edge_end.circle)
           end
 
           # `--` deactivates the sender, `++` activates the receiver and `!!`
@@ -438,6 +444,26 @@ module Sirena
               [phase, phase == :off ? message.from : message.to,
                phase == :on ? colour : nil]
             end
+          end
+
+          def marks_of(match, message)
+            if @autoactivate && match[4].nil? && match[5].nil?
+              return automatic_marks(message)
+            end
+
+            marks(match[4], message, colour(match[6]))
+          end
+
+          # After `autoactivate on` a call activates its receiver and a
+          # dashed answer deactivates its sender, when it is active. A lost
+          # message (written `x`) does neither. A message to the edge is
+          # refused: the slice cannot activate the participant it names.
+          def automatic_marks(message)
+            return [] if message.style.head.glyph == :cross
+            return [[:on, message.to, nil]] unless message.dashed
+
+            active = @outline.active?(message.from)
+            active ? [[:off, message.from, nil]] : []
           end
 
           def colour(token)

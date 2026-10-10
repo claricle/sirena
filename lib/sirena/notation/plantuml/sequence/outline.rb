@@ -53,6 +53,10 @@ module Sirena
             @items << Destroy.new(participant: id)
           end
 
+          def active?(id)
+            @depth[id].positive?
+          end
+
           def allowed?(phase, id)
             phase != :off || @depth[id].positive?
           end

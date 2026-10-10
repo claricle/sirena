@@ -30,7 +30,7 @@ module PlantUmlSequenceCorpus
     7ff458de0156 2a2a7bb5aacc f0cf331472b7 e76e451484c6
     ddc664f08110 d918f796209f ae1299794d0b fcaf69429c9c
     bea0f11e448b 2bd5234bfbfe 2018ad068c81 f0cb24bd16e0
-    ad11bf4b448a 793d6e993975 1f75ab64bf5e
+    ad11bf4b448a 793d6e993975 1f75ab64bf5e e6d99fb6ac3c
   ].freeze
 
   def case_named(suffix)
@@ -189,6 +189,15 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     svg = Sirena.render(source_of("1f75ab64bf5e"), notation: :plantuml)
 
     expect(matches(svg, "//text[.='x']")).to be_empty
+  end
+
+  it "draws a bar for each call of the autoactivate case" do
+    svg = Sirena.render(source_of("e6d99fb6ac3c"), notation: :plantuml)
+    bare = source_of("e6d99fb6ac3c").sub(/^autoactivate on\n/, "")
+
+    plain = Sirena.render(bare, notation: :plantuml)
+
+    expect(rect_count(svg) - rect_count(plain)).to eq(3)
   end
 
   it "refuses every other case instead of rendering part of it" do
