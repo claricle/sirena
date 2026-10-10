@@ -45,11 +45,10 @@ module Sirena
         end
 
         # Add all nodes to diagram
-        result[:nodes]&.each do |node_data|
+        result[:nodes].each do |node_data|
           next if node_data == result[:root]
 
-          node = find_or_create_node(diagram, node_data)
-          diagram.add_node(node) unless diagram.nodes.include?(node)
+          diagram.add_node(build_node(node_data))
         end
 
         diagram
@@ -68,19 +67,12 @@ module Sirena
         node.parent = parent if parent
 
         # Build children recursively
-        node_data[:children]&.each do |child_data|
+        node_data[:children].each do |child_data|
           child = build_node(child_data, node)
           node.add_child(child)
         end
 
         node
-      end
-
-      def find_or_create_node(diagram, node_data)
-        existing = diagram.nodes.find { |n| n.id == node_data[:id] }
-        return existing if existing
-
-        build_node(node_data)
       end
     end
   end
