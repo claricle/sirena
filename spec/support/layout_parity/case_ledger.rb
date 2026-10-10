@@ -12,6 +12,8 @@ module SpecSupport
         worst_analog
       ].freeze
       JSON_SCALARS = [String, Integer, TrueClass, FalseClass, NilClass].freeze
+      # Suppress runtime noise far below the 0.08 and 0.15 contract thresholds.
+      SCOREBOARD_DECIMAL_PLACES = 12
 
       def self.build(results)
         new(results).build
@@ -36,7 +38,11 @@ module SpecSupport
         case_id = evidence.fetch("case")
         validate_case_id(case_id)
         geometry = evidence.fetch("geometry")
-        metrics = METRICS.to_h { |metric| [metric, geometry.fetch(metric)] }
+        metrics = METRICS.to_h do |metric|
+          value = normalized_metric(geometry.fetch(metric))
+          geometry[metric] = value
+          [metric, value]
+        end
 
         evidence.merge(
           "summary" => {
@@ -105,6 +111,13 @@ module SpecSupport
         return "-Infinity" if value.infinite? == -1
 
         raise ArgumentError, "NaN is not a JSON value"
+      end
+
+      def normalized_metric(value)
+        return value unless value.is_a?(Float) && value.finite?
+
+        rounded = value.round(SCOREBOARD_DECIMAL_PLACES)
+        rounded.zero? ? 0.0 : rounded
       end
     end
   end
