@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/sankey"
 
-RSpec.describe Sirena::Parser::Sankey do
+RSpec.describe Sirena::Parser::Sankey, :aggregate_failures do
   let(:parser) { described_class.new }
 
   describe "#parse" do
