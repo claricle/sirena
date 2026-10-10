@@ -26,6 +26,12 @@ RSpec.describe Sirena::Layout::Sequence::TextWrap do
     )
   end
 
+  it "cuts a word only a little wider than the limit" do
+    expect(described_class.lines("mmmmmmmmmm and", 100, 16)).to eq(
+      ["mmmmmmmm-", "mm and"],
+    )
+  end
+
   it "leaves text that holds a <br> as the source wrote it" do
     expect(described_class.lines("a<br>b c", 10, 16)).to eq(["a", "b c"])
   end

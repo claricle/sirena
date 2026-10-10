@@ -50,6 +50,12 @@ RSpec.describe Sirena::Renderer::Sequence do
       expect(runs.map { |run| run.attributes["y"] }).to all(match(/\A\d/))
     end
 
+    it "centres every line on the text's own x" do
+      xs = runs.map { |run| run.attributes["x"] }
+
+      expect(xs).to all(eq(runs.first.parent.attributes["x"]))
+    end
+
     it "writes no dy on any line" do
       expect(runs.map { |run| run.attributes["dy"] }).to all(be_nil)
     end
