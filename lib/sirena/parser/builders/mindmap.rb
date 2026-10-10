@@ -9,6 +9,9 @@ module Sirena
       class Mindmap < Parslet::Transform
         # Helper class to build mindmap tree from indented nodes
         class TreeBuilder
+          # The first matching rule wins, in this order.
+          SHAPE_NAMES = %w[circle bang cloud hexagon square round].freeze
+
           attr_reader :root, :all_nodes
 
           def initialize
@@ -231,15 +234,8 @@ module Sirena
           end
 
           def extract_shape(node_data)
-            # Determine shape based on which parser rule matched
-            return "circle" if node_data[:shape_circle]
-            return "bang" if node_data[:shape_bang]
-            return "cloud" if node_data[:shape_cloud]
-            return "hexagon" if node_data[:shape_hexagon]
-
-            return "square" if node_data[:shape_square]
-
-            node_data[:shape_round] ? "round" : "default"
+            SHAPE_NAMES.find { |name| node_data[:"shape_#{name}"] } ||
+              "default"
           end
 
           def find_parent(level)
