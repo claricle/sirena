@@ -157,7 +157,6 @@ Naming/PredicateMethod:
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Performance/MapCompact:
   Exclude:
-    - 'lib/sirena/layout/architecture.rb'
     - 'lib/sirena/layout/requirement.rb'
     - 'tasks/benchmark.rake'
     - 'spec/sirena/renderer/git_graph_spec.rb'
@@ -213,7 +212,6 @@ Style/IfInsideElse:
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/MapIntoArray:
   Exclude:
-    - 'lib/sirena/layout/c4.rb'
     - 'lib/sirena/layout/requirement.rb'
 
 # Offense count: 5
