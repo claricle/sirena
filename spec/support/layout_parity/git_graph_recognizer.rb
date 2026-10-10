@@ -16,8 +16,7 @@ module SpecSupport
           markers + reference_labels(extractor, doc) +
             reference_lanes(extractor, doc)
         else
-          labels = sirena_labels(extractor, doc, markers)
-          markers + labels + sirena_lanes(markers, labels)
+          markers + sirena_labels(extractor, doc, markers)
         end
       end
 
@@ -109,28 +108,6 @@ module SpecSupport
           sirena_label(extractor, text, markers, orientation)
         end
         deduplicate_branch_labels(labels)
-      end
-
-      def sirena_lanes(markers, labels)
-        orientation = orientation(markers)
-        labels.select { |label| label.kind == :branch_label }.map do |label|
-          anchor = nearest_element(label.bbox, markers)
-          lane_markers = markers_on_lane(markers, anchor, orientation)
-          logical_element(
-            :lane, label.key, Bbox.union(lane_markers.map(&:bbox))
-          )
-        end
-      end
-
-      def markers_on_lane(markers, anchor, orientation)
-        markers.select do |marker|
-          same_lane?(marker.bbox, anchor.bbox, orientation)
-        end
-      end
-
-      def same_lane?(left, right, orientation)
-        axis = orientation == :lr ? 1 : 0
-        (left.center[axis] - right.center[axis]).abs <= 0.01
       end
 
       def deduplicate_branch_labels(labels)
