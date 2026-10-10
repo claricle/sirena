@@ -26,11 +26,11 @@ refer to mermaids.
 
 The library follows strict object-oriented principles with a model-driven
 architecture. Most diagram models use `Lutaml::Model`, but not all data
-structures do: `Sirena::Diagram::TreemapNode` and `Sirena::Diagram::RadarAxis`
-are plain Ruby classes, and the transform/layout pipeline between parsing and
-rendering passes plain hashes rather than typed models. The pipeline keeps a
-clean separation between parsing, transformation, layout, and rendering
-phases.
+structures do: six diagram classes (`PacketField`, `RadarAxis`, `RadarCurve`,
+`TreemapNode`, `XYAxis`, `XYDataset`) are plain Ruby classes. Six diagram types
+(flowchart, class, state, ER, Sankey, timeline) lay out to a typed
+`Layout::Scene`; the other types still build a graph or legacy layout
+structure. See link:ARCHITECTURE.md[] for the stages.
 
 
 == Features
@@ -85,7 +85,7 @@ See link:examples/README.adoc[] for working examples of all diagram types.
 === Core capabilities
 
 * **Pure Ruby implementation** - No JavaScript dependencies
-* **Parslet-based parsing** - Superior error messages and maintainability
+* **Parslet-based parsing** - Declarative grammars with line and column in parse errors
 * **SVG output** - Standards-compliant SVG 1.2
 * **Theme support** - 4 built-in themes, custom theme support
 * **Auto-detection** - Automatic diagram type detection
@@ -227,18 +227,17 @@ https://claricle.github.io/sirena[Sirena Documentation Site].
 * https://claricle.github.io/sirena/pages/comparison/[Tool Comparison] - Compare Sirena with Mermaid.js, PlantUML, and Graphviz
 * https://claricle.github.io/sirena/pages/compatibility/[Mermaid.js Compatibility] - Detailed syntax compatibility matrix
 * https://claricle.github.io/sirena/diagram_types/[Diagram Types Reference] - Complete syntax reference for all 24 diagram types
-* https://claricle.github.io/sirena/guides/migration-from-mermaid/[Migration Guide] - Step-by-step migration from Mermaid.js
 
 === Documentation Structure
 
 The documentation uses a 6-collection architecture:
 
-. **Core Topics** - Installation, architecture, compatibility, comparison, configuration
+. **Core Topics** - Compatibility and comparison
 . **Tutorials** - Step-by-step learning paths
 . **Guides** - Task-oriented how-to documentation
 . **Diagram Types** - Complete reference for all 24 diagram types with examples
 . **Features** - Detailed capability documentation
-. **References** - API and CLI reference
+. **References** - Reference index
 
 See the https://claricle.github.io/sirena[documentation site] for the complete guide.
 
@@ -252,10 +251,10 @@ code through distinct processing stages, each with clear responsibilities and
 well-defined interfaces.
 
 **All parsers use Parslet**, a powerful PEG (Parsing Expression Grammar) library
-that provides superior error messages, composability, and maintainability
-compared to traditional lexer-based approaches. The 3-layer Parslet architecture
-(Grammar → Transform → Parser) is not universal: 10 of the 23 builders subclass
-`Parslet::Transform`, the rest are plain classes, and User Journey builds its
+that provides composability and declarative grammars. The 3-layer Parslet
+architecture (Grammar → Builder → Parser) is not universal: 10 of the 26 files
+under `lib/sirena/parser/builders/` subclass `Parslet::Transform`, the rest are
+plain classes or helpers, and User Journey builds its
 model directly in the parser.
 
 Layout uses a built-in fallback grid (`Layout::Grid`) by default. Flowcharts
@@ -368,12 +367,12 @@ Sirena (Root Module)
 === Parslet-based parser architecture
 
 All 24 implemented diagram types use Parslet for grammar parsing, but only 10 of
-the 23 builders subclass `Parslet::Transform`. Where the 3-layer pattern is
+the 26 files under `lib/sirena/parser/builders/` subclass `Parslet::Transform`. Where the 3-layer pattern is
 followed it looks like this:
 
 . **Layer 1: Grammar** (Parslet::Parser) - Defines syntax rules using Parslet
   DSL, parses text into intermediate tree structures
-. **Layer 2: Transform** (Parslet::Transform) - Converts intermediate trees to
+. **Layer 2: Builder** (Parslet::Transform) - Converts intermediate trees to
   typed Diagram models using pattern matching
 . **Layer 3: Parser** - Orchestrates Grammar and Transform, provides public API
 
@@ -386,10 +385,10 @@ Transform layer.
 
 This architecture provides:
 
-* **Superior error messages** with detailed context and line numbers
+* **Line and column in parse errors** (for example `Parse error at line 9, column 8`)
 * **Composability** through shared grammar rules across diagram types
 * **Maintainability** via declarative, self-documenting syntax rules
-* **Type safety** through strongly-typed Lutaml::Model objects
+* **Typed models** (Lutaml::Model) for most diagram types
 
 See link:ARCHITECTURE.md[] for detailed architecture documentation.
 
@@ -407,9 +406,6 @@ mermaid-cli-generated reference output is a separate, optional task
 "Mermaid-js compatibility validation" below.
 
 === Mermaid-js compatibility validation
-
-Sirena's test suite includes test cases that covers all diagram types to ensure
-comprehensive compatibility and correctness.
 
 `spec/fixtures_mermaid/` contains 847 unique mmdc-generated reference SVGs
 (each duplicated into a `correct/` subdirectory, so a naive file count reads
