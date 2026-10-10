@@ -43,4 +43,24 @@ RSpec.describe Sirena::Layout::Flowchart::LayerSpacing do
 
     expect(gap(scene, :x)).to be_within(0.01).of(50 + width)
   end
+
+  # An edge over a layer puts its label in the gap after its first layer.
+  it "puts the room of a two-rank link in the first gap" do
+    diagram = Sirena::Diagram::Flowchart.new(direction: "TD")
+    %w[A B C].each do |id|
+      diagram.nodes << Sirena::Diagram::FlowchartNode.new(
+        id: id, label: id, shape: "rect",
+      )
+    end
+    [["A", "B", nil], ["B", "C", nil], ["A", "C", "long"]].each do |from, to, label|
+      diagram.edges << Sirena::Diagram::FlowchartEdge.new(
+        source_id: from, target_id: to, arrow_type: "arrow", label: label,
+      )
+    end
+    found = Sirena::Layout::Flowchart.new.to_graph(diagram).children
+      .to_h { |node| [node.id, node] }
+
+    expect(found["B"].y - (found["A"].y + found["A"].height)).to be > 60
+    expect(found["C"].y - (found["B"].y + found["B"].height)).to be_within(0.01).of(50)
+  end
 end
