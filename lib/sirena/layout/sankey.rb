@@ -70,26 +70,37 @@ module Sirena
       end
 
       def scene(diagram)
+        prepare_layout(diagram)
+        width = canvas_width
+        height = canvas_height
+        Scene.new(**scene_attributes(width, height))
+      end
+
+      def prepare_layout(diagram)
         @graph = ir_graph(diagram)
         @node_layers = {}
         @node_positions = {}
-
         assign_layers
         calculate_positions
+      end
 
-        width = canvas_width
-        height = canvas_height
-        Scene.new(
+      def scene_attributes(width, height)
+        {
           id: "sankey",
           width: width,
           height: height,
           view_box: "0 0 #{width} #{height}",
           title: title_geometry(width),
+        }.merge(scene_contents)
+      end
+
+      def scene_contents
+        {
           acc_title: @graph.accessibility_title,
           acc_description: @graph.accessibility_description,
           nodes: typed_nodes,
           flows: typed_flows,
-        )
+        }
       end
 
       private
@@ -102,38 +113,49 @@ module Sirena
 
       def assign_layers
         visited = Set.new
-        source_nodes = @graph.nodes.filter_map do |node|
+        sources = source_node_ids
+        seed_source_layers(sources, visited)
+        assign_reachable_layers(sources.dup, visited)
+        default_unvisited_layers
+      end
+
+      def source_node_ids
+        @graph.nodes.filter_map do |node|
           node.id if total_inflow(node.id).zero?
         end
+      end
 
-        source_nodes.each do |node_id|
+      def seed_source_layers(source_ids, visited)
+        source_ids.each do |node_id|
           @node_layers[node_id] = 0
           visited.add(node_id)
         end
+      end
 
-        queue = source_nodes.dup
+      def assign_reachable_layers(queue, visited)
         until queue.empty?
           current_id = queue.shift
           current_layer = @node_layers[current_id]
-
           flows_from(current_id).each do |flow|
-            target_id = flow.target_id
-            next if visited.include?(target_id)
-
-            @node_layers[target_id] = [
-              @node_layers[target_id] || 0,
-              current_layer + 1,
-            ].max
-            next if queue.include?(target_id)
-
-            queue << target_id
-            visited.add(target_id)
+            assign_target_layer(flow.target_id, current_layer, queue, visited)
           end
         end
+      end
 
+      def assign_target_layer(target_id, current_layer, queue, visited)
+        return if visited.include?(target_id)
+
+        current = @node_layers[target_id] || 0
+        @node_layers[target_id] = [current, current_layer + 1].max
+        return if queue.include?(target_id)
+
+        queue << target_id
+        visited.add(target_id)
+      end
+
+      def default_unvisited_layers
         @graph.nodes.each do |node|
-          node_id = node.id
-          @node_layers[node_id] = 0 unless @node_layers.key?(node_id)
+          @node_layers[node.id] = 0 unless @node_layers.key?(node.id)
         end
       end
 
@@ -142,19 +164,24 @@ module Sirena
         @node_layers.each { |node_id, layer| layers[layer] << node_id }
 
         layers.each do |layer, node_ids|
-          sorted_nodes = node_ids.each_with_index.sort_by do |id, index|
-            [-(total_inflow(id) + total_outflow(id)), index]
-          end
-          sorted_nodes.map!(&:first)
+          position_layer(layer, sorted_layer_nodes(node_ids))
+        end
+      end
 
-          sorted_nodes.each_with_index do |node_id, index|
-            @node_positions[node_id] = {
-              x: layer * LAYER_SPACING,
-              y: index * (NODE_HEIGHT + NODE_SPACING),
-              width: calculate_node_width(node_id),
-              height: NODE_HEIGHT,
-            }
-          end
+      def sorted_layer_nodes(node_ids)
+        node_ids.each_with_index.sort_by do |id, index|
+          [-(total_inflow(id) + total_outflow(id)), index]
+        end.map(&:first)
+      end
+
+      def position_layer(layer, node_ids)
+        node_ids.each_with_index do |node_id, index|
+          @node_positions[node_id] = {
+            x: layer * LAYER_SPACING,
+            y: index * (NODE_HEIGHT + NODE_SPACING),
+            width: calculate_node_width(node_id),
+            height: NODE_HEIGHT,
+          }
         end
       end
 
@@ -192,58 +219,95 @@ module Sirena
       end
 
       def typed_nodes
-        @graph.nodes.map do |node|
-          position = @node_positions.fetch(
-            node.id,
-            { x: 0, y: 0, width: MIN_NODE_WIDTH, height: NODE_HEIGHT },
-          )
-          x = MARGIN_LEFT + position[:x]
-          y = MARGIN_TOP + position[:y]
-          width = position[:width]
-          height = position[:height]
+        @graph.nodes.map { |node| typed_node(node) }
+      end
 
-          Node.new(
-            id: node.id,
-            layer: @node_layers[node.id] || 0,
-            x: x,
-            y: y,
-            width: width,
-            height: height,
-            corner_radius: 3,
-            label: Label.new(
-              text: node.label || node.id,
-              x: x + (width / 2),
-              y: y + (height / 2) + NODE_LABEL_BASELINE_OFFSET,
-            ),
-            inflow: total_inflow(node.id),
-            outflow: total_outflow(node.id),
-          )
-        end
+      def typed_node(node)
+        position = node_position(node.id)
+        x = MARGIN_LEFT + position[:x]
+        y = MARGIN_TOP + position[:y]
+        Node.new(**node_attributes(node, position, x, y))
+      end
+
+      def node_attributes(node, position, x_coordinate, y_coordinate)
+        {
+          id: node.id,
+          layer: @node_layers[node.id] || 0,
+          x: x_coordinate,
+          y: y_coordinate,
+          width: position[:width],
+          height: position[:height],
+          corner_radius: 3,
+          label: node_label(node, position, x_coordinate, y_coordinate),
+        }.merge(node_flow_totals(node))
+      end
+
+      def node_flow_totals(node)
+        {
+          inflow: total_inflow(node.id),
+          outflow: total_outflow(node.id),
+        }
+      end
+
+      def node_position(node_id)
+        @node_positions.fetch(
+          node_id,
+          { x: 0, y: 0, width: MIN_NODE_WIDTH, height: NODE_HEIGHT },
+        )
+      end
+
+      def node_label(node, position, x_coordinate, y_coordinate)
+        x = x_coordinate + (position[:width] / 2)
+        y = y_coordinate + (position[:height] / 2) + NODE_LABEL_BASELINE_OFFSET
+        Label.new(
+          text: node.label || node.id,
+          x: x,
+          y: y,
+        )
       end
 
       def typed_flows
         colour_index = 0
         @graph.edges.map do |flow|
-          geometry = flow_geometry(flow)
-          current_colour = colour_index
+          typed = typed_flow(flow, colour_index)
           colour_index += 1 unless self_loop?(flow)
-
-          Flow.new(
-            id: flow.id,
-            source: flow.source_id,
-            target: flow.target_id,
-            value: flow.properties.weight,
-            width: geometry[:width],
-            source_x: geometry[:source_x],
-            source_y: geometry[:source_y],
-            target_x: geometry[:target_x],
-            target_y: geometry[:target_y],
-            path: self_loop?(flow) ? nil : flow_path(geometry),
-            label: self_loop?(flow) ? nil : flow_label(flow, geometry),
-            colour_index: current_colour,
-            self_loop: self_loop?(flow),
-          )
+          typed
         end
+      end
+
+      def typed_flow(flow, colour_index)
+        geometry = flow_geometry(flow)
+        loop = self_loop?(flow)
+        Flow.new(**flow_attributes(flow, geometry, colour_index, loop))
+      end
+
+      def flow_attributes(flow, geometry, colour_index, loop)
+        {
+          id: flow.id,
+          source: flow.source_id,
+          target: flow.target_id,
+          value: flow.properties.weight,
+          width: geometry[:width],
+        }.merge(flow_endpoint_attributes(geometry),
+                flow_render_attributes(flow, geometry, colour_index, loop))
+      end
+
+      def flow_endpoint_attributes(geometry)
+        {
+          source_x: geometry[:source_x],
+          source_y: geometry[:source_y],
+          target_x: geometry[:target_x],
+          target_y: geometry[:target_y],
+        }
+      end
+
+      def flow_render_attributes(flow, geometry, colour_index, loop)
+        {
+          path: loop ? nil : flow_path(geometry),
+          label: loop ? nil : flow_label(flow, geometry),
+          colour_index: colour_index,
+          self_loop: loop,
+        }
       end
 
       def flow_geometry(flow)
@@ -292,10 +356,7 @@ module Sirena
       end
 
       def curve_command(geometry, source_y, target_y, reverse: false)
-        offset = (geometry[:target_x] - geometry[:source_x]) * 0.5
-        source_control = geometry[:source_x] + offset
-        target_control = geometry[:target_x] - offset
-        controls = [source_control, target_control]
+        controls = curve_controls(geometry)
         controls.reverse! if reverse
         end_x = reverse ? geometry[:source_x] : geometry[:target_x]
 
@@ -304,6 +365,11 @@ module Sirena
           "#{controls[1]} #{target_y},",
           "#{end_x} #{target_y}",
         ].join(" ")
+      end
+
+      def curve_controls(geometry)
+        offset = (geometry[:target_x] - geometry[:source_x]) * 0.5
+        [geometry[:source_x] + offset, geometry[:target_x] - offset]
       end
 
       def scalable_flow?(total_flow)
