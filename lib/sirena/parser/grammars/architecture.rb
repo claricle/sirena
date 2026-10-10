@@ -12,10 +12,10 @@ module Sirena
         # Main diagram structure
         rule(:diagram) do
           ws? >>
-          header >>
-          ws? >>
-          statements.maybe >>
-          ws?
+            header >>
+            ws? >>
+            statements.maybe >>
+            ws?
         end
 
         rule(:header) do
@@ -28,85 +28,85 @@ module Sirena
 
         rule(:statement) do
           title_statement |
-          acc_title_statement |
-          acc_descr_block_statement |
-          acc_descr_statement |
-          group_def |
-          service_def |
-          junction_def |
-          edge_def
+            acc_title_statement |
+            acc_descr_block_statement |
+            acc_descr_statement |
+            group_def |
+            service_def |
+            junction_def |
+            edge_def
         end
 
         # Title statement
         rule(:title_statement) do
           str("title") >> space.repeat(1) >>
-          (line_end.absent? >> any).repeat(1).as(:title) >>
-          line_end
+            (line_end.absent? >> any).repeat(1).as(:title) >>
+            line_end
         end
 
         # Accessibility title
         rule(:acc_title_statement) do
           str("accTitle:") >> space.repeat(1) >>
-          (line_end.absent? >> any).repeat(1).as(:acc_title) >>
-          line_end
+            (line_end.absent? >> any).repeat(1).as(:acc_title) >>
+            line_end
         end
 
         # Accessibility description
         rule(:acc_descr_statement) do
           str("accDescr:") >> space.repeat(1) >>
-          (line_end.absent? >> any).repeat(1).as(:acc_descr) >>
-          line_end
+            (line_end.absent? >> any).repeat(1).as(:acc_descr) >>
+            line_end
         end
 
         # Accessibility description, multiline block form: accDescr { ... }
         rule(:acc_descr_block_statement) do
           str("accDescr") >> space? >> lbrace >>
-          (rbrace.absent? >> any).repeat.as(:acc_descr) >>
-          rbrace >> line_end
+            (rbrace.absent? >> any).repeat.as(:acc_descr) >>
+            rbrace >> line_end
         end
 
         # Group definition
         rule(:group_def) do
           str("group").as(:stmt_type) >> space.repeat(1) >>
-          arch_identifier.as(:id) >>
-          icon_spec.maybe >>
-          label_spec.maybe >>
-          in_clause.maybe.as(:parent) >>
-          line_end
+            arch_identifier.as(:id) >>
+            icon_spec.maybe >>
+            label_spec.maybe >>
+            in_clause.maybe.as(:parent) >>
+            line_end
         end
 
         # Service definition. Icon and label are both optional - a bare
         # "service db" with neither is valid architecture-beta syntax.
         rule(:service_def) do
           str("service").as(:stmt_type) >> space.repeat(1) >>
-          arch_identifier.as(:id) >>
-          icon_spec.maybe >>
-          label_spec.maybe >>
-          in_clause.maybe.as(:group) >>
-          line_end
+            arch_identifier.as(:id) >>
+            icon_spec.maybe >>
+            label_spec.maybe >>
+            in_clause.maybe.as(:group) >>
+            line_end
         end
 
         # Junction definition - a routing point with no icon or label,
         # used purely to bend edges between services.
         rule(:junction_def) do
           str("junction").as(:stmt_type) >> space.repeat(1) >>
-          arch_identifier.as(:id) >>
-          in_clause.maybe.as(:group) >>
-          line_end
+            arch_identifier.as(:id) >>
+            in_clause.maybe.as(:group) >>
+            line_end
         end
 
         # Edge definition - handles various formats
         # Format: from:fromPos --> toPos:to or from --> to
         rule(:edge_def) do
           arch_identifier.as(:from) >>
-          position_spec.maybe.as(:from_pos) >>
-          space? >>
-          arrow.as(:arrow) >>
-          space? >>
-          (reverse_position_spec.as(:to_pos) >> colon).maybe >>
-          arch_identifier.as(:to) >>
-          (space? >> colon >> space? >> edge_label.as(:label)).maybe >>
-          line_end
+            position_spec.maybe.as(:from_pos) >>
+            space? >>
+            arrow.as(:arrow) >>
+            space? >>
+            (reverse_position_spec.as(:to_pos) >> colon).maybe >>
+            arch_identifier.as(:to) >>
+            (space? >> colon >> space? >> edge_label.as(:label)).maybe >>
+            line_end
         end
 
         # Reverse position spec: L: instead of :L (for target position)
@@ -145,8 +145,8 @@ module Sirena
         # Arrow patterns - order matters, check longer first
         rule(:arrow) do
           str("L--R") | str("R--L") |
-          str("T--B") | str("B--T") |
-          str("-->") | str("--")
+            str("T--B") | str("B--T") |
+            str("-->") | str("--")
         end
 
         # Edge label
