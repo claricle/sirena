@@ -64,34 +64,34 @@ module Sirena
           probe = INITIAL_PROBE
 
           loop do
-            remaining = source.chars_left
-            break if remaining.zero?
+            break if source.chars_left.zero?
 
-            chunk_size = [remaining, probe].min
-            chunk_str = source.consume(chunk_size).to_s
-            # `anchored` can carry a fixed UTF-8 encoding (a char class with
-            # a literal `\uXXXX` escape, e.g. JS_WHITESPACE_CHARS); matching
-            # it against a chunk in an incompatible encoding (binary input
-            # with a high byte) raises for the WHOLE chunk, even when the
-            # class would have accepted a leading ASCII run before that
-            # byte. Retry on just that run instead of discarding it.
-            matched =
-              begin
-                anchored.match(chunk_str)[0]
-              rescue Encoding::CompatibilityError
-                anchored.match(ascii_prefix(chunk_str))[0]
-              end
+            matched, complete = scan_chunk(source, anchored, probe)
             buffer << matched
-
-            if matched.bytesize < chunk_str.bytesize
-              source.bytepos -= chunk_str.bytesize - matched.bytesize
-              break
-            end
+            break unless complete
 
             probe = [probe * 2, CHUNK].min
           end
 
           buffer
+        end
+
+        # A fixed-UTF-8 regex can reject a binary chunk even when its leading
+        # ASCII run matches. Retry against that prefix, then restore any bytes
+        # consumed beyond the match.
+        def self.scan_chunk(source, anchored, probe)
+          size = [source.chars_left, probe].min
+          chunk = source.consume(size).to_s
+          matched = anchored_match(anchored, chunk)
+          excess = chunk.bytesize - matched.bytesize
+          source.bytepos -= excess
+          [matched, excess.zero?]
+        end
+
+        def self.anchored_match(anchored, chunk)
+          anchored.match(chunk)[0]
+        rescue Encoding::CompatibilityError
+          anchored.match(ascii_prefix(chunk))[0]
         end
 
         # The bytes of `chunk_str` before its first byte >= 0x80, safe to

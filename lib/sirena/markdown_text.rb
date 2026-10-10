@@ -74,54 +74,45 @@ module Sirena
     # @param text [String] raw label text, markers and literal newlines
     # @return [Array<Array<Run>>] one run array per line
     def parse_lines(text)
-      raw = text.to_s
-      raw = transcode_binary_to_utf8(raw) if raw.encoding == Encoding::ASCII_8BIT
-      raw = raw.scrub unless raw.valid_encoding?
+      raw = normalized_text(text)
       return [[]] if raw.empty?
-      return literal_lines(raw) unless raw.match?(EMPHASIS_MARKER)
-      return literal_lines(raw) if raw.length > MAX_PARSEABLE_LENGTH
-      return literal_lines(raw) if real_marker_count(raw) > MAX_EMPHASIS_MARKERS
-      return literal_lines(raw) if unsafe_escaped_delimiter_interaction?(raw)
-      return literal_lines(raw) if unsafe_delimiter_run_structure?(raw)
+      return literal_lines(raw) if literal_only?(raw)
 
       root, = Parser.parse(raw)
-
-      # A line led by a tab or 4+ spaces matches neither `:paragraph`
-      # nor `:blank_line` in this restricted `Parser`, so kramdown's own
-      # fallback appends a bare `:text` block under root instead of
-      # wrapping it in `:p` — fragmenting a label that also has a stray
-      # marker elsewhere into several literal lines where mermaid
-      # renders one. So the moment ANY unexpected block type shows up
-      # anywhere in the tree, the whole label falls back to
-      # `literal_lines` on the raw text, untouched by kramdown —
-      # guaranteeing no fragmentation or marker loss, at the cost of
-      # losing styling for that one label.
-      return literal_lines(raw) if root.children.any? do |block|
-        !PLAIN_BLOCK_TYPES.include?(block.type)
-      end
+      return literal_lines(raw) unless plain_blocks?(root)
       return literal_lines(raw) if unsafe_emphasis_divergence?(raw, root)
 
-      lines = []
+      parsed_lines(root)
+    end
 
-      root.children.each do |block|
-        case block.type
-        when :p
-          lines.concat(
-            split_on_hard_breaks(
-              flatten_runs(block, bold: false, italic: false),
-            ),
-          )
-        when :blank
-          # Real mmdc's CSS sets paragraph margins to zero, so any number
-          # of blank lines between two `:p` blocks (or a leading/trailing
-          # one) renders with NO extra vertical space — do not push a
-          # line per blank-line `\n` here. A `:blank` block stays in
-          # `PLAIN_BLOCK_TYPES` (so its presence doesn't trip the
-          # fallback-to-literal guard above) but contributes zero lines.
-        end
+    def normalized_text(text)
+      raw = text.to_s
+      raw = transcode_binary_to_utf8(raw) if raw.encoding == Encoding::ASCII_8BIT
+      raw.valid_encoding? ? raw : raw.scrub
+    end
+
+    def literal_only?(raw)
+      !raw.match?(EMPHASIS_MARKER) ||
+        raw.length > MAX_PARSEABLE_LENGTH ||
+        real_marker_count(raw) > MAX_EMPHASIS_MARKERS ||
+        unsafe_escaped_delimiter_interaction?(raw) ||
+        unsafe_delimiter_run_structure?(raw)
+    end
+
+    # A line led by a tab or 4+ spaces produces a bare `:text` block. Any
+    # such unexpected block makes the whole label literal, avoiding tree
+    # fragmentation and marker loss.
+    def plain_blocks?(root)
+      root.children.all? { |block| PLAIN_BLOCK_TYPES.include?(block.type) }
+    end
+
+    # Blank blocks contribute no lines because mmdc's paragraph margins are
+    # zero; only paragraph contents are flattened.
+    def parsed_lines(root)
+      root.children.select { |block| block.type == :p }.flat_map do |block|
+        runs = flatten_runs(block, bold: false, italic: false)
+        split_on_hard_breaks(runs)
       end
-
-      lines
     end
 
     # `ASCII-8BIT` always reports `valid_encoding? == true`, so the
@@ -189,16 +180,21 @@ module Sirena
         next unless %w[* _].include?(marker)
 
         after = raw[::Regexp.last_match.end(0)..]
-        orphan_run = after[/\A#{Regexp.escape(marker)}+/]
-        next unless orphan_run&.length == 1
-
-        search_region = after[orphan_run.length..]
-          .gsub(::Kramdown::Parser::Kramdown::ESCAPED_CHARS, " ")
-        next_run = search_region[/#{Regexp.escape(marker)}+/]
-        return true if next_run && next_run.length != 1
+        return true if unsafe_following_runs?(after, marker)
       end
 
       false
+    end
+
+    def unsafe_following_runs?(after, marker)
+      pattern = /#{Regexp.escape(marker)}+/
+      orphan = after[/\A#{pattern}/]
+      return false unless orphan&.length == 1
+
+      region = after[orphan.length..]
+        .gsub(::Kramdown::Parser::Kramdown::ESCAPED_CHARS, " ")
+      following = region[pattern]
+      following && following.length != 1
     end
 
     # kramdown's emphasis grammar disagrees with `marked`'s on some valid
@@ -249,11 +245,14 @@ module Sirena
       return true if paragraphs.length != p_blocks.length
 
       paragraphs.zip(p_blocks).any? do |paragraph, block|
-        kramdown_runs = EmphasisSimulator.coalesce_runs(
-          flatten_runs(block, bold: false, italic: false),
-        )
-        kramdown_runs != EmphasisSimulator.simulate(paragraph.strip)
+        emphasis_runs_differ?(paragraph, block)
       end
+    end
+
+    def emphasis_runs_differ?(paragraph, block)
+      runs = flatten_runs(block, bold: false, italic: false)
+      EmphasisSimulator.coalesce_runs(runs) !=
+        EmphasisSimulator.simulate(paragraph.strip)
     end
 
     # Walks one `:p` block's children into a flat run list: nesting is
@@ -266,21 +265,21 @@ module Sirena
     # @api private
     def flatten_runs(node, bold:, italic:)
       node.children.flat_map do |child|
-        case child.type
-        when :text
-          [Run.new(text: child.value, bold: bold, italic: italic)]
-        when :strong
-          flatten_runs(child, bold: true, italic: italic)
-        when :em
-          flatten_runs(child, bold: bold, italic: true)
-        else
-          # Not reachable through this restricted `Parser` today — kept
-          # as a symmetric guard against a future kramdown release adding
-          # a span node type this method doesn't handle. Degrades to
-          # literal text under whichever bold/italic context was already
-          # active, rather than crashing.
-          [Run.new(text: literal_text_of(child), bold: bold, italic: italic)]
-        end
+        flatten_child(child, bold: bold, italic: italic)
+      end
+    end
+
+    # Unknown span types degrade to literal text under the active style.
+    def flatten_child(child, bold:, italic:)
+      case child.type
+      when :text
+        [Run.new(text: child.value, bold: bold, italic: italic)]
+      when :strong
+        flatten_runs(child, bold: true, italic: italic)
+      when :em
+        flatten_runs(child, bold: bold, italic: true)
+      else
+        [Run.new(text: literal_text_of(child), bold: bold, italic: italic)]
       end
     end
 
@@ -344,23 +343,21 @@ module Sirena
     # @param max_length [Integer] maximum visible characters to keep
     # @return [Array<Array<Run>>]
     def truncate_runs(lines, max_length)
-      budget = max_length
       result = []
+      append_lines_within_budget(lines, max_length, result)
+      result
+    end
 
+    def append_lines_within_budget(lines, budget, result)
       lines.each_with_index do |runs, line_index|
         line_length = runs.sum { |run| run.text.length }
-
-        if line_length <= budget
-          result << runs
-          budget -= line_length
-          next
+        if line_length > budget
+          result << truncate_line(runs, budget) if line_index.zero?
+          break
         end
-
-        result << truncate_line(runs, budget) if line_index.zero?
-        break
+        result << runs
+        budget -= line_length
       end
-
-      result
     end
 
     # Cuts a single line's runs to `budget` visible characters, trimming
@@ -376,18 +373,21 @@ module Sirena
     def truncate_line(runs, budget)
       remaining = [budget - 3, 0].max
       kept = []
-
       runs.each do |run|
-        if run.text.length <= remaining
-          kept << run
-          remaining -= run.text.length
-        else
-          kept << run.with(text: "#{run.text[0, remaining]}...")
-          break
-        end
+        remaining = append_truncated_run(kept, run, remaining)
+        break unless remaining
       end
-
       kept
+    end
+
+    def append_truncated_run(kept, run, remaining)
+      if run.text.length <= remaining
+        kept << run
+        remaining - run.text.length
+      else
+        kept << run.with(text: "#{run.text[0, remaining]}...")
+        nil
+      end
     end
   end
 end

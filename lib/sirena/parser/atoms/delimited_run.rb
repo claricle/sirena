@@ -31,37 +31,46 @@ module Sirena
         def try(source, context, _consume_all)
           start = source.bytepos
           anchor = source.consume(0)
-          opening = source.consume(1)
+          return opening_error(source, context, start) unless opening?(source)
 
-          if opening.to_s != @delimiter
-            source.bytepos = start
-            return context.err(self, source, "Expected #{@delimiter.inspect}")
-          end
+          buffer, segments = consume_segments(source)
+          return segment_error(source, context, start) if segments.zero?
 
-          buffer = +opening.to_s
+          succ(Parslet::Slice.new(anchor.position, buffer, anchor.line_cache))
+        end
+
+        def opening?(source)
+          source.consume(1).to_s == @delimiter
+        end
+
+        def opening_error(source, context, start)
+          source.bytepos = start
+          context.err(self, source, "Expected #{@delimiter.inspect}")
+        end
+
+        def consume_segments(source)
+          buffer = +@delimiter
           segments = 0
-
-          loop do
-            before = source.bytepos
-            run = GreedyRun.scan(source, @segment_re)
-            closing = source.consume(1)
-
-            unless closing.to_s == @delimiter
-              source.bytepos = before
-              break
-            end
-
+          while (run = consume_segment(source))
             buffer << run << @delimiter
             segments += 1
           end
+          [buffer, segments]
+        end
 
-          if segments.zero?
-            source.bytepos = start
-            message = "Expected at least one #{@delimiter.inspect}-closed run"
-            return context.err(self, source, message)
-          end
+        def consume_segment(source)
+          before = source.bytepos
+          run = GreedyRun.scan(source, @segment_re)
+          return run if source.consume(1).to_s == @delimiter
 
-          succ(Parslet::Slice.new(anchor.position, buffer, anchor.line_cache))
+          source.bytepos = before
+          nil
+        end
+
+        def segment_error(source, context, start)
+          source.bytepos = start
+          message = "Expected at least one #{@delimiter.inspect}-closed run"
+          context.err(self, source, message)
         end
 
         def to_s_inner(_prec)
