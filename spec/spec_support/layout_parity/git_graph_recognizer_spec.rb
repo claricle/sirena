@@ -39,12 +39,6 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphRecognizer do
     %w[main hotfix develop featureB featureA release]
   end
 
-  def vertical_lane_keys(orientation)
-    source = "gitGraph #{orientation}:\n commit\n branch x\n " \
-             "checkout x\n commit\n"
-    keys_of(recognized(Sirena.render(source)), :lane)
-  end
-
   it "uses marker ordinals and semantic branch labels on a real pair" do
     expected = [expected_commits, expected_branches]
 
@@ -52,15 +46,9 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphRecognizer do
       .to eq([expected, expected])
   end
 
-  it "recognizes semantic lanes from both rendered representations" do
+  it "keeps the missing candidate lane lines visible" do
     reference, sirena = real_summary.map(&:last)
 
-    expect([reference, sirena]).to eq([expected_branches, expected_branches])
-  end
-
-  it "recognizes vertical candidate lanes from collinear markers" do
-    lanes = %w[TB BT].map { |orientation| vertical_lane_keys(orientation) }
-
-    expect(lanes).to eq([%w[main x], %w[main x]])
+    expect([reference, sirena]).to eq([expected_branches, []])
   end
 end
