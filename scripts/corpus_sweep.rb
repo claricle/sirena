@@ -71,7 +71,8 @@ def undeclared_entity?(output)
       break unless scanner.skip_until(/\?>/)
     elsif (ref = scanner.scan(/&([^;&<\s]+);/))
       name = ref[1..-2]
-      return true unless name.start_with?("#") || PREDEFINED_ENTITIES.include?(name)
+      numeric = name.start_with?("#")
+      return true unless numeric || PREDEFINED_ENTITIES.include?(name)
     else
       # Not a construct we track: step past this character, then jump to the
       # next one that could start one.
@@ -93,15 +94,25 @@ rescue StandardError
 end
 
 def corpus_types(requested)
-  available = Dir.children(CORPUS_ROOT).select do |d|
-    File.directory?(File.join(CORPUS_ROOT, d)) && !Dir.glob(File.join(CORPUS_ROOT, d, "*.mmd")).empty?
-  end
+  available = available_corpus_types
   return available.sort if requested.empty?
 
   unknown = requested - available
-  abort "Unknown corpus type(s): #{unknown.join(', ')}\nAvailable: #{available.sort.join(', ')}" unless unknown.empty?
+  abort unknown_types_message(unknown, available) unless unknown.empty?
 
   requested
+end
+
+def available_corpus_types
+  Dir.children(CORPUS_ROOT).select do |directory|
+    path = File.join(CORPUS_ROOT, directory)
+    File.directory?(path) && !Dir.glob(File.join(path, "*.mmd")).empty?
+  end
+end
+
+def unknown_types_message(unknown, available)
+  "Unknown corpus type(s): #{unknown.join(', ')}\n" \
+    "Available: #{available.sort.join(', ')}"
 end
 
 def sweep(types)
@@ -133,8 +144,9 @@ def verdicts
   # "against valid cases only: 1/1 = 100.0%".
   bad = rows.reject { |row| VERDICTS.include?(row["verdict"]) }
   unless bad.empty?
+    bad_verdicts = bad.map { |row| row["verdict"].inspect }.uniq.first(3)
     warn "  WARNING: #{bad.size} row(s) carry an unknown verdict " \
-         "(#{bad.map { |r| r['verdict'].inspect }.uniq.first(3).join(', ')}); " \
+         "(#{bad_verdicts.join(', ')}); " \
          "ignoring the file rather than reporting over a subset."
     return {}
   end
@@ -145,7 +157,8 @@ end
 def report(sweep_results, list_failing:)
   # An empty corpus otherwise printed "0/0 = NaN%" and exited 0, which reads
   # as a successful measurement of nothing.
-  abort "No corpus cases found; nothing to measure." if sweep_results.values.all?(&:empty?)
+  empty = sweep_results.values.all?(&:empty?)
+  abort "No corpus cases found; nothing to measure." if empty
 
   puts "TYPE              PASS   FAIL  TIMEOUT    RATE"
   sweep_results.sort.each do |type, results|
@@ -159,11 +172,13 @@ def report(sweep_results, list_failing:)
 
     tally = results.values.tally
     passed = tally.fetch(:pass, 0)
-    puts format("%<type>-15s %<passed>6d %<failed>6d %<timeout>8d %<rate>6.1f%%",
-                type: type, passed: passed,
-                failed: tally.fetch(:fail, 0),
-                timeout: tally.fetch(:timeout, 0),
-                rate: 100.0 * passed / results.size)
+    puts format(
+      "%<type>-15s %<passed>6d %<failed>6d %<timeout>8d %<rate>6.1f%%",
+      type: type, passed: passed,
+      failed: tally.fetch(:fail, 0),
+      timeout: tally.fetch(:timeout, 0),
+      rate: 100.0 * passed / results.size
+    )
   end
   all = sweep_results.values.flat_map(&:values)
   total_passed = all.count(:pass)
@@ -178,7 +193,10 @@ def report(sweep_results, list_failing:)
   # unchanged failure look like a difference.
   sweep_results.sort.each do |_type, results|
     results.reject { |_, status| status == :pass }
-      .each { |path, status| puts "#{status}: #{path.sub("#{CORPUS_ROOT}/", '')}" }
+      .each do |path, status|
+        relative_path = path.sub("#{CORPUS_ROOT}/", "")
+        puts "#{status}: #{relative_path}"
+      end
   end
 end
 

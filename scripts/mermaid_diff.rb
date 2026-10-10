@@ -72,7 +72,9 @@ def mermaid_verdict(source)
     input = File.join(dir, "probe.mmd")
     File.write(input, source)
 
-    MmdcOracle.verdict(input) { |probe, output| HardenedMmdc.run_mmdc(probe, output) }
+    MmdcOracle.verdict(input) do |probe, output|
+      HardenedMmdc.run_mmdc(probe, output)
+    end
   end
 
   warn "  mmdc: #{result.diagnostic}" if result.verdict == :error
@@ -123,13 +125,17 @@ def report(verdicts, only_gaps:)
 
   tally = verdicts.group_by(&:kind).transform_values(&:size)
   puts
-  puts format("%<total>d probes: %<agree>d agree, %<gaps>d gaps, " \
-              "%<over_accepted>d over-accepted, %<mmdc_failures>d mmdc failures",
-              total: verdicts.size,
-              agree: tally[:agree].to_i,
-              gaps: tally[:gap].to_i,
-              over_accepted: tally[:over_acceptance].to_i,
-              mmdc_failures: tally[:infrastructure].to_i)
+  summary_format = "%<total>d probes: %<agree>d agree, %<gaps>d gaps, " \
+                   "%<over_accepted>d over-accepted, " \
+                   "%<mmdc_failures>d mmdc failures"
+  puts format(
+    summary_format,
+    total: verdicts.size,
+    agree: tally[:agree].to_i,
+    gaps: tally[:gap].to_i,
+    over_accepted: tally[:over_acceptance].to_i,
+    mmdc_failures: tally[:infrastructure].to_i,
+  )
 end
 
 # Leading whitespace is often the whole point of a probe — the indented
@@ -169,7 +175,9 @@ abort "usage: mermaid_diff.rb [--only-gaps] <probe file>..." if paths.empty?
 check_oracle
 
 records = probes(paths)
-abort "  no probe records found — check the file and its separators" if records.empty?
+if records.empty?
+  abort "  no probe records found — check the file and its separators"
+end
 
 verdicts = records.map do |source|
   Verdict.new(source, sirena_verdict(source), mermaid_verdict(source))
