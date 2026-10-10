@@ -11,7 +11,48 @@
 # loudly instead of shipping a corpus-inflated report. Untagged examples that
 # merely read corpus fixtures are NOT covered -- tag them, don't rely on the
 # fixture directory.
-SimpleCov.configure do
+module SimpleCovConfiguration
+  module_function
+
+  def apply(config)
+    configure_report(config)
+    configure_groups(config)
+    configure_floor(config)
+  end
+
+  def configure_report(config)
+    config.coverage_dir ENV.fetch("SIMPLECOV_COVERAGE_DIR", "coverage")
+    config.enable_coverage :branch
+    # coverage/coverage.json feeds `simplecov patch`
+    # (tasks/coverage.rake: coverage:changed_lines).
+    config.formats :html, :json
+
+    # `cover` includes every matching lib/ file, even when the suite never
+    # requires it, so an unloaded file enters the report at 0% rather than
+    # appearing to have no coverable lines. Its extension filter also keeps
+    # tasks and built-in YAML themes out of the report.
+    config.cover "lib/**/*.rb"
+  end
+
+  def configure_groups(config)
+    # Group coverage by component so regressions remain attributable. Files
+    # that match none of these paths remain in SimpleCov's Ungrouped bucket.
+    config.group "Parser", %r{\Alib/sirena/parser(\.rb\z|/)}
+    config.group "Diagram", %r{\Alib/sirena/diagram(\.rb\z|/)}
+    config.group "Layout", %r{\Alib/sirena/layout(\.rb\z|/)}
+    config.group "Renderer", %r{\Alib/sirena/renderer(\.rb\z|/)}
+    config.group "Svg", %r{\Alib/sirena/svg(\.rb\z|/)}
+    config.group "Theme", %r{\Alib/sirena/theme(\.rb\z|/)}
+  end
+
+  def configure_floor(config)
+    # Runs with failing examples skip these line and branch floors. Coverage
+    # can be order-sensitive, so re-measure several seeds before raising them.
+    config.minimum_coverage line: 97.00, branch: 89.00
+  end
+end
+
+SimpleCov.configure do |config|
   # A COVERAGE=true subprocess that is not spec:unit itself (e.g. a spec that
   # shells out to prove the corpus-exclusion guard -- see
   # spec/spec_helper_corpus_guard_spec.rb) would otherwise write into this
@@ -21,43 +62,7 @@ SimpleCov.configure do
   # completes successfully. SIMPLECOV_COVERAGE_DIR lets such a caller point
   # the child at a throwaway directory instead, without touching the real one
   # coverage:changed_lines reads.
-  coverage_dir ENV.fetch("SIMPLECOV_COVERAGE_DIR", "coverage")
-
-  enable_coverage :branch
-
-  formats :html, :json # coverage/coverage.json feeds `simplecov patch` (tasks/coverage.rake: coverage:changed_lines)
-
-  # `cover` below expands to include every lib/ file on disk matching
-  # `lib/**/*.rb`, even one `spec:unit` never requires -- it enters the
-  # report at 0%, not "no coverable lines" (which would count as a pass for
-  # both this floor and coverage:changed_lines). The same glob is also a
-  # restriction: `tasks/*.rake` and `lib/sirena/theme/builtin/*.yml`
-  # never appear in the report, loaded or not -- `cover` matches by
-  # extension (`SimpleCov::UnloadedFileInjector.discover` /
-  # `SimpleCov::Result#apply_cover_filters!`, gem source), not by whether
-  # Ruby's Coverage module ever saw the file.
-  cover "lib/**/*.rb"
-
-  # TODO.foundation/03-coverage-gate.md item 1: grouped by component, so a
-  # regression is traceable to the architecture layer that caused it
-  # (lib/sirena/CLAUDE.md's pipeline: Parser -> Diagram -> Transform ->
-  # layout -> Renderer -> Svg). Files matched by none of these (engine.rb,
-  # diagram_registry.rb, cli.rb, commands/, layout/fallback.rb,
-  # text_measurement.rb, version.rb) fall into SimpleCov's own "Ungrouped"
-  # bucket.
-  group "Parser", %r{\Alib/sirena/parser(\.rb\z|/)}
-  group "Diagram", %r{\Alib/sirena/diagram(\.rb\z|/)}
-  group "Layout", %r{\Alib/sirena/layout(\.rb\z|/)}
-  group "Renderer", %r{\Alib/sirena/renderer(\.rb\z|/)}
-  group "Svg", %r{\Alib/sirena/svg(\.rb\z|/)}
-  group "Theme", %r{\Alib/sirena/theme(\.rb\z|/)}
-
-  # Line and branch floors, enforced by SimpleCov on `rake coverage:measure`
-  # (spec:unit). A run with any failing example skips this check entirely.
-  # Coverage can be order-sensitive (rescue/call-site pairs in
-  # renderer/{base,flowchart,pie}.rb resolve differently by execution order),
-  # so re-measure across several seeds before raising either number off one
-  # run. Floors only rise; the next rungs are branch 90, then branch 97
-  # (TODO.foundation/03-coverage-gate.md, "Bars").
-  minimum_coverage line: 97.00, branch: 89.00
+  # The helper keeps this configuration block below RuboCop's block-length
+  # limit while leaving SimpleCov's configuration receiver explicit.
+  SimpleCovConfiguration.apply(config)
 end
