@@ -29,7 +29,7 @@ module StateDiagramOracleCases
   end
 end
 
-RSpec.describe "StateDiagram Integration" do
+RSpec.describe "StateDiagram Integration", :aggregate_failures do
   include StateDiagramIntegrationSpecHelpers
 
   describe "complete state diagram pipeline" do
