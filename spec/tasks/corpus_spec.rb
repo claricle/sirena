@@ -33,7 +33,7 @@ module CorpusCheckStubs
   end
 end
 
-RSpec.describe Sirena::Corpus do
+RSpec.describe Sirena::Corpus, :aggregate_failures do
   describe ".types" do
     it "lists the real corpus type directories" do
       expect(described_class.types).to include("pie", "flowchart",
