@@ -37,19 +37,7 @@ RSpec.describe Sirena::Renderer::C4 do
   end
 
   it "uses every element palette including external variants" do
-    colors = Sirena::Theme::Registry.get(:default).colors
-    groups = renderer.render(scene(children: palette_nodes)).children
-      .grep(Sirena::Svg::Group)
-    fills = groups.to_h do |group|
-      [group.id, group.children.grep(Sirena::Svg::Rect).first.fill]
-    end
-
-    expect(fills).to eq(
-      "element-p" => colors.secondary,
-      "element-s" => colors.secondary,
-      "element-c" => colors.primary,
-      "element-k" => colors.surface_variant,
-    )
+    expect(palette_fills).to eq(expected_palette_fills)
   end
 
   it "uses typed label font sizes in source order" do
@@ -96,6 +84,24 @@ RSpec.describe Sirena::Renderer::C4 do
                                  body_center: point.new(x: 60, y: 75))
     [person, node("s", "system", external: true),
      node("c", "container"), node("k", "component")]
+  end
+
+  def palette_fills
+    groups = renderer.render(scene(children: palette_nodes)).children
+      .grep(Sirena::Svg::Group)
+    groups.to_h do |group|
+      [group.id, group.children.grep(Sirena::Svg::Rect).first.fill]
+    end
+  end
+
+  def expected_palette_fills
+    colors = Sirena::Theme::Registry.get(:default).colors
+    {
+      "element-p" => colors.secondary,
+      "element-s" => colors.secondary,
+      "element-c" => colors.primary,
+      "element-k" => colors.surface_variant,
+    }
   end
 
   def sized_label_node
