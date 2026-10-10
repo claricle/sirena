@@ -1,41 +1,38 @@
 <svg
- width="680.934"
- height="160.0"
- viewBox="0 0 680.934 160"
+ width="743.0"
+ height="140.0"
+ viewBox="0 0 743.0 140.0"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="edge-frontend-backend">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 160.0 80.0 L 200.0 80.0"/>
-  <polygon fill="#000000" points="200.0,80.0 192.0,84.0 192.0,76.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 100.0 60.0 L 221.0 60.0"/>
 </g>
 <g id="edge-backend-db">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 320.93399999999997 80.0 L 360.93399999999997 80.0"/>
-  <polygon fill="#000000" points="360.934,80.0 352.934,84.0 352.934,76.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 301.0 60.0 L 422.0 60.0"/>
 </g>
 <g id="edge-backend-cache">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 320.93399999999997 80.0 L 360.93399999999997 80.0 L 360.93399999999997 120.0 L 480.93399999999997 120.0 L 480.93399999999997 80.0 L 520.934 80.0"/>
-  <polygon fill="#000000" points="520.934,80.0 512.934,84.0 512.934,76.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 301.0 60.0 L 422.0 60.0 L 422.0 100.0 L 502.0 100.0 L 502.0 60.0 L 623.0 60.0"/>
 </g>
 <g id="service-frontend">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="40.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="100.0" y="74.4" text-anchor="middle" font-size="24">⊞</text>
-  <text fill="#000000" x="100.0" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Frontend</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="20.0" width="80.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="60.0" y="68.4" text-anchor="middle" font-size="24">⊞</text>
+  <text fill="#000000" x="60.0" y="120.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Frontend</text>
 </g>
 <g id="service-backend">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="200.0" y="40.0" width="120.934" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="260.467" y="74.4" text-anchor="middle" font-size="24">▦</text>
-  <text fill="#000000" x="260.467" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Backend API</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="221.0" y="20.0" width="80.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="261.0" y="68.4" text-anchor="middle" font-size="24">▦</text>
+  <text fill="#000000" x="261.0" y="120.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Backend API</text>
 </g>
 <g id="service-db">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="360.93399999999997" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="420.93399999999997" y="74.4" text-anchor="middle" font-size="24">⬢</text>
-  <text fill="#000000" x="420.93399999999997" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Database</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="422.0" y="20.0" width="80.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="462.0" y="68.4" text-anchor="middle" font-size="24">⬢</text>
+  <text fill="#000000" x="462.0" y="120.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Database</text>
 </g>
 <g id="service-cache">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="520.934" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="580.934" y="74.4" text-anchor="middle" font-size="24">◎</text>
-  <text fill="#000000" x="580.934" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Cache</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="623.0" y="20.0" width="80.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="663.0" y="68.4" text-anchor="middle" font-size="24">◎</text>
+  <text fill="#000000" x="663.0" y="120.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Cache</text>
 </g>
 </svg>

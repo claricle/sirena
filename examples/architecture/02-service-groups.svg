@@ -1,60 +1,56 @@
 <svg
- width="550.0"
- height="350.0"
- viewBox="0 0 550 350"
+ width="383.5"
+ height="600.5"
+ viewBox="0 0 383.5 600.5"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="group-api">
-  <rect fill="#f0f0f0" fill-opacity="0.3" stroke="#999" stroke-width="2" x="10.0" y="10.0" width="500.0" height="140.0" rx="8.0" ry="8.0" stroke-dasharray="5,5"/>
-  <text fill="#333" x="20.0" y="30.0" font-size="14" font-weight="bold">API Services</text>
-  <text fill="#666" x="480.0" y="35.0" font-size="20">☁</text>
+  <rect fill="#f0f0f0" fill-opacity="0.3" stroke="#999" stroke-width="2" x="-22.5" y="-22.5" width="366.0" height="383.0" rx="8.0" ry="8.0" stroke-dasharray="5,5"/>
+  <text fill="#333" x="-12.5" y="-2.5" font-size="14" font-weight="bold">API Services</text>
+  <text fill="#666" x="313.5" y="2.5" font-size="20">☁</text>
 </g>
 <g id="group-storage">
-  <rect fill="#f0f0f0" fill-opacity="0.3" stroke="#999" stroke-width="2" x="10.0" y="170.0" width="340.0" height="140.0" rx="8.0" ry="8.0" stroke-dasharray="5,5"/>
-  <text fill="#333" x="20.0" y="190.0" font-size="14" font-weight="bold">Storage Layer</text>
-  <text fill="#666" x="320.0" y="195.0" font-size="20">◎</text>
+  <rect fill="#f0f0f0" fill-opacity="0.3" stroke="#999" stroke-width="2" x="-22.5" y="378.5" width="345.0" height="182.0" rx="8.0" ry="8.0" stroke-dasharray="5,5"/>
+  <text fill="#333" x="-12.5" y="398.5" font-size="14" font-weight="bold">Storage Layer</text>
+  <text fill="#666" x="292.5" y="403.5" font-size="20">◎</text>
 </g>
 <g id="edge-webapp-auth">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 160.0 80.0 L 200.0 80.0"/>
-  <polygon fill="#000000" points="200.0,80.0 192.0,84.0 192.0,76.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 100.0 60.0 L 221.0 60.0"/>
 </g>
 <g id="edge-webapp-data">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 100.0 120.0 L 100.0 170.0 L 360.0 170.0 L 360.0 20.0 L 420.0 20.0 L 420.0 40.0"/>
-  <polygon fill="#000000" points="420.0,40.0 416.0,32.0 424.0,32.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 60.0 100.0 L 60.0 221.0"/>
 </g>
 <g id="edge-data-db">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 420.0 120.0 L 100.0 200.0"/>
-  <polygon fill="#000000" points="100.0,200.0 106.791,194.1791 108.7313,201.9403"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 60.0 301.0 L 60.0 421.0"/>
 </g>
 <g id="edge-auth-cache">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 260.0 120.0 L 260.0 200.0"/>
-  <polygon fill="#000000" points="260.0,200.0 256.0,192.0 264.0,192.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 261.0 100.0 L 240.0 421.0"/>
 </g>
 <g id="service-webapp">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="40.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="100.0" y="74.4" text-anchor="middle" font-size="24">▦</text>
-  <text fill="#000000" x="100.0" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Web Server</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="20.0" width="80.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="60.0" y="68.4" text-anchor="middle" font-size="24">▦</text>
+  <text fill="#000000" x="60.0" y="120.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Web Server</text>
 </g>
 <g id="service-auth">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="200.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="260.0" y="74.4" text-anchor="middle" font-size="24">▦</text>
-  <text fill="#000000" x="260.0" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Auth Service</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="221.0" y="20.0" width="80.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="261.0" y="68.4" text-anchor="middle" font-size="24">▦</text>
+  <text fill="#000000" x="261.0" y="120.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Auth Service</text>
 </g>
 <g id="service-data">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="360.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="420.0" y="74.4" text-anchor="middle" font-size="24">⬢</text>
-  <text fill="#000000" x="420.0" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Data API</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="221.0" width="80.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="60.0" y="269.4" text-anchor="middle" font-size="24">⬢</text>
+  <text fill="#000000" x="60.0" y="321.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Data API</text>
 </g>
 <g id="service-db">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="40.0" y="200.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="100.0" y="234.4" text-anchor="middle" font-size="24">⬢</text>
-  <text fill="#000000" x="100.0" y="257.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Database</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="421.0" width="80.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="60.0" y="469.4" text-anchor="middle" font-size="24">⬢</text>
+  <text fill="#000000" x="60.0" y="521.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Database</text>
 </g>
 <g id="service-cache">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="200.0" y="200.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="260.0" y="234.4" text-anchor="middle" font-size="24">▦</text>
-  <text fill="#000000" x="260.0" y="257.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Cache</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="200.0" y="421.0" width="80.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="240.0" y="469.4" text-anchor="middle" font-size="24">▦</text>
+  <text fill="#000000" x="240.0" y="521.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Cache</text>
 </g>
 </svg>

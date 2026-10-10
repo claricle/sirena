@@ -15,53 +15,15 @@
             -43.46131677889235
           ],
           "bbox_sirena": [
-            20.0,
-            76.0,
-            660.0,
-            120.0
+            100.0,
+            60.0,
+            221.0,
+            60.0
           ],
           "key": [
             "architecture_edge",
             "api",
             "db-server"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -60.91357551748237,
-            -3.4613167788923533,
-            -60.91357551748237,
-            117.46131677889238
-          ],
-          "bbox_sirena": [
-            260.0,
-            20.0,
-            584.0,
-            140.0
-          ],
-          "key": [
-            "architecture_edge",
-            "api",
-            "disk1-server"
-          ]
-        },
-        {
-          "bbox_reference": [
-            140.91357551748237,
-            -3.4613167788923533,
-            140.91357551748237,
-            117.46131677889238
-          ],
-          "bbox_sirena": [
-            96.0,
-            20.0,
-            420.0,
-            140.0
-          ],
-          "key": [
-            "architecture_edge",
-            "api",
-            "disk2-db"
           ]
         },
         {
@@ -72,10 +34,10 @@
             256.96131677889235
           ],
           "bbox_sirena": [
-            10.0,
-            10.0,
-            670.0,
-            150.0
+            -22.5,
+            -22.5,
+            343.5,
+            360.5
           ],
           "key": [
             "architecture_group",
@@ -85,50 +47,88 @@
         },
         {
           "bbox_reference": [
-            -100.91357551748237,
-            -83.46131677889235,
-            -20.91357551748237,
-            -3.4613167788923533
+            100.91357551748237,
+            117.46131677889238,
+            180.91357551748237,
+            197.46131677889238
           ],
           "bbox_sirena": [
-            520.0,
-            40.0,
-            640.0,
-            120.0
+            221.0,
+            221.0,
+            301.0,
+            301.0
           ],
           "key": [
             "architecture_service",
             "api",
-            "server"
+            "disk2"
+          ]
+        },
+        {
+          "bbox_reference": [
+            140.91357551748237,
+            -3.4613167788923533,
+            140.91357551748237,
+            117.46131677889238
+          ],
+          "bbox_sirena": [
+            261.0,
+            100.0,
+            261.0,
+            221.0
+          ],
+          "key": [
+            "architecture_edge",
+            "api",
+            "disk2-db"
+          ]
+        },
+        {
+          "bbox_reference": [
+            100.91357551748237,
+            -83.46131677889235,
+            180.91357551748237,
+            -3.4613167788923533
+          ],
+          "bbox_sirena": [
+            221.0,
+            20.0,
+            301.0,
+            100.0
+          ],
+          "key": [
+            "architecture_service",
+            "api",
+            "db"
           ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.919635938041,
-      "worst_e_h": "Infinity",
-      "worst_e_w": "Infinity",
+      "worst_e_a": 0.002456425199,
+      "worst_e_c": 0.001566660423,
+      "worst_e_h": 0.000639801168,
+      "worst_e_w": 0.006789545909,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "architecture_edge",
-          "api",
-          "db-server"
+          "architecture_group",
+          null,
+          "api"
         ],
         "e_c": [
           "architecture_service",
           "api",
-          "server"
+          "disk2"
         ],
         "e_h": [
           "architecture_edge",
           "api",
-          "db-server"
+          "disk1-server"
         ],
         "e_w": [
           "architecture_edge",
           "api",
-          "disk1-server"
+          "db-server"
         ]
       }
     },
@@ -140,10 +140,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.919635938041,
-        "worst_e_w": "Infinity",
-        "worst_e_h": "Infinity",
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.001566660423,
+        "worst_e_w": 0.006789545909,
+        "worst_e_h": 0.000639801168,
+        "worst_e_a": 0.002456425199,
         "worst_analog": null
       }
     }
@@ -166,7 +166,7 @@
           "bbox_sirena": [
             40.0,
             40.0,
-            168.704,
+            120.0,
             120.0
           ],
           "key": [
@@ -177,10 +177,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.6088,
-      "worst_e_c": 0.215243304193,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.6088,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -213,10 +213,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.215243304193,
-        "worst_e_w": 0.6088,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.6088,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -225,27 +225,27 @@
     "case": "architecture/011_rendering_architecture_spec_architecture_10.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 22,
+      "matched": 28,
       "reference_elements": 28,
       "sirena_elements": 28,
       "top5": [
         {
           "bbox_reference": [
-            -727.2199093843001,
+            -526.320910536194,
             -148.25883421953148,
-            -606.320910536194,
+            61.84540678512019,
             -148.25883421953148
           ],
           "bbox_sirena": [
-            160.0,
-            76.0,
-            200.0,
-            84.0
+            301.0,
+            60.0,
+            823.0,
+            60.0
           ],
           "key": [
             "architecture_edge",
-            "federated",
-            "server1-edge"
+            null,
+            "edge-firewall"
           ]
         },
         {
@@ -256,10 +256,10 @@
             -148.25883421953148
           ],
           "bbox_sirena": [
-            174.892,
-            236.0,
-            214.892,
-            244.0
+            903.0,
+            60.0,
+            1024.0,
+            60.0
           ],
           "key": [
             "architecture_edge",
@@ -275,10 +275,10 @@
             60.57651226461766
           ],
           "bbox_sirena": [
-            274.892,
-            200.0,
-            1344.892,
-            300.0
+            1064.0,
+            100.0,
+            1064.0,
+            255.0
           ],
           "key": [
             "architecture_edge",
@@ -288,289 +288,84 @@
         },
         {
           "bbox_reference": [
-            101.84540678512022,
-            60.57651226461766,
-            292.3280114850691,
-            60.57651226461766
+            -359.27633138403144,
+            -230.75883421953154,
+            929.7199093843001,
+            361.75883421953154
           ],
           "bbox_sirena": [
-            1294.892,
-            234.0,
-            1438.892,
-            244.0
+            378.5,
+            -22.5,
+            1749.5,
+            561.5
           ],
           "key": [
-            "architecture_edge",
-            "on_prem",
-            "1Leftofmid-mid"
+            "architecture_group",
+            null,
+            "on_prem"
           ]
         },
         {
           "bbox_reference": [
-            -84.07586454604143,
+            292.3280114850691,
             60.57651226461766,
-            101.84540678512022,
+            471.4442003387736,
             60.57651226461766
           ],
           "bbox_sirena": [
-            1346.892,
-            234.0,
-            1490.892,
-            244.0
+            1070.0,
+            261.0,
+            1259.0,
+            261.0
           ],
           "key": [
             "architecture_edge",
             "on_prem",
-            "2Leftofmid-1Leftofmid"
+            "mid-1RightOfMid"
           ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.474259240028,
-      "worst_e_h": "Infinity",
-      "worst_e_w": "Infinity",
+      "worst_e_a": 0.079131232326,
+      "worst_e_c": 0.047906396381,
+      "worst_e_h": 0.08194579377,
+      "worst_e_w": 0.112495930781,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "architecture_edge",
-          "federated",
-          "server1-edge"
+          "architecture_group",
+          null,
+          "on_prem"
         ],
         "e_c": [
           "architecture_service",
           "on_prem",
-          "server"
+          "db3"
         ],
         "e_h": [
           "architecture_edge",
-          "federated",
-          "server1-edge"
+          "on_prem",
+          "server-mid"
         ],
         "e_w": [
           "architecture_edge",
-          "on_prem",
-          "server-mid"
+          null,
+          "edge-firewall"
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          "on_prem",
-          "1Leftofmid-db1"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          "on_prem",
-          "2Leftofmid-db2"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          "on_prem",
-          "3Leftofmid-db3"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          "on_prem",
-          "1RightOfMid-db4"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          "on_prem",
-          "2RightOfMid-db5"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          "on_prem",
-          "3RightOfMid-db6"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          null,
-          "1Leftofmid-db1"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          null,
-          "2Leftofmid-db2"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          null,
-          "3Leftofmid-db3"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          null,
-          "1RightOfMid-db4"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          null,
-          "2RightOfMid-db5"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_edge",
-          null,
-          "3RightOfMid-db6"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/architecture/011_rendering_architecture_spec_architecture_10.svg",
     "reproduce": "bundle exec rake 'corpus[architecture,valid]'",
     "sirena_status": "rendered",
     "type": "architecture",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.474259240028,
-        "worst_e_w": "Infinity",
-        "worst_e_h": "Infinity",
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.047906396381,
+        "worst_e_w": 0.112495930781,
+        "worst_e_h": 0.08194579377,
+        "worst_e_a": 0.079131232326,
         "worst_analog": null
       }
     }
@@ -585,25 +380,6 @@
       "top5": [
         {
           "bbox_reference": [
-            123.89042259024745,
-            0.9938752139106484,
-            203.89042259024745,
-            80.99387521391066
-          ],
-          "bbox_sirena": [
-            520.0,
-            40.0,
-            683.7180000000001,
-            120.0
-          ],
-          "key": [
-            "architecture_service",
-            null,
-            "fa"
-          ]
-        },
-        {
-          "bbox_reference": [
             16.547503861356148,
             165.94022102709994,
             96.54750386135615,
@@ -612,7 +388,7 @@
           "bbox_sirena": [
             40.0,
             40.0,
-            160.0,
+            120.0,
             120.0
           ],
           "key": [
@@ -629,9 +405,9 @@
             104.90236582964434
           ],
           "bbox_sirena": [
-            200.0,
+            160.0,
             40.0,
-            320.0,
+            240.0,
             120.0
           ],
           "key": [
@@ -642,15 +418,34 @@
         },
         {
           "bbox_reference": [
+            123.89042259024745,
+            0.9938752139106484,
+            203.89042259024745,
+            80.99387521391066
+          ],
+          "bbox_sirena": [
+            400.0,
+            40.0,
+            480.0,
+            120.0
+          ],
+          "key": [
+            "architecture_service",
+            null,
+            "fa"
+          ]
+        },
+        {
+          "bbox_reference": [
             -31.460767970084206,
             -129.94022102709994,
             48.539232029915794,
             -49.94022102709994
           ],
           "bbox_sirena": [
-            360.0,
+            280.0,
             40.0,
-            480.0,
+            360.0,
             120.0
           ],
           "key": [
@@ -661,16 +456,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.046475,
-      "worst_e_c": 0.640333122999,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.656707707079,
       "worst_e_h": 0.0,
-      "worst_e_w": 1.046475,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "architecture_service",
           null,
-          "fa"
+          "s3"
         ],
         "e_c": [
           "architecture_service",
@@ -685,7 +480,7 @@
         "e_w": [
           "architecture_service",
           null,
-          "fa"
+          "s3"
         ]
       }
     },
@@ -697,10 +492,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.640333122999,
-        "worst_e_w": 1.046475,
+        "worst_e_c": 0.656707707079,
+        "worst_e_w": 0.0,
         "worst_e_h": 0.0,
-        "worst_e_a": 1.046475,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -721,53 +516,15 @@
             -43.46131677889235
           ],
           "bbox_sirena": [
-            20.0,
-            76.0,
-            660.0,
-            120.0
+            100.0,
+            60.0,
+            221.0,
+            60.0
           ],
           "key": [
             "architecture_edge",
             "api",
             "db-server"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -60.91357551748237,
-            -3.4613167788923533,
-            -60.91357551748237,
-            117.46131677889238
-          ],
-          "bbox_sirena": [
-            260.0,
-            20.0,
-            584.0,
-            140.0
-          ],
-          "key": [
-            "architecture_edge",
-            "api",
-            "disk1-server"
-          ]
-        },
-        {
-          "bbox_reference": [
-            140.91357551748237,
-            -3.4613167788923533,
-            140.91357551748237,
-            117.46131677889238
-          ],
-          "bbox_sirena": [
-            96.0,
-            20.0,
-            420.0,
-            140.0
-          ],
-          "key": [
-            "architecture_edge",
-            "api",
-            "disk2-db"
           ]
         },
         {
@@ -778,10 +535,10 @@
             256.96131677889235
           ],
           "bbox_sirena": [
-            10.0,
-            10.0,
-            670.0,
-            150.0
+            -22.5,
+            -22.5,
+            343.5,
+            360.5
           ],
           "key": [
             "architecture_group",
@@ -791,50 +548,88 @@
         },
         {
           "bbox_reference": [
-            -100.91357551748237,
-            -83.46131677889235,
-            -20.91357551748237,
-            -3.4613167788923533
+            100.91357551748237,
+            117.46131677889238,
+            180.91357551748237,
+            197.46131677889238
           ],
           "bbox_sirena": [
-            520.0,
-            40.0,
-            640.0,
-            120.0
+            221.0,
+            221.0,
+            301.0,
+            301.0
           ],
           "key": [
             "architecture_service",
             "api",
-            "server"
+            "disk2"
+          ]
+        },
+        {
+          "bbox_reference": [
+            140.91357551748237,
+            -3.4613167788923533,
+            140.91357551748237,
+            117.46131677889238
+          ],
+          "bbox_sirena": [
+            261.0,
+            100.0,
+            261.0,
+            221.0
+          ],
+          "key": [
+            "architecture_edge",
+            "api",
+            "disk2-db"
+          ]
+        },
+        {
+          "bbox_reference": [
+            100.91357551748237,
+            -83.46131677889235,
+            180.91357551748237,
+            -3.4613167788923533
+          ],
+          "bbox_sirena": [
+            221.0,
+            20.0,
+            301.0,
+            100.0
+          ],
+          "key": [
+            "architecture_service",
+            "api",
+            "db"
           ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": "Infinity",
-      "worst_e_c": 0.919635938041,
-      "worst_e_h": "Infinity",
-      "worst_e_w": "Infinity",
+      "worst_e_a": 0.002456425199,
+      "worst_e_c": 0.001566660423,
+      "worst_e_h": 0.000639801168,
+      "worst_e_w": 0.006789545909,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "architecture_edge",
-          "api",
-          "db-server"
+          "architecture_group",
+          null,
+          "api"
         ],
         "e_c": [
           "architecture_service",
           "api",
-          "server"
+          "disk2"
         ],
         "e_h": [
           "architecture_edge",
           "api",
-          "db-server"
+          "disk1-server"
         ],
         "e_w": [
           "architecture_edge",
           "api",
-          "disk1-server"
+          "db-server"
         ]
       }
     },
@@ -846,10 +641,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.919635938041,
-        "worst_e_w": "Infinity",
-        "worst_e_h": "Infinity",
-        "worst_e_a": "Infinity",
+        "worst_e_c": 0.001566660423,
+        "worst_e_w": 0.006789545909,
+        "worst_e_h": 0.000639801168,
+        "worst_e_a": 0.002456425199,
         "worst_analog": null
       }
     }
@@ -909,7 +704,7 @@
           "bbox_sirena": [
             40.0,
             40.0,
-            160.0,
+            120.0,
             120.0
           ],
           "key": [
@@ -920,10 +715,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.416666666667,
-      "worst_e_c": 0.122840232316,
+      "worst_e_a": 0.055555555556,
+      "worst_e_c": 0.04515696749,
       "worst_e_h": 0.058823529412,
-      "worst_e_w": 0.333333333333,
+      "worst_e_w": 0.111111111111,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -956,10 +751,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.122840232316,
-        "worst_e_w": 0.333333333333,
+        "worst_e_c": 0.04515696749,
+        "worst_e_w": 0.111111111111,
         "worst_e_h": 0.058823529412,
-        "worst_e_a": 0.416666666667,
+        "worst_e_a": 0.055555555556,
         "worst_analog": null
       }
     }
@@ -1338,9 +1133,9 @@
     "case": "architecture/029_spec_xss_spec_28.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 1,
+      "matched": 2,
       "reference_elements": 2,
-      "sirena_elements": 1,
+      "sirena_elements": 2,
       "top5": [
         {
           "bbox_reference": [
@@ -1352,7 +1147,7 @@
           "bbox_sirena": [
             40.0,
             40.0,
-            160.0,
+            120.0,
             120.0
           ],
           "key": [
@@ -1360,13 +1155,32 @@
             null,
             "db"
           ]
+        },
+        {
+          "bbox_reference": [
+            73.46149885702418,
+            -16.0,
+            185.4614988570242,
+            96.0
+          ],
+          "bbox_sirena": [
+            218.0,
+            24.0,
+            330.0,
+            136.0
+          ],
+          "key": [
+            "architecture_group",
+            null,
+            "api"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.416666666667,
-      "worst_e_c": 0.122840232316,
+      "worst_e_a": 0.055555555556,
+      "worst_e_c": 0.023788924599,
       "worst_e_h": 0.058823529412,
-      "worst_e_w": 0.333333333333,
+      "worst_e_w": 0.111111111111,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -1391,36 +1205,18 @@
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "architecture_group",
-          null,
-          "api"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/architecture/029_spec_xss_spec_28.svg",
     "reproduce": "bundle exec rake 'corpus[architecture,valid]'",
     "sirena_status": "rendered",
     "type": "architecture",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.122840232316,
-        "worst_e_w": 0.333333333333,
+        "worst_e_c": 0.023788924599,
+        "worst_e_w": 0.111111111111,
         "worst_e_h": 0.058823529412,
-        "worst_e_a": 0.416666666667,
+        "worst_e_a": 0.055555555556,
         "worst_analog": null
       }
     }
@@ -64141,10 +63937,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64155,7 +63951,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64178,7 +63974,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -64202,10 +63998,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64216,7 +64012,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64239,7 +64035,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -64263,10 +64059,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64277,7 +64073,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64300,7 +64096,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -64324,10 +64120,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64338,7 +64134,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64361,7 +64157,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -64385,10 +64181,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64399,7 +64195,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64422,7 +64218,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -64446,10 +64242,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64460,7 +64256,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64483,7 +64279,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -64507,10 +64303,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64521,7 +64317,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64544,7 +64340,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -64568,10 +64364,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64582,7 +64378,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64605,7 +64401,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -64629,10 +64425,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64643,7 +64439,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64666,7 +64462,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -64690,10 +64486,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64704,7 +64500,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64727,7 +64523,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -64751,10 +64547,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -64765,7 +64561,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -64788,7 +64584,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
@@ -76201,16 +75997,73 @@
       "top5": [
         {
           "bbox_reference": [
+            188.4,
+            133.28,
+            198.4,
+            143.28
+          ],
+          "bbox_sirena": [
+            188.39999999999998,
+            133.27999999999997,
+            198.39999999999998,
+            143.27999999999997
+          ],
+          "key": [
+            "quadrant_point",
+            "Need to promote",
+            "Campaign F"
+          ]
+        },
+        {
+          "bbox_reference": [
+            211.6,
+            319.84,
+            221.6,
+            329.84
+          ],
+          "bbox_sirena": [
+            211.60000000000002,
+            319.84,
+            221.60000000000002,
+            329.84
+          ],
+          "key": [
+            "quadrant_point",
+            "Re-evaluate",
+            "Campaign E"
+          ]
+        },
+        {
+          "bbox_reference": [
+            290.47999999999996,
+            171.44,
+            300.47999999999996,
+            181.44
+          ],
+          "bbox_sirena": [
+            290.47999999999996,
+            171.44000000000003,
+            300.47999999999996,
+            181.44000000000003
+          ],
+          "key": [
+            "quadrant_point",
+            "We should expand",
+            "Campaign C"
+          ]
+        },
+        {
+          "bbox_reference": [
             263.0,
             45.0,
             495.0,
             257.0
           ],
           "bbox_sirena": [
-            400.0,
-            80.0,
-            720.0,
-            300.0
+            263.0,
+            45.0,
+            495.0,
+            257.0
           ],
           "key": [
             "quadrant_region",
@@ -76226,80 +76079,23 @@
             257.0
           ],
           "bbox_sirena": [
-            80.0,
-            80.0,
-            400.0,
-            300.0
+            31.0,
+            45.0,
+            263.0,
+            257.0
           ],
           "key": [
             "quadrant_region",
             null,
             "Need to promote"
           ]
-        },
-        {
-          "bbox_reference": [
-            31.0,
-            257.0,
-            263.0,
-            469.0
-          ],
-          "bbox_sirena": [
-            80.0,
-            300.0,
-            400.0,
-            520.0
-          ],
-          "key": [
-            "quadrant_region",
-            null,
-            "Re-evaluate"
-          ]
-        },
-        {
-          "bbox_reference": [
-            263.0,
-            257.0,
-            495.0,
-            469.0
-          ],
-          "bbox_sirena": [
-            400.0,
-            300.0,
-            720.0,
-            520.0
-          ],
-          "key": [
-            "quadrant_region",
-            null,
-            "May be improved"
-          ]
-        },
-        {
-          "bbox_reference": [
-            387.92,
-            319.84,
-            397.92,
-            329.84
-          ],
-          "bbox_sirena": [
-            573.2,
-            364.4,
-            585.2,
-            376.4
-          ],
-          "key": [
-            "quadrant_point",
-            "May be improved",
-            "Campaign D"
-          ]
         }
       ],
-      "worst_analog": 0.2,
-      "worst_e_a": 0.329153605016,
-      "worst_e_c": 0.219053528628,
-      "worst_e_h": 0.2,
-      "worst_e_w": 0.379310344828,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "Campaign A",
@@ -76312,13 +76108,13 @@
         ],
         "e_c": [
           "quadrant_point",
-          "May be improved",
-          "Campaign D"
-        ],
-        "e_h": [
-          "quadrant_point",
           "Need to promote",
           "Campaign F"
+        ],
+        "e_h": [
+          "quadrant_region",
+          null,
+          "We should expand"
         ],
         "e_w": [
           "quadrant_region",
@@ -76335,11 +76131,11 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.219053528628,
-        "worst_e_w": 0.379310344828,
-        "worst_e_h": 0.2,
-        "worst_e_a": 0.329153605016,
-        "worst_analog": 0.2
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -76390,16 +76186,73 @@
       "top5": [
         {
           "bbox_reference": [
+            118.8,
+            336.79999999999995,
+            128.8,
+            346.79999999999995
+          ],
+          "bbox_sirena": [
+            118.80000000000001,
+            336.79999999999995,
+            128.8,
+            346.79999999999995
+          ],
+          "key": [
+            "quadrant_point",
+            "Niche",
+            "Incorta"
+          ]
+        },
+        {
+          "bbox_reference": [
+            262.64000000000004,
+            294.4,
+            272.64000000000004,
+            304.4
+          ],
+          "bbox_sirena": [
+            262.64,
+            294.4,
+            272.64,
+            304.4
+          ],
+          "key": [
+            "quadrant_point",
+            "Visionaries",
+            "IBM"
+          ]
+        },
+        {
+          "bbox_reference": [
+            281.2,
+            209.60000000000002,
+            291.2,
+            219.60000000000002
+          ],
+          "bbox_sirena": [
+            281.20000000000005,
+            209.60000000000002,
+            291.20000000000005,
+            219.60000000000002
+          ],
+          "key": [
+            "quadrant_point",
+            "Leaders",
+            "Salesforce"
+          ]
+        },
+        {
+          "bbox_reference": [
             263.0,
             45.0,
             495.0,
             257.0
           ],
           "bbox_sirena": [
-            400.0,
-            80.0,
-            720.0,
-            300.0
+            263.0,
+            45.0,
+            495.0,
+            257.0
           ],
           "key": [
             "quadrant_region",
@@ -76415,104 +76268,47 @@
             257.0
           ],
           "bbox_sirena": [
-            80.0,
-            80.0,
-            400.0,
-            300.0
+            31.0,
+            45.0,
+            263.0,
+            257.0
           ],
           "key": [
             "quadrant_region",
             null,
             "Challengers"
           ]
-        },
-        {
-          "bbox_reference": [
-            31.0,
-            257.0,
-            263.0,
-            469.0
-          ],
-          "bbox_sirena": [
-            80.0,
-            300.0,
-            400.0,
-            520.0
-          ],
-          "key": [
-            "quadrant_region",
-            null,
-            "Niche"
-          ]
-        },
-        {
-          "bbox_reference": [
-            263.0,
-            257.0,
-            495.0,
-            469.0
-          ],
-          "bbox_sirena": [
-            400.0,
-            300.0,
-            720.0,
-            520.0
-          ],
-          "key": [
-            "quadrant_region",
-            null,
-            "Visionaries"
-          ]
-        },
-        {
-          "bbox_reference": [
-            374.0,
-            146.0,
-            384.0,
-            156.0
-          ],
-          "bbox_sirena": [
-            554.0,
-            184.0,
-            566.0,
-            196.0
-          ],
-          "key": [
-            "quadrant_point",
-            "Leaders",
-            "Microsoft"
-          ]
         }
       ],
-      "worst_analog": 0.2,
-      "worst_e_a": 0.329153605016,
-      "worst_e_c": 0.210873999905,
-      "worst_e_h": 0.2,
-      "worst_e_w": 0.379310344828,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
-          "IBM",
+          "Incorta",
           "radius"
         ],
         "e_a": [
-          "quadrant_region",
-          null,
-          "Leaders"
-        ],
-        "e_c": [
-          "quadrant_region",
-          null,
-          "Visionaries"
-        ],
-        "e_h": [
           "quadrant_point",
           "Niche",
           "Incorta"
         ],
-        "e_w": [
+        "e_c": [
+          "quadrant_point",
+          "Visionaries",
+          "IBM"
+        ],
+        "e_h": [
           "quadrant_region",
           null,
           "Leaders"
+        ],
+        "e_w": [
+          "quadrant_point",
+          "Niche",
+          "Incorta"
         ]
       }
     },
@@ -76524,11 +76320,11 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.210873999905,
-        "worst_e_w": 0.379310344828,
-        "worst_e_h": 0.2,
-        "worst_e_a": 0.329153605016,
-        "worst_analog": 0.2
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -76542,16 +76338,73 @@
       "top5": [
         {
           "bbox_reference": [
+            113.8,
+            331.79999999999995,
+            133.8,
+            351.79999999999995
+          ],
+          "bbox_sirena": [
+            113.80000000000001,
+            331.79999999999995,
+            133.8,
+            351.79999999999995
+          ],
+          "key": [
+            "quadrant_point",
+            "Niche",
+            "Incorta"
+          ]
+        },
+        {
+          "bbox_reference": [
+            257.64000000000004,
+            289.4,
+            277.64000000000004,
+            309.4
+          ],
+          "bbox_sirena": [
+            257.64,
+            289.4,
+            277.64,
+            309.4
+          ],
+          "key": [
+            "quadrant_point",
+            "Visionaries",
+            "IBM"
+          ]
+        },
+        {
+          "bbox_reference": [
+            276.2,
+            204.60000000000002,
+            296.2,
+            224.60000000000002
+          ],
+          "bbox_sirena": [
+            276.20000000000005,
+            204.60000000000002,
+            296.20000000000005,
+            224.60000000000002
+          ],
+          "key": [
+            "quadrant_point",
+            "Leaders",
+            "Salesforce"
+          ]
+        },
+        {
+          "bbox_reference": [
             263.0,
             45.0,
             495.0,
             257.0
           ],
           "bbox_sirena": [
-            400.0,
-            80.0,
-            720.0,
-            300.0
+            263.0,
+            45.0,
+            495.0,
+            257.0
           ],
           "key": [
             "quadrant_region",
@@ -76567,94 +76420,37 @@
             257.0
           ],
           "bbox_sirena": [
-            80.0,
-            80.0,
-            400.0,
-            300.0
+            31.0,
+            45.0,
+            263.0,
+            257.0
           ],
           "key": [
             "quadrant_region",
             null,
             "Challengers"
           ]
-        },
-        {
-          "bbox_reference": [
-            31.0,
-            257.0,
-            263.0,
-            469.0
-          ],
-          "bbox_sirena": [
-            80.0,
-            300.0,
-            400.0,
-            520.0
-          ],
-          "key": [
-            "quadrant_region",
-            null,
-            "Niche"
-          ]
-        },
-        {
-          "bbox_reference": [
-            263.0,
-            257.0,
-            495.0,
-            469.0
-          ],
-          "bbox_sirena": [
-            400.0,
-            300.0,
-            720.0,
-            520.0
-          ],
-          "key": [
-            "quadrant_region",
-            null,
-            "Visionaries"
-          ]
-        },
-        {
-          "bbox_reference": [
-            369.0,
-            141.0,
-            389.0,
-            161.0
-          ],
-          "bbox_sirena": [
-            550.0,
-            180.0,
-            570.0,
-            200.0
-          ],
-          "key": [
-            "quadrant_point",
-            "Leaders",
-            "Microsoft"
-          ]
         }
       ],
       "worst_analog": 0.0,
-      "worst_e_a": 0.329153605016,
-      "worst_e_c": 0.210873999905,
-      "worst_e_h": 0.037735849057,
-      "worst_e_w": 0.379310344828,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "Incorta",
           "radius"
         ],
         "e_a": [
-          "quadrant_region",
-          null,
-          "Leaders"
+          "quadrant_point",
+          "Niche",
+          "Incorta"
         ],
         "e_c": [
-          "quadrant_region",
-          null,
-          "Visionaries"
+          "quadrant_point",
+          "Visionaries",
+          "IBM"
         ],
         "e_h": [
           "quadrant_region",
@@ -76662,9 +76458,9 @@
           "Leaders"
         ],
         "e_w": [
-          "quadrant_region",
-          null,
-          "Leaders"
+          "quadrant_point",
+          "Niche",
+          "Incorta"
         ]
       }
     },
@@ -76676,10 +76472,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.210873999905,
-        "worst_e_w": 0.379310344828,
-        "worst_e_h": 0.037735849057,
-        "worst_e_a": 0.329153605016,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": 0.0
       }
     }
@@ -76694,16 +76490,73 @@
       "top5": [
         {
           "bbox_reference": [
+            118.8,
+            336.79999999999995,
+            128.8,
+            346.79999999999995
+          ],
+          "bbox_sirena": [
+            118.80000000000001,
+            336.79999999999995,
+            128.8,
+            346.79999999999995
+          ],
+          "key": [
+            "quadrant_point",
+            "Niche",
+            "Incorta"
+          ]
+        },
+        {
+          "bbox_reference": [
+            262.64000000000004,
+            294.4,
+            272.64000000000004,
+            304.4
+          ],
+          "bbox_sirena": [
+            262.64,
+            294.4,
+            272.64,
+            304.4
+          ],
+          "key": [
+            "quadrant_point",
+            "Visionaries",
+            "IBM"
+          ]
+        },
+        {
+          "bbox_reference": [
+            276.2,
+            204.60000000000002,
+            296.2,
+            224.60000000000002
+          ],
+          "bbox_sirena": [
+            276.20000000000005,
+            204.60000000000002,
+            296.20000000000005,
+            224.60000000000002
+          ],
+          "key": [
+            "quadrant_point",
+            "Leaders",
+            "Salesforce"
+          ]
+        },
+        {
+          "bbox_reference": [
             263.0,
             45.0,
             495.0,
             257.0
           ],
           "bbox_sirena": [
-            400.0,
-            80.0,
-            720.0,
-            300.0
+            263.0,
+            45.0,
+            495.0,
+            257.0
           ],
           "key": [
             "quadrant_region",
@@ -76719,104 +76572,47 @@
             257.0
           ],
           "bbox_sirena": [
-            80.0,
-            80.0,
-            400.0,
-            300.0
+            31.0,
+            45.0,
+            263.0,
+            257.0
           ],
           "key": [
             "quadrant_region",
             null,
             "Challengers"
           ]
-        },
-        {
-          "bbox_reference": [
-            31.0,
-            257.0,
-            263.0,
-            469.0
-          ],
-          "bbox_sirena": [
-            80.0,
-            300.0,
-            400.0,
-            520.0
-          ],
-          "key": [
-            "quadrant_region",
-            null,
-            "Niche"
-          ]
-        },
-        {
-          "bbox_reference": [
-            263.0,
-            257.0,
-            495.0,
-            469.0
-          ],
-          "bbox_sirena": [
-            400.0,
-            300.0,
-            720.0,
-            520.0
-          ],
-          "key": [
-            "quadrant_region",
-            null,
-            "Visionaries"
-          ]
-        },
-        {
-          "bbox_reference": [
-            369.0,
-            141.0,
-            389.0,
-            161.0
-          ],
-          "bbox_sirena": [
-            550.0,
-            180.0,
-            570.0,
-            200.0
-          ],
-          "key": [
-            "quadrant_point",
-            "Leaders",
-            "Microsoft"
-          ]
         }
       ],
-      "worst_analog": 0.2,
-      "worst_e_a": 0.329153605016,
-      "worst_e_c": 0.210873999905,
-      "worst_e_h": 0.2,
-      "worst_e_w": 0.379310344828,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
-          "IBM",
+          "Incorta",
           "radius"
         ],
         "e_a": [
-          "quadrant_region",
-          null,
-          "Leaders"
-        ],
-        "e_c": [
-          "quadrant_region",
-          null,
-          "Visionaries"
-        ],
-        "e_h": [
           "quadrant_point",
           "Niche",
           "Incorta"
         ],
-        "e_w": [
+        "e_c": [
+          "quadrant_point",
+          "Visionaries",
+          "IBM"
+        ],
+        "e_h": [
           "quadrant_region",
           null,
           "Leaders"
+        ],
+        "e_w": [
+          "quadrant_point",
+          "Niche",
+          "Incorta"
         ]
       }
     },
@@ -76828,11 +76624,11 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.210873999905,
-        "worst_e_w": 0.379310344828,
-        "worst_e_h": 0.2,
-        "worst_e_a": 0.329153605016,
-        "worst_analog": 0.2
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -78775,54 +78571,54 @@
       "top5": [
         {
           "bbox_reference": [
-            17.8203125,
-            8.0,
-            155.9140625,
-            120.0
-          ],
-          "bbox_sirena": [
-            20.0,
-            20.0,
-            170.0,
-            100.0
-          ],
-          "key": [
-            "element",
-            null,
-            "test_entity"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             194.0,
             165.734375,
             378.0
           ],
           "bbox_sirena": [
-            20.0,
-            180.0,
-            200.0,
-            320.0
+            8.0,
+            194.0,
+            156.96,
+            378.0
           ],
           "key": [
             "requirement",
             null,
             "test_req"
           ]
+        },
+        {
+          "bbox_reference": [
+            17.8203125,
+            8.0,
+            155.9140625,
+            120.0
+          ],
+          "bbox_sirena": [
+            14.239999999999995,
+            8.0,
+            150.72000000000003,
+            120.0
+          ],
+          "key": [
+            "element",
+            null,
+            "test_entity"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.520706042091,
-      "worst_e_c": 0.122505711637,
-      "worst_e_h": 0.285714285714,
-      "worst_e_w": 0.141158989599,
+      "worst_e_a": 0.055627538385,
+      "worst_e_c": 0.010907459311,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.055627538385,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "element",
+          "requirement",
           null,
-          "test_entity"
+          "test_req"
         ],
         "e_c": [
           "requirement",
@@ -78830,9 +78626,9 @@
           "test_req"
         ],
         "e_h": [
-          "element",
+          "requirement",
           null,
-          "test_entity"
+          "test_req"
         ],
         "e_w": [
           "requirement",
@@ -78849,10 +78645,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.122505711637,
-        "worst_e_w": 0.141158989599,
-        "worst_e_h": 0.285714285714,
-        "worst_e_a": 0.520706042091,
+        "worst_e_c": 0.010907459311,
+        "worst_e_w": 0.055627538385,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.055627538385,
         "worst_analog": null
       }
     }
@@ -78947,10 +78743,10 @@
             144.0
           ],
           "bbox_sirena": [
-            20.0,
-            20.0,
-            170.0,
-            100.0
+            8.0,
+            8.0,
+            148.048,
+            144.0
           ],
           "key": [
             "element",
@@ -78960,10 +78756,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.792224906655,
-      "worst_e_c": 0.143603570965,
-      "worst_e_h": 0.411764705882,
-      "worst_e_w": 0.054249945091,
+      "worst_e_a": 0.015696024599,
+      "worst_e_c": 0.005673196105,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.015696024599,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -78996,10 +78792,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.143603570965,
-        "worst_e_w": 0.054249945091,
-        "worst_e_h": 0.411764705882,
-        "worst_e_a": 0.792224906655,
+        "worst_e_c": 0.005673196105,
+        "worst_e_w": 0.015696024599,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.015696024599,
         "worst_analog": null
       }
     }
@@ -98698,25 +98494,6 @@
       "top5": [
         {
           "bbox_reference": [
-            123.89042259024745,
-            0.9938752139106484,
-            203.89042259024745,
-            80.99387521391066
-          ],
-          "bbox_sirena": [
-            520.0,
-            40.0,
-            683.7180000000001,
-            120.0
-          ],
-          "key": [
-            "architecture_service",
-            null,
-            "fa"
-          ]
-        },
-        {
-          "bbox_reference": [
             16.547503861356148,
             165.94022102709994,
             96.54750386135615,
@@ -98725,7 +98502,7 @@
           "bbox_sirena": [
             40.0,
             40.0,
-            160.0,
+            120.0,
             120.0
           ],
           "key": [
@@ -98742,9 +98519,9 @@
             104.90236582964434
           ],
           "bbox_sirena": [
-            200.0,
+            160.0,
             40.0,
-            320.0,
+            240.0,
             120.0
           ],
           "key": [
@@ -98755,15 +98532,34 @@
         },
         {
           "bbox_reference": [
+            123.89042259024745,
+            0.9938752139106484,
+            203.89042259024745,
+            80.99387521391066
+          ],
+          "bbox_sirena": [
+            400.0,
+            40.0,
+            480.0,
+            120.0
+          ],
+          "key": [
+            "architecture_service",
+            null,
+            "fa"
+          ]
+        },
+        {
+          "bbox_reference": [
             -31.460767970084206,
             -129.94022102709994,
             48.539232029915794,
             -49.94022102709994
           ],
           "bbox_sirena": [
-            360.0,
+            280.0,
             40.0,
-            480.0,
+            360.0,
             120.0
           ],
           "key": [
@@ -98774,16 +98570,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.046475,
-      "worst_e_c": 0.640333122999,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.656707707079,
       "worst_e_h": 0.0,
-      "worst_e_w": 1.046475,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "architecture_service",
           null,
-          "fa"
+          "s3"
         ],
         "e_c": [
           "architecture_service",
@@ -98798,7 +98594,7 @@
         "e_w": [
           "architecture_service",
           null,
-          "fa"
+          "s3"
         ]
       }
     },
@@ -98810,10 +98606,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.640333122999,
-        "worst_e_w": 1.046475,
+        "worst_e_c": 0.656707707079,
+        "worst_e_w": 0.0,
         "worst_e_h": 0.0,
-        "worst_e_a": 1.046475,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -100451,10 +100247,10 @@
             40.0
           ],
           "bbox_sirena": [
-            250.0,
-            105.0,
-            250.0,
-            105.0
+            100.0,
+            40.0,
+            100.0,
+            40.0
           ],
           "key": [
             "info_text",
@@ -100465,7 +100261,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.408694568107,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
@@ -100488,7 +100284,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.408694568107,
+        "worst_e_c": 0.0,
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
