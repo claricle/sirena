@@ -682,4 +682,20 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       expect(closed.map(&:height).max).to be < open_bars.map(&:height).max
     end
   end
+
+  describe "participant fills" do
+    let(:head) { top_heads(scene_of("participant A #CCCCCC01")).first }
+
+    it "fills the head with the colour" do
+      expect(head.fill).to eq("#CCCCCC")
+    end
+
+    it "keeps the alpha as an opacity" do
+      expect(head.fill_opacity).to eq(0.00392)
+    end
+
+    it "leaves a head without a colour to the theme" do
+      expect(top_heads(scene_of("participant A")).first.fill).to be_nil
+    end
+  end
 end

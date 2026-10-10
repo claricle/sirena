@@ -8,13 +8,16 @@ module Sirena
         # on its head, as written; `stereotype` is the text of a `<<...>>`
         # after the declaration.
         class Participant
-          attr_reader :id, :label, :kind, :stereotype
+          attr_reader :id, :label, :kind, :stereotype, :fill
 
-          def initialize(id:, label: id, kind: :participant, stereotype: nil)
+          # @param fill [Fill, nil] the colour written after the declaration
+          def initialize(id:, label: id, kind: :participant, stereotype: nil,
+                         fill: nil)
             @id = id
             @label = label
             @kind = kind
             @stereotype = stereotype
+            @fill = fill
             freeze
           end
         end
