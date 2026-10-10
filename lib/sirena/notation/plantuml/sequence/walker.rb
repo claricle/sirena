@@ -5,6 +5,7 @@ require_relative "arrow_marks"
 require_relative "bar_tracker"
 require_relative "destroy"
 require_relative "divider"
+require_relative "edge"
 require_relative "fragment"
 require_relative "message"
 require_relative "note"
@@ -27,6 +28,7 @@ module Sirena
           TAB_HEIGHT = 20.0
           CROSS_HALF = 9.0
           TOP_OFFSET = 20.0
+          LEFT_EDGE = 0.0
 
           attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
                       :right, :y
@@ -46,7 +48,10 @@ module Sirena
             start_empty
           end
 
-          def run(items)
+          # @param edge_right [Float, nil] where a message written `->]` ends;
+          #   required when the items have one
+          def run(items, edge_right: nil)
+            @edge_right = edge_right
             previous = nil
             items.each do |item|
               @mark_y = nil unless anchoring?(item)
@@ -129,7 +134,9 @@ module Sirena
           def message(message)
             @self_drop = message.self_message? ? SELF_HEIGHT : 0.0
             @last_y = @mark_y = @y
-            from, to = [message.from, message.to].map { |id| centre(id) }
+            from, to = [message.from, message.to].map do |place|
+              place_of(place, message)
+            end
             @arrows << arrow_record(message, arrow_for(message, from, to))
             touch(*extent(message, from, to))
             @y += message.self_message? ? ROW * 1.5 : ROW
@@ -138,8 +145,37 @@ module Sirena
           def extent(message, from, to)
             return [from - reach(message), from] if loops_left?(message)
 
-            low, high = [from, to].minmax
+            low, high = reached(message, from, to).minmax
             [low, high + (message.self_message? ? reach(message) : 0)]
+          end
+
+          # The diagram edge belongs to no row's extent: only the participant
+          # at the other end does.
+          def reached(message, from, to)
+            return [from, to] unless message.edge&.global?
+
+            [centre(message.participants.first)]
+          end
+
+          # Where an end of a message lands: a lifeline, or an edge, which a
+          # ring drawn there pulls inwards.
+          def place_of(place, message)
+            return centre(place) unless place.is_a?(Edge)
+
+            inward = place.left? ? 1 : -1
+            ring = message.edge_end.circle ? Edge::RING_INSET : 0.0
+            edge_x(place, message) + (inward * ring)
+          end
+
+          def edge_x(edge, message)
+            return local_x(edge, message) if edge.local?
+
+            edge.left? ? LEFT_EDGE : @edge_right
+          end
+
+          def local_x(edge, message)
+            run = @measure.call(message.label.to_s) + Edge::RUN_PADDING
+            centre(message.participants.first) + (edge.left? ? -run : run)
           end
 
           # A bar starts or ends at the arrow it is written on, or else

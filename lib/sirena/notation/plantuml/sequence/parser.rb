@@ -7,6 +7,7 @@ require_relative "../unsupported_construct_error"
 require_relative "arrow_syntax"
 require_relative "box"
 require_relative "diagram"
+require_relative "edge"
 require_relative "message"
 require_relative "note"
 require_relative "outline"
@@ -40,9 +41,9 @@ module Sirena
           HIDE_FOOTBOX = /\Ahide[ \t]+footbox\z/i
           STYLE_OPEN = /\A<style>\z/i
           STYLE_CLOSE = /\A<\/style>\z/i
-          MESSAGE = /\A(#{QUOTED}|#{NAME})[ \t]*
+          MESSAGE = /\A(#{QUOTED}|#{NAME}|\[(?=[-<\\\/oxOX]))[ \t]*
                      (#{ArrowSyntax::SOURCE})
-                     [ \t]*(#{QUOTED}|#{NAME})[ \t]*
+                     [ \t]*(#{QUOTED}|#{NAME}|(?<![ \t])\])[ \t]*
                      (--\+\+|\+\+--|\+\+|--|!!)?[ \t]*(#{COLOUR})?
                      [ \t]*(?::[ \t]*(.*))?\z/xo
           ACTIVATION = /\A(activate|deactivate)[ \t]+(#{QUOTED}|#{NAME})
@@ -344,6 +345,8 @@ module Sirena
 
           def message(match)
             message = build_message(match) or return false
+            return false if unplaceable?(message, match[4])
+
             marks = marks(match[4], message, colour(match[6]))
             return false if match[5] && marks.none? { |phase,| phase == :on }
 
@@ -351,13 +354,32 @@ module Sirena
           end
 
           def build_message(match)
-            from, to = [match[1], match[3]].map { |name| mention(name) }
             style, reversed = ArrowSyntax.read(match[2])
-            return unless style
+            ends = [endpoint(match[1], :left), endpoint(match[3], :right)]
+            return unless style && edges_readable?(ends, reversed)
 
-            from, to = to, from if reversed
+            from, to = reversed ? ends.reverse : ends
             kind = @parallel ? ParallelMessage : Message
             kind.new(from: from, to: to, label: match[7], style: style)
+          end
+
+          def endpoint(token, side)
+            Edge.read(token, side) || mention(token)
+          end
+
+          # At most one end is missing, and a diagram-wide edge only for the
+          # forms measured against PlantUML: written `[->` or `->]`.
+          def edges_readable?(ends, reversed)
+            edges = ends.grep(Edge)
+            edges.size < 2 && edges.none? { |edge| reversed && edge.global? }
+          end
+
+          # A `?` end has no ring in the slice, and a missing end cannot be
+          # activated or destroyed.
+          def unplaceable?(message, suffix)
+            edge = message.edge or return false
+
+            !suffix.nil? || (edge.local? && message.edge_end.circle)
           end
 
           # `--` deactivates the sender, `++` activates the receiver and `!!`

@@ -50,7 +50,7 @@ module Sirena
           private
 
           def message_span(message, ids)
-            [ids.index(message.from), ids.index(message.to)].minmax
+            message.participants.map { |id| ids.index(id) }.minmax
           end
         end
       end

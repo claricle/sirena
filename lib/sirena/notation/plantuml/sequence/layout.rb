@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../layout/base"
+require_relative "edge"
 require_relative "note"
 require_relative "note_geometry"
 require_relative "scene"
@@ -20,10 +21,12 @@ module Sirena
           BOX_PADDING = 8.0
           BOX_TITLE_HEIGHT = 26.0
           MIN_WIDTH_PADDING = 14.0
+          EDGE_GAP = 5.0
+          EDGE_MARGIN = 10.0
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
                            :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT,
-                           :MIN_WIDTH_PADDING
+                           :MIN_WIDTH_PADDING, :EDGE_GAP, :EDGE_MARGIN
 
           def scene(diagram)
             @diagram = diagram
@@ -39,11 +42,35 @@ module Sirena
           private
 
           def walk
+            @edge_right = right_edge
             Walker.new(lifelines: ids.zip(@centers).to_h, bounds: head_bounds,
                        measure: ->(text) { text_width(text) },
                        font_size: font_size,
                        start_y: @top + @head_height + Walker::ROW)
-              .run(@diagram.items)
+              .run(@diagram.items, edge_right: @edge_right)
+          end
+
+          # Where `->]` messages end: past every head, and far enough from
+          # each sender to fit its label. Nil when there are none.
+          def right_edge
+            ends = edge_messages(:right).map do |m|
+              @centers[ids.index(m.from)] + edge_room(m)
+            end
+            return if ends.empty?
+
+            [head_bounds.last + EDGE_GAP, *ends].max
+          end
+
+          def edge_messages(side)
+            @diagram.messages.select do |m|
+              m.edge&.global? && m.edge.side == side
+            end
+          end
+
+          # Label plus the run either side of it, and the ring if one is drawn.
+          def edge_room(message)
+            ring = message.edge_end.circle ? Edge::RING_INSET : 0.0
+            label_width(message) + Edge::RUN_PADDING + ring
           end
 
           def head_bounds
@@ -116,11 +143,22 @@ module Sirena
 
           def centers(widths)
             gaps = required_gaps(widths)
-            x = MARGIN + (widths.first / 2)
+            x = MARGIN + (widths.first / 2) + left_edge_room(widths, gaps)
             widths.each_index.map do |index|
               x += gaps[index - 1] if index.positive?
               x
             end
+          end
+
+          # How far to push every head right so the label of a `[->` message
+          # fits between the left edge and the head it points at.
+          def left_edge_room(widths, gaps)
+            start = MARGIN + (widths.first / 2)
+            short = edge_messages(:left).map do |m|
+              index = ids.index(m.to)
+              edge_room(m) - start - gaps.first(index).sum
+            end
+            [0.0, *short].max
           end
 
           # Distance between neighbouring centres: heads must not overlap and
@@ -192,6 +230,8 @@ module Sirena
           end
 
           def widen(gaps, message)
+            return if message.edge
+
             low, high = indexes(message).sort
             span = gap_span(gaps, message, low, high)
             need = message_room(message, low == high)
@@ -222,9 +262,18 @@ module Sirena
           end
 
           def canvas_width(widths)
+            padded = [head_extent(widths), @flow.right].max + MARGIN
+            [padded, edge_extent].max
+          end
+
+          def head_extent(widths)
             right = @centers.last + (widths.last / 2)
             self_room = self_reach(@diagram.participants.size - 1)
-            [right, @centers.last + self_room, @flow.right].max + MARGIN
+            [right, @centers.last + self_room].max
+          end
+
+          def edge_extent
+            @edge_right ? @edge_right + EDGE_MARGIN : 0.0
           end
 
           def self_reach(index)

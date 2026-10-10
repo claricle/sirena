@@ -53,6 +53,7 @@ module Sirena
 
           def reply(label)
             call = @calls.pop or return false
+            return false if call.edge
 
             style = ArrowStyle.plain(:filled, dashed: true)
             message(Message.new(from: call.to, to: call.from, label: label,
