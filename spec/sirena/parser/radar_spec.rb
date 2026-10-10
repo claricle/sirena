@@ -83,6 +83,12 @@ RSpec.describe Sirena::Parser::Radar do
         expect(curve.value_for("C")).to eq(3.0)
       end
 
+      it "ignores positional values beyond the last axis" do
+        diagram = parser.parse("radar-beta\n  axis A,B\n  curve c{1,2,3}\n")
+
+        expect(diagram.curves.first.values.size).to eq(2)
+      end
+
       it "parses named values" do
         source = <<~MERMAID
           radar-beta
