@@ -17,6 +17,15 @@ RSpec.describe Sirena::Layout::Timeline do
   let(:diagram) { Sirena::Parser::Timeline.new.parse(source) }
   let(:scene) { described_class.new.to_graph(diagram) }
 
+  it "lays out shared pre-positioned IR identically to the private model" do
+    diagram.acc_title = "Accessible history"
+    diagram.acc_description = "Launches over time"
+    ir = Sirena::Notation::Mermaid::IRAdapters::Timeline.call(diagram)
+    actual = Marshal.dump(described_class.new.call(ir))
+
+    expect(actual).to eq(Marshal.dump(scene))
+  end
+
   describe "final geometry" do
     subject(:geometry_evidence) do
       history, work = scene.tracks
