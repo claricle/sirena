@@ -3,108 +3,257 @@
 require "spec_helper"
 require "sirena/parser/user_journey"
 
+module UserJourneySpecHelpers
+  def section_names_and_tasks(source)
+    parser.parse(source).sections.map do |section|
+      [section.name, section.tasks.map(&:name)]
+    end
+  end
+
+  def scored_section_names_and_tasks(source)
+    parser.parse(source).sections.map do |section|
+      [section.name, section.tasks.map { |task| [task.name, task.score] }]
+    end
+  end
+
+  def journey_shape(source)
+    diagram = parser.parse(source)
+    sections = diagram.sections.map do |section|
+      tasks = section.tasks.map { |task| [task.name, task.score] }
+      [section.name, tasks]
+    end
+    [diagram.title, sections]
+  end
+
+  def expect_parse_error(
+    source,
+    error = Sirena::Parser::ParseError,
+    message = nil,
+    failure_message: nil
+  )
+    matcher = message ? raise_error(error, message) : raise_error(error)
+    expect { parser.parse(source) }.to matcher, failure_message
+  end
+
+  def expect_score_error(source)
+    expect_parse_error(
+      source,
+      Sirena::Parser::ScoreError,
+      /Score must be between 1 and 5/,
+    )
+  end
+
+  def expect_section_tasks(source, section, tasks)
+    expect(section_names_and_tasks(source)).to eq([[section, tasks]])
+  end
+
+  def expect_directive_journey(source)
+    expected = ["Real title", [["Order from website", [
+      ["Sit down", 5], ["Check mail", 3]
+    ]]]]
+    expect(journey_shape(source)).to eq(expected)
+  end
+
+  def expect_invalid_byte_parse_error(source)
+    expect_encoded_parse_error(
+      source,
+      valid: true,
+      message: /invalid byte sequence/,
+    )
+  end
+
+  def expect_task_closed_and_unclosed(closed, unclosed, task)
+    expect_closed_and_unclosed(closed, unclosed, [["S", [task]]])
+  end
+
+  def expect_comment_brace_behavior
+    commented_close = "journey\nsection S\nBefore: 5: You\n" \
+                      "accDescr {unterminated\nSwallowed: 1: Me\n%% }\n" \
+                      "After: 4: Us\n"
+    real_close = "journey\naccDescr {\ndescription\n%% }\n" \
+                 "still description\n}\nsection S\nTask: 3: Me\n"
+    expect_task_closed_and_unclosed(real_close, commented_close, "Task")
+  end
+
+  def expect_closed_and_unclosed(closed, unclosed, expected)
+    expect(section_names_and_tasks(closed)).to eq(expected)
+    expect_parse_error(unclosed, Sirena::Parser::ParseError, /Parse error/)
+  end
+
+  def expect_encoded_parse_error(source, valid:, ascii_only: nil, message: nil)
+    expected_encoding = [valid, ascii_only].compact
+    actual_encoding = [source.valid_encoding?, source.ascii_only?]
+      .first(expected_encoding.length)
+    expect(actual_encoding).to eq(expected_encoding)
+    expect_parse_error(source, Sirena::Parser::ParseError, message)
+  end
+
+  def expect_comment_openers(codepoints)
+    separators = codepoints.map { |codepoint| codepoint.chr(Encoding::UTF_8) }
+    expect(separators.uniq.length).to eq(3)
+
+    separators.each do |separator|
+      source = "journey\nsection S\nBefore: 5: You\n" \
+               "accDescr {unterminated\nSwallowed: 1: Me#{separator}%% }"
+      failure_message = "U+#{format('%04X', separator.ord)} should " \
+                        "open a comment"
+      expect_parse_error(
+        source,
+        Sirena::Parser::ParseError,
+        /Parse error/,
+        failure_message: failure_message,
+      )
+    end
+  end
+
+  def expect_comment_indents(codepoints)
+    indents = codepoints.map { |codepoint| codepoint.chr(Encoding::UTF_8) }
+    expect(indents.uniq.length).to eq(indents.length)
+
+    indents.each do |indent|
+      source = "journey\nsection S\nBefore: 5: You\n" \
+               "accDescr {unterminated\nSwallowed: 1: Me\n#{indent}%% }\n" \
+               "After: 4: Us\n"
+      failure_message = "U+#{format('%04X', indent.ord)} should " \
+                        "indent a comment"
+      expect_parse_error(
+        source,
+        Sirena::Parser::ParseError,
+        /Parse error/,
+        failure_message: failure_message,
+      )
+    end
+  end
+
+  def journey_block(line)
+    "journey\naccDescr {d\n#{"#{line}\n" * 800}}\nsection S\nT: 1: M\n"
+  end
+
+  def best_parse_time(source)
+    Array.new(3) { wall_time { parser.parse(source) } }.min
+  end
+
+  def expect_line_bounded_alternative(rule, line, control)
+    source = journey_block(line)
+    expect(section_names_and_tasks(source)).to eq([["S", ["T"]]])
+    failure_message = "#{rule} is not line-bounded"
+    expect(best_parse_time(source)).to be < control * 8, failure_message
+  end
+
+  def expect_block_alternatives_line_bounded
+    control = best_parse_time(journey_block("x"))
+    alternatives = { "acc_comment_line" => "%% x", "acc_directive" => "%%{x" }
+    alternatives.each do |rule, line|
+      expect_line_bounded_alternative(rule, line, control)
+    end
+  end
+
+  def unclosed_block_ratio(source, control_source)
+    refused = wall_time do
+      expect_parse_error(source, Sirena::Parser::ParseError, /Parse error/)
+    end
+    accepted = wall_time do
+      expect(section_names_and_tasks(control_source)).to eq([["S", ["T"]]])
+    end
+    refused / accepted
+  end
+
+  def expect_unclosed_block_linear
+    source = "journey\n#{"accDescr {x: 3: Me\n" * 2000}"
+    control_source = "journey\n#{"accDescr {x: 3: Me}\n" * 2000}" \
+                     "section S\nT: 1: M\n"
+    expect(source.bytesize).to be > 30_000
+
+    ratios = Array.new(3) { unclosed_block_ratio(source, control_source) }
+    expect(ratios.min).to be < 8
+  end
+
+  def unicode_block_sources
+    [0x2028, 0x00A0].map do |codepoint|
+      separator = codepoint.chr(Encoding::UTF_8)
+      "journey\naccDescr {#{separator * 4000}}\nsection S\nT: 3: Me\n"
+    end
+  end
+
+  def expect_unicode_results(results)
+    expect(results.map(&:last)).to eq([[["S", ["T"]]], [["S", ["T"]]]])
+    expect(results.first.first).to be < results.last.first * 15
+  end
+
+  def expect_unicode_line_separator_linear
+    sources = unicode_block_sources
+    expect(sources.first).not_to eq(sources.last)
+
+    results = sources.map do |source|
+      [best_parse_time(source), section_names_and_tasks(source)]
+    end
+    expect_unicode_results(results)
+  end
+
+  def journey_fixture(filename)
+    File.read(
+      File.expand_path("../../mermaid/user_journey/#{filename}", __dir__),
+    )
+  end
+end
+
 RSpec.describe Sirena::Parser::UserJourney do
+  include UserJourneySpecHelpers
+
   let(:parser) { described_class.new }
 
   describe "#parse" do
-    it "parses simple user journey with one task" do
-      source = <<~MERMAID
-        journey
-          title My Journey
-          section Shopping
-            Browse products: 5: Customer
-      MERMAID
+    basic_cases = {
+      "parses simple user journey with one task" => [
+        <<~MERMAID,
+          journey
+            title My Journey
+            section Shopping
+              Browse products: 5: Customer
+        MERMAID
+        lambda do |diagram|
+          task = diagram.sections.first.tasks.first
+          [diagram.class, diagram.title, diagram.sections.length,
+           diagram.sections.first.name, diagram.sections.first.tasks.length,
+           task.name, task.score, task.actors]
+        end,
+        [Sirena::Diagram::UserJourney, "My Journey", 1, "Shopping", 1,
+         "Browse products", 5, ["Customer"]],
+      ],
+      "parses user journey without title" => [
+        "journey\nsection Shopping\nBrowse: 5: Customer\n",
+        ->(diagram) { [diagram.title, diagram.sections.length] },
+        [nil, 1],
+      ],
+      "parses multiple sections" => [
+        "journey\nsection Shopping\nBrowse: 5: Customer\n" \
+        "section Checkout\nPay: 3: Customer\n",
+        ->(diagram) { diagram.sections.map(&:name) },
+        %w[Shopping Checkout],
+      ],
+      "parses multiple tasks in a section" => [
+        "journey\nsection Shopping\nBrowse: 5: Customer\n" \
+        "Select: 4: Customer\nAdd to cart: 4: Customer\n",
+        ->(diagram) { diagram.sections.first.tasks.map(&:name) },
+        ["Browse", "Select", "Add to cart"],
+      ],
+      "parses tasks with multiple actors" => [
+        "journey\nsection Shopping\nCheckout: 3: Customer, Staff\n",
+        ->(diagram) { diagram.sections.first.tasks.first.actors },
+        %w[Customer Staff],
+      ],
+      "parses tasks with different scores" => [
+        "journey\nsection Test\nTask1: 1: Actor\nTask2: 2: Actor\n" \
+        "Task3: 3: Actor\nTask4: 4: Actor\nTask5: 5: Actor\n",
+        ->(diagram) { diagram.sections.first.tasks.map(&:score) },
+        [1, 2, 3, 4, 5],
+      ],
+    }
 
-      diagram = parser.parse(source)
-
-      expect(diagram).to be_a(Sirena::Diagram::UserJourney)
-      expect(diagram.title).to eq("My Journey")
-      expect(diagram.sections.length).to eq(1)
-      expect(diagram.sections.first.name).to eq("Shopping")
-      expect(diagram.sections.first.tasks.length).to eq(1)
-      expect(diagram.sections.first.tasks.first.name).to eq("Browse products")
-      expect(diagram.sections.first.tasks.first.score).to eq(5)
-      expect(diagram.sections.first.tasks.first.actors).to eq(["Customer"])
-    end
-
-    it "parses user journey without title" do
-      source = <<~MERMAID
-        journey
-          section Shopping
-            Browse: 5: Customer
-      MERMAID
-
-      diagram = parser.parse(source)
-
-      expect(diagram.title).to be_nil
-      expect(diagram.sections.length).to eq(1)
-    end
-
-    it "parses multiple sections" do
-      source = <<~MERMAID
-        journey
-          section Shopping
-            Browse: 5: Customer
-          section Checkout
-            Pay: 3: Customer
-      MERMAID
-
-      diagram = parser.parse(source)
-
-      expect(diagram.sections.length).to eq(2)
-      expect(diagram.sections[0].name).to eq("Shopping")
-      expect(diagram.sections[1].name).to eq("Checkout")
-    end
-
-    it "parses multiple tasks in a section" do
-      source = <<~MERMAID
-        journey
-          section Shopping
-            Browse: 5: Customer
-            Select: 4: Customer
-            Add to cart: 4: Customer
-      MERMAID
-
-      diagram = parser.parse(source)
-
-      expect(diagram.sections.first.tasks.length).to eq(3)
-      expect(diagram.sections.first.tasks[0].name).to eq("Browse")
-      expect(diagram.sections.first.tasks[1].name).to eq("Select")
-      expect(diagram.sections.first.tasks[2].name).to eq("Add to cart")
-    end
-
-    it "parses tasks with multiple actors" do
-      source = <<~MERMAID
-        journey
-          section Shopping
-            Checkout: 3: Customer, Staff
-      MERMAID
-
-      diagram = parser.parse(source)
-
-      task = diagram.sections.first.tasks.first
-      expect(task.actors).to eq(%w[Customer Staff])
-    end
-
-    it "parses tasks with different scores" do
-      source = <<~MERMAID
-        journey
-          section Test
-            Task1: 1: Actor
-            Task2: 2: Actor
-            Task3: 3: Actor
-            Task4: 4: Actor
-            Task5: 5: Actor
-      MERMAID
-
-      diagram = parser.parse(source)
-
-      tasks = diagram.sections.first.tasks
-      expect(tasks[0].score).to eq(1)
-      expect(tasks[1].score).to eq(2)
-      expect(tasks[2].score).to eq(3)
-      expect(tasks[3].score).to eq(4)
-      expect(tasks[4].score).to eq(5)
+    basic_cases.each do |description, (source, projection, expected)|
+      it description do
+        expect(projection.call(parser.parse(source))).to eq(expected)
+      end
     end
 
     it "raises ParseError for invalid syntax" do
@@ -133,8 +282,8 @@ RSpec.describe Sirena::Parser::UserJourney do
           diagram = parser.parse(source)
           task = diagram.sections.first.tasks.first
 
-          expect(task.score).to eq(expected_score)
-          expect(task.actors).to eq(expected_actors)
+          expect([task.score, task.actors])
+            .to eq([expected_score, expected_actors])
         end
       end
     end
@@ -158,16 +307,8 @@ RSpec.describe Sirena::Parser::UserJourney do
     end
 
     it "raises ScoreError for score out of range" do
-      source = <<~MERMAID
-        journey
-          section Test
-            Task: 6: Actor
-      MERMAID
-
-      expect { parser.parse(source) }.to raise_error(
-        Sirena::Parser::ScoreError,
-        /Score must be between 1 and 5/,
-      )
+      source = "journey\nsection Test\nTask: 6: Actor\n"
+      expect_score_error(source)
     end
 
     # "The oracle" below means mermaid 11.16.1 via mermaid-cli 11.12.0. To
@@ -180,20 +321,19 @@ RSpec.describe Sirena::Parser::UserJourney do
     describe "an accessibility directive from the corpus" do
       cases = {
         "004_parser_should_handle_a_title_definition_3.mmd" => nil,
-        "004_parser_should_handle_an_accessibility_description_accdescr__3.mmd" =>
+        "004_parser_should_handle_an_accessibility_description_" \
+        "accdescr__3.mmd" =>
           "Adding journey diagram functionality to mermaid",
-        "005_parser_should_handle_an_accessibility_multiline_description_accdescr__4.mmd" =>
+        "005_parser_should_handle_an_accessibility_multiline_" \
+        "description_accdescr__4.mmd" =>
           "Adding journey diagram functionality to mermaid",
       }
 
       cases.each do |filename, expected_title|
         it "parses #{filename}" do
-          source = File.read(File.expand_path("../../mermaid/user_journey/#{filename}", __dir__))
-
-          diagram = parser.parse(source)
-
-          expect(diagram.title).to eq(expected_title)
-          expect(diagram.sections.map(&:name)).to eq(["Order from website"])
+          diagram = parser.parse(journey_fixture(filename))
+          actual = [diagram.title, diagram.sections.map(&:name)]
+          expect(actual).to eq([expected_title, ["Order from website"]])
         end
       end
     end
@@ -216,7 +356,8 @@ RSpec.describe Sirena::Parser::UserJourney do
         "accTitle with a spaced colon" => "accTitle : The accessible title",
         "accDescr with a spaced colon" => "accDescr : A user journey",
         "an indented accTitle" => "    accTitle: The accessible title",
-        "a braced accDescr block" => "accDescr {\n  a multi line\n  description\n}",
+        "a braced accDescr block" =>
+          "accDescr {\n  a multi line\n  description\n}",
         "a braced accDescr block on one line" => "accDescr {Desc}",
         "a braced accDescr block with no gap" => "accDescr{Desc}",
         "an accTitle with no gap" => "accTitle:Tight",
@@ -224,13 +365,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         it "discards #{label} and leaves the rest of the diagram alone" do
           source = "journey\ntitle Real title\nsection Order from website\n  " \
                    "Sit down: 5: Me\n#{directive}\n  Check mail: 3: Me\n"
-
-          diagram = parser.parse(source)
-
-          expect(diagram.title).to eq("Real title")
-          expect(diagram.sections.map(&:name)).to eq(["Order from website"])
-          expect(diagram.sections.first.tasks.map { |t| [t.name, t.score] })
-            .to eq([["Sit down", 5], ["Check mail", 3]])
+          expect_directive_journey(source)
         end
       end
     end
@@ -240,12 +375,11 @@ RSpec.describe Sirena::Parser::UserJourney do
         # The oracle titles the first source `3: Me` and draws no task for
         # it; it renders the second as an ordinary task, since `accTitleNode`
         # only starts with the same letters.
-        directive = "journey\nsection Order from website\n  accTitle: 3: Me\n"
-        prefixed = "journey\nsection Order from website\n  accTitleNode: 3: Me\n"
-
-        expect(parser.parse(directive).sections.first.tasks.map(&:name)).to eq([])
-        expect(parser.parse(prefixed).sections.first.tasks.map(&:name))
-          .to eq(["accTitleNode"])
+        section = "journey\nsection Order from website\n  "
+        directive = "#{section}accTitle: 3: Me\n"
+        prefixed = "#{section}accTitleNode: 3: Me\n"
+        expect_section_tasks(directive, "Order from website", [])
+        expect_section_tasks(prefixed, "Order from website", ["accTitleNode"])
       end
 
       it "matches accTitle/accDescr case-insensitively, as the oracle does" do
@@ -254,15 +388,13 @@ RSpec.describe Sirena::Parser::UserJourney do
         # literally named "ACCDESCR".
         source = "journey\nsection S\nACCDESCR: 3: Me\n"
 
-        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-          .to eq([["S", []]])
+        expect(section_names_and_tasks(source)).to eq([["S", []]])
       end
 
       it "matches a mixed-case braced accDescr opener case-insensitively" do
         source = "journey\nAccDescr {Desc}\nsection S\nT: 1: M\n"
 
-        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-          .to eq([["S", ["T"]]])
+        expect(section_names_and_tasks(source)).to eq([["S", ["T"]]])
       end
 
       it "still takes a mixed-case keyword whole rather than as a prefix" do
@@ -272,8 +404,8 @@ RSpec.describe Sirena::Parser::UserJourney do
         # to match the next character.
         prefixed = "journey\nsection S\nACCTITLENODE: 3: Me\n"
 
-        expect(parser.parse(prefixed).sections.first.tasks.map(&:name))
-          .to eq(["ACCTITLENODE"])
+        expected = [["S", ["ACCTITLENODE"]]]
+        expect(section_names_and_tasks(prefixed)).to eq(expected)
       end
 
       it "reads a task-shaped directive as a directive" do
@@ -283,22 +415,18 @@ RSpec.describe Sirena::Parser::UserJourney do
         # and draws no task.
         source = "journey\nsection Order from website\n  accDescr : 3: Me\n"
 
-        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
+        expect(section_names_and_tasks(source))
           .to eq([["Order from website", []]])
       end
 
       it "requires the block to close, as mermaid does" do
         # The oracle renders the closed source and refuses the unclosed one.
         # Why the brace is required is on the rule itself.
-        closed = "journey\naccDescr {desc}\nsection Order from website\n  " \
-                 "Sit down: 5: Me\n"
-        unclosed = "journey\naccDescr {unterminated\nsection Order from website\n  " \
-                   "Sit down: 5: Me\n"
-
-        expect(parser.parse(closed).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-          .to eq([["Order from website", ["Sit down"]]])
-        expect { parser.parse(unclosed) }
-          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+        task = "section Order from website\n  Sit down: 5: Me\n"
+        closed = "journey\naccDescr {desc}\n#{task}"
+        unclosed = "journey\naccDescr {unterminated\n#{task}"
+        expected = [["Order from website", ["Sit down"]]]
+        expect_closed_and_unclosed(closed, unclosed, expected)
       end
 
       it "refuses a task-shaped opener whose block never closes" do
@@ -314,8 +442,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         # answer: the source becomes a diagram with no sections at all.
         source = "journey\naccDescr {x: 3: Me\n"
 
-        expect { parser.parse(source) }
-          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+        expect_parse_error(source, Sirena::Parser::ParseError, /Parse error/)
       end
 
       it "refuses an opener whose only closing brace sits in a comment" do
@@ -325,8 +452,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         # here a `}` really is present in the source.
         source = "journey\naccDescr {a\nT: 3: Me\n%% }\n"
 
-        expect { parser.parse(source) }
-          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+        expect_parse_error(source, Sirena::Parser::ParseError, /Parse error/)
       end
 
       it "opens a comment only at the start of a line" do
@@ -337,11 +463,11 @@ RSpec.describe Sirena::Parser::UserJourney do
         # block never closes, and the whole source is refused.
         source = "journey\naccDescr {text%% }\nsection S\nT: 1: M\n"
 
-        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-          .to eq([["S", ["T"]]])
+        expect(section_names_and_tasks(source)).to eq([["S", ["T"]]])
       end
 
-      it "lets a brace in a later, unrelated line close an earlier open block" do
+      it "lets a brace in a later, unrelated line close " \
+         "an earlier open block" do
         # A stray `}` inside a later task's actor name closes the block
         # early and silently drops every section/task in between -- here
         # "section Alpha" and its task vanish entirely, with no error.
@@ -353,8 +479,8 @@ RSpec.describe Sirena::Parser::UserJourney do
         source = "journey\naccDescr {oops\nsection Alpha\n" \
                  "RealTask: 5: Person}\nsection Beta\nAnotherTask: 2: Someone\n"
 
-        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-          .to eq([["Beta", ["AnotherTask"]]])
+        expected = [["Beta", ["AnotherTask"]]]
+        expect(section_names_and_tasks(source)).to eq(expected)
       end
 
       it "ends the block at the brace and reads what follows it" do
@@ -369,7 +495,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         # took 9.75s; they take 0.82s now.
         source = "journey\nsection S\naccDescr{Desc}After: 3: Me\n"
 
-        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map { |t| [t.name, t.score] }] })
+        expect(scored_section_names_and_tasks(source))
           .to eq([["S", [["After", 3]]]])
       end
 
@@ -382,14 +508,11 @@ RSpec.describe Sirena::Parser::UserJourney do
         # this source produced before the braced form existed.
         source = +"journey\naccDescr{\x9F"
         source.force_encoding(Encoding::ISO_8859_1)
-        expect(source).to be_valid_encoding
-        expect(source.ascii_only?).to be(false)
-
-        expect { parser.parse(source) }
-          .to raise_error(Sirena::Parser::ParseError)
+        expect_encoded_parse_error(source, valid: true, ascii_only: false)
       end
 
-      it "raises ParseError on a UTF-8-tagged source with an invalid byte sequence" do
+      it "raises ParseError on a UTF-8-tagged source with " \
+         "an invalid byte sequence" do
         # A different failure mode from the ISO-8859-1 case above: this source
         # is tagged UTF-8 but is not valid UTF-8, so Parslet::Source.new raises
         # ArgumentError ("invalid byte sequence in UTF-8") from StringScanner
@@ -397,14 +520,13 @@ RSpec.describe Sirena::Parser::UserJourney do
         # before an EncodingError could ever be raised. Parser::Base#parse
         # documents ParseError as the one contract; a raw ArgumentError would
         # break it.
-        source = (+"journey\naccTitle: \xFF\xFE\n").force_encoding(Encoding::UTF_8)
-        expect(source.valid_encoding?).to be(false)
-
-        expect { parser.parse(source) }
-          .to raise_error(Sirena::Parser::ParseError)
+        source = (+"journey\naccTitle: \xFF\xFE\n")
+          .force_encoding(Encoding::UTF_8)
+        expect_encoded_parse_error(source, valid: false)
       end
 
-      it "raises ParseError on a source valid in a non-UTF-8 encoding that only fails once the tree is built" do
+      it "raises ParseError on a source valid in a non-UTF-8 encoding " \
+         "that only fails once the tree is built" do
         # A third failure mode: this source is valid Big5-HKSCS throughout
         # and passes grammar parsing entirely, then raises ArgumentError from
         # `String#strip` inside build_diagram_from_tree, on the actor slice.
@@ -413,10 +535,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         # PipelineError), not the ParseError this parser's contract promises.
         source = "journey\naccTitle: description\nsection S\nTask: 1: é\n"
           .encode("Big5-HKSCS")
-        expect(source.valid_encoding?).to be(true)
-
-        expect { parser.parse(source) }
-          .to raise_error(Sirena::Parser::ParseError, /invalid byte sequence/)
+        expect_invalid_byte_parse_error(source)
       end
 
       it "ends the directive text at the newline" do
@@ -430,15 +549,11 @@ RSpec.describe Sirena::Parser::UserJourney do
         # `acc_gap` rule, which skips comments and blank lines after the
         # delimiter, and that also changes what a bare `accTitle:` does to
         # the line after it.
-        empty = "journey\naccTitle:\nsection Order from website\n  " \
-                "Sit down: 5: Me\n"
-        next_line = "journey\naccTitle:\nBig decisions\n" \
-                    "section Order from website\n  Sit down: 5: Me\n"
-
-        expect(parser.parse(empty).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-          .to eq([["Order from website", ["Sit down"]]])
-        expect { parser.parse(next_line) }
-          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+        task = "section Order from website\n  Sit down: 5: Me\n"
+        empty = "journey\naccTitle:\n#{task}"
+        next_line = "journey\naccTitle:\nBig decisions\n#{task}"
+        expected = [["Order from website", ["Sit down"]]]
+        expect_closed_and_unclosed(empty, next_line, expected)
       end
     end
 
@@ -461,7 +576,7 @@ RSpec.describe Sirena::Parser::UserJourney do
           source = "journey\nsection S\nBefore: 5: You\naccDescr {desc\n" \
                    "#{directive}\nSwallowed: 1: Me\n}\nAfter: 4: Us\n"
 
-          expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
+          expect(section_names_and_tasks(source))
             .to eq([["S", %w[Before After]]])
         end
       end
@@ -483,8 +598,7 @@ RSpec.describe Sirena::Parser::UserJourney do
           source = "journey\nsection S\nBefore: 5: You\naccDescr {desc\n" \
                    "#{directive}\nSwallowed: 1: Me\n}\nAfter: 4: Us\n"
 
-          expect { parser.parse(source) }
-            .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+          expect_parse_error(source, Sirena::Parser::ParseError, /Parse error/)
         end
       end
 
@@ -496,10 +610,8 @@ RSpec.describe Sirena::Parser::UserJourney do
         directive = "journey\naccDescr {A%%{x}%%B\nsection S\nT: 1: M\n"
         comment = "journey\naccDescr {A%% x}B\nsection S\nT: 1: M\n"
 
-        expect(parser.parse(directive).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-          .to eq([["S", ["T"]]])
-        expect { parser.parse(comment) }
-          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+        expected = [["S", ["T"]]]
+        expect_closed_and_unclosed(directive, comment, expected)
       end
 
       it "does not read a directive split across two lines" do
@@ -507,11 +619,11 @@ RSpec.describe Sirena::Parser::UserJourney do
         # across lines and renders; here the directive body stops at the
         # line end (required -- see the invariant on acc_block_body), so the
         # `}` inside the JSON closes the block early and this refuses it.
-        source = "journey\naccDescr {a\n%%{init: {\n\"theme\":\"dark\"}}%%\nb}\n" \
+        source = "journey\naccDescr {a\n%%{init: {\n" \
+                 "\"theme\":\"dark\"}}%%\nb}\n" \
                  "section S\nT: 1: M\n"
 
-        expect { parser.parse(source) }
-          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+        expect_parse_error(source, Sirena::Parser::ParseError, /Parse error/)
       end
 
       it "treats a directive with no closing tail as ordinary text" do
@@ -527,8 +639,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         # open instead and refuses a source the oracle accepts.
         source = "journey\naccDescr {a\n%%{x\nb}\nsection S\nT: 1: M\n"
 
-        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-          .to eq([["S", ["T"]]])
+        expect(section_names_and_tasks(source)).to eq([["S", ["T"]]])
       end
 
       it "does not let a brace inside a comment close the block" do
@@ -538,16 +649,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         # where the oracle rejects, and quietly short a task. The oracle
         # renders the second source, where a real brace follows the commented
         # one.
-        commented_close = "journey\nsection S\nBefore: 5: You\n" \
-                          "accDescr {unterminated\nSwallowed: 1: Me\n%% }\n" \
-                          "After: 4: Us\n"
-        real_close = "journey\naccDescr {\ndescription\n%% }\n" \
-                     "still description\n}\nsection S\nTask: 3: Me\n"
-
-        expect { parser.parse(commented_close) }
-          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
-        expect(parser.parse(real_close).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-          .to eq([["S", ["Task"]]])
+        expect_comment_brace_behavior
       end
 
       it "opens a comment on any of the four line terminators" do
@@ -556,17 +658,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         # them let the `}` in `%% }` close the block and dropped `Swallowed`
         # without a word. Built from codepoints so no editor can normalise
         # one of the three into another.
-        separators = [0x0D, 0x2028, 0x2029].map { |c| c.chr(Encoding::UTF_8) }
-        expect(separators.uniq.length).to eq(3)
-
-        separators.each do |sep|
-          source = "journey\nsection S\nBefore: 5: You\naccDescr {unterminated\n" \
-                   "Swallowed: 1: Me#{sep}%% }"
-
-          expect { parser.parse(source) }
-            .to raise_error(Sirena::Parser::ParseError, /Parse error/),
-                "U+#{format('%04X', sep.ord)} should open a comment"
-        end
+        expect_comment_openers([0x0D, 0x2028, 0x2029])
       end
 
       it "accepts every character of mermaid whitespace as a comment indent" do
@@ -579,18 +671,9 @@ RSpec.describe Sirena::Parser::UserJourney do
         # U+2028 and U+2029 are absent on purpose: `acc_nl` claims both, and
         # sharing them made a valid document quadratic. A run of them still
         # opens a comment, which the terminator example above covers.
-        indents = [0x09, 0x0B, 0x0C, 0x20, 0x00A0, 0x1680, *0x2000..0x200A,
-                   0x202F, 0x205F, 0x3000, 0xFEFF].map { |c| c.chr(Encoding::UTF_8) }
-        expect(indents.uniq.length).to eq(indents.length)
-
-        indents.each do |ws|
-          source = "journey\nsection S\nBefore: 5: You\naccDescr {unterminated\n" \
-                   "Swallowed: 1: Me\n#{ws}%% }\nAfter: 4: Us\n"
-
-          expect { parser.parse(source) }
-            .to raise_error(Sirena::Parser::ParseError, /Parse error/),
-                "U+#{format('%04X', ws.ord)} should indent a comment"
-        end
+        codepoints = [0x09, 0x0B, 0x0C, 0x20, 0x00A0, 0x1680,
+                      *0x2000..0x200A, 0x202F, 0x205F, 0x3000, 0xFEFF]
+        expect_comment_indents(codepoints)
       end
     end
 
@@ -607,23 +690,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         # invariant on `acc_block_body`) before it ships. Each side is the
         # MINIMUM of three runs: noise only ever adds time, so a spike has to
         # hit every sample to produce a false failure.
-        block = lambda do |line|
-          "journey\naccDescr {d\n#{"#{line}\n" * 800}}\nsection S\nT: 1: M\n"
-        end
-        best = lambda do |source|
-          Array.new(3) { wall_time { parser.parse(source) } }.min
-        end
-
-        control = best.call(block.call("x"))
-
-        { "acc_comment_line" => "%% x", "acc_directive" => "%%{x" }.each do |rule, line|
-          source = block.call(line)
-
-          expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-            .to eq([["S", ["T"]]])
-          expect(best.call(source))
-            .to be < control * 8, "#{rule} is not line-bounded"
-        end
+        expect_block_alternatives_line_bounded
       end
 
       it "refuses a long unclosed block without rescanning it per line" do
@@ -632,25 +699,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         # into separate phases and `min` each separately -- that flakes under
         # load. Measure as ADJACENT PAIRS and take the minimum over the
         # per-pair ratios, so both halves of a sample share one load regime.
-        source = "journey\n#{"accDescr {x: 3: Me\n" * 2000}"
-        control = "journey\n#{"accDescr {x: 3: Me}\n" * 2000}section S\nT: 1: M\n"
-        expect(source.bytesize).to be > 30_000
-
-        ratios = Array.new(3) do
-          refused = wall_time do
-            expect { parser.parse(source) }
-              .to raise_error(Sirena::Parser::ParseError, /Parse error/)
-          end
-
-          accepted = wall_time do
-            expect(parser.parse(control).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-              .to eq([["S", ["T"]]])
-          end
-
-          refused / accepted
-        end.min
-
-        expect(ratios).to be < 8
+        expect_unclosed_block_linear
       end
 
       it "parses a long run of U+2028 inside a block in linear time" do
@@ -659,22 +708,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         # makes this quadratic again. The no-break space is the control: it
         # is in the indent set and NOT in `acc_nl`, so it cannot open a
         # comment, isolating the one property under test.
-        terminator = 0x2028.chr(Encoding::UTF_8)
-        control = 0x00A0.chr(Encoding::UTF_8)
-        expect(terminator).not_to eq(control)
-
-        sources = [terminator, control].map do |sep|
-          "journey\naccDescr {#{sep * 4000}}\nsection S\nT: 3: Me\n"
-        end
-        expect(sources.first).not_to eq(sources.last)
-
-        results = sources.map do |source|
-          best = Array.new(3) { wall_time { parser.parse(source) } }.min
-          [best, parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] }]
-        end
-
-        expect(results.map(&:last)).to eq([[["S", ["T"]]], [["S", ["T"]]]])
-        expect(results.first.first).to be < results.last.first * 15
+        expect_unicode_line_separator_linear
       end
     end
   end
