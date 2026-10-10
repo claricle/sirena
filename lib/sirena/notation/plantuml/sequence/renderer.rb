@@ -151,11 +151,15 @@ module Sirena
           end
 
           def note_group(note)
-            children = [outlined_path(note.path, note_fill)]
-            if note.fold_path
-              children << outlined_path(note.fold_path, note_fill)
-            end
+            paths = [note.path, note.fold_path].compact
+            children = paths.map { |data| note_path(data, note) }
             group("note-#{note.path.hash.abs}", children, note.texts)
+          end
+
+          def note_path(data, note)
+            outlined_path(data, note.fill || note_fill).tap do |path|
+              path.fill_opacity = note.fill_opacity&.to_s
+            end
           end
 
           def divider_group(divider)

@@ -339,6 +339,18 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       expect(folds.map(&:nil?)).to eq([false, true])
     end
 
+    it "fills a note with its colour, folded corner too" do
+      note = scene_of("A -> B", "note right #red: x").notes.first
+
+      expect(note.fill).to eq("#FF0000")
+    end
+
+    it "carries the opacity of a note colour" do
+      note = scene_of("A -> B", "note right #ff000080: x").notes.first
+
+      expect(note.fill_opacity).to eq(0.50196)
+    end
+
     it "makes a two-line note taller than a one-line note" do
       heights = [%w[note over A: a], %w[note over A: a\\nb]].map do |words|
         scene_of("A -> B", words.join(" ")).height

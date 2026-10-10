@@ -12,6 +12,7 @@ require_relative "edge"
 require_relative "fill"
 require_relative "message"
 require_relative "note"
+require_relative "note_fill"
 require_relative "outline"
 require_relative "parallel_message"
 require_relative "participant"
@@ -64,7 +65,7 @@ module Sirena
           NOTE = /\A(note|hnote|rnote)[ \t]+(left|right|over|across|top|bottom)
                   (?:[ \t]+of)?
                   (?:[ \t]+(#{TARGET}(?:[ \t]*,[ \t]*#{TARGET})*))?
-                  (?:[ \t]+\#\w+)?[ \t]*(?::[ \t]*(.*))?\z/xio
+                  (?:[ \t]+(\#\w+))?[ \t]*(?::[ \t]*(.*))?\z/xio
           REF = /\Aref[ \t]+over[ \t]+(#{TARGET}(?:[ \t]*,[ \t]*#{TARGET})*)
                  [ \t]*:[ \t]*(\S.*)\z/xio
           END_NOTE = /\Aend[ \t]*[hr]?note\z/i
@@ -330,12 +331,12 @@ module Sirena
           end
 
           def note(match)
-            pending = pending_note_from(match)
-            return positioned_note(pending, match[4]) if misplaced?(pending)
+            pending = pending_note_from(match) or return false
+            return positioned_note(pending, match[5]) if misplaced?(pending)
             return false if hanging?(pending) && !hangs_from_something?
 
             @pending_note = pending
-            match[4] ? collect_note(match[4].strip, inline: true) : true
+            match[5] ? collect_note(match[5].strip, inline: true) : true
           end
 
           # PlantUML has no top or bottom note. After a message the note is
@@ -361,9 +362,14 @@ module Sirena
             @outline.after_message? || @outline.after_block?
           end
 
+          # nil when the colour is not one PlantUML is known to draw.
           def pending_note_from(match)
+            fill = NoteFill.read(match[4])
+            return if match[4] && !fill
+
             { shape: match[1].downcase.to_sym, side: match[2].downcase.to_sym,
-              targets: targets_of(match[3]), lines: [], parallel: @parallel }
+              targets: targets_of(match[3]), lines: [], parallel: @parallel,
+              fill: fill }
           end
 
           def targets_of(list)
@@ -389,7 +395,8 @@ module Sirena
             @outline.note(Note.new(shape: pending[:shape],
                                    side: pending[:side],
                                    targets: pending[:targets], text: text,
-                                   parallel: pending[:parallel]))
+                                   parallel: pending[:parallel],
+                                   fill: pending[:fill]))
           end
 
           # PlantUML does not draw a box inside a box: the inner one is drawn
