@@ -49,7 +49,7 @@ module Sirena
       end
 
       def node_group(card)
-        fill, text, rule = TimelinePalette.for(card.color_index)
+        fill, text, rule = TimelinePalette.for(theme.colors, card.color_index)
         Svg::Group.new(class_name: "timeline-node").tap do |node|
           node << background(card, fill, rule)
           node << text_group(card, text)

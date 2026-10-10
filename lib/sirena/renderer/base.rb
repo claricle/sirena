@@ -138,6 +138,15 @@ module Sirena
         nil
       end
 
+      # Gets a colour from one of the theme's named categorical palettes.
+      #
+      # @param name [Symbol] palette name
+      # @param index [Integer] position, counted from 0
+      # @return [String] colour
+      def theme_palette(name, index)
+        theme.colors.palette(name, index)
+      end
+
       # Gets a typography property from the theme.
       #
       # @param property [Symbol] property name

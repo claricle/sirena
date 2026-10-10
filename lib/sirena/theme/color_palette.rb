@@ -40,6 +40,12 @@ module Sirena
       attribute :section_bg, :string
       attribute :title_text, :string
 
+      PALETTES = %i[flow xy timeline_fill timeline_text timeline_rule].freeze
+
+      PALETTES.each do |name|
+        attribute :"#{name}_palette", :string, collection: true
+      end
+
       yaml do
         map "background", to: :background
         map "surface", to: :surface
@@ -72,6 +78,22 @@ module Sirena
         map "note_fill", to: :note_fill
         map "section_bg", to: :section_bg
         map "title_text", to: :title_text
+        PALETTES.each { |name| map "#{name}_palette", to: :"#{name}_palette" }
+      end
+
+      # Picks a colour from a named categorical palette, wrapping past the end.
+      #
+      # @param name [Symbol] one of PALETTES
+      # @param index [Integer] position, counted from 0
+      # @return [String] the colour
+      # @raise [KeyError] when the name is unknown or the theme lacks it
+      def palette(name, index)
+        raise KeyError, "unknown palette: #{name.inspect}" unless PALETTES.include?(name)
+
+        colours = public_send(:"#{name}_palette")
+        raise KeyError, "theme defines no #{name} palette" if colours.nil? || colours.empty?
+
+        colours.fetch(index % colours.length)
       end
     end
   end
