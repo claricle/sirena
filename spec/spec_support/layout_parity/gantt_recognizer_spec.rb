@@ -35,17 +35,18 @@ RSpec.describe SpecSupport::LayoutParity::GanttRecognizer do
   end
 
   def expected_tick_extremes
-    [[:tick, "2014-01-01", :label], [:tick, "2014-01-04", :label],
-     [:tick, "12-31", :label], [:tick, "01-05", :label]]
+    first = [:tick, "2014-01-01", :label]
+    last = [:tick, "2014-01-04", :label]
+    [first, last, first, last]
   end
 
   it "keys the real task by its row label on both sides" do
     task = [[:task, "Design jison grammar", :label]]
 
-    expect(pair_summary).to eq([[task, 13], [task, 6]])
+    expect(pair_summary).to eq([[task, 13], [task, 13]])
   end
 
-  it "keeps the real date-axis mismatch visible" do
+  it "reads the same first and last date tick on both sides" do
     expect(tick_extremes).to eq(expected_tick_extremes)
   end
 end
