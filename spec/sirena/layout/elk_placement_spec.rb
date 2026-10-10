@@ -17,6 +17,18 @@ module ElkPlacementSpecHelpers
   def positions(graph)
     graph[:children].to_h { |node| [node[:id], node.values_at(:x, :y)] }
   end
+
+  def routed_edge_semantics(graph)
+    graph[:edges].map do |edge|
+      [edge[:id], edge[:labels], edge[:metadata], edge[:sections]&.any?]
+    end
+  end
+
+  def expected_routed_edge_semantics(graph)
+    graph[:edges].map do |edge|
+      [edge[:id], edge[:labels], edge[:metadata], true]
+    end
+  end
 end
 
 RSpec.describe Sirena::Layout::ElkPlacement do
@@ -41,6 +53,22 @@ RSpec.describe Sirena::Layout::ElkPlacement do
       expect(placed["B"][1]).to be > placed["A"][1]
     end
 
+    it "copies the routes returned by elkrb without replacing edge semantics" do
+      graph = graph_for("flowchart TD\n A-->|first|B\n B-->|second|C\n")
+      expected = expected_routed_edge_semantics(graph)
+      described_class.apply(graph)
+      expect(routed_edge_semantics(graph)).to eq(expected)
+    end
+
+    it "copies every route when parallel edges share a semantic id" do
+      graph = graph_for("flowchart TD\n A-->B\n A-->B\n")
+      ids = graph[:edges].map { |edge| edge[:id] }
+      described_class.apply(graph)
+
+      routed = graph[:edges].all? { |edge| edge[:sections]&.any? }
+      expect([ids.uniq.size, routed]).to eq([1, true])
+    end
+
     it "refuses a direction elkrb cannot lay out" do
       graph = graph_for("flowchart LR\n A-->B\n")
       expect { described_class.apply(graph) }
@@ -58,6 +86,15 @@ RSpec.describe Sirena::Layout::ElkPlacement do
     it "renders a flowchart whose coordinates differ from the grid's" do
       elk = Sirena::Engine.new.render(source, layout_engine: :elk)
       expect(elk).not_to eq(Sirena::Engine.new.render(source))
+    end
+
+    it "retains a self-loop for Flowchart to route after elkrb placement" do
+      svg = Sirena::Engine.new.render("flowchart TD\n A --> A\n",
+                                      layout_engine: :elk)
+      group = svg[%r{<g id="edge-A_to_A".*?</g>}m]
+      path = group[/<path\b[^>]*\bd="([^"]+)"/, 1]
+
+      expect(path.scan(/\bL /).size).to be >= 3
     end
 
     it "raises for a diagram type without an elk placement" do
