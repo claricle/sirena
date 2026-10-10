@@ -2,6 +2,6 @@
 cop: Performance/MapCompact
 rows:
 - file: lib/sirena/layout/requirement.rb
-  count: 2
+  count: 1
 - file: tasks/benchmark.rake
   count: 1
