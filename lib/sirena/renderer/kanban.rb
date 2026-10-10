@@ -93,9 +93,8 @@ module Sirena
             x: label.x, base_font_weight: "bold"
           )
         elsif label.style == "card"
-          lines = Sirena::MarkdownText.truncate_runs(
-            Sirena::MarkdownText.parse_lines(label.text),
-            Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET,
+          lines = Layout::KanbanCardText.lines(
+            label.text, width: label.wrap_width, font_size: label.font_size
           )
           MarkdownText.assign_markdown_text(text, lines, x: label.x)
         else
