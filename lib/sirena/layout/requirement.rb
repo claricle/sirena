@@ -33,19 +33,25 @@ module Sirena
       private_constant :SemanticRequirement, :SemanticElement,
                        :SemanticRelationship, :SemanticDiagram
 
-      # Default dimensions
-      DEFAULT_REQ_WIDTH = 180
-      DEFAULT_REQ_HEIGHT = 140
-      DEFAULT_ELEM_WIDTH = 150
-      DEFAULT_ELEM_HEIGHT = 80
-      DEFAULT_SPACING_X = 100
-      DEFAULT_SPACING_Y = 80
-      DEFAULT_PADDING = 20
-      HEADER_HEIGHT = 30
-      LINE_HEIGHT = 16
-      HEXAGON_FACTORS = [[-1, 0], [-0.5, -1], [0.5, -1], [1, 0],
-                         [0.5, 1], [-0.5, 1]].freeze
-
+      # Box metrics measured from mmdc output: 24px rows, 10px side padding,
+      # 8px above the first row, a 20px gap under the name, 12px below.
+      ROW_HEIGHT = 24
+      PADDING_X = 10
+      TOP_PADDING = 8
+      SECTION_GAP = 20
+      BOTTOM_PADDING = 12
+      HEADER_ROWS = 2
+      HEADER_HEIGHT = TOP_PADDING + (HEADER_ROWS * ROW_HEIGHT) +
+        (SECTION_GAP / 2)
+      BOLD_WIDTH_FACTOR = 1.06
+      NODE_SEPARATION = 50
+      RANK_SEPARATION = 74
+      CANVAS_MARGIN = 8
+      # Metrics-only: boxes are sized as if text were drawn at mmdc's 16px.
+      LABEL_FONT_SIZE = 16
+      TEXT_WRAP_WIDTH = 300
+      EMPTY_WIDTH = 20
+      EMPTY_HEIGHT = 40
       REQUIREMENT_TYPE_LABELS = {
         "requirement" => "Requirement",
         "functionalRequirement" => "Functional Requirement",
@@ -250,84 +256,78 @@ module Sirena
       end
 
       def requirement_labels(requirement, geometry)
-        requirement_header_labels(requirement, geometry) +
-          positioned_property_labels(requirement, geometry)
+        row_labels(geometry, header_role: "header", body_role: "property")
       end
 
-      def requirement_header_labels(requirement, geometry)
+      def row_labels(geometry, header_role:, body_role:)
+        geometry[:rows].each_with_index.map do |row, index|
+          header = index < HEADER_ROWS
+          row_label(row, index, geometry,
+                    header ? header_role : body_role, header)
+        end
+      end
+
+      def row_label(row, index, geometry, default_role, header)
+        center_y = row_center_y(index, geometry)
+        Label.new(
+          text: row[:text], font_weight: row[:weight],
+          font_size: row_font_size(row, index, default_role),
+          role: row[:role] || default_role,
+          x: header ? geometry[:x] + (geometry[:width] / 2) : geometry[:x] + PADDING_X,
+          y: default_role == "property" ? center_y + 5 : center_y,
+          text_anchor: header ? "middle" : nil
+        )
+      end
+
+      def row_font_size(row, index, role)
+        return property_font_size if %w[property].include?(role) || row[:role] == "risk"
+        return 14 if role == "element" && index == 1
+        return 12 if role == "header" && index.zero?
+
+        11
+      end
+
+      def row_center_y(index, geometry)
+        gap = index < HEADER_ROWS ? 0 : SECTION_GAP
+        geometry[:y] + TOP_PADDING + gap + (index * ROW_HEIGHT) +
+          (ROW_HEIGHT / 2)
+      end
+
+      def requirement_rows(requirement)
         type_label = REQUIREMENT_TYPE_LABELS.fetch(requirement.type,
                                                    requirement.type)
-        middle_y = geometry[:y] + (HEADER_HEIGHT / 2)
-        [requirement_type_label(type_label, geometry, middle_y),
-         requirement_name_label(requirement.name, geometry, middle_y)]
+        [text_row("<<#{type_label}>>"),
+         text_row(requirement.name, weight: "bold"),
+         *requirement_body_rows(requirement)]
       end
 
-      def requirement_type_label(type_label, geometry, middle_y)
-        Label.new(text: "<<#{type_label}>>", x: geometry[:x] + 10,
-                  y: middle_y, font_size: 12, font_weight: "bold",
-                  role: "header")
+      def requirement_body_rows(requirement)
+        [
+          requirement.id && text_row("ID: #{requirement.id}"),
+          *text_rows(requirement.text),
+          requirement.risk &&
+            text_row("Risk: #{requirement.risk.capitalize}", role: "risk"),
+          requirement.verifymethod &&
+            text_row("Verification: #{requirement.verifymethod.capitalize}"),
+        ].compact
       end
 
-      def requirement_name_label(name, geometry, middle_y)
-        Label.new(text: name, x: geometry[:x] + geometry[:width] - 10,
-                  y: middle_y, font_size: 11, text_anchor: "end",
-                  role: "header")
+      def text_rows(text)
+        return [] unless text
+
+        wrap_text("Text: #{text}", TEXT_WRAP_WIDTH, LABEL_FONT_SIZE)
+          .map { |line| text_row(line) }
       end
 
-      def positioned_property_labels(requirement, geometry)
-        y_coord = geometry[:y] + HEADER_HEIGHT + 15
-        requirement_property_rows(requirement, geometry).map do |row|
-          label = property_label(row[:text], geometry[:x], y_coord,
-                                 role: row[:role], weight: row[:weight])
-          y_coord += row[:advance]
-          label
-        end
+      def element_rows(element)
+        [text_row("<<Element>>"),
+         text_row(element.name, weight: "bold"),
+         *[element.type && text_row("Type: #{element.type}"),
+           element.docref && text_row("Doc Ref: #{element.docref}")].compact]
       end
 
-      def requirement_property_rows(requirement, geometry)
-        id_rows(requirement) + text_rows(requirement, geometry) +
-          risk_rows(requirement) + verification_rows(requirement)
-      end
-
-      def id_rows(requirement)
-        return [] unless requirement.id
-
-        [property_row("ID: #{requirement.id}")]
-      end
-
-      def text_rows(requirement, geometry)
-        return [] unless requirement.text
-
-        lines = wrap_text("Text: #{requirement.text}", geometry[:width] - 20,
-                          property_font_size)
-        lines.map.with_index do |line, index|
-          gap = index == lines.length - 1 ? 5 : 0
-          property_row(line, advance: LINE_HEIGHT + gap)
-        end
-      end
-
-      def risk_rows(requirement)
-        return [] unless requirement.risk
-
-        [property_row("Risk: #{requirement.risk.capitalize}",
-                      role: "risk", weight: "bold")]
-      end
-
-      def verification_rows(requirement)
-        return [] unless requirement.verifymethod
-
-        [property_row("Verification: #{requirement.verifymethod.capitalize}")]
-      end
-
-      def property_row(text, advance: LINE_HEIGHT, role: "property",
-                       weight: nil)
-        { text: text, advance: advance, role: role, weight: weight }
-      end
-
-      def property_label(text, left, y_coord, role: "property", weight: nil)
-        Label.new(text: text, x: left + 10, y: y_coord,
-                  font_size: property_font_size, font_weight: weight,
-                  role: role)
+      def text_row(text, weight: nil, role: nil)
+        { text: text, weight: weight, role: role }
       end
 
       def typed_element_nodes(elements)
@@ -336,60 +336,19 @@ module Sirena
           Node.new(
             id: element.name, kind: "element", x: info[:x], y: info[:y],
             width: info[:width], height: info[:height], box: rect(info),
-            shape_points: hexagon_points(info),
-            labels: element_labels(element, info)
+            shape_points: rectangle_points(info),
+            labels: row_labels(info, header_role: "element",
+                                     body_role: "detail")
           )
         end
       end
 
-      def element_labels(element, geometry)
-        center_x = geometry[:x] + (geometry[:width] / 2)
-        center_y = geometry[:y] + (geometry[:height] / 2)
-        [element_stereotype(center_x, center_y),
-         element_name(element.name, center_x, center_y),
-         *element_detail_labels(element, center_x, center_y)]
-      end
-
-      def element_stereotype(center_x, center_y)
-        Label.new(text: "<<Element>>", x: center_x, y: center_y - 26,
-                  font_size: 11, text_anchor: "middle", role: "element")
-      end
-
-      def element_name(name, center_x, center_y)
-        Label.new(text: name, x: center_x, y: center_y - 10,
-                  font_size: 14, font_weight: "bold",
-                  text_anchor: "middle", role: "element")
-      end
-
-      def element_detail_labels(element, center_x, center_y)
-        [element.type && element_detail("Type: #{element.type}", center_x,
-                                        center_y + 10),
-         element.docref && element_detail("Doc Ref: #{element.docref}",
-                                          center_x, center_y + 26)].compact
-      end
-
-      def element_detail(text, center_x, center_y)
-        Label.new(text: text, x: center_x, y: center_y, font_size: 11,
-                  text_anchor: "middle", role: "detail")
-      end
-
-      def hexagon_points(geometry)
-        center = box_center(geometry)
-        half_size = Point.new(x: geometry[:width] / 2,
-                              y: geometry[:height] / 2)
-        HEXAGON_FACTORS.map do |factors|
-          scaled_point(center, half_size, factors)
-        end.join(" ")
-      end
-
-      def box_center(geometry)
-        Point.new(x: geometry[:x] + (geometry[:width] / 2),
-                  y: geometry[:y] + (geometry[:height] / 2))
-      end
-
-      def scaled_point(center, half_size, factors)
-        [center.x + (half_size.x * factors[0]),
-         center.y + (half_size.y * factors[1])].join(",")
+      def rectangle_points(geometry)
+        right = geometry[:x] + geometry[:width]
+        bottom = geometry[:y] + geometry[:height]
+        [[geometry[:x], geometry[:y]], [right, geometry[:y]],
+         [right, bottom], [geometry[:x], bottom]]
+          .map { |point| point.join(",") }.join(" ")
       end
 
       def typed_relationships(relationships)
@@ -471,157 +430,93 @@ module Sirena
       end
 
       def calculate_node_positions(diagram)
-        requirements = diagram.requirements
-        elements = diagram.elements
-        relationships = diagram.relationships
-
-        # Build dependency graph to determine layout
-        levels = build_dependency_levels(requirements, elements, relationships)
-
-        positioned_requirements = {}
-        positioned_elements = {}
-
-        current_y = DEFAULT_PADDING
-        max_width = 0
-
-        levels.each_with_index do |level_nodes, level_idx|
-          current_x = DEFAULT_PADDING
-          max_height = 0
-
-          level_nodes.each do |node|
-            if node[:type] == :requirement
-              req = node[:object]
-              dims = calculate_requirement_dimensions(req)
-
-              positioned_requirements[req.name] = {
-                requirement: req,
-                x: current_x,
-                y: current_y,
-                width: dims[:width],
-                height: dims[:height],
-                level: level_idx,
-              }
-            else
-              elem = node[:object]
-              dims = calculate_element_dimensions(elem)
-
-              positioned_elements[elem.name] = {
-                element: elem,
-                x: current_x,
-                y: current_y,
-                width: dims[:width],
-                height: dims[:height],
-                level: level_idx,
-              }
-            end
-
-            current_x += dims[:width] + DEFAULT_SPACING_X
-            max_height = [max_height, dims[:height]].max
-          end
-
-          max_width = [max_width, current_x].max
-          current_y += max_height + DEFAULT_SPACING_Y
+        ranks = rank_nodes(diagram)
+        sized = ranks.map { |rank| rank.map { |node| size_node(node) } }
+        canvas_width = sized.map { |rank| rank_width(rank) }.max.to_f
+        positioned = { requirements: {}, elements: {} }
+        top = CANVAS_MARGIN
+        sized.each_with_index do |rank, level|
+          place_rank(rank, level, top, canvas_width, positioned)
+          top += rank.map { |node| node[:height] }.max + RANK_SEPARATION
         end
+        return positioned.merge(width: EMPTY_WIDTH, height: EMPTY_HEIGHT) if sized.empty?
 
-        {
-          requirements: positioned_requirements,
-          elements: positioned_elements,
-          width: max_width + DEFAULT_PADDING,
-          height: current_y + DEFAULT_PADDING,
-        }
+        positioned.merge(
+          width: canvas_width + (2 * CANVAS_MARGIN),
+          height: top - RANK_SEPARATION + CANVAS_MARGIN,
+        )
       end
 
-      def build_dependency_levels(requirements, elements, relationships)
-        # Build a simple level-based layout
-        # Level 0: Elements
-        # Level 1: Requirements that depend on elements
-        # Level 2+: Requirements that depend on other requirements
+      def rank_width(rank)
+        rank.sum { |node| node[:width] } + (NODE_SEPARATION * (rank.size - 1))
+      end
 
-        nodes_by_name = {}
-        requirements.each do |requirement|
-          nodes_by_name[requirement.name] = {
-            type: :requirement, object: requirement, level: nil
-          }
+      def place_rank(rank, level, top, canvas_width, positioned)
+        left = CANVAS_MARGIN + ((canvas_width - rank_width(rank)) / 2)
+        rank.each do |node|
+          geometry = node.merge(x: left, y: top, level: level)
+          bucket = node[:requirement] ? :requirements : :elements
+          positioned[bucket][node[:name]] = geometry
+          left += node[:width] + NODE_SEPARATION
         end
-        elements.each do |element|
-          nodes_by_name[element.name] = {
-            type: :element, object: element, level: 0
-          }
+      end
+
+      # Sources sit above their targets, as in mmdc: rank = longest path
+      # from any root. Edges that close a cycle are ignored.
+      def rank_nodes(diagram)
+        nodes = diagram.requirements.map do |req|
+          { name: req.name, requirement: req }
+        end + diagram.elements.map do |elem|
+          { name: elem.name, element: elem }
         end
+        levels = node_levels(nodes.map { |node| node[:name] },
+                             diagram.relationships)
+        nodes.group_by { |node| levels[node[:name]] }.sort.map(&:last)
+      end
 
-        # Build dependency map
-        dependencies = Hash.new { |h, k| h[k] = [] }
-        relationships.each do |rel|
-          # Source depends on target (arrow direction)
-          dependencies[rel.source] << rel.target
+      # Nodes on a cycle never resolve; they share the level below the rest.
+      def node_levels(names, relationships)
+        edges = relationships.select do |rel|
+          names.include?(rel.source) && names.include?(rel.target) &&
+            rel.source != rel.target
         end
+        levels = {}
+        loop do
+          ready = names.reject { |name| levels.key?(name) }.select do |name|
+            edges.select { |rel| rel.target == name }
+              .all? { |rel| levels.key?(rel.source) }
+          end
+          break if ready.empty?
 
-        # Calculate levels for requirements
-        changed = true
-        max_iterations = 10
-        iterations = 0
-
-        while changed && iterations < max_iterations
-          changed = false
-          iterations += 1
-
-          requirements.each do |req|
-            node = nodes_by_name[req.name]
-            next if node[:level]
-
-            deps = dependencies[req.name]
-            if deps.empty?
-              # No dependencies, place at level 1
-              node[:level] = 1
-              changed = true
-            else
-              # Check if all dependencies have levels
-              dep_levels = deps.filter_map do |dependency|
-                nodes_by_name[dependency]&.dig(:level)
-              end
-              if dep_levels.size == deps.size
-                # All dependencies have levels
-                max_dep_level = dep_levels.max || 0
-                node[:level] = max_dep_level + 1
-                changed = true
-              end
-            end
+          ready.each do |name|
+            levels[name] = edges.select { |rel| rel.target == name }
+              .map { |rel| levels[rel.source] + 1 }.max || 0
           end
         end
-
-        # Assign default level to any remaining nodes
-        nodes_by_name.each_value do |node|
-          node[:level] ||= 1 if node[:type] == :requirement
-        end
-
-        # Group by level
-        levels = []
-        grouped_nodes = nodes_by_name.values.group_by { |node| node[:level] }
-        grouped_nodes.sort.each do |_level, nodes|
-          levels << nodes
-        end
-
-        levels
+        stuck = (levels.values.max || -1) + 1
+        names.to_h { |name| [name, levels.fetch(name, stuck)] }
       end
 
-      def calculate_requirement_dimensions(requirement)
-        text_lines = requirement_text_line_count(requirement.text)
-        height = DEFAULT_REQ_HEIGHT + ((text_lines - 1) * 20)
-        { width: DEFAULT_REQ_WIDTH,
-          height: [height, DEFAULT_REQ_HEIGHT].max }
+      def size_node(node)
+        rows = if node[:requirement]
+                 requirement_rows(node[:requirement])
+               else
+                 element_rows(node[:element])
+               end
+        node.merge(rows: rows, width: rows_width(rows),
+                   height: rows_height(rows))
       end
 
-      def requirement_text_line_count(text)
-        return 1 if !text || text.empty?
-
-        wrap_text(text, DEFAULT_REQ_WIDTH - 20, property_font_size).length
+      def rows_width(rows)
+        widest = rows.map do |row|
+          scale = row[:weight] == "bold" ? BOLD_WIDTH_FACTOR : 1
+          measure_text(row[:text], font_size: LABEL_FONT_SIZE)[:width] * scale
+        end.max
+        widest + (2 * PADDING_X)
       end
 
-      def calculate_element_dimensions(_element)
-        {
-          width: DEFAULT_ELEM_WIDTH,
-          height: DEFAULT_ELEM_HEIGHT,
-        }
+      def rows_height(rows)
+        TOP_PADDING + SECTION_GAP + BOTTOM_PADDING + (rows.size * ROW_HEIGHT)
       end
 
       def calculate_relationships(diagram, nodes_layout)
