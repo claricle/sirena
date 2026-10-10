@@ -9,6 +9,14 @@ RSpec.describe Sirena::Layout::C4Bounds do
 
   before { bounds.start_at(50, 10) }
 
+  def finished_child
+    described_class.new(width_limit: 800, per_row: 4).tap do |child|
+      child.start_at(0, 0)
+      child.data.stopx = 100
+      child.data.stopy = 200
+    end
+  end
+
   def positions
     nodes.each { |node| bounds.insert(node) }
     nodes.map { |node| [node[:x], node[:y]] }
@@ -47,11 +55,7 @@ RSpec.describe Sirena::Layout::C4Bounds do
   end
 
   it "absorbs a finished child plus a margin" do
-    child = described_class.new(width_limit: 800, per_row: 4)
-    child.start_at(0, 0)
-    child.data.stopx = 100
-    child.data.stopy = 200
-    bounds.absorb(child)
+    bounds.absorb(finished_child)
     expect([bounds.data.stopx, bounds.data.stopy]).to eq([150, 250])
   end
 end

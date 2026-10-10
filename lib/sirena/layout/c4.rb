@@ -316,11 +316,15 @@ module Sirena
         canvas = graph.dig(:metadata, :canvas)
         return legacy_canvas(children) unless canvas
 
-        title = graph.dig(:metadata, :title).to_s.empty? ? 0 : 60
+        title = title_height(graph)
         width = canvas[:width]
         height = canvas[:height] + title
         view_box = "0 #{-(C4Placement::MARGIN_Y + title)} #{width} #{height}"
         canvas.merge(height: height, view_box: view_box)
+      end
+
+      def title_height(graph)
+        graph.dig(:metadata, :title).to_s.empty? ? 0 : 60
       end
 
       def legacy_canvas(children)
@@ -390,6 +394,10 @@ module Sirena
         text = node[:stereotype]
         return unless text && node[:x] && node[:y] && kind != "boundary"
 
+        stereotype_label(node, text)
+      end
+
+      def stereotype_label(node, text)
         Label.new(
           text: text, **stereotype_size(text),
           x: node[:x] + (node[:width] / 2.0),
@@ -491,17 +499,30 @@ module Sirena
         length = Math.hypot(run, rise)
         return if length.zero?
 
-        unit = [run / length, rise / length]
+        arrowhead_text(tip, [run / length, rise / length])
+      end
+
+      def arrowhead_text(tip, unit)
         arrowhead_polygon(tip, unit).map { |point| point.join(",") }.join(" ")
       end
 
       def arrowhead_polygon(tip, unit)
-        base_x = tip.x - (unit[0] * ARROW_SIZE)
-        base_y = tip.y - (unit[1] * ARROW_SIZE)
-        wing_x = -unit[1] * ARROW_SIZE / 2
-        wing_y = unit[0] * ARROW_SIZE / 2
-        [[tip.x, tip.y], [base_x + wing_x, base_y + wing_y],
-         [base_x - wing_x, base_y - wing_y]]
+        base = arrowhead_base(tip, unit)
+        wing = arrowhead_wing(unit)
+        [[tip.x, tip.y], wing_corner(base, wing, 1),
+         wing_corner(base, wing, -1)]
+      end
+
+      def arrowhead_base(tip, unit)
+        [tip.x - (unit[0] * ARROW_SIZE), tip.y - (unit[1] * ARROW_SIZE)]
+      end
+
+      def arrowhead_wing(unit)
+        [-unit[1] * ARROW_SIZE / 2, unit[0] * ARROW_SIZE / 2]
+      end
+
+      def wing_corner(base, wing, sign)
+        [base[0] + (sign * wing[0]), base[1] + (sign * wing[1])]
       end
 
       def relationship_labels(labels, from, to)

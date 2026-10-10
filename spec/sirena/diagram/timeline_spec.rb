@@ -69,13 +69,25 @@ RSpec.describe Sirena::Diagram::Timeline do
       expect([section.events, section.tasks]).to eq([[], []])
     end
 
-    it "reports events and tasks independently" do
-      states = [[section.has_events?, section.has_tasks?]]
-      section.events << event("2020", "Started")
-      states << [section.has_events?, section.has_tasks?]
-      section.events << Sirena::Diagram::TimelineEvent.new(time: "Research")
-      states << [section.has_events?, section.has_tasks?]
-      expect(states).to eq([[false, false], [true, false], [true, true]])
+    describe "events and tasks" do
+      let(:states) { [section.has_events?, section.has_tasks?] }
+
+      it "reports neither on an empty section" do
+        expect(states).to eq([false, false])
+      end
+
+      it "reports events without tasks" do
+        section.events << event("2020", "Started")
+
+        expect(states).to eq([true, false])
+      end
+
+      it "reports tasks once an event has no description" do
+        section.events << event("2020", "Started")
+        section.events << Sirena::Diagram::TimelineEvent.new(time: "Research")
+
+        expect(states).to eq([true, true])
+      end
     end
   end
 

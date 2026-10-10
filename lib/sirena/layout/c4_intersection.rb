@@ -25,17 +25,23 @@ module Sirena
 
       def self.axis_point(box, target)
         x_pos, y_pos = target
-        mid_x, mid_y = centre(box)
         if box.y == y_pos
-          [box.x < x_pos ? box.x + box.width : box.x, mid_y]
+          [horizontal_exit_x(box, x_pos), centre(box)[1]]
         elsif box.x == x_pos
-          [mid_x, box.y < y_pos ? box.y + box.height : box.y]
+          [centre(box)[0], vertical_exit_y(box, y_pos)]
         end
       end
 
+      def self.horizontal_exit_x(box, x_pos)
+        box.x < x_pos ? box.x + box.width : box.x
+      end
+
+      def self.vertical_exit_y(box, y_pos)
+        box.y < y_pos ? box.y + box.height : box.y
+      end
+
       def self.diagonal_point(box, target)
-        dx = (box.x - target[0]).abs
-        dy = (box.y - target[1]).abs
+        dx, dy = offsets(box, target)
         slope = dy.fdiv(dx)
         if box.height.fdiv(box.width) >= slope
           side_point(box, target, slope)
@@ -44,22 +50,28 @@ module Sirena
         end
       end
 
+      def self.offsets(box, target)
+        [(box.x - target[0]).abs, (box.y - target[1]).abs]
+      end
+
       def self.side_point(box, target, slope)
-        mid_y = box.y + (box.height / 2.0)
         sign = box.y < target[1] ? 1 : -1
-        x_pos = box.x > target[0] ? box.x : box.x + box.width
-        [x_pos, mid_y + (sign * slope * box.width / 2.0)]
+        [side_x(box, target), centre(box)[1] + (sign * slope * box.width / 2.0)]
+      end
+
+      def self.side_x(box, target)
+        box.x > target[0] ? box.x : box.x + box.width
       end
 
       def self.edge_point(box, target, ratio)
-        mid_x = box.x + (box.width / 2.0)
         sign = box.x > target[0] ? -1 : 1
-        y_pos = box.y < target[1] ? box.y + box.height : box.y
-        [mid_x + (sign * ratio * box.height / 2.0), y_pos]
+        [centre(box)[0] + (sign * ratio * box.height / 2.0),
+         vertical_exit_y(box, target[1])]
       end
 
       private_class_method :centre, :leave, :axis_point, :diagonal_point,
-                           :side_point, :edge_point
+                           :side_point, :edge_point, :horizontal_exit_x,
+                           :vertical_exit_y, :offsets, :side_x
     end
   end
 end
