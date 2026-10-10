@@ -47,14 +47,14 @@ RSpec.describe SpecSupport::LayoutParity::KanbanRecognizer do
       [:card, "Create Blog about the new diagram"]],
      [[:section, "Todo"],
       [:card, "Create Documentation"],
-      [:card, "Create Blog about the ..."]]]
+      [:card, "Create Blog about thenew diagram"]]]
   end
 
   it "recognizes sections and repeated cards by their shared labels" do
     expect(simple_result).to eq(expected_simple_result)
   end
 
-  it "keeps a real reference's full label so truncation remains visible" do
+  it "joins a wrapped card's lines without the break space" do
     expect(real_labels).to eq(expected_real_labels)
   end
 end
