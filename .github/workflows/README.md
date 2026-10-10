@@ -4,7 +4,7 @@
 
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
-| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4/4.0-experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
+| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.2/3.3/3.4 stable and 4.0 experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
 | Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `conformance` (`rake conformance:check`), `fresh-resolution` (no lockfile, `bundle exec rake`), `plantuml-toolchain` (pinned PlantUML jar + Java 21 + Graphviz, `spec/plantuml/toolchain_probe_spec.rb`) | < 30 min |
 
 Reserved, not yet wired: snippet spec (16), parity (14). Corpus (02b) runs
@@ -56,8 +56,8 @@ replace the SHA, update the comment, run `bundle exec rspec spec/workflows`.
 ## What generic-rake ran (audit, metanorma/ci@875ae77e)
 
 Explicit now in `unit`: checkout, `ruby/setup-ruby` with bundler cache,
-`bundle exec rake` over the matrix from its `ruby-matrix.json` (3.3, 3.4,
-4.0 experimental; macos, ubuntu, windows). Not carried over: Java 17 setup
+`bundle exec rake` over Ruby 3.2, 3.3, and 3.4 as stable versions and Ruby 4.0
+as experimental on macOS, Ubuntu, and Windows. Not carried over: Java 17 setup
 (nothing here uses it), recursive submodules (there are none), the
 metanorma tool installers, private fonts. Its `tests-passed` repository
 dispatch moved to the `cascade` job and now fires only on push events
@@ -66,7 +66,7 @@ dispatch moved to the `cascade` job and now fires only on push events
 The old tag-triggered `do-release` dispatch was removed: releases now start
 only from `release.yml`'s manual dispatch and must pass its changelog preflight.
 The Ruby/OS matrix is hard-coded in `unit`; it was previously fetched from
-metanorma's `ruby-matrix.json` (identical today).
+metanorma's `ruby-matrix.json`, which did not include Sirena's Ruby 3.2 floor.
 
 ## Repository-owned release
 
