@@ -667,4 +667,19 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       expect(warned.width).to be >= banner.x + banner.width
     end
   end
+
+  describe "autoactivate" do
+    it "draws the bar of each activated receiver" do
+      scene = scene_of("autoactivate on", "A -> B", "B -> C")
+
+      expect(scene.bars.size).to eq(2)
+    end
+
+    it "closes the bar at a dashed answer" do
+      open_bars = scene_of("autoactivate on", "A -> B", "A -> C").bars
+      closed = scene_of("autoactivate on", "A -> B", "B --> A", "A -> C").bars
+
+      expect(closed.map(&:height).max).to be < open_bars.map(&:height).max
+    end
+  end
 end
