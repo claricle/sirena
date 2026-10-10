@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../layout/base"
+require_relative "class_name"
 require_relative "package_frames"
 require_relative "scene"
 
@@ -64,11 +65,15 @@ module Sirena
 
         def box_specification(klass, diagram)
           member_rows = klass.body.map { |member| member_text(member) }
-          title_rows = title_rows(klass)
-          box_record(klass.name, title_rows, member_rows)
-            .merge(member_modifiers: klass.body.map(&:modifiers),
-                   package: klass.package,
-                   chain: diagram.package_chain(klass.package))
+          names = name_rows(klass)
+          box_record(klass.name, header_rows(klass) + names, member_rows)
+            .merge(name_rows: names.size, **box_context(klass, diagram))
+        end
+
+        def box_context(klass, diagram)
+          { member_modifiers: klass.body.map(&:modifiers),
+            package: klass.package,
+            chain: diagram.package_chain(klass.package) }
         end
 
         def note_specifications(notes)
@@ -101,14 +106,15 @@ module Sirena
           member_rows.empty? ? height : height + 6.0
         end
 
-        def title_rows(klass)
+        def header_rows(klass)
           kind = ["<<#{klass.kind}>>"] unless klass.kind == :class
           tags = klass.stereotypes.map { |tag| "<<#{tag}>>" }
-          [*kind, *(tags.join(" ") unless tags.empty?), klass_title(klass)]
+          [*kind, *(tags.join(" ") unless tags.empty?)]
         end
 
-        def klass_title(klass)
-          klass.generics ? "#{klass.name}<#{klass.generics}>" : klass.name
+        def name_rows(klass)
+          *first, last = ClassName.lines(klass.name)
+          [*first, (klass.generics ? "#{last}<#{klass.generics}>" : last)]
         end
 
         def measured_width(text)
@@ -246,7 +252,7 @@ module Sirena
         def title_texts(item, horizontal, vertical, width)
           cursor = vertical + BOX_PADDING + font_size
           texts = item[:title_rows].each_with_index.map do |content, index|
-            role = index == item[:title_rows].size - 1 ? "class_name" : "kind"
+            role = title_role(item, index)
             text = scene_text(
               content, horizontal + (width / 2), cursor, role, "middle"
             )
@@ -254,6 +260,11 @@ module Sirena
             text
           end
           [texts, cursor]
+        end
+
+        def title_role(item, index)
+          header = item[:title_rows].size - item[:name_rows]
+          index < header ? "kind" : "class_name"
         end
 
         def member_contents(item, horizontal, cursor, width)

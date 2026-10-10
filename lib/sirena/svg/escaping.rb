@@ -43,7 +43,7 @@ module Sirena
       # A sequence label accepts any non-line-ending character
       # (grammars/sequence.rb:241), so a NUL in a diagram reached the output
       # and xmllint refused the SVG.
-      FORBIDDEN = /[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/
+      FORBIDDEN = /[^\t\n\r\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/
 
       module_function
 
