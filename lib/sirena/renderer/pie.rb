@@ -42,15 +42,17 @@ module Sirena
         scene = typed_scene(graph)
         svg = create_document(scene)
         svg << typed_label(scene.title) if scene.title
-        scene.slices.each do |slice|
-          svg << typed_slice(slice)
-          svg << typed_label(slice.label)
-        end
+        scene.slices.each { |slice| add_slice(svg, slice) }
         scene.legend.each { |entry| add_legend_entry(svg, entry) }
         svg
       end
 
       protected
+
+      def add_slice(svg, slice)
+        svg << typed_slice(slice)
+        svg << typed_label(slice.label)
+      end
 
       def typed_scene(graph)
         return graph if graph.is_a?(Layout::Pie::Scene)
@@ -80,11 +82,14 @@ module Sirena
           text.x = entry.x + 22
           text.y = entry.y + 14
           text.content = entry.text
-          text.fill = theme_color(:label_text) || "#000000"
-          text.font_family = theme_typography(:font_family) ||
-                             "Arial, sans-serif"
-          text.font_size = number_string(entry.font_size)
+          apply_text_theme(text, entry.font_size)
         end
+      end
+
+      def apply_text_theme(text, font_size)
+        text.fill = theme_color(:label_text) || "#000000"
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = number_string(font_size)
       end
 
       def typed_label(label)
@@ -103,9 +108,7 @@ module Sirena
 
       def set_label_style(text, label)
         text.content = label.text
-        text.fill = theme_color(:label_text) || "#000000"
-        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-        text.font_size = number_string(label.font_size)
+        apply_text_theme(text, label.font_size)
         text.font_weight = label.font_weight if label.font_weight
       end
 
