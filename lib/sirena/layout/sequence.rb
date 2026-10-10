@@ -167,7 +167,8 @@ module Sirena
         entries = graph.dig(:metadata, :note_entries)
         positions = participant_positions(graph[:children])
         @rows = MessageRows.new(graph[:edges], positions,
-                                font_size: message_font_size, wrap: @wrap)
+                                font_size: message_font_size, wrap: @wrap,
+                                closers: frame_closers(graph))
         placement = note_placement(entries, positions)
         @shift = placement.overhang
         return [positions, placement] if @shift.zero?
@@ -199,6 +200,11 @@ module Sirena
       # Height the notes and the messages' extra lines add to the diagram.
       def stack_height(placement)
         placement.total_height + rows.total_extra
+      end
+
+      def frame_closers(graph)
+        frames = graph.dig(:metadata, :frames) || []
+        frames.map { |frame| frame[:stop] - 1 }
       end
 
       def frame_placement(graph)
