@@ -10,6 +10,16 @@ RSpec.describe Sirena::Parser::ClassNamespaces do
   let(:diagram) do
     parse("namespace Shapes {\n  class Tri\n  class Rect\n}\nclass Loose\n")
   end
+  let(:collected_class_ids) do
+    diagram = parse("class Known")
+    tree = [{
+      namespace_keyword: "namespace",
+      namespace_name: "N",
+      namespace_body: [{ class_id: "Known" }, { class_id: "Ghost" }],
+    }]
+
+    described_class.collect(tree, diagram).first.class_ids
+  end
 
   it "reads the namespace name" do
     expect(diagram.namespaces.map(&:name)).to eq(["Shapes"])
@@ -57,5 +67,9 @@ RSpec.describe Sirena::Parser::ClassNamespaces do
   it "makes one entity of a class declared in two blocks" do
     source = "namespace N1 { class C }\nnamespace N2 { class C }"
     expect(parse(source).entities.map(&:id)).to eq(%w[C])
+  end
+
+  it "ignores members that were not built as class entities" do
+    expect(collected_class_ids).to eq(["Known"])
   end
 end

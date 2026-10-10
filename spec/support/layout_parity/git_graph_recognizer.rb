@@ -105,7 +105,7 @@ module SpecSupport
       def sirena_labels(extractor, doc, markers)
         return [] if markers.empty?
 
-        orientation = orientation(markers)
+        orientation = orientation(extractor, doc, markers)
         labels = doc.xpath("//text").filter_map do |text|
           sirena_label(extractor, text, markers, orientation)
         end
@@ -181,7 +181,30 @@ module SpecSupport
         distance(label.center, marker.center) <= reach
       end
 
-      def orientation(markers)
+      def orientation(extractor, doc, markers)
+        label_orientation(extractor, doc, markers) ||
+          marker_orientation(markers)
+      end
+
+      def label_orientation(extractor, doc, markers)
+        labels = doc.xpath("//text").select do |text|
+          text["font-weight"] == "bold"
+        end
+        return :lr if labels.any? { |text| text["text-anchor"] == "start" }
+
+        vertical_label_orientation(extractor, labels, markers)
+      end
+
+      def vertical_label_orientation(extractor, labels, markers)
+        node = labels.find { |text| text["text-anchor"] == "middle" }
+        entry = text_entry(extractor, node) if node
+        marker = nearest_element(entry[:box], markers) if entry
+        return unless marker
+
+        entry[:box].center.last > marker.bbox.center.last ? :tb : :bt
+      end
+
+      def marker_orientation(markers)
         centers = markers.map { |marker| marker.bbox.center }
         return :lr if span(centers, 0) >= span(centers, 1)
 

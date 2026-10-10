@@ -41,4 +41,9 @@ RSpec.describe Sirena::Parser::ClassNotes do
     notes = notes_of("classDiagram\nnote for Ghost \"x\"\n")
     expect(notes.first.target_id).to be_nil
   end
+
+  it "resolves a unique dotted class from its unqualified note target" do
+    notes = notes_of("classDiagram\nclass Pkg.A\nnote for A \"about A\"\n")
+    expect(notes.first.target_id).to eq("Pkg.A")
+  end
 end

@@ -162,7 +162,7 @@ module Sirena
           acc_title: graph[:acc_title],
           acc_description: graph[:acc_description],
           title: title_geometry(graph[:title]),
-          timeline: timeline_geometry(graph),
+          timeline: displayed_timeline(graph),
           sections: section_geometry(graph[:sections])
         }
       end
@@ -267,9 +267,13 @@ module Sirena
                   font_size: large_font_size, font_weight: "bold")
       end
 
-      def timeline_geometry(graph)
+      def displayed_timeline(graph)
         return if graph.dig(:metadata, :task_count).zero?
 
+        timeline_geometry(graph)
+      end
+
+      def timeline_geometry(graph)
         timeline = graph[:timeline]
         Timeline.new(
           background: Rect.new(x: MARGIN_LEFT, y: MARGIN_TOP,
