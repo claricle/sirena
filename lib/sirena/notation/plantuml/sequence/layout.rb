@@ -2,6 +2,7 @@
 
 require_relative "../../../layout/base"
 require_relative "edge"
+require_relative "message_wrap"
 require_relative "note"
 require_relative "note_geometry"
 require_relative "ref"
@@ -310,7 +311,8 @@ module Sirena
           def label_width(message)
             return 0.0 unless message.label
 
-            measure_text(message.label, font_size: font_size)[:width]
+            MessageWrap.new(@diagram.appearance.max_message,
+                            ->(text) { text_width(text) }).width(message.label)
           end
 
           def canvas_width(widths)

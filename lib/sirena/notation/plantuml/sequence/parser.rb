@@ -42,6 +42,10 @@ module Sirena
                          (?:[ \t]+<<[ \t]*([^<>\n]+?)[ \t]*>>)?
                          (?:[ \t]+(\#\w+))?\z/xio
           SKINPARAM_WIDTH = /\Askinparam[ \t]+MinClassWidth[ \t]+(\d+)\z/i
+          MAXMESSAGE = /maxmessagesize[ \t]+(\d+)\z/i
+          SKINPARAM_MAXMESSAGE = /\Askinparam[ \t]+#{MAXMESSAGE}/i
+          SKINPARAM_LINE = /\A#{MAXMESSAGE}/i
+          SKINPARAM_OPEN = /\Askinparam[ \t]*\{\z/i
           HIDE_FOOTBOX = /\Ahide[ \t]+footbox\z/i
           AUTOACTIVATE = /\Aautoactivate[ \t]+(on|off)\z/i
           STYLE_OPEN = /\A<style>\z/i
@@ -116,6 +120,7 @@ module Sirena
             @open_boxes = []
             @pending_note = nil
             @pending_style = nil
+            @skin_open = nil
             @appearance = Appearance.new
             @teoz = false
             @parallel = false
@@ -162,6 +167,7 @@ module Sirena
           def statement(text, number)
             return collect_note(text) if @pending_note
             return collect_style(text) if @pending_style
+            return collect_skinparam(text, number) if @skin_open
             return end_of_diagram(text, number) if text == "@enduml"
             return pragma(PRAGMA.match(text)) if PRAGMA.match?(text)
 
@@ -187,6 +193,10 @@ module Sirena
           def read_setting(text, number)
             if (match = SKINPARAM_WIDTH.match(text))
               set(min_width: match[1].to_i)
+            elsif (match = SKINPARAM_MAXMESSAGE.match(text))
+              set(max_message: match[1].to_i)
+            elsif SKINPARAM_OPEN.match?(text)
+              @skin_open = number
             elsif HIDE_FOOTBOX.match?(text)
               @footbox = false
             elsif (match = AUTOACTIVATE.match(text))
@@ -212,6 +222,19 @@ module Sirena
               close_style
             else
               @pending_style[:lines] << text
+            end
+            :statements
+          end
+
+          # Inside `skinparam {`, a line is `Maxmessagesize N`; anything
+          # else leaves the block unread.
+          def collect_skinparam(text, number)
+            if text == "}"
+              @skin_open = nil
+            elsif (match = SKINPARAM_LINE.match(text))
+              set(max_message: match[1].to_i)
+            else
+              raise refusal(text, number)
             end
             :statements
           end

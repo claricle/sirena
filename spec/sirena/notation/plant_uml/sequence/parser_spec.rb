@@ -295,6 +295,34 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
   end
 
+  describe "Maxmessagesize" do
+    def limit(*lines)
+      parse(*lines, "A -> B").appearance.max_message
+    end
+
+    it "reads the skinparam line" do
+      expect(limit("skinparam maxmessagesize 200")).to eq(200)
+    end
+
+    it "reads the skinparam block" do
+      expect(limit("skinparam {", "Maxmessagesize 200", "}")).to eq(200)
+    end
+
+    it "is nil when the source sets none" do
+      expect(limit).to be_nil
+    end
+
+    it "refuses another setting in the block" do
+      expect { parse("skinparam {", "Shadowing false", "}", "A -> B") }
+        .to raise_error(unsupported, /Shadowing/)
+    end
+
+    it "refuses a block left open" do
+      expect { parse("skinparam {", "Maxmessagesize 200", "A -> B") }
+        .to raise_error(unsupported)
+    end
+  end
+
   describe "minimum participant width" do
     let(:style) do
       lambda do |body|

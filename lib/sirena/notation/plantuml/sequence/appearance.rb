@@ -9,23 +9,26 @@ module Sirena
         # What skinparam and `<style>` set for a sequence diagram: the
         # narrowest participant head, how a head's lines sit against each
         # other, the {HeadStyle} of the heads, and the fill, text colour and
-        # text size of a fragment's keyword tab.
+        # text size of a fragment's keyword tab, and the widest line a message
+        # wraps at.
         # A setting the source never made is nil, except `alignment` and
         # `head_style`.
         class Appearance
           KEYS = %i[min_width alignment tab_fill tab_colour tab_size
-                    head_style].freeze
+                    head_style max_message].freeze
           private_constant :KEYS
 
-          attr_reader :min_width, :tab_fill, :tab_colour, :tab_size
+          attr_reader :min_width, :tab_fill, :tab_colour, :tab_size,
+                      :max_message
 
           def initialize(**settings)
             unknown = settings.keys - KEYS
             raise ArgumentError, "unknown: #{unknown}" if unknown.any?
 
             @settings = settings.freeze
-            @min_width, @tab_fill, @tab_colour, @tab_size =
-              settings.values_at(:min_width, :tab_fill, :tab_colour, :tab_size)
+            @min_width, @tab_fill, @tab_colour, @tab_size, @max_message =
+              settings.values_at(:min_width, :tab_fill, :tab_colour, :tab_size,
+                                 :max_message)
             freeze
           end
 
