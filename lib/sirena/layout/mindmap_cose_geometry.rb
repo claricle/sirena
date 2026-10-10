@@ -18,6 +18,12 @@ module Sirena
 
       module_function
 
+      # @return [Array<Float>] [left, top, right, bottom] around +bodies+
+      def bounding_box(bodies)
+        [bodies.map(&:x).min, bodies.map(&:y).min,
+         bodies.map(&:right).max, bodies.map(&:bottom).max]
+      end
+
       def intersects?(first, second)
         !(first.right < second.x || first.bottom < second.y ||
           second.right < first.x || second.bottom < first.y)
@@ -60,13 +66,17 @@ module Sirena
       end
 
       def slanted_clip(first, second)
-        slope = (second.center_y - first.center_y) /
-                (second.center_x - first.center_x)
+        slope = slope_between(first, second)
         left_up = [first.center_x > second.center_x,
                    first.center_y > second.center_y]
-        first_point = border_point(first, slope, left_up, second_box: false)
-        second_point = border_point(second, slope, left_up, second_box: true)
-        first_point + second_point
+        border_point(first, slope, left_up, second_box: false) +
+          border_point(second, slope, left_up, second_box: true)
+      end
+
+      def slope_between(first, second)
+        rise = second.center_y - first.center_y
+        run = second.center_x - first.center_x
+        rise / run
       end
 
       def border_point(box, slope, left_up, second_box:)
@@ -97,41 +107,67 @@ module Sirena
       end
 
       def side_point(box, slope, direction)
-        half_width = box.width / 2
-        half_height = box.height / 2
         case direction
-        when 1 then [box.center_x + (-half_height / slope), box.y]
-        when 2 then [box.right, box.center_y + (half_width * slope)]
-        when 3 then [box.center_x + (half_height / slope), box.bottom]
-        else [box.x, box.center_y + (-half_width * slope)]
+        when 1 then top_point(box, slope)
+        when 2 then right_point(box, slope)
+        when 3 then bottom_point(box, slope)
+        else left_point(box, slope)
         end
+      end
+
+      def top_point(box, slope)
+        [box.center_x + (-box.half_height / slope), box.y]
+      end
+
+      def right_point(box, slope)
+        [box.right, box.center_y + (box.half_width * slope)]
+      end
+
+      def bottom_point(box, slope)
+        [box.center_x + (box.half_height / slope), box.bottom]
+      end
+
+      def left_point(box, slope)
+        [box.x, box.center_y + (-box.half_width * slope)]
       end
 
       # How far each of two overlapping boxes is pushed along each axis.
       #
       # @return [Array<Float>] [x, y] separation for the first box
       def separation(first, second, buffer)
+        move_x, move_y = overlap_shift(first, second)
+        direction_x = direction(first.center_x, second.center_x)
+        direction_y = direction(first.center_y, second.center_y)
+        [push(direction_x, move_x, buffer), push(direction_y, move_y, buffer)]
+      end
+
+      def push(direction, move, buffer)
+        -1 * direction * ((move / 2) + buffer)
+      end
+
+      # The overlap along the axis it is cheaper to separate on, and the
+      # matching movement along the other axis.
+      def overlap_shift(first, second)
         overlap_x, overlap_y = overlaps(first, second)
         slope = centre_slope(first, second)
-        move_y = slope * overlap_x
         move_x = overlap_y / slope
         if overlap_x < move_x
-          move_x = overlap_x
+          [overlap_x, slope * overlap_x]
         else
-          move_y = overlap_y
+          [move_x, overlap_y]
         end
-        direction_x = first.center_x < second.center_x ? -1 : 1
-        direction_y = first.center_y < second.center_y ? -1 : 1
-        [-1 * direction_x * ((move_x / 2) + buffer),
-         -1 * direction_y * ((move_y / 2) + buffer)]
+      end
+
+      def direction(first_centre, second_centre)
+        first_centre < second_centre ? -1 : 1
       end
 
       def centre_slope(first, second)
-        return 1.0 if first.center_y == second.center_y &&
-                      first.center_x == second.center_x
+        same_row = first.center_y == second.center_y
+        same_column = first.center_x == second.center_x
+        return 1.0 if same_row && same_column
 
-        ((second.center_y - first.center_y) /
-          (second.center_x - first.center_x)).abs
+        slope_between(first, second).abs
       end
 
       def overlaps(first, second)

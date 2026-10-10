@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "mindmap_cose_geometry"
 require_relative "mindmap_cose_trig"
 require_relative "mindmap_cose_wedge"
 
@@ -74,17 +75,12 @@ module Sirena
       end
 
       def move_to_origin
-        left, top = top_left
-        size = [bodies.map(&:right).max - left, bodies.map(&:bottom).max - top]
+        left, top, right, bottom = MindmapCoseGeometry.bounding_box(bodies)
         bodies.each do |body|
           body.x -= left
           body.y -= top
         end
-        size
-      end
-
-      def top_left
-        [bodies.map(&:x).min, bodies.map(&:y).min]
+        [right - left, bottom - top]
       end
 
       def branch(body, parent, wedge, distance)

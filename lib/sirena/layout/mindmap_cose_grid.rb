@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "mindmap_cose_geometry"
+
 module Sirena
   module Layout
     # Spatial index that limits which pairs of mindmap boxes repel each
@@ -36,23 +38,26 @@ module Sirena
       private
 
       def bounds
-        left = @bodies.map(&:x).min
-        top = @bodies.map(&:y).min
-        width = @bodies.map(&:right).max - left
-        height = @bodies.map(&:bottom).max - top
+        left, top, right, bottom = MindmapCoseGeometry.bounding_box(@bodies)
+        width = right - left
+        height = bottom - top
         [left - MARGIN, top - MARGIN, left + width + MARGIN,
          top + height + MARGIN]
       end
 
       def add(body, left, top)
-        first_x = ((body.x - left) / @range).floor
-        last_x = ((body.width + body.x - left) / @range).floor
-        first_y = ((body.y - top) / @range).floor
-        last_y = ((body.height + body.y - top) / @range).floor
+        first_x, last_x = span(body.x, body.width, left)
+        first_y, last_y = span(body.y, body.height, top)
         (first_x..last_x).each do |column|
           (first_y..last_y).each { |row| @cells[column][row] << body }
         end
         body.cells = [first_x, last_x, first_y, last_y]
+      end
+
+      # @return [Array<Integer>] first and last cell index along one axis
+      def span(start, size, origin)
+        [((start - origin) / @range).floor,
+         ((size + start - origin) / @range).floor]
       end
 
       def candidates(body)
@@ -60,12 +65,16 @@ module Sirena
         found = []
         ((first_x - 1)..(last_x + 1)).each do |column|
           ((first_y - 1)..(last_y + 1)).each do |row|
-            next unless cell?(column, row)
-
-            found.concat(@cells[column][row].reject { |other| other.equal?(body) })
+            found.concat(cell_members(column, row, body))
           end
         end
         found
+      end
+
+      def cell_members(column, row, body)
+        return [] unless cell?(column, row)
+
+        @cells[column][row].reject { |other| other.equal?(body) }
       end
 
       def cell?(column, row)
@@ -74,11 +83,13 @@ module Sirena
       end
 
       def within_range?(body, other)
-        gap_x = (body.center_x - other.center_x).abs -
-                ((body.width / 2) + (other.width / 2))
-        gap_y = (body.center_y - other.center_y).abs -
-                ((body.height / 2) + (other.height / 2))
+        gap_x = gap(body.center_x, other.center_x, body.width, other.width)
+        gap_y = gap(body.center_y, other.center_y, body.height, other.height)
         gap_x <= @range && gap_y <= @range
+      end
+
+      def gap(centre, other_centre, size, other_size)
+        (centre - other_centre).abs - ((size / 2) + (other_size / 2))
       end
     end
   end
