@@ -3,5 +3,3 @@ cop: Layout/FirstHashElementIndentation
 rows:
 - file: scripts/extract_mermaid_tests.rb
   count: 2
-- file: spec/tasks/corpus_spec.rb
-  count: 4
