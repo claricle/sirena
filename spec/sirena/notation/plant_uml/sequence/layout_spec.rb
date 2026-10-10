@@ -802,6 +802,46 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
   end
 
+  describe "autonumber" do
+    let(:numbered) { scene_of("autonumber", "A -> B : hello") }
+    let(:plain) { scene_of("A -> B : hello") }
+
+    it "draws the number in bold before the label" do
+      texts = numbered.arrows.first.texts
+
+      expect(texts.map { |t| [t.content, t.weight] })
+        .to eq([["1", "bold"], ["hello", nil]])
+    end
+
+    it "starts the label a gap after the number" do
+      number, label = numbered.arrows.first.texts
+
+      expect(label.x - number.x).to be > 4.0
+    end
+
+    it "starts the pair left of where the plain label starts" do
+      number = numbered.arrows.first.texts.first
+      label = plain.arrows.first.texts.first
+
+      expect(number.x).to be < label.x - (label.content.size * 2)
+    end
+
+    it "lengthens the run of a ? message to fit the number" do
+      runs = [scene_of("autonumber", "?-> A : hi"), scene_of("?-> A : hi")]
+      starts = runs.map { |s| s.arrows.first.path[/M (\S+)/, 1].to_f }
+
+      expect(starts.first).to be < starts.last
+    end
+
+    it "widens the gap between lifelines to fit the number" do
+      long = "a label long enough to need room"
+      widths = [scene_of("autonumber", "A -> B : #{long}"),
+                scene_of("A -> B : #{long}")].map { |s| s.lifelines.last.x1 }
+
+      expect(widths.first).to be > widths.last
+    end
+  end
+
   describe "participant fills" do
     let(:head) { top_heads(scene_of("participant A #CCCCCC01")).first }
 

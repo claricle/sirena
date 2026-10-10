@@ -14,6 +14,7 @@ require_relative "message"
 require_relative "note"
 require_relative "fragment_shape"
 require_relative "note_geometry"
+require_relative "numbered_label"
 require_relative "page_break"
 require_relative "note_shape"
 require_relative "ref"
@@ -192,7 +193,7 @@ module Sirena
           end
 
           def local_x(edge, message)
-            run = wrap.width(message.label.to_s) + Edge::RUN_PADDING
+            run = label_width(message) + Edge::RUN_PADDING
             centre(message.participants.first) + (edge.left? ? -run : run)
           end
 
@@ -235,7 +236,12 @@ module Sirena
           end
 
           def reach(message)
-            SELF_WIDTH + 6 + wrap.width(message.label.to_s)
+            SELF_WIDTH + 6 + label_width(message)
+          end
+
+          def label_width(message)
+            NumberedLabel.new(@measure).extra(message) +
+              wrap.width(message.label.to_s)
           end
 
           def straight(message, from, to)
@@ -277,6 +283,10 @@ module Sirena
             return [] unless message.label && !message.label.empty?
 
             x, y, anchor = geometry
+            if message.number
+              return NumberedLabel.new(@measure).texts(message, x, y, anchor)
+            end
+
             lines = label_lines(message)
             lines.each_with_index.map do |line, index|
               up = (lines.size - 1 - index) * line_step

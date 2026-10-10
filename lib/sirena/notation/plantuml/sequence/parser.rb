@@ -81,12 +81,14 @@ module Sirena
           LINE_END = /\r\n|\r|\n/
           PARALLEL = /\A&[ \t]*(.*)\z/
           NEWPAGE = /\Anewpage\z/i
+          AUTONUMBER = /\Aautonumber(?:[ \t]+(\d+))?\z/i
 
           PARALLEL_KINDS = [MESSAGE, NOTE, BLOCK].freeze
           TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
                       [REF, :ref], [BRANCH, :branch], [ACTIVATION, :activation],
                       [RETURN, :reply], [DIVIDER, :divider],
-                      [DESTROY, :destroy], [NEWPAGE, :newpage]].freeze
+                      [DESTROY, :destroy], [NEWPAGE, :newpage],
+                      [AUTONUMBER, :autonumber]].freeze
 
           private_constant :TIMELINE, :NAME, :QUOTED, :KINDS,
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
@@ -95,7 +97,7 @@ module Sirena
                            :DIVIDER, :DESTROY, :COLOUR, :SKINPARAM_WIDTH,
                            :STYLE_OPEN, :STYLE_CLOSE, :PARALLEL,
                            :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE,
-                           :AUTOACTIVATE
+                           :AUTOACTIVATE, :AUTONUMBER
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -322,6 +324,10 @@ module Sirena
             @outline.destroy(mention(match[1]))
           end
 
+          def autonumber(match)
+            @outline.autonumber((match[1] || 1).to_i)
+          end
+
           def newpage(_match)
             @outline.newpage
           end
@@ -531,10 +537,21 @@ module Sirena
 
           def diagram
             check_boxes
+            check_numbering
             Diagram.new(participants: @participants.values.freeze,
                         items: @outline.items.freeze, boxes: @boxes.freeze,
                         appearance: @appearance, footbox: @footbox,
                         warnings: @warnings.freeze)
+          end
+
+          # The number of a wrapped label would sit on one of its lines,
+          # which has not been measured.
+          def check_numbering
+            return unless @appearance.max_message
+            return unless @outline.items.grep(Message).any?(&:number)
+
+            raise Sirena::Parser::ParseError,
+                  "Parse error: autonumber with Maxmessagesize is not supported"
           end
 
           def unclosed_block
