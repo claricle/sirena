@@ -26,10 +26,7 @@ module Sirena
       #
       # @return [Boolean] true if task is valid
       def valid?
-        !name.nil? && !name.empty? &&
-          !score.nil? &&
-          score >= 1 && score <= 5 &&
-          !actors.nil?
+        !name.nil? && !name.empty? && valid_score? && !actors.nil?
       end
 
       # Returns the color for this task based on score.
@@ -39,13 +36,17 @@ module Sirena
         case score
         when 1..2
           :red
-        when 3
-          :yellow
         when 4..5
           :green
         else
           :yellow
         end
+      end
+
+      private
+
+      def valid_score?
+        !score.nil? && score.between?(1, 5)
       end
     end
 

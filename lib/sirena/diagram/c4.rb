@@ -46,8 +46,7 @@ module Sirena
       #
       # @return [Boolean] true if element is valid
       def valid?
-        !id.nil? && !id.empty? &&
-          !label.nil? && !label.empty? &&
+        [id, label].all? { |value| value && !value.empty? } &&
           !element_type.nil?
       end
 
@@ -259,21 +258,7 @@ module Sirena
       #
       # @return [Boolean] true if C4 diagram is valid
       def valid?
-        return false unless %w[Context Container Component Dynamic
-                               Deployment].include?(level)
-        return false unless elements.nil? || elements.all?(&:valid?)
-        return false unless relationships.nil? ||
-          relationships.all?(&:valid?)
-        return false unless boundaries.nil? || boundaries.all?(&:valid?)
-
-        # Validate relationship references
-        element_ids = elements.map(&:id)
-        relationships&.each do |rel|
-          return false unless element_ids.include?(rel.from_id)
-          return false unless element_ids.include?(rel.to_id)
-        end
-
-        true
+        valid_level? && valid_collections? && relationship_references_resolve?
       end
 
       # Finds an element by its identifier.
@@ -322,6 +307,30 @@ module Sirena
       # @return [Array<C4Boundary>] child boundaries
       def boundaries_in_boundary(boundary_id)
         boundaries.select { |b| b.parent_id == boundary_id }
+      end
+
+      private
+
+      def valid_level?
+        %w[Context Container Component Dynamic Deployment].include?(level)
+      end
+
+      def valid_collections?
+        valid_collection?(elements) && valid_collection?(relationships) &&
+          valid_collection?(boundaries)
+      end
+
+      def valid_collection?(items)
+        items.nil? || items.all?(&:valid?)
+      end
+
+      def relationship_references_resolve?
+        element_ids = elements.map(&:id)
+
+        relationships.nil? || relationships.all? do |relationship|
+          element_ids.include?(relationship.from_id) &&
+            element_ids.include?(relationship.to_id)
+        end
       end
     end
   end

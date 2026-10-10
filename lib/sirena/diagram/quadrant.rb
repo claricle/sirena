@@ -35,10 +35,7 @@ module Sirena
       #
       # @return [Boolean] true if point is valid
       def valid?
-        !label.nil? && !label.empty? &&
-          !x.nil? && !y.nil? &&
-          x >= 0.0 && x <= 1.0 &&
-          y >= 0.0 && y <= 1.0
+        !label.nil? && !label.empty? && coordinate?(x) && coordinate?(y)
       end
 
       # Determine which quadrant this point is in (1-4).
@@ -51,15 +48,15 @@ module Sirena
       #
       # @return [Integer] quadrant number (1-4)
       def quadrant
-        if x >= 0.5 && y >= 0.5
-          1
-        elsif x < 0.5 && y >= 0.5
-          2
-        elsif x < 0.5 && y < 0.5
-          3
-        else
-          4
-        end
+        return x < 0.5 ? 2 : 1 if y >= 0.5
+
+        x < 0.5 ? 3 : 4
+      end
+
+      private
+
+      def coordinate?(value)
+        !value.nil? && value.between?(0.0, 1.0)
       end
     end
 
