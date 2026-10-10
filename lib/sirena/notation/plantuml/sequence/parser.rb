@@ -277,10 +277,14 @@ module Sirena
 
           def note(match)
             pending = pending_note_from(match)
-            return false if hanging?(pending) && !@outline.after_message?
+            return false if hanging?(pending) && !hangs_from_something?
 
             @pending_note = pending
             match[4] ? collect_note(match[4].strip, inline: true) : true
+          end
+
+          def hangs_from_something?
+            @outline.after_message? || @outline.after_block?
           end
 
           def pending_note_from(match)

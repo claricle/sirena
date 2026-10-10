@@ -530,6 +530,17 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
         .to raise_error(unsupported, /note/)
     end
 
+    it "attaches a note without a target to the block that just closed" do
+      diagram = parse("A -> B", "alt x", "B -> A", "end", "note right: x")
+
+      expect(diagram.items.last).to be_attached
+    end
+
+    it "refuses a note without a target inside a block before any message" do
+      expect { parse("alt x", "note right: x", "A -> B", "end") }
+        .to raise_error(unsupported, /note/)
+    end
+
     it "reads @enduml inside an open note as note text" do
       expect { parse("A -> B", "note left of A", "text") }
         .to raise_error(Sirena::Parser::ParseError, /missing @enduml/)
