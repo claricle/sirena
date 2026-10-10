@@ -520,7 +520,9 @@ module Sirena
         by_id = groups.to_h { |g| [g.id, g] }
         depths = groups.to_h { |g| [g.id, group_depth(g, by_id, [])] }
 
-        groups.sort_by { |g| -depths[g.id] }
+        groups.each_with_index
+          .sort_by { |group, index| [-depths[group.id], index] }
+          .map(&:first)
       end
 
       def group_depth(group, by_id, seen)

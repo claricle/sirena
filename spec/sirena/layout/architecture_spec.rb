@@ -160,6 +160,20 @@ RSpec.describe Sirena::Layout::Architecture do
     [scene, scene.children.find { |node| node.id == "gm" }]
   end
 
+  def groups_with_services(count)
+    groups = Array.new(count) { |index| group("g#{index}") }
+    services = groups.map do |item|
+      service("service_#{item.id}", group_id: item.id)
+    end
+    [groups, services]
+  end
+
+  def group_ids(scene)
+    scene.children.filter_map do |node|
+      node.id if node.kind == "group"
+    end
+  end
+
   it "returns a typed final Scene" do
     expect(routed_scene).to be_a(described_class::Scene)
   end
@@ -262,6 +276,12 @@ RSpec.describe Sirena::Layout::Architecture do
       .to be >= nodes["inner"].x + nodes["inner"].width
     expect(nodes["outer"].y + nodes["outer"].height)
       .to be >= nodes["inner"].y + nodes["inner"].height
+  end
+
+  it "preserves declaration order for groups at the same depth" do
+    groups, services = groups_with_services(8)
+    scene = layout.call(diagram(services: services, groups: groups))
+    expect(group_ids(scene)).to eq(groups.map(&:id))
   end
 
   it "omits empty group chains without non-finite dimensions" do

@@ -142,9 +142,10 @@ module Sirena
         @node_layers.each { |node_id, layer| layers[layer] << node_id }
 
         layers.each do |layer, node_ids|
-          sorted_nodes = node_ids.sort_by do |id|
-            -(total_inflow(id) + total_outflow(id))
+          sorted_nodes = node_ids.each_with_index.sort_by do |id, index|
+            [-(total_inflow(id) + total_outflow(id)), index]
           end
+          sorted_nodes.map!(&:first)
 
           sorted_nodes.each_with_index do |node_id, index|
             @node_positions[node_id] = {
