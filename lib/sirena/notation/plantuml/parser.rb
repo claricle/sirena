@@ -28,7 +28,7 @@ module Sirena
       # @example
       #   Parser.new.parse("@startuml\nclass A\nA --> B\n@enduml\n")
       class Parser
-        NAME = /[A-Za-z_][A-Za-z0-9_]*/
+        NAME = /[A-Za-z_][A-Za-z0-9_$]*/
         VISIBILITY = { "+" => :public, "-" => :private, "#" => :protected,
                        "~" => :package }.freeze
         KINDS = { "class" => :class, "abstract class" => :abstract,
@@ -44,7 +44,8 @@ module Sirena
            (?:<([^<>]+)>)?((?:[ \t]*#{STEREOTYPE})*)
            ((?:[ \t]+\$#{NAME})*)(?:[ \t]*(\{))?\z/xo
         PACKAGE = /\A(\+)?package[ \t]+
-                   (?:"([^"]+)"[ \t]+as[ \t]+(#{NAME})|(#{NAME}))
+                   (?:"([^"]+)"[ \t]+as[ \t]+(#{NAME})|
+                      (#{NAME}(?:\.#{NAME})*))
                    (?:[ \t]*<<([^<>]+)>>)?(?:[ \t]+(\#[A-Za-z0-9]+))?
                    [ \t]*\{\z/xio
         HIDE_TAG = /\Ahide[ \t]+\$(#{NAME})\z/io
@@ -174,9 +175,15 @@ module Sirena
           shape = package_shape(match[5])
           raise refusal(text, number, "package stereotype") unless shape
 
-          Package.new(id: match[3] || match[4], title: match[2] || match[4],
+          Package.new(id: match[3] || match[4], title: package_title(match),
                       shape: shape, icon: !match[1].nil?,
                       color: package_color(match[6], text, number))
+        end
+
+        # A dotted name is drawn as its last part, inside a frame for each
+        # part before it.
+        def package_title(match)
+          match[2] || match[4].split(".").last
         end
 
         def package_color(written, text, number)

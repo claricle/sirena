@@ -645,6 +645,47 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
   end
 
+  describe "dotted package names and $ in names" do
+    let(:source) { "package a_$a {\npackage java.lang {\nclass foo$1\n}\n}" }
+
+    it "reads $ inside a class or package name" do
+      diagram = parse_corpus(source)
+
+      expect([diagram.classes.first.name, diagram.packages.first.id])
+        .to eq(["foo$1", "a_$a"])
+    end
+
+    it "opens each part of a dotted name as a package inside the last" do
+      packages = parse_corpus(source).packages
+
+      expect(packages.map { |p| [p.id, p.title, p.parent] })
+        .to eq([["a_$a", "a_$a", nil], ["java", "java", "a_$a"],
+                ["java.lang", "lang", "java"]])
+    end
+
+    it "draws a frame for each part, the innermost around the class" do
+      svg = rendered_document(source)
+
+      expect(enclosed?(bounds(svg, "package-java.lang"),
+                       bounds(svg, "package-java"))).to be(true)
+    end
+
+    it "keeps the outermost frame on the canvas" do
+      svg = rendered_document(source)
+
+      expect(bounds(svg, "package-a_$a")["x"]).to be >= 0
+    end
+
+    it "refuses an implicit package name met under two parents" do
+      text = "package a {\npackage x.y {\nclass A\n}\n}\n" \
+             "package x.z {\nclass B\n}"
+
+      expect { parse_corpus(text) }
+        .to raise_error(described_class::UnsupportedConstructError,
+                        /shared by two packages/)
+    end
+  end
+
   describe "a package whose classes are all hidden" do
     let(:source) do
       ["package p {", "class A $x", "}", "package q {", "class C", "}",
