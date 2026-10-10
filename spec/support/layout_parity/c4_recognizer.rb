@@ -50,8 +50,11 @@ module SpecSupport
       end
 
       # The first text of an element is its "<<stereotype>>"; the name is next.
+      # An element declared with an empty name keeps an empty name text on both
+      # producers, so its description is the first visible label to key on.
       def name_text(node)
-        node.xpath(".//text")[1]&.text
+        node.xpath(".//text")[1..].to_a.map(&:text)
+          .find { |text| !text.strip.empty? }
       end
 
       def labeled_element(extractor, node, raw_label, kind)

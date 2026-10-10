@@ -41,4 +41,14 @@ RSpec.describe SpecSupport::LayoutParity::C4Recognizer do
     expect(parents.map { |map| map.fetch("Banking Customer A") })
       .to eq(%w[BankBoundary0 BankBoundary0])
   end
+
+  it "keys an element declared with an empty name by its description" do
+    name = "028_parser_should_parse_the_description_27"
+    reference = summaries(reference_svg("c4/#{name}.svg"))
+    sirena = summaries(Sirena.render(corpus_source("c4/#{name}.mmd")))
+    key = "A customer of the bank, with personal bank accounts."
+
+    expect([identities(reference), identities(sirena)])
+      .to all(eq([[:c4_element, key]]))
+  end
 end
