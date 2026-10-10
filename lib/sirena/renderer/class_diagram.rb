@@ -76,6 +76,7 @@ module Sirena
       def render_scene(scene)
         svg = create_document(scene)
         add_markers(svg)
+        scene.namespaces.each { |box| render_scene_namespace(box, svg) }
         render_relationships(scene, svg)
         render_classes(scene, svg)
         scene.notes.each { |note| render_scene_note(note, svg) }
@@ -96,6 +97,26 @@ module Sirena
         end
         node.method_rows.each { |label| group.children << scene_text(label) }
         svg << group
+      end
+
+      def render_scene_namespace(box, svg)
+        group = Svg::Group.new.tap { |item| item.id = "namespace-#{box.title}" }
+        group.children << Svg::Rect.new(
+          x: svg_number(box.x), y: svg_number(box.y),
+          width: svg_number(box.width), height: svg_number(box.height),
+          fill: "none", stroke: "#000000", stroke_width: "1"
+        )
+        group.children << scene_namespace_title(box)
+        svg << group
+      end
+
+      def scene_namespace_title(box)
+        Svg::Text.new(
+          x: svg_number(box.x + (box.width / 2)), y: svg_number(box.y + 22),
+          content: box.title, fill: "#000000",
+          font_family: "Arial, sans-serif", font_size: "16",
+          text_anchor: "middle"
+        )
       end
 
       def render_scene_note(note, svg)

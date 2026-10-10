@@ -4,6 +4,7 @@ require "lutaml/model"
 require_relative "base"
 require_relative "generic_text"
 require_relative "class_note"
+require_relative "class_namespace"
 
 module Sirena
   module Diagram
@@ -347,6 +348,10 @@ module Sirena
 
       # Notes written with `note` / `note for`, in source order
       attribute :notes, ClassNote, collection: true, default: -> { [] }
+
+      # Namespace blocks, in source order
+      attribute :namespaces, ClassNamespace, collection: true,
+                                             default: -> { [] }
 
       # Returns the diagram type identifier.
       #
