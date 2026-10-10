@@ -287,8 +287,11 @@ module Sirena
         logger&.debug("Detected diagram type: #{type}")
         reject_degenerate_preamble(type, preamble[:degenerate])
         diagram = parse_diagram(type, preamble[:body], title, logger)
-        diagram.wrap = true if sequence_wrap?(type, source)
-        diagram = IRAdapter.call(type, diagram)
+        diagram = IRAdapter.call(type, with_wrap(type, diagram, source))
+        parsed(type, diagram)
+      end
+
+      def parsed(type, diagram)
         Parsed.new(type: type, diagram: diagram,
                    transform: layer_class(Layout, type, Layout::LayoutError),
                    renderer: layer_class(Renderer, type, Renderer::RenderError))
@@ -311,6 +314,11 @@ module Sirena
           return type if body.match?(row[:pattern])
         end
         nil
+      end
+
+      def with_wrap(type, diagram, source)
+        diagram.wrap = true if sequence_wrap?(type, source)
+        diagram
       end
 
       def sequence_wrap?(type, source)

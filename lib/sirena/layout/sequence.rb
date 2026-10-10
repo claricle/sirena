@@ -136,10 +136,9 @@ module Sirena
           notes: graph.nodes.select { |node| node.role == "note" },
           note_entries: NotePlacement.entries(graph),
           title: graph.label,
-          wrap: wrap_setting?(graph),
           accessibility_title: graph.accessibility_title,
           accessibility_description: graph.accessibility_description,
-        }.merge(FrameReader.call(graph))
+        }.merge(FrameReader.call(graph), wrap: wrap_setting?(graph))
       end
 
       def wrap_setting?(graph)
@@ -348,13 +347,17 @@ module Sirena
         return 800 unless participants
         return 0 if participants.empty?
 
+        participants_span(participants) +
+          (2 * Geometry::DIAGRAM_MARGIN_X) - CANVAS_PAD +
+          frame_layout.extra_width
+      end
+
+      def participants_span(participants)
         total_width = participants.sum do |participant|
           participant_width_value(participant)
         end
         total_width + ((participants.length - 1) * PARTICIPANT_MARGIN) +
-          inner_gaps(participants) +
-          (2 * Geometry::DIAGRAM_MARGIN_X) - CANVAS_PAD +
-          frame_layout.extra_width
+          inner_gaps(participants)
       end
 
       def inner_gaps(participants)
@@ -377,11 +380,14 @@ module Sirena
           id = participant_id(participant)
           left = cursor + frame_layout.gap_before(id)
           width = participant_width_value(participant)
-          advance = width + PARTICIPANT_MARGIN + frame_layout.gap_after(id) +
-                    gaps.extra_after(id)
-          cursor = left + advance
+          cursor = left + participant_advance(id, width)
           [id, participant_position(left, width)]
         end
+      end
+
+      def participant_advance(id, width)
+        width + PARTICIPANT_MARGIN + frame_layout.gap_after(id) +
+          gaps.extra_after(id)
       end
 
       def participant_position(left, width)
