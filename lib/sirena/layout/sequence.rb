@@ -211,7 +211,8 @@ module Sirena
         metadata = graph[:metadata]
         spans = graph[:edges].map { |e| [e[:sources].first, e[:targets].first] }
         FramePlacement.new(frames: metadata[:frames],
-                           boxes: metadata[:boxes], spans: spans)
+                           boxes: metadata[:boxes], spans: spans,
+                           ids: graph[:children].map { |c| c[:id] })
       end
 
       def build_scene(graph, positions, placement)
@@ -413,6 +414,7 @@ module Sirena
 
         (2 * Geometry::DIAGRAM_MARGIN_Y) + (PARTICIPANT_HEIGHT * 2) +
           lifeline_length(message_count) + frame_layout.top_inset +
+          frame_layout.bottom_inset +
           Geometry::CANVAS_TRIM - CANVAS_PAD
       end
 

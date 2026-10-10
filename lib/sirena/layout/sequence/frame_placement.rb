@@ -31,9 +31,14 @@ module Sirena
         TAB_CHAR_WIDTH = 8
         TAB_PADDING = 18
         TAB_HEIGHT = 20
-        BOX_PAD = 10
-        BOX_HEADER = 28
-        BOX_TOP = 8
+        BOX_PAD = 5
+        BOX_AFTER = 15
+        BOX_EDGE = 25
+        BOX_HEADER = 27
+        BOX_HEADER_BARE = 10
+        BOX_BELOW = 10
+        BOX_TOP = 5
+        BOX_TITLE_BASELINE = 21
         BOX_BOTTOM_PAD = 10
         TITLE_BASELINE = 18
         DIVIDER_OFFSET = 5
@@ -48,16 +53,21 @@ module Sirena
         # @param boxes [Array<Hash>] from FrameReader
         # @param spans [Array<Array>] the [source, target] ids of each
         #   message, by message index
-        def initialize(frames: [], boxes: [], spans: [])
+        # @param ids [Array<String>] participant ids, left to right
+        def initialize(frames: [], boxes: [], spans: [], ids: [])
           @frames = frames
           @boxes = boxes
           @spans = spans
+          @ids = ids
           @notes = NO_NOTES
         end
 
-        # Extra space above the participant row when a box has a title.
+        # Extra space above the participant row when there is a box: more
+        # when a box has a title.
         def top_inset
-          @boxes.any? { |box| !box[:title].empty? } ? BOX_HEADER : 0
+          return 0 if @boxes.empty?
+
+          titled_box? ? BOX_HEADER : BOX_HEADER_BARE
         end
 
         # Distance every row at `index` or below is pushed down.
@@ -67,15 +77,25 @@ module Sirena
 
         def total_shift = row_shift(@spans.length)
 
+        # Room a box leaves under the canvas for its own frame.
+        def bottom_inset
+          @boxes.empty? ? 0 : BOX_BELOW
+        end
+
         def gap_before(id)
           @boxes.count { |box| box[:members].first == id } * BOX_PAD
         end
 
         def gap_after(id)
-          @boxes.count { |box| box[:members].last == id } * BOX_PAD
+          @boxes.count { |box| box[:members].last == id } * BOX_AFTER
         end
 
-        def extra_width = @boxes.length * 2 * BOX_PAD
+        # A box ending the diagram has no neighbour to push away.
+        def extra_width
+          @boxes.sum do |box|
+            BOX_PAD + (box[:members].last == @ids.last ? BOX_PAD : BOX_AFTER)
+          end
+        end
 
         # Height of the frame edges at `index` that come before `order`
         # in the source: where a note written at `order` starts.
@@ -111,6 +131,8 @@ module Sirena
         end
 
         private
+
+        def titled_box? = @boxes.any? { |box| !box[:title].empty? }
 
         def room(index)
           opening(index).sum { |frame| open_height(frame) } +
@@ -299,14 +321,14 @@ module Sirena
             x: left, y: BOX_TOP, width: right - left,
             height: bottom - BOX_TOP, color: box[:color],
             title: box[:title].empty? ? nil : box[:title],
-            title_y: BOX_TOP + TITLE_BASELINE
+            title_y: BOX_TOP + BOX_TITLE_BASELINE
           )
         end
 
         def box_extent(members, positions, widths)
           lefts = members.map { |id| positions[id][:x] }
           rights = members.map { |id| positions[id][:x] + widths.fetch(id) }
-          [lefts.min - BOX_PAD, rights.max + BOX_PAD]
+          [lefts.min - BOX_EDGE, rights.max + BOX_EDGE]
         end
       end
     end
