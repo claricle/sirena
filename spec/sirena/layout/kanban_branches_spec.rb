@@ -48,7 +48,7 @@ RSpec.describe Sirena::Layout::Kanban do
       it "spaces them horizontally and bounds the board" do
         two_empty_columns
 
-        expect(board_geometry).to eq([540.0, 140.0, [40.0, 300.0], []])
+        expect(board_geometry).to eq([485.0, 115.0, [40.0, 245.0], []])
       end
     end
 
@@ -62,7 +62,7 @@ RSpec.describe Sirena::Layout::Kanban do
       it "uses only header and padding height" do
         single_todo_column
 
-        expect(column_geometry).to eq([200.0, 60.0, 50.0, nil, nil])
+        expect(column_geometry).to eq([200.0, 35.0, 25.0, nil, nil])
       end
     end
 
@@ -75,7 +75,7 @@ RSpec.describe Sirena::Layout::Kanban do
       it "grows the card and column for rendered lines and metadata rows" do
         rich_card_column
 
-        expect(rich_card_geometry).to eq([280.0, 284.0, 204.0, 134.0, 4])
+        expect(rich_card_geometry).to eq([280.0, 219.0, 139.0, 104.0, 4])
       end
 
       it "lays out shared data IR identically to the private model" do
@@ -98,12 +98,12 @@ RSpec.describe Sirena::Layout::Kanban do
                   [work.background.x, work.background.y],
                   [work.label.x, work.label.y],
                   work.metadata.map { |label| [label.x, label.y] }]
-        expected = [280.0, 284.0, "0 0 280 284.0",
-                    [40.0, 40.0], [40.0, 40.0], [140.0, 70.0],
-                    [215.0, 55.0], [225.0, 69.0], [50.0, 100.0],
-                    [60.0, 125.0],
-                    [[60.0, 168.0], [120.0, 168.0],
-                     [60.0, 186.0], [120.0, 186.0]]]
+        expected = [280.0, 219.0, "0 0 280 219.0",
+                    [40.0, 40.0], [40.0, 40.0], [140.0, 57.5],
+                    [215.0, 42.5], [225.0, 56.5], [47.5, 65.0],
+                    [57.5, 90.0],
+                    [[57.5, 139.0], [117.5, 139.0],
+                     [57.5, 157.0], [117.5, 157.0]]]
 
         [actual, expected]
       end
@@ -144,7 +144,7 @@ RSpec.describe Sirena::Layout::Kanban do
         stacked_columns
 
         expect(stacked_geometry).to eq(
-          [540.0, 325.0, [245.0, 150.0], [100.0, 195.0, 100.0]],
+          [485.0, 208.0, [128.0, 79.0], [65.0, 114.0, 65.0]],
         )
       end
     end
