@@ -166,6 +166,7 @@ module Sirena
       def shifted_placement(graph)
         entries = graph.dig(:metadata, :note_entries)
         positions = participant_positions(graph[:children])
+        frame_layout.fit_titles(positions)
         @rows = MessageRows.new(graph[:edges], positions,
                                 font_size: message_font_size, wrap: @wrap,
                                 closers: frame_closers(graph))

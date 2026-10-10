@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "frame_shape"
+require_relative "text_wrap"
+require_relative "text_width"
 require_relative "box_shape"
 
 module Sirena
@@ -41,6 +43,10 @@ module Sirena
         BOX_TITLE_BASELINE = 21
         BOX_BOTTOM_PAD = 10
         TITLE_BASELINE = 18
+        TITLE_MIN_ROOM = 20
+        TITLE_MARGIN = 20
+        TITLE_LINE_ROOM = 17
+        TITLE_FONT_SIZE = 16
         DIVIDER_OFFSET = 5
         LOOP_WIDTH = 56
         NO_NOTES = Class.new do
@@ -60,6 +66,19 @@ module Sirena
           @spans = spans
           @ids = ids
           @notes = NO_NOTES
+          @title_lines = {}
+        end
+
+        # Wraps every frame title the way mmdc does: at the title area's
+        # width (frame less a 50px tab) less 20, with each extra line growing
+        # the frame. Call before any
+        # row is placed; the frame's width ignores notes.
+        # @param positions [Hash] participant id => position hash
+        def fit_titles(positions)
+          @title_lines = @frames.to_h do |frame|
+            left, right = horizontal_extent(frame, positions)
+            [frame[:open_order], title_lines(frame, right - left)]
+          end
         end
 
         # Extra space above the participant row when there is a box: more
@@ -153,7 +172,26 @@ module Sirena
         def open_height(frame)
           return RECT_OPEN_HEIGHT if frame[:kind] == "rect"
 
-          labelled_height(OPEN_HEIGHT, frame[:label])
+          labelled_height(OPEN_HEIGHT, frame[:label]) + extra_title(frame)
+        end
+
+        def extra_title(frame)
+          lines = @title_lines.fetch(frame[:open_order], []).length
+          [TITLE_MIN_ROOM, TITLE_LINE_ROOM * lines].max - TITLE_MIN_ROOM
+        end
+
+        def title_lines(frame, width)
+          return [] if frame[:kind] == "rect" || frame[:label].empty?
+
+          text = "[#{frame[:label]}]"
+          limit = [width - TAB_MIN_WIDTH - TITLE_MARGIN,
+                   widest_word(text) + 1].max
+          TextWrap.lines(text, limit, TITLE_FONT_SIZE)
+        end
+
+        # A title is never cut inside a word, however narrow the frame.
+        def widest_word(text)
+          text.split.map { |w| TextWidth.of("#{w} ", TITLE_FONT_SIZE) }.max
         end
 
         def section_height(section)
@@ -213,8 +251,10 @@ module Sirena
             return { color: frame[:label], tab_width: 0 }
           end
 
+          lines = @title_lines.fetch(frame[:open_order], [])
           { tab_width: tab_width(frame[:kind]),
-            title: frame[:label].empty? ? nil : "[#{frame[:label]}]" }
+            title: frame[:label].empty? ? nil : "[#{frame[:label]}]",
+            title_lines: lines }
         end
 
         def tab_width(kind)
