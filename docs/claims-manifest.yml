@@ -121,91 +121,91 @@
   file: README.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: provides superior error messages, composability
   file: README.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "**Superior error messages** with detailed context and line numbers"
   file: README.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "**Type safety** through strongly-typed Lutaml::Model objects"
   file: README.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: test cases that covers all diagram types to ensure
   file: README.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: passes plain hashes rather than typed models
   file: README.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: of the 23 builders
   file: README.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Step-by-step migration from Mermaid.js
   file: README.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Comprehensive documentation is available at the
   file: README.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: 'README: six plain-Ruby diagram classes and typed Layout::Scene for six types'
   file: README.adoc
   disposition: corrected
   evidence: bundle exec ruby -Ilib -e 'require "sirena"; abort unless Sirena::Layout::Scene'
-  pr: 999999
+  pr: 271
 
 - claim: 'README: 10 of the 26 files under lib/sirena/parser/builders subclass Parslet::Transform'
   file: README.adoc
   disposition: corrected
   evidence: grep -l 'Parslet::Transform' lib/sirena/parser/builders/*.rb | wc -l
-  pr: 999999
+  pr: 271
 
 - claim: register_type(type, parser:, transform:, renderer:, model:)
   file: ARCHITECTURE.md
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Notation::Mermaid.register_type(
   file: ARCHITECTURE.md
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Notation::Mermaid (Detection, Parsing, Type Registration)
   file: ARCHITECTURE.md
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "    ├── viewBox: String"
   file: ARCHITECTURE.md
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Adding a diagram type is a row in Notation::Mermaid::TYPES, not a register_type
     call
@@ -213,201 +213,201 @@
   disposition: corrected
   evidence: bundle exec ruby -Ilib -e 'require "sirena"; abort if Sirena::Notation::Mermaid.respond_to?(:register_type);
     abort unless Sirena::Notation::Mermaid::TYPES.size == 24'
-  pr: 999999
+  pr: 271
 
 - claim: "`Sirena::DiagramRegistry.register`), the same mechanism every built-in diagram
     type"
   file: docs/_features/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Register a new diagram type's parser/transform/renderer/model
   file: docs/_features/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Professional-quality output
   file: docs/_features/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Clear, actionable error messages
   file: docs/_features/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Accurate text rendering
   file: docs/_features/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Maximum accessibility
   file: docs/_features/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: 'Sirena includes four professional themes:'
   file: docs/_features/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* **Fast Parsing** - Parslet-based parsing"
   file: docs/_features/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Extension point is Sirena::Notation.register; DiagramRegistry has no register
   file: docs/_features/index.adoc
   disposition: corrected
   evidence: bundle exec ruby -Ilib -e 'require "sirena"; abort if Sirena::DiagramRegistry.respond_to?(:register);
     abort unless Sirena::Notation.respond_to?(:register)'
-  pr: 999999
+  pr: 271
 
 - claim: Professional-quality SVG output
   file: docs/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Robust grammar-based parsing with clear error messages
   file: docs/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Advanced theming system
   file: docs/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: docs/index.adoc type table lists all 24 registered types
   file: docs/index.adoc
   disposition: corrected
   evidence: test "$(grep -c '^|link:diagram_types' docs/index.adoc)" = 24
-  pr: 999999
+  pr: 271
 
 - claim: Rails Integration** - Using Sirena in Rails applications
   file: docs/_tutorials/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Jekyll Integration** - Static site generation with Sirena
   file: docs/_tutorials/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Performance Optimization** - Making your diagrams render faster
   file: docs/_guides/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Production Deployment** - Running Sirena in production environments
   file: docs/_guides/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "**Error Codes** - All error codes and meanings"
   file: docs/_references/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "**API Reference** - Programmatic API documentation"
   file: docs/_references/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* *CLI Quick Reference* (planned)"
   file: docs/_references/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "**Theming System** - How themes work in Sirena"
   file: docs/_pages/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "**Configuration** - Configuring Sirena for your needs"
   file: docs/_pages/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: All diagram types maintain syntax compatibility with Mermaid.js.
   file: docs/_diagram_types/index.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "|Better debugging in Sirena"
   file: docs/_pages/compatibility.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "|Easier customization in Sirena"
   file: docs/_pages/compatibility.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "|~2MB (mermaid.min.js)"
   file: docs/_pages/compatibility.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "`spec/tasks/compatibility_spec.rb` fails"
   file: docs/_pages/compatibility.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* Smaller Docker images"
   file: docs/_pages/compatibility.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* Lower resource usage is important"
   file: docs/_pages/compatibility.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: 'Sirena includes comprehensive compatibility testing:'
   file: docs/_pages/compatibility.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: 'Uses YAML themes instead of inline styles. Apply themes globally:'
   file: docs/_pages/compatibility.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: mermaid.min.js in mermaid-cli 11.12.0 is 3,566,058 bytes (~3.4 MB)
   file: docs/_pages/compatibility.adoc
   disposition: corrected
   evidence: ls -l $(dirname $(readlink -f $(which mmdc)))/../node_modules/mermaid/dist/mermaid.min.js
-  pr: 999999
+  pr: 271
 
 - claim: style, classDef, class and click lines are accepted but have no effect on
     output
@@ -415,145 +415,145 @@
   disposition: corrected
   evidence: printf 'graph TD\n A[x]\n style A fill:#f9f\n' | bundle exec exe/sirena
     render | grep -c 'fill="#f9f"' (prints 0)
-  pr: 999999
+  pr: 271
 
 - claim: "* Low memory footprint"
   file: docs/_pages/comparison.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* Slower startup (JVM initialization)"
   file: docs/_pages/comparison.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* Syntax less intuitive than Mermaid"
   file: docs/_pages/comparison.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "✅ Maximum performance critical +"
   file: docs/_pages/comparison.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* Excellent for CI/CD and automated documentation"
   file: docs/_pages/comparison.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "**PlantUML** dominates formal UML documentation"
   file: docs/_pages/comparison.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: provides the most powerful graph layout algorithms
   file: docs/_pages/comparison.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "**Syntax Compatibility:** Not directly compatible (different syntax)"
   file: docs/_pages/comparison.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: provides a comprehensive comparison of Sirena
   file: docs/_pages/comparison.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: Sirena renders PlantUML class and sequence diagrams with --require sirena/notation/plantuml
   file: docs/_pages/comparison.adoc
   disposition: corrected
   evidence: bundle exec ruby -e 'puts File.read("scoreboard/plantuml.json")[0,200]'
-  pr: 999999
+  pr: 271
 
 - claim: Sirena provides full support for rendering C4 diagrams
   file: docs/_diagram_types/c4-diagram.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* Person: 140x180 px"
   file: docs/_diagram_types/c4-diagram.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: 'Sirena uses the standard C4-PlantUML color scheme:'
   file: docs/_diagram_types/c4-diagram.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* **Labels** - Bold, 14-16pt"
   file: docs/_diagram_types/c4-diagram.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: 'standard 7-file Parslet architecture:'
   file: docs/_diagram_types/c4-diagram.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: 'follows the established Parslet architecture with full support for:'
   file: docs/_diagram_types/pie-chart.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* 13 RSpec tests covering all features"
   file: docs/_diagram_types/pie-chart.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: 'The implementation includes comprehensive tests:'
   file: docs/_diagram_types/quadrant-chart.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: 'The timeline implementation includes comprehensive test coverage:'
   file: docs/_diagram_types/timeline.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* Full support for sections, events, tasks, and styling"
   file: docs/_diagram_types/timeline.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: "* Professional presentation"
   file: docs/_diagram_types/radar-chart.adoc
   disposition: removed
   evidence: ruby scripts/check_claims_manifest.rb
-  pr: 999999
+  pr: 271
 
 - claim: 'blob/main links carry no #L line anchors (they drifted to blank lines and
     comments)'
   file: docs/_diagram_types/c4-diagram.adoc, docs/_diagram_types/quadrant-chart.adoc
   disposition: corrected
   evidence: test -z "$(git grep -nE 'blob/main/[^ ]*#L[0-9]+' -- docs/_diagram_types)"
-  pr: 999999
+  pr: 271
 
 - claim: Performance Benchmark links resolve to /performance-benchmark/
   file: docs/_features/index.adoc, docs/_pages/compatibility.adoc, docs/_pages/comparison.adoc
   disposition: corrected
   evidence: git grep -n '\.\./performance-benchmark/' -- docs/_features docs/_pages
     (only ../../ forms)
-  pr: 999999
+  pr: 271
 
