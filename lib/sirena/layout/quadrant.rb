@@ -110,7 +110,7 @@ module Sirena
           axes: border_lines(space),
           axis_labels: axis_labels(graph[:axes], space),
           quadrant_labels: quadrant_labels(graph[:quadrants], graph[:points]),
-          points: typed_points(graph[:points])
+          points: typed_points(graph[:points]),
         }
       end
 
@@ -262,15 +262,15 @@ module Sirena
           next top_label(quadrant[:label], x, bounds) unless points.empty?
 
           label(quadrant[:label], [x, bounds[:y] + (bounds[:height] / 2.0)],
-                QUADRANT_FONT_SIZE, "quadrant", anchor: "middle",
-                baseline: "middle")
+                QUADRANT_FONT_SIZE, "quadrant",
+                anchor: "middle", baseline: "middle")
         end
       end
 
       def top_label(text, x, bounds)
         label(text, [x, bounds[:y] + QUADRANT_TEXT_TOP_PADDING],
-              QUADRANT_FONT_SIZE, "quadrant", anchor: "middle",
-              baseline: "hanging")
+              QUADRANT_FONT_SIZE, "quadrant",
+              anchor: "middle", baseline: "hanging")
       end
 
       def typed_points(points)

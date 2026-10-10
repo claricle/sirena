@@ -48,7 +48,7 @@ RSpec.describe Sirena::Layout::Requirement do
         requirements: [Sirena::Diagram::RequirementNode.new(name: "r")],
         elements: [Sirena::Diagram::RequirementElement.new(name: "e")],
         relationships: [Sirena::Diagram::RequirementRelationship.new(
-          source: "r", target: "e", type: "verifies"
+          source: "r", target: "e", type: "verifies",
         )],
       ),
     )

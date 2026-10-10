@@ -727,7 +727,7 @@ module Sirena
           queue = [id]
           seen[id] = true
           queue.each do |current|
-            links[current].each do |neighbour, _step|
+            links[current].map(&:first).each do |neighbour|
               next if seen[neighbour]
 
               seen[neighbour] = true
