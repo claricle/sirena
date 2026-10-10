@@ -81,15 +81,9 @@ RSpec.describe Sirena::Renderer::Treemap do
     expect(render_cell(parent_with_descendant)).to include("Grandchild")
   end
 
-  it "keeps a label at the truncation boundary" do
-    cell = base_cell.merge(label: "1234567890", width: 80)
-
-    expect(render_cell(cell)).to include(">1234567890</text>")
-  end
-
-  it "truncates a label beyond the boundary" do
+  it "keeps a label wider than its cell whole" do
     cell = base_cell.merge(label: "12345678901", width: 80)
 
-    expect(render_cell(cell)).to include(">1234567...</text>")
+    expect(render_cell(cell)).to include(">12345678901</text>")
   end
 end

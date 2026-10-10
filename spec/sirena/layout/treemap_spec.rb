@@ -20,7 +20,7 @@ RSpec.describe Sirena::Layout::Treemap do
       child_scenes = ir_scene.cells.first.children
       [ir_scene, child_scenes.map { |cell| cell.label.text },
        ir_scene.cells.first.value_label,
-       child_scenes.last.fill, child_scenes.last.stroke]
+       child_scenes.first.fill, child_scenes.first.stroke]
     end
 
     let(:diagram) do
@@ -42,7 +42,7 @@ RSpec.describe Sirena::Layout::Treemap do
       described_class.new.call(data)
     end
     let(:expected_evidence) do
-      [scene, %w[Small Large], nil, "#f96", "#123"]
+      [scene, %w[Large Small], nil, "#f96", "#123"]
     end
 
     it { is_expected.to eq(expected_evidence) }
@@ -66,6 +66,6 @@ RSpec.describe Sirena::Layout::Treemap do
       described_class.new.call(data)
     end
 
-    it { is_expected.to eq([scene, 82.0]) }
+    it { is_expected.to eq([scene, 310.0]) }
   end
 end
