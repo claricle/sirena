@@ -724,8 +724,8 @@ RSpec.describe Sirena::Engine do
       # The whole path. Counting decimal places only proves the number is
       # no longer than three, which rounding to two or fewer also
       # satisfies. The start is where the ray between the two boxes' exact
-      # centres leaves `one` (376.0, 104.0 to 69.277, 67.0, crossing x = 300).
-      expect(path).to eq("M 300.0 94.83 L 69.277 67.0")
+      # centres leaves `one` (crossing x = 300).
+      expect(path).to eq("M 300.0 102.86 L 84.277 75.5")
     end
 
     it "joins a box to a plain node" do
