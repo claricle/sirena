@@ -204,8 +204,10 @@ module CorpusOracle
       "toolchain" => provenance.slice(*TOOLCHAIN_KEYS) }.compact
   end
 
+  # Reads the source the way corpus_verdicts.rb did when it took the digest.
+  # A text-mode read on Windows folds CRLF, so binread would never match.
   def verified_source_sha(path, digest)
-    source_sha = Digest::SHA256.hexdigest(File.binread(path))
+    source_sha = Digest::SHA256.hexdigest(File.read(path))
     return source_sha if source_sha == digest
 
     refuse!(path, "source changed since it was hashed")
