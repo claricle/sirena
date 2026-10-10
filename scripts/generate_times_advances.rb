@@ -55,6 +55,7 @@ if __FILE__ == $PROGRAM_NAME
   source, output = ARGV
   abort "usage: #{$PROGRAM_NAME} TimesNewRoman.ttf OUTPUT.rb" unless output
 
-  File.write("#{output}.tmp", times_render(runs(advances(source, TIMES_RANGES))))
+  table = runs(advances(source, TIMES_RANGES))
+  File.write("#{output}.tmp", times_render(table))
   File.rename("#{output}.tmp", output)
 end
