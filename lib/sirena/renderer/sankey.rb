@@ -33,7 +33,7 @@ module Sirena
       end
 
       def apply_title_style(text)
-        text.fill = theme_color(:label_text) || "#000000"
+        text.fill = theme_color(:label_text)
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         text.font_size = (theme_typography(:font_size_large) || 18).to_s
         text.text_anchor = "middle"
@@ -62,8 +62,8 @@ module Sirena
       end
 
       def apply_node_style(rect)
-        rect.fill = theme_color(:node_fill) || "#2E86AB"
-        rect.stroke = theme_color(:node_stroke) || "#1A5276"
+        rect.fill = theme_color(:node_fill)
+        rect.stroke = theme_color(:node_stroke)
         rect.stroke_width = "2"
       end
 
@@ -75,7 +75,7 @@ module Sirena
       end
 
       def apply_node_label_style(text)
-        text.fill = theme_color(:node_text) || "#FFFFFF"
+        text.fill = theme_color(:node_text)
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         text.font_size = (theme_typography(:font_size_small) || 11).to_s
         text.text_anchor = "middle"
@@ -100,7 +100,7 @@ module Sirena
       end
 
       def apply_flow_label_style(text)
-        text.fill = theme_color(:label_text) || "#333333"
+        text.fill = theme_color(:label_text)
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         text.font_size = (theme_typography(:font_size_small) || 10).to_s
         text.text_anchor = "middle"

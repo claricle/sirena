@@ -48,7 +48,7 @@ RSpec.describe Sirena::Renderer::Sankey do
     theme = Sirena::Theme.new(
       colors: Sirena::Theme::ColorPalette.new(
         node_fill: "#010203", node_stroke: "#040506",
-        label_text: "#070809"
+        label_text: "#070809", node_text: "#0a0b0c"
       ),
       typography: Sirena::Theme::Typography.new(
         font_family: "Example Sans", font_size_small: 13,
@@ -66,8 +66,8 @@ RSpec.describe Sirena::Renderer::Sankey do
     expect(flow_xml).to include("Flows", ">4</text>", "#ED7D31", "#FFC000")
   end
 
-  it "uses default node colors" do
-    expect(bare_xml).to include('fill="#2E86AB"', 'stroke="#1A5276"')
+  it "draws nodes in the default theme's colors" do
+    expect(flow_xml).to include('fill="#ffffff"', 'stroke="#000000"')
   end
 
   it "uses default typography" do
@@ -80,7 +80,7 @@ RSpec.describe Sirena::Renderer::Sankey do
 
   it "uses theme typography" do
     expect(themed_xml)
-      .to include('fill="#FFFFFF"', 'font-family="Example Sans"')
+      .to include('fill="#0a0b0c"', 'font-family="Example Sans"')
   end
 
   it "omits an absent title" do

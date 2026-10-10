@@ -70,13 +70,13 @@ module Sirena
       end
 
       def apply_column_style(rect)
-        rect.fill = theme_color(:background) || "#f3f4f6"
-        rect.stroke = theme_color(:border) || "#d1d5db"
+        rect.fill = theme_color(:background)
+        rect.stroke = theme_color(:border)
         rect.stroke_width = "1"
       end
 
       def apply_header_style(rect)
-        rect.fill = theme_color(:primary) || "#3b82f6"
+        rect.fill = theme_color(:primary)
       end
 
       def apply_badge_style(rect)
@@ -86,7 +86,7 @@ module Sirena
 
       def apply_card_style(rect)
         rect.fill = "#ffffff"
-        rect.stroke = theme_color(:border) || "#d1d5db"
+        rect.stroke = theme_color(:border)
         rect.stroke_width = "1"
       end
 
@@ -138,7 +138,7 @@ module Sirena
       def label_color(style)
         case style
         when "header", "badge" then "#ffffff"
-        when "metadata_label" then theme_color(:secondary) || "#6b7280"
+        when "metadata_label" then theme_color(:secondary)
         else theme_color(:text) || "#1f2937"
         end
       end
