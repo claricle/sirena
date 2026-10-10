@@ -10,11 +10,23 @@ require "yaml"
 # `board` needs `described_class` and `root` (from LintDebtFixture), so it
 # is included rather than made a module function.
 module LintDebtScoreboardSpecHelpers
+  def self.cache
+    @cache ||= {}
+  end
+
   # A fresh instance every call, never memoised -- each example measures
   # the tree more than once (baseline, then again after a mutation), and
   # Sirena::LintDebt caches its own measurement for its own lifetime.
   def board
     described_class.new(root: root, debt: Sirena::LintDebt.new(root: root))
+  end
+
+  # The diff contexts have two examples each that only read one diff, and
+  # every measurement is a `bundle exec rubocop` run. The first example
+  # builds the diff; the second reuses it (a plain value, the tree is not
+  # read again).
+  def diff_once(key)
+    LintDebtScoreboardSpecHelpers.cache[key] ||= yield
   end
 end
 
@@ -140,18 +152,19 @@ RSpec.describe Sirena::LintDebtScoreboard do
     end
 
     context "with an offence seeded via the todo file (route A)" do
-      before do
-        board.record!
-        write("seed_a.rb", "module Fixture\n  Y = 'seed_a'.freeze\nend\n")
-        todo = File.read(File.join(root, ".rubocop_todo.yml"))
-        write(
-          ".rubocop_todo.yml",
-          "#{todo}Style/FrozenStringLiteralComment:\n  " \
-          "Exclude:\n    - seed_a.rb\n",
-        )
+      let(:diff) do
+        diff_once(:route_a) do
+          board.record!
+          write("seed_a.rb", "module Fixture\n  Y = 'seed_a'.freeze\nend\n")
+          todo = File.read(File.join(root, ".rubocop_todo.yml"))
+          write(
+            ".rubocop_todo.yml",
+            "#{todo}Style/FrozenStringLiteralComment:\n  " \
+            "Exclude:\n    - seed_a.rb\n",
+          )
+          board.diff
+        end
       end
-
-      let(:diff) { board.diff }
 
       it "is not clean" do
         expect(diff).not_to be_clean
@@ -165,18 +178,19 @@ RSpec.describe Sirena::LintDebtScoreboard do
     end
 
     context "with an offence seeded via a fresh Exclude (route B)" do
-      before do
-        board.record!
-        write("seed_b.rb", "module Fixture\n  Y = 'seed_b'.freeze\nend\n")
-        write(
-          ".rubocop.yml",
-          "inherit_from:\n  - .rubocop_todo.yml\n" \
-          "AllCops:\n  NewCops: enable\n" \
-          "Style/FrozenStringLiteralComment:\n  Exclude:\n    - seed_b.rb\n",
-        )
+      let(:diff) do
+        diff_once(:route_b) do
+          board.record!
+          write("seed_b.rb", "module Fixture\n  Y = 'seed_b'.freeze\nend\n")
+          write(
+            ".rubocop.yml",
+            "inherit_from:\n  - .rubocop_todo.yml\n" \
+            "AllCops:\n  NewCops: enable\n" \
+            "Style/FrozenStringLiteralComment:\n  Exclude:\n    - seed_b.rb\n",
+          )
+          board.diff
+        end
       end
-
-      let(:diff) { board.diff }
 
       it "is not clean" do
         expect(diff).not_to be_clean
@@ -190,19 +204,20 @@ RSpec.describe Sirena::LintDebtScoreboard do
     end
 
     context "with an offence seeded via an inline directive (route C)" do
-      before do
-        board.record!
-        write(
-          "seed_c.rb",
-          "# frozen_string_literal: true\n\n" \
-          "module Fixture\n  " \
-          "Y = 1+1 " \
-          "# rubocop:disable Layout/SpaceAroundOperators\n" \
-          "end\n",
-        )
+      let(:diff) do
+        diff_once(:route_c) do
+          board.record!
+          write(
+            "seed_c.rb",
+            "# frozen_string_literal: true\n\n" \
+            "module Fixture\n  " \
+            "Y = 1+1 " \
+            "# rubocop:disable Layout/SpaceAroundOperators\n" \
+            "end\n",
+          )
+          board.diff
+        end
       end
-
-      let(:diff) { board.diff }
 
       it "is not clean" do
         expect(diff).not_to be_clean
@@ -216,21 +231,22 @@ RSpec.describe Sirena::LintDebtScoreboard do
     end
 
     context "when an existing row's count increases" do
-      before do
-        write(
-          "op.rb",
-          "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
-        )
-        board.record!
+      let(:diff) do
+        diff_once(:count_increase) do
+          write(
+            "op.rb",
+            "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
+          )
+          board.record!
 
-        write(
-          "op.rb",
-          "# frozen_string_literal: true\n\n" \
-          "module Fixture\n  X = 1+1\n  Y = 2+2\nend\n",
-        )
+          write(
+            "op.rb",
+            "# frozen_string_literal: true\n\n" \
+            "module Fixture\n  X = 1+1\n  Y = 2+2\nend\n",
+          )
+          board.diff
+        end
       end
-
-      let(:diff) { board.diff }
 
       it "is not clean" do
         expect(diff).not_to be_clean
@@ -244,20 +260,21 @@ RSpec.describe Sirena::LintDebtScoreboard do
     end
 
     context "when an offence is fixed" do
-      before do
-        write(
-          "op.rb",
-          "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
-        )
-        board.record!
+      let(:diff) do
+        diff_once(:fixed) do
+          write(
+            "op.rb",
+            "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
+          )
+          board.record!
 
-        write(
-          "op.rb",
-          "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1 + 1\nend\n",
-        )
+          write(
+            "op.rb",
+            "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1 + 1\nend\n",
+          )
+          board.diff
+        end
       end
-
-      let(:diff) { board.diff }
 
       it "is not clean" do
         expect(diff).not_to be_clean
