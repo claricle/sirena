@@ -564,7 +564,9 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
 
     it "anchors a left-aligned head at start and a right one at end" do
-      anchors = %w[left right].map { |a| stereotyped_head(a).texts.first.anchor }
+      anchors = %w[left right].map do |side|
+        stereotyped_head(side).texts.first.anchor
+      end
 
       expect(anchors).to eq(%w[start end])
     end

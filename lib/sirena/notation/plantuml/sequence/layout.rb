@@ -48,9 +48,9 @@ module Sirena
             Walker.new(lifelines: ids.zip(@centers).to_h, bounds: head_bounds,
                        measure: ->(text) { text_width(text) },
                        font_size: font_size,
-                       appearance: @diagram.appearance,
                        start_y: @top + @head_height + Walker::ROW)
-              .run(@diagram.items, edge_right: @edge_right)
+              .run(@diagram.items, edge_right: @edge_right,
+                                   appearance: @diagram.appearance)
           end
 
           # Where `->]` messages end: past every head, and far enough from

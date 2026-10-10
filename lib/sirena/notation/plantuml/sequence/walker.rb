@@ -44,23 +44,22 @@ module Sirena
           # @param measure [#call] text width in pixels
           # @param bounds [Array<Float>] left and right edge of the heads
           # @param start_y [Float] where the first row goes
-          # @param appearance [Appearance] what the fragment tabs are drawn in
-          def initialize(lifelines:, measure:, font_size:, bounds:, start_y:,
-                         appearance: Appearance.new)
+          def initialize(lifelines:, measure:, font_size:, bounds:, start_y:)
             @ids = lifelines.keys
             @centers = lifelines.values
             @measure = measure
             @font_size = font_size
             @bounds = bounds
             @y = start_y
-            @appearance = appearance
             start_empty
           end
 
           # @param edge_right [Float, nil] where a message written `->]` ends;
           #   required when the items have one
-          def run(items, edge_right: nil)
+          # @param appearance [Appearance] what the fragment tabs are drawn in
+          def run(items, edge_right: nil, appearance: Appearance.new)
             @edge_right = edge_right
+            @appearance = appearance
             previous = nil
             items.each do |item|
               @mark_y = nil unless anchoring?(item)

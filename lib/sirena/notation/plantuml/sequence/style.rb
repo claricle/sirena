@@ -66,8 +66,7 @@ module Sirena
           def enter(name)
             @tokens.shift
             @path << name.downcase
-            return if @path == %w[sequencediagram] ||
-                      PROPERTIES.key?(@path)
+            return if PROPERTIES.key?(@path) || @path == %w[sequencediagram]
 
             refuse
           end
