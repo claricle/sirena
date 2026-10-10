@@ -16,7 +16,7 @@ module SpecSupport
         return [] unless box
 
         element = Element.new(kind: :info_text, key: "info-text", bbox: box,
-                              label: normalized(text))
+                              label: normalized(text), identity: :label)
         [element]
       end
 

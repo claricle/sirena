@@ -23,7 +23,8 @@ module SpecSupport
         box = Bbox.union(boxes) if boxes.any?
         return unless box
 
-        Element.new(kind: :error_icon, key: "error-icon", bbox: box)
+        Element.new(kind: :error_icon, key: "error-icon", bbox: box,
+                    identity: :label)
       end
 
       def icon_nodes(extractor, doc)
@@ -51,7 +52,7 @@ module SpecSupport
 
           role = TEXT_ROLES.fetch(index, "line-#{index + 1}")
           Element.new(kind: :error_text, key: role, bbox: box,
-                      label: normalized(text))
+                      label: normalized(text), identity: :label)
         end
       end
 
