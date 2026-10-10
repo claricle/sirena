@@ -15,10 +15,16 @@ module Sirena
       # @param nodes [Array<Hash>] class nodes
       # @param namespaces [Array<#name, #class_ids>]
       # @return [Array<Hash>] the nodes, with each namespace's members
-      #   replaced by one cluster at the position of its first member
+      #   replaced by one cluster at the position of its first member;
+      #   a namespace with no members follows as a titled leaf, as mmdc
+      #   draws it
       def nest(nodes, namespaces)
         owners = owner_index(nodes, namespaces)
         seen = {}
+        nest_members(nodes, owners, seen) + empty_nodes(namespaces, owners)
+      end
+
+      def nest_members(nodes, owners, seen)
         nodes.filter_map do |node|
           cluster = owners[node[:id]]
           next node unless cluster
@@ -40,6 +46,24 @@ module Sirena
       end
 
       private
+
+      def empty_nodes(namespaces, owners)
+        placed = owners.values.map { |cluster| cluster[:id] }
+        namespaces.filter_map do |item|
+          leaf_node(item.name) unless placed.include?("namespace:#{item.name}")
+        end
+      end
+
+      # mmdc pads the title 32px each side inside a 56px-high box.
+      def leaf_node(name)
+        label = @size.call(name)
+        {
+          id: "namespace:#{name}",
+          width: label[:width] + 64,
+          height: 56,
+          metadata: { title: name },
+        }
+      end
 
       def owner_index(nodes, namespaces)
         namespaces.each_with_object({}) do |item, index|
@@ -70,11 +94,15 @@ module Sirena
         nodes.each do |node|
           x = origin[0] + (node[:x] || 0)
           y = origin[1] + (node[:y] || 0)
-          next plain << node.merge(x: x, y: y) unless node[:children]
+          next plain << node.merge(x: x, y: y) unless titled?(node)
 
           boxes << box(node, x, y)
-          collect(node[:children], [x, y], plain, boxes)
+          collect(Array(node[:children]), [x, y], plain, boxes)
         end
+      end
+
+      def titled?(node)
+        node[:children] || node.dig(:metadata, :title)
       end
 
       def box(node, left, top)
