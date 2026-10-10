@@ -379,7 +379,7 @@ module Sirena
 
           # Extract header (first element)
           header = tree.first
-          if header && header.is_a?(Hash) && header[:direction]
+          if header.is_a?(Hash) && header[:direction]
             dir_value = header[:direction][:dir_value] || header[:direction]
             diagram.direction = canonical_direction(dir_value.to_s) if dir_value
           end
@@ -1037,7 +1037,7 @@ module Sirena
           # with nothing in it, and treating it as absent named the node
           # after itself and kept an older label on a re-mention.
           label = label.to_s.gsub(COMMENT_LINE, "") if delims == "()"
-          [SHAPE_MAP[delims] || "rect", label.nil? ? nil : label.to_s.strip]
+          [SHAPE_MAP[delims] || "rect", label&.to_s&.strip]
         end
       end
     end
