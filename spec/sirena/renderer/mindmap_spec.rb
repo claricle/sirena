@@ -48,7 +48,8 @@ RSpec.describe Sirena::Renderer::Mindmap do
     start = link.sections.first.start_point
     centre_gap = Math.hypot(start.x - root.center_x,
                             start.y - (root.y + (root.height / 2)))
-    expect([framing, centre_gap.round(6), link.path.start_with?("M #{start.x} ")])
+    path_starts_at_start = link.path.start_with?("M #{start.x} ")
+    expect([framing, centre_gap.round(6), path_starts_at_start])
       .to eq([true, Sirena::Layout::Mindmap::EDGE_INSET, true])
   end
 
