@@ -21,6 +21,7 @@ module Sirena
           @diagram = Diagram::StateDiagram.new
           @states = @diagram.states
           @state_counter = 0
+          @composite_ids = []
           statements_in(tree).each { |item| process_item(item) }
           @diagram
         end
@@ -49,6 +50,7 @@ module Sirena
           return unless stmt.is_a?(Hash)
           return process_state_declaration(stmt) if state_declaration?(stmt)
           return process_transition(stmt) if transition?(stmt)
+          return process_note(stmt) if attached_note?(stmt)
           return if ignored_statement?(stmt)
 
           process_standalone_state(stmt) if standalone_state?(stmt)
@@ -62,16 +64,32 @@ module Sirena
           stmt[:from] && stmt[:to]
         end
 
+        def attached_note?(stmt)
+          stmt[:note_keyword] && stmt[:note_target]
+        end
+
         def standalone_state?(stmt)
           stmt[:state_id] && !stmt[:keyword]
         end
 
-        # Notes and styles are parsed but dropped. This remains a parity gap:
-        # mermaid renders note nodes, but the diagram model has nowhere to
-        # carry them. A direction nested in a composite also falls through;
-        # it cannot be attached to the model's flattened state collection.
+        # Floating notes and styles remain unsupported. A direction nested in
+        # a composite also falls through; it cannot be attached to the model's
+        # flattened state collection.
         def ignored_statement?(stmt)
           stmt[:note_keyword] || stmt[:style_keyword]
+        end
+
+        def process_note(stmt)
+          target_id = extract_text(stmt[:note_target])
+          target = find_state(target_id)
+          return unless target && !@composite_ids.include?(target_id)
+
+          note = Diagram::StateNote.new
+          note.id = "#{target_id}----note"
+          note.text = extract_text(stmt[:note_text]).strip
+          note.target_id = target_id
+          note.position = extract_text(stmt[:position])
+          @diagram.notes << note
         end
 
         def process_state_declaration(stmt)
@@ -93,6 +111,7 @@ module Sirena
         end
 
         def declare_composite_state(state_id, label, composite)
+          @composite_ids << state_id
           state = process_composite_state(state_id, label, composite)
           append_display_text(state, label)
         end

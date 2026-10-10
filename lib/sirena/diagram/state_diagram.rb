@@ -124,6 +124,18 @@ module Sirena
       end
     end
 
+    # A note attached to a state in a state diagram.
+    class StateNote < Lutaml::Model::Serializable
+      attribute :id, :string
+      attribute :text, :string
+      attribute :target_id, :string
+      attribute :position, :string
+
+      def valid?
+        [id, text, target_id].all? { |value| value && !value.empty? }
+      end
+    end
+
     # State diagram model.
     #
     # Represents a complete state machine diagram with states and
@@ -154,6 +166,9 @@ module Sirena
       attribute :transitions, StateTransition, collection: true,
                                                default: -> { [] }
 
+      # Collection of notes attached to states
+      attribute :notes, StateNote, collection: true, default: -> { [] }
+
       # Returns the diagram type identifier.
       #
       # @return [Symbol] :state_diagram
@@ -178,7 +193,7 @@ module Sirena
       def valid?
         return false if states.nil?
 
-        all_states.all?(&:valid?) && valid_transitions?
+        all_states.all?(&:valid?) && valid_transitions? && valid_notes?
       end
 
       # Finds a state by its identifier.
@@ -244,6 +259,12 @@ module Sirena
       def valid_transitions?
         transitions.nil? || transitions.all? do |transition|
           transition.valid? && transition_references_resolve?(transition)
+        end
+      end
+
+      def valid_notes?
+        notes.nil? || notes.all? do |note|
+          note.valid? && !find_state(note.target_id).nil?
         end
       end
 

@@ -31,11 +31,12 @@ module Sirena
             entries = state_entries(diagram.states)
             identities = state_identities(entries, occupied)
             states = state_nodes(entries, identities, occupied)
+            notes = note_nodes(diagram.notes, entries, identities, occupied)
             details, transitions = transition_records(
               diagram.transitions, entries, identities, occupied
             )
             settings = settings_nodes(diagram, occupied)
-            [states + details + settings, transitions]
+            [states + notes + details + settings, transitions]
           end
 
           def state_entries(states, parent = nil)
@@ -81,6 +82,24 @@ module Sirena
 
           def state_role(state_type)
             STATE_ROLES.fetch(state_type, "state")
+          end
+
+          def note_nodes(notes, entries, identities, occupied)
+            endpoints = source_index(entries, identities)
+            Array(notes).flat_map.with_index do |note, index|
+              note_record(note, index, endpoints, occupied)
+            end
+          end
+
+          def note_record(note, index, endpoints, occupied)
+            id = reserve_id(note.id || "state_note_#{index}", occupied)
+            values = [["original_identifier", note.id],
+                      ["placement_side", note.position]]
+            entity = IR::Node.new(
+              id: id, label: note.text, role: "annotation",
+              parent_id: endpoints[note.target_id]
+            )
+            [entity, *semantic_nodes(id, values, occupied)]
           end
 
           def transition_records(transitions, entries, identities, occupied)
@@ -193,6 +212,7 @@ module Sirena
           private_class_method :graph_contents, :state_entries,
                                :state_identities, :state_nodes, :state_record,
                                :state_values, :state_role,
+                               :note_nodes, :note_record,
                                :transition_records, :source_index,
                                :transition_record, :transition_details,
                                :transition_edge, :settings_nodes,

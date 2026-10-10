@@ -219,7 +219,20 @@ module Sirena
         when "end" then end_state_shape(state)
         when "choice" then choice_state_shape(state)
         when "fork", "join" then fork_join_state_shape(state)
+        when "note" then note_state_shape(state)
         else normal_state_shape(state.x, state.y, state.width, state.height)
+        end
+      end
+
+      def note_state_shape(state)
+        Svg::Rect.new.tap do |rect|
+          rect.x = state.x
+          rect.y = state.y
+          rect.width = state.width
+          rect.height = state.height
+          rect.fill = "#fff5ad"
+          rect.stroke = "#aaaa33"
+          rect.stroke_width = "1"
         end
       end
 
