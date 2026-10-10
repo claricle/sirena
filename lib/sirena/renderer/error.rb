@@ -67,8 +67,8 @@ module Sirena
           r.y = geometry.y
           r.width = geometry.width
           r.height = geometry.height
-          r.fill = "#FFEBEE"
-          r.stroke = "#D32F2F"
+          r.fill = theme_color(:surface)
+          r.stroke = theme_color(:error)
           r.stroke_width = "2"
           r.rx = geometry.corner_radius
           r.ry = geometry.corner_radius
@@ -87,8 +87,8 @@ module Sirena
           c.cx = scene.icon.x
           c.cy = scene.icon.y
           c.r = scene.icon.radius
-          c.fill = "#D32F2F"
-          c.stroke = "#B71C1C"
+          c.fill = theme_color(:error)
+          c.stroke = theme_color(:edge_stroke)
           c.stroke_width = "2"
         end
         svg << circle
@@ -99,7 +99,7 @@ module Sirena
           r.y = scene.mark.y
           r.width = scene.mark.width
           r.height = scene.mark.height
-          r.fill = "#FFFFFF"
+          r.fill = theme_color(:background)
           r.rx = scene.mark.corner_radius
         end
         svg << line
@@ -109,7 +109,7 @@ module Sirena
           c.cx = scene.dot.x
           c.cy = scene.dot.y
           c.r = scene.dot.radius
-          c.fill = "#FFFFFF"
+          c.fill = theme_color(:background)
         end
         svg << dot
       end
@@ -121,7 +121,7 @@ module Sirena
           t.x = label.x
           t.y = label.y
           t.content = label.text
-          t.fill = "#C62828"
+          t.fill = theme_color(:error)
           t.font_family = theme_typography(:font_family) ||
                           "Arial, sans-serif"
           t.font_size = number_string(label.font_size)

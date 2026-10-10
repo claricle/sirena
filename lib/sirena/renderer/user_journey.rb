@@ -43,6 +43,12 @@ module Sirena
         green: "#48dbfb",
       }.freeze
 
+      SCORE_COLOR_ROLES = {
+        red: :error,
+        yellow: :warning,
+        green: :success,
+      }.freeze
+
       # Renders a laid-out graph to SVG.
       #
       # @param graph [Hash] laid-out graph with node positions
@@ -357,8 +363,9 @@ module Sirena
       end
 
       def set_box_style(rect, box)
-        rect.fill = SCORE_COLORS.fetch(box.style.to_sym)
-        rect.stroke = "#333333"
+        style = box.style.to_sym
+        rect.fill = theme_color(SCORE_COLOR_ROLES.fetch(style))
+        rect.stroke = theme_color(:node_stroke)
         rect.stroke_width = "2"
         rect.rx = box.corner_radius
         rect.ry = box.corner_radius
@@ -381,7 +388,7 @@ module Sirena
       def set_label_style(text, label)
         text.content = label.text
         text.fill = label_color(label.style)
-        text.font_family = "Arial, sans-serif"
+        text.font_family = theme_typography(:font_family)
         text.font_size = number_string(label.font_size)
         text.font_weight = label.font_weight if label.font_weight
       end
@@ -416,15 +423,16 @@ module Sirena
       end
 
       def set_arrow_style(element)
-        element.stroke = "#666666"
+        element.stroke = theme_color(:edge_stroke)
         element.stroke_width = "2"
       end
 
       def label_color(style)
-        return "#666666" if style == "section"
-        return "#333333" if style == "actors"
+        if %w[section actors].include?(style)
+          return theme_color(:foreground_secondary)
+        end
 
-        "#000000"
+        theme_color(:foreground)
       end
 
       def number_string(value)

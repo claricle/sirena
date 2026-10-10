@@ -7,14 +7,19 @@ module Sirena
   module Renderer
     # Emits SVG from final, typed C4 geometry.
     class C4 < Base
-      C4_COLORS = {
-        person: { bg: "#08427B", border: "#073B6F", text: "#FFFFFF" },
-        person_ext: { bg: "#6C6477", border: "#4A4552", text: "#FFFFFF" },
-        system: { bg: "#1168BD", border: "#0B4884", text: "#FFFFFF" },
-        system_ext: { bg: "#8F8F8F", border: "#6B6B6B", text: "#FFFFFF" },
-        container: { bg: "#438DD5", border: "#2E6295", text: "#FFFFFF" },
-        component: { bg: "#85BBF0", border: "#5D8FB9", text: "#000000" },
-        boundary: { bg: "#FFFFFF", border: "#9BA7B4", text: "#000000" },
+      C4_COLOR_ROLES = {
+        person: { bg: :primary, border: :edge_stroke, text: :background },
+        person_ext: { bg: :secondary, border: :edge_stroke,
+                      text: :background },
+        system: { bg: :primary, border: :edge_stroke, text: :background },
+        system_ext: { bg: :secondary, border: :edge_stroke,
+                      text: :background },
+        container: { bg: :primary, border: :edge_stroke,
+                     text: :background },
+        component: { bg: :surface_variant, border: :node_stroke,
+                     text: :foreground },
+        boundary: { bg: :background, border: :node_stroke,
+                    text: :foreground },
       }.freeze
 
       # @param scene [Layout::C4::Scene] final canvas geometry
@@ -45,16 +50,17 @@ module Sirena
           group.children << boundary_rect(node)
           unless node.labels.empty?
             group.children << label_element(node.labels.first,
-                                            C4_COLORS[:boundary][:text])
+                                            element_colours(node)[:text])
           end
         end
       end
 
       def boundary_rect(node)
+        colours = element_colours(node)
         Svg::Rect.new.tap do |rect|
           apply_box(rect, node)
-          rect.fill = C4_COLORS[:boundary][:bg]
-          rect.stroke = C4_COLORS[:boundary][:border]
+          rect.fill = colours[:bg]
+          rect.stroke = colours[:border]
           rect.stroke_width = "2"
           rect.stroke_dasharray = "10,5"
           rect.rx = 8
@@ -90,7 +96,7 @@ module Sirena
               when "system" then node.external ? :system_ext : :system
               else node.kind.to_sym
               end
-        C4_COLORS.fetch(key)
+        C4_COLOR_ROLES.fetch(key).transform_values { |role| theme_color(role) }
       end
 
       def element_box(node, colours)
@@ -142,7 +148,7 @@ module Sirena
           group.children << arrowhead(points)
         end
         edge.labels.each do |label|
-          group.children << label_element(label, "#000000")
+          group.children << label_element(label, theme_color(:label_text))
         end
         svg << group
       end
@@ -153,7 +159,7 @@ module Sirena
           line.y1 = start_point.y
           line.x2 = end_point.x
           line.y2 = end_point.y
-          line.stroke = "#707070"
+          line.stroke = theme_color(:edge_stroke)
           line.stroke_width = "2"
         end
       end
@@ -161,8 +167,8 @@ module Sirena
       def arrowhead(points)
         Svg::Polygon.new.tap do |polygon|
           polygon.points = points
-          polygon.fill = "#707070"
-          polygon.stroke = "#707070"
+          polygon.fill = theme_color(:edge_stroke)
+          polygon.stroke = theme_color(:edge_stroke)
         end
       end
 

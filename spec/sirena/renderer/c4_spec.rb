@@ -24,12 +24,13 @@ RSpec.describe Sirena::Renderer::C4 do
   end
 
   it "renders people, systems, external palettes, labels, and relationships" do
+    colors = Sirena::Theme::Registry.get(:default).colors
     expect(context_xml).to include('id="element-user"', "User",
-                                   "A system user", "#08427B")
+                                   "A system user", colors.primary)
     expect(context_xml).to include('id="element-webapp"', "Main application",
-                                   "#1168BD")
+                                   colors.primary)
     expect(context_xml).to include('id="element-email"', "Sends notifications",
-                                   "#8F8F8F")
+                                   colors.secondary)
     expect(context_xml).to include('id="rel_0"', "Uses", "<polygon")
   end
 
@@ -43,9 +44,10 @@ RSpec.describe Sirena::Renderer::C4 do
     scene = scene_for("examples/c4/02-container-diagram.mmd")
     xml = renderer.render(scene).to_xml
     boundary = scene.children.find { |node| node.kind == "boundary" }
+    primary = Sirena::Theme::Registry.get(:default).colors.primary
     expect(boundary.children).not_to be_empty
     expect(xml).to include('id="boundary-ecommerce"', "E-commerce System")
-    expect(xml).to include('id="element-webapp"', "#438DD5")
+    expect(xml).to include('id="element-webapp"', primary)
     expect(xml).to include('stroke-dasharray="10,5"')
   end
 
@@ -66,5 +68,14 @@ RSpec.describe Sirena::Renderer::C4 do
     expect(xml).to include("Syncs", "[HTTPS]")
     expect(xml).to include('font-size="12.0">Syncs<',
                            'font-size="10.0">[HTTPS]<')
+  end
+
+  it "uses semantic colors from the active theme" do
+    dark = Sirena::Theme::Registry.get(:dark)
+    themed = described_class.new(theme: dark).render(context_scene)
+
+    expect(themed.to_xml).to include(
+      dark.colors.primary, dark.colors.edge_stroke, dark.colors.background
+    )
   end
 end

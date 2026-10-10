@@ -7,6 +7,13 @@ RSpec.describe Sirena::Renderer::UserJourney do
   let(:renderer) { described_class.new }
 
   describe "#render" do
+    let(:dark) { Sirena::Theme::Registry.get(:dark) }
+    let(:themed) { described_class.new(theme: dark).render(graph) }
+    let(:theme_attributes) do
+      [dark.colors.success, dark.colors.node_stroke,
+       dark.typography.font_family, dark.colors.foreground,
+       dark.colors.foreground_secondary]
+    end
     let(:graph) do
       {
         id: "user_journey",
@@ -70,7 +77,12 @@ RSpec.describe Sirena::Renderer::UserJourney do
 
       rects = groups.flat_map(&:children).grep(Sirena::Svg::Rect)
 
-      expect(rects.first.fill).to eq("#48dbfb")
+      expect(rects.first.fill)
+        .to eq(Sirena::Theme::Registry.get(:default).colors.success)
+    end
+
+    it "uses semantic colors and typography from the active theme" do
+      expect(themed.to_xml).to include(*theme_attributes)
     end
 
     it "renders task content as text elements" do
