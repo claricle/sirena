@@ -43,6 +43,10 @@ module Sirena
         BOX_TITLE_BASELINE = 21
         BOX_BOTTOM_PAD = 10
         TITLE_BASELINE = 18
+        KIND_BASELINE = 14
+        TITLE_PITCH = 19
+        TAB_SLANT = 8
+        TAB_SHOULDER = 13
         TITLE_MIN_ROOM = 20
         TITLE_MARGIN = 20
         TITLE_LINE_ROOM = 17
@@ -234,8 +238,8 @@ module Sirena
           frame = @frames.fetch(index)
           box = frame_box(index, frame, positions, row_y)
           attributes = box.merge(frame_decoration(frame))
-          shape = FrameShape.new(kind: frame[:kind], **attributes)
-          shape.dividers = dividers(index, row_y)
+          shape = tab_geometry(FrameShape.new(kind: frame[:kind], **attributes))
+          shape.dividers = dividers(index, row_y, shape)
           shape
         end
 
@@ -255,6 +259,40 @@ module Sirena
           { tab_width: tab_width(frame[:kind]),
             title: frame[:label].empty? ? nil : "[#{frame[:label]}]",
             title_lines: lines }
+        end
+
+        # Final canvas positions of a frame's tab and title text.
+        def tab_geometry(shape)
+          return shape if shape.kind == "rect"
+
+          tab_right = shape.x + shape.tab_width
+          shape.tab_points = tab_points(shape.x, tab_right, shape.y)
+          keyword_geometry(shape)
+          title_geometry(shape, tab_right)
+        end
+
+        def keyword_geometry(shape)
+          shape.kind_x = shape.x + (shape.tab_width / 2)
+          shape.kind_y = shape.y + KIND_BASELINE
+        end
+
+        def title_geometry(shape, tab_right)
+          shape.title_x = tab_right + ((shape.width - shape.tab_width) / 2)
+          shape.title_ys = title_ys(shape)
+          shape
+        end
+
+        def title_ys(shape)
+          count = [shape.title_lines.length, 1].max
+          Array.new(count) do |line|
+            shape.y + TITLE_BASELINE + (TITLE_PITCH * line)
+          end
+        end
+
+        def tab_points(left, right, top)
+          bottom = top + TAB_HEIGHT
+          "#{left},#{top} #{right},#{top} #{right},#{top + TAB_SHOULDER} " \
+            "#{right - TAB_SLANT},#{bottom} #{left},#{bottom}"
         end
 
         def tab_width(kind)
@@ -293,9 +331,9 @@ module Sirena
           closing(frame[:stop]).count { |f| f[:depth] > frame[:depth] }
         end
 
-        def dividers(index, row_y)
+        def dividers(index, row_y, shape)
           @frames.fetch(index)[:sections].map do |section|
-            divider(section, section_rank(section), row_y)
+            divider(section, section_rank(section), row_y, shape)
           end
         end
 
@@ -305,12 +343,18 @@ module Sirena
             .count { |other| other[:start] == section[:start] }
         end
 
-        def divider(section, rank, row_y)
+        def divider(section, rank, row_y, shape)
           at = section[:start]
           notes = @notes.slots_before(at, section[:order])
           line_y = divider_top(at, rank, row_y) + notes
           FrameDivider.new(y: line_y, text: "[#{section[:label]}]",
-                           text_y: line_y + TITLE_BASELINE)
+                           text_y: line_y + TITLE_BASELINE,
+                           **divider_span(shape))
+        end
+
+        def divider_span(shape)
+          { x1: shape.x, x2: shape.x + shape.width,
+            text_x: shape.x + (shape.width / 2) }
         end
 
         def divider_top(at, rank, row_y)
@@ -361,6 +405,7 @@ module Sirena
             x: left, y: BOX_TOP, width: right - left,
             height: bottom - BOX_TOP, color: box[:color],
             title: box[:title].empty? ? nil : box[:title],
+            title_x: left + ((right - left) / 2),
             title_y: BOX_TOP + BOX_TITLE_BASELINE
           )
         end
