@@ -1,83 +1,18 @@
 <svg
- width="1040.0"
- height="210.0"
- viewBox="0 0 1040 210"
+ width="1026.0"
+ height="94.0"
+ viewBox="0 0 1026 94"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
-<text fill="#000000" x="520.0" y="65.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">TCP Header</text>
-<text fill="#000000" x="55.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">0</text>
-<text fill="#000000" x="85.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">1</text>
-<text fill="#000000" x="115.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">2</text>
-<text fill="#000000" x="145.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">3</text>
-<text fill="#000000" x="175.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">4</text>
-<text fill="#000000" x="205.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">5</text>
-<text fill="#000000" x="235.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">6</text>
-<text fill="#000000" x="265.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">7</text>
-<text fill="#000000" x="295.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">8</text>
-<text fill="#000000" x="325.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">9</text>
-<text fill="#000000" x="355.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">10</text>
-<text fill="#000000" x="385.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">11</text>
-<text fill="#000000" x="415.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">12</text>
-<text fill="#000000" x="445.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">13</text>
-<text fill="#000000" x="475.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">14</text>
-<text fill="#000000" x="505.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">15</text>
-<text fill="#000000" x="535.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">16</text>
-<text fill="#000000" x="565.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">17</text>
-<text fill="#000000" x="595.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">18</text>
-<text fill="#000000" x="625.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">19</text>
-<text fill="#000000" x="655.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">20</text>
-<text fill="#000000" x="685.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">21</text>
-<text fill="#000000" x="715.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">22</text>
-<text fill="#000000" x="745.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">23</text>
-<text fill="#000000" x="775.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">24</text>
-<text fill="#000000" x="805.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">25</text>
-<text fill="#000000" x="835.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">26</text>
-<text fill="#000000" x="865.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">27</text>
-<text fill="#000000" x="895.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">28</text>
-<text fill="#000000" x="925.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">29</text>
-<text fill="#000000" x="955.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">30</text>
-<text fill="#000000" x="985.0" y="119.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">31</text>
-<line stroke="#cccccc" stroke-width="1" x1="40.0" y1="130.0" x2="40.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="70.0" y1="130.0" x2="70.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="100.0" y1="130.0" x2="100.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="130.0" y1="130.0" x2="130.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="160.0" y1="130.0" x2="160.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="190.0" y1="130.0" x2="190.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="220.0" y1="130.0" x2="220.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="250.0" y1="130.0" x2="250.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="280.0" y1="130.0" x2="280.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="310.0" y1="130.0" x2="310.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="340.0" y1="130.0" x2="340.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="370.0" y1="130.0" x2="370.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="400.0" y1="130.0" x2="400.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="430.0" y1="130.0" x2="430.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="460.0" y1="130.0" x2="460.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="490.0" y1="130.0" x2="490.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="520.0" y1="130.0" x2="520.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="550.0" y1="130.0" x2="550.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="580.0" y1="130.0" x2="580.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="610.0" y1="130.0" x2="610.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="640.0" y1="130.0" x2="640.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="670.0" y1="130.0" x2="670.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="700.0" y1="130.0" x2="700.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="730.0" y1="130.0" x2="730.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="760.0" y1="130.0" x2="760.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="790.0" y1="130.0" x2="790.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="820.0" y1="130.0" x2="820.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="850.0" y1="130.0" x2="850.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="880.0" y1="130.0" x2="880.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="910.0" y1="130.0" x2="910.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="940.0" y1="130.0" x2="940.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="970.0" y1="130.0" x2="970.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="1000.0" y1="130.0" x2="1000.0" y2="170.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="40.0" y1="130.0" x2="1000.0" y2="130.0"/>
-<line stroke="#cccccc" stroke-width="1" x1="40.0" y1="170.0" x2="1000.0" y2="170.0"/>
-<rect fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5" x="40.0" y="130.0" width="480.0" height="40.0"/>
-<text fill="#000000" x="280.0" y="154.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Source Port</text>
-<text fill="#000000" x="280.0" y="170.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">0-15</text>
-<rect fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5" x="520.0" y="130.0" width="480.0" height="40.0"/>
-<text fill="#000000" x="760.0" y="154.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Destination Port</text>
-<text fill="#000000" x="760.0" y="170.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">16-31</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="1.0" y="15.0" width="507.0" height="32.0"/>
+<text fill="#000000" x="254.5" y="35.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Source Port</text>
+<text fill="#000000" x="1.0" y="13.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">0</text>
+<text fill="#000000" x="508.0" y="13.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">15</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="513.0" y="15.0" width="507.0" height="32.0"/>
+<text fill="#000000" x="766.5" y="35.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Destination Port</text>
+<text fill="#000000" x="513.0" y="13.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">16</text>
+<text fill="#000000" x="1020.0" y="13.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">31</text>
+<text fill="#000000" x="513.0" y="75.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">TCP Header</text>
 </svg>
