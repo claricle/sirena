@@ -395,37 +395,37 @@ class PerformanceBenchmarker
       == Batch Rendering Performance
 
       #{if results[:batch_rendering] && !results[:batch_rendering].empty?
-        batch = results[:batch_rendering]
-        <<~BATCH
-          Performance rendering #{batch[:diagram_count]} diagrams:
+          batch = results[:batch_rendering]
+          <<~BATCH
+            Performance rendering #{batch[:diagram_count]} diagrams:
 
-          [cols="2,2,2"]
-          |===
-          |Metric |Sirena |Mermaid.js
+            [cols="2,2,2"]
+            |===
+            |Metric |Sirena |Mermaid.js
 
-          |Total Time
-          |#{format_time(batch[:sirena_total])}
-          |#{format_time(batch[:mermaid_total])}
+            |Total Time
+            |#{format_time(batch[:sirena_total])}
+            |#{format_time(batch[:mermaid_total])}
 
-          |Per Diagram
-          |#{format_time(batch[:sirena_per_diagram])}
-          |#{format_time(batch[:mermaid_per_diagram])}
+            |Per Diagram
+            |#{format_time(batch[:sirena_per_diagram])}
+            |#{format_time(batch[:mermaid_per_diagram])}
 
-          |Throughput
-          |#{(batch[:diagram_count] / batch[:sirena_total]).round(1)} diagrams/sec
-          |#{batch[:mermaid_total] ? "#{(batch[:diagram_count] / batch[:mermaid_total]).round(1)} diagrams/sec" : 'N/A'}
-          |===
+            |Throughput
+            |#{(batch[:diagram_count] / batch[:sirena_total]).round(1)} diagrams/sec
+            |#{batch[:mermaid_total] ? "#{(batch[:diagram_count] / batch[:mermaid_total]).round(1)} diagrams/sec" : 'N/A'}
+            |===
 
-          #{if batch[:mermaid_total]
-            "*Batch speedup:* #{speedup_label(batch[:mermaid_total] / batch[:sirena_total])}"
-          else
-            '*Batch speedup:* not measured (mermaid-cli failed during this run)'
-          end}
+            #{if batch[:mermaid_total]
+                "*Batch speedup:* #{speedup_label(batch[:mermaid_total] / batch[:sirena_total])}"
+              else
+                '*Batch speedup:* not measured (mermaid-cli failed during this run)'
+              end}
 
-        BATCH
-      else
-        '*Batch benchmarking requires mermaid-cli installation*'
-      end}
+          BATCH
+        else
+          '*Batch benchmarking requires mermaid-cli installation*'
+        end}
 
       == Startup Time
 
@@ -443,19 +443,19 @@ class PerformanceBenchmarker
       |===
 
       #{if results[:startup_time][:mermaid]
-        speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
-        "*Startup speedup:* #{speedup_label(speedup)}"
-      end}
+          speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
+          "*Startup speedup:* #{speedup_label(speedup)}"
+        end}
 
       == Memory Usage
 
       #{if results[:memory_usage] && !results[:memory_usage].empty?
-        mem = results[:memory_usage]
-        <<~MEMORY
-          Note: #{mem[:note]}
+          mem = results[:memory_usage]
+          <<~MEMORY
+            Note: #{mem[:note]}
 
-        MEMORY
-      end}
+          MEMORY
+        end}
 
       == Analysis
 
@@ -464,21 +464,21 @@ class PerformanceBenchmarker
       *Measured Results:*
 
       #{if results[:single_diagram]
-        avg_speedup = calculate_average_speedup(results[:single_diagram])
-        <<~FINDINGS
-          . *Rendering Speed:* #{avg_speedup} on average for single diagrams
-          #{if results[:batch_rendering] && results[:batch_rendering][:sirena_total] && results[:batch_rendering][:mermaid_total]
-            batch_speedup = results[:batch_rendering][:mermaid_total] / results[:batch_rendering][:sirena_total]
-            ". *Batch Processing:* #{speedup_label(batch_speedup)} for rendering #{results[:batch_rendering][:diagram_count]} diagrams"
-          end}
-          #{if results[:startup_time][:mermaid]
-            startup_speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
-            ". *Startup Time (cold start):* #{speedup_label(startup_speedup)}"
-          end}
-          . *Dependencies:* No Node.js, Puppeteer, or Chrome required
+          avg_speedup = calculate_average_speedup(results[:single_diagram])
+          <<~FINDINGS
+            . *Rendering Speed:* #{avg_speedup} on average for single diagrams
+            #{if results[:batch_rendering] && results[:batch_rendering][:sirena_total] && results[:batch_rendering][:mermaid_total]
+                batch_speedup = results[:batch_rendering][:mermaid_total] / results[:batch_rendering][:sirena_total]
+                ". *Batch Processing:* #{speedup_label(batch_speedup)} for rendering #{results[:batch_rendering][:diagram_count]} diagrams"
+              end}
+            #{if results[:startup_time][:mermaid]
+                startup_speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
+                ". *Startup Time (cold start):* #{speedup_label(startup_speedup)}"
+              end}
+            . *Dependencies:* No Node.js, Puppeteer, or Chrome required
 
-        FINDINGS
-      end}
+          FINDINGS
+        end}
 
       === Architectural Differences
 
@@ -527,14 +527,14 @@ class PerformanceBenchmarker
 
       * **#{calculate_average_speedup(results[:single_diagram])}** rendering, averaged over the sample diagrams above
       #{if results[:startup_time][:mermaid]
-        startup_speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
-        explanation = if startup_speedup >= 1
-          '(Sirena pays Ruby interpreter + gem load per process, but still starts faster here)'
-        else
-          "(Sirena pays Ruby interpreter + gem load per process; mmdc's Node process starts faster here)"
-        end
-        "* **Cold start: #{speedup_label(startup_speedup)}** than launching mmdc #{explanation}"
-      end}
+          startup_speedup = results[:startup_time][:mermaid] / results[:startup_time][:sirena]
+          explanation = if startup_speedup >= 1
+                          '(Sirena pays Ruby interpreter + gem load per process, but still starts faster here)'
+                        else
+                          "(Sirena pays Ruby interpreter + gem load per process; mmdc's Node process starts faster here)"
+                        end
+          "* **Cold start: #{speedup_label(startup_speedup)}** than launching mmdc #{explanation}"
+        end}
       * **Memory usage:** not measured in this run
       * **Native Ruby integration** (no Node.js required at render time)
 
@@ -550,6 +550,7 @@ class PerformanceBenchmarker
   def calculate_average_speedup(single_results)
     speedups = single_results.values.map do |data|
       next unless data[:mermaid_time]
+
       data[:mermaid_time] / data[:sirena_time]
     end.compact
 
