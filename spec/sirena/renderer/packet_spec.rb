@@ -22,25 +22,9 @@ RSpec.describe Sirena::Renderer::Packet do
               label: "hello",
               bit_start: 0,
               bit_end: 10,
-              x: 40,
-              y: 70,
-              width: 330,
-              height: 40,
-              row: 0,
-              start_col: 0,
-              end_col: 10,
             },
           ],
           row_count: 1,
-          bits_per_row: 32,
-          cell_width: 30,
-          cell_height: 40,
-          padding: 40,
-          header_height: 30,
-          title_height: 40,
-          title_margin: 20,
-          width: 1040,
-          height: 210,
           title: "Hello world",
         }
       end
@@ -50,10 +34,9 @@ RSpec.describe Sirena::Renderer::Packet do
         expect(svg).to be_a(Sirena::Svg::Document)
       end
 
-      it "sets proper document dimensions" do
+      it "sizes the canvas like mmdc's viewBox for the same diagram" do
         svg = renderer.render(layout)
-        expect(svg.width).to eq(layout[:width])
-        expect(svg.height).to eq(layout[:height])
+        expect([svg.width, svg.height]).to eq([1026.0, 94.0])
       end
 
       it "includes title" do
@@ -77,11 +60,15 @@ RSpec.describe Sirena::Renderer::Packet do
         expect(field_texts.length).to eq(1)
       end
 
-      it "includes grid lines" do
+      it "places the block and its bit numbers where mmdc does" do
         svg = renderer.render(layout)
-        lines = svg.children.grep(Sirena::Svg::Line)
-        # Should have both vertical and horizontal grid lines
-        expect(lines.length).to be > 0
+        rect = svg.children.grep(Sirena::Svg::Rect).first
+        texts = svg.children.grep(Sirena::Svg::Text)
+        numbers = texts.select { |t| text_content(t).match?(/\A\d+\z/) }
+        expect([[rect.x, rect.y, rect.width, rect.height],
+                numbers.map { |t| [text_content(t), t.x, t.y] }])
+          .to eq([[1.0, 15.0, 347.0, 32.0],
+                  [["0", 1.0, 13.0], ["10", 348.0, 13.0]]])
       end
     end
 
@@ -93,49 +80,19 @@ RSpec.describe Sirena::Renderer::Packet do
               label: "Source Port",
               bit_start: 0,
               bit_end: 7,
-              x: 40,
-              y: 70,
-              width: 240,
-              height: 40,
-              row: 0,
-              start_col: 0,
-              end_col: 7,
             },
             {
               label: "Destination Port",
               bit_start: 8,
               bit_end: 15,
-              x: 280,
-              y: 70,
-              width: 240,
-              height: 40,
-              row: 0,
-              start_col: 8,
-              end_col: 15,
             },
             {
               label: "Sequence Number",
               bit_start: 16,
               bit_end: 31,
-              x: 520,
-              y: 70,
-              width: 480,
-              height: 40,
-              row: 0,
-              start_col: 16,
-              end_col: 31,
             },
           ],
           row_count: 1,
-          bits_per_row: 32,
-          cell_width: 30,
-          cell_height: 40,
-          padding: 40,
-          header_height: 30,
-          title_height: 0,
-          title_margin: 0,
-          width: 1040,
-          height: 150,
           title: nil,
         }
       end
@@ -163,37 +120,14 @@ RSpec.describe Sirena::Renderer::Packet do
               label: "Field 1",
               bit_start: 0,
               bit_end: 31,
-              x: 40,
-              y: 70,
-              width: 960,
-              height: 40,
-              row: 0,
-              start_col: 0,
-              end_col: 31,
             },
             {
               label: "Field 2",
               bit_start: 32,
               bit_end: 63,
-              x: 40,
-              y: 110,
-              width: 960,
-              height: 40,
-              row: 1,
-              start_col: 0,
-              end_col: 31,
             },
           ],
           row_count: 2,
-          bits_per_row: 32,
-          cell_width: 30,
-          cell_height: 40,
-          padding: 40,
-          header_height: 30,
-          title_height: 0,
-          title_margin: 0,
-          width: 1040,
-          height: 190,
           title: nil,
         }
       end
@@ -204,12 +138,12 @@ RSpec.describe Sirena::Renderer::Packet do
         expect(rects.length).to be >= 2
       end
 
-      it "renders bit markers for all rows" do
+      it "numbers only the first and last bit of each block, one row down" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        # Should have bit markers for bits 0-63 (2 rows of 32 bits)
-        bit_markers = texts.select { |t| Array(t.content).join.match?(/^\d+$/) }
-        expect(bit_markers.length).to eq(64)
+        bit_markers = texts.select { |t| text_content(t).match?(/\A\d+\z/) }
+        expect(bit_markers.map { |t| [text_content(t), t.y] })
+          .to eq([["0", 13.0], ["31", 13.0], ["32", 60.0], ["63", 60.0]])
       end
     end
 
@@ -218,15 +152,6 @@ RSpec.describe Sirena::Renderer::Packet do
         {
           fields: [],
           row_count: 0,
-          bits_per_row: 32,
-          cell_width: 30,
-          cell_height: 40,
-          padding: 40,
-          header_height: 30,
-          title_height: 0,
-          title_margin: 0,
-          width: 80,
-          height: 80,
           title: nil,
         }
       end
@@ -249,13 +174,6 @@ RSpec.describe Sirena::Renderer::Packet do
               label: "Short Field",
               bit_start: 0,
               bit_end: 15,
-              x: 40,
-              y: 70,
-              width: 480,
-              height: 40,
-              row: 0,
-              start_col: 0,
-              end_col: 15,
               is_continuation: false,
               is_final: true,
             },
@@ -263,13 +181,6 @@ RSpec.describe Sirena::Renderer::Packet do
               label: "Long Field",
               bit_start: 16,
               bit_end: 31,
-              x: 520,
-              y: 70,
-              width: 480,
-              height: 40,
-              row: 0,
-              start_col: 16,
-              end_col: 31,
               is_continuation: false,
               is_final: false,
             },
@@ -277,27 +188,11 @@ RSpec.describe Sirena::Renderer::Packet do
               label: "Long Field",
               bit_start: 32,
               bit_end: 47,
-              x: 40,
-              y: 110,
-              width: 480,
-              height: 40,
-              row: 1,
-              start_col: 0,
-              end_col: 15,
               is_continuation: true,
               is_final: true,
             },
           ],
           row_count: 2,
-          bits_per_row: 32,
-          cell_width: 30,
-          cell_height: 40,
-          padding: 40,
-          header_height: 30,
-          title_height: 0,
-          title_margin: 0,
-          width: 1040,
-          height: 190,
           title: nil,
         }
       end
