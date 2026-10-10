@@ -278,7 +278,7 @@ module Sirena
           axes: axes, title: data.label,
           curves: position_curves(data, axes, min_value, max_value),
           grid_circles: calculate_grid_circles(min_value, max_value),
-          options: radar_options(data),
+          options: radar_options(data)
         }
       end
 

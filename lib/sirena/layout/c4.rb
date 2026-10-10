@@ -328,15 +328,17 @@ module Sirena
 
       def typed_node(node)
         kind = node_kind(node)
-        Node.new(
-          id: node[:id], x: node[:x], y: node[:y], width: node[:width],
-          height: node[:height], kind: kind,
-          external: node.dig(:metadata, :external) || false,
+        children = (node[:children] || []).map { |child| typed_node(child) }
+        Node.new(**node_attributes(node, kind), children: children)
+      end
+
+      def node_attributes(node, kind)
+        node.slice(:id, :x, :y, :width, :height).merge(
+          kind: kind, external: node.dig(:metadata, :external) || false,
           labels: positioned_node_labels(node, kind),
           stereotype: positioned_stereotype(node, kind),
           head_center: person_head(node, kind),
-          body_center: person_body(node, kind),
-          children: (node[:children] || []).map { |child| typed_node(child) }
+          body_center: person_body(node, kind)
         )
       end
 
@@ -506,10 +508,18 @@ module Sirena
 
       def scene_dimensions(nodes, title = nil)
         flat_nodes = flatten_nodes(nodes)
-        width = flat_nodes.map { |node| node.x + node.width }.max || 760
-        width = [width, title.x + title.width].max if title
-        height = flat_nodes.map { |node| node.y + node.height }.max || 560
+        width = [extent(flat_nodes, :x, :width, 760), title_right(title)].max
+        height = extent(flat_nodes, :y, :height, 560)
         [width + DIAGRAM_PADDING, height + DIAGRAM_PADDING]
+      end
+
+      def extent(nodes, origin, size, fallback)
+        ends = nodes.map { |n| n.public_send(origin) + n.public_send(size) }
+        ends.max || fallback
+      end
+
+      def title_right(title)
+        title ? title.x + title.width : 0
       end
 
       def flatten_nodes(nodes)

@@ -30,25 +30,23 @@ module Sirena
       # @return [Array<Array<Sirena::MarkdownText::Run>>]
       def wrap(runs)
         lines = [[]]
-        used = 0.0
         pieces(runs).each do |run, piece|
-          size = measure(piece)
-          if wraps?(lines.last, used, size)
-            lines << []
-            used = 0.0
-          end
+          lines << [] if wraps?(lines.last, measure(piece))
           next if skip_space?(piece, lines)
 
           lines.last << [run, piece]
-          used += size
         end
         lines.map { |line| merge(line) }
       end
 
       private
 
-      def wraps?(line, used, size)
-        !line.empty? && used + size > @width
+      def wraps?(line, size)
+        !line.empty? && line_width(line) + size > @width
+      end
+
+      def line_width(line)
+        line.inject(0.0) { |used, (_run, piece)| used + measure(piece) }
       end
 
       def skip_space?(piece, lines)
@@ -67,10 +65,13 @@ module Sirena
         return [token] if measure(token) <= @width
 
         token.chars.each_with_object([+""]) do |char, chunks|
-          chunks << +"" if measure(chunks.last + char) > @width &&
-                           !chunks.last.empty?
+          chunks << +"" if overflows?(chunks.last, char)
           chunks.last << char
         end
+      end
+
+      def overflows?(chunk, char)
+        !chunk.empty? && measure(chunk + char) > @width
       end
 
       def measure(text)

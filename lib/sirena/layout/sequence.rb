@@ -189,8 +189,8 @@ module Sirena
 
       def box_shapes(children, positions, count, notes)
         widths = children.to_h { |child| [child[:id], child[:width]] }
-        bottom = lifeline_bottom(count, notes.total_height) +
-                 FramePlacement::BOX_BOTTOM_PAD
+        bottom = lifeline_bottom(count, notes.total_height)
+        bottom += FramePlacement::BOX_BOTTOM_PAD
         frame_layout.box_shapes(positions, widths, bottom)
       end
 
@@ -336,14 +336,16 @@ module Sirena
         cursor = PARTICIPANT_MARGIN
         participants.to_h do |participant|
           id = participant_id(participant)
-          cursor += frame_layout.gap_before(id)
+          left = cursor + frame_layout.gap_before(id)
           width = participant_width_value(participant)
-          position = {
-            x: cursor, y: origin_y, center_x: cursor + (width / 2)
-          }
-          cursor += width + PARTICIPANT_MARGIN + frame_layout.gap_after(id)
-          [id, position]
+          advance = width + PARTICIPANT_MARGIN + frame_layout.gap_after(id)
+          cursor = left + advance
+          [id, participant_position(left, width)]
         end
+      end
+
+      def participant_position(left, width)
+        { x: left, y: origin_y, center_x: left + (width / 2) }
       end
 
       def typed_participants(participants, positions)

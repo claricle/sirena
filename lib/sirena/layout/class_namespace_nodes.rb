@@ -43,13 +43,17 @@ module Sirena
 
       def owner_index(nodes, namespaces)
         namespaces.each_with_object({}) do |item, index|
-          members = nodes.select do |node|
-            item.class_ids.include?(node[:id]) && !index.key?(node[:id])
-          end
+          members = unclaimed(nodes, item, index)
           next if members.empty?
 
           cluster = cluster_node(item.name, members)
           members.each { |node| index[node[:id]] = cluster }
+        end
+      end
+
+      def unclaimed(nodes, item, index)
+        nodes.select do |node|
+          item.class_ids.include?(node[:id]) && !index.key?(node[:id])
         end
       end
 
@@ -73,9 +77,9 @@ module Sirena
         end
       end
 
-      def box(node, x, y)
+      def box(node, left, top)
         ClassNamespaceBox.new(
-          id: node[:id], title: node[:metadata][:title], x: x, y: y,
+          id: node[:id], title: node[:metadata][:title], x: left, y: top,
           width: node[:width], height: node[:height]
         )
       end

@@ -338,19 +338,20 @@ module Sirena
 
       def scene_from_graph(graph)
         flat, boxes = namespace_layout.flatten(graph[:children] || [])
-        notes, classes = flat.partition { |node| note_layout.note?(node) }
         width, height = scene_dimensions(flat + box_extents(boxes))
+        content = scene_content(graph, flat)
 
         Scene.new(
-          id: graph[:id] || "class_diagram",
-          width: width,
-          height: height,
-          view_box: "0 0 #{width} #{height}",
-          children: classes.map { |node| typed_node(node) },
-          edges: typed_edges(graph[:edges] || [], classes),
-          notes: typed_notes(notes, classes),
-          namespaces: boxes,
+          id: graph[:id] || "class_diagram", width: width, height: height,
+          view_box: "0 0 #{width} #{height}", namespaces: boxes, **content
         )
+      end
+
+      def scene_content(graph, flat)
+        notes, classes = flat.partition { |node| note_layout.note?(node) }
+        { children: classes.map { |node| typed_node(node) },
+          edges: typed_edges(graph[:edges] || [], classes),
+          notes: typed_notes(notes, classes) }
       end
 
       def box_extents(boxes)

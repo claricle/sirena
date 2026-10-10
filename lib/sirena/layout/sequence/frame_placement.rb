@@ -135,9 +135,19 @@ module Sirena
         end
 
         def edges(index)
-          opening(index).map { |f| edge(f[:open_order], open_height(f)) } +
-            closing(index).map { |f| edge(f[:close_order], close_height(f)) } +
-            sections_at(index).map { |s| edge(s[:order], SECTION_HEIGHT) }
+          opening_edges(index) + closing_edges(index) + section_edges(index)
+        end
+
+        def opening_edges(index)
+          opening(index).map { |f| edge(f[:open_order], open_height(f)) }
+        end
+
+        def closing_edges(index)
+          closing(index).map { |f| edge(f[:close_order], close_height(f)) }
+        end
+
+        def section_edges(index)
+          sections_at(index).map { |s| edge(s[:order], SECTION_HEIGHT) }
         end
 
         def edge(order, height) = { order: order, height: height }
@@ -150,15 +160,18 @@ module Sirena
 
         def frame_shape(index, positions, row_y)
           frame = @frames.fetch(index)
+          box = frame_box(index, frame, positions, row_y)
+          attributes = box.merge(frame_decoration(frame))
+          shape = FrameShape.new(kind: frame[:kind], **attributes)
+          shape.dividers = dividers(index, row_y)
+          shape
+        end
+
+        def frame_box(index, frame, positions, row_y)
           left, right = horizontal_extent(frame, positions)
           top = frame_top(index, row_y)
           bottom = [frame_bottom(index, row_y), top + TAB_HEIGHT].max
-          FrameShape.new(
-            kind: frame[:kind], x: left, y: top, width: right - left,
-            height: bottom - top, **frame_decoration(frame)
-          ).tap do |shape|
-            shape.dividers = dividers(index, row_y)
-          end
+          { x: left, y: top, width: right - left, height: bottom - top }
         end
 
         def frame_decoration(frame)
@@ -177,10 +190,8 @@ module Sirena
         def frame_top(index, row_y)
           frame = @frames.fetch(index)
           start = frame[:start]
-          earlier = @frames.first(index).select { |f| f[:start] == start }
-          base(start, row_y) + closing_room(start) +
-            (sections_at(start).length * SECTION_HEIGHT) +
-            earlier.sum { |f| open_height(f) } +
+          base(start, row_y) + closing_room(start) + sections_height(start) +
+            opened_before(index, start) +
             @notes.slots_before(start, frame[:open_order])
         end
 
@@ -188,11 +199,22 @@ module Sirena
           closing(at).sum { |frame| close_height(frame) }
         end
 
+        def sections_height(at) = sections_at(at).length * SECTION_HEIGHT
+
+        def opened_before(index, start)
+          earlier = @frames.first(index).select { |f| f[:start] == start }
+          earlier.sum { |f| open_height(f) }
+        end
+
         def frame_bottom(index, row_y)
           frame = @frames.fetch(index)
-          deeper = closing(frame[:stop]).count { |f| f[:depth] > frame[:depth] }
-          base(frame[:stop], row_y) - 12 + (CLOSE_HEIGHT * deeper) +
+          base(frame[:stop], row_y) - 12 +
+            (CLOSE_HEIGHT * deeper_closing(frame)) +
             @notes.slots_before(frame[:stop], frame[:close_order])
+        end
+
+        def deeper_closing(frame)
+          closing(frame[:stop]).count { |f| f[:depth] > frame[:depth] }
         end
 
         def dividers(index, row_y)
@@ -253,16 +275,19 @@ module Sirena
         end
 
         def box_shape(box, members, positions, widths, bottom)
-          left = members.map { |id| positions[id][:x] }.min - BOX_PAD
-          right = members.map do |id|
-            positions[id][:x] + widths.fetch(id)
-          end.max + BOX_PAD
+          left, right = box_extent(members, positions, widths)
           BoxShape.new(
             x: left, y: BOX_TOP, width: right - left,
             height: bottom - BOX_TOP, color: box[:color],
             title: box[:title].empty? ? nil : box[:title],
             title_y: BOX_TOP + TITLE_BASELINE
           )
+        end
+
+        def box_extent(members, positions, widths)
+          lefts = members.map { |id| positions[id][:x] }
+          rights = members.map { |id| positions[id][:x] + widths.fetch(id) }
+          [lefts.min - BOX_PAD, rights.max + BOX_PAD]
         end
       end
     end

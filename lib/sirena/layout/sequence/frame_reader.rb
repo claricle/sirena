@@ -6,6 +6,11 @@ module Sirena
       # Reads frames and boxes back out of the sequence IR graph as plain
       # hashes, in the order the diagram declared them.
       module FrameReader
+        INTEGER_FIELDS = {
+          start: "start_index", stop: "end_index", depth: "depth",
+          open_order: "open_order", close_order: "close_order"
+        }.freeze
+
         module_function
 
         # @param graph [IR::Graph] the sequence graph
@@ -27,37 +32,42 @@ module Sirena
 
         def sections_by_frame(graph, fields)
           nodes = graph.nodes.select { |n| n.role == "frame_section" }
-          nodes.group_by { |n| fields.dig(n.id, "owner_frame") }
-            .transform_values do |group|
-              group.map do |node|
-                { label: node.label.to_s,
-                  start: fields.dig(node.id, "start_index").to_i,
-                  order: fields.dig(node.id, "order").to_i }
-              end
-            end
+          grouped = nodes.group_by { |n| fields.dig(n.id, "owner_frame") }
+          grouped.transform_values do |group|
+            group.map { |node| section(node, fields.fetch(node.id, {})) }
+          end
+        end
+
+        def section(node, data)
+          { label: node.label.to_s, start: data["start_index"].to_i,
+            order: data["order"].to_i }
         end
 
         def frames(graph, fields, sections)
           graph.nodes.select { |n| n.role == "frame" }.map do |node|
-            data = fields.fetch(node.id, {})
-            { kind: data["frame_kind"], label: node.label.to_s,
-              start: data["start_index"].to_i, stop: data["end_index"].to_i,
-              depth: data["depth"].to_i,
-              open_order: data["open_order"].to_i,
-              close_order: data["close_order"].to_i,
-              sections: sections.fetch(node.id, []) }
+            frame(node, fields.fetch(node.id, {}), sections.fetch(node.id, []))
           end
+        end
+
+        def frame(node, data, sections)
+          record = { kind: data["frame_kind"], label: node.label.to_s,
+                     sections: sections }
+          record.merge(INTEGER_FIELDS.transform_values { |k| data[k].to_i })
         end
 
         def boxes(graph, fields)
           graph.nodes.select { |n| n.role == "box" }.map do |node|
-            members = graph.edges.select do |edge|
-              edge.role == "box_member" && edge.source_id == node.id
-            end
             { title: node.label.to_s,
               color: fields.dig(node.id, "box_color"),
-              members: members.map(&:target_id) }
+              members: box_members(graph, node) }
           end
+        end
+
+        def box_members(graph, box)
+          members = graph.edges.select do |edge|
+            edge.role == "box_member" && edge.source_id == box.id
+          end
+          members.map(&:target_id)
         end
       end
     end
