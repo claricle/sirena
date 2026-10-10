@@ -22,6 +22,7 @@ module Sirena
             @calls = []
             @blocks = []
             @depth = Hash.new(0)
+            @number = nil
           end
 
           # @return [Array] the items of the first page, which ends with its
@@ -34,6 +35,7 @@ module Sirena
           # `marks` are the changes written on the same line, as
           # [phase, id, color] triples; phase is :on, :off or :destroy.
           def message(message, marks = [])
+            message = numbered(message) or return false
             @calls << message unless message.dashed
             @items << message
             marks.each { |phase, id, color| mark(phase, id, color) }
@@ -41,6 +43,11 @@ module Sirena
 
           # PlantUML draws nothing for a `--` or `deactivate` on a
           # participant with no open bar, so that change is dropped.
+          # Messages after this line are numbered from `start`.
+          def autonumber(start)
+            @number = start
+          end
+
           def activation(phase, id, color = nil)
             return true unless allowed?(phase, id)
 
@@ -139,6 +146,16 @@ module Sirena
           end
 
           private
+
+          # Under `autonumber` a message takes the next number. One with no
+          # label or a line break in it is not drawn; false then.
+          def numbered(message)
+            return message unless @number
+            return if message.label.to_s.strip.empty?
+            return if message.label.include?("\\n")
+
+            message.numbered(@number).tap { @number += 1 }
+          end
 
           def mark(phase, id, color)
             phase == :destroy ? destroy(id) : activation(phase, id, color)

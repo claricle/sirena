@@ -886,6 +886,68 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
   end
 
+  describe "autonumber" do
+    def numbers(*lines)
+      parse(*lines).messages.map(&:number)
+    end
+
+    it "numbers each message from 1" do
+      expect(numbers("autonumber", "A -> B : a", "B --> A : b"))
+        .to eq([1, 2])
+    end
+
+    it "starts from the number it is given" do
+      expect(numbers("autonumber 7", "A -> B : a")).to eq([7])
+    end
+
+    it "leaves the messages before it unnumbered" do
+      expect(numbers("A -> B : a", "autonumber", "B -> A : b"))
+        .to eq([nil, 1])
+    end
+
+    it "numbers a return like any other message" do
+      expect(numbers("autonumber", "A -> B : a", "return b")).to eq([1, 2])
+    end
+
+    it "numbers a message that starts with &" do
+      lines = ["!pragma teoz true", "autonumber", "A -> B : a", "& B -> A : b"]
+
+      expect(numbers(*lines)).to eq([1, 2])
+    end
+
+    it "keeps a numbered message on the row of the one before it" do
+      lines = ["!pragma teoz true", "autonumber", "A -> B : a", "& B -> A : b"]
+
+      expect(parse(*lines).messages.last).to be_parallel
+    end
+
+    it "does not number without autonumber" do
+      expect(numbers("A -> B : a")).to eq([nil])
+    end
+
+    {
+      "a message with no label" => "A -> B",
+      "a label with a line break" => "A -> B : a\\nb",
+    }.each do |what, line|
+      it "refuses #{what}" do
+        expect { parse("autonumber", line) }
+          .to raise_error(unsupported, /message arrow/)
+      end
+    end
+
+    it "refuses a step, which has not been measured" do
+      expect { parse("autonumber 5 10", "A -> B : a") }
+        .to raise_error(unsupported, /autonumber/)
+    end
+
+    it "refuses a numbered message when Maxmessagesize is set" do
+      lines = ["autonumber", "skinparam maxmessagesize 100", "A -> B : a"]
+
+      expect { parse(*lines) }
+        .to raise_error(Sirena::Parser::ParseError, /Maxmessagesize/)
+    end
+  end
+
   describe "newpage" do
     let(:page_break) { Sirena::Notation::PlantUML::Sequence::PageBreak }
 
