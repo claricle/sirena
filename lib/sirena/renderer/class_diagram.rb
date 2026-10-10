@@ -91,16 +91,33 @@ module Sirena
 
       def render_scene_node(node, svg)
         group = Svg::Group.new.tap { |item| item.id = "class-#{node.id}" }
-        group.children << scene_node_box(node)
-        group.children << scene_text(node.stereotype) if node.stereotype
-        group.children << scene_text(node.name)
-        group.children << scene_separator(node.separators.first)
-        node.attributes.each { |label| group.children << scene_text(label) }
-        if node.separators.length > 1
-          group.children << scene_separator(node.separators.last)
-        end
-        node.method_rows.each { |label| group.children << scene_text(label) }
+        group.children.concat(scene_node_parts(node))
         svg << group
+      end
+
+      def scene_node_parts(node)
+        scene_node_header(node) + scene_node_members(node)
+      end
+
+      def scene_node_header(node)
+        [
+          scene_node_box(node),
+          node.stereotype && scene_text(node.stereotype),
+          scene_text(node.name),
+          scene_separator(node.separators.first),
+        ].compact
+      end
+
+      def scene_node_members(node)
+        node.attributes.map { |label| scene_text(label) } +
+          [additional_scene_separator(node)].compact +
+          node.method_rows.map { |label| scene_text(label) }
+      end
+
+      def additional_scene_separator(node)
+        return unless node.separators.length > 1
+
+        scene_separator(node.separators.last)
       end
 
       def render_scene_namespace(box, svg)
@@ -205,12 +222,16 @@ module Sirena
 
       def render_scene_edge(edge, svg)
         group = Svg::Group.new.tap { |item| item.id = "rel-#{edge.id}" }
-        edge.sections.each do |section|
-          group.children << scene_edge_section(section, edge.dashed)
-        end
-        edge.markers.each { |marker| group.children << scene_marker(marker) }
-        edge.labels.each { |label| group.children << scene_text(label) }
+        group.children.concat(scene_edge_parts(edge))
         svg << group
+      end
+
+      def scene_edge_parts(edge)
+        edge.sections.map do |section|
+          scene_edge_section(section, edge.dashed)
+        end +
+          edge.markers.map { |marker| scene_marker(marker) } +
+          edge.labels.map { |label| scene_text(label) }
       end
 
       def scene_edge_section(section, dashed)
@@ -316,156 +337,136 @@ module Sirena
       end
 
       def render_class(node, svg)
-        x = node[:x] || 0
-        y = node[:y] || 0
-        width = node[:width] || 150
-        height = node[:height] || 100
-
+        geometry = class_geometry(node)
         metadata = node[:metadata] || {}
-
-        # Create group for the class
-        group = Svg::Group.new.tap do |g|
-          g.id = "class-#{node[:id]}"
-        end
-
-        # Render outer box
-        box = Svg::Rect.new.tap do |r|
-          r.x = x
-          r.y = y
-          r.width = width
-          r.height = height
-          r.fill = "#ffffff"
-          r.stroke = "#000000"
-          r.stroke_width = "2"
-          r.rx = 3
-          r.ry = 3
-        end
-        group.children << box
-
-        # Render compartment separators and content
+        group = legacy_class_group(node[:id], geometry)
         render_class_content(node, metadata, group)
-
         svg << group
       end
 
+      def class_geometry(node)
+        {
+          x: node[:x] || 0,
+          y: node[:y] || 0,
+          width: node[:width] || 150,
+          height: node[:height] || 100,
+        }
+      end
+
+      def legacy_class_group(id, geometry)
+        Svg::Group.new.tap do |group|
+          group.id = "class-#{id}"
+          group.children << legacy_class_box(geometry)
+        end
+      end
+
+      def legacy_class_box(geometry)
+        Svg::Rect.new(
+          x: geometry[:x], y: geometry[:y],
+          width: geometry[:width], height: geometry[:height],
+          fill: "#ffffff", stroke: "#000000", stroke_width: "2",
+          rx: 3, ry: 3
+        )
+      end
+
       def render_class_content(node, metadata, group)
-        x = node[:x] || 0
-        y = node[:y] || 0
-        width = node[:width] || 150
+        geometry = class_geometry(node)
+        current_y = render_class_header(node, metadata, geometry, group)
+        current_y = render_attribute_compartment(
+          geometry[:x], current_y, geometry[:width], metadata, group
+        )
+        render_method_compartment(
+          geometry[:x], current_y, geometry[:width], metadata, group
+        )
+      end
 
-        current_y = y + BOX_PADDING
-
-        # Render stereotype if present
-        stereotype = metadata[:stereotype]
-        current_y = render_stereotype(x, current_y, width, stereotype, group) if stereotype && !stereotype.empty?
-
-        # Render class name
+      def render_class_header(node, metadata, geometry, group)
+        current_y = render_optional_stereotype(
+          geometry[:x], geometry[:y] + BOX_PADDING,
+          geometry[:width], metadata, group
+        )
         name = metadata[:name] || node[:id]
-        current_y = render_class_name(x, current_y, width, name, group)
+        current_y = render_class_name(
+          geometry[:x], current_y, geometry[:width], name, group
+        )
+        render_separator(geometry[:x], current_y, geometry[:width], group)
+      end
 
-        # Add separator after name
-        separator_y = current_y + 5
-        separator = Svg::Line.new.tap do |l|
-          l.x1 = x
-          l.y1 = separator_y
-          l.x2 = x + width
-          l.y2 = separator_y
-          l.stroke = "#000000"
-          l.stroke_width = "1"
-        end
-        group.children << separator
-        current_y = separator_y + 10
+      def render_optional_stereotype(x_pos, y_pos, width, metadata, group)
+        stereotype = metadata[:stereotype]
+        return y_pos unless stereotype && !stereotype.empty?
 
-        # Render attributes
+        render_stereotype(x_pos, y_pos, width, stereotype, group)
+      end
+
+      def render_separator(x_pos, y_pos, width, group)
+        separator_y = y_pos + 5
+        group.children << Svg::Line.new(
+          x1: x_pos, y1: separator_y,
+          x2: x_pos + width, y2: separator_y,
+          stroke: "#000000", stroke_width: "1"
+        )
+        separator_y + 10
+      end
+
+      def render_attribute_compartment(x_pos, y_pos, width, metadata, group)
         attributes = metadata[:attributes] || []
-        unless attributes.empty?
-          current_y = render_attributes(x, current_y, width, attributes, group)
+        return y_pos if attributes.empty?
 
-          # Add separator after attributes
-          separator_y = current_y + 5
-          separator = Svg::Line.new.tap do |l|
-            l.x1 = x
-            l.y1 = separator_y
-            l.x2 = x + width
-            l.y2 = separator_y
-            l.stroke = "#000000"
-            l.stroke_width = "1"
-          end
-          group.children << separator
-          current_y = separator_y + 10
-        end
+        next_y = render_attributes(x_pos, y_pos, width, attributes, group)
+        render_separator(x_pos, next_y, width, group)
+      end
 
-        # Render methods
+      def render_method_compartment(x_pos, y_pos, width, metadata, group)
         methods = metadata[:methods] || []
-        render_methods(x, current_y, width, methods, group) unless
-          methods.empty?
+        return y_pos if methods.empty?
+
+        render_methods(x_pos, y_pos, width, methods, group)
       end
 
-      def render_stereotype(x, y, width, stereotype, group)
-        text = Svg::Text.new.tap do |t|
-          t.x = x + width / 2
-          t.y = y
-          t.content = "«#{stereotype}»"
-          t.fill = "#000000"
-          t.font_family = "Arial, sans-serif"
-          t.font_size = STEREOTYPE_FONT_SIZE.to_s
-          t.text_anchor = "middle"
-        end
-        group.children << text
-        y + LINE_HEIGHT
+      def render_stereotype(x_pos, y_pos, width, stereotype, group)
+        group.children << Svg::Text.new(
+          x: x_pos + (width / 2), y: y_pos,
+          content: "«#{stereotype}»", fill: "#000000",
+          font_family: "Arial, sans-serif",
+          font_size: STEREOTYPE_FONT_SIZE.to_s, text_anchor: "middle"
+        )
+        y_pos + LINE_HEIGHT
       end
 
-      def render_class_name(x, y, width, name, group)
-        text = Svg::Text.new.tap do |t|
-          t.x = x + width / 2
-          t.y = y
-          t.content = Diagram::GenericText.display(name)
-          t.fill = "#000000"
-          t.font_family = "Arial, sans-serif"
-          t.font_size = CLASS_NAME_FONT_SIZE.to_s
-          t.text_anchor = "middle"
-          t.font_weight = "bold"
-        end
-        group.children << text
-        y + LINE_HEIGHT
+      def render_class_name(x_pos, y_pos, width, name, group)
+        group.children << Svg::Text.new(
+          x: x_pos + (width / 2), y: y_pos,
+          content: Diagram::GenericText.display(name), fill: "#000000",
+          font_family: "Arial, sans-serif",
+          font_size: CLASS_NAME_FONT_SIZE.to_s, text_anchor: "middle",
+          font_weight: "bold"
+        )
+        y_pos + LINE_HEIGHT
       end
 
-      def render_attributes(x, y, _width, attributes, group)
-        current_y = y
-
-        attributes.each do |attr|
-          text = Svg::Text.new.tap do |t|
-            t.x = x + BOX_PADDING
-            t.y = current_y
-            t.content = attr[:text]
-            t.fill = "#000000"
-            t.font_family = "monospace"
-            t.font_size = MEMBER_FONT_SIZE.to_s
-          end
-          group.children << text
-          current_y += LINE_HEIGHT
-        end
-
-        current_y
+      def render_attributes(x_pos, y_pos, _width, attributes, group)
+        render_members(x_pos, y_pos, attributes, group)
       end
 
-      def render_methods(x, y, _width, methods, group)
-        current_y = y
+      def render_methods(x_pos, y_pos, _width, methods, group)
+        render_members(x_pos, y_pos, methods, group)
+      end
 
-        methods.each do |method|
-          text = Svg::Text.new.tap do |t|
-            t.x = x + BOX_PADDING
-            t.y = current_y
-            t.content = method[:text]
-            t.fill = "#000000"
-            t.font_family = "monospace"
-            t.font_size = MEMBER_FONT_SIZE.to_s
-          end
-          group.children << text
-          current_y += LINE_HEIGHT
+      def render_members(x_pos, y_pos, members, group)
+        rows = members.each_with_index.map do |member, index|
+          member_text(x_pos, y_pos + (index * LINE_HEIGHT), member[:text])
         end
+        group.children.concat(rows)
+        y_pos + (members.length * LINE_HEIGHT)
+      end
 
-        current_y
+      def member_text(x_pos, y_pos, content)
+        Svg::Text.new(
+          x: x_pos + BOX_PADDING, y: y_pos, content: content,
+          fill: "#000000", font_family: "monospace",
+          font_size: MEMBER_FONT_SIZE.to_s
+        )
       end
 
       # Released protected hook retained for callers that format legacy rows.
@@ -490,40 +491,39 @@ module Sirena
       end
 
       def render_relationship(edge, graph, svg)
+        endpoints = relationship_endpoints(edge, graph)
+        return unless endpoints
+
+        svg << legacy_relationship_group(edge, *endpoints)
+      end
+
+      def relationship_endpoints(edge, graph)
         source = find_node(graph, edge[:sources]&.first)
         target = find_node(graph, edge[:targets]&.first)
+        [source, target] if source && target
+      end
 
-        return unless source && target
-
+      def legacy_relationship_group(edge, source, target)
         metadata = edge[:metadata] || {}
-        rel_type = metadata[:relationship_type] || "association"
-
-        # Create group for the relationship
-        group = Svg::Group.new.tap do |g|
-          g.id = "rel-#{edge[:id]}"
-        end
-
-        # Calculate connection points
         source_point = calculate_connection_point(source, target)
         target_point = calculate_connection_point(target, source)
+        group = Svg::Group.new.tap { |item| item.id = "rel-#{edge[:id]}" }
+        render_relationship_body(source_point, target_point, metadata, group)
+        render_relationship_labels(edge, source_point, target_point, group)
+        group
+      end
 
+      def render_relationship_body(source_point, target_point, metadata, group)
         if metadata[:start_marker] || metadata[:end_marker]
-          # Mixed-marker operator (e.g. `o--|>`): each end carries its own
-          # marker independently, so relationship_type alone can't drive
-          # rendering here.
-          render_mixed_marker_relationship(source_point, target_point, metadata, group)
-        else
-          # Render the line
-          render_relationship_line(source_point, target_point, rel_type, group)
-
-          # Render arrow/marker at target
-          render_relationship_marker(source_point, target_point, rel_type, group)
+          render_mixed_marker_relationship(
+            source_point, target_point, metadata, group
+          )
+          return
         end
 
-        # Render labels if present
-        render_relationship_labels(edge, source_point, target_point, group)
-
-        svg << group
+        type = metadata[:relationship_type] || "association"
+        render_relationship_line(source_point, target_point, type, group)
+        render_relationship_marker(source_point, target_point, type, group)
       end
 
       def find_node(graph, node_id)
@@ -537,16 +537,11 @@ module Sirena
       end
 
       def render_relationship_line(from, to, rel_type, group)
-        line = Svg::Line.new.tap do |l|
-          l.x1 = from[:x]
-          l.y1 = from[:y]
-          l.x2 = to[:x]
-          l.y2 = to[:y]
-          l.stroke = "#000000"
-          l.stroke_width = "2"
-          l.stroke_dasharray = "5,5" if rel_type == "dependency"
-        end
-        group.children << line
+        group.children << Svg::Line.new(
+          x1: from[:x], y1: from[:y], x2: to[:x], y2: to[:y],
+          stroke: "#000000", stroke_width: "2",
+          stroke_dasharray: rel_type == "dependency" ? "5,5" : nil
+        )
       end
 
       def render_relationship_marker(from, to, rel_type, group)
@@ -560,20 +555,27 @@ module Sirena
         end
       end
 
-      def render_mixed_marker_relationship(source_point, target_point, metadata, group)
-        line = Svg::Line.new.tap do |l|
-          l.x1 = source_point[:x]
-          l.y1 = source_point[:y]
-          l.x2 = target_point[:x]
-          l.y2 = target_point[:y]
-          l.stroke = "#000000"
-          l.stroke_width = "2"
-          l.stroke_dasharray = "5,5" if metadata[:dashed]
-        end
-        group.children << line
+      def render_mixed_marker_relationship(
+        source_point, target_point, metadata, group
+      )
+        group.children << mixed_relationship_line(
+          source_point, target_point, metadata[:dashed]
+        )
+        render_marker_at(
+          source_point, target_point, metadata[:start_marker], group
+        )
+        render_marker_at(
+          target_point, source_point, metadata[:end_marker], group
+        )
+      end
 
-        render_marker_at(source_point, target_point, metadata[:start_marker], group)
-        render_marker_at(target_point, source_point, metadata[:end_marker], group)
+      def mixed_relationship_line(source_point, target_point, dashed)
+        Svg::Line.new(
+          x1: source_point[:x], y1: source_point[:y],
+          x2: target_point[:x], y2: target_point[:y],
+          stroke: "#000000", stroke_width: "2",
+          stroke_dasharray: dashed ? "5,5" : nil
+        )
       end
 
       # Draws `marker` at `point`, oriented along the connecting line away
@@ -585,13 +587,8 @@ module Sirena
       def render_marker_at(point, away_from, marker, group)
         case marker
         when "inheritance"
-          # mermaid's classDiagram CSS renders extension/inheritance markers
-          # with `fill: transparent !important` -- a hollow triangle, not the
-          # filled one the single-type inheritance path draws.
           render_triangle_marker(away_from, point, false, group)
         when "dependency"
-          # mermaid renders the dependency marker filled (`fill: lineColor`)
-          # as a concave dart -- see DART_NEAR/DART_FAR/DART_WIDTH above.
           render_dart_marker(point, away_from, group)
         when "composition"
           render_diamond_marker(point, away_from, true, group)
@@ -626,52 +623,43 @@ module Sirena
         labels = edge[:labels] || []
         return if labels.empty?
 
-        # Main label in the middle
-        main_label = labels.find { |l| !l[:position] }
-        if main_label
-          mid_x = (from[:x] + to[:x]) / 2
-          mid_y = (from[:y] + to[:y]) / 2
+        render_main_relationship_label(labels, from, to, group)
+        render_cardinality_label(labels, "source", from, group)
+        render_cardinality_label(labels, "target", to, group)
+      end
 
-          text = Svg::Text.new.tap do |t|
-            t.x = mid_x
-            t.y = mid_y - 5
-            t.content = main_label[:text]
-            t.fill = "#000000"
-            t.font_family = "Arial, sans-serif"
-            t.font_size = "11"
-            t.text_anchor = "middle"
-          end
-          group.children << text
-        end
+      def render_main_relationship_label(labels, from, to, group)
+        label = labels.find { |candidate| !candidate[:position] }
+        return unless label
 
-        # Source cardinality
-        source_label = labels.find { |l| l[:position] == "source" }
-        if source_label
-          text = Svg::Text.new.tap do |t|
-            t.x = from[:x] + 5
-            t.y = from[:y] - 5
-            t.content = source_label[:text]
-            t.fill = "#000000"
-            t.font_family = "Arial, sans-serif"
-            t.font_size = "10"
-          end
-          group.children << text
-        end
+        group.children << main_relationship_text(label, from, to)
+      end
 
-        # Target cardinality
-        target_label = labels.find { |l| l[:position] == "target" }
-        return unless target_label
+      def main_relationship_text(label, from, to)
+        Svg::Text.new(
+          x: (from[:x] + to[:x]) / 2,
+          y: ((from[:y] + to[:y]) / 2) - 5,
+          content: label[:text], fill: "#000000",
+          font_family: "Arial, sans-serif", font_size: "11",
+          text_anchor: "middle"
+        )
+      end
 
-        text = Svg::Text.new.tap do |t|
-          t.x = to[:x] - 5
-          t.y = to[:y] - 5
-          t.content = target_label[:text]
-          t.fill = "#000000"
-          t.font_family = "Arial, sans-serif"
-          t.font_size = "10"
-          t.text_anchor = "end"
-        end
-        group.children << text
+      def render_cardinality_label(labels, position, point, group)
+        label = labels.find { |candidate| candidate[:position] == position }
+        return unless label
+
+        group.children << cardinality_text(label, position, point)
+      end
+
+      def cardinality_text(label, position, point)
+        target = position == "target"
+        Svg::Text.new(
+          x: point[:x] + (target ? -5 : 5), y: point[:y] - 5,
+          content: label[:text], fill: "#000000",
+          font_family: "Arial, sans-serif", font_size: "10",
+          text_anchor: target ? "end" : nil
+        )
       end
     end
   end
