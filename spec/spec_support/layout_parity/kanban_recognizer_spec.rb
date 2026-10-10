@@ -50,6 +50,20 @@ RSpec.describe SpecSupport::LayoutParity::KanbanRecognizer do
       [:card, "Create Blog about the new diagram"]]]
   end
 
+  let(:metadata_card_labels) do
+    %w[
+      007_rendering_kanban_spec_kanban_6
+      009_rendering_kanban_spec_kanban_8
+      010_rendering_kanban_spec_kanban_9
+    ].map do |name|
+      reference = reference_svg("kanban/#{name}.svg")
+      sirena = Sirena.render(corpus_source("kanban/#{name}.mmd"))
+      [reference, sirena].map do |svg|
+        recognized(svg).select { |item| item.first == :card }
+      end
+    end
+  end
+
   it "recognizes sections and repeated cards by their shared labels" do
     expect(simple_result).to eq(expected_simple_result)
   end
@@ -59,18 +73,7 @@ RSpec.describe SpecSupport::LayoutParity::KanbanRecognizer do
   end
 
   it "uses the primary card label instead of metadata values" do
-    %w[
-      007_rendering_kanban_spec_kanban_6
-      009_rendering_kanban_spec_kanban_8
-      010_rendering_kanban_spec_kanban_9
-    ].each do |name|
-      reference = reference_svg("kanban/#{name}.svg")
-      sirena = Sirena.render(corpus_source("kanban/#{name}.mmd"))
-      labels = [reference, sirena].map do |svg|
-        recognized(svg).select { |item| item.first == :card }
-      end
-
-      expect(labels.first).to eq(labels.last)
-    end
+    expect(metadata_card_labels)
+      .to all(satisfy { |reference, sirena| reference == sirena })
   end
 end

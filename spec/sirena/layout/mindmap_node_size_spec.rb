@@ -61,6 +61,10 @@ RSpec.describe Sirena::Layout::MindmapNodeSize do
     expect(size("  \n  The root\n  ", "default")[:lines]).to eq(["The root"])
   end
 
+  it "keeps an all-blank label as one renderable line" do
+    expect(size("  \n  ", "default")[:lines]).to eq([""])
+  end
+
   it "falls back to the default box for an unknown shape" do
     expect(size("root", "mystery")).to eq(size("root", "default"))
   end
