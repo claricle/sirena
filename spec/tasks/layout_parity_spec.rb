@@ -8,6 +8,8 @@ module LayoutParity
 end
 
 RSpec.describe LayoutParity do
+  include UnshardedRakefile
+
   let(:scoreboard) { Sirena::LayoutParityScoreboard }
   let(:directory) { Dir.mktmpdir }
   let(:path) { File.join(directory, "layout-parity.json") }
@@ -60,7 +62,7 @@ RSpec.describe LayoutParity do
 
   it "wires the check into the default task used by both CI lanes" do
     with_rake_application do
-      load File.expand_path("../../Rakefile", __dir__)
+      load_unsharded_rakefile
       expect(Rake::Task[:default].prerequisites)
         .to include("layout_parity:check")
     end
