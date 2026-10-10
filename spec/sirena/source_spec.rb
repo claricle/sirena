@@ -59,7 +59,7 @@ module SourceSplitSpecHelpers
 end
 
 RSpec.describe Sirena::Source do
-  describe ".split" do
+  describe ".split", :aggregate_failures do
     include SourceSplitSpecHelpers
 
     it "separates a frontmatter block from the body" do
@@ -718,7 +718,7 @@ RSpec.describe Sirena::Source do
     end
   end
 
-  describe ".title" do
+  describe ".title", :aggregate_failures do
     it "reads the title out of a frontmatter block" do
       expect(described_class.title("title: My Chart")).to eq("My Chart")
     end
