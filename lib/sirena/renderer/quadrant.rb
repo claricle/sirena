@@ -24,15 +24,17 @@ module Sirena
       # @return [Svg::Document] rendered SVG document
       def render(scene)
         svg = create_document(scene)
-        svg << quadrants_group(scene)
-        svg << border_group(scene.axes)
-        svg << points_group(scene.points)
-        svg << labels_group(scene.axis_labels)
-        svg << title_group(scene.title)
+        scene_groups(scene).each { |element| svg << element }
         svg
       end
 
       protected
+
+      def scene_groups(scene)
+        [quadrants_group(scene), border_group(scene.axes),
+         points_group(scene.points), labels_group(scene.axis_labels),
+         title_group(scene.title)]
+      end
 
       def group(name)
         Svg::Group.new(class_name: name)
@@ -82,9 +84,13 @@ module Sirena
           element.y1 = line.y1
           element.x2 = line.x2
           element.y2 = line.y2
-          element.stroke = theme_color(:grid_line) || BORDER_COLOR
-          element.stroke_width = number_string(line.stroke_width)
+          apply_border_style(element, line.stroke_width)
         end
+      end
+
+      def apply_border_style(element, width)
+        element.stroke = theme_color(:grid_line) || BORDER_COLOR
+        element.stroke_width = number_string(width)
       end
 
       def points_group(points)
@@ -102,10 +108,12 @@ module Sirena
 
       def labels_group(labels)
         group("labels").tap do |container|
-          labels.each do |label|
-            container << group("label").tap { |cell| cell << text_element(label) }
-          end
+          labels.each { |label| container << label_group(label) }
         end
+      end
+
+      def label_group(label)
+        group("label").tap { |cell| cell << text_element(label) }
       end
 
       def title_group(title)
@@ -141,10 +149,14 @@ module Sirena
           text.y = 0
           text.content = label.text
           text.transform = transform(label)
-          text.dominant_baseline = label.baseline
-          text.text_anchor = label.text_anchor if label.text_anchor
+          apply_text_alignment(text, label)
           apply_text_style(text, label)
         end
+      end
+
+      def apply_text_alignment(text, label)
+        text.dominant_baseline = label.baseline
+        text.text_anchor = label.text_anchor if label.text_anchor
       end
 
       def transform(label)
