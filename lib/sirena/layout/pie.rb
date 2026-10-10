@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "pie_legend"
 require_relative "../diagram/pie"
 require_relative "../notation/mermaid/ir_adapters/pie"
 
@@ -48,6 +49,8 @@ module Sirena
         attribute :acc_description, :string
         attribute :title, Label
         attribute :slices, Slice, collection: true, default: -> { [] }
+        attribute :legend, PieLegendEntry, collection: true,
+                                           default: -> { [] }
       end
 
       def self.from_graph(graph, theme: nil)
@@ -93,15 +96,26 @@ module Sirena
       end
 
       def scene_from_graph(graph)
-        width = 500
+        legend = legend_entries(graph)
+        width = [500, pie_legend.width(legend)].max
         height = graph[:title] ? 460 : 400
         Scene.new(
           id: graph[:id] || "pie", width: width, height: height,
           view_box: "0 0 #{width} #{height}",
           acc_title: graph[:acc_title],
           acc_description: graph[:acc_description],
-          title: title_label(graph[:title]), slices: typed_slices(graph)
+          title: title_label(graph[:title]), slices: typed_slices(graph),
+          legend: legend
         )
+      end
+
+      def legend_entries(graph)
+        pie_legend.entries(graph[:slices] || [], graph[:show_data])
+      end
+
+      def pie_legend
+        PieLegend.new(center_y: CENTER_Y,
+                      font_size: font_size(:font_size_small, 12))
       end
 
       def title_label(title)
@@ -119,20 +133,18 @@ module Sirena
         (graph[:slices] || []).map.with_index do |slice, index|
           angle = slice[:angle]
           finish_angle = start_angle + angle
-          typed = typed_slice(slice, index, start_angle, finish_angle,
-                              graph[:show_data])
+          typed = typed_slice(slice, index, start_angle, finish_angle)
           start_angle = finish_angle
           typed
         end
       end
 
-      def typed_slice(slice, index, start_angle, finish_angle, show_data)
+      def typed_slice(slice, index, start_angle, finish_angle)
         Slice.new(
           id: slice[:id] || "slice_#{index}",
           path: slice_path(start_angle, finish_angle), color_index: index,
           percentage: slice[:percentage], angle: slice[:angle],
-          label: slice_label(slice, (start_angle + finish_angle) / 2.0,
-                             show_data)
+          label: slice_label(slice, (start_angle + finish_angle) / 2.0)
         )
       end
 
@@ -147,12 +159,10 @@ module Sirena
         ].join(" ")
       end
 
-      def slice_label(slice, angle, show_data)
+      def slice_label(slice, angle)
         x_position, y_position = circle_point(angle, LABEL_OFFSET)
-        text = slice[:label].to_s
-        text += ": #{slice[:percentage].round(1)}%" if show_data
         Label.new(
-          text: text, x: x_position, y: y_position,
+          text: "#{slice[:percentage].round}%", x: x_position, y: y_position,
           font_size: font_size(:font_size_small, 12),
           text_anchor: "middle", dominant_baseline: "middle"
         )

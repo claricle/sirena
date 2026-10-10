@@ -58,10 +58,10 @@ RSpec.describe Sirena::Layout::Pie do
 
   def expected_geometry
     [
-      "share", 500.0, 460.0, "Market share", "Share by product",
+      "share", 549.364, 460.0, "Market share", "Share by product",
       "One quarter and three quarters",
-      [["slice_0", "Small: 25.0%", include("A 150 150 0 0 1")],
-       ["slice_1", "Large: 75.0%", include("A 150 150 0 1 1")]]
+      [["slice_0", "25%", include("A 150 150 0 0 1")],
+       ["slice_1", "75%", include("A 150 150 0 1 1")]]
     ]
   end
 end

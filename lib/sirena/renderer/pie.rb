@@ -5,6 +5,7 @@ require_relative "../layout/pie"
 require_relative "../svg/document"
 require_relative "../svg/circle"
 require_relative "../svg/path"
+require_relative "../svg/rect"
 require_relative "../svg/text"
 require_relative "../svg/group"
 
@@ -45,6 +46,7 @@ module Sirena
           svg << typed_slice(slice)
           svg << typed_label(slice.label)
         end
+        scene.legend.each { |entry| add_legend_entry(svg, entry) }
         svg
       end
 
@@ -63,6 +65,25 @@ module Sirena
           path.stroke = theme_color(:node_stroke) || "#ffffff"
           path.stroke_width = "2"
           path.id = slice.id.sub("_", "-")
+        end
+      end
+
+      def add_legend_entry(svg, entry)
+        color = get_slice_color(entry.color_index)
+        svg << Svg::Rect.new(x: entry.x, y: entry.y, width: 18, height: 18,
+                             fill: color, stroke: color)
+        svg << legend_text(entry)
+      end
+
+      def legend_text(entry)
+        Svg::Text.new.tap do |text|
+          text.x = entry.x + 22
+          text.y = entry.y + 14
+          text.content = entry.text
+          text.fill = theme_color(:label_text) || "#000000"
+          text.font_family = theme_typography(:font_family) ||
+                             "Arial, sans-serif"
+          text.font_size = number_string(entry.font_size)
         end
       end
 
