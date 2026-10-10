@@ -171,11 +171,11 @@ module Sirena
                      y: (corner[:y] + (direction[:y] * step)).round(2))
       end
 
-      def ellipse_entry(corner, centre, direction, rx, ry)
-        x = (corner[:x] - centre[:x]) / rx
-        y = (corner[:y] - centre[:y]) / ry
-        dx = direction[:x] / rx
-        dy = direction[:y] / ry
+      def ellipse_entry(corner, centre, direction, radius_x, radius_y)
+        x = (corner[:x] - centre[:x]) / radius_x
+        y = (corner[:y] - centre[:y]) / radius_y
+        dx = direction[:x] / radius_x
+        dy = direction[:y] / radius_y
         a = (dx**2) + (dy**2)
         return nil if a.zero?
 
@@ -183,12 +183,12 @@ module Sirena
         smallest_quadratic_root(a, b)
       end
 
-      def smallest_quadratic_root(a, b)
-        discriminant = (b**2) - (4 * a)
+      def smallest_quadratic_root(quad_coeff, linear_coeff)
+        discriminant = (linear_coeff**2) - (4 * quad_coeff)
         return nil if discriminant.negative?
 
-        [(-b - Math.sqrt(discriminant)) / (2 * a),
-         (-b + Math.sqrt(discriminant)) / (2 * a)]
+        [(-linear_coeff - Math.sqrt(discriminant)) / (2 * quad_coeff),
+         (-linear_coeff + Math.sqrt(discriminant)) / (2 * quad_coeff)]
           .select { |value| value >= 0 }.min
       end
 
