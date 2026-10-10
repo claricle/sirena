@@ -634,7 +634,7 @@ module Sirena
         return LANE_SPACING * 2 if lane_assignments.empty?
 
         max_lane = lane_assignments.values.max
-        (max_lane + 1) * LANE_SPACING + LANE_SPACING
+        ((max_lane + 1) * LANE_SPACING) + LANE_SPACING
       end
     end
   end

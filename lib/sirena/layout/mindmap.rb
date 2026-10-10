@@ -420,7 +420,7 @@ module Sirena
       # @param root [Diagram::Mindmap::MindmapNode] root node
       # @return [Numeric] tree width
       def calculate_tree_width(root)
-        estimate_subtree_width(root) + ROOT_PADDING * 2
+        estimate_subtree_width(root) + (ROOT_PADDING * 2)
       end
 
       def children_of(node)
@@ -441,7 +441,7 @@ module Sirena
       def calculate_bounds(nodes)
         return { width: 0, height: 0 } if nodes.empty?
 
-        max_x = nodes.map { |n| n[:x] + n[:width] / 2 }.max
+        max_x = nodes.map { |n| n[:x] + (n[:width] / 2) }.max
         max_y = nodes.map { |n| n[:y] + n[:height] }.max
 
         {

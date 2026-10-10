@@ -95,8 +95,8 @@ module Sirena
         positioned_fields = position_fields(fields, row_count)
 
         # Calculate dimensions
-        width = BITS_PER_ROW * CELL_WIDTH + (PADDING * 2)
-        content_height = row_count * CELL_HEIGHT + HEADER_HEIGHT
+        width = (BITS_PER_ROW * CELL_WIDTH) + (PADDING * 2)
+        content_height = (row_count * CELL_HEIGHT) + HEADER_HEIGHT
         title_offset = document.label ? TITLE_HEIGHT + TITLE_MARGIN : 0
         height = content_height + (PADDING * 2) + title_offset
 

@@ -311,7 +311,7 @@ module Sirena
             child_dims = calculate_block_dimensions(child)
             sum + child_dims[:height] + DEFAULT_SPACING
           end
-          height = [height, child_height + DEFAULT_COMPOUND_PADDING * 2].max
+          height = [height, child_height + (DEFAULT_COMPOUND_PADDING * 2)].max
         end
 
         {
@@ -346,9 +346,9 @@ module Sirena
           {
             from: connection.source_id,
             to: connection.target_id,
-            from_x: from_block[:x] + from_block[:width] / 2,
+            from_x: from_block[:x] + (from_block[:width] / 2),
             from_y: from_block[:y] + from_block[:height],
-            to_x: to_block[:x] + to_block[:width] / 2,
+            to_x: to_block[:x] + (to_block[:width] / 2),
             to_y: to_block[:y],
             connection_type: connection.role,
           }
