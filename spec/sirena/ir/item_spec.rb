@@ -41,6 +41,11 @@ RSpec.describe Sirena::IR::Item do
       .to include("properties must be a valid PropertySet")
   end
 
+  it "rejects a missing property set" do
+    expect(ir_messages(described_class, id: "i", properties: nil))
+      .to include("properties must be a valid PropertySet")
+  end
+
   it "uses an exact closed property vocabulary" do
     expect(Sirena::IR::PropertySet.attributes.keys)
       .to eq(%i[source_marker target_marker weight])

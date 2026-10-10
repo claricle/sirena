@@ -81,6 +81,19 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapter do
     expect(mindmap_comparison.first).to eq(mindmap_comparison.last)
   end
 
+  it "returns the private model for a type the registry does not know" do
+    diagram = Object.new
+
+    expect(described_class.call(:unregistered, diagram)).to equal(diagram)
+  end
+
+  it "returns the private model for a type that has not opted in" do
+    stub_const("Sirena::Notation::Mermaid::TYPES", { late: {} })
+    diagram = Object.new
+
+    expect(described_class.call(:late, diagram)).to equal(diagram)
+  end
+
   it "discovers opted-in adapters by the registered type name" do
     actual = [opted_in_types, described_class.const_defined?(:ADAPTERS, false)]
     expect(actual).to eq([expected_opted_in_types, false])
