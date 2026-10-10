@@ -46,8 +46,14 @@ module Sirena
           FAMILY = /\A[\w-]+\z/
           COMMENT = %r{/\*.*?\*/}m
           NAMED = { "lightyellow" => "#FFFFE0" }.freeze
+          HEAD_TEXT = {
+            head_style: ->(text) { text.downcase if text.casecmp?("italic") },
+            head_family: ->(text) { text if FAMILY.match?(text) },
+            head_weight: ->(text) { text.downcase if WEIGHT.match?(text) },
+          }.freeze
           private_constant :TOKEN, :PROPERTIES, :NESTED, :INERT, :PARENTS,
-                           :ALIGNMENTS, :NAMED, :WEIGHT, :FAMILY, :COMMENT
+                           :ALIGNMENTS, :NAMED, :WEIGHT, :FAMILY, :COMMENT,
+                           :HEAD_TEXT
 
           # @param text [String] what lies between `<style>` and `</style>`
           # @return [Appearance, nil] nil when the block sets anything else
@@ -121,12 +127,8 @@ module Sirena
           end
 
           def text_or_colour(key, value)
-            case key
-            when :head_style then value.downcase if value.casecmp?("italic")
-            when :head_family then value if FAMILY.match?(value)
-            when :head_weight then value.downcase if WEIGHT.match?(value)
-            else colour(value)
-            end
+            rule = HEAD_TEXT[key]
+            rule ? rule.call(value) : colour(value)
           end
 
           def alignment(value)
