@@ -59,16 +59,24 @@ module Sirena
 
       def entity_box(node, styles)
         attributed = node.attributes.any?
-        Svg::Rect.new.tap do |rect|
-          rect.x = node.x
-          rect.y = node.y
-          rect.width = node.width
-          rect.height = node.height
-          rect.fill = box_property(styles, "fill", attributed) || "#f9f9f9"
-          rect.stroke = box_property(styles, "stroke", attributed) || "#333333"
-          rect.stroke_width =
-            box_property(styles, "stroke-width", attributed) || "2"
-        end
+        rect = Svg::Rect.new
+        apply_entity_geometry(rect, node)
+        apply_entity_styles(rect, styles, attributed)
+        rect
+      end
+
+      def apply_entity_geometry(rect, node)
+        rect.x = node.x
+        rect.y = node.y
+        rect.width = node.width
+        rect.height = node.height
+      end
+
+      def apply_entity_styles(rect, styles, attributed)
+        rect.fill = box_property(styles, "fill", attributed) || "#f9f9f9"
+        rect.stroke = box_property(styles, "stroke", attributed) || "#333333"
+        rect.stroke_width =
+          box_property(styles, "stroke-width", attributed) || "2"
       end
 
       def emit_entity_content(node, group, styles)
@@ -79,28 +87,32 @@ module Sirena
       end
 
       def emit_entity_header(node, group, styles)
-        name_color = styles["color"] || "#000000"
-        label = node.labels.first
-        text = Svg::Text.new.tap do |t|
-          t.x = label.x
-          t.y = label.y
-          t.content = label.text
-          t.fill = name_color
-          t.font_family = "Arial, sans-serif"
-          t.font_size = font_size_value(label.font_size)
-          t.text_anchor = "middle"
-          t.font_weight = "bold"
+        group.children << entity_header_text(node.labels.first, styles)
+        group.children << entity_separator(node.separator)
+      end
+
+      def entity_header_text(label, styles)
+        Svg::Text.new(
+          x: label.x,
+          y: label.y,
+          content: label.text,
+          fill: styles["color"] || "#000000",
+          font_family: "Arial, sans-serif",
+          font_size: font_size_value(label.font_size),
+          text_anchor: "middle",
+          font_weight: "bold",
+        )
+      end
+
+      def entity_separator(geometry)
+        Svg::Line.new.tap do |line|
+          line.x1 = geometry.x1
+          line.y1 = geometry.y1
+          line.x2 = geometry.x2
+          line.y2 = geometry.y2
+          line.stroke = "#333333"
+          line.stroke_width = "1"
         end
-        group.children << text
-        separator = Svg::Line.new.tap do |l|
-          l.x1 = node.separator.x1
-          l.y1 = node.separator.y1
-          l.x2 = node.separator.x2
-          l.y2 = node.separator.y2
-          l.stroke = "#333333"
-          l.stroke_width = "1"
-        end
-        group.children << separator
       end
 
       def emit_attribute(attribute, styles, group)
@@ -420,7 +432,9 @@ module Sirena
       CSS_COLOR_FUNCTION = /\A(?:rgb|rgba|hsl|hsla)\(.+\)\z/i
       private_constant :CSS_COLOR_FUNCTION
 
-      CSS_LENGTH = %r{\A\d+(?:\.\d+)?(?:px|em|rem|%|pt|cm|mm|in|pc|ex|ch|vw|vh)?\z}i
+      CSS_LENGTH = %r{
+        \A\d+(?:\.\d+)?(?:px|em|rem|%|pt|cm|mm|in|pc|ex|ch|vw|vh)?\z
+      }ix
       private_constant :CSS_LENGTH
 
       # The CSS Color Module Level 4 extended keyword set, plus `none` (a
@@ -524,15 +538,23 @@ module Sirena
 
       def emit_relationship(edge, svg)
         group = Svg::Group.new.tap { |item| item.id = "rel-#{edge.id}" }
-        edge.sections.each do |section|
-          group.children << relationship_shape(section, edge.relationship_type)
-        end
+        group.children.concat(relationship_shapes(edge))
         emit_marker(edge.source_marker, group)
         emit_marker(edge.target_marker, group)
-        if edge.labels.any?
-          group.children << relationship_text(edge.labels.first)
-        end
+        emit_relationship_label(edge, group)
         svg << group
+      end
+
+      def relationship_shapes(edge)
+        edge.sections.map do |section|
+          relationship_shape(section, edge.relationship_type)
+        end
+      end
+
+      def emit_relationship_label(edge, group)
+        return if edge.labels.empty?
+
+        group.children << relationship_text(edge.labels.first)
       end
 
       def relationship_shape(section, relationship_type)
@@ -544,12 +566,16 @@ module Sirena
 
       def relationship_line(section, relationship_type)
         Svg::Line.new.tap do |line|
-          line.x1 = section.start_point.x
-          line.y1 = section.start_point.y
-          line.x2 = section.end_point.x
-          line.y2 = section.end_point.y
+          apply_line_geometry(line, section)
           relationship_stroke(line, relationship_type)
         end
+      end
+
+      def apply_line_geometry(line, section)
+        line.x1 = section.start_point.x
+        line.y1 = section.start_point.y
+        line.x2 = section.end_point.x
+        line.y2 = section.end_point.y
       end
 
       def relationship_path(section, relationship_type)
@@ -580,13 +606,10 @@ module Sirena
       end
 
       def emit_marker(marker, group)
-        if marker.circle_first
-          marker.circles.each { |geometry| group.children << marker_circle(geometry) }
-        end
-        marker.lines.each { |geometry| group.children << marker_line(geometry) }
-        return if marker.circle_first
-
-        marker.circles.each { |geometry| group.children << marker_circle(geometry) }
+        circles = marker.circles.map { |geometry| marker_circle(geometry) }
+        lines = marker.lines.map { |geometry| marker_line(geometry) }
+        children = marker.circle_first ? circles + lines : lines + circles
+        group.children.concat(children)
       end
 
       def marker_line(geometry)
@@ -687,12 +710,12 @@ module Sirena
         end
       end
 
-      def render_attribute(x, y, _width, attribute, group)
+      def render_attribute(x_pos, y_pos, _width, attribute, group)
         row = Layout::ErDiagram.attribute_row(
-          x, y, attribute, theme: theme
+          x_pos, y_pos, attribute, theme: theme
         )
         emit_attribute(row, @compatibility_styles || {}, group)
-        y + Layout::ErDiagram::TEXT_LINE_HEIGHT
+        y_pos + Layout::ErDiagram::TEXT_LINE_HEIGHT
       end
 
       def render_relationships(graph, svg)
@@ -706,10 +729,19 @@ module Sirena
       end
 
       def render_relationship(edge, graph, svg)
+        endpoints = relationship_endpoints(edge, graph)
+        return unless endpoints
+
+        svg << compatibility_relationship_group(edge, *endpoints)
+      end
+
+      def relationship_endpoints(edge, graph)
         source = find_node(graph, edge[:sources]&.first)
         target = find_node(graph, edge[:targets]&.first)
-        return unless source && target
+        [source, target] if source && target
+      end
 
+      def compatibility_relationship_group(edge, source, target)
         metadata = edge[:metadata] || {}
         from = calculate_connection_point(source, target)
         to = calculate_connection_point(target, source)
@@ -717,6 +749,12 @@ module Sirena
         render_relationship_line(
           from, to, metadata[:relationship_type] || "non-identifying", group
         )
+        render_compatibility_cardinalities(metadata, from, to, group)
+        render_relationship_label(edge, from, to, group)
+        group
+      end
+
+      def render_compatibility_cardinalities(metadata, from, to, group)
         if metadata[:cardinality_from]
           render_cardinality(
             from, to, metadata[:cardinality_from], :source, group
@@ -727,8 +765,6 @@ module Sirena
             to, from, metadata[:cardinality_to], :target, group
           )
         end
-        render_relationship_label(edge, from, to, group)
-        svg << group
       end
 
       def find_node(graph, node_id)
