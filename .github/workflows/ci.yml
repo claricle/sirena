@@ -48,6 +48,13 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - run: bundle exec rake
+        env:
+          # leptris has no Ruby 3.2 Windows native bundle. Select its
+          # documented FFI mode there; every other matrix cell still probes
+          # and uses native acceleration when its platform gem provides it.
+          LEPTRIS_NO_NATIVE: >-
+            ${{ matrix.os == 'windows-latest' &&
+            matrix.ruby == '3.2' && '1' || '' }}
 
   pins:
     name: pins

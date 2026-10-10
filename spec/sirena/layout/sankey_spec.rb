@@ -69,6 +69,13 @@ RSpec.describe Sirena::Layout::Sankey do
     [direct, graph].map { |input| scene_summary(input) }
   end
 
+  def equal_flow_source_ys(count)
+    sources = Array.new(count) { |index| node("source_#{index}") }
+    equal_flows = sources.map { |source| flow(source.id, "sink", 1) }
+    subject = diagram(nodes: sources + [node("sink")], flows: equal_flows)
+    described_class.new.call(subject).nodes.first(count).map(&:y)
+  end
+
   it "builds the empty accessibility canvas" do
     expect(empty_scene).to have_attributes(empty_canvas)
   end
@@ -108,6 +115,11 @@ RSpec.describe Sirena::Layout::Sankey do
   it "keeps cycles on the fallback layer" do
     expect(cyclic_scene.nodes.map { |item| [item.id, item.layer] })
       .to eq([["a", 0], ["b", 0]])
+  end
+
+  it "preserves declaration order for nodes with equal flow" do
+    expected = Array.new(8) { |index| 100.0 + (index * 70) }
+    expect(equal_flow_source_ys(8)).to eq(expected)
   end
 
   it "marks self-loops" do

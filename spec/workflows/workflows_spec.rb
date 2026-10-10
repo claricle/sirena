@@ -110,6 +110,17 @@ module WorkflowHelpers
       end,
     }
   end
+
+  def unit_rake_step(jobs)
+    jobs.fetch("unit").fetch("steps").find do |step|
+      step["run"] == "bundle exec rake"
+    end
+  end
+
+  def leptris_selector
+    "${{ matrix.os == 'windows-latest' && " \
+      "matrix.ruby == '3.2' && '1' || '' }}"
+  end
 end
 
 # The subject is a set of YAML files, not a class.
@@ -197,6 +208,11 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
     it "runs every stable Ruby on every OS and keeps Ruby 4 experimental" do
       expect(jobs.fetch("unit").dig("strategy", "matrix"))
         .to eq(expected_unit_matrix)
+    end
+
+    it "selects leptris FFI only for Ruby 3.2 on Windows" do
+      expect(unit_rake_step(jobs).dig("env", "LEPTRIS_NO_NATIVE"))
+        .to eq(leptris_selector)
     end
 
     it "runs on pull requests, merge queue, push, dispatch and a nightly schedule" do
