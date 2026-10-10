@@ -9,6 +9,7 @@ module Sirena
     class Radar < Base
       DEFAULT_RADIUS = 200
       PADDING = 80
+      TITLE_Y = 16
       LABEL_OFFSET = 30
       GRID_CIRCLES = 5
 
@@ -75,6 +76,7 @@ module Sirena
         attribute :axes, Axis, collection: true, default: -> { [] }
         attribute :curves, Curve, collection: true, default: -> { [] }
         attribute :legend, Legend, collection: true, default: -> { [] }
+        attribute :title, Label
       end
 
       # Converts the released positioned-Hash surface to a typed Scene.
@@ -134,8 +136,19 @@ module Sirena
             graph.fetch(:grid_circles), center_x, center_y
           ),
           axes: typed_axes(graph.fetch(:axes), center_x, center_y),
-          curves: curves, legend: legend(graph, curves)
+          curves: curves, legend: legend(graph, curves),
+          title: title_label(graph)
         }
+      end
+
+      def title_label(graph)
+        return unless graph[:title]
+
+        Label.new(
+          text: graph[:title], x: graph.fetch(:center_x), y: TITLE_Y,
+          font_size: font_size(:font_size_large, 16),
+          text_anchor: "middle", dominant_baseline: "hanging"
+        )
       end
 
       def typed_grid(circles, center_x, center_y)
@@ -262,7 +275,7 @@ module Sirena
 
       def radar_data(data, axes, min_value, max_value)
         {
-          axes: axes,
+          axes: axes, title: data.label,
           curves: position_curves(data, axes, min_value, max_value),
           grid_circles: calculate_grid_circles(min_value, max_value),
           options: radar_options(data),
