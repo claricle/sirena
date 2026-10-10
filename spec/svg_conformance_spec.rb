@@ -23,9 +23,15 @@ CONFORMANCE_ROOT = File.expand_path("..", __dir__)
 CONFORMANCE_EXAMPLE_SVGS =
   (Dir.glob(File.join(CONFORMANCE_ROOT, "examples", "*.svg")) +
    Dir.glob(File.join(CONFORMANCE_ROOT, "examples", "*", "*.svg"))).freeze
-CONFORMANCE_FIXTURE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, "spec", "fixtures", "*", "input.mmd")).freeze
-CONFORMANCE_CORPUS_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, "spec", "mermaid", "*", "*.mmd")).freeze
-CONFORMANCE_EXAMPLE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, "examples", "*", "*.mmd")).freeze
+CONFORMANCE_FIXTURE_SOURCES = Dir.glob(
+  File.join(CONFORMANCE_ROOT, "spec", "fixtures", "*", "input.mmd"),
+).freeze
+CONFORMANCE_CORPUS_SOURCES = Dir.glob(
+  File.join(CONFORMANCE_ROOT, "spec", "mermaid", "*", "*.mmd"),
+).freeze
+CONFORMANCE_EXAMPLE_SOURCES = Dir.glob(
+  File.join(CONFORMANCE_ROOT, "examples", "*", "*.mmd"),
+).freeze
 
 # Which corpus cases render today, by NAME not count -- a count can't see
 # a regressing case swap places with a gaining one. A floor, not an
@@ -33,8 +39,11 @@ CONFORMANCE_EXAMPLE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, "examples", "
 # that STOPS rendering fails it.
 #
 # Regenerate after a real gain with
-# `CONFORMANCE_WRITE_RENDERABLE=1 bundle exec rspec spec/svg_conformance_spec.rb`.
-CONFORMANCE_RENDERABLE_FILE = File.join(CONFORMANCE_ROOT, "spec", "mermaid", "corpus-renderable.txt")
+# `CONFORMANCE_WRITE_RENDERABLE=1 bundle exec rspec
+# spec/svg_conformance_spec.rb`.
+CONFORMANCE_RENDERABLE_FILE = File.join(
+  CONFORMANCE_ROOT, "spec", "mermaid", "corpus-renderable.txt"
+)
 
 # The size the baseline itself must not fall below. It guards the guard: an
 # emptied or truncated list would make the subset check pass against nothing.
@@ -143,7 +152,9 @@ module SvgConformanceSpecHelpers
   # different documents every day.
   def render_or_skip(path)
     svg = Timeout.timeout(CONFORMANCE_CASE_TIMEOUT) do
-      Sirena::Engine.new.render(File.read(path), today: CONFORMANCE_EXAMPLE_TODAY)
+      Sirena::Engine.new.render(
+        File.read(path), today: CONFORMANCE_EXAMPLE_TODAY
+      )
     end
     svg if svg_document?(svg)
   rescue StandardError
@@ -153,6 +164,16 @@ end
 
 # Helpers for the nested 'the checked-in examples' describe block below.
 module SvgConformanceCheckedInExampleHelpers
+  def example_task_source
+    path = File.join(CONFORMANCE_ROOT, "tasks", "example_tasks.rb")
+    File.read(path)
+  end
+
+  def unrenderable_example_source_lines
+    CONFORMANCE_UNRENDERABLE_EXAMPLES
+      .map { |source| "  \"#{source}\"," }.join("\n")
+  end
+
   # The same inputs examples.rake uses. The date is pinned there because
   # gantt and timeline place bars relative to today, so an unpinned render
   # differs from identical source every day.
@@ -162,9 +183,13 @@ module SvgConformanceCheckedInExampleHelpers
     # Same cap as render_or_skip, and for the same reason: a pathological
     # source must fail this example, not hang the whole suite.
     Timeout.timeout(CONFORMANCE_CASE_TIMEOUT) do
-      # Unlike the corpus's Engine call, this mirrors examples.rake's theme/today arguments.
-      Sirena.render(File.read(mmd_path), theme: metadata["theme"] || CONFORMANCE_EXAMPLE_THEME,
-                                         today: CONFORMANCE_EXAMPLE_TODAY)
+      # This mirrors examples.rake's theme/today arguments, unlike the
+      # corpus's Engine call.
+      Sirena.render(
+        File.read(mmd_path),
+        theme: metadata["theme"] || CONFORMANCE_EXAMPLE_THEME,
+        today: CONFORMANCE_EXAMPLE_TODAY,
+      )
     end
   end
 
@@ -175,7 +200,8 @@ module SvgConformanceCheckedInExampleHelpers
   # Every source that is not named unrenderable owes exactly one SVG.
   def expected_svgs
     (CONFORMANCE_EXAMPLE_SOURCES.map { |mmd| relative(mmd) } -
-      CONFORMANCE_UNRENDERABLE_EXAMPLES).map { |mmd| mmd.sub(/\.mmd\z/, ".svg") }
+      CONFORMANCE_UNRENDERABLE_EXAMPLES)
+      .map { |mmd| mmd.sub(/\.mmd\z/, ".svg") }
   end
 end
 
@@ -197,8 +223,11 @@ RSpec.describe Sirena::Svg do
         expect(content).not_to be_empty
 
         malformed = parse_error(content)
+        malformed_message = lambda do
+          "#{svg_path.sub("#{CONFORMANCE_ROOT}/", '')}: #{malformed}"
+        end
         expect(malformed).to be_nil,
-                             -> { "#{svg_path.sub("#{CONFORMANCE_ROOT}/", '')}: #{malformed}" }
+                             malformed_message
 
         result = validate(content)
         expect(result).to be_valid, -> { complaint(svg_path, result) }
@@ -216,8 +245,11 @@ RSpec.describe Sirena::Svg do
         svg = Sirena::Engine.new.render(File.read(source_path))
 
         malformed = parse_error(svg)
+        malformed_message = lambda do
+          "#{source_path.sub("#{CONFORMANCE_ROOT}/", '')}: #{malformed}"
+        end
         expect(malformed).to be_nil,
-                             -> { "#{source_path.sub("#{CONFORMANCE_ROOT}/", '')}: #{malformed}" }
+                             malformed_message
 
         result = validate(svg)
         expect(result).to be_valid, -> { complaint(source_path, result) }
@@ -249,7 +281,10 @@ RSpec.describe Sirena::Svg do
 
         rendered << corpus_name(source_path)
         malformed = parse_error(svg)
-        next "#{source_path.sub("#{CONFORMANCE_ROOT}/", '')}: not well-formed: #{malformed}" if malformed
+        if malformed
+          path = source_path.sub("#{CONFORMANCE_ROOT}/", "")
+          next "#{path}: not well-formed: #{malformed}"
+        end
 
         result = validate(svg)
         complaint(source_path, result) unless result.valid?
@@ -259,8 +294,11 @@ RSpec.describe Sirena::Svg do
       # population it was drawn from is known to be intact. By name, because a
       # count stays put when one case regresses and another gains.
       lost = baseline - rendered
+      lost_message = lambda do
+        "stopped rendering, so nothing checked them: #{lost.sort.join(', ')}"
+      end
       expect(lost).to be_empty,
-                      -> { "stopped rendering, so nothing checked them: #{lost.sort.join(', ')}" }
+                      lost_message
       expect(offenders).to be_empty, -> { offenders.join("\n") }
 
       # Written last, and only once every assertion above has held, so
@@ -278,14 +316,15 @@ RSpec.describe Sirena::Svg do
     include SvgConformanceCheckedInExampleHelpers
 
     it "has example sources to render" do
-      # 53 is today's .mmd count under examples/; this guard catches sources vanishing.
+      # 53 is today's .mmd count under examples/; this guard catches
+      # sources vanishing.
       expect(CONFORMANCE_EXAMPLE_SOURCES.size).to be >= 53
     end
 
     # Duplicated render inputs must drift loudly here instead of blaming every
     # checked-in SVG as stale.
     it "uses the generation task rendering defaults" do
-      task_source = File.read(File.join(CONFORMANCE_ROOT, "tasks", "example_tasks.rb"))
+      task_source = example_task_source
 
       expect(task_source).to include(
         "EXAMPLE_TODAY = Date.new(#{CONFORMANCE_EXAMPLE_TODAY.year}, " \
@@ -298,8 +337,8 @@ RSpec.describe Sirena::Svg do
     end
 
     it "uses the conformance gate named unrenderable examples" do
-      task_source = File.read(File.join(CONFORMANCE_ROOT, "tasks", "example_tasks.rb"))
-      sources = CONFORMANCE_UNRENDERABLE_EXAMPLES.map { |source| "  \"#{source}\"," }.join("\n")
+      task_source = example_task_source
+      sources = unrenderable_example_source_lines
 
       expect(task_source).to include(
         "EXPECTED_UNRENDERABLE_SOURCES = [\n#{sources}\n].freeze",
@@ -346,7 +385,9 @@ RSpec.describe Sirena::Svg do
 
         compared += 1
         svg_path = mmd.sub(/\.mmd\z/, ".svg")
-        next relative(svg_path) unless CONFORMANCE_EXAMPLE_SVGS.include?(svg_path)
+        unless CONFORMANCE_EXAMPLE_SVGS.include?(svg_path)
+          next relative(svg_path)
+        end
 
         relative(svg_path) unless File.read(svg_path) == rendered
       end
@@ -355,10 +396,15 @@ RSpec.describe Sirena::Svg do
       # source that stops rendering is skipped by the rescue, and an empty
       # stale list says nothing until every source that is not named
       # unrenderable is known to have been compared.
+      expected_count = CONFORMANCE_EXAMPLE_SOURCES.size -
+        CONFORMANCE_UNRENDERABLE_EXAMPLES.size
       expect(compared)
-        .to eq(CONFORMANCE_EXAMPLE_SOURCES.size - CONFORMANCE_UNRENDERABLE_EXAMPLES.size)
+        .to eq(expected_count)
+      stale_message = lambda do
+        "not tracked, or not what the renderer produces: #{stale.join(', ')}"
+      end
       expect(stale).to be_empty,
-                       -> { "not tracked, or not what the renderer produces: #{stale.join(', ')}" }
+                       stale_message
     end
   end
 end
