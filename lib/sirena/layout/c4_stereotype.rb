@@ -16,6 +16,15 @@ module Sirena
         snake = base.gsub(/([a-z])([A-Z])/, '\1_\2').downcase
         "<<#{prefix}#{snake}>>"
       end
+
+      # @param element_type [String, nil] e.g. "SystemDb_Ext", "ContainerQueue"
+      # @return [String, nil] "database", "queue", or nil for a plain box
+      def self.shape(element_type)
+        base = element_type.to_s.delete_suffix(EXTERNAL_SUFFIX)
+        return "database" if base.end_with?("Db")
+
+        "queue" if base.end_with?("Queue")
+      end
     end
   end
 end
