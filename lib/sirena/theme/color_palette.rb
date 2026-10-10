@@ -27,6 +27,18 @@ module Sirena
       attribute :hover_fill, :string
       attribute :active_fill, :string
       attribute :disabled_fill, :string
+      attribute :border, :string
+      attribute :edge_color, :string
+      attribute :field_background, :string
+      attribute :field_border, :string
+      attribute :field_text, :string
+      attribute :group_background, :string
+      attribute :highlight, :string
+      attribute :node_bg, :string
+      attribute :node_text, :string
+      attribute :note_fill, :string
+      attribute :section_bg, :string
+      attribute :title_text, :string
 
       yaml do
         map "background", to: :background
@@ -48,6 +60,18 @@ module Sirena
         map "hover_fill", to: :hover_fill
         map "active_fill", to: :active_fill
         map "disabled_fill", to: :disabled_fill
+        map "border", to: :border
+        map "edge_color", to: :edge_color
+        map "field_background", to: :field_background
+        map "field_border", to: :field_border
+        map "field_text", to: :field_text
+        map "group_background", to: :group_background
+        map "highlight", to: :highlight
+        map "node_bg", to: :node_bg
+        map "node_text", to: :node_text
+        map "note_fill", to: :note_fill
+        map "section_bg", to: :section_bg
+        map "title_text", to: :title_text
       end
     end
   end
