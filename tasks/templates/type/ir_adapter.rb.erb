@@ -1,0 +1,31 @@
+# frozen_string_literal: true
+
+require_relative "../../../ir"
+
+module Sirena
+  module Notation
+    module Mermaid
+      module IRAdapters
+        # Maps <%= keyword %>'s private ordered items to shared data IR.
+        module <%= klass %>
+          module_function
+
+          def call(diagram)
+            IR::Data.new(
+              id: "<%= type %>",
+              label: diagram.title,
+              role: "ordered_list",
+              items: diagram.items.each_with_index.map do |label, index|
+                IR::Item.new(
+                  id: "<%= type %>_item_#{index}",
+                  label: label,
+                  role: "list_item",
+                )
+              end,
+            )
+          end
+        end
+      end
+    end
+  end
+end

@@ -86,4 +86,12 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapter do
 
     expect(described_class.call(:pie, diagram)).to equal(diagram)
   end
+
+  it "discovers opted-in adapters by the registered type name" do
+    row = Sirena::Notation::Mermaid::TYPES.fetch(:sankey)
+    actual = [row.fetch(:ir_adapter), sankey_graph.class,
+              described_class.const_defined?(:ADAPTERS, false)]
+
+    expect(actual).to eq([true, Sirena::IR::Graph, false])
+  end
 end

@@ -3,7 +3,16 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::<%= klass %> do
-  let(:diagram) { Sirena::Diagram::<%= klass %>.new(items: %w[a b]) }
+  let(:diagram) do
+    Sirena::IR::Data.new(
+      id: "<%= type %>",
+      role: "ordered_list",
+      items: [
+        Sirena::IR::Item.new(id: "item_0", label: "a", role: "list_item"),
+        Sirena::IR::Item.new(id: "item_1", label: "b", role: "list_item"),
+      ],
+    )
+  end
 
   it "returns a Scene" do
     expect(described_class.new.call(diagram))
@@ -14,5 +23,11 @@ RSpec.describe Sirena::Layout::<%= klass %> do
     ys = described_class.new.call(diagram).rows.map(&:y)
 
     expect(ys).to eq(ys.sort.uniq)
+  end
+
+  it "uses shared data labels as row text" do
+    rows = described_class.new.call(diagram).rows
+
+    expect(rows.map(&:text)).to eq(%w[a b])
   end
 end

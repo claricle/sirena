@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "ir_adapters/sankey"
-require_relative "ir_adapters/mindmap"
-
 module Sirena
   module Notation
     module Mermaid
@@ -10,18 +7,20 @@ module Sirena
       # time. Types without a migrated adapter keep their private model until
       # their own vertical lands.
       module IRAdapter
-        ADAPTERS = {
-          sankey: IRAdapters::Sankey,
-          mindmap: IRAdapters::Mindmap,
-        }.freeze
-        private_constant :ADAPTERS
-
         module_function
 
         def call(type, diagram)
-          adapter = ADAPTERS[type]
-          adapter ? adapter.call(diagram) : diagram
+          row = Mermaid::TYPES[type]
+          return diagram unless row&.fetch(:ir_adapter, false)
+
+          require_relative "ir_adapters/#{type}"
+          IRAdapters.const_get(class_name(type, row), false).call(diagram)
         end
+
+        def class_name(type, row)
+          row[:name] || type.to_s.split("_").map(&:capitalize).join
+        end
+        private_class_method :class_name
       end
     end
   end

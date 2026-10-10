@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
-require_relative "../diagram/<%= type %>"
+require_relative "../ir"
 
 module Sirena
   module Layout
@@ -22,7 +22,7 @@ module Sirena
         attribute :rows, Row, collection: true, default: -> { [] }
       end
 
-      # @param diagram [Diagram::<%= klass %>]
+      # @param diagram [IR::Data]
       # @return [Scene]
       def scene(diagram)
         height = (PADDING * 2) + (diagram.items.length * ROW_HEIGHT)
@@ -37,8 +37,8 @@ module Sirena
       private
 
       def rows_for(diagram)
-        diagram.items.each_with_index.map do |text, index|
-          Row.new(text: text, x: PADDING,
+        diagram.items.each_with_index.map do |item, index|
+          Row.new(text: item.label, x: PADDING,
                   y: PADDING + (index * ROW_HEIGHT) + (ROW_HEIGHT / 2))
         end
       end

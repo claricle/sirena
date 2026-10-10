@@ -132,6 +132,10 @@ the foundation close with the architecture issue #2 asks for half-built.
   `TODO.architecture/LAYERS.md`'s
   new-type row all agree with what it generates. Adding the IR changes
   that count; this item owns moving every copy of it.
+  **Verified 2026-10-10:** the disposable generated tree reports 10 defining
+  files, generates a conventional `IR::Data` adapter plus its spec, updates
+  both registries, and passes the generated specs, contract, IR-map, and SVG
+  registry checks without hand edits.
 - No IR field names or encodes a notation-specific construct — asserted
   by a spec, not by inspection.
 - The corpus pass set is unchanged across the migration, byte-identical
