@@ -25,7 +25,8 @@ module Sirena
           bang: "bang",           # ))text((
           hexagon: "hexagon",     # {{text}}
           square: "square",       # [text]
-          default: "default", # plain text (rounded rectangle)
+          round: "round",         # (text)
+          default: "default",     # plain text
         }.freeze
 
         def add_child(child)
