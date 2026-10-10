@@ -137,7 +137,8 @@ RSpec.describe Sirena::Parser::Requirement do
         expect(result.relationships.size).to eq(7)
 
         types = result.relationships.map(&:type)
-        expect(types).to include("contains", "copies", "derives", "satisfies", "verifies", "refines", "traces")
+        expected = %w[contains copies derives satisfies verifies refines traces]
+        expect(types).to include(*expected)
       end
     end
 
@@ -190,7 +191,8 @@ RSpec.describe Sirena::Parser::Requirement do
       end
     end
 
-    context "with accessibility title and single-line description (corpus 004)" do
+    context "with accessibility title and single-line description " \
+            "(corpus 004)" do
       let(:source) do
         <<~MERMAID
           requirementDiagram
@@ -216,7 +218,8 @@ RSpec.describe Sirena::Parser::Requirement do
     # `${expectedAccDescription}` template literal (an extraction artifact,
     # per CLAUDE.md), so it stays classified as unsupported. This exercises
     # the same multi-line accDescr {} grammar path with real text instead.
-    context "with accessibility title and multiline description (shape of corpus 005)" do
+    context "with accessibility title and multiline description " \
+            "(shape of corpus 005)" do
       let(:source) do
         <<~MERMAID
           requirementDiagram
@@ -378,7 +381,8 @@ RSpec.describe Sirena::Parser::Requirement do
       end
     end
 
-    context "with the accessibility keyword and its value separated by a newline" do
+    context "with the accessibility keyword and its value separated by a " \
+            "newline" do
       # Mermaid's lexer token is `accTitle\s*":"\s*` / `accDescr\s*":"\s*` --
       # `\s` matches a newline, so the colon and the value after it may
       # start on the line following the keyword. Verified against the
@@ -400,7 +404,8 @@ RSpec.describe Sirena::Parser::Requirement do
       end
     end
 
-    context "with a statement immediately after a multiline accDescr closing brace" do
+    context "with a statement immediately after a multiline accDescr " \
+            "closing brace" do
       # requirementDiagram.jison's multiline accDescr body state is popped
       # by `}` alone -- the grammar never requires a NEWLINE token after
       # it, so another directive may start on the same line.
@@ -429,7 +434,8 @@ RSpec.describe Sirena::Parser::Requirement do
       # existed stays green here too (no accTitle rule means the same
       # ParseError for an unrelated reason).
       it "raises a parse error rather than skipping the comment" do
-        source = "requirementDiagram\naccTitle%% c\n: T\nelement foo {\ntype: bar\n}\n"
+        source = "requirementDiagram\naccTitle%% c\n: T\n" \
+                 "element foo {\ntype: bar\n}\n"
 
         expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
       end
