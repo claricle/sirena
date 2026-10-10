@@ -89,7 +89,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       # The two strokes straddle the tip rather than stopping at it, and
       # the shaft runs its full length because a cross takes no inset.
       shaft, *strokes = group.scan(/<line[^>]*>/)
-      expect(shaft).to include('x1="125.0"').and include('x2="325.0"')
+      expect(shaft).to include('x1="126.0"').and include('x2="325.0"')
       expect(strokes.map { |l| l[/x1="[\d.]+" y1="[\d.]+" x2="[\d.]+" y2="[\d.]+"/] })
         .to contain_exactly('x1="321.0" y1="115.0" x2="329.0" y2="123.0"',
                             'x1="321.0" y1="123.0" x2="329.0" y2="115.0"')
@@ -324,7 +324,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       "sequenceDiagram\nparticipant A\nparticipant B\nA->>B: hello\n"
     end
     let(:decorated_digest) do
-      "c1b3ca2594e0d4658b52d13352cea342d5e7aaae9ee8033c8a4d67c0077a387b"
+      "2f614ff61f9c0147bd826fd1099c0a57b34ac54c2a20fc4b22b83e5bdc72330a"
     end
 
     it "emits the font sizes resolved by the injected theme" do

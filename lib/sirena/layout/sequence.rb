@@ -690,9 +690,10 @@ module Sirena
 
       def message_line(span, style, ends)
         inset = FLUSH_HEADS.include?(style[:head]) ? 0 : ARROW_SIZE
-        inset *= (span[:x2] <=> span[:x1])
+        direction = span[:x2] <=> span[:x1]
+        inset *= direction
         line(
-          span[:x1] + (ends.include?(:source) ? inset : 0), span[:y1],
+          span[:x1] + (ends.include?(:source) ? inset : direction), span[:y1],
           span[:x2] - (ends.include?(:target) ? inset : 0), span[:y2]
         )
       end
