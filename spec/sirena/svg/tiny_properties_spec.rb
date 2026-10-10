@@ -53,7 +53,8 @@ RSpec.describe Sirena::Svg do
     end
 
     it "leaves the components alone when there is no whole-element opacity" do
-      expect(rect(fill_opacity: "0.3").to_xml).to eq('<rect fill-opacity="0.3"/>')
+      expect(rect(fill_opacity: "0.3").to_xml)
+        .to eq('<rect fill-opacity="0.3"/>')
     end
 
     # An empty opacity="" is syntactically legal and means "not set", not
@@ -159,27 +160,32 @@ RSpec.describe Sirena::Svg do
     end
 
     it "drops a central label half an x-height below its anchor" do
-      expect(text(y: 10.0, font_size: "10", dominant_baseline: "central").to_xml)
+      expect(text(y: 10.0, font_size: "10",
+                  dominant_baseline: "central").to_xml)
         .to include('y="13.5"')
     end
 
     it "hangs a label a full ascender below its anchor" do
-      expect(text(y: 10.0, font_size: "10", dominant_baseline: "hanging").to_xml)
+      expect(text(y: 10.0, font_size: "10",
+                  dominant_baseline: "hanging").to_xml)
         .to include('y="18.0"')
     end
 
     it "hangs a text-before-edge label a full ascender below its anchor" do
-      expect(text(y: 10.0, font_size: "10", dominant_baseline: "text-before-edge").to_xml)
+      expect(text(y: 10.0, font_size: "10",
+                  dominant_baseline: "text-before-edge").to_xml)
         .to include('y="18.0"')
     end
 
     it "lifts a bottom-aligned label by a descender" do
-      expect(text(y: 10.0, font_size: "10", dominant_baseline: "text-after-edge").to_xml)
+      expect(text(y: 10.0, font_size: "10",
+                  dominant_baseline: "text-after-edge").to_xml)
         .to include('y="8.0"')
     end
 
     it "lifts an ideographic label by a descender" do
-      expect(text(y: 10.0, font_size: "10", dominant_baseline: "ideographic").to_xml)
+      expect(text(y: 10.0, font_size: "10",
+                  dominant_baseline: "ideographic").to_xml)
         .to include('y="8.0"')
     end
 
@@ -189,7 +195,8 @@ RSpec.describe Sirena::Svg do
     end
 
     it "leaves the baseline where it was for a value it does not know" do
-      expect(text(y: 10.0, font_size: "10", dominant_baseline: "nonsense").to_xml)
+      expect(text(y: 10.0, font_size: "10",
+                  dominant_baseline: "nonsense").to_xml)
         .to include('y="10.0"')
     end
 
@@ -199,16 +206,19 @@ RSpec.describe Sirena::Svg do
     end
 
     it "falls back to the CSS initial size when the label carries none" do
-      expect(text(y: 0.0, dominant_baseline: "middle").to_xml).to include('y="5.6"')
+      expect(text(y: 0.0,
+                  dominant_baseline: "middle").to_xml).to include('y="5.6"')
     end
 
     it "leaves y unchanged when the font size is not finite" do
-      expect(text(y: 10.0, font_size: "1e400", dominant_baseline: "middle").to_xml)
+      expect(text(y: 10.0, font_size: "1e400",
+                  dominant_baseline: "middle").to_xml)
         .to eq('<text y="10.0" font-size="1e400"></text>')
     end
 
     it "leaves y unchanged when a finite baseline calculation overflows" do
-      expect(text(y: 1.7e308, font_size: "1e308", dominant_baseline: "middle").to_xml)
+      expect(text(y: 1.7e308, font_size: "1e308",
+                  dominant_baseline: "middle").to_xml)
         .to eq('<text y="1.7e+308" font-size="1e308"></text>')
     end
 
@@ -222,7 +232,8 @@ RSpec.describe Sirena::Svg do
     end
 
     it "still emits a non-finite y when no baseline was asked for" do
-      expect(text(y: Float::INFINITY).to_xml).to eq('<text y="Infinity"></text>')
+      expect(text(y: Float::INFINITY).to_xml)
+        .to eq('<text y="Infinity"></text>')
     end
   end
 end
