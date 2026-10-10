@@ -84,7 +84,12 @@ RSpec.describe Sirena::Renderer::Requirement do
   end
 
   def scene_ids(xml)
-    pattern = /id="(requirement-test_req|element-test_entity|relationship-test_entity-test_req)"/
+    ids = %w[
+      requirement-test_req
+      element-test_entity
+      relationship-test_entity-test_req
+    ]
+    pattern = /id="(#{Regexp.union(ids)})"/
     xml.scan(pattern).flatten.sort
   end
 
