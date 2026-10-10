@@ -30,8 +30,8 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphMarkerGeometry do
   end
 
   def expected_errors
-    [0.2, 0.2, 0.2, nil, 0.2, 0.2, 0.2, 1.0 / 9, 0.2, 0.2,
-     1.0 / 9, 0.2, 0.2, 1.0 / 9, 0.2, 0.2, 1.0 / 9, 1.0 / 9]
+    [0.0, 0.0, 0.0, nil, 0.0, 0.0, 0.0, 1.0 / 9, 0.0, 0.0,
+     1.0 / 9, 0.0, 0.0, 1.0 / 9, 0.0, 0.0, 1.0 / 9, 1.0 / 9]
   end
 
   def error_matchers

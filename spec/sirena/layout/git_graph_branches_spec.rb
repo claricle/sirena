@@ -39,7 +39,7 @@ RSpec.describe Sirena::Layout::GitGraph do
   end
 
   it "returns a finite empty graph with unlabeled main-branch metadata" do
-    expect(empty_evidence).to eq([240.0, 200.0, [], [], ["main", 0, nil]])
+    expect(empty_evidence).to eq([180.0, 100.0, [], [], ["main", 0, nil]])
   end
 
   it "places top-to-bottom tag and identity labels on opposite sides" do

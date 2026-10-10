@@ -1,7 +1,7 @@
 <svg
- width="777.92"
- height="980.0"
- viewBox="0 0 777.92 980"
+ width="980.0"
+ height="800.0"
+ viewBox="0 0 980 800"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
@@ -88,12 +88,12 @@
   <text fill="#000000" x="484.6865" y="667.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">timeout</text>
 </g>
 <g id="transition-Idle_to_end_2">
-  <path fill="none" stroke="#000000" stroke-width="2" d="M 350 75 L 65 865"/>
-  <polygon fill="#000000" points="65.0,865.0 63.9522,856.1173 71.4775,858.8321"/>
-  <text fill="#000000" x="207.0" y="462.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">shutdown()</text>
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 350 75 L 865 65"/>
+  <polygon fill="#000000" points="865.0,65.0 857.0792,69.1546 856.9239,61.1561"/>
+  <text fill="#000000" x="607.0" y="62.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">shutdown()</text>
 </g>
 <g id="state-start_1">
-  <circle fill="#000000" stroke="none" cx="65.0" cy="65.0" r="15.0"/>
+  <circle fill="#000000" stroke="none" cx="65.0" cy="65.0" r="7.0"/>
   <text fill="#000000" x="65.0" y="69.9" text-anchor="middle" font-family="Arial, sans-serif" font-size="14">[*]</text>
 </g>
 <g id="state-Idle">
@@ -142,9 +142,9 @@
 </g>
 <g id="state-end_2">
   <g>
-    <circle fill="none" stroke="#000000" stroke-width="2" cx="65.0" cy="865.0" r="15.0"/>
-    <circle fill="#000000" stroke="none" cx="65.0" cy="865.0" r="10.0"/>
+    <circle fill="none" stroke="#000000" stroke-width="2" cx="865.0" cy="65.0" r="7.0"/>
+    <circle fill="#000000" stroke="none" cx="865.0" cy="65.0" r="2.0"/>
   </g>
-  <text fill="#000000" x="65.0" y="869.9" text-anchor="middle" font-family="Arial, sans-serif" font-size="14">[*]</text>
+  <text fill="#000000" x="865.0" y="69.9" text-anchor="middle" font-family="Arial, sans-serif" font-size="14">[*]</text>
 </g>
 </svg>

@@ -147,7 +147,7 @@ RSpec.describe Sirena::Conformance do
 
   describe ".render with a source that depends on today's date" do
     let(:name) do
-      "gantt/010_parser_should_handle_a_dateformat_definition_9.mmd"
+      "gantt/021_parser_should_handle_a_dateformat_definition_20.mmd"
     end
     let(:source) { File.read(File.join(described_class::CORPUS_ROOT, name)) }
     let(:engine) { Sirena::Engine.new }

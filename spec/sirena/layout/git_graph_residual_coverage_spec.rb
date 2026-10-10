@@ -44,8 +44,8 @@ RSpec.describe Sirena::Layout::GitGraph do
     expect(layout.send(:build_connections, [], [edge])).to be_empty
   end
 
-  it "reserves two lane widths when no lanes are assigned" do
+  it "reserves one marker diameter when no lanes are assigned" do
     expect(layout.send(:calculate_lane_span, {}))
-      .to eq(described_class::LANE_SPACING * 2)
+      .to eq(described_class::COMMIT_RADIUS * 2)
   end
 end
