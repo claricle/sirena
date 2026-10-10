@@ -341,15 +341,19 @@ module Sirena
         Section.new(
           start_point: Point.new(x: route[0], y: route[1]),
           end_point: Point.new(x: route[2], y: route[3]),
-          bend_points: bends.map { |point| Point.new(x: point[:x], y: point[:y]) },
+          bend_points: bends.map do |point|
+            Point.new(x: point[:x], y: point[:y])
+          end,
         )
       end
 
       def typed_edge_labels(edge, source, target, bends, route)
         (edge[:labels] || []).first(1).map do |label|
           x, y = edge_label_anchor(source, target, bends, route)
-          Label.new(text: label[:text], width: label[:width], height: label[:height],
-                    x: x, y: y)
+          Label.new(
+            text: label[:text], width: label[:width], height: label[:height],
+            x: x, y: y
+          )
         end
       end
 
@@ -363,7 +367,8 @@ module Sirena
       end
 
       def typed_heads(route, bends, source, target, type)
-        shape = EDGE_HEADS[type.sub(/\A(?:thick|dotted)_/, "").delete_suffix("_both")]
+        head_type = type.sub(/\A(?:thick|dotted)_/, "").delete_suffix("_both")
+        shape = EDGE_HEADS[head_type]
         return [] unless shape
 
         ends = type.end_with?("_both") ? %i[source target] : [:target]
@@ -468,7 +473,7 @@ module Sirena
       end
 
       def merge_bounds(bounds, min_x, max_x, min_y, max_y)
-        return { min_x: min_x, max_x: max_x, min_y: min_y, max_y: max_y } unless bounds
+        return { min_x:, max_x:, min_y:, max_y: } unless bounds
 
         { min_x: [bounds[:min_x], min_x].min,
           max_x: [bounds[:max_x], max_x].max,
@@ -493,7 +498,9 @@ module Sirena
         label = edge[:labels]&.first
         return [0.0, 0.0] unless label
 
-        width = measure_text(label[:text].to_s, font_size: edge_label_font_size)[:width] *
+        width = measure_text(
+          label[:text].to_s, font_size: edge_label_font_size
+        )[:width] *
           SUBSTITUTE_FONT_HEADROOM
         height = edge_label_font_size * TextMeasurement::HEIGHT_RATIO
         [width / 2.0, height]
@@ -547,8 +554,8 @@ module Sirena
 
       def boundary_geometry(bends, source, target, which)
         node, other = which == :target ? [target, source] : [source, target]
-        approach = which == :target ? bends.last : bends.first
-        from_x, from_y = approach ? approach.values_at(:x, :y) : node_centre(other)
+        via = which == :target ? bends.last : bends.first
+        from_x, from_y = via ? via.values_at(:x, :y) : node_centre(other)
         tip_x, tip_y = node_boundary(node, from_x, from_y)
         { tip_x: tip_x, tip_y: tip_y, from_x: from_x, from_y: from_y }
       end
@@ -587,8 +594,8 @@ module Sirena
       def head_tip_geometry(route, bends, source, target, which)
         node = which == :target ? target : source
         other = which == :target ? :source : :target
-        approach = which == :target ? bends.last : bends.first
-        from_x, from_y = approach ? approach.values_at(:x, :y) : route_end(route, other)
+        via = which == :target ? bends.last : bends.first
+        from_x, from_y = via ? via.values_at(:x, :y) : route_end(route, other)
         tip_x, tip_y = if cluster?(node)
                          route_end(route, which)
                        else
@@ -837,7 +844,8 @@ module Sirena
       # theme has no typography or no font_size_normal. NOT used for edge
       # labels -- see #edge_label_font_size.
       def layout_font_size
-        valid_font_size(theme&.typography&.font_size_normal) || DEFAULT_FONT_SIZE
+        normal_size = valid_font_size(theme&.typography&.font_size_normal)
+        normal_size || DEFAULT_FONT_SIZE
       end
 
       # The size edge-label measure_text calls size against, mirroring the
@@ -847,8 +855,9 @@ module Sirena
       # Keeping the two in step means the layout reserves room for the font
       # the renderer draws with, not a different one.
       def edge_label_font_size
-        valid_font_size(theme&.typography&.font_size_small) ||
-          valid_font_size(theme&.typography&.font_size_normal) || DEFAULT_FONT_SIZE
+        small_size = valid_font_size(theme&.typography&.font_size_small)
+        normal_size = valid_font_size(theme&.typography&.font_size_normal)
+        small_size || normal_size || DEFAULT_FONT_SIZE
       end
 
       # A theme-supplied font size flows unchecked into TextMeasurement's

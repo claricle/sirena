@@ -4,11 +4,15 @@ require "spec_helper"
 
 module ArchitectureDiagramValiditySpecHelpers
   def group(id, parent_id: nil)
-    described_class::Group.new(id: id, label: id, icon: "cloud", parent_id: parent_id)
+    described_class::Group.new(
+      id: id, label: id, icon: "cloud", parent_id: parent_id,
+    )
   end
 
   def service(id, group_id: nil)
-    described_class::Service.new(id: id, label: id, icon: "server", group_id: group_id)
+    described_class::Service.new(
+      id: id, label: id, icon: "server", group_id: group_id,
+    )
   end
 
   def junction(id, group_id: nil)
@@ -31,7 +35,9 @@ RSpec.describe Sirena::Diagram::Architecture do
     end
 
     it "returns true for a service placed in a declared group" do
-      diagram = described_class.new(groups: [group("g")], services: [service("s", group_id: "g")])
+      diagram = described_class.new(
+        groups: [group("g")], services: [service("s", group_id: "g")],
+      )
 
       expect(diagram.valid?).to be true
     end
@@ -42,7 +48,9 @@ RSpec.describe Sirena::Diagram::Architecture do
     # so this reaches the model whether or not either group carries a
     # service of its own.
     it "returns false when two groups are parented to each other" do
-      diagram = described_class.new(groups: [group("a", parent_id: "b"), group("b", parent_id: "a")])
+      diagram = described_class.new(
+        groups: [group("a", parent_id: "b"), group("b", parent_id: "a")],
+      )
 
       expect(diagram.valid?).to be false
     end
@@ -50,7 +58,8 @@ RSpec.describe Sirena::Diagram::Architecture do
     # A three-group cycle where one member has its own service still
     # counts as a cycle — the direct service only changes whether the
     # broken shape happens to crash downstream, not whether it is valid.
-    it "returns false for a three-group cycle even when one member has a direct service" do
+    it "returns false for a three-group cycle even when one member has " \
+       "a direct service" do
       diagram = described_class.new(
         groups: [
           group("a", parent_id: "c"),
@@ -70,19 +79,25 @@ RSpec.describe Sirena::Diagram::Architecture do
     end
 
     it "returns false when a group's parent_id names no declared group" do
-      diagram = described_class.new(groups: [group("a", parent_id: "nosuchgroup")])
+      diagram = described_class.new(
+        groups: [group("a", parent_id: "nosuchgroup")],
+      )
 
       expect(diagram.valid?).to be false
     end
 
     it "returns false when a junction's group_id names no declared group" do
-      diagram = described_class.new(junctions: [junction("j", group_id: "nosuchgroup")])
+      diagram = described_class.new(
+        junctions: [junction("j", group_id: "nosuchgroup")],
+      )
 
       expect(diagram.valid?).to be false
     end
 
     it "returns false when a service's group_id names no declared group" do
-      diagram = described_class.new(services: [service("s", group_id: "nosuchgroup")])
+      diagram = described_class.new(
+        services: [service("s", group_id: "nosuchgroup")],
+      )
 
       expect(diagram.valid?).to be false
     end
