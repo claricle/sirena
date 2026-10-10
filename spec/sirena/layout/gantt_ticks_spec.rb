@@ -47,4 +47,14 @@ RSpec.describe Sirena::Layout::GanttTicks do
     expect(GanttTickTexts.summary(jan_first, 14, "fortnightly"))
       .to eq(GanttTickTexts.summary(jan_first, 14))
   end
+
+  it "caps a tickInterval that would draw millions of ticks" do
+    ticks = described_class.times(Time.utc(2022), Time.utc(9999), "1day")
+    expect(ticks.length).to be <= described_class::MAX_TICKS
+  end
+
+  it "keeps a tickInterval that stays under the cap" do
+    ticks = described_class.times(Time.utc(2024), Time.utc(2025), "1day")
+    expect(ticks.length).to eq(367)
+  end
 end
