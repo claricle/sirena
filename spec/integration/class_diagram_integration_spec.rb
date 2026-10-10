@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "ClassDiagram Integration" do
+RSpec.describe "ClassDiagram Integration", :aggregate_failures do
   describe "complete class diagram pipeline" do
     let(:parser) { Sirena::Parser::ClassDiagram.new }
     let(:transform) { Sirena::Layout::ClassDiagram.new }

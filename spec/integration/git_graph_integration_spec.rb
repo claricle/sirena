@@ -5,7 +5,7 @@ require "sirena/parser/git_graph"
 require "sirena/layout/git_graph"
 require "sirena/renderer/git_graph"
 
-RSpec.describe "Git Graph Integration" do
+RSpec.describe "Git Graph Integration", :aggregate_failures do
   let(:parser) { Sirena::Parser::GitGraph.new }
   let(:transform) { Sirena::Layout::GitGraph.new }
   let(:renderer) { Sirena::Renderer::GitGraph.new }
