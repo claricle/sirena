@@ -62,7 +62,9 @@ module Sirena
         @displacement = 0.0
         spring_forces
         repulsion_forces
-        bodies.each { |body| @displacement += body.move(@cooling, MAX_DISPLACEMENT) }
+        bodies.each do |body|
+          @displacement += body.move(@cooling, MAX_DISPLACEMENT)
+        end
       end
 
       def cool
@@ -73,11 +75,16 @@ module Sirena
       end
 
       def converged?
-        oscillating = @iterations > @max_iterations / 3.0 &&
-                      (@displacement - @previous_displacement).abs < 2
+        oscillating = oscillating?
         converged = @displacement < @threshold
         @previous_displacement = @displacement
         converged || oscillating
+      end
+
+      def oscillating?
+        return false unless @iterations > @max_iterations / 3.0
+
+        (@displacement - @previous_displacement).abs < 2
       end
 
       def spring_forces
@@ -99,10 +106,11 @@ module Sirena
       end
 
       def repulsion_forces
-        @grid.refresh if (@iterations % GRID_PERIOD) == 1
+        refresh = (@iterations % GRID_PERIOD) == 1
+        @grid.refresh if refresh
         done = {}
         bodies.each do |body|
-          @grid.refresh_surrounding(body, done) if (@iterations % GRID_PERIOD) == 1
+          @grid.refresh_surrounding(body, done) if refresh
           body.surrounding.each { |other| repel(body, other) }
           done[body] = true
         end
@@ -118,24 +126,29 @@ module Sirena
 
       def push_apart(first, second)
         x, y = MindmapCoseGeometry.separation(first, second, SEPARATION_BUFFER)
-        force_x = 2 * x
-        force_y = 2 * y
         share = 1.0 / 2
-        first.repulsion_x -= share * force_x
-        first.repulsion_y -= share * force_y
-        second.repulsion_x += share * force_x
-        second.repulsion_y += share * force_y
+        apply_repulsion(first, second, share * (2 * x), share * (2 * y))
       end
 
       def push_away(first, second)
-        clip = MindmapCoseGeometry.clip_points(first, second)
-        gap_x = minimum_gap(clip[2] - clip[0])
-        gap_y = minimum_gap(clip[3] - clip[1])
+        apply_repulsion(first, second, *inverse_square_force(first, second))
+      end
+
+      # @return [Array<Float>] the force on the second box, along x and y
+      def inverse_square_force(first, second)
+        gap_x, gap_y = border_gaps(first, second)
         squared = (gap_x * gap_x) + (gap_y * gap_y)
         distance = Math.sqrt(squared)
         force = REPULSION_STRENGTH / squared
-        force_x = force * gap_x / distance
-        force_y = force * gap_y / distance
+        [force * gap_x / distance, force * gap_y / distance]
+      end
+
+      def border_gaps(first, second)
+        clip = MindmapCoseGeometry.clip_points(first, second)
+        [minimum_gap(clip[2] - clip[0]), minimum_gap(clip[3] - clip[1])]
+      end
+
+      def apply_repulsion(first, second, force_x, force_y)
         first.repulsion_x -= force_x
         first.repulsion_y -= force_y
         second.repulsion_x += force_x
