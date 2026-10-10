@@ -87,8 +87,6 @@ rows:
   count: 2
 - file: scripts/er_diagram_fuzz.rb
   count: 3
-- file: scripts/extract_mermaid_tests.rb
-  count: 25
 - file: scripts/flowchart_fuzz.rb
   count: 3
 - file: scripts/generate_shape_table.rb
@@ -97,8 +95,6 @@ rows:
   count: 1
 - file: scripts/mermaid_diff.rb
   count: 3
-- file: scripts/mermaid_fuzz.rb
-  count: 24
 - file: scripts/mmdc_oracle.rb
   count: 2
 - file: scripts/sequence_fuzz.rb
@@ -331,8 +327,6 @@ rows:
   count: 10
 - file: tasks/corpus.rake
   count: 1
-- file: tasks/example_tasks.rb
-  count: 35
 - file: tasks/examples.rake
   count: 12
 - file: tasks/generate_mermaid_fixtures.rake
