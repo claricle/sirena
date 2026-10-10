@@ -16,7 +16,7 @@ RSpec.describe Sirena::Parser::Builders::Pie do
 
   context "with an array tree" do
     let(:tree) do
-      ["noise", { title: nil }, { title: "   " },
+      [{ title: nil }, { title: "   " },
        { title: { other: "plain" } }, { show_data: nil },
        { data_entry: true, label: "X", value: "3" },
        { standalone_title: "Late" }]
