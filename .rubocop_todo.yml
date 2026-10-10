@@ -11,26 +11,6 @@ Gemspec/RequiredRubyVersion:
   Exclude:
     - 'sirena.gemspec'
 
-# Offense count: 5
-# This cop supports safe autocorrection (--autocorrect).
-Layout/ElseAlignment:
-  Exclude:
-    - 'tasks/benchmark.rake'
-
-# Offense count: 8
-# This cop supports safe autocorrection (--autocorrect).
-Layout/EmptyLineAfterGuardClause:
-  Exclude:
-    - 'tasks/benchmark.rake'
-
-# Offense count: 11
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyleAlignWith.
-# SupportedStylesAlignWith: keyword, variable, start_of_line
-Layout/EndAlignment:
-  Exclude:
-    - 'tasks/benchmark.rake'
-
 # Offense count: 8
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowForAlignment, AllowBeforeTrailingComments, ForceEqualSignAlignment.
@@ -44,13 +24,6 @@ Layout/ExtraSpacing:
 # SupportedStyles: special_inside_parentheses, consistent, align_braces
 Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
-
-# Offense count: 11
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: Width, AllowedPatterns.
-Layout/IndentationWidth:
-  Exclude:
-    - 'tasks/benchmark.rake'
 
 # Offense count: 18
 # This cop supports safe autocorrection (--autocorrect).

@@ -1,5 +1,0 @@
----
-cop: Layout/ElseAlignment
-rows:
-- file: tasks/benchmark.rake
-  count: 3

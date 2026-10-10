@@ -1,5 +1,0 @@
----
-cop: Layout/IndentationWidth
-rows:
-- file: tasks/benchmark.rake
-  count: 9

@@ -1,5 +1,0 @@
----
-cop: Layout/EndAlignment
-rows:
-- file: tasks/benchmark.rake
-  count: 9

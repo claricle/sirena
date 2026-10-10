@@ -1,5 +1,0 @@
----
-cop: Layout/EmptyLineAfterGuardClause
-rows:
-- file: tasks/benchmark.rake
-  count: 1
