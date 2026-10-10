@@ -72,7 +72,6 @@ Layout/LineLength:
 # SupportedStyles: aligned, indented, indented_relative_to_receiver
 Layout/MultilineMethodCallIndentation:
   Exclude:
-    - 'lib/sirena/diagram/class_diagram.rb'
     - 'lib/sirena/renderer/er_diagram.rb'
     - 'lib/sirena/renderer/gantt.rb'
     - 'tasks/generate_mermaid_fixtures.rake'
