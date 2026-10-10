@@ -15,5 +15,7 @@ RSpec.describe Sirena::Theme::SpacingConfig do
     load source
   end
 
-  it("loads and maps YAML after Theme exists") { expect(spacing.node_margin).to eq(12.5) }
+  it "loads and maps YAML after Theme exists" do
+    expect(spacing.node_margin).to eq(12.5)
+  end
 end
