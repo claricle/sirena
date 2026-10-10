@@ -22,19 +22,22 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "ends where the last line ends, heading along it" do
       anchor = terminus("M 0 0 L 10 0")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
     end
 
     it "takes the heading from the last segment, not the first" do
       anchor = terminus("M 0 0 L 10 0 L 10 10")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 10.0, 0.0, 1.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([10.0, 10.0, 0.0, 1.0])
     end
 
     it "keeps the last usable heading through a zero-length final line" do
       anchor = terminus("M 0 0 L 10 0 L 10 0")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
     end
 
     it "has no terminus after a trailing bare move" do
@@ -44,7 +47,8 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "uses a real segment after a move as the terminus" do
       anchor = terminus("M 0 0 L 10 0 M 50 50 L 60 50")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([60.0, 50.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([60.0, 50.0, 1.0, 0.0])
     end
 
     it "does not borrow the previous subpath heading after a move" do
@@ -54,7 +58,8 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "finds a curve heading before a degenerate terminal control point" do
       anchor = terminus("M 0 0 C 0 0, 10 0, 10 0")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
     end
 
     # The one curve in the corpus. A Bezier leaves its end point along the
@@ -90,13 +95,15 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "reflects a cubic control for a smooth outgoing tangent" do
       anchor = terminus("M 0 0 C 0 0, 10 0, 10 10 S 20 20, 20 20")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([20.0, 20.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([20.0, 20.0, 1.0, 0.0])
     end
 
     it "reflects relative cubic controls in absolute space" do
       anchor = terminus("M 0 0 c 0 0, 10 0, 10 10 s 10 10, 10 10")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([20.0, 20.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([20.0, 20.0, 1.0, 0.0])
     end
 
     it "follows a relative command from the current point" do
@@ -115,10 +122,12 @@ RSpec.describe Sirena::Svg::PathGeometry do
     # to `l`, so every later group is still an offset. Two implicit groups
     # rather than one, because one cannot show that the second is measured
     # from the first rather than from the move.
-    it "draws relative lines from the coordinates that follow a relative move" do
+    it "draws relative lines from the coordinates that follow a relative " \
+       "move" do
       anchor = terminus("m 5 20 10 0 0 10")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([15.0, 30.0, 0.0, 1.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([15.0, 30.0, 0.0, 1.0])
     end
 
     it "reads horizontal and vertical shorthand" do
@@ -134,19 +143,22 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "offsets only x for a relative horizontal shorthand" do
       anchor = terminus("M 5 20 h 10")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([15.0, 20.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([15.0, 20.0, 1.0, 0.0])
     end
 
     it "offsets only y for a relative vertical shorthand" do
       anchor = terminus("M 5 20 v 10")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([5.0, 30.0, 0.0, 1.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([5.0, 30.0, 0.0, 1.0])
     end
 
     # The heading as well as the point. A closing segment travels from the
     # last vertex back to the start, and that direction is what an arrowhead
     # there points along — asserting the position alone let any angle pass.
-    it "closes back to the start of the subpath, heading along the closing segment" do
+    it "closes back to the start of the subpath, heading along the closing " \
+       "segment" do
       anchor = terminus("M 0 0 L 10 0 L 10 10 Z")
       diagonal = -10 / Math.hypot(10, 10)
 
@@ -173,7 +185,8 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "keeps the last complete segment when the final command is short" do
       anchor = terminus("M 0 0 L 10 0 L 5")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
     end
 
     it "has no anchor for empty data" do
@@ -203,28 +216,33 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "omits an arc whose endpoints coincide, keeping the anchor before it" do
       anchor = terminus("M 0 0 L 10 0 A 5 5 0 0 1 10 0")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
     end
 
     it "omits a relative arc that returns to where it started" do
       anchor = terminus("M 0 0 L 10 0 a 5 5 0 0 1 0 0")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
     end
 
     it "treats a zero horizontal radius arc as a straight line" do
       anchor = terminus("M 0 0 A 0 5 0 0 1 10 0")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
     end
 
     it "treats a relative zero vertical radius arc as a straight line" do
       anchor = terminus("M 5 5 a 5 0 0 0 1 0 10")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([5.0, 15.0, 0.0, 1.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([5.0, 15.0, 0.0, 1.0])
     end
 
-    it "still moves the pen through an arc, so the next segment is placed right" do
+    it "still moves the pen through an arc, so the next segment is placed " \
+       "right" do
       anchor = terminus("M 0 0 A 5 5 0 0 1 10 0 l 5 0")
 
       expect([anchor.x, anchor.y, anchor.dx]).to eq([15.0, 0.0, 1.0])
@@ -238,7 +256,8 @@ RSpec.describe Sirena::Svg::PathGeometry do
 
     # The endpoint cases below short-circuit before the finite-length guard,
     # so they cannot prove it rejects an infinite control-point delta.
-    it "has no anchor when a finite-ended curve has a non-finite control point" do
+    it "has no anchor when a finite-ended curve has a non-finite control " \
+       "point" do
       expect(terminus("M 0 0 C 0 0, 1e400 0, 10 0")).to be_nil
     end
 
@@ -248,7 +267,8 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "finds a heading across a segment wider than the float range" do
       anchor = terminus("M -1e308 0 L 1e308 0")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([1e308, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([1e308, 0.0, 1.0, 0.0])
     end
 
     it "finds a heading between two large coordinates of the same sign" do
@@ -276,7 +296,8 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "starts where the path starts, heading into the first segment" do
       anchor = origin("M 0 0 L 10 0 L 10 10")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
     end
 
     it "takes a curve heading from the control point next to the start" do
@@ -288,16 +309,19 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "finds the first usable heading after a zero-length initial line" do
       anchor = origin("M 0 0 L 0 0 L 10 0")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
     end
 
     it "keeps the first usable heading when later segments turn" do
       anchor = origin("M 0 0 L 0 0 L 10 0 L 10 10")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
     end
 
-    it "does not borrow a later subpath heading after a degenerate initial line" do
+    it "does not borrow a later subpath heading after a degenerate initial " \
+       "line" do
       expect(origin("M 0 0 L 0 0 M 50 50 L 60 50")).to be_nil
     end
 
@@ -308,13 +332,15 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "reflects a leading smooth curve control without overflowing" do
       anchor = origin("M 1e308 0 S 1e308 10 9e307 10")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([1e308, 0.0, 0.0, 1.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([1e308, 0.0, 0.0, 1.0])
     end
 
     it "treats a zero-radius initial arc as a straight line" do
       anchor = origin("M 0 0 A 0 5 0 0 1 10 0")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
     end
 
     # An omitted arc is not travelled, so the path has not begun on it and
@@ -322,7 +348,8 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it "starts on the segment after a leading arc that goes nowhere" do
       anchor = origin("M 0 0 A 5 5 0 0 1 0 0 L 10 0")
 
-      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
+      expect([anchor.x, anchor.y, anchor.dx,
+              anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
     end
 
     # The path begins on the arc, so the segment after it is not the start of
@@ -346,7 +373,8 @@ RSpec.describe Sirena::Svg::PathGeometry do
   # match raise ArgumentError rather than simply fail to match, escaping the
   # documented "unrecognised byte is skipped" leniency -- reachable via
   # from_xml on a foreign document, which is not obligated to send valid d.
-  it "has no origin or terminus rather than raising on an invalid byte sequence" do
+  it "has no origin or terminus rather than raising on an invalid byte " \
+     "sequence" do
     invalid = +"M 0 0 L \xFF\xFE 10 10"
     invalid.force_encoding("UTF-8")
 
