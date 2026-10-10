@@ -28,7 +28,13 @@ module Sirena
       # either is asking for nothing to be drawn, which is not the same as
       # not having asked.
       NONE = "none"
-      private_constant :LENGTH, :HALF_WIDTH, :DEFAULT_STROKE_WIDTH, :NONE
+      PAINT_ATTRIBUTES = {
+        fill_opacity: :stroke_opacity,
+        opacity: :opacity,
+        transform: :transform,
+      }.freeze
+      private_constant :LENGTH, :HALF_WIDTH, :DEFAULT_STROKE_WIDTH, :NONE,
+                       :PAINT_ATTRIBUTES
 
       # @param path [Svg::Path] the path to draw arrowheads for
       # @return [Array<Svg::Polygon>] one per marker the path asked for
@@ -52,9 +58,8 @@ module Sirena
       # @return [Array<Svg::Polygon>] the end-marker head before the
       #   start-marker head, with either absent
       def polygons
-        wants_end = names_something?(path.marker_end)
-        wants_start = names_something?(path.marker_start)
-        return [] unless wants_end || wants_start
+        heads = requested_heads
+        return [] if heads.empty?
 
         # An arrowhead is the end of the line, so a line painting nothing
         # ends in nothing. SVG's initial `stroke` is `none`, and inherited
@@ -63,13 +68,25 @@ module Sirena
         return [] unless painted?
 
         geometry = PathGeometry.new(path.d)
-        [(triangle(geometry.terminus) if wants_end),
-         (triangle(reversed(geometry.origin)) if wants_start)].compact
+        heads.filter_map { |head| triangle(anchor_for(head, geometry)) }
       end
 
       private
 
       attr_reader :path
+
+      def requested_heads
+        markers = [[:end, path.marker_end], [:start, path.marker_start]]
+        markers.filter_map do |head, marker|
+          head if names_something?(marker)
+        end
+      end
+
+      def anchor_for(head, geometry)
+        return geometry.terminus if head == :end
+
+        reversed(geometry.origin)
+      end
 
       # Asked of a marker and of a stroke alike, because `none` is SVG's own
       # "nothing here" for both. Escaping.blank? catches an unset attribute;
@@ -115,29 +132,54 @@ module Sirena
         return nil unless coordinates.flatten.all?(&:finite?)
 
         Polygon.new.tap do |polygon|
-          polygon.points = Polygon.build_points(
-            coordinates.map { |x, y| [Numbers.write(x), Numbers.write(y)] },
-          )
-          polygon.fill = path.stroke
-          # The head is painted where the line's stroke would have been, so
-          # it inherits the line's opacity and sits in its coordinate space.
-          polygon.fill_opacity = presence(path.stroke_opacity)
-          polygon.opacity = presence(path.opacity)
-          polygon.transform = presence(path.transform)
+          set_points(polygon, coordinates)
+          copy_paint(polygon)
+        end
+      end
+
+      def set_points(polygon, coordinates)
+        written = coordinates.map do |x, y|
+          [Numbers.write(x), Numbers.write(y)]
+        end
+        polygon.points = Polygon.build_points(written)
+      end
+
+      # The head is painted where the line's stroke would have been, so it
+      # inherits the line's opacity and sits in its coordinate space.
+      def copy_paint(polygon)
+        polygon.fill = path.stroke
+        PAINT_ATTRIBUTES.each do |target, source|
+          value = presence(path.public_send(source))
+          polygon.public_send("#{target}=", value)
         end
       end
 
       # Tip on the path's end, base one arrow-length back along the heading,
       # squared off either side of it.
       def corners(anchor)
-        length = LENGTH * stroke_width
-        half = HALF_WIDTH * stroke_width
-        base_x = anchor.x - (anchor.dx * length)
-        base_y = anchor.y - (anchor.dy * length)
+        tip = anchor.to_a.first(2)
+        base = arrow_base(anchor)
+        offset = corner_offset(anchor)
+        [tip, subtract(base, offset), add(base, offset)]
+      end
 
-        [[anchor.x, anchor.y],
-         [base_x - (anchor.dy * half), base_y + (anchor.dx * half)],
-         [base_x + (anchor.dy * half), base_y - (anchor.dx * half)]]
+      def arrow_base(anchor)
+        length = LENGTH * stroke_width
+        [anchor.x - (anchor.dx * length),
+         anchor.y - (anchor.dy * length)]
+      end
+
+      def corner_offset(anchor)
+        half = HALF_WIDTH * stroke_width
+        [anchor.dy * half, -anchor.dx * half]
+      end
+
+      def add(left, right)
+        left.zip(right).map(&:sum)
+      end
+
+      def subtract(left, right)
+        left.zip(right).map { |a, b| a - b }
       end
 
       # nil rather than lutaml's unset sentinel or an empty attribute value,
