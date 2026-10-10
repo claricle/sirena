@@ -44,7 +44,9 @@ module GitRepoHelpersSpecHelpers
     # `$!` is the exception already on its way out of the block, if any.
     # Raising over it would replace a real example failure with a cleanup
     # error, and the failure is the more useful of the two.
-    raise "#{dir} survived 10 delete attempts: the maintenance child outlived them" if File.exist?(dir) && $!.nil?
+    message = "#{dir} survived 10 delete attempts: the maintenance child " \
+              "outlived them"
+    raise message if File.exist?(dir) && $!.nil?
   end
 
   # Commits in a repo of its own so neither example can see the other's, and
@@ -55,7 +57,8 @@ module GitRepoHelpersSpecHelpers
   def commit_trace(suppressed:)
     trace = File.join(Dir.tmpdir, "git-trace-#{SecureRandom.hex(8)}.log")
     env = isolated_config.merge("GIT_TRACE" => trace)
-    args = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "x"]
+    args = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q",
+            "--allow-empty", "-m", "x"]
     in_throwaway_repo do |dir|
       with_env(env) do
         sh(dir, "git", "init", "-q", "-b", "main")

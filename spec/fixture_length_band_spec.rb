@@ -19,7 +19,8 @@ RSpec.describe FixtureLengthBand do
     "3x below the baseline" => [83, false],
   }.each do |label, (length, inside)|
     it "#{inside ? 'accepts' : 'rejects'} output #{label}" do
-      expect(within_length_band?("x" * length, expected_svg, baseline)).to be(inside)
+      expect(within_length_band?("x" * length, expected_svg,
+                                 baseline)).to be(inside)
     end
   end
 end

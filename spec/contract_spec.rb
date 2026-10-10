@@ -93,7 +93,8 @@ RSpec.describe Sirena::Notation::Mermaid do
   describe "an invalid model driven through Engine" do
     it "raises rather than silently producing SVG" do
       invalid_diagram = Sirena::Diagram::Kanban.new.tap do |kanban|
-        kanban.columns = [Sirena::Diagram::KanbanColumn.new(id: nil, title: nil)]
+        kanban.columns = [Sirena::Diagram::KanbanColumn.new(id: nil,
+                                                            title: nil)]
       end
       stub_parser = Class.new do
         define_method(:parse) { |_source| invalid_diagram }

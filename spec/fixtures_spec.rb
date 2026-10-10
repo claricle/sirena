@@ -7,9 +7,15 @@ RSpec.describe "Reference SVG Fixtures" do
 
   let(:engine) { Sirena::Engine.new }
 
-  shared_examples "validates against reference fixture" do |diagram_type, baseline_ratio|
-    let(:input_path) { File.expand_path("fixtures/#{diagram_type}/input.mmd", __dir__) }
-    let(:expected_path) { File.expand_path("fixtures/#{diagram_type}/expected.svg", __dir__) }
+  shared_examples(
+    "validates against reference fixture",
+  ) do |diagram_type, baseline_ratio|
+    let(:input_path) do
+      File.expand_path("fixtures/#{diagram_type}/input.mmd", __dir__)
+    end
+    let(:expected_path) do
+      File.expand_path("fixtures/#{diagram_type}/expected.svg", __dir__)
+    end
     let(:input_mmd) { File.read(input_path) }
     let(:expected_svg) { File.read(expected_path) }
 
@@ -48,21 +54,26 @@ RSpec.describe "Reference SVG Fixtures" do
       # collapse to a fraction of today's output fails, not just a collapse
       # to 2% of the reference.
       ratio = length_ratio(actual_svg, expected_svg).round(4)
+      message = "ratio #{ratio} is outside 2x of the #{diagram_type} " \
+                "baseline #{baseline_ratio}"
+
       expect(within_length_band?(actual_svg, expected_svg, baseline_ratio))
-        .to be(true), "ratio #{ratio} is outside 2x of the #{diagram_type} baseline #{baseline_ratio}"
+        .to be(true), message
     end
 
     it "fails the length band when the output is 50x smaller" do
       actual_svg = engine.render(input_mmd)
       collapsed = actual_svg[0, actual_svg.length / 50]
 
-      expect(within_length_band?(collapsed, expected_svg, baseline_ratio)).to be(false)
+      expect(within_length_band?(collapsed, expected_svg,
+                                 baseline_ratio)).to be(false)
     end
 
     it "fails the length band when the output is 3x larger" do
       actual_svg = engine.render(input_mmd)
 
-      expect(within_length_band?(actual_svg * 3, expected_svg, baseline_ratio)).to be(false)
+      expect(within_length_band?(actual_svg * 3, expected_svg,
+                                 baseline_ratio)).to be(false)
     end
   end
 
@@ -79,7 +90,8 @@ RSpec.describe "Reference SVG Fixtures" do
   end
 
   describe "State diagrams" do
-    it_behaves_like "validates against reference fixture", "state_diagram", 0.024
+    it_behaves_like "validates against reference fixture", "state_diagram",
+                    0.024
   end
 
   describe "ER diagrams" do
