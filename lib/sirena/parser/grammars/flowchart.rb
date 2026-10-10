@@ -1186,7 +1186,7 @@ module Sirena
           end
           char = closing.absent? >> blank.absent? >> str('"').absent? >>
                  str("%%{").absent? >> any
-          char = forbidden.absent? >> char
+          char = forbidden.absent? >> char if forbidden
           gap = blank.repeat(1) >> closing.absent?
           text = char >> (char | gap).repeat
           (link_start.maybe >> open).as(:open) >> blank.repeat >>
