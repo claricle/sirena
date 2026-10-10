@@ -182,11 +182,21 @@ module Sirena
         size = font_size(:font_size_small, 12)
         bottom = dims[:chart_y] + dims[:chart_height]
         right = dims[:chart_x] + dims[:chart_width]
+        horizontal_axis_labels(axes, dims, size, bottom, right) +
+          vertical_axis_labels(axes, dims, size, bottom)
+      end
+
+      def horizontal_axis_labels(axes, dims, size, bottom, right)
         [
           label(axes[:x_left], [dims[:chart_x] - 10, bottom + 30], size,
                 "axis", anchor: "end"),
           label(axes[:x_right], [right + 10, bottom + 30], size,
                 "axis", anchor: "start"),
+        ]
+      end
+
+      def vertical_axis_labels(axes, dims, size, bottom)
+        [
           label(axes[:y_bottom], [dims[:chart_x] - 30, bottom + 10], size,
                 "axis", anchor: "middle"),
           label(axes[:y_top], [dims[:chart_x] - 30, dims[:chart_y] - 10], size,
@@ -257,15 +267,29 @@ module Sirena
       end
 
       def transform_point(point, margin, width, height)
+        values = point_values(point)
+        { id: point.id, label: point.label, quadrant: point_quadrant(point) }
+          .merge(point_coordinates(values, margin, width, height))
+          .merge(point_style(values))
+      end
+
+      def point_values(point)
+        %w[x_value y_value marker_size fill_color stroke_color stroke_width]
+          .to_h { |dimension| [dimension, placement_value(point, dimension)] }
+      end
+
+      def point_coordinates(values, margin, width, height)
         {
-          id: point.id, label: point.label,
-          svg_x: margin + (placement_value(point, "x_value") * width),
-          svg_y: margin + ((1.0 - placement_value(point, "y_value")) * height),
-          quadrant: point_quadrant(point),
-          radius: placement_value(point, "marker_size").to_f,
-          color: placement_value(point, "fill_color"),
-          stroke_color: placement_value(point, "stroke_color"),
-          stroke_width: placement_value(point, "stroke_width").to_f
+          svg_x: margin + (values["x_value"] * width),
+          svg_y: margin + ((1.0 - values["y_value"]) * height),
+        }
+      end
+
+      def point_style(values)
+        {
+          radius: values["marker_size"].to_f, color: values["fill_color"],
+          stroke_color: values["stroke_color"],
+          stroke_width: values["stroke_width"].to_f
         }
       end
 

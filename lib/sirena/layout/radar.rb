@@ -283,16 +283,19 @@ module Sirena
       end
 
       def calculate_value_range(data)
-        measurements = data.values
-        values = measurements.filter_map do |value|
-          value.value.value if value.role == "measurement"
-        end
+        values = measurement_values(data)
         lower_bound = option_value(data, "lower_bound")
         upper_bound = option_value(data, "upper_bound")
         min_value = lower_bound || values.min || 0
         max_value = upper_bound || inferred_max(values)
         max_value = min_value + 1 if max_value <= min_value
         [min_value, max_value]
+      end
+
+      def measurement_values(data)
+        data.values.filter_map do |value|
+          value.value.value if value.role == "measurement"
+        end
       end
 
       def inferred_max(values)

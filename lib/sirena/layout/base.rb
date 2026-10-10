@@ -123,13 +123,9 @@ module Sirena
       # @raise [LayoutError] if the diagram fails its own #valid? check
       def call(diagram, theme: nil, today: nil)
         today_before_call = @today
-        raise LayoutError, "Invalid diagram" if diagram.nil? || !diagram.valid?
-
-        @theme = theme if theme
-        @today = today if today
-        return scene(diagram) if converted?
-
-        Legacy.new(build_graph(diagram))
+        validate_diagram!(diagram)
+        apply_context(theme, today)
+        layout_result(diagram)
       ensure
         @today = today_before_call if today
       end
@@ -161,6 +157,21 @@ module Sirena
       end
 
       private
+
+      def validate_diagram!(diagram)
+        raise LayoutError, "Invalid diagram" if diagram.nil? || !diagram.valid?
+      end
+
+      def apply_context(theme, today)
+        @theme = theme if theme
+        @today = today if today
+      end
+
+      def layout_result(diagram)
+        return scene(diagram) if converted?
+
+        Legacy.new(build_graph(diagram))
+      end
 
       # True only when #scene is defined between this layout's own class
       # and Layout::Base (inclusive), not merely inherited from
@@ -221,16 +232,17 @@ module Sirena
           ElkOptions::ALGORITHM => algorithm,
           ElkOptions::DIRECTION => direction,
         }
+        apply_algorithm_options(base_options, algorithm)
+        base_options.merge(options)
+      end
 
-        # Add algorithm-specific defaults
+      def apply_algorithm_options(base_options, algorithm)
         case algorithm
         when ALGORITHM_LAYERED
           base_options.merge!(layered_algorithm_options)
         when ALGORITHM_STRESS, ALGORITHM_FORCE
           base_options.merge!(force_based_algorithm_options)
         end
-
-        base_options.merge(options)
       end
 
       # Default layout options for layered algorithm.
@@ -242,16 +254,11 @@ module Sirena
       # @return [Hash] layered algorithm options
       def layered_algorithm_options
         {
-          # Node and edge spacing
           ElkOptions::NODE_NODE_SPACING => DEFAULT_NODE_SPACING,
           ElkOptions::EDGE_NODE_SPACING => DEFAULT_EDGE_SPACING,
           ElkOptions::EDGE_EDGE_SPACING => DEFAULT_EDGE_SPACING,
           ElkOptions::LAYER_SPACING => DEFAULT_LAYER_SPACING,
-
-          # Use SIMPLE node placement for predictable layouts
           ElkOptions::NODE_PLACEMENT => "SIMPLE",
-
-          # Consider model order for consistent positioning
           ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
         }
       end
