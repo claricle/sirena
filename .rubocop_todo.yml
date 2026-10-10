@@ -256,7 +256,6 @@ Style/RescueStandardError:
 # AllowedMethods: present?, blank?, presence, try, try!
 Style/SafeNavigation:
   Exclude:
-    - 'lib/sirena/parser/builders/flowchart.rb'
     - 'lib/sirena/renderer/pie.rb'
     - 'lib/sirena/layout/gantt.rb'
 
