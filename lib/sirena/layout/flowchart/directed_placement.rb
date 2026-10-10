@@ -2,7 +2,6 @@
 
 require_relative "../elk_placement"
 require_relative "layer_spacing"
-require_relative "route_points"
 require_relative "row_centering"
 
 module Sirena
@@ -71,13 +70,21 @@ module Sirena
         def level_of(edge, paths)
           source = paths[edge[:sources]&.first]
           target = paths[edge[:targets]&.first]
-          return unless source && target
+          divergence(source, target) if source && target
+        end
 
-          shared = source.zip(target).take_while { |a, b| a == b }.length
+        # Where two box paths part: [container id, source box id, target box
+        # id]. Nil when one box holds the other.
+        def divergence(source, target)
+          shared = common_prefix(source, target)
           return if shared == source.length || shared == target.length
 
           [shared.zero? ? nil : source[shared - 1], source[shared],
            target[shared]]
+        end
+
+        def common_prefix(source, target)
+          source.zip(target).take_while { |a, b| a == b }.length
         end
 
         def place_level(boxes, container)
@@ -89,41 +96,31 @@ module Sirena
           boxes.zip(flat[:children]) do |box, placed|
             box.merge!(x: placed[:x], y: placed[:y])
           end
-          keep_sections(flat) if container.nil?
         end
 
         # Boxes go to elkrb under their position, because a model may repeat
         # an id and elkrb needs each box named apart.
         def flat_graph(boxes, level_edges)
           names = {}
-          boxes.each_with_index { |box, index| names[box[:id]] ||= "box-#{index}" }
-          {
-            id: @graph[:id],
-            children: boxes.each_with_index.map do |box, index|
-              { id: "box-#{index}", width: box[:width], height: box[:height] }
-            end,
-            edges: flat_edges(level_edges, names),
-            layoutOptions: @options,
-          }
+          boxes.each_with_index do |box, index|
+            names[box[:id]] ||= "box-#{index}"
+          end
+          { id: @graph[:id], children: flat_children(boxes),
+            edges: flat_edges(level_edges, names), layoutOptions: @options }
         end
 
-        def flat_edges(level_edges, names)
-          @routed = {}
-          level_edges.each_with_index.filter_map do |(edge, from, to), index|
-            next unless names[from] && names[to]
-
-            @routed["edge-#{index}"] = edge if edge[:sources] == [from] &&
-              edge[:targets] == [to]
-            { id: "edge-#{index}", sources: [names[from]],
-              targets: [names[to]], labels: edge[:labels] || [] }
+        def flat_children(boxes)
+          boxes.each_with_index.map do |box, index|
+            { id: "box-#{index}", width: box[:width], height: box[:height] }
           end
         end
 
-        # An edge between two boxes of the page keeps the route elkrb found.
-        def keep_sections(flat)
-          flat[:edges].each do |placed|
-            edge = @routed[placed[:id]]
-            edge[:sections] = placed[:sections] if edge && placed[:sections]
+        def flat_edges(level_edges, names)
+          level_edges.each_with_index.filter_map do |(edge, from, to), index|
+            next unless names[from] && names[to]
+
+            { id: "edge-#{index}", sources: [names[from]],
+              targets: [names[to]], labels: edge[:labels] || [] }
           end
         end
 
@@ -143,15 +140,35 @@ module Sirena
         # below the top; a title wider than them stretches the box and the
         # contents are centred in it.
         def fit(cluster, contents)
-          left = contents.map { |c| c[:x] }.min
-          top = contents.map { |c| c[:y] }.min
-          inner = contents.map { |c| c[:x] + c[:width] }.max - left
-          width = [inner + (CLUSTER_SIDE * 2), titled_width(cluster)].max.ceil
-          shift(contents, ((width - inner) / 2.0) - left,
-                CLUSTER_VERTICAL - top)
-          cluster[:width] = width
-          cluster[:height] =
-            contents.map { |c| c[:y] + c[:height] }.max + CLUSTER_VERTICAL
+          inner = right_of(contents) - left_of(contents)
+          cluster[:width] = boxed_width(cluster, inner)
+          settle(contents, cluster[:width] - inner)
+          cluster[:height] = bottom_of(contents) + CLUSTER_VERTICAL
+        end
+
+        def boxed_width(cluster, inner)
+          [inner + (CLUSTER_SIDE * 2), titled_width(cluster)].max.ceil
+        end
+
+        def settle(contents, spare)
+          shift(contents, (spare / 2.0) - left_of(contents),
+                CLUSTER_VERTICAL - top_of(contents))
+        end
+
+        def left_of(boxes)
+          boxes.map { |box| box[:x] }.min
+        end
+
+        def top_of(boxes)
+          boxes.map { |box| box[:y] }.min
+        end
+
+        def right_of(boxes)
+          boxes.map { |box| box[:x] + box[:width] }.max
+        end
+
+        def bottom_of(boxes)
+          boxes.map { |box| box[:y] + box[:height] }.max
         end
 
         def shift(boxes, delta_x, delta_y)
@@ -183,32 +200,24 @@ module Sirena
           mirror(flat)
         end
 
-        # Swaps the axes of every box and every edge point. Before the layout
-        # it turns the boxes on their side; after, it undoes that.
+        # Swaps the axes of every box. Before the layout it turns the boxes
+        # on their side; after, it undoes that.
         def transpose(flat)
           flat[:children].each do |box|
             box[:x], box[:y] = box[:y], box[:x] if box[:x]
             box[:width], box[:height] = box[:height], box[:width]
           end
-          RoutePoints.of(flat).each { |point| point[:x], point[:y] = point[:y], point[:x] }
         end
 
         def mirror(flat)
-          horizontal = MIRRORED_X.include?(@direction)
-          vertical = MIRRORED_Y.include?(@direction)
-          return unless horizontal || vertical
-
           boxes = flat[:children]
-          extent_x = boxes.map { |b| b[:x] + b[:width] }.max
-          extent_y = boxes.map { |b| b[:y] + b[:height] }.max
-          boxes.each do |box|
-            box[:x] = extent_x - box[:x] - box[:width] if horizontal
-            box[:y] = extent_y - box[:y] - box[:height] if vertical
-          end
-          RoutePoints.of(flat).each do |point|
-            point[:x] = extent_x - point[:x] if horizontal
-            point[:y] = extent_y - point[:y] if vertical
-          end
+          flip(boxes, :x, :width) if MIRRORED_X.include?(@direction)
+          flip(boxes, :y, :height) if MIRRORED_Y.include?(@direction)
+        end
+
+        def flip(boxes, axis, size)
+          extent = boxes.map { |box| box[axis] + box[size] }.max
+          boxes.each { |box| box[axis] = extent - box[axis] - box[size] }
         end
       end
     end
