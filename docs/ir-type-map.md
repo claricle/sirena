@@ -87,7 +87,7 @@ layout behavior; the older survey's `transform/*` wording refers to these
 | `user_journey` | `graph-shaped` | `lib/sirena/layout/user_journey.rb` | Tasks are identified children and consecutive task flow emits source/target ids (41–46, 89–100). |
 | `gantt` | `pre-positioned` | `lib/sirena/layout/gantt.rb` | Dates, durations, declaration order, and dependencies determine task intervals before drawing (21–31, 60–101). |
 | `pie` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/pie.rb` | Ordered slice values and visibility become shared data; layout alone computes percentages, angles, paths, and labels. |
-| `timeline` | `pre-positioned` | `lib/sirena/layout/timeline.rb` | Event time values determine their position on the source-domain timeline (21–34, 45–74, 98–112). |
+| `timeline` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/timeline.rb` | Sections, events, descriptions, and tasks map to ordered contained placements; layout owns all canvas geometry. |
 | `quadrant` | `pre-positioned` | `lib/sirena/layout/quadrant.rb` | Each point's source x/y values determine its place in the fixed 2x2 chart (28–48, 138–158). |
 | `git_graph` | `graph-shaped` | `lib/sirena/layout/git_graph.rb` | Commits identify parents and emitted connections identify from/to commits (45–82, 226–257); branch order only influences layout. |
 | `mindmap` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/mindmap.rb` | Tree nodes map to shared identities, containment, and resolved parent/child edges; layout owns their geometry. |
@@ -98,7 +98,7 @@ layout behavior; the older survey's `transform/*` wording refers to these
 | `xychart` | `pre-positioned` | `lib/sirena/layout/xy_chart.rb` | Axis domains and data values determine plot positions in source-domain coordinates (33–58, 190–224). |
 | `architecture` | `graph-shaped` | `lib/sirena/layout/architecture.rb` | Services/junctions have ids and each embedded edge model retains `from_id`/`to_id` even though the output also has routed coordinates (24–41, 296–317). |
 | `sankey` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/sankey.rb` | Flows map to shared nodes and resolved weighted edges; layout owns layering, positions, and paths. |
-| `packet` | `pre-positioned` | `lib/sirena/layout/packet.rb` | Field bit ranges determine row, column, and span in the fixed-width bit grid (40–59, 115–180). |
+| `packet` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/packet.rb` | Fields map to ordered bit-start placements with inclusive spans; layout owns row, column, and pixel geometry. |
 | `treemap` | `data-shaped` | `lib/sirena/layout/treemap.rb` | Nested values have containment but no endpoint connectivity; layout allocates space from values (19–44, 47–85). |
 | `c4` | `graph-shaped` | `lib/sirena/layout/c4.rb` | Elements/boundaries become identified children and relationships carry source/target ids (40–50, 178–206). |
 | `info` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/info.rb` | The title and show-information flag map to shared data without nodes or connectivity; layout owns panel geometry. |
@@ -106,9 +106,10 @@ layout behavior; the older survey's `transform/*` wording refers to these
 
 Summary: **6 pre-positioned, 12 graph-shaped, 6 data-shaped; 24 total.**
 
-Migration status: **5 of 24 Mermaid types use the shared IR boundary** — 2
-graph-shaped (`mindmap`, `sankey`) and 3 data-shaped (`pie`, `info`, `error`);
-19 types remain on their private layout inputs.
+Migration status: **7 of 24 Mermaid types use the shared IR boundary** — 2
+graph-shaped (`mindmap`, `sankey`), 3 data-shaped (`pie`, `info`, `error`),
+and 2 pre-positioned (`packet`, `timeline`); 17 types remain on their private
+layout inputs.
 
 `rake type:new[<type>]` adds a data-shaped row immediately above this
 summary and recalculates all four counts from the table. The generated adapter
