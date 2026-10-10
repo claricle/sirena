@@ -33,11 +33,15 @@ RSpec.describe Sirena::Layout::Flowchart do
 
     it "maps every outline to final shape geometry" do
       expect(shapes.map { |shape| nodes.fetch(shape).shape_kind })
-        .to eq(%w[rounded rounded circle circle rhombus hexagon rect])
+        .to eq(%w[rounded stadium circle circle rhombus hexagon rect])
     end
 
-    it "rounds rounded nodes" do
-      expect(nodes.fetch("rounded").corner_radius).to eq(20.0)
+    it "rounds rounded nodes by mmdc's 5" do
+      expect(nodes.fetch("rounded").corner_radius).to eq(5.0)
+    end
+
+    it "rounds stadium nodes by half their height" do
+      expect(nodes.fetch("stadium").corner_radius).to eq(20.0)
     end
 
     it "sizes circle nodes" do

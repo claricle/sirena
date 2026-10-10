@@ -407,13 +407,12 @@ RSpec.describe Sirena::Renderer::Flowchart do
       expect(xml).not_to include("NaN")
     end
 
-    # SVG clamps `rx` to half the width, so a stadium no wider than it is
-    # tall is drawn as an ellipse, not a capsule.
+    # A stadium no wider than it is tall is a capsule with a vertical spine:
+    # its radius is half the width.
     #
-    # The approach has to be diagonal. Dead level with the centre the two
-    # answers coincide — the capsule's cap crosses that line at exactly
-    # the ellipse's own side — so a square-on head would pass this with
-    # the ellipse branch taken out again.
+    # The approach has to be diagonal. Dead level with the centre the
+    # capsule and an ellipse of the same box coincide, so a square-on head
+    # would pass this with the spine turned the wrong way.
     it "lands on the outline of a stadium narrower than it is tall" do
       graph = {
         children: [{ id: "A", x: 95, y: -100, width: 40, height: 20 },
@@ -426,9 +425,11 @@ RSpec.describe Sirena::Renderer::Flowchart do
       tip_x, tip_y = xml[/<polygon[^>]*points="(-?[\d.]+),(-?[\d.]+)/]
         .match(/(-?[\d.]+),(-?[\d.]+)/).captures.map(&:to_f)
 
-      # On the ellipse itself: half the width is 15, half the height 50.
-      expect((((tip_x - 215) / 15.0)**2) + (((tip_y - 10) / 50.0)**2))
-        .to be_within(0.01).of(1.0)
+      # Half the width is 15 and the spine runs 35 either side of the centre.
+      spine_y = tip_y.clamp(10 - 35.0, 10 + 35.0)
+
+      expect(Math.hypot(tip_x - 215, tip_y - spine_y))
+        .to be_within(0.1).of(15.0)
     end
 
     # mmdc caps a loop's depth at 48. The layout never builds a node big
@@ -1224,22 +1225,23 @@ RSpec.describe Sirena::Renderer::Flowchart do
       expect(Math.hypot(tip_x - cx, tip_y - cy)).to be_within(0.1).of(r)
     end
 
-    it "lands on a rounded box's curved end" do
-      xml = Sirena.render("flowchart TD\n  A --> B\n  B --> C\n  C --> D(x)\n")
-      x, y, width, height = node_rect(xml, "D")
-      half_w = width / 2
-      half_h = height / 2
-      tip_x, tip_y = tip_of(xml, "C_to_D")
-      across = (tip_x - (x + half_w)).abs
-      down = tip_y - (y + half_h)
-      straight = [half_w - half_h, 0].max
-      gap = if across <= straight
-              down.abs - half_h
-            else
-              Math.hypot(across - straight, down) - half_h
-            end
+    # mmdc rounds a `(x)` node with a 5 radius. Coming in at a slant on its
+    # corner, the box answer is 2.07 out past that curve.
+    it "lands on a rounded box's curved corner" do
+      graph = {
+        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
+                   { id: "B", x: 110, y: 100, width: 40, height: 40,
+                     metadata: { shape: "rounded" } }],
+        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
+                  metadata: { arrow_type: "arrow" } }],
+      }
+      xml = render_graph(graph).to_xml
+      tip_x, tip_y = tip_of(xml, "A_to_B")
+      corner_x = (tip_x - 130).abs - 15
+      corner_y = (tip_y - 120).abs - 15
+      gap = Math.hypot([corner_x, 0].max, [corner_y, 0].max) - 5
 
-      expect(gap).to be_within(0.05).of(0)
+      expect(gap).to be_within(0.1).of(0)
     end
 
     it "lands on a circle at its radius" do

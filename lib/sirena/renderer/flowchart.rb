@@ -109,7 +109,7 @@ module Sirena
 
       def node_shape(node)
         case node.shape_kind
-        when "rounded" then rounded_rectangle(node)
+        when "rounded", "stadium" then rounded_rectangle(node)
         when "circle" then circle(node)
         when "rhombus", "hexagon" then polygon(node)
         else rectangle(node)

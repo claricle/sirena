@@ -43,6 +43,7 @@ module Sirena
       RHOMBUS_PADDING = 30.0
 
       CLUSTER_CORNER = FlowchartEdgeRouter::CLUSTER_CORNER
+      ROUNDED_CORNER = 5.0
       CLUSTER_TITLE_BASELINE = 20
       EDGE_LABEL_LIFT = 5.0
       SUBSTITUTE_FONT_HEADROOM = 1.2
@@ -59,7 +60,7 @@ module Sirena
       }.freeze
 
       NODE_OUTLINES = {
-        "rounded" => "rounded", "stadium" => "rounded",
+        "rounded" => "rounded", "stadium" => "stadium",
         "circle" => "circle", "double_circle" => "circle",
         "rhombus" => "rhombus", "hexagon" => "hexagon"
       }.freeze
@@ -326,7 +327,8 @@ module Sirena
 
       def corner_radius(kind, width, height)
         return CLUSTER_CORNER if kind == "cluster"
-        return [width, height].min / 2.0 if kind == "rounded"
+        return ROUNDED_CORNER if kind == "rounded"
+        return [width, height].min / 2.0 if kind == "stadium"
 
         0.0
       end
@@ -642,7 +644,8 @@ module Sirena
         when "rhombus" then rhombus_scale(half_w, half_h, delta_x, delta_y)
         when "circle" then circle_scale(half_w, half_h, delta_x, delta_y)
         when "hexagon" then hexagon_scale(half_w, half_h, delta_x, delta_y)
-        when "rounded" then stadium_scale(half_w, half_h, delta_x, delta_y)
+        when "rounded" then rounded_scale(half_w, half_h, delta_x, delta_y)
+        when "stadium" then stadium_scale(half_w, half_h, delta_x, delta_y)
         else box_scale(half_w, half_h, delta_x, delta_y)
         end
       end
@@ -665,6 +668,17 @@ module Sirena
           axis_ratio(delta_x, half_w) + axis_ratio(delta_y, 2 * half_h)
         )
         [slope, delta_y.zero? ? Float::INFINITY : half_h / delta_y.abs].min
+      end
+
+      def rounded_scale(half_w, half_h, x_diff, y_diff)
+        scale = box_scale(half_w, half_h, x_diff, y_diff)
+        inner_x = half_w - ROUNDED_CORNER
+        inner_y = half_h - ROUNDED_CORNER
+        return scale if (x_diff * scale).abs <= inner_x ||
+                        (y_diff * scale).abs <= inner_y
+
+        cap_intersection(inner_x * (x_diff.negative? ? -1 : 1), ROUNDED_CORNER,
+                         x_diff, y_diff, inner_y * (y_diff.negative? ? -1 : 1))
       end
 
       def stadium_scale(half_w, half_h, x_diff, y_diff)
@@ -690,10 +704,10 @@ module Sirena
         delta.zero? ? 0.0 : delta.abs / half_extent
       end
 
-      def cap_intersection(centre_x, radius, delta_x, delta_y)
+      def cap_intersection(centre_x, radius, delta_x, delta_y, centre_y = 0)
         a = (delta_x * delta_x) + (delta_y * delta_y)
-        b = delta_x * centre_x
-        c = (centre_x * centre_x) - (radius * radius)
+        b = (delta_x * centre_x) + (delta_y * centre_y)
+        c = (centre_x * centre_x) + (centre_y * centre_y) - (radius * radius)
         (b + Math.sqrt([(b * b) - (a * c), 0].max)) / a
       end
 
