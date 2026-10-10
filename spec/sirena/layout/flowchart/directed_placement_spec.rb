@@ -30,6 +30,14 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
     )
   end
 
+  # The SVG writes whole points, so a width not rounded up can leave less
+  # than the 8 mmdc keeps beside the members.
+  it "never leaves a member closer than 8 points to its subgraph box" do
+    source = "flowchart TD\nsubgraph s\nA[Laptop computer]\nend\n"
+
+    expect(builder.cluster_margins(source).first(2)).to all(be >= 8.0)
+  end
+
   context "when a model repeats an id" do
     let(:scene) do
       diagram = Sirena::Diagram::Flowchart.new(direction: "TD")
