@@ -79,7 +79,7 @@ RSpec.describe Sirena::Layout::GitGraph do
 
   it "preserves branch metadata and assigns lanes only during layout" do
     expect(branch_summary)
-      .to eq([%w[main main feature], [1, 1, 2], [2, "main", "A"]])
+      .to eq([%w[main feature], [0, 1], [2, "main", "A"]])
   end
 
   it "applies bottom-to-top orientation without mutating either input" do

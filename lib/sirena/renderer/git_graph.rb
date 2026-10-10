@@ -92,7 +92,7 @@ module Sirena
         Svg::Circle.new.tap do |circle|
           circle.cx = commit.x
           circle.cy = commit.y
-          circle.r = 8
+          circle.r = Layout::GitGraph::COMMIT_RADIUS
           circle.fill = commit_fill(commit, branch_colours)
           circle.stroke = commit_stroke(commit, branch_colours)
           circle.stroke_width = "2"
