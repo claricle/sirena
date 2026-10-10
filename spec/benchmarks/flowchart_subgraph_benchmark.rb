@@ -17,6 +17,14 @@ module FlowchartSubgraphBenchmarkHelpers
   def boxes(source)
     described_class.new.parse(source).subgraphs
   end
+
+  def parse_time(source)
+    wall_time { described_class.new.parse(source) }
+  end
+
+  def boxed_source(body)
+    "graph TD\nsubgraph s [T]\n#{body}\nend\n"
+  end
 end
 
 RSpec.describe Sirena::Parser::Flowchart do
@@ -59,11 +67,8 @@ RSpec.describe Sirena::Parser::Flowchart do
   describe "a subgraph holding many nodes", :speed do
     it "costs no more than the same nodes outside one" do
       body = (0...1600).map { |i| "n#{i}" }.join("\n")
-      loose = wall_time { described_class.new.parse("graph TD\n#{body}\n") }
-      boxed = wall_time do
-        described_class.new.parse("graph TD\nsubgraph s [T]\n#{body}\nend\n")
-      end
-
+      loose = parse_time("graph TD\n#{body}\n")
+      boxed = parse_time(boxed_source(body))
       expect(boxed).to be < loose * 2
     end
   end
