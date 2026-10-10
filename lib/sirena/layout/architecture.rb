@@ -675,7 +675,7 @@ module Sirena
       # around whatever is in the way instead, so the transform only needs
       # to hand it the real anchor point and the real declared side.
       def position_edges(diagram, service_positions)
-        diagram.edges.map do |edge|
+        diagram.edges.filter_map do |edge|
           from = service_positions[edge.from_id]
           to = service_positions[edge.to_id]
 
@@ -695,7 +695,7 @@ module Sirena
             from_side: from_side,
             to_side: to_side,
           }
-        end.compact
+        end
       end
 
       # The grammar's position token is match("[LRTB]").repeat(1) - one OR

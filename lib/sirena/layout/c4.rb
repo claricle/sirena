@@ -470,11 +470,9 @@ module Sirena
       end
 
       def transform_root_nodes(diagram, elements, boundaries)
-        nodes = []
-
         # Add root-level boundaries (which contain their own elements)
-        boundaries.each do |boundary|
-          nodes << transform_boundary(diagram, boundary)
+        nodes = boundaries.map do |boundary|
+          transform_boundary(diagram, boundary)
         end
 
         # Add root-level elements (not in any boundary)
@@ -490,11 +488,9 @@ module Sirena
         elements = diagram.elements_in_boundary(boundary.id)
         child_boundaries = diagram.boundaries_in_boundary(boundary.id)
 
-        children = []
-
         # Add child boundaries first
-        child_boundaries.each do |child_boundary|
-          children << transform_boundary(diagram, child_boundary)
+        children = child_boundaries.map do |child_boundary|
+          transform_boundary(diagram, child_boundary)
         end
 
         # Add elements in this boundary
