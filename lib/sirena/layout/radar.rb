@@ -95,8 +95,6 @@ module Sirena
       # Retains the pre-Scene structure for direct callers during conversion.
       def build_graph(diagram)
         data = ir_data(diagram)
-        return empty_layout if data.dimensions.empty?
-
         min_value, max_value = calculate_value_range(data)
         axes = position_axes(data)
         radar_dimensions(min_value, max_value).merge(
@@ -277,14 +275,6 @@ module Sirena
       def font_size(name, fallback)
         value = theme.typography&.public_send(name)
         value&.positive? ? value : fallback
-      end
-
-      def empty_layout
-        {
-          axes: [], curves: [], grid_circles: [], center_x: PADDING,
-          center_y: PADDING, radius: DEFAULT_RADIUS, width: PADDING * 2,
-          height: PADDING * 2, min_value: 0, max_value: 0, options: {}
-        }
       end
 
       def radar_dimensions(min_value, max_value)

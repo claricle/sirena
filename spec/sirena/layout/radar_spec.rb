@@ -12,14 +12,14 @@ RSpec.describe Sirena::Layout::Radar do
 
   context "without axes" do
     subject(:empty_scene_geometry) do
-      [graph.class, graph.axes, graph.curves, graph.grid_circles,
+      [graph.class, graph.axes, graph.curves, graph.grid_circles.map(&:radius),
        graph.center_x, graph.center_y, graph.radius, graph.width, graph.height,
        graph.min_value, graph.max_value, graph.view_box]
     end
 
-    it "returns the compact empty-axis canvas" do
-      expected = [described_class::Scene, [], [], [], 50.0, 50.0, 300.0,
-                  100.0, 100.0, 0.0, 0.0, "0 0 100 100"]
+    it "keeps the default canvas with the default rings" do
+      expected = [described_class::Scene, [], [], [60.0, 120.0, 180.0, 240.0, 300.0],
+                  350.0, 350.0, 300.0, 700.0, 700.0, 0.0, 100.0, "0 0 700 700"]
 
       expect(empty_scene_geometry).to eq(expected)
     end
