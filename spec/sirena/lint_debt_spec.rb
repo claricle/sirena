@@ -117,6 +117,18 @@ RSpec.describe Sirena::LintDebt do
     end
   end
 
+  describe "rubocop runs" do
+    # `rows` and the inline layer count are the same invocation; running
+    # it twice cost a Windows cell about two seconds per report.
+    it "spawns rubocop three times for rows plus by_source" do
+      allow(Open3).to receive(:capture3).and_call_original
+      debt.rows
+      debt.by_source
+
+      expect(Open3).to have_received(:capture3).exactly(3).times
+    end
+  end
+
   describe "#report" do
     # Every other #exempted_count spec calls the method directly, so none
     # of them would notice #report's own "exempted" key going missing or

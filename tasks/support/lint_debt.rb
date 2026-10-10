@@ -153,10 +153,10 @@ module Sirena
       @config_layer_count ||= offense_count(synthesized_config)
     end
 
+    # The same rubocop run `measured_rows` tallies, so one subprocess
+    # answers both.
     def inline_layer_count
-      @inline_layer_count ||= offense_count(
-        synthesized_config, ignore_disable_comments: true
-      )
+      measured_result.dig("summary", "offense_count")
     end
 
     def refuse_ambient_options!
@@ -171,8 +171,12 @@ module Sirena
     # already has), and each call is its own `bundle exec rubocop`
     # subprocess -- unmemoized, every report would pay for it twice.
     def measured_rows
-      @measured_rows ||= rows_from(
-        run_rubocop(synthesized_config, ignore_disable_comments: true),
+      @measured_rows ||= rows_from(measured_result)
+    end
+
+    def measured_result
+      @measured_result ||= run_rubocop(
+        synthesized_config, ignore_disable_comments: true
       )
     end
 
@@ -189,8 +193,8 @@ module Sirena
       end
     end
 
-    def offense_count(config, ignore_disable_comments: false)
-      run_rubocop(config, ignore_disable_comments: ignore_disable_comments)
+    def offense_count(config)
+      run_rubocop(config, ignore_disable_comments: false)
         .dig("summary", "offense_count")
     end
 
