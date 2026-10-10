@@ -1,0 +1,81 @@
+{
+  "source": "mindmap\n  Root node here\n    A very long label for the first child node\n    Another very long label for the second one\n    Third quite long label for this child too\n    Fourth quite long label for this child too\n    Fifth quite long label for this child too\n",
+  "nodes": [
+    {
+      "id": "0",
+      "width": 149.203125,
+      "height": 34.0,
+      "centre": [
+        387.7370359404729,
+        124.04330173418032
+      ]
+    },
+    {
+      "id": "1",
+      "width": 240.0,
+      "height": 58.0,
+      "centre": [
+        282.1568065042161,
+        44.0
+      ]
+    },
+    {
+      "id": "2",
+      "width": 240.0,
+      "height": 58.0,
+      "centre": [
+        607.019675653245,
+        185.86435700746642
+      ]
+    },
+    {
+      "id": "3",
+      "width": 240.0,
+      "height": 58.0,
+      "centre": [
+        135.0,
+        134.37543687720324
+      ]
+    },
+    {
+      "id": "4",
+      "width": 240.0,
+      "height": 58.0,
+      "centre": [
+        568.7992271415496,
+        58.48679608818452
+      ]
+    },
+    {
+      "id": "5",
+      "width": 240.0,
+      "height": 58.0,
+      "centre": [
+        319.15409534546575,
+        214.36800831175162
+      ]
+    }
+  ],
+  "edges": [
+    [
+      "0",
+      "1"
+    ],
+    [
+      "0",
+      "2"
+    ],
+    [
+      "0",
+      "3"
+    ],
+    [
+      "0",
+      "4"
+    ],
+    [
+      "0",
+      "5"
+    ]
+  ]
+}
