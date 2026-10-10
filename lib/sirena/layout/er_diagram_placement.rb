@@ -40,27 +40,30 @@ module Sirena
 
         build_nodes
         layers = ErDiagramOrdering.call(@ranks, @chain)
-        xs = ErDiagramCoordinates.call(
+        centres = ErDiagramCoordinates.call(
           layers, @chain, widths, dummies,
           node: NODE_SPACING, edge: EDGE_SPACING
         )
-        write(layers, xs)
+        write(layers, centres)
         @graph
       end
 
       private
 
       def build_nodes
-        @nodes = @children.to_h do |child|
-          [child[:id], entity_node(child)]
-        end
-        pairs = @edges.map do |edge|
-          [edge[:sources]&.first, edge[:targets]&.first]
-        end
-        pairs = pairs.map { |pair| pair.all? { |id| @nodes.key?(id) } ? pair : [nil, nil] }
-        @ranks, oriented = ErDiagramLayering.call(@nodes.keys, pairs)
+        @nodes = @children.to_h { |child| [child[:id], entity_node(child)] }
+        @ranks, oriented = ErDiagramLayering.call(@nodes.keys, relation_pairs)
         @chain = []
         oriented.each_with_index { |pair, index| add_chain(pair, index) }
+      end
+
+      # A relation with an end that is not an entity takes no part, like a
+      # self-loop.
+      def relation_pairs
+        @edges.map do |edge|
+          pair = [edge[:sources]&.first, edge[:targets]&.first]
+          pair.all? { |id| @nodes.key?(id) } ? pair : [nil, nil]
+        end
       end
 
       # The relation becomes a chain of dummy nodes, one per rank crossed;
@@ -69,17 +72,17 @@ module Sirena
         return unless pair
 
         from, to = pair
-        low = @ranks[from]
-        middle = low + ((@ranks[to] - low) / 2)
-        previous = from
-        ((low + 1)...@ranks[to]).each do |rank|
-          dummy = dummy_node("#{index}:#{rank}", dummy_size(index, rank == middle))
-          @nodes[dummy.id] = dummy
-          @ranks[dummy.id] = rank
-          @chain << [previous, dummy.id]
-          previous = dummy.id
+        middle = (@ranks[from] + @ranks[to]) / 2
+        inner = ((@ranks[from] + 1)...@ranks[to]).map do |rank|
+          add_dummy("#{index}:#{rank}", rank, dummy_size(index, rank == middle))
         end
-        @chain << [previous, to]
+        @chain.concat([from, *inner, to].each_cons(2).to_a)
+      end
+
+      def add_dummy(id, rank, size)
+        @nodes[id] = dummy_node(id, size)
+        @ranks[id] = rank
+        id
       end
 
       def entity_node(child)
@@ -99,11 +102,13 @@ module Sirena
       end
 
       def label_size(edge)
-        text = (edge[:labels] || []).find { |item| !item[:position] }&.dig(:text)
+        label = (edge[:labels] || []).find { |item| !item[:position] }
+        text = label&.dig(:text)
         return if text.to_s.empty?
 
-        { width: ErDiagramEntitySize.text_width(text) * LABEL_FONT_SIZE /
-          ErDiagramEntitySize::FONT_SIZE, height: LABEL_HEIGHT }
+        width = ErDiagramEntitySize.text_width(text)
+        { width: width * LABEL_FONT_SIZE / ErDiagramEntitySize::FONT_SIZE,
+          height: LABEL_HEIGHT }
       end
 
       def widths
@@ -116,26 +121,36 @@ module Sirena
 
       # The canvas reaches as far as the widest label or edge route, not
       # only the entity boxes, so the extent covers every node in the layers.
-      def write(layers, xs)
-        left = layers.flatten.map { |id| xs[id] - (@nodes[id].width / 2.0) }.min
-        top = MARGIN
-        layers.each do |layer|
-          tallest = layer.map { |id| @nodes[id].height }.max || 0
-          layer.each do |id|
-            next if @nodes[id].dummy?
-
-            place(id, xs[id] - left + MARGIN, top + (tallest / 2.0))
-          end
-          top += tallest + (RANK_SPACING / 2.0)
+      def write(layers, centres)
+        left = layers.flatten.map { |id| left_side(id, centres) }.min
+        bottom = layers.reduce(MARGIN) do |top, layer|
+          place_layer(layer, centres, left, top)
         end
-        @graph[:extent] = extent(layers, xs, left, top)
+        @graph[:extent] = extent(layers, centres, left, bottom)
       end
 
-      def extent(layers, xs, left, top)
+      # @return [Numeric] where the next rank starts
+      def place_layer(layer, centres, left, top)
+        tallest = layer.map { |id| @nodes[id].height }.max || 0
+        place_entities(layer, centres, left, top + (tallest / 2.0))
+        top + (tallest + (RANK_SPACING / 2.0))
+      end
+
+      def place_entities(layer, centres, left, centre_y)
+        layer.reject { |id| @nodes[id].dummy? }.each do |id|
+          place(id, centres[id] - left + MARGIN, centre_y)
+        end
+      end
+
+      def left_side(id, centres)
+        centres[id] - (@nodes[id].width / 2.0)
+      end
+
+      def extent(layers, centres, left, bottom)
         right = layers.flatten.map do |id|
-          xs[id] - left + MARGIN + (@nodes[id].width / 2.0)
+          centres[id] - left + MARGIN + (@nodes[id].width / 2.0)
         end.max
-        [right, top - (RANK_SPACING / 2.0)]
+        [right, bottom - (RANK_SPACING / 2.0)]
       end
 
       def place(id, center_x, center_y)
