@@ -38,14 +38,14 @@ module Sirena
         end
 
         def try(source, context, _consume_all)
-          start_slice = source.consume(0)
+          origin = source.consume(0)
           matched = self.class.scan(source, @anchored)
 
-          if @min.positive? && matched.empty?
-            return context.err(self, source, "Expected at least one matching character")
-          end
+          message = "Expected at least one matching character"
+          empty = @min.positive? && matched.empty?
+          return context.err(self, source, message) if empty
 
-          succ(Parslet::Slice.new(start_slice.position, matched, start_slice.line_cache))
+          succ(Parslet::Slice.new(origin.position, matched, origin.line_cache))
         end
 
         # The `\A(?:class)*` regexp that `scan` expects, for a Parslet-style
