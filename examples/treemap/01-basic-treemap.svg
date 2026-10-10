@@ -9,9 +9,11 @@
 <g>
   <rect fill="#8dd3c7" stroke="#000000" stroke-width="2" x="10.0" y="10.0" width="780.0" height="580.0" rx="4.0" ry="4.0"/>
   <text fill="#000000" x="15.0" y="25.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Company Revenue</text>
+  <text fill="#000000" x="785.0" y="25.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">175000</text>
   <g>
     <rect fill="#ffffb3" stroke="#000000" stroke-width="2" x="20.0" y="30.0" width="760.0" height="179.14285714285717" rx="4.0" ry="4.0"/>
     <text fill="#000000" x="25.0" y="45.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">North America</text>
+    <text fill="#000000" x="775.0" y="45.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">57000</text>
     <g>
       <rect fill="#bebada" stroke="#000000" stroke-width="2" x="30.0" y="50.0" width="740.0" height="117.74436090225566" rx="4.0" ry="4.0"/>
       <text fill="#000000" x="35.0" y="65.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">US</text>
@@ -26,6 +28,7 @@
   <g>
     <rect fill="#ffffb3" stroke="#000000" stroke-width="2" x="20.0" y="219.14285714285717" width="760.0" height="213.71428571428572" rx="4.0" ry="4.0"/>
     <text fill="#000000" x="25.0" y="234.14285714285717" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Europe</text>
+    <text fill="#000000" x="775.0" y="234.14285714285717" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">68000</text>
     <g>
       <rect fill="#bebada" stroke="#000000" stroke-width="2" x="30.0" y="239.14285714285717" width="740.0" height="75.6470588235294" rx="4.0" ry="4.0"/>
       <text fill="#000000" x="35.0" y="254.14285714285717" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">UK</text>
@@ -45,6 +48,7 @@
   <g>
     <rect fill="#ffffb3" stroke="#000000" stroke-width="2" x="20.0" y="442.8571428571429" width="760.0" height="157.14285714285714" rx="4.0" ry="4.0"/>
     <text fill="#000000" x="25.0" y="457.8571428571429" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Asia</text>
+    <text fill="#000000" x="775.0" y="457.8571428571429" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">50000</text>
     <g>
       <rect fill="#bebada" stroke="#000000" stroke-width="2" x="30.0" y="462.8571428571429" width="740.0" height="40.0" rx="4.0" ry="4.0"/>
       <text fill="#000000" x="35.0" y="477.8571428571429" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Japan</text>

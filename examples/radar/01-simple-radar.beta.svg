@@ -41,4 +41,5 @@
 <text fill="#000000" x="35.0" y="524.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">Current State</text>
 <circle fill="#7c3aed" stroke="none" cx="20.0" cy="540.0" r="5.0"/>
 <text fill="#000000" x="35.0" y="544.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">Target State</text>
+<text fill="#000000" x="280.0" y="28.8" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16">Technology Stack Assessment</text>
 </svg>
