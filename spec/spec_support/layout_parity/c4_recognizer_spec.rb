@@ -34,11 +34,11 @@ RSpec.describe SpecSupport::LayoutParity::C4Recognizer do
     expect(identities(sirena_summary)).to eq(identities(reference_summary))
   end
 
-  it "keeps the real containment mismatch visible" do
+  it "matches the containment of the reference" do
     reference_summary, sirena_summary = real_pair
     parents = [parent_map(reference_summary), parent_map(sirena_summary)]
 
     expect(parents.map { |map| map.fetch("Banking Customer A") })
-      .to eq(["BankBoundary0", "BankBoundary2"])
+      .to eq(%w[BankBoundary0 BankBoundary0])
   end
 end
