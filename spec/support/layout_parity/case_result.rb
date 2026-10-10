@@ -25,7 +25,18 @@ module SpecSupport
       end
 
       def hard_failure?
-        sirena_status != "rendered" || invariants.any?
+        sirena_status != "rendered" || invariants.any? || unmatched_nonempty?
+      end
+
+      private
+
+      def unmatched_nonempty?
+        geometry.fetch(:matched).zero? && !both_figures_empty?
+      end
+
+      def both_figures_empty?
+        geometry.fetch(:reference_elements).zero? &&
+          geometry.fetch(:sirena_elements).zero?
       end
     end
   end
