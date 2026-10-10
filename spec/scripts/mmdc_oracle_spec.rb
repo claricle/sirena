@@ -14,11 +14,15 @@ RSpec.describe MmdcOracle do
     it "accepts on a successful exit with a valid, non-error SVG" do
       svg = '<svg aria-roledescription="flowchart-v2"><style/></svg>'
 
-      with_svg_file(svg) { |path| expect(described_class.direct_verdict(true, path)).to be(:accepts) }
+      with_svg_file(svg) do |path|
+        expect(described_class.direct_verdict(true, path)).to be(:accepts)
+      end
     end
 
     it "rejects on a nonzero exit with a genuine, well-formed rejection page" do
-      with_svg_file(syntax_error_svg) { |path| expect(described_class.direct_verdict(false, path)).to be(:rejects) }
+      with_svg_file(syntax_error_svg) do |path|
+        expect(described_class.direct_verdict(false, path)).to be(:rejects)
+      end
     end
 
     # The bug: `error_page?` is a regex over raw markup, not an XML validity
@@ -26,20 +30,26 @@ RSpec.describe MmdcOracle do
     # document that still contains the error-role and XHTML-style markers a
     # real rejection page has. That is a crash producing garbage, not mermaid
     # answering "no" — it must not be reported as :rejects.
-    it "reports a crash, not a rejection, for a truncated document that still carries the error markers" do
+    it "reports a truncated error-marked document as a crash" do
       truncated = '<svg aria-roledescription="error">' \
                   '<style xmlns="http://www.w3.org/1999/xhtml">.error-icon{fill:#55'
 
-      with_svg_file(truncated) { |path| expect(described_class.direct_verdict(false, path)).to be(:error) }
+      with_svg_file(truncated) do |path|
+        expect(described_class.direct_verdict(false, path)).to be(:error)
+      end
     end
 
-    it "errors on a successful exit with a malformed SVG (unchanged existing behaviour)" do
-      with_svg_file("not xml") { |path| expect(described_class.direct_verdict(true, path)).to be(:error) }
+    it "errors on a successful exit with malformed SVG" do
+      with_svg_file("not xml") do |path|
+        expect(described_class.direct_verdict(true, path)).to be(:error)
+      end
     end
 
     it "is ambiguous on a nonzero exit with no output file at all" do
       Dir.mktmpdir do |dir|
-        expect(described_class.direct_verdict(false, File.join(dir, "missing.svg"))).to be(:ambiguous)
+        path = File.join(dir, "missing.svg")
+
+        expect(described_class.direct_verdict(false, path)).to be(:ambiguous)
       end
     end
   end

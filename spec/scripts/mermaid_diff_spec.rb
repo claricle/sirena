@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 require "open3"
-# RbConfig arrives with RubyGems, not with the interpreter: `ruby --disable-gems`
-# raises NameError on it. The example at :587 calls `RbConfig.ruby` to re-invoke
+# RbConfig arrives with RubyGems, not with the interpreter. Running Ruby with
+# `--disable-gems` raises NameError on it. The example at :587 calls
+# `RbConfig.ruby` to re-invoke
 # the current interpreter, so requiring it here is what makes that example
 # independent of how the suite was launched.
 require "rbconfig"
@@ -21,7 +22,8 @@ unless defined?(MermaidDiff)
 end
 unless defined?(CorpusVerdicts)
   CorpusVerdicts = Module.new
-  load File.expand_path("../../scripts/corpus_verdicts.rb", __dir__), CorpusVerdicts
+  load File.expand_path("../../scripts/corpus_verdicts.rb", __dir__),
+       CorpusVerdicts
 end
 
 # Every example that breaks `ps` puts a real broken `ps` on PATH, and every
@@ -101,31 +103,35 @@ RSpec.describe MermaidDiff do
     # than this one. SystemStackError is not a StandardError, so it took the
     # whole run down instead of being one rejected probe.
     it "answers instead of crashing when the parser runs out of stack" do
-      deep = "flowchart LR\n#{"  subgraph s\n" * 2000}  A --> B\n#{"  end\n" * 2000}"
+      deep = "flowchart LR\n#{"  subgraph s\n" * 2000}  " \
+             "A --> B\n#{"  end\n" * 2000}"
 
       expect(harness.send(:sirena_verdict, deep)).to be(:rejects)
     end
   end
 
   describe "asking mermaid for a verdict" do
+    let(:timeout_text) { "case timed out" }
+    let(:missing_text) { "no SVG was written" }
+
     it "treats a missing process status as infrastructure failure" do
       result = MmdcOracle.verdict("probe") do |input, _output|
         raise "unexpected canary run" unless input == "probe"
 
-        [nil, "case timed out"]
+        [nil, timeout_text]
       end
 
-      expect([result.verdict, result.diagnostic]).to eq([:error, "case timed out"])
+      expect([result.verdict, result.diagnostic]).to eq([:error, timeout_text])
     end
 
     it "treats success without an SVG as infrastructure failure" do
       result = MmdcOracle.verdict("probe") do |input, _output|
         raise "unexpected canary run" unless input == "probe"
 
-        [true, "no SVG was written"]
+        [true, missing_text]
       end
 
-      expect([result.verdict, result.diagnostic]).to eq([:error, "no SVG was written"])
+      expect([result.verdict, result.diagnostic]).to eq([:error, missing_text])
     end
 
     # mmdc can fail to spawn long after the version check passed — the
@@ -215,7 +221,8 @@ RSpec.describe MermaidDiff do
 
       only("mmdc", wedge("20.31")) do
         expect { Timeout.timeout(guard) { harness.send(:check_oracle) } }
-          .to raise_error(SystemExit).and output(/missing or not answering/).to_stderr
+          .to raise_error(SystemExit)
+          .and output(/missing or not answering/).to_stderr
       end
 
       expect(gone?("20.31")).to be(true)
@@ -231,7 +238,8 @@ RSpec.describe MermaidDiff do
         "flowchart LR\n  A[reject-by-fake]\n",
         mmdc: selective_mmdc,
       )
-      failed_out, failed_err, failed_status = run_harness(trivial_source, mmdc: unavailable_mmdc)
+      failed_run = run_harness(trivial_source, mmdc: unavailable_mmdc)
+      failed_out, failed_err, failed_status = failed_run
 
       actual = [
         agree_status.exitstatus,
@@ -269,7 +277,8 @@ RSpec.describe MermaidDiff do
     it "passes the only-gaps flag through to the report" do
       source = "not a diagram\n%%%%\nflowchart LR\n  A[reject-by-fake]\n"
 
-      stdout, stderr, status = run_harness(source, "--only-gaps", mmdc: selective_mmdc)
+      stdout, stderr, status = run_harness(source, "--only-gaps",
+                                           mmdc: selective_mmdc)
 
       expected = [
         1,
@@ -285,7 +294,8 @@ RSpec.describe MermaidDiff do
       stdout, stderr, status = run_harness(trivial_source, relative: true)
 
       expect([status.exitstatus, stdout, stderr]).to eq(
-        [0, "\n1 probes: 1 agree, 0 gaps, 0 over-accepted, 0 mmdc failures\n", ""],
+        [0, "\n1 probes: 1 agree, 0 gaps, 0 over-accepted, 0 mmdc failures\n",
+         ""],
       )
     end
   end
@@ -363,6 +373,21 @@ RSpec.describe MermaidDiff do
   # renderings have the same root role; only the syntax-error page puts its
   # style element in the XHTML namespace.
   describe "reading mermaid's verdict off an SVG" do
+    let(:root_error_text_svg) do
+      '<svg id="my-svg" class="flowchart" ' \
+        'role="graphics-document document" ' \
+        'aria-roledescription="flowchart-v2">' \
+        "<style>.error-icon{fill:#552222;}</style>" \
+        '<g class="node"><span>Syntax error in text</span></g></svg>'
+    end
+    let(:nested_error_role_svg) do
+      '<svg id="my-svg" role="graphics-document document" ' \
+        'aria-roledescription="flowchart-v2" ' \
+        'aria-describedby="chart-desc-my-svg">' \
+        '<desc id="chart-desc-my-svg">aria-roledescription="error"</desc>' \
+        '<g class="node"/></svg>'
+    end
+
     it "accepts an intentional error diagram" do
       expect(oracle_verdict(intentional_error_svg)).to be(:accepts)
     end
@@ -397,12 +422,7 @@ RSpec.describe MermaidDiff do
     end
 
     it "ignores the word error everywhere but the root element" do
-      svg = '<svg id="my-svg" class="flowchart" role="graphics-document document" ' \
-            'aria-roledescription="flowchart-v2">' \
-            "<style>.error-icon{fill:#552222;}</style>" \
-            '<g class="node"><span>Syntax error in text</span></g></svg>'
-
-      expect(oracle_verdict(svg)).to be(:accepts)
+      expect(oracle_verdict(root_error_text_svg)).to be(:accepts)
     end
 
     # A source can put the marker itself into the document. mmdc renders
@@ -410,12 +430,7 @@ RSpec.describe MermaidDiff do
     # <desc> with the quotes intact, so reading the whole document calls a
     # diagram mermaid drew a rejection. Cut from that output.
     it "ignores the error role when it sits below the root element" do
-      svg = '<svg id="my-svg" role="graphics-document document" ' \
-            'aria-roledescription="flowchart-v2" aria-describedby="chart-desc-my-svg">' \
-            '<desc id="chart-desc-my-svg">aria-roledescription="error"</desc>' \
-            '<g class="node"/></svg>'
-
-      expect(oracle_verdict(svg)).to be(:accepts)
+      expect(oracle_verdict(nested_error_role_svg)).to be(:accepts)
     end
   end
 
@@ -428,8 +443,10 @@ RSpec.describe MermaidDiff do
         File.write(syntax_error, syntax_error_svg)
 
         prefix_path(fake_mmdc(dir, copying_mmdc)) do
-          expect(corpus_harness.send(:local_mmdc_verdict, intentional)).to be(:accepts)
-          expect(corpus_harness.send(:local_mmdc_verdict, syntax_error)).to be(:rejects)
+          expect(corpus_harness.send(:local_mmdc_verdict,
+                                     intentional)).to be(:accepts)
+          expect(corpus_harness.send(:local_mmdc_verdict,
+                                     syntax_error)).to be(:rejects)
         end
       end
     end
@@ -457,13 +474,17 @@ RSpec.describe MermaidDiff do
           { path: path }
         end
         rows = entries.map do |entry|
-          { "case" => entry[:path], "verdict" => "invalid", "evidence" => "sidecar rejected it" }
+          { "case" => entry[:path], "verdict" => "invalid",
+            "evidence" => "sidecar rejected it" }
         end
 
         errors = nil
         prefix_path(fake_mmdc(dir, corpus_verdict_mmdc)) do
-          expect { errors = corpus_harness.send(:verify_invalid!, rows, entries) }
-            .to output(/checked 3 invalid case\(s\).*1 promoted to valid/).to_stderr
+          expect do
+            errors = corpus_harness.send(:verify_invalid!, rows, entries)
+          end.to output(
+            /checked 3 invalid case\(s\).*1 promoted to valid/,
+          ).to_stderr
         end
 
         expected = [
@@ -472,7 +493,9 @@ RSpec.describe MermaidDiff do
           ["invalid", "local mmdc could not be run"],
         ]
 
-        expect(rows.map { |row| [row["verdict"], row["evidence"]] }).to eq(expected)
+        expect(rows.map do |row|
+          [row["verdict"], row["evidence"]]
+        end).to eq(expected)
         # The CLI's abort-on-broken-mmdc gate reads exactly this return value
         # (corpus_verdicts.rb:318-319) -- only the third row is a genuine
         # :error (mmdc could not be run), so it must be 1, not 3.
@@ -552,7 +575,8 @@ RSpec.describe MermaidDiff do
       source = +"flowchart LR\n  A[\xFF]\n"
       source.force_encoding(Encoding::UTF_8)
 
-      expect(harness.send(:one_line, source)).to eq("flowchart LR |   A[\uFFFD]")
+      expect(harness.send(:one_line,
+                          source)).to eq("flowchart LR |   A[\uFFFD]")
     end
 
     it "escapes terminal control bytes in a record" do
