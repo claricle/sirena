@@ -4,9 +4,9 @@
     "type": "class",
     "cases": 37,
     "oracle_valid": 35,
-    "passing": 34,
-    "pass_rate": 0.9714,
-    "status": "34/35 oracle-valid cases pass; 2/37 cases are rejected by the pinned oracle",
+    "passing": 35,
+    "pass_rate": 1.0,
+    "status": "35/35 oracle-valid cases pass; 2/37 cases are rejected by the pinned oracle",
     "provenance": "upstream-fixture"
   },
   {
@@ -14,9 +14,9 @@
     "type": "sequence",
     "cases": 79,
     "oracle_valid": 77,
-    "passing": 58,
-    "pass_rate": 0.7532,
-    "status": "58/77 oracle-valid cases pass; 2/79 cases are rejected by the pinned oracle",
+    "passing": 63,
+    "pass_rate": 0.8182,
+    "status": "63/77 oracle-valid cases pass; 2/79 cases are rejected by the pinned oracle",
     "provenance": "upstream-fixture"
   }
 ]
