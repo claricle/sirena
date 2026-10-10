@@ -55,7 +55,7 @@ module Sirena
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
         scene = typed_scene(graph)
-        svg = typed_document(scene)
+        svg = create_document(scene)
         render_scene_title(svg, scene)
         scene.sections.each { |label| svg << label_element(label) }
         scene.tasks.each { |task| render_typed_task(svg, task) }
@@ -330,11 +330,6 @@ module Sirena
         return graph if graph.is_a?(Layout::UserJourney::Scene)
 
         Layout::UserJourney.from_graph(graph, theme: theme)
-      end
-
-      def typed_document(scene)
-        Svg::Document.new(width: scene.width, height: scene.height,
-                          view_box: scene.view_box)
       end
 
       def render_scene_title(svg, scene)

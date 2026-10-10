@@ -17,7 +17,7 @@ module Sirena
       # @param scene [Layout::Mindmap::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = create_document_from_layout(scene)
+        svg = create_document(scene)
         render_connections(scene, svg)
         render_nodes(scene, svg)
 
@@ -25,17 +25,6 @@ module Sirena
       end
 
       protected
-
-      # Kept as the one-argument protected extension point from 0.1.0.
-      # @param scene [Layout::Mindmap::Scene] final canvas geometry
-      # @return [Svg::Document] new SVG document
-      def create_document_from_layout(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
 
       # Renders all connections between nodes.
       #

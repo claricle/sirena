@@ -35,7 +35,7 @@ module Sirena
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
         scene = typed_scene(graph)
-        svg = create_document_for_error(scene)
+        svg = create_document(scene)
 
         # Render error box
         render_error_box(scene, svg)
@@ -50,15 +50,6 @@ module Sirena
       end
 
       protected
-
-      def create_document_for_error(graph)
-        scene = typed_scene(graph)
-        Svg::Document.new.tap do |doc|
-          doc.width = scene.width
-          doc.height = scene.height
-          doc.view_box = scene.view_box
-        end
-      end
 
       def render_error_box(graph, svg)
         geometry = typed_scene(graph).box
