@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../layout/sequence"
+require_relative "sequence/note_drawing"
 
 module Sirena
   module Renderer
@@ -42,6 +43,7 @@ module Sirena
         scene.participants.each do |participant|
           draw_participant(participant, svg)
         end
+        scene.notes.each { |note| svg << NoteDrawing.new(note).group }
         svg
       end
 
@@ -54,7 +56,8 @@ module Sirena
         render_lifelines(positions, metadata[:message_count] || 0, svg)
         render_messages(graph, positions, svg) if graph[:edges]
         render_participants(graph[:children], positions, svg)
-        render_notes(metadata[:notes], positions, svg) if metadata[:notes]
+        render_notes(metadata[:note_entries], positions, svg) if
+          metadata[:note_entries]
         svg
       end
 
@@ -369,7 +372,10 @@ module Sirena
         group.children << message_label(label)
       end
 
-      def render_notes(_notes, _positions, _svg); end
+      def render_notes(entries, positions, svg)
+        placement = sequence_layout.send(:note_placement, entries, positions)
+        placement.notes.each { |note| svg << NoteDrawing.new(note).group }
+      end
 
       def sequence_layout
         Layout::Sequence.new.tap { |layout| layout.theme = theme }

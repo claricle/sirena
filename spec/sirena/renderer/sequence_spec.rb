@@ -324,7 +324,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       "sequenceDiagram\nparticipant A\nparticipant B\nA->>B: hello\n"
     end
     let(:decorated_digest) do
-      "c275d92a7bc0aec7a7b1deffcbd3fa399b16b96c381975792a47a7555928919f"
+      "7fd1d01dadf9188cdc9e5898c7450395a290a2b7623572e06b574a50176b1a38"
     end
 
     it "emits the font sizes resolved by the injected theme" do
