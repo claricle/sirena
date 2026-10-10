@@ -10,7 +10,9 @@ module Sirena
     # colours stay as given, so a theme that names no colour for something
     # still draws it unpainted.
     module Completion
-      PALETTE_KEYS = ColorPalette::PALETTES.map { |name| :"#{name}_palette" }.freeze
+      PALETTE_KEYS = ColorPalette::PALETTES.map do |name|
+        :"#{name}_palette"
+      end.freeze
 
       module_function
 
@@ -34,7 +36,8 @@ module Sirena
       def filled_colors(colors, defaults)
         values = ColorPalette.attributes.keys.to_h do |key|
           given = set_value(colors&.public_send(key))
-          [key, PALETTE_KEYS.include?(key) ? given || defaults.public_send(key) : given]
+          fill = PALETTE_KEYS.include?(key) && defaults.public_send(key)
+          [key, given || fill || nil]
         end
         ColorPalette.new(**values)
       end
