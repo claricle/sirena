@@ -37,18 +37,20 @@ module Sirena
           # @return [Array(ArrowStyle, Boolean), nil] the style and whether
           #   the arrow is written pointing at the sender's name
           def read(token)
-            hidden = HIDDEN.match?(token)
-            colour = Fill.read(token[COLOUR, 1])&.colour
             match = TOKEN.match(token.sub(HIDDEN, "").sub(COLOUR, "")) or return
             lead, left, shaft, right, trail = match.captures
             return unless fits?(lead, left, right, trail)
 
             build(ends(lead, left, LEFT), ends(trail, right, RIGHT),
-                  shaft.length == 2, !left.nil? && right.nil?,
-                  { hidden: hidden, colour: colour })
+                  shaft.length == 2, !left.nil? && right.nil?, looks(token))
           end
 
           private
+
+          def looks(token)
+            { hidden: HIDDEN.match?(token),
+              colour: Fill.read(token[COLOUR, 1])&.colour }
+          end
 
           # Pairs of glyph and decoration for one side; `x` beside a head
           # replaces it, `x` alone and `o` are decorations.
