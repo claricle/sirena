@@ -17,6 +17,12 @@ RSpec.describe Sirena::Parser::XyChart do
         expect(diagram).to be_a(Sirena::Diagram::XyChart)
       end
 
+      it "reads a body of only comments and blank lines as empty" do
+        diagram = parser.parse("xychart-beta\n%% only a comment\n\n")
+
+        expect([diagram.title, diagram.datasets]).to eq([nil, []])
+      end
+
       it "parses chart with title and axes" do
         source = <<~MERMAID
           xychart-beta
