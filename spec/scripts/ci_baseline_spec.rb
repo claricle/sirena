@@ -86,7 +86,7 @@ RSpec.describe CiBaseline, :aggregate_failures do
     end
 
     it "falls back to the default-branch merge-base for a new branch" do
-      payload = { "before" => CiBaseline::ZERO_SHA,
+      payload = { "before" => ("0" * 40),
                   "repository" => { "default_branch" => "main" } }
 
       result = described_class.resolve("push", payload, dir: feature_checkout)
@@ -106,7 +106,7 @@ RSpec.describe CiBaseline, :aggregate_failures do
     end
 
     it "is consistency-only for a new branch with no default branch known" do
-      payload = { "before" => CiBaseline::ZERO_SHA }
+      payload = { "before" => ("0" * 40) }
 
       result = described_class.resolve("push", payload, dir: feature_checkout)
 
