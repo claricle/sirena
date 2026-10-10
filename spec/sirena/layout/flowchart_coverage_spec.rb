@@ -10,13 +10,22 @@ RSpec.describe Sirena::Layout::Flowchart do
   end
 
   describe "edges that name no endpoint" do
+    let(:children) do
+      [graphs.node("A", [0, 0], [100, 200]), graphs.node("B", [200, 0])]
+    end
     let(:scene) do
       graphs.scene(
-        [graphs.node("A", [0, 0]), graphs.node("B", [200, 0])],
+        children,
         [graphs.edge("ok", "A", "B"),
          { id: "no_source", targets: ["B"] },
          { id: "no_target", sources: ["A"] }],
       )
+    end
+
+    it "reserves no loop room above their node" do
+      up = graphs.scene(children, [{ id: "no_target", sources: ["A"] }], "UP")
+
+      expect(up.children.first.y).to eq(0)
     end
 
     it "draws only the edge with both ends" do
@@ -44,6 +53,35 @@ RSpec.describe Sirena::Layout::Flowchart do
 
       expect(scene.edges.last.sections.first.start_point.y)
         .to eq(node.center_y)
+    end
+  end
+
+  describe "bend points on a shifted page" do
+    let(:children) { [graphs.node("A", [0, 0]), graphs.node("B", [200, 0])] }
+    let(:bent) do
+      graphs.edge("bent", "A", "B").merge(
+        sections: [{ bendPoints: [{ x: 150, y: 25 }] }],
+      )
+    end
+    let(:scene) do
+      graphs.scene(children, [graphs.edge("loop", "A", "A"), bent], "UP")
+    end
+
+    it "move with the nodes" do
+      bend = scene.edges.last.sections.first.bend_points.first
+
+      expect(bend.y).to eq(25 + scene.children.first.y)
+    end
+  end
+
+  describe "self-loops that overflow on one side only" do
+    let(:children) { [graphs.node("A", [0, 0]), graphs.node("B", [300, 0])] }
+    let(:loops) { [graphs.edge("a", "A", "A"), graphs.edge("b", "B", "B")] }
+
+    it "shifts the page by the leftmost loop" do
+      scene = graphs.scene(children, loops, "LEFT")
+
+      expect(scene.children.first.x).to be > 0
     end
   end
 
