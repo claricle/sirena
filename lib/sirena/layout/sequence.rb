@@ -6,6 +6,7 @@ require_relative "../diagram/sequence_text"
 require_relative "../notation/mermaid/ir_adapters/sequence"
 require_relative "sequence/geometry"
 require_relative "sequence/actor_gaps"
+require_relative "sequence/text_width"
 require_relative "sequence/note_placement"
 require_relative "sequence/frame_reader"
 require_relative "sequence/frame_placement"
@@ -429,7 +430,10 @@ module Sirena
       end
 
       def participant_width(label)
-        [PARTICIPANT_WIDTH, label[:width] + PARTICIPANT_LABEL_PADDING].max
+        lines = label[:text].to_s.split(Diagram::SequenceText::LINE_BREAK, -1)
+        text = TextWidth.widest(lines, participant_font_size)
+        padded = (text + PARTICIPANT_LABEL_PADDING).to_f
+        [PARTICIPANT_WIDTH, padded].max
       end
 
       def participant_width_value(participant)

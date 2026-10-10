@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "../../text_measurement"
 require_relative "../../diagram/sequence_text"
 require_relative "geometry"
+require_relative "text_width"
 
 module Sirena
   module Layout
@@ -10,8 +10,7 @@ module Sirena
       # Widens the gap after an actor so the longest message to its right
       # neighbour, and the notes beside or over it, fit between the two
       # (mermaid's getMaxMessageWidthPerActor and calculateActorMargins).
-      # Text is measured with TextMeasurement, i.e. in the Arial the
-      # diagram is drawn in, so widths differ from mmdc by the font.
+      # Text is measured by TextWidth, the way mmdc measures it.
       class ActorGaps
         LINE_BREAK = Diagram::SequenceText::LINE_BREAK
         TEXT_PADDING = 10
@@ -117,10 +116,8 @@ module Sirena
         end
 
         def text_width(source)
-          body = Diagram::SequenceText.decode(
-            source.to_s.sub(Diagram::SequenceText::WRAP_PREFIX, ""),
-          )
-          width = widest_line(body)
+          body = source.to_s.sub(Diagram::SequenceText::WRAP_PREFIX, "")
+          width = TextWidth.widest(body.split(LINE_BREAK, -1), @font_size)
           width = [width, WRAP_LIMIT].min if wrapped?(source.to_s)
           width + (2 * TEXT_PADDING)
         end
@@ -129,12 +126,6 @@ module Sirena
           return true if source.match?(WRAP_ON)
 
           @wrap && !source.match?(WRAP_OFF)
-        end
-
-        def widest_line(body)
-          body.split(LINE_BREAK, -1).map do |line|
-            TextMeasurement.measure(line, font_size: @font_size)[:width]
-          end.max.to_f.round
         end
       end
     end

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "../../text_measurement"
 require_relative "../../diagram/sequence_text"
 require_relative "geometry"
+require_relative "text_width"
 require_relative "frame_placement"
 
 module Sirena
@@ -181,9 +181,7 @@ module Sirena
         end
 
         def text_width(lines)
-          lines.map do |line|
-            TextMeasurement.measure(line, font_size: @font_size)[:width]
-          end.max.to_f
+          TextWidth.widest(lines, @font_size).to_f
         end
 
         def box_horizontal(position, centers, lines)
