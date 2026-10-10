@@ -3373,31 +3373,13 @@
         "e_w": null
       }
     },
-    "invariants": [
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          null,
-          "[]"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/c4/028_parser_should_parse_the_description_27.svg",
     "reproduce": "bundle exec rake 'corpus[c4,valid]'",
     "sirena_status": "rendered",
     "type": "c4",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
         "worst_e_c": null,
         "worst_e_w": null,
@@ -3639,31 +3621,13 @@
         "e_w": null
       }
     },
-    "invariants": [
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          null,
-          "[]"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/c4/035_parser_should_parse_the_description_34.svg",
     "reproduce": "bundle exec rake 'corpus[c4,valid]'",
     "sirena_status": "rendered",
     "type": "c4",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
         "worst_e_c": null,
         "worst_e_w": null,
