@@ -16,14 +16,21 @@ RSpec.describe Sirena::Cli do
     ["batch", Sirena::Commands::BatchCommand],
     ["version", Sirena::Commands::VersionCommand],
   ].each do |name, command_class|
-    it "reports a #{name} command failure and exits one" do
-      command = instance_double(command_class)
-      allow(command_class).to receive(:new).and_return(command)
-      allow(command).to receive(:run).and_raise(ArgumentError, "broken")
+    context "with the #{name} command" do
+      let(:command) { instance_double(command_class) }
 
-      expect { described_class.start([name]) }
-        .to output("Error: broken\n").to_stderr
-        .and raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+      before do
+        allow(command_class).to receive(:new).and_return(command)
+        allow(command).to receive(:run).and_raise(ArgumentError, "broken")
+      end
+
+      it "reports a failure and exits one" do
+        expect { described_class.start([name]) }
+          .to output("Error: broken\n").to_stderr
+          .and raise_error(SystemExit) do |error|
+            raise "expected exit status 1" unless error.status == 1
+          end
+      end
     end
   end
 end
