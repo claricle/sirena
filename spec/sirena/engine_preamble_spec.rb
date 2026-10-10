@@ -52,7 +52,8 @@ RSpec.describe Sirena::Engine do
     it "still raises for an indented frontmatter closer" do
       # mmdc rejects it, so the 44 corpus cases shaped this way must keep
       # failing rather than be rescued by a lenient fence.
-      source = "---\n  config:\n    theme: base\n  ---\n  flowchart LR\n  A-->B\n"
+      source = "---\n  config:\n    theme: base\n  ---\n  " \
+               "flowchart LR\n  A-->B\n"
 
       expect { engine.render(source) }
         .to raise_error(described_class::DiagramTypeError)
@@ -213,7 +214,8 @@ RSpec.describe Sirena::Engine do
       flowchart: "flowchart LR\n  A-->B\n",
       er_diagram: "erDiagram\n  A ||--o{ B : has\n",
       user_journey: "journey\n  section S\n  Task: 5: A\n",
-      gantt: "gantt\n  dateFormat YYYY-MM-DD\n  section S\n  T: 2024-01-01, 1d\n",
+      gantt: "gantt\n  dateFormat YYYY-MM-DD\n  section S\n  " \
+             "T: 2024-01-01, 1d\n",
       timeline: "timeline\n  2024 : Event\n",
       block: "block-beta\n  A\n",
       sankey: "sankey-beta\nA,B,1\n",
@@ -232,11 +234,15 @@ RSpec.describe Sirena::Engine do
 
     it "refuses a headerless directive for state_diagram" do
       source = "%%{}%%\nstateDiagram-v2\n  [*] --> S\n"
+      message = Regexp.new(
+        "\\AA state_diagram diagram does not accept a directive with " \
+        "no header\\.",
+      )
 
       expect { engine.render(source) }
         .to raise_error(
           described_class::PipelineError,
-          /\AA state_diagram diagram does not accept a directive with no header\./,
+          message,
         )
     end
 
@@ -247,7 +253,8 @@ RSpec.describe Sirena::Engine do
       state_diagram: "stateDiagram-v2\n  [*] --> S\n",
       er_diagram: "erDiagram\n  A ||--o{ B : has\n",
       user_journey: "journey\n  section S\n  Task: 5: A\n",
-      gantt: "gantt\n  dateFormat YYYY-MM-DD\n  section S\n  T: 2024-01-01, 1d\n",
+      gantt: "gantt\n  dateFormat YYYY-MM-DD\n  section S\n  " \
+             "T: 2024-01-01, 1d\n",
       timeline: "timeline\n  2024 : Event\n",
       quadrant: "quadrantChart\n  A: [0.5, 0.5]\n",
       mindmap: "mindmap\n  root((A))\n",
@@ -261,11 +268,15 @@ RSpec.describe Sirena::Engine do
     }.each do |type, body|
       it "refuses late frontmatter for #{type}" do
         source = "%% note\n---\ntitle: T\n---\n#{body}"
+        message = Regexp.new(
+          "\\AA #{type} diagram does not accept frontmatter " \
+          "behind another item\\.",
+        )
 
         expect { engine.render(source) }
           .to raise_error(
             described_class::PipelineError,
-            /\AA #{type} diagram does not accept frontmatter behind another item\./,
+            message,
           )
       end
     end

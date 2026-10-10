@@ -131,7 +131,7 @@ RSpec.describe Sirena::Layout::Grid do
     # one-by-one box, so it never checked the title played any part.
     it "sizes a box with nothing in it from its title" do
       label = { text: "T", width: 10, height: 14 }
-      box = apply({ children: [cluster("s", [], label: label)] })[:children].first
+      box = apply({ children: [cluster("s", [], label:)] }).dig(:children, 0)
       padding = described_class::CLUSTER_PADDING
 
       expect(box[:width]).to eq(label[:width] + (padding * 2))
