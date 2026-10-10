@@ -9,20 +9,28 @@ RSpec.describe Sirena::Layout::Quadrant do
 
   let(:diagram) { Sirena::Diagram::Quadrant.new(id: "portfolio") }
   let(:expected_bounds) do
-    [[1, 400.0, 80.0, 320.0, 220.0],
-     [2, 80.0, 80.0, 320.0, 220.0],
-     [3, 80.0, 300.0, 320.0, 220.0],
-     [4, 400.0, 300.0, 320.0, 220.0]]
+    [[1, 250.0, 5.0, 245.0, 245.0],
+     [2, 5.0, 5.0, 245.0, 245.0],
+     [3, 5.0, 250.0, 245.0, 245.0],
+     [4, 250.0, 250.0, 245.0, 245.0]]
   end
 
-  it "publishes the fixed canvas and chart dimensions" do
+  it "publishes mmdc's 500x500 canvas" do
     expect([graph.class, graph.id, graph.width, graph.height, graph.view_box])
-      .to eq([described_class::Scene, "portfolio", 800.0, 600.0,
-              "0 0 800 600"])
+      .to eq([described_class::Scene, "portfolio", 500.0, 500.0,
+              "0 0 500 500"])
   end
 
-  it "uses empty strings for omitted axis labels" do
-    expect(graph.axis_labels.map(&:text)).to eq(["", "", "", ""])
+  it "draws no axis label that was not written" do
+    expect(graph.axis_labels).to eq([])
+  end
+
+  it "draws mmdc's six border lines around the plot" do
+    expect(graph.axes.map { |l| [l.x1, l.y1, l.x2, l.y2, l.stroke_width] })
+      .to eq([[4.0, 5.0, 496.0, 5.0, 2.0], [495.0, 6.0, 495.0, 494.0, 2.0],
+              [4.0, 495.0, 496.0, 495.0, 2.0], [5.0, 6.0, 5.0, 494.0, 2.0],
+              [250.0, 6.0, 250.0, 494.0, 1.0],
+              [6.0, 250.0, 494.0, 250.0, 1.0]])
   end
 
   it "calculates all four quadrant bounds through the public graph" do
@@ -71,7 +79,7 @@ RSpec.describe Sirena::Layout::Quadrant do
     it "normalizes x and inverts y into SVG coordinates" do
       positions = point_values(graph.points, :x, :y)
 
-      expect(positions).to eq([[240.0, 190.0], [720.0, 520.0]])
+      expect(positions).to eq([[147.0, 121.0], [495.0, 469.0]])
     end
 
     it "applies default and custom point geometry" do
@@ -82,12 +90,13 @@ RSpec.describe Sirena::Layout::Quadrant do
       expect(geometry).to eq([[6, 2, nil], [9.0, 4.0, "navy"]])
     end
 
-    it "preserves supplied axes while defaulting omitted labels" do
-      expect(graph.axis_labels.map(&:text)).to eq(["low", "", "", "high"])
+    it "draws only the supplied axis labels, x below the plot" do
+      expect(graph.axis_labels.map { |l| [l.text, l.x, l.y, l.rotation] })
+        .to eq([["low", 31.0, 479.0, 0.0], ["high", 5.0, 121.0, -90.0]])
     end
 
-    it "stores final point-label geometry and themed font sizes" do
-      expect(themed_point_geometry).to eq([250.0, 180.0, 14.0, 14.0])
+    it "centres each point label under its circle at mmdc's 12px size" do
+      expect(themed_point_geometry).to eq([147.0, 126.0, 12.0, 16.0])
     end
   end
 

@@ -29,7 +29,7 @@ RSpec.describe Sirena::Layout::Quadrant do
   it "assigns center boundaries to one and lower-left values to three" do
     expect(boundary_evidence)
       .to eq(["Boundaries", [1, 3], %w[Keep Drop],
-              [[400.0, 300.0], [393.6, 304.4]]])
+              [[250.0, 270.0], [245.1, 274.5]]])
   end
 
   it "rejects an invalid point before layout" do

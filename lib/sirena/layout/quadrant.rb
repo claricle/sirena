@@ -7,9 +7,26 @@ module Sirena
   module Layout
     # Builds final quadrant-chart geometry.
     class Quadrant < Base
-      DEFAULT_WIDTH = 800
-      DEFAULT_HEIGHT = 600
-      DEFAULT_MARGIN = 80
+      # mmdc's quadrantChart defaults (mermaid quadrantBuilder.ts).
+      CHART_SIZE = 500
+      PADDING = 5
+      AXIS_LABEL_PADDING = 5
+      AXIS_FONT_SIZE = 16
+      QUADRANT_FONT_SIZE = 16
+      QUADRANT_TEXT_TOP_PADDING = 5
+      TITLE_PADDING = 10
+      TITLE_FONT_SIZE = 20
+      POINT_FONT_SIZE = 12
+      POINT_TEXT_PADDING = 5
+      EXTERNAL_BORDER = 2
+      INTERNAL_BORDER = 1
+
+      # The plotted area inside the chart's padding, axes and title.
+      Space = Data.define(:left, :top, :width, :height, :title, :x_axis,
+                          :x_axis_below) do
+        def half_width = width / 2.0
+        def half_height = height / 2.0
+      end
 
       class Rect < Lutaml::Model::Serializable
         attribute :number, :integer
@@ -24,6 +41,7 @@ module Sirena
         attribute :y1, :float
         attribute :x2, :float
         attribute :y2, :float
+        attribute :stroke_width, :float
       end
 
       class Label < Lutaml::Model::Serializable
@@ -34,6 +52,8 @@ module Sirena
         attribute :text_anchor, :string
         attribute :font_weight, :string
         attribute :style, :string
+        attribute :rotation, :float
+        attribute :baseline, :string
       end
 
       class Point < Lutaml::Model::Serializable
@@ -62,13 +82,12 @@ module Sirena
       # Retains the pre-Scene structure for direct callers during conversion.
       def build_graph(diagram)
         data = ir_document(diagram)
-        margin, chart_width, chart_height = chart_dimensions
+        space = chart_space(data)
         {
-          id: data.id, title: data.label,
-          dimensions: dimensions(margin, chart_width, chart_height),
+          id: data.id, title: data.label, space: space,
           axes: axes(data),
-          quadrants: quadrants(data, margin, chart_width, chart_height),
-          points: transform_points(data, margin, chart_width, chart_height)
+          quadrants: quadrants(data, space),
+          points: transform_points(data, space)
         }
       end
 
@@ -76,41 +95,50 @@ module Sirena
 
       def scene(diagram)
         graph = build_graph(diagram)
-        dims = graph[:dimensions]
         Scene.new(
-          **canvas_attributes(graph, dims),
-          **scene_data(graph, dims),
+          id: graph[:id], width: CHART_SIZE, height: CHART_SIZE,
+          view_box: "0 0 #{CHART_SIZE} #{CHART_SIZE}",
+          **scene_data(graph)
         )
       end
 
-      def canvas_attributes(graph, dims)
+      def scene_data(graph)
+        space = graph[:space]
         {
-          id: graph[:id], width: dims[:width], height: dims[:height],
-          view_box: "0 0 #{dims[:width]} #{dims[:height]}"
-        }
-      end
-
-      def scene_data(graph, dims)
-        {
-          title: title_label(graph[:title], dims),
+          title: title_label(graph[:title]),
           quadrants: typed_quadrants(graph[:quadrants]),
-          axes: axis_lines(dims), axis_labels: axis_labels(graph[:axes], dims),
-          quadrant_labels: quadrant_labels(graph[:quadrants]),
+          axes: border_lines(space),
+          axis_labels: axis_labels(graph[:axes], space),
+          quadrant_labels: quadrant_labels(graph[:quadrants], graph[:points]),
           points: typed_points(graph[:points])
         }
       end
 
-      def dimensions(margin, chart_width, chart_height)
-        {
-          width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT, margin: margin,
-          chart_width: chart_width, chart_height: chart_height,
-          chart_x: margin, chart_y: margin
-        }
+      def chart_space(data)
+        axes = axes(data)
+        title = title_space(data)
+        x_axis = axes.values_at(:x_left, :x_right).any? { |t| !t.empty? }
+        y_axis = axes.values_at(:y_bottom, :y_top).any? { |t| !t.empty? }
+        x_space = x_axis ? (2 * AXIS_LABEL_PADDING) + AXIS_FONT_SIZE : 0
+        y_space = y_axis ? (2 * AXIS_LABEL_PADDING) + AXIS_FONT_SIZE : 0
+        x_top = points?(data) ? 0 : x_space
+        x_bottom = points?(data) ? x_space : 0
+        Space.new(
+          left: PADDING + y_space, top: PADDING + x_top + title,
+          width: CHART_SIZE - (2 * PADDING) - y_space,
+          height: CHART_SIZE - (2 * PADDING) - x_top - x_bottom - title,
+          title: title, x_axis: x_axis, x_axis_below: points?(data)
+        )
       end
 
-      def chart_dimensions
-        [DEFAULT_MARGIN, DEFAULT_WIDTH - (DEFAULT_MARGIN * 2),
-         DEFAULT_HEIGHT - (DEFAULT_MARGIN * 2)]
+      def title_space(data)
+        return 0 if data.label.to_s.empty?
+
+        TITLE_FONT_SIZE + (2 * TITLE_PADDING)
+      end
+
+      def points?(data)
+        data.items.any? { |item| item.role == "point" }
       end
 
       def ir_document(diagram)
@@ -130,92 +158,119 @@ module Sirena
           .to_h { |item| [placement_value(item, "axis_position"), item.label] }
       end
 
-      def quadrants(data, margin, width, height)
+      def quadrants(data, space)
         labels = data.items.select { |item| item.role == "region_label" }
           .to_h { |item| [placement_value(item, "region").to_i, item.label] }
         (1..4).to_h do |number|
           [:"q#{number}", {
             label: labels[number], number: number,
-            bounds: calculate_quadrant_bounds(number, margin, width, height)
+            bounds: quadrant_bounds(number, space)
           }]
         end
       end
 
-      def title_label(title, dims)
-        return unless title
+      def quadrant_bounds(number, space)
+        x = [1, 4].include?(number) ? space.left + space.half_width : space.left
+        y = [3, 4].include?(number) ? space.top + space.half_height : space.top
+        { x: x, y: y, width: space.half_width, height: space.half_height }
+      end
 
-        label(title, [dims[:width] / 2.0, 30],
-              font_size(:font_size_large, 18), "title",
-              anchor: "middle", weight: "bold")
+      def title_label(title)
+        return if title.to_s.empty?
+
+        label(title, [CHART_SIZE / 2.0, TITLE_PADDING], TITLE_FONT_SIZE,
+              "title", anchor: "middle", baseline: "hanging")
       end
 
       def typed_quadrants(quadrants)
         quadrants.values.map do |quadrant|
-          bounds = quadrant[:bounds]
-          Rect.new(number: quadrant[:number], **bounds)
+          Rect.new(number: quadrant[:number], **quadrant[:bounds])
         end
       end
 
-      def axis_lines(dims)
-        center_x = dims[:chart_x] + (dims[:chart_width] / 2.0)
-        center_y = dims[:chart_y] + (dims[:chart_height] / 2.0)
+      # The six border lines mmdc draws: four outer edges, then the two dividers.
+      def border_lines(space)
+        half = EXTERNAL_BORDER / 2.0
+        left = space.left
+        top = space.top
+        right = left + space.width
+        bottom = top + space.height
+        mid_x = left + space.half_width
+        mid_y = top + space.half_height
         [
-          vertical_axis(dims, center_x), horizontal_axis(dims, center_y)
+          line(left - half, top, right + half, top, EXTERNAL_BORDER),
+          line(right, top + half, right, bottom - half, EXTERNAL_BORDER),
+          line(left - half, bottom, right + half, bottom, EXTERNAL_BORDER),
+          line(left, top + half, left, bottom - half, EXTERNAL_BORDER),
+          line(mid_x, top + half, mid_x, bottom - half, INTERNAL_BORDER),
+          line(left + half, mid_y, right - half, mid_y, INTERNAL_BORDER),
         ]
       end
 
-      def vertical_axis(dims, center_x)
-        Line.new(
-          x1: center_x, y1: dims[:chart_y], x2: center_x,
-          y2: dims[:chart_y] + dims[:chart_height]
-        )
+      def line(x1, y1, x2, y2, width)
+        Line.new(x1: x1, y1: y1, x2: x2, y2: y2, stroke_width: width)
       end
 
-      def horizontal_axis(dims, center_y)
-        Line.new(
-          x1: dims[:chart_x], y1: center_y,
-          x2: dims[:chart_x] + dims[:chart_width], y2: center_y
-        )
+      # Only axis labels that were written are drawn, as in mmdc.
+      def axis_labels(axes, space)
+        x_labels(axes, space) + y_labels(axes, space)
       end
 
-      def axis_labels(axes, dims)
-        size = font_size(:font_size_small, 12)
-        bottom = dims[:chart_y] + dims[:chart_height]
-        right = dims[:chart_x] + dims[:chart_width]
-        horizontal_axis_labels(axes, dims, size, bottom, right) +
-          vertical_axis_labels(axes, dims, size, bottom)
+      def x_labels(axes, space)
+        middle = !axes[:x_right].empty?
+        y = x_label_y(space)
+        centre = space.left + (middle ? space.half_width / 2 : 0)
+        [[axes[:x_left], centre],
+         [axes[:x_right], centre + space.half_width]].filter_map do |text, x|
+          next if text.empty?
+
+          axis_label(text, [x, y], middle, 0)
+        end
       end
 
-      def horizontal_axis_labels(axes, dims, size, bottom, right)
-        [
-          label(axes[:x_left], [dims[:chart_x] - 10, bottom + 30], size,
-                "axis", anchor: "end"),
-          label(axes[:x_right], [right + 10, bottom + 30], size,
-                "axis", anchor: "start"),
-        ]
+      # The x axis sits below the plot when there are points, above otherwise.
+      def x_label_y(space)
+        return AXIS_LABEL_PADDING + space.title unless space.x_axis_below
+
+        AXIS_LABEL_PADDING + space.top + space.height + PADDING
       end
 
-      def vertical_axis_labels(axes, dims, size, bottom)
-        [
-          label(axes[:y_bottom], [dims[:chart_x] - 30, bottom + 10], size,
-                "axis", anchor: "middle"),
-          label(axes[:y_top], [dims[:chart_x] - 30, dims[:chart_y] - 10], size,
-                "axis", anchor: "middle"),
-        ]
+      def y_labels(axes, space)
+        middle = !axes[:y_top].empty?
+        lift = middle ? space.half_height / 2 : 0
+        [[axes[:y_bottom], space.top + space.height - lift],
+         [axes[:y_top], space.top + space.half_height - lift]]
+          .filter_map do |text, y|
+            next if text.empty?
+
+            axis_label(text, [AXIS_LABEL_PADDING, y], middle, -90)
+          end
       end
 
-      def quadrant_labels(quadrants)
+      def axis_label(text, position, middle, rotation)
+        label(text, position, AXIS_FONT_SIZE, "axis",
+              anchor: middle ? "middle" : "start", baseline: "hanging",
+              rotation: rotation)
+      end
+
+      def quadrant_labels(quadrants, points)
         quadrants.values.filter_map do |quadrant|
           next unless quadrant[:label]
 
           bounds = quadrant[:bounds]
-          label(
-            quadrant[:label],
-            [bounds[:x] + (bounds[:width] / 2.0), bounds[:y] + 20],
-            font_size(:font_size_normal, 14), "quadrant",
-            anchor: "middle", weight: "bold"
-          )
+          x = bounds[:x] + (bounds[:width] / 2.0)
+          next top_label(quadrant[:label], x, bounds) unless points.empty?
+
+          label(quadrant[:label], [x, bounds[:y] + (bounds[:height] / 2.0)],
+                QUADRANT_FONT_SIZE, "quadrant", anchor: "middle",
+                baseline: "middle")
         end
+      end
+
+      def top_label(text, x, bounds)
+        label(text, [x, bounds[:y] + QUADRANT_TEXT_TOP_PADDING],
+              QUADRANT_FONT_SIZE, "quadrant", anchor: "middle",
+              baseline: "hanging")
       end
 
       def typed_points(points)
@@ -232,10 +287,9 @@ module Sirena
       end
 
       def point_label(point)
-        position = [point[:svg_x] + 10, point[:svg_y] - 10]
         label(
-          point[:label], position, font_size(:font_size_small, 11),
-          "point", anchor: "start"
+          point[:label], [point[:svg_x], point[:svg_y] + POINT_TEXT_PADDING],
+          POINT_FONT_SIZE, "point", anchor: "middle", baseline: "hanging"
         )
       end
 
@@ -243,33 +297,19 @@ module Sirena
         Label.new(
           text: text, x: position[0], y: position[1],
           font_size: size, style: style,
-          text_anchor: options[:anchor], font_weight: options[:weight]
+          text_anchor: options[:anchor], font_weight: options[:weight],
+          rotation: options.fetch(:rotation, 0), baseline: options[:baseline]
         )
       end
 
-      def font_size(name, fallback)
-        value = theme.typography&.public_send(name)
-        value&.positive? ? value : fallback
+      def transform_points(data, space)
+        point_items(data).map { |point| transform_point(point, space) }
       end
 
-      def calculate_quadrant_bounds(number, margin, width, height)
-        half_width = width / 2.0
-        half_height = height / 2.0
-        x = [1, 4].include?(number) ? margin + half_width : margin
-        y = [3, 4].include?(number) ? margin + half_height : margin
-        { x: x, y: y, width: half_width, height: half_height }
-      end
-
-      def transform_points(data, margin, width, height)
-        point_items(data).map do |point|
-          transform_point(point, margin, width, height)
-        end
-      end
-
-      def transform_point(point, margin, width, height)
+      def transform_point(point, space)
         values = point_values(point)
         { id: point.id, label: point.label, quadrant: point_quadrant(point) }
-          .merge(point_coordinates(values, margin, width, height))
+          .merge(point_coordinates(values, space))
           .merge(point_style(values))
       end
 
@@ -278,10 +318,10 @@ module Sirena
           .to_h { |dimension| [dimension, placement_value(point, dimension)] }
       end
 
-      def point_coordinates(values, margin, width, height)
+      def point_coordinates(values, space)
         {
-          svg_x: margin + (values["x_value"] * width),
-          svg_y: margin + ((1.0 - values["y_value"]) * height),
+          svg_x: space.left + (values["x_value"] * space.width),
+          svg_y: space.top + ((1.0 - values["y_value"]) * space.height),
         }
       end
 
