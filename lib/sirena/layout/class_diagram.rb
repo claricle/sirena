@@ -4,6 +4,7 @@ require_relative "base"
 require_relative "grid"
 require_relative "../diagram/class_diagram"
 require_relative "../diagram/generic_text"
+require_relative "../notation/mermaid/ir_adapters/class_diagram"
 
 module Sirena
   module Layout
@@ -22,6 +23,37 @@ module Sirena
       DART_NEAR = 3
       DART_FAR = 14
       DART_WIDTH = 5
+
+      SemanticAttribute = Struct.new(
+        :name, :type, :visibility, :text, :rendered_text, keyword_init: true
+      ) do
+        def display_text
+          rendered_text
+        end
+      end
+      SemanticMethod = Struct.new(
+        :name, :parameters, :return_type, :visibility, :text, :rendered_text,
+        keyword_init: true
+      ) do
+        def display_text
+          rendered_text
+        end
+      end
+      SemanticEntity = Struct.new(
+        :id, :name, :stereotype, :attributes, :class_methods,
+        keyword_init: true
+      )
+      SemanticRelationship = Struct.new(
+        :from_id, :to_id, :relationship_type, :label,
+        :source_cardinality, :target_cardinality, :start_marker, :end_marker,
+        :dashed, keyword_init: true
+      )
+      SemanticDiagram = Struct.new(
+        :id, :title, :direction, :theme, :entities, :relationships,
+        keyword_init: true
+      )
+      private_constant :SemanticAttribute, :SemanticMethod, :SemanticEntity,
+                       :SemanticRelationship, :SemanticDiagram
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -118,12 +150,152 @@ module Sirena
       private
 
       def build_graph(diagram)
+        diagram = semantic_diagram(ir_graph(diagram))
         {
           id: diagram.id || "class_diagram",
           children: transform_entities(diagram),
           edges: transform_relationships(diagram),
           layoutOptions: layout_options(diagram),
         }
+      end
+
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::ClassDiagram.call(diagram)
+      end
+
+      def semantic_diagram(graph)
+        children, nodes_by_id = semantic_context(graph)
+        SemanticDiagram.new(
+          **semantic_metadata(graph, children),
+          **semantic_collections(graph, children, nodes_by_id),
+        )
+      end
+
+      def semantic_context(graph)
+        children = graph.nodes.group_by(&:parent_id)
+        nodes_by_id = graph.nodes.to_h { |node| [node.id, node] }
+        [children, nodes_by_id]
+      end
+
+      def semantic_metadata(graph, children)
+        settings = graph.nodes.find { |node| node.role == "diagram_settings" }
+        fields = semantic_fields(children[settings&.id])
+        {
+          id: fields["diagram_identifier"], title: graph.label,
+          direction: fields["layout_direction"], theme: fields["theme"]
+        }
+      end
+
+      def semantic_collections(graph, children, nodes_by_id)
+        {
+          entities: semantic_entities(graph, children),
+          relationships: semantic_relationships(
+            graph, children, nodes_by_id
+          ),
+        }
+      end
+
+      def semantic_entities(graph, children)
+        graph.nodes.filter_map do |node|
+          semantic_entity(node, children) if node.role == "class"
+        end
+      end
+
+      def semantic_entity(node, children)
+        fields = semantic_fields(children[node.id])
+        SemanticEntity.new(
+          id: fields.fetch("original_identifier", node.id),
+          name: node.label, stereotype: fields["stereotype"],
+          **entity_members(node, children)
+        )
+      end
+
+      def entity_members(node, children)
+        nodes = children[node.id]
+        {
+          attributes: semantic_members(
+            nodes, children, "attribute", SemanticAttribute
+          ),
+          class_methods: semantic_members(
+            nodes, children, "operation", SemanticMethod
+          ),
+        }
+      end
+
+      def semantic_members(nodes, children, role, type)
+        Array(nodes).select { |node| node.role == role }.map do |node|
+          fields = semantic_fields(children[node.id])
+          type.new(**member_attributes(fields, node.label, role))
+        end
+      end
+
+      def member_attributes(fields, rendered_text, role)
+        common = {
+          name: fields["name"], visibility: fields["visibility"],
+          text: fields["source_text"], rendered_text: rendered_text
+        }
+        return common.merge(type: fields["type"]) if role == "attribute"
+
+        common.merge(
+          parameters: fields["parameters"],
+          return_type: fields["return_type"],
+        )
+      end
+
+      def semantic_relationships(graph, children, nodes_by_id)
+        graph.edges.map do |edge|
+          semantic_relationship(edge, children, nodes_by_id)
+        end
+      end
+
+      def semantic_relationship(edge, children, nodes_by_id)
+        fields = semantic_fields(children[edge.parent_id])
+        SemanticRelationship.new(
+          **relationship_identity(edge, children, nodes_by_id, fields),
+          **relationship_ends(fields), **relationship_style(fields)
+        )
+      end
+
+      def relationship_identity(edge, children, nodes_by_id, fields)
+        {
+          from_id: source_identifier(nodes_by_id[edge.source_id], children),
+          to_id: source_identifier(nodes_by_id[edge.target_id], children),
+          label: edge.label,
+          relationship_type: fields["relationship_type"],
+        }
+      end
+
+      def relationship_ends(fields)
+        {
+          source_cardinality: fields["source_cardinality"],
+          target_cardinality: fields["target_cardinality"],
+        }
+      end
+
+      def relationship_style(fields)
+        {
+          start_marker: fields["source_marker"],
+          end_marker: fields["target_marker"],
+          dashed: boolean_field(fields["dashed"]),
+        }
+      end
+
+      def source_identifier(node, children)
+        return unless node
+
+        semantic_fields(children[node.id]).fetch("original_identifier", node.id)
+      end
+
+      def semantic_fields(nodes)
+        Array(nodes).to_h { |node| [node.role, node.label] }
+      end
+
+      def boolean_field(value)
+        return if value.nil?
+
+        value == "true"
       end
 
       def scene_from_graph(graph)

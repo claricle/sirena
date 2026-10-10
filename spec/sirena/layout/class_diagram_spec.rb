@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "sirena/notation/mermaid/ir_adapters/class_diagram"
 
 module ClassDiagramLayoutSpecHelpers
   def measured(text, size, monospace: false)
@@ -139,6 +140,15 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       .to eq([880.0, 680.0, "0 0 880 680"])
     expect(empty_scene.children).to be_empty
     expect(empty_scene.edges).to be_empty
+  end
+
+  it "lays out shared graph IR identically without mutating the source" do
+    before = Marshal.dump(diagram)
+    graph = Sirena::Notation::Mermaid::IRAdapters::ClassDiagram.call(diagram)
+    from_private_model = Marshal.dump(layout.call(diagram))
+
+    expect([Marshal.dump(layout.call(graph)), Marshal.dump(diagram)])
+      .to eq([from_private_model, before])
   end
 
   it "raises for an invalid diagram" do
