@@ -53,4 +53,24 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     expect(ClassNoteSvg.group_ids("classDiagram\nclass A\n").grep(/namespace/))
       .to be_empty
   end
+
+  context "with a namespace that holds no class" do
+    let(:empty_source) do
+      "classDiagram\nnamespace Empty { }\nnamespace Full { class Tri }\n"
+    end
+
+    it "still draws its box" do
+      expect(ClassNoteSvg.group_ids(empty_source))
+        .to include("namespace-Empty")
+    end
+
+    it "still draws its title" do
+      expect(ClassNoteSvg.texts(empty_source)).to include("Empty")
+    end
+
+    it "keeps the title padded inside a 56 high box" do
+      rect = ClassNoteSvg.rect(empty_source, "namespace-Empty")
+      expect(rect["height"].to_f).to eq(56.0)
+    end
+  end
 end
