@@ -101,7 +101,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
   it "resolves a standalone class inside a namespace to its declaration" do
     diagram = parser.parse("classDiagram\nnamespace N {\nclass `A B`\n`A B`\n}\n")
 
-    expect(diagram.entities.map(&:id)).to eq(["N.A B"])
+    expect(diagram.entities.map(&:id)).to eq(["A B"])
   end
 
   it "keeps generic-looking text in a backticked name when a generic is applied" do
@@ -209,7 +209,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
     it "parses the shorthand inside a namespace" do
       diagram = parser.parse("classDiagram\nnamespace N {\nclass A:::s\n}\n")
 
-      expect(diagram.entities.map(&:id)).to eq(["N.A"])
+      expect(diagram.entities.map(&:id)).to eq(["A"])
     end
 
     # Keep: mmdc rejects each of these; they guard the new shorthand from

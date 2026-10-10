@@ -106,7 +106,6 @@ module Sirena
           # written on the mention that creates it.
           @statement_count = 0
           @created_in = {}
-          @current_namespace = nil
 
           # Tree is an array: [header, direction, ...statements]
           if tree.is_a?(Array)
@@ -156,29 +155,19 @@ module Sirena
             nil
           elsif stmt[:class_id] && !stmt[:keyword]
             # Standalone class
-            entity = ensure_entity_exists(
-              qualify_name(class_id_text(stmt[:class_id])),
-            )
+            entity = ensure_entity_exists(class_id_text(stmt[:class_id]))
             apply_generic(entity, stmt[:generic])
           end
         end
 
+        # Namespace members keep their plain, global ids; the parser's
+        # ClassNamespaces records which box each one belongs to.
         def process_namespace(stmt)
-          namespace_name = extract_text(stmt[:namespace_name])
-          old_namespace = @current_namespace
-          @current_namespace = namespace_name
-
-          # Process namespace body
-          if stmt[:namespace_body]
-            statements = Array(stmt[:namespace_body])
-            statements.each { |s| process_statement(s) }
-          end
-
-          @current_namespace = old_namespace
+          Array(stmt[:namespace_body]).each { |s| process_statement(s) }
         end
 
         def process_class_declaration(stmt)
-          class_id = qualify_name(class_id_text(stmt[:class_id]))
+          class_id = class_id_text(stmt[:class_id])
 
           entity = find_or_create_entity(class_id)
 
@@ -216,7 +205,7 @@ module Sirena
         end
 
         def process_standalone_stereotype(stmt)
-          class_id = qualify_name(class_id_text(stmt[:class_id]))
+          class_id = class_id_text(stmt[:class_id])
 
           entity = find_or_create_entity(class_id)
 
@@ -225,7 +214,7 @@ module Sirena
         end
 
         def process_colon_member(stmt)
-          class_id = qualify_name(class_id_text(stmt[:class_id]))
+          class_id = class_id_text(stmt[:class_id])
 
           entity = find_or_create_entity(class_id)
           apply_generic(entity, stmt[:generic])
@@ -370,10 +359,6 @@ module Sirena
           to_id = class_id_text(stmt[:to_id])
           operator = extract_text(stmt[:operator][:arrow])
 
-          # Qualify names if in namespace
-          from_id = qualify_name(from_id)
-          to_id = qualify_name(to_id)
-
           # Ensure both entities exist
           apply_generic(ensure_entity_exists(from_id), stmt[:from_generic])
           apply_generic(ensure_entity_exists(to_id), stmt[:to_generic])
@@ -491,13 +476,6 @@ module Sirena
 
           generic_type = extract_text(generic[:generic_type])
           entity.name = "#{entity.name}~#{generic_type}~"
-        end
-
-        def qualify_name(name)
-          return name unless @current_namespace
-          return name if name.include?(".")
-
-          "#{@current_namespace}.#{name}"
         end
 
         def parse_visibility(vis_data)

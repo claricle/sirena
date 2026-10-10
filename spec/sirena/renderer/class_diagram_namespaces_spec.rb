@@ -7,7 +7,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
   let(:source) do
     "classDiagram\nnamespace Shapes {\n  class Tri\n  class Rect\n}\n" \
       "namespace Other {\n  class Far\n}\nclass Loose\n" \
-      "Shapes.Tri --> Other.Far\n"
+      "Tri --> Far\n"
   end
 
   let(:box) { ClassNoteSvg.rect(source, "namespace-Shapes") }
@@ -20,8 +20,8 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     expect(ClassNoteSvg.texts(source)).to include("Tri", "Rect", "Far")
   end
 
-  it "no longer shows the qualified class name" do
-    expect(ClassNoteSvg.texts(source)).not_to include("Shapes.Tri")
+  it "shows a class once even when a relationship repeats its id" do
+    expect(ClassNoteSvg.texts(source).count("Tri")).to eq(1)
   end
 
   it "draws one box per namespace" do
@@ -30,12 +30,12 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
   end
 
   it "encloses a class in its namespace box" do
-    inner = ClassNoteSvg.rect(source, "class-Shapes.Rect")
+    inner = ClassNoteSvg.rect(source, "class-Rect")
     expect(ClassNoteSvg.contained?(inner, box)).to be(true)
   end
 
   it "leaves a class of another namespace outside the box" do
-    inner = ClassNoteSvg.rect(source, "class-Other.Far")
+    inner = ClassNoteSvg.rect(source, "class-Far")
     expect(ClassNoteSvg.contained?(inner, box)).to be(false)
   end
 
@@ -46,7 +46,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
 
   it "still joins classes of different namespaces" do
     expect(ClassNoteSvg.group_ids(source))
-      .to include("rel-Shapes.Tri_to_Other.Far")
+      .to include("rel-Tri_to_Far")
   end
 
   it "draws no namespace box when the source has none" do
