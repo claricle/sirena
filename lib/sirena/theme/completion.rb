@@ -33,7 +33,8 @@ module Sirena
 
       def filled_colors(colors, defaults)
         values = ColorPalette.attributes.keys.to_h do |key|
-          [key, set_value(colors&.public_send(key)) || defaults.public_send(key)]
+          given = set_value(colors&.public_send(key))
+          [key, given || defaults.public_send(key)]
         end
         ColorPalette.new(**values)
       end

@@ -27,21 +27,14 @@ module Sirena
       attribute :hover_fill, :string
       attribute :active_fill, :string
       attribute :disabled_fill, :string
-      attribute :border, :string
-      attribute :edge_color, :string
-      attribute :field_background, :string
-      attribute :field_border, :string
-      attribute :field_text, :string
-      attribute :group_background, :string
-      attribute :highlight, :string
-      attribute :node_bg, :string
-      attribute :node_text, :string
-      attribute :note_fill, :string
-      attribute :section_bg, :string
-      attribute :title_text, :string
-      attribute :card_text, :string
-      attribute :xy_axis_line, :string
-      attribute :xy_grid_line, :string
+
+      EXTRA_COLORS = %i[
+        border edge_color field_background field_border field_text
+        group_background highlight node_bg node_text note_fill section_bg
+        title_text card_text xy_axis_line xy_grid_line
+      ].freeze
+
+      EXTRA_COLORS.each { |name| attribute name, :string }
 
       PALETTES = %i[flow xy timeline_fill timeline_text timeline_rule].freeze
 
@@ -69,21 +62,7 @@ module Sirena
         map "hover_fill", to: :hover_fill
         map "active_fill", to: :active_fill
         map "disabled_fill", to: :disabled_fill
-        map "border", to: :border
-        map "edge_color", to: :edge_color
-        map "field_background", to: :field_background
-        map "field_border", to: :field_border
-        map "field_text", to: :field_text
-        map "group_background", to: :group_background
-        map "highlight", to: :highlight
-        map "node_bg", to: :node_bg
-        map "node_text", to: :node_text
-        map "note_fill", to: :note_fill
-        map "section_bg", to: :section_bg
-        map "title_text", to: :title_text
-        map "card_text", to: :card_text
-        map "xy_axis_line", to: :xy_axis_line
-        map "xy_grid_line", to: :xy_grid_line
+        EXTRA_COLORS.each { |name| map name.to_s, to: name }
         PALETTES.each { |name| map "#{name}_palette", to: :"#{name}_palette" }
       end
 
@@ -94,10 +73,14 @@ module Sirena
       # @return [String] the colour
       # @raise [KeyError] when the name is unknown or the theme lacks it
       def palette(name, index)
-        raise KeyError, "unknown palette: #{name.inspect}" unless PALETTES.include?(name)
+        unless PALETTES.include?(name)
+          raise KeyError, "unknown palette: #{name.inspect}"
+        end
 
         colours = public_send(:"#{name}_palette")
-        raise KeyError, "theme defines no #{name} palette" if colours.nil? || colours.empty?
+        if colours.nil? || colours.empty?
+          raise KeyError, "theme defines no #{name} palette"
+        end
 
         colours.fetch(index % colours.length)
       end
