@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../notation/mermaid/ir_adapters/git_graph"
 
 module Sirena
   module Layout
@@ -53,12 +54,18 @@ module Sirena
 
       class Commit < Lutaml::Model::Serializable
         attribute :id, :string
+        attribute :message, :string
         attribute :x, :float
         attribute :y, :float
         attribute :branch, :string
         attribute :lane, :integer
         attribute :type, :string
+        attribute :tag, :string
         attribute :parent_ids, :string, collection: true, default: -> { [] }
+        attribute :is_merge, :boolean
+        attribute :merge_branch, :string
+        attribute :is_cherry_pick, :boolean
+        attribute :cherry_pick_parent, :string
         attribute :labels, Label, collection: true, default: -> { [] }
       end
 
@@ -66,6 +73,9 @@ module Sirena
         attribute :name, :string
         attribute :lane, :integer
         attribute :color, :string
+        attribute :order, :integer
+        attribute :parent_branch, :string
+        attribute :created_at_commit, :string
         attribute :label, Label
       end
 
@@ -95,50 +105,102 @@ module Sirena
       # @param diagram [Diagram::GitGraph] the git graph diagram
       # @return [Hash] layout data with commits, branches, and connections
       def build_graph(diagram)
-        orientation = diagram.orientation
-
-        # Build commit lookup and parent tracking
-        commits_by_id = build_commit_lookup(diagram.commits)
-        branch_info = build_branch_info(diagram)
-
-        # Assign lanes to branches
-        lane_assignments = assign_lanes(diagram, branch_info)
-
-        # Position commits
-        positioned_commits = position_commits(
-          diagram.commits,
-          commits_by_id,
-          lane_assignments,
-          orientation,
+        graph = ir_graph(diagram)
+        orientation = graph_orientation(graph)
+        branches = source_branches(graph)
+        lane_assignments = assign_lanes(
+          branches, build_branch_info(branches)
         )
-
-        # Build connections between commits
-        connections = build_connections(
-          positioned_commits,
-          commits_by_id,
+        commits = position_commits(
+          source_commits(graph), lane_assignments, orientation
         )
+        graph_result(graph, commits, branches, lane_assignments, orientation)
+      end
 
-        # Build branch metadata
-        branches = build_branch_metadata(
-          diagram.branches,
-          lane_assignments,
-          positioned_commits,
-        )
+      private
 
-        width, height = extents(positioned_commits, lane_assignments,
-                                orientation)
-
+      def graph_result(graph, commits, branches, lanes, orientation)
+        width, height = extents(commits, lanes, orientation)
         {
-          commits: positioned_commits,
-          branches: branches,
-          connections: connections,
+          commits: commits,
+          branches: build_branch_metadata(branches, lanes),
+          connections: build_connections(commits, graph.edges),
           orientation: orientation,
           width: width,
           height: height,
         }
       end
 
-      private
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::GitGraph.call(diagram)
+      end
+
+      def graph_orientation(graph)
+        graph.nodes.find { |node| node.role == "orientation" }&.label || "LR"
+      end
+
+      def source_commits(graph)
+        children = graph.nodes.group_by(&:parent_id)
+        graph.nodes.select { |node| node.role == "commit" }.map do |node|
+          commit_attributes(node, children.fetch(node.id, []))
+        end
+      end
+
+      def commit_attributes(node, semantics)
+        commit_identity(node, semantics).merge(commit_action(semantics))
+      end
+
+      def commit_identity(node, semantics)
+        {
+          ir_id: node.id, id: node.label,
+          message: semantic_value(semantics, "message"),
+          type: semantic_value(semantics, "type") || "NORMAL",
+          tag: semantic_value(semantics, "tag"),
+          branch_name: semantic_value(semantics, "branch_name"),
+          parent_ids: semantic_values(semantics, "parent_reference")
+        }
+      end
+
+      def commit_action(semantics)
+        {
+          is_merge: semantic?(semantics, "merge_commit"),
+          merge_branch: semantic_value(semantics, "merge_branch"),
+          is_cherry_pick: semantic?(semantics, "cherry_pick_commit"),
+          cherry_pick_parent: semantic_value(
+            semantics, "cherry_pick_parent"
+          ),
+        }
+      end
+
+      def source_branches(graph)
+        children = graph.nodes.group_by(&:parent_id)
+        graph.nodes.select { |node| node.role == "branch" }.map do |node|
+          branch_attributes(node, children.fetch(node.id, []))
+        end
+      end
+
+      def branch_attributes(node, semantics)
+        order = semantic_value(semantics, "order")
+        {
+          name: node.label, order: order&.to_i,
+          parent_branch: semantic_value(semantics, "parent_branch"),
+          created_at_commit: semantic_value(semantics, "created_at_commit")
+        }
+      end
+
+      def semantic_values(semantics, role)
+        semantics.select { |node| node.role == role }.map(&:label)
+      end
+
+      def semantic_value(semantics, role)
+        semantics.find { |node| node.role == role }&.label
+      end
+
+      def semantic?(semantics, role)
+        semantics.any? { |node| node.role == role }
+      end
 
       def scene(diagram)
         graph = build_graph(diagram)
@@ -258,14 +320,28 @@ module Sirena
 
       def typed_commit(commit, labels, shift)
         Commit.new(
-          id: commit[:id], x: commit[:x] + shift,
-          y: commit[:y] + PADDING, branch: commit[:branch],
-          lane: commit[:lane], type: commit[:type],
-          parent_ids: commit[:parent_ids],
+          **typed_commit_attributes(commit, shift),
           labels: typed_labels(
             commit_labels_for(labels, commit), shift - PADDING
-          )
+          ),
         )
+      end
+
+      def typed_commit_attributes(commit, shift)
+        typed_commit_identity(commit, shift).merge(
+          is_merge: commit[:is_merge], merge_branch: commit[:merge_branch],
+          is_cherry_pick: commit[:is_cherry_pick],
+          cherry_pick_parent: commit[:cherry_pick_parent]
+        )
+      end
+
+      def typed_commit_identity(commit, shift)
+        {
+          id: commit[:id], message: commit[:message],
+          x: commit[:x] + shift, y: commit[:y] + PADDING,
+          branch: commit[:branch], lane: commit[:lane], type: commit[:type],
+          tag: commit[:tag], parent_ids: commit[:parent_ids]
+        }
       end
 
       def commit_labels_for(labels, commit)
@@ -286,6 +362,8 @@ module Sirena
         end
         Branch.new(
           name: branch[:name], lane: branch[:lane], color: branch[:color],
+          order: branch[:order], parent_branch: branch[:parent_branch],
+          created_at_commit: branch[:created_at_commit],
           label: typed_label(geometry, shift - PADDING)
         )
       end
@@ -357,25 +435,11 @@ module Sirena
           Theme::Registry.get(:default).typography.font_size_small
       end
 
-      # Builds a lookup hash of commits by ID.
+      # Builds branch information from the shared graph's branch entries.
       #
-      # @param commits [Array<Diagram::GitGraph::Commit>] commits
-      # @return [Hash<String, Diagram::GitGraph::Commit>] commit lookup
-      def build_commit_lookup(commits)
-        lookup = {}
-        commits.each_with_index do |commit, idx|
-          # Use index as fallback ID if no ID specified
-          key = commit.id || "commit_#{idx}"
-          lookup[key] = commit
-        end
-        lookup
-      end
-
-      # Builds branch information from diagram.
-      #
-      # @param diagram [Diagram::GitGraph] diagram
+      # @param branches [Array<Hash>] ordered branch semantics
       # @return [Hash] branch info with parent relationships
-      def build_branch_info(diagram)
+      def build_branch_info(branches)
         info = {}
 
         # Start with main branch
@@ -386,11 +450,11 @@ module Sirena
         }
 
         # Add other branches
-        diagram.branches.each do |branch|
-          info[branch.name] = {
-            parent: branch.parent_branch || "main",
-            order: branch.order || info.size,
-            created_at: branch.created_at_commit,
+        branches.each do |branch|
+          info[branch[:name]] = {
+            parent: branch[:parent_branch] || "main",
+            order: branch[:order] || info.size,
+            created_at: branch[:created_at_commit],
           }
         end
 
@@ -401,10 +465,10 @@ module Sirena
       #
       # Main branch gets lane 0, child branches get the following lanes.
       #
-      # @param diagram [Diagram::GitGraph] diagram
+      # @param branches [Array<Hash>] ordered branch semantics
       # @param branch_info [Hash] branch information
       # @return [Hash<String, Integer>] branch name to lane number
-      def assign_lanes(diagram, branch_info)
+      def assign_lanes(branches, branch_info)
         lanes = {}
         next_lane = 0
 
@@ -413,13 +477,13 @@ module Sirena
         next_lane += 1
 
         # Sort branches by order then by creation
-        sorted_branches = diagram.branches.sort_by do |b|
-          [branch_info[b.name][:order] || 999, b.name]
+        sorted_branches = branches.sort_by do |branch|
+          [branch_info[branch[:name]][:order] || 999, branch[:name]]
         end
 
         # Assign lanes to other branches
         sorted_branches.each do |branch|
-          lanes[branch.name] = next_lane
+          lanes[branch[:name]] = next_lane
           next_lane += 1
         end
 
@@ -428,17 +492,15 @@ module Sirena
 
       # Positions commits with X and Y coordinates.
       #
-      # @param commits [Array<Diagram::GitGraph::Commit>] commits
-      # @param commits_by_id [Hash] commit lookup
+      # @param commits [Array<Hash>] ordered commit semantics
       # @param lane_assignments [Hash] branch to lane mapping
       # @param orientation [String] "LR", "TB" or "BT"
       # @return [Array<Hash>] positioned commits
-      def position_commits(commits, commits_by_id, lane_assignments,
-                           orientation)
+      def position_commits(commits, lane_assignments, orientation)
         positioned = []
 
         commits.each_with_index do |commit, idx|
-          branch = commit.branch_name || "main"
+          branch = commit[:branch_name] || "main"
           lane = lane_assignments[branch] || 0
           x, y = coordinates(
             time_position(idx, commits.size, orientation),
@@ -446,21 +508,23 @@ module Sirena
             orientation,
           )
 
-          commit_id = commit.id || "commit_#{idx}"
+          commit_id = commit[:id] || "commit_#{idx}"
 
           positioned << {
+            ir_id: commit[:ir_id],
             id: commit_id,
             x: x,
             y: y,
             branch: branch,
             lane: lane,
-            type: commit.type || "NORMAL",
-            tag: commit.tag,
-            parent_ids: commit.parent_ids,
-            is_merge: commit.is_merge || false,
-            merge_branch: commit.merge_branch,
-            is_cherry_pick: commit.is_cherry_pick || false,
-            cherry_pick_parent: commit.cherry_pick_parent,
+            message: commit[:message],
+            type: commit[:type] || "NORMAL",
+            tag: commit[:tag],
+            parent_ids: commit[:parent_ids],
+            is_merge: commit[:is_merge] || false,
+            merge_branch: commit[:merge_branch],
+            is_cherry_pick: commit[:is_cherry_pick] || false,
+            cherry_pick_parent: commit[:cherry_pick_parent],
           }
         end
 
@@ -493,52 +557,38 @@ module Sirena
       # Builds connections between commits.
       #
       # @param positioned_commits [Array<Hash>] positioned commits
-      # @param commits_by_id [Hash] commit lookup
+      # @param edges [Array<IR::Edge>] resolved parent connections
       # @return [Array<Hash>] connections with from/to commits and type
-      def build_connections(positioned_commits, commits_by_id)
-        connections = []
+      def build_connections(positioned_commits, edges)
         commit_positions = positioned_commits.to_h do |c|
-          [c[:id], c]
+          [c[:ir_id], c]
         end
 
-        positioned_commits.each do |commit|
-          # Connect to parent commits
-          commit[:parent_ids].each do |parent_id|
-            parent = commit_positions[parent_id]
-            next unless parent
+        edges.filter_map do |edge|
+          parent = commit_positions[edge.source_id]
+          commit = commit_positions[edge.target_id]
+          next unless parent && commit
 
-            connection_type = if commit[:is_merge]
-                                :merge
-                              elsif commit[:is_cherry_pick]
-                                :cherry_pick
-                              else
-                                :normal
-                              end
-
-            connections << {
-              from: parent[:id],
-              to: commit[:id],
-              from_x: parent[:x],
-              from_y: parent[:y],
-              to_x: commit[:x],
-              to_y: commit[:y],
-              from_branch: parent[:branch],
-              to_branch: commit[:branch],
-              type: connection_type,
-            }
-          end
+          {
+            from: parent[:id],
+            to: commit[:id],
+            from_x: parent[:x],
+            from_y: parent[:y],
+            to_x: commit[:x],
+            to_y: commit[:y],
+            from_branch: parent[:branch],
+            to_branch: commit[:branch],
+            type: edge.role == "parent" ? :normal : edge.role.to_sym,
+          }
         end
-
-        connections
       end
 
       # Builds branch metadata for rendering.
       #
-      # @param branches [Array<Diagram::GitGraph::Branch>] branches
+      # @param branches [Array<Hash>] ordered branch semantics
       # @param lane_assignments [Hash] lane assignments
-      # @param positioned_commits [Array<Hash>] positioned commits
       # @return [Array<Hash>] branch metadata
-      def build_branch_metadata(branches, lane_assignments, positioned_commits)
+      def build_branch_metadata(branches, lane_assignments)
         metadata = []
 
         # Add main branch
@@ -550,14 +600,20 @@ module Sirena
 
         # Add other branches with cycling colors
         branches.each_with_index do |branch, idx|
-          metadata << {
-            name: branch.name,
-            lane: lane_assignments[branch.name] || (idx + 1),
-            color: DEFAULT_COLORS[(idx + 1) % DEFAULT_COLORS.length],
-          }
+          metadata << branch_metadata(branch, idx, lane_assignments)
         end
 
         metadata
+      end
+
+      def branch_metadata(branch, index, lane_assignments)
+        {
+          name: branch[:name],
+          lane: lane_assignments[branch[:name]] || (index + 1),
+          color: DEFAULT_COLORS[(index + 1) % DEFAULT_COLORS.length],
+          order: branch[:order], parent_branch: branch[:parent_branch],
+          created_at_commit: branch[:created_at_commit]
+        }
       end
 
       # Calculates the extent along the time axis.
