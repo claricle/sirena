@@ -188,7 +188,7 @@ module Sirena
         Notation.fetch(notation)
         case notation
         when Symbol then notation
-        when String then String.instance_method(:to_sym).bind_call(notation)
+        else String.instance_method(:to_sym).bind_call(notation)
         end
       end
     end

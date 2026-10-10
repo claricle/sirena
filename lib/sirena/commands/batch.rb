@@ -163,11 +163,8 @@ module Sirena
           puts "\nUse --verbose to see full error details"
         end
 
-        if (@stats[:success] + @stats[:failed]).positive?
-          success_rate = (@stats[:success].to_f /
-                         (@stats[:success] + @stats[:failed]) * 100).round(1)
-          puts "\nSuccess rate: #{success_rate}%"
-        end
+        rate = (@stats[:success].to_f / (@stats[:success] + @stats[:failed]))
+        puts "\nSuccess rate: #{(rate * 100).round(1)}%"
       end
     end
   end
