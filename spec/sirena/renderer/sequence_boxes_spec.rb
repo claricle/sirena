@@ -14,7 +14,9 @@ RSpec.describe Sirena::Renderer::Sequence do
   it "draws the box around the participants declared inside it" do
     box = rect_box(svg_group(doc, "box-0"))
 
-    expect(participant_boxes(doc, %w[A B]).all? { |m| encloses?(box, m) }).to be(true)
+    members = participant_boxes(doc, %w[A B])
+
+    expect(members.all? { |m| encloses?(box, m) }).to be(true)
   end
 
   it "leaves a participant declared before the box outside it" do

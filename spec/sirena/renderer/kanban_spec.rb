@@ -247,9 +247,10 @@ RSpec.describe Sirena::Renderer::Kanban do
       it "wraps a long bold run into bold tspans without losing a character" do
         long_text = "Hello **#{'x' * 30}**"
         xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: long_text)).to_xml
-        bold_text = REXML::Document.new(xml).get_elements('//tspan[@font-weight="bold"]').map(&:text).join
+        document = REXML::Document.new(xml)
+        bold = document.get_elements('//tspan[@font-weight="bold"]')
 
-        expect(bold_text).to eq("x" * 30)
+        expect(bold.map(&:text).join).to eq("x" * 30)
       end
 
       it "never truncates a card label with an ellipsis" do
@@ -260,9 +261,11 @@ RSpec.describe Sirena::Renderer::Kanban do
       end
 
       it "keeps a long later line in full instead of dropping it" do
-        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: "Short\n#{'q' * 30}")).to_xml
+        text = "Short\n#{'q' * 30}"
+        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: text)).to_xml
+        tspans = REXML::Document.new(xml).get_elements("//tspan")
 
-        expect(REXML::Document.new(xml).get_elements("//tspan").map(&:text).join.count("q")).to eq(30)
+        expect(tspans.map(&:text).join.count("q")).to eq(30)
       end
 
       it "wraps a long card title onto several lines at word boundaries" do

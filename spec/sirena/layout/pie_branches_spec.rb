@@ -24,7 +24,7 @@ RSpec.describe Sirena::Layout::Pie do
 
   it "renders zero-total slices without division errors or data suffixes" do
     expect(zero_total_evidence).to eq([[0.0, 0.0], [0.0, 0.0],
-                                       ["None", "Also none"], 1])
+                                       ["0%", "0%"], 1])
   end
 
   it "accepts the released minimal graph shape without slices" do

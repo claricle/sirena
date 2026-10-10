@@ -86,7 +86,8 @@ RSpec.describe Sirena::Layout::ErDiagram do
 
   describe "fonts without a usable theme" do
     it "uses 12 when the theme has no typography" do
-      row = described_class.attribute_row(0, 0, id_column, theme: Struct.new(:typography).new(nil))
+      theme = Struct.new(:typography).new(nil)
+      row = described_class.attribute_row(0, 0, id_column, theme: theme)
       expect(row.font_size).to eq(12.0)
     end
 

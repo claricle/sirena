@@ -108,7 +108,8 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   describe "the label font without any registered theme" do
     it "falls back to 12" do
       allow(Sirena::Theme::Registry).to receive(:get).and_return(nil)
-      edge = { id: "e", sources: ["A"], targets: ["B"], labels: [{ text: "x" }] }
+      edge = { id: "e", sources: ["A"], targets: ["B"],
+               labels: [{ text: "x" }] }
       scene = described_class.from_graph({ children: children, edges: [edge] })
       expect(scene.edges.first.labels.first.font_size).to eq(12.0)
     end

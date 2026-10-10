@@ -140,7 +140,9 @@ RSpec.describe Sirena::Layout::Flowchart do
     it "places the nodes where the full graph places them" do
       full = graphs.settingless_graph("flowchart LR\nA-->B", keep: true)
 
-      expect(coordinates(scene)).to eq(coordinates(described_class.new.call(full)))
+      expected = coordinates(described_class.new.call(full))
+
+      expect(coordinates(scene)).to eq(expected)
     end
   end
 end

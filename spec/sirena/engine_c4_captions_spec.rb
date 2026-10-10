@@ -27,7 +27,8 @@ RSpec.describe Sirena::Engine do
 
   it "draws the stereotype in 12px italic" do
     svg = described_class.new.render(source)
-    expect(svg).to match(/font-size="12(\.0)?"[^>]*font-style="italic"[^>]*>&lt;/)
+    expect(svg)
+      .to match(/font-size="12(\.0)?"[^>]*font-style="italic"[^>]*>&lt;/)
   end
 
   context "without a title" do
