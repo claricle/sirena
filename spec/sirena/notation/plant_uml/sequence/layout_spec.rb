@@ -753,7 +753,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       run = lambda do |*setting|
         scene = scene_of(*setting, "A ->? : #{label}")
         start, stop = scene.arrows.first.path.match(/M (\S+) \S+ L (\S+)/)
-                           .captures.map(&:to_f)
+          .captures.map(&:to_f)
         (start - stop).abs
       end
 
