@@ -122,6 +122,12 @@ RSpec.describe Sirena::Renderer::Sequence do
       expect(dashes(Sirena::Svg::Line)).to eq(["5,5"])
     end
 
+    it "draws only the heads of geometry without a shaft" do
+      hook(:draw_arrow_geometry, { heads: [] }, style("solid"), group)
+
+      expect(group.children).to be_empty
+    end
+
     it "dashes a dotted message line" do
       span = { x1: 10, y1: 50, x2: 90, y2: 50 }
 
