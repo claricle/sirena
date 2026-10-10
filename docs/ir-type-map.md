@@ -84,7 +84,7 @@ layout behavior; the older survey's `transform/*` wording refers to these
 | `class_diagram` | `graph-shaped` | `lib/sirena/layout/class_diagram.rb` | Classes become children and relationships carry resolvable source/target ids (120–125, 169–174). |
 | `state_diagram` | `graph-shaped` | `lib/sirena/layout/state_diagram.rb` | States become children and transitions become endpoint-identified edges (196–201, 250–259). |
 | `er_diagram` | `graph-shaped` | `lib/sirena/layout/er_diagram.rb` | Entities become children and relationships resolve source and target entities (223–229, 314–322). |
-| `user_journey` | `graph-shaped` | `lib/sirena/layout/user_journey.rb` | Tasks are identified children and consecutive task flow emits source/target ids (41–46, 89–100). |
+| `user_journey` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/user_journey.rb` | Sections and tasks map to ordered contained nodes with scores, actors, styles, and resolved sequential edges; layout owns all geometry. |
 | `gantt` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/gantt.rb` | Sections, tasks, dates, durations, dependencies, exclusions, statuses, and display settings map to shared constraints; layout owns all geometry. |
 | `pie` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/pie.rb` | Ordered slice values and visibility become shared data; layout alone computes percentages, angles, paths, and labels. |
 | `timeline` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/timeline.rb` | Sections, events, descriptions, and tasks map to ordered contained placements; layout owns all canvas geometry. |
@@ -106,10 +106,10 @@ layout behavior; the older survey's `transform/*` wording refers to these
 
 Summary: **6 pre-positioned, 12 graph-shaped, 6 data-shaped; 24 total.**
 
-Migration status: **15 of 24 Mermaid types use the shared IR boundary** — 3
-graph-shaped (`mindmap`, `sankey`, `requirement`), 6 data-shaped (`pie`, `info`, `error`,
+Migration status: **16 of 24 Mermaid types use the shared IR boundary** — 4
+graph-shaped (`mindmap`, `sankey`, `requirement`, `user_journey`), 6 data-shaped (`pie`, `info`, `error`,
 `kanban`, `radar`, `treemap`), and 6 pre-positioned (`packet`, `timeline`,
-`quadrant`, `xychart`, `block`, `gantt`); 9 types remain on their private
+`quadrant`, `xychart`, `block`, `gantt`); 8 types remain on their private
 layout inputs.
 
 `rake type:new[<type>]` adds a data-shaped row immediately above this

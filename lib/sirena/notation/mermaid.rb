@@ -61,6 +61,7 @@ module Sirena
         user_journey: {
           pattern: /\A\s*journey/i,
           keyword: "journey",
+          ir_adapter: true,
         },
         gantt: {
           pattern: /\A\s*gantt(\s|\z)/i,
