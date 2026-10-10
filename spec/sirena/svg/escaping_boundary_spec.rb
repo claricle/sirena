@@ -32,7 +32,8 @@ ELEMENT_ATTRIBUTES = {
   Sirena::Svg::Polyline => [:points],
   Sirena::Svg::Ellipse => [],
   Sirena::Svg::Rect => [:stroke_dasharray],
-  Sirena::Svg::Text => %i[text_anchor font_family font_size font_weight font_style],
+  Sirena::Svg::Text => %i[text_anchor font_family font_size font_weight
+                          font_style],
 }.freeze
 
 # Four renderers set marker-end, marker-start is set directly (Path.from_xml
@@ -144,7 +145,8 @@ RSpec.describe Sirena::Svg::Escaping do
       rect = Sirena::Svg::Rect.new
       rect.opacity = 0.3
 
-      expect(rect.to_xml).to eq('<rect fill-opacity="0.3" stroke-opacity="0.3"/>')
+      expect(rect.to_xml)
+        .to eq('<rect fill-opacity="0.3" stroke-opacity="0.3"/>')
     end
   end
 
@@ -177,7 +179,8 @@ RSpec.describe Sirena::Svg::Escaping do
     # reverted (mutation-check.sh confirmed this). Keep it; it becomes the
     # only check for an explicitly-set version/baseProfile now that
     # from_xml round-tripping is gone.
-    it "declares the SVG Tiny 1.2 profile by default, and honours a different one when set directly" do
+    it "declares the SVG Tiny 1.2 profile by default, and honours a " \
+       "different one when set directly" do
       defaults = described_class.new.to_xml
 
       other = described_class.new

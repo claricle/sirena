@@ -15,7 +15,8 @@ RSpec.describe Sirena::Svg::Text do
   # cross-version read-back contract `#body` relies on, which is exactly what
   # broke lutaml-model 0.7 -> 0.8 (see the file's git history).
   describe "#content" do
-    it "reads back a scalar assignment as something Array() flattens to that scalar, on any lutaml-model 0.8.x" do
+    it "reads back a scalar assignment as something Array() flattens to " \
+       "that scalar, on any lutaml-model 0.8.x" do
       text = described_class.new
       text.content = "plain string"
 

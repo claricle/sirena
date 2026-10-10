@@ -12,7 +12,8 @@ RSpec.describe Sirena::Svg::Group do
 
       xml = group.to_xml
 
-      expect(xml).to eq("<g>\n  <text>This is a\nmultiline string\n</text>\n</g>")
+      expect(xml)
+        .to eq("<g>\n  <text>This is a\nmultiline string\n</text>\n</g>")
     end
 
     # Tspan is the one Element subclass that used to override the public

@@ -17,13 +17,20 @@ module SvgRegistrySources
   end
 
   def verdicts
-    @verdicts ||= YAML.safe_load_file(File.join(corpus_root, "corpus-verdicts.yml"))
-      .to_h { |entry| [entry["case"], entry["verdict"]] }
+    @verdicts ||= YAML.safe_load_file(File.join(corpus_root,
+                                                "corpus-verdicts.yml"))
+      .to_h do |entry|
+      [entry["case"], entry["verdict"]]
+    end
   end
 
   def corpus_cases
     @corpus_cases ||= Dir.glob(File.join(corpus_root, "*", "*.mmd"))
       .map { |path| [path, File.read(path)] }
+  end
+
+  def missing_source_message(type)
+    "no source available for #{type} -- see the source-existence example"
   end
 
   # A real .mmd source for +type+, never typed by hand here: prefers the
@@ -42,7 +49,9 @@ module SvgRegistrySources
     return File.read(fixture_path) if File.exist?(fixture_path)
 
     pattern = Sirena::Engine::DIAGRAM_TYPE_PATTERNS.fetch(type)
-    candidates = corpus_cases.select { |_path, content| content.match?(pattern) }
+    candidates = corpus_cases.select do |_path, content|
+      content.match?(pattern)
+    end
     verdict_of = ->(path) { verdicts[path.delete_prefix("#{corpus_root}/")] }
 
     chosen = candidates.find { |path, _| verdict_of.call(path) == "valid" } ||
@@ -58,15 +67,16 @@ end
 RSpec.describe "SVG output for every registered diagram type" do # rubocop:disable RSpec/DescribeClass
   Sirena::DiagramRegistry.types.each do |type|
     it "has a real fixture or corpus source for #{type}" do
-      message = "no contract/input fixture and no spec/mermaid corpus case matches " \
-        "Engine::DIAGRAM_TYPE_PATTERNS[:#{type}] -- add one before registering this type"
+      message = "no contract/input fixture and no spec/mermaid corpus case " \
+                "matches Engine::DIAGRAM_TYPE_PATTERNS[:#{type}] -- add one " \
+                "before registering this type"
 
       expect(SvgRegistrySources.find_source(type)).not_to be_nil, message
     end
 
     it "renders #{type} as SVG that REXML parses with an <svg> root" do
       source = SvgRegistrySources.find_source(type)
-      skip "no source available for #{type} -- see the source-existence example" if source.nil?
+      skip SvgRegistrySources.missing_source_message(type) if source.nil?
 
       document = REXML::Document.new(Sirena::Engine.new.render(source))
 
