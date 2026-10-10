@@ -353,7 +353,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("entity-")
       end
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-      attr_line = texts.map { |t| svg_text_content(t) }.find { |t| t.include?("id") }
+      attr_line = texts.map { |t| svg_text_content(t) }
+        .find { |text| text.include?("id") }
 
       expect(attr_line).to eq("PK int id")
     end
@@ -430,7 +431,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       texts = rel_groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       label = texts.find { |text| Array(text.content).join == "places" }
-      expect([Array(label.content).join, label.font_size]).to eq(["places", "12"])
+      expect([Array(label.content).join, label.font_size])
+        .to eq(["places", "12"])
     end
 
     it "emits every text role at its injected theme size" do
@@ -458,7 +460,9 @@ RSpec.describe Sirena::Renderer::ErDiagram do
     end
 
     it "dispatches public Hash rendering through the released hooks" do
-      expect(ErDiagramSpecHelpers.public_hook_calls(described_class, graph)).to eq(
+      calls = ErDiagramSpecHelpers.public_hook_calls(described_class, graph)
+
+      expect(calls).to eq(
         calculate_width: 1, calculate_height: 1,
         render_relationships: 1, render_relationship: 1,
         calculate_connection_point: 2,
@@ -564,7 +568,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         svg = renderer.render(classed_graph)
 
         expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#f96")
-        expect(ErDiagramSpecHelpers.rect_for(svg, "OTHER").fill).to eq("#f9f9f9")
+        other_rect = ErDiagramSpecHelpers.rect_for(svg, "OTHER")
+        expect(other_rect.fill).to eq("#f9f9f9")
       end
 
       # Resolves classes BY NAME, not by position in the class list — an
@@ -588,8 +593,12 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         classed_graph = {
           id: "er_diagram",
           children: [
-            ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"], attributes: [{ name: "make" }]),
-            ErDiagramSpecHelpers.entity_node("OTHER", attributes: [{ name: "x" }]),
+            ErDiagramSpecHelpers.entity_node(
+              "CAR", classes: ["a"], attributes: [{ name: "make" }]
+            ),
+            ErDiagramSpecHelpers.entity_node(
+              "OTHER", attributes: [{ name: "x" }]
+            ),
           ],
           edges: [],
           class_defs: { "a" => "color:blue" },
@@ -612,7 +621,9 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       it "ignores an undeclared class without aborting the rest (C4)" do
         classed_graph = {
           id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: %w[ghost known])],
+          children: [
+            ErDiagramSpecHelpers.entity_node("CAR", classes: %w[ghost known]),
+          ],
           edges: [],
           class_defs: { "known" => "fill:#0f0" },
         }
@@ -684,10 +695,14 @@ RSpec.describe Sirena::Renderer::ErDiagram do
 
         expect { renderer.render(no_colon_graph) }.not_to raise_error
         expect { renderer.render(multi_value_graph) }.not_to raise_error
-        expect(ErDiagramSpecHelpers.rect_for(renderer.render(no_colon_graph), "CAR").fill)
-          .to eq("#f9f9f9")
-        expect(ErDiagramSpecHelpers.rect_for(renderer.render(multi_value_graph), "CAR").fill)
-          .to eq("#f9f9f9")
+        no_colon_rect = ErDiagramSpecHelpers.rect_for(
+          renderer.render(no_colon_graph), "CAR"
+        )
+        multi_value_rect = ErDiagramSpecHelpers.rect_for(
+          renderer.render(multi_value_graph), "CAR"
+        )
+        expect(no_colon_rect.fill).to eq("#f9f9f9")
+        expect(multi_value_rect.fill).to eq("#f9f9f9")
       end
 
       # Verified against mermaid's own bundle and a real browser: its
@@ -721,12 +736,16 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("red")
       end
 
-      it "lets an explicit class override a conflicting default property (C12)" do
+      it "lets an explicit class override a conflicting default property " \
+         "(C12)" do
         graph = {
           id: "er_diagram",
           children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
           edges: [],
-          class_defs: { "default" => "fill:red,stroke:green", "a" => "fill:blue" },
+          class_defs: {
+            "default" => "fill:red,stroke:green",
+            "a" => "fill:blue",
+          },
         }
         svg = renderer.render(graph)
         rect = ErDiagramSpecHelpers.rect_for(svg, "CAR")
@@ -738,10 +757,13 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       # Verified against mermaid's own db: cssClasses is "default a b a" for
       # `CAR:::a,b` then `CAR:::a` — the repeat is NOT deduped, so it moves
       # "a" to the end and lets it win over the intervening "b".
-      it "lets a later duplicate assignment win over an intervening class (C13)" do
+      it "lets a later duplicate assignment win over an intervening class " \
+         "(C13)" do
         graph = {
           id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: %w[a b a])],
+          children: [
+            ErDiagramSpecHelpers.entity_node("CAR", classes: %w[a b a]),
+          ],
           edges: [],
           class_defs: { "a" => "fill:red", "b" => "fill:blue" },
         }
@@ -786,7 +808,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       # from that, not green. A parse-time downcase collapses all three
       # chunks into one Ruby key and makes the LAST literal chunk win
       # instead, giving green — this is the regression box_style fixes.
-      it "resolves same-property mixed-case conflicts in source order, not literal-last (C16)" do
+      it "resolves same-property mixed-case conflicts in source order, not " \
+         "literal-last (C16)" do
         graph = {
           id: "er_diagram",
           children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
@@ -809,7 +832,11 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       it "does not let an uppercase COLOR style the entity name (C17)" do
         graph = {
           id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"], attributes: [{ name: "make" }])],
+          children: [
+            ErDiagramSpecHelpers.entity_node(
+              "CAR", classes: ["a"], attributes: [{ name: "make" }]
+            ),
+          ],
           edges: [],
           class_defs: { "a" => "fill:currentColor,COLOR:red" },
         }
@@ -832,7 +859,9 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         graph = {
           id: "er_diagram",
           children: [
-            ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"], attributes: [{ name: "make" }]),
+            ErDiagramSpecHelpers.entity_node(
+              "CAR", classes: ["a"], attributes: [{ name: "make" }]
+            ),
           ],
           edges: [],
           class_defs: { "a" => "fill:red,FILL:blue,fill:green" },
@@ -853,7 +882,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       # names the same property. mermaid renames a lowercase `fill` copy to
       # `bgFill`, so it stops colliding -- see C24. `stroke` is not renamed,
       # which is what this example pins.
-      it "replays a colour-bearing chunk after a later same-property one (C19)" do
+      it "replays a colour-bearing chunk after a later same-property one " \
+         "(C19)" do
         graph = {
           id: "er_diagram",
           children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
@@ -862,7 +892,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         }
         svg = renderer.render(graph)
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").stroke).to eq("currentcolor")
+        rect = ErDiagramSpecHelpers.rect_for(svg, "CAR")
+        expect(rect.stroke).to eq("currentcolor")
       end
 
       # mermaid appends its `textStyles` replay after the class's own
@@ -889,7 +920,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       end
 
       %w[FILL FiLl].each do |key|
-        it "still replays a #{key} chunk, which mermaid does not rename (C25 #{key})" do
+        it "still replays a #{key} chunk, which mermaid does not rename " \
+           "(C25 #{key})" do
           graph = {
             id: "er_diagram",
             children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
@@ -898,7 +930,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           }
           svg = renderer.render(graph)
 
-          expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("currentcolor")
+          rect = ErDiagramSpecHelpers.rect_for(svg, "CAR")
+          expect(rect.fill).to eq("currentcolor")
         end
       end
 
@@ -908,15 +941,21 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       # the case-insensitive cascade — this declaration computes
       # green/4px attributed, where C16's bare fill equivalent computes
       # blue/8px.
-      it "resolves stroke and stroke-width by exact lowercase key on an attributed entity (C20)" do
+      it "resolves stroke and stroke-width by exact lowercase key on an " \
+         "attributed entity (C20)" do
         graph = {
           id: "er_diagram",
           children: [
-            ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"], attributes: [{ name: "make" }]),
+            ErDiagramSpecHelpers.entity_node(
+              "CAR", classes: ["a"], attributes: [{ name: "make" }]
+            ),
           ],
           edges: [],
-          class_defs: { "a" => "stroke:red,STROKE:blue,stroke:green," \
-                                "stroke-width:2px,STROKE-WIDTH:8px,stroke-width:4px" },
+          class_defs: {
+            "a" => "stroke:red,STROKE:blue,stroke:green," \
+                   "stroke-width:2px,STROKE-WIDTH:8px," \
+                   "stroke-width:4px",
+          },
         }
         svg = renderer.render(graph)
         rect = ErDiagramSpecHelpers.rect_for(svg, "CAR")
@@ -930,7 +969,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       # entity's box, and the browser's `color` cascade resolves
       # currentColor to red. Sirena has no cascade left to replay at
       # paint time, so it must substitute the concrete value now.
-      it "resolves currentColor against an ambient COLOR override on a bare entity (C21)" do
+      it "resolves currentColor against an ambient COLOR override on a bare " \
+         "entity (C21)" do
         graph = {
           id: "er_diagram",
           children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
@@ -963,7 +1003,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       # invalid <color>, drops that declaration entirely during
       # cascade, and computes red from the earlier valid "fill:red" —
       # not black from "bogus".
-      it "keeps an earlier valid value when a later same-property one is invalid CSS (C23)" do
+      it "keeps an earlier valid value when a later same-property one is " \
+         "invalid CSS (C23)" do
         graph = {
           id: "er_diagram",
           children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
