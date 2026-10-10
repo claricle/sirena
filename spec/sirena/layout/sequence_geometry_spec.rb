@@ -54,7 +54,7 @@ RSpec.describe Sirena::Layout::Sequence do
   end
 
   it "sizes the canvas to the lifeline plus the bottom margins" do
-    expect(plain.height).to eq(215 + 44 * 2)
+    expect(plain.height).to eq(215 + (44 * 2))
   end
 
   it "opens a loop 10 below the message before it" do
@@ -68,7 +68,9 @@ RSpec.describe Sirena::Layout::Sequence do
   end
 
   it "puts an alt divider 15 below the message before it" do
-    expect(alted.frames.first.dividers.first.y).to eq(message_rows(alted)[1] + 15)
+    divider = alted.frames.first.dividers.first
+
+    expect(divider.y).to eq(message_rows(alted)[1] + 15)
   end
 
   it "puts the first row of a loop 89 below the message before it" do

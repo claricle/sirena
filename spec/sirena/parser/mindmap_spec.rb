@@ -197,8 +197,8 @@ RSpec.describe Sirena::Parser::Mindmap do
       end
 
       it "drops a whole-line %% comment, not a node (corpus 048)" do
-        source = "mindmap\n  root(Root)\n    a(a)\n\n" \
-                 "    %% a comment\n    b[New Stuff]\n"
+        source = ["mindmap", "  root(Root)", "    a(a)", "",
+                  "    %% a comment", "    b[New Stuff]", ""].join("\n")
 
         diagram = parser.parse(source)
         expect(diagram.root.children.map(&:content)).to eq(["a", "New Stuff"])
