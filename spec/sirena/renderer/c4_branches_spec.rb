@@ -37,8 +37,19 @@ RSpec.describe Sirena::Renderer::C4 do
   end
 
   it "uses every element palette including external variants" do
-    xml = renderer.render(scene(children: palette_nodes)).to_xml
-    expect(xml).to include("#6C6477", "#8F8F8F", "#438DD5", "#85BBF0")
+    colors = Sirena::Theme::Registry.get(:default).colors
+    groups = renderer.render(scene(children: palette_nodes)).children
+      .grep(Sirena::Svg::Group)
+    fills = groups.to_h do |group|
+      [group.id, group.children.grep(Sirena::Svg::Rect).first.fill]
+    end
+
+    expect(fills).to eq(
+      "element-p" => colors.secondary,
+      "element-s" => colors.secondary,
+      "element-c" => colors.primary,
+      "element-k" => colors.surface_variant,
+    )
   end
 
   it "uses typed label font sizes in source order" do

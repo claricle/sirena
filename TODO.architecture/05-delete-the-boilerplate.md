@@ -1,9 +1,11 @@
 # 05 — Delete the boilerplate
 
-Status (2026-10-10): **Part A complete; Parts B and C remain open.** The
+Status (2026-10-10): **Parts A and B complete; Part C remains open.** The
 declarative parser base, single positioned-error formatter, instance builder
-convention, and distinct journey `ScoreError` are all present on `main` and
-covered across every registered type.
+convention, and distinct journey `ScoreError` are all present and covered
+across every registered type. `Renderer::Base#create_document` is now the sole
+Mermaid SVG document constructor: all 24 registered renderers use final Scene
+dimensions, and no renderer retains offset instance variables.
 
 **Goal:** parse errors that name the line, column and offending source
 for all 24 types; themes that actually work; about 1,500 fewer lines.
@@ -271,8 +273,8 @@ headings silently drop everything after the first block.
       `self.apply` class methods are migrated to instance methods, not merely called
       differently — `grep -rn "def self.apply" lib/sirena/parser/builders/` returns
       nothing
-- [ ] B — one `create_document` on `Renderer::Base`, no per-renderer copies
-- [ ] B — no renderer sets `@offset_x` / `@offset_y`
+- [x] B — one `create_document` on `Renderer::Base`, no per-renderer copies
+- [x] B — no renderer sets `@offset_x` / `@offset_y`
 - [ ] C — `grep -rn "DEFAULT_COLORS\|FLOW_COLORS\|SECTION_COLORS" lib/sirena/`
       returns nothing. **Search all of `lib/sirena/`, not just the renderers** —
       the sixth palette lives in `transform/git_graph.rb` and a renderer-only

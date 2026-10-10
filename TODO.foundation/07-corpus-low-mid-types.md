@@ -8,11 +8,11 @@ artifacts; no unknown verdicts).
 The six required singleton-capture grep audits are recorded in the generated
 `docs/singleton-capture-audit.md`; its generator scans the owned parser and
 builder paths and records 07e's explicit zero-hit result. Sankey's empty-input
-gap closed in PR #248. Two acceptance criteria are still open. First,
-`DiagramTypeGaps::BY_TYPE` still creates exactly three pending contract
-examples: theme output for user_journey, c4 and error. Second, item 07 must
-complete the joint item-14 handoff to the 90% branch floor; the current
-enforced floor is 89%.
+gap closed in PR #248. The C4, Error and User Journey theme-output gaps are
+also closed, and `DiagramTypeGaps::BY_TYPE` no longer creates pending contract
+examples. One acceptance criterion is still open: item 07 must complete the
+joint item-14 handoff to the 90% branch floor; the current enforced floor is
+89%.
 
 Can start: after 02. Same target, method, and parallelism rules as item
 06 — including the serialized shared-grammar track for anything touching
@@ -69,9 +69,9 @@ the scoreboard — quantified over the CORPUS, not over registrations, so
 an unregistered type is a failure, not an escape. Zero pending examples
 suite-wide.
 
-The corpus half is satisfied for this item's types: 831/831 oracle-valid cases
-pass. The zero-pending half is not: the three theme-output contract gaps listed
-in the status still call `pending`. Sankey's former empty-input gap is closed.
+The corpus and zero-pending halves are satisfied for this item's types:
+831/831 oracle-valid cases pass, the three theme-output contract gaps no
+longer call `pending`, and Sankey's former empty-input gap is closed.
 
 Floor raises are acceptance criteria of this item, not side effects.
 Both are second-finisher rules, because the tracks run concurrently:

@@ -6,6 +6,8 @@ require "sirena/renderer/user_journey"
 RSpec.describe Sirena::Renderer::UserJourney do
   subject(:renderer) { described_class.new }
 
+  let(:colors) { Sirena::Theme::Registry.get(:default).colors }
+
   def xml_for(graph)
     renderer.render(graph).to_xml
   end
@@ -36,7 +38,8 @@ RSpec.describe Sirena::Renderer::UserJourney do
       /font-size="16" font-weight="bold">([^<]+)</
     end
     let(:default_box) do
-      '<rect fill="#feca57" stroke="#333333" stroke-width="2" ' \
+      "<rect fill=\"#{colors.warning}\" stroke=\"#{colors.node_stroke}\" " \
+        'stroke-width="2" ' \
         'x="0.0" y="0.0" width="120.0" height="80.0"'
     end
 
@@ -53,7 +56,8 @@ RSpec.describe Sirena::Renderer::UserJourney do
        "under their own header", :aggregate_failures do
       xml = xml_for({ id: "u", children: tasks })
       expect(xml.scan(section_headers).flatten).to eq(%w[Default S])
-      expect(xml).to include('fill="#48dbfb"').and include(">Me, You<")
+      expect(xml).to include("fill=\"#{colors.success}\"")
+        .and include(">Me, You<")
     end
 
     it "skips the title when it is empty", :aggregate_failures do
