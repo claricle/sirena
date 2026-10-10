@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "package"
+require_relative "style_sheet"
 
 module Sirena
   module Notation
@@ -16,14 +17,16 @@ module Sirena
       # does not, so whatever draws the text must interpret or refuse them.
       class Diagram
         attr_reader :classes, :relations, :junctions, :directives, :notes,
-                    :packages
+                    :packages, :captions, :style
 
         # `junctions` are the association classes, `directives` the
         # restyling lines the parser recorded without applying and `notes`
         # the Notes in source order. `packages` are the Packages in source
         # order; each class names its own.
-        # @param recorded [Hash] optional `:junctions`, `:directives` and
-        #   `:notes`; each defaults to empty
+        # `captions` are the title, header, footer, caption and legend, one
+        # of each kind at most, and `style` the StyleSheet that dresses them.
+        # @param recorded [Hash] optional `:junctions`, `:directives`,
+        #   `:notes`, `:captions` and `:style`; each defaults to empty
         def initialize(classes:, relations:, packages: [].freeze, **recorded)
           @classes = classes
           @relations = relations
@@ -31,6 +34,8 @@ module Sirena
           @junctions = recorded.fetch(:junctions, [].freeze)
           @directives = recorded.fetch(:directives, [].freeze)
           @notes = recorded.fetch(:notes, [].freeze)
+          @captions = recorded.fetch(:captions, [].freeze)
+          @style = recorded.fetch(:style) { StyleSheet.new }
           freeze
         end
 

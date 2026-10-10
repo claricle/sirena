@@ -4,6 +4,7 @@ require_relative "../../error"
 require_relative "../../error/diagram_type_error"
 require_relative "../../error/parse_error"
 require_relative "arrow"
+require_relative "caption"
 require_relative "class_name"
 require_relative "diagram_builder"
 require_relative "directives"
@@ -72,6 +73,7 @@ module Sirena
         TYPED_METHOD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]+(#{NAME})[ \t]*
                         \(([^()]*)\)\z/xo
         MODIFIERS = /\A(?:\{(?:static|abstract|field|method)\}[ \t]*)+/i
+        STYLE_OPEN = %r{\A<style>\z}i
         LINE_END = /\r\n|\r|\n/
         NOT_FOUND_MESSAGE = "Unable to detect diagram type from source. " \
                             "Source must start with one of: @startuml"
@@ -80,7 +82,7 @@ module Sirena
                          :STEREOTYPE, :CLASS_DECLARATION, :QUOTED_DECLARATION,
                          :QUOTED_NAME, :HIDE_TAG, :PACKAGE, :NOTE, :END_NOTE,
                          :RELATION, :JUNCTION, :METHOD, :FIELD,
-                         :TYPED_FIELD, :TYPED_METHOD, :MODIFIERS, :LINE_END,
+                         :TYPED_FIELD, :TYPED_METHOD, :MODIFIERS, :STYLE_OPEN, :LINE_END,
                          :NOT_FOUND_MESSAGE
 
         # @param source [String] PlantUML source
@@ -119,7 +121,7 @@ module Sirena
           return phase if text.empty?
 
           refuse_continuation(phase, text, number)
-          return phase if text.start_with?("'") && phase != :note
+          return phase if text.start_with?("'") && !%i[note style].include?(phase)
 
           read_line(phase, builder, text, number)
         end
@@ -130,6 +132,7 @@ module Sirena
           when :statements then statement(builder, text, number)
           when :body then body_line(builder, text, number)
           when :note then note_line(builder, text, number)
+          when :style then style_line(builder, text, number)
           else after(text, number)
           end
         end
@@ -150,9 +153,27 @@ module Sirena
           refuse_block_comment(text, number)
           return record(builder, text) if Directives.match?(text)
 
-          block_line(builder, text, number) ||
+          caption_or_style(builder, text, number) ||
+            block_line(builder, text, number) ||
             quoted_declaration(builder, text, number) ||
             declaration_or_relation(builder, text, number)
+        end
+
+        # nil unless the line is a caption or opens a style block.
+        def caption_or_style(builder, text, number)
+          if (caption = Caption.read(text))
+            builder.caption(caption)
+            :statements
+          elsif STYLE_OPEN.match?(text)
+            builder.open_style(number, text)
+            :style
+          end
+        end
+
+        def style_line(builder, text, number)
+          raise unclosed_style(builder) if text == "@enduml"
+
+          builder.style_line(text, number) == :closed ? :statements : :style
         end
 
         # nil unless the line hides a tag or opens or closes a package.
@@ -349,7 +370,7 @@ module Sirena
           return unless text.end_with?("\\")
 
           case phase
-          when :statements, :body, :note
+          when :statements, :body, :note, :style
             raise refusal(text, number, "line continuation")
           end
         end
@@ -366,6 +387,7 @@ module Sirena
           when :after then builder.diagram
           when :body then raise unclosed_body(builder)
           when :note then raise unclosed_note(builder)
+          when :style then raise unclosed_style(builder)
           else
             raise Sirena::Parser::ParseError,
                   "Parse error: missing @enduml before the end of the source"
@@ -385,6 +407,13 @@ module Sirena
           Sirena::Parser::ParseError.new(
             "Parse error: the note opened on line " \
             "#{builder.open_note_line} is never closed with end note",
+          )
+        end
+
+        def unclosed_style(builder)
+          Sirena::Parser::ParseError.new(
+            "Parse error: the style block opened on line " \
+            "#{builder.open_style_line} is never closed with </style>",
           )
         end
 

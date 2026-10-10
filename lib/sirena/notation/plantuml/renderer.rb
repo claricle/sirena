@@ -14,15 +14,69 @@ module Sirena
 
         def render(scene)
           document = blank_document(scene)
-          scene.frames.each { |frame| render_frame(frame, document) }
+          render_background(scene, document)
+          content = content_target(scene, document)
+          scene.frames.each { |frame| render_frame(frame, content) }
           scene.relations.each do |relation|
-            render_relation(relation, document)
+            render_relation(relation, content)
           end
-          scene.boxes.each { |box| render_box(box, document) }
+          scene.boxes.each { |box| render_box(box, content) }
+          scene.panels.to_a.each { |panel| render_panel(panel, document) }
           document
         end
 
         private
+
+        def render_background(scene, document)
+          return unless scene.background
+
+          document << Svg::Rect.new(x: 0, y: 0, width: scene.width,
+                                    height: scene.height,
+                                    fill: scene.background)
+        end
+
+        # The diagram moves as one when captions make room around it.
+        def content_target(scene, document)
+          return document if scene.panels.to_a.empty?
+
+          group = Svg::Group.new(
+            transform: "translate(#{scene.content_x}, #{scene.content_y})",
+          )
+          document << group
+          group
+        end
+
+        def render_panel(panel, document)
+          group = Svg::Group.new(id: panel.id)
+          group << panel_rectangle(panel) if panel.fill || panel.bordered
+          group << panel_text(panel)
+          document << group
+        end
+
+        def panel_rectangle(panel)
+          Svg::Rect.new(x: panel.x, y: panel.y, width: panel.width,
+                        height: panel.height, fill: panel.fill || "none").tap do |rect|
+            next unless panel.bordered
+
+            rect.rx = 7.5
+            rect.ry = 7.5
+            rect.stroke = "#000000"
+            rect.stroke_width = "1"
+          end
+        end
+
+        def panel_text(panel)
+          Svg::Text.new.tap do |text|
+            text.x = panel.x + (panel.width / 2)
+            text.y = panel.y + 5.0 + (panel.font_size * 0.95)
+            text.content = panel.content
+            text.text_anchor = "middle"
+            text.fill = panel.colour || text_colour
+            text.font_family = font_family("caption")
+            text.font_size = panel.font_size.to_s
+            text.font_weight = "bold" if panel.bold
+          end
+        end
 
         def blank_document(scene)
           Svg::Document.new(

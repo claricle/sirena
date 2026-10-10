@@ -107,6 +107,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     resources.vega.nonreg.group2904.role_tail_only--c95e6006dcac
     resources.vega.nonreg.group2904.role_without_visibility--6318bda823a1
     resources.vega.nonreg.group2917.smetana_hide_class--cda3c6a5e269
+    resources.vega.nonreg.simple.A0005--f83e486078d0
     resources.vega.nonreg.simple.QualifiedAssoc001--8c3b78057dc3
     resources.vega.nonreg.simple.QualifiedAssoc002--d57fb49a9920
     resources.vega.svg.interactive.SVG0004_Svek--d500aa856a7e

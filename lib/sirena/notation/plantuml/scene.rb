@@ -70,6 +70,29 @@ module Sirena
           attribute :texts, Text, collection: true
         end
 
+        # A title, header, footer, caption or legend: a rectangle (drawn when
+        # `fill` is set or `bordered`) holding one line of `content`.
+        class Panel < Lutaml::Model::Serializable
+          attribute :id, :string
+          attribute :kind, :string
+          attribute :x, :float
+          attribute :y, :float
+          attribute :width, :float
+          attribute :height, :float
+          attribute :fill, :string
+          attribute :bordered, :boolean
+          attribute :colour, :string
+          attribute :font_size, :float
+          attribute :bold, :boolean
+          attribute :content, :string
+        end
+
+        # `panels` sit in canvas space. The rest of the scene is drawn
+        # shifted by `content_x`, `content_y` inside the `background`.
+        attribute :panels, Panel, collection: true
+        attribute :background, :string
+        attribute :content_x, :float
+        attribute :content_y, :float
         attribute :frames, Frame, collection: true
         attribute :boxes, Box, collection: true
         attribute :relations, Relation, collection: true

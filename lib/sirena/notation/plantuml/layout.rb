@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../layout/base"
+require_relative "caption_layout"
 require_relative "class_name"
 require_relative "package_frames"
 require_relative "scene"
@@ -35,10 +36,19 @@ module Sirena
           boxes = position_boxes(rows_by_package(specifications, diagram),
                                  box_width)
 
-          build_scene(diagram, boxes, box_width)
+          dress(diagram, build_scene(diagram, boxes, box_width))
         end
 
         private
+
+        def dress(diagram, scene)
+          measure = lambda do |text, size|
+            measure_text(text, font_size: size)[:width]
+          end
+          captions = CaptionLayout.new(diagram, normal_size: font_size,
+                                                measure: measure)
+          captions.dress(scene)
+        end
 
         def build_scene(diagram, boxes, box_width)
           frames = scene_frames(diagram, boxes)
