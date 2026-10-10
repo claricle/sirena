@@ -114,20 +114,15 @@ module Sirena
           fit(cluster, contents)
         end
 
-        # A subgraph with its own `direction`, or with contents and no edge
-        # crossing its border, is laid out as a graph of its own. Any other
-        # is laid out with the level around it.
+        # A subgraph with its own `direction`, or with no edge crossing its
+        # border, is laid out as a graph of its own. Any other is laid out
+        # with the level around it.
         def inner_frame(cluster, frame)
           direction = cluster.dig(:metadata, :direction)
           return frame.nested(direction) if direction
-          return frame if external_or_empty?(cluster)
+          return frame if @level_edges.external?(cluster[:id])
 
           frame.nested
-        end
-
-        def external_or_empty?(cluster)
-          cluster[:children].to_a.empty? ||
-            @level_edges.external?(cluster[:id])
         end
 
         # The contents sit CLUSTER_SIDE from the left and CLUSTER_VERTICAL
