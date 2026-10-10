@@ -10,18 +10,22 @@ require "tmpdir"
 # Engine#render returns SVG-shaped output that is not XML.
 RSpec.describe "scripts/corpus_sweep.rb", type: :task do
   let(:root) { File.expand_path("../..", __dir__) }
-  let(:info_cases) { Dir.glob(File.join(root, "spec", "mermaid", "info", "*.mmd")).size }
+  let(:info_cases) do
+    Dir.glob(File.join(root, "spec", "mermaid", "info", "*.mmd")).size
+  end
 
   # `<img src=` opens a tag that never closes, the shape of the XSS corpus case.
   let(:malformed_svg) do
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><text>Alice<img src=</text></svg>'
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1">' \
+      "<text>Alice<img src=</text></svg>"
   end
 
   # Returns [stdout, status]; stderr is not part of what is asserted.
   let(:sweep_info) do
     lambda do |prelude = nil|
       args = prelude ? ["-r", prelude] : []
-      out, _err, status = Open3.capture3(RbConfig.ruby, *args, File.join(root, "scripts", "corpus_sweep.rb"),
+      script = File.join(root, "scripts", "corpus_sweep.rb")
+      out, _err, status = Open3.capture3(RbConfig.ruby, *args, script,
                                          "--failing", "info", chdir: root)
       [out, status]
     end
