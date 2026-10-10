@@ -146,15 +146,21 @@ module Sirena
           end
 
           def message(message)
-            @y += [label_lines(message).size - 1, 0].max * line_step
-            @self_drop = message.self_message? ? SELF_HEIGHT : 0.0
-            @last_y = @mark_y = @y
-            from, to = [message.from, message.to].map do |place|
-              place_of(place, message)
-            end
+            start_row(message)
+            from, to = ends_of(message)
             draw(message, from, to) unless message.style.hidden
             touch(*extent(message, from, to))
             @y += message.self_message? ? ROW * 1.5 : ROW
+          end
+
+          def start_row(message)
+            @y += [label_lines(message).size - 1, 0].max * line_step
+            @self_drop = message.self_message? ? SELF_HEIGHT : 0.0
+            @last_y = @mark_y = @y
+          end
+
+          def ends_of(message)
+            [message.from, message.to].map { |place| place_of(place, message) }
           end
 
           def draw(message, from, to)
@@ -281,16 +287,20 @@ module Sirena
 
           def label_texts(message, geometry)
             return [] unless message.label && !message.label.empty?
+            return numbered_texts(message, geometry) if message.number
 
-            x, y, anchor = geometry
-            if message.number
-              return NumberedLabel.new(@measure).texts(message, x, y, anchor)
-            end
+            stacked_texts(message, *geometry)
+          end
 
+          def numbered_texts(message, geometry)
+            NumberedLabel.new(@measure).texts(message, *geometry)
+          end
+
+          def stacked_texts(message, at_x, at_y, anchor)
             lines = label_lines(message)
             lines.each_with_index.map do |line, index|
               up = (lines.size - 1 - index) * line_step
-              text(line, x, y - up, "message_label", anchor)
+              text(line, at_x, at_y - up, "message_label", anchor)
             end
           end
 
@@ -366,7 +376,7 @@ module Sirena
 
           # Between the rows on either side of the line, like a divider.
           def page_break(_item)
-            @page_breaks << @y - 20
+            @page_breaks << (@y - 20)
           end
 
           def ref(item)
