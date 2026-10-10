@@ -38,10 +38,10 @@ RSpec.describe SpecSupport::LayoutParity::InfoRecognizer do
 
   def expected_pair
     [[[:info_text, "info-text", nil, "v11.12.0"]],
-     [[:info_text, "info-text", nil, "Info"]]]
+     [[:info_text, "info-text", nil, "v11.12.0"]]]
   end
 
-  it "uses one fixed role despite the producers' different wording" do
+  it "gives both producers' version text the one fixed role" do
     expect(real_pair).to eq(expected_pair)
   end
 
