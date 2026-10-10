@@ -42,9 +42,9 @@ RSpec.describe Sirena::Renderer::UserJourney do
     it "renders graph to SVG document" do
       svg = renderer.render(graph)
 
-      expect(svg).to be_a(Sirena::Svg::Document)
-      expect(svg.width).to be > 0
-      expect(svg.height).to be > 0
+      expect(svg).to be_a(Sirena::Svg::Document).and have_attributes(
+        width: be_positive, height: be_positive,
+      )
     end
 
     it "includes task boxes in SVG" do

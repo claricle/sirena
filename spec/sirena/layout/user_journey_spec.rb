@@ -6,6 +6,24 @@ require "sirena/diagram/user_journey"
 
 RSpec.describe Sirena::Layout::UserJourney do
   let(:transform) { described_class.new }
+  let(:positive_box) do
+    have_attributes(width: be_positive, height: be_positive)
+  end
+  let(:single_task_journey) do
+    Sirena::Diagram::UserJourney.new(
+      title: "My Journey",
+      sections: [
+        Sirena::Diagram::JourneySection.new(
+          name: "Shopping",
+          tasks: [
+            Sirena::Diagram::JourneyTask.new(
+              name: "Browse", score: 5, actors: ["Customer"],
+            ),
+          ],
+        ),
+      ],
+    )
+  end
 
   def representative_journey
     Sirena::Diagram::UserJourney.new(
@@ -29,48 +47,20 @@ RSpec.describe Sirena::Layout::UserJourney do
 
   describe "#to_graph" do
     it "converts diagram to graph structure" do
-      diagram = Sirena::Diagram::UserJourney.new.tap do |d|
-        d.title = "My Journey"
-        section = Sirena::Diagram::JourneySection.new.tap do |s|
-          s.name = "Shopping"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Browse"
-            t.score = 5
-            t.actors = ["Customer"]
-          end
-        end
-        d.sections << section
-      end
+      scene = transform.to_graph(single_task_journey)
 
-      scene = transform.to_graph(diagram)
-
-      expect(scene).to be_a(described_class::Scene)
-      expect(scene.id).to eq("user_journey")
-      expect(scene.tasks).to be_a(Array)
-      expect(scene.arrows).to be_a(Array)
-      expect(scene.view_box).to eq("0 -25 500 540")
+      expect(scene).to be_a(described_class::Scene).and have_attributes(
+        id: "user_journey", tasks: be_a(Array), arrows: be_a(Array),
+        view_box: "0 -25 500 540"
+      )
     end
 
     it "creates task nodes with dimensions" do
-      diagram = Sirena::Diagram::UserJourney.new.tap do |d|
-        section = Sirena::Diagram::JourneySection.new.tap do |s|
-          s.name = "Shopping"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Browse"
-            t.score = 5
-            t.actors = ["Customer"]
-          end
-        end
-        d.sections << section
-      end
+      task = transform.to_graph(single_task_journey).tasks.fetch(0)
 
-      scene = transform.to_graph(diagram)
-
-      expect(scene.tasks.length).to eq(1)
-      task = scene.tasks.first
-      expect(task.id).to eq("task_0")
-      expect(task.box.width).to be > 0
-      expect(task.box.height).to be > 0
+      expect(task).to have_attributes(
+        id: "task_0", box: positive_box,
+      )
     end
 
     it "draws one timeline arrow at the mmdc height" do
