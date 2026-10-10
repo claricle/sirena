@@ -21,12 +21,27 @@ module Sirena
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
+          # One shape at an arrow end: a "polygon" (points), a "line" or a
+          # "circle". A polygon is filled with the edge colour when `filled`.
+          class Mark < Lutaml::Model::Serializable
+            attribute :kind, :string
+            attribute :filled, :boolean
+            attribute :heavy, :boolean
+            attribute :points, :string
+            attribute :x1, :float
+            attribute :y1, :float
+            attribute :x2, :float
+            attribute :y2, :float
+            attribute :cx, :float
+            attribute :cy, :float
+            attribute :r, :float
+          end
+
           class Arrow < Lutaml::Model::Serializable
             attribute :id, :string
             attribute :path, :string
             attribute :dashed, :boolean
-            attribute :marker_points, :string
-            attribute :marker_filled, :boolean
+            attribute :marks, Mark, collection: true
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "activation"
+require_relative "arrow_style"
 require_relative "destroy"
 require_relative "divider"
 require_relative "fragment"
@@ -53,8 +54,9 @@ module Sirena
           def reply(label)
             call = @calls.pop or return false
 
+            style = ArrowStyle.plain(:filled, dashed: true)
             message(Message.new(from: call.to, to: call.from, label: label,
-                                head: :filled, dashed: true))
+                                style: style))
           end
 
           def note(note)

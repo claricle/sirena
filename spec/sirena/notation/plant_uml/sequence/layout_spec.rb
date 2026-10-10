@@ -62,15 +62,70 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
   it "points a reversed arrow at the participant on the left" do
     arrow = scene_of("A -> B", "B -> A").arrows.last
-    tip = arrow.marker_points.split.first.split(",").first.to_f
+    tip = arrow.marks.first.points.split.first.split(",").first.to_f
 
     expect(tip).to be < arrow.path[/M (\S+)/, 1].to_f
   end
 
   it "fills the head of -> and leaves ->> open" do
-    filled = scene_of("A -> B", "A ->> B").arrows.map(&:marker_filled)
+    arrows = scene_of("A -> B", "A ->> B").arrows
+    filled = arrows.map { |arrow| arrow.marks.first.filled }
 
     expect(filled).to eq([true, false])
+  end
+
+  describe "arrow ends" do
+    def marks_of(line)
+      scene_of(line).arrows.first.marks
+    end
+
+    def numbers_of(line)
+      scene_of(line).arrows.first.path.scan(/-?\d+\.?\d*/).map(&:to_f)
+    end
+
+    it "draws a cross as two heavy lines" do
+      marks = marks_of("A ->x B")
+
+      expect(marks.map { |m| [m.kind, m.heavy] }).to eq([["line", true]] * 2)
+    end
+
+    it "stops the shaft 11.5 inside a cross" do
+      expect(numbers_of("A ->x B")[2]).to eq(numbers_of("A -> B")[2] - 11.5)
+    end
+
+    it "draws a ring before the head it belongs to" do
+      expect(marks_of("A o-> B").map(&:kind)).to eq(%w[circle polygon])
+    end
+
+    it "starts the shaft 4 inside a ring with no head" do
+      expect(numbers_of("A o-> B")[0]).to eq(numbers_of("A -> B")[0] + 4.0)
+    end
+
+    it "draws the half head of a backslash on the upper side only" do
+      sides = marks_of("A -\\ B").first.points.split.map do |pair|
+        pair.split(",").last.to_f
+      end
+
+      expect(sides.max).to eq(numbers_of("A -> B")[1])
+    end
+
+    it "loops a message written <- to its sender on the left" do
+      numbers = numbers_of("A <- A : hi")
+
+      expect(numbers[2]).to eq(numbers[0] - 36)
+    end
+
+    it "anchors the label of a left loop at its end" do
+      arrow = scene_of("A <- A : hi").arrows.first
+
+      expect(arrow.texts.first).to have_attributes(
+        anchor: "end", x: numbers_of("A <- A : hi")[2] - 6,
+      )
+    end
+
+    it "keeps a left loop of the first participant on the canvas" do
+      expect(numbers_of("A <- A : hi").min).to be >= 0
+    end
   end
 
   it "makes room right of the last participant for a self message" do

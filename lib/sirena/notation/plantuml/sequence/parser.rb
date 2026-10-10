@@ -4,6 +4,7 @@ require_relative "../../../error"
 require_relative "../../../error/diagram_type_error"
 require_relative "../../../error/parse_error"
 require_relative "../unsupported_construct_error"
+require_relative "arrow_syntax"
 require_relative "box"
 require_relative "diagram"
 require_relative "message"
@@ -27,16 +28,6 @@ module Sirena
           QUOTED = /"[^"\n]+"/
           KINDS = %w[participant actor boundary control entity database
                      collections queue].freeze
-          ARROWS = {
-            "->" => { head: :filled, dashed: false, reversed: false },
-            "->>" => { head: :open, dashed: false, reversed: false },
-            "-->" => { head: :filled, dashed: true, reversed: false },
-            "-->>" => { head: :open, dashed: true, reversed: false },
-            "<-" => { head: :filled, dashed: false, reversed: true },
-            "<<-" => { head: :open, dashed: false, reversed: true },
-            "<--" => { head: :filled, dashed: true, reversed: true },
-            "<<--" => { head: :open, dashed: true, reversed: true },
-          }.freeze
 
           COLOUR = /\#(\h{6}|\h{3}|red|green|blue|yellow|orange|purple|gray|
                        grey|cyan|magenta|lime|navy|teal|olive|maroon|silver|
@@ -50,7 +41,7 @@ module Sirena
           STYLE_OPEN = /\A<style>\z/i
           STYLE_CLOSE = /\A<\/style>\z/i
           MESSAGE = /\A(#{QUOTED}|#{NAME})[ \t]*
-                     (#{Regexp.union(ARROWS.keys.sort_by { |g| -g.length })})
+                     (#{ArrowSyntax::SOURCE})
                      [ \t]*(#{QUOTED}|#{NAME})[ \t]*
                      (--\+\+|\+\+--|\+\+|--|!!)?[ \t]*(#{COLOUR})?
                      [ \t]*(?::[ \t]*(.*))?\z/xo
@@ -83,7 +74,7 @@ module Sirena
                       [RETURN, :reply], [DIVIDER, :divider],
                       [DESTROY, :destroy]].freeze
 
-          private_constant :TIMELINE, :NAME, :QUOTED, :KINDS, :ARROWS,
+          private_constant :TIMELINE, :NAME, :QUOTED, :KINDS,
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
                            :LINE_END, :PRAGMA, :ACTIVATION, :MARKS, :TARGET,
                            :NOTE, :END_NOTE, :BLOCK, :BRANCH, :RETURN, :DIVIDER,
@@ -352,7 +343,7 @@ module Sirena
           end
 
           def message(match)
-            message = build_message(match)
+            message = build_message(match) or return false
             marks = marks(match[4], message, colour(match[6]))
             return false if match[5] && marks.none? { |phase,| phase == :on }
 
@@ -361,11 +352,12 @@ module Sirena
 
           def build_message(match)
             from, to = [match[1], match[3]].map { |name| mention(name) }
-            arrow = ARROWS.fetch(match[2])
-            from, to = to, from if arrow[:reversed]
+            style, reversed = ArrowSyntax.read(match[2])
+            return unless style
+
+            from, to = to, from if reversed
             kind = @parallel ? ParallelMessage : Message
-            kind.new(from: from, to: to, label: match[7],
-                     head: arrow[:head], dashed: arrow[:dashed])
+            kind.new(from: from, to: to, label: match[7], style: style)
           end
 
           # `--` deactivates the sender, `++` activates the receiver and `!!`

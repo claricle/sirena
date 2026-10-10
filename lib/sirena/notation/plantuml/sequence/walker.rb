@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "activation"
+require_relative "arrow_marks"
 require_relative "bar_tracker"
 require_relative "destroy"
 require_relative "divider"
@@ -23,8 +24,6 @@ module Sirena
           ROW = 40.0
           SELF_WIDTH = 36.0
           SELF_HEIGHT = 20.0
-          ARROW_LENGTH = 10.0
-          ARROW_HALF_WIDTH = 4.0
           TAB_HEIGHT = 20.0
           CROSS_HALF = 9.0
           TOP_OFFSET = 20.0
@@ -137,6 +136,8 @@ module Sirena
           end
 
           def extent(message, from, to)
+            return [from - reach(message), from] if loops_left?(message)
+
             low, high = [from, to].minmax
             [low, high + (message.self_message? ? reach(message) : 0)]
           end
@@ -166,7 +167,13 @@ module Sirena
           end
 
           def arrow_for(message, from, to)
-            message.self_message? ? self_arrow(from) : straight(from, to)
+            return straight(message, from, to) unless message.self_message?
+
+            self_arrow(message, from)
+          end
+
+          def loops_left?(message)
+            message.self_message? && message.leftward?
           end
 
           def centre(id)
@@ -177,37 +184,38 @@ module Sirena
             SELF_WIDTH + 6 + @measure.call(message.label.to_s)
           end
 
-          def straight(from, to)
+          def straight(message, from, to)
             sign = to >= from ? 1 : -1
-            { path: "M #{from} #{@y} L #{to} #{@y}", tip: [to, @y], dx: -sign,
+            tail, start = ArrowMarks.for(message.style.tail, from, @y, sign)
+            head, stop = ArrowMarks.for(message.style.head, to, @y, -sign)
+            { path: "M #{start} #{@y} L #{stop} #{@y}", marks: tail + head,
               label: [(from + to) / 2, @y - 6, "middle"] }
           end
 
-          def self_arrow(centre)
-            right = centre + SELF_WIDTH
+          # The loop leaves and returns on the same side of the lifeline; a
+          # message written `<-` loops out on the left.
+          def self_arrow(message, centre)
+            side = loops_left?(message) ? -1 : 1
+            far = centre + (side * SELF_WIDTH)
             bottom = @y + SELF_HEIGHT
-            { path: "M #{centre} #{@y} L #{right} #{@y} L #{right} #{bottom} " \
-                    "L #{centre} #{bottom}",
-              tip: [centre, bottom], dx: 1,
-              label: [right + 6, @y + 12, "start"] }
+            tail, start = ArrowMarks.for(message.style.tail, centre, @y, side)
+            head, stop = ArrowMarks.for(message.style.head, centre, bottom,
+                                        side)
+            { path: "M #{start} #{@y} L #{far} #{@y} L #{far} #{bottom} " \
+                    "L #{stop} #{bottom}",
+              marks: tail + head, label: loop_label(far, side) }
+          end
+
+          def loop_label(far, side)
+            [far + (side * 6), @y + 12, side.positive? ? "start" : "end"]
           end
 
           def arrow_record(message, geometry)
             Scene::Arrow.new(
               id: "message-#{@arrows.size + 1}", path: geometry[:path],
-              dashed: message.dashed,
-              marker_points: head_points(geometry[:tip], geometry[:dx]),
-              marker_filled: message.head == :filled,
+              dashed: message.dashed, marks: geometry[:marks],
               texts: label_texts(message, geometry[:label])
             )
-          end
-
-          def head_points(tip, direction)
-            x, y = tip
-            back = x + (direction * ARROW_LENGTH)
-            [[x, y], [back, y - ARROW_HALF_WIDTH],
-             [back, y + ARROW_HALF_WIDTH]].map { |px, py| "#{px},#{py}" }
-              .join(" ")
           end
 
           def label_texts(message, geometry)
