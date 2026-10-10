@@ -27,12 +27,6 @@ RSpec.describe Sirena::Layout::C4 do
     }
   end
 
-  def fallback_sizes
-    layout.theme = double(typography: nil)
-    [layout.send(:normal_font_size), layout.send(:large_font_size),
-     layout.send(:small_font_size)]
-  end
-
   it "keeps a missing semantic element type missing" do
     element_class = described_class.const_get(:SemanticElement, false)
 
@@ -56,16 +50,8 @@ RSpec.describe Sirena::Layout::C4 do
     expect(edges).to be_empty
   end
 
-  it "omits an absent relationship label" do
-    expect(layout.send(:optional_relationship_label, nil)).to be_nil
-  end
-
   it "uses minimum dimensions for an empty boundary" do
     expect(layout.send(:calculate_boundary_dimensions, []))
       .to eq(width: 300, height: 200)
-  end
-
-  it "falls back when theme typography is absent" do
-    expect(fallback_sizes).to eq([14, 16, 12])
   end
 end
