@@ -90,7 +90,7 @@ module Sirena
 
         rule(:directed_header) do
           header_direction.as(:direction) >>
-            (separator | space? >> (newline | eof))
+            (separator | (space? >> (newline | eof)))
         end
 
         rule(:undirected_header) do
@@ -98,7 +98,7 @@ module Sirena
         end
 
         rule(:header_direction) do
-          space.repeat(1) >> direction |
+          (space.repeat(1) >> direction) |
             glyph_direction.as(:dir_value)
         end
 
@@ -299,8 +299,8 @@ module Sirena
         # the source from the id onwards, so `subgraph s  Title` is
         # labelled `s  Title` and collapsing the run would misquote it.
         rule(:subgraph_title) do
-          space.repeat >> bracketed_title |
-            space.repeat(1).as(:subgraph_free_gap) >> free_title
+          (space.repeat >> bracketed_title) |
+            (space.repeat(1).as(:subgraph_free_gap) >> free_title)
         end
 
         rule(:bracketed_title) { bracket_title >> bracket_title_end }
@@ -313,7 +313,7 @@ module Sirena
         # Nothing at all may follow a bracketed title, not even a space:
         # mmdc refuses `subgraph s [Title] ` before the newline.
         rule(:bracket_title_end) do
-          (semicolon_run >> no_comment | newline | eof).present?
+          ((semicolon_run >> no_comment) | newline | eof).present?
         end
 
         # A flat character class, NOT `declaration_end.absent? >> any`.
@@ -348,12 +348,12 @@ module Sirena
         # and a comment is not a statement: mmdc renders `subgraph s;;A`
         # and refuses `subgraph s; %% note`.
         rule(:declaration_end) do
-          line_space.repeat >> (semicolon_run >> no_comment | newline | eof)
+          line_space.repeat >> ((semicolon_run >> no_comment) | newline | eof)
         end
 
         rule(:subgraph_close) do
-          space.repeat(1) >> close_at_space |
-            space? >> (close_at_line_end | close_at_semicolon)
+          (space.repeat(1) >> close_at_space) |
+            (space? >> (close_at_line_end | close_at_semicolon))
         end
 
         # Whitespace alone separates `end` from what follows: mmdc renders
@@ -430,7 +430,7 @@ module Sirena
         # drawing a node mermaid refuses.
         rule(:style_property_list) do
           empty_comma_item.absent? >>
-            (hashed_property_list | hashed_head.absent? >> style_property)
+            (hashed_property_list | (hashed_head.absent? >> style_property))
         end
 
         # mermaid joins declarations with a comma and refuses an empty one:
@@ -438,9 +438,9 @@ module Sirena
         # the item, so `fill:#f9f,;B` is fine while `fill:red,;B` is not.
         rule(:empty_comma_item) do
           comma |
-            hash_char.maybe >>
+            (hash_char.maybe >>
             hash_terminated_run(comma_gap).repeat >>
-            (comma_gap | hash_char >> hashed_comma_gap_scan)
+            (comma_gap | (hash_char >> hashed_comma_gap_scan)))
         end
 
         rule(:hashed_comma_gap_scan) do
@@ -448,7 +448,7 @@ module Sirena
         end
 
         rule(:comma_gap) do
-          hashed_comma_gap | comma >> semicolon
+          hashed_comma_gap | (comma >> semicolon)
         end
 
         rule(:hashed_comma_gap) { comma >> (comma | newline | eof) }
@@ -459,7 +459,7 @@ module Sirena
         # line rather than hand a second `;` back as a separator.
         rule(:hashed_property_list) do
           hashed_head >> declaration_run.repeat >>
-            (semicolon >> space? >> hashed_tail | semicolon.absent?)
+            ((semicolon >> space? >> hashed_tail) | semicolon.absent?)
         end
 
         # The `#` has to arrive before the first `;` for the swallow to
@@ -1191,7 +1191,7 @@ module Sirena
           text = char >> (char | gap).repeat
           (link_start.maybe >> open).as(:open) >> blank.repeat >>
             closing_ahead >>
-            (quoted_label >> (char | gap).repeat | text).as(:label) >>
+            ((quoted_label >> (char | gap).repeat) | text).as(:label) >>
             blank.repeat >> closing.as(:close)
         end
         private :inline_halves

@@ -94,8 +94,8 @@ module Sirena
       end
 
       def create_circle_block(x, y, width, height)
-        cx = x + width / 2
-        cy = y + height / 2
+        cx = x + (width / 2)
+        cy = y + (height / 2)
         r = [width, height].min / 2
 
         Svg::Circle.new.tap do |circle|
@@ -108,8 +108,8 @@ module Sirena
 
       def create_arrow_block(x, y, width, height, direction)
         # Simple triangle pointing in the specified direction
-        cx = x + width / 2
-        cy = y + height / 2
+        cx = x + (width / 2)
+        cy = y + (height / 2)
 
         points = case direction
                  when "up"

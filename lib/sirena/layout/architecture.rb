@@ -512,7 +512,7 @@ module Sirena
 
           # Move to next row
           current_x = DEFAULT_SPACING
-          current_y += DEFAULT_SERVICE_HEIGHT + DEFAULT_SPACING * 2
+          current_y += DEFAULT_SERVICE_HEIGHT + (DEFAULT_SPACING * 2)
         end
 
         positions
@@ -675,8 +675,8 @@ module Sirena
             group: group,
             x: min_x - DEFAULT_GROUP_PADDING,
             y: min_y - DEFAULT_GROUP_PADDING,
-            width: max_x - min_x + DEFAULT_GROUP_PADDING * 2,
-            height: max_y - min_y + DEFAULT_GROUP_PADDING * 2,
+            width: max_x - min_x + (DEFAULT_GROUP_PADDING * 2),
+            height: max_y - min_y + (DEFAULT_GROUP_PADDING * 2),
           }
         end
 
@@ -753,24 +753,27 @@ module Sirena
       def calculate_connection_point(service_pos, position)
         case position
         when "L"
-          { x: service_pos[:x], y: service_pos[:y] + service_pos[:height] / 2 }
+          {
+            x: service_pos[:x],
+            y: service_pos[:y] + (service_pos[:height] / 2),
+          }
         when "R"
           {
             x: service_pos[:x] + service_pos[:width],
-            y: service_pos[:y] + service_pos[:height] / 2,
+            y: service_pos[:y] + (service_pos[:height] / 2),
           }
         when "T"
-          { x: service_pos[:x] + service_pos[:width] / 2, y: service_pos[:y] }
+          { x: service_pos[:x] + (service_pos[:width] / 2), y: service_pos[:y] }
         when "B"
           {
-            x: service_pos[:x] + service_pos[:width] / 2,
+            x: service_pos[:x] + (service_pos[:width] / 2),
             y: service_pos[:y] + service_pos[:height],
           }
         else
           # Default to right
           {
             x: service_pos[:x] + service_pos[:width],
-            y: service_pos[:y] + service_pos[:height] / 2,
+            y: service_pos[:y] + (service_pos[:height] / 2),
           }
         end
       end

@@ -429,7 +429,7 @@ module Sirena
         positions = axis[:values].map.with_index do |label, idx|
           {
             label: label,
-            position: idx * spacing + spacing / 2,
+            position: (idx * spacing) + (spacing / 2),
             index: idx,
           }
         end

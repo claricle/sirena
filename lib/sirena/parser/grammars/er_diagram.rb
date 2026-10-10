@@ -224,7 +224,7 @@ module Sirena
 
         # Line terminators for ER diagrams
         rule(:line_end) do
-          semicolon.maybe >> space? >> (comment.maybe >> newline | eof)
+          semicolon.maybe >> space? >> ((comment.maybe >> newline) | eof)
         end
       end
     end

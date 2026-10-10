@@ -177,8 +177,8 @@ module Sirena
         end
 
         if margin
-          xs << [xs.min - MARGIN, 0].max << xs.max + MARGIN
-          ys << [ys.min - MARGIN, 0].max << ys.max + MARGIN
+          xs << [xs.min - MARGIN, 0].max << (xs.max + MARGIN)
+          ys << [ys.min - MARGIN, 0].max << (ys.max + MARGIN)
         end
 
         { xs: xs.uniq.sort, ys: ys.uniq.sort }
