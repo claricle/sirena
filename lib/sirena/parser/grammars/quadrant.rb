@@ -149,7 +149,10 @@ module Sirena
 
         # Optional styling parameters (flexible whitespace around commas)
         rule(:styling_params) do
-          (space.repeat(1) >> styling_param >> (space? >> comma >> space? >> styling_param).repeat).maybe
+          (
+            space.repeat(1) >> styling_param >>
+              (space? >> comma >> space? >> styling_param).repeat
+          ).maybe
         end
 
         rule(:styling_param) do

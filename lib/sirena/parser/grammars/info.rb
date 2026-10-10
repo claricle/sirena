@@ -46,7 +46,8 @@ module Sirena
 
         # Body: showInfo on separate line
         rule(:body) do
-          (space.repeat >> show_info_statement >> line_end).repeat(1).as(:show_info_body)
+          (space.repeat >> show_info_statement >> line_end)
+            .repeat(1).as(:show_info_body)
         end
 
         rule(:show_info_statement) do

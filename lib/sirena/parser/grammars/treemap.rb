@@ -47,12 +47,14 @@ module Sirena
 
         # Title declaration
         rule(:title_decl) do
-          str("title") >> spaces >> (newline.absent? >> any).repeat(1).as(:title)
+          str("title") >> spaces >>
+            (newline.absent? >> any).repeat(1).as(:title)
         end
 
         # Accessibility declarations
         rule(:acc_title) do
-          str("accTitle:") >> spaces? >> (newline.absent? >> any).repeat(1).as(:acc_title)
+          str("accTitle:") >> spaces? >>
+            (newline.absent? >> any).repeat(1).as(:acc_title)
         end
 
         rule(:acc_descr) do

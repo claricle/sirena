@@ -183,8 +183,10 @@ module Sirena
         # (mmdc rejects "3d, 2024-01-10" with "Invalid date:3d"). See
         # Builders::Gantt#process_task_details for the actual rule.
         rule(:task_details) do
-          (task_field.as(:field) >>
-            (space? >> comma >> space? >> task_field.as(:field)).repeat).as(:parts)
+          (
+            task_field.as(:field) >>
+              (space? >> comma >> space? >> task_field.as(:field)).repeat
+          ).as(:parts)
         end
 
         rule(:task_field) do

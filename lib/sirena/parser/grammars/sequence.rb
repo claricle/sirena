@@ -124,12 +124,17 @@ module Sirena
 
         rule(:autonumber_statement) do
           str("autonumber") >>
-            (space.repeat(1) >> (str("off") | numbering)).maybe >> content_boundary
+            (space.repeat(1) >> (str("off") | numbering)).maybe >>
+            content_boundary
         end
 
-        # mermaid's NUM: digits with up to two decimals, or a leading-dot decimal.
+        # Mermaid's NUM is digits with up to two decimals, or a leading-dot
+        # decimal.
         rule(:number) do
-          (match["0-9"].repeat(1) >> (str(".") >> match["0-9"].repeat(1, 2)).maybe) |
+          (
+            match["0-9"].repeat(1) >>
+              (str(".") >> match["0-9"].repeat(1, 2)).maybe
+          ) |
             (str(".") >> match["0-9"].repeat(1, 2))
         end
 
@@ -304,7 +309,9 @@ module Sirena
         # leading `#`", differing only in which character rule bounds the
         # plain branch. A private method, not `rule()`: Parslet's `rule()`
         # macro memoizes a fixed zero-argument atom and can't take one.
-        def hash_free_lead(char_rule) = char_ref | (hash_char.absent? >> char_rule)
+        def hash_free_lead(char_rule)
+          char_ref | (hash_char.absent? >> char_rule)
+        end
         private :hash_free_lead
 
         rule(:declaration_lead) { hash_free_lead(declaration_char) }
@@ -597,8 +604,11 @@ module Sirena
         # 1 message.
         rule(:create_statement) do
           str("create").as(:create) >> space.repeat(1) >>
-            ((declaration_body("participant") >> content_boundary.as(:participant)) |
-              (declaration_body("actor") >> content_boundary.as(:actor)))
+            (
+              (declaration_body("participant") >>
+                content_boundary.as(:participant)) |
+              (declaration_body("actor") >> content_boundary.as(:actor))
+            )
         end
 
         # Draws no destroy marker (sirena's existing "not modeled" stance
@@ -625,7 +635,8 @@ module Sirena
         # yields the following message instead of swallowing it.
         rule(:links_statement) do
           str("links") >> space.repeat(1) >>
-            message_actor_name.as(:links) >> colon >> text_run >> content_boundary
+            message_actor_name.as(:links) >> colon >> text_run >>
+            content_boundary
         end
 
         # Messages with arrows (order matters: longest patterns first)
