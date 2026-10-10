@@ -7,11 +7,14 @@ module Sirena
   module Layout
     # Builds final-canvas radar-chart geometry.
     class Radar < Base
-      DEFAULT_RADIUS = 200
-      PADDING = 80
-      TITLE_Y = 16
-      LABEL_OFFSET = 30
+      DEFAULT_RADIUS = 300
+      PADDING = 50
+      LABEL_SCALE = 1.05
+      CURVE_TENSION = 0.17
+      LEGEND_STEP = 20
+      LEGEND_INSET = (DEFAULT_RADIUS + PADDING) * 0.75
       GRID_CIRCLES = 5
+      MAX_TICKS = 32
 
       class Circle < Lutaml::Model::Serializable
         attribute :x, :float
@@ -34,6 +37,7 @@ module Sirena
         attribute :text_anchor, :string
         attribute :dominant_baseline, :string
         attribute :font_weight, :string
+        attribute :class_name, :string
       end
 
       class Axis < Lutaml::Model::Serializable
@@ -55,6 +59,7 @@ module Sirena
         attribute :id, :string
         attribute :label, :string
         attribute :polygon_points, :string
+        attribute :path_data, :string
         attribute :points, Point, collection: true, default: -> { [] }
         attribute :color_index, :integer
       end
@@ -77,6 +82,7 @@ module Sirena
         attribute :curves, Curve, collection: true, default: -> { [] }
         attribute :legend, Legend, collection: true, default: -> { [] }
         attribute :title, Label
+        attribute :grid_shape, :string, default: -> { "circle" }
       end
 
       # Converts the released positioned-Hash surface to a typed Scene.
@@ -124,7 +130,7 @@ module Sirena
           width: width, height: height, view_box: "0 0 #{width} #{height}",
           center_x: graph.fetch(:center_x), center_y: graph.fetch(:center_y),
           radius: graph.fetch(:radius), min_value: graph.fetch(:min_value),
-          max_value: graph.fetch(:max_value)
+          max_value: graph.fetch(:max_value), grid_shape: grid_shape(graph)
         }
       end
 
@@ -141,13 +147,18 @@ module Sirena
         }
       end
 
+      def grid_shape(graph)
+        graph.dig(:options, :grid_shape) == "polygon" ? "polygon" : "circle"
+      end
+
       def title_label(graph)
         return unless graph[:title]
 
         Label.new(
-          text: graph[:title], x: graph.fetch(:center_x), y: TITLE_Y,
+          text: graph[:title], x: graph.fetch(:center_x), y: 0,
           font_size: font_size(:font_size_large, 16),
-          text_anchor: "middle", dominant_baseline: "hanging"
+          text_anchor: "middle", dominant_baseline: "hanging",
+          class_name: "radarTitle"
         )
       end
 
@@ -166,7 +177,7 @@ module Sirena
         Axis.new(
           id: axis[:id], angle: angle,
           line: axis_line(axis, center_x, center_y),
-          label: axis_label(axis, angle, center_x, center_y)
+          label: axis_label(axis, center_x, center_y)
         )
       end
 
@@ -177,13 +188,13 @@ module Sirena
         )
       end
 
-      def axis_label(axis, angle, center_x, center_y)
+      def axis_label(axis, center_x, center_y)
         Label.new(
           text: axis[:label], x: center_x + axis[:label_x],
           y: center_y + axis[:label_y],
           font_size: font_size(:font_size_normal, 12),
-          text_anchor: text_anchor(angle),
-          dominant_baseline: dominant_baseline(angle), font_weight: "bold"
+          text_anchor: "middle", dominant_baseline: "middle",
+          class_name: "radarAxisLabel"
         )
       end
 
@@ -199,7 +210,8 @@ module Sirena
         end
         Curve.new(
           id: curve[:id], label: curve[:label], points: points,
-          polygon_points: polygon_points(points), color_index: index
+          polygon_points: polygon_points(points), color_index: index,
+          path_data: closed_curve(points)
         )
       end
 
@@ -215,40 +227,51 @@ module Sirena
         points.map { |point| "#{point.x},#{point.y}" }.join(" ")
       end
 
+      def closed_curve(points)
+        return "" if points.empty?
+
+        segments = points.each_index.map { |index| segment(points, index) }
+        "M#{points.first.x},#{points.first.y} #{segments.join(' ')} Z"
+      end
+
+      def segment(points, index)
+        before, from, to, after = (-1..2).map do |step|
+          points[(index + step) % points.length]
+        end
+        first = offset(from, to, before, CURVE_TENSION)
+        second = offset(to, after, from, -CURVE_TENSION)
+        "C#{first} #{second} #{to.x},#{to.y}"
+      end
+
+      def offset(origin, ahead, behind, scale)
+        x_pos = origin.x + ((ahead.x - behind.x) * scale)
+        y_pos = origin.y + ((ahead.y - behind.y) * scale)
+        "#{x_pos},#{y_pos}"
+      end
+
       def legend(graph, curves)
         return [] if graph.dig(:options, :show_legend) == false
 
         curves.map.with_index do |curve, index|
-          legend_entry(curve, index, graph.fetch(:height))
+          legend_entry(curve, index, graph)
         end
       end
 
-      def legend_entry(curve, index, height)
-        y_position = height - 40 + (index * 20)
+      def legend_entry(curve, index, graph)
+        left = graph.fetch(:center_x) + LEGEND_INSET
+        top = graph.fetch(:center_y) - LEGEND_INSET + (index * LEGEND_STEP)
         Legend.new(
-          marker: Circle.new(x: 20, y: y_position, radius: 5),
-          label: Label.new(
-            text: curve.label, x: 35, y: y_position + 4,
-            font_size: font_size(:font_size_small, 10), text_anchor: "start"
-          ),
-          color_index: index,
+          marker: Circle.new(x: left + 6, y: top + 6, radius: 6),
+          label: legend_label(curve, left + 16, top), color_index: index
         )
       end
 
-      def text_anchor(angle)
-        normalized = angle % 360
-        return "start" if normalized > 45 && normalized < 135
-        return "end" if normalized > 225 && normalized < 315
-
-        "middle"
-      end
-
-      def dominant_baseline(angle)
-        normalized = angle % 360
-        return "hanging" if normalized > 135 && normalized < 225
-        return "auto" if normalized < 45 || normalized > 315
-
-        "middle"
+      def legend_label(curve, x_pos, y_pos)
+        Label.new(
+          text: curve.label, x: x_pos, y: y_pos, text_anchor: "start",
+          font_size: font_size(:font_size_small, 12),
+          dominant_baseline: "hanging", class_name: "radarLegendText"
+        )
       end
 
       def font_size(name, fallback)
@@ -277,7 +300,9 @@ module Sirena
         {
           axes: axes, title: data.label,
           curves: position_curves(data, axes, min_value, max_value),
-          grid_circles: calculate_grid_circles(min_value, max_value),
+          grid_circles: calculate_grid_circles(
+            min_value, max_value, tick_count(data)
+          ),
           options: radar_options(data)
         }
       end
@@ -286,7 +311,7 @@ module Sirena
         values = measurement_values(data)
         lower_bound = option_value(data, "lower_bound")
         upper_bound = option_value(data, "upper_bound")
-        min_value = lower_bound || values.min || 0
+        min_value = lower_bound || 0
         max_value = upper_bound || inferred_max(values)
         max_value = min_value + 1 if max_value <= min_value
         [min_value, max_value]
@@ -322,8 +347,8 @@ module Sirena
         {
           end_x: Math.cos(radians) * DEFAULT_RADIUS,
           end_y: Math.sin(radians) * DEFAULT_RADIUS,
-          label_x: Math.cos(radians) * (DEFAULT_RADIUS + LABEL_OFFSET),
-          label_y: Math.sin(radians) * (DEFAULT_RADIUS + LABEL_OFFSET),
+          label_x: Math.cos(radians) * DEFAULT_RADIUS * LABEL_SCALE,
+          label_y: Math.sin(radians) * DEFAULT_RADIUS * LABEL_SCALE,
         }
       end
 
@@ -361,10 +386,16 @@ module Sirena
       end
 
       def radar_options(data)
-        visibility = data.values.find do |value|
-          value.role == "legend_visibility"
-        end
-        visibility ? { show_legend: visibility.value.value } : {}
+        visibility = option_value(data, "legend_visibility")
+        shape = option_value(data, "grid_shape")
+        { grid_shape: shape }.merge(
+          visibility.nil? ? {} : { show_legend: visibility },
+        )
+      end
+
+      def tick_count(data)
+        ticks = option_value(data, "tick_count")
+        ticks&.positive? ? [ticks.to_i, MAX_TICKS].min : GRID_CIRCLES
       end
 
       def option_value(data, role)
@@ -385,9 +416,9 @@ module Sirena
         ((value - min_value).to_f / (max_value - min_value)).clamp(0, 1)
       end
 
-      def calculate_grid_circles(min_value, max_value)
-        Array.new(GRID_CIRCLES) do |index|
-          fraction = (index + 1).to_f / GRID_CIRCLES
+      def calculate_grid_circles(min_value, max_value, ticks)
+        Array.new(ticks) do |index|
+          fraction = (index + 1).to_f / ticks
           {
             radius: DEFAULT_RADIUS * fraction,
             value: min_value + ((max_value - min_value) * fraction),

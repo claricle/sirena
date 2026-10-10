@@ -28,8 +28,8 @@ RSpec.describe SpecSupport::LayoutParity::RadarGraticuleGeometry do
 
   def real_pair_expected
     [[60.0, 120.0, 180.0, 240.0, 300.0],
-     [40.0, 80.0, 120.0, 160.0, 200.0],
-     Array.new(5) { be_within(0.000_001).of(1.0 / 3) }]
+     [60.0, 120.0, 180.0, 240.0, 300.0],
+     Array.new(5) { be_within(0.000_001).of(0.0) }]
   end
 
   def transformed_svg

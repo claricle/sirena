@@ -18,8 +18,8 @@ RSpec.describe Sirena::Layout::Radar do
     end
 
     it "returns the compact empty-axis canvas" do
-      expected = [described_class::Scene, [], [], [], 80.0, 80.0, 200.0,
-                  160.0, 160.0, 0.0, 0.0, "0 0 160 160"]
+      expected = [described_class::Scene, [], [], [], 50.0, 50.0, 300.0,
+                  100.0, 100.0, 0.0, 0.0, "0 0 100 100"]
 
       expect(empty_scene_geometry).to eq(expected)
     end
@@ -46,8 +46,8 @@ RSpec.describe Sirena::Layout::Radar do
       expect(
         [graph.min_value, graph.max_value, graph.center_x, graph.center_y,
          graph.radius, graph.width, graph.height, graph.view_box],
-      ).to eq([10.0, 30.0, 280.0, 280.0, 200.0, 560.0, 560.0,
-               "0 0 560 560"])
+      ).to eq([0.0, 30.0, 350.0, 350.0, 300.0, 700.0, 700.0,
+               "0 0 700 700"])
     end
 
     context "with positioned axes" do
@@ -59,9 +59,9 @@ RSpec.describe Sirena::Layout::Radar do
                    speed.label.text_anchor, speed.label.dominant_baseline],
                   [quality.id, quality.angle, quality.line.x2.round(4),
                    quality.line.y2, quality.label.x.round(4), quality.label.y]]
-        expected = [["speed", -90.0, 280.0, 280.0, 280.0, 80.0, 280.0,
-                     50.0, "end", "middle"],
-                    ["quality", 90.0, 280.0, 480.0, 280.0, 510.0]]
+        expected = [["speed", -90.0, 350.0, 350.0, 350.0, 50.0, 350.0,
+                     35.0, "middle", "middle"],
+                    ["quality", 90.0, 350.0, 650.0, 350.0, 665.0]]
 
         [actual, expected]
       end
@@ -75,7 +75,7 @@ RSpec.describe Sirena::Layout::Radar do
       subject(:curve_geometry) do
         rendered_curve = graph.curves.first
         points = rendered_curve.points.map do |point|
-          [point.axis_id, point.value, point.normalized,
+          [point.axis_id, point.value, point.normalized.round(4),
            point.x.round(4), point.y.round(4)]
         end
 
@@ -85,15 +85,15 @@ RSpec.describe Sirena::Layout::Radar do
       it "normalizes points onto their axes" do
         expect(curve_geometry).to eq(
           ["current", "Current",
-           [["speed", 10.0, 0.0, 280.0, 280.0],
-            ["quality", 30.0, 1.0, 280.0, 480.0]]],
+           [["speed", 10.0, 0.3333, 350.0, 250.0],
+            ["quality", 30.0, 1.0, 350.0, 650.0]]],
         )
       end
     end
 
     it "creates five evenly spaced grid circles across the range" do
       expect(graph.grid_circles.map(&:radius)).to eq(
-        [40.0, 80.0, 120.0, 160.0, 200.0],
+        [60.0, 120.0, 180.0, 240.0, 300.0],
       )
     end
 
@@ -117,7 +117,7 @@ RSpec.describe Sirena::Layout::Radar do
 
       it "stores label and legend geometry in the scene" do
         expect(themed_geometry).to eq(
-          [16.0, 20.0, 520.0, 35.0, 524.0, 14.0],
+          [16.0, 618.5, 93.5, 628.5, 87.5, 14.0],
         )
       end
     end

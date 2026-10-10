@@ -8,13 +8,13 @@ RSpec.describe Sirena::Renderer::Radar, "#render" do
     diagram = Sirena::Parser::Radar.new.parse(source)
     Sirena::Layout::Radar.new.call(diagram)
   end
-  let(:polygons) { described_class.new.render(scene).children.grep(Sirena::Svg::Polygon) }
+  let(:polygons) { described_class.new.render(scene).children.grep(Sirena::Svg::Path) }
 
-  it "draws a polygon for a curve" do
+  it "draws a path for a curve" do
     expect(polygons.size).to eq(1)
   end
 
-  it "draws no polygon for a curve without points" do
+  it "draws no path for a curve without points" do
     scene.curves.first.points = []
 
     expect(polygons).to be_empty
