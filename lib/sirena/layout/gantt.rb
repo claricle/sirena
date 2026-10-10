@@ -2,6 +2,8 @@
 
 require_relative "base"
 require_relative "gantt_ticks"
+require_relative "gantt_duration"
+require_relative "gantt_exclusions"
 require_relative "../diagram/gantt"
 require_relative "../notation/mermaid/ir_adapters/gantt"
 require "date"
@@ -49,7 +51,7 @@ module Sirena
       SourceTask = Struct.new(
         :description, :id, :start_date, :end_date, :duration, :after_task,
         :until_task, :tags, :click_href, :click_callback, :calculated_start,
-        :calculated_end, keyword_init: true
+        :calculated_end, :render_end, keyword_init: true
       ) do
         def done?
           tags.include?("done")
@@ -292,7 +294,7 @@ module Sirena
         return [] if days <= 0
 
         start = timeline[:start_date]
-        origin = Time.utc(start.year, start.month, start.day)
+        origin = start
         pad = TIMELINE_PADDING_DAYS * DAY_SECONDS
         stop = origin + (days * DAY_SECONDS) - pad
         GanttTicks.times(origin + pad, stop, interval).map do |tick|
@@ -526,17 +528,17 @@ module Sirena
         return false unless previous_task.calculated_end
 
         task.calculated_start = previous_task.calculated_end
-        task.calculated_end = end_for(task.calculated_start, task.duration)
+        settle_end(task, end_for(task.calculated_start, task.duration))
         true
       end
 
       def calculate_task_date(task)
-        task.calculated_start = parse_date(task.start_date)
+        task.calculated_start = midnight(parse_date(task.start_date))
 
         if task.end_date
-          task.calculated_end = parse_date(task.end_date)
+          settle_end(task, midnight(parse_date(task.end_date)))
         elsif task.duration && task.calculated_start
-          task.calculated_end = end_for(task.calculated_start, task.duration)
+          settle_end(task, end_for(task.calculated_start, task.duration))
         end
       end
 
@@ -547,21 +549,21 @@ module Sirena
 
           task.calculated_start = ref_task.calculated_end
           if task.duration
-            task.calculated_end = end_for(task.calculated_start, task.duration)
+            settle_end(task, end_for(task.calculated_start, task.duration))
           elsif task.end_date
-            task.calculated_end = parse_date(task.end_date)
+            settle_end(task, midnight(parse_date(task.end_date)))
           elsif task.until_task
             until_task = @task_map[task.until_task]
-            task.calculated_end = until_task.calculated_start if until_task
+            settle_end(task, until_task.calculated_start) if until_task
           end
           return true
         end
 
         if task.until_task && task.start_date
-          task.calculated_start = parse_date(task.start_date)
+          task.calculated_start = midnight(parse_date(task.start_date))
           until_task = @task_map[task.until_task]
           if until_task && until_task.calculated_start
-            task.calculated_end = until_task.calculated_start
+            settle_end(task, until_task.calculated_start)
             return true
           end
         end
@@ -613,23 +615,31 @@ module Sirena
         today
       end
 
-      def end_for(start_date, duration_str)
-        # Parse duration string (e.g., "30d", "2w", "48h", "1M")
-        value = duration_str.to_i
-        unit = duration_str[-1]
+      def end_for(start_time, duration_str)
+        GanttDuration.add(start_time, duration_str)
+      end
 
-        case unit
-        when "w"
-          start_date + (value * 7)
-        when "h"
-          # Convert hours to days (rough approximation)
-          start_date + (value / 24.0).ceil
-        when "M"
-          # Add months (rough approximation)
-          start_date >> value
-        else
-          start_date + value # Default to days
+      def midnight(date)
+        Time.utc(date.year, date.month, date.day)
+      end
+
+      # An end written as a YYYY-MM-DD date is final; every other end is
+      # pushed past excluded days, as mermaid's checkTaskDates does.
+      def settle_end(task, stop)
+        if task.end_date.to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+          task.calculated_end = stop
+          task.render_end = nil
+          return
         end
+
+        task.calculated_end, task.render_end =
+          exclusions.settle(task.calculated_start, stop)
+      end
+
+      def exclusions
+        @exclusions ||= GanttExclusions.new(
+          @diagram.excludes, @diagram.weekend, @diagram.date_format
+        )
       end
 
       def calculate_timeline
@@ -647,17 +657,17 @@ module Sirena
         end
 
         # Default to a reasonable range if no dates found
-        min_date ||= today
-        max_date ||= today + 30
+        min_date ||= midnight(today)
+        max_date ||= midnight(today + 30)
 
         # Add padding
-        min_date -= 1
-        max_date += 1
+        min_date -= DAY_SECONDS
+        max_date += DAY_SECONDS
 
         {
           start_date: min_date,
           end_date: max_date,
-          total_days: (max_date - min_date).to_i,
+          total_days: (max_date - min_date) / DAY_SECONDS,
         }
       end
 
@@ -681,10 +691,10 @@ module Sirena
             active: task.active?,
             critical: task.critical?,
             milestone: task.milestone?,
-            start_date: task.calculated_start,
-            end_date: task.calculated_end,
+            start_date: task.calculated_start&.to_date,
+            end_date: task.calculated_end&.to_date,
             start_x: calculate_x_position(task.calculated_start, axis),
-            width: task_width(task.calculated_start, task.calculated_end, axis),
+            width: task_width(task, axis),
             click_href: task.click_href,
             click_callback: task.click_callback,
           }
@@ -694,15 +704,17 @@ module Sirena
       def calculate_x_position(date, timeline)
         return 0 unless date
 
-        days_from_start = (date - timeline[:start_date]).to_i
+        days_from_start = (date - timeline[:start_date]) / DAY_SECONDS
         # The timeline is 800 pixels wide.
         (days_from_start.to_f / timeline[:total_days]) * 800
       end
 
-      def task_width(start_date, end_date, timeline)
-        return 20 unless start_date && end_date # Minimum width for milestones
+      def task_width(task, timeline)
+        start_time = task.calculated_start
+        end_time = task.render_end || task.calculated_end
+        return 20 unless start_time && end_time # Minimum width for milestones
 
-        duration_days = (end_date - start_date).to_i
+        duration_days = (end_time - start_time) / DAY_SECONDS
         return 10 if duration_days <= 0 # Milestone or zero duration
 
         (duration_days.to_f / timeline[:total_days]) * 800

@@ -67,7 +67,7 @@ RSpec.describe Sirena::Renderer::Gantt do
   def date_labels(format)
     layout.send(
       :date_labels,
-      { total_days: 10, start_date: Date.new(2024, 1, 1) },
+      { total_days: 10, start_date: Time.utc(2024, 1, 1) },
       format,
     )
   end
