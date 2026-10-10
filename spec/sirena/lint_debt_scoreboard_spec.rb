@@ -270,7 +270,8 @@ RSpec.describe Sirena::LintDebtScoreboard do
 
           write(
             "op.rb",
-            "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1 + 1\nend\n",
+            "# frozen_string_literal: true\n\n" \
+            "module Fixture\n  X = 1 + 1\nend\n",
           )
           board.diff
         end

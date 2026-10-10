@@ -138,31 +138,36 @@ module Sirena
       end
 
       def build_scene(graph, positions)
-        children = graph[:children]
-        message_count = graph.dig(:metadata, :message_count) || 0
         placement = note_placement(graph.dig(:metadata, :note_entries),
                                    positions)
-        width, height = scene_dimensions(children, message_count, placement)
-
+        width, height = scene_dimensions(graph, placement)
         Scene.new(
           id: graph[:id], width: width, height: height,
           view_box: "0 0 #{width} #{height}",
-          participants: typed_participants(children, positions),
-          lifelines: lifeline_geometry(positions, message_count,
+          participants: typed_participants(graph[:children], positions),
+          **placed_geometry(graph, positions, placement)
+        )
+      end
+
+      def placed_geometry(graph, positions, placement)
+        count = graph.dig(:metadata, :message_count) || 0
+        {
+          lifelines: lifeline_geometry(positions, count,
                                        placement.total_height),
           messages: typed_messages(graph[:edges], positions, placement),
           notes: placement.notes
-        )
+        }
       end
 
       def note_placement(entries, positions)
         NotePlacement.new(entries, positions, font_size: message_font_size)
       end
 
-      def scene_dimensions(participants, message_count, placement)
-        [[canvas_width(participants) + 40, placement.right_edge + 20].max,
-         canvas_height(participants, message_count) +
-           placement.total_height + 40]
+      def scene_dimensions(graph, placement)
+        children = graph[:children]
+        count = graph.dig(:metadata, :message_count) || 0
+        [[canvas_width(children) + 40, placement.right_edge + 20].max,
+         canvas_height(children, count) + placement.total_height + 40]
       end
 
       def transform_participants(graph)

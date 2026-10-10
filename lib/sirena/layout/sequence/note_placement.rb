@@ -29,17 +29,25 @@ module Sirena
         end
 
         def self.entry_for(graph, node)
-          details = graph.nodes.select { |item| item.parent_id == node.id }
-          fields = details.to_h { |item| [item.role, item.label] }
+          fields = fields_of(graph, node)
           {
             text: node.label.to_s, position: fields["note_position"],
             message_index: fields["message_index"].to_i,
-            participant_ids: graph.edges.select do |edge|
-              edge.role == "note_reference" && edge.source_id == node.id
-            end.map(&:target_id)
+            participant_ids: reference_ids(graph, node)
           }
         end
-        private_class_method :entry_for
+
+        def self.fields_of(graph, node)
+          details = graph.nodes.select { |item| item.parent_id == node.id }
+          details.to_h { |item| [item.role, item.label] }
+        end
+
+        def self.reference_ids(graph, node)
+          graph.edges.select do |edge|
+            edge.role == "note_reference" && edge.source_id == node.id
+          end.map(&:target_id)
+        end
+        private_class_method :entry_for, :fields_of, :reference_ids
 
         # @param entries [Array<Hash>, nil] see {.entries}
         # @param positions [Hash] participant id to its x/center_x
@@ -80,11 +88,19 @@ module Sirena
 
         def build_note(index)
           entry = @entries[index]
-          centers = entry[:participant_ids].filter_map do |id|
-            @positions.dig(id, :center_x)
-          end
+          centers = centers_of(entry)
           return if centers.empty?
 
+          place(index, entry, centers)
+        end
+
+        def centers_of(entry)
+          entry[:participant_ids].filter_map do |id|
+            @positions.dig(id, :center_x)
+          end
+        end
+
+        def place(index, entry, centers)
           lines = text_lines(entry)
           width, left = box_horizontal(entry[:position], centers, lines)
           top = top_of(index)

@@ -33,10 +33,14 @@ module Sirena
             rect.y = @note.y
             rect.width = @note.width
             rect.height = @note.height
-            rect.fill = FILL
-            rect.stroke = STROKE
-            rect.stroke_width = "1"
+            style_box(rect)
           end
+        end
+
+        def style_box(rect)
+          rect.fill = FILL
+          rect.stroke = STROKE
+          rect.stroke_width = "1"
         end
 
         def size(value)
@@ -48,12 +52,16 @@ module Sirena
             item.x = line.x
             item.y = line.y
             item.content = line.text
-            item.fill = "#000000"
-            item.font_family = "Arial, sans-serif"
             item.font_size = size(line.font_size)
-            item.text_anchor = "middle"
-            item.dominant_baseline = "middle"
+            style_text(item)
           end
+        end
+
+        def style_text(item)
+          item.fill = "#000000"
+          item.font_family = "Arial, sans-serif"
+          item.text_anchor = "middle"
+          item.dominant_baseline = "middle"
         end
       end
     end

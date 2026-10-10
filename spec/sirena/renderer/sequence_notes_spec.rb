@@ -26,7 +26,8 @@ RSpec.describe Sirena::Renderer::Sequence do
   end
 
   it "draws each note line as its own text" do
-    expect(xml.scan(/>(line one|line two)</)).to eq([["line one"], ["line two"]])
+    texts = xml.scan(/>(line one|line two)</)
+    expect(texts).to eq([["line one"], ["line two"]])
   end
 
   it "keeps <br> out of the drawn text" do

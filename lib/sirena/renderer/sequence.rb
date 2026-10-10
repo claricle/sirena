@@ -40,11 +40,15 @@ module Sirena
         svg = create_document(scene)
         scene.lifelines.each { |lifeline| draw_lifeline(lifeline, svg) }
         scene.messages.each { |message| draw_message(message, svg) }
+        draw_participants_and_notes(scene, svg)
+        svg
+      end
+
+      def draw_participants_and_notes(scene, svg)
         scene.participants.each do |participant|
           draw_participant(participant, svg)
         end
         scene.notes.each { |note| svg << NoteDrawing.new(note).group }
-        svg
       end
 
       def render_graph(graph)
@@ -56,11 +60,15 @@ module Sirena
         render_lifelines(positions, metadata[:message_count] || 0, svg)
         render_messages(graph, positions, svg) if graph[:edges]
         render_participants(graph[:children], positions, svg)
-        if metadata[:notes]
-          render_notes(metadata[:note_entries] || metadata[:notes],
-                       positions, svg)
-        end
+        render_graph_notes(metadata, positions, svg)
         svg
+      end
+
+      def render_graph_notes(metadata, positions, svg)
+        return unless metadata[:notes]
+
+        render_notes(metadata[:note_entries] || metadata[:notes],
+                     positions, svg)
       end
 
       def draw_lifeline(lifeline, svg)
