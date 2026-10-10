@@ -545,6 +545,39 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
   end
 
+  describe "package colours" do
+    {
+      "#yellow" => "#FFFF00", "#FFEE00" => "#FFEE00", "#abc" => "#AABBCC"
+    }.each do |written, hex|
+      it "reads #{written} as #{hex} and fills the frame with it" do
+        source = "package p <<Frame>> #{written} {\nclass A\n}"
+
+        expect([parse_corpus(source).packages.first.color,
+                REXML::XPath.first(rendered_document(source),
+                                   "//g[@id='package-p']/rect/@fill").value])
+          .to eq([hex, hex])
+      end
+    end
+
+    it "leaves a package with no colour unfilled" do
+      fill = REXML::XPath.first(rendered_document("package p {\nclass A\n}"),
+                                "//g[@id='package-p']/rect/@fill").value
+
+      expect(fill).to eq("none")
+    end
+
+    it "refuses a colour name it does not know" do
+      expect { parse_corpus("package p #chartreuse {\nclass A\n}") }
+        .to raise_error(described_class::UnsupportedConstructError,
+                        /package colour name/)
+    end
+
+    it "refuses the colour written before the stereotype, as PlantUML does" do
+      expect { parse_corpus("package p #red <<Frame>> {\nclass A\n}") }
+        .to raise_error(described_class::UnsupportedConstructError)
+    end
+  end
+
   describe "nested packages" do
     let(:source) do
       ["package outer {", "class A", "package inner {", "class B", "}",

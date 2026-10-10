@@ -82,7 +82,7 @@ module Sirena
           Scene::Frame.new(
             id: "package-#{package.id}", x: left, y: top, width: width,
             height: height, icon: package.icon, texts: [title],
-            tab_width: (tab_width(package) if folder)
+            tab_width: (tab_width(package) if folder), fill: package.color
           )
         end
 

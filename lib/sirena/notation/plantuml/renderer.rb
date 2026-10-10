@@ -46,17 +46,17 @@ module Sirena
         end
 
         def frame_body(frame)
-          frame_rectangle(frame, frame.width, frame.height)
+          frame_rectangle(frame, frame.width, frame.height, frame.fill)
         end
 
         # A folder's tab sits on top of the body; a frame has none.
         def frame_tab(frame)
-          frame_rectangle(frame, frame.tab_width, 22.0)
+          frame_rectangle(frame, frame.tab_width, 22.0, frame.fill)
         end
 
-        def frame_rectangle(frame, width, height)
+        def frame_rectangle(frame, width, height, fill)
           Svg::Rect.new(x: frame.x, y: frame.y, width: width, height: height,
-                        fill: "none", stroke: node_stroke,
+                        fill: fill || "none", stroke: node_stroke,
                         stroke_width: stroke_width)
         end
 

@@ -9,6 +9,7 @@ require_relative "directives"
 require_relative "junction"
 require_relative "member"
 require_relative "package"
+require_relative "package_color"
 require_relative "relation"
 require_relative "unsupported_construct_error"
 require_relative "unsupported_constructs"
@@ -44,7 +45,8 @@ module Sirena
            ((?:[ \t]+\$#{NAME})*)(?:[ \t]*(\{))?\z/xo
         PACKAGE = /\A(\+)?package[ \t]+
                    (?:"([^"]+)"[ \t]+as[ \t]+(#{NAME})|(#{NAME}))
-                   (?:[ \t]*<<([^<>]+)>>)?[ \t]*\{\z/xio
+                   (?:[ \t]*<<([^<>]+)>>)?(?:[ \t]+(\#[A-Za-z0-9]+))?
+                   [ \t]*\{\z/xio
         HIDE_TAG = /\Ahide[ \t]+\$(#{NAME})\z/io
         NOTE = /\Anote[ \t]+(left|right|top|bottom)[ \t]+of[ \t]+(#{NAME})
                 (?:::(#{NAME}))?(?:[ \t]+(\#[A-Za-z0-9]+))?
@@ -163,15 +165,25 @@ module Sirena
         end
 
         def open_package(builder, text, number)
-          match = PACKAGE.match(text)
+          package = package_from(PACKAGE.match(text), text, number)
+          builder.open_package(package, number, text)
+          :statements
+        end
+
+        def package_from(match, text, number)
           shape = package_shape(match[5])
           raise refusal(text, number, "package stereotype") unless shape
 
-          builder.open_package(
-            Package.new(id: match[3] || match[4], title: match[2] || match[4],
-                        shape: shape, icon: !match[1].nil?), number, text
-          )
-          :statements
+          Package.new(id: match[3] || match[4], title: match[2] || match[4],
+                      shape: shape, icon: !match[1].nil?,
+                      color: package_color(match[6], text, number))
+        end
+
+        def package_color(written, text, number)
+          return unless written
+
+          PackageColor.hex(written) ||
+            raise(refusal(text, number, "package colour name"))
         end
 
         def package_shape(stereotype)
