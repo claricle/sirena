@@ -105,6 +105,15 @@ module Sirena
           end
         end
 
+        # @return [Numeric] how far the left-most note reaches past the
+        #   left margin, 0 when none does
+        def overhang
+          left = notes.map(&:x).min
+          return 0 unless left && left < Geometry::DIAGRAM_MARGIN_X
+
+          Geometry::DIAGRAM_MARGIN_X - left
+        end
+
         # @return [Numeric] the right-most x any note reaches
         def right_edge
           notes.map { |note| note.x + note.width }.max || 0
@@ -187,7 +196,7 @@ module Sirena
         def box_horizontal(position, centers, lines)
           wide = [text_width(lines) + PADDING, MIN_WIDTH].max
           case position
-          when "left_of" then [wide, [centers.first - SIDE_GAP - wide, 10].max]
+          when "left_of" then [wide, centers.first - SIDE_GAP - wide]
           when "right_of" then [wide, centers.first + SIDE_GAP]
           else over_box(centers, wide)
           end

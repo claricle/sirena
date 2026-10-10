@@ -70,7 +70,9 @@ RSpec.describe Sirena::Layout::Sequence do
   end
 
   it "gives half of a note over one actor to the gap after it" do
-    expect(last_actor_x("A->>B: x\nNote over A: #{four_times}")).to eq(437)
+    xs = actor_xs(layout_scene("A->>B: x\nNote over A: #{four_times}"))
+
+    expect(xs.last - xs.first).to eq(387)
   end
 
   it "leaves the gaps alone for a note right of the last actor" do

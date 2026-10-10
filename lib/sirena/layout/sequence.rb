@@ -151,7 +151,20 @@ module Sirena
         graph = build_graph(diagram)
         @frame_layout = frame_placement(graph)
         @gaps = build_gaps(graph)
-        build_scene(graph, participant_positions(graph[:children]))
+        build_scene(graph, *shifted_placement(graph))
+      end
+
+      # A note left of the first actor may stick out past the left margin;
+      # mmdc then grows the canvas leftwards, so every actor moves right.
+      def shifted_placement(graph)
+        entries = graph.dig(:metadata, :note_entries)
+        positions = participant_positions(graph[:children])
+        placement = note_placement(entries, positions)
+        @shift = placement.overhang
+        return [positions, placement] if @shift.zero?
+
+        positions = participant_positions(graph[:children], @shift)
+        [positions, note_placement(entries, positions)]
       end
 
       def frame_layout
@@ -176,9 +189,7 @@ module Sirena
                            boxes: metadata[:boxes], spans: spans)
       end
 
-      def build_scene(graph, positions)
-        placement = note_placement(graph.dig(:metadata, :note_entries),
-                                   positions)
+      def build_scene(graph, positions, placement)
         width, height = scene_dimensions(graph, placement)
         Scene.new(
           id: graph[:id], width: width, height: height,
@@ -220,7 +231,8 @@ module Sirena
       def scene_dimensions(graph, placement)
         children = graph[:children]
         count = graph.dig(:metadata, :message_count) || 0
-        [[canvas_width(children) + CANVAS_PAD, notes_right_edge(placement)].max,
+        wide = canvas_width(children) + CANVAS_PAD + @shift
+        [[wide, notes_right_edge(placement)].max,
          canvas_height(children, count) + placement.total_height + CANVAS_PAD]
       end
 
@@ -375,8 +387,8 @@ module Sirena
           Geometry::CANVAS_TRIM - CANVAS_PAD
       end
 
-      def participant_positions(participants)
-        cursor = Geometry::DIAGRAM_MARGIN_X
+      def participant_positions(participants, shift = 0)
+        cursor = Geometry::DIAGRAM_MARGIN_X + shift
         participants.to_h do |participant|
           id = participant_id(participant)
           left = cursor + frame_layout.gap_before(id)
