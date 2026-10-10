@@ -54,6 +54,14 @@ RSpec.describe Sirena::Layout::TimelineFlow do
       .to eq([295, 117.8, 295, 423.4])
   end
 
+  it "wraps card text at 150, not at the 190 card width" do
+    groups = [{ name: nil, periods: [period("p", "Mass production lines")] }]
+    flow = described_class.new(groups, sectioned: false)
+
+    expect(cards_of(flow, "event").first.lines)
+      .to eq(["Mass production", "lines"])
+  end
+
   it "draws no section card without sections" do
     expect(cards_of(plain, "section")).to be_empty
   end

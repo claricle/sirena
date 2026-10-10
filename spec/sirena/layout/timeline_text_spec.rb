@@ -23,6 +23,12 @@ RSpec.describe Sirena::Layout::TimelineText do
     expect(described_class.wrap("a<br>b", 150)).to eq(%w[a b])
   end
 
+  it "keeps a line that is exactly as wide as the limit" do
+    width = described_class.width_of("ab cd")
+
+    expect(described_class.wrap("ab cd", width)).to eq(["ab cd"])
+  end
+
   it "collapses runs of whitespace" do
     expect(described_class.wrap("a    b", 150)).to eq(["a b"])
   end
