@@ -13,13 +13,15 @@ module Sirena
     # - Requirements with properties (id, text, risk, verifymethod)
     # - Multiple requirement types (requirement, functionalRequirement, etc.)
     # - Elements with properties (type, docref)
-    # - Relationships (contains, copies, derives, satisfies, verifies, refines, traces)
+    # - Relationships (contains, copies, derives, satisfies, verifies, refines,
+    #   traces)
     # - Styling directives
     # - Class definitions and assignments
     #
     # @example Parse a simple requirement diagram
     #   parser = Requirement.new
-    #   diagram = parser.parse("requirementDiagram\n  requirement test_req { id: 1 }")
+    #   source = "requirementDiagram\n  requirement test_req { id: 1 }"
+    #   diagram = parser.parse(source)
     class Requirement < Base
       grammar Grammars::Requirement
       builder Builders::Requirement

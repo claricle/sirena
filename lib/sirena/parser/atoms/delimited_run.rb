@@ -18,7 +18,11 @@ module Sirena
       class DelimitedRun < Parslet::Atoms::Base
         def initialize(delimiter, segment_class)
           super()
-          raise ArgumentError, "delimiter must be one character, got #{delimiter.inspect}" if delimiter.length != 1
+          if delimiter.length != 1
+            message = "delimiter must be one character, got "
+            message += delimiter.inspect
+            raise ArgumentError, message
+          end
 
           @delimiter = delimiter
           @segment_re = GreedyRun.anchored(segment_class)
@@ -53,7 +57,8 @@ module Sirena
 
           if segments.zero?
             source.bytepos = start
-            return context.err(self, source, "Expected at least one #{@delimiter.inspect}-closed run")
+            message = "Expected at least one #{@delimiter.inspect}-closed run"
+            return context.err(self, source, message)
           end
 
           succ(Parslet::Slice.new(anchor.position, buffer, anchor.line_cache))

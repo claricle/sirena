@@ -25,7 +25,8 @@ module Sirena
     #
     # @example Parse a simple C4 Context diagram
     #   parser = C4.new
-    #   diagram = parser.parse("C4Context\ntitle My System\nPerson(user, \"User\")")
+    #   source = "C4Context\ntitle My System\nPerson(user, \"User\")"
+    #   diagram = parser.parse(source)
     class C4 < Base
       grammar Grammars::C4
       builder Builders::C4
