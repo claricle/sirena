@@ -12,7 +12,8 @@ module Sirena
       attribute :id, :string
       attribute :text, :string
       attribute :risk, :string # Low, Medium, High
-      attribute :verifymethod, :string # Analysis, Inspection, Test, Demonstration
+      # Verification methods: Analysis, Inspection, Test, or Demonstration.
+      attribute :verifymethod, :string
       attribute :classes, :string, collection: true, default: -> { [] }
 
       def add_class(class_name)
@@ -36,7 +37,9 @@ module Sirena
     class RequirementRelationship < Lutaml::Model::Serializable
       attribute :source, :string
       attribute :target, :string
-      attribute :type, :string # contains, copies, derives, satisfies, verifies, refines, traces
+      # Relationship types: contains, copies, derives, satisfies, verifies,
+      # refines, or traces.
+      attribute :type, :string
 
       VALID_TYPES = %w[
         contains
@@ -99,12 +102,24 @@ module Sirena
 
     # Represents a Mermaid requirement diagram
     class Requirement < Base
-      attribute :requirements, RequirementNode, collection: true, default: -> { [] }
-      attribute :elements, RequirementElement, collection: true, default: -> { [] }
-      attribute :relationships, RequirementRelationship, collection: true, default: -> { [] }
+      attribute :requirements,
+                RequirementNode,
+                collection: true,
+                default: -> { [] }
+      attribute :elements,
+                RequirementElement,
+                collection: true,
+                default: -> { [] }
+      attribute :relationships,
+                RequirementRelationship,
+                collection: true,
+                default: -> { [] }
       attribute :styles, RequirementStyle, collection: true, default: -> { [] }
       attribute :classes, RequirementClass, collection: true, default: -> { [] }
-      attribute :class_assignments, RequirementClassAssignment, collection: true, default: -> { [] }
+      attribute :class_assignments,
+                RequirementClassAssignment,
+                collection: true,
+                default: -> { [] }
       attribute :acc_title, :string
       attribute :acc_description, :string
 
