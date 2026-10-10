@@ -48,7 +48,13 @@ module SpecSupport
 
       def closest_label(extractor, shape, labels)
         box = extractor.bbox(shape)
-        labels.min_by { |entry| distance(box.center, entry[:box].center) }
+        labels.min_by { |entry| row_distance(box, entry[:box]) }
+      end
+
+      def row_distance(shape, label)
+        delta_x = (shape.center.first - label.center.first).abs
+        delta_y = (shape.center.last - label.center.last).abs
+        [delta_y, delta_x]
       end
 
       def reference_ticks(extractor, doc)
