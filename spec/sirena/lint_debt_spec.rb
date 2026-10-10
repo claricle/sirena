@@ -6,12 +6,12 @@ require_relative "../support/lint_debt_fixture"
 require "fileutils"
 require "yaml"
 
-# `write_array_intersect_offence`, `write_exceptions`, `write_long_method_offence`
-# and `signed_entry` all call `write` or reference `grammar_file`, both from
-# example state (LintDebtFixture/`let`), so they stay included. The other
-# two -- `with_target_ruby_version_override` and `signature_message` -- are
-# pure and marked `module_function` in place, so callers stay bare method
-# calls either way.
+# `write_array_intersect_offence`, `write_exceptions`,
+# `write_long_method_offence`, and `signed_entry` all call `write` or reference
+# `grammar_file`, both from example state (LintDebtFixture/`let`), so they stay
+# included. The other two -- `with_target_ruby_version_override` and
+# `signature_message` -- are pure and marked `module_function` in place, so
+# callers stay bare method calls either way.
 module LintDebtSpecHelpers
   # A file the fixture's default `TargetRubyVersion` (3.2) flags via
   # `Style/ArrayIntersect` (its minimum is 3.1) but an ambient `2.7`

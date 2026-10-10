@@ -43,14 +43,18 @@ RSpec.configure do |config|
     # still trip this (RSpec aborts before entering its group), producing a
     # false-positive raise rather than a silent miss.
     config.after(:suite) do
-      scheduled = RSpec.world.filtered_examples.values.flatten.select { |e| e.metadata[:corpus] }
+      scheduled = RSpec.world.filtered_examples.values.flatten.select do |e|
+        e.metadata[:corpus]
+      end
       next if scheduled.empty?
 
       more = scheduled.size - 1
       suffix = more.zero? ? "" : " and #{more} more"
-      raise "COVERAGE=true scheduled #{scheduled.size} :corpus-tagged example(s) to run " \
-            "instrumented (#{scheduled.first.full_description.inspect}#{suffix}) -- this " \
-            "would inflate coverage.json. Run without COVERAGE, or exclude with --tag ~corpus."
+      raise "COVERAGE=true scheduled #{scheduled.size} :corpus-tagged " \
+            "example(s) to run instrumented " \
+            "(#{scheduled.first.full_description.inspect}#{suffix}) -- this " \
+            "would inflate coverage.json. Run without COVERAGE, or exclude " \
+            "with --tag ~corpus."
     end
   end
   config.example_status_persistence_file_path = "spec/examples.txt"
