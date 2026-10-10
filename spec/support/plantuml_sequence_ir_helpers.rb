@@ -97,7 +97,7 @@ module PlantUmlSequenceIrHelpers
   end
 
   def sequence_corpus_diagrams
-    Dir[CORPUS_GLOB].sort.filter_map do |path|
+    Dir[CORPUS_GLOB].filter_map do |path|
       parse_sequence(File.read(path))
     rescue Sirena::Parser::ParseError,
            Sirena::Notation::PlantUML::UnsupportedConstructError
