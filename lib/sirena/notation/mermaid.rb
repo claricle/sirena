@@ -41,22 +41,27 @@ module Sirena
         flowchart: {
           pattern: /\A\s*(?:flowchart-elk|(?i:graph|flowchart))([\s<>^]|\z)/,
           keyword: "graph, flowchart, or flowchart-elk",
+          ir_adapter: true,
         },
         sequence: {
           pattern: /\A\s*sequenceDiagram/i,
           keyword: "sequenceDiagram",
+          ir_adapter: true,
         },
         class_diagram: {
           pattern: /\A\s*classDiagram/i,
           keyword: "classDiagram",
+          ir_adapter: true,
         },
         state_diagram: {
           pattern: /\A\s*stateDiagram(-v2)?/i,
           keyword: "stateDiagram or stateDiagram-v2",
+          ir_adapter: true,
         },
         er_diagram: {
           pattern: /\A\s*erDiagram/i,
           keyword: "erDiagram",
+          ir_adapter: true,
         },
         user_journey: {
           pattern: /\A\s*journey/i,
@@ -122,6 +127,7 @@ module Sirena
         architecture: {
           pattern: /\A\s*architecture-beta/i,
           keyword: "architecture-beta",
+          ir_adapter: true,
         },
         sankey: {
           pattern: /\A\s*sankey-beta/i,

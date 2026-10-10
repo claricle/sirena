@@ -81,24 +81,13 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapter do
     expect(mindmap_comparison.first).to eq(mindmap_comparison.last)
   end
 
-  it "leaves an unmigrated diagram unchanged" do
-    diagram = Sirena::Parser::Flowchart.new.parse(
-      File.read("spec/fixtures/contract/flowchart.mmd"),
-    )
-
-    expect(described_class.call(:flowchart, diagram)).to equal(diagram)
-  end
-
   it "discovers opted-in adapters by the registered type name" do
     actual = [opted_in_types, described_class.const_defined?(:ADAPTERS, false)]
     expect(actual).to eq([expected_opted_in_types, false])
   end
 
   def opted_in_types
-    %i[
-      mindmap sankey pie info error packet timeline kanban radar treemap
-      quadrant xychart block gantt requirement user_journey git_graph c4
-    ].to_h do |type|
+    Sirena::Notation::Mermaid::TYPES.keys.to_h do |type|
       source = File.read("spec/fixtures/contract/#{type}.mmd")
       [type, Sirena::Notation::Mermaid.parse(source).diagram.class]
     end
@@ -111,6 +100,12 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapter do
       user_journey: Sirena::IR::Graph,
       git_graph: Sirena::IR::Graph,
       c4: Sirena::IR::Graph,
+      flowchart: Sirena::IR::Graph,
+      sequence: Sirena::IR::Graph,
+      class_diagram: Sirena::IR::Graph,
+      state_diagram: Sirena::IR::Graph,
+      er_diagram: Sirena::IR::Graph,
+      architecture: Sirena::IR::Graph,
       pie: Sirena::IR::Data, info: Sirena::IR::Data, error: Sirena::IR::Data,
       kanban: Sirena::IR::Data, radar: Sirena::IR::Data,
       treemap: Sirena::IR::Data,
