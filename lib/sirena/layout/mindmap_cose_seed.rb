@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "mindmap_cose_trig"
+
 module Sirena
   module Layout
     # Initial placement for a tree: the centre of the tree goes in the
@@ -79,8 +81,8 @@ module Sirena
       def branch(body, parent, start_angle, end_angle, distance, ring)
         angle = (angle_midpoint(start_angle, end_angle) + start_angle).remainder(360)
         radians = (angle * (2.0 * Math::PI)) / 360
-        body.center = [distance * Math.cos(radians),
-                       distance * Math.sin(radians)]
+        body.center = [distance * MindmapCoseTrig.cos(radians),
+                       distance * MindmapCoseTrig.sin(radians)]
         place_children(body, parent, start_angle, end_angle,
                        distance + ring, ring)
       end

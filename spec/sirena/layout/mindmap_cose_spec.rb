@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require "spec_helper"
 require "sirena/layout/mindmap_cose"
 
@@ -33,6 +34,24 @@ RSpec.describe Sirena::Layout::MindmapCose do
       nodes, placed = reference_layout(name)
       actual = offsets_from_first(nodes.map { |node| placed.fetch(node[:id]) })
       expected = offsets_from_first(nodes.map { |node| node[:centre] })
+
+      expect(actual.flatten).to match(
+        expected.flatten.map { |value| be_within(0.01).of(value) },
+      )
+    end
+  end
+
+  # Layouts mmdc 11.12.0 produced in Chrome 131 from the fixture's source,
+  # with the box sizes mmdc measured. The symmetric trees turn a last-bit
+  # difference in the seed's sin and cos into a visibly different layout.
+  Dir[File.join(__dir__, "../../fixtures/mindmap_cose/*.json")].each do |path|
+    name = File.basename(path, ".json")
+    it "puts every node where mmdc does (#{name})" do
+      fixture = JSON.parse(File.read(path))
+      sizes = fixture["nodes"].map { |n| [n["id"], n["width"], n["height"]] }
+      placed = described_class.call(sizes, fixture["edges"])
+      actual = offsets_from_first(fixture["nodes"].map { |n| placed.fetch(n["id"]) })
+      expected = offsets_from_first(fixture["nodes"].map { |n| n["centre"] })
 
       expect(actual.flatten).to match(
         expected.flatten.map { |value| be_within(0.01).of(value) },
