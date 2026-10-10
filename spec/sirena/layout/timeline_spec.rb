@@ -37,6 +37,10 @@ RSpec.describe Sirena::Layout::Timeline do
     expect([titled.width, titled.height]).to eq([1390, 629.6])
   end
 
+  it "keeps float noise out of the canvas height" do
+    expect(lay_out(File.read(mmd("003"))).height).to eq(845.8)
+  end
+
   it "keeps the viewBox in step with the size" do
     expect(titled.view_box).to eq("0 0 1390.0 629.6")
   end

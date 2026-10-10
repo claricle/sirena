@@ -16,6 +16,11 @@ RSpec.describe Sirena::Renderer::Timeline do
                "power, Steam <br>power\n")
   end
 
+  let(:thirteen) do
+    sections = (1..13).map { |n| " section s#{n}\n t#{n}\n" }
+    render_doc("timeline\n#{sections.join}")
+  end
+
   it "wraps a period in a taskWrapper group" do
     expect(attrs(doc, "//g[@class='taskWrapper']", "transform"))
       .to eq(["translate(100, 167.8)", "translate(300, 167.8)"])
@@ -50,6 +55,26 @@ RSpec.describe Sirena::Renderer::Timeline do
       .to eq(%w[#ffffff #ffffff #000000 #000000])
   end
 
+  it "draws the rule under a card 3 thick" do
+    expect(attrs(doc, "//line[@class='node-line']", "stroke-width").uniq)
+      .to eq(["3"])
+  end
+
+  it "centres the card text 10 below the card top" do
+    expect(attrs(doc, "//g[@class='taskWrapper']//g/g[2]", "transform"))
+      .to eq(["translate(95, 10)", "translate(95, 10)"])
+  end
+
+  it "sets card text at 16 and the title at 33" do
+    expect(attrs(wrapped, "//text", "font-size").uniq).to eq(%w[16 33])
+  end
+
+  it "starts the section colours over after twelve" do
+    fills = attrs(thirteen, "//path[@class='node-bkg']", "fill")
+
+    expect(fills.last).to eq(fills.first)
+  end
+
   it "draws the drop line dashed" do
     expect(attrs(doc, "//path[@stroke-dasharray]", "stroke-dasharray")
       .uniq).to eq(["5,5"])
@@ -65,6 +90,11 @@ RSpec.describe Sirena::Renderer::Timeline do
     expect(nodes(wrapped, "//tspan").map(&:text)).to eq(
       ["Machinery, Water", "power, Steam", "power"],
     )
+  end
+
+  it "steps wrapped lines 17.6 apart, as mmdc's 1.1em does" do
+    expect(attrs(wrapped, "//tspan", "y").compact.map(&:to_f))
+      .to eq([38.6, 56.2])
   end
 
   it "draws the title bold" do
