@@ -138,16 +138,10 @@ RSpec.describe Sirena::Renderer::Flowchart do
   describe "#render with no boxes to draw" do
     let(:empty_graph) { { id: "flowchart", children: [], edges: [] } }
 
-    # `create_document`'s own padding (20 per side,
-    # `Renderer::Base#create_document`) is the only number this canvas
-    # carries -- `calculate_width`/`calculate_height` contribute nothing when
-    # there is nothing drawn, the same as they would for a single zero-sized
-    # box. mmdc draws the same source at `-8 -8 16 16` (a percentage width,
-    # not a fixed one, and its own 8px padding), which this does not try to
-    # match byte-for-byte: sirena's viewBox origin never goes negative
-    # (`Svg::Document#calculate_view_box` always emits `0 0 W H`, for every
-    # diagram type), and its padding constant is sirena's own, not mermaid's.
-    empty_dimensions = { width: 40.0, height: 40.0, view_box: "0 0 40 40" }
+    # mmdc draws the same source 16px square (its 8px padding either side)
+    # at viewBox `-8 -8 16 16`; sirena's viewBox origin is always 0 0
+    # (`Svg::Document#calculate_view_box`, for every diagram type).
+    empty_dimensions = { width: 16.0, height: 16.0, view_box: "0 0 16.0 16.0" }
     empty_dimensions.each do |property, expected|
       it "sets #{property} to #{expected.inspect}" do
         svg = render_graph(empty_graph)

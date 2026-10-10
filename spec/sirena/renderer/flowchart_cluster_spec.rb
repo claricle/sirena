@@ -736,7 +736,7 @@ RSpec.describe Sirena::Engine do
       # no longer than three, which rounding to two or fewer also
       # satisfies. The start is where the ray between the two boxes' exact
       # centres leaves `one`.
-      expect(path).to eq("M 82.9 116.0 L 46.888 193.0")
+      expect(path).to eq("M 78.9 112.0 L 42.888 189.0")
     end
 
     it "joins a box to a plain node" do
@@ -1006,14 +1006,14 @@ RSpec.describe Sirena::Engine do
         .to eq("M 81.8 50.0 L 120.0 80.0 L 200.0 46.2")
     end
 
-    it "keeps eighty units beyond the right and bottom maxima" do
+    it "keeps mmdc's 8px beyond the right and bottom maxima" do
       source = cluster("s", x: 0.0, y: 0.0, width: 100.0, height: 100.0)
       document = render_graph({ id: "g", children: [source], edges: [] })
       min_x, min_y, width, height = document.view_box.split.map(&:to_f)
 
       expect([min_x, min_y]).to eq([0.0, 0.0])
-      expect((min_x + width) - 100.0).to eq(80.0)
-      expect((min_y + height) - 100.0).to eq(80.0)
+      expect((min_x + width) - 100.0).to eq(8.0)
+      expect((min_y + height) - 100.0).to eq(8.0)
     end
   end
 

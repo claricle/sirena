@@ -19,6 +19,7 @@ module Sirena
       # boxes turned on their side and the result turned back, and a reversed
       # one is mirrored.
       class DirectedPlacement
+        PAGE_MARGIN = 8.0
         CLUSTER_PADDING = 20.0
         CLUSTER_SIDE = 8.0
         CLUSTER_VERTICAL = 25.0
@@ -38,10 +39,19 @@ module Sirena
           @graph = graph
           @level_edges = edges_by_level(graph)
           place_level(graph[:children] || [], nil)
+          margin_page(graph[:children] || [])
           graph
         end
 
         private
+
+        # mmdc leaves PAGE_MARGIN round the diagram.
+        def margin_page(boxes)
+          return if boxes.empty?
+
+          shift(boxes, PAGE_MARGIN - left_of(boxes),
+                PAGE_MARGIN - top_of(boxes))
+        end
 
         def cluster?(box)
           box.dig(:metadata, :cluster) == true
