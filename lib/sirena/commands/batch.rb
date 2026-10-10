@@ -23,32 +23,12 @@ module Sirena
       def run
         input_path = options[:input] || "."
         output_path = options[:output] || "output"
-
-        puts "Sirena Batch Renderer"
-        puts "=" * 60
-        puts "Input:  #{input_path}"
-        puts "Output: #{output_path}"
-        puts "Theme:  #{options[:theme] || 'default'}"
-        puts
-
+        print_header(input_path, output_path)
         NotationLoader.load_all(options[:require])
         files = find_diagram_files(input_path)
+        return print_empty(input_path) if files.empty?
 
-        if files.empty?
-          puts "No diagram files found in: #{input_path}"
-          return
-        end
-
-        puts "Found #{files.length} diagram files"
-        puts
-
-        FileUtils.mkdir_p(output_path)
-
-        files.each_with_index do |file, idx|
-          process_file(file, input_path, output_path, idx + 1, files.length)
-        end
-
-        print_summary
+        render_batch(files, input_path, output_path)
       end
 
       # Whether every item rendered without error. Checked after #run, not
@@ -64,6 +44,37 @@ module Sirena
       end
 
       private
+
+      def render_batch(files, input_path, output_path)
+        print_file_count(files)
+        FileUtils.mkdir_p(output_path)
+        process_files(files, input_path, output_path)
+        print_summary
+      end
+
+      def print_header(input_path, output_path)
+        puts "Sirena Batch Renderer"
+        puts "=" * 60
+        puts "Input:  #{input_path}"
+        puts "Output: #{output_path}"
+        puts "Theme:  #{options[:theme] || 'default'}"
+        puts
+      end
+
+      def print_empty(input_path)
+        puts "No diagram files found in: #{input_path}"
+      end
+
+      def print_file_count(files)
+        puts "Found #{files.length} diagram files"
+        puts
+      end
+
+      def process_files(files, input_path, output_path)
+        files.each_with_index do |file, index|
+          process_file(file, input_path, output_path, index + 1, files.length)
+        end
+      end
 
       def find_diagram_files(path)
         if File.directory?(path)
@@ -107,62 +118,90 @@ module Sirena
       def process_file(file, input_base, output_base, current, total)
         relative = relative_path_for(file, input_base)
         output_file = File.join(output_base, output_name(relative))
-
         print "[#{current}/#{total}] #{relative}... "
+        process_render(file, output_file, relative)
+      end
 
-        begin
-          # Raw bytes, as `RenderCommand#read_input` reads them: a text-mode
-          # read would apply the locale's encodings before `Source` sees it.
-          source = File.binread(file)
-          svg = Sirena.render(source,
-                              theme: options[:theme],
-                              verbose: options[:verbose],
-                              path: file,
-                              notation: options[:notation])
+      def process_render(file, output_file, relative)
+        render_file(file, output_file)
+        record_success
+      rescue *Sirena::EXHAUSTION_ERRORS, StandardError => e
+        record_failure(relative, e)
+      end
 
-          FileUtils.mkdir_p(File.dirname(output_file))
-          File.binwrite(output_file, svg)
+      def render_file(file, output_file)
+        # Raw bytes, as `RenderCommand#read_input` reads them: a text-mode
+        # read would apply the locale's encodings before `Source` sees it.
+        source = File.binread(file)
+        svg = Sirena.render(source, **render_options(file))
+        FileUtils.mkdir_p(File.dirname(output_file))
+        File.binwrite(output_file, svg)
+      end
 
-          @stats[:success] += 1
-          puts "✅"
-        rescue *Sirena::EXHAUSTION_ERRORS, StandardError => e
-          # Batch promises to survive a bad file and report it. `File.binread`
-          # runs inside this block too, so exhaustion can arrive from
-          # outside the engine's own boundary and has to be named here as
-          # well as there.
-          @stats[:failed] += 1
-          @stats[:errors] << { file: relative, error: e.message }
-          puts "❌ #{e.class.name}"
-          if options[:verbose]
-            puts "   #{e.message}"
-            # Printed, never stored: `@stats[:errors]` above outlives the
-            # whole run, and a cause's trace is what must not accumulate
-            # there.
-            diagnostics = Sirena::ErrorReport.cause_diagnostics(e)
-            puts diagnostics.lines.map { |l| "   #{l}" }.join unless diagnostics.empty?
-          end
-        end
+      def render_options(file)
+        {
+          theme: options[:theme], verbose: options[:verbose], path: file,
+          notation: options[:notation]
+        }
+      end
+
+      def record_success
+        @stats[:success] += 1
+        puts "✅"
+      end
+
+      def record_failure(relative, error)
+        @stats[:failed] += 1
+        @stats[:errors] << { file: relative, error: error.message }
+        puts "❌ #{error.class.name}"
+        print_verbose_failure(error) if options[:verbose]
+      end
+
+      def print_verbose_failure(error)
+        puts "   #{error.message}"
+        # Printed, never stored: `@stats[:errors]` outlives the whole run,
+        # and a cause's trace is what must not accumulate there.
+        diagnostics = Sirena::ErrorReport.cause_diagnostics(error)
+        return if diagnostics.empty?
+
+        puts diagnostics.lines.map { |line| "   #{line}" }.join
       end
 
       def print_summary
+        print_summary_header
+        print_summary_counts
+        print_errors if @stats[:failed].positive?
+        print_success_rate
+      end
+
+      def print_summary_header
         puts "\n#{'=' * 60}"
         puts "BATCH RENDERING SUMMARY"
         puts "=" * 60
+      end
+
+      def print_summary_counts
         puts "✅ Success: #{@stats[:success]}"
         puts "❌ Failed:  #{@stats[:failed]}"
         puts "   Total:   #{@stats[:success] + @stats[:failed]}"
+      end
 
-        if @stats[:failed].positive?
-          puts "\nErrors:"
-          @stats[:errors].first(5).each do |err|
-            puts "  #{err[:file]}: #{err[:error].lines.first.strip}"
-          end
-          if @stats[:errors].length > 5
-            puts "  ... and #{@stats[:errors].length - 5} more errors"
-          end
-          puts "\nUse --verbose to see full error details"
+      def print_errors
+        puts "\nErrors:"
+        @stats[:errors].first(5).each do |error|
+          puts "  #{error[:file]}: #{error[:error].lines.first.strip}"
         end
+        print_extra_error_count
+        puts "\nUse --verbose to see full error details"
+      end
 
+      def print_extra_error_count
+        return unless @stats[:errors].length > 5
+
+        puts "  ... and #{@stats[:errors].length - 5} more errors"
+      end
+
+      def print_success_rate
         rate = (@stats[:success].to_f / (@stats[:success] + @stats[:failed]))
         puts "\nSuccess rate: #{(rate * 100).round(1)}%"
       end

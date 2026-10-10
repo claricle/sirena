@@ -34,11 +34,15 @@ module Sirena
       whole, _, fraction = mantissa.partition(".")
       combined = whole + fraction
       digits = combined.sub(/\A0+/, "")
-      point = whole.length - (combined.length - digits.length) +
-        exponent.to_i
+      point = point_position(whole, combined, digits, exponent)
       [digits.sub(/0+\z/, ""), point]
     end
     private_class_method :decompose
+
+    def point_position(whole, combined, digits, exponent)
+      whole.length - (combined.length - digits.length) + exponent.to_i
+    end
+    private_class_method :point_position
 
     def place(digits, point)
       return exponential(digits, point) unless point > -6 && point <= 21
