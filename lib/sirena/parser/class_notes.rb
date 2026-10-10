@@ -8,6 +8,8 @@ module Sirena
     #
     # The class builder drops them, so they are read from the tree beside it.
     class ClassNotes
+      LINE_BREAK = %r{<br\s*/?>}i
+
       # @param tree [Array<Hash>] the class diagram parse tree
       # @param diagram [Diagram::ClassDiagram] the built diagram, for the
       #   ids a `note for` can point at
@@ -31,9 +33,11 @@ module Sirena
 
       private
 
-      # mmdc renders the text as HTML, so a tag shows as its content.
+      # mmdc renders the text as HTML: a <br> starts a new line and any
+      # other tag shows as its content. A literal backslash-n stays text.
       def note_text(slice)
-        slice.to_s.strip.sub(/\A"(.*)"\z/m, '\1').gsub(/<[^>]*>/, "")
+        text = slice.to_s.strip.sub(/\A"(.*)"\z/m, '\1')
+        text.gsub(LINE_BREAK, "\n").gsub(/<[^>]*>/, "")
       end
 
       def target(slice)
