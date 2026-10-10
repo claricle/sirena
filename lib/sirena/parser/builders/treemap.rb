@@ -53,23 +53,14 @@ module Sirena
 
         # Node with all fields
         rule(node: subtree(:n)) do
+          # An empty indent parses to [], a non-empty one to a string.
           indent_val = n[:indent]
-          # Handle indent - could be Array (empty), Parslet::Slice, or String
-          indent_len = if indent_val.is_a?(Array)
-                         indent_val.length # Empty array = 0
-                       elsif indent_val.respond_to?(:to_s)
-                         indent_val.to_s.length # String or Parslet::Slice
-                       else
-                         0
-                       end
-
-          label_val = n[:label]
-          label_str = label_val.is_a?(String) ? label_val : label_val.to_s
+          indent_len = indent_val.is_a?(Array) ? 0 : indent_val.to_s.length
 
           result = {
             type: :node,
             indent: indent_len,
-            label: label_str,
+            label: n[:label],
           }
 
           result[:value] = n[:value] if n.key?(:value)
@@ -101,7 +92,8 @@ module Sirena
               # Accessibility description: parsed, not yet stored on the model.
             when :class_def
               diagram.add_class_def(stmt[:name], stmt[:styles])
-            when :node
+            else
+              # Only :node is left: the rules above emit no other type.
               nodes << stmt
             end
           end
@@ -121,8 +113,6 @@ module Sirena
         #   order, each carrying its indentation level
         # @return [void]
         def build_hierarchy(diagram, nodes)
-          return if nodes.empty?
-
           # Stack to track the current parent at each indentation level
           # Format: [[indent_level, node], ...]
           stack = []
