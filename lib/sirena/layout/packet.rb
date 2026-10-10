@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../notation/mermaid/ir_adapters/packet"
 
 module Sirena
   module Layout
@@ -83,18 +84,20 @@ module Sirena
       # @param diagram [Diagram::Packet] the packet diagram
       # @return [Hash] layout data with positioned fields and dimensions
       def build_graph(diagram)
-        return empty_layout if diagram.fields.empty?
+        document = ir_document(diagram)
+        fields = document.items.select { |item| item.role == "field" }
+        return empty_layout(document.label) if fields.empty?
 
         # Calculate the number of rows needed
-        row_count = diagram.row_count(BITS_PER_ROW)
+        row_count = packet_row_count(fields)
 
         # Position each field
-        positioned_fields = position_fields(diagram.fields, row_count)
+        positioned_fields = position_fields(fields, row_count)
 
         # Calculate dimensions
         width = BITS_PER_ROW * CELL_WIDTH + (PADDING * 2)
         content_height = row_count * CELL_HEIGHT + HEADER_HEIGHT
-        title_offset = diagram.title ? TITLE_HEIGHT + TITLE_MARGIN : 0
+        title_offset = document.label ? TITLE_HEIGHT + TITLE_MARGIN : 0
         height = content_height + (PADDING * 2) + title_offset
 
         {
@@ -105,11 +108,11 @@ module Sirena
           cell_height: CELL_HEIGHT,
           padding: PADDING,
           header_height: HEADER_HEIGHT,
-          title_height: diagram.title ? TITLE_HEIGHT : 0,
-          title_margin: diagram.title ? TITLE_MARGIN : 0,
+          title_height: document.label ? TITLE_HEIGHT : 0,
+          title_margin: document.label ? TITLE_MARGIN : 0,
           width: width,
           height: height,
-          title: diagram.title,
+          title: document.label,
         }
       end
 
@@ -117,6 +120,12 @@ module Sirena
 
       def scene(diagram)
         scene_from_graph(build_graph(diagram))
+      end
+
+      def ir_document(diagram)
+        return diagram if diagram.is_a?(IR::Prepositioned)
+
+        Notation::Mermaid::IRAdapters::Packet.call(diagram)
       end
 
       def scene_from_graph(graph)
@@ -254,7 +263,9 @@ module Sirena
       # Returns an empty layout structure.
       #
       # @return [Hash] empty layout
-      def empty_layout
+      def empty_layout(title = nil)
+        title_height = title ? TITLE_HEIGHT : 0
+        title_margin = title ? TITLE_MARGIN : 0
         {
           fields: [],
           row_count: 0,
@@ -263,12 +274,17 @@ module Sirena
           cell_height: CELL_HEIGHT,
           padding: PADDING,
           header_height: HEADER_HEIGHT,
-          title_height: 0,
-          title_margin: 0,
+          title_height: title_height,
+          title_margin: title_margin,
           width: PADDING * 2,
-          height: PADDING * 2,
-          title: nil,
+          height: (PADDING * 2) + title_height + title_margin,
+          title: title,
         }
+      end
+
+      def packet_row_count(fields)
+        maximum = fields.map { |field| bit_end(field) }.max
+        ((maximum + 1).to_f / BITS_PER_ROW).ceil
       end
 
       # Positions all fields in the grid.
@@ -280,13 +296,12 @@ module Sirena
         positioned = []
 
         fields.each do |field|
-          # Handle fields that may span multiple rows
-          if field.spans_rows?(BITS_PER_ROW)
-            # Split into multiple visual segments
-            positioned.concat(split_field_across_rows(field))
-          else
+          if start_row(field) == end_row(field)
             # Single row field
             positioned << position_single_field(field)
+          else
+            # Split into multiple visual segments
+            positioned.concat(split_field_across_rows(field))
           end
         end
 
@@ -298,9 +313,9 @@ module Sirena
       # @param field [Diagram::PacketField] field to position
       # @return [Hash] positioned field data
       def position_single_field(field)
-        row = field.start_row(BITS_PER_ROW)
-        start_col = field.start_bit_in_row(BITS_PER_ROW)
-        end_col = field.end_bit_in_row(BITS_PER_ROW)
+        row = start_row(field)
+        start_col = start_bit_in_row(field)
+        end_col = end_bit_in_row(field)
 
         x = PADDING + (start_col * CELL_WIDTH)
         y = PADDING + HEADER_HEIGHT + (row * CELL_HEIGHT)
@@ -309,8 +324,8 @@ module Sirena
 
         {
           label: field.label,
-          bit_start: field.bit_start,
-          bit_end: field.bit_end,
+          bit_start: bit_start(field),
+          bit_end: bit_end(field),
           x: x,
           y: y,
           width: width,
@@ -327,15 +342,16 @@ module Sirena
       # @return [Array<Hash>] array of positioned segments
       def split_field_across_rows(field)
         segments = []
-        current_bit = field.bit_start
+        current_bit = bit_start(field)
+        final_bit = bit_end(field)
 
-        while current_bit <= field.bit_end
+        while current_bit <= final_bit
           row = current_bit / BITS_PER_ROW
           start_col = current_bit % BITS_PER_ROW
 
           # Determine end column for this row
           row_end_bit = ((row + 1) * BITS_PER_ROW) - 1
-          segment_end_bit = [field.bit_end, row_end_bit].min
+          segment_end_bit = [final_bit, row_end_bit].min
           end_col = segment_end_bit % BITS_PER_ROW
 
           x = PADDING + (start_col * CELL_WIDTH)
@@ -354,14 +370,42 @@ module Sirena
             row: row,
             start_col: start_col,
             end_col: end_col,
-            is_continuation: current_bit > field.bit_start,
-            is_final: segment_end_bit == field.bit_end,
+            is_continuation: current_bit > bit_start(field),
+            is_final: segment_end_bit == final_bit,
           }
 
           current_bit = segment_end_bit + 1
         end
 
         segments
+      end
+
+      def bit_placement(field)
+        field.placements.find { |placement| placement.dimension == "bit" }
+      end
+
+      def bit_start(field)
+        bit_placement(field).value.value.to_i
+      end
+
+      def bit_end(field)
+        bit_start(field) + bit_placement(field).span.value.to_i - 1
+      end
+
+      def start_row(field)
+        bit_start(field) / BITS_PER_ROW
+      end
+
+      def end_row(field)
+        bit_end(field) / BITS_PER_ROW
+      end
+
+      def start_bit_in_row(field)
+        bit_start(field) % BITS_PER_ROW
+      end
+
+      def end_bit_in_row(field)
+        bit_end(field) % BITS_PER_ROW
       end
     end
   end

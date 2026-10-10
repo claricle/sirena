@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/timeline"
+require_relative "../notation/mermaid/ir_adapters/timeline"
 
 module Sirena
   module Layout
@@ -60,24 +61,28 @@ module Sirena
       class Scene < Layout::Scene
         attribute :id, :string
         attribute :view_box, :string
+        attribute :acc_title, :string
+        attribute :acc_description, :string
         attribute :title, Label
         attribute :tracks, Track, collection: true, default: -> { [] }
       end
 
       # Retains the pre-Scene structure for direct callers during conversion.
       def build_graph(diagram)
-        all_events = collect_all_events(diagram)
+        document = ir_document(diagram)
+        all_events = collect_all_events(document)
         timeline_range = calculate_timeline_range(all_events)
 
         {
-          id: "timeline",
-          title: diagram.title,
-          acc_title: diagram.acc_title,
-          acc_description: diagram.acc_description,
-          sections: transform_sections(diagram, timeline_range),
-          events: transform_events(diagram.events, timeline_range),
+          id: document.id,
+          title: document.label,
+          acc_title: document.accessibility_title,
+          acc_description: document.accessibility_description,
+          sections: transform_sections(document, timeline_range),
+          events: transform_events(root_events(document), document,
+                                   timeline_range),
           timeline: timeline_range,
-          metadata: timeline_metadata(diagram, all_events),
+          metadata: timeline_metadata(document, all_events),
         }
       end
 
@@ -91,8 +96,16 @@ module Sirena
         Scene.new(
           id: graph[:id], width: width, height: height,
           view_box: "0 0 #{width} #{height}",
+          acc_title: graph[:acc_title],
+          acc_description: graph[:acc_description],
           title: title_label(graph[:title]), tracks: tracks(graph)
         )
+      end
+
+      def ir_document(diagram)
+        return diagram if diagram.is_a?(IR::Prepositioned)
+
+        Notation::Mermaid::IRAdapters::Timeline.call(diagram)
       end
 
       def scene_height(graph)
@@ -263,12 +276,12 @@ module Sirena
         MARGIN_LEFT + ((x_position / 100.0) * TIMELINE_WIDTH)
       end
 
-      def collect_all_events(diagram)
-        diagram.sections.each_with_object(
-          diagram.events.dup,
-        ) do |section, events|
-          events.concat(section.events)
-        end
+      def collect_all_events(document)
+        document.items.select { |item| item.role == "event" }
+      end
+
+      def root_events(document)
+        collect_all_events(document).select { |event| event.parent_id.nil? }
       end
 
       def calculate_timeline_range(events)
@@ -282,7 +295,7 @@ module Sirena
 
       def numeric_times(events)
         events.filter_map do |event|
-          extract_numeric_time(event.time)
+          extract_numeric_time(event_time(event))
         end
       end
 
@@ -296,11 +309,12 @@ module Sirena
         }
       end
 
-      def timeline_metadata(diagram, all_events)
+      def timeline_metadata(document, all_events)
+        sections = document.items.select { |item| item.role == "section" }
         {
-          section_count: diagram.sections.length,
+          section_count: sections.length,
           total_events: all_events.length,
-          has_sections: diagram.has_sections?,
+          has_sections: !sections.empty?,
         }
       end
 
@@ -315,27 +329,60 @@ module Sirena
         match&.then { |value| value[0].to_i }
       end
 
-      def transform_sections(diagram, timeline_range)
-        diagram.sections.map.with_index do |section, index|
-          {
-            id: "section_#{index}", name: section.name,
-            events: transform_events(section.events, timeline_range),
-            tasks: section.tasks, has_events: section.has_events?,
-            has_tasks: section.has_tasks?
-          }
+      def transform_sections(document, timeline_range)
+        section_items(document).map do |section|
+          events, tasks = section_contents(document, section)
+          transformed = transform_events(events, document, timeline_range)
+          section_attributes(section, transformed, tasks)
         end
       end
 
-      def transform_events(events, timeline_range)
-        events.map.with_index do |event, index|
-          {
-            id: "event_#{index}", time: event.time,
-            descriptions: event.descriptions,
-            primary_description: event.primary_description,
-            multiple_descriptions: event.multiple_descriptions?,
-            x_position: calculate_x_position(event.time, timeline_range)
-          }
+      def section_items(document)
+        document.items.select { |item| item.role == "section" }
+      end
+
+      def section_contents(document, section)
+        [children(document, section.id, "event"),
+         children(document, section.id, "task")]
+      end
+
+      def section_attributes(section, events, tasks)
+        {
+          id: section.id, name: section.label, events: events,
+          tasks: tasks.map(&:label), has_events: !events.empty?,
+          has_tasks: !tasks.empty?
+        }
+      end
+
+      def transform_events(events, document, timeline_range)
+        events.map do |event|
+          descriptions = children(document, event.id, "description")
+            .map(&:label)
+          time = event_time(event)
+          event_attributes(event, time, descriptions, timeline_range)
         end
+      end
+
+      def event_attributes(event, time, descriptions, timeline_range)
+        {
+          id: event.id, time: time, descriptions: descriptions,
+          primary_description: descriptions.first,
+          multiple_descriptions: descriptions.length > 1,
+          x_position: calculate_x_position(time, timeline_range)
+        }
+      end
+
+      def children(document, parent_id, role)
+        document.items.select do |item|
+          item.parent_id == parent_id && item.role == role
+        end
+      end
+
+      def event_time(event)
+        placement = event.placements.find do |item|
+          item.dimension == "time"
+        end
+        placement.value.value
       end
 
       def calculate_x_position(time_string, timeline_range)

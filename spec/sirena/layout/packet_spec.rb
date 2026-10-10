@@ -15,6 +15,15 @@ RSpec.describe Sirena::Layout::Packet do
       .to eq([described_class::Scene, 80.0, 80.0, nil, [], [], 34])
   end
 
+  it "lays out shared pre-positioned IR identically to the private model" do
+    packet.title = "Header"
+    packet.add_field(Sirena::Diagram::PacketField.new(30, 34, "boundary"))
+    ir = Sirena::Notation::Mermaid::IRAdapters::Packet.call(packet)
+    actual = Marshal.dump(described_class.new.call(ir))
+
+    expect(actual).to eq(Marshal.dump(scene))
+  end
+
   context "with a title and one row" do
     before do
       packet.title = "Header"
