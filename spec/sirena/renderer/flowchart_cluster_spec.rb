@@ -577,15 +577,17 @@ RSpec.describe Sirena::Engine do
     end
   end
 
-  # Clusters made the grid size-aware, and a cell that shrank to fit would
-  # have moved every diagram in the project. The floor is what keeps them
-  # still, so these are the coordinates from before that change.
+  # Unconnected nodes share one rank, left to right in source order, with
+  # elkrb's 50 point node spacing between them.
   describe "a diagram with no subgraph" do
-    it "keeps the grid pitch it has always had" do
+    it "lays unconnected nodes in one row, 50 apart" do
       found = spots(render("flowchart TD\nA\nB\nC\nD\n"))
 
-      expect(found).to eq([["A", 50.0, 50.0], ["B", 300.0, 50.0],
-                           ["C", 550.0, 50.0], ["D", 50.0, 250.0]])
+      expect(found.map(&:first)).to eq(%w[A B C D])
+      expect(found.map(&:last).uniq.size).to eq(1)
+      gaps = found.each_cons(2).map { |left, right| right[1] - left[1] }
+      expect(gaps).to all(be > 50.0)
+      expect(found.map { |spot| spot[1] }).to eq(found.map { |spot| spot[1] }.sort)
     end
   end
 
@@ -658,17 +660,17 @@ RSpec.describe Sirena::Engine do
       expect(on_border?(box(xml, "two"), tx, ty)).to be(true)
     end
 
-    # The two boxes sit side by side, so the line leaves the right edge
-    # of the first and arrives at the left edge of the second.
+    # The second box ranks below the first, so the line leaves the bottom
+    # edge of the first and arrives at the top edge of the second.
     it "leaves the near side of each box" do
       xml = render(source)
       path = xml[/<g id="edge-one_to_two">\s*<path[^>]*\bd="([^"]*)"/, 1]
-      sx, _sy, tx, _ty = path.scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
+      _sx, sy, _tx, ty = path.scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
       first = box(xml, "one")
       second = box(xml, "two")
 
-      expect(sx).to be_within(0.01).of(first[:x] + first[:width])
-      expect(tx).to be_within(0.01).of(second[:x])
+      expect(sy).to be_within(0.01).of(first[:y] + first[:height])
+      expect(ty).to be_within(0.01).of(second[:y])
     end
 
     # One box holds the other, so trimming each end independently put
@@ -725,7 +727,7 @@ RSpec.describe Sirena::Engine do
       # no longer than three, which rounding to two or fewer also
       # satisfies. The start is where the ray between the two boxes' exact
       # centres leaves `one` (crossing x = 300).
-      expect(path).to eq("M 300.0 102.86 L 84.277 75.5")
+      expect(path).to eq("M 69.1 137.0 L 46.277 212.5")
     end
 
     it "joins a box to a plain node" do

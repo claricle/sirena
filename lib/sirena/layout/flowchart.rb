@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
-require_relative "grid"
-require_relative "elk_placement"
+require_relative "flowchart/directed_placement"
 require_relative "flowchart/edge_router"
 require_relative "../diagram/flowchart"
 require_relative "../diagram/flowchart_label_text"
@@ -144,21 +143,17 @@ module Sirena
         layout.send(:scene_from_graph, graph)
       end
 
-      # :grid (the default) or :elk. Grid is deleted once :elk becomes the
-      # default; the switch exists only until the parity ratchet allows that.
+      # Engine#choose_placement sets this for layout_engine: :elk. Every
+      # flowchart is placed by elkrb now, so the value is not read.
       attr_accessor :placement
 
       def scene(diagram)
         graph = build_graph(ir_graph(diagram))
-        placer.apply(graph)
+        DirectedPlacement.apply(graph)
         scene_from_graph(graph)
       end
 
       private
-
-      def placer
-        placement == :elk ? ElkPlacement : Grid
-      end
 
       def ir_graph(diagram)
         return diagram if diagram.is_a?(IR::Graph)
