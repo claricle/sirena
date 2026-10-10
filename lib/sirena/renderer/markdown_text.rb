@@ -19,15 +19,20 @@ module Sirena
       # `<tspan>` wrapper, same XML shape existing fixtures expect.
       #
       # @param text_element [Svg::Text] element to assign onto
-      # @param lines [Array<Array<Sirena::MarkdownText::Run>>] truncated, from `Sirena::MarkdownText.parse_lines`
+      # @param lines [Array<Array<Sirena::MarkdownText::Run>>] truncated runs
+      #   from `Sirena::MarkdownText.parse_lines`
       # @param x [Numeric] the label's horizontal anchor
       # @param base_font_weight [String, nil] passed to `build_markdown_tspans`
       # @return [void]
-      def assign_markdown_text(text_element, lines, x:, base_font_weight: nil)
+      def assign_markdown_text(text_element, lines, base_font_weight: nil,
+                               **coordinates)
+        x_position = required_x(coordinates)
         if plain_line?(lines)
           text_element.content = lines.first.first&.text.to_s
         else
-          text_element.tspans = build_markdown_tspans(lines, x: x, base_font_weight: base_font_weight)
+          text_element.tspans = build_markdown_tspans(
+            lines, x: x_position, base_font_weight: base_font_weight
+          )
         end
       end
 
@@ -49,32 +54,52 @@ module Sirena
       # `line_shift` (lines below the previous placed run) — every other run
       # continues the previous one.
       #
-      # @param lines [Array<Array<Sirena::MarkdownText::Run>>] truncated, from `Sirena::MarkdownText.parse_lines`
+      # @param lines [Array<Array<Sirena::MarkdownText::Run>>] truncated runs
+      #   from `Sirena::MarkdownText.parse_lines`
       # @param x [Numeric] the label's horizontal anchor
-      # @param base_font_weight [String, nil] "bold" for a bold-by-default `Svg::Text` (e.g. a kanban column header)
+      # @param base_font_weight [String, nil] "bold" for a bold-by-default
+      #   `Svg::Text` (e.g. a kanban column header)
       # @return [Array<Svg::Tspan>]
       # @api private
-      def build_markdown_tspans(lines, x:, base_font_weight: nil)
+      def build_markdown_tspans(lines, base_font_weight: nil, **coordinates)
+        x_position = required_x(coordinates)
         pending_lines = 0
-
         lines.each_with_index.flat_map do |runs, line_index|
           pending_lines += 1 if line_index.positive?
-
-          runs.each_with_index.map do |run, run_index|
-            new_line = run_index.zero? && pending_lines.positive?
-
-            Svg::Tspan.new.tap do |t|
-              if new_line
-                t.x = x
-                t.line_shift = pending_lines
-                pending_lines = 0
-              end
-              t.font_weight = "bold" if run.bold || base_font_weight == "bold"
-              t.font_style = "italic" if run.italic
-              t.content = run.text
-            end
-          end
+          tspans = line_tspans(runs, x_position, pending_lines,
+                               base_font_weight)
+          pending_lines = 0 unless runs.empty?
+          tspans
         end
+      end
+
+      def required_x(coordinates)
+        return coordinates[:x] if coordinates.key?(:x)
+
+        raise ArgumentError, "missing keyword: :x"
+      end
+
+      def line_tspans(runs, x_position, line_shift, base_font_weight)
+        runs.map.with_index do |run, index|
+          build_tspan(run, x_position, line_shift, base_font_weight,
+                      new_line: index.zero? && line_shift.positive?)
+        end
+      end
+
+      def build_tspan(run, x_position, line_shift, base_font_weight, new_line:)
+        Svg::Tspan.new.tap do |tspan|
+          apply_line_shift(tspan, x_position, line_shift) if new_line
+          if run.bold || base_font_weight == "bold"
+            tspan.font_weight = "bold"
+          end
+          tspan.font_style = "italic" if run.italic
+          tspan.content = run.text
+        end
+      end
+
+      def apply_line_shift(tspan, x_position, line_shift)
+        tspan.x = x_position
+        tspan.line_shift = line_shift
       end
     end
   end

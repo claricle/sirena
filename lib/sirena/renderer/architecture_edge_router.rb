@@ -66,7 +66,7 @@ module Sirena
             parent = (index - 1) / 2
             break if @entries[parent][0] <= @entries[index][0]
 
-            @entries[parent], @entries[index] = @entries[index], @entries[parent]
+            swap_entries(parent, index)
             index = parent
           end
         end
@@ -74,16 +74,22 @@ module Sirena
         def sift_down(index)
           size = @entries.length
           loop do
-            smallest = index
-            left = (2 * index) + 1
-            right = (2 * index) + 2
-            smallest = left if left < size && @entries[left][0] < @entries[smallest][0]
-            smallest = right if right < size && @entries[right][0] < @entries[smallest][0]
+            smallest = smallest_entry(index, size)
             break if smallest == index
 
-            @entries[index], @entries[smallest] = @entries[smallest], @entries[index]
+            swap_entries(index, smallest)
             index = smallest
           end
+        end
+
+        def smallest_entry(index, size)
+          left = (2 * index) + 1
+          [index, left, left + 1].select { |entry| entry < size }
+            .min_by { |entry| @entries[entry][0] }
+        end
+
+        def swap_entries(first, second)
+          @entries[first], @entries[second] = @entries[second], @entries[first]
         end
       end
       private_constant :MinHeap
@@ -99,7 +105,9 @@ module Sirena
       #   to[:point] last. Length 2 means a straight line was clear.
       def route(from:, to:, obstacles:)
         clearance_obstacles = obstacles + [from[:box], to[:box]]
-        return [from[:point], to[:point]] if straight_clear?(from[:point], to[:point], clearance_obstacles)
+        if straight_clear?(from[:point], to[:point], clearance_obstacles)
+          return [from[:point], to[:point]]
+        end
 
         path = shortest_path(from, to, clearance_obstacles)
         return [from[:point], to[:point]] unless path
@@ -110,7 +118,9 @@ module Sirena
       private
 
       def straight_clear?(from_point, to_point, clearance_obstacles)
-        clearance_obstacles.none? { |box| segment_crosses_box?(box, from_point, to_point) }
+        clearance_obstacles.none? do |box|
+          segment_crosses_box?(box, from_point, to_point)
+        end
       end
 
       # General segment-vs-box interior test (the segment need not be
@@ -119,16 +129,26 @@ module Sirena
       # where the segment's x is strictly inside the box's x-span AND its y
       # is strictly inside the box's y-span; a border touch does not count
       # as crossing, matching EdgeRouter#crosses_face?'s semantics.
-      def segment_crosses_box?(box, p1, p2)
-        tx = axis_interval(p1[:x], p2[:x], box[:x] || 0, right_of(box))
-        return false unless tx
+      def segment_crosses_box?(box, first_point, second_point)
+        x_interval = horizontal_interval(box, first_point, second_point)
+        return false unless x_interval
 
-        ty = axis_interval(p1[:y], p2[:y], box[:y] || 0, bottom_of(box))
-        return false unless ty
+        y_interval = vertical_interval(box, first_point, second_point)
+        return false unless y_interval
 
-        lo = [tx[0], ty[0], 0.0].max
-        hi = [tx[1], ty[1], 1.0].min
+        lo = [x_interval[0], y_interval[0], 0.0].max
+        hi = [x_interval[1], y_interval[1], 1.0].min
         lo < hi
+      end
+
+      def horizontal_interval(box, first_point, second_point)
+        axis_interval(first_point[:x], second_point[:x], box[:x] || 0,
+                      right_of(box))
+      end
+
+      def vertical_interval(box, first_point, second_point)
+        axis_interval(first_point[:y], second_point[:y], box[:y] || 0,
+                      bottom_of(box))
       end
 
       # The [t_lo, t_hi] sub-range of t (segment parametrized as
@@ -136,14 +156,22 @@ module Sirena
       # far. nil when no such t exists - including a segment that runs
       # exactly along that axis outside (near, far), or exactly along its
       # border, since a border touch is not "strictly between".
-      def axis_interval(c1, c2, near, far)
-        if c1 == c2
-          return c1 > near && c1 < far ? [-Float::INFINITY, Float::INFINITY] : nil
+      def axis_interval(first_coordinate, second_coordinate, near, far)
+        if first_coordinate == second_coordinate
+          return infinite_interval if
+            first_coordinate.between?(near, far) &&
+              ![near, far].include?(first_coordinate)
+
+          return nil
         end
 
-        step = (c2 - c1).to_f
-        edges = [(near - c1) / step, (far - c1) / step].sort
-        edges
+        step = (second_coordinate - first_coordinate).to_f
+        [(near - first_coordinate) / step,
+         (far - first_coordinate) / step].sort
+      end
+
+      def infinite_interval
+        [-Float::INFINITY, Float::INFINITY]
       end
 
       def right_of(box)
@@ -155,11 +183,15 @@ module Sirena
       end
 
       def shortest_path(from, to, clearance_obstacles)
-        grid = build_grid(from[:point], to[:point], clearance_obstacles, margin: false)
+        grid = build_grid(
+          from[:point], to[:point], clearance_obstacles, margin: false
+        )
         path = search_grid(grid, from, to, clearance_obstacles)
         return path if path
 
-        widened = build_grid(from[:point], to[:point], clearance_obstacles, margin: true)
+        widened = build_grid(
+          from[:point], to[:point], clearance_obstacles, margin: true
+        )
         search_grid(widened, from, to, clearance_obstacles)
       end
 
@@ -170,18 +202,23 @@ module Sirena
       def build_grid(from_point, to_point, clearance_obstacles, margin:)
         xs = [from_point[:x], to_point[:x]]
         ys = [from_point[:y], to_point[:y]]
-
-        clearance_obstacles.each do |box|
-          xs << (box[:x] || 0) << right_of(box)
-          ys << (box[:y] || 0) << bottom_of(box)
-        end
-
-        if margin
-          xs << [xs.min - MARGIN, 0].max << (xs.max + MARGIN)
-          ys << [ys.min - MARGIN, 0].max << (ys.max + MARGIN)
-        end
-
+        add_obstacle_coordinates(xs, ys, clearance_obstacles)
+        add_margin_coordinates(xs, ys) if margin
         { xs: xs.uniq.sort, ys: ys.uniq.sort }
+      end
+
+      def add_obstacle_coordinates(x_coordinates, y_coordinates, obstacles)
+        obstacles.each do |box|
+          x_coordinates << (box[:x] || 0) << right_of(box)
+          y_coordinates << (box[:y] || 0) << bottom_of(box)
+        end
+      end
+
+      def add_margin_coordinates(x_coordinates, y_coordinates)
+        x_coordinates << [x_coordinates.min - MARGIN, 0].max
+        x_coordinates << (x_coordinates.max + MARGIN)
+        y_coordinates << [y_coordinates.min - MARGIN, 0].max
+        y_coordinates << (y_coordinates.max + MARGIN)
       end
 
       # Direction-aware Dijkstra over the grid-line intersections. A hop
@@ -195,60 +232,130 @@ module Sirena
       def search_grid(grid, from, to, clearance_obstacles)
         xs = grid[:xs]
         ys = grid[:ys]
-        start = [xs.index(from[:point][:x]), ys.index(from[:point][:y])]
-        goal = [xs.index(to[:point][:x]), ys.index(to[:point][:y])]
+        start = grid_position(xs, ys, from[:point])
+        goal = grid_position(xs, ys, to[:point])
         return nil if start == goal
 
-        required_first = [FACE_NORMAL[from[:side]][:x], FACE_NORMAL[from[:side]][:y]]
-        required_last = [-FACE_NORMAL[to[:side]][:x], -FACE_NORMAL[to[:side]][:y]]
+        required_first = face_direction(from[:side])
+        required_last = face_direction(to[:side]).map(&:-@)
+        find_grid_path(grid, start, goal, [required_first, required_last],
+                       clearance_obstacles)
+      end
+
+      def grid_position(x_coordinates, y_coordinates, point)
+        [x_coordinates.index(point[:x]), y_coordinates.index(point[:y])]
+      end
+
+      def face_direction(side)
+        FACE_NORMAL.fetch(side).values_at(:x, :y)
+      end
+
+      def find_grid_path(grid, start, goal, directions, clearance_obstacles)
+        required_first, required_last = directions
         goal_state = [goal[0], goal[1], required_last]
-
-        dist = { [start[0], start[1], nil] => 0 }
-        prev = {}
-        frontier = MinHeap.new
-        frontier.push(0, [start[0], start[1], nil])
-
-        until frontier.empty?
-          cost, state = frontier.pop
-          next if cost > dist.fetch(state, Float::INFINITY)
-          return reconstruct(prev, state, xs, ys) if state == goal_state
-
-          expand(state, xs, ys, required_first, clearance_obstacles).each do |next_state, step_cost|
-            new_cost = cost + step_cost
-            next if new_cost >= dist.fetch(next_state, Float::INFINITY)
-
-            dist[next_state] = new_cost
-            prev[next_state] = state
-            frontier.push(new_cost, next_state)
-          end
+        context = search_context(start, grid)
+        until context[:frontier].empty?
+          path = visit_grid_state(context, goal_state, required_first,
+                                  clearance_obstacles)
+          return path if path
         end
-
         nil
       end
 
-      def expand(state, xs, ys, required_first, clearance_obstacles)
-        xi, yi, dir = state
-        GRID_STEPS.filter_map do |dx, dy|
-          next if dir.nil? && [dx, dy] != required_first
+      def search_context(start, grid)
+        frontier = MinHeap.new
+        frontier.push(0, [start[0], start[1], nil])
+        {
+          grid: grid, frontier: frontier, previous: {},
+          distances: { [start[0], start[1], nil] => 0 }
+        }
+      end
 
-          nxi = xi + dx
-          nyi = yi + dy
-          next unless nxi.between?(0, xs.length - 1) && nyi.between?(0, ys.length - 1)
+      def visit_grid_state(context, goal_state, required_first,
+                           clearance_obstacles)
+        cost, state = context[:frontier].pop
+        return if stale_state?(context, state, cost)
 
-          p1 = { x: xs[xi], y: ys[yi] }
-          p2 = { x: xs[nxi], y: ys[nyi] }
-          next if clearance_obstacles.any? { |box| segment_crosses_box?(box, p1, p2) }
+        path = reconstruct_goal(context, state, goal_state)
+        return path if path
 
-          new_dir = [dx, dy]
-          turn_cost = dir && dir != new_dir ? TURN_PENALTY : 0
-          [[nxi, nyi, new_dir], 1 + turn_cost]
+        expand_grid_state(context, state, cost, required_first,
+                          clearance_obstacles)
+        nil
+      end
+
+      def stale_state?(context, state, cost)
+        cost > context[:distances].fetch(state, Float::INFINITY)
+      end
+
+      def reconstruct_goal(context, state, goal_state)
+        return unless state == goal_state
+
+        grid = context[:grid]
+        reconstruct(context[:previous], state, grid[:xs], grid[:ys])
+      end
+
+      def expand_grid_state(context, state, cost, required_first,
+                            clearance_obstacles)
+        grid = context[:grid]
+        moves = expand(state, grid, required_first, clearance_obstacles)
+        moves.each { |move| relax_grid_move(move, cost, state, context) }
+      end
+
+      def relax_grid_move(move, cost, state, context)
+        next_state, step_cost = move
+        new_cost = cost + step_cost
+        distances = context[:distances]
+        return if new_cost >= distances.fetch(next_state, Float::INFINITY)
+
+        distances[next_state] = new_cost
+        context[:previous][next_state] = state
+        context[:frontier].push(new_cost, next_state)
+      end
+
+      def expand(state, grid, required_first, clearance_obstacles)
+        GRID_STEPS.filter_map do |step|
+          grid_move(state, step, grid, required_first, clearance_obstacles)
         end
       end
 
-      def reconstruct(prev, state, xs, ys)
+      def grid_move(state, step, grid, required_first, clearance_obstacles)
+        x_index, y_index, direction = state
+        return if direction.nil? && step != required_first
+
+        next_x, next_y = next_grid_position(x_index, y_index, step)
+        return unless grid_position_valid?(next_x, next_y, grid)
+
+        points = grid_segment(x_index, y_index, next_x, next_y, grid)
+        return unless straight_clear?(*points, clearance_obstacles)
+
+        [[next_x, next_y, step], grid_step_cost(direction, step)]
+      end
+
+      def next_grid_position(x_index, y_index, step)
+        [x_index + step[0], y_index + step[1]]
+      end
+
+      def grid_position_valid?(x_index, y_index, grid)
+        x_index.between?(0, grid[:xs].length - 1) &&
+          y_index.between?(0, grid[:ys].length - 1)
+      end
+
+      def grid_segment(x_index, y_index, next_x, next_y, grid)
+        [{ x: grid[:xs][x_index], y: grid[:ys][y_index] },
+         { x: grid[:xs][next_x], y: grid[:ys][next_y] }]
+      end
+
+      def grid_step_cost(direction, next_direction)
+        direction && direction != next_direction ? 1 + TURN_PENALTY : 1
+      end
+
+      def reconstruct(prev, state, x_coordinates, y_coordinates)
         path = [state]
         path << prev[path.last] while prev.key?(path.last)
-        path.reverse.map { |xi, yi, _dir| { x: xs[xi], y: ys[yi] } }
+        path.reverse.map do |x_index, y_index, _direction|
+          { x: x_coordinates[x_index], y: y_coordinates[y_index] }
+        end
       end
 
       # Drops points that don't represent an actual direction change, so
