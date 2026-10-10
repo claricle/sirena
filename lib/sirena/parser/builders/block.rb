@@ -23,6 +23,16 @@ module Sirena
           "---" => "line",
         }.freeze
 
+        STATEMENT_HANDLERS = [
+          [:columns_keyword, nil],
+          %i[space_keyword process_space],
+          %i[arrow_id process_arrow],
+          %i[compound_keyword process_compound],
+          %i[block_id process_block],
+          [%i[from to], :process_connection],
+          %i[style_keyword process_style],
+        ].freeze
+
         # Block ID
         rule(block_id: simple(:id)) { id.to_s }
         rule(block_id: { string: simple(:s) }) { s.to_s }
@@ -72,80 +82,73 @@ module Sirena
         # exposed that hazard.
         def apply(tree)
           diagram = Diagram::Block.new
-
-          # Tree is an array of statement hashes
           statements = tree.is_a?(Array) ? tree : [tree]
-
-          # Extract columns value first
-          statements.each do |stmt|
-            next unless stmt.is_a?(Hash)
-
-            if stmt[:columns_keyword] && stmt[:columns_value]
-              diagram.columns = stmt[:columns_value].to_s.to_i
-              break
-            end
-          end
-
-          # Process all statements
+          assign_columns(diagram, statements)
           process_statements(diagram, statements)
-
           diagram
+        end
+
+        def assign_columns(diagram, statements)
+          statement = statements.find do |item|
+            item.is_a?(Hash) && item[:columns_keyword] && item[:columns_value]
+          end
+          diagram.columns = statement[:columns_value].to_s.to_i if statement
         end
 
         def process_statements(diagram, statements, parent_block = nil)
           statements.each_with_index do |stmt, index|
             next unless stmt.is_a?(Hash)
 
-            if stmt[:columns_keyword]
-              # Already processed columns
-              next
-            elsif stmt[:space_keyword]
-              # Space placeholder
-              block = create_space_block(parent_block, index)
-              if parent_block
-                parent_block.add_child(block)
-              else
-                diagram.add_block(block)
-              end
-            elsif stmt[:arrow_id]
-              # Arrow block
-              block = create_arrow_block(stmt)
-              if parent_block
-                parent_block.add_child(block)
-              else
-                diagram.add_block(block)
-              end
-            elsif stmt[:compound_keyword]
-              # Compound block
-              block = create_compound_block(stmt, parent_block, index)
-              if stmt[:compound_statements]
-                sub_stmts = stmt[:compound_statements]
-                sub_stmts = [sub_stmts] unless sub_stmts.is_a?(Array)
-                process_statements(diagram, sub_stmts, block)
-              end
-              if parent_block
-                parent_block.add_child(block)
-              else
-                diagram.add_block(block)
-              end
-            elsif stmt[:block_id]
-              # Regular block
-              block = create_block(stmt)
-              if parent_block
-                parent_block.add_child(block)
-              else
-                diagram.add_block(block)
-              end
-            elsif stmt[:from] && stmt[:to]
-              # Connection
-              connection = create_connection(stmt)
-              diagram.add_connection(connection)
-            elsif stmt[:style_keyword]
-              # Style directive
-              style = create_style(stmt)
-              diagram.add_style(style)
-            end
+            handler = statement_handler(stmt)
+            send(handler, diagram, stmt, parent_block, index) if handler
           end
+        end
+
+        def statement_handler(stmt)
+          match = STATEMENT_HANDLERS.find do |keys, _|
+            Array(keys).all? { |key| stmt[key] }
+          end
+          match&.last
+        end
+
+        def process_space(diagram, _stmt, parent_block, index)
+          block = create_space_block(parent_block, index)
+          add_block(diagram, parent_block, block)
+        end
+
+        def process_arrow(diagram, stmt, parent_block, _index)
+          add_block(diagram, parent_block, create_arrow_block(stmt))
+        end
+
+        def process_compound(diagram, stmt, parent_block, index)
+          block = create_compound_block(stmt, parent_block, index)
+          process_compound_children(diagram, stmt[:compound_statements], block)
+          add_block(diagram, parent_block, block)
+        end
+
+        def process_compound_children(diagram, statements, block)
+          return unless statements
+
+          children = statements.is_a?(Array) ? statements : [statements]
+          process_statements(diagram, children, block)
+        end
+
+        def process_block(diagram, stmt, parent_block, _index)
+          add_block(diagram, parent_block, create_block(stmt))
+        end
+
+        def process_connection(diagram, stmt, _parent_block, _index)
+          diagram.add_connection(create_connection(stmt))
+        end
+
+        def process_style(diagram, stmt, _parent_block, _index)
+          diagram.add_style(create_style(stmt))
+        end
+
+        def add_block(diagram, parent_block, block)
+          return parent_block.add_child(block) if parent_block
+
+          diagram.add_block(block)
         end
 
         # Anonymous ids are derived from the statement's position and its
@@ -192,84 +195,91 @@ module Sirena
         def create_block(stmt)
           Diagram::BlockNode.new.tap do |b|
             b.id = stmt[:block_id].to_s
-
-            # Set width if specified
-            if stmt[:block_width]
-              width_val = stmt[:block_width]
-              # Handle both transformed integers and raw strings like ":2"
-              b.width = if width_val.is_a?(Hash)
-                          width_val[:width].to_i
-                        else
-                          width_val.to_s.sub(/^:/, "").to_i
-                        end
-            end
-
-            # Set shape and label if specified
-            if stmt[:block_shape]
-              shape_data = stmt[:block_shape]
-              if shape_data.is_a?(Hash)
-                # Check if it has open/close delimiters (raw parse tree)
-                if shape_data[:open] && shape_data[:close]
-                  delims = "#{shape_data[:open]}#{shape_data[:close]}"
-                  b.shape = SHAPE_MAP[delims] || "rect"
-                  label = shape_data[:label].to_s
-                  # Strip surrounding quotes if present
-                  label = label.gsub(/^["']|["']$/, "")
-                  b.label = label
-                # Or if it's been transformed already
-                elsif shape_data[:shape_type]
-                  b.shape = shape_data[:shape_type] || "rect"
-                  label = shape_data[:label] || b.id
-                  # Strip surrounding quotes if present
-                  label = label.to_s.gsub(/^["']|["']$/, "")
-                  b.label = label
-                end
-              end
-            else
-              b.label = b.id
-            end
+            assign_width(b, stmt[:block_width])
+            assign_shape(b, stmt[:block_shape])
           end
+        end
+
+        def assign_width(block, width)
+          return unless width
+
+          value = width.is_a?(Hash) ? width[:width] : width.to_s.sub(/^:/, "")
+          block.width = value.to_i
+        end
+
+        def assign_shape(block, shape)
+          return block.label = block.id unless shape
+          return unless shape.is_a?(Hash)
+
+          handler = shape_handler(shape)
+          send(handler, block, shape) if handler
+        end
+
+        def shape_handler(shape)
+          return :assign_raw_shape if shape[:open] && shape[:close]
+
+          :assign_transformed_shape if shape[:shape_type]
+        end
+
+        def assign_transformed_shape(block, shape)
+          block.shape = shape[:shape_type] || "rect"
+          block.label = unquote(shape[:label] || block.id)
+        end
+
+        def assign_raw_shape(block, shape)
+          delimiters = "#{shape[:open]}#{shape[:close]}"
+          block.shape = SHAPE_MAP[delimiters] || "rect"
+          block.label = unquote(shape[:label])
+        end
+
+        def unquote(label)
+          label.to_s.gsub(/^["']|["']$/, "")
         end
 
         def create_connection(stmt)
           Diagram::BlockConnection.new.tap do |c|
             c.from = stmt[:from].to_s
             c.to = stmt[:to].to_s
-
-            arrow_type = if stmt[:arrow]
-                           stmt[:arrow][:arrow_type] || stmt[:arrow][:line_type]
-                         end
-
-            c.connection_type = if arrow_type
-                                  ARROW_MAP[arrow_type.to_s] || "arrow"
-                                else
-                                  "arrow"
-                                end
+            c.connection_type = connection_type(stmt[:arrow])
           end
+        end
+
+        def connection_type(arrow)
+          return "arrow" unless arrow
+
+          type = arrow[:arrow_type] || arrow[:line_type]
+          ARROW_MAP[type.to_s] || "arrow"
         end
 
         def create_style(stmt)
           Diagram::BlockStyle.new.tap do |s|
             s.block_id = stmt[:style_target].to_s
-
-            if stmt[:style_props]
-              props = stmt[:style_props]
-              props = [props] unless props.is_a?(Array)
-
-              props.each do |prop|
-                prop_str = prop.to_s.strip
-                if prop_str.start_with?("fill:")
-                  s.fill = prop_str.sub("fill:", "").strip
-                elsif prop_str.start_with?("stroke:")
-                  s.stroke = prop_str.sub("stroke:", "").strip
-                elsif prop_str.start_with?("stroke-width:")
-                  s.stroke_width = prop_str.sub("stroke-width:", "").strip
-                else
-                  s.properties << prop_str
-                end
-              end
-            end
+            assign_style_properties(s, stmt[:style_props])
           end
+        end
+
+        def assign_style_properties(style, properties)
+          return unless properties
+
+          values = properties.is_a?(Array) ? properties : [properties]
+          values.each { |property| assign_style_property(style, property) }
+        end
+
+        def assign_style_property(style, property)
+          value = property.to_s.strip
+          if value.start_with?("fill:")
+            style.fill = property_value(value, "fill:")
+          elsif value.start_with?("stroke:")
+            style.stroke = property_value(value, "stroke:")
+          elsif value.start_with?("stroke-width:")
+            style.stroke_width = property_value(value, "stroke-width:")
+          else
+            style.properties << value
+          end
+        end
+
+        def property_value(property, prefix)
+          property.sub(prefix, "").strip
         end
       end
     end
