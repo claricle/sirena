@@ -72,6 +72,9 @@ module Sirena
         attribute :icon, :string
         attribute :icon_x, :float
         attribute :icon_y, :float
+        attribute :center_x, :float
+        attribute :center_y, :float
+        attribute :radius, :float
         attribute :group_id, :string
         attribute :parent_id, :string
       end
@@ -311,14 +314,21 @@ module Sirena
       end
 
       def typed_junctions(junctions)
-        junctions.values.map do |info|
-          Node.new(
-            id: info[:junction].id, kind: "junction",
-            x: info[:x], y: info[:y], width: info[:width],
-            height: info[:height],
-            group_id: normalized_group_id(info[:group_id])
-          )
-        end
+        junctions.values.map { |info| typed_junction(info) }
+      end
+
+      def typed_junction(info)
+        attributes = node_geometry(info).merge(
+          id: info[:junction].id, kind: "junction",
+          group_id: normalized_group_id(info[:group_id])
+        )
+        Node.new(**attributes, **circle_geometry(info))
+      end
+
+      def circle_geometry(info)
+        { center_x: horizontal_center(info),
+          center_y: info[:y] + (info[:height] / 2),
+          radius: info[:width] / 2 }
       end
 
       def normalized_group_id(group_id)
