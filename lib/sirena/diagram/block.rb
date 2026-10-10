@@ -13,7 +13,8 @@ module Sirena
       attribute :shape, :string, default: -> { "rect" }
       attribute :children, BlockNode, collection: true, default: -> { [] }
       attribute :block_type, :string # "block", "space", "arrow"
-      attribute :direction, :string # for arrow blocks: "up", "down", "left", "right"
+      # Arrow block directions: "up", "down", "left", or "right".
+      attribute :direction, :string
       attribute :is_compound, :boolean, default: -> { false }
 
       def compound?
@@ -63,7 +64,10 @@ module Sirena
     class Block < Base
       attribute :columns, :integer, default: -> { 1 }
       attribute :blocks, BlockNode, collection: true, default: -> { [] }
-      attribute :connections, BlockConnection, collection: true, default: -> { [] }
+      attribute :connections,
+                BlockConnection,
+                collection: true,
+                default: -> { [] }
       attribute :styles, BlockStyle, collection: true, default: -> { [] }
 
       def add_block(block)

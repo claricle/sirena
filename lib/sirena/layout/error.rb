@@ -6,7 +6,8 @@ require_relative "../notation/mermaid/ir_adapters/error"
 
 module Sirena
   module Layout
-    # Error diagram transformer for converting error models to renderable structure.
+    # Error diagram transformer for converting error models to renderable
+    # structure.
     #
     # Error diagrams have no complex layout requirements - they simply display
     # an error message. This transformer prepares basic data for rendering.

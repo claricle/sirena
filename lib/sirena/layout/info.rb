@@ -6,10 +6,12 @@ require_relative "../notation/mermaid/ir_adapters/info"
 
 module Sirena
   module Layout
-    # Info diagram transformer for converting info models to renderable structure.
+    # Info diagram transformer for converting info models to renderable
+    # structure.
     #
     # Info diagrams have no complex layout requirements - they simply display
-    # an informational message. This transformer prepares basic data for rendering.
+    # an informational message. This transformer prepares basic data for
+    # rendering.
     #
     # @example Transform an info diagram
     #   transform = Info.new

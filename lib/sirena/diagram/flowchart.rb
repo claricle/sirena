@@ -307,7 +307,8 @@ module Sirena
       def named_by_parent?(holders, box)
         parents = holders[box.parent_id]
 
-        parents.nil? || parents.any? { |parent| parent.child_ids.include?(box.id) }
+        parents.nil? ||
+          parents.any? { |parent| parent.child_ids.include?(box.id) }
       end
 
       def children_name_back?(holders, box)

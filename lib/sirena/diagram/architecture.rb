@@ -92,9 +92,15 @@ module Sirena
       def group_references_resolve?
         known = groups.map(&:id)
 
-        groups.all? { |group| group.parent_id.nil? || known.include?(group.parent_id) } &&
-          services.all? { |service| service.group_id.nil? || known.include?(service.group_id) } &&
-          junctions.all? { |junction| junction.group_id.nil? || known.include?(junction.group_id) }
+        groups.all? do |group|
+          group.parent_id.nil? || known.include?(group.parent_id)
+        end &&
+          services.all? do |service|
+            service.group_id.nil? || known.include?(service.group_id)
+          end &&
+          junctions.all? do |junction|
+            junction.group_id.nil? || known.include?(junction.group_id)
+          end
       end
     end
   end
