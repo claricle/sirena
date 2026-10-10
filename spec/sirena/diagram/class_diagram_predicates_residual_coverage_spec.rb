@@ -3,12 +3,14 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Diagram::ClassDiagram do
-  it "identifies the remaining public class diagram kinds" do
-    entity = Sirena::Diagram::ClassEntity.new(stereotype: "enum")
-    relationships = %w[association dependency realization].map do |type|
+  let(:entity) { Sirena::Diagram::ClassEntity.new(stereotype: "enum") }
+  let(:relationships) do
+    %w[association dependency realization].map do |type|
       Sirena::Diagram::ClassRelationship.new(relationship_type: type)
     end
+  end
 
+  it "identifies the remaining public class diagram kinds" do
     evidence = [entity.enum?] + relationships.map do |relationship|
       relationship.public_send("#{relationship.relationship_type}?")
     end

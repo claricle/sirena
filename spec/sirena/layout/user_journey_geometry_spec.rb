@@ -142,4 +142,21 @@ RSpec.describe Sirena::Layout::UserJourneyGeometry do
       expect(scene.tasks.first.labels.map(&:y)).to eq([121.0, 135.0, 149.0])
     end
   end
+
+  context "without tasks" do
+    let(:scene) { JourneySceneBuilder.scene([]) }
+    let(:geometry) do
+      line = scene.arrows.fetch(0).line
+      [scene.width, scene.height, scene.view_box,
+       scene.tasks, scene.sections, scene.legend,
+       [line.x1, line.y1, line.x2, line.y2]]
+    end
+
+    it "keeps finite canvas and timeline geometry" do
+      expect(geometry).to eq(
+        [400.0, 45.0, "0 -25 400 20", [], [], [],
+         [150.0, 200.0, 246.0, 200.0]],
+      )
+    end
+  end
 end
