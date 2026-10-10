@@ -26,7 +26,19 @@ module Sirena
         "fork_state" => "fork",
         "join_state" => "join",
       }.freeze
-      private_constant :STATE_TYPES
+      DIRECTIONS = {
+        "TD" => DIRECTION_DOWN, "TB" => DIRECTION_DOWN,
+        "LR" => DIRECTION_RIGHT, "RL" => DIRECTION_LEFT,
+        "BT" => DIRECTION_UP
+      }.freeze
+      LAYOUT_SETTINGS = {
+        ElkOptions::NODE_NODE_SPACING => 60,
+        ElkOptions::LAYER_SPACING => 60,
+        ElkOptions::EDGE_NODE_SPACING => 40,
+        ElkOptions::EDGE_EDGE_SPACING => 30,
+        ElkOptions::NODE_PLACEMENT => "SIMPLE",
+      }.freeze
+      private_constant :STATE_TYPES, :DIRECTIONS, :LAYOUT_SETTINGS
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -426,21 +438,26 @@ module Sirena
       end
 
       def transform_states(states)
-        states.map do |state|
-          dims = calculate_state_dimensions(state)
+        states.map { |state| transformed_state(state) }
+      end
 
-          {
-            id: state.id,
-            width: dims[:width],
-            height: dims[:height],
-            labels: state_labels(state),
-            metadata: {
-              state_type: state.state_type,
-              shape_type: state_shape_type(state),
-              description: state.description,
-            },
-          }
-        end
+      def transformed_state(state)
+        dimensions = calculate_state_dimensions(state)
+        {
+          id: state.id,
+          width: dimensions[:width],
+          height: dimensions[:height],
+          labels: state_labels(state),
+          metadata: state_metadata(state),
+        }
+      end
+
+      def state_metadata(state)
+        {
+          state_type: state.state_type,
+          shape_type: state_shape_type(state),
+          description: state.description,
+        }
       end
 
       def transform_transitions(graph, semantics)
@@ -486,16 +503,14 @@ module Sirena
 
       def state_labels(state)
         state_texts(state).each_with_index.map do |text, index|
-          text_dims = measure_text(
-            text,
-            font_size: index.zero? ? normal_font_size : small_font_size,
-          )
-          {
-            text: text,
-            width: text_dims[:width],
-            height: text_dims[:height],
-          }
+          state_label(text, index)
         end
+      end
+
+      def state_label(text, index)
+        font_size = index.zero? ? normal_font_size : small_font_size
+        dimensions = measure_text(text, font_size: font_size)
+        { text: text, width: dimensions[:width], height: dimensions[:height] }
       end
 
       def transition_labels(label)
@@ -514,27 +529,23 @@ module Sirena
 
       def calculate_state_dimensions(state)
         texts = state_texts(state)
-        label_text = texts.first || state.id
         label_dims = measure_text(
-          label_text,
-          font_size: normal_font_size,
+          texts.first || state.id, font_size: normal_font_size
         )
+        state_dims = dimensions_for_shape(state, label_dims, texts.drop(1))
+        dimensions_with_label(state_dims, label_dims)
+      end
 
-        # Adjust dimensions based on state type
-        state_dims = case state_shape_type(state)
-                     when "start", "end"
-                       calculate_terminal_dimensions
-                     when "choice"
-                       calculate_choice_dimensions(label_dims)
-                     when "fork", "join"
-                       calculate_fork_join_dimensions
-                     else
-                       calculate_normal_state_dimensions(
-                         label_dims,
-                         texts.drop(1),
-                       )
-                     end
+      def dimensions_for_shape(state, label_dims, descriptions)
+        case state_shape_type(state)
+        when "start", "end" then calculate_terminal_dimensions
+        when "choice" then calculate_choice_dimensions(label_dims)
+        when "fork", "join" then calculate_fork_join_dimensions
+        else calculate_normal_state_dimensions(label_dims, descriptions)
+        end
+      end
 
+      def dimensions_with_label(state_dims, label_dims)
         {
           width: state_dims[:width],
           height: state_dims[:height],
@@ -605,27 +616,22 @@ module Sirena
       end
 
       def calculate_normal_state_dimensions(label_dims, descriptions)
-        # Normal states are rounded rectangles
-        width = label_dims[:width] + 40
-        height = label_dims[:height] + 30
-
-        descriptions.each do |description|
-          desc_dims = measure_text(
-            description,
-            font_size: small_font_size,
-          )
-          height += desc_dims[:height] + 10
-          width = [width, desc_dims[:width] + 40].max
+        dimensions = descriptions.map do |description|
+          measure_text(description, font_size: small_font_size)
         end
+        width = normal_state_width(label_dims, dimensions)
+        height = normal_state_height(label_dims, dimensions)
+        { width: [width, 100].max, height: [height, 50].max }
+      end
 
-        # Minimum dimensions
-        width = [width, 100].max
-        height = [height, 50].max
+      def normal_state_width(label_dims, descriptions)
+        descriptions.map { |item| item[:width] }
+          .push(label_dims[:width]).max + 40
+      end
 
-        {
-          width: width,
-          height: height,
-        }
+      def normal_state_height(label_dims, descriptions)
+        label_dims[:height] + 30 +
+          descriptions.sum { |item| item[:height] + 10 }
       end
 
       def label_font_sizes
@@ -646,34 +652,15 @@ module Sirena
       end
 
       def layout_options(direction)
-        # State diagrams use layered algorithm for state machine flow
-        # This ensures proper hierarchical layout of states with clear
-        # transition paths from start to end states
         build_elk_options(
           algorithm: ALGORITHM_LAYERED,
           direction: direction_to_layout(direction),
-          ElkOptions::NODE_NODE_SPACING => 60,
-          ElkOptions::LAYER_SPACING => 60,
-          ElkOptions::EDGE_NODE_SPACING => 40,
-          ElkOptions::EDGE_EDGE_SPACING => 30,
-          # SIMPLE node placement for predictable state flow
-          ElkOptions::NODE_PLACEMENT => "SIMPLE",
+          **LAYOUT_SETTINGS,
         )
       end
 
       def direction_to_layout(direction)
-        case direction
-        when "TD", "TB"
-          DIRECTION_DOWN
-        when "LR"
-          DIRECTION_RIGHT
-        when "RL"
-          DIRECTION_LEFT
-        when "BT"
-          DIRECTION_UP
-        else
-          DIRECTION_DOWN # Default direction
-        end
+        DIRECTIONS.fetch(direction, DIRECTION_DOWN)
       end
     end
   end

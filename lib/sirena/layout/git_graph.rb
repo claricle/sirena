@@ -440,25 +440,19 @@ module Sirena
       # @param branches [Array<Hash>] ordered branch semantics
       # @return [Hash] branch info with parent relationships
       def build_branch_info(branches)
-        info = {}
-
-        # Start with main branch
-        info["main"] = {
-          parent: nil,
-          order: 0,
-          created_at: nil,
-        }
-
-        # Add other branches
+        info = { "main" => branch_info({}, 0) }
         branches.each do |branch|
-          info[branch[:name]] = {
-            parent: branch[:parent_branch] || "main",
-            order: branch[:order] || info.size,
-            created_at: branch[:created_at_commit],
-          }
+          info[branch[:name]] = branch_info(branch, info.size)
         end
-
         info
+      end
+
+      def branch_info(branch, default_order)
+        {
+          parent: branch.empty? ? nil : branch[:parent_branch] || "main",
+          order: branch[:order] || default_order,
+          created_at: branch[:created_at_commit],
+        }
       end
 
       # Assigns lanes (rows for LR, columns for TB/BT) to branches.
@@ -469,25 +463,13 @@ module Sirena
       # @param branch_info [Hash] branch information
       # @return [Hash<String, Integer>] branch name to lane number
       def assign_lanes(branches, branch_info)
-        lanes = {}
-        next_lane = 0
-
-        # Assign main branch to lane 0
-        lanes["main"] = next_lane
-        next_lane += 1
-
-        # Sort branches by order then by creation
-        sorted_branches = branches.sort_by do |branch|
+        ordered = branches.sort_by do |branch|
           [branch_info[branch[:name]][:order] || 999, branch[:name]]
         end
-
-        # Assign lanes to other branches
-        sorted_branches.each do |branch|
-          lanes[branch[:name]] = next_lane
-          next_lane += 1
+        ordered.each_with_index.with_object("main" => 0) do |pair, lanes|
+          branch, index = pair
+          lanes[branch[:name]] = index + 1
         end
-
-        lanes
       end
 
       # Positions commits with X and Y coordinates.
@@ -497,38 +479,49 @@ module Sirena
       # @param orientation [String] "LR", "TB" or "BT"
       # @return [Array<Hash>] positioned commits
       def position_commits(commits, lane_assignments, orientation)
-        positioned = []
-
-        commits.each_with_index do |commit, idx|
-          branch = commit[:branch_name] || "main"
-          lane = lane_assignments[branch] || 0
-          x, y = coordinates(
-            time_position(idx, commits.size, orientation),
-            (lane * LANE_SPACING) + LANE_SPACING,
-            orientation,
+        commits.each_with_index.map do |commit, index|
+          positioned_commit(
+            commit, index, commits.size, lane_assignments, orientation
           )
-
-          commit_id = commit[:id] || "commit_#{idx}"
-
-          positioned << {
-            ir_id: commit[:ir_id],
-            id: commit_id,
-            x: x,
-            y: y,
-            branch: branch,
-            lane: lane,
-            message: commit[:message],
-            type: commit[:type] || "NORMAL",
-            tag: commit[:tag],
-            parent_ids: commit[:parent_ids],
-            is_merge: commit[:is_merge] || false,
-            merge_branch: commit[:merge_branch],
-            is_cherry_pick: commit[:is_cherry_pick] || false,
-            cherry_pick_parent: commit[:cherry_pick_parent],
-          }
         end
+      end
 
-        positioned
+      def positioned_commit(commit, index, count, lane_assignments, orientation)
+        branch = commit[:branch_name] || "main"
+        lane = lane_assignments[branch] || 0
+        commit.merge(positioned_commit_attributes(
+                       commit, [index, count], [branch, lane], orientation
+                     )).slice(
+                       :ir_id, :id, :x, :y, :branch, :lane, :message,
+                       :type, :tag,
+                       :parent_ids, :is_merge, :merge_branch, :is_cherry_pick,
+                       :cherry_pick_parent
+                     )
+      end
+
+      def positioned_commit_attributes(commit, sequence, branch_lane,
+                                       orientation)
+        index, count = sequence
+        branch, lane = branch_lane
+        x, y = commit_coordinates(index, count, lane, orientation)
+        {
+          id: commit[:id] || "commit_#{index}", x: x, y: y,
+          branch: branch, lane: lane,
+          type: commit[:type] || "NORMAL"
+        }.merge(commit_flags(commit))
+      end
+
+      def commit_flags(commit)
+        {
+          is_merge: commit[:is_merge] || false,
+          is_cherry_pick: commit[:is_cherry_pick] || false,
+        }
+      end
+
+      def commit_coordinates(index, count, lane, orientation)
+        time = time_position(index, count, orientation)
+        lane_position = (lane * LANE_SPACING) + LANE_SPACING
+        coordinates(time, lane_position, orientation)
       end
 
       # Width and height: the time axis is horizontal for `LR` only.
@@ -560,8 +553,8 @@ module Sirena
       # @param edges [Array<IR::Edge>] resolved parent connections
       # @return [Array<Hash>] connections with from/to commits and type
       def build_connections(positioned_commits, edges)
-        commit_positions = positioned_commits.to_h do |c|
-          [c[:ir_id], c]
+        commit_positions = positioned_commits.to_h do |commit|
+          [commit[:ir_id], commit]
         end
 
         edges.filter_map do |edge|
@@ -569,18 +562,18 @@ module Sirena
           commit = commit_positions[edge.target_id]
           next unless parent && commit
 
-          {
-            from: parent[:id],
-            to: commit[:id],
-            from_x: parent[:x],
-            from_y: parent[:y],
-            to_x: commit[:x],
-            to_y: commit[:y],
-            from_branch: parent[:branch],
-            to_branch: commit[:branch],
-            type: edge.role == "parent" ? :normal : edge.role.to_sym,
-          }
+          connection(edge, parent, commit)
         end
+      end
+
+      def connection(edge, parent, commit)
+        {
+          from: parent[:id], to: commit[:id],
+          from_x: parent[:x], from_y: parent[:y],
+          to_x: commit[:x], to_y: commit[:y],
+          from_branch: parent[:branch], to_branch: commit[:branch],
+          type: edge.role == "parent" ? :normal : edge.role.to_sym
+        }
       end
 
       # Builds branch metadata for rendering.
@@ -589,21 +582,15 @@ module Sirena
       # @param lane_assignments [Hash] lane assignments
       # @return [Array<Hash>] branch metadata
       def build_branch_metadata(branches, lane_assignments)
-        metadata = []
-
-        # Add main branch
-        metadata << {
+        main = {
           name: "main",
           lane: lane_assignments["main"] || 0,
           color: DEFAULT_COLORS[0],
         }
-
-        # Add other branches with cycling colors
-        branches.each_with_index do |branch, idx|
-          metadata << branch_metadata(branch, idx, lane_assignments)
+        branches.each_with_index.with_object([main]) do |pair, metadata|
+          branch, index = pair
+          metadata << branch_metadata(branch, index, lane_assignments)
         end
-
-        metadata
       end
 
       def branch_metadata(branch, index, lane_assignments)

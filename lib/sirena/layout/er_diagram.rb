@@ -17,6 +17,20 @@ module Sirena
       CARDINALITY_SIZE = 15
       DIAGRAM_PADDING = 20
       EMPTY_DIAGRAM_PADDING = 8
+      ONE_CARDINALITIES = %w[one one_or_more zero_or_one].freeze
+      MANY_CARDINALITIES = %w[zero_or_more one_or_more].freeze
+      ZERO_CARDINALITIES = %w[zero_or_more zero_or_one].freeze
+      LAYOUT_SETTINGS = {
+        ElkOptions::NODE_NODE_SPACING => ENTITY_SPACING,
+        ElkOptions::LAYER_SPACING => ENTITY_SPACING,
+        ElkOptions::EDGE_NODE_SPACING => 50,
+        ElkOptions::EDGE_EDGE_SPACING => 30,
+        ElkOptions::NODE_PLACEMENT => "NETWORK_SIMPLEX",
+        ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
+        ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
+      }.freeze
+      private_constant :ONE_CARDINALITIES, :MANY_CARDINALITIES,
+                       :ZERO_CARDINALITIES, :LAYOUT_SETTINGS
 
       SemanticAttribute = Struct.new(
         :name, :attribute_type, :key_type, :note, keyword_init: true
@@ -141,17 +155,12 @@ module Sirena
       end
 
       def self.marker(point, opposite, cardinality)
-        lines = []
-        circles = []
-        one = %w[one one_or_more zero_or_one]
-        many = %w[zero_or_more one_or_more]
-        lines.concat(one_lines(point, opposite)) if one.include?(cardinality)
-        if %w[zero_or_more zero_or_one].include?(cardinality)
-          circles << circle(point, opposite)
-        end
-        lines.concat(crows_foot(point, opposite)) if many.include?(cardinality)
-        Marker.new(lines: lines, circles: circles,
-                   circle_first: cardinality&.start_with?("zero_"))
+        lines = marker_lines(point, opposite, cardinality)
+        circles = marker_circles(point, opposite, cardinality)
+        Marker.new(
+          lines: lines, circles: circles,
+          circle_first: cardinality&.start_with?("zero_")
+        )
       end
 
       def self.relationship_label(text, from, to, font_size)
@@ -564,35 +573,45 @@ module Sirena
       def transform_entities(diagram)
         diagram.entities.map do |entity|
           dimensions = calculate_entity_dimensions(entity)
-          {
-            id: entity.id,
-            width: dimensions[:width],
-            height: dimensions[:height],
-            labels: entity_labels(entity),
-            metadata: {
-              name: entity.name,
-              classes: entity.classes,
-              attributes: entity.attributes.map do |item|
-                attribute_to_hash(item)
-              end,
-            },
-          }
+          entity_graph_node(entity, dimensions)
         end
+      end
+
+      def entity_graph_node(entity, dimensions)
+        {
+          id: entity.id,
+          width: dimensions[:width],
+          height: dimensions[:height],
+          labels: entity_labels(entity),
+          metadata: entity_metadata(entity),
+        }
+      end
+
+      def entity_metadata(entity)
+        {
+          name: entity.name,
+          classes: entity.classes,
+          attributes: entity.attributes.map { |item| attribute_to_hash(item) },
+        }
       end
 
       def transform_relationships(diagram)
         diagram.relationships.map do |relationship|
-          {
-            id: "#{relationship.from_id}_to_#{relationship.to_id}",
-            sources: [relationship.from_id], targets: [relationship.to_id],
-            labels: relationship_labels(relationship),
-            metadata: {
-              relationship_type: relationship.relationship_type,
-              cardinality_from: relationship.cardinality_from,
-              cardinality_to: relationship.cardinality_to,
-            }
-          }
+          relationship_edge(relationship)
         end
+      end
+
+      def relationship_edge(relationship)
+        {
+          id: "#{relationship.from_id}_to_#{relationship.to_id}",
+          sources: [relationship.from_id], targets: [relationship.to_id],
+          labels: relationship_labels(relationship),
+          metadata: {
+            relationship_type: relationship.relationship_type,
+            cardinality_from: relationship.cardinality_from,
+            cardinality_to: relationship.cardinality_to,
+          }
+        }
       end
 
       def calculate_entity_dimensions(entity)
@@ -673,12 +692,18 @@ module Sirena
 
       def content_extent(graph, coordinate, dimension, default_size, fallback)
         return 0 if empty_graph?(graph)
-        return fallback unless graph[:children]
 
-        maximum = graph[:children].map do |node|
-          (node[coordinate] || 0) + (node[dimension] || default_size)
+        children = graph[:children]
+        return fallback unless children
+
+        maximum = children.map do |node|
+          node_extent(node, coordinate, dimension, default_size)
         end.max || fallback
         maximum + 40
+      end
+
+      def node_extent(node, coordinate, dimension, default_size)
+        (node[coordinate] || 0) + (node[dimension] || default_size)
       end
 
       def large_text_size
@@ -698,13 +723,7 @@ module Sirena
         build_elk_options(
           algorithm: ALGORITHM_LAYERED,
           direction: DIRECTION_RIGHT,
-          ElkOptions::NODE_NODE_SPACING => ENTITY_SPACING,
-          ElkOptions::LAYER_SPACING => ENTITY_SPACING,
-          ElkOptions::EDGE_NODE_SPACING => 50,
-          ElkOptions::EDGE_EDGE_SPACING => 30,
-          ElkOptions::NODE_PLACEMENT => "NETWORK_SIMPLEX",
-          ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
-          ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
+          **LAYOUT_SETTINGS,
         )
       end
 
@@ -770,15 +789,37 @@ module Sirena
         end
 
         def one_lines(point, opposite)
-          angle = Math.atan2(opposite.y - point.y, opposite.x - point.x)
-          perpendicular = angle + (Math::PI / 2)
+          perpendicular = direction(point, opposite) + (Math::PI / 2)
           half = CARDINALITY_SIZE / 2
-          [Line.new(
-            x1: point.x + (half * Math.cos(perpendicular)),
-            y1: point.y + (half * Math.sin(perpendicular)),
-            x2: point.x - (half * Math.cos(perpendicular)),
-            y2: point.y - (half * Math.sin(perpendicular)),
-          )]
+          horizontal = x_offset(half, perpendicular)
+          vertical = y_offset(half, perpendicular)
+          [one_cardinality_line(point, horizontal, vertical)]
+        end
+
+        def one_cardinality_line(point, horizontal, vertical)
+          Line.new(
+            x1: point.x + horizontal,
+            y1: point.y + vertical,
+            x2: point.x - horizontal,
+            y2: point.y - vertical,
+          )
+        end
+
+        def marker_lines(point, opposite, cardinality)
+          lines = if ONE_CARDINALITIES.include?(cardinality)
+                    one_lines(point, opposite)
+                  else
+                    []
+                  end
+          return lines unless MANY_CARDINALITIES.include?(cardinality)
+
+          lines + crows_foot(point, opposite)
+        end
+
+        def marker_circles(point, opposite, cardinality)
+          return [] unless ZERO_CARDINALITIES.include?(cardinality)
+
+          [circle(point, opposite)]
         end
 
         def circle(point, opposite)
@@ -802,18 +843,28 @@ module Sirena
           Math.atan2(opposite.y - point.y, opposite.x - point.x)
         end
 
+        def x_offset(distance, angle)
+          distance * Math.cos(angle)
+        end
+
+        def y_offset(distance, angle)
+          distance * Math.sin(angle)
+        end
+
         def crows_foot(point, opposite)
-          angle = Math.atan2(opposite.y - point.y, opposite.x - point.x)
-          base_x = point.x + (CARDINALITY_SIZE * Math.cos(angle))
-          base_y = point.y + (CARDINALITY_SIZE * Math.sin(angle))
+          angle = direction(point, opposite)
+          base = offset_point(point, opposite, CARDINALITY_SIZE)
           [-Math::PI / 4, 0, Math::PI / 4].map do |offset|
-            line_angle = angle + Math::PI + offset
-            Line.new(
-              x1: base_x, y1: base_y,
-              x2: base_x + (CARDINALITY_SIZE * Math.cos(line_angle)),
-              y2: base_y + (CARDINALITY_SIZE * Math.sin(line_angle))
-            )
+            cardinality_line(base, angle + Math::PI + offset)
           end
+        end
+
+        def cardinality_line(base, angle)
+          Line.new(
+            x1: base.x, y1: base.y,
+            x2: base.x + x_offset(CARDINALITY_SIZE, angle),
+            y2: base.y + y_offset(CARDINALITY_SIZE, angle)
+          )
         end
       end
     end

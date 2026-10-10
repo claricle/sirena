@@ -71,19 +71,20 @@ module Sirena
       # title, which would otherwise run out over the edge.
       def fit_cluster(cluster, contents)
         band = title_band(cluster)
-
-        # mermaid draws a box holding only an empty box, and there is
-        # nothing inside this one to measure against.
-        if contents.empty?
-          cluster[:width] = titled_width(cluster)
-          cluster[:height] = band + CLUSTER_PADDING
-          return
-        end
+        return fit_empty_cluster(cluster, band) if contents.empty?
 
         shift(contents,
               CLUSTER_PADDING - low(contents, :x),
               band - low(contents, :y))
+        fit_cluster_bounds(cluster, contents)
+      end
 
+      def fit_empty_cluster(cluster, band)
+        cluster[:width] = titled_width(cluster)
+        cluster[:height] = band + CLUSTER_PADDING
+      end
+
+      def fit_cluster_bounds(cluster, contents)
         cluster[:width] = [high(contents, :x, :width) + CLUSTER_PADDING,
                            titled_width(cluster)].max
         cluster[:height] = high(contents, :y, :height) + CLUSTER_PADDING
@@ -112,19 +113,22 @@ module Sirena
         heights = rows.map { |row| row_height(row) }
 
         rows.each_with_index do |row, r|
-          row.each_with_index do |child, c|
-            # A transform that positions its own children keeps them:
-            # block and quadrant arrive laid out.
-            next if child[:x] && child[:y]
-
-            child[:x] = MARGIN + widths.take(c).sum
-            child[:y] = MARGIN + heights.take(r).sum
-
-            # Everything else that nests keeps the order it had: its own
-            # children are laid out once it has a place.
-            place(child[:children]) if child[:children] && !cluster?(child)
-          end
+          arrange_row(row, r, widths, heights)
         end
+      end
+
+      def arrange_row(row, row_index, widths, heights)
+        row.each_with_index do |child, column_index|
+          next if child[:x] && child[:y]
+
+          child[:x] = MARGIN + widths.take(column_index).sum
+          child[:y] = MARGIN + heights.take(row_index).sum
+          place_nested_children(child)
+        end
+      end
+
+      def place_nested_children(child)
+        place(child[:children]) if child[:children] && !cluster?(child)
       end
 
       # Only a cluster may outgrow a cell. Sizing cells to ordinary nodes

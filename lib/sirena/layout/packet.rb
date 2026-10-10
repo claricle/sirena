@@ -88,32 +88,12 @@ module Sirena
         fields = document.items.select { |item| item.role == "field" }
         return empty_layout(document.label) if fields.empty?
 
-        # Calculate the number of rows needed
         row_count = packet_row_count(fields)
-
-        # Position each field
-        positioned_fields = position_fields(fields, row_count)
-
-        # Calculate dimensions
-        width = (BITS_PER_ROW * CELL_WIDTH) + (PADDING * 2)
-        content_height = (row_count * CELL_HEIGHT) + HEADER_HEIGHT
-        title_offset = document.label ? TITLE_HEIGHT + TITLE_MARGIN : 0
-        height = content_height + (PADDING * 2) + title_offset
-
-        {
-          fields: positioned_fields,
+        layout_dimensions(row_count, document.label).merge(
+          fields: position_fields(fields, row_count),
           row_count: row_count,
-          bits_per_row: BITS_PER_ROW,
-          cell_width: CELL_WIDTH,
-          cell_height: CELL_HEIGHT,
-          padding: PADDING,
-          header_height: HEADER_HEIGHT,
-          title_height: document.label ? TITLE_HEIGHT : 0,
-          title_margin: document.label ? TITLE_MARGIN : 0,
-          width: width,
-          height: height,
           title: document.label,
-        }
+        )
       end
 
       private
@@ -264,22 +244,50 @@ module Sirena
       #
       # @return [Hash] empty layout
       def empty_layout(title = nil)
-        title_height = title ? TITLE_HEIGHT : 0
-        title_margin = title ? TITLE_MARGIN : 0
-        {
+        layout_dimensions(0, title).merge(
           fields: [],
           row_count: 0,
+          title: title,
+        )
+      end
+
+      def layout_dimensions(row_count, title)
+        title_height, title_margin = title_dimensions(title)
+        packet_metrics.merge(
+          title_height: title_height,
+          title_margin: title_margin,
+          width: packet_width(row_count),
+          height: packet_height(row_count, title_height, title_margin),
+        )
+      end
+
+      def packet_metrics
+        {
           bits_per_row: BITS_PER_ROW,
           cell_width: CELL_WIDTH,
           cell_height: CELL_HEIGHT,
           padding: PADDING,
           header_height: HEADER_HEIGHT,
-          title_height: title_height,
-          title_margin: title_margin,
-          width: PADDING * 2,
-          height: (PADDING * 2) + title_height + title_margin,
-          title: title,
         }
+      end
+
+      def packet_height(row_count, title_height, title_margin)
+        content_height = if row_count.zero?
+                           0
+                         else
+                           (row_count * CELL_HEIGHT) + HEADER_HEIGHT
+                         end
+        content_height + (PADDING * 2) + title_height + title_margin
+      end
+
+      def title_dimensions(title)
+        title ? [TITLE_HEIGHT, TITLE_MARGIN] : [0, 0]
+      end
+
+      def packet_width(row_count)
+        return PADDING * 2 if row_count.zero?
+
+        (BITS_PER_ROW * CELL_WIDTH) + (PADDING * 2)
       end
 
       def packet_row_count(fields)
@@ -293,19 +301,13 @@ module Sirena
       # @param row_count [Integer] total number of rows
       # @return [Array<Hash>] positioned fields with coordinates
       def position_fields(fields, _row_count)
-        positioned = []
-
-        fields.each do |field|
+        fields.flat_map do |field|
           if start_row(field) == end_row(field)
-            # Single row field
-            positioned << position_single_field(field)
+            [position_single_field(field)]
           else
-            # Split into multiple visual segments
-            positioned.concat(split_field_across_rows(field))
+            split_field_across_rows(field)
           end
         end
-
-        positioned
       end
 
       # Positions a field that fits in a single row.
@@ -316,20 +318,26 @@ module Sirena
         row = start_row(field)
         start_col = start_bit_in_row(field)
         end_col = end_bit_in_row(field)
+        field_segment(
+          field, bit_start(field)..bit_end(field), [row, start_col, end_col]
+        )
+      end
 
-        x = PADDING + (start_col * CELL_WIDTH)
-        y = PADDING + HEADER_HEIGHT + (row * CELL_HEIGHT)
-        width = (end_col - start_col + 1) * CELL_WIDTH
-        height = CELL_HEIGHT
-
+      def field_segment(field, bit_range, placement)
+        row, start_col, end_col = placement
         {
           label: field.label,
-          bit_start: bit_start(field),
-          bit_end: bit_end(field),
-          x: x,
-          y: y,
-          width: width,
-          height: height,
+          bit_start: bit_range.begin,
+          bit_end: bit_range.end,
+        }.merge(segment_geometry(row, start_col, end_col))
+      end
+
+      def segment_geometry(row, start_col, end_col)
+        {
+          x: PADDING + (start_col * CELL_WIDTH),
+          y: PADDING + HEADER_HEIGHT + (row * CELL_HEIGHT),
+          width: (end_col - start_col + 1) * CELL_WIDTH,
+          height: CELL_HEIGHT,
           row: row,
           start_col: start_col,
           end_col: end_col,
@@ -346,38 +354,37 @@ module Sirena
         final_bit = bit_end(field)
 
         while current_bit <= final_bit
-          row = current_bit / BITS_PER_ROW
-          start_col = current_bit % BITS_PER_ROW
-
-          # Determine end column for this row
-          row_end_bit = ((row + 1) * BITS_PER_ROW) - 1
-          segment_end_bit = [final_bit, row_end_bit].min
-          end_col = segment_end_bit % BITS_PER_ROW
-
-          x = PADDING + (start_col * CELL_WIDTH)
-          y = PADDING + HEADER_HEIGHT + (row * CELL_HEIGHT)
-          width = (end_col - start_col + 1) * CELL_WIDTH
-          height = CELL_HEIGHT
-
-          segments << {
-            label: field.label,
-            bit_start: current_bit,
-            bit_end: segment_end_bit,
-            x: x,
-            y: y,
-            width: width,
-            height: height,
-            row: row,
-            start_col: start_col,
-            end_col: end_col,
-            is_continuation: current_bit > bit_start(field),
-            is_final: segment_end_bit == final_bit,
-          }
-
+          segment = split_segment(field, current_bit, final_bit)
+          segments << segment
+          segment_end_bit = segment[:bit_end]
           current_bit = segment_end_bit + 1
         end
 
         segments
+      end
+
+      def split_segment(field, current_bit, final_bit)
+        row = current_bit / BITS_PER_ROW
+        start_col = current_bit % BITS_PER_ROW
+        segment_end_bit = segment_end(row, final_bit)
+        segment = field_segment(
+          field, current_bit..segment_end_bit,
+          [row, start_col, segment_end_bit % BITS_PER_ROW]
+        )
+        segment.merge(
+          segment_status(field, current_bit, segment_end_bit, final_bit),
+        )
+      end
+
+      def segment_end(row, final_bit)
+        [final_bit, ((row + 1) * BITS_PER_ROW) - 1].min
+      end
+
+      def segment_status(field, current_bit, segment_end_bit, final_bit)
+        {
+          is_continuation: current_bit > bit_start(field),
+          is_final: segment_end_bit == final_bit,
+        }
       end
 
       def bit_placement(field)
