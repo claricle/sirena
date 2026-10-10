@@ -10,7 +10,7 @@ module Sirena
       class Treemap < Parslet::Transform
         rule(number: simple(:x)) { x.to_f }
         rule(string: simple(:x)) { x.to_s }
-        rule(string: sequence(:x)) { "" }  # Empty string
+        rule(string: sequence(:x)) { "" } # Empty string
         rule(identifier: simple(:x)) { x.to_s }
 
         rule(keyword: simple(:_kw), statements: subtree(:stmts)) do
@@ -35,10 +35,12 @@ module Sirena
         end
 
         # Class definition
-        rule(class_def: {
-          class_name: simple(:name),
-          class_styles: simple(:styles),
-        }) do
+        rule(
+          class_def: {
+            class_name: simple(:name),
+            class_styles: simple(:styles),
+          },
+        ) do
           {
             type: :class_def,
             name: name.to_s,
@@ -54,9 +56,9 @@ module Sirena
           indent_val = n[:indent]
           # Handle indent - could be Array (empty), Parslet::Slice, or String
           indent_len = if indent_val.is_a?(Array)
-                         indent_val.length  # Empty array = 0
+                         indent_val.length # Empty array = 0
                        elsif indent_val.respond_to?(:to_s)
-                         indent_val.to_s.length  # String or Parslet::Slice
+                         indent_val.to_s.length # String or Parslet::Slice
                        else
                          0
                        end
