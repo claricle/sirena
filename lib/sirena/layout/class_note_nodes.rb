@@ -7,7 +7,8 @@ module Sirena
     # Turns the notes of a class diagram into grid nodes, and back into
     # positioned ClassNote objects once the grid has placed them.
     class ClassNoteNodes
-      HEIGHT = 36
+      LINE_HEIGHT = 24
+      VERTICAL_PADDING = 12
       PADDING = 12
 
       # @param font_size [Numeric] the note text size
@@ -41,12 +42,17 @@ module Sirena
       private
 
       def node(note, index)
+        lines = ClassNote.lines_of(note.text)
         {
           id: "note:#{index}",
-          width: @measure.call(note.text, @font_size) + PADDING,
-          height: HEIGHT,
+          width: width(lines),
+          height: (lines.size * LINE_HEIGHT) + VERTICAL_PADDING,
           metadata: { note: true, text: note.text, target_id: note.target_id },
         }
+      end
+
+      def width(lines)
+        lines.map { |line| @measure.call(line, @font_size) }.max + PADDING
       end
 
       def note(node, target)

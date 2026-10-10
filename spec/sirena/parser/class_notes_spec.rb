@@ -27,6 +27,16 @@ RSpec.describe Sirena::Parser::ClassNotes do
     expect(notes.first.text).to eq("bold text")
   end
 
+  it "starts a new line at each <br> spelling, as mmdc does" do
+    notes = notes_of("classDiagram\nnote \"a<br>b<br/>c<br />d\"\n")
+    expect(notes.first.text).to eq("a\nb\nc\nd")
+  end
+
+  it "keeps a literal backslash-n as text, as mmdc does" do
+    notes = notes_of("classDiagram\nnote \"a\\nb\"\n")
+    expect(notes.first.text).to eq("a\\nb")
+  end
+
   it "leaves a note for a class that does not exist unattached" do
     notes = notes_of("classDiagram\nnote for Ghost \"x\"\n")
     expect(notes.first.target_id).to be_nil

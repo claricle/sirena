@@ -23,6 +23,17 @@ module Sirena
       attribute :link_x2, :float
       attribute :link_y2, :float
 
+      # @param text [String] note text, lines joined by newlines
+      # @return [Array<String>] the lines, at least one
+      def self.lines_of(text)
+        text.to_s.split("\n", -1).then { |all| all.empty? ? [""] : all }
+      end
+
+      # @return [Array<String>] the text split into lines
+      def lines
+        self.class.lines_of(text)
+      end
+
       def linked?
         !link_x1.nil?
       end

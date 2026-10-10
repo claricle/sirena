@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "../diagram/generic_text"
 require_relative "../layout/class_diagram"
+require_relative "line_break_text"
 
 module Sirena
   module Renderer
@@ -28,6 +29,9 @@ module Sirena
 
       # Line height for text
       LINE_HEIGHT = 18
+
+      # Gap between the lines of a note, as mmdc draws them
+      NOTE_LINE_HEIGHT = Layout::ClassNoteNodes::LINE_HEIGHT.to_s
 
       # Padding within class boxes
       BOX_PADDING = 10
@@ -151,12 +155,19 @@ module Sirena
       end
 
       def scene_note_text(note)
-        Svg::Text.new(
+        text = Svg::Text.new(
           x: svg_number(note.x + (note.width / 2)),
-          y: svg_number(note.y + 23), content: note.text, fill: "#000000",
+          y: svg_number(note.y + 23), fill: "#000000",
           font_family: "Arial, sans-serif", font_size: "16",
           text_anchor: "middle"
         )
+        fill_note_lines(text, note.lines)
+      end
+
+      def fill_note_lines(text, lines)
+        return text.tap { text.content = lines.first } if lines.one?
+
+        LineBreakText.fill_lines(text, lines, height: NOTE_LINE_HEIGHT)
       end
 
       def scene_node_box(node)
