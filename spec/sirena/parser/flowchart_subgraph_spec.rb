@@ -27,7 +27,7 @@ module FlowchartSubgraphSpecHelpers
   end
 end
 
-RSpec.describe Sirena::Parser::Flowchart do
+RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
   include FlowchartSubgraphSpecHelpers
 
   describe "a subgraph" do

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::Flowchart do
+RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
   let(:parser) { described_class.new }
 
   describe "#parse" do
