@@ -9,15 +9,13 @@ require_relative "../svg/group"
 require_relative "../svg/line"
 require_relative "../svg/path"
 require_relative "../svg/text"
+require_relative "../svg/tspan"
 
 module Sirena
   module Renderer
     # Emits SVG from final, typed timeline geometry.
     class Timeline < Base
       FONT_FAMILY = "Trebuchet MS, Verdana, Arial, sans-serif"
-      LINE_PITCH = 17.6
-      # Baseline of the first text line inside a card's text group.
-      FIRST_BASELINE = 21
       CARD_WRAPPERS = {
         "section" => nil, "period" => "taskWrapper", "event" => "eventWrapper"
       }.freeze
@@ -41,10 +39,7 @@ module Sirena
       end
 
       def card_group(card)
-        wrapper = Svg::Group.new(
-          class_name: CARD_WRAPPERS.fetch(card.kind),
-          transform: "translate(#{number(card.x)}, #{number(card.y)})",
-        )
+        wrapper = Svg::Group.new(class_name: CARD_WRAPPERS.fetch(card.kind))
         wrapper.tap { |group| group << node_group(card) }
       end
 
@@ -52,51 +47,51 @@ module Sirena
         fill, text, rule = TimelinePalette.for(theme.colors, card.color_index)
         Svg::Group.new(class_name: "timeline-node").tap do |node|
           node << background(card, fill, rule)
-          node << text_group(card, text)
+          node << text_element(card, text)
         end
       end
 
       def background(card, fill, rule)
         Svg::Group.new.tap do |group|
-          group << card_path(card, fill)
-          group << rule_line(card, rule)
+          group << Svg::Path.new(d: card.outline, fill: fill,
+                                 class_name: "node-bkg")
+          group << rule_line(card.rule, rule)
         end
       end
 
-      def card_path(card, fill)
-        height = card.height
-        width = card.width
-        Svg::Path.new(
-          d: "M0 #{number(height - 5)} v#{number(5 - height + 5)} " \
-             "q0,-5 5,-5 h#{number(width - 10)} q5,0 5,5 " \
-             "v#{number(height - 5)} H0 Z",
-          fill: fill, class_name: "node-bkg"
-        )
-      end
-
-      def rule_line(card, rule)
+      def rule_line(line, stroke)
         Svg::Line.new(
-          x1: 0, y1: card.height, x2: card.width, y2: card.height,
-          stroke: rule, stroke_width: "3", class_name: "node-line"
+          x1: number(line.x1), y1: number(line.y1),
+          x2: number(line.x2), y2: number(line.y2),
+          stroke: stroke, stroke_width: "3", class_name: "node-line"
         )
-      end
-
-      def text_group(card, color)
-        group = Svg::Group.new(
-          transform: "translate(#{number(card.width / 2)}, 10)",
-        )
-        group.tap { |text| text << text_element(card, color) }
       end
 
       def text_element(card, color)
-        lines = card.lines
         text = Svg::Text.new(
-          x: 0, y: FIRST_BASELINE, fill: color, font_family: FONT_FAMILY,
-          font_size: number(card.font_size), text_anchor: "middle"
+          x: number(card.text_x), y: number(card.text_y), fill: color,
+          font_family: FONT_FAMILY, font_size: number(card.font_size),
+          text_anchor: "middle"
         )
-        return LineBreakText.fill(text, lines.first.to_s) if lines.length < 2
+        fill_text(text, card)
+      end
 
-        LineBreakText.fill_lines(text, lines, pitch: LINE_PITCH)
+      def fill_text(text, card)
+        if card.lines.length < 2
+          text.content = card.lines.first.to_s
+        else
+          text.tspans = tspans(card)
+        end
+        text
+      end
+
+      def tspans(card)
+        baselines = [nil, *card.next_baselines]
+        card.lines.zip(baselines).map do |line, baseline|
+          Svg::Tspan.new(x: card.text_x, y: baseline).tap do |run|
+            run.content = line
+          end
+        end
       end
 
       def title_element(scene)
