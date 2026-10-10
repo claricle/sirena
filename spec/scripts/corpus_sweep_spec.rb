@@ -102,6 +102,7 @@ RSpec.describe CorpusSweep do
     end
 
     let(:results) { sweeper.sweep(["pie"]) }
+    let(:status_line) { /\A(?:pass|fail|timeout): / }
 
     it "records one status per case file" do
       expect(results["pie"].transform_keys { |p| File.basename(p) })
@@ -110,13 +111,19 @@ RSpec.describe CorpusSweep do
 
     it 'lists only non-passing cases as "status: corpus-relative path"' do
       out = capture_stdout { sweeper.report(results, list_failing: true) }
-      expect(out.lines.grep(/\A(?:fail|timeout):/)).to eq(["fail: pie/002_bad.mmd\n"])
+      expect(out.lines.grep(status_line)).to eq(["fail: pie/002_bad.mmd\n"])
+    end
+
+    it "lists a timed-out case with the timeout status" do
+      slow = { "pie" => { "#{root}/pie/003_slow.mmd" => :timeout } }
+      out = capture_stdout { sweeper.report(slow, list_failing: true) }
+      expect(out.lines.grep(status_line)).to eq(["timeout: pie/003_slow.mmd\n"])
     end
 
     it "prints the summary without a failing list when not asked" do
       out = capture_stdout { sweeper.report(results, list_failing: false) }
       expect(out).to include("TOTAL: 1/2 = 50.0%")
-      expect(out.lines.grep(/\A(?:fail|timeout):/)).to be_empty
+      expect(out.lines.grep(status_line)).to be_empty
     end
   end
 end
