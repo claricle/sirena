@@ -108,24 +108,24 @@ RSpec.describe Sirena::Layout::C4 do
 
   it "stores a person's final default dimensions" do
     expect(context_nodes["user"]).to have_attributes(
-      kind: "person", width: described_class::PERSON_WIDTH.to_f,
-      height: described_class::PERSON_HEIGHT.to_f
+      kind: "person", width: 216.0, height: 134.0
     )
   end
 
   it "stores a system's final default dimensions" do
     expect(context_nodes["webapp"]).to have_attributes(
-      kind: "system", width: described_class::SYSTEM_WIDTH.to_f,
-      height: described_class::SYSTEM_HEIGHT.to_f
+      kind: "system", width: 216.0, height: 86.0
     )
   end
 
-  it "sizes the final canvas from recursively nested children plus padding" do
+  # 150 and 170 are the margins mmdc leaves around c4/007's content:
+  # its widest box ends at 1336 in a 1486 wide view box, its lowest at
+  # 2313 in a 2483 high one (the 170 holds the 60 for the title).
+  it "sizes the canvas from the rightmost and lowest box" do
     width = container_nodes.map { |node| node.x + node.width }.max
     height = container_nodes.map { |node| node.y + node.height }.max
-    padding = described_class::DIAGRAM_PADDING
     expect([container_scene.width, container_scene.height])
-      .to eq([width, height].map { |size| size + padding })
+      .to eq([width + 150, height + 170])
   end
 
   it "keeps nested boundary children" do
@@ -133,10 +133,10 @@ RSpec.describe Sirena::Layout::C4 do
     expect(boundary.children).not_to be_empty
   end
 
-  it "keeps Grid as the default placement" do
-    allow(Sirena::Layout::Grid).to receive(:apply).and_call_original
+  it "places boxes with C4Placement by default" do
+    allow(Sirena::Layout::C4Placement).to receive(:apply).and_call_original
     layout.call(diagram)
-    expect(Sirena::Layout::Grid).to have_received(:apply).once
+    expect(Sirena::Layout::C4Placement).to have_received(:apply).once
   end
 
   it "lets Engine select ELK for Context and Container DOWN layouts" do
@@ -165,8 +165,7 @@ RSpec.describe Sirena::Layout::C4 do
     scene = layout.call(diagram(elements: [element("x", type: "Unknown")]))
 
     expect(scene.children.first).to have_attributes(
-      id: "x", kind: "system", width: described_class::SYSTEM_WIDTH.to_f,
-      height: described_class::SYSTEM_HEIGHT.to_f
+      id: "x", kind: "system", width: 216.0, height: 60.0
     )
   end
 

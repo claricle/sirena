@@ -29,9 +29,7 @@ RSpec.describe Sirena::Renderer::C4 do
   end
 
   it "uses typed empty-scene dimensions verbatim" do
-    parsed = Sirena::Parser::C4.new.parse("C4Context\n")
-    empty_scene = Sirena::Layout::C4.new.call(parsed)
-    svg = renderer.render(empty_scene)
+    svg = renderer.render(scene)
     expect([svg.width, svg.height, svg.to_xml.include?("<g")])
       .to eq([800, 600, false])
   end

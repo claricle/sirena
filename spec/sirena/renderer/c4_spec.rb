@@ -66,8 +66,8 @@ RSpec.describe Sirena::Renderer::C4 do
     expect(edge.arrowheads.length).to eq(2)
     expect(xml.scan("<polygon").size).to eq(2)
     expect(xml).to include("Syncs", "[HTTPS]")
-    expect(xml).to include('font-size="12.0">Syncs<',
-                           'font-size="10.0">[HTTPS]<')
+    expect(xml).to include('font-size="12.0" font-style="normal">Syncs<',
+                           'font-size="12.0" font-style="italic">[HTTPS]<')
   end
 
   it "uses semantic colors from the active theme" do
