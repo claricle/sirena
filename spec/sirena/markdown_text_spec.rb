@@ -3,14 +3,29 @@
 require "spec_helper"
 
 RSpec.describe Sirena::MarkdownText do
+  def text_run(text, bold: false, italic: false)
+    described_class::Run.new(text: text, bold: bold, italic: italic)
+  end
+
+  def expect_literal_lines(raw)
+    expect(described_class.parse_lines(raw))
+      .to eq(described_class.literal_lines(raw))
+  end
+
+  def overlength_padding
+    marker_length = "**x**".length
+    "a" * (described_class::MAX_PARSEABLE_LENGTH - marker_length + 1)
+  end
+
   describe ".parse_lines" do
     # Mutation-check: remove the `raw.scrub unless raw.valid_encoding?` guard.
     # Watched red: raises ArgumentError instead of degrading to a run.
-    it "degrades invalid UTF-8 byte sequences to a scrubbed literal run instead of raising" do
+    it "degrades invalid UTF-8 byte sequences to a scrubbed literal run " \
+       "instead of raising" do
       bad = "hello#{(+"\xFF\xFE").force_encoding('UTF-8')}"
 
       expect { described_class.parse_lines(bad) }.not_to raise_error
-      expect(described_class.parse_lines(bad)).to eq([[described_class::Run.new(text: bad.scrub, bold: false, italic: false)]])
+      expect(described_class.parse_lines(bad)).to eq([[text_run(bad.scrub)]])
     end
 
     # Mutation-check: remove `transcode_binary_to_utf8`'s call (or its
@@ -19,16 +34,20 @@ RSpec.describe Sirena::MarkdownText do
     # String#encode, because ASCII-8BIT always reports `valid_encoding? ==
     # true`, so the `raw.scrub unless raw.valid_encoding?` guard above never
     # fires for it.
-    it "degrades an ASCII-8BIT-tagged string with a non-ASCII byte instead of raising" do
+    it "degrades an ASCII-8BIT-tagged string with a non-ASCII byte " \
+       "instead of raising" do
       bad = (+"hello *world* caf\xE9").force_encoding("ASCII-8BIT")
-      expected_tail = (+"\xE9").force_encoding("ASCII-8BIT").encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+      expected_tail = (+"\xE9").force_encoding("ASCII-8BIT").encode(
+        Encoding::UTF_8, invalid: :replace, undef: :replace
+      )
 
       expect { described_class.parse_lines(bad) }.not_to raise_error
-      expect(described_class.parse_lines(bad)).to eq([[
-                                                       described_class::Run.new(text: "hello ", bold: false, italic: false),
-                                                       described_class::Run.new(text: "world", bold: false, italic: true),
-                                                       described_class::Run.new(text: " caf#{expected_tail}", bold: false, italic: false),
-                                                     ]])
+      expected = [[
+        text_run("hello "),
+        text_run("world", italic: true),
+        text_run(" caf#{expected_tail}"),
+      ]]
+      expect(described_class.parse_lines(bad)).to eq(expected)
     end
 
     # Mutation-check: change `flatten_runs`'s `:strong` branch to pass
@@ -38,7 +57,7 @@ RSpec.describe Sirena::MarkdownText do
     it "renders **bold** as one bold run" do
       lines = described_class.parse_lines("**bold**")
 
-      expect(lines).to eq([[described_class::Run.new(text: "bold", bold: true, italic: false)]])
+      expect(lines).to eq([[text_run("bold", bold: true)]])
     end
 
     # Mutation-check: the `:em` branch's mirror of the bold mutation above
@@ -47,7 +66,7 @@ RSpec.describe Sirena::MarkdownText do
     it "renders *italic* as one italic run" do
       lines = described_class.parse_lines("*italic*")
 
-      expect(lines).to eq([[described_class::Run.new(text: "italic", bold: false, italic: true)]])
+      expect(lines).to eq([[text_run("italic", italic: true)]])
     end
 
     # Regression guard for Codex High #2 (kramdown-rewrite round 1): the
@@ -61,9 +80,9 @@ RSpec.describe Sirena::MarkdownText do
       lines = described_class.parse_lines("**bold *and italic* end**")
 
       expect(lines).to eq([[
-                            described_class::Run.new(text: "bold ", bold: true, italic: false),
-                            described_class::Run.new(text: "and italic", bold: true, italic: true),
-                            described_class::Run.new(text: " end", bold: true, italic: false),
+                            text_run("bold ", bold: true),
+                            text_run("and italic", bold: true, italic: true),
+                            text_run(" end", bold: true),
                           ]])
     end
 
@@ -71,13 +90,14 @@ RSpec.describe Sirena::MarkdownText do
     # mmdc: `*italic **bold** end*` -> `<em>italic <strong>bold</strong>
     # end</em>`, so "italic " and " end" stay italic-only and "bold" picks
     # up both flags.
-    it "nests italic-outer/bold-inner the other way round, still merging flags" do
+    it "nests italic-outer/bold-inner the other way round, still merging " \
+       "flags" do
       lines = described_class.parse_lines("*italic **bold** end*")
 
       expect(lines).to eq([[
-                            described_class::Run.new(text: "italic ", bold: false, italic: true),
-                            described_class::Run.new(text: "bold", bold: true, italic: true),
-                            described_class::Run.new(text: " end", bold: false, italic: true),
+                            text_run("italic ", italic: true),
+                            text_run("bold", bold: true, italic: true),
+                            text_run(" end", italic: true),
                           ]])
     end
 
@@ -89,7 +109,7 @@ RSpec.describe Sirena::MarkdownText do
     it "renders ***both*** as one run with both bold and italic" do
       lines = described_class.parse_lines("***both***")
 
-      expect(lines).to eq([[described_class::Run.new(text: "both", bold: true, italic: true)]])
+      expect(lines).to eq([[text_run("both", bold: true, italic: true)]])
     end
 
     # Regression guard for Codex High #3 (kramdown-rewrite round 1): a hard
@@ -105,8 +125,8 @@ RSpec.describe Sirena::MarkdownText do
       lines = described_class.parse_lines("**a\nb**")
 
       expect(lines).to eq([
-                            [described_class::Run.new(text: "a", bold: true, italic: false)],
-                            [described_class::Run.new(text: "b", bold: true, italic: false)],
+                            [text_run("a", bold: true)],
+                            [text_run("b", bold: true)],
                           ])
     end
 
@@ -117,17 +137,17 @@ RSpec.describe Sirena::MarkdownText do
     # would still show up as a red example here.
     it "leaves an unmatched or improperly flanked marker as literal text" do
       expect(described_class.parse_lines("lone * star"))
-        .to eq([[described_class::Run.new(text: "lone * star", bold: false, italic: false)]])
+        .to eq([[text_run("lone * star")]])
 
       expect(described_class.parse_lines("lone ** double"))
-        .to eq([[described_class::Run.new(text: "lone ** double", bold: false, italic: false)]])
+        .to eq([[text_run("lone ** double")]])
 
       expect(described_class.parse_lines("a * b * c"))
-        .to eq([[described_class::Run.new(text: "a * b * c", bold: false, italic: false)]])
+        .to eq([[text_run("a * b * c")]])
 
       # Space before the closer: mmdc-verified to never close.
       expect(described_class.parse_lines("**bold **still"))
-        .to eq([[described_class::Run.new(text: "**bold **still", bold: false, italic: false)]])
+        .to eq([[text_run("**bold **still")]])
     end
 
     # Negative-space coverage: this spec exists to fail if backtick
@@ -137,7 +157,7 @@ RSpec.describe Sirena::MarkdownText do
     it "treats a backtick as a plain literal character, never a style marker" do
       lines = described_class.parse_lines("`code`")
 
-      expect(lines).to eq([[described_class::Run.new(text: "`code`", bold: false, italic: false)]])
+      expect(lines).to eq([[text_run("`code`")]])
     end
 
     # A tab or 4+ leading spaces matches neither kramdown's `:paragraph`
@@ -149,13 +169,13 @@ RSpec.describe Sirena::MarkdownText do
     it "treats a tab-leading line as literal text instead of crashing" do
       lines = described_class.parse_lines("\tIndented Label")
 
-      expect(lines).to eq([[described_class::Run.new(text: "\tIndented Label", bold: false, italic: false)]])
+      expect(lines).to eq([[text_run("\tIndented Label")]])
     end
 
     it "treats a four-space-leading line as literal text instead of crashing" do
       lines = described_class.parse_lines("    Four spaces label")
 
-      expect(lines).to eq([[described_class::Run.new(text: "    Four spaces label", bold: false, italic: false)]])
+      expect(lines).to eq([[text_run("    Four spaces label")]])
     end
 
     # Same shapes as the two examples above, but with a trailing unflanked
@@ -166,16 +186,18 @@ RSpec.describe Sirena::MarkdownText do
     # bare root-level `:text` block). A trailing UNFLANKED `*` is required:
     # a well-formed pair like `*word*` fragments the tree differently (see
     # the regression guard below), which the same guard also catches.
-    it "treats a tab-leading line with a marker as literal text via the real parse path" do
+    it "treats a tab-leading line with a marker as literal text via the real " \
+       "parse path" do
       lines = described_class.parse_lines("\tIndented Label*")
 
-      expect(lines).to eq([[described_class::Run.new(text: "\tIndented Label*", bold: false, italic: false)]])
+      expect(lines).to eq([[text_run("\tIndented Label*")]])
     end
 
-    it "treats a four-space-leading line with a marker as literal text via the real parse path" do
+    it "treats a four-space-leading line with a marker as literal text via " \
+       "the real parse path" do
       lines = described_class.parse_lines("    Four spaces label*")
 
-      expect(lines).to eq([[described_class::Run.new(text: "    Four spaces label*", bold: false, italic: false)]])
+      expect(lines).to eq([[text_run("    Four spaces label*")]])
     end
 
     # Same fallback shape, but reached from a second line after a hard
@@ -186,12 +208,13 @@ RSpec.describe Sirena::MarkdownText do
     # shape alone can't distinguish the two mechanisms — see the regression
     # guard below for that. The blank-line gap collapses to zero extra rows
     # (matches real mmdc, not a distinct blank line).
-    it "treats a tab-leading line after a blank line as literal text, with the blank gap collapsed" do
+    it "treats a tab-leading line after a blank line as literal text, with " \
+       "the blank gap collapsed" do
       lines = described_class.parse_lines("a*\n\n\tb")
 
       expect(lines).to eq([
-                            [described_class::Run.new(text: "a*", bold: false, italic: false)],
-                            [described_class::Run.new(text: "\tb", bold: false, italic: false)],
+                            [text_run("a*")],
+                            [text_run("\tb")],
                           ])
     end
 
@@ -203,10 +226,11 @@ RSpec.describe Sirena::MarkdownText do
     # `:p`); the per-node handling this replaced turned it into three
     # fragmented, unstyled lines with the `*` chars silently gone. Must
     # instead fall back to `literal_lines(raw)` for the whole string.
-    it "falls back to the whole raw string, not a fragmented per-node reconstruction" do
+    it "falls back to the whole raw string, not a fragmented per-node " \
+       "reconstruction" do
       raw = "\t*hello* world"
 
-      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+      expect_literal_lines(raw)
     end
 
     # Guards the OTHER shape of "indented mid-label text": a four-space-led
@@ -218,12 +242,13 @@ RSpec.describe Sirena::MarkdownText do
     # reaches `Parser.parse` (the marker-free early exit takes it straight
     # to `literal_lines`), so an unmarked version would pass even with
     # `Parser.parse` replaced by an unconditional exception.
-    it "keeps an indented continuation line inside the paragraph, unaffected by the fallback" do
+    it "keeps an indented continuation line inside the paragraph, " \
+       "unaffected by the fallback" do
       lines = described_class.parse_lines("a*\n    b")
 
       expect(lines).to eq([
-                            [described_class::Run.new(text: "a*", bold: false, italic: false)],
-                            [described_class::Run.new(text: "    b", bold: false, italic: false)],
+                            [text_run("a*")],
+                            [text_run("    b")],
                           ])
     end
 
@@ -236,8 +261,8 @@ RSpec.describe Sirena::MarkdownText do
       lines = described_class.parse_lines("Line one*\nLine two")
 
       expect(lines).to eq([
-                            [described_class::Run.new(text: "Line one*", bold: false, italic: false)],
-                            [described_class::Run.new(text: "Line two", bold: false, italic: false)],
+                            [text_run("Line one*")],
+                            [text_run("Line two")],
                           ])
     end
 
@@ -249,9 +274,9 @@ RSpec.describe Sirena::MarkdownText do
       lines = described_class.parse_lines("**a** plain **b**")
 
       expect(lines).to eq([[
-                            described_class::Run.new(text: "a", bold: true, italic: false),
-                            described_class::Run.new(text: " plain ", bold: false, italic: false),
-                            described_class::Run.new(text: "b", bold: true, italic: false),
+                            text_run("a", bold: true),
+                            text_run(" plain "),
+                            text_run("b", bold: true),
                           ]])
     end
 
@@ -263,20 +288,21 @@ RSpec.describe Sirena::MarkdownText do
     it "treats a backslash-escaped marker as literal, never a style trigger" do
       lines = described_class.parse_lines('\*escaped* text')
 
-      expect(lines).to eq([[described_class::Run.new(text: "*escaped* text", bold: false, italic: false)]])
+      expect(lines).to eq([[text_run("*escaped* text")]])
     end
 
     # Same fix, but escaped markers sitting next to REAL emphasis on the
     # same line — distinguishes "escapes are recognized" from "escapes
     # happen to disable all emphasis parsing on the line". mmdc:
     # `task1[**a** \*b\* **c**]` -> `<strong>a</strong> *b* <strong>c</strong>`.
-    it "keeps an escaped marker literal alongside real emphasis on the same line" do
+    it "keeps an escaped marker literal alongside real emphasis on the " \
+       "same line" do
       lines = described_class.parse_lines('**a** \*b\* **c**')
 
       expect(lines).to eq([[
-                            described_class::Run.new(text: "a", bold: true, italic: false),
-                            described_class::Run.new(text: " *b* ", bold: false, italic: false),
-                            described_class::Run.new(text: "c", bold: true, italic: false),
+                            text_run("a", bold: true),
+                            text_run(" *b* "),
+                            text_run("c", bold: true),
                           ]])
     end
 
@@ -288,14 +314,16 @@ RSpec.describe Sirena::MarkdownText do
     # the cap, so that shape can't tell "fallback skipped kramdown" apart
     # from "kramdown ran and found nothing to style" — only `"**x** "`,
     # which DOES parse into styled nodes under the cap, isolates the guard.
-    it "falls back to unstyled literal text past MAX_EMPHASIS_MARKERS, never parsing markup" do
+    it "falls back to unstyled literal text past MAX_EMPHASIS_MARKERS, " \
+       "never parsing markup" do
       long_text = "**x** " * 10
 
-      expect(long_text.count("*_")).to be > described_class::MAX_EMPHASIS_MARKERS
+      expect(long_text.count("*_"))
+        .to be > described_class::MAX_EMPHASIS_MARKERS
 
       lines = described_class.parse_lines(long_text)
 
-      expect(lines).to eq([[described_class::Run.new(text: long_text, bold: false, italic: false)]])
+      expect(lines).to eq([[text_run(long_text)]])
     end
 
     # The marker-count fallback still respects hard line breaks — it skips
@@ -305,18 +333,20 @@ RSpec.describe Sirena::MarkdownText do
     # whether the guard fires). Asserts the whole result, not just
     # `lines.last`: a mutation dropping every line but the last would still
     # satisfy an assertion on `lines.last` alone.
-    it "still splits on hard line breaks in the marker-count unstyled fallback" do
+    it "still splits on hard line breaks in the marker-count unstyled " \
+       "fallback" do
       first_line = "**x** " * 8
       long_text = "#{first_line}\nsecond"
 
-      expect(long_text.count("*_")).to be > described_class::MAX_EMPHASIS_MARKERS
+      expect(long_text.count("*_"))
+        .to be > described_class::MAX_EMPHASIS_MARKERS
       expect(long_text.length).to be <= described_class::MAX_PARSEABLE_LENGTH
 
       lines = described_class.parse_lines(long_text)
 
       expect(lines).to eq([
-                            [described_class::Run.new(text: first_line, bold: false, italic: false)],
-                            [described_class::Run.new(text: "second", bold: false, italic: false)],
+                            [text_run(first_line)],
+                            [text_run("second")],
                           ])
     end
 
@@ -332,11 +362,8 @@ RSpec.describe Sirena::MarkdownText do
 
       lines = described_class.parse_lines(raw)
 
-      expect(lines).to eq([[
-                            described_class::Run.new(
-                              text: "*" * (described_class::MAX_EMPHASIS_MARKERS + 1), bold: false, italic: false,
-                            ),
-                          ]])
+      literal = "*" * (described_class::MAX_EMPHASIS_MARKERS + 1)
+      expect(lines).to eq([[text_run(literal)]])
     end
 
     # The LENGTH backstop still respects hard line breaks too, independent
@@ -344,19 +371,21 @@ RSpec.describe Sirena::MarkdownText do
     # (one marker total, nowhere near `MAX_EMPHASIS_MARKERS`) followed by
     # filler past `MAX_PARSEABLE_LENGTH`, so only the length backstop
     # explains the fallback here.
-    it "still splits on hard line breaks in the length-backstop unstyled fallback" do
-      padding = "a" * (described_class::MAX_PARSEABLE_LENGTH - "**x**".length + 1)
+    it "still splits on hard line breaks in the length-backstop unstyled " \
+       "fallback" do
+      padding = overlength_padding
       first_line = "**x**#{padding}"
       long_text = "#{first_line}\nsecond"
 
-      expect(first_line.count("*_")).to be <= described_class::MAX_EMPHASIS_MARKERS
+      expect(first_line.count("*_"))
+        .to be <= described_class::MAX_EMPHASIS_MARKERS
       expect(long_text.length).to be > described_class::MAX_PARSEABLE_LENGTH
 
       lines = described_class.parse_lines(long_text)
 
       expect(lines).to eq([
-                            [described_class::Run.new(text: first_line, bold: false, italic: false)],
-                            [described_class::Run.new(text: "second", bold: false, italic: false)],
+                            [text_run(first_line)],
+                            [text_run("second")],
                           ])
     end
 
@@ -369,16 +398,18 @@ RSpec.describe Sirena::MarkdownText do
     # (proving the marker-count guard alone would NOT have triggered a
     # fallback) but the run still comes back as one literal run rather than
     # a styled bold run once the length guard is live.
-    it "falls back on length alone when marker count is low but the label is huge" do
-      padding = "a" * (described_class::MAX_PARSEABLE_LENGTH - "**x**".length + 1)
+    it "falls back on length alone when marker count is low but the label " \
+       "is huge" do
+      padding = overlength_padding
       long_text = "**x**#{padding}"
 
-      expect(long_text.count("*_")).to be <= described_class::MAX_EMPHASIS_MARKERS
+      expect(long_text.count("*_"))
+        .to be <= described_class::MAX_EMPHASIS_MARKERS
       expect(long_text.length).to be > described_class::MAX_PARSEABLE_LENGTH
 
       lines = described_class.parse_lines(long_text)
 
-      expect(lines).to eq([[described_class::Run.new(text: long_text, bold: false, italic: false)]])
+      expect(lines).to eq([[text_run(long_text)]])
     end
 
     # The actual behavior this round's High fixes: an ordinary label with
@@ -387,22 +418,23 @@ RSpec.describe Sirena::MarkdownText do
     # label with one bold word losing its styling under the old
     # length-only cap). Verified directly against real mmdc: `<strong>` is
     # rendered around "proposed".
-    it "styles an ordinary long label with few markers instead of falling back" do
-      long_text = "Please review the **proposed** deployment plan asap and get back to " \
-                  "the team before the end of the day tomorrow"
+    it "styles an ordinary long label with few markers instead of falling " \
+       "back" do
+      long_text = "Please review the **proposed** deployment plan asap and " \
+                  "get back to the team before the end of the day tomorrow"
 
       expect(long_text.length).to be > 50
-      expect(long_text.count("*_")).to be <= described_class::MAX_EMPHASIS_MARKERS
+      expect(long_text.count("*_"))
+        .to be <= described_class::MAX_EMPHASIS_MARKERS
 
       lines = described_class.parse_lines(long_text)
+      trailing_text = " deployment plan asap and get back to the team " \
+                      "before the end of the day tomorrow"
 
       expect(lines).to eq([[
-                            described_class::Run.new(text: "Please review the ", bold: false, italic: false),
-                            described_class::Run.new(text: "proposed", bold: true, italic: false),
-                            described_class::Run.new(
-                              text: " deployment plan asap and get back to the team before the end of " \
-                                    "the day tomorrow", bold: false, italic: false
-                            ),
+                            text_run("Please review the "),
+                            text_run("proposed", bold: true),
+                            text_run(trailing_text),
                           ]])
     end
 
@@ -413,10 +445,11 @@ RSpec.describe Sirena::MarkdownText do
     # literal run instead of one italic one, since the narrowed predicate
     # would send underscore-only text straight to `literal_lines` without
     # ever calling kramdown.
-    it "still parses underscore-only italic markup through the marker-free early exit guard" do
+    it "still parses underscore-only italic markup through the marker-free " \
+       "early exit guard" do
       lines = described_class.parse_lines("_italic_")
 
-      expect(lines).to eq([[described_class::Run.new(text: "italic", bold: false, italic: true)]])
+      expect(lines).to eq([[text_run("italic", italic: true)]])
     end
 
     # Boundary: exactly MAX_EMPHASIS_MARKERS markers still gets parsed
@@ -433,10 +466,10 @@ RSpec.describe Sirena::MarkdownText do
 
       lines = described_class.parse_lines(text)
 
-      expected_runs = [described_class::Run.new(text: "a", bold: false, italic: true)]
+      expected_runs = [text_run("a", italic: true)]
       (segment_count - 1).times do
-        expected_runs << described_class::Run.new(text: " ", bold: false, italic: false)
-        expected_runs << described_class::Run.new(text: "a", bold: false, italic: true)
+        expected_runs << text_run(" ")
+        expected_runs << text_run("a", italic: true)
       end
 
       expect(lines).to eq([expected_runs])
@@ -453,7 +486,7 @@ RSpec.describe Sirena::MarkdownText do
 
       lines = described_class.parse_lines(text)
 
-      expect(lines).to eq([[described_class::Run.new(text: text, bold: false, italic: false)]])
+      expect(lines).to eq([[text_run(text)]])
     end
 
     # Boundary for `MAX_PARSEABLE_LENGTH` itself — the marker-count
@@ -464,26 +497,27 @@ RSpec.describe Sirena::MarkdownText do
     # distinguish "the guard is live" from "kramdown found nothing to
     # style".
     it "parses markup normally at exactly MAX_PARSEABLE_LENGTH characters" do
-      padding = "a" * (described_class::MAX_PARSEABLE_LENGTH - "**x**".length)
+      padding_length = described_class::MAX_PARSEABLE_LENGTH - "**x**".length
+      padding = "a" * padding_length
       text = "**x**#{padding}"
       expect(text.length).to eq(described_class::MAX_PARSEABLE_LENGTH)
 
       lines = described_class.parse_lines(text)
 
       expect(lines).to eq([[
-                            described_class::Run.new(text: "x", bold: true, italic: false),
-                            described_class::Run.new(text: padding, bold: false, italic: false),
+                            text_run("x", bold: true),
+                            text_run(padding),
                           ]])
     end
 
     it "falls back once length exceeds MAX_PARSEABLE_LENGTH by one" do
-      padding = "a" * (described_class::MAX_PARSEABLE_LENGTH - "**x**".length + 1)
+      padding = overlength_padding
       text = "**x**#{padding}"
       expect(text.length).to eq(described_class::MAX_PARSEABLE_LENGTH + 1)
 
       lines = described_class.parse_lines(text)
 
-      expect(lines).to eq([[described_class::Run.new(text: text, bold: false, italic: false)]])
+      expect(lines).to eq([[text_run(text)]])
     end
 
     # Underscore escape coverage: the two escape specs above only ever use
@@ -491,10 +525,11 @@ RSpec.describe Sirena::MarkdownText do
     # claims to cover both markers — this is pure spec-coverage, no
     # production change. Requires `:escaped_chars` in `Parser`'s
     # `@span_parsers` (same guard the `\*` version above checks).
-    it "treats a backslash-escaped underscore as literal, never a style trigger" do
+    it "treats a backslash-escaped underscore as literal, never a style " \
+       "trigger" do
       lines = described_class.parse_lines('\_escaped_ text')
 
-      expect(lines).to eq([[described_class::Run.new(text: "_escaped_ text", bold: false, italic: false)]])
+      expect(lines).to eq([[text_run("_escaped_ text")]])
     end
 
     # An escaped marker that leaves exactly one unescaped marker of the
@@ -505,25 +540,28 @@ RSpec.describe Sirena::MarkdownText do
     # wrong answer per shape. Falls back to `literal_lines` instead: it
     # doesn't reproduce mmdc's fragmented spans, but it is SAFE (no crash,
     # no wrong styling), the same trade-off `MAX_EMPHASIS_MARKERS` accepts.
-    it "falls back to literal text when an escaped marker leaves a lone orphan before a mismatched closer" do
+    it "falls back to literal text when an escaped marker leaves a lone " \
+       "orphan before a mismatched closer" do
       raw = '**a \** b**'
 
-      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+      expect_literal_lines(raw)
     end
 
-    it "falls back to literal text for the escape-first form of the same interaction" do
+    it "falls back to literal text for the escape-first form of the same " \
+       "interaction" do
       raw = '\**a**'
 
-      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+      expect_literal_lines(raw)
     end
 
     # The same interaction with `_` instead of `*`, proving the guard isn't
     # marker-specific. mmdc: `task1[__a \__ b__]` renders
     # `<em><em>a _</em> b</em>_`; this module falls back to literal instead.
-    it "falls back to literal text for the same interaction with underscore markers" do
+    it "falls back to literal text for the same interaction with underscore " \
+       "markers" do
       raw = '__a \__ b__'
 
-      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+      expect_literal_lines(raw)
     end
 
     # A SECOND escaped marker sitting between the orphan and the real
@@ -535,10 +573,11 @@ RSpec.describe Sirena::MarkdownText do
     # the sibling example below ("does not fall back when a lone orphan
     # cleanly pairs with a same-length closer") catches that broader case;
     # the two together pin the real property.
-    it "falls back to literal text when a second escaped marker sits between the orphan and the real closer" do
+    it "falls back to literal text when a second escaped marker sits between " \
+       "the orphan and the real closer" do
       raw = '\**a \* b**'
 
-      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+      expect_literal_lines(raw)
     end
 
     # A lone orphan is not unsafe by itself — only a length MISMATCH with
@@ -549,12 +588,13 @@ RSpec.describe Sirena::MarkdownText do
     # the guard to fire on ANY lone orphan regardless of what follows it
     # (drop the `next_run.length != 1` condition). Watched red: this comes
     # back as `literal_lines(raw)` instead of the styled runs below.
-    it "does not fall back when a lone orphan cleanly pairs with a same-length closer" do
+    it "does not fall back when a lone orphan cleanly pairs with a " \
+       "same-length closer" do
       lines = described_class.parse_lines('a\**b*')
 
       expect(lines).to eq([[
-                            described_class::Run.new(text: "a*", bold: false, italic: false),
-                            described_class::Run.new(text: "b", bold: false, italic: true),
+                            text_run("a*"),
+                            text_run("b", italic: true),
                           ]])
     end
 
@@ -562,10 +602,11 @@ RSpec.describe Sirena::MarkdownText do
     # cleanly with itself and is never treated as a lone orphan. Verified
     # directly against real mmdc: `task1[**\*x\***]` renders
     # `<strong>*x*</strong>`, matching this module unchanged.
-    it "does not fall back when the escape is followed by a two-or-more marker run" do
+    it "does not fall back when the escape is followed by a two-or-more " \
+       "marker run" do
       lines = described_class.parse_lines('**\*x\***')
 
-      expect(lines).to eq([[described_class::Run.new(text: "*x*", bold: true, italic: false)]])
+      expect(lines).to eq([[text_run("*x*", bold: true)]])
     end
 
     # The OTHER half of the blank-line fix (`literal_lines` covers the
@@ -574,12 +615,13 @@ RSpec.describe Sirena::MarkdownText do
     # different code path, the `:blank` case in `parse_lines` itself). A
     # blank-line paragraph gap between two `:p` blocks must contribute no
     # extra line, matching real mmdc's zero-margin paragraph CSS.
-    it "collapses a blank-line paragraph gap to no extra lines on the real kramdown parse path" do
+    it "collapses a blank-line paragraph gap to no extra lines on the real " \
+       "kramdown parse path" do
       lines = described_class.parse_lines("**A**\n\nB")
 
       expect(lines).to eq([
-                            [described_class::Run.new(text: "A", bold: true, italic: false)],
-                            [described_class::Run.new(text: "B", bold: false, italic: false)],
+                            [text_run("A", bold: true)],
+                            [text_run("B")],
                           ])
     end
 
@@ -597,25 +639,28 @@ RSpec.describe Sirena::MarkdownText do
     it "falls back to literal text for a 4-or-more marker run (Guard A)" do
       raw = "****foo****"
 
-      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+      expect_literal_lines(raw)
     end
 
-    it "falls back to literal text for a run-length sequence that leaves an interior run dangling (Guard B)" do
+    it "falls back to literal text for a run-length sequence that leaves an " \
+       "interior run dangling (Guard B)" do
       raw = "**foo* bar**"
 
-      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+      expect_literal_lines(raw)
     end
 
-    it "falls back to literal text for a single-marker nested wrap across the two delimiter characters (Guard C)" do
+    it "falls back to literal text for a single-marker nested wrap across " \
+       "the two delimiter characters (Guard C)" do
       raw = "_*a*_"
 
-      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+      expect_literal_lines(raw)
     end
 
-    it "falls back to literal text when a trailing 4-run closes two nested bold spans" do
+    it "falls back to literal text when a trailing 4-run closes two nested " \
+       "bold spans" do
       raw = "**foo **bar****"
 
-      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+      expect_literal_lines(raw)
     end
 
     # Guard C is deliberately narrower than "any `*`/`_` adjacency": a
@@ -624,12 +669,13 @@ RSpec.describe Sirena::MarkdownText do
     # to `literal_lines` (`*a*_b_` -> independent italics, no
     # cross-interaction). An earlier, cruder adjacency-only version of
     # Guard C false-positived on exactly this shape.
-    it "keeps a sequential (non-nested) run of two single markers of different characters styled" do
+    it "keeps a sequential (non-nested) run of two single markers of " \
+       "different characters styled" do
       lines = described_class.parse_lines("*a*_b_")
 
       expect(lines).to eq([[
-                            described_class::Run.new(text: "a", bold: false, italic: true),
-                            described_class::Run.new(text: "b", bold: false, italic: true),
+                            text_run("a", italic: true),
+                            text_run("b", italic: true),
                           ]])
     end
 
@@ -637,8 +683,8 @@ RSpec.describe Sirena::MarkdownText do
       lines = described_class.parse_lines("_a_*b*")
 
       expect(lines).to eq([[
-                            described_class::Run.new(text: "a", bold: false, italic: true),
-                            described_class::Run.new(text: "b", bold: false, italic: true),
+                            text_run("a", italic: true),
+                            text_run("b", italic: true),
                           ]])
     end
 
@@ -648,10 +694,11 @@ RSpec.describe Sirena::MarkdownText do
     # Mutation-check: temporarily restore the old Guard B call in place of
     # `unsafe_emphasis_divergence?`. Watched red: this falls back to
     # `literal_lines`, `**a*a**`, instead of one bold run.
-    it "keeps a run-length sequence styled when it matches marked exactly, unlike the superficially identical Guard B case" do
+    it "keeps a run-length sequence styled when it matches marked exactly, " \
+       "unlike the superficially identical Guard B case" do
       lines = described_class.parse_lines("**a*a**")
 
-      expect(lines).to eq([[described_class::Run.new(text: "a*a", bold: true, italic: false)]])
+      expect(lines).to eq([[text_run("a*a", bold: true)]])
     end
 
     # A second, genuine kramdown/marked divergence `unsafe_emphasis_divergence?`
@@ -663,21 +710,22 @@ RSpec.describe Sirena::MarkdownText do
     # Neither shape is reproducible without genuinely re-parsing, so this
     # falls back to `literal_lines` rather than risk either wrong render —
     # same trade-off as every other guard in this file.
-    it "falls back to literal text for a cross-type nesting shape marked and kramdown resolve differently" do
+    it "falls back to literal text for a cross-type nesting shape marked " \
+       "and kramdown resolve differently" do
       raw = "_a *b* c_"
 
-      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+      expect_literal_lines(raw)
     end
   end
 
   describe ".truncate_runs" do
     def plain_run(text)
-      described_class::Run.new(text: text, bold: false, italic: false)
+      text_run(text)
     end
 
     def styled_runs
-      [described_class::Run.new(text: "abc", bold: true, italic: false),
-       described_class::Run.new(text: "defgh", bold: false, italic: true)]
+      [text_run("abc", bold: true),
+       text_run("defgh", italic: true)]
     end
 
     it "keeps every line when their visible text fits the budget" do
