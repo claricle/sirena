@@ -336,6 +336,35 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       end
     end
 
+    describe "with no participant at one end" do
+      def edge_message(line)
+        parse("participant A", line).messages.first
+      end
+
+      {
+        "[-> A : hi" => [:from, :left, false],
+        "A ->] : hi" => [:to, :right, false],
+      }.each do |line, (end_name, side, local)|
+        it "reads #{line.inspect} as an edge on the #{end_name} end" do
+          message = edge_message(line)
+          edge = message.public_send(end_name)
+
+          expect([edge.side, edge.local?, message.participants])
+            .to eq([side, local, ["A"]])
+        end
+      end
+
+      it "reads the marks written beside the edge" do
+        style = edge_message("[x-> A").style
+
+        expect([style.tail.glyph, style.head.glyph]).to eq(%i[cross filled])
+      end
+
+      it "reads a ring written beside a closing bracket" do
+        expect(edge_message("A ->o]").style.head.circle).to be(true)
+      end
+    end
+
     it "reads a capital O as the ring of an o" do
       style = parse("A O-> B").messages.first.style
 
@@ -412,6 +441,17 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       "newpage" => "newpage",
       "!pragma layout smetana" => "preprocessor directive",
       "A -[#red]> B" => "message arrow",
+      "[<- A" => "message arrow",
+      "A <-]" => "message arrow",
+      "A ->[" => "message arrow",
+      "]-> A" => "message arrow",
+      "[->]" => "message arrow",
+      "[ -> A" => "message arrow",
+      "A -> ]" => "message arrow",
+      "?->?" => "message arrow",
+      "A ->?B" => "message arrow",
+      "A ->o?" => "message arrow",
+      "[-> A ++" => "message arrow",
       "title T" => "title",
     }.each do |line, name|
       it "refuses #{line.inspect} as #{name}" do
@@ -540,6 +580,11 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       senders = parse("A -> B", "B -> C", "return", "return").messages.last(2)
 
       expect(senders.map(&:from)).to eq(%w[C B])
+    end
+
+    it "refuses a return that would answer a message from an edge" do
+      expect { parse("participant A", "[-> A", "return") }
+        .to raise_error(unsupported, /return/)
     end
 
     it "refuses a return with nothing to answer" do

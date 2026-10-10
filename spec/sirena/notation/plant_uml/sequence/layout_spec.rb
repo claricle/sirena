@@ -128,6 +128,85 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
   end
 
+  describe "messages with no participant at one end" do
+    let(:long) { "x" * 80 }
+
+    def ends_of(scene)
+      scene.arrows.map do |arrow|
+        arrow.path.scan(/-?\d+\.?\d*/).map(&:to_f).values_at(0, 2)
+      end
+    end
+
+    def first_run(line)
+      ends_of(scene_of(line)).first
+    end
+
+    def lifeline(scene, index)
+      scene.lifelines[index].x1
+    end
+
+    it "starts a [-> message at the left edge of the canvas" do
+      expect(first_run("[-> A : hi").first).to eq(0.0)
+    end
+
+    it "pushes the heads right to fit the label of a [-> message" do
+      near = top_heads(scene_of("[-> A : hi")).first.x
+      far = top_heads(scene_of("[-> A : #{long}")).first.x
+
+      expect(far).to be > near + 300
+    end
+
+    it "pushes the heads right when the target is not the first" do
+      scene = scene_of("participant A", "participant B",
+                       "[-> B : #{long}")
+
+      expect(lifeline(scene, 1)).to be > 400
+    end
+
+    it "ends a ->] message right of the last head and inside the canvas" do
+      scene = scene_of("participant A", "participant B", "A ->] : hi")
+      stop = ends_of(scene).first.last
+      last = top_heads(scene).last
+
+      expect([stop > last.x + last.width, stop < scene.width])
+        .to eq([true, true])
+    end
+
+    it "ends every ->] message at the same place" do
+      scene = scene_of("participant A", "participant B",
+                       "A ->] : hi", "B ->] : there")
+
+      expect(ends_of(scene).map(&:last).uniq.size).to eq(1)
+    end
+
+    it "carries a long ->] label past the last head" do
+      scene = scene_of("A ->] : #{long}")
+
+      expect(ends_of(scene).first.last).to be > 400
+    end
+
+    it "keeps the end of a long ->] label on the canvas" do
+      scene = scene_of("A ->] : #{long}")
+
+      expect(scene.width).to be > ends_of(scene).first.last
+    end
+
+    it "pulls the end of a ->o] message 8 inside the edge" do
+      plain = first_run("A ->] : hi").last
+      ring = scene_of("A ->o] : hi").arrows.first.marks.find do |mark|
+        mark.kind == "circle"
+      end
+
+      expect(ring.cx).to eq(plain - 8.0)
+    end
+
+    it "pulls the start of a [o-> message 8 inside the edge" do
+      ring = scene_of("[o-> A : hi").arrows.first.marks.first
+
+      expect(ring.cx).to eq(8.0)
+    end
+  end
+
   it "makes room right of the last participant for a self message" do
     scene = scene_of("A -> A : long long long long long msg")
 
