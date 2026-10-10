@@ -266,6 +266,42 @@ RSpec.describe CorpusOracle do
 
   after { FileUtils.remove_entry(dir) }
 
+  describe ".missing_provenance" do
+    let(:complete) do
+      { "verdict" => "accepts", "source_sha256" => "a", "svg_sha256" => "b",
+        "toolchain" => { "mmdc" => "11.12.0" } }
+    end
+
+    it "is empty for a complete row" do
+      expect(described_class.missing_provenance(complete)).to eq([])
+    end
+
+    it "lists every key an old-format row lacks, yet load_rows still reads it" do
+      old = { "sha256" => "abc", "verdict" => "accepts" }
+      File.write(out, oracle_yaml(provenance, [old]))
+
+      expect(described_class.missing_provenance(old))
+        .to eq(%w[source_sha256 svg_sha256 toolchain.mmdc])
+      expect(described_class.load_rows(out).keys).to eq(["abc"])
+    end
+
+    it "does not ask a rejection for an svg hash" do
+      row = complete.merge("verdict" => "rejects").except("svg_sha256")
+
+      expect(described_class.missing_provenance(row)).to eq([])
+    end
+
+    it "makes refresh refuse a toolchain-less row, leaving the file alone" do
+      File.write(out, "earlier\n")
+      entries = write_entries(dir, { "a" => "pie\n" })
+
+      expect do
+        described_class.refresh(entries, provenance: {}, path: out, &accepting)
+      end.to raise_error(described_class::InfrastructureError, /toolchain\.mmdc/)
+      expect(File.read(out)).to eq("earlier\n")
+    end
+  end
+
   describe ".judge" do
     it "accepts a source mmdc renders" do
       expect(described_class.judge(path, &accepting)).to eq(["accepts", nil])
@@ -435,6 +471,50 @@ RSpec.describe CorpusOracle do
       refresh_with(accepting)
 
       expect(YAML.load_file(out)["provenance"]).to eq(provenance)
+    end
+
+    it "gives every row its source hash, toolchain and rendered-svg hash" do
+      refresh_with(accepting)
+
+      rows = YAML.load_file(out)["cases"]
+
+      expect(rows).to all(include(
+                            "source_sha256" => match(/\A\h{64}\z/),
+                            "svg_sha256" => Digest::SHA256.hexdigest(rendered_svg),
+                            "toolchain" => { "mmdc" => described_class::EXPECTED_CLI },
+                          ))
+    end
+
+    it "hashes the bytes judged: source_sha256 equals the row key" do
+      refresh_with(accepting)
+
+      expect(YAML.load_file(out)["cases"])
+        .to all(satisfy { |row| row["source_sha256"] == row["sha256"] })
+    end
+
+    it "records the full toolchain identity it was given" do
+      full = provenance.merge("mermaid" => "11.16.1", "chromium" => "131.0",
+                              "node" => "22")
+      described_class.refresh(entries, provenance: full, path: out, &accepting)
+
+      expect(YAML.load_file(out)["cases"].map { |row| row["toolchain"] })
+        .to all(eq("mmdc" => "11.12.0", "mermaid" => "11.16.1",
+                   "chromium" => "131.0"))
+    end
+
+    it "gives a rejection no svg hash" do
+      rows = described_class.refresh(entries, provenance: provenance,
+                                              path: out,
+                                     &error_page_runner)
+
+      expect(rows.map { |row| row["svg_sha256"] }).to all(be_nil)
+    end
+
+    it "refuses a source edited after its digest was taken" do
+      File.write(entries.first[:path], "pie\n  edited\n")
+
+      expect { refresh_with(accepting) }
+        .to raise_error(described_class::InfrastructureError, /changed/)
     end
 
     it "returns the rows it wrote" do
