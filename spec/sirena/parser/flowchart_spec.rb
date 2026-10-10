@@ -88,4 +88,12 @@ RSpec.describe Sirena::Parser::Flowchart do
       )
     end
   end
+
+  describe "#parse a class on a node already declared" do
+    it "puts the class on the existing node" do
+      diagram = parser.parse("graph TD\nA[x]\nA:::c\n")
+
+      expect(diagram.nodes.map(&:classes)).to eq([":::c"])
+    end
+  end
 end
