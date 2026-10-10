@@ -85,6 +85,14 @@ RSpec.describe Sirena::Layout::Mindmap do
               scene.height - extent[3]]).to eq([10.0, 10.0, 10.0, 10.0])
     end
 
+    it "puts the first child right of the root and the second left, as mmdc does" do
+      root, first, second = scene.children
+      reference = MindmapReference.nodes("028").map { |node| node[:centre][0] }
+
+      expect([first.center_x > root.center_x, second.center_x < root.center_x])
+        .to eq([reference[1] > reference[0], reference[2] < reference[0]])
+    end
+
     it "is as tall as the mmdc viewBox" do
       expect(scene.height).to eq(reference_box[3])
     end
