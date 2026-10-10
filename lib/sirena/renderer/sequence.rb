@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "../layout/sequence"
 require_relative "sequence/note_drawing"
+require_relative "sequence/frame_drawing"
 
 module Sirena
   module Renderer
@@ -16,6 +17,8 @@ module Sirena
       MESSAGE_Y_OFFSET = 60
       SELF_LOOP_WIDTH = 56
       SELF_LOOP_HEIGHT = 20
+      include FrameDrawing
+
       LAYOUT_SCENE = Layout::Sequence::Scene
 
       HEAD_ENDS = {
@@ -38,7 +41,9 @@ module Sirena
 
       def render_scene(scene)
         svg = create_document(scene)
+        draw_boxes(scene, svg)
         scene.lifelines.each { |lifeline| draw_lifeline(lifeline, svg) }
+        draw_frames(scene, svg)
         scene.messages.each { |message| draw_message(message, svg) }
         draw_participants_and_notes(scene, svg)
         svg

@@ -2,6 +2,8 @@
 
 require "lutaml/model"
 require_relative "base"
+require_relative "sequence_frame"
+require_relative "sequence_box"
 
 module Sirena
   module Diagram
@@ -120,6 +122,11 @@ module Sirena
       # Message index where the note appears
       attribute :message_index, :integer
 
+      # Position among the frame edges, dividers and notes, in source
+      # order; tells which side of a frame edge at the same message
+      # index the note sits on
+      attribute :order, :integer
+
       # Validates the note has required attributes.
       #
       # Text may be empty — mmdc renders `Note over A:` with no trailing
@@ -172,6 +179,14 @@ module Sirena
       # Collection of notes
       attribute :notes, SequenceNote, collection: true,
                                       default: -> { [] }
+
+      # Control blocks (loop, alt, opt, par, critical, break, rect)
+      attribute :frames, SequenceFrame, collection: true,
+                                        default: -> { [] }
+
+      # `box` groups around participants
+      attribute :boxes, SequenceBox, collection: true,
+                                     default: -> { [] }
 
       # Returns the diagram type identifier.
       #
