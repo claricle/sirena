@@ -209,7 +209,7 @@ RSpec.describe Sirena::Renderer::Radar do
         texts = svg.children.grep(Sirena::Svg::Text)
         # Should include axis labels + legend labels
         # `content` is `collection: true`, so read it through Array(...).
-        legend_texts = texts.select { |t| Array(t.content).join == "Team A" || Array(t.content).join == "Team B" }
+        legend_texts = texts.select { |text| /\ATeam [AB]\z/.match?(Array(text.content).join) }
         expect(legend_texts.length).to eq(2)
       end
     end

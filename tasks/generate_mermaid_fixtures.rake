@@ -147,15 +147,15 @@ class MermaidFixtureGenerator
       # Evaluate result based on expectations
       if has_error_marker
         # File is EXPECTED to fail
-        if !success
-          # Failed as expected - this is CORRECT
-          stats[:error_expected_fail] += 1
-          print "E"  # E = Expected error (pass)
-        else
+        if success
           # Succeeded but should have failed - UNEXPECTED
           stats[:error_unexpected_success] += 1
           unexpected_successes << { file: basename, note: "Should have failed but succeeded" }
           print "U"  # U = Unexpected success (fail)
+        else
+          # Failed as expected - this is CORRECT
+          stats[:error_expected_fail] += 1
+          print "E"  # E = Expected error (pass)
         end
       else
         # File is EXPECTED to succeed
