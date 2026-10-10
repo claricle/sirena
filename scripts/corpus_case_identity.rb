@@ -35,10 +35,9 @@ module CorpusCaseIdentity
 
   def id_for(record)
     type, path, titles, source = validated_parts(record)
-    occurrence = record.fetch(:occurrence, 0)
-    identity = identity_string(titles, occurrence)
-    "#{type}/#{slug(titles.last || File.basename(path, '.*'))}-" \
-      "#{digest8(path, identity, source)}"
+    identity = identity_string(titles, record.fetch(:occurrence, 0))
+    stem = slug(titles.last || File.basename(path, ".*"))
+    "#{type}/#{stem}-#{digest8(path, identity, source)}"
   end
 
   # Returns the records in order, each with :occurrence and :id filled in.
@@ -46,10 +45,10 @@ module CorpusCaseIdentity
   def assign_ids(records)
     seen = Hash.new(0)
     identified = records.map do |record|
-      occurrence = record.fetch(:occurrence) { seen[twin_key(record)] }
-      seen[twin_key(record)] += 1
-      with_occurrence = record.merge(occurrence: occurrence)
-      with_occurrence.merge(id: id_for(with_occurrence))
+      key = twin_key(record)
+      occurrence = record.fetch(:occurrence) { seen[key] }
+      seen[key] += 1
+      with_id(record.merge(occurrence: occurrence))
     end
     raise_on_collision(identified)
     identified
@@ -62,16 +61,12 @@ module CorpusCaseIdentity
   # old_records also carry :case (the ordinal path being retired).
   def migration_manifest(old_records:, new_records:)
     old = assign_ids(old_records)
-    new_ids = assign_ids(new_records).to_h { |record| [record[:id], record] }
     ensure_unique_cases(old)
-
-    matched, orphaned = old.partition { |record| new_ids.key?(record[:id]) }
-    {
-      pairs: matched.map { |r| { old: r.fetch(:case), new: r[:id] } }
-        .sort_by { |pair| pair[:old] },
-      deletions: orphaned.map { |r| r.fetch(:case) }.sort,
-      additions: (new_ids.keys - matched.map { |r| r[:id] }).sort,
-    }
+    new_ids = assign_ids(new_records).map { |record| record[:id] }
+    matched, orphaned = old.partition { |r| new_ids.include?(r[:id]) }
+    { pairs: pairs_for(matched),
+      deletions: cases_of(orphaned),
+      additions: additions_for(matched, new_ids) }
   end
 
   def normalize_path(path)
@@ -84,42 +79,63 @@ module CorpusCaseIdentity
   end
 
   def slug(text)
-    cleaned = text.to_s.downcase.gsub(/[^a-z0-9]+/, "_")
-    cleaned = cleaned.sub(/\A_+/, "")[0, MAX_SLUG_LENGTH].sub(/_+\z/, "")
+    cleaned = text.to_s.downcase.gsub(/[^a-z0-9]+/, "_").sub(/\A_+/, "")
+    cleaned = cleaned[0, MAX_SLUG_LENGTH].sub(/_+\z/, "")
     cleaned.empty? ? "case" : cleaned
   end
 
   def digest8(path, identity, source)
-    Digest::SHA256.hexdigest([path, identity, source].join("\0"))[0, HASH_LENGTH]
+    joined = [path, identity, source].join("\0")
+    Digest::SHA256.hexdigest(joined)[0, HASH_LENGTH]
+  end
+
+  def cases_of(records)
+    records.map { |record| record.fetch(:case) }.sort
+  end
+
+  def additions_for(matched, new_ids)
+    (new_ids - matched.map { |record| record[:id] }).sort
+  end
+
+  def with_id(record)
+    record.merge(id: id_for(record))
+  end
+
+  def pairs_for(matched)
+    matched.map { |r| { old: r.fetch(:case), new: r[:id] } }
+      .sort_by { |pair| pair[:old] }
   end
 
   def validated_parts(record)
-    type = record[:type].to_s
-    unless TYPE_PATTERN.match?(type)
-      raise InvalidRecordError, "type #{type.inspect} is not [a-z0-9_]+"
-    end
-
     path = normalize_path(record[:upstream_path])
+    titles = clean_titles(record[:title])
+    reject_nul(path, *titles)
     raise InvalidRecordError, "upstream_path is empty" if path.empty?
 
-    titles = Array(record[:title]).map { |t| t.to_s.split.join(" ") }
-      .reject(&:empty?)
-    [type, path, titles, utf8_source(record[:source])].tap do |parts|
-      ensure_no_nul(path, *titles, label: parts[0])
-    end
+    [valid_type(record[:type]), path, titles, utf8_source(record[:source])]
+  end
+
+  def valid_type(type)
+    return type.to_s if TYPE_PATTERN.match?(type.to_s)
+
+    raise InvalidRecordError, "type #{type.inspect} is not [a-z0-9_]+"
+  end
+
+  def clean_titles(title)
+    Array(title).map { |part| part.to_s.split.join(" ") }.reject(&:empty?)
   end
 
   def utf8_source(source)
     text = String(source).dup.force_encoding(Encoding::UTF_8)
-    raise InvalidRecordError, "source is not valid UTF-8" unless text.valid_encoding?
+    return normalize_source(text) if text.valid_encoding?
 
-    normalize_source(text)
+    raise InvalidRecordError, "source is not valid UTF-8"
   end
 
-  def ensure_no_nul(*fields, label:)
+  def reject_nul(*fields)
     return unless fields.any? { |field| field.include?("\0") }
 
-    raise InvalidRecordError, "NUL in path or title of a #{label} record"
+    raise InvalidRecordError, "NUL in an upstream path or title"
   end
 
   def identity_string(titles, occurrence)
@@ -130,17 +146,16 @@ module CorpusCaseIdentity
   end
 
   def twin_key(record)
-    type, path, titles, source = validated_parts(record)
-    [type, path, titles, source]
+    validated_parts(record)
   end
 
   def raise_on_collision(identified)
     identified.group_by { |record| record[:id] }.each do |id, claimants|
       next if claimants.one?
 
+      paths = claimants.map { |claimant| claimant[:upstream_path] }
       raise CollisionError,
-            "#{claimants.length} cases claim #{id}: " \
-            "#{claimants.map { |c| c[:upstream_path] }.join(', ')}"
+            "#{claimants.length} cases claim #{id}: #{paths.join(', ')}"
     end
   end
 
@@ -151,7 +166,8 @@ module CorpusCaseIdentity
     raise InvalidRecordError, "old cases listed twice: #{dupes.join(', ')}"
   end
 
-  private_class_method :validated_parts, :utf8_source, :ensure_no_nul,
-                       :identity_string, :twin_key, :raise_on_collision,
-                       :ensure_unique_cases
+  private_class_method :validated_parts, :valid_type, :clean_titles,
+                       :utf8_source, :reject_nul, :identity_string,
+                       :twin_key, :raise_on_collision, :ensure_unique_cases,
+                       :pairs_for, :with_id, :additions_for, :cases_of
 end

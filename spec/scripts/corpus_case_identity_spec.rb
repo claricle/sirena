@@ -3,14 +3,14 @@
 require "spec_helper"
 require_relative "../../scripts/corpus_case_identity"
 
-# Builds corpus records from a synthetic upstream: a hash of
-# path => [[title, source], ...] in the order the tests appear in that file.
+# Synthetic upstream: a hash of path => [[title, source], ...] in the order
+# the tests appear in that file.
 module CorpusCaseIdentityHelpers
-  def path = "packages/mermaid/src/diagrams/pie/pieDb.spec.ts"
-  def first = ["handles titles", "pie title A\n  \"x\" : 1"]
-  def second = ["handles showData", "pie showData\n  \"y\" : 2"]
-  def third = ["handles comments", "pie\n  %% note\n  \"z\" : 3"]
-  def inserted = ["handles a new thing", "pie title New\n  \"n\" : 9"]
+  def upstream_path = "packages/mermaid/src/diagrams/pie/pieDb.spec.ts"
+  def first_test = ["handles titles", "pie title A\n  \"x\" : 1"]
+  def second_test = ["handles showData", "pie showData\n  \"y\" : 2"]
+  def third_test = ["handles comments", "pie\n  %% note\n  \"z\" : 3"]
+  def inserted_test = ["handles a new thing", "pie title New\n  \"n\" : 9"]
   def pie_source = "pie title Pets\n  \"Dogs\" : 386"
   def graph_source = "graph TD\n  A --> B"
 
@@ -22,94 +22,110 @@ module CorpusCaseIdentityHelpers
     end
   end
 
-  def ids_by_label(upstream, type: "pie")
-    ids = described_class.assign_ids(records_from(upstream, type: type))
-    ids.to_h { |record| [[record[:upstream_path], record[:title], record[:source]], record[:id]] }
+  def ids_of(records)
+    described_class.assign_ids(records).map { |record| record[:id] }
   end
 
-  def id_of(upstream, path, test)
-    ids_by_label(upstream).fetch([path, test[0], test[1]])
+  def ids_by_test(tests, path: upstream_path)
+    ids = ids_of(records_from({ path => tests }))
+    tests.zip(ids).to_h
+  end
+
+  def id_for_record(**changes)
+    base = { type: "pie", upstream_path: upstream_path,
+             title: "handles titles", source: "pie" }
+    described_class.id_for(base.merge(changes))
+  end
+
+  def hash_of(id) = id[/\h{8}\z/]
+  def stem_of(id) = id.sub(/-\h{8}\z/, "")
+
+  def with_occurrence_zero(records)
+    records.map { |record| record.merge(occurrence: 0) }
   end
 end
 
 RSpec.describe CorpusCaseIdentity do
   include CorpusCaseIdentityHelpers
 
-  # Same three scenarios, once with titled tests and once with untitled
-  # blocks, so identity is proven for both branches of the identity string.
-  [
-    ["titled", ->(test) { test }],
-    ["untitled", ->(test) { [nil, test[1]] }],
-  ].each do |label, shape|
+  # The same scenarios for titled tests and for untitled blocks, so
+  # identity is proven on both branches of the identity string.
+  {
+    "titled" => ->(test) { test },
+    "untitled" => ->(test) { [nil, test[1]] },
+  }.each do |label, shape|
     context "with #{label} tests" do
-      let(:tests) { [first, second, third].map(&shape) }
-      let(:before_ids) { ids_by_label({ path => tests }) }
+      let(:tests) { [first_test, second_test, third_test].map(&shape) }
+      let(:before_ids) { ids_by_test(tests) }
 
-      it "keeps every ID when an upstream test is inserted before another" do
-        after = ids_by_label({ path => [tests[0], shape.call(inserted), *tests[1..]] })
+      it "keeps every ID when a test is inserted before another" do
+        grown = [tests[0], shape.call(inserted_test), *tests[1..]]
 
-        expect(after.slice(*before_ids.keys)).to eq(before_ids)
-        expect(after.values.uniq.length).to eq(4)
+        expect(ids_by_test(grown)).to include(before_ids)
       end
 
-      it "keeps every ID when two upstream tests are reordered" do
-        after = ids_by_label({ path => [tests[0], tests[2], tests[1]] })
+      it "gives the inserted test an ID of its own" do
+        grown = [tests[0], shape.call(inserted_test), *tests[1..]]
 
-        expect(after).to eq(before_ids)
+        expect(ids_by_test(grown).values.uniq.length).to eq(4)
       end
 
-      it "keeps the surviving IDs when an upstream test is deleted" do
-        after = ids_by_label({ path => [tests[0], tests[2]] })
+      it "keeps every ID when two tests are reordered" do
+        reordered = [tests[0], tests[2], tests[1]]
 
-        expect(after).to eq(before_ids.slice(tests[0].then { |t| [path, *t] }, [path, *tests[2]]))
+        expect(ids_by_test(reordered)).to eq(before_ids)
+      end
+
+      it "keeps the surviving IDs when a test is deleted" do
+        survivors = [tests[0], tests[2]]
+
+        expect(ids_by_test(survivors)).to eq(before_ids.slice(*survivors))
       end
     end
   end
 
   describe ".id_for" do
-    let(:record) { { type: "pie", upstream_path: path, title: "handles titles", source: "pie\n" } }
-
     it "has the shape <type>/<slug>-<hash8>" do
-      expect(described_class.id_for(record)).to match(%r{\Apie/handles_titles-\h{8}\z})
+      expect(id_for_record).to match(%r{\Apie/handles_titles-\h{8}\z})
     end
 
     it "changes when the source changes" do
-      changed = record.merge(source: "pie\n  \"Dogs\" : 1")
-
-      expect(described_class.id_for(changed)).not_to eq(described_class.id_for(record))
+      expect(hash_of(id_for_record(source: "pie showData")))
+        .not_to eq(hash_of(id_for_record))
     end
 
-    it "changes only the hash when the source changes" do
-      changed = record.merge(source: "pie showData")
-      prefix = ->(id) { id.sub(/-\h{8}\z/, "") }
-
-      expect(prefix.call(described_class.id_for(changed))).to eq(prefix.call(described_class.id_for(record)))
+    it "leaves the slug alone when only the source changes" do
+      expect(stem_of(id_for_record(source: "pie showData")))
+        .to eq(stem_of(id_for_record))
     end
 
     it "changes when the upstream path changes" do
-      moved = record.merge(upstream_path: "cypress/integration/rendering/pie.spec.ts")
+      moved = id_for_record(upstream_path: "cypress/rendering/pie.spec.ts")
 
-      expect(described_class.id_for(moved)).not_to eq(described_class.id_for(record))
+      expect(moved).not_to eq(id_for_record)
     end
 
     it "changes when the test title changes" do
-      renamed = record.merge(title: "handles other things")
-
-      expect(described_class.id_for(renamed)).not_to eq(described_class.id_for(record))
+      expect(id_for_record(title: "handles more")).not_to eq(id_for_record)
     end
 
-    it "ignores line endings, trailing blanks and a leading slash on the path" do
-      messy = record.merge(source: "pie\r\n\r\n", upstream_path: "/#{path}")
-      clean = record.merge(source: "pie")
+    it "ignores line endings, trailing blanks and a leading slash" do
+      messy = id_for_record(source: "pie  \r\n\r\n",
+                            upstream_path: "/#{upstream_path}")
 
-      expect(described_class.id_for(messy)).to eq(described_class.id_for(clean))
+      expect(messy).to eq(id_for_record)
     end
 
-    it "uses the last title of a describe/it path for the slug and all of them for the hash" do
-      nested = record.merge(title: ["pie diagram", "handles titles"])
+    it "slugs the last title of a describe/it path" do
+      nested = id_for_record(title: ["pie diagram", "handles titles"])
 
-      expect(described_class.id_for(nested)).to start_with("pie/handles_titles-")
-      expect(described_class.id_for(nested)).not_to eq(described_class.id_for(record))
+      expect(stem_of(nested)).to eq("pie/handles_titles")
+    end
+
+    it "hashes every title of a describe/it path" do
+      nested = id_for_record(title: ["pie diagram", "handles titles"])
+
+      expect(hash_of(nested)).not_to eq(hash_of(id_for_record))
     end
 
     {
@@ -121,7 +137,7 @@ RSpec.describe CorpusCaseIdentity do
       "a source that is not UTF-8" => { source: "pie \xFF".b },
     }.each do |label, change|
       it "rejects #{label}" do
-        expect { described_class.id_for(record.merge(change)) }
+        expect { id_for_record(**change) }
           .to raise_error(CorpusCaseIdentity::InvalidRecordError)
       end
     end
@@ -130,7 +146,7 @@ RSpec.describe CorpusCaseIdentity do
   describe "slug safety" do
     {
       "path separators" => "../../etc/passwd",
-      "spaces and punctuation" => "should handle: 'quotes', \"double\" & <angles>!",
+      "punctuation" => "should handle: 'quotes', \"double\" & <angles>!",
       "non-ASCII" => "gestión de ñandú — 日本語",
       "shell metacharacters" => "$(rm -rf ~); `id` | cat > /dev/null",
       "a Windows reserved name" => "CON",
@@ -138,120 +154,132 @@ RSpec.describe CorpusCaseIdentity do
       "an enormous title" => "very long title " * 40,
     }.each do |label, title|
       it "keeps #{label} to filesystem-safe characters" do
-        id = described_class.id_for(type: "pie", upstream_path: path, title: title, source: "pie")
-
-        expect(id).to match(%r{\Apie/[a-z0-9_]{1,48}-\h{8}\z})
+        expect(id_for_record(title: title))
+          .to match(%r{\Apie/[a-z0-9_]{1,48}-\h{8}\z})
       end
     end
 
     it "is accepted by the corpus case-path shape" do
-      id = described_class.id_for(type: "pie", upstream_path: path, title: "Handles: titles", source: "pie")
+      id = id_for_record(title: "Handles: titles")
 
       expect("#{id}.mmd").to match(%r{\A[a-z0-9_]+/[A-Za-z0-9_.-]+\.mmd\z})
     end
   end
 
   describe ".assign_ids" do
-    it "gives identical twins in one file distinct, order-stable IDs" do
-      twins = records_from({ path => [[nil, pie_source], [nil, pie_source]] })
-      ids = described_class.assign_ids(twins).map { |r| r[:id] }
+    let(:twins) { records_from({ upstream_path => [[nil, pie_source]] * 2 }) }
 
-      expect(ids.uniq.length).to eq(2)
+    it "gives identical twins in one file distinct IDs" do
+      expect(ids_of(twins).uniq.length).to eq(2)
     end
 
     it "keeps a twin's ID when an unrelated test is inserted before it" do
-      twins = records_from({ path => [[nil, pie_source], [nil, pie_source]] })
-      shifted = records_from({ path => [[nil, graph_source], [nil, pie_source], [nil, pie_source]] })
+      shifted = records_from(
+        { upstream_path => [[nil, graph_source], *[[nil, pie_source]] * 2] },
+      )
 
-      before = described_class.assign_ids(twins).map { |r| r[:id] }
-      after = described_class.assign_ids(shifted).map { |r| r[:id] }
-
-      expect(after.drop(1)).to eq(before)
+      expect(ids_of(shifted).drop(1)).to eq(ids_of(twins))
     end
 
     it "raises when two cases claim one ID" do
-      claimed = records_from({ path => [["t", pie_source], ["t", pie_source]] })
-      claimed.each { |record| record[:occurrence] = 0 }
-
-      expect { described_class.assign_ids(claimed) }
-        .to raise_error(CorpusCaseIdentity::CollisionError, /2 cases claim pie\/t-/)
+      expect { described_class.assign_ids(with_occurrence_zero(twins)) }
+        .to raise_error(CorpusCaseIdentity::CollisionError,
+                        %r{2 cases claim pie/piedb_spec-})
     end
 
     it "raises when two different tests hash to the same ID" do
       allow(described_class).to receive(:digest8).and_return("deadbeef")
-      different = records_from({ path => [["t", pie_source], ["t", "pie showData"]] })
+      different = records_from({ upstream_path => [["t", "a"], ["t", "b"]] })
 
       expect { described_class.assign_ids(different) }
-        .to raise_error(CorpusCaseIdentity::CollisionError, /pie\/t-deadbeef/)
+        .to raise_error(CorpusCaseIdentity::CollisionError, /-deadbeef/)
     end
   end
 
   describe ".migration_manifest" do
     let(:old_records) do
-      records_from({ path => [first, second, third] }).each_with_index.map do |record, index|
-        record.merge(case: format("pie/%<n>03d_old_%<i>d.mmd", n: index + 1, i: index))
+      tests = [first_test, second_test, third_test]
+      records_from({ upstream_path => tests }).each_with_index.map do |r, i|
+        r.merge(case: format("pie/%<n>03d_old.mmd", n: i + 1))
       end
     end
 
-    it "pairs each old ordinal case with the ID of the same upstream block" do
-      reordered = records_from({ path => [third, first, second] })
-      manifest = described_class.migration_manifest(old_records: old_records, new_records: reordered)
-
-      expected = old_records.zip(described_class.assign_ids(old_records)).map do |old, identified|
-        { old: old[:case], new: identified[:id] }
-      end
-      expect(manifest[:pairs]).to eq(expected.sort_by { |pair| pair[:old] })
-      expect(manifest.values_at(:deletions, :additions)).to eq([[], []])
+    def manifest_for(tests, old: old_records)
+      build_manifest(old, records_from({ upstream_path => tests }))
     end
 
-    it "lists a vanished upstream test as a deletion instead of dropping it" do
-      manifest = described_class.migration_manifest(
-        old_records: old_records, new_records: records_from({ path => [first, third] }),
-      )
+    def build_manifest(old, new)
+      described_class.migration_manifest(old_records: old, new_records: new)
+    end
 
-      expect(manifest[:deletions]).to eq([old_records[1][:case]])
-      expect(manifest[:pairs].map { |pair| pair[:old] })
+    it "pairs each old ordinal case with the ID of the same block" do
+      expected = old_records.zip(ids_of(old_records)).map do |old, id|
+        { old: old[:case], new: id }
+      end
+      reordered = manifest_for([third_test, first_test, second_test])
+
+      expect(reordered[:pairs]).to eq(expected.sort_by { _1[:old] })
+    end
+
+    it "reports nothing lost or gained when the upstream is reordered" do
+      reordered = manifest_for([third_test, first_test, second_test])
+
+      expect(reordered.values_at(:deletions, :additions)).to eq([[], []])
+    end
+
+    it "lists a vanished upstream test as a deletion" do
+      pruned = manifest_for([first_test, third_test])
+
+      expect(pruned[:deletions]).to eq([old_records[1][:case]])
+    end
+
+    it "still pairs the surviving cases after a deletion" do
+      pruned = manifest_for([first_test, third_test])
+
+      expect(pruned[:pairs].map { _1[:old] })
         .to eq([old_records[0][:case], old_records[2][:case]])
     end
 
     it "lists a new upstream test as an addition" do
-      manifest = described_class.migration_manifest(
-        old_records: old_records, new_records: records_from({ path => [first, inserted, second, third] }),
+      grown = manifest_for(
+        [first_test, inserted_test, second_test, third_test],
       )
 
-      expect(manifest[:additions]).to eq([id_of({ path => [inserted] }, path, inserted)])
+      expect(grown[:additions])
+        .to eq([ids_by_test([inserted_test]).fetch(inserted_test)])
     end
 
     it "treats a test whose source changed as a deletion plus an addition" do
-      edited = [second[0], "#{second[1]}\n  \"extra\" : 4"]
-      manifest = described_class.migration_manifest(
-        old_records: old_records, new_records: records_from({ path => [first, edited, third] }),
-      )
+      edited = [second_test[0], "#{second_test[1]}\n  \"extra\" : 4"]
+      changed = manifest_for([first_test, edited, third_test])
 
-      expect([manifest[:deletions].length, manifest[:additions].length]).to eq([1, 1])
+      expect(changed.values_at(:deletions, :additions).map(&:length))
+        .to eq([1, 1])
     end
 
     it "raises when the new records collide" do
-      collided = records_from({ path => [["t", pie_source], ["t", pie_source]] }).each { |r| r[:occurrence] = 0 }
+      claimed = with_occurrence_zero(
+        records_from({ upstream_path => [["t", pie_source]] * 2 }),
+      )
 
-      expect { described_class.migration_manifest(old_records: old_records, new_records: collided) }
+      expect { build_manifest([], claimed) }
         .to raise_error(CorpusCaseIdentity::CollisionError)
     end
 
     it "raises when the old records collide" do
-      collided = old_records.map { |record| record.merge(occurrence: 0, title: "t", source: pie_source) }
+      collided = old_records.map do |r|
+        r.merge(occurrence: 0, title: "t", source: pie_source)
+      end
 
-      expect do
-        described_class.migration_manifest(old_records: collided, new_records: records_from({ path => [first] }))
-      end.to raise_error(CorpusCaseIdentity::CollisionError)
+      expect { manifest_for([], old: collided) }
+        .to raise_error(CorpusCaseIdentity::CollisionError)
     end
 
     it "raises when one old case is listed twice" do
-      repeated = old_records.map { |record| record.merge(case: "pie/001_same.mmd") }
+      repeated = old_records.map { |r| r.merge(case: "pie/001_same.mmd") }
 
-      expect do
-        described_class.migration_manifest(old_records: repeated, new_records: [])
-      end.to raise_error(CorpusCaseIdentity::InvalidRecordError, /listed twice/)
+      expect { manifest_for([], old: repeated) }
+        .to raise_error(CorpusCaseIdentity::InvalidRecordError, /twice/)
     end
   end
 end
