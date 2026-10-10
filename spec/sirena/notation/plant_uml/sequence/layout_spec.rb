@@ -408,6 +408,12 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
       expect(divider.texts.first.content).to eq("Phase")
     end
+
+    it "omits the label box for an empty divider" do
+      divider = scene_of("A -> B", "====").dividers.first
+
+      expect([divider.width, divider.texts]).to eq([0.0, []])
+    end
   end
 
   describe "activation bars" do

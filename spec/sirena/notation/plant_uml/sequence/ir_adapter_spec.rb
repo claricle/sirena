@@ -9,6 +9,13 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::IRAdapter do
   include PlantUmlSequenceIrHelpers
 
   let(:graph) { described_class.call(parse_sequence(sequence_feature_source)) }
+  let(:sequence) { Sirena::Notation::PlantUML::Sequence }
+  let(:markerless_graph) do
+    style = sequence::ArrowStyle.new(head: sequence::ArrowEnd.new)
+    message = sequence::Message.new(from: "A", to: "B", label: "", style:)
+    diagram = parse_sequence("@startuml\nA -> B\n@enduml")
+    described_class.call(diagram.with_items([message]))
+  end
 
   def nodes(*roles)
     graph.nodes.select { |node| roles.include?(node.role) }
@@ -57,5 +64,12 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::IRAdapter do
     numbers = graph.nodes.select { |node| node.role == "number" }
 
     expect(numbers.map(&:label)).to eq(%w[1 5])
+  end
+
+  it "keeps absent arrow-end glyphs absent" do
+    edge = markerless_graph.edges.first
+
+    expect([edge.properties.source_marker, edge.properties.target_marker])
+      .to eq([nil, nil])
   end
 end
