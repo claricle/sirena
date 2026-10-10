@@ -22,6 +22,7 @@ module Sirena
       ARROW_SIZE = 8
       SELF_LOOP_WIDTH = 56
       SELF_LOOP_HEIGHT = 20
+      ACTOR_LABEL_OFFSET = 55
 
       HEAD_ENDS = {
         "target" => [:target].freeze,
@@ -324,7 +325,7 @@ module Sirena
           width: participant[:width] || PARTICIPANT_WIDTH,
           height: participant[:height] || PARTICIPANT_HEIGHT,
           corner_radius: 5,
-          label: typed_participant_label(label, position),
+          label: typed_participant_label(label, position, actor_type),
           actor_head: actor_head(position, actor_type),
           actor_lines: actor_lines(position, actor_type)
         )
@@ -357,15 +358,19 @@ module Sirena
         participant.is_a?(Participant) ? participant.id : participant[:id]
       end
 
-      def typed_participant_label(label, position)
+      def typed_participant_label(label, position, actor_type = nil)
         return unless label
 
         Label.new(
           text: label[:text], width: label[:width], height: label[:height],
           x: position[:center_x],
-          y: position[:y] + (PARTICIPANT_HEIGHT / 2),
+          y: position[:y] + label_offset(actor_type),
           font_size: participant_font_size
         )
+      end
+
+      def label_offset(actor_type)
+        actor_type == "actor" ? ACTOR_LABEL_OFFSET : PARTICIPANT_HEIGHT / 2
       end
 
       def actor_head(position, actor_type)
