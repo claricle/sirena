@@ -17,12 +17,12 @@ module Sirena
       # @example A diagram without frames moves nothing
       #   FramePlacement.new.row_shift(3) # => 0
       class FramePlacement
-        OPEN_HEIGHT = 30
+        OPEN_HEIGHT = 45
         RECT_OPEN_HEIGHT = 10
-        CLOSE_HEIGHT = 12
+        CLOSE_HEIGHT = 10
         RECT_CLOSE_HEIGHT = 8
-        SECTION_HEIGHT = 40
-        SLOT_HALF = 30
+        SECTION_HEIGHT = 45
+        SLOT_HALF = 34
         SIDE_MARGIN = 11
         NEST_MARGIN = 10
         TAB_MIN_WIDTH = 50
@@ -34,7 +34,7 @@ module Sirena
         BOX_TOP = 8
         BOX_BOTTOM_PAD = 10
         TITLE_BASELINE = 18
-        DIVIDER_OFFSET = 14
+        DIVIDER_OFFSET = 5
         LOOP_WIDTH = 56
         NO_NOTES = Class.new do
           def slots_before(_index, _order) = 0
@@ -208,7 +208,7 @@ module Sirena
 
         def frame_bottom(index, row_y)
           frame = @frames.fetch(index)
-          base(frame[:stop], row_y) - 12 +
+          base(frame[:stop], row_y) +
             (CLOSE_HEIGHT * deeper_closing(frame)) +
             @notes.slots_before(frame[:stop], frame[:close_order])
         end

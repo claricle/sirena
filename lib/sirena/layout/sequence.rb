@@ -4,6 +4,7 @@ require_relative "base"
 require_relative "../diagram/sequence"
 require_relative "../diagram/sequence_text"
 require_relative "../notation/mermaid/ir_adapters/sequence"
+require_relative "sequence/geometry"
 require_relative "sequence/note_placement"
 require_relative "sequence/frame_reader"
 require_relative "sequence/frame_placement"
@@ -14,17 +15,20 @@ module Sirena
     class Sequence < Base
       # mmdc draws every sequence text at 16px.
       DEFAULT_FONT_SIZE = 16
-      PARTICIPANT_SPACING = 150
-      PARTICIPANT_WIDTH = 120
-      PARTICIPANT_HEIGHT = 40
-      PARTICIPANT_MARGIN = 20
+      PARTICIPANT_SPACING = Geometry::ACTOR_WIDTH
+      PARTICIPANT_WIDTH = Geometry::ACTOR_WIDTH
+      PARTICIPANT_HEIGHT = Geometry::ACTOR_HEIGHT
+      PARTICIPANT_MARGIN = Geometry::ACTOR_MARGIN
       PARTICIPANT_LABEL_PADDING = 20
-      MESSAGE_SPACING = 60
+      MESSAGE_SPACING = Geometry::MESSAGE_PITCH
       LIFELINE_DASH = "5,5"
       ARROW_SIZE = 8
       SELF_LOOP_WIDTH = 56
       SELF_LOOP_HEIGHT = 20
       ACTOR_LABEL_OFFSET = 55
+      # The released renderer hooks size the canvas this much smaller
+      # than the scene they draw (Renderer::Sequence#calculate_width).
+      CANVAS_PAD = 40
 
       HEAD_ENDS = {
         "target" => [:target].freeze,
@@ -197,8 +201,14 @@ module Sirena
       def scene_dimensions(graph, placement)
         children = graph[:children]
         count = graph.dig(:metadata, :message_count) || 0
-        [[canvas_width(children) + 40, placement.right_edge + 20].max,
-         canvas_height(children, count) + placement.total_height + 40]
+        [[canvas_width(children) + CANVAS_PAD, notes_right_edge(placement)].max,
+         canvas_height(children, count) + placement.total_height + CANVAS_PAD]
+      end
+
+      def notes_right_edge(placement)
+        return 0 if placement.notes.empty?
+
+        placement.right_edge + Geometry::DIAGRAM_MARGIN_X
       end
 
       def transform_participants(graph)
@@ -321,19 +331,21 @@ module Sirena
         total_width = participants.sum do |participant|
           participant_width_value(participant)
         end
-        total_width + (participants.length * PARTICIPANT_MARGIN) + 80 +
+        total_width + ((participants.length - 1) * PARTICIPANT_MARGIN) +
+          (2 * Geometry::DIAGRAM_MARGIN_X) - CANVAS_PAD +
           frame_layout.extra_width
       end
 
       def canvas_height(participants, message_count)
         return 0 if (participants || []).empty?
 
-        (PARTICIPANT_HEIGHT * 2) + (message_count * MESSAGE_SPACING) + 100 +
-          frame_layout.total_shift + frame_layout.top_inset
+        (2 * Geometry::DIAGRAM_MARGIN_Y) + (PARTICIPANT_HEIGHT * 2) +
+          lifeline_length(message_count) + frame_layout.top_inset +
+          Geometry::CANVAS_TRIM - CANVAS_PAD
       end
 
       def participant_positions(participants)
-        cursor = PARTICIPANT_MARGIN
+        cursor = Geometry::DIAGRAM_MARGIN_X
         participants.to_h do |participant|
           id = participant_id(participant)
           left = cursor + frame_layout.gap_before(id)
@@ -440,7 +452,7 @@ module Sirena
       end
 
       def origin_y
-        PARTICIPANT_MARGIN + frame_layout.top_inset
+        Geometry::DIAGRAM_MARGIN_Y + frame_layout.top_inset
       end
 
       def lifeline_bottom(message_count, note_height = 0)
@@ -449,8 +461,8 @@ module Sirena
       end
 
       def lifeline_length(message_count, note_height = 0)
-        (message_count * MESSAGE_SPACING) + 100 + frame_layout.total_shift +
-          note_height
+        (message_count * MESSAGE_SPACING) + Geometry::LIFELINE_TAIL +
+          frame_layout.total_shift + note_height
       end
 
       def lifeline_geometry(positions, message_count, note_height = 0)

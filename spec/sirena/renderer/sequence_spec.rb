@@ -59,7 +59,7 @@ RSpec.describe Sirena::Renderer::Sequence do
 
         expect(group.scan("<polygon").size).to eq(0)
         expect(group.scan("<line").size).to eq(1)
-        expect(group[/<line[^>]*>/]).to include('x2="220.0"')
+        expect(group[/<line[^>]*>/]).to include('x2="325.0"')
       end
     end
 
@@ -68,14 +68,14 @@ RSpec.describe Sirena::Renderer::Sequence do
 
       expect(group.scan("<polygon").size).to eq(1)
       expect(group[/<polygon[^>]*points="([^"]*)"/, 1])
-        .to eq("220,120 212,116 212,124")
+        .to eq("325,119 317,115 317,123")
     end
 
     it "draws an arrowhead at both ends of <<->>, one per end" do
       # A count alone would pass with two heads stacked at the same end.
       tips = SequenceSpecHelpers.message_group("<<->>").scan(/<polygon[^>]*points="(\d+),/).flatten
 
-      expect(tips).to contain_exactly("80", "220")
+      expect(tips).to contain_exactly("125", "325")
     end
 
     it "draws a stroked cross on -x, not a filled head" do
@@ -89,10 +89,10 @@ RSpec.describe Sirena::Renderer::Sequence do
       # The two strokes straddle the tip rather than stopping at it, and
       # the shaft runs its full length because a cross takes no inset.
       shaft, *strokes = group.scan(/<line[^>]*>/)
-      expect(shaft).to include('x1="80.0"').and include('x2="220.0"')
+      expect(shaft).to include('x1="125.0"').and include('x2="325.0"')
       expect(strokes.map { |l| l[/x1="[\d.]+" y1="[\d.]+" x2="[\d.]+" y2="[\d.]+"/] })
-        .to contain_exactly('x1="216.0" y1="116.0" x2="224.0" y2="124.0"',
-                            'x1="216.0" y1="124.0" x2="224.0" y2="116.0"')
+        .to contain_exactly('x1="321.0" y1="115.0" x2="329.0" y2="123.0"',
+                            'x1="321.0" y1="123.0" x2="329.0" y2="115.0"')
       # Stroke-only is the point: mermaid's crosshead sets fill="none".
       expect(strokes).to all(include('stroke="#000000"'))
       expect(strokes).to all(include('stroke-width="2"'))
@@ -105,7 +105,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       polygon = SequenceSpecHelpers.message_group("-)")[/<polygon[^>]*>/]
 
       expect(polygon).to include('fill="#000000"')
-      expect(polygon[/points="([^"]*)"/, 1]).to eq("220,120 212,116 215.2,120 212,124")
+      expect(polygon[/points="([^"]*)"/, 1]).to eq("325,119 317,115 320.2,119 317,123")
     end
 
     it "draws one barb below the line on -|/" do
@@ -113,21 +113,21 @@ RSpec.describe Sirena::Renderer::Sequence do
       polygon = SequenceSpecHelpers.message_group("-|/")[/<polygon[^>]*>/]
 
       expect(polygon).to include('fill="#000000"')
-      expect(polygon[/points="([^"]*)"/, 1]).to eq("220,120 212,124 212,120")
+      expect(polygon[/points="([^"]*)"/, 1]).to eq("325,119 317,123 317,119")
     end
 
     it "draws one barb above the line on -|\\" do
       polygon = SequenceSpecHelpers.message_group("-|\\")[/<polygon[^>]*>/]
 
-      expect(polygon[/points="([^"]*)"/, 1]).to eq("220,120 212,116 212,120")
+      expect(polygon[/points="([^"]*)"/, 1]).to eq("325,119 317,115 317,119")
     end
 
     # mermaid's stickBottomArrowHead is `M 0 7 L 7 0` with fill="none" —
     # one stroke, where the solid variant is a filled wedge. Drawing both
     # as polygons made `-//` and `-|/` the same picture.
     {
-      "-//" => 'x1="220.0" y1="120.0" x2="212.0" y2="124.0"',
-      "-\\\\" => 'x1="220.0" y1="120.0" x2="212.0" y2="116.0"',
+      "-//" => 'x1="325.0" y1="119.0" x2="317.0" y2="123.0"',
+      "-\\\\" => 'x1="325.0" y1="119.0" x2="317.0" y2="115.0"',
     }.each do |arrow, stroke|
       it "draws one unfilled stroke on #{arrow}" do
         group = SequenceSpecHelpers.message_group(arrow)
@@ -144,7 +144,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       group = SequenceSpecHelpers.message_group("/|-")
 
       expect(group[/<polygon[^>]*points="([^"]*)"/, 1])
-        .to eq("80,120 88,116 88,120")
+        .to eq("125,119 133,115 133,119")
     end
 
     it "draws the stroke of //- at the source, flipped" do
@@ -152,7 +152,7 @@ RSpec.describe Sirena::Renderer::Sequence do
 
       expect(group.scan("<polygon").size).to eq(0)
       expect(group.scan(/<line[^>]*>/).last)
-        .to include('x1="80.0" y1="120.0" x2="88.0" y2="116.0"')
+        .to include('x1="125.0" y1="119.0" x2="133.0" y2="115.0"')
     end
 
     it "insets the shaft at the end that carries a filled head" do
@@ -160,12 +160,12 @@ RSpec.describe Sirena::Renderer::Sequence do
       # stops short of it — at whichever end it is. Insetting the target
       # end regardless drew /|- through its own barb.
       expect(SequenceSpecHelpers.message_group("/|-")[/<line[^>]*>/])
-        .to include('x1="88.0"').and include('x2="220.0"')
+        .to include('x1="133.0"').and include('x2="325.0"')
     end
 
     it "runs the shaft up to the tip under a concave head" do
       # The chevron of `-)` meets the centreline at its notch, not at its
-      # back edge, so insetting the shaft left a gap between 212 and 215.2.
+      # back edge, so insetting the shaft left a gap between 317 and 320.2.
       headless = SequenceSpecHelpers.message_group("->")[/<line[^>]*>/]
 
       expect(SequenceSpecHelpers.message_group("-)")[/<line[^>]*>/]).to eq(headless)
@@ -178,7 +178,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       headless = SequenceSpecHelpers.message_group("->")[/<line[^>]*>/]
 
       expect(SequenceSpecHelpers.message_group("//-")[/<line[^>]*>/])
-        .to include('x1="80.0"').and include('x2="220.0"')
+        .to include('x1="125.0"').and include('x2="325.0"')
       expect(SequenceSpecHelpers.message_group("-//")[/<line[^>]*>/]).to eq(headless)
     end
 
@@ -188,12 +188,12 @@ RSpec.describe Sirena::Renderer::Sequence do
     describe "a right-to-left message" do
       it "flips the target barb of -|/ to the other side" do
         expect(SequenceSpecHelpers.rtl_group("-|/")[/<polygon[^>]*points="([^"]*)"/, 1])
-          .to eq("80,120 88,116 88,120")
+          .to eq("125,119 133,115 133,119")
       end
 
       it "draws the source barb of /|- below, as left-to-right draws it" do
         expect(SequenceSpecHelpers.rtl_group("/|-")[/<polygon[^>]*points="([^"]*)"/, 1])
-          .to eq("220,120 212,124 212,120")
+          .to eq("325,119 317,123 317,119")
       end
     end
 
@@ -206,7 +206,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       MERMAID
       polygon = SequenceSpecHelpers.message_group("-)", rtl)[/<polygon[^>]*>/]
 
-      expect(polygon[/points="([^"]*)"/, 1]).to eq("80,120 88,116 84.8,120 88,124")
+      expect(polygon[/points="([^"]*)"/, 1]).to eq("125,119 133,115 129.8,119 133,123")
     end
   end
 
@@ -231,7 +231,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       tips = SequenceSpecHelpers.message_group("<<-->>").scan(/<polygon[^>]*points="(\d+),/).flatten
 
       expect(SequenceSpecHelpers.dashed?("<<-->>")).to be(true)
-      expect(tips).to contain_exactly("80", "220")
+      expect(tips).to contain_exactly("125", "325")
     end
   end
 
@@ -242,7 +242,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       # Reaching right, not left: the loop must not cross the lifeline into
       # the previous participant's column.
       expect(group[/<path[^>]*d="([^"]*)"/, 1])
-        .to eq("M 80,110 C 136,110 136,130 80,130")
+        .to eq("M 125,109 C 181,109 181,129 125,129")
       expect(group.scan("<polygon").size).to eq(0)
     end
 
@@ -251,7 +251,7 @@ RSpec.describe Sirena::Renderer::Sequence do
 
       expect(group.scan("<polygon").size).to eq(1)
       expect(group[/<polygon[^>]*points="([^"]*)"/, 1])
-        .to eq("80,130 88,126 88,134")
+        .to eq("125,129 133,125 133,133")
     end
 
     it "draws a head at each end of a bidirectional self-message" do
@@ -259,7 +259,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       group = SequenceSpecHelpers.self_group("<<->>")
       tips = group.scan(/<polygon[^>]*points="[\d.]+,([\d.]+)/).flatten
 
-      expect(tips).to contain_exactly("110", "130")
+      expect(tips).to contain_exactly("109", "129")
     end
 
     it "lifts the label clear of the loop" do
@@ -288,7 +288,7 @@ RSpec.describe Sirena::Renderer::Sequence do
 
     it "insets towards the head on a right-to-left message" do
       # Unsigned, this ran the shaft past its own head: B<<->>A started at
-      # 228 while the source head occupied 212 to 220.
+      # 333 while the source head occupied 317 to 325.
       rtl = <<~MERMAID
         sequenceDiagram
             participant A
@@ -296,8 +296,8 @@ RSpec.describe Sirena::Renderer::Sequence do
             B<<->>A: m
       MERMAID
 
-      expect(SequenceSpecHelpers.message_line("<<->>", "x1", rtl)).to eq(212.0)
-      expect(SequenceSpecHelpers.message_line("<<->>", "x2", rtl)).to eq(88.0)
+      expect(SequenceSpecHelpers.message_line("<<->>", "x1", rtl)).to eq(317.0)
+      expect(SequenceSpecHelpers.message_line("<<->>", "x2", rtl)).to eq(133.0)
     end
   end
 
@@ -324,7 +324,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       "sequenceDiagram\nparticipant A\nparticipant B\nA->>B: hello\n"
     end
     let(:decorated_digest) do
-      "462eb6aca8e9ffd45bde342925333555a688d1242f677edcaf49f445f45ed9a8"
+      "c1b3ca2594e0d4658b52d13352cea342d5e7aaae9ee8033c8a4d67c0077a387b"
     end
 
     it "emits the font sizes resolved by the injected theme" do
@@ -437,7 +437,7 @@ RSpec.describe Sirena::Renderer::Sequence do
             calculate_width calculate_height calculate_participant_positions
             render_lifelines render_messages render_participants render_notes
           ],
-          407.0,
+          457.0,
         ]
       end
 
