@@ -14,23 +14,32 @@ RSpec.describe SpecSupport::LayoutParity::SequenceRecognizer do
     ]
   end
 
-  let(:participant_bottoms) do
-    [
-      [:"participant-bottom", "Alice", "Alice"],
-      [:"participant-bottom", "Bob", "Bob"],
-    ]
-  end
-
   def recognized(svg)
     extract(svg, recognizer).elements.map do |element|
       [element.kind, element.key, element.label]
     end.sort_by { |kind, key, _label| [kind, key] }
   end
 
-  it "maps a real pair to its producer-specific participant copies" do
+  def failure_identities(reference, sirena)
+    figures = [reference, sirena].map { |svg| extract(svg, recognizer) }
+    match = SpecSupport::LayoutParity::ElementMatcher.match(
+      reference: figures.first, sirena: figures.last,
+    )
+    match[:failures].map { |failure| failure.values_at(:type, :group) }
+  end
+
+  it "maps a real pair to the same semantic participants" do
     reference, sirena = sequence_sides
 
     expect([recognized(reference), recognized(sirena)])
-      .to eq([participant_bottoms + participant_tops, participant_tops])
+      .to eq([participant_tops, participant_tops])
+  end
+
+  it "keeps participant-set differences visible" do
+    reference, = sequence_sides
+    alice = Sirena.render("sequenceDiagram\n  Alice->>Alice: Hi\n")
+
+    expect(failure_identities(reference, alice))
+      .to eq([[:missing, [:"participant-top", nil, "Bob"]]])
   end
 end

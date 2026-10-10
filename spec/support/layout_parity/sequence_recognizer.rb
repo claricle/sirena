@@ -2,11 +2,11 @@
 
 module SpecSupport
   module LayoutParity
-    # Sequence participants (contract section 1). Mermaid draws each twice:
-    # rect[name] with class actor-top or actor-bottom. Sirena draws one
-    # g id="participant-<id>" with no class, read as participant-top.
+    # Sequence participants (contract section 1). Mermaid's top and bottom
+    # boxes are presentation copies of one semantic participant, so the top
+    # copy supplies its geometry. Sirena draws that participant once.
     class SequenceRecognizer
-      REFERENCE_CLASSES = %w[actor-top actor-bottom].freeze
+      REFERENCE_CLASS = "actor-top"
 
       def container_kinds
         []
@@ -20,11 +20,9 @@ module SpecSupport
 
       def reference(extractor, doc)
         doc.xpath("//rect[@name]").filter_map do |rect|
-          position = (rect["class"].to_s.split & REFERENCE_CLASSES).first
-          next unless position
+          next unless rect["class"].to_s.split.include?(REFERENCE_CLASS)
 
-          kind = :"participant-#{position.delete_prefix('actor-')}"
-          Element.new(kind: kind, key: rect["name"],
+          Element.new(kind: :"participant-top", key: rect["name"],
                       bbox: extractor.bbox(rect), label: rect["name"])
         end
       end
