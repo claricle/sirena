@@ -4,6 +4,20 @@ module SpecSupport
   module LayoutParity
     # Quadrant regions and data points keyed by their visible labels.
     class QuadrantRecognizer
+      # A point belongs to the region containing its center, even when its
+      # marker straddles the region boundary.
+      class PointElement < Element
+        def initialize(parent:, **attributes)
+          @semantic_parent = parent
+          super(**attributes)
+        end
+
+        def with_parent(_parent)
+          super(@semantic_parent)
+        end
+      end
+      private_constant :PointElement
+
       def container_kinds
         [:quadrant_region]
       end
@@ -22,7 +36,7 @@ module SpecSupport
           element(extractor, node, extractor.label(node), :quadrant_region)
         end
         points = nodes_with_class(doc, "data-point").filter_map do |node|
-          element(extractor, node, extractor.label(node), :quadrant_point)
+          point_element(extractor, node, extractor.label(node), region_elements)
         end
         region_elements + points
       end
@@ -35,9 +49,19 @@ module SpecSupport
         point_nodes = doc.xpath("//circle[starts-with(@id, 'point_')]")
         points = point_nodes.filter_map do |circle|
           label = circle.next_element
-          element(extractor, circle, normalized(label), :quadrant_point)
+          point_element(extractor, circle, normalized(label), regions)
         end
         regions + points
+      end
+
+      def point_element(extractor, node, label, regions)
+        box = extractor.bbox(node)
+        return unless box && !label.empty?
+
+        anchor = Bbox.from_points([box.center])
+        parent = regions.find { |region| region.bbox.contain?(anchor) }&.key
+        PointElement.new(kind: :quadrant_point, key: label, bbox: box,
+                         label: label, identity: :label, parent: parent)
       end
 
       def element(extractor, node, label, kind)
