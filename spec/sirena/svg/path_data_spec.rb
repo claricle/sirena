@@ -35,7 +35,8 @@ RSpec.describe Sirena::Svg::Path, ".build_path_data" do
   end
 
   it "keeps the bezier control points in c1, c2 order" do
-    command = { type: :bezier, c1x: 10, c1y: 20, c2x: 30, c2y: 40, x: 50, y: 60 }
+    command = { type: :bezier, c1x: 10, c1y: 20, c2x: 30, c2y: 40, x: 50,
+                y: 60 }
 
     expect(described_class.build_path_data([command]))
       .to start_with("C 10 20 30 40")

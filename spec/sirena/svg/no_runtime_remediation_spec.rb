@@ -14,13 +14,18 @@ require "ripper"
 # A structural check rather than a behavioural one, because the failure mode
 # is a call nobody writes a test for.
 REMEDIATION_LIB_ROOT = File.expand_path("../../../lib", __dir__)
-REMEDIATION_LIB_FILES = Dir.glob(File.join(REMEDIATION_LIB_ROOT, "**", "*.{rb,rake}")).freeze
+REMEDIATION_LIB_FILES = Dir.glob(File.join(REMEDIATION_LIB_ROOT, "**",
+                                           "*.{rb,rake}")).freeze
 
 # The remediation entry points, and the gem that owns them. Sirena's runtime
 # does not depend on svg_conform at all — it is the gate's tool, not the
 # renderer's — so naming it anywhere under lib/ is the same finding.
-REMEDIATION = /apply_fixes|SvgConform|svg_conform|RemediationEngine|RemediationRunner/
-REMEDIATION_COMMENT_TOKENS = %i[on_comment on_embdoc on_embdoc_beg on_embdoc_end].freeze
+REMEDIATION = Regexp.new(
+  "apply_fixes|SvgConform|svg_conform|" \
+  "RemediationEngine|RemediationRunner",
+)
+REMEDIATION_COMMENT_TOKENS = %i[on_comment on_embdoc on_embdoc_beg
+                                on_embdoc_end].freeze
 
 module SvgNoRuntimeRemediationSpecHelpers
   # Lexed rather than grepped. Half the files under lib/ explain in a comment
@@ -35,7 +40,10 @@ module SvgNoRuntimeRemediationSpecHelpers
   def offences
     REMEDIATION_LIB_FILES.flat_map do |path|
       code_tokens(path).filter_map do |(position, _type, token)|
-        "#{path.sub("#{REMEDIATION_LIB_ROOT}/", '')}:#{position.first}: #{token}" if token.match?(REMEDIATION)
+        if token.match?(REMEDIATION)
+          "#{path.sub("#{REMEDIATION_LIB_ROOT}/",
+                      '')}:#{position.first}: #{token}"
+        end
       end
     end
   end
@@ -50,7 +58,8 @@ RSpec.describe Sirena::Svg do
     # remediation call would land and still clear any useful threshold. The
     # focused glob names that directory independently.
     it "includes every SVG file in the broad lib/ glob" do
-      svg_files = Dir.glob(File.join(REMEDIATION_LIB_ROOT, "sirena", "svg", "*.rb"))
+      svg_files = Dir.glob(File.join(REMEDIATION_LIB_ROOT, "sirena", "svg",
+                                     "*.rb"))
 
       expect(svg_files).not_to be_empty
       expect(REMEDIATION_LIB_FILES).to include(*svg_files)
@@ -63,9 +72,12 @@ RSpec.describe Sirena::Svg do
     end
 
     it "does not declare svg_conform as a runtime dependency" do
-      gemspec = Gem::Specification.load(File.expand_path("../../../sirena.gemspec", __dir__))
+      gemspec = Gem::Specification.load(File.expand_path(
+                                          "../../../sirena.gemspec", __dir__
+                                        ))
 
-      expect(gemspec.runtime_dependencies.map(&:name)).not_to include("svg_conform")
+      expect(gemspec.runtime_dependencies.map(&:name))
+        .not_to include("svg_conform")
     end
   end
 end
