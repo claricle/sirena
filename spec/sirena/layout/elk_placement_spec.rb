@@ -10,7 +10,8 @@ module ElkPlacementSpecHelpers
   def graph_for(source, direction: nil)
     diagram = Sirena::Parser::Flowchart.new.parse(source)
     diagram.direction = direction if direction
-    Sirena::Layout::Flowchart.new.send(:build_graph, diagram)
+    graph = Sirena::Notation::Mermaid::IRAdapters::Flowchart.call(diagram)
+    Sirena::Layout::Flowchart.new.send(:build_graph, graph)
   end
 
   def positions(graph)

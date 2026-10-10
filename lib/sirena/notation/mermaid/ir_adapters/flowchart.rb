@@ -11,6 +11,12 @@ module Sirena
           module_function
 
           def call(diagram)
+            return diagram unless diagram.valid?
+
+            adapt(diagram)
+          end
+
+          def adapt(diagram)
             occupied = []
             boxes = drawable_boxes(diagram)
             box_ids = identity_map(boxes, occupied, "group")
@@ -169,7 +175,7 @@ module Sirena
             occupied << candidate
             candidate
           end
-          private_class_method :entity_nodes, :flow_node, :group_node,
+          private_class_method :adapt, :entity_nodes, :flow_node, :group_node,
                                :edge_nodes, :edge_node, :marker_properties,
                                :settings_nodes, :semantic_nodes,
                                :graph_attributes, :accessibility,
