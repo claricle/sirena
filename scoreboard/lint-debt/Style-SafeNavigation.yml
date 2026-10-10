@@ -1,7 +1,5 @@
 ---
 cop: Style/SafeNavigation
 rows:
-- file: lib/sirena/layout/gantt.rb
-  count: 1
 - file: lib/sirena/renderer/pie.rb
   count: 1

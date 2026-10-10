@@ -1,11 +1,7 @@
 ---
 cop: Layout/LineLength
 rows:
-- file: lib/sirena/parser/grammars/mindmap.rb
-  count: 2
 - file: lib/sirena/renderer/architecture.rb
-  count: 1
-- file: lib/sirena/renderer/gantt.rb
   count: 1
 - file: lib/sirena/renderer/packet.rb
   count: 2
@@ -25,16 +21,8 @@ rows:
   count: 10
 - file: spec/sirena/parser/c4_spec.rb
   count: 2
-- file: spec/sirena/parser/class_diagram_namespace_line_end_spec.rb
-  count: 1
-- file: spec/sirena/parser/class_diagram_spec.rb
-  count: 2
 - file: spec/sirena/parser/kanban_spec.rb
   count: 12
-- file: spec/sirena/parser/mindmap_spec.rb
-  count: 12
-- file: spec/sirena/parser/treemap_spec.rb
-  count: 4
 - file: spec/sirena/renderer/architecture_edge_router_spec.rb
   count: 34
 - file: spec/sirena/renderer/architecture_spec.rb
