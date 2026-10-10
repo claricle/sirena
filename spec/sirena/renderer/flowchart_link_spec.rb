@@ -322,7 +322,10 @@ RSpec.describe Sirena::Renderer::Flowchart do
       # A diagonal edge turns both arms square to the screen; a cross drawn
       # square to the screen leaves both diagonal.
       expect(arms.size).to eq(2)
-      expect(arms.map { |x1, y1, x2, y2| (x2 - x1).abs < 0.05 || (y2 - y1).abs < 0.05 })
+      square = arms.map do |x1, y1, x2, y2|
+        (x2 - x1).abs < 0.05 || (y2 - y1).abs < 0.05
+      end
+      expect(square)
         .to all(be(true))
       # Every endpoint is written to one decimal, so the measured arm
       # carries up to 0.1 of quantisation on its own — it lands on 12.8
@@ -473,7 +476,10 @@ RSpec.describe Sirena::Renderer::Flowchart do
       }
       xml = render_graph(graph).to_xml
       arms = xml[%r{<g id="edge-A_to_B".*?</g>}m]
-        .scan(/<line[^>]*x1="([-\d.]+)" y1="([-\d.]+)" x2="([-\d.]+)" y2="([-\d.]+)"/)
+        .scan(
+          /<line[^>]*x1="([-\d.]+)"[ ]y1="([-\d.]+)"
+           [ ]x2="([-\d.]+)"[ ]y2="([-\d.]+)"/x,
+        )
         .map { |c| c.map(&:to_f) }
 
       expect(arms.size).to eq(2)
@@ -749,7 +755,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # one decimal already carries 0.05 of rounding, so 0.05 would sit
     # exactly on the quantisation floor with no headroom.
     [4, 16, 40, 80, 160].each do |label_width|
-      it "keeps a sideways loop on the flow-side face at #{label_width} characters" do
+      it "keeps a sideways loop on the flow-side face " \
+         "at #{label_width} characters" do
         xml = Sirena.render("flowchart LR\n  A[#{'a' * label_width}] --> A\n")
         x, _y, width, = node_rect(xml)
         start_point, end_point = path_points(xml).values_at(0, -1)
@@ -789,10 +796,12 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # only as wide as the anchor still clips the glyphs — measured
     # against this exact input, Chrome's `getBBox()` put the BT label at
     # y=-11 and the RL label at x=-17.8 while their anchors sat at zero.
-    it "keeps a loop label's own text clear of the page edge, not just its anchor" do
+    it "keeps a loop label's own text clear of the page edge, " \
+       "not just its anchor" do
       { "BT" => :y, "RL" => :x }.each do |direction, axis|
         xml = Sirena.render(
-          "flowchart #{direction}\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n",
+          "flowchart #{direction}\nsubgraph s\nA[abcdefghij]\n" \
+          "end\ns -->|again| s\n",
         )
         tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
           .find { |t| t.include?(">again<") }
@@ -818,7 +827,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # asserts against the pinned real half-width instead. The figure is
     # font-dependent (an HTML span of the same text reads 90.61), and the
     # anchor clears it by about 9, so a different Arial still passes.
-    it "shifts a self loop far enough to clear a wide-glyph label's REAL width" do
+    it "shifts a self loop far enough to clear a wide-glyph label's " \
+       "REAL width" do
       xml = Sirena.render(
         "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|WWWWWWWW| s\n",
       )
@@ -841,10 +851,11 @@ RSpec.describe Sirena::Renderer::Flowchart do
         Sirena::Engine.new(theme: { typography: typography })
           .render(source)[/viewBox="([^"]*)"/, 1]
       end
+      large_type = { font_size_small: 20.0, font_size_normal: 20.0 }
 
       expect([view_box.call({}), view_box.call({ font_size_normal: 20.0 })])
         .to eq([view_box.call({ font_size_small: 16.0 }),
-                view_box.call({ font_size_small: 20.0, font_size_normal: 20.0 })])
+                view_box.call(large_type)])
     end
 
     # Every built-in theme sets both sizes, and they differ. The small one
@@ -928,9 +939,11 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # failed, so raising the ratio again without re-measuring a real
     # script cannot silently pass this the way it passed the ASCII
     # table.
-    it "shifts a self loop far enough to clear an ordinary CJK label, not just ASCII" do
+    it "shifts a self loop far enough to clear an ordinary CJK label, " \
+       "not just ASCII" do
       xml = Sirena.render(
-        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|#{"\u{4E2D}" * 80}| s\n",
+        "flowchart RL\nsubgraph s\nA[abcdefghij]\n" \
+        "end\ns -->|#{"\u{4E2D}" * 80}| s\n",
       )
       tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
         .find { |t| t.include?(">#{"\u{4E2D}" * 80}<") }
@@ -950,7 +963,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # contains by default), but it costs nothing and states the intent
     # explicitly for a renderer that follows the SVG spec's `visible`
     # default for a root element more literally than Chrome does.
-    it "declares overflow hidden on every flowchart document, not just ones with a self loop" do
+    it "declares overflow hidden on every flowchart document, " \
+       "not just ones with a self loop" do
       with_loop = Sirena.render("flowchart RL\ns -->|x| s\n")
       without_loop = Sirena.render("flowchart LR\nA-->B\n")
 
@@ -1134,8 +1148,9 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # The box answer puts this tip 7.6 out past the diamond's sloped edge.
     it "lands on a diamond's sloped edge" do
       xml = Sirena.render("flowchart TD\n  A{x} --> A\n")
+      gap = gap_to(tip_of(xml, "A_to_A"), outline(xml, "A"))
 
-      expect(gap_to(tip_of(xml, "A_to_A"), outline(xml, "A"))).to be_within(0.05).of(0)
+      expect(gap).to be_within(0.05).of(0)
     end
 
     # D sits on the row below, so the link arrives at a slant. The box
@@ -1144,8 +1159,9 @@ RSpec.describe Sirena::Renderer::Flowchart do
       xml = Sirena.render(
         "flowchart TD\n  A --> B\n  B --> C\n  C --> D{{x}}\n",
       )
+      gap = gap_to(tip_of(xml, "C_to_D"), outline(xml, "D"))
 
-      expect(gap_to(tip_of(xml, "C_to_D"), outline(xml, "D"))).to be_within(0.05).of(0)
+      expect(gap).to be_within(0.05).of(0)
     end
 
     # A hexagon keeps a flat top and bottom, and a loop comes back up
@@ -1169,10 +1185,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         xml = Sirena.render(
           "flowchart TD\n  A --> B\n  B --> C\n  C --> D([#{label}])\n",
         )
-        rect = xml[%r{<g id="node-D".*?</g>}m].match(
-          /<rect[^>]*x="([-\d.]+)" y="([-\d.]+)" width="([\d.]+)" height="([\d.]+)"/,
-        )
-        x, y, width, height = rect.captures.map(&:to_f)
+        x, y, width, height = node_rect(xml, "D")
         half_w = width / 2
         half_h = height / 2
         tip_x, tip_y = tip_of(xml, "C_to_D")
@@ -1207,10 +1220,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
 
     it "lands on a rounded box's curved end" do
       xml = Sirena.render("flowchart TD\n  A --> B\n  B --> C\n  C --> D(x)\n")
-      rect = xml[%r{<g id="node-D".*?</g>}m].match(
-        /<rect[^>]*x="([-\d.]+)" y="([-\d.]+)" width="([\d.]+)" height="([\d.]+)"/,
-      )
-      x, y, width, height = rect.captures.map(&:to_f)
+      x, y, width, height = node_rect(xml, "D")
       half_w = width / 2
       half_h = height / 2
       tip_x, tip_y = tip_of(xml, "C_to_D")
