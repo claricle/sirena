@@ -73,7 +73,8 @@ RSpec.describe Sirena::Parser::Flowchart do
       "click with a semicolon in the URL" =>
         %(graph TD\nA\nclick A "https://example.com/a;b"\n),
       "click mixing bare tokens and quoted strings" =>
-        %(graph TD\nA\nclick A href "https://example.com/a;b" "tip;here" _blank\n),
+        "graph TD\nA\nclick A href \"https://example.com/a;b\" " \
+        "\"tip;here\" _blank\n",
     }.each do |label, source|
       it "still renders #{label}" do
         expect(renders?(source)).to be(true)
@@ -145,7 +146,9 @@ RSpec.describe Sirena::Parser::Flowchart do
       # gets to swallow anything. mmdc draws A and a node `stroke:#333`;
       # a node id here takes no colon, so we refuse instead of drawing a
       # diagram one node short.
-      expect { described_class.new.parse("graph TD\nA\nstyle A fill:red;stroke:#333\n") }
+      source = "graph TD\nA\nstyle A fill:red;stroke:#333\n"
+
+      expect { described_class.new.parse(source) }
         .to raise_error(Sirena::Parser::ParseError)
     end
 
@@ -297,7 +300,9 @@ RSpec.describe Sirena::Parser::Flowchart do
       # has to stand as a node. mmdc draws exactly that. A node id here
       # takes no colon, so we refuse the line — swallowing it drew A and B
       # and silently lost the third node.
-      expect { described_class.new.parse("graph TD\nA-->B\nstyle A fill:red;stroke:blue\n") }
+      source = "graph TD\nA-->B\nstyle A fill:red;stroke:blue\n"
+
+      expect { described_class.new.parse(source) }
         .to raise_error(Sirena::Parser::ParseError)
     end
   end
@@ -391,7 +396,9 @@ RSpec.describe Sirena::Parser::Flowchart do
       # This example asserted the opposite and was wrong. mmdc 11.12.0
       # rejects `é: value`, so treating it as a continuation accepted a
       # source the oracle refuses.
-      expect { described_class.new.parse("graph TD\nA\nstyle A fill:red;é: value\n") }
+      source = "graph TD\nA\nstyle A fill:red;é: value\n"
+
+      expect { described_class.new.parse(source) }
         .to raise_error(Sirena::Parser::ParseError)
     end
   end
@@ -858,12 +865,16 @@ RSpec.describe Sirena::Parser::Flowchart do
     # the parser rather than through the engine because a node-less flowchart
     # is rejected downstream on main too, for unrelated reasons.
     it "terminates on a header followed only by separators" do
-      expect { Timeout.timeout(5) { described_class.new.parse("graph TD;;;\n") } }
+      source = "graph TD;;;\n"
+
+      expect { Timeout.timeout(5) { described_class.new.parse(source) } }
         .not_to raise_error
     end
 
     it "terminates on separators at end of input" do
-      expect { Timeout.timeout(5) { described_class.new.parse("graph TD\nA-->B;;;") } }
+      source = "graph TD\nA-->B;;;"
+
+      expect { Timeout.timeout(5) { described_class.new.parse(source) } }
         .not_to raise_error
     end
   end

@@ -35,7 +35,8 @@ RSpec.describe Sirena::Parser::Flowchart do
       it "renders corpus case #{name}" do
         source = File.read("spec/mermaid/unknown/#{name}.mmd")
 
-        expect(svg_text(source)).to include("hog.(1)").and include("new strings")
+        expect(svg_text(source))
+          .to include("hog.(1)").and include("new strings")
       end
     end
 
@@ -57,7 +58,9 @@ RSpec.describe Sirena::Parser::Flowchart do
     end
 
     it "leaves the other round labels of the diagram alone" do
-      text = svg_text("flowchart LR\nb(\"a (1)\") --> c\nd(x y) --> e\nf(p\n%% lone \"\nq) --> g")
+      source = "flowchart LR\nb(\"a (1)\") --> c\nd(x y) --> e\n" \
+               "f(p\n%% lone \"\nq) --> g"
+      text = svg_text(source)
 
       expect(text).to include("a (1)").and include("x y").and include("g")
     end

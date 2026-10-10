@@ -15,7 +15,9 @@ RSpec.describe Sirena::Parser::Flowchart do
     end
 
     it "takes the id on a link with an inline label" do
-      expect(parse_flowchart("A e1@-- text --> B").edges.map(&:label)).to eq(["text"])
+      labels = parse_flowchart("A e1@-- text --> B").edges.map(&:label)
+
+      expect(labels).to eq(["text"])
     end
 
     it "takes the id on a grouped link" do
@@ -80,7 +82,8 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(node_ids(source)).to eq(%w[A B])
     end
 
-    it "sets no node for a shaped, linkless mention with no metadata or class" do
+    it "sets no node for a shaped, linkless mention " \
+       "with no metadata or class" do
       source = "A e1@--> B\ne1[shaped]"
 
       expect(node_ids(source)).to eq(%w[A B])
@@ -139,7 +142,9 @@ RSpec.describe Sirena::Parser::Flowchart do
 
   describe "an @ that is not an edge id" do
     it "keeps an @ inside a link label" do
-      expect(edge_tuples("A --me@host--> B").first[0..2]).to eq(["A", "B", "me@host"])
+      tuple = edge_tuples("A --me@host--> B").first[0..2]
+
+      expect(tuple).to eq(["A", "B", "me@host"])
     end
 
     it "keeps an @ inside a quoted link label" do
