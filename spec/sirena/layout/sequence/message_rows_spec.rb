@@ -33,6 +33,14 @@ RSpec.describe Sirena::Layout::Sequence::MessageRows do
     end
   end
 
+  it "wraps a self message at one actor box wide" do
+    edge = { sources: ["A"], targets: ["A"],
+             metadata: { message_source: "word " * 12 } }
+    rows = described_class.new([edge], positions, font_size: 16, wrap: true)
+
+    expect(rows.lines(0).length).to eq(3)
+  end
+
   it "does not wrap when the diagram does not" do
     expect(rows_for(wide, wrap: false).lines(0)).to eq([wide])
   end
