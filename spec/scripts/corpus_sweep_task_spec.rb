@@ -1,52 +1,24 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "json"
 require "open3"
 require "rbconfig"
 
 # Runs scripts/corpus_sweep.rb over the pie corpus in a child process with
 # Sirena::Engine#render replaced by one fixed string, so the script's own
 # pass predicate is what is under test rather than any renderer.
+#
+# One child sweeps every SVG below in turn: each example used to spawn its
+# own Ruby (bundler/setup and all of sirena loaded), which made this file
+# about 16 spawns, 1 to 2 s each on a Windows runner.
 module CorpusSweepRunner
   REPO_ROOT = File.expand_path("../..", __dir__)
 
-  STUB = <<~RUBY
-    require "bundler/setup"
-    require "sirena"
-    Sirena::Engine.class_eval { def render(_source, *) = ENV.fetch("FAKE_SVG") }
-    ARGV.replace(["pie"])
-    # corpus_sweep.rb only runs its report when loaded as the main program
-    # ($PROGRAM_NAME == __FILE__); `load` alone leaves $PROGRAM_NAME as "-e"
-    # and the script returns before printing anything.
-    $PROGRAM_NAME = File.expand_path("scripts/corpus_sweep.rb")
-    load "scripts/corpus_sweep.rb"
-  RUBY
-
-  def sweep_totals_for(svg)
-    # bundler/setup must run before "sirena" is required in the child, or a
-    # default gem (json) activates unpinned and Bundler's own activation
-    # later conflicts with the Gemfile's pinned version.
-    out, err, status = Open3.capture3({ "FAKE_SVG" => svg }, RbConfig.ruby, "-I", "lib", "-e", STUB, chdir: REPO_ROOT)
-    raise "sweep did not run: #{err}" unless status.success?
-
-    passed, total = out.match(%r{^TOTAL: (\d+)/(\d+)}).captures.map(&:to_i)
-    { passed: passed, total: total }
-  end
-end
-
-RSpec.describe "scripts/corpus_sweep.rb", type: :task do
-  include CorpusSweepRunner
-
-  it "counts a well-formed SVG as a pass for every case" do
-    totals = sweep_totals_for('<svg xmlns="http://www.w3.org/2000/svg"><text>a</text></svg>')
-
-    expect(totals[:total]).to be_positive
-    expect(totals[:passed]).to eq(totals[:total])
-  end
-
-  # Sirena's real output opens `<svg` followed by a newline, not a space, so
-  # the root-tag shape is pinned on every spelling the predicate accepts.
-  {
+  WELL_FORMED = {
+    "a well-formed SVG" => '<svg xmlns="http://www.w3.org/2000/svg"><text>a</text></svg>',
+    # Sirena's real output opens `<svg` followed by a newline, not a space, so
+    # the root-tag shape is pinned on every spelling the predicate accepts.
     "a newline after <svg" => %(<svg\n  xmlns="http://www.w3.org/2000/svg"\n  width="1"></svg>\n),
     "an xml declaration before the root" => %(<?xml version="1.0"?>\n<svg xmlns="http://www.w3.org/2000/svg"></svg>),
     "leading whitespace before the root" => %(\n  <svg xmlns="http://www.w3.org/2000/svg"></svg>),
@@ -56,15 +28,9 @@ RSpec.describe "scripts/corpus_sweep.rb", type: :task do
     "an entity-like text inside CDATA" => "<svg><![CDATA[&nbsp;]]></svg>",
     "an entity-like text inside a processing instruction" => "<svg><?x &nbsp; ?></svg>",
     "a numeric character reference" => "<svg><text>&#169;</text></svg>",
-  }.each do |label, svg|
-    it "counts #{label} as a pass for every case" do
-      totals = sweep_totals_for(svg)
+  }.freeze
 
-      expect(totals[:passed]).to eq(totals[:total])
-    end
-  end
-
-  {
+  MALFORMED = {
     "an unescaped <br> inside <text> (svg-shaped but not XML)" => "<svg><text>a<br></text></svg>",
     "an undeclared entity reference" => "<svg><text>a&nbsp;b</text></svg>",
     "output that is not an svg at all" => "<html></html>",
@@ -72,7 +38,72 @@ RSpec.describe "scripts/corpus_sweep.rb", type: :task do
     "an svg root that is not closed at the end" => "<svg></svg><!-- x -->",
     "an entity after a CDATA section that holds a comment opener" => "<svg><![CDATA[<!--]]>&nbsp;<!-- --></svg>",
     "an entity after a processing instruction that holds a comment opener" => "<svg><?x <!-- ?>&nbsp;<?y --> ?></svg>",
-  }.each do |label, svg|
+  }.freeze
+
+  STUB = <<~RUBY
+    require "bundler/setup"
+    require "json"
+    require "stringio"
+    require "sirena"
+    Sirena::Engine.class_eval { def render(_source, *) = ENV.fetch("FAKE_SVG") }
+    # corpus_sweep.rb only runs its report when loaded as the main program
+    # ($PROGRAM_NAME == __FILE__); `load` alone leaves $PROGRAM_NAME as "-e"
+    # and the script returns before printing anything.
+    $PROGRAM_NAME = File.expand_path("scripts/corpus_sweep.rb")
+    totals = JSON.parse(ENV.fetch("FAKE_SVGS")).to_h do |svg|
+      ENV["FAKE_SVG"] = svg
+      ARGV.replace(["pie"])
+      $stdout = StringIO.new
+      load "scripts/corpus_sweep.rb"
+      [svg, $stdout.string]
+    ensure
+      $stdout = STDOUT
+    end
+    puts JSON.generate(totals)
+  RUBY
+
+  # Sweeps every SVG above in one child, once per process.
+  def self.sweeps
+    @sweeps ||= begin
+      svgs = WELL_FORMED.values + MALFORMED.values
+      # bundler/setup must run before "sirena" is required in the child, or a
+      # default gem (json) activates unpinned and Bundler's own activation
+      # later conflicts with the Gemfile's pinned version.
+      out, err, status = Open3.capture3(
+        { "FAKE_SVGS" => JSON.generate(svgs) },
+        RbConfig.ruby, "-W0", "-I", "lib", "-e", STUB, chdir: REPO_ROOT
+      )
+      raise "sweep did not run: #{err}" unless status.success?
+
+      JSON.parse(out)
+    end
+  end
+
+  def sweep_totals_for(svg)
+    report = CorpusSweepRunner.sweeps.fetch(svg)
+    passed, total = report.match(%r{^TOTAL: (\d+)/(\d+)}).captures.map(&:to_i)
+    { passed: passed, total: total }
+  end
+end
+
+RSpec.describe "scripts/corpus_sweep.rb", type: :task do
+  include CorpusSweepRunner
+
+  CorpusSweepRunner::WELL_FORMED.each do |label, svg|
+    it "counts #{label} as a pass for every case" do
+      totals = sweep_totals_for(svg)
+
+      expect(totals[:passed]).to eq(totals[:total])
+    end
+  end
+
+  it "sweeps at least one case" do
+    svg = CorpusSweepRunner::WELL_FORMED.values.first
+
+    expect(sweep_totals_for(svg)[:total]).to be_positive
+  end
+
+  CorpusSweepRunner::MALFORMED.each do |label, svg|
     it "counts #{label} as a failure for every case" do
       expect(sweep_totals_for(svg)[:passed]).to eq(0)
     end
