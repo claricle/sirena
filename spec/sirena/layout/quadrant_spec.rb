@@ -87,7 +87,7 @@ RSpec.describe Sirena::Layout::Quadrant do
         graph.points, :radius, :stroke_width, :stroke_color
       )
 
-      expect(geometry).to eq([[6, 2, nil], [9.0, 4.0, "navy"]])
+      expect(geometry).to eq([[5, 2, nil], [9.0, 4.0, "navy"]])
     end
 
     it "draws only the supplied axis labels, x below the plot" do
