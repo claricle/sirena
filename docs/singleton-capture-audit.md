@@ -35,7 +35,7 @@ ruby scripts/audit_singleton_captures.rb --check
 
 **Result:** 1 executable `Array(...)` hit
 
-- `lib/sirena/parser/builders/class_diagram.rb:166` — `statements = Array(stmt[:namespace_body])`
+- `lib/sirena/parser/builders/class_diagram.rb:173` — `statements = Array(stmt[:namespace_body])`
 
 ## 07b — sequence
 
@@ -79,9 +79,9 @@ ruby scripts/audit_singleton_captures.rb --check
 
 **Result:** 5 executable `Array(...)` hits
 
-- `lib/sirena/parser/builders/gantt.rb:180` — `Array(parts.is_a?(Array) ? parts : [parts]).map { |part| extract_text(part[:field]) }`
+- `lib/sirena/parser/builders/gantt.rb:186` — `Array(parts.is_a?(Array) ? parts : [parts]).map do |part|`
 - `lib/sirena/parser/builders/kanban.rb:414` — `lines_array = Array(lines)`
-- `lib/sirena/parser/builders/radar.rb:107` — `Array(statements).each do |stmt|`
+- `lib/sirena/parser/builders/radar.rb:111` — `Array(statements).each do |stmt|`
 - `lib/sirena/parser/radar.rb:60` — `values = Array(curve_data[:values])`
 - `lib/sirena/parser/user_journey.rb:180` — `lines = Array(tree[:lines])`
 
@@ -141,12 +141,12 @@ ruby scripts/audit_singleton_captures.rb --check
 
 - `lib/sirena/parser/builders/mindmap.rb:253` — `nodes_array = Array(nodes)`
 - `lib/sirena/parser/builders/packet.rb:43` — `stmts = statements.nil? ? [] : Array(statements)`
-- `lib/sirena/parser/builders/requirement.rb:272` — `Array(class_data)`
-- `lib/sirena/parser/builders/sankey.rb:52` — `Array(statements).each do |stmt|`
-- `lib/sirena/parser/builders/xy_chart.rb:31` — `values: Array(values),`
-- `lib/sirena/parser/builders/xy_chart.rb:39` — `values: Array(values),`
-- `lib/sirena/parser/builders/xy_chart.rb:68` — `values: Array(values),`
-- `lib/sirena/parser/builders/xy_chart.rb:78` — `values: Array(values),`
-- `lib/sirena/parser/builders/xy_chart.rb:88` — `values: Array(values),`
-- `lib/sirena/parser/builders/xy_chart.rb:101` — `Array(statements).each do |stmt|`
+- `lib/sirena/parser/builders/requirement.rb:277` — `Array(class_data)`
+- `lib/sirena/parser/builders/sankey.rb:54` — `Array(statements).each do |stmt|`
+- `lib/sirena/parser/builders/xy_chart.rb:33` — `values: Array(values),`
+- `lib/sirena/parser/builders/xy_chart.rb:41` — `values: Array(values),`
+- `lib/sirena/parser/builders/xy_chart.rb:74` — `values: Array(values),`
+- `lib/sirena/parser/builders/xy_chart.rb:84` — `values: Array(values),`
+- `lib/sirena/parser/builders/xy_chart.rb:97` — `values: Array(values),`
+- `lib/sirena/parser/builders/xy_chart.rb:110` — `Array(statements).each do |stmt|`
 - `lib/sirena/parser/packet.rb:43` — `Array(result[:fields]).each do |field_data|`
