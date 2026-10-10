@@ -107,9 +107,9 @@ Sirena (Root Module)
     │
     ├── Notation (Registry: register, fetch, resolve)
     │
-    ├── Notation::Mermaid (Detection, Parsing, Type Registration)
+    ├── Notation::Mermaid (Detection, Parsing, the TYPES table)
     │     │
-    │     ├── register_type(type, parser:, transform:, renderer:, model:)
+    │     ├── TYPES (one row per diagram type: pattern, keyword)
     │     └── type_handlers(type) -> handler set
     │
     ├── DiagramRegistry (Deprecated Notation::Mermaid Facade)
@@ -359,18 +359,15 @@ class Renderer::NewType < Renderer::Base
   end
 end
 
-# 4. Register
-Notation::Mermaid.register_type(
-  :new_type,
-  parser: Parser::NewType,
-  transform: Layout::NewType,
-  renderer: Renderer::NewType,
-  model: Diagram::NewType
-)
-
-# 5. Add a detection regex to Notation::Mermaid::DIAGRAM_TYPE_PATTERNS
-#    and a keyword to Notation::Mermaid::DIAGRAM_TYPE_KEYWORDS
+# 4. Add one row to Notation::Mermaid::TYPES (lib/sirena/notation/mermaid.rb)
+#    with a detection `pattern:` and the `keyword:` the error message prints.
+#    The parser, layout, renderer and model are found by name:
+#    Parser::NewType, Layout::NewType, Renderer::NewType, Diagram::NewType.
+#    lib/sirena/notation/builtin.rb requires the files for each row.
 ```
+
+`bundle exec rake 'type:new[demo]'` scaffolds these files; see
+`docs/adding-a-diagram-type.md`. There is no `register_type` method.
 
 ### Adding New SVG Shapes
 
@@ -401,7 +398,7 @@ circle, ellipse, line, path, polygon, polyline, text, group; output is
 ```
 SVG::Document
     │
-    ├── viewBox: String
+    ├── view_box: String
     ├── width: Numeric
     ├── height: Numeric
     └── children: Array<SVG::Element>
@@ -417,7 +414,7 @@ SVG::Document
             │
             ├── SVG::Text
             │     ├── x, y: Numeric
-            │     ├── content: String
+            │     ├── content: Array<String>
             │     └── style: SVG::Style
             │
             └── SVG::Rect, Circle, Line, Polygon...
@@ -621,33 +618,27 @@ sequenceDiagram
 
 ### Registry Pattern (Notation::Mermaid)
 
-Allows dynamic registration and retrieval of diagram type handlers without
-hardcoding type checks. Each of the 24 types registers one handler set in
-`lib/sirena/notation/builtin.rb`; detection is a separate table,
-`Notation::Mermaid::DIAGRAM_TYPE_PATTERNS`. `DiagramRegistry` delegates to
-this table as a deprecated compatibility facade.
+Retrieves a diagram type's handlers without hardcoding type checks. Each of
+the 24 types is one row of `Notation::Mermaid::TYPES`; its handler classes are
+found by name (`Parser::<Type>`, `Layout::<Type>`, `Renderer::<Type>`,
+`Diagram::<Type>`) and `lib/sirena/notation/builtin.rb` requires their files.
+`DIAGRAM_TYPE_PATTERNS` is derived from that table. `DiagramRegistry` delegates
+to it as a deprecated compatibility facade and only reads (`get`, `types`,
+`registered?`).
 
 ```mermaid
 flowchart LR
-    Pat["Notation::Mermaid::DIAGRAM_TYPE_PATTERNS: regex to type"] --> Type["type symbol"]
+    Pat["Notation::Mermaid::TYPES: regex to type"] --> Type["type symbol"]
     Type --> Get["Notation::Mermaid.type_handlers(type)"]
     Get --> H["handler set"]
     H --> Pa["parser: Parser class"]
     H --> Tr["transform: Layout class"]
     H --> Re["renderer: Renderer class"]
     H --> Mo["model: Diagram class"]
-    Boot["lib/sirena/notation/builtin.rb"] -->|"register_type(type, parser:, transform:, renderer:, model:)"| Get
+    Boot["lib/sirena/notation/builtin.rb: requires each row's files"] --> Get
 ```
 
 ```ruby
-Notation::Mermaid.register_type(
-  :flowchart,
-  parser: Parser::Flowchart,
-  transform: Layout::Flowchart,
-  renderer: Renderer::Flowchart,
-  model: Diagram::Flowchart
-)
-
 handlers = Notation::Mermaid.type_handlers(:flowchart)
 diagram = handlers[:parser].new.parse(source)
 ```
