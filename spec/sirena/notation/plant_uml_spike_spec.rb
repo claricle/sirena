@@ -189,7 +189,7 @@ module PlantUmlSpikeHelpers
   def pipeline_attributes(notation)
     have_attributes(
       type: :class_diagram,
-      diagram: an_instance_of(notation::Diagram),
+      diagram: an_instance_of(Sirena::IR::Graph),
       transform: notation::Layout,
       renderer: notation::Renderer,
     )
