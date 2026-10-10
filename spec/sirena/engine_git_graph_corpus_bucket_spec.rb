@@ -119,9 +119,9 @@ RSpec.describe Sirena::Engine do
 
   describe "an empty diagram" do
     {
-      "LR" => [240.0, 260.0],
-      "TB" => [260.0, 240.0],
-      "BT" => [260.0, 240.0],
+      "LR" => [180.0, 100.0],
+      "TB" => [100.0, 180.0],
+      "BT" => [100.0, 180.0],
     }.each do |direction, size|
       it "renders #{direction} at #{size.join('x')} with nothing drawn" do
         svg = render_svg("gitGraph #{direction}:\n")
@@ -225,11 +225,11 @@ RSpec.describe Sirena::Engine do
 
   describe "commit spacing" do
     { "LR" => :first, "TB" => :last, "BT" => :last }.each do |direction, axis|
-      it "puts commits 80px apart along the time axis, #{direction}" do
+      it "puts commits 50px apart along the time axis, #{direction}" do
         centers = circle_centers(render_svg(commit_chain(direction, %w[a b c])))
         gaps = centers.map(&axis).each_cons(2).map { |a, b| (a - b).abs }
 
-        expect(gaps).to eq([80, 80])
+        expect(gaps).to eq([50, 50])
       end
     end
   end

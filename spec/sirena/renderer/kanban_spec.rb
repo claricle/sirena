@@ -59,6 +59,11 @@ module KanbanRendererSpecHelpers
     REXML::XPath.first(REXML::Document.new(xml), path)
   end
 
+  def rendered_text(xml)
+    REXML::XPath.match(REXML::Document.new(xml), "//text//text()")
+      .join(" ")
+  end
+
   def expect_bold_card_run(xml)
     expect(xml).to match(%r{<tspan[^>]*font-weight="bold"[^>]*>urgent</tspan>})
     expect(xml).to include("<tspan>Hello </tspan>")
@@ -223,8 +228,7 @@ RSpec.describe Sirena::Renderer::Kanban do
 
       it "includes card elements" do
         svg = renderer.render(layout)
-        xml = svg.to_xml
-        expect(xml).to include("Create Documentation")
+        expect(rendered_text(svg.to_xml)).to include("Create Documentation")
       end
     end
 
@@ -290,8 +294,8 @@ RSpec.describe Sirena::Renderer::Kanban do
 
       it "renders all cards" do
         svg = renderer.render(layout)
-        xml = svg.to_xml
-        expect(xml).to include("Create Documentation", "Release v1.0")
+        expect(rendered_text(svg.to_xml))
+          .to include("Create Documentation", "Release v1.0")
       end
     end
 
