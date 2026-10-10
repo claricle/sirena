@@ -21,9 +21,8 @@ RSpec.describe Sirena::Renderer::Timeline do
     render_doc("timeline\n#{sections.join}")
   end
 
-  it "wraps a period in a taskWrapper group" do
-    expect(attrs(doc, "//g[@class='taskWrapper']", "transform"))
-      .to eq(["translate(100, 167.8)", "translate(300, 167.8)"])
+  it "wraps each period in a taskWrapper group" do
+    expect(nodes(doc, "//g[@class='taskWrapper']").length).to eq(2)
   end
 
   it "wraps an event in an eventWrapper group" do
@@ -32,12 +31,12 @@ RSpec.describe Sirena::Renderer::Timeline do
 
   it "draws a card as mmdc's rounded-top path" do
     expect(attrs(doc, "//path[@class='node-bkg']", "d").first)
-      .to eq("M0 62.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H0 Z")
+      .to eq("M100 112.8 v-57.8 q0,-5 5,-5 h180 q5,0 5,5 v62.8 H100 Z")
   end
 
   it "draws the rule under a card, full width" do
     expect(attrs(doc, "//line[@class='node-line']", "x2").first.to_f)
-      .to eq(190)
+      .to eq(290)
   end
 
   it "fills the first section with the first palette entry" do
@@ -60,9 +59,11 @@ RSpec.describe Sirena::Renderer::Timeline do
       .to eq(["3"])
   end
 
-  it "centres the card text 10 below the card top" do
-    expect(attrs(doc, "//g[@class='taskWrapper']//g/g[2]", "transform"))
-      .to eq(["translate(95, 10)", "translate(95, 10)"])
+  it "centres the card text on the card, 31 below its top" do
+    texts = nodes(doc, "//g[@class='taskWrapper']//text")
+
+    expect(texts.map { |text| [text.attributes["x"], text.attributes["y"]] })
+      .to eq([%w[195.0 198.8], %w[395.0 198.8]])
   end
 
   it "sets card text at 16 and the title at 33" do
@@ -94,7 +95,7 @@ RSpec.describe Sirena::Renderer::Timeline do
 
   it "steps wrapped lines 17.6 apart, as mmdc's 1.1em does" do
     expect(attrs(wrapped, "//tspan", "y").compact.map(&:to_f))
-      .to eq([38.6, 56.2])
+      .to eq([359.6, 377.2])
   end
 
   it "draws the title bold" do

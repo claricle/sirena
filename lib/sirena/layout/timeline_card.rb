@@ -18,12 +18,34 @@ module Sirena
       attribute :font_size, :float
       # The dashed line a period drops towards its events.
       attribute :connector, TimelineLine
+      # Canvas path data of the box, rounded top corners and open bottom.
+      attribute :outline, :string
+      # The rule under the box, on the canvas.
+      attribute :rule, TimelineLine
+      # Canvas anchor of the first text line, centred on the box.
+      attribute :text_x, :float
+      attribute :text_y, :float
+      # Canvas baselines of the text lines after the first.
+      attribute :next_baselines, :float, collection: true, default: -> { [] }
+
+      CORNER = 5
+      TEXT_TOP = 10
+      FIRST_BASELINE = 21
+      LINE_PITCH = 17.6
 
       # Moves the card, and its connector, by the given offsets.
       def shift(delta_x, delta_y)
         self.x += delta_x
         self.y += delta_y
         connector&.shift(delta_x, delta_y)
+        place
+      end
+
+      # Publishes the canvas geometry the renderer draws from.
+      def place
+        self.outline = outline_path
+        self.rule = rule_line
+        place_text
       end
 
       # @return [Float] x range the box and its text cover
@@ -36,6 +58,38 @@ module Sirena
       # @return [Float] lowest y the box or its connector reaches
       def bottom
         [y + height, connector&.y2].compact.max
+      end
+
+      private
+
+      def place_text
+        self.text_x = x + (width / 2)
+        self.text_y = y + TEXT_TOP + FIRST_BASELINE
+        self.next_baselines = baselines_after_first
+      end
+
+      def baselines_after_first
+        (1...lines.length).map { |index| text_y + (index * LINE_PITCH) }
+      end
+
+      def rule_line
+        bottom_y = y + height
+        TimelineLine.new(x1: x, y1: bottom_y, x2: x + width, y2: bottom_y)
+      end
+
+      def outline_path
+        [start_command, "v#{path_number(CORNER + CORNER - height)}",
+         "q0,-#{CORNER} #{CORNER},-#{CORNER}", "h#{path_number(width - 10)}",
+         "q#{CORNER},0 #{CORNER},#{CORNER}", "v#{path_number(height - CORNER)}",
+         "H#{path_number(x)}", "Z"].join(" ")
+      end
+
+      def start_command
+        "M#{path_number(x)} #{path_number(y + height - CORNER)}"
+      end
+
+      def path_number(value)
+        value.to_i == value ? value.to_i.to_s : value.round(4).to_s
       end
     end
   end

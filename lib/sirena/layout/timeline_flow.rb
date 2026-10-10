@@ -119,7 +119,7 @@ module Sirena
           width: width, height: height, color_index: color,
           font_size: TimelineText::FONT_SIZE,
           text_width: lines.map { |line| TimelineText.width_of(line) }.max
-        )
+        ).tap(&:place)
       end
 
       def section_max
