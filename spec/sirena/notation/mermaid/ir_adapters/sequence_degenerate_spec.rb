@@ -22,7 +22,8 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapters::Sequence do
   context "when the model carries accessibility readers" do
     before do
       diagram.define_singleton_method(:acc_title) { nil }
-      diagram.define_singleton_method(:acc_description) { "Described" }
+      diagram.define_singleton_method(:acc_description) { nil }
+      diagram.define_singleton_method(:acc_descr) { "Described" }
     end
 
     it "skips a nil reader and takes the next non-nil one" do
