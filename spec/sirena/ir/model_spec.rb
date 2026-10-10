@@ -67,4 +67,8 @@ RSpec.describe Sirena::IR::Model do
     expect { Sirena::IR::Graph.new("id" => "a", id: "b") }
       .to raise_error(ArgumentError, "duplicate attribute names")
   end
+
+  it "has no default semantic errors" do
+    expect(described_class.new).to be_valid
+  end
 end

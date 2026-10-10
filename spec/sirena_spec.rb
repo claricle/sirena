@@ -13,4 +13,17 @@ RSpec.describe Sirena do
   it "does not leak a render method onto the top-level main object" do
     expect(TOPLEVEL_BINDING.receiver.respond_to?(:render, true)).to be false
   end
+
+  context "when loading the version file" do
+    let(:source) { File.expand_path("../lib/sirena/version.rb", __dir__) }
+
+    before do
+      stub_const("Sirena", Module.new)
+      load source
+    end
+
+    it "exposes its loaded version" do
+      expect(Object.const_get(:Sirena).const_get(:VERSION)).to eq("0.1.0")
+    end
+  end
 end
