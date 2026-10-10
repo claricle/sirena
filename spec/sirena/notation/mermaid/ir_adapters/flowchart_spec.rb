@@ -203,4 +203,13 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapters::Flowchart do
 
     expect(Marshal.dump(diagram)).to eq(before)
   end
+
+  it "leaves an invalid private model for the layout validity guard" do
+    empty = Sirena::Diagram::Flowchart.new(
+      nodes: [], subgraphs: [flowchart_group("empty", "Empty")],
+    )
+
+    actual = [described_class.call(empty).equal?(empty), empty.valid?]
+    expect(actual).to eq([true, false])
+  end
 end
