@@ -100,16 +100,16 @@ layout behavior; the older survey's `transform/*` wording refers to these
 | `sankey` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/sankey.rb` | Flows map to shared nodes and resolved weighted edges; layout owns layering, positions, and paths. |
 | `packet` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/packet.rb` | Fields map to ordered bit-start placements with inclusive spans; layout owns row, column, and pixel geometry. |
 | `treemap` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/treemap.rb` | Preorder hierarchy, explicit magnitudes, derived totals, and normalized styles map to shared data; layout allocates all rectangles. |
-| `c4` | `graph-shaped` | `lib/sirena/layout/c4.rb` | Elements/boundaries become identified children and relationships carry source/target ids (40–50, 178–206). |
+| `c4` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/c4.rb` | Elements and boundaries map to ordered contained nodes with normalized roles and resolved directional relationships; layout owns all geometry. |
 | `info` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/info.rb` | The title and show-information flag map to shared data without nodes or connectivity; layout owns panel geometry. |
 | `error` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/error.rb` | The title and message map to shared ordered content without connectivity; layout owns panel geometry. |
 
 Summary: **6 pre-positioned, 12 graph-shaped, 6 data-shaped; 24 total.**
 
-Migration status: **17 of 24 Mermaid types use the shared IR boundary** — 5
-graph-shaped (`mindmap`, `sankey`, `requirement`, `user_journey`, `git_graph`), 6 data-shaped (`pie`, `info`, `error`,
+Migration status: **18 of 24 Mermaid types use the shared IR boundary** — 6
+graph-shaped (`mindmap`, `sankey`, `requirement`, `user_journey`, `git_graph`, `c4`), 6 data-shaped (`pie`, `info`, `error`,
 `kanban`, `radar`, `treemap`), and 6 pre-positioned (`packet`, `timeline`,
-`quadrant`, `xychart`, `block`, `gantt`); 7 types remain on their private
+`quadrant`, `xychart`, `block`, `gantt`); 6 types remain on their private
 layout inputs.
 
 `rake type:new[<type>]` adds a data-shaped row immediately above this
