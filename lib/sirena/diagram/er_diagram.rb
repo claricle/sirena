@@ -81,9 +81,17 @@ module Sirena
       #
       # @return [Boolean] true if entity is valid
       def valid?
-        !id.nil? && !id.empty? && !name.nil? && !name.empty? &&
-          !attributes.nil? &&
-          attributes.all? { |attribute| attribute&.valid? }
+        present?(id) && present?(name) && valid_attributes?
+      end
+
+      private
+
+      def present?(value)
+        !value.nil? && !value.empty?
+      end
+
+      def valid_attributes?
+        attributes&.all? { |attribute| attribute&.valid? } || false
       end
     end
 
@@ -122,11 +130,7 @@ module Sirena
       #
       # @return [Boolean] true if relationship is valid
       def valid?
-        !from_id.nil? && !from_id.empty? &&
-          !to_id.nil? && !to_id.empty? &&
-          !relationship_type.nil? && !relationship_type.empty? &&
-          !cardinality_from.nil? && !cardinality_from.empty? &&
-          !cardinality_to.nil? && !cardinality_to.empty?
+        required_values.all? { |value| value && !value.empty? }
       end
 
       # Checks if this is an identifying relationship.
@@ -141,6 +145,18 @@ module Sirena
       # @return [Boolean] true if non-identifying type
       def non_identifying?
         relationship_type == "non-identifying"
+      end
+
+      private
+
+      def required_values
+        [
+          from_id,
+          to_id,
+          relationship_type,
+          cardinality_from,
+          cardinality_to,
+        ]
       end
     end
 
@@ -238,19 +254,7 @@ module Sirena
       #
       # @return [Boolean] true if ER diagram is valid
       def valid?
-        return false if entities.nil?
-        return false unless entities.all? { |entity| entity&.valid? }
-        return false unless relationships.nil? ||
-                            relationships.all? { |rel| rel&.valid? }
-
-        # Validate relationship references
-        entity_ids = entities.map(&:id)
-        relationships&.each do |rel|
-          return false unless entity_ids.include?(rel.from_id)
-          return false unless entity_ids.include?(rel.to_id)
-        end
-
-        true
+        valid_entities? && valid_relationships? && valid_references?
       end
 
       # Finds an entity by its identifier.
@@ -289,6 +293,24 @@ module Sirena
       # @return [Array<ErRelationship>] non-identifying relationships
       def non_identifying_relationships
         relationships.select(&:non_identifying?)
+      end
+
+      private
+
+      def valid_entities?
+        entities&.all? { |entity| entity&.valid? } || false
+      end
+
+      def valid_relationships?
+        relationships.nil? || relationships.all? { |relation| relation&.valid? }
+      end
+
+      def valid_references?
+        entity_ids = entities.map(&:id)
+        Array(relationships).all? do |relation|
+          entity_ids.include?(relation.from_id) &&
+            entity_ids.include?(relation.to_id)
+        end
       end
     end
   end

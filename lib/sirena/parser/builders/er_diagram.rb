@@ -28,28 +28,38 @@ module Sirena
 
         KEY_TYPES = %w[PK FK UK].freeze
 
+        STATEMENT_HANDLERS = {
+          classdef: :process_class_def,
+          entity: :process_entity_definition,
+          relationship: :process_relationship,
+        }.freeze
+        private_constant :STATEMENT_HANDLERS
+
         # Transform parse tree into ER diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
         # @return [Diagram::ErDiagram] the ER diagram model
         def apply(tree)
           diagram = Diagram::ErDiagram.new
-
-          # Tree is an array: [header, ...statements]
-          if tree.is_a?(Array)
-            tree.each do |item|
-              next if item.is_a?(Hash) && item[:header] # Skip header
-
-              process_statement(diagram, item) if item.is_a?(Hash)
-            end
-          elsif tree.is_a?(Hash) && tree[:statements]
-            process_statements(diagram, tree[:statements])
+          statements(tree).each do |statement|
+            process_statement(diagram, statement)
           end
 
           diagram
         end
 
         private
+
+        def statements(tree)
+          if tree.is_a?(Array)
+            return tree.grep(Hash).reject { |item| item[:header] }
+          end
+          if tree.is_a?(Hash) && tree[:statements]
+            return Array(tree[:statements]).grep(Hash)
+          end
+
+          []
+        end
 
         def process_statements(diagram, statements)
           Array(statements).each do |stmt|
@@ -60,16 +70,15 @@ module Sirena
         def process_statement(diagram, stmt)
           return unless stmt.is_a?(Hash)
 
-          if stmt[:classdef_names]
-            # Style class declaration
-            process_class_def(diagram, stmt)
-          elsif stmt[:entity_id]
-            # Entity, with or without an attribute block
-            process_entity_definition(diagram, stmt)
-          elsif stmt[:from_id] && stmt[:to_id] && stmt[:pattern]
-            # Relationship
-            process_relationship(diagram, stmt)
-          end
+          kind = statement_kind(stmt)
+          send(STATEMENT_HANDLERS.fetch(kind), diagram, stmt) if kind
+        end
+
+        def statement_kind(stmt)
+          return :classdef if stmt[:classdef_names]
+          return :entity if stmt[:entity_id]
+
+          :relationship if stmt[:from_id] && stmt[:to_id] && stmt[:pattern]
         end
 
         def process_class_def(diagram, stmt)
@@ -87,66 +96,71 @@ module Sirena
           entity = find_or_create_entity(diagram, entity_id)
 
           add_entity_classes(entity, stmt[:entity_classes])
+          add_attributes(entity, stmt[:attributes])
+        end
 
-          # Process attributes
-          if stmt[:attributes]
-            attributes = Array(stmt[:attributes])
-            attributes.each do |attr_data|
-              next unless attr_data.is_a?(Hash)
-
-              attribute = Diagram::ErAttribute.new.tap do |attr|
-                attr.name = attr_data[:name].to_s
-                type = attr_data[:type]
-                key = attr_data[:key]
-                attr.attribute_type = extract_attribute_type(type) if type
-                attr.key_type = extract_key_type(key) if key
-                attr.note = extract_text(attr_data[:note]) if attr_data[:note]
-              end
-
-              entity.attributes << attribute
-            end
+        def add_attributes(entity, captures)
+          Array(captures).grep(Hash).each do |capture|
+            entity.attributes << build_attribute(capture)
           end
+        end
+
+        def build_attribute(capture)
+          attribute = Diagram::ErAttribute.new
+          attribute.name = capture[:name].to_s
+          assign_attribute_details(attribute, capture)
+          attribute
+        end
+
+        def assign_attribute_details(attribute, capture)
+          if capture[:type]
+            attribute.attribute_type = extract_attribute_type(capture[:type])
+          end
+          attribute.key_type = extract_key_type(capture[:key]) if capture[:key]
+          attribute.note = extract_text(capture[:note]) if capture[:note]
         end
 
         def process_relationship(diagram, stmt)
           from_id = unquote(stmt[:from_id])
           to_id = unquote(stmt[:to_id])
-          pattern = stmt[:pattern]
+          ensure_relationship_entities(diagram, stmt, from_id, to_id)
+          diagram.relationships << build_relationship(stmt, from_id, to_id)
+        end
 
-          # Ensure entities exist
-          add_entity_classes(ensure_entity(diagram, from_id),
-                             stmt[:from_classes])
-          add_entity_classes(ensure_entity(diagram, to_id),
-                             stmt[:to_classes])
+        def ensure_relationship_entities(diagram, stmt, from_id, to_id)
+          from = ensure_entity(diagram, from_id)
+          to = ensure_entity(diagram, to_id)
+          add_entity_classes(from, stmt[:from_classes])
+          add_entity_classes(to, stmt[:to_classes])
+        end
 
-          # Parse relationship pattern
-          card_from = extract_text(pattern[:card_from])
-          card_to = extract_text(pattern[:card_to])
+        def build_relationship(stmt, from_id, to_id)
+          cardinality_from, cardinality_to, relationship_type =
+            relationship_pattern(stmt[:pattern])
+          Diagram::ErRelationship.new.tap do |relationship|
+            relationship.from_id = from_id
+            relationship.to_id = to_id
+            relationship.relationship_type = relationship_type
+            relationship.cardinality_from = cardinality_from
+            relationship.cardinality_to = cardinality_to
+            relationship.label = relationship_label(stmt)
+          end
+        end
+
+        def relationship_pattern(pattern)
+          from = CARDINALITY_SYMBOLS[extract_text(pattern[:card_from])]
+          to = CARDINALITY_SYMBOLS[extract_text(pattern[:card_to])]
           operator = extract_text(pattern[:operator])
+          type = operator == "==" ? "identifying" : "non-identifying"
+          [from, to, type]
+        end
 
-          # Map cardinalities
-          card_from_val = CARDINALITY_SYMBOLS[card_from]
-          card_to_val = CARDINALITY_SYMBOLS[card_to]
+        def relationship_label(stmt)
+          label = stmt.dig(:label, :label_text)
+          return unless label
 
-          # Determine relationship type from operator
-          rel_type = operator == "==" ? "identifying" : "non-identifying"
-
-          # Extract label if present
-          label = nil
-          if stmt[:label] && stmt[:label][:label_text]
-            label = extract_text(stmt[:label][:label_text]).strip
-          end
-
-          relationship = Diagram::ErRelationship.new.tap do |rel|
-            rel.from_id = from_id
-            rel.to_id = to_id
-            rel.relationship_type = rel_type
-            rel.cardinality_from = card_from_val
-            rel.cardinality_to = card_to_val
-            rel.label = label unless label.nil? || label.empty?
-          end
-
-          diagram.relationships << relationship
+          text = extract_text(label).strip
+          text unless text.empty?
         end
 
         def unquote(slice)
@@ -210,17 +224,23 @@ module Sirena
           output = []
           index = 0
           while index < sets.length
-            this_set = sets[index]
-            if this_set == "," && index.positive? && index + 1 < sets.length &&
-               should_combine_tilde_sets?(sets[index - 1], sets[index + 1])
-              this_set = "#{sets[index - 1]},#{sets[index + 1]}"
-              index += 1
-              output.pop
-            end
-            output << process_tilde_set(this_set)
-            index += 1
+            current, index = next_tilde_set(sets, index, output)
+            output << process_tilde_set(current)
           end
           output.join
+        end
+
+        def next_tilde_set(sets, index, output)
+          current = sets[index]
+          return [current, index + 1] unless combinable_tilde_set?(sets, index)
+
+          output.pop
+          ["#{sets[index - 1]},#{sets[index + 1]}", index + 2]
+        end
+
+        def combinable_tilde_set?(sets, index)
+          sets[index] == "," && index.positive? && index + 1 < sets.length &&
+            should_combine_tilde_sets?(sets[index - 1], sets[index + 1])
         end
 
         # A comma inside a generic's tildes (`Map~K, V~`) splits the input
@@ -232,50 +252,47 @@ module Sirena
           previous_set.count("~") == 1 && next_set.count("~") == 1
         end
 
+        # One pass collects every tilde's index rather than rescanning the
+        # entire array after each replacement. Pairing outside-in from that
+        # fixed list gives the same result: first with last, then second with
+        # second-to-last, and so on.
         def process_tilde_set(input)
           has_starting_tilde = input.count("~").odd? && input.start_with?("~")
           input = input[1..] if has_starting_tilde
-
           chars = input.chars
-          # One pass to collect every tilde's index, instead of the
-          # `index`/`rindex` pair rescanning the WHOLE array after every
-          # replacement (O(n) per pair, O(n^2) total on an n-tilde input).
-          # Pairing outside-in from a fixed index list gives the same
-          # result in one scan: pair 0 is (first, last), pair 1 is
-          # (second, second-to-last), and so on.
-          tilde_indices = chars.each_index.select { |i| chars[i] == "~" }
-          (tilde_indices.length / 2).times do |pair|
-            first = tilde_indices[pair]
-            last = tilde_indices[-(pair + 1)]
-
-            chars[first] = "<"
-            chars[last] = ">"
-          end
-
+          replace_tilde_pairs(chars)
           chars.unshift("~") if has_starting_tilde
           chars.join
+        end
+
+        def replace_tilde_pairs(chars)
+          indices = chars.each_index.select { |index| chars[index] == "~" }
+          (indices.length / 2).times do |pair|
+            chars[indices[pair]] = "<"
+            chars[indices[-(pair + 1)]] = ">"
+          end
         end
 
         def extract_text(value)
           case value
           when Hash
-            if value.key?(:string)
-              # Both grammar rules that capture `:string` (`tilde_type`,
-              # `note`) go through `GreedyRun`/`DelimitedRun`, whose
-              # zero-length match is a real empty `Parslet::Slice`, not
-              # `[]` the way a native `.repeat.as(:string)` capture would
-              # be -- so a plain `.to_s` is safe here even for `~~` or `""`.
-              value[:string].to_s
-            elsif value[:key_type]
-              value[:key_type].to_s
-            else
-              value.values.first.to_s
-            end
+            extract_hash_text(value)
           when String
             value
           else
             value.to_s
           end
+        end
+
+        # Both grammar rules that capture `:string` (`tilde_type`, `note`)
+        # go through `GreedyRun`/`DelimitedRun`, whose zero-length match is a
+        # real empty `Parslet::Slice`, not `[]`; `.to_s` is safe for `~~` and
+        # `""` alike.
+        def extract_hash_text(value)
+          return value[:string].to_s if value.key?(:string)
+          return value[:key_type].to_s if value[:key_type]
+
+          value.values.first.to_s
         end
 
         # Several keys join into one comma-separated string, "PK,FK",
