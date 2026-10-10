@@ -99,6 +99,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     resources.vega.nonreg.group2903.two_association_classes--5589df921b7b
     resources.vega.nonreg.group2903.without_association_class--633626f844fa
     resources.vega.nonreg.group2846.correct_code--c4f1bf12e099
+    resources.vega.nonreg.group2846.dollar_sign_code--64ad77e9de1f
     resources.vega.nonreg.group2904.all_visibilities--00480b0ff655
     resources.vega.nonreg.group2904.diamond_at_tail--bb82b36b91be
     resources.vega.nonreg.group2904.icon_size_zero--5d137d5deadd
