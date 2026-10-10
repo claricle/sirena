@@ -17,6 +17,8 @@ module Sirena
         HEAD_INSET = 3
         PADDING = 20
         SELF_DROP = 30
+        # A message with no text lacks the 34px its first line brings.
+        EMPTY_DROP = 34
         MIN_LIMIT = Geometry::ACTOR_WIDTH
         FLAT_HEADS = %w[none stick_top stick_bottom].freeze
         TURNED_HEADS = %w[half_top half_bottom].freeze
@@ -51,6 +53,8 @@ module Sirena
         # @param index [Integer] message index
         # @return [Numeric] height the message's extra lines add to its row
         def extra(index)
+          return -EMPTY_DROP if textless?(index)
+
           [lines(index).length - 1, 0].max * line_advance
         end
 
@@ -76,6 +80,10 @@ module Sirena
         end
 
         private
+
+        def textless?(index)
+          index && lines(index).all? { |line| line.strip.empty? }
+        end
 
         # mmdc leaves 30 below a message to itself, for the loop, and 30
         # more when a frame ends right after it.
