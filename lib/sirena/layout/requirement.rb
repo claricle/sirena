@@ -483,7 +483,7 @@ module Sirena
         end
 
         # Assign default level to any remaining nodes
-        nodes_by_name.each do |_name, node|
+        nodes_by_name.each_value do |node|
           node[:level] ||= 1 if node[:type] == :requirement
         end
 

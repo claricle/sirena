@@ -162,7 +162,7 @@ rows:
 - file: scripts/corpus_verdicts.rb
   count: 6
 - file: scripts/diagram_fuzz_report.rb
-  count: 3
+  count: 2
 - file: scripts/er_diagram_fuzz.rb
   count: 3
 - file: scripts/extract_mermaid_tests.rb

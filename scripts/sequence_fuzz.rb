@@ -301,8 +301,10 @@ module SequenceFuzz
     end
 
     def print_timings(total, sirena_elapsed, mermaid_elapsed)
-      puts format("sirena:  %d cases in %.3fs (%.1f/s)", total, sirena_elapsed, total / sirena_elapsed)
-      puts format("mermaid: %d cases in %.3fs (%.1f/s)", total, mermaid_elapsed, total / mermaid_elapsed)
+      puts format("sirena:  %<total>d cases in %<elapsed>.3fs (%<rate>.1f/s)",
+                  total: total, elapsed: sirena_elapsed, rate: total / sirena_elapsed)
+      puts format("mermaid: %<total>d cases in %<elapsed>.3fs (%<rate>.1f/s)",
+                  total: total, elapsed: mermaid_elapsed, rate: total / mermaid_elapsed)
     end
 
     def print_summary(total, divergences)

@@ -98,7 +98,7 @@ module Sirena
         end
 
         rule(:boundary_params) do
-          (variable_or_identifier).as(:id) >>
+          variable_or_identifier.as(:id) >>
             (space? >> comma >> space? >>
              param_value.as(:label)).maybe >>
             (space? >> comma >> space? >>
@@ -144,7 +144,7 @@ module Sirena
         end
 
         rule(:element_params) do
-          (variable_or_identifier).as(:id) >>
+          variable_or_identifier.as(:id) >>
             (space? >> comma >> space? >>
              param_value.as(:label)).maybe >>
             (space? >> comma >> space? >>
@@ -179,9 +179,9 @@ module Sirena
         end
 
         rule(:relationship_params) do
-          (variable_or_identifier).as(:from) >>
+          variable_or_identifier.as(:from) >>
             space? >> comma >> space? >>
-            (variable_or_identifier).as(:to) >>
+            variable_or_identifier.as(:to) >>
             (space? >> comma >> space? >>
              param_value.as(:label)).maybe >>
             (space? >> comma >> space? >>

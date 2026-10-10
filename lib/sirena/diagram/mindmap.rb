@@ -35,7 +35,7 @@ module Sirena
         end
 
         def root?
-          level == 0
+          level.zero?
         end
 
         def leaf?

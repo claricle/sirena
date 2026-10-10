@@ -279,7 +279,7 @@ module Sirena
         b = (b + (255 - b) * factor).round
 
         # Return hex
-        format("#%02x%02x%02x", r, g, b)
+        format("#%<red>02x%<green>02x%<blue>02x", red: r, green: g, blue: b)
       end
     end
   end

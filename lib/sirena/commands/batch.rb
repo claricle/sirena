@@ -145,14 +145,14 @@ module Sirena
       end
 
       def print_summary
-        puts "\n" + "=" * 60
+        puts "\n#{'=' * 60}"
         puts "BATCH RENDERING SUMMARY"
         puts "=" * 60
         puts "✅ Success: #{@stats[:success]}"
         puts "❌ Failed:  #{@stats[:failed]}"
         puts "   Total:   #{@stats[:success] + @stats[:failed]}"
 
-        if @stats[:failed] > 0
+        if @stats[:failed].positive?
           puts "\nErrors:"
           @stats[:errors].first(5).each do |err|
             puts "  #{err[:file]}: #{err[:error].lines.first.strip}"
@@ -163,7 +163,7 @@ module Sirena
           puts "\nUse --verbose to see full error details"
         end
 
-        if @stats[:success] + @stats[:failed] > 0
+        if (@stats[:success] + @stats[:failed]).positive?
           success_rate = (@stats[:success].to_f /
                          (@stats[:success] + @stats[:failed]) * 100).round(1)
           puts "\nSuccess rate: #{success_rate}%"

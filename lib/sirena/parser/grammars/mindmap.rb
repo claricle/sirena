@@ -10,7 +10,7 @@ module Sirena
         rule(:diagram) do
           space? >>
             header >>
-            (node_line).repeat(0).as(:nodes) >>
+            node_line.repeat(0).as(:nodes) >>
             space?
         end
 

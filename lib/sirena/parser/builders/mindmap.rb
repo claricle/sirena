@@ -64,7 +64,7 @@ module Sirena
             @all_nodes << node
 
             # Build hierarchy
-            if level == 0
+            if level.zero?
               @root = node
               @level_stack = [node]
             else
@@ -241,7 +241,7 @@ module Sirena
           end
 
           def find_parent(level)
-            return nil if level == 0
+            return nil if level.zero?
             # Parent is the last node at level - 1
             @level_stack[level - 1]
           end
