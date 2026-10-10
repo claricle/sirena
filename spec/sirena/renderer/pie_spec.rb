@@ -10,16 +10,16 @@ RSpec.describe Sirena::Renderer::Pie do
 
   it "uses the compact canvas and emits no marks for an empty pie" do
     expect([svg.width, svg.height, svg.view_box, svg.children]).to eq(
-      [500.0, 400.0, "0 0 500 400", []],
+      [450.0, 450.0, "0 0 450 450", []],
     )
   end
 
-  it "adds title space and centers the title" do
+  it "centers the title above the pie" do
     graph[:title] = "Distribution"
     title = svg.children.grep(Sirena::Svg::Text).first
 
     expect([svg.height, title.x, title.y, text(title)]).to eq(
-      [460.0, 250.0, 40.0, "Distribution"],
+      [450.0, 225.0, 25.0, "Distribution"],
     )
   end
 
@@ -41,7 +41,7 @@ RSpec.describe Sirena::Renderer::Pie do
 
   def expected_arcs
     [
-      [include("A 150 150 0 1 1"), include("A 150 150 0 0 1")],
+      [include("A 185 185 0 1 1"), include("A 185 185 0 0 1")],
       ["75%", "25%", "Large [3]", "Small [1]"],
     ]
   end

@@ -10,7 +10,7 @@ RSpec.describe Sirena::Layout::Pie do
 
   it "keeps an empty pie renderable" do
     expect([scene.class, scene.id, scene.width, scene.height, scene.slices])
-      .to eq([described_class::Scene, "pie", 500.0, 400.0, []])
+      .to eq([described_class::Scene, "pie", 450.0, 450.0, []])
   end
 
   it "transforms populated slices and their proportions" do
@@ -58,10 +58,10 @@ RSpec.describe Sirena::Layout::Pie do
 
   def expected_geometry
     [
-      "share", 549.364, 460.0, "Market share", "Share by product",
+      "share", 559.364, 450.0, "Market share", "Share by product",
       "One quarter and three quarters",
-      [["slice_0", "25%", include("A 150 150 0 0 1")],
-       ["slice_1", "75%", include("A 150 150 0 1 1")]]
+      [["slice_0", "25%", include("A 185 185 0 0 1")],
+       ["slice_1", "75%", include("A 185 185 0 1 1")]]
     ]
   end
 end
