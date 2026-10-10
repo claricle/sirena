@@ -48,9 +48,7 @@ module Sirena
           # @param graph [IR::Graph] from {IRAdapter}
           def scene(graph)
             @diagram = IRReader.call(graph)
-            @widths = @diagram.participants.map { |p| head_width(p) }
-            @centers = centers(@widths)
-            @head_height = head_height
+            measure_heads
             @origin = MARGIN + banner_room
             @top = @origin + (@diagram.boxes.empty? ? 0 : BOX_TITLE_HEIGHT)
             @flow = walk
@@ -59,6 +57,12 @@ module Sirena
           end
 
           private
+
+          def measure_heads
+            @widths = @diagram.participants.map { |p| head_width(p) }
+            @centers = centers(@widths)
+            @head_height = head_height
+          end
 
           def walk
             @edge_right = right_edge
@@ -318,7 +322,8 @@ module Sirena
           end
 
           def wrap
-            MessageWrap.new(@diagram.appearance.max_message, method(:text_width))
+            MessageWrap.new(@diagram.appearance.max_message,
+                            method(:text_width))
           end
 
           def numbering
@@ -409,7 +414,10 @@ module Sirena
           def head_label(participant, centre, top)
             label = text(participant.label, centre, top + @head_height - 12,
                          "participant")
-            style = head_style
+            restyle(label, head_style)
+          end
+
+          def restyle(label, style)
             label.colour = style.colour
             label.size = style.size
             label.family = style.family
