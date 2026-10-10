@@ -241,9 +241,9 @@ module Sirena
           end
 
           def find_parent(level)
-            # Parent is the last node at level - 1
-
-            level.zero? ? nil : @level_stack[level - 1]
+            # Parent is the last node at level - 1; level 0 is the root and
+            # never asks.
+            @level_stack[level - 1]
           end
         end
 
