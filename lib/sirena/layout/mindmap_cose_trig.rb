@@ -12,15 +12,18 @@ module Sirena
     module MindmapCoseTrig
       DIGITS = 60
       SCALE = 10**DIGITS
-      PI = Rational("3.14159265358979323846264338327950288419716939937510582097494459230781640628620899")
+      PI = Rational(
+        "3.14159265358979323846264338327950288419716939937510" \
+        "582097494459230781640628620899",
+      )
       HALF_PI = PI / 2
 
       module_function
 
-      # @param x [Float] angle in radians
+      # @param radians [Float] angle in radians
       # @return [Float]
-      def sin(x)
-        quadrant, remainder = reduce(x)
+      def sin(radians)
+        quadrant, remainder = reduce(radians)
         case quadrant
         when 0 then to_float(sine_series(remainder))
         when 1 then to_float(cosine_series(remainder))
@@ -29,10 +32,10 @@ module Sirena
         end
       end
 
-      # @param x [Float] angle in radians
+      # @param radians [Float] angle in radians
       # @return [Float]
-      def cos(x)
-        quadrant, remainder = reduce(x)
+      def cos(radians)
+        quadrant, remainder = reduce(radians)
         case quadrant
         when 0 then to_float(cosine_series(remainder))
         when 1 then to_float(-sine_series(remainder))
@@ -41,10 +44,10 @@ module Sirena
         end
       end
 
-      # @return [Array] the quarter turns in x modulo four, and the rest as
-      #   a SCALE-fixed integer within a quarter pi of zero
-      def reduce(x)
-        angle = Rational(x)
+      # @return [Array] the quarter turns modulo four, and the rest as a
+      #   SCALE-fixed integer within a quarter pi of zero
+      def reduce(radians)
+        angle = Rational(radians)
         turns = (angle / HALF_PI).round
         [turns % 4, ((angle - (turns * HALF_PI)) * SCALE).round]
       end
