@@ -137,9 +137,13 @@ module Sirena
             from, to = [message.from, message.to].map do |place|
               place_of(place, message)
             end
-            @arrows << arrow_record(message, arrow_for(message, from, to))
+            draw(message, from, to) unless message.style.hidden
             touch(*extent(message, from, to))
             @y += message.self_message? ? ROW * 1.5 : ROW
+          end
+
+          def draw(message, from, to)
+            @arrows << arrow_record(message, arrow_for(message, from, to))
           end
 
           def extent(message, from, to)
