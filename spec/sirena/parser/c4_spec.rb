@@ -301,4 +301,39 @@ RSpec.describe Sirena::Parser::C4 do
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
   end
+
+  describe "#parse single-parameter layout config and nested boundaries" do
+    it "keeps a lone UpdateLayoutConfig parameter" do
+      source = "C4Context\nUpdateLayoutConfig($c4ShapeInRow=\"2\")\n"
+
+      expect(parser.parse(source).layout_config).to eq("$c4ShapeInRow=2")
+    end
+
+    context "with a boundary inside a boundary" do
+      let(:source) do
+        <<~C4
+          C4Context
+          Boundary(b1, "Outer") {
+            Person(p, "P")
+            Boundary(b2, "Inner") {
+              System(s, "S")
+            }
+          }
+        C4
+      end
+      let(:boundaries) { parser.parse(source).boundaries.to_h { [_1.id, _1] } }
+
+      it "lists the inner boundary under the outer one" do
+        expect(boundaries["b1"].boundary_ids).to eq(["b2"])
+      end
+
+      it "points the inner boundary at its parent" do
+        expect(boundaries["b2"].parent_id).to eq("b1")
+      end
+
+      it "keeps the element inside the inner boundary" do
+        expect(boundaries["b2"].element_ids).to eq(["s"])
+      end
+    end
+  end
 end
