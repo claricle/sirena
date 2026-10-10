@@ -365,7 +365,8 @@ RSpec.describe Sirena::Renderer::Kanban do
 
         expect(first_half.attributes["font-weight"]).to eq("bold")
         expect(second_half.attributes["font-weight"]).to eq("bold")
-        expect(second_half.attributes["y"].to_f).to be > second_half.parent.attributes["y"].to_f
+        parent_y = second_half.parent.attributes["y"].to_f
+        expect(second_half.attributes["y"].to_f).to be > parent_y
       end
 
       # The column header rect and its text's baseline must grow with a
