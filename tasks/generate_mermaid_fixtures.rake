@@ -292,7 +292,7 @@ class MermaidOutputComparator
         else
           differences += 1
         end
-      rescue => e
+      rescue StandardError
         differences += 1
       end
     end
@@ -347,7 +347,7 @@ class MermaidTestValidator
       begin
         Sirena.render(source)
         passing += 1
-      rescue => e
+      rescue StandardError
         failing += 1
       end
     end
