@@ -13,4 +13,9 @@ RSpec.describe Sirena::Diagram::Flowchart do
   it "is valid when the edge list is absent" do
     expect(described_class.new(nodes: [node], edges: nil)).to be_valid
   end
+
+  it "is invalid when an edge names no source" do
+    edge = Sirena::Diagram::FlowchartEdge.new(source_id: "", target_id: "A")
+    expect(described_class.new(nodes: [node], edges: [edge])).not_to be_valid
+  end
 end
