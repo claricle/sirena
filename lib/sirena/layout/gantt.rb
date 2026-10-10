@@ -268,6 +268,8 @@ module Sirena
       end
 
       def timeline_geometry(graph)
+        return if graph.dig(:metadata, :task_count).zero?
+
         timeline = graph[:timeline]
         Timeline.new(
           background: Rect.new(x: MARGIN_LEFT, y: MARGIN_TOP,
