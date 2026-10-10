@@ -44,7 +44,9 @@ module Sirena
           return unless item.is_a?(Hash)
 
           process_header(diagram, item) if item.key?(:header)
-          process_node_declaration(diagram, item) if item.key?(:node_declaration)
+          if item.key?(:node_declaration)
+            process_node_declaration(diagram, item)
+          end
           process_flow_entry(diagram, item) if item.key?(:flow_entry)
         end
 

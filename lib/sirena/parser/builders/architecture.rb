@@ -56,7 +56,9 @@ module Sirena
           group.id = extract_text(data[:id]) if data[:id]
           group.label = extract_text(data[:label]) if data[:label]
           group.icon = extract_text(data[:icon]) if data[:icon]
-          group.parent_id = extract_text(data[:parent]) if data[:parent] && !data[:parent].to_s.empty?
+          if data[:parent] && !data[:parent].to_s.empty?
+            group.parent_id = extract_text(data[:parent])
+          end
           group
         end
 
@@ -65,14 +67,18 @@ module Sirena
           service.id = extract_text(data[:id]) if data[:id]
           service.label = extract_text(data[:label]) if data[:label]
           service.icon = extract_text(data[:icon]) if data[:icon]
-          service.group_id = extract_text(data[:group]) if data[:group] && !data[:group].to_s.empty?
+          if data[:group] && !data[:group].to_s.empty?
+            service.group_id = extract_text(data[:group])
+          end
           service
         end
 
         def create_junction(data)
           junction = Diagram::Architecture::Junction.new
           junction.id = extract_text(data[:id]) if data[:id]
-          junction.group_id = extract_text(data[:group]) if data[:group] && !data[:group].to_s.empty?
+          if data[:group] && !data[:group].to_s.empty?
+            junction.group_id = extract_text(data[:group])
+          end
           junction
         end
 

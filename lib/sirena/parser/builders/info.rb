@@ -22,11 +22,17 @@ module Sirena
             tree.each do |item|
               next unless item.is_a?(Hash)
 
-              process_show_info_inline(diagram, item) if item.key?(:show_info_inline)
-              process_show_info_body(diagram, item) if item.key?(:show_info_body)
+              if item.key?(:show_info_inline)
+                process_show_info_inline(diagram, item)
+              end
+              if item.key?(:show_info_body)
+                process_show_info_body(diagram, item)
+              end
             end
           elsif tree.is_a?(Hash)
-            process_show_info_inline(diagram, tree) if tree.key?(:show_info_inline)
+            if tree.key?(:show_info_inline)
+              process_show_info_inline(diagram, tree)
+            end
             process_show_info_body(diagram, tree) if tree.key?(:show_info_body)
           end
 

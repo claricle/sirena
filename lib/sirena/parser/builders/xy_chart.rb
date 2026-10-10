@@ -12,9 +12,11 @@ module Sirena
           { type: :title, title: title.to_s }
         end
 
-        # Transform values - keep as-is for now, will determine numeric vs categorical later
+        # Transform values - keep as-is for now, will determine numeric vs
+        # categorical later
         rule(value: simple(:v)) do
-          # Try to convert to number if it looks numeric, otherwise keep as string
+          # Try to convert to number if it looks numeric, otherwise keep as
+          # string
           str = v.to_s
           if str.match?(/^\d+(\.\d+)?$/)
             str.to_f
@@ -41,7 +43,11 @@ module Sirena
         end
 
         # Transform Y-axis with label
-        rule(y_label: { string: simple(:label) }, y_min: simple(:min), y_max: simple(:max)) do
+        rule(
+          y_label: { string: simple(:label) },
+          y_min: simple(:min),
+          y_max: simple(:max),
+        ) do
           {
             type: :y_axis,
             label: label.to_s,
@@ -80,7 +86,10 @@ module Sirena
         end
 
         # Transform named dataset
-        rule(dataset_label: { string: simple(:label) }, dataset_values: subtree(:values)) do
+        rule(
+          dataset_label: { string: simple(:label) },
+          dataset_values: subtree(:values),
+        ) do
           {
             type: :dataset,
             chart_type: :line,

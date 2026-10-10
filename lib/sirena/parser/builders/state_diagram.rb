@@ -22,7 +22,8 @@ module Sirena
           @state_counter = 0
 
           # A diagram with statements is an array containing the header and
-          # statements in source order; a header-only diagram is the header hash.
+          # statements in source order; a header-only diagram is the header
+          # hash.
           if tree.is_a?(Array)
             tree.each do |item|
               process_item(item) if item.is_a?(Hash)
@@ -86,7 +87,9 @@ module Sirena
           if stmt[:marker]
             # Special state marker (choice, fork, join). No label: mmdc
             # 11.12.0 has no shape for `state "X" as Y <<choice>>` either.
-            add_special_state(state_id, extract_text(stmt[:marker][:marker_type]))
+            add_special_state(
+              state_id, extract_text(stmt[:marker][:marker_type])
+            )
           elsif stmt[:composite]
             # Composite state with nested statements
             state = process_composite_state(state_id, label, stmt[:composite])
@@ -153,7 +156,9 @@ module Sirena
             chain_transitions.each do |chain_item|
               next unless chain_item[:chain_to]
 
-              chain_to = extract_state_id(chain_item[:chain_to], is_source: false)
+              chain_to = extract_state_id(
+                chain_item[:chain_to], is_source: false
+              )
               create_transition(current_from, chain_to, nil, nil)
               current_from = chain_to
             end
@@ -182,7 +187,8 @@ module Sirena
           state_str = extract_text(state_data)
 
           # Check if this is a start/end marker
-          if state_str == START_END_MARKER || state_str.strip == START_END_MARKER
+          if state_str == START_END_MARKER ||
+              state_str.strip == START_END_MARKER
             # If it's a source of transition, it's a start state
             # If it's a target of transition, it's an end state
             if is_source
@@ -264,7 +270,8 @@ module Sirena
 
         def create_transition(from_id, to_id, trigger = nil, guard = nil)
           # Ensure both states exist
-          ensure_state_exists(from_id) unless from_id.start_with?("start_", "end_")
+          ensure_state_exists(from_id) unless from_id.start_with?("start_",
+                                                                  "end_")
           ensure_state_exists(to_id) unless to_id.start_with?("start_", "end_")
 
           transition = Diagram::StateTransition.new.tap do |t|
