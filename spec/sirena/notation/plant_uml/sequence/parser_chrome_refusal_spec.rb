@@ -13,6 +13,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     ["header", "", "end header"] => "header",
     ["legend", "| a | b |", "end legend"] => "legend",
     ["title", "end title"] => "title",
+    ["header", "One", "", "Two", "end header"] => "header",
     ["left header Top"] => "aligned header or footer",
     ["center footer Bot"] => "aligned header or footer",
   }.each do |lines, construct|

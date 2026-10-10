@@ -43,6 +43,12 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     expect(legend.y).to be < 40
   end
 
+  it "grows the canvas for a legend wider than the diagram" do
+    wide = laid_out("legend", "long " * 40, "end legend", "A -> B")
+
+    expect(wide.width).to be > laid_out("A -> B").width
+  end
+
   it "has no legend when none is written" do
     expect(laid_out("A -> B").legend).to be_nil
   end

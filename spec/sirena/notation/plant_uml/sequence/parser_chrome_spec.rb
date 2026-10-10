@@ -59,6 +59,13 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     expect(chrome.legend_place).to eq("top center")
   end
 
+  it "keeps the legend place when a footer block is read after it" do
+    chrome = chrome_of("legend top", "Key", "end legend",
+                       "footer", "F", "end footer")
+
+    expect(chrome.legend_place).to eq("top center")
+  end
+
   it "keeps a participant called header" do
     expect(parsed_diagram("header -> B : x").messages.size).to eq(1)
   end
