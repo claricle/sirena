@@ -32,6 +32,17 @@ RSpec.describe SpecSupport::LayoutParity::ErrorRecognizer do
     [recognized(reference), recognized(sirena)]
   end
 
+  def matched_real_pair
+    name = "002_rendering_errordiagram_spec_error_1"
+    reference = extract(reference_svg("error/#{name}.svg"), recognizer)
+    sirena = extract(
+      Sirena.render(corpus_source("error/#{name}.mmd")), recognizer
+    )
+    SpecSupport::LayoutParity::ElementMatcher.match(
+      reference: reference, sirena: sirena,
+    )
+  end
+
   def expected_pair
     [
       [[:error_icon, "error-icon", nil, nil],
@@ -50,5 +61,16 @@ RSpec.describe SpecSupport::LayoutParity::ErrorRecognizer do
 
   it "uses fixed icon and text roles for a real pair" do
     expect(real_pair).to eq(expected_pair)
+  end
+
+  it "matches shared fixed roles while retaining a missing version role" do
+    result = matched_real_pair
+
+    expect(result[:pairs].map { |pair| pair.map(&:key) }).to eq(
+      [["error-icon", "error-icon"], ["message", "message"]],
+    )
+    expect(result[:failures]).to contain_exactly(
+      include(type: :missing, group: [:error_text, nil, "version"]),
+    )
   end
 end
