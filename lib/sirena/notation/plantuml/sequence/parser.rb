@@ -41,9 +41,9 @@ module Sirena
           HIDE_FOOTBOX = /\Ahide[ \t]+footbox\z/i
           STYLE_OPEN = /\A<style>\z/i
           STYLE_CLOSE = /\A<\/style>\z/i
-          MESSAGE = /\A(#{QUOTED}|#{NAME}|\[(?=[-<\\\/oxOX]))[ \t]*
+          MESSAGE = /\A(#{QUOTED}|#{NAME}|[\[?](?=[-<\\\/oxOX]))[ \t]*
                      (#{ArrowSyntax::SOURCE})
-                     [ \t]*(#{QUOTED}|#{NAME}|(?<![ \t])\])[ \t]*
+                     [ \t]*(#{QUOTED}|#{NAME}|(?<![ \t])[\]?])[ \t]*
                      (--\+\+|\+\+--|\+\+|--|!!)?[ \t]*(#{COLOUR})?
                      [ \t]*(?::[ \t]*(.*))?\z/xo
           ACTIVATION = /\A(activate|deactivate)[ \t]+(#{QUOTED}|#{NAME})

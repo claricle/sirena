@@ -205,6 +205,23 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
       expect(ring.cx).to eq(8.0)
     end
+
+    it "runs a ->? message a label and 24 beyond its sender" do
+      scene = scene_of("A ->? : hi", "A ->? : a longer label")
+      short, long = ends_of(scene).map { |numbers| numbers.last - numbers[0] }
+
+      expect([short > 24, long > short]).to eq([true, true])
+    end
+
+    it "runs a ?-> message back from its receiver" do
+      start, stop = first_run("?->A : hi")
+
+      expect(stop - start).to be > 24
+    end
+
+    it "keeps a ?-> message of the first head on the canvas" do
+      expect(first_run("?->A : #{long}").min).to be >= 0
+    end
   end
 
   it "makes room right of the last participant for a self message" do

@@ -13,10 +13,10 @@ module Sirena
           extend self
 
           # The arrow as a part of a longer pattern. A leading or trailing
-          # o/x is a decoration only when blanks, or a `[` or `]` edge,
+          # o/x is a decoration only when blanks, or a `[` or `]` or `?` edge,
           # separate it from the names.
           SOURCE = '(?:(?<=[ \t\[])[oxOX])?(?:<<|<|//|/|\\\\\\\\|\\\\)?--?' \
-                   '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[oxOX](?=[ \t\]]|\z))?'
+                   '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[oxOX](?=[ \t\]?]|\z))?'
           TOKEN = /\A([oxOX])?(<<|<|\/\/|\/|\\\\|\\)?(--?)
                    (>>|>|\\\\|\\|\/\/|\/)?([oxOX])?\z/x
           LEFT = { "<<" => :open, "<" => :filled, "//" => :upper_open,
