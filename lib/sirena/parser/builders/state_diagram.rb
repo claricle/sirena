@@ -20,22 +20,17 @@ module Sirena
         def apply(tree)
           @diagram = Diagram::StateDiagram.new
           @state_counter = 0
-
-          # A diagram with statements is an array containing the header and
-          # statements in source order; a header-only diagram is the header
-          # hash.
-          if tree.is_a?(Array)
-            tree.each do |item|
-              process_item(item) if item.is_a?(Hash)
-            end
-          elsif tree.is_a?(Hash)
-            process_item(tree)
-          end
-
+          statements_in(tree).each { |item| process_item(item) }
           @diagram
         end
 
         private
+
+        def statements_in(tree)
+          return tree.grep(Hash) if tree.is_a?(Array)
+
+          tree.is_a?(Hash) ? [tree] : []
+        end
 
         def process_item(item)
           return unless item.is_a?(Hash)
@@ -51,57 +46,63 @@ module Sirena
 
         def process_statement(stmt)
           return unless stmt.is_a?(Hash)
+          return process_state_declaration(stmt) if state_declaration?(stmt)
+          return process_transition(stmt) if transition?(stmt)
+          return if ignored_statement?(stmt)
 
-          if stmt[:keyword] == "state" && stmt[:state_id]
-            # State declaration
-            process_state_declaration(stmt)
-          elsif stmt[:from] && stmt[:to]
-            # Transition
-            process_transition(stmt)
-          elsif stmt[:note_keyword] || stmt[:style_keyword]
-            # Notes and styling directives are parsed and dropped, and that
-            # is a GAP, not parity. Measured against mmdc 11.12.0: a note
-            # renders its own node and its text -- `note right of A / hello`
-            # produces a 10,403-byte SVG containing "hello", against 7,992
-            # bytes without it. The diagram model carries neither, so nothing
-            # downstream could draw them yet.
-            nil
-          elsif stmt[:state_id] && !stmt[:keyword]
-            # Standalone state, with or without a description
-            process_standalone_state(stmt)
-          elsif stmt[:concurrent_sep]
-            # Concurrent separator - handled in composite context
-            nil
-          end
-          # A `direction` statement reaches here only from inside a
-          # composite, and falls through on purpose: the model has no
-          # composite container to hang it on, and mermaid scopes it to the
-          # composite rather than to the diagram.
+          process_standalone_state(stmt) if standalone_state?(stmt)
+        end
+
+        def state_declaration?(stmt)
+          stmt[:keyword] == "state" && stmt[:state_id]
+        end
+
+        def transition?(stmt)
+          stmt[:from] && stmt[:to]
+        end
+
+        def standalone_state?(stmt)
+          stmt[:state_id] && !stmt[:keyword]
+        end
+
+        # Notes and styles are parsed but dropped. This remains a parity gap:
+        # mermaid renders note nodes, but the diagram model has nowhere to
+        # carry them. A direction nested in a composite also falls through;
+        # it cannot be attached to the model's flattened state collection.
+        def ignored_statement?(stmt)
+          stmt[:note_keyword] || stmt[:style_keyword]
         end
 
         def process_state_declaration(stmt)
           state_id = extract_text(stmt[:state_id])
           label = state_label(stmt)
-          description = description_of(stmt)
-
           if stmt[:marker]
-            # Special state marker (choice, fork, join). No label: mmdc
-            # 11.12.0 has no shape for `state "X" as Y <<choice>>` either.
-            add_special_state(
-              state_id, extract_text(stmt[:marker][:marker_type])
-            )
+            declare_special_state(state_id, stmt[:marker])
           elsif stmt[:composite]
-            # Composite state with nested statements
-            state = process_composite_state(state_id, label, stmt[:composite])
-            append_display_text(state, label)
+            declare_composite_state(state_id, label, stmt[:composite])
           else
-            state = add_or_update_state(state_id, label)
-            append_display_text(state, label)
-            if description
-              state.description = description
-              append_display_text(state, description)
-            end
+            update_declared_state(state_id, label, description_of(stmt))
           end
+        end
+
+        # Marker states have no label because the model has no matching shape
+        # for mermaid's labelled choice/fork/join declarations.
+        def declare_special_state(state_id, marker)
+          add_special_state(state_id, extract_text(marker[:marker_type]))
+        end
+
+        def declare_composite_state(state_id, label, composite)
+          state = process_composite_state(state_id, label, composite)
+          append_display_text(state, label)
+        end
+
+        def update_declared_state(state_id, label, description)
+          state = add_or_update_state(state_id, label)
+          append_display_text(state, label)
+          return unless description
+
+          state.description = description
+          append_display_text(state, description)
         end
 
         # nil rather than "" when there is no description: every non-nil
@@ -136,32 +137,20 @@ module Sirena
         end
 
         def process_transition(stmt)
-          # Get source state (if [*], it's a start state)
           from_id = extract_state_id(stmt[:from], is_source: true)
-
-          # Get target state (if [*], it's an end state)
           to_id = extract_state_id(stmt[:to], is_source: false)
-
-          # Parse label for trigger and guard
           trigger, guard = parse_transition_label(stmt[:label])
-
-          # Create transition
           create_transition(from_id, to_id, trigger, guard)
+          process_transition_chain(to_id, stmt[:chain])
+        end
 
-          # Handle chained transitions
-          if stmt[:chain] && !stmt[:chain].empty?
-            chain_transitions = Array(stmt[:chain])
-            current_from = to_id
+        def process_transition_chain(current_from, chain)
+          Array(chain).each do |chain_item|
+            next unless chain_item[:chain_to]
 
-            chain_transitions.each do |chain_item|
-              next unless chain_item[:chain_to]
-
-              chain_to = extract_state_id(
-                chain_item[:chain_to], is_source: false
-              )
-              create_transition(current_from, chain_to, nil, nil)
-              current_from = chain_to
-            end
+            chain_to = extract_state_id(chain_item[:chain_to], is_source: false)
+            create_transition(current_from, chain_to)
+            current_from = chain_to
           end
         end
 
@@ -182,23 +171,12 @@ module Sirena
           parent_state
         end
 
+        # A marker is a start state as a source and an end state as a target.
         def extract_state_id(state_data, is_source: nil)
-          # Convert to string for comparison
           state_str = extract_text(state_data)
+          return state_str unless state_str.strip == START_END_MARKER
 
-          # Check if this is a start/end marker
-          if state_str == START_END_MARKER ||
-              state_str.strip == START_END_MARKER
-            # If it's a source of transition, it's a start state
-            # If it's a target of transition, it's an end state
-            if is_source
-              ensure_start_state
-            else
-              ensure_end_state
-            end
-          else
-            state_str
-          end
+          is_source ? ensure_start_state : ensure_end_state
         end
 
         def ensure_start_state
@@ -254,17 +232,23 @@ module Sirena
 
         def add_or_update_state(state_id, label = nil)
           existing = @diagram.find_state(state_id)
-          if existing
-            existing.label = label if label && !label.empty?
-            existing
-          else
-            state = Diagram::StateNode.new.tap do |s|
-              s.id = state_id
-              s.label = label || state_id
-              s.state_type = "normal"
-            end
-            @diagram.states << state
-            state
+          return update_state_label(existing, label) if existing
+
+          state = build_state(state_id, label || state_id, "normal")
+          @diagram.states << state
+          state
+        end
+
+        def update_state_label(state, label)
+          state.label = label if label && !label.empty?
+          state
+        end
+
+        def build_state(id, label, type)
+          Diagram::StateNode.new.tap do |state|
+            state.id = id
+            state.label = label
+            state.state_type = type
           end
         end
 
@@ -283,21 +267,17 @@ module Sirena
           @diagram.transitions << transition
         end
 
+        # Split "trigger [guard]" while preserving a trigger with no guard.
         def parse_transition_label(label_data)
           return [nil, nil] unless label_data
 
           label_text = extract_text(label_data[:label_text] || label_data).strip
           return [nil, nil] if label_text.empty?
 
-          # Parse trigger and guard from label
-          # Format: "trigger [guard]" or just "trigger"
-          if label_text =~ /^(.+?)\s*\[(.+?)\]\s*$/
-            trigger = Regexp.last_match(1).strip
-            guard = Regexp.last_match(2).strip
-            [trigger, guard]
-          else
-            [label_text, nil]
-          end
+          match = label_text.match(/^(.+?)\s*\[(.+?)\]\s*$/)
+          return [label_text, nil] unless match
+
+          [match[1].strip, match[2].strip]
         end
 
         def generate_state_id(prefix)
@@ -306,24 +286,11 @@ module Sirena
         end
 
         def extract_text(value)
-          case value
-          when Hash
-            if value[:string]
-              value[:string].to_s
-            elsif value[:marker_type]
-              value[:marker_type].to_s
-            elsif value[:dir_value]
-              value[:dir_value].to_s
-            elsif value[:label_text]
-              value[:label_text].to_s
-            else
-              value.values.first.to_s
-            end
-          when String
-            value
-          else
-            value.to_s
-          end
+          return value.to_s unless value.is_a?(Hash)
+
+          keys = %i[string marker_type dir_value label_text]
+          key = keys.find { |name| value[name] }
+          key ? value[key].to_s : value.values.first.to_s
         end
       end
     end
