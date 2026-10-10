@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "keyword_defaults"
+
 module Sirena
   module Notation
     module PlantUML
@@ -10,16 +12,19 @@ module Sirena
         # true when the note began with `&`. `fill` is a {Fill}, or nil for
         # the default note colour.
         class Note
+          EXTRAS = { parallel: false, fill: nil }.freeze
+          private_constant :EXTRAS
+
           attr_reader :shape, :side, :targets, :text, :fill
 
-          def initialize(shape:, side:, targets:, text:, parallel: false,
-                         fill: nil)
+          def initialize(shape:, side:, targets:, text:, **extras)
+            extras = KeywordDefaults.resolve(extras, EXTRAS)
             @shape = shape
             @side = side
             @targets = targets.freeze
             @text = text
-            @parallel = parallel
-            @fill = fill
+            @parallel = extras[:parallel]
+            @fill = extras[:fill]
             freeze
           end
 
