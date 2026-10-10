@@ -60,7 +60,8 @@ module DiagramFuzzReport
   # combining the two extraction batches that share one registered
   # diagram type (spec/mermaid/class + spec/mermaid/class_diagram are
   # both `:class_diagram`, and likewise state/state_diagram,
-  # er/er_diagram, git/gitgraph -- see lib/sirena.rb's DiagramRegistry.register calls):
+  # er/er_diagram, git/gitgraph -- see lib/sirena.rb's
+  # DiagramRegistry.register calls):
   #
   #   class_diagram   465  (class 181 + class_diagram 284)
   #   flowchart       331
@@ -99,10 +100,15 @@ module DiagramFuzzReport
       # mermaid_fuzz_runner.js's payload to carry a getter/preflight per
       # CASE rather than per batch, which is a real redesign, not
       # something to fold into this PR.
-      results = TARGETS.map { |kwargs| MermaidFuzz::Runner.new(**kwargs).run(seed: seed, count: @count) }
+      results = TARGETS.map do |kwargs|
+        MermaidFuzz::Runner.new(**kwargs).run(seed: seed, count: @count)
+      end
 
       unproven, proven = results.partition { |r| !r.proven }
-      unproven.each { |r| warn "#{r.label}: EXCLUDED from the table below -- its own harness is not proven trustworthy." }
+      unproven.each do |result|
+        warning = "#{result.label}: EXCLUDED from the table below"
+        warn "#{warning} -- its own harness is not proven trustworthy."
+      end
 
       print_table(proven)
 

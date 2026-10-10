@@ -16,7 +16,8 @@
 #   ruby scripts/sequence_fuzz.rb [--seed N] [--count N] [--verbose]
 #
 #   --seed N     replay a specific run. Always printed, so any run can be
-#                reproduced exactly: `ruby scripts/sequence_fuzz.rb --seed 12345`
+#                reproduced exactly:
+#                `ruby scripts/sequence_fuzz.rb --seed 12345`
 #   --count N    how many RANDOM cases to generate, on top of the fixed
 #                regression corpus below (default 500)
 #   --verbose    print every case, not just the divergences
@@ -116,8 +117,14 @@ module SequenceFuzz
   # the regression corpus because #38 landing is exactly the change that
   # could make it start disagreeing.
   KNOWN_DIVERGENCES = [
-    Case.new("known-1-dash-paren-comment", "sequenceDiagram\n    B->>A-(%%C: m\n"),
-    Case.new("known-2-reversed-arrow-lead", "sequenceDiagram\n    A-(//-B: m\n"),
+    Case.new(
+      "known-1-dash-paren-comment",
+      "sequenceDiagram\n    B->>A-(%%C: m\n",
+    ),
+    Case.new(
+      "known-2-reversed-arrow-lead",
+      "sequenceDiagram\n    A-(//-B: m\n",
+    ),
   ].freeze
 
   # Generates random single-message sequence-diagram sources with a
@@ -134,7 +141,8 @@ module SequenceFuzz
     private
 
     def generate_source(*)
-      "sequenceDiagram\n    #{random_actor}#{random_arrow}#{random_actor}#{random_message}\n"
+      "sequenceDiagram\n    #{random_actor}#{random_arrow}" \
+        "#{random_actor}#{random_message}\n"
     end
 
     def random_arrow
@@ -184,13 +192,26 @@ module SequenceFuzz
 
     def run(cases)
       payload = cases.map { |c| { id: c.id, source: c.source } }.to_json
-      stdout, stderr, status = Open3.capture3("node", MERMAID_RUNNER, stdin_data: payload)
-      raise "mermaid runner failed (exit #{status.exitstatus}):\n#{stderr}" unless status.success?
+      stdout, stderr, status = Open3.capture3(
+        "node", MERMAID_RUNNER, stdin_data: payload
+      )
+      raise_unless_successful(status, stderr)
 
       JSON.parse(stdout, symbolize_names: true).to_h do |r|
-        verdict = r[:accepted] ? { accepted: true, actors: r[:actors] } : { accepted: false, error: r[:error] }
-        [r[:id].to_s, verdict]
+        [r[:id].to_s, verdict_for(r)]
       end
+    end
+
+    def raise_unless_successful(status, stderr)
+      return if status.success?
+
+      raise "mermaid runner failed (exit #{status.exitstatus}):\n#{stderr}"
+    end
+
+    def verdict_for(result)
+      return { accepted: true, actors: result[:actors] } if result[:accepted]
+
+      { accepted: false, error: result[:error] }
     end
   end
 
@@ -216,7 +237,8 @@ module SequenceFuzz
     private
 
     def classify
-      return accept_reject_mismatch unless @sirena[:accepted] == @mermaid[:accepted]
+      return accept_reject_mismatch \
+        unless @sirena[:accepted] == @mermaid[:accepted]
       return [:agree, "both rejected"] unless @sirena[:accepted]
 
       actor_mismatch
@@ -225,7 +247,8 @@ module SequenceFuzz
     def accept_reject_mismatch
       [
         :accept_reject_mismatch,
-        "sirena accepted=#{@sirena[:accepted]} mermaid accepted=#{@mermaid[:accepted]} " \
+        "sirena accepted=#{@sirena[:accepted]} " \
+        "mermaid accepted=#{@mermaid[:accepted]} " \
         "(sirena: #{@sirena[:error] || @sirena[:actors].inspect}, " \
         "mermaid: #{@mermaid[:error] || @mermaid[:actors].inspect})",
       ]
@@ -235,7 +258,9 @@ module SequenceFuzz
       if @sirena[:actors] == @mermaid[:actors]
         [:agree, "both accepted, actors=#{@sirena[:actors].inspect}"]
       else
-        [:actor_mismatch, "sirena actors=#{@sirena[:actors].inspect} mermaid actors=#{@mermaid[:actors].inspect}"]
+        sirena = @sirena[:actors].inspect
+        mermaid = @mermaid[:actors].inspect
+        [:actor_mismatch, "sirena actors=#{sirena} mermaid actors=#{mermaid}"]
       end
     end
   end
@@ -285,8 +310,11 @@ module SequenceFuzz
       [sirena_results, mermaid_results, sirena_elapsed, mermaid_elapsed]
     end
 
-    def report(cases, sirena_results, mermaid_results, sirena_elapsed, mermaid_elapsed)
-      comparisons = cases.map { |c| Comparison.new(c, sirena_results[c.id], mermaid_results[c.id]) }
+    def report(cases, sirena_results, mermaid_results,
+               sirena_elapsed, mermaid_elapsed)
+      comparisons = cases.map do |c|
+        Comparison.new(c, sirena_results[c.id], mermaid_results[c.id])
+      end
       divergences = comparisons.select(&:divergence?)
 
       print_cases(comparisons, divergences)
@@ -302,9 +330,11 @@ module SequenceFuzz
 
     def print_timings(total, sirena_elapsed, mermaid_elapsed)
       puts format("sirena:  %<total>d cases in %<elapsed>.3fs (%<rate>.1f/s)",
-                  total: total, elapsed: sirena_elapsed, rate: total / sirena_elapsed)
+                  total: total, elapsed: sirena_elapsed,
+                  rate: total / sirena_elapsed)
       puts format("mermaid: %<total>d cases in %<elapsed>.3fs (%<rate>.1f/s)",
-                  total: total, elapsed: mermaid_elapsed, rate: total / mermaid_elapsed)
+                  total: total, elapsed: mermaid_elapsed,
+                  rate: total / mermaid_elapsed)
     end
 
     def print_summary(total, divergences)
