@@ -4,7 +4,7 @@ require "spec_helper"
 require "sirena/parser/mindmap"
 require "sirena/layout/mindmap"
 
-RSpec.describe Sirena::Layout::Mindmap do
+module MindmapBranchesHelpers
   def scene_for(source)
     diagram = Sirena::Parser::Mindmap.new.parse(source)
     described_class.new.call(diagram)
@@ -33,6 +33,38 @@ RSpec.describe Sirena::Layout::Mindmap do
   def scene_path_points(scene)
     scene.edges.first.path.scan(/-?\d+\.?\d*/).map(&:to_f).each_slice(2).to_a
   end
+
+  # Gaps between the node boxes and the left, top, right and bottom of the
+  # canvas.
+  def canvas_margins(scene)
+    left, right = axis_extent(scene.children, :x, :width)
+    top, bottom = axis_extent(scene.children, :y, :height)
+    [left, top, scene.width - right, scene.height - bottom]
+  end
+
+  def axis_extent(boxes, origin, size)
+    [boxes.map(&origin).min,
+     boxes.map { |box| box.public_send(origin) + box.public_send(size) }.max]
+  end
+
+  # Distance from each end of the first edge to the centre of its node.
+  def edge_end_distances(scene)
+    root, first = scene.children
+    section = scene.edges.first.sections.first
+    [distance(section.start_point, centre_of(root)),
+     distance(section.end_point, centre_of(first))]
+  end
+
+  # How far mmdc starts its first edge from the first node's centre.
+  def reference_inset(name)
+    start = MindmapReference.edge_paths(name).first.first
+    centre = MindmapReference.nodes(name).first[:centre]
+    Math.hypot(start[0] - centre[0], start[1] - centre[1])
+  end
+end
+
+RSpec.describe Sirena::Layout::Mindmap do
+  include MindmapBranchesHelpers
 
   it "returns a finite empty scene when no root exists" do
     scene = described_class.new.call(Sirena::Diagram::Mindmap.new)
@@ -76,16 +108,10 @@ RSpec.describe Sirena::Layout::Mindmap do
     let(:reference_box) { MindmapReference.view_box("028") }
 
     it "frames the node boxes with 10 on every side" do
-      boxes = scene.children
-      extent = [boxes.map(&:x).min, boxes.map(&:y).min,
-                boxes.map { |node| node.x + node.width }.max,
-                boxes.map { |node| node.y + node.height }.max]
-
-      expect([extent[0], extent[1], scene.width - extent[2],
-              scene.height - extent[3]]).to eq([10.0, 10.0, 10.0, 10.0])
+      expect(canvas_margins(scene)).to eq([10.0, 10.0, 10.0, 10.0])
     end
 
-    it "puts the first child right of the root and the second left, as mmdc does" do
+    it "places the first child right and the second left, as mmdc does" do
       root, first, second = scene.children
       reference = MindmapReference.nodes("028").map { |node| node[:centre][0] }
 
@@ -102,16 +128,9 @@ RSpec.describe Sirena::Layout::Mindmap do
     end
 
     it "starts and ends each edge 15 from the node centres" do
-      root, first = scene.children
-      section = scene.edges.first.sections.first
-      reference = MindmapReference.edge_paths("028").first
-      nodes = MindmapReference.nodes("028")
-      inset = Math.hypot(reference.first[0] - nodes.first[:centre][0],
-                         reference.first[1] - nodes.first[:centre][1])
+      inset = be_within(0.01).of(reference_inset("028"))
 
-      expect([distance(section.start_point, centre_of(root)),
-              distance(section.end_point, centre_of(first))])
-        .to match([be_within(0.01).of(inset), be_within(0.01).of(inset)])
+      expect(edge_end_distances(scene)).to match([inset, inset])
     end
 
     it "bends each edge through its midpoint as mmdc's curve does" do
