@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "sirena/notation/mermaid/ir_adapters/kanban"
 
 RSpec.describe Sirena::Layout::Kanban do
   subject(:graph) { described_class.new.to_graph(diagram) }
@@ -75,6 +76,13 @@ RSpec.describe Sirena::Layout::Kanban do
         rich_card_column
 
         expect(rich_card_geometry).to eq([280.0, 284.0, 204.0, 134.0, 4])
+      end
+
+      it "lays out shared data IR identically to the private model" do
+        rich_card_column
+        data = Sirena::Notation::Mermaid::IRAdapters::Kanban.call(diagram)
+
+        expect(described_class.new.call(data)).to eq(graph)
       end
     end
 

@@ -3,6 +3,7 @@
 require "spec_helper"
 require "sirena/layout/radar"
 require "sirena/diagram/radar"
+require "sirena/notation/mermaid/ir_adapters/radar"
 
 RSpec.describe Sirena::Layout::Radar do
   subject(:graph) { described_class.new.to_graph(diagram) }
@@ -96,6 +97,13 @@ RSpec.describe Sirena::Layout::Radar do
       )
     end
 
+    it "lays out shared data IR identically to the private model" do
+      diagram.options = { min: 0, max: 40, show_legend: false }
+      data = Sirena::Notation::Mermaid::IRAdapters::Radar.call(diagram)
+
+      expect(described_class.new.call(data)).to eq(graph)
+    end
+
     context "with a larger theme" do
       subject(:themed_geometry) do
         contrast = described_class.new.call(
@@ -132,6 +140,28 @@ RSpec.describe Sirena::Layout::Radar do
     ranges = [[5, 5], [10, 2]].map { |min, max| graph_for_range(min, max) }
 
     expect(ranges).to eq([[5, 6], [10, 11]])
+  end
+
+  context "with colliding axis and series identifiers" do
+    subject(:ir_graph) do
+      data = Sirena::Notation::Mermaid::IRAdapters::Radar.call(diagram)
+
+      described_class.new.call(data)
+    end
+
+    let(:diagram) do
+      Sirena::Diagram::Radar.new.tap do |radar|
+        radar.axes = [Sirena::Diagram::RadarAxis.new("same", "Axis")]
+        radar.curves = [colliding_curve]
+      end
+    end
+    let(:colliding_curve) do
+      Sirena::Diagram::RadarCurve.new("same", "Curve").tap do |curve|
+        curve.add_value("same", 5)
+      end
+    end
+
+    it { is_expected.to eq(graph) }
   end
 
   def graph_for_range(min, max)
