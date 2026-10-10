@@ -142,7 +142,7 @@ module Sirena
         text.tspans = label.lines.each_with_index.map do |line, row|
           Svg::Tspan.new.tap do |run|
             run.x = label.x
-            run.y = label.y + (row * label.line_pitch)
+            run.y = label.line_ys.fetch(row)
             run.content = line
           end
         end
