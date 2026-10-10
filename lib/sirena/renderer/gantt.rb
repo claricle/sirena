@@ -59,14 +59,22 @@ module Sirena
 
       def grid_line(geometry)
         Svg::Line.new.tap do |line|
-          line.x1 = geometry.x1
-          line.y1 = geometry.y1
-          line.x2 = geometry.x2
-          line.y2 = geometry.y2
-          line.stroke = theme_color(:node_stroke) || "#e0e0e0"
-          line.stroke_width = "1"
-          line.stroke_dasharray = "2,2"
+          apply_line_geometry(line, geometry)
+          apply_grid_line_style(line)
         end
+      end
+
+      def apply_line_geometry(line, geometry)
+        line.x1 = geometry.x1
+        line.y1 = geometry.y1
+        line.x2 = geometry.x2
+        line.y2 = geometry.y2
+      end
+
+      def apply_grid_line_style(line)
+        line.stroke = theme_color(:node_stroke) || "#e0e0e0"
+        line.stroke_width = "1"
+        line.stroke_dasharray = "2,2"
       end
 
       def render_section(section, svg)
@@ -86,12 +94,21 @@ module Sirena
       def render_task(task, svg)
         svg << text_element(task.label)
         colour = TASK_COLORS.fetch(task.status.to_sym)
+        render_task_shape(task, svg, colour)
+      end
+
+      def render_task_shape(task, svg, colour)
         if task.milestone_points
-          svg << milestone(task.milestone_points, colour)
-        elsif task.bar
-          svg << task_bar(task.bar, colour)
-          svg << text_element(task.id_label, fill: "#ffffff") if task.id_label
+          return svg << milestone(task.milestone_points, colour)
         end
+        return unless task.bar
+
+        svg << task_bar(task.bar, colour)
+        render_task_id(task.id_label, svg)
+      end
+
+      def render_task_id(label, svg)
+        svg << text_element(label, fill: "#ffffff") if label
       end
 
       def task_bar(geometry, colour)
@@ -123,16 +140,24 @@ module Sirena
 
       def text_element(geometry, fill: nil)
         Svg::Text.new.tap do |text|
-          text.x = geometry.x
-          text.y = geometry.y
-          text.content = geometry.text
-          text.fill = fill || theme_color(:label_text) || "#000000"
-          text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-          text.font_size = geometry.font_size.to_s
-          text.text_anchor = geometry.text_anchor
-          text.font_weight = geometry.font_weight
-          text.dominant_baseline = geometry.dominant_baseline
+          apply_text_geometry(text, geometry)
+          apply_text_style(text, geometry, fill)
         end
+      end
+
+      def apply_text_geometry(text, geometry)
+        text.x = geometry.x
+        text.y = geometry.y
+        text.content = geometry.text
+        text.text_anchor = geometry.text_anchor
+        text.dominant_baseline = geometry.dominant_baseline
+      end
+
+      def apply_text_style(text, geometry, fill)
+        text.fill = fill || theme_color(:label_text) || "#000000"
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = geometry.font_size.to_s
+        text.font_weight = geometry.font_weight
       end
     end
   end

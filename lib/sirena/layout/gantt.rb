@@ -472,38 +472,41 @@ module Sirena
 
       def calculate_task_dates
         tasks = @diagram.sections.flat_map(&:tasks)
+        calculate_explicit_dates(tasks)
+        resolve_dependencies(tasks)
+      end
 
-        # First pass: calculate tasks with explicit dates
+      def calculate_explicit_dates(tasks)
         tasks.each do |task|
           calculate_task_date(task) if task.start_date && !task.after_task
         end
+      end
 
-        # Second pass: resolve dependencies, including a task's IMPLICIT
-        # dependency on the one immediately before it in declaration order
-        # when it names no start and no "after"/"until" but does carry a
-        # duration — mermaid schedules it flush against the previous
-        # task's end. Measured against mmdc: `T: crit, active, 3d` with
-        # nothing else starts where the previous task ends, chaining
-        # across section boundaries too, and even when that previous
-        # task's own end came from ANOTHER dependency rather than an
-        # explicit date — see `chain_from_previous_task`.
-        max_iterations = 100
-        iteration = 0
-        loop do
-          changed = false
-          tasks.each_with_index do |task, index|
-            next unless unresolved?(task)
-
-            if task.after_task || task.until_task
-              changed = true if resolve_task_dependency(task)
-            elsif task.duration && index.positive?
-              changed = true if chain_from_previous_task(task, tasks[index - 1])
-            end
-          end
-
-          iteration += 1
-          break if !changed || iteration >= max_iterations
+      # Resolve declared and implicit dependencies to a fixed point. An
+      # implicit duration starts at the previous task's end, including across
+      # sections and when that predecessor was itself resolved by dependency.
+      def resolve_dependencies(tasks)
+        100.times do
+          break unless resolve_dependency_pass(tasks)
         end
+      end
+
+      def resolve_dependency_pass(tasks)
+        changed = false
+        tasks.each_with_index do |task, index|
+          changed = true if resolve_unsettled_task?(task, tasks, index)
+        end
+        changed
+      end
+
+      def resolve_unsettled_task?(task, tasks, index)
+        return false unless unresolved?(task)
+        if task.after_task || task.until_task
+          return resolve_task_dependency?(task)
+        end
+        return false unless task.duration && index.positive?
+
+        chain_from_previous_task?(task, tasks[index - 1])
       end
 
       # A task with a start date but an "until" end is scheduled by the
@@ -520,11 +523,11 @@ module Sirena
 
       # The predecessor is found by POSITION, not by id — the previous
       # task may have no id at all (ids are optional). Runs inside the
-      # same fixed-point loop as `resolve_task_dependency` so a chain
+      # same fixed-point loop as `resolve_task_dependency?` so a chain
       # whose predecessor is itself still resolving (e.g. via its own
       # "after") converges once the predecessor does, instead of reading
       # a stale nil on the first pass.
-      def chain_from_previous_task(task, previous_task)
+      def chain_from_previous_task?(task, previous_task)
         return false unless previous_task.calculated_end
 
         task.calculated_start = previous_task.calculated_end
@@ -534,7 +537,10 @@ module Sirena
 
       def calculate_task_date(task)
         task.calculated_start = midnight(parse_date(task.start_date))
+        settle_explicit_task_end(task)
+      end
 
+      def settle_explicit_task_end(task)
         if task.end_date
           settle_end(task, midnight(parse_date(task.end_date)))
         elsif task.duration && task.calculated_start
@@ -542,33 +548,45 @@ module Sirena
         end
       end
 
-      def resolve_task_dependency(task)
-        if task.after_task
-          ref_task = latest_dependency(task.after_task)
-          return false unless ref_task
+      def resolve_task_dependency?(task)
+        return resolve_after_dependency?(task) if task.after_task
 
-          task.calculated_start = ref_task.calculated_end
-          if task.duration
-            settle_end(task, end_for(task.calculated_start, task.duration))
-          elsif task.end_date
-            settle_end(task, midnight(parse_date(task.end_date)))
-          elsif task.until_task
-            until_task = @task_map[task.until_task]
-            settle_end(task, until_task.calculated_start) if until_task
-          end
-          return true
+        resolve_until_dependency?(task)
+      end
+
+      def resolve_after_dependency?(task)
+        ref_task = latest_dependency(task.after_task)
+        return false unless ref_task
+
+        task.calculated_start = ref_task.calculated_end
+        settle_dependency_end(task)
+        true
+      end
+
+      def settle_dependency_end(task)
+        if task.duration
+          settle_end(task, end_for(task.calculated_start, task.duration))
+        elsif task.end_date
+          settle_end(task, midnight(parse_date(task.end_date)))
+        elsif task.until_task
+          settle_until_end(task)
         end
+      end
 
-        if task.until_task && task.start_date
-          task.calculated_start = midnight(parse_date(task.start_date))
-          until_task = @task_map[task.until_task]
-          if until_task && until_task.calculated_start
-            settle_end(task, until_task.calculated_start)
-            return true
-          end
-        end
+      def settle_until_end(task)
+        until_task = @task_map[task.until_task]
+        settle_end(task, until_task.calculated_start) if until_task
+      end
 
-        false
+      def resolve_until_dependency?(task)
+        return false unless task.until_task && task.start_date
+
+        task.calculated_start = midnight(parse_date(task.start_date))
+        until_task = @task_map[task.until_task]
+        return false unless until_task&.calculated_start
+
+        settle_end(task, until_task.calculated_start)
+        true
       end
 
       # "after a c" names every task this one waits on, space-separated —
@@ -596,23 +614,25 @@ module Sirena
       # "2024/01" still reads as 2024-01-01 rather than moving with the pin.
       def parse_date(date_str)
         parts = Date._parse(date_str.to_s)
-        # Ordinal dates such as 2024-032 carry a day-of-year instead of a
-        # month and day. The grammar accepts them, so they need their own
-        # branch or the guard below would discard them.
-        yday = parts[:yday]
-        return Date.ordinal(parts[:year] || today.year, yday) if yday
+        return ordinal_date(parts) if parts[:yday]
         return today unless parts[:mon] || parts[:mday]
 
-        # An explicit year anchors the month to January, which is what
-        # Date.parse did: '017/2024' read as 2024-01-17, not as today's month.
-        # Only a wholly absent year lets the reference date supply the month.
-        default_month = parts[:year] ? 1 : today.mon
-
-        Date.new(parts[:year] || today.year,
-                 parts[:mon] || default_month,
-                 parts[:mday] || 1)
+        Date.new(*calendar_date_parts(parts))
       rescue ArgumentError, TypeError
         today
+      end
+
+      # Ordinal dates carry a day-of-year instead of a month and day.
+      def ordinal_date(parts)
+        Date.ordinal(parts[:year] || today.year, parts[:yday])
+      end
+
+      # An explicit year defaults the month to January; without one, the
+      # injected reference date supplies both year and month.
+      def calendar_date_parts(parts)
+        default_month = parts[:year] ? 1 : today.mon
+        [parts[:year] || today.year, parts[:mon] || default_month,
+         parts[:mday] || 1]
       end
 
       def end_for(start_time, duration_str)
@@ -643,31 +663,25 @@ module Sirena
       end
 
       def calculate_timeline
-        min_date = nil
-        max_date = nil
-
-        @diagram.sections.each do |section|
-          section.tasks.each do |task|
-            start = task.calculated_start
-            min_date = start if start && (!min_date || start < min_date)
-
-            finish = task.calculated_end
-            max_date = finish if finish && (!max_date || finish > max_date)
-          end
-        end
-
-        # Default to a reasonable range if no dates found
+        min_date, max_date = timeline_bounds
         min_date ||= midnight(today)
         max_date ||= midnight(today + 30)
+        padded_timeline(min_date, max_date)
+      end
 
-        # Add padding
-        min_date -= DAY_SECONDS
-        max_date += DAY_SECONDS
+      def timeline_bounds
+        tasks = @diagram.sections.flat_map(&:tasks)
+        starts = tasks.filter_map(&:calculated_start)
+        finishes = tasks.filter_map(&:calculated_end)
+        [starts.min, finishes.max]
+      end
 
+      def padded_timeline(min_date, max_date)
+        start_date = min_date - DAY_SECONDS
+        end_date = max_date + DAY_SECONDS
         {
-          start_date: min_date,
-          end_date: max_date,
-          total_days: (max_date - min_date) / DAY_SECONDS,
+          start_date: start_date, end_date: end_date,
+          total_days: (end_date - start_date) / DAY_SECONDS
         }
       end
 
@@ -683,22 +697,33 @@ module Sirena
 
       def transform_tasks(section, axis, section_index)
         section.tasks.map.with_index do |task, task_index|
-          {
-            id: task.id || "task_#{section_index}_#{task_index}",
-            description: task.description,
-            tags: task.tags,
-            done: task.done?,
-            active: task.active?,
-            critical: task.critical?,
-            milestone: task.milestone?,
-            start_date: task.calculated_start&.to_date,
-            end_date: task.calculated_end&.to_date,
-            start_x: calculate_x_position(task.calculated_start, axis),
-            width: task_width(task, axis),
-            click_href: task.click_href,
-            click_callback: task.click_callback,
-          }
+          transformed_task(task, axis, section_index, task_index)
         end
+      end
+
+      def transformed_task(task, axis, section_index, task_index)
+        {
+          id: task.id || "task_#{section_index}_#{task_index}",
+          description: task.description, tags: task.tags,
+          **task_flags(task), **task_timing(task, axis),
+          click_href: task.click_href, click_callback: task.click_callback
+        }
+      end
+
+      def task_flags(task)
+        {
+          done: task.done?, active: task.active?,
+          critical: task.critical?, milestone: task.milestone?
+        }
+      end
+
+      def task_timing(task, axis)
+        {
+          start_date: task.calculated_start&.to_date,
+          end_date: task.calculated_end&.to_date,
+          start_x: calculate_x_position(task.calculated_start, axis),
+          width: task_width(task, axis),
+        }
       end
 
       def calculate_x_position(date, timeline)
