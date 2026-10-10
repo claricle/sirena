@@ -32,18 +32,27 @@ RSpec.describe Sirena::Layout::UserJourney do
     graph.tasks.map { |node| node.box.width }
   end
 
-  def flattened_scene_summary
-    arrow = graph.arrows.first
-    [graph.tasks.map(&:id), [arrow.source, arrow.target],
-     graph.sections.map(&:text)]
+  def band_names
+    graph.sections.flat_map { |band| band.labels.map(&:text) }
   end
 
   def pay_task_summary
+    [task_box_facts, task_label_facts, task_section_facts]
+  end
+
+  def task_box_facts
+    box = graph.tasks.first.box
+    [graph.tasks.first.id, box.width, box.height, box.fill]
+  end
+
+  def task_label_facts
     journey_task = graph.tasks.first
-    [[journey_task.id, journey_task.box.width,
-      journey_task.box.height, journey_task.box.style],
-     journey_task.labels.map(&:text),
-     [journey_task.section_name, journey_task.section_index]]
+    [journey_task.labels.map(&:text), journey_task.dots.map(&:name)]
+  end
+
+  def task_section_facts
+    journey_task = graph.tasks.first
+    [journey_task.section_name, journey_task.section_index]
   end
 
   def journey_layout_policy
@@ -68,35 +77,34 @@ RSpec.describe Sirena::Layout::UserJourney do
 
   describe "graph branches" do
     it "uses the fallback id and complete metadata for an empty journey" do
-      expect([graph.id, graph.title, graph.sections, graph.tasks, graph.arrows])
-        .to eq(["user_journey", nil, [], [], []])
+      expect([graph.id, graph.title, graph.sections, graph.tasks,
+              graph.arrows.map(&:id)])
+        .to eq(["user_journey", nil, [], [], ["timeline"]])
     end
 
-    it "preserves an explicit diagram id and section metadata" do
+    it "keeps the diagram id and title, and bands only sections with tasks" do
       checkout_diagram
 
-      expect([graph.id, graph.title.text, graph.sections.map(&:text)])
-        .to eq(["checkout", "Checkout", ["Find"]])
+      expect([graph.id, graph.title.text, band_names])
+        .to eq(["checkout", "Checkout", []])
     end
 
-    it "flattens sections into sequential nodes and cross-section edges" do
+    it "keeps tasks in written order, one band per section" do
       two_section_journey
-      expect(flattened_scene_summary)
-        .to eq([%w[task_0 task_1], %w[task_0 task_1], %w[Find Buy]])
+      expect([graph.tasks.map(&:id), band_names])
+        .to eq([%w[task_0 task_1], %w[Find Buy]])
     end
 
-    it "carries task labels, score color, actors, and section index" do
+    it "carries task label, section colour, actors, and section index" do
       diagram.sections << section("Buy", [task("Pay", 3, ["Buyer", "Bank"])])
-      expect(pay_task_summary).to match(
-        [["task_0", kind_of(Numeric), 80, "yellow"],
-         ["Pay", "3", "Buyer, Bank"], ["Buy", 0]],
+      expect(pay_task_summary).to eq(
+        [["task_0", 150.0, 50.0, "#191970"],
+         [["Pay"], ["Buyer", "Bank"]], ["Buy", 0]],
       )
     end
 
-    it "uses minimum width for short content, measured for long content" do
-      short_width, long_width = task_widths
-
-      expect([short_width, long_width > short_width]).to eq([140, true])
+    it "gives every task the same 150px box whatever its name" do
+      expect(task_widths).to eq([150.0, 150.0])
     end
 
     it "sets the complete horizontal journey layout policy" do

@@ -27,27 +27,27 @@ RSpec.describe Sirena::Layout::UserJourney do
     ]
   end
   let(:scores) do
-    scene.tasks.to_h { |task| [task.id, task.labels[1].text] }
+    scene.tasks.to_h { |task| [task.id, task.score] }
   end
 
   it "ignores nodes whose role is not a journey task" do
     expect(scene.tasks.map(&:id)).to eq(%w[none half whole])
   end
 
-  it "draws an arrow only for sequence edges" do
-    expect(scene.arrows.map(&:id)).to eq(["flow"])
+  it "draws only the timeline arrow, whatever the edges" do
+    expect(scene.arrows.map(&:id)).to eq(["timeline"])
   end
 
   it "scores a task with no weight as 3" do
-    expect(scores.fetch("none")).to eq("3")
+    expect(scores.fetch("none")).to eq(3)
   end
 
   it "keeps a fractional weight as is" do
-    expect(scores.fetch("half")).to eq("2.5")
+    expect(scores.fetch("half")).to eq(2.5)
   end
 
-  it "prints a whole-number weight without a decimal" do
-    expect(scores.fetch("whole")).to eq("4")
+  it "keeps a whole-number weight whole" do
+    expect(scores.fetch("whole")).to eq(4)
   end
 
   it "leaves the section name empty for a task outside any section" do
