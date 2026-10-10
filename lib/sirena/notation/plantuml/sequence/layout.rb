@@ -4,6 +4,8 @@ require_relative "../../../layout/base"
 require_relative "edge"
 require_relative "note"
 require_relative "note_geometry"
+require_relative "ref"
+require_relative "ref_shape"
 require_relative "scene"
 require_relative "walker"
 
@@ -173,6 +175,7 @@ module Sirena
             @diagram.messages.each { |m| widen(gaps, m) }
             @diagram.boxes.each { |box| widen_box(gaps, box) }
             each_note { |note, span| widen_note(gaps, note, span) }
+            @diagram.items.grep(Ref).each { |ref| widen_ref(gaps, ref) }
           end
 
           def each_note
@@ -194,6 +197,13 @@ module Sirena
             when :right then raise_gap(gaps, high, need + 12)
             else widen_over(gaps, (low...high).to_a, low, need)
             end
+          end
+
+          # A ref wider than the lifelines it names pushes them apart.
+          def widen_ref(gaps, ref)
+            low, high = ref.targets.map { |id| ids.index(id) }.minmax
+            need = RefShape.width_for(ref.label, method(:text_width))
+            widen_over(gaps, (low...high).to_a, low, need)
           end
 
           def widen_over(gaps, between, index, need)

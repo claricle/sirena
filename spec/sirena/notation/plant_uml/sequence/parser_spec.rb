@@ -551,6 +551,29 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
   end
 
+  describe "ref over" do
+    let(:ref_class) { Sirena::Notation::PlantUML::Sequence::Ref }
+
+    it "reads the targets and the text, and declares the targets" do
+      diagram = parse("A -> B", "ref over B, C : see other")
+      ref = diagram.items.grep(ref_class).first
+
+      expect([ref.targets, ref.label, diagram.participants.map(&:id)])
+        .to eq([%w[B C], "see other", %w[A B C]])
+    end
+
+    [
+      "ref over A",
+      "ref over A:",
+      "ref over A : two\\nlines",
+      "ref left of A : x",
+    ].each do |line|
+      it "refuses #{line.inspect}, which it does not draw" do
+        expect(refusal_of("A -> B", line).construct).to eq("ref")
+      end
+    end
+  end
+
   describe "blocks" do
     def phases(*lines)
       fragment = Sirena::Notation::PlantUML::Sequence::Fragment

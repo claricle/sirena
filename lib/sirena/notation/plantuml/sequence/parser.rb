@@ -13,6 +13,7 @@ require_relative "note"
 require_relative "outline"
 require_relative "parallel_message"
 require_relative "participant"
+require_relative "ref"
 require_relative "refusals"
 require_relative "style"
 
@@ -56,6 +57,8 @@ module Sirena
                   (?:[ \t]+of)?
                   (?:[ \t]+(#{TARGET}(?:[ \t]*,[ \t]*#{TARGET})*))?
                   (?:[ \t]+\#\w+)?[ \t]*(?::[ \t]*(.*))?\z/xio
+          REF = /\Aref[ \t]+over[ \t]+(#{TARGET}(?:[ \t]*,[ \t]*#{TARGET})*)
+                 [ \t]*:[ \t]*(\S.*)\z/xio
           END_NOTE = /\Aend[ \t]*[hr]?note\z/i
           BLOCK = /\A(alt|opt|loop|par|critical|break|group)
                    (?:[ \t]+(?:\#\w+[ \t]*)?(.*))?\z/xi
@@ -71,14 +74,14 @@ module Sirena
 
           PARALLEL_KINDS = [MESSAGE, NOTE, BLOCK].freeze
           TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
-                      [BRANCH, :branch], [ACTIVATION, :activation],
+                      [REF, :ref], [BRANCH, :branch], [ACTIVATION, :activation],
                       [RETURN, :reply], [DIVIDER, :divider],
                       [DESTROY, :destroy]].freeze
 
           private_constant :TIMELINE, :NAME, :QUOTED, :KINDS,
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
                            :LINE_END, :PRAGMA, :ACTIVATION, :MARKS, :TARGET,
-                           :NOTE, :END_NOTE, :BLOCK, :BRANCH, :RETURN, :DIVIDER,
+                           :NOTE, :END_NOTE, :REF, :BLOCK, :BRANCH, :RETURN, :DIVIDER,
                            :DESTROY, :COLOUR, :SKINPARAM_WIDTH, :STYLE_OPEN,
                            :STYLE_CLOSE, :PARALLEL,
                            :PARALLEL_KINDS,
@@ -250,6 +253,14 @@ module Sirena
           def block(match)
             @outline.open_block(match[1].downcase, match[2].to_s.strip,
                                 parallel: @parallel)
+          end
+
+          # A label with a line break is the multi-line form; not drawn.
+          def ref(match)
+            return false if match[2].include?("\\n")
+
+            @outline.ref(Ref.new(targets: targets_of(match[1]),
+                                 label: match[2].strip))
           end
 
           def branch(match)
