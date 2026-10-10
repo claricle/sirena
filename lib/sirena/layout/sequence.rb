@@ -193,7 +193,7 @@ module Sirena
 
       def rows
         @rows ||= MessageRows.new([], {}, font_size: message_font_size,
-                                  wrap: @wrap)
+                                          wrap: @wrap)
       end
 
       # Height the notes and the messages' extra lines add to the diagram.

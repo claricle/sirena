@@ -32,4 +32,32 @@ RSpec.describe Sirena::Renderer::Sequence do
       expect(SequenceLabelTextHelpers.drawn_texts(source)).to include(expected)
     end
   end
+
+  describe "a wrapped message" do
+    let(:wrapped_source) do
+      "sequenceDiagram\nA->>B:wrap: #{'word ' * 30}\n"
+    end
+    let(:runs) do
+      doc = REXML::Document.new(Sirena::Engine.new.render(wrapped_source))
+      REXML::XPath.match(doc, "//*[local-name()='tspan']")
+    end
+
+    it "draws more than one line" do
+      expect(runs.length).to be > 1
+    end
+
+    it "places every line with its own y" do
+      expect(runs.map { |run| run.attributes["y"] }).to all(match(/\A\d/))
+    end
+
+    it "writes no dy on any line" do
+      expect(runs.map { |run| run.attributes["dy"] }).to all(be_nil)
+    end
+
+    it "steps each line down by the drawn pitch" do
+      ys = runs.map { |run| run.attributes["y"].to_f }
+
+      expect(ys.each_cons(2).map { |top, low| low - top }.uniq).to eq([19.0])
+    end
+  end
 end
