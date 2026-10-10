@@ -19,8 +19,6 @@ rows:
   count: 2
 - file: spec/sirena/diagram/er_diagram_spec.rb
   count: 1
-- file: spec/sirena/diagram/user_journey_spec.rb
-  count: 2
 - file: spec/sirena/engine_preamble_spec.rb
   count: 1
 - file: spec/sirena/engine_spec.rb
@@ -35,14 +33,10 @@ rows:
   count: 5
 - file: spec/sirena/layout/grid_spec.rb
   count: 4
-- file: spec/sirena/layout/user_journey_spec.rb
-  count: 2
 - file: spec/sirena/markdown_text_spec.rb
   count: 12
 - file: spec/sirena/parser/class_diagram_parser_annotations_members_spec.rb
   count: 1
-- file: spec/sirena/parser/class_diagram_spec.rb
-  count: 17
 - file: spec/sirena/parser/er_diagram_spec.rb
   count: 28
 - file: spec/sirena/parser/error_position_spec.rb
@@ -67,8 +61,6 @@ rows:
   count: 13
 - file: spec/sirena/parser/greedy_run_spec.rb
   count: 6
-- file: spec/sirena/parser/mindmap_spec.rb
-  count: 21
 - file: spec/sirena/parser/packet_spec.rb
   count: 6
 - file: spec/sirena/parser/quadrant_spec.rb
@@ -77,8 +69,6 @@ rows:
   count: 16
 - file: spec/sirena/parser/timeline_spec.rb
   count: 8
-- file: spec/sirena/parser/treemap_spec.rb
-  count: 10
 - file: spec/sirena/renderer/architecture_edge_router_spec.rb
   count: 6
 - file: spec/sirena/renderer/architecture_spec.rb
@@ -103,8 +93,6 @@ rows:
   count: 13
 - file: spec/sirena/renderer/treemap_spec.rb
   count: 5
-- file: spec/sirena/renderer/user_journey_spec.rb
-  count: 1
 - file: spec/sirena/svg/arrowhead_spec.rb
   count: 2
 - file: spec/sirena/svg/escaping_boundary_spec.rb

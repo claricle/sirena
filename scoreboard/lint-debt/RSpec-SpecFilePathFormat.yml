@@ -19,8 +19,6 @@ rows:
   count: 1
 - file: spec/sirena/exhaustion_errors_spec.rb
   count: 1
-- file: spec/sirena/parser/class_diagram_namespace_line_end_spec.rb
-  count: 1
 - file: spec/sirena/parser/class_diagram_parser_annotations_members_spec.rb
   count: 1
 - file: spec/sirena/parser/class_diagram_parser_names_headers_spec.rb
