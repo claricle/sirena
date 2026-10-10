@@ -13,7 +13,7 @@ module LaneVerdictCli
   end
 end
 
-RSpec.describe LaneVerdict do
+RSpec.describe LaneVerdict, :aggregate_failures do
   describe ".failures" do
     {
       "all children succeeded" => [

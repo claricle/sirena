@@ -72,7 +72,7 @@ module ApplyFixesScan
   end
 end
 
-RSpec.describe "svg_conform apply_fixes", type: :task do
+RSpec.describe "svg_conform apply_fixes", :aggregate_failures, type: :task do
   include ApplyFixesScan
 
   let(:repo_root) { File.expand_path("../..", __dir__) }

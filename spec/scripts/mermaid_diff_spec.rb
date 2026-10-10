@@ -29,7 +29,7 @@ end
 # Every example that breaks `ps` puts a real broken `ps` on PATH, and every
 # process tree uses real processes — a stub would only prove that the rescue
 # matches what the stub was told to raise.
-RSpec.describe MermaidDiff do
+RSpec.describe MermaidDiff, :aggregate_failures do
   include MermaidDiffSpecSupport::Helpers
 
   subject(:harness) { Class.new { include MermaidDiff }.new }

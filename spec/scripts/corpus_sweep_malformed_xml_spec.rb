@@ -8,7 +8,7 @@ require "tmpdir"
 # subprocess. Its `info` cases all render well-formed SVG, which makes the
 # unpatched run the control: the only difference in the seeded run is that
 # Engine#render returns SVG-shaped output that is not XML.
-RSpec.describe "scripts/corpus_sweep.rb", type: :task do
+RSpec.describe "scripts/corpus_sweep.rb", :aggregate_failures, type: :task do
   let(:root) { File.expand_path("../..", __dir__) }
   let(:info_cases) do
     Dir.glob(File.join(root, "spec", "mermaid", "info", "*.mmd")).size
