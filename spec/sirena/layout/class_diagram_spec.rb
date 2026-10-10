@@ -20,6 +20,48 @@ module ClassDiagramLayoutSpecHelpers
     end
   end
 
+  def scene_geometry(scene)
+    [
+      scene.class,
+      scene.children.map(&:class).uniq,
+      scene.edges.map(&:class).uniq,
+      scene.width,
+      scene.height,
+      scene.view_box,
+    ]
+  end
+
+  def member_rows(node)
+    [node.attributes.map(&:text), node.method_rows.map(&:text),
+     separator_coordinates(node)]
+  end
+
+  def edge_geometry(edge)
+    [
+      edge.source, edge.target,
+      *section_geometry(edge.sections.first),
+      edge.labels.map(&:text), edge.markers.map(&:fill)
+    ]
+  end
+
+  def section_geometry(section)
+    [[section.start_point.x, section.start_point.y],
+     [section.end_point.x, section.end_point.y]]
+  end
+
+  def invalid_diagram
+    diagram = Sirena::Diagram::ClassDiagram.new
+    diagram.relationships << Sirena::Diagram::ClassRelationship.new(
+      from_id: "Dog", to_id: "Animal", relationship_type: "inheritance",
+    )
+    diagram
+  end
+
+  def member_width(layout, row)
+    source = "classDiagram\nclass N {\n  #{row}\n}\n"
+    layout.call(parsed(source)).children.first.width
+  end
+
   def routed_graph
     nodes = %w[A B].each_with_index.map do |id, index|
       { id: id, x: index * 200, y: 0, width: 100, height: 50,
@@ -75,11 +117,10 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   let(:scene) { layout.call(diagram) }
 
   it "returns typed final canvas geometry" do
-    expect(scene).to be_a(described_class::Scene)
-    expect(scene.children).to all(be_a(described_class::Node))
-    expect(scene.edges).to all(be_a(described_class::Edge))
-    expect([scene.width, scene.height, scene.view_box])
-      .to eq([520.0, 214.0, "0 0 520 214"])
+    expect(scene_geometry(scene)).to eq(
+      [described_class::Scene, [described_class::Node],
+       [described_class::Edge], 520.0, 214.0, "0 0 520 214"],
+    )
   end
 
   it "positions class nodes through the fallback grid inside layout" do
@@ -88,25 +129,17 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   end
 
   it "carries final member rows without renderer graph lookups" do
-    animal = scene.children.first
-
-    expect(animal.attributes.map(&:text)).to eq(["#int age"])
-    expect(animal.method_rows.map(&:text)).to eq(["+breathe()"])
-    expect(separator_coordinates(animal))
-      .to eq([[50.0, 83.0, 190.0, 83.0], [50.0, 116.0, 190.0, 116.0]])
+    expect(member_rows(scene.children.first)).to eq(
+      [["#int age"], ["+breathe()"],
+       [[50.0, 83.0, 190.0, 83.0], [50.0, 116.0, 190.0, 116.0]]],
+    )
   end
 
   it "carries final relationship endpoints, labels, and marker geometry" do
-    edge = scene.edges.first
-    section = edge.sections.first
-
-    expect([edge.source, edge.target]).to eq(%w[Animal Dog])
-    expect([section.start_point.x, section.start_point.y])
-      .to eq([190.0, 22.0])
-    expect([section.end_point.x, section.end_point.y])
-      .to eq([300.0, 151.0])
-    expect(edge.labels.map(&:text)).to eq(["knows"])
-    expect(edge.markers.map(&:fill)).to eq(["#000000"])
+    expect(edge_geometry(scene.edges.first)).to eq(
+      ["Animal", "Dog", [190.0, 22.0], [300.0, 151.0],
+       ["knows"], ["#000000"]],
+    )
   end
 
   it "preserves canonical labels and every routed section coordinate" do
@@ -118,9 +151,8 @@ RSpec.describe Sirena::Layout::ClassDiagram do
 
   it "orients routed markers from their adjacent terminal section" do
     edge = described_class.from_graph(multi_section_marker_graph).edges.first
-    expected = described_class.triangle_marker(
-      { x: 150, y: 75 }, { x: 200, y: 25 }, true
-    )
+    expected = described_class.triangle_marker({ x: 150, y: 75 },
+                                               { x: 200, y: 25 }, true)
 
     expect(edge.markers.first.points).to eq(expected.points)
   end
@@ -136,10 +168,9 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   it "uses the legacy empty class canvas upstream" do
     empty_scene = layout.call(parsed("classDiagram\n"))
 
-    expect([empty_scene.width, empty_scene.height, empty_scene.view_box])
-      .to eq([880.0, 680.0, "0 0 880 680"])
-    expect(empty_scene.children).to be_empty
-    expect(empty_scene.edges).to be_empty
+    expect([empty_scene.width, empty_scene.height, empty_scene.view_box,
+            empty_scene.children, empty_scene.edges])
+      .to eq([880.0, 680.0, "0 0 880 680", [], []])
   end
 
   it "lays out shared graph IR identically without mutating the source" do
@@ -152,12 +183,7 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   end
 
   it "raises for an invalid diagram" do
-    invalid = Sirena::Diagram::ClassDiagram.new
-    invalid.relationships << Sirena::Diagram::ClassRelationship.new(
-      from_id: "Dog", to_id: "Animal", relationship_type: "inheritance",
-    )
-
-    expect { layout.call(invalid) }
+    expect { layout.call(invalid_diagram) }
       .to raise_error(Sirena::Layout::LayoutError)
   end
 
@@ -169,9 +195,8 @@ RSpec.describe Sirena::Layout::ClassDiagram do
     it "uses the default theme's large and small sizes" do
       node = layout.call(parsed(stereotype_source)).children.first
 
-      expect([node.name.font_size, node.stereotype.font_size])
-        .to eq([16.0, 12.0])
-      expect(node.stereotype.y).to be < node.name.y
+      expect([node.name.font_size, node.stereotype.font_size,
+              node.stereotype.y < node.name.y]).to eq([16.0, 12.0, true])
     end
 
     it "uses high-contrast sizes for measurement and emitted labels" do
@@ -179,9 +204,8 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       node = layout.call(parsed(stereotype_source), theme: theme).children.first
       expected = measured("<<InternationalOrderProcessor>>", 14) + 20
 
-      expect(node.width).to be_within(0.01).of(expected)
-      expect([node.name.font_size, node.stereotype.font_size])
-        .to eq([18.0, 14.0])
+      expect([node.width, node.name.font_size, node.stereotype.font_size])
+        .to match([be_within(0.01).of(expected), 18.0, 14.0])
     end
   end
 
@@ -193,12 +217,9 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       "a typed attribute" => "+String #{'i' * 40}",
     }.each do |label, row|
       it "sizes #{label} from the monospace text drawn" do
-        member_scene = layout.call(
-          parsed("classDiagram\nclass N {\n  #{row}\n}\n"),
-        )
         expected = measured(row, 12, monospace: true) + 20
 
-        expect(member_scene.children.first.width)
+        expect(member_width(layout, row))
           .to be_within(0.01).of(expected)
       end
     end
@@ -220,9 +241,8 @@ RSpec.describe Sirena::Layout::ClassDiagram do
 
     it "sizes a stereotype on its own small-font line" do
       stereotype = "InternationalOrderProcessor"
-      node = layout.call(
-        parsed("classDiagram\nclass N <<#{stereotype}>>\n"),
-      ).children.first
+      source = "classDiagram\nclass N <<#{stereotype}>>\n"
+      node = layout.call(parsed(source)).children.first
 
       expect(node.width)
         .to be_within(0.01).of(measured("<<#{stereotype}>>", 12) + 20)
