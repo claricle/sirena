@@ -11,47 +11,13 @@ Step-by-step tutorials to help you accomplish specific tasks with Sirena.
 
 == What's in This Section
 
-Hands-on tutorials covering:
+There are no tutorial pages yet. Start with the
+link:../../guides/quick-start/[Getting Started] guide.
 
-* **Getting Started** - Installation and first diagram
-* **CLI Usage** - Command-line interface walkthrough
-* **Rails Integration** - Using Sirena in Rails applications
-* **Jekyll Integration** - Static site generation with Sirena
-* **Batch Processing** - Processing multiple diagrams at once
-* **Theme Customization** - Creating and applying custom themes
-
-== Tutorial Format
-
-Each tutorial includes:
-
-* **Prerequisites** - What you need before starting
-* **Step-by-step instructions** - Clear, actionable steps
-* **Code examples** - Copy-paste ready code
-* **Expected results** - What you should see
-* **Troubleshooting** - Common issues and solutions
-
-== Recommended Learning Path
-
-For beginners:
-
-. link:../../guides/quick-start/[Getting Started]
-. *CLI Usage* (planned)
-. *Creating Your First Diagram* (planned)
-
-For application integration:
-
-. *Rails Integration* (planned)
-. *Jekyll Integration* (planned)
-
-For advanced usage:
-
-. *Batch Processing* (planned)
-. *Theme Customization* (planned)
+Planned: CLI usage walkthrough, batch processing, theme customization.
 
 == Next Steps
 
-After completing tutorials:
-
 * Explore link:../../guides/index/[Guides] for in-depth topics
 * Reference link:../../diagram_types/index/[Diagram Types] for syntax
-* Check link:../../references/index/[API Reference] for programmatic use
+* Check link:../../references/index/[References] for the CLI reference

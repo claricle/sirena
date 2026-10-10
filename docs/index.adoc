@@ -8,7 +8,7 @@ permalink: /
 
 == Sirena Documentation
 
-Welcome to Sirena, a pure Ruby Mermaid diagram rendering library that converts Mermaid syntax into beautiful SVG diagrams. Built for server-side rendering, Sirena provides native integration with Ruby applications without requiring Node.js or browser dependencies.
+Welcome to Sirena, a pure Ruby Mermaid diagram rendering library that converts Mermaid syntax into SVG diagrams. Built for server-side rendering, Sirena provides native integration with Ruby applications without requiring Node.js or browser dependencies.
 
 == Why Sirena?
 
@@ -26,11 +26,11 @@ Welcome to Sirena, a pure Ruby Mermaid diagram rendering library that converts M
   the link:performance-benchmark/[Performance Benchmark report]; memory was not
   measured, and the report does not generalize one machine's timings
 
-=== Comprehensive Diagram Support
+=== Diagram Support
 * 24 diagram types registered (compatibility varies by type; see the compatibility page)
-* Mermaid.js syntax compatibility
-* Advanced theming system
-* Professional-quality SVG output
+* Mermaid.js syntax as input (parity varies by type; see the compatibility page)
+* YAML theming with 4 built-in themes
+* Self-contained SVG output
 
 == Quick Start
 
@@ -52,13 +52,13 @@ See link:guides/quick-start/[Getting Started Tutorial] for complete installation
 == Documentation Structure
 
 === link:pages/index/[Core Topics]
-Essential concepts and architecture you need to understand Sirena.
+Compatibility and comparison pages.
 
 === link:tutorials/index/[Tutorials]
 Step-by-step guides to help you get started and accomplish specific tasks.
 
 === link:guides/index/[Guides]
-In-depth guides for advanced features and best practices.
+Installation, quick start and the CLI reference.
 
 === link:diagram_types/index/[Diagram Types]
 Complete reference for all 24 diagram types with syntax and examples.
@@ -67,11 +67,11 @@ Complete reference for all 24 diagram types with syntax and examples.
 Detailed documentation of Sirena's unique features and capabilities.
 
 === link:references/index/[References]
-Complete API and CLI references for quick lookup.
+CLI reference and compatibility lookup.
 
 == Supported Diagram Types
 
-Sirena registers 24 diagram types compatible with Mermaid.js syntax:
+Sirena registers 24 diagram types that read Mermaid.js syntax (parity varies by type; see the compatibility page):
 
 [cols="1,3"]
 |===
@@ -133,6 +133,21 @@ Sirena registers 24 diagram types compatible with Mermaid.js syntax:
 
 |link:diagram_types/kanban-diagram/[Kanban]
 |Workflow board visualization
+
+|link:diagram_types/radar-chart/[Radar]
+|Multi-dimensional data comparison
+
+|link:diagram_types/packet-diagram/[Packet]
+|Network packet structure
+
+|link:diagram_types/treemap-diagram/[Treemap]
+|Hierarchical data as nested rectangles
+
+|link:diagram_types/info-diagram/[Info]
+|Information display
+
+|link:diagram_types/error-diagram/[Error]
+|Error message display
 |===
 
 See the complete link:diagram_types/index/[Diagram Types Reference] for detailed syntax and examples.
@@ -143,12 +158,12 @@ See the complete link:diagram_types/index/[Diagram Types Reference] for detailed
 * **Batch Processing**: Built-in batch renderer for documentation sets
 * **Ruby Integration**: Call `Sirena.render` directly from Rails, Jekyll, or
   any Ruby application; no dedicated Rails helpers or Jekyll plugin exist yet
-* **Parslet Parsing**: Robust grammar-based parsing with clear error messages
-* **SVG Output**: Professional-quality scalable vector graphics
+* **Parslet Parsing**: Grammar-based parsing; parse errors report line and column
+* **SVG Output**: Scalable vector graphics, self-contained
 
 == Compatibility & Comparison
 
-Sirena maintains syntax compatibility with Mermaid.js while providing a pure Ruby implementation optimized for server-side rendering.
+Sirena reads Mermaid.js syntax in a pure Ruby implementation; how much of each type's real-world input it handles is measured on the compatibility page.
 
 * link:pages/compatibility/[Mermaid.js Compatibility] - Detailed syntax compatibility matrix
 * link:pages/comparison/[Tool Comparison] - Compare Sirena with Mermaid.js, PlantUML, and Graphviz
@@ -158,7 +173,6 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 * **Report Issues**: https://github.com/claricle/sirena/issues[GitHub Issues]
 * **Source Code**: https://github.com/claricle/sirena[GitHub Repository]
 * **RubyGems**: https://rubygems.org/gems/sirena[Sirena Gem]
-* **Migration Guide**: *Migrating from Mermaid.js* (planned)
 
 == License
 

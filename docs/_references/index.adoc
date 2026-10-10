@@ -7,32 +7,14 @@ has_children: true
 
 == References
 
-Complete API, CLI, and configuration references for quick lookup.
+Reference material for quick lookup.
 
 == What's in This Section
 
-Comprehensive reference documentation:
-
-* **CLI Reference** - Complete command-line interface
-* **API Reference** - Programmatic API documentation
-* **Theme Reference** - Theme configuration schema
-* **Error Codes** - All error codes and meanings
-* **Configuration** - Configuration options
-* **Mermaid Compatibility** - Syntax compatibility matrix
-
-== Reference Format
-
-Each reference page provides:
-
-* **Quick lookup tables** - Find information fast
-* **Complete listings** - Exhaustive documentation
-* **Examples** - Usage demonstrations
-* **Notes** - Important details and caveats
-* **See also** - Related documentation
+* link:../../guides/cli-reference/[CLI Reference] - the `sirena` commands
+* link:../../pages/compatibility/[Mermaid Compatibility] - per-type corpus pass rates
 
 == Command-Line Interface
-
-=== link:../../guides/cli-reference/[CLI Reference]
 
 Complete documentation of all `sirena` commands:
 
@@ -41,60 +23,7 @@ Complete documentation of all `sirena` commands:
 * `sirena types` - List supported diagram types
 * `sirena version` - Show version information
 
-== Programmatic API
-
-=== *API Reference* (planned)
-
-Ruby API documentation:
-
-* `Sirena.render()` - Main rendering method
-* `Sirena::Engine` - Core engine class
-* `Sirena::Theme` - Theme system
-* `Sirena::Parser` - Parser classes
-* `Sirena::Renderer` - Renderer classes
-
-== Configuration
-
-=== *Theme Reference* (planned)
-
-Complete theme configuration schema:
-
-* Color palette configuration
-* Typography settings
-* Shape styles
-* Spacing configuration
-* Effect styles
-
-== Error Handling
-
-=== *Error Codes* (planned)
-
-All error codes with:
-
-* Error code number
-* Error message
-* Cause explanation
-* Resolution steps
-* Examples
-
-== Compatibility
-
-=== *Mermaid Compatibility* (planned)
-
-Feature-by-feature comparison:
-
-* Supported syntax
-* Unsupported features
-* Behavioral differences
-* Migration notes
-
-== Quick Reference Cards
-
-Downloadable quick references:
-
-* *CLI Quick Reference* (planned)
-* *API Quick Reference* (planned)
-* *Syntax Quick Reference* (planned)
+Planned: API reference, theme reference, error reference, quick reference cards.
 
 == Related Documentation
 
