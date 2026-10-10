@@ -47,7 +47,7 @@ ruby scripts/audit_singleton_captures.rb --check
 
 **Result:** 1 executable `Array(...)` hit
 
-- `lib/sirena/parser/builders/sequence.rb:86` — `Array(statements).each do |stmt|`
+- `lib/sirena/parser/builders/sequence.rb:87` — `Array(statements).each do |stmt|`
 
 ## 07c — git, gitgraph
 
