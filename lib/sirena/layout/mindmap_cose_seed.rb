@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "mindmap_cose_trig"
+require_relative "mindmap_cose_wedge"
 
 module Sirena
   module Layout
@@ -20,8 +21,8 @@ module Sirena
       def place
         tree = breadth_first_order
         centre = tree_centre(tree)
-        ring = [tree.map(&:diagonal).max, RING_GAP].max
-        branch(centre, nil, 0.0, ANGLE_SPAN, 0.0, ring)
+        @ring = [tree.map(&:diagonal).max, RING_GAP].max
+        branch(centre, nil, MindmapCoseWedge.new(0.0, ANGLE_SPAN), 0.0)
         move_to_origin
       end
 
@@ -32,7 +33,9 @@ module Sirena
       def breadth_first_order
         order = [bodies.first]
         order.each do |body|
-          body.neighbors.each { |other| order << other unless order.include?(other) }
+          body.neighbors.each do |other|
+            order << other unless order.include?(other)
+          end
         end
         order
       end
@@ -54,59 +57,60 @@ module Sirena
         fresh = []
         index = 0
         while index < remaining.length
-          body = remaining.delete_at(index)
-          body.neighbors.each do |other|
-            next if removed.include?(other)
-
-            degrees[other] -= 1
-            fresh << other if degrees[other] == 1
-          end
+          fresh.concat(release(remaining.delete_at(index), degrees, removed))
           index += 1
         end
         removed.concat(fresh)
       end
 
+      # @return [Array] the neighbours of body that just became leaves
+      def release(body, degrees, removed)
+        body.neighbors.filter_map do |other|
+          next if removed.include?(other)
+
+          degrees[other] -= 1
+          other if degrees[other] == 1
+        end
+      end
+
       def move_to_origin
-        left = bodies.map(&:x).min
-        top = bodies.map(&:y).min
-        width = bodies.map(&:right).max - left
-        height = bodies.map(&:bottom).max - top
+        left, top = top_left
+        size = [bodies.map(&:right).max - left, bodies.map(&:bottom).max - top]
         bodies.each do |body|
           body.x -= left
           body.y -= top
         end
-        [width, height]
+        size
       end
 
-      def branch(body, parent, start_angle, end_angle, distance, ring)
-        angle = (angle_midpoint(start_angle, end_angle) + start_angle).remainder(360)
-        radians = (angle * (2.0 * Math::PI)) / 360
+      def top_left
+        [bodies.map(&:x).min, bodies.map(&:y).min]
+      end
+
+      def branch(body, parent, wedge, distance)
+        radians = (wedge.bearing * (2.0 * Math::PI)) / 360
         body.center = [distance * MindmapCoseTrig.cos(radians),
                        distance * MindmapCoseTrig.sin(radians)]
-        place_children(body, parent, start_angle, end_angle,
-                       distance + ring, ring)
+        place_children(body, parent, wedge, distance + @ring)
       end
 
-      def angle_midpoint(start_angle, end_angle)
-        half = ((end_angle - start_angle) + 1) / 2.0
-        half.negative? ? half + 180 : half
-      end
-
-      def place_children(body, parent, start_angle, end_angle, distance, ring)
-        links = body.links
-        count = links.length - (parent ? 1 : 0)
-        step = (end_angle - start_angle).abs / count.to_f
-        index = parent ? (links.index { |link| link.other_end(body).equal?(parent) } + 1) % links.length : 0
-        placed = 0
-        while placed != count
-          child = links[index].other_end(body)
-          unless child.equal?(parent)
-            first = (start_angle + (placed * step)).remainder(360)
-            branch(child, body, first, (first + step).remainder(360), distance, ring)
-            placed += 1
-          end
-          index = (index + 1) % links.length
+      def place_children(body, parent, wedge, distance)
+        children = children_in_order(body, parent)
+        children.each_with_index do |child, index|
+          branch(child, body, wedge.slice(index, children.length), distance)
         end
+      end
+
+      # The children start after the parent's link and wrap around.
+      def children_in_order(body, parent)
+        links = parent ? rotate_past(body.links, body, parent) : body.links
+        others = links.map { |link| link.other_end(body) }
+        others.reject { |other| other.equal?(parent) }
+      end
+
+      def rotate_past(links, body, parent)
+        index = links.index { |link| link.other_end(body).equal?(parent) }
+        links.rotate((index + 1) % links.length)
       end
     end
   end
