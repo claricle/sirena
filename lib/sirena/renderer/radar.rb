@@ -43,22 +43,14 @@ module Sirena
       def grid_ring(ring, scene)
         return grid_circle(ring) unless scene.grid_shape == "polygon"
 
-        grid_polygon(ring, scene)
+        grid_polygon(ring)
       end
 
-      def grid_polygon(ring, scene)
+      def grid_polygon(ring)
         Svg::Polygon.new.tap do |element|
-          element.points = scene.axes.map { |axis| ring_point(ring, axis) }
-            .join(" ")
+          element.points = ring.polygon_points
           style_ring(element)
         end
-      end
-
-      def ring_point(ring, axis)
-        radians = axis.angle * Math::PI / 180
-        x_pos = ring.x + (Math.cos(radians) * ring.radius)
-        y_pos = ring.y + (Math.sin(radians) * ring.radius)
-        "#{x_pos},#{y_pos}"
       end
 
       def grid_circle(circle)

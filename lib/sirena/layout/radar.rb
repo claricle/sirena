@@ -22,6 +22,11 @@ module Sirena
         attribute :radius, :float
       end
 
+      # A graticule ring; +polygon_points+ is its outline through the axes.
+      class Ring < Circle
+        attribute :polygon_points, :string
+      end
+
       class Line < Lutaml::Model::Serializable
         attribute :x1, :float
         attribute :y1, :float
@@ -77,7 +82,7 @@ module Sirena
         attribute :radius, :float
         attribute :min_value, :float
         attribute :max_value, :float
-        attribute :grid_circles, Circle, collection: true, default: -> { [] }
+        attribute :grid_circles, Ring, collection: true, default: -> { [] }
         attribute :axes, Axis, collection: true, default: -> { [] }
         attribute :curves, Curve, collection: true, default: -> { [] }
         attribute :legend, Legend, collection: true, default: -> { [] }
@@ -133,13 +138,10 @@ module Sirena
       end
 
       def scene_data(graph, curves)
-        center_x = graph.fetch(:center_x)
-        center_y = graph.fetch(:center_y)
+        axes = typed_axes(graph.fetch(:axes), graph.fetch(:center_x),
+                          graph.fetch(:center_y))
         {
-          grid_circles: typed_grid(
-            graph.fetch(:grid_circles), center_x, center_y
-          ),
-          axes: typed_axes(graph.fetch(:axes), center_x, center_y),
+          grid_circles: typed_grid(graph, axes), axes: axes,
           curves: curves, legend: legend(graph, curves),
           title: title_label(graph)
         }
@@ -160,10 +162,21 @@ module Sirena
         )
       end
 
-      def typed_grid(circles, center_x, center_y)
-        circles.map do |circle|
-          Circle.new(x: center_x, y: center_y, radius: circle[:radius])
+      def typed_grid(graph, axes)
+        graph.fetch(:grid_circles).map do |circle|
+          ring = Ring.new(x: graph.fetch(:center_x),
+                          y: graph.fetch(:center_y), radius: circle[:radius])
+          ring.polygon_points = axes.map { |axis| ring_vertex(ring, axis) }
+            .join(" ")
+          ring
         end
+      end
+
+      def ring_vertex(ring, axis)
+        radians = axis.angle * Math::PI / 180
+        x_pos = ring.x + (Math.cos(radians) * ring.radius)
+        y_pos = ring.y + (Math.sin(radians) * ring.radius)
+        "#{x_pos},#{y_pos}"
       end
 
       def typed_axes(axes, center_x, center_y)
