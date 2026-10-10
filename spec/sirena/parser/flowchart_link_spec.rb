@@ -81,7 +81,7 @@ module FlowchartLinkSpecHelpers
   end
 end
 
-RSpec.describe Sirena::Parser::Flowchart do
+RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
   include FlowchartLinkSpecHelpers
 
   describe "every link mermaid draws" do

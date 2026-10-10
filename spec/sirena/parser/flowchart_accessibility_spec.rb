@@ -17,7 +17,7 @@ module FlowchartAccessibilitySpecHelpers
   end
 end
 
-RSpec.describe Sirena::Parser::Flowchart do
+RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
   include FlowchartAccessibilitySpecHelpers
 
   describe "accessibility statements" do

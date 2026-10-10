@@ -29,7 +29,7 @@ module FlowchartSubgraphOwnershipHelpers
   end
 end
 
-RSpec.describe Sirena::Parser::Flowchart do
+RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
   include FlowchartSubgraphOwnershipHelpers
 
   describe "two boxes naming the same subgraph" do

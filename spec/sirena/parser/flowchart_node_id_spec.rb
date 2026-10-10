@@ -82,7 +82,7 @@ module FlowchartNodeIdSpecHelpers
   end
 end
 
-RSpec.describe Sirena::Parser::Flowchart do
+RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
   include FlowchartNodeIdSpecHelpers
 
   describe "node ids mermaid accepts" do
