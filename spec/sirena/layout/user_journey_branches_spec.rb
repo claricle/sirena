@@ -58,6 +58,14 @@ RSpec.describe Sirena::Layout::UserJourney do
     }
   end
 
+  def from_graph_scenes
+    two_section_journey
+    positioned = described_class.new.build_graph(diagram)
+    Sirena::Layout::Grid.apply(positioned)
+    ir = Sirena::Notation::Mermaid::IRAdapters::UserJourney.call(diagram)
+    [described_class.from_graph(positioned), described_class.from_graph(ir)]
+  end
+
   describe "graph branches" do
     it "uses the fallback id and complete metadata for an empty journey" do
       expect([graph.id, graph.title, graph.sections, graph.tasks, graph.arrows])
@@ -95,6 +103,11 @@ RSpec.describe Sirena::Layout::UserJourney do
       layout_options = described_class.new.build_graph(diagram)[:layoutOptions]
 
       expect(layout_options).to include(journey_layout_policy)
+    end
+
+    it "retains from_graph behavior for positioned hashes and shared IR" do
+      from_hash, from_ir = from_graph_scenes
+      expect(Marshal.dump(from_hash)).to eq(Marshal.dump(from_ir))
     end
   end
 end

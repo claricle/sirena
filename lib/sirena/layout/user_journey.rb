@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grid"
 require_relative "../diagram/user_journey"
+require_relative "../notation/mermaid/ir_adapters/user_journey"
 
 module Sirena
   module Layout
@@ -89,6 +90,8 @@ module Sirena
         attribute :id, :string
         attribute :view_box, :string
         attribute :title, Label
+        attribute :acc_title, :string
+        attribute :acc_description, :string
         attribute :sections, Label, collection: true, default: -> { [] }
         attribute :tasks, Task, collection: true, default: -> { [] }
         attribute :arrows, Arrow, collection: true, default: -> { [] }
@@ -97,22 +100,28 @@ module Sirena
       def self.from_graph(graph, theme: nil)
         layout = new
         layout.theme = theme if theme
+        return layout.to_graph(graph) if graph.is_a?(IR::Graph)
+
         layout.send(:scene_from_graph, graph)
       end
 
       # Converts a user journey to a graph structure.
       #
-      # @param diagram [Diagram::UserJourney] the user journey to transform
+      # @param diagram [Diagram::UserJourney, IR::Graph] source journey graph
       # @return [Hash] elkrb-compatible graph hash
       def build_graph(diagram)
+        graph = ir_graph(diagram)
+        sections = section_nodes(graph)
         {
-          id: diagram.id || "user_journey",
-          children: transform_tasks(diagram),
-          edges: transform_task_flow(diagram),
+          id: graph.id,
+          children: transform_tasks(graph, sections),
+          edges: transform_task_flow(graph),
           layoutOptions: layout_options,
           metadata: {
-            title: diagram.title,
-            sections: diagram.sections.map(&:name),
+            title: graph.label,
+            sections: sections.map(&:label),
+            acc_title: graph.accessibility_title,
+            acc_description: graph.accessibility_description,
           },
         }
       end
@@ -131,6 +140,8 @@ module Sirena
         Scene.new(
           id: graph[:id] || "user_journey", width: width, height: height,
           view_box: "0 0 #{width} #{height}", title: title_label(graph),
+          acc_title: graph.dig(:metadata, :acc_title),
+          acc_description: graph.dig(:metadata, :acc_description),
           sections: section_labels(graph), tasks: typed_tasks(graph),
           arrows: typed_arrows(graph)
         )
@@ -339,58 +350,70 @@ module Sirena
          y_position - (10 * Math.sin(angle))]
       end
 
-      def transform_tasks(diagram)
-        task_id = 0
-        nodes = []
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
 
-        diagram.sections.each_with_index do |section, section_idx|
-          section.tasks.each do |task|
-            dims = calculate_task_dimensions(task)
-
-            nodes << {
-              id: "task_#{task_id}",
-              width: dims[:width],
-              height: dims[:height],
-              labels: task_labels(task),
-              metadata: {
-                name: task.name,
-                score: task.score,
-                score_color: task.score_color,
-                actors: task.actors,
-                section_name: section.name,
-                section_index: section_idx,
-              },
-            }
-
-            task_id += 1
-          end
-        end
-
-        nodes
+        Notation::Mermaid::IRAdapters::UserJourney.call(diagram)
       end
 
-      def transform_task_flow(diagram)
-        # Create sequential edges between tasks
-        edges = []
-        all_tasks = diagram.all_tasks
-        task_id = 0
+      def section_nodes(graph)
+        graph.nodes.select { |node| node.role == "journey_section" }
+      end
 
-        all_tasks.each_with_index do |_task, idx|
-          next if idx >= all_tasks.length - 1
-
-          edges << {
-            id: "flow_#{task_id}",
-            sources: ["task_#{task_id}"],
-            targets: ["task_#{task_id + 1}"],
-            metadata: {
-              type: "sequence",
-            },
-          }
-
-          task_id += 1
+      def transform_tasks(graph, sections)
+        section_indexes = sections.each_with_index.to_h do |section, index|
+          [section.id, index]
         end
+        graph.nodes.filter_map do |node|
+          next unless task_node?(node)
 
-        edges
+          metadata = task_metadata(graph, node, sections, section_indexes)
+          dims = calculate_task_dimensions(metadata)
+          {
+            id: node.id, width: dims[:width], height: dims[:height],
+            labels: task_labels(metadata), metadata: metadata
+          }
+        end
+      end
+
+      def task_node?(node)
+        node.role&.start_with?("journey_task_")
+      end
+
+      def task_metadata(graph, node, sections, section_indexes)
+        section = sections.find { |candidate| candidate.id == node.parent_id }
+        {
+          name: node.label,
+          score: normalized_score(node.properties.weight),
+          score_color: node.role.delete_prefix("journey_task_"),
+          actors: actor_names(graph, node.id),
+          section_name: section&.label,
+          section_index: section_indexes[node.parent_id],
+        }
+      end
+
+      def normalized_score(score)
+        return score.to_i if score&.finite? && score == score.to_i
+
+        score
+      end
+
+      def actor_names(graph, task_id)
+        graph.nodes.filter_map do |node|
+          actor = node.role == "journey_actor" && node.parent_id == task_id
+          node.label if actor
+        end
+      end
+
+      def transform_task_flow(graph)
+        graph.edges.filter_map do |edge|
+          next unless edge.role == "sequence"
+
+          {
+            id: edge.id, sources: [edge.source_id], targets: [edge.target_id],
+            metadata: { type: "sequence" }
+          }
+        end
       end
 
       def calculate_task_dimensions(task)
@@ -399,13 +422,13 @@ module Sirena
 
         # Check task name width
         name_width = measure_text(
-          task.name,
+          task[:name],
           font_size: DEFAULT_FONT_SIZE + 2,
         )[:width]
         max_width = [max_width, name_width].max
 
         # Check actors width (displayed as comma-separated list)
-        actors_text = task.actors.join(", ")
+        actors_text = task[:actors].join(", ")
         actors_width = measure_text(
           actors_text,
           font_size: DEFAULT_FONT_SIZE,
@@ -426,19 +449,19 @@ module Sirena
 
         # Task name label
         name_dims = measure_text(
-          task.name,
+          task[:name],
           font_size: DEFAULT_FONT_SIZE + 2,
         )
 
         labels << {
-          text: task.name,
+          text: task[:name],
           width: name_dims[:width],
           height: name_dims[:height],
           position: :top,
         }
 
         # Score label
-        score_text = task.score.to_s
+        score_text = task[:score].to_s
         score_dims = measure_text(
           score_text,
           font_size: DEFAULT_FONT_SIZE + 4,
@@ -452,7 +475,7 @@ module Sirena
         }
 
         # Actors label
-        actors_text = task.actors.join(", ")
+        actors_text = task[:actors].join(", ")
         actors_dims = measure_text(
           actors_text,
           font_size: DEFAULT_FONT_SIZE - 2,
