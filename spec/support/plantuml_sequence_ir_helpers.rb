@@ -116,12 +116,15 @@ module PlantUmlSequenceIrHelpers
     when Array then value.map { |item| sequence_shape(item) }
     when Hash then value.transform_values { |item| sequence_shape(item) }
     when Symbol, String, Numeric, nil, true, false then value
-    else
-      fields = value.instance_variables.to_h do |name|
-        [name, sequence_shape(value.instance_variable_get(name))]
-      end
-      [value.class, fields]
+    else object_shape(value)
     end
+  end
+
+  def object_shape(value)
+    fields = value.instance_variables.to_h do |name|
+      [name, sequence_shape(value.instance_variable_get(name))]
+    end
+    [value.class, fields]
   end
 
   def appearance_shape(appearance)
