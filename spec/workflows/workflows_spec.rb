@@ -100,15 +100,27 @@ module WorkflowHelpers
   end
 
   def expected_unit_matrix
-    stable_oses = %w[ubuntu-latest macos-latest windows-latest]
+    shards = %w[1/3 2/3 3/3]
     {
-      "os" => stable_oses,
+      "os" => %w[ubuntu-latest macos-latest windows-latest],
       "ruby" => %w[3.2 3.3 3.4],
       "experimental" => [false],
-      "include" => stable_oses.map do |os|
-        { "os" => os, "ruby" => "4.0", "experimental" => true }
-      end,
+      "shard" => shards,
+      "exclude" => %w[ubuntu-latest macos-latest].product(shards.drop(1))
+        .map { |os, shard| { "os" => os, "shard" => shard } },
+      "include" => expected_ruby4_cells(shards),
     }
+  end
+
+  # Ruby 4.0 is experimental everywhere; only Windows is split into shards.
+  def expected_ruby4_cells(shards)
+    cell = { "ruby" => "4.0", "experimental" => true }
+    unsharded = %w[ubuntu-latest macos-latest].map do |os|
+      { "os" => os }.merge(cell)
+    end
+    unsharded + shards.map do |shard|
+      { "os" => "windows-latest", "shard" => shard }.merge(cell)
+    end
   end
 
   def unit_rake_step(jobs)
@@ -213,6 +225,11 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
     it "selects leptris FFI only for Ruby 3.2 on Windows" do
       expect(unit_rake_step(jobs).dig("env", "LEPTRIS_NO_NATIVE"))
         .to eq(leptris_selector)
+    end
+
+    it "gives the rake step a shard only on Windows" do
+      expect(unit_rake_step(jobs).dig("env", "SIRENA_SPEC_SHARD"))
+        .to eq("${{ matrix.os == 'windows-latest' && matrix.shard || '' }}")
     end
 
     it "runs on pull requests, merge queue, push, dispatch and a nightly schedule" do

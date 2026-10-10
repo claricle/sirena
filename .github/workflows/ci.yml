@@ -26,8 +26,14 @@ jobs:
   # ---- fast lane: unit suite, budget < 10 min ---------------------------
   unit:
     # Everything generic-rake ran before: `bundle exec rake` (spec, benchmark,
-    # corpus:check) on the repository-owned Ruby x OS matrix.
-    name: unit (ruby ${{ matrix.ruby }}, ${{ matrix.os }})
+    # corpus:check) on the repository-owned Ruby x OS matrix. Windows runs the
+    # specs as three parallel jobs (SIRENA_SPEC_SHARD, tasks/support/
+    # spec_shard.rb): one Windows job took 9 to 15 min against 5 to 8 on the
+    # other systems, and the lane is as slow as its slowest job.
+    name: >-
+      unit (ruby ${{ matrix.ruby }}, ${{ matrix.os }}${{
+      matrix.os == 'windows-latest' && format(', shard {0}', matrix.shard)
+      || '' }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     continue-on-error: ${{ matrix.experimental }}
@@ -37,10 +43,19 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         ruby: ['3.2', '3.3', '3.4']
         experimental: [false]
+        shard: ['1/3', '2/3', '3/3']
+        exclude:
+          # Only Windows is sharded; the shard value is ignored elsewhere.
+          - {os: ubuntu-latest, shard: '2/3'}
+          - {os: ubuntu-latest, shard: '3/3'}
+          - {os: macos-latest, shard: '2/3'}
+          - {os: macos-latest, shard: '3/3'}
         include:
           - {os: ubuntu-latest, ruby: '4.0', experimental: true}
           - {os: macos-latest, ruby: '4.0', experimental: true}
-          - {os: windows-latest, ruby: '4.0', experimental: true}
+          - {os: windows-latest, ruby: '4.0', experimental: true, shard: '1/3'}
+          - {os: windows-latest, ruby: '4.0', experimental: true, shard: '2/3'}
+          - {os: windows-latest, ruby: '4.0', experimental: true, shard: '3/3'}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
       - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
@@ -55,6 +70,8 @@ jobs:
           LEPTRIS_NO_NATIVE: >-
             ${{ matrix.os == 'windows-latest' &&
             matrix.ruby == '3.2' && '1' || '' }}
+          SIRENA_SPEC_SHARD: >-
+            ${{ matrix.os == 'windows-latest' && matrix.shard || '' }}
 
   pins:
     name: pins

@@ -30,6 +30,13 @@ The fast lane's slowest job is always a Windows `unit` cell (median 9.4 to
 runs are in neither column: their job logs were not fetched. 14 Windows
 jobs logged no cache line. The fast lane is over budget on Windows.
 
+Windows `unit` cells therefore run the specs as three parallel jobs
+(`shard: 1/3, 2/3, 3/3`), each given `SIRENA_SPEC_SHARD=<i>/<n>`. The Rakefile
+passes `tasks/support/spec_shard.rb`'s file list to RSpec; the last shard also
+runs the rake tasks that follow RSpec (benchmark, corpus, claims, layout
+parity). Every spec file lands in exactly one shard
+(`spec/sirena/spec_shard_spec.rb`). Ubuntu and macOS stay one job per cell.
+
 ## Branch protection (owner applies; a repository setting, not YAML)
 
 Owner action after merge (no branch protection exists today): mark `fast-lane`
