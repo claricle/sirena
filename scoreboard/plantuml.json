@@ -14,9 +14,9 @@
     "type": "sequence",
     "cases": 79,
     "oracle_valid": 77,
-    "passing": 76,
-    "pass_rate": 0.987,
-    "status": "76/77 oracle-valid cases pass; 2/79 cases are rejected by the pinned oracle",
+    "passing": 77,
+    "pass_rate": 1.0,
+    "status": "77/77 oracle-valid cases pass; 2/79 cases are rejected by the pinned oracle",
     "provenance": "upstream-fixture"
   }
 ]
