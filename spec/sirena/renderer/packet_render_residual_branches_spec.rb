@@ -10,13 +10,16 @@ RSpec.describe Sirena::Renderer::Packet, "#render" do
   end
   let(:renderer) { described_class.new }
 
-  def anchors
-    renderer.render(scene).children.grep(Sirena::Svg::Text)
-      .select { |t| Array(t.content).join.match?(/\A\d+\z/) }
-      .map { |t| [Array(t.content).join, t.text_anchor] }
+  def number_texts
+    texts = renderer.render(scene).children.grep(Sirena::Svg::Text)
+    texts.select { |t| Array(t.content).join.match?(/\A\d+\z/) }
   end
 
-  it "writes start and end numbers for a multi-bit block, one for a single bit" do
+  def anchors
+    number_texts.map { |t| [Array(t.content).join, t.text_anchor] }
+  end
+
+  it "numbers a multi-bit block at both ends, a single bit once" do
     expect(anchors).to eq(
       [["0", "start"], ["31", "end"], ["32", "middle"]],
     )

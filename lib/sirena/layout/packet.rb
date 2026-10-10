@@ -113,42 +113,46 @@ module Sirena
       def typed_field(field)
         first = field.fetch(:bit_start)
         last = field.fetch(:bit_end)
-        row = first / BITS_PER_ROW
-        x_position = ((first % BITS_PER_ROW) * BIT_WIDTH) + 1
-        width = ((last - first + 1) * BIT_WIDTH) - PADDING_X
-        y_position = (row * ROW_PITCH) + PADDING_Y
+        box = block_box(first, last)
         Field.new(
-          box: Box.new(x: x_position, y: y_position, width: width,
-                       height: ROW_HEIGHT),
-          label: block_label(field[:label], x_position + (width / 2.0),
-                             y_position + (ROW_HEIGHT / 2.0)),
-          start_label: start_label(first, last, x_position, width, y_position),
-          end_label: end_label(first, last, x_position, width, y_position),
+          box: box, label: block_label(field[:label], box),
+          start_label: start_label(first, last, box),
+          end_label: end_label(first, last, box)
         )
       end
 
-      def block_label(text, x_position, y_position)
+      def block_box(first, last)
+        Box.new(
+          x: ((first % BITS_PER_ROW) * BIT_WIDTH) + 1,
+          y: ((first / BITS_PER_ROW) * ROW_PITCH) + PADDING_Y,
+          width: ((last - first + 1) * BIT_WIDTH) - PADDING_X,
+          height: ROW_HEIGHT,
+        )
+      end
+
+      def block_label(text, box)
         Label.new(
-          text: text, x: x_position, y: y_position, font_size: 12,
+          text: text, x: box.x + (box.width / 2.0),
+          y: box.y + (ROW_HEIGHT / 2.0), font_size: 12,
           text_anchor: "middle", dominant_baseline: "middle", style: "field"
         )
       end
 
-      def start_label(first, last, x_position, width, y_position)
+      def start_label(first, last, box)
         single = first == last
         Label.new(
-          text: first.to_s, x: x_position + (single ? width / 2.0 : 0),
-          y: y_position - 2, font_size: 10,
+          text: first.to_s, x: box.x + (single ? box.width / 2.0 : 0),
+          y: box.y - 2, font_size: 10,
           text_anchor: single ? "middle" : "start",
           dominant_baseline: "auto", style: "start"
         )
       end
 
-      def end_label(first, last, x_position, width, y_position)
+      def end_label(first, last, box)
         return if first == last
 
         Label.new(
-          text: last.to_s, x: x_position + width, y: y_position - 2,
+          text: last.to_s, x: box.x + box.width, y: box.y - 2,
           font_size: 10, text_anchor: "end",
           dominant_baseline: "auto", style: "end"
         )
