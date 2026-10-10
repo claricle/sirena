@@ -25,6 +25,7 @@ module Sirena
       GRID_PITCH_Y = 201
       GRID_ORIGIN = 60
       COMPONENT_GAP = 100
+      BLOCK_GAP = 100
       DEFAULT_SPACING = 40
       DEFAULT_ICON_SIZE = 24
       DEFAULT_JUNCTION_SIZE = 12
@@ -493,6 +494,9 @@ module Sirena
         unless diagram.edges.empty?
           placed = bounded(diagram, *position_on_grid(diagram))
           return placed if groups_separate?(diagram, *placed)
+
+          placed = bounded(diagram, *position_in_blocks(diagram))
+          return placed if groups_separate?(diagram, *placed)
         end
         bounded(diagram, *position_by_rows(diagram, hierarchy))
       end
@@ -564,6 +568,98 @@ module Sirena
           (node[:service] ? services : junctions)[id] = entry
         end
         [services, junctions]
+      end
+
+      # Each top-level group is laid out as its own grid block, and the blocks
+      # are placed along the sides of the edges that join them, as mmdc
+      # offsets whole groups. A node outside every group is a block of its own.
+      def position_in_blocks(diagram)
+        nodes = grid_nodes(diagram)
+        owner = block_owners(diagram, nodes)
+        inner, outer = diagram.edges.partition do |edge|
+          owner[edge.from_id] == owner[edge.to_id]
+        end
+        shifts = block_shifts(nodes, owner, inner, outer)
+        services = {}
+        junctions = {}
+        shifts.each do |block, (shift_x, shift_y)|
+          members = nodes.select { |id, _| owner[id] == block }
+          grid_cells(members, inner).each do |id, (x_coord, y_coord)|
+            entry = grid_entry(nodes.fetch(id), x_coord + shift_x,
+                               y_coord + shift_y)
+            (nodes.fetch(id)[:service] ? services : junctions)[id] = entry
+          end
+        end
+        [services, junctions]
+      end
+
+      def block_owners(diagram, nodes)
+        nodes.to_h do |id, node|
+          group = node[:group_id]
+          top = ([group] + ancestor_ids(diagram, group)).last
+          [id, top == :root ? id : top]
+        end
+      end
+
+      # block => [x shift, y shift]. Blocks take the cell of the side the
+      # joining edge names; each grid column and row is as wide as its
+      # largest block.
+      def block_shifts(nodes, owner, inner, outer)
+        blocks = owner.values.uniq
+        extents = blocks.to_h do |block|
+          members = nodes.select { |id, _| owner[id] == block }
+          [block, block_extent(members, grid_cells(members, inner))]
+        end
+        cells = place_blocks(blocks, owner, outer)
+        x_starts = block_starts(cells, extents, 0, :right)
+        y_starts = block_starts(cells, extents, 1, :bottom)
+        blocks.to_h do |block|
+          col, row = cells.fetch(block)
+          [block, [x_starts.fetch(col), y_starts.fetch(row)]]
+        end
+      end
+
+      def block_extent(members, cells)
+        {
+          right: cells.map { |id, c| c[0] + (members[id][:width] / 2.0) }.max,
+          bottom: cells.map { |id, c| c[1] + (members[id][:height] / 2.0) }.max,
+        }
+      end
+
+      def place_blocks(blocks, owner, outer)
+        links = Hash.new { |hash, key| hash[key] = [] }
+        outer.each do |edge|
+          from = owner[edge.from_id]
+          to = owner[edge.to_id]
+          step = SIDE_STEPS.fetch(valid_side(edge.from_position, "R"))
+          links[from] << [to, step]
+          links[to] << [from, step.map(&:-@)]
+        end
+        cells = {}
+        offset = 0
+        components(blocks, links).each do |component|
+          placed = place_component(component, links)
+          min_col = placed.values.map(&:first).min
+          min_row = placed.values.map(&:last).min
+          placed.each do |block, (col, row)|
+            cells[block] = [offset + col - min_col, row - min_row]
+          end
+          offset += placed.values.map(&:first).max - min_col + 1
+        end
+        cells
+      end
+
+      def block_starts(cells, extents, axis, edge)
+        ends = Hash.new(0)
+        cells.each do |block, cell|
+          ends[cell[axis]] = [ends[cell[axis]], extents[block][edge]].max
+        end
+        start = 0
+        ends.keys.sort.to_h do |index|
+          at = start
+          start += ends[index] + BLOCK_GAP
+          [index, at]
+        end
       end
 
       def grid_nodes(diagram)
