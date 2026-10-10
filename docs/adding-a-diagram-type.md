@@ -1,6 +1,6 @@
 # Adding a diagram type
 
-Adding a Mermaid diagram type to Sirena touches eight files. One command
+Adding a Mermaid diagram type to Sirena touches ten defining files. One command
 writes all of them, plus their specs. This page says what each file owns,
 walks through adding a trivial type called `demo`, and ends with the table
 for fixing a failing corpus case.
@@ -19,6 +19,10 @@ it printed.
     |
   Diagram::<Type>      TYPED    what the text MEANS      (semantics)
     |
+  Mermaid::IRAdapters::<Type>   private model -> shared IR::Data
+    |
+  IR::Data             TYPED    notation-neutral ordered content
+    |
   Layout::<Type>                every type, one per type
     |
   Layout::<Type>::Scene TYPED   where things GO          (geometry)
@@ -30,17 +34,20 @@ it printed.
   SVG string
 ```
 
-## The eight files
+## The ten defining files
 
 ```
   lib/sirena/parser/<type>.rb             the parser itself
   lib/sirena/parser/grammars/<type>.rb    what the text LOOKS LIKE
   lib/sirena/parser/builders/<type>.rb    parse tree -> model
   lib/sirena/diagram/<type>.rb            what the diagram MEANS
+  lib/sirena/notation/mermaid/
+    ir_adapters/<type>.rb                  private model -> shared IR
   lib/sirena/layout/<type>.rb             geometry, AND its Scene class
   lib/sirena/renderer/<type>.rb           scene -> SVG
   spec/fixtures/contract/<type>.mmd       the contract fixture
   lib/sirena/notation/mermaid.rb          one row in TYPES
+  docs/ir-type-map.md                     one typed-IR shape row
 ```
 
 - **Parser** wires one grammar to one builder; it has no logic of its own.
@@ -48,12 +55,16 @@ it printed.
   produces a raw parse tree.
 - **Builder** turns that tree into the typed model.
 - **Diagram** is the typed model: what the text means, with no geometry.
-- **Layout** turns the model into positions and sizes. Its `Scene` class
+- **IR adapter** translates the private model into a notation-neutral shared
+  shape. The generated ordered-list type uses `IR::Data` with stable item IDs.
+- **Layout** turns the shared IR into positions and sizes. Its `Scene` class
   lives in the same file.
 - **Renderer** draws a `Scene` as SVG objects, using the theme.
 - **Contract fixture** is the one canonical source the shared examples
   parse, lay out and render.
 - **`TYPES` row** is the keyword pattern that makes detection pick your type.
+- **IR-map row** records the shared shape and its implementation; the generator
+  also recalculates the summary counts from the table.
 
 Every type has a layout, even one with trivial geometry.
 
@@ -65,26 +76,30 @@ Quote the task. Unquoted brackets die in zsh.
 bundle exec rake 'type:new[demo]'
 ```
 
-It prints the paths it wrote, the eight files plus four specs:
+It prints the paths it wrote, the ten defining files plus five specs:
 
 ```
 lib/sirena/parser/demo.rb
 lib/sirena/parser/grammars/demo.rb
 lib/sirena/parser/builders/demo.rb
 lib/sirena/diagram/demo.rb
+lib/sirena/notation/mermaid/ir_adapters/demo.rb
 lib/sirena/layout/demo.rb
 lib/sirena/renderer/demo.rb
 spec/fixtures/contract/demo.mmd
 spec/sirena/parser/demo_spec.rb
 spec/sirena/diagram/demo_spec.rb
+spec/sirena/notation/mermaid/ir_adapters/demo_spec.rb
 spec/sirena/layout/demo_spec.rb
 spec/sirena/renderer/demo_spec.rb
 lib/sirena/notation/mermaid.rb
+docs/ir-type-map.md
 ```
 
 It refuses, and writes nothing, when the name is not `snake_case`, the
 type is already registered, an earlier `TYPES` row already claims the
-keyword, or any target file already exists. The keyword is the type name.
+keyword, either registry has no stable insertion point, or any target file
+already exists. The keyword is the type name.
 
 ## Worked example: `demo`
 
@@ -98,19 +113,21 @@ demo
 
 That is `spec/fixtures/contract/demo.mmd`, as generated.
 
-Run the contract examples and the four generated specs. No hand-editing
+Run the contract examples and the five generated specs. No hand-editing
 is needed for either to pass:
 
 ```sh
 bundle exec rspec spec/contract_spec.rb -e demo
 bundle exec rspec spec/sirena/parser/demo_spec.rb \
-  spec/sirena/diagram/demo_spec.rb spec/sirena/layout/demo_spec.rb \
+  spec/sirena/diagram/demo_spec.rb \
+  spec/sirena/notation/mermaid/ir_adapters/demo_spec.rb \
+  spec/sirena/layout/demo_spec.rb \
   spec/sirena/renderer/demo_spec.rb
 ```
 
 ```
 12 examples, 0 failures
-9 examples, 0 failures
+11 examples, 0 failures
 ```
 
 Render it:
@@ -136,8 +153,9 @@ bundle exec exe/sirena render spec/fixtures/contract/demo.mmd -o demo.svg
 (`demo.svg` holds that SVG; the command itself prints nothing.)
 
 From here you change the generated files to make `demo` mean something:
-grammar for the syntax, builder and diagram for the model, layout for the
-geometry, renderer for the drawing. Run the same specs after each change.
+grammar for the syntax, builder and diagram for the private model, adapter for
+the shared IR, layout for the geometry, renderer for the drawing. Run the same
+specs after each change and keep the IR-map row synchronized with the adapter.
 
 ## Corpus: one type at a time
 

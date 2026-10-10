@@ -106,6 +106,11 @@ layout behavior; the older survey's `transform/*` wording refers to these
 
 Summary: **6 pre-positioned, 12 graph-shaped, 6 data-shaped; 24 total.**
 
+`rake type:new[<type>]` adds a data-shaped row immediately above this
+summary and recalculates all four counts from the table. The generated adapter
+maps the private ordered-item model to `IR::Data`; changing the generated type
+to another shape means changing that adapter and this row together.
+
 ## Consequence for implementation
 
 Foundation 18 migration adds one notation adapter per private parse model (or

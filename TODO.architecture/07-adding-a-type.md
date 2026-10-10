@@ -10,27 +10,26 @@ lands fast, including the 458 evidence-valid corpus cases still failing.
 One number asserted by a spec, and one measurement that refuses to be a
 number:
 
-- **Adding a new diagram type touches exactly 8 files that define the
-  type** — 6 new under `lib/`, one new fixture, and one edited row in
-  `TYPES`. Counted from the list below, not estimated. Two earlier
+- **Adding a new diagram type touches exactly 10 files that define the
+  type** — 7 new under `lib/`, one new fixture, one edited row in
+  `TYPES`, and one edited row in `docs/ir-type-map.md`. Counted from the
+  list below, not estimated. Two earlier
   drafts said 5 and then 6; both forgot files that the list itself
   names.
 
-  Specs are on top of that and the generator writes them too. The 8 is
+  Specs are on top of that and the generator writes them too. The 10 is
   the contract surface — what someone has to understand — not the
   number of files the generator creates.
 
-  **This is the count before `TODO.foundation/18`.** That item's typed
-  IR adds more than a row: it requires a notation-to-IR mapping per
+  **This is the count after `TODO.foundation/18`'s generator handoff.**
+  Typed IR adds more than a row: it requires a notation-to-IR mapping per
   type (`18-typed-ir-boundary.md:103-115,142-144`, `TODO.foundation/12:106-109`)
   as well as an entry in `docs/ir-type-map.md`. Item 03 turned the
-  existing transforms into layouts, so that mapping is a new
-  **responsibility** whose home item 18 has not settled.
+  existing transforms into layouts, so that mapping is a separate
+  **responsibility**.
 
-  The post-18 count is **9 or 10, and item 18 settles which**: a
-  separate mapper file makes 10; folding the mapping into one of the
-  eight above keeps it at 9. Any other existing file still makes it 10,
-  because it is a file this list does not already count.
+  The post-18 count is **10**: the generated notation adapter is a separate
+  file, and the generator updates the IR map as the second edited registry.
 
   **Item 18 owns that handoff, and it is gated.** Saying so was not
   enough — `TODO.foundation/18` had no Do, Done or Files entry covering
@@ -54,21 +53,24 @@ number:
   `22996b9` needs one; `4f77b61` needs five across four layers.
 
   **What holds is the direction, not a number.** Extending a type is
-  bounded by the change itself. Adding one is a fixed eight files across
+  bounded by the change itself. Adding one is a fixed ten files across
   every layer, every time. The structural work is what makes the first
   cheap; it cannot make it constant.
 
-## The eight files
+## The ten files
 
 ```
   lib/sirena/parser/<type>.rb             the parser itself
   lib/sirena/parser/grammars/<type>.rb    what the text LOOKS LIKE
   lib/sirena/parser/builders/<type>.rb    parse tree -> model
   lib/sirena/diagram/<type>.rb            what the diagram MEANS
+  lib/sirena/notation/mermaid/
+    ir_adapters/<type>.rb                  private model -> shared IR
   lib/sirena/layout/<type>.rb             geometry, AND its Scene class
   lib/sirena/renderer/<type>.rb           scene -> SVG
   spec/fixtures/contract/<type>.mmd       the contract fixture
   lib/sirena/notation/mermaid.rb          one row in TYPES
+  docs/ir-type-map.md                     one shape/adapter row
 ```
 
 **The layout is mandatory** — item 04 gives every type one, so there is
@@ -76,14 +78,15 @@ no "only if it has geometry" case. **The Scene lives inside the layout
 file**, not beside it; that is item 04's rule, and it is why this list
 has no separate scene file.
 
-Six new files, one new fixture, one edited row. Specs are on top of
-that.
+Seven new library files, one new fixture, and two edited registries. Specs are
+on top of that.
 
 ## Steps — PR 1, tooling
 
-1. **Generator.** `rake type:new[kanban]` scaffolds the seven files the
+1. **Generator.** `rake type:new[kanban]` scaffolds the eight new files the
    list above names — parser, grammar, builder, diagram, layout (with
-   its Scene inside), renderer, contract fixture — plus their specs,
+   its Scene inside), renderer, IR adapter, contract fixture — plus their
+   specs,
    from templates. The templates encode the conventions, so they cannot
    be got wrong.
 
@@ -117,7 +120,7 @@ that.
 
 4. Write `docs/adding-a-diagram-type.md`:
    - the pipeline diagram from `00-overview.md`
-   - the eight files and what each owns, in one sentence each
+   - the ten files and what each owns, in one sentence each
    - the generator command
    - a worked example adding a trivial type end to end
 5. In the same page, **"how do I fix a failing case"** — the single most
@@ -137,10 +140,11 @@ that.
 
 - [x] `rake type:new[demo]` produces a type that passes the shared
       examples with no hand-editing
-- [x] a spec asserts the file count: adding `demo` touched 8 defining
+- [x] a spec asserts the file count: adding `demo` touches 10 defining
       files, ignoring specs (`spec/sirena/type_generator_spec.rb`)
-- [ ] `rake type:new[demo]` leaves the suite **green**, including item
-      06's `TYPES`-to-fixture parity — no hand-edited row
+- [x] `rake type:new[demo]` leaves its disposable acceptance suite **green**,
+      including item 06's `TYPES`-to-fixture parity, the IR map, and the SVG
+      registry — no hand-edited row
 - [x] `docs/adding-a-diagram-type.md` exists, and someone who has not
       read this plan can follow it end to end
 - [x] `rake 'corpus[<type>]'` (every failing case) and

@@ -26,14 +26,18 @@ module SvgRegistrySources
       .map { |path| [path, File.read(path)] }
   end
 
-  # A real .mmd source for +type+, never typed by hand here: prefers
-  # spec/fixtures/<type>/input.mmd, else the first spec/mermaid corpus
+  # A real .mmd source for +type+, never typed by hand here: prefers the
+  # shared contract fixture, then spec/fixtures/<type>/input.mmd, else the
+  # first spec/mermaid corpus
   # case whose CONTENT matches the type's Engine::DIAGRAM_TYPE_PATTERNS
   # entry (not its directory name -- several corpus directories hold the
   # same diagram under a different extraction-batch name). Prefers a
   # corpus-verdicts.yml "valid" case, then one not marked "invalid", so a
   # type is never skipped for want of an oracle verdict.
   def find_source(type)
+    contract_path = File.join(fixtures_root, "contract", "#{type}.mmd")
+    return File.read(contract_path) if File.exist?(contract_path)
+
     fixture_path = File.join(fixtures_root, type.to_s, "input.mmd")
     return File.read(fixture_path) if File.exist?(fixture_path)
 
@@ -54,7 +58,7 @@ end
 RSpec.describe "SVG output for every registered diagram type" do # rubocop:disable RSpec/DescribeClass
   Sirena::DiagramRegistry.types.each do |type|
     it "has a real fixture or corpus source for #{type}" do
-      message = "no spec/fixtures/#{type}/input.mmd and no spec/mermaid corpus case matches " \
+      message = "no contract/input fixture and no spec/mermaid corpus case matches " \
         "Engine::DIAGRAM_TYPE_PATTERNS[:#{type}] -- add one before registering this type"
 
       expect(SvgRegistrySources.find_source(type)).not_to be_nil, message

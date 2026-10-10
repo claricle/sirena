@@ -85,6 +85,7 @@ module Sirena
         mindmap: {
           pattern: /\A\s*mindmap/i,
           keyword: "mindmap",
+          ir_adapter: true,
         },
         kanban: {
           pattern: /\A\s*kanban/i,
@@ -114,6 +115,7 @@ module Sirena
         sankey: {
           pattern: /\A\s*sankey-beta/i,
           keyword: "sankey-beta",
+          ir_adapter: true,
         },
         packet: {
           pattern: /\A\s*packet-beta/i,

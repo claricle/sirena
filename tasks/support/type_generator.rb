@@ -15,6 +15,7 @@ module Sirena
 
     TEMPLATES = File.expand_path("../templates/type", __dir__)
     TYPES_FILE = "lib/sirena/notation/mermaid.rb"
+    IR_MAP_FILE = "docs/ir-type-map.md"
     NAME_FORMAT = /\A[a-z][a-z0-9_]*\z/
 
     # Template => path under the root; %s is the snake_case name.
@@ -23,6 +24,8 @@ module Sirena
       "grammar.rb.erb" => "lib/sirena/parser/grammars/%s.rb",
       "builder.rb.erb" => "lib/sirena/parser/builders/%s.rb",
       "diagram.rb.erb" => "lib/sirena/diagram/%s.rb",
+      "ir_adapter.rb.erb" =>
+        "lib/sirena/notation/mermaid/ir_adapters/%s.rb",
       "layout.rb.erb" => "lib/sirena/layout/%s.rb",
       "renderer.rb.erb" => "lib/sirena/renderer/%s.rb",
       "fixture.mmd.erb" => "spec/fixtures/contract/%s.mmd",
@@ -31,11 +34,17 @@ module Sirena
     SPEC_FILES = {
       "parser_spec.rb.erb" => "spec/sirena/parser/%s_spec.rb",
       "diagram_spec.rb.erb" => "spec/sirena/diagram/%s_spec.rb",
+      "ir_adapter_spec.rb.erb" =>
+        "spec/sirena/notation/mermaid/ir_adapters/%s_spec.rb",
       "layout_spec.rb.erb" => "spec/sirena/layout/%s_spec.rb",
       "renderer_spec.rb.erb" => "spec/sirena/renderer/%s_spec.rb",
     }.freeze
 
     ROW_ANCHOR = "\n      }.freeze\n"
+    MAP_ANCHOR = "\n\nSummary:"
+    MAP_ROW = /^\| `[^`]+` \| `(?<shape>[^`]+)` \|/
+    MAP_SUMMARY = /Summary: \*\*.*?; \d+ total\.\*\*/
+    SHAPES = ["pre-positioned", "graph-shaped", "data-shaped"].freeze
 
     # @param name [String] snake_case type name, also the diagram keyword
     # @param root [String] the repository root to write into
@@ -50,9 +59,11 @@ module Sirena
     def call
       validate
       row_source = types_source_with_row
+      map_source = map_source_with_row
       paths = write_files(DEFINING_FILES.merge(SPEC_FILES))
       File.write(File.join(@root, TYPES_FILE), row_source)
-      paths + [TYPES_FILE]
+      File.write(File.join(@root, IR_MAP_FILE), map_source)
+      paths + [TYPES_FILE, IR_MAP_FILE]
     end
 
     private
@@ -124,8 +135,41 @@ module Sirena
         #{@type}: {
           pattern: /\\A\\s*#{@type}(\\s|\\z)/i,
           keyword: "#{keyword}",
+          ir_adapter: true,
         },
       RUBY
+    end
+
+    def map_source_with_row
+      source = File.read(File.join(@root, IR_MAP_FILE))
+      anchor = source.index(MAP_ANCHOR) or
+        raise Error, "no summary in #{IR_MAP_FILE}"
+      unless source.match?(MAP_SUMMARY)
+        raise Error, "no count summary in #{IR_MAP_FILE}"
+      end
+
+      updated = source.dup.insert(anchor, map_row)
+      update_map_summary(updated)
+    end
+
+    def map_row
+      "\n| `#{type}` | `data-shaped` | " \
+        "`lib/sirena/notation/mermaid/ir_adapters/#{type}.rb` | " \
+        "Generated ordered content maps to shared `IR::Data`; layout owns " \
+        "geometry. |"
+    end
+
+    def update_map_summary(source)
+      counts = source.lines.filter_map do |line|
+        MAP_ROW.match(line)&.[](:shape)
+      end
+        .tally
+      summary = SHAPES.map { |shape| "#{counts.fetch(shape, 0)} #{shape}" }
+        .join(", ")
+      source.sub(
+        MAP_SUMMARY,
+        "Summary: **#{summary}; #{counts.values.sum} total.**",
+      )
     end
 
     # Renders everything first, so a template error leaves nothing behind.
