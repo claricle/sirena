@@ -115,12 +115,7 @@ the bundle; only the dev-time generator needs it. `WIDE_CHAR_WIDTH_RATIO` is
 gone: renderers reserve room as the measured width times
 `Renderer::Base::SUBSTITUTE_FONT_HEADROOM` (1.2).
 
-**The 0.889 gap, settled.** It does not reproduce. Headless Chrome 131
-`getComputedTextLength` for `@` is 1.01514 em at 12, 16 and 100 px for Arial,
-Helvetica, `sans-serif` and Arial Unicode MS, which is the `hmtx` advance
-(2079/2048). Mermaid's own default stack (`"trebuchet ms", verdana, arial`)
-gives 0.77 em, so a reading near 0.889 came from a different resolved font,
-not from a flaw in the table.
+**The 0.889 gap:** settled under Facts above; it was a different font.
 
 **Accuracy against Chrome (Arial, 14 mixed strings, size 100):** predicted
 over measured is 1.000 to 1.004; the one string off by more than 0.01 em
