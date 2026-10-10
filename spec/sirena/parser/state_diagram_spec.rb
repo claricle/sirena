@@ -290,7 +290,9 @@ RSpec.describe Sirena::Parser::StateDiagram do
         marker_diagram = parser.parse(
           "stateDiagram-v2\nstate  A <<choice>>\n",
         )
-        expect(marker_diagram.states.map { |state| [state.id, state.state_type] })
+        expect(marker_diagram.states.map do |state|
+          [state.id, state.state_type]
+        end)
           .to eq([["A", "choice"]])
       end
     end

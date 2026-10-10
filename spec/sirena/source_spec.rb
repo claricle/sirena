@@ -47,8 +47,21 @@ module SourceSpecHelpers
   end
 end
 
+module SourceSplitSpecHelpers
+  def complete_preamble
+    "---\ntitle: T\n---\n%%{init: {}}%%\n%% note\n" \
+      "flowchart LR\n  A-->B\n"
+  end
+
+  def split_source(source)
+    described_class.split(source)
+  end
+end
+
 RSpec.describe Sirena::Source do
   describe ".split" do
+    include SourceSplitSpecHelpers
+
     it "separates a frontmatter block from the body" do
       result = described_class.split(
         "---\ntitle: My Chart\n---\nflowchart LR\n  A-->B\n",
@@ -79,7 +92,8 @@ RSpec.describe Sirena::Source do
     end
 
     it "handles a directive spanning several lines" do
-      source = "%%{init: {\n  \"theme\": \"base\"\n}}%%\nflowchart LR\n  A-->B\n"
+      source = "%%{init: {\n  \"theme\": \"base\"\n}}%%\n" \
+               "flowchart LR\n  A-->B\n"
 
       result = described_class.split(source)
 
@@ -93,9 +107,7 @@ RSpec.describe Sirena::Source do
     end
 
     it "takes all three together" do
-      source = "---\ntitle: T\n---\n%%{init: {}}%%\n%% note\nflowchart LR\n  A-->B\n"
-
-      result = described_class.split(source)
+      result = split_source(complete_preamble)
 
       expect(result[:frontmatter]).to eq("title: T\n")
       expect(result[:directives]).to eq(["%%{init: {}}%%"])
@@ -212,7 +224,8 @@ RSpec.describe Sirena::Source do
       end
 
       it "reports nothing for an ordinary preamble" do
-        result = described_class.split("%% note\n%%{init: {}}%%\nflowchart LR\n")
+        source = "%% note\n%%{init: {}}%%\nflowchart LR\n"
+        result = described_class.split(source)
 
         expect(result[:degenerate]).to be_empty
       end
@@ -390,12 +403,12 @@ RSpec.describe Sirena::Source do
         # forward. A quoted value does too, and so does a header with no
         # value: both swallow the diagram when no `}%%` follows.
         %w[" '].each do |quote|
-          result = described_class.split("%%{init: #{quote}x#{quote}\nflowchart LR\n")
+          result = split_source("%%{init: #{quote}x#{quote}\nflowchart LR\n")
 
           expect(result[:body]).to eq("")
         end
 
-        expect(described_class.split("%%{init}\nflowchart LR\n")[:body]).to eq("")
+        expect(split_source("%%{init}\nflowchart LR\n")[:body]).to eq("")
       end
 
       it "still stops at the end of a value that starts with a word" do
@@ -841,7 +854,8 @@ RSpec.describe Sirena::Source do
         end
       end
 
-      it "refuses a verbatim tag whose percent-decoded bytes are not valid UTF-8" do
+      it "refuses a verbatim tag whose percent-decoded bytes are not " \
+         "valid UTF-8" do
         # Psych validates encoding on scalar TEXT, not on a decoded tag
         # string, so `node.tag[TAG, 1]` used to meet invalid bytes and
         # `Regexp#match?` raised a bare ArgumentError instead of the
@@ -1133,8 +1147,13 @@ RSpec.describe Sirena::Source do
           print verdict
         RUBY
         env = { "RUBY_FIBER_VM_STACK_SIZE" => "32768" }
-        output = IO.popen(env, [RbConfig.ruby, "-I", File.expand_path("../../lib", __dir__), "-e", script],
-                          err: %i[child out], &:read)
+        output = IO.popen(
+          env,
+          [RbConfig.ruby, "-I", File.expand_path("../../lib", __dir__),
+           "-e", script],
+          err: %i[child out],
+          &:read
+        )
 
         expect(levels).to be < Sirena::Source::Frontmatter::MAX_NESTING
         expect(output.lines.last).to eq("refused")

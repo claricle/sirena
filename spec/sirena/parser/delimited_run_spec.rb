@@ -8,6 +8,12 @@ module DelimitedRunSpecHelpers
   def build_input(segment_count)
     "~#{Array.new(segment_count) { |i| "s#{i}" }.join('~')}~"
   end
+
+  def timed_parse(atom, segment_count)
+    min_call_time do
+      cpu_time { atom.parse(build_input(segment_count), prefix: true) }
+    end
+  end
 end
 
 RSpec.describe Sirena::Parser::Atoms::DelimitedRun do
@@ -29,7 +35,8 @@ RSpec.describe Sirena::Parser::Atoms::DelimitedRun do
     end
 
     it "matches through the last delimiter, not the first" do
-      expect(atom.parse("~bar~baz qux~", prefix: true).to_s).to eq("~bar~baz qux~")
+      expect(atom.parse("~bar~baz qux~",
+                        prefix: true).to_s).to eq("~bar~baz qux~")
     end
 
     it "matches an empty segment between two adjacent delimiters" do
@@ -44,7 +51,8 @@ RSpec.describe Sirena::Parser::Atoms::DelimitedRun do
       expect { atom.parse("~foo") }.to raise_error(Parslet::ParseFailed)
     end
 
-    it "stops the segment run at a character outside its class, refusing to cross it" do
+    it "stops the segment run at a character outside its class, " \
+       "refusing to cross it" do
       expect { atom.parse("~foo\nbar~") }.to raise_error(Parslet::ParseFailed)
     end
 
@@ -78,8 +86,8 @@ RSpec.describe Sirena::Parser::Atoms::DelimitedRun do
     # comment).
     it "scales linearly with the number of segments, not their square",
        :speed do
-      small_time = min_call_time { cpu_time { atom.parse(build_input(500), prefix: true) } }
-      large_time = min_call_time { cpu_time { atom.parse(build_input(4_000), prefix: true) } }
+      small_time = timed_parse(atom, 500)
+      large_time = timed_parse(atom, 4_000)
 
       expect(large_time / small_time).to be < 30
     end

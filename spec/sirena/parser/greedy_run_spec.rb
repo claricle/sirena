@@ -29,7 +29,8 @@ RSpec.describe Sirena::Parser::Atoms::GreedyRun do
       expect(tree.to_s).to eq("")
     end
 
-    it "consumes a run longer than one chunk in more than one chunk without losing characters" do
+    it "consumes a run longer than one chunk in more than one chunk " \
+       "without losing characters" do
       long_run = "a" * 120_000
       tree = atom.parse(long_run)
 
@@ -74,7 +75,8 @@ RSpec.describe Sirena::Parser::Atoms::GreedyRun do
     # an ASCII-8BIT source with a byte >= 0x80 used to raise
     # `Encoding::CompatibilityError` straight out of `Regexp#match` instead
     # of failing to match, crashing the whole parse.
-    it "keeps the compatible run before an encoding-incompatible byte instead of raising" do
+    it "keeps the compatible run before an encoding-incompatible byte " \
+       "instead of raising" do
       source = Parslet::Source.new((+"ab\xFFcd").force_encoding(Encoding::ASCII_8BIT))
       anchored = Regexp.new('\A(?:[^~\u00A0])*', Regexp::MULTILINE)
 
@@ -88,7 +90,8 @@ RSpec.describe Sirena::Parser::Atoms::GreedyRun do
     # chunk the incompatible byte lands in (probe starts at 64, doubles
     # each round) -- the fix must not depend on the chunk boundary.
     [30, 64, 100, 130, 200].each do |ascii_run_length|
-      it "keeps a #{ascii_run_length}-byte compatible run wherever the incompatible byte falls" do
+      it "keeps a #{ascii_run_length}-byte compatible run wherever the " \
+         "incompatible byte falls" do
         prefix = "a" * ascii_run_length
         source = Parslet::Source.new("#{prefix}\xFF".force_encoding(Encoding::ASCII_8BIT))
         anchored = Regexp.new('\A(?:[^~\u00A0])*', Regexp::MULTILINE)
