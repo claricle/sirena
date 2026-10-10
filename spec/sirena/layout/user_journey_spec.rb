@@ -7,6 +7,26 @@ require "sirena/diagram/user_journey"
 RSpec.describe Sirena::Layout::UserJourney do
   let(:transform) { described_class.new }
 
+  def representative_journey
+    Sirena::Diagram::UserJourney.new(
+      id: "checkout", title: "Checkout",
+      sections: [
+        Sirena::Diagram::JourneySection.new(
+          name: "Find",
+          tasks: [Sirena::Diagram::JourneyTask.new(
+            name: "Browse", score: 5, actors: ["Buyer"],
+          )],
+        ),
+        Sirena::Diagram::JourneySection.new(
+          name: "Buy",
+          tasks: [Sirena::Diagram::JourneyTask.new(
+            name: "Pay", score: 2, actors: ["Buyer", "Bank"],
+          )],
+        ),
+      ]
+    )
+  end
+
   describe "#to_graph" do
     it "converts diagram to graph structure" do
       diagram = Sirena::Diagram::UserJourney.new.tap do |d|
@@ -129,6 +149,14 @@ RSpec.describe Sirena::Layout::UserJourney do
       expect { transform.to_graph(diagram) }.to raise_error(
         Sirena::Layout::LayoutError,
       )
+    end
+
+    it "lays out private and shared graph inputs to identical scenes" do
+      diagram = representative_journey
+      ir = Sirena::Notation::Mermaid::IRAdapters::UserJourney.call(diagram)
+
+      expect(Marshal.dump(transform.to_graph(ir)))
+        .to eq(Marshal.dump(transform.to_graph(diagram)))
     end
   end
 end
