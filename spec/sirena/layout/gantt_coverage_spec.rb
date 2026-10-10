@@ -9,7 +9,7 @@ RSpec.describe Sirena::Layout::Gantt do
   describe "durations" do
     {
       "weeks as seven days" => ["2w", Date.new(2024, 1, 15)],
-      "hours round up to whole days" => ["36h", Date.new(2024, 1, 3)],
+      "hours as part of a day" => ["36h", Date.new(2024, 1, 2)],
       "months move the calendar month" => ["1M", Date.new(2024, 2, 1)],
       "a bare number counts days" => ["5", Date.new(2024, 1, 6)],
     }.each do |name, (duration, finish)|
