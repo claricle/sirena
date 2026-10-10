@@ -24,6 +24,7 @@ module SpecSupport
         :source,
         :type,
         :recognizer,
+        :measurement_policy,
         :reference,
         :reference_path,
       ) do
@@ -81,6 +82,7 @@ module SpecSupport
 
         Candidate.new(case_id: case_id, source: source, type: entry.type,
                       recognizer: entry.recognizer,
+                      measurement_policy: entry.measurement_policy,
                       reference: relative_reference,
                       reference_path: reference_path)
       end
@@ -133,6 +135,8 @@ module SpecSupport
           reference: candidate.reference,
           reproduce: reproduce(candidate.case_id),
           recognizer: candidate.recognizer,
+          analog_measurements: candidate.measurement_policy.analog_measurements,
+          spatial_kinds: candidate.measurement_policy.spatial_kinds,
         }
       end
 
