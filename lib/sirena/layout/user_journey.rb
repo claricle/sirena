@@ -46,6 +46,17 @@ module Sirena
       TITLE_PADDING = 20
       SECTION_PADDING = 10
 
+      JOURNEY_ELK_OPTIONS = {
+        ElkOptions::NODE_NODE_SPACING => TASK_SPACING,
+        ElkOptions::LAYER_SPACING => TASK_SPACING,
+        ElkOptions::EDGE_NODE_SPACING => 30,
+        ElkOptions::EDGE_EDGE_SPACING => 20,
+        ElkOptions::NODE_PLACEMENT => "SIMPLE",
+        ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
+        ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
+      }.freeze
+      private_constant :JOURNEY_ELK_OPTIONS
+
       class Box < Lutaml::Model::Serializable
         attribute :x, :float
         attribute :y, :float
@@ -143,16 +154,20 @@ module Sirena
           children: transform_tasks(graph, sections),
           edges: transform_task_flow(graph),
           layoutOptions: layout_options,
-          metadata: {
-            title: graph.label,
-            sections: sections.map(&:label),
-            acc_title: graph.accessibility_title,
-            acc_description: graph.accessibility_description,
-          },
+          metadata: journey_metadata(graph, sections),
         }
       end
 
       private
+
+      def journey_metadata(graph, sections)
+        {
+          title: graph.label,
+          sections: sections.map(&:label),
+          acc_title: graph.accessibility_title,
+          acc_description: graph.accessibility_description,
+        }
+      end
 
       def scene(diagram)
         scene_from_graph(build_graph(diagram))
@@ -175,13 +190,17 @@ module Sirena
         graph.nodes.filter_map do |node|
           next unless task_node?(node)
 
-          metadata = task_metadata(graph, node, sections, section_indexes)
-          dims = calculate_task_dimensions(metadata)
-          {
-            id: node.id, width: dims[:width], height: dims[:height],
-            labels: task_labels(metadata), metadata: metadata
-          }
+          transformed_task(graph, node, sections, section_indexes)
         end
+      end
+
+      def transformed_task(graph, node, sections, section_indexes)
+        metadata = task_metadata(graph, node, sections, section_indexes)
+        dimensions = calculate_task_dimensions(metadata)
+        {
+          id: node.id, width: dimensions[:width], height: dimensions[:height],
+          labels: task_labels(metadata), metadata: metadata
+        }
       end
 
       def task_node?(node)
@@ -225,78 +244,35 @@ module Sirena
       end
 
       def calculate_task_dimensions(task)
-        # Calculate width based on task name and actors
-        max_width = MIN_TASK_WIDTH
-
-        # Check task name width
-        name_width = measure_text(
-          task[:name],
-          font_size: DEFAULT_FONT_SIZE + 2,
-        )[:width]
-        max_width = [max_width, name_width].max
-
-        # Check actors width (displayed as comma-separated list)
-        actors_text = task[:actors].join(", ")
-        actors_width = measure_text(
-          actors_text,
-          font_size: DEFAULT_FONT_SIZE,
-        )[:width]
-        max_width = [max_width, actors_width].max
-
-        # Add padding
-        total_width = max_width + (TASK_PADDING * 2)
-
+        widths = [
+          MIN_TASK_WIDTH,
+          measured_width(task[:name], DEFAULT_FONT_SIZE + 2),
+          measured_width(task[:actors].join(", "), DEFAULT_FONT_SIZE),
+        ]
         {
-          width: total_width,
+          width: widths.max + (TASK_PADDING * 2),
           height: TASK_HEIGHT,
         }
       end
 
+      def measured_width(text, font_size)
+        measure_text(text, font_size: font_size)[:width]
+      end
+
       def task_labels(task)
-        labels = []
+        [
+          task_label(task[:name], DEFAULT_FONT_SIZE + 2, :top),
+          task_label(task[:score].to_s, DEFAULT_FONT_SIZE + 4, :center),
+          task_label(task[:actors].join(", "), DEFAULT_FONT_SIZE - 2, :bottom),
+        ]
+      end
 
-        # Task name label
-        name_dims = measure_text(
-          task[:name],
-          font_size: DEFAULT_FONT_SIZE + 2,
-        )
-
-        labels << {
-          text: task[:name],
-          width: name_dims[:width],
-          height: name_dims[:height],
-          position: :top,
+      def task_label(text, font_size, position)
+        dimensions = measure_text(text, font_size: font_size)
+        {
+          text: text, width: dimensions[:width], height: dimensions[:height],
+          position: position
         }
-
-        # Score label
-        score_text = task[:score].to_s
-        score_dims = measure_text(
-          score_text,
-          font_size: DEFAULT_FONT_SIZE + 4,
-        )
-
-        labels << {
-          text: score_text,
-          width: score_dims[:width],
-          height: score_dims[:height],
-          position: :center,
-        }
-
-        # Actors label
-        actors_text = task[:actors].join(", ")
-        actors_dims = measure_text(
-          actors_text,
-          font_size: DEFAULT_FONT_SIZE - 2,
-        )
-
-        labels << {
-          text: actors_text,
-          width: actors_dims[:width],
-          height: actors_dims[:height],
-          position: :bottom,
-        }
-
-        labels
       end
 
       def layout_options
@@ -304,16 +280,8 @@ module Sirena
         # DIRECTION_RIGHT provides left-to-right horizontal timeline
         # SIMPLE node placement maintains task order in journey sequence
         build_elk_options(
-          algorithm: ALGORITHM_LAYERED,
-          direction: DIRECTION_RIGHT,
-          ElkOptions::NODE_NODE_SPACING => TASK_SPACING,
-          ElkOptions::LAYER_SPACING => TASK_SPACING,
-          ElkOptions::EDGE_NODE_SPACING => 30,
-          ElkOptions::EDGE_EDGE_SPACING => 20,
-          # SIMPLE node placement for chronological task ordering
-          ElkOptions::NODE_PLACEMENT => "SIMPLE",
-          ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
-          ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
+          algorithm: ALGORITHM_LAYERED, direction: DIRECTION_RIGHT,
+          **JOURNEY_ELK_OPTIONS
         )
       end
     end
