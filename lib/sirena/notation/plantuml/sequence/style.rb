@@ -11,13 +11,14 @@ module Sirena
         #
         #   sequenceDiagram {
         #     participant { MinimumWidth N  HorizontalAlignment L }
-        #     groupHeader { FontColor C  BackGroundColor C }
+        #     groupHeader { FontColor C  BackGroundColor C  FontSize N }
         #   }
         #
         # Anything else makes {.read} return nil, so the parser refuses the
-        # block instead of ignoring part of it. The nested form
-        # `group { header { ... } }` is among them: PlantUML 1.2026.6 draws
-        # it with no effect, and a later release may not.
+        # block instead of ignoring part of it. The nested forms
+        # `group { header { FontColor C  BackGroundColor C } }` and the same
+        # under `reference` are read and dropped: PlantUML 1.2026.6 draws
+        # them with no effect.
         class Style
           TOKEN = /[{}]|[^\s{}]+/
           PROPERTIES = {
@@ -25,11 +26,22 @@ module Sirena
               { "minimumwidth" => :min_width,
                 "horizontalalignment" => :alignment },
             %w[sequencediagram groupheader] =>
-              { "fontcolor" => :tab_colour, "backgroundcolor" => :tab_fill },
+              { "fontcolor" => :tab_colour, "backgroundcolor" => :tab_fill,
+                "fontsize" => :tab_size },
           }.freeze
+          NESTED = {
+            "fontcolor" => :ignored, "backgroundcolor" => :ignored
+          }.freeze
+          INERT = {
+            %w[sequencediagram group header] => NESTED,
+            %w[sequencediagram reference header] => NESTED,
+          }.freeze
+          PARENTS = [%w[sequencediagram], %w[sequencediagram group],
+                     %w[sequencediagram reference]].freeze
           ALIGNMENTS = %w[left center right].freeze
           NAMED = { "lightyellow" => "#FFFFE0" }.freeze
-          private_constant :TOKEN, :PROPERTIES, :ALIGNMENTS, :NAMED
+          private_constant :TOKEN, :PROPERTIES, :NESTED, :INERT, :PARENTS,
+                           :ALIGNMENTS, :NAMED
 
           # @param text [String] what lies between `<style>` and `</style>`
           # @return [Appearance, nil] nil when the block sets anything else
@@ -66,21 +78,32 @@ module Sirena
           def enter(name)
             @tokens.shift
             @path << name.downcase
-            return if PROPERTIES.key?(@path) || @path == %w[sequencediagram]
+            refuse unless known_path?
+          end
 
-            refuse
+          def known_path?
+            PROPERTIES.key?(@path) || INERT.key?(@path) ||
+              PARENTS.include?(@path)
           end
 
           def assign(name, value)
-            key = PROPERTIES.fetch(@path, {})[name.downcase] or refuse
+            key = PROPERTIES.fetch(@path) { INERT.fetch(@path, {}) }
+              .fetch(name.downcase) { refuse }
+            return if key == :ignored
+
             @values[key] = convert(key, value.to_s) or refuse
           end
 
           def convert(key, value)
-            return Integer(value, 10, exception: false) if key == :min_width
+            return size(value) if %i[min_width tab_size].include?(key)
             return alignment(value) if key == :alignment
 
             colour(value)
+          end
+
+          def size(value)
+            number = Integer(value, 10, exception: false)
+            number if number&.positive?
           end
 
           def alignment(value)

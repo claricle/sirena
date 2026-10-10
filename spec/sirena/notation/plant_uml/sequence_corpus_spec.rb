@@ -25,7 +25,7 @@ module PlantUmlSequenceCorpus
     846af1d12917 920d4bcaa3e9 d783321e2c62
     559333843e38 184d55bcfb9c 2dd4eecfa67b f985a9b8f0de
     0385427ea4be 24072f84b995 577feb6055fb 4f6a53784edf 4f323bdad314
-    5bcc726e80b1
+    5bcc726e80b1 af2e98871d2d a4a8af9cba7c 29dfa779f376
     6893700e037a 18d6381b866f f602d00329ee
     7ff458de0156 2a2a7bb5aacc f0cf331472b7 e76e451484c6
     ddc664f08110 d918f796209f ae1299794d0b fcaf69429c9c
@@ -125,6 +125,27 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
 
     expect(matches(svg, "//text[.='Setup']/@fill").map(&:value))
       .to eq(["#0000FF"])
+  end
+
+  it "draws the group tab of the nested-over-flat case at the flat size" do
+    svg = Sirena.render(source_of("29dfa779f376"), notation: :plantuml)
+
+    expect(matches(svg, "//text[.='Setup']/@font-size").map(&:value))
+      .to eq(["20.0"])
+  end
+
+  it "keeps the flat colours when the nested header sets another" do
+    svg = Sirena.render(source_of("29dfa779f376"), notation: :plantuml)
+
+    expect(matches(svg, "//text[.='Setup']/@fill").map(&:value))
+      .to eq(["#0000FF"])
+  end
+
+  it "draws the nested-header group exactly as the unstyled one" do
+    nested = Sirena.render(source_of("af2e98871d2d"), notation: :plantuml)
+    bare = source_of("af2e98871d2d").sub(%r{<style>.*</style>\n}m, "")
+
+    expect(nested).to eq(Sirena.render(bare, notation: :plantuml))
   end
 
   it "draws the stereotype of the left-aligned case at the block edge" do

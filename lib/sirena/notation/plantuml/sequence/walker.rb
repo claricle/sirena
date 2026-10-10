@@ -2,6 +2,7 @@
 
 require_relative "activation"
 require_relative "appearance"
+require_relative "tab_size"
 require_relative "arrow_marks"
 require_relative "bar_tracker"
 require_relative "destroy"
@@ -347,8 +348,12 @@ module Sirena
             @blocks << { keyword: item.keyword, label: item.label.to_s,
                          top: @y - 20, low: Float::INFINITY,
                          high: -Float::INFINITY, branches: [], depth: 0,
-                         resume: @resume }
-            @y += TAB_HEIGHT
+                         resume: @resume, tab: tab_size }
+            @y += TAB_HEIGHT + tab_size.height_growth
+          end
+
+          def tab_size
+            TabSize.new(@appearance.tab_size, @font_size)
           end
 
           def branch(item)
