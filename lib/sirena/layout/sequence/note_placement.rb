@@ -2,6 +2,7 @@
 
 require_relative "../../text_measurement"
 require_relative "../../diagram/sequence_text"
+require_relative "frame_placement"
 
 module Sirena
   module Layout
@@ -33,6 +34,7 @@ module Sirena
           {
             text: node.label.to_s, position: fields["note_position"],
             message_index: fields["message_index"].to_i,
+            order: fields["order"].to_i,
             participant_ids: reference_ids(graph, node)
           }
         end
@@ -52,18 +54,32 @@ module Sirena
         # @param entries [Array<Hash>, nil] see {.entries}
         # @param positions [Hash] participant id to its x/center_x
         # @param font_size [Numeric] note text size
-        def initialize(entries, positions, font_size:)
+        # @param frames [FramePlacement] frame room the notes sit between
+        def initialize(entries, positions, font_size:,
+                       frames: FramePlacement.new)
           @entries = entries || []
           @positions = positions
           @font_size = font_size
+          @frames = frames
         end
 
         # @return [Array<Note>] placed notes; ones naming no known
         #   participant are left out
         def notes
-          @notes ||= @entries.each_index.filter_map do |index|
-            build_note(index)
-          end
+          @notes ||= pairs.map(&:last)
+        end
+
+        # @param from [Integer] source order of the opening frame edge
+        # @param to [Integer] source order of the closing frame edge
+        # @return [Array<Numeric>, nil] left and right edge of the notes
+        #   written between the two, nil when there are none
+        def x_range(from, to)
+          inside = pairs.select do |entry, _note|
+            entry[:order] > from && entry[:order] < to
+          end.map(&:last)
+          return if inside.empty?
+
+          [inside.map(&:x).min, inside.map { |n| n.x + n.width }.max]
         end
 
         # @return [Numeric] height all note slots add to the diagram
@@ -79,12 +95,30 @@ module Sirena
           end
         end
 
+        # @param index [Integer] message index
+        # @param order [Integer] source order of a frame edge
+        # @return [Numeric] height of the note slots at `index` that
+        #   come before that edge in the source
+        def slots_before(index, order)
+          @entries.sum do |entry|
+            at_index = entry[:message_index] == index
+            at_index && entry[:order] < order ? slot(entry) : 0
+          end
+        end
+
         # @return [Numeric] the right-most x any note reaches
         def right_edge
           notes.map { |note| note.x + note.width }.max || 0
         end
 
         private
+
+        def pairs
+          @pairs ||= @entries.each_index.filter_map do |index|
+            note = build_note(index)
+            [@entries[index], note] if note
+          end
+        end
 
         def build_note(index)
           entry = @entries[index]
@@ -129,7 +163,14 @@ module Sirena
           above = @entries.first(index).sum do |entry|
             entry[:message_index] <= own ? slot(entry) : 0
           end
-          FIRST_ROW + (own * ROW_SPACING) + above + TOP_GAP
+          FIRST_ROW + (own * ROW_SPACING) + above + TOP_GAP +
+            frame_offset(own, @entries[index][:order])
+        end
+
+        def frame_offset(own, order)
+          lead = @frames.lead(own, order)
+          @frames.top_inset + @frames.row_shift(own - 1) + lead +
+            (lead.zero? ? 0 : TOP_GAP)
         end
 
         def text_width(lines)

@@ -30,7 +30,9 @@ module Sirena
           def event_contents(diagram, participants, occupied)
             [messages(diagram, participants, occupied),
              notes(diagram, participants, occupied),
-             activations(diagram, participants, occupied)]
+             activations(diagram, participants, occupied),
+             frames(diagram, occupied),
+             boxes(diagram, participants, occupied)]
           end
 
           def participant_identities(diagram, occupied)
@@ -118,7 +120,8 @@ module Sirena
           def note_record(note, index, endpoints, occupied)
             note_id = reserve_id("note_#{index}", occupied)
             values = [["note_position", note.position],
-                      ["message_index", note.message_index]]
+                      ["message_index", note.message_index],
+                      ["order", note.order]]
             nodes = [IR::Node.new(
               id: note_id, label: note.text, role: "note",
             ), *semantic_nodes(note_id, values, occupied)]
@@ -155,6 +158,60 @@ module Sirena
               activation_id, endpoints[activation.participant_id], occupied
             )
             [nodes, edge]
+          end
+
+          def frames(diagram, occupied)
+            records = Array(diagram.frames).map.with_index do |frame, index|
+              frame_record(frame, index, occupied)
+            end
+            [records.flatten(1), []]
+          end
+
+          def frame_record(frame, index, occupied)
+            id = reserve_id("frame_#{index}", occupied)
+            values = [["frame_kind", frame.kind],
+                      ["start_index", frame.start_index],
+                      ["end_index", frame.end_index],
+                      ["depth", frame.depth],
+                      ["open_order", frame.open_order],
+                      ["close_order", frame.close_order]]
+            nodes = [IR::Node.new(id: id, label: frame.label, role: "frame"),
+                     *semantic_nodes(id, values, occupied)]
+            nodes + section_nodes(frame, id, occupied)
+          end
+
+          def section_nodes(frame, frame_id, occupied)
+            Array(frame.sections).flat_map.with_index do |section, index|
+              id = reserve_id("#{frame_id}_section_#{index}", occupied)
+              values = [["section_kind", section.kind],
+                        ["start_index", section.start_index],
+                        ["order", section.order],
+                        ["owner_frame", frame_id]]
+              [IR::Node.new(id: id, label: section.label,
+                            role: "frame_section"),
+               *semantic_nodes(id, values, occupied)]
+            end
+          end
+
+          def boxes(diagram, participant_ids, occupied)
+            endpoints = source_index(Array(diagram.participants),
+                                     participant_ids)
+            records = Array(diagram.boxes).map.with_index do |box, index|
+              box_record(box, index, endpoints, occupied)
+            end
+            [records.flat_map(&:first), records.flat_map(&:last)]
+          end
+
+          def box_record(box, index, endpoints, occupied)
+            id = reserve_id("box_#{index}", occupied)
+            nodes = [IR::Node.new(id: id, label: box.title, role: "box"),
+                     *semantic_nodes(id, [["box_color", box.color]],
+                                     occupied)]
+            members = box.participant_ids.map.with_index do |member, ref|
+              reference_edge("box_member_#{index}_#{ref}", "box_member",
+                             id, endpoints[member], occupied)
+            end
+            [nodes, members]
           end
 
           def reference_edge(preferred, role, source_id, target_id, occupied)
@@ -227,7 +284,8 @@ module Sirena
                                :message_record, :message_details,
                                :message_edge, :notes, :note_record,
                                :note_references, :activations,
-                               :activation_record,
+                               :activation_record, :frames, :frame_record,
+                               :section_nodes, :boxes, :box_record,
                                :reference_edge, :settings_nodes,
                                :semantic_nodes, :graph_attributes,
                                :optional_value, :reserve_id

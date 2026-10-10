@@ -2,6 +2,7 @@
 
 require_relative "capture_string"
 require_relative "../../diagram/sequence"
+require_relative "sequence_blocks"
 
 module Sirena
   module Parser
@@ -13,6 +14,7 @@ module Sirena
       # notes, and activations.
       class Sequence
         include CaptureString
+        include SequenceBlocks
 
         # Every arrow mmdc 11.12.0 renders, read off its own SVG: a line
         # class (messageLine0/1 -> solid/dotted), a marker, and which end
@@ -81,6 +83,7 @@ module Sirena
           @pending_created = nil
           @pending_destroyed = nil
           @known_actor_ids = Set.new
+          reset_blocks
         end
 
         def process_statements(diagram, statements)
@@ -136,6 +139,7 @@ module Sirena
         def add_participant(diagram, stmt, actor_type)
           id = actor_id(stmt[:id])
           @known_actor_ids << id
+          @box_ids&.push(id)
           shown_id = Diagram::SequenceText.decode(id)
           label = stmt[:label] ? decoded_text(stmt[:label]) : shown_id
           label = shown_id if label.empty?
@@ -282,6 +286,7 @@ module Sirena
             n.position = position
             n.participant_ids = participants
             n.message_index = @message_index
+            n.order = next_order
           end
 
           diagram.notes << note
@@ -322,50 +327,6 @@ module Sirena
 
             diagram.activations << activation
           end
-        end
-
-        # Each block rule names its statement list with `.as`, so the key is
-        # always present; the else/and/option continuations are a named
-        # `repeat` (an Array, possibly empty) of hashes that name theirs.
-        def process_box(diagram, stmt)
-          process_statements(diagram, stmt[:box_statements])
-        end
-
-        def process_loop(diagram, stmt)
-          process_statements(diagram, stmt[:loop_statements])
-        end
-
-        def process_alt(diagram, stmt)
-          process_statements(diagram, stmt[:alt_statements])
-          stmt[:else_blocks].each do |block|
-            process_statements(diagram, block[:else_statements])
-          end
-        end
-
-        def process_opt(diagram, stmt)
-          process_statements(diagram, stmt[:opt_statements])
-        end
-
-        def process_rect(diagram, stmt)
-          process_statements(diagram, stmt[:rect_statements])
-        end
-
-        def process_par(diagram, stmt)
-          process_statements(diagram, stmt[:par_statements])
-          stmt[:and_blocks].each do |block|
-            process_statements(diagram, block[:and_statements])
-          end
-        end
-
-        def process_critical(diagram, stmt)
-          process_statements(diagram, stmt[:critical_statements])
-          stmt[:option_blocks].each do |block|
-            process_statements(diagram, block[:option_statements])
-          end
-        end
-
-        def process_break(diagram, stmt)
-          process_statements(diagram, stmt[:break_statements])
         end
 
         # An actor name is a bounded run of text, so a name that abuts a

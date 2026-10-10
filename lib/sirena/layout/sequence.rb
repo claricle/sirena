@@ -5,6 +5,8 @@ require_relative "../diagram/sequence"
 require_relative "../diagram/sequence_text"
 require_relative "../notation/mermaid/ir_adapters/sequence"
 require_relative "sequence/note_placement"
+require_relative "sequence/frame_reader"
+require_relative "sequence/frame_placement"
 
 module Sirena
   module Layout
@@ -92,6 +94,8 @@ module Sirena
         attribute :lifelines, Line, collection: true, default: -> { [] }
         attribute :messages, Message, collection: true, default: -> { [] }
         attribute :notes, Note, collection: true, default: -> { [] }
+        attribute :frames, FrameShape, collection: true, default: -> { [] }
+        attribute :boxes, BoxShape, collection: true, default: -> { [] }
       end
 
       # Retains the pre-Scene graph shape for direct layout callers.
@@ -129,12 +133,24 @@ module Sirena
           title: graph.label,
           accessibility_title: graph.accessibility_title,
           accessibility_description: graph.accessibility_description,
-        }
+        }.merge(FrameReader.call(graph))
       end
 
       def scene(diagram)
         graph = build_graph(diagram)
+        @frame_layout = frame_placement(graph)
         build_scene(graph, participant_positions(graph[:children]))
+      end
+
+      def frame_layout
+        @frame_layout ||= FramePlacement.new
+      end
+
+      def frame_placement(graph)
+        metadata = graph[:metadata]
+        spans = graph[:edges].map { |e| [e[:sources].first, e[:targets].first] }
+        FramePlacement.new(frames: metadata[:frames],
+                           boxes: metadata[:boxes], spans: spans)
       end
 
       def build_scene(graph, positions)
@@ -156,11 +172,26 @@ module Sirena
                                        placement.total_height),
           messages: typed_messages(graph[:edges], positions, placement),
           notes: placement.notes,
+          frames: frame_shapes(positions, placement),
+          boxes: box_shapes(graph[:children], positions, count, placement),
         }
       end
 
       def note_placement(entries, positions)
-        NotePlacement.new(entries, positions, font_size: message_font_size)
+        NotePlacement.new(entries, positions, font_size: message_font_size,
+                                              frames: frame_layout)
+      end
+
+      def frame_shapes(positions, notes)
+        rows = ->(index) { message_vertical(index) + notes.shift_for(index) }
+        frame_layout.frame_shapes(positions, rows, notes)
+      end
+
+      def box_shapes(children, positions, count, notes)
+        widths = children.to_h { |child| [child[:id], child[:width]] }
+        bottom = lifeline_bottom(count, notes.total_height) +
+                 FramePlacement::BOX_BOTTOM_PAD
+        frame_layout.box_shapes(positions, widths, bottom)
       end
 
       def scene_dimensions(graph, placement)
@@ -290,26 +321,28 @@ module Sirena
         total_width = participants.sum do |participant|
           participant_width_value(participant)
         end
-        total_width + (participants.length * PARTICIPANT_MARGIN) + 80
+        total_width + (participants.length * PARTICIPANT_MARGIN) + 80 +
+          frame_layout.extra_width
       end
 
       def canvas_height(participants, message_count)
         return 0 if (participants || []).empty?
 
-        (PARTICIPANT_HEIGHT * 2) +
-          (message_count * MESSAGE_SPACING) + 100
+        (PARTICIPANT_HEIGHT * 2) + (message_count * MESSAGE_SPACING) + 100 +
+          frame_layout.total_shift + frame_layout.top_inset
       end
 
       def participant_positions(participants)
         cursor = PARTICIPANT_MARGIN
         participants.to_h do |participant|
+          id = participant_id(participant)
+          cursor += frame_layout.gap_before(id)
           width = participant_width_value(participant)
           position = {
-            x: cursor, y: PARTICIPANT_MARGIN,
-            center_x: cursor + (width / 2)
+            x: cursor, y: origin_y, center_x: cursor + (width / 2)
           }
-          cursor += width + PARTICIPANT_MARGIN
-          [participant_id(participant), position]
+          cursor += width + PARTICIPANT_MARGIN + frame_layout.gap_after(id)
+          [id, position]
         end
       end
 
@@ -404,13 +437,26 @@ module Sirena
         ]
       end
 
+      def origin_y
+        PARTICIPANT_MARGIN + frame_layout.top_inset
+      end
+
+      def lifeline_bottom(message_count, note_height = 0)
+        origin_y + PARTICIPANT_HEIGHT +
+          lifeline_length(message_count, note_height)
+      end
+
+      def lifeline_length(message_count, note_height = 0)
+        (message_count * MESSAGE_SPACING) + 100 + frame_layout.total_shift +
+          note_height
+      end
+
       def lifeline_geometry(positions, message_count, note_height = 0)
-        length = (message_count * MESSAGE_SPACING) + 100 + note_height
+        length = lifeline_length(message_count, note_height)
         positions.values.map do |position|
           line(
-            position[:center_x], PARTICIPANT_MARGIN + PARTICIPANT_HEIGHT,
-            position[:center_x],
-            PARTICIPANT_MARGIN + PARTICIPANT_HEIGHT + length
+            position[:center_x], origin_y + PARTICIPANT_HEIGHT,
+            position[:center_x], origin_y + PARTICIPANT_HEIGHT + length
           )
         end
       end
@@ -435,8 +481,8 @@ module Sirena
       end
 
       def message_vertical(index)
-        PARTICIPANT_MARGIN + PARTICIPANT_HEIGHT +
-          ((index + 1) * MESSAGE_SPACING)
+        origin_y + PARTICIPANT_HEIGHT + ((index + 1) * MESSAGE_SPACING) +
+          frame_layout.row_shift(index)
       end
 
       def build_typed_message(edge, index, source, target, vertical)
