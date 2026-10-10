@@ -43,7 +43,7 @@ module Sirena
 
     # Merge with another theme (for overrides)
     def merge(other_theme)
-      merged = self.class.new(
+      self.class.new(
         name: other_theme.name || name,
         description: other_theme.description || description,
         colors: merge_attribute(colors, other_theme.colors),
@@ -52,7 +52,6 @@ module Sirena
         spacing: merge_attribute(spacing, other_theme.spacing),
         effects: merge_attribute(effects, other_theme.effects),
       )
-      merged
     end
 
     private
