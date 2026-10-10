@@ -44,6 +44,7 @@ module Sirena
             attribute :id, :string
             attribute :path, :string
             attribute :dashed, :boolean
+            attribute :colour, :string
             attribute :marks, Mark, collection: true
             attribute :texts, PlantUML::Scene::Text, collection: true
           end

@@ -718,6 +718,18 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
   end
 
+  describe "arrow colour" do
+    let(:arrow) { scene_of("A -[#22A722]>> B").arrows.first }
+
+    it "carries the colour to the scene" do
+      expect(arrow.colour).to eq("#22A722")
+    end
+
+    it "leaves a plain arrow to the theme" do
+      expect(scene_of("A -> B").arrows.first.colour).to be_nil
+    end
+  end
+
   describe "Maxmessagesize" do
     let(:label) { "alpha beta gamma delta epsilon zeta eta theta iota" }
     let(:plain) { scene_of("A -> B : #{label}", "B -> A : x") }

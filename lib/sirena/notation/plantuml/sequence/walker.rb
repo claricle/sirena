@@ -267,7 +267,8 @@ module Sirena
           def arrow_record(message, geometry)
             Scene::Arrow.new(
               id: "message-#{@arrows.size + 1}", path: geometry[:path],
-              dashed: message.dashed, marks: geometry[:marks],
+              dashed: message.dashed, colour: message.style.colour,
+              marks: geometry[:marks],
               texts: label_texts(message, geometry[:label])
             )
           end

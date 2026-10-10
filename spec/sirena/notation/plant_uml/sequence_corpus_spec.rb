@@ -214,6 +214,14 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     expect(matches(svg, "//rect[@stroke='#EE0000']").size).to eq(4)
   end
 
+  it "draws a coloured arrow's shaft and head in its colour" do
+    source = "@startuml\nparticipant A\nA -[#22A722]> B\n@enduml"
+    svg = Sirena.render(source, notation: :plantuml)
+    strokes = matches(svg, "//g[@id='message-1']/*/@stroke").map(&:value)
+
+    expect(strokes.uniq).to eq(["#22A722"])
+  end
+
   it "wraps the long messages of the leftmsg case" do
     svg = Sirena.render(source_of("990470abe6d9"), notation: :plantuml)
 
