@@ -231,11 +231,15 @@ module Sirena
 
         def divider(section, rank, row_y)
           at = section[:start]
-          line_y = base(at, row_y) + closing_room(at) +
-                   (SECTION_HEIGHT * rank) + DIVIDER_OFFSET +
-                   @notes.slots_before(at, section[:order])
+          notes = @notes.slots_before(at, section[:order])
+          line_y = divider_top(at, rank, row_y) + notes
           FrameDivider.new(y: line_y, text: "[#{section[:label]}]",
                            text_y: line_y + TITLE_BASELINE)
+        end
+
+        def divider_top(at, rank, row_y)
+          base(at, row_y) + closing_room(at) + (SECTION_HEIGHT * rank) +
+            DIVIDER_OFFSET
         end
 
         def horizontal_extent(frame, positions)
