@@ -26,6 +26,11 @@ RSpec.describe Sirena::Layout::C4Intersection do
     expect(rounded(points)).to eq([[61.5, 50.0], [145.5, 300.0]])
   end
 
+  it "leaves a box through its top edge when the other is above" do
+    points = described_class.points(box.(0, 300), box.(100, 0))
+    expect(rounded(points).map(&:last)).to eq([300.0, 50.0])
+  end
+
   it "never returns a nil point" do
     points = described_class.points(box.(0, 0), box.(0, 0))
     expect(points.flatten).to all(be_a(Numeric))
