@@ -16,11 +16,11 @@ module LayoutFlowchartSpecHelpers
     scene.edges.first.labels.first.width
   end
 
-  def label_width_for(font_size_normal)
+  def label_width_for(flowchart_font_size)
     themed_transform = described_class.new
     themed_transform.theme = Sirena::Theme.new(
       typography: Sirena::Theme::Typography.new(
-        font_size_normal: font_size_normal,
+        flowchart_font_size: flowchart_font_size,
       ),
     )
     diagram = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
@@ -273,10 +273,10 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
       end.to raise_error(Sirena::Layout::LayoutError)
     end
 
-    # D10: text measurement must track the theme the renderer actually
-    # draws with, not a hardcoded constant -- otherwise a theme with a
-    # larger font_size_normal (high_contrast: 16.0 vs default: 14.0) draws
-    # text wider than the box sirena measured for it.
+    # Text measurement must track the theme the renderer actually draws
+    # with, not a hardcoded constant -- otherwise a theme with a larger
+    # flowchart_font_size (high_contrast: 18.0 vs default: 16.0) draws text
+    # wider than the box sirena measured for it.
     context "with a theme injected for sizing" do
       let(:diagram) do
         Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
@@ -288,15 +288,13 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
         end
       end
 
-      it "measures a wider node under a theme with a larger font_size_normal" do
+      it "measures a wider node under a theme with a larger flowchart_font_size" do
         expect(node_width(:high_contrast)).to be > node_width(:default)
       end
     end
 
-    # An edge label draws at font_size_small when the theme sets one
-    # (renderer/flowchart.rb#edge_label_font_size), not font_size_normal --
-    # so the layout must reserve room against the same font, or an edge
-    # label's box is sized for text the renderer never draws.
+    # mmdc draws an edge label at the node text size, so neither
+    # font_size_small nor font_size_normal moves it.
     context "with an edge label and a theme whose small and normal sizes differ" do
       let(:diagram) do
         Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
@@ -309,12 +307,12 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
         end
       end
 
-      it "sizes the edge label at font_size_small, not font_size_normal" do
+      it "sizes the edge label at flowchart_font_size alone" do
         small_typography = Sirena::Theme::Typography.new(
           font_size_small: 12.0, font_size_normal: 30.0,
         )
         normal_typography = Sirena::Theme::Typography.new(
-          font_size_small: 12.0, font_size_normal: 12.0,
+          font_size_small: 20.0, font_size_normal: 12.0,
         )
 
         expect(edge_label_width(small_typography))
@@ -322,11 +320,8 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
       end
     end
 
-    # apply_theme_to_text leaves the SVG element's font_size unset (falling
-    # through to Svg::Text::DEFAULT_FONT_SIZE = 16.0) whenever the theme has
-    # no typography or no font_size_normal -- so the layout's own fallback
-    # has to match 16.0, not a different value, or this exact gap D10 fixes
-    # for the has-typography case reopens for the no-typography one.
+    # The renderer draws at 16.0 when the theme sets no flowchart_font_size,
+    # so the layout's fallback has to be 16.0 too.
     context "with a theme that has no typography at all" do
       it "measures node text at the SVG render-side default of 16.0" do
         diagram = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
@@ -337,7 +332,7 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
         no_typography.theme = Sirena::Theme.new
         explicit_sixteen = described_class.new
         explicit_sixteen.theme = Sirena::Theme.new(
-          typography: Sirena::Theme::Typography.new(font_size_normal: 16.0),
+          typography: Sirena::Theme::Typography.new(flowchart_font_size: 16.0),
         )
 
         expect(described_class::DEFAULT_FONT_SIZE).to eq(16.0)
@@ -352,7 +347,7 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     # negative one silently produces a smaller-than-fallback label_width
     # (padding alone can mask it in the padded node :width, so this checks
     # the unpadded label measurement directly).
-    context "with a theme carrying an invalid font_size_normal" do
+    context "with a theme carrying an invalid flowchart_font_size" do
       it "falls back to DEFAULT_FONT_SIZE for a negative value" do
         default_label_width = label_width_for(nil)
 
@@ -370,7 +365,7 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
 
         expect do
           Sirena::Engine.new(
-            theme: { typography: { font_size_normal: Float::NAN } },
+            theme: { typography: { flowchart_font_size: Float::NAN } },
           ).render(source)
         end.not_to raise_error
       end
@@ -380,7 +375,7 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
 
         expect do
           Sirena::Engine.new(
-            theme: { typography: { font_size_normal: Float::INFINITY } },
+            theme: { typography: { flowchart_font_size: Float::INFINITY } },
           ).render(source)
         end.not_to raise_error
       end
@@ -391,8 +386,7 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     # registry, so the fallback itself can resolve to nil -- a transform
     # built directly with no theme injected sees exactly this. The renderer
     # already tolerates a nil theme via safe navigation
-    # (renderer/base.rb#theme_typography); layout_font_size and
-    # edge_label_font_size must match that, not dereference theme directly.
+    # (renderer/base.rb#theme_typography); layout_font_size must match that, not dereference theme directly.
     context "with no theme registered at all" do
       it "still measures node and edge-label text instead of raising" do
         Sirena::Theme::Registry.clear
@@ -433,8 +427,7 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
 
   # The renderer draws a node label as ONE <text>, and SVG collapses the
   # newline in it to a space, so the box must fit the whole string. The quote
-  # marks around the label are not drawn, so they are not measured: 291.8 is
-  # the earlier Chrome figure (301.78) less the two quote glyphs.
+  # marks around the label are not drawn, so they are not measured.
   describe "a node label containing a newline" do
     let(:source) do
       "flowchart LR\n  " \
@@ -446,7 +439,7 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     end
 
     it "is sized for the whole string drawn on one line" do
-      expect(label.width).to be_within(0.1).of(291.8)
+      expect(label.width).to be_within(0.1).of(333.5)
     end
   end
 

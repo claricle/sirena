@@ -464,16 +464,16 @@ RSpec.describe Sirena::Engine do
       outer = box(xml, "s")
 
       # The literal drop, not just "below the top". A baseline of 1 still
-      # puts half a 14px middle-baselined title outside the box, and
+      # puts half a 16px middle-baselined title outside the box, and
       # "greater than the top edge" was happy with it.
       #
       # 20, plus the 0.35em `middle` baseline shift Svg::Text folds into `y`
       # itself (Sirena::Svg::Text::BASELINE_SHIFTS) now that Tiny 1.2 forbids
-      # the `dominant-baseline` attribute: 20 + 0.35 * 14px font-size = 24.9.
+      # the `dominant-baseline` attribute: 20 + 0.35 * 16px font-size = 25.6.
       # mmdc leaves the CSS property in place and never needs this shift; a
       # Tiny 1.2 renderer has no `dominant-baseline` to honour, so the shift
       # is what keeps the glyph centred where mmdc's title actually sits.
-      expect(attr(title, "y") - outer[:y]).to be_within(0.001).of(24.9)
+      expect(attr(title, "y") - outer[:y]).to be_within(0.001).of(25.6)
       expect(attr(title, "y")).to be < outer[:y] + outer[:height]
     end
 
@@ -484,7 +484,8 @@ RSpec.describe Sirena::Engine do
       title = xml[/<g id="cluster-s">.*?(<text[^>]*>)/m, 1]
       node = xml[/<g id="node-A">\s*<rect[^>]*>/]
 
-      expect(attr(node, "y")).to be > attr(title, "y")
+      title_centre = attr(title, "y") - (0.35 * 16)
+      expect(attr(node, "y")).to be > title_centre
     end
 
     # A box drawn no bigger than its contents clips them.
@@ -555,7 +556,7 @@ RSpec.describe Sirena::Engine do
       xml = render("flowchart TB\nsubgraph a\nsubgraph b\nend\nend\nz\n")
       outer = box(xml, "a")
 
-      expect([outer[:width], outer[:height]]).to eq([47.0, 50.0])
+      expect([outer[:width], outer[:height]]).to eq([48.0, 50.0])
     end
   end
 
@@ -735,7 +736,7 @@ RSpec.describe Sirena::Engine do
       # no longer than three, which rounding to two or fewer also
       # satisfies. The start is where the ray between the two boxes' exact
       # centres leaves `one`.
-      expect(path).to eq("M 82.03 113.0 L 46.277 188.5")
+      expect(path).to eq("M 82.9 116.0 L 46.888 193.0")
     end
 
     it "joins a box to a plain node" do

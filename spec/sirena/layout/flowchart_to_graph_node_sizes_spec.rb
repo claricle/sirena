@@ -2,15 +2,22 @@
 
 RSpec.describe Sirena::Layout::Flowchart, "#to_graph" do
   let(:builder) { FlowchartSceneBuilder }
-  let(:line_height) { 14.0 * 1.5 }
+  let(:line_height) { 16.0 * 1.5 }
   let(:text_width) do
-    Sirena::TextMeasurement.measure("Laptop", font_size: 14.0)[:width]
+    Sirena::TextMeasurement.measure("Laptop", font_size: 16.0)[:width]
   end
 
   it "pads a box 30 either side and 15 above and below a 1.5 line" do
     expect(builder.lone_node("rect", "Laptop")).to have_attributes(
       width: be_within(0.01).of(text_width + 60),
       height: be_within(0.01).of(line_height + 30),
+    )
+  end
+
+  # Reference 001: node D "Laptop" is 109.265625 x 54, its label 49.27 x 24.
+  it "sizes a box like mmdc's 16px reference" do
+    expect(builder.lone_node("rect", "Laptop")).to have_attributes(
+      width: be_within(1.0).of(109.27), height: 54.0,
     )
   end
 
