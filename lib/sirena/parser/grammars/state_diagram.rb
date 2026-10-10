@@ -79,11 +79,11 @@ module Sirena
           str("state").as(:keyword) >> spaces >>
             (
               marker_declaration |
-              state_target >> space? >>
+              (state_target >> space? >>
                 (
                   state_description |
                   composite_body.as(:composite)
-                ).maybe
+                ).maybe)
             ) >>
             line_end
         end
@@ -126,12 +126,12 @@ module Sirena
         rule(:quoted_state_id) do
           (
             str('"') >>
-              (str("\\") >> any | str('"').absent? >> any).repeat >>
+              ((str("\\") >> any) | (str('"').absent? >> any)).repeat >>
               str('"')
           ) |
             (
               str("'") >>
-                (str("\\") >> any | str("'").absent? >> any).repeat >>
+                ((str("\\") >> any) | (str("'").absent? >> any)).repeat >>
                 str("'")
             )
         end
@@ -243,7 +243,7 @@ module Sirena
 
         # Either end of a transition. `[*]` is the start or end marker.
         rule(:transition_end) do
-          start_end_marker | reserved_name.absent? >> state_id
+          start_end_marker | (reserved_name.absent? >> state_id)
         end
 
         # Start/end marker [*]
@@ -374,7 +374,7 @@ module Sirena
 
         # Line terminators for State diagrams
         rule(:line_end) do
-          semicolon.maybe >> space? >> (comment.maybe >> newline | eof)
+          semicolon.maybe >> space? >> ((comment.maybe >> newline) | eof)
         end
       end
     end

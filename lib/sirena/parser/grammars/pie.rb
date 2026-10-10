@@ -67,7 +67,7 @@ module Sirena
             acc_descr_declaration |
             standalone_title_declaration |
             data_entry |
-            comment >> line_end
+            (comment >> line_end)
         end
 
         # Title as a standalone statement (not in header)

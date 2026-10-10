@@ -52,7 +52,7 @@ module Sirena
             section_declaration |
             event_entry |
             task_entry |
-            comment >> line_end
+            (comment >> line_end)
         end
 
         # Title

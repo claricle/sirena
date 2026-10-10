@@ -136,8 +136,8 @@ module Sirena
             axis_line |
             curve_line |
             option_line |
-            comment >> eol |
-            space? >> newline
+            (comment >> eol) |
+            (space? >> newline)
           )
         end
 
