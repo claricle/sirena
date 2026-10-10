@@ -226,8 +226,8 @@ module SequenceFuzz
       [
         :accept_reject_mismatch,
         "sirena accepted=#{@sirena[:accepted]} mermaid accepted=#{@mermaid[:accepted]} " \
-          "(sirena: #{@sirena[:error] || @sirena[:actors].inspect}, " \
-          "mermaid: #{@mermaid[:error] || @mermaid[:actors].inspect})",
+        "(sirena: #{@sirena[:error] || @sirena[:actors].inspect}, " \
+        "mermaid: #{@mermaid[:error] || @mermaid[:actors].inspect})",
       ]
     end
 

@@ -233,8 +233,8 @@ module MermaidFuzz
       [
         :accept_reject_mismatch,
         "sirena accepted=#{@sirena[:accepted]} mermaid accepted=#{@mermaid[:accepted]} " \
-          "(sirena: #{@sirena[:error] || @sirena[:ids].inspect}, " \
-          "mermaid: #{@mermaid[:error] || @mermaid[:ids].inspect})",
+        "(sirena: #{@sirena[:error] || @sirena[:ids].inspect}, " \
+        "mermaid: #{@mermaid[:error] || @mermaid[:ids].inspect})",
       ]
     end
 
