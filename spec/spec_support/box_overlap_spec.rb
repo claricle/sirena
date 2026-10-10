@@ -15,8 +15,9 @@ RSpec.describe BoxOverlap do
   ].each do |name, geometry, expected|
     it "reports #{name} as #{expected ? 'overlapping' : 'apart'}" do
       other = box.new(*geometry)
-      expect([described_class.overlap?(base, other),
-              described_class.overlap?(other, base)]).to eq([expected, expected])
+      results = [described_class.overlap?(base, other),
+                 described_class.overlap?(other, base)]
+      expect(results).to eq([expected, expected])
     end
   end
 end
