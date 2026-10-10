@@ -69,6 +69,10 @@ module Sirena
         return year_interval unless index
         return LADDER.first.first(2) if index.zero?
 
+        nearer_rung(index, target)
+      end
+
+      def nearer_rung(index, target)
         below = LADDER[index - 1]
         above = LADDER[index]
         (target / below.last < above.last / target ? below : above).first(2)

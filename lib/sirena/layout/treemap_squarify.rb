@@ -54,20 +54,26 @@ module Sirena
 
       def worst_ratio(row, alpha)
         values = row.map { |node| node[:value] }
-        beta = values.sum**2 * alpha
+        beta = (values.sum**2) * alpha
         [values.max / beta, beta / values.min].max
       end
 
       def row_bounds(sum, row)
-        width = @x1 - @x0
-        height = @y1 - @y0
-        if width < height
-          dice(row, sum, [@x0, @y0, @x1, @y0 + height * sum / @value])
-          @y0 += height * sum / @value
+        if (@x1 - @x0) < (@y1 - @y0)
+          dice(row, sum, [@x0, @y0, @x1, advance_y(sum)])
         else
-          slice(row, sum, [@x0, @y0, @x0 + width * sum / @value, @y1])
-          @x0 += width * sum / @value
+          slice(row, sum, [@x0, @y0, advance_x(sum), @y1])
         end
+      end
+
+      # Moves the free area's top edge down past a row of total `sum`.
+      def advance_y(sum)
+        @y0 += (@y1 - @y0) * sum / @value
+      end
+
+      # Moves the free area's left edge right past a row of total `sum`.
+      def advance_x(sum)
+        @x0 += (@x1 - @x0) * sum / @value
       end
 
       def dice(row, sum, bounds)

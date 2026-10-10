@@ -143,12 +143,22 @@ module Sirena
       # (sweep 0), and the slices that are drawn share the whole circle.
       def ranked(graph)
         slices = graph[:slices] || []
-        order = slices.each_index.sort_by { |i| [-slices[i][:value].to_f, i] }
+        ranks = rank_table(slices)
         scale = sweep_scale(slices)
         slices.each_with_index.map do |slice, index|
-          slice.merge(input_index: index, rank: order.index(index),
-                      sweep: scale * (shown?(slice) ? weight(slice) : 0.0))
+          ranked_slice(slice, index, ranks[index], scale)
         end
+      end
+
+      # Maps each input index to its position in largest-first order.
+      def rank_table(slices)
+        order = slices.each_index.sort_by { |i| [-slices[i][:value].to_f, i] }
+        order.each_with_index.to_h
+      end
+
+      def ranked_slice(slice, index, rank, scale)
+        slice.merge(input_index: index, rank: rank,
+                    sweep: scale * (shown?(slice) ? weight(slice) : 0.0))
       end
 
       def shown?(slice)
