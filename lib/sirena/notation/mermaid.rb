@@ -65,6 +65,7 @@ module Sirena
         gantt: {
           pattern: /\A\s*gantt(\s|\z)/i,
           keyword: "gantt",
+          ir_adapter: true,
         },
         pie: {
           pattern: /\A\s*pie(\s|\z)/i,

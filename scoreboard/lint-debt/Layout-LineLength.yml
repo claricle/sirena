@@ -30,7 +30,7 @@ rows:
 - file: lib/sirena/layout/flowchart/edge_router.rb
   count: 10
 - file: lib/sirena/layout/gantt.rb
-  count: 11
+  count: 8
 - file: lib/sirena/layout/info.rb
   count: 2
 - file: lib/sirena/layout/requirement.rb

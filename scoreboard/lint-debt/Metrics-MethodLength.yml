@@ -36,7 +36,7 @@ rows:
 - file: lib/sirena/layout/flowchart/edge_router.rb
   count: 3
 - file: lib/sirena/layout/gantt.rb
-  count: 7
+  count: 6
 - file: lib/sirena/layout/git_graph.rb
   count: 6
 - file: lib/sirena/layout/grid.rb
