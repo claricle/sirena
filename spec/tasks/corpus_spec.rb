@@ -216,10 +216,9 @@ RSpec.describe Sirena::Corpus do
         { "a/1.mmd" => "valid" },
       )
 
-      expect(rows).to eq([{
-        "case" => "a/1.mmd", "verdict" => "valid", "pass" => false,
-        "stage" => "parse", "exception_class" => "X"
-      }])
+      expect(rows).to eq([{ "case" => "a/1.mmd", "verdict" => "valid",
+                            "pass" => false, "stage" => "parse",
+                            "exception_class" => "X" }])
     end
 
     it "defaults an unrecorded verdict to unknown rather than raising" do
@@ -467,11 +466,11 @@ RSpec.describe Sirena::Corpus do
 
     it "lands in the scoreboard row with stage detect" do
       rows = described_class.rows_for_scoreboard(described_class.run_cases(["seeded/1.mmd"]), {})
+      error_class = "Sirena::Engine::DiagramTypeError"
 
-      expect(rows).to eq([{
-        "case" => "seeded/1.mmd", "verdict" => "unknown", "pass" => false,
-        "stage" => "detect", "exception_class" => "Sirena::Engine::DiagramTypeError"
-      }])
+      expect(rows).to eq([{ "case" => "seeded/1.mmd", "verdict" => "unknown",
+                            "pass" => false, "stage" => "detect",
+                            "exception_class" => error_class }])
     end
   end
 end

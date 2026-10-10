@@ -37,6 +37,23 @@ module ApplyFixesScan
       apply_fixes_references([path]).size
     end
   end
+
+  def trap_new_instances(klass, raised_methods, error, returned_methods = {})
+    allow(klass).to receive(:new).and_wrap_original do |constructor, *args, **kwargs, &block|
+      instance = constructor.call(*args, **kwargs, &block)
+      trap_instance(instance, raised_methods, error, returned_methods)
+      instance
+    end
+  end
+
+  def trap_instance(instance, raised_methods, error, returned_methods)
+    raised_methods.each do |name|
+      allow(instance).to receive(name).and_raise(error)
+    end
+    return if returned_methods.empty?
+
+    allow(instance).to receive_messages(returned_methods)
+  end
 end
 
 RSpec.describe "svg_conform apply_fixes", type: :task do
@@ -80,8 +97,10 @@ RSpec.describe "svg_conform apply_fixes", type: :task do
         SvgConform::Fixer => %i[apply_fix apply_fixes apply_validation_fixes],
         SvgConform::Profile => [:apply_remediations],
         SvgConform::RemediationEngine => [:apply_remediations] }.each do |klass, names|
-        names.each { |name| allow_any_instance_of(klass).to receive(name).and_raise(fixes_called) } # rubocop:disable RSpec/AnyInstance
+        trap_new_instances(klass, names, fixes_called)
       end
+      allow(SvgConform::Profiles.get(profile))
+        .to receive(:apply_remediations).and_raise(fixes_called)
     end
 
     it "is not reached when fix: true validates Sirena output, as a string or a file" do
@@ -97,7 +116,7 @@ RSpec.describe "svg_conform apply_fixes", type: :task do
     end
 
     it "raises when a fixable violation reaches it, so the trap is live" do
-      allow_any_instance_of(SvgConform::ValidationResult).to receive(:fixable?).and_return(true) # rubocop:disable RSpec/AnyInstance
+      trap_new_instances(SvgConform::ValidationResult, [:apply_fixes], fixes_called, fixable?: true)
       broken = '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>'
 
       expect { SvgConform.validate(broken, profile: profile, fix: true) }.to raise_error(fixes_called)
