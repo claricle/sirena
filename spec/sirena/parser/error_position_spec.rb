@@ -273,7 +273,8 @@ RSpec.describe Sirena::Parser::Base do
       message = error_from(Sirena::Parser::Flowchart.new,
                            "graph TD\nstyle A fill:#f9f,,g")
 
-      expect(message).to end_with("Input should not start with HASHED_COMMA_GAP")
+      expect(message)
+        .to end_with("Input should not start with HASHED_COMMA_GAP")
       expect(position_in(message)).to eq("line 2, column 18")
     end
   end

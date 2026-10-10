@@ -106,9 +106,13 @@ RSpec.describe Sirena::Parser::Packet do
 
     context "with fixture files" do
       let(:fixtures_dir) { File.join(__dir__, "../../mermaid/packet") }
+      let(:packet_beta_fixture) do
+        "002_parser_should_handle_a_packet-beta_definition_1.mmd"
+      end
 
       it "parses 001_rendering_packet_spec_packet_0.mmd" do
-        source = File.read(File.join(fixtures_dir, "001_rendering_packet_spec_packet_0.mmd"))
+        source = File.read(File.join(fixtures_dir,
+                                     "001_rendering_packet_spec_packet_0.mmd"))
 
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Packet)
@@ -118,21 +122,23 @@ RSpec.describe Sirena::Parser::Packet do
       end
 
       it "parses 002_parser_should_handle_a_packet-beta_definition_1.mmd" do
-        source = File.read(File.join(fixtures_dir, "002_parser_should_handle_a_packet-beta_definition_1.mmd"))
+        source = File.read(File.join(fixtures_dir, packet_beta_fixture))
 
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Packet)
       end
 
       it "parses 003_parsertest_packet_test_2.mmd" do
-        source = File.read(File.join(fixtures_dir, "003_parsertest_packet_test_2.mmd"))
+        source = File.read(File.join(fixtures_dir,
+                                     "003_parsertest_packet_test_2.mmd"))
 
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Packet)
       end
 
       it "parses 004_spec_mermaidapi_spec_3.mmd" do
-        source = File.read(File.join(fixtures_dir, "004_spec_mermaidapi_spec_3.mmd"))
+        source = File.read(File.join(fixtures_dir,
+                                     "004_spec_mermaidapi_spec_3.mmd"))
 
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Packet)
