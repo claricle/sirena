@@ -52,4 +52,19 @@ RSpec.describe Sirena::IR::Model do
 
     expect(attribute_types).not_to include(Lutaml::Model::Type::Hash)
   end
+
+  it "rejects attributes that are not a Hash" do
+    expect { Sirena::IR::Graph.new([]) }
+      .to raise_error(ArgumentError, "attributes must be a Hash")
+  end
+
+  it "rejects attribute names that are not Strings or Symbols" do
+    expect { Sirena::IR::Graph.new(1 => "graph") }
+      .to raise_error(ArgumentError, /names must be Strings or Symbols/)
+  end
+
+  it "rejects a name given as both String and Symbol" do
+    expect { Sirena::IR::Graph.new("id" => "a", id: "b") }
+      .to raise_error(ArgumentError, "duplicate attribute names")
+  end
 end
