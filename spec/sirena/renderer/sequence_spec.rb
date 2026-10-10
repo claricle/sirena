@@ -242,7 +242,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       # Reaching right, not left: the loop must not cross the lifeline into
       # the previous participant's column.
       expect(group[/<path[^>]*d="([^"]*)"/, 1])
-        .to eq("M 125,109 C 181,109 181,129 125,129")
+        .to eq("M 125,119 C 185,109 185,149 125,139")
       expect(group.scan("<polygon").size).to eq(0)
     end
 
@@ -251,7 +251,7 @@ RSpec.describe Sirena::Renderer::Sequence do
 
       expect(group.scan("<polygon").size).to eq(1)
       expect(group[/<polygon[^>]*points="([^"]*)"/, 1])
-        .to eq("125,129 133,125 133,133")
+        .to eq("125,139 133,135 133,143")
     end
 
     it "draws a head at each end of a bidirectional self-message" do
@@ -259,7 +259,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       group = SequenceSpecHelpers.self_group("<<->>")
       tips = group.scan(/<polygon[^>]*points="[\d.]+,([\d.]+)/).flatten
 
-      expect(tips).to contain_exactly("109", "129")
+      expect(tips).to contain_exactly("119", "139")
     end
 
     it "lifts the label clear of the loop" do
