@@ -48,6 +48,7 @@ module Sirena
             Walker.new(lifelines: ids.zip(@centers).to_h, bounds: head_bounds,
                        measure: ->(text) { text_width(text) },
                        font_size: font_size,
+                       appearance: @diagram.appearance,
                        start_y: @top + @head_height + Walker::ROW)
               .run(@diagram.items, edge_right: @edge_right)
           end
@@ -321,7 +322,27 @@ module Sirena
             name = above_label(participant)
             return [label] unless name
 
-            [text(name, centre, top + 14, "kind"), label]
+            lines = [text(name, centre, top + 14, "kind"), label]
+            participant.stereotype ? align(lines, centre) : lines
+          end
+
+          # Lines of a stereotyped head sit against the edge of the block
+          # they form, which is as wide as its widest line.
+          def align(lines, centre)
+            alignment = @diagram.appearance.alignment
+            return lines if alignment == :center
+
+            half = lines.map { |line| line_width(line) }.max / 2
+            lines.each do |line|
+              line.anchor = alignment == :left ? "start" : "end"
+              line.x = alignment == :left ? centre - half : centre + half
+            end
+          end
+
+          # The renderer draws a "kind" line at 0.85 of the normal size.
+          def line_width(line)
+            scale = line.role == "kind" ? 0.85 : 1.0
+            measure_text(line.content, font_size: font_size * scale)[:width]
           end
 
           def above_label(participant)

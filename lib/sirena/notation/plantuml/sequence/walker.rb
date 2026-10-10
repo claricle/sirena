@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "activation"
+require_relative "appearance"
 require_relative "arrow_marks"
 require_relative "bar_tracker"
 require_relative "destroy"
@@ -43,13 +44,16 @@ module Sirena
           # @param measure [#call] text width in pixels
           # @param bounds [Array<Float>] left and right edge of the heads
           # @param start_y [Float] where the first row goes
-          def initialize(lifelines:, measure:, font_size:, bounds:, start_y:)
+          # @param appearance [Appearance] what the fragment tabs are drawn in
+          def initialize(lifelines:, measure:, font_size:, bounds:, start_y:,
+                         appearance: Appearance.new)
             @ids = lifelines.keys
             @centers = lifelines.values
             @measure = measure
             @font_size = font_size
             @bounds = bounds
             @y = start_y
+            @appearance = appearance
             start_empty
           end
 
@@ -362,7 +366,8 @@ module Sirena
           end
 
           def emit_fragment(block, bottom)
-            record = FragmentShape.new(block, bottom, @centers, @measure)
+            record = FragmentShape.new(block, bottom, @centers, @measure,
+                                       @appearance)
             @fragments << record.scene
             @closed = { shape: record, top: block[:top] }
             touch(record.x, record.x + record.width)

@@ -59,6 +59,7 @@ module Sirena
             attribute :width, :float
             attribute :height, :float
             attribute :tab_path, :string
+            attribute :tab_fill, :string
             attribute :separators, PlantUML::Scene::Segment, collection: true
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
