@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/class_diagram"
 require_relative "builders/class_diagram"
+require_relative "class_notes"
 require_relative "../diagram/class_diagram"
 
 module Sirena
@@ -29,7 +30,9 @@ module Sirena
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         tree = parse_with_grammar(Grammars::ClassDiagram.new, source)
-        Builders::ClassDiagram.new.apply(tree, source)
+        diagram = Builders::ClassDiagram.new.apply(tree, source)
+        diagram.notes = ClassNotes.collect(tree, diagram)
+        diagram
       end
     end
   end

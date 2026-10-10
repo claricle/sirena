@@ -78,6 +78,7 @@ module Sirena
         add_markers(svg)
         render_relationships(scene, svg)
         render_classes(scene, svg)
+        scene.notes.each { |note| render_scene_note(note, svg) }
         svg
       end
 
@@ -95,6 +96,39 @@ module Sirena
         end
         node.method_rows.each { |label| group.children << scene_text(label) }
         svg << group
+      end
+
+      def render_scene_note(note, svg)
+        group = Svg::Group.new.tap { |item| item.id = "note-#{note.id}" }
+        group.children << scene_note_link(note) if note.linked?
+        group.children << scene_note_box(note)
+        group.children << scene_note_text(note)
+        svg << group
+      end
+
+      def scene_note_link(note)
+        Svg::Line.new(
+          x1: svg_number(note.link_x1), y1: svg_number(note.link_y1),
+          x2: svg_number(note.link_x2), y2: svg_number(note.link_y2),
+          stroke: "#aaaa33", stroke_width: "1", stroke_dasharray: "2,2"
+        )
+      end
+
+      def scene_note_box(note)
+        Svg::Rect.new(
+          x: svg_number(note.x), y: svg_number(note.y),
+          width: svg_number(note.width), height: svg_number(note.height),
+          fill: "#fff5ad", stroke: "#aaaa33", stroke_width: "1"
+        )
+      end
+
+      def scene_note_text(note)
+        Svg::Text.new(
+          x: svg_number(note.x + (note.width / 2)),
+          y: svg_number(note.y + 23), content: note.text, fill: "#000000",
+          font_family: "Arial, sans-serif", font_size: "16",
+          text_anchor: "middle"
+        )
       end
 
       def scene_node_box(node)

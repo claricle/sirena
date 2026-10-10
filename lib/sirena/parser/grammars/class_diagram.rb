@@ -285,8 +285,8 @@ module Sirena
         # quote because the corpus has notes with quotes inside HTML.
         rule(:note_statement) do
           str("note").as(:ignored) >>
-            (space >> str("for") >> space >> class_name).maybe >>
-            space >> rest_of_line >>
+            (space >> str("for") >> space >> class_name.as(:note_for)).maybe >>
+            space >> rest_of_line.as(:note_text) >>
             line_end
         end
 
