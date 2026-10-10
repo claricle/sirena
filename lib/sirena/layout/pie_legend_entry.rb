@@ -11,6 +11,9 @@ module Sirena
       attribute :x, :float
       attribute :y, :float
       attribute :font_size, :float
+      # Where the caption is anchored, so the renderer only reads it.
+      attribute :text_x, :float
+      attribute :text_y, :float
     end
   end
 end

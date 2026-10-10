@@ -43,11 +43,10 @@ module Sirena
 
       protected
 
-      # mmdc rings the pie with a circle one pixel outside the slices.
       def outer_circle
         Svg::Circle.new(
           cx: Layout::Pie::CENTER_X, cy: Layout::Pie::CENTER_Y,
-          r: Layout::Pie::RADIUS + 1, fill: "none", stroke_width: "2",
+          r: Layout::Pie::OUTER_RADIUS, fill: "none", stroke_width: "2",
           stroke: theme_color(:label_text) || "#000000"
         )
       end
@@ -82,8 +81,8 @@ module Sirena
 
       def legend_text(entry)
         Svg::Text.new.tap do |text|
-          text.x = entry.x + 22
-          text.y = entry.y + 14
+          text.x = entry.text_x
+          text.y = entry.text_y
           text.content = entry.text
           apply_text_theme(text, entry.font_size)
         end

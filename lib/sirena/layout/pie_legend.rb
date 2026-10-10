@@ -11,6 +11,8 @@ module Sirena
       ROW_HEIGHT = 22
       SWATCH = 18
       TEXT_GAP = 4
+      TEXT_OFFSET_X = SWATCH + TEXT_GAP
+      TEXT_BASELINE = 14
       RIGHT_MARGIN = 49
 
       def initialize(center_y:, font_size:)
@@ -38,7 +40,9 @@ module Sirena
 
       def entry(text, index, row_y)
         PieLegendEntry.new(text: text, color_index: index, x: LEFT, y: row_y,
-                           font_size: @font_size)
+                           font_size: @font_size,
+                           text_x: LEFT + TEXT_OFFSET_X,
+                           text_y: row_y + TEXT_BASELINE)
       end
 
       def caption(slice, show_data)

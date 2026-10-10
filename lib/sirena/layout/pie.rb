@@ -21,6 +21,8 @@ module Sirena
       RADIUS = 185
       CENTER_X = 225
       CENTER_Y = 225
+      # mmdc rings the pie with a circle one pixel outside the slices.
+      OUTER_RADIUS = RADIUS + 1
       LABEL_OFFSET = RADIUS * 0.75
       TITLE_Y = CENTER_Y - 200
       HEIGHT = 450
