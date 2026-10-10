@@ -7,17 +7,19 @@ require "fileutils"
 require "json"
 require "open3"
 
-# tasks/coverage.rake is loaded only by the Rakefile (`Dir.glob('tasks/**/*.rake')`),
-# never required by the app itself, so nothing in spec/sirena/** exercises it -- mutation-check.sh
-# and line-deletion-check.sh both confirmed 0% protection for this file before this spec existed.
-# Each example gets its OWN Rake::Application: a Rake::Task only ever runs once per
-# application (`invoke` is a no-op once marked complete), and several examples below
-# `clear`/redefine `spec:unit`/`spec:corpus_runner` to observe what coverage:measure/
-# spec:corpus pass them -- reusing this process's real, shared Rake.application would leak
-# that invoked/redefined state across examples and could disturb whatever actually invoked
-# this spec run. Each example also gets its own throwaway git repo, so
-# `coverage:changed_lines`'s `git diff --merge-base` / `git ls-files` calls have something real
-# to run against without touching this repo's own history or coverage/ directory.
+# tasks/coverage.rake is loaded only by the Rakefile
+# (`Dir.glob('tasks/**/*.rake')`), never required by the app itself, so nothing
+# in spec/sirena/** exercises it. mutation-check.sh and line-deletion-check.sh
+# both confirmed 0% protection for this file before this spec existed.
+# Each example gets its OWN Rake::Application: a Rake::Task only ever runs once
+# per application (`invoke` is a no-op once marked complete), and several
+# examples below `clear`/redefine `spec:unit`/`spec:corpus_runner` to observe
+# what coverage:measure/spec:corpus pass them. Reusing this process's real,
+# shared Rake.application would leak that invoked/redefined state across
+# examples and could disturb whatever actually invoked this spec run. Each
+# example also gets its own throwaway git repo, so `coverage:changed_lines`'s
+# `git diff --merge-base` / `git ls-files` calls have something real to run
+# against without touching this repo's own history or coverage/ directory.
 RSpec.describe "tasks/coverage.rake" do
   around do |example|
     original_application = Rake.application
@@ -96,13 +98,31 @@ RSpec.describe "tasks/coverage.rake" do
       allow(main_object).to receive(:sh)
     end
 
+    def message_matching(*parts)
+      Regexp.new(parts.join(".*"), Regexp::MULTILINE)
+    end
+
+    def message_containing(*parts)
+      Regexp.new(parts.join)
+    end
+
+    def missing_coverage_error
+      message_matching(
+        "coverage/coverage\\.json is missing",
+        "rake coverage:measure",
+        "rake coverage:guard",
+        "coverage:changed_lines",
+      )
+    end
+
     # Asserts the exact argv the real `sh` call in coverage.rake is supposed
     # to pass -- not just that guards upstream didn't raise. Checking only
     # "no known guard-message raised" stays green even with the `sh` call
     # deleted entirely or its `--minimum` dropped to `0`.
     def expect_sh_invoked_for_gate!(base)
       expect(main_object).to have_received(:sh).with(
-        "bundle", "exec", "simplecov", "patch", "--input", "tmp/coverage-line-only.json",
+        "bundle", "exec", "simplecov", "patch", "--input",
+        "tmp/coverage-line-only.json",
         "--base", base, "--find-renames", "--minimum", "100"
       )
     end
@@ -119,20 +139,26 @@ RSpec.describe "tasks/coverage.rake" do
       commit!("lib/foo.rb", "class Foo\nend\n")
       ENV["COVERAGE_BASE"] = "HEAD"
 
-      expect { invoke! }.to raise_error(%r{coverage/coverage\.json is missing.*rake coverage:measure.*rake coverage:guard.*coverage:changed_lines}m)
+      expect { invoke! }.to raise_error(missing_coverage_error)
     end
 
-    it "raises with the git failure when COVERAGE_BASE does not resolve to a ref" do
+    it "raises with the git failure when COVERAGE_BASE does not resolve " \
+       "to a ref" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
       FileUtils.mkdir_p("coverage")
       File.write("coverage/coverage.json", JSON.generate("coverage" => {}))
       ENV["COVERAGE_BASE"] = "this-ref-does-not-exist"
 
-      expect { invoke! }.to raise_error(/git diff --name-only --merge-base this-ref-does-not-exist failed/)
+      error = message_containing(
+        "git diff --name-only --merge-base ",
+        "this-ref-does-not-exist failed",
+      )
+      expect { invoke! }.to raise_error(error)
     end
 
-    it "raises when a changed file was edited after the report was generated (stale mtime)" do
+    it "raises when a changed file was edited after the report was generated " \
+       "(stale mtime)" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
       base = head_sha
@@ -145,10 +171,15 @@ RSpec.describe "tasks/coverage.rake" do
       File.utime(Time.now, Time.now, "lib/foo.rb")
       ENV["COVERAGE_BASE"] = base
 
-      expect { invoke! }.to raise_error(/predates a newer edit to lib\/foo\.rb.*run `rake coverage:measure` again before coverage:changed_lines/)
+      error = message_matching(
+        "predates a newer edit to lib/foo\\.rb",
+        "run `rake coverage:measure` again before coverage:changed_lines",
+      )
+      expect { invoke! }.to raise_error(error)
     end
 
-    it "raises when the report has no entry at all for a changed lib/*.rb file" do
+    it "raises when the report has no entry at all for a changed lib/*.rb " \
+       "file" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
       base = head_sha
@@ -161,19 +192,28 @@ RSpec.describe "tasks/coverage.rake" do
       File.utime(Time.now, Time.now, "coverage/coverage.json")
       ENV["COVERAGE_BASE"] = base
 
-      expect { invoke! }.to raise_error(/no entry \(or a content mismatch.*for lib\/foo\.rb.*run `rake coverage:measure` again before.*coverage:changed_lines/m)
+      error = message_matching(
+        "no entry \\(or a content mismatch",
+        "for lib/foo\\.rb",
+        "run `rake coverage:measure` again before",
+        "coverage:changed_lines",
+      )
+      expect { invoke! }.to raise_error(error)
     end
 
-    it "raises when the report entry is present but its source content is stale (same length, different text)" do
+    it "raises when the report entry is present but its source content is " \
+       "stale (same length, different text)" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
       base = head_sha
-      commit!("lib/foo.rb", "class Bar\nend\n") # same 2 lines, different content than the report below
+      # Same two lines, but different content from the report below.
+      commit!("lib/foo.rb", "class Bar\nend\n")
 
       FileUtils.mkdir_p("coverage")
       report = {
         "coverage" => {
-          "lib/foo.rb" => { "source" => ["class Foo", "end"], "lines" => [1, nil] },
+          "lib/foo.rb" => { "source" => ["class Foo", "end"],
+                            "lines" => [1, nil] },
         },
       }
       File.write("coverage/coverage.json", JSON.generate(report))
@@ -182,10 +222,17 @@ RSpec.describe "tasks/coverage.rake" do
       File.utime(Time.now, Time.now, "coverage/coverage.json")
       ENV["COVERAGE_BASE"] = base
 
-      expect { invoke! }.to raise_error(/no entry \(or a content mismatch.*for lib\/foo\.rb.*run `rake coverage:measure` again before.*coverage:changed_lines/m)
+      error = message_matching(
+        "no entry \\(or a content mismatch",
+        "for lib/foo\\.rb",
+        "run `rake coverage:measure` again before",
+        "coverage:changed_lines",
+      )
+      expect { invoke! }.to raise_error(error)
     end
 
-    it "ignores a changed file outside lib/ or not ending in .rb -- no report entry required" do
+    it "ignores a changed file outside lib/ or not ending in .rb -- " \
+       "no report entry required" do
       init_repo!
       commit!("README.md", "# hello\n")
       base = head_sha
@@ -205,7 +252,8 @@ RSpec.describe "tasks/coverage.rake" do
       expect_sh_invoked_for_gate!(base)
     end
 
-    it "requires a report entry only when a changed path matches BOTH halves of lib/*.rb (guards against && degrading to ||)" do
+    it "requires a report entry only when a changed path matches BOTH halves " \
+       "of lib/*.rb (guards against && degrading to ||)" do
       init_repo!
       commit!("lib/foo.txt", "hello\n")
       base = head_sha
@@ -226,7 +274,8 @@ RSpec.describe "tasks/coverage.rake" do
       expect_sh_invoked_for_gate!(base)
     end
 
-    it "skips a deleted lib/*.rb file for both the mtime and content-entry checks -- simplecov patch --find-renames handles it" do
+    it "skips a deleted lib/*.rb file for both the mtime and content-entry " \
+       "checks -- simplecov patch --find-renames handles it" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
       base = head_sha
@@ -245,8 +294,9 @@ RSpec.describe "tasks/coverage.rake" do
       expect_sh_invoked_for_gate!(base)
     end
 
-    it "raises when a changed non-lib file (e.g. its only covering spec) was deleted -- " \
-       "the old report can no longer prove what ran against a lib/*.rb file it still covers" do
+    it "raises when a changed non-lib file (e.g. its only covering spec) " \
+       "was deleted -- the old report can no longer prove what ran against " \
+       "a lib/*.rb file it still covers" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
       commit!("spec/foo_spec.rb", "RSpec.describe('Foo') { it { } }\n")
@@ -258,7 +308,8 @@ RSpec.describe "tasks/coverage.rake" do
       FileUtils.mkdir_p("coverage")
       report = {
         "coverage" => {
-          "lib/foo.rb" => { "source" => source_lines, "lines" => Array.new(source_lines.size, 1) },
+          "lib/foo.rb" => { "source" => source_lines,
+                            "lines" => Array.new(source_lines.size, 1) },
         },
       }
       File.write("coverage/coverage.json", JSON.generate(report))
@@ -268,11 +319,17 @@ RSpec.describe "tasks/coverage.rake" do
       ENV["COVERAGE_BASE"] = base
       stub_sh!
 
-      expect { invoke! }.to raise_error(/spec\/foo_spec\.rb deleted vs COVERAGE_BASE=#{Regexp.escape(base.inspect)}.*Move COVERAGE_BASE past this deletion instead/m)
+      error = message_matching(
+        "spec/foo_spec\\.rb deleted vs COVERAGE_BASE=" \
+        "#{Regexp.escape(base.inspect)}",
+        "Move COVERAGE_BASE past this deletion instead",
+      )
+      expect { invoke! }.to raise_error(error)
       expect(main_object).not_to have_received(:sh)
     end
 
-    it "re-running coverage:measure does NOT clear the deleted-non-lib guard -- only moving COVERAGE_BASE does" do
+    it "re-running coverage:measure does NOT clear the deleted-non-lib " \
+       "guard -- only moving COVERAGE_BASE does" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
       commit!("spec/foo_spec.rb", "RSpec.describe('Foo') { it { } }\n")
@@ -283,19 +340,23 @@ RSpec.describe "tasks/coverage.rake" do
 
       source_lines = File.readlines("lib/foo.rb", chomp: true)
       FileUtils.mkdir_p("coverage")
-      # A freshly generated report (current mtime, matching source) -- exactly what
-      # re-running `rake coverage:measure` produces -- still cannot satisfy this guard
-      # against old_base, because the guard has no freshness dimension.
+      # A freshly generated report (current mtime, matching source) is exactly
+      # what re-running `rake coverage:measure` produces. It still cannot
+      # satisfy this guard against old_base because the guard has no freshness
+      # dimension.
       report = {
         "coverage" => {
-          "lib/foo.rb" => { "source" => source_lines, "lines" => Array.new(source_lines.size, 1) },
+          "lib/foo.rb" => { "source" => source_lines,
+                            "lines" => Array.new(source_lines.size, 1) },
         },
       }
       File.write("coverage/coverage.json", JSON.generate(report))
       ENV["COVERAGE_BASE"] = old_base
       stub_sh!
 
-      expect { invoke! }.to raise_error(/Move COVERAGE_BASE past this deletion instead/)
+      expect { invoke! }.to raise_error(
+        /Move COVERAGE_BASE past this deletion instead/,
+      )
 
       # invoke! is a memoized subject -- call the task directly for the second
       # invocation, and reenable first since a Rake::Task only runs once per
@@ -305,7 +366,8 @@ RSpec.describe "tasks/coverage.rake" do
       expect { Rake::Task["coverage:changed_lines"].invoke }.not_to raise_error
     end
 
-    it "passes every fail-closed guard and reaches the real simplecov patch subprocess when the report is fresh and matches" do
+    it "passes every fail-closed guard and reaches the real simplecov patch " \
+       "subprocess when the report is fresh and matches" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
       base = head_sha
@@ -332,7 +394,7 @@ RSpec.describe "tasks/coverage.rake" do
 
       expect { invoke! }.not_to raise_error
       expect_sh_invoked_for_gate!(base)
-      # tmp/coverage-line-only.json is only written after every guard above passes.
+      # tmp/coverage-line-only.json is written only after every guard passes.
       expect(File).to exist("tmp/coverage-line-only.json")
       written = JSON.parse(File.read("tmp/coverage-line-only.json"))
       expect(written["coverage"]["lib/foo.rb"]).not_to have_key("branches")
@@ -346,13 +408,19 @@ RSpec.describe "tasks/coverage.rake" do
 
       FileUtils.mkdir_p("coverage")
       File.write("../outside-target.json", JSON.generate("coverage" => {}))
-      File.symlink(File.expand_path("../outside-target.json"), "coverage/coverage.json")
+      File.symlink(File.expand_path("../outside-target.json"),
+                   "coverage/coverage.json")
       ENV["COVERAGE_BASE"] = base
 
-      expect { invoke! }.to raise_error(/coverage\/coverage\.json is a symlink -- refusing to read through it/)
+      error = message_containing(
+        "coverage/coverage\\.json is a symlink -- ",
+        "refusing to read through it",
+      )
+      expect { invoke! }.to raise_error(error)
     end
 
-    it "does not follow a symlink left at tmp/coverage-line-only.json -- clears it and writes a real file instead" do
+    it "does not follow a symlink left at tmp/coverage-line-only.json -- " \
+       "clears it and writes a real file instead" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
       base = head_sha
@@ -362,7 +430,8 @@ RSpec.describe "tasks/coverage.rake" do
       FileUtils.mkdir_p("coverage")
       report = {
         "coverage" => {
-          "lib/foo.rb" => { "source" => source_lines, "lines" => Array.new(source_lines.size, 1) },
+          "lib/foo.rb" => { "source" => source_lines,
+                            "lines" => Array.new(source_lines.size, 1) },
         },
       }
       File.write("coverage/coverage.json", JSON.generate(report))
@@ -371,12 +440,13 @@ RSpec.describe "tasks/coverage.rake" do
 
       # Create the symlink BEFORE touching coverage.json's mtime below: it is an
       # untracked path, so `git ls-files --others --exclude-standard` puts it in
-      # changed_paths, and the staleness guard (coverage.rake:133) would otherwise
+      # changed_paths, and the staleness guard would otherwise
       # see it as newer than the report and raise before this test ever reaches
       # the symlink-write guard it means to exercise.
       FileUtils.mkdir_p("tmp")
       File.write("../outside-victim.txt", "untouched")
-      File.symlink(File.expand_path("../outside-victim.txt"), "tmp/coverage-line-only.json")
+      File.symlink(File.expand_path("../outside-victim.txt"),
+                   "tmp/coverage-line-only.json")
 
       File.utime(Time.now, Time.now, "coverage/coverage.json")
       ENV["COVERAGE_BASE"] = base
@@ -387,13 +457,15 @@ RSpec.describe "tasks/coverage.rake" do
       expect(File.read("../outside-victim.txt")).to eq("untouched")
     end
 
-    it "requires a report entry for a brand-new lib/*.rb file that was never `git add`ed" do
+    it "requires a report entry for a brand-new lib/*.rb file that was never " \
+       "`git add`ed" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
       base = head_sha
 
       FileUtils.mkdir_p("lib")
-      File.write("lib/untracked.rb", "class Untracked\nend\n") # deliberately never committed or added
+      # Deliberately never committed or added.
+      File.write("lib/untracked.rb", "class Untracked\nend\n")
 
       FileUtils.mkdir_p("coverage")
       File.write("coverage/coverage.json", JSON.generate("coverage" => {}))
@@ -403,22 +475,35 @@ RSpec.describe "tasks/coverage.rake" do
       ENV["COVERAGE_BASE"] = base
       stub_sh!
 
-      expect { invoke! }.to raise_error(/no entry \(or a content mismatch.*for lib\/untracked\.rb/m)
+      error = message_matching(
+        "no entry \\(or a content mismatch",
+        "for lib/untracked\\.rb",
+      )
+      expect { invoke! }.to raise_error(error)
       expect(main_object).not_to have_received(:sh)
     end
 
-    it "catches a gutted non-lib file with a backdated mtime, via the manifest coverage:measure writes" do
+    it "catches a gutted non-lib file with a backdated mtime, via the " \
+       "manifest coverage:measure writes" do
       init_repo!
       commit!("lib/foo.rb", "class Foo\nend\n")
-      commit!("spec/foo_spec.rb", "RSpec.describe(Foo) { it('real') { expect(Foo.new).to be_a(Foo) } }\n")
+      spec_content = "RSpec.describe(Foo) { " \
+                     "it('real') { expect(Foo.new).to be_a(Foo) } }\n"
+      commit!("spec/foo_spec.rb", spec_content)
       base = head_sha
       commit!("lib/foo.rb", "class Foo\n  def bar; end\nend\n")
 
       source_lines = File.readlines("lib/foo.rb", chomp: true)
       FileUtils.mkdir_p("coverage")
-      File.write("coverage/coverage.json", JSON.generate(
-                                             "coverage" => { "lib/foo.rb" => { "source" => source_lines, "lines" => Array.new(source_lines.size, 1) } },
-                                           ))
+      report = {
+        "coverage" => {
+          "lib/foo.rb" => {
+            "source" => source_lines,
+            "lines" => Array.new(source_lines.size, 1),
+          },
+        },
+      }
+      File.write("coverage/coverage.json", JSON.generate(report))
 
       # Run the REAL coverage:measure task (spec:unit itself stubbed to a
       # no-op -- this spec is about the manifest measure writes, not about
@@ -438,7 +523,12 @@ RSpec.describe "tasks/coverage.rake" do
       ENV["COVERAGE_BASE"] = base
       stub_sh!
 
-      expect { invoke! }.to raise_error(/predates a newer edit to spec\/foo_spec\.rb.*coverage:measure-time snapshot.*run `rake coverage:measure` again/m)
+      error = message_matching(
+        "predates a newer edit to spec/foo_spec\\.rb",
+        "coverage:measure-time snapshot",
+        "run `rake coverage:measure` again",
+      )
+      expect { invoke! }.to raise_error(error)
       expect(main_object).not_to have_received(:sh)
     end
 
@@ -456,9 +546,15 @@ RSpec.describe "tasks/coverage.rake" do
 
         source_lines = File.readlines("lib/foo.rb", chomp: true)
         FileUtils.mkdir_p("coverage")
-        File.write("coverage/coverage.json", JSON.generate(
-                                               "coverage" => { "lib/foo.rb" => { "source" => source_lines, "lines" => [1, 1, hits, 1, 1] } },
-                                             ))
+        report = {
+          "coverage" => {
+            "lib/foo.rb" => {
+              "source" => source_lines,
+              "lines" => [1, 1, hits, 1, 1],
+            },
+          },
+        }
+        File.write("coverage/coverage.json", JSON.generate(report))
         File.utime(Time.now, Time.now, "coverage/coverage.json")
         ENV["COVERAGE_BASE"] = base
         Rake::Task["coverage:changed_lines"].invoke
@@ -485,7 +581,8 @@ RSpec.describe "tasks/coverage.rake" do
   end
 
   describe "coverage:measure" do
-    it "sets COVERAGE=true for spec:unit and restores the previous value even when spec:unit raises" do
+    it "sets COVERAGE=true for spec:unit and restores the previous value " \
+       "even when spec:unit raises" do
       ENV.delete("COVERAGE")
 
       seen_coverage = nil
@@ -495,7 +592,9 @@ RSpec.describe "tasks/coverage.rake" do
         raise "spec:unit boom"
       end
 
-      expect { Rake::Task["coverage:measure"].invoke }.to raise_error("spec:unit boom")
+      expect do
+        Rake::Task["coverage:measure"].invoke
+      end.to raise_error("spec:unit boom")
       expect(seen_coverage).to eq("true")
       expect(ENV.fetch("COVERAGE", nil)).to be_nil
     end
@@ -504,13 +603,14 @@ RSpec.describe "tasks/coverage.rake" do
       ENV["COVERAGE"] = "was-already-set"
 
       Rake::Task["spec:unit"].clear
-      Rake::Task.define_task("spec:unit") { nil } # stand in for the real spec run
-
+      # stand in for the real spec run
+      Rake::Task.define_task("spec:unit") { nil }
       Rake::Task["coverage:measure"].invoke
       expect(ENV.fetch("COVERAGE", nil)).to eq("was-already-set")
     end
 
-    it "reenables spec:unit so a second invocation in the same process actually reruns it" do
+    it "reenables spec:unit so a second invocation in the same process " \
+       "actually reruns it" do
       ENV.delete("COVERAGE")
 
       invocations = 0
@@ -526,7 +626,8 @@ RSpec.describe "tasks/coverage.rake" do
   end
 
   describe "spec:corpus" do
-    it "clears COVERAGE for spec:corpus_runner and restores the previous value even when it raises" do
+    it "clears COVERAGE for spec:corpus_runner and restores the previous " \
+       "value even when it raises" do
       ENV["COVERAGE"] = "true"
 
       seen_coverage = :unset
@@ -536,12 +637,15 @@ RSpec.describe "tasks/coverage.rake" do
         raise "spec:corpus_runner boom"
       end
 
-      expect { Rake::Task["spec:corpus"].invoke }.to raise_error("spec:corpus_runner boom")
+      expect do
+        Rake::Task["spec:corpus"].invoke
+      end.to raise_error("spec:corpus_runner boom")
       expect(seen_coverage).to be_nil
       expect(ENV.fetch("COVERAGE", nil)).to eq("true")
     end
 
-    it "reenables spec:corpus_runner so a second invocation in the same process actually reruns it" do
+    it "reenables spec:corpus_runner so a second invocation in the same " \
+       "process actually reruns it" do
       ENV.delete("COVERAGE")
 
       invocations = 0
