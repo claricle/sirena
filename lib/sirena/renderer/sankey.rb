@@ -32,16 +32,23 @@ module Sirena
 
       def render_title(title, svg)
         svg << Svg::Text.new.tap do |text|
-          text.x = title.x
-          text.y = title.y
-          text.content = title.text
-          text.fill = theme_color(:label_text) || "#000000"
-          text.font_family =
-            theme_typography(:font_family) || "Arial, sans-serif"
-          text.font_size = (theme_typography(:font_size_large) || 18).to_s
-          text.text_anchor = "middle"
-          text.font_weight = "bold"
+          assign_text_geometry(text, title)
+          apply_title_style(text)
         end
+      end
+
+      def assign_text_geometry(text, label)
+        text.x = label.x
+        text.y = label.y
+        text.content = label.text
+      end
+
+      def apply_title_style(text)
+        text.fill = theme_color(:label_text) || "#000000"
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = (theme_typography(:font_size_large) || 18).to_s
+        text.text_anchor = "middle"
+        text.font_weight = "bold"
       end
 
       def render_node(node, svg)
@@ -51,30 +58,39 @@ module Sirena
 
       def node_rectangle(node)
         Svg::Rect.new.tap do |rect|
-          rect.x = node.x
-          rect.y = node.y
-          rect.width = node.width
-          rect.height = node.height
-          rect.fill = theme_color(:node_fill) || "#2E86AB"
-          rect.stroke = theme_color(:node_stroke) || "#1A5276"
-          rect.stroke_width = "2"
-          rect.rx = node.corner_radius
-          rect.ry = node.corner_radius
+          assign_node_geometry(rect, node)
+          apply_node_style(rect)
         end
+      end
+
+      def assign_node_geometry(rect, node)
+        rect.x = node.x
+        rect.y = node.y
+        rect.width = node.width
+        rect.height = node.height
+        rect.rx = node.corner_radius
+        rect.ry = node.corner_radius
+      end
+
+      def apply_node_style(rect)
+        rect.fill = theme_color(:node_fill) || "#2E86AB"
+        rect.stroke = theme_color(:node_stroke) || "#1A5276"
+        rect.stroke_width = "2"
       end
 
       def node_label(label)
         Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
-          text.content = label.text
-          text.fill = theme_color(:node_text) || "#FFFFFF"
-          text.font_family =
-            theme_typography(:font_family) || "Arial, sans-serif"
-          text.font_size = (theme_typography(:font_size_small) || 11).to_s
-          text.text_anchor = "middle"
-          text.font_weight = "bold"
+          assign_text_geometry(text, label)
+          apply_node_label_style(text)
         end
+      end
+
+      def apply_node_label_style(text)
+        text.fill = theme_color(:node_text) || "#FFFFFF"
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = (theme_typography(:font_size_small) || 11).to_s
+        text.text_anchor = "middle"
+        text.font_weight = "bold"
       end
 
       def render_flow(flow, svg)
@@ -89,15 +105,16 @@ module Sirena
 
       def flow_label(label)
         Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
-          text.content = label.text
-          text.fill = theme_color(:label_text) || "#333333"
-          text.font_family =
-            theme_typography(:font_family) || "Arial, sans-serif"
-          text.font_size = (theme_typography(:font_size_small) || 10).to_s
-          text.text_anchor = "middle"
+          assign_text_geometry(text, label)
+          apply_flow_label_style(text)
         end
+      end
+
+      def apply_flow_label_style(text)
+        text.fill = theme_color(:label_text) || "#333333"
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = (theme_typography(:font_size_small) || 10).to_s
+        text.text_anchor = "middle"
       end
 
       def flow_colour(flow)
