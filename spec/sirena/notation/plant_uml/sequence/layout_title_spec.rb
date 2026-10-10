@@ -17,7 +17,9 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "pushes the rows down by the title's room" do
-    expect(first_arrow_y(titled) - first_arrow_y(plain)).to be_within(0.001).of(37.49)
+    shift = first_arrow_y(titled) - first_arrow_y(plain)
+
+    expect(shift).to be_within(0.001).of(37.49)
   end
 
   it "grows the canvas for a title wider than the diagram" do
