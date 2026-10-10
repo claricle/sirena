@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Theme::Registry do
+RSpec.describe Sirena::Theme::Registry, :aggregate_failures do
   before do
     # Clear registry before each test
     described_class.clear
