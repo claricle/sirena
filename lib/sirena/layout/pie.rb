@@ -17,11 +17,13 @@ module Sirena
     #   transform = Pie.new
     #   data = transform.to_graph(pie_diagram)
     class Pie < Base
-      RADIUS = 150
-      CENTER_X = 250
-      CENTER_Y = 200
-      LABEL_OFFSET = 180
-      TITLE_Y = 40
+      # mmdc: a 450px square, 40px margin, radius 185, labels at 0.75r.
+      RADIUS = 185
+      CENTER_X = 225
+      CENTER_Y = 225
+      LABEL_OFFSET = RADIUS * 0.75
+      TITLE_Y = CENTER_Y - 200
+      HEIGHT = 450
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -97,11 +99,10 @@ module Sirena
 
       def scene_from_graph(graph)
         legend = legend_entries(graph)
-        width = [500, pie_legend.width(legend)].max
-        height = graph[:title] ? 460 : 400
+        width = [HEIGHT, pie_legend.width(legend)].max
         Scene.new(
-          id: graph[:id] || "pie", width: width, height: height,
-          view_box: "0 0 #{width} #{height}",
+          id: graph[:id] || "pie", width: width, height: HEIGHT,
+          view_box: "0 0 #{width} #{HEIGHT}",
           title: title_label(graph[:title]), slices: typed_slices(graph),
           legend: legend, **accessibility(graph)
         )
@@ -113,7 +114,7 @@ module Sirena
       end
 
       def legend_entries(graph)
-        pie_legend.entries(graph[:slices] || [], graph[:show_data])
+        pie_legend.entries(ranked(graph), graph[:show_data])
       end
 
       def pie_legend
@@ -131,21 +132,35 @@ module Sirena
         )
       end
 
-      def typed_slices(graph)
-        start_angle = -90.0
-        (graph[:slices] || []).map.with_index do |slice, index|
-          angle = slice[:angle]
-          finish_angle = start_angle + angle
-          typed = typed_slice(slice, index, start_angle, finish_angle)
-          start_angle = finish_angle
-          typed
+      # mmdc lays slices out largest first (stable); the legend keeps input order.
+      def ranked(graph)
+        slices = graph[:slices] || []
+        order = slices.each_index.sort_by { |i| [-slices[i][:value].to_f, i] }
+        slices.each_with_index.map do |slice, index|
+          slice.merge(input_index: index, rank: order.index(index))
         end
       end
 
-      def typed_slice(slice, index, start_angle, finish_angle)
+      # Angles accumulate in rank order; slices are emitted in input order
+      # so document order matches the legend order. mmdc draws no zero slice.
+      def typed_slices(graph)
+        start_angle = -90.0
+        typed = ranked(graph).sort_by { |slice| slice[:rank] }.map do |slice|
+          finish_angle = start_angle + slice[:angle]
+          result = typed_slice(slice, start_angle, finish_angle)
+          start_angle = finish_angle
+          [slice[:input_index], result]
+        end
+        typed.sort_by(&:first).filter_map(&:last)
+      end
+
+      def typed_slice(slice, start_angle, finish_angle)
+        return if slice[:angle].zero?
+
         Slice.new(
-          id: slice[:id] || "slice_#{index}",
-          path: slice_path(start_angle, finish_angle), color_index: index,
+          id: slice[:id] || "slice_#{slice[:input_index]}",
+          path: slice_path(start_angle, finish_angle),
+          color_index: slice[:rank],
           percentage: slice[:percentage], angle: slice[:angle],
           label: slice_label(slice, (start_angle + finish_angle) / 2.0)
         )

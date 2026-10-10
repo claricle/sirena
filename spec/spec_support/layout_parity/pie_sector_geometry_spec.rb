@@ -32,8 +32,8 @@ RSpec.describe SpecSupport::LayoutParity::PieSectorGeometry do
   end
 
   def real_pair_matchers
-    [be_within(0.001).of(185.0), be_within(0.001).of(150.0),
-     be_within(0.001).of(35.0 / 185.0), be < 0.000_01]
+    [be_within(0.001).of(185.0), be_within(0.001).of(185.0),
+     be < 0.000_01, be < 0.000_01]
   end
 
   def transformed_svg

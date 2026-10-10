@@ -7,11 +7,11 @@ module Sirena
   module Layout
     # Lays out the legend column of a pie chart, right of the pie.
     class PieLegend
-      LEFT = 460
+      LEFT = 441
       ROW_HEIGHT = 22
       SWATCH = 18
       TEXT_GAP = 4
-      RIGHT_MARGIN = 20
+      RIGHT_MARGIN = 49
 
       def initialize(center_y:, font_size:)
         @center_y = center_y
@@ -22,7 +22,8 @@ module Sirena
       def entries(slices, show_data)
         top = @center_y - (slices.length * ROW_HEIGHT / 2.0)
         slices.each_with_index.map do |slice, index|
-          entry(caption(slice, show_data), index, top + (index * ROW_HEIGHT))
+          entry(caption(slice, show_data), slice[:rank] || index,
+                top + (index * ROW_HEIGHT))
         end
       end
 

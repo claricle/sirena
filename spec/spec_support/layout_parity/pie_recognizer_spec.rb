@@ -43,9 +43,8 @@ RSpec.describe SpecSupport::LayoutParity::PieRecognizer do
     expect(real_pair(name)).to eq([expected, expected])
   end
 
-  it "keeps the candidate's zero-value sector visible as parity evidence" do
+  it "sees no sector for a zero-value slice on either side" do
     name = "022_parser_should_handle_simple_pie_with_zero_slice_value_21"
-    expect(real_pair(name)).to eq([[sector("rats")],
-                                   [sector("dogs"), sector("rats")]])
+    expect(real_pair(name)).to eq([[sector("rats")], [sector("rats")]])
   end
 end
