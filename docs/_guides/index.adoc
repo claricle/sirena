@@ -7,50 +7,18 @@ has_children: true
 
 == Guides
 
-In-depth guides covering advanced topics, best practices, and real-world use cases.
+Task-oriented guides for installing and using Sirena.
 
 == What's in This Section
 
-Comprehensive guides for:
+* link:../installation/[Installation]
+* link:../quick-start/[Quick Start]
+* link:../cli-reference/[CLI Reference]
 
-* **Migration from Mermaid.js** - Converting from JavaScript to Ruby
-* **Performance Optimization** - Making your diagrams render faster
-* **Advanced Theming** - Deep dive into the theme system
-* **Best Practices** - Patterns and anti-patterns for each diagram type
-* **Troubleshooting** - Debugging common issues
-* **Production Deployment** - Running Sirena in production environments
-
-== Guide Format
-
-Each guide provides:
-
-* **Overview** - What the guide covers
-* **Background** - Context and concepts
-* **Detailed explanations** - In-depth technical information
-* **Examples** - Real-world scenarios
-* **Best practices** - Recommended approaches
-* **Common pitfalls** - What to avoid
-
-== Featured Guides
-
-=== For Mermaid.js Users
-
-* *Migration from Mermaid.js* (planned) - Complete migration guide with syntax comparison
-
-=== For Production Use
-
-* *Performance Optimization* (planned) - Techniques for faster rendering
-* *Caching Strategies* (planned) - Improve performance with caching
-* *CI/CD Integration* (planned) - Using Sirena in automated workflows
-
-=== For Advanced Customization
-
-* *Creating Custom Themes* (planned) - Building themes from scratch
-* *SVG Customization* (planned) - Advanced SVG manipulation
-* *Extending Parsers* (planned) - Adding custom syntax
+Planned: migration from Mermaid.js, theming, troubleshooting, CI/CD integration.
 
 == Related Documentation
 
 * link:../../tutorials/index/[Tutorials] - For step-by-step learning
 * link:../../features/index/[Features] - For feature documentation
-* link:../../references/index/[References] - For API and CLI reference
+* link:../../references/index/[References] - For CLI reference
