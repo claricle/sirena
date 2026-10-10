@@ -323,7 +323,10 @@ RSpec.describe Sirena::Renderer::Kanban do
         second_line = REXML::XPath.first(parsed, '//tspan[text()="Line two"]')
 
         expect(second_line.attributes["x"]).to eq("60.0")
-        expect(second_line.attributes["dy"]).to eq("1.2em")
+        expect(second_line.attributes["y"].to_f).to be_within(0.001).of(
+          second_line.parent.attributes["y"].to_f +
+          (second_line.parent.attributes["font-size"].to_f * 1.2)
+        )
 
         italic_xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: "Hello *urgent*")).to_xml
         italic_run = REXML::XPath.first(REXML::Document.new(italic_xml), '//tspan[text()="urgent"]')
@@ -362,7 +365,7 @@ RSpec.describe Sirena::Renderer::Kanban do
 
         expect(first_half.attributes["font-weight"]).to eq("bold")
         expect(second_half.attributes["font-weight"]).to eq("bold")
-        expect(second_half.attributes["dy"]).to eq("1.2em")
+        expect(second_half.attributes["y"].to_f).to be > second_half.parent.attributes["y"].to_f
       end
 
       # The column header rect and its text's baseline must grow with a

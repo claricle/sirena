@@ -45,8 +45,9 @@ module Sirena
       end
 
       # Builds the <tspan> runs for a markdown-parsed label. Only the FIRST
-      # run of a line after a hard line break needs `x` (reset) and `dy`
-      # (one line height) — every other run continues the previous one.
+      # run of a line after a hard line break needs `x` (reset) and a
+      # `line_shift` (lines below the previous placed run) — every other run
+      # continues the previous one.
       #
       # @param lines [Array<Array<Sirena::MarkdownText::Run>>] truncated, from `Sirena::MarkdownText.parse_lines`
       # @param x [Numeric] the label's horizontal anchor
@@ -65,7 +66,7 @@ module Sirena
             Svg::Tspan.new.tap do |t|
               if new_line
                 t.x = x
-                t.dy = line_height_dy(pending_lines)
+                t.line_shift = pending_lines
                 pending_lines = 0
               end
               t.font_weight = "bold" if run.bold || base_font_weight == "bold"
@@ -74,18 +75,6 @@ module Sirena
             end
           end
         end
-      end
-
-      # `line_count * 1.2em`, computed in tenths rather than `Float`
-      # multiplication: `3 * 1.2` is `3.5999999999999996` in binary
-      # floating point, which would put a wrong `dy` in the SVG.
-      #
-      # @param line_count [Integer] number of accumulated line-heights
-      # @return [String]
-      # @api private
-      def line_height_dy(line_count)
-        tenths = line_count * 12
-        "#{tenths / 10}.#{tenths % 10}em"
       end
     end
   end

@@ -9,7 +9,6 @@ module Sirena
     # (<br>, <br/>, <br />) into a new line as mmdc does.
     module LineBreakText
       BREAK = %r{<br\s*/?>}i
-      LINE_HEIGHT = "1.2em"
 
       module_function
 
@@ -29,7 +28,7 @@ module Sirena
       def line_run(line, left, index)
         Svg::Tspan.new.tap do |run|
           run.x = left
-          run.dy = LINE_HEIGHT if index.positive?
+          run.line_shift = 1 if index.positive?
           run.content = line
         end
       end
