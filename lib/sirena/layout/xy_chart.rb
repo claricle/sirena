@@ -575,7 +575,6 @@ module Sirena
           position ? position[:position] : 0
         else
           # Distribute points evenly across width
-          num_points = 1 # Will be overridden by caller if needed
           spacing = width / [index + 1, 1].max
           index * spacing
         end
