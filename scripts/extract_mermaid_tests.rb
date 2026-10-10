@@ -99,7 +99,7 @@ class MermaidTestExtractor
     content = File.read(file)
 
     # Build regex pattern for all diagram keywords
-    keywords = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "").gsub(/\|/, '\\|') }.join("|")
+    keywords = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "").gsub("|", '\\|') }.join("|")
 
     # Find all backtick diagram blocks
     content.scan(/`((?:#{keywords})[^`]*)`/mi) do
@@ -185,7 +185,7 @@ class MermaidTestExtractor
       content.scan(/<pre\s+class="mermaid"[^>]*>(.*?)<\/pre>/mi) do
         match_pos = $~.begin(0)
         diagram_src = $1.strip
-        diagram_src = diagram_src.gsub(/&lt;/, "<").gsub(/&gt;/, ">").gsub(/&amp;/, "&")
+        diagram_src = diagram_src.gsub("&lt;", "<").gsub("&gt;", ">").gsub("&amp;", "&")
         type = detect_diagram_type(diagram_src)
         next if type == :unknown
 
@@ -203,7 +203,7 @@ class MermaidTestExtractor
       content.scan(/<div\s+class="mermaid"[^>]*>(.*?)<\/div>/mi) do
         match_pos = $~.begin(0)
         diagram_src = $1.strip
-        diagram_src = diagram_src.gsub(/&lt;/, "<").gsub(/&gt;/, ">").gsub(/&amp;/, "&")
+        diagram_src = diagram_src.gsub("&lt;", "<").gsub("&gt;", ">").gsub("&amp;", "&")
         type = detect_diagram_type(diagram_src)
         next if type == :unknown
 
@@ -413,7 +413,7 @@ class MermaidTestExtractor
     parts = []
     # Match both single and double quoted strings, handling escaped characters
     str_value.scan(/['"]([^'"\\]*(?:\\.[^'"\\]*)*)['"]/) do |match|
-      parts << match[0].gsub(/\\n/, "\n").gsub(/\\t/, "\t").gsub(/\\"/, '"').gsub(/\\'/, "'")
+      parts << match[0].gsub("\\n", "\n").gsub("\\t", "\t").gsub('\\"', '"').gsub("\\'", "'")
     end
     parts.join("")
   end
