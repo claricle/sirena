@@ -20,7 +20,9 @@ module Sirena
     # place it becomes anything else.
     #
     # @example Route an edge
-    #   points, label_ends = FlowchartEdgeRouter.new.route(source, target, bends)
+    #   points, label_ends = FlowchartEdgeRouter.new.route(
+    #     source, target, bends
+    #   )
     class FlowchartEdgeRouter
       # Rounded the way mermaid paints a cluster. The Scene carries the same
       # radius, and an endpoint on a corner has to land on it.
@@ -119,7 +121,9 @@ module Sirena
 
         outline = painted_cluster_outline(box)
         return point if outline.values_at(:rx, :ry).any?(&:zero?)
-        return rounded_corner(neighbour, outline, x_side, y_side) if x_side && y_side
+        if x_side && y_side
+          return rounded_corner(neighbour, outline, x_side, y_side)
+        end
 
         clamp_cluster_side(point, outline, x_side, y_side)
       end
@@ -130,7 +134,9 @@ module Sirena
       end
 
       def edge_side(coordinate, edges)
-        side = edges.each_index.min_by { |index| (coordinate - edges[index]).abs }
+        side = edges.each_index.min_by do |index|
+          (coordinate - edges[index]).abs
+        end
         side if (coordinate - edges[side]).abs <= ROUTE_EPSILON
       end
 
@@ -248,7 +254,9 @@ module Sirena
         # One centre can sit inside the other box even when neither box
         # contains the other. Detect that deep partial overlap from the
         # rectangles themselves before the centre-based nesting fallback.
-        return exterior_route(source, target, from, to) if exposed_cluster_overlap?(source, target)
+        if exposed_cluster_overlap?(source, target)
+          return exterior_route(source, target, from, to)
+        end
 
         # A step past the other centre means that centre is inside this
         # box. Use the opposite sides so the ordered route still points
@@ -259,17 +267,23 @@ module Sirena
 
         # Partially overlapping or touching boxes need an exterior route:
         # their centre chord is visible through both cluster faces.
-        return exterior_route(source, target, from, to) if out + back >= 1.0 - TOUCHING
+        if out + back >= 1.0 - TOUCHING
+          return exterior_route(source, target, from, to)
+        end
 
         route = [along(from, to, out), along(to, from, back)]
-        return exterior_route(source, target, from, to) if route.first == route.last
+        if route.first == route.last
+          return exterior_route(source, target, from, to)
+        end
 
         route
       end
 
       def exposed_cluster_overlap?(source, target)
         return false unless cluster?(source) && cluster?(target)
-        return false if contains_box?(source, target) || contains_box?(target, source)
+
+        nested = contains_box?(source, target) || contains_box?(target, source)
+        return false if nested
 
         (source[:x] || 0) <= right_of(target) &&
           right_of(source) >= (target[:x] || 0) &&
@@ -307,7 +321,8 @@ module Sirena
         candidates = sideways ? [bottom, right] : [right, bottom]
         rounded = candidates.map { |points| rounded_points(points) }
 
-        rounded.find { |route| clear_route?(route, source, target) } || rounded.first
+        clear = rounded.find { |route| clear_route?(route, source, target) }
+        clear || rounded.first
       end
 
       def rounded_points(points)
@@ -373,9 +388,13 @@ module Sirena
         dx = to[:x] - from[:x]
         dy = to[:y] - from[:y]
         reach = []
-        reach << side(from[:x], dx, box[:x] || 0, box[:width] || 0) unless dx.zero?
-        reach << side(from[:y], dy, box[:y] || 0, box[:height] || 0) unless dy.zero?
+        reach << box_side(from[:x], dx, box, :x, :width) unless dx.zero?
+        reach << box_side(from[:y], dy, box, :y, :height) unless dy.zero?
         reach.empty? ? 0.0 : reach.min.clamp(0.0, Float::INFINITY)
+      end
+
+      def box_side(from, delta, box, origin_key, size_key)
+        side(from, delta, box[origin_key] || 0, box[size_key] || 0)
       end
 
       # The side the run is heading for, as a fraction of the whole run.
