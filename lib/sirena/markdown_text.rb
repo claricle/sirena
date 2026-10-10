@@ -96,7 +96,9 @@ module Sirena
       # `literal_lines` on the raw text, untouched by kramdown —
       # guaranteeing no fragmentation or marker loss, at the cost of
       # losing styling for that one label.
-      return literal_lines(raw) if root.children.any? { |block| !PLAIN_BLOCK_TYPES.include?(block.type) }
+      return literal_lines(raw) if root.children.any? do |block|
+        !PLAIN_BLOCK_TYPES.include?(block.type)
+      end
       return literal_lines(raw) if unsafe_emphasis_divergence?(raw, root)
 
       lines = []
@@ -104,7 +106,11 @@ module Sirena
       root.children.each do |block|
         case block.type
         when :p
-          lines.concat(split_on_hard_breaks(flatten_runs(block, bold: false, italic: false)))
+          lines.concat(
+            split_on_hard_breaks(
+              flatten_runs(block, bold: false, italic: false),
+            ),
+          )
         when :blank
           # Real mmdc's CSS sets paragraph margins to zero, so any number
           # of blank lines between two `:p` blocks (or a leading/trailing
@@ -243,7 +249,9 @@ module Sirena
       return true if paragraphs.length != p_blocks.length
 
       paragraphs.zip(p_blocks).any? do |paragraph, block|
-        kramdown_runs = EmphasisSimulator.coalesce_runs(flatten_runs(block, bold: false, italic: false))
+        kramdown_runs = EmphasisSimulator.coalesce_runs(
+          flatten_runs(block, bold: false, italic: false),
+        )
         kramdown_runs != EmphasisSimulator.simulate(paragraph.strip)
       end
     end
