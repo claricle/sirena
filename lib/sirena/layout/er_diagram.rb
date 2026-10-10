@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "grid"
+require_relative "er_diagram_entity_size"
 require_relative "../diagram/er_diagram"
 require_relative "../notation/mermaid/ir_adapters/er_diagram"
 
@@ -14,6 +15,7 @@ module Sirena
       TEXT_LINE_HEIGHT = 18
       ENTITY_PADDING = 10
       ENTITY_SPACING = 100
+      ROW_HEIGHT = ErDiagramEntitySize::ROW_HEIGHT
       CARDINALITY_SIZE = 15
       DIAGRAM_PADDING = 20
       EMPTY_DIAGRAM_PADDING = 8
@@ -407,14 +409,14 @@ module Sirena
 
       def node_label(node, metadata, geometry)
         name = metadata[:name] || node[:id]
-        y = geometry[:y] + ENTITY_PADDING + large_text_size
+        y = row_baseline(geometry[:y], large_text_size)
         positioned_label(
           name, geometry[:x] + (geometry[:width] / 2), y, large_text_size
         )
       end
 
       def node_separator(label, geometry)
-        y = label.y + TEXT_LINE_HEIGHT
+        y = label.y - baseline_offset(large_text_size) + (ROW_HEIGHT / 2)
         Line.new(x1: geometry[:x], y1: y,
                  x2: geometry[:x] + geometry[:width], y2: y)
       end
@@ -431,10 +433,19 @@ module Sirena
           key_type: attribute[:key_type], note: attribute[:note],
           text: format_attribute(attribute),
           x: x_coordinate + ENTITY_PADDING,
-          y: separator_y + ENTITY_PADDING + small_text_size +
-            (index * TEXT_LINE_HEIGHT),
+          y: row_baseline(separator_y + (index * ROW_HEIGHT),
+                          small_text_size),
           font_size: small_text_size
         )
+      end
+
+      # The baseline that centres a line of text in a row starting at TOP.
+      def row_baseline(top, font_size)
+        top + (ROW_HEIGHT / 2) + baseline_offset(font_size)
+      end
+
+      def baseline_offset(font_size)
+        font_size / 3
       end
 
       def typed_edges(edges, nodes)
@@ -572,7 +583,7 @@ module Sirena
 
       def transform_entities(diagram)
         diagram.entities.map do |entity|
-          dimensions = calculate_entity_dimensions(entity)
+          dimensions = entity_dimensions(entity)
           entity_graph_node(entity, dimensions)
         end
       end
@@ -611,13 +622,6 @@ module Sirena
             cardinality_from: relationship.cardinality_from,
             cardinality_to: relationship.cardinality_to,
           }
-        }
-      end
-
-      def calculate_entity_dimensions(entity)
-        {
-          width: entity_width(entity),
-          height: entity_height(entity),
         }
       end
 
@@ -667,19 +671,10 @@ module Sirena
         end
       end
 
-      def entity_width(entity)
-        widths = entity.attributes.map do |attribute|
-          measured_width(format_attribute(attribute),
-                         small_text_size, monospace: true)
-        end
-        widths.push(MIN_ENTITY_WIDTH,
-                    measured_width(entity.name, large_text_size)).max +
-          (ENTITY_PADDING * 2)
-      end
-
-      def entity_height(entity)
-        ((1 + entity.attributes.length) * LINE_HEIGHT) +
-          (ENTITY_PADDING * 2)
+      def entity_dimensions(entity)
+        ErDiagramEntitySize.call(
+          entity.name, entity.attributes.map { |item| attribute_to_hash(item) }
+        )
       end
 
       def content_width(graph)
