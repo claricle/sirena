@@ -7,16 +7,19 @@ module Sirena
         # A `note`, `hnote` or `rnote`. `side` is :left, :right, :over or
         # :across. `targets` are participant ids; empty for :across and for a
         # left/right note that hangs off the message before it. `parallel` is
-        # true when the note began with `&`.
+        # true when the note began with `&`. `fill` is a {Fill}, or nil for
+        # the default note colour.
         class Note
-          attr_reader :shape, :side, :targets, :text
+          attr_reader :shape, :side, :targets, :text, :fill
 
-          def initialize(shape:, side:, targets:, text:, parallel: false)
+          def initialize(shape:, side:, targets:, text:, parallel: false,
+                         fill: nil)
             @shape = shape
             @side = side
             @targets = targets.freeze
             @text = text
             @parallel = parallel
+            @fill = fill
             freeze
           end
 

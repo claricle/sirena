@@ -71,6 +71,8 @@ module Sirena
           class Note < Lutaml::Model::Serializable
             attribute :path, :string
             attribute :fold_path, :string
+            attribute :fill, :string
+            attribute :fill_opacity, :float
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 

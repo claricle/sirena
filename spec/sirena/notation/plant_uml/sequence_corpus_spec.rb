@@ -96,6 +96,21 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     expect(counts.first - counts.last).to eq(1)
   end
 
+  it "fills a coloured note, folded corner included" do
+    svg = Sirena.render("@startuml\nA -> B\nnote right #red: x\n@enduml\n",
+                        notation: :plantuml)
+
+    expect(matches(svg, "//path/@fill").map(&:value).count("#FF0000")).to eq(2)
+  end
+
+  it "draws the opacity of a note colour with an alpha" do
+    source = "@startuml\nA -> B\nnote right #ff000080: x\n@enduml\n"
+    svg = Sirena.render(source, notation: :plantuml)
+
+    expect(matches(svg, "//path/@fill-opacity").map(&:value).uniq)
+      .to eq(["0.50196"])
+  end
+
   it "draws a cross for a destroyed participant of a rendered case" do
     source = source_of("184d55bcfb9c")
     counts = [source, source.sub(/^destroy .*\n/, "")].map do |text|

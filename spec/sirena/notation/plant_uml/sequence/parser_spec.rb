@@ -739,8 +739,25 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       expect(note_of("note across: x").side).to eq(:across)
     end
 
-    it "ignores a colour after the side" do
+    it "keeps the text of a note with a colour after the side" do
       expect(note_of("note right #red: x").text).to eq("x")
+    end
+
+    it "reads the colour of a note, by name or in hex" do
+      fills = ["#red", "#f80", "#ff000080"].map do |colour|
+        note_of("note right #{colour}: x").fill.colour
+      end
+
+      expect(fills).to eq(%w[#FF0000 #FF8800 #FF0000])
+    end
+
+    it "leaves a note without a colour with no fill" do
+      expect(note_of("note right: x").fill).to be_nil
+    end
+
+    it "refuses a note colour that is not known" do
+      expect { note_of("note right #nosuchcolour: x") }
+        .to raise_error(unsupported, /note/)
     end
 
     it "attaches a note without a target to the message before it" do

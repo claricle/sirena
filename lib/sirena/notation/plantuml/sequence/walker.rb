@@ -341,7 +341,8 @@ module Sirena
             Scene::Note.new(
               path: NoteShape.outline(note.shape, x, top, width, height),
               fold_path: NoteShape.fold(note.shape, x, top, width),
-              texts: note_texts(note, x + NoteGeometry::PAD, top),
+              fill: note.fill&.colour, fill_opacity: note.fill&.opacity,
+              texts: note_texts(note, x + NoteGeometry::PAD, top)
             )
           end
 
