@@ -40,7 +40,7 @@ RSpec.describe Sirena::Layout::Treemap do
     scene = nonpositive_scene
     expect([scene.width, scene.height, scene.cells,
             scene.title.text, scene.title.x])
-      .to eq([800.0, 400.0, [], "No allocation", 400.0])
+      .to eq([1000.0, 400.0, [], "No allocation", 500.0])
   end
 
   it "filters nonpositive descendants without dropping positive siblings" do
@@ -49,9 +49,9 @@ RSpec.describe Sirena::Layout::Treemap do
             children.fetch(0).value_label.text]).to eq([["Positive"], "3"])
   end
 
-  it "accepts legacy string styles and formats narrow decimal leaves" do
+  it "accepts legacy string styles and formats decimal leaves" do
     cell = legacy_cell
     expect([cell.fill, cell.stroke, cell.label.text, cell.value_label.text])
-      .to eq(["#abc", "#def", "...", "1.2"])
+      .to eq(["#abc", "#def", "Extraordinarily long", "1.2"])
   end
 end
