@@ -104,48 +104,6 @@ module Sirena
       def number_string(value)
         value.to_i == value ? value.to_i.to_s : value.to_s
       end
-
-      def cell_fill_color(cell, class_defs)
-        # If cell has a CSS class, try to extract fill from class_defs
-        if cell[:css_class] && class_defs[cell[:css_class]]
-          styles = class_defs[cell[:css_class]]
-          if styles =~ /fill:\s*([^;,]+)/
-            return $1.strip
-          end
-        end
-
-        # Otherwise use default colors based on depth
-        depth_colors = %w[#8dd3c7 #ffffb3 #bebada #fb8072]
-        depth_colors[cell[:depth] % depth_colors.length]
-      end
-
-      def cell_stroke_color(cell, class_defs)
-        # If cell has a CSS class, try to extract stroke from class_defs
-        if cell[:css_class] && class_defs[cell[:css_class]]
-          styles = class_defs[cell[:css_class]]
-          if styles =~ /stroke:\s*([^;,]+)/
-            return $1.strip
-          end
-        end
-
-        theme_color(:node_stroke) || "#333"
-      end
-
-      def truncate_label(label, max_width)
-        # Simple truncation - could be improved with actual text measurement
-        max_chars = (max_width / 7).to_i
-        return label if label.length <= max_chars
-
-        "#{label[0...(max_chars - 3)]}..."
-      end
-
-      def format_value(value)
-        if value == value.to_i
-          value.to_i.to_s
-        else
-          format("%.1f", value)
-        end
-      end
     end
   end
 end
