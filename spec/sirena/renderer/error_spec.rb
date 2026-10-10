@@ -7,6 +7,12 @@ RSpec.describe Sirena::Renderer::Error do
   subject(:svg) { described_class.new.render(message: message) }
 
   let(:message) { "Dependency missing" }
+  let(:dark) { Sirena::Theme::Registry.get(:dark) }
+  let(:themed) { described_class.new(theme: dark).render(message: message) }
+  let(:theme_colors) do
+    [dark.colors.surface, dark.colors.error, dark.colors.edge_stroke,
+     dark.colors.background]
+  end
 
   it "renders the error canvas, box, icon, and explicit message geometry" do
     expect(rendered_geometry).to eq(expected_geometry)
@@ -17,6 +23,10 @@ RSpec.describe Sirena::Renderer::Error do
     label = default_svg.children.grep(Sirena::Svg::Text).first
 
     expect(Array(label.content).join).to eq("Error")
+  end
+
+  it "uses semantic colors from the active theme" do
+    expect(themed.to_xml).to include(*theme_colors)
   end
 
   def rendered_geometry
