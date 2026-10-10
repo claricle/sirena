@@ -13,7 +13,7 @@ This page focuses specifically on **Mermaid.js syntax compatibility** - what wor
 
 === Overview
 
-Sirena maintains syntax compatibility with Mermaid.js while providing a pure Ruby implementation optimized for server-side rendering. This page documents the compatibility matrix, feature parity, and migration considerations specifically between Sirena and Mermaid.js.
+Sirena reads Mermaid.js syntax in a pure Ruby implementation. This page documents measured compatibility and known differences between Sirena and Mermaid.js.
 
 === Feature Comparison Matrix
 
@@ -34,17 +34,12 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 |**Themes**
 |CSS-based
 |YAML-based
-|Easier customization in Sirena
+|Sirena themes are YAML files or a Hash
 
 |**Batch Mode**
 |Manual scripting
 |Built-in
 |`sirena batch` command
-
-|**Error Messages**
-|Generic
-|Detailed
-|Better debugging in Sirena
 
 |**Dependencies**
 |Node + Puppeteer
@@ -52,7 +47,7 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 |Simpler deployment
 
 |**File Size**
-|~2MB (mermaid.min.js)
+|~3.4 MB (mermaid.min.js in mermaid-cli 11.12.0)
 |Ruby gem
 |Not benchmarked
 
@@ -213,7 +208,7 @@ artifacts and cases mmdc rejects are excluded from the denominator.
 |===
 // END GENERATED
 
-Regenerate with `bundle exec rake docs:compatibility`; `spec/tasks/compatibility_spec.rb` fails when this table and `scoreboard/corpus.json` disagree.
+Regenerate with `bundle exec rake docs:compatibility`; `spec/sirena/docs_compatibility_spec.rb` fails when this table and `scoreboard/corpus.json` disagree.
 
 ==== Not Supported
 
@@ -248,7 +243,7 @@ graph TD
 ----
 
 **Sirena:**
-Uses YAML themes instead of inline styles. Apply themes globally:
+Inline `style` lines are accepted by the parser but have no effect on the output (measured: the node keeps the theme fill and stroke). Apply a theme globally instead:
 [source,bash]
 ----
 sirena render diagram.mmd --theme dark
@@ -264,7 +259,7 @@ graph TD
     click A callback "Tooltip"
 ----
 
-**Sirena:** Not supported (static SVG output)
+**Sirena:** `click` lines are accepted and ignored; no link or callback is emitted (static SVG output)
 
 ===== Custom CSS Classes
 
@@ -276,14 +271,14 @@ graph TD
     class A myClass
 ----
 
-**Sirena:** Use theme system for styling
+**Sirena:** `class` and `classDef` lines are accepted and ignored; use the theme system for styling
 
 === Performance Comparison
 
 The `benchmark:compare` and `benchmark:quick` rake tasks run against
 `Sirena.render`. One dated Apple M2 comparison with mermaid-cli, its method,
 and reproduction commands is published in the
-link:../performance-benchmark/[Performance Benchmark report]. That report did
+link:../../performance-benchmark/[Performance Benchmark report]. That report did
 not measure memory, and one machine's result is not a general performance
 guarantee. Sirena's lack of a browser or Node.js dependency remains a
 structural difference, not itself a timing measurement.
@@ -297,7 +292,6 @@ structural difference, not itself a timing measurement.
 * No Node.js required
 * No headless browser (Puppeteer/Chrome)
 * Single Ruby gem installation
-* Smaller Docker images
 
 **No Browser Dependency**
 
@@ -315,7 +309,6 @@ structural difference, not itself a timing measurement.
 **Enhanced Tooling**
 
 * Built-in batch processor
-* Better error messages
 * YAML-based themes
 * Command-line tools
 
@@ -336,21 +329,14 @@ structural difference, not itself a timing measurement.
 * Batch processing many diagrams
 * CI/CD diagram generation
 * Simpler deployment is priority
-* Lower resource usage is important
 
 === Migration Path
 
-See *Migration Guide* (planned) for:
-
-* Step-by-step migration instructions
-* Syntax conversion examples
-* Tool comparison
-* Performance optimization
-* Troubleshooting tips
+A migration guide is planned.
 
 === Compatibility Testing
 
-Sirena includes comprehensive compatibility testing:
+Compatibility can be checked with:
 
 [source,bash]
 ----
@@ -364,7 +350,7 @@ sirena render diagram.mmd -o sirena-output.svg
 
 === Future Compatibility
 
-Sirena aims to maintain syntax parity with Mermaid.js. New Mermaid.js features will be evaluated for inclusion based on:
+Sirena aims for syntax parity with Mermaid.js; the table above is the measured state. New Mermaid.js features will be evaluated for inclusion based on:
 
 * Server-side rendering applicability
 * Ruby ecosystem fit
@@ -374,13 +360,10 @@ Sirena aims to maintain syntax parity with Mermaid.js. New Mermaid.js features w
 === Getting Help
 
 * **Issues**: https://github.com/claricle/sirena/issues[Report compatibility issues]
-* **Migration**: *Migration Guide* (planned)
 * **Examples**: https://github.com/claricle/sirena/tree/main/examples[Example Diagrams]
 
 === Related Documentation
 
 * link:../comparison/[Tool Comparison] - Compare Sirena with Mermaid.js, PlantUML, and Graphviz
-* *Migration from Mermaid.js* (planned) - Step-by-step migration guide
 * link:../../diagram_types/index/[Diagram Types Reference] - Syntax for all diagram types
-* *Theme System* (planned) - YAML-based theming
-* *Performance Optimization* (planned) - Optimization techniques
+

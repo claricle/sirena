@@ -10,11 +10,11 @@ description: "Compare Sirena with Mermaid.js, PlantUML, Graphviz, and other diag
 
 === Purpose
 
-This page provides a comprehensive comparison of Sirena against other popular diagram generation tools to help you choose the right tool for your needs.
+This page compares Sirena with other popular diagram generation tools to help you choose the right tool for your needs.
 
 === Overview
 
-Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, optimized for server-side use. Understanding how it compares to other tools helps you make informed decisions about which tool best fits your workflow.
+Sirena is a pure Ruby renderer for Mermaid syntax, for server-side use. Compatibility with Mermaid.js varies by diagram type; see the compatibility page.
 
 === Feature Comparison Matrix
 
@@ -31,7 +31,7 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 |**Diagram Types**
 |24
 |20+
-|14+
+|Not counted here
 |Graph-focused
 
 |**Rendering**
@@ -77,7 +77,7 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 |No
 
 |**Syntax**
-|Mermaid-compatible
+|Mermaid syntax (partial parity)
 |Mermaid native
 |PlantUML DSL
 |DOT language
@@ -124,10 +124,10 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
   dedicated integration layer built yet)
 * A dated Apple M2 run against mermaid-cli is published with reproduction
   commands and scope limits (see Performance Benchmarks below)
-* YAML-based theme system (easier than CSS)
-* Mermaid.js syntax compatibility
+* YAML-based theme system
+* Reads Mermaid.js syntax (partial parity)
 * Built-in batch processor
-* Excellent for CI/CD and automated documentation
+* Runs in any Ruby CI job
 
 **Limitations:**
 
@@ -154,7 +154,6 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 * Interactive diagrams with click events
 * Live editor (mermaid.live)
 * 20+ diagram types
-* Extensive documentation
 * JavaScript ecosystem integration
 
 **Limitations:**
@@ -181,7 +180,6 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 
 * Extensive UML diagram support
 * Well-established (20+ years)
-* Comprehensive documentation
 * Multiple output formats
 * Java ecosystem integration
 * Server mode available
@@ -191,8 +189,6 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 * Requires Java JRE
 * PlantUML-specific syntax (not Mermaid)
 * More complex installation
-* Slower startup (JVM initialization)
-* Syntax less intuitive than Mermaid
 
 **Best For:**
 
@@ -208,8 +204,6 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 **Strengths:**
 
 * Powerful graph layout algorithms
-* Fast rendering
-* Low memory footprint
 * Multiple output formats
 * DOT language standard
 * Scientific/academic use
@@ -236,7 +230,7 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 The `benchmark:compare` and `benchmark:quick` rake tasks run against
 `Sirena.render`. One dated Apple M2 comparison with mermaid-cli, its method,
 and reproduction commands is published in the
-link:../performance-benchmark/[Performance Benchmark report]. That report did
+link:../../performance-benchmark/[Performance Benchmark report]. That report did
 not measure memory, and one machine's result is not a general performance
 guarantee or a comparison with PlantUML or Graphviz.
 
@@ -255,21 +249,20 @@ guarantee or a comparison with PlantUML or Graphviz.
 . Test batch rendering against your own workload (the single published run
   does not substitute for this)
 
-See our comprehensive *Migration from Mermaid.js Guide* (planned).
+A migration guide is planned.
 
 ==== From PlantUML to Sirena
 
-**Syntax Compatibility:** Not directly compatible (different syntax)
+**Syntax Compatibility:** Sirena renders PlantUML class and sequence diagrams when started with `--require sirena/notation/plantuml` (`scoreboard/plantuml.json`: class 35/35, sequence 77/77 oracle-valid cases). Other PlantUML diagram types are not supported.
 
 **Migration Strategy:**
 
 . Identify diagram types needed
-. Rewrite PlantUML syntax to Mermaid syntax
+. Load the PlantUML notation for class and sequence diagrams; rewrite other PlantUML syntax to Mermaid syntax
 . Test rendering with Sirena
 . Adapt theming and styling
 . Update build scripts
 
-**Effort:** Moderate to High (syntax translation required)
 
 ==== From Graphviz to Sirena
 
@@ -319,7 +312,6 @@ See our comprehensive *Migration from Mermaid.js Guide* (planned).
 ✅ Custom graph layouts needed +
 ✅ Scientific visualizations +
 ✅ Network topology diagrams +
-✅ Maximum performance critical +
 ✅ DOT language expertise +
 ✅ Graph theory applications
 
@@ -392,9 +384,6 @@ Different tools for different diagram types:
 === Related Documentation
 
 * link:../compatibility/[Mermaid.js Compatibility] - Detailed syntax compatibility
-* *Migration from Mermaid.js* (planned) - Step-by-step migration guide
-* *Theme System* (planned) - Sirena's YAML-based themes
-* *Performance Optimization* (planned) - Getting the most from Sirena
 
 === External Resources
 
@@ -407,9 +396,9 @@ Different tools for different diagram types:
 
 Each tool has its strengths and ideal use cases:
 
-* **Sirena** excels at server-side Ruby rendering with Mermaid syntax
-* **Mermaid.js** leads in interactive browser-based diagrams
-* **PlantUML** dominates formal UML documentation
-* **Graphviz** provides the most powerful graph layout algorithms
+* **Sirena** renders Mermaid syntax server-side in Ruby
+* **Mermaid.js** renders interactive browser-based diagrams
+* **PlantUML** targets UML documentation
+* **Graphviz** is a general graph layout tool
 
-Choose based on your tech stack, rendering requirements, and diagram complexity. For Ruby applications needing server-side Mermaid-compatible rendering without a Node.js or Java runtime, Sirena is a fit; see "Performance Benchmarks" above for the scoped measurement and its limits.
+Choose based on your tech stack, rendering requirements, and diagram complexity. For Ruby applications needing server-side Mermaid-compatible rendering without a Node.js or Java runtime, Sirena may fit; see "Performance Benchmarks" above for the scoped measurement and its limits.
