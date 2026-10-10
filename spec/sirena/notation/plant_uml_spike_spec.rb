@@ -333,8 +333,8 @@ RSpec.describe Sirena::Notation::PlantUML do
 
   describe "a construct outside the subset" do
     {
-      "package Domain #red {" => ["package", 3],
-      "+package Domain #red {" => ["package", 3],
+      "package Domain #teal {" => ["package colour name", 3],
+      "+package Domain #teal {" => ["package colour name", 3],
       "namespace Domain {" => ["namespace", 3],
       "enum Color" => ["enum", 3],
       "title My diagram" => ["title", 3],
@@ -360,7 +360,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       "@STARTUML" => ["statement", 3],
       "@startuml_x" => ["statement", 3],
       "ENUM Color" => ["enum", 3],
-      "PACKAGE Domain #red {" => ["package", 3],
+      "PACKAGE Domain #teal {" => ["package colour name", 3],
       "CLASS A extends B" => ["class declaration form", 3],
       "CLASS A <<entity>>" => ["stereotype", 3],
       "STATIC CLASS A" => ["class declaration form", 3],
