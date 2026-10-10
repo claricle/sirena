@@ -12,7 +12,7 @@ parent: Diagram Types
 
 Pie chart diagrams visualize proportional data as circular segments. Each slice represents a portion of the whole, making it easy to see relative sizes and distributions at a glance.
 
-The pie chart implementation in Sirena follows the established Parslet architecture with full support for:
+The pie chart implementation in Sirena follows the established Parslet architecture and supports:
 
 * Multiple data slices with labels and values
 * Optional title display
@@ -317,7 +317,7 @@ pie title Department Budget Allocation
 The pie chart implementation includes:
 
 * Coverage against the oracle-valid mermaid-js corpus cases: `--> against valid cases only: 40/40 = 100.0%` (`bundle exec ruby scripts/corpus_sweep.rb --failing pie`, BY VERDICT section). The remaining 9 corpus cases are outside the oracle-valid set: 1 `artifact`, 6 `invalid`, 2 `unknown`, per `spec/mermaid/corpus-verdicts.yml`.
-* 13 RSpec tests covering all features
+* 13 RSpec examples in `spec/sirena/parser/pie_spec.rb`
 * Parser, transform, and renderer tests
 * Edge case handling (empty diagrams, negative values, etc.)
 

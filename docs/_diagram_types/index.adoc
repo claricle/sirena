@@ -177,7 +177,7 @@ Each diagram type page includes:
 
 == Mermaid.js Compatibility
 
-All diagram types maintain syntax compatibility with Mermaid.js. See link:../../pages/compatibility/[Compatibility Guide] for detailed comparison.
+No diagram type has full parity with Mermaid.js; per-type corpus pass rates are on the compatibility page. See link:../../pages/compatibility/[Compatibility Guide] for detailed comparison.
 
 == Examples
 

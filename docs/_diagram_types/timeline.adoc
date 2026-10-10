@@ -337,11 +337,10 @@ The following features are not yet supported:
 
 == Testing
 
-The timeline implementation includes comprehensive test coverage:
+The timeline implementation includes these checks:
 
 * **16/16 = 100.0% of oracle-valid mermaid-js corpus cases passing** (`bundle exec ruby scripts/corpus_sweep.rb --failing timeline`, valid-cases line)
 * The 17th corpus fixture contains invalid syntax ("Timeline diagram" instead of "timeline") and is excluded from the oracle-valid denominator
-* Full support for sections, events, tasks, and styling
 * HTML tags in descriptions handled correctly
 * Special characters (semicolons, hashtags) supported
 
