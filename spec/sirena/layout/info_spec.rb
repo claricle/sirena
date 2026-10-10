@@ -23,17 +23,25 @@ RSpec.describe Sirena::Layout::Info do
     )
   end
 
-  def scene_geometry
-    scene_identity + [box_geometry, scene.label.text]
+  it "lays out shared data IR identically to the private model" do
+    populate_diagram
+    ir = Sirena::Notation::Mermaid::IRAdapters::Info.call(diagram)
+    ir_scene = described_class.new.call(ir)
+
+    expect(scene_geometry(ir_scene)).to eq(scene_geometry)
   end
 
-  def scene_identity
-    [scene.class, scene.id, scene.title, scene.width, scene.height]
+  def scene_geometry(value = scene)
+    scene_identity(value) + [box_geometry(value), value.label.text]
   end
 
-  def box_geometry
-    [scene.box.x, scene.box.y, scene.box.width, scene.box.height,
-     scene.box.corner_radius]
+  def scene_identity(value)
+    [value.class, value.id, value.title, value.width, value.height]
+  end
+
+  def box_geometry(value)
+    [value.box.x, value.box.y, value.box.width, value.box.height,
+     value.box.corner_radius]
   end
 
   def populate_diagram
