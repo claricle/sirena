@@ -25,6 +25,23 @@ module Sirena
       DEFAULT_FONT_SIZE = 16.0
       NODE_LINE_HEIGHT = 1.5
 
+      # What mmdc adds to the label, measured on its output, as
+      # [width, height]. A shape not listed is sized as a box.
+      SHAPE_PADDING = {
+        "rounded" => [30.0, 30.0],
+        "asymmetric" => [24.75, 15.0],
+        "hexagon" => [45.0, 15.0],
+        "parallelogram" => [60.0, 15.0],
+        "parallelogram_alt" => [60.0, 15.0],
+        "trapezoid" => [60.0, 15.0],
+        "trapezoid_alt" => [60.0, 15.0],
+      }.freeze
+      BOX_PADDING = [60.0, 30.0].freeze
+      # Square shapes: a rhombus is label width + label height + 30 on a
+      # side; a circle is label width + 15 across (25 for a double one).
+      CIRCLE_PADDING = { "circle" => 15.0, "double_circle" => 25.0 }.freeze
+      RHOMBUS_PADDING = 30.0
+
       CLUSTER_CORNER = FlowchartEdgeRouter::CLUSTER_CORNER
       CLUSTER_TITLE_BASELINE = 20
       EDGE_LABEL_LIFT = 5.0
@@ -827,23 +844,6 @@ module Sirena
           label_height: line_height,
         }
       end
-
-      # What mmdc adds to the label, measured on its output, as
-      # [width, height]. A shape not listed is sized as a box.
-      SHAPE_PADDING = {
-        "rounded" => [30.0, 30.0],
-        "asymmetric" => [24.75, 15.0],
-        "hexagon" => [45.0, 15.0],
-        "parallelogram" => [60.0, 15.0],
-        "parallelogram_alt" => [60.0, 15.0],
-        "trapezoid" => [60.0, 15.0],
-        "trapezoid_alt" => [60.0, 15.0],
-      }.freeze
-      BOX_PADDING = [60.0, 30.0].freeze
-      # Square shapes: a rhombus is label width + label height + 30 on a
-      # side; a circle is label width + 15 across (25 for a double one).
-      CIRCLE_PADDING = { "circle" => 15.0, "double_circle" => 25.0 }.freeze
-      RHOMBUS_PADDING = 30.0
 
       def node_box(label_width, label_height, shape)
         if shape == "rhombus"
