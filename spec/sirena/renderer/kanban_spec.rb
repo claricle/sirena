@@ -325,7 +325,7 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect(second_line.attributes["x"]).to eq("60.0")
         expect(second_line.attributes["y"].to_f).to be_within(0.001).of(
           second_line.parent.attributes["y"].to_f +
-          (second_line.parent.attributes["font-size"].to_f * 1.2)
+          (second_line.parent.attributes["font-size"].to_f * 1.2),
         )
 
         italic_xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: "Hello *urgent*")).to_xml
