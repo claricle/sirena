@@ -27,6 +27,12 @@ RSpec.describe Sirena::Layout::Block do
     MERMAID
   end
 
+  def skipped_row_positions(source)
+    diagram = parser.parse(source)
+    blocks = transform.call(diagram).children.to_h { |node| [node.id, node] }
+    blocks.values_at("fit", "overflow", "short", "also_overflow").map(&:y)
+  end
+
   describe "#call" do
     it "lays out shared pre-positioned IR identically to the private model" do
       diagram = parser.parse(ir_equivalence_source)
@@ -64,13 +70,7 @@ RSpec.describe Sirena::Layout::Block do
       end
 
       it "treats a skipped row as contributing zero height rather than nil" do
-        diagram = parser.parse(source)
-        blocks = transform.call(diagram).children.to_h do |node|
-          [node.id, node]
-        end
-        ordered = blocks.values_at("fit", "overflow", "short", "also_overflow")
-        expect(ordered.map(&:y))
-          .to eq([20, 120, 200, 280])
+        expect(skipped_row_positions(source)).to eq([20, 120, 200, 280])
       end
     end
 
