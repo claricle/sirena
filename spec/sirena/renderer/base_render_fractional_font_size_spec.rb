@@ -33,6 +33,8 @@ RSpec.describe Sirena::Renderer::Base, "#render" do
   it "keeps a fractional font size in Sirena::Renderer::Error" do
     scene = FractionalFontScene.widen(Sirena::Layout::Error.from_graph({}))
 
-    expect(Sirena::Renderer::Error.new.render(scene).to_xml).to match(fractional)
+    xml = Sirena::Renderer::Error.new.render(scene).to_xml
+
+    expect(xml).to match(fractional)
   end
 end

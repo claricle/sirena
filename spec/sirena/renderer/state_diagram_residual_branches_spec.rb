@@ -39,7 +39,9 @@ RSpec.describe Sirena::Renderer::StateDiagram do
   end
 
   describe "hooks called with typed geometry" do
-    let(:typed) { hook(:typed_state, { id: "a", x: 1, y: 2, width: 3, height: 4 }) }
+    let(:typed) do
+      hook(:typed_state, { id: "a", x: 1, y: 2, width: 3, height: 4 })
+    end
 
     it "reads the box of a typed state" do
       expect(hook(:compatibility_shape_values, typed, typed, "normal"))

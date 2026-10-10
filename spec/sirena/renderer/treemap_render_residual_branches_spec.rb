@@ -6,7 +6,8 @@ RSpec.describe Sirena::Renderer::Treemap, "#render" do
   subject(:renderer) { described_class.new }
 
   let(:scene) do
-    diagram = Sirena::Parser::Treemap.new.parse("treemap-beta\n  \"A\"\n    \"B\": 5\n")
+    source = "treemap-beta\n  \"A\"\n    \"B\": 5\n"
+    diagram = Sirena::Parser::Treemap.new.parse(source)
     Sirena::Layout::Treemap.new.call(diagram)
   end
   let(:fills) do
