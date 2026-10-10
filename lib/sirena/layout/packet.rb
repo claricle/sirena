@@ -33,6 +33,51 @@ module Sirena
       TITLE_HEIGHT = 40
       TITLE_MARGIN = 20
 
+      class Line < Lutaml::Model::Serializable
+        attribute :x1, :float
+        attribute :y1, :float
+        attribute :x2, :float
+        attribute :y2, :float
+      end
+
+      class Box < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+      end
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :font_size, :float
+        attribute :text_anchor, :string
+        attribute :dominant_baseline, :string
+        attribute :font_weight, :string
+        attribute :style, :string
+      end
+
+      class Field < Lutaml::Model::Serializable
+        attribute :box, Box
+        attribute :label, Label
+        attribute :range_label, Label
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :title, Label
+        attribute :bit_markers, Label, collection: true, default: -> { [] }
+        attribute :grid_lines, Line, collection: true, default: -> { [] }
+        attribute :fields, Field, collection: true, default: -> { [] }
+      end
+
+      def self.from_graph(graph, theme: nil)
+        layout = new
+        layout.theme = theme if theme
+        layout.send(:scene_from_graph, graph)
+      end
+
       # Transforms the diagram into a layout structure.
       #
       # @param diagram [Diagram::Packet] the packet diagram
@@ -69,6 +114,142 @@ module Sirena
       end
 
       private
+
+      def scene(diagram)
+        scene_from_graph(build_graph(diagram))
+      end
+
+      def scene_from_graph(graph)
+        width = graph.fetch(:width)
+        height = graph.fetch(:height)
+        Scene.new(
+          width: width, height: height, view_box: "0 0 #{width} #{height}",
+          title: title_label(graph), bit_markers: bit_markers(graph),
+          grid_lines: grid_lines(graph),
+          fields: graph.fetch(:fields).map { |field| typed_field(field, graph) }
+        )
+      end
+
+      def title_label(graph)
+        return unless graph[:title]
+
+        Label.new(
+          text: graph[:title], x: graph[:width] / 2.0,
+          y: graph[:padding] + (graph[:title_height] / 2.0),
+          font_size: font_size(:font_size_large, 16), text_anchor: "middle",
+          dominant_baseline: "middle", font_weight: "bold", style: "title"
+        )
+      end
+
+      def bit_markers(graph)
+        graph.fetch(:row_count).times.flat_map do |row|
+          Array.new(graph.fetch(:bits_per_row)) do |bit|
+            bit_marker(graph, row, bit)
+          end
+        end
+      end
+
+      def bit_marker(graph, row, bit)
+        Label.new(
+          text: ((row * graph[:bits_per_row]) + bit).to_s,
+          x: marker_x(graph, bit), y: marker_y(graph, row),
+          font_size: font_size(:font_size_small, 10), text_anchor: "middle",
+          dominant_baseline: "middle", style: "marker"
+        )
+      end
+
+      def marker_x(graph, bit)
+        graph[:padding] + (bit * graph[:cell_width]) +
+          (graph[:cell_width] / 2.0)
+      end
+
+      def marker_y(graph, row)
+        graph[:padding] + title_offset(graph) +
+          (graph[:header_height] / 2.0) + (row * graph[:cell_height])
+      end
+
+      def grid_lines(graph)
+        vertical_grid_lines(graph) + horizontal_grid_lines(graph)
+      end
+
+      def vertical_grid_lines(graph)
+        Array.new(graph[:bits_per_row] + 1) do |index|
+          vertical_line(graph, index)
+        end
+      end
+
+      def vertical_line(graph, index)
+        x_position = graph[:padding] + (index * graph[:cell_width])
+        y_position = grid_top(graph)
+        height = graph[:row_count] * graph[:cell_height]
+        Line.new(x1: x_position, y1: y_position,
+                 x2: x_position, y2: y_position + height)
+      end
+
+      def horizontal_grid_lines(graph)
+        grid_width = graph[:bits_per_row] * graph[:cell_width]
+        Array.new(graph[:row_count] + 1) do |index|
+          horizontal_line(graph, index, grid_width)
+        end
+      end
+
+      def horizontal_line(graph, index, width)
+        y_position = grid_top(graph) + (index * graph[:cell_height])
+        Line.new(x1: graph[:padding], y1: y_position,
+                 x2: graph[:padding] + width, y2: y_position)
+      end
+
+      def grid_top(graph)
+        graph[:padding] + title_offset(graph) + graph[:header_height]
+      end
+
+      def typed_field(field, graph)
+        y_position = field[:y] + title_offset(graph)
+        label_x, label_y = field_center(field, y_position)
+        Field.new(
+          box: field_box(field, y_position),
+          label: field_label(field[:label], label_x, label_y),
+          range_label: range_label(field, label_x, label_y),
+        )
+      end
+
+      def field_center(field, y_position)
+        [field[:x] + (field[:width] / 2.0),
+         y_position + (field[:height] / 2.0)]
+      end
+
+      def field_box(field, y_position)
+        Box.new(x: field[:x], y: y_position,
+                width: field[:width], height: field[:height])
+      end
+
+      def field_label(text, x_position, y_position)
+        Label.new(
+          text: text, x: x_position, y: y_position,
+          font_size: font_size(:font_size_normal, 12), text_anchor: "middle",
+          dominant_baseline: "middle", style: "field"
+        )
+      end
+
+      def range_label(field, x_position, y_position)
+        return unless field[:width] > 100
+
+        Label.new(
+          text: "#{field[:bit_start]}-#{field[:bit_end]}",
+          x: x_position, y: y_position + 16,
+          font_size: font_size(:font_size_small, 9), text_anchor: "middle",
+          dominant_baseline: "middle", style: "range"
+        )
+      end
+
+      def title_offset(graph)
+        graph[:title_height] + graph[:title_margin]
+      end
+
+      def font_size(name, fallback)
+        value = theme.typography&.public_send(name)
+        value&.positive? ? value : fallback
+      end
 
       # Returns an empty layout structure.
       #

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/error"
 require_relative "../svg/document"
 require_relative "../svg/rect"
 require_relative "../svg/text"
@@ -33,55 +34,59 @@ module Sirena
       # @param graph [Hash] the error diagram graph structure from transform
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
-        svg = create_document_for_error(graph)
+        scene = typed_scene(graph)
+        svg = create_document_for_error(scene)
 
         # Render error box
-        render_error_box(graph, svg)
+        render_error_box(scene, svg)
 
         # Render error icon
-        render_error_icon(svg)
+        render_typed_error_icon(svg, scene)
 
         # Render error text
-        render_error_text(graph, svg)
+        render_error_text(scene, svg)
 
         svg
       end
 
       protected
 
-      def create_document_for_error(_graph)
-        width = 500
-        height = 220
-
+      def create_document_for_error(graph)
+        scene = typed_scene(graph)
         Svg::Document.new.tap do |doc|
-          doc.width = width
-          doc.height = height
-          doc.view_box = "0 0 #{width} #{height}"
+          doc.width = scene.width
+          doc.height = scene.height
+          doc.view_box = scene.view_box
         end
       end
 
-      def render_error_box(_graph, svg)
+      def render_error_box(graph, svg)
+        geometry = typed_scene(graph).box
         box = Svg::Rect.new.tap do |r|
-          r.x = BOX_X
-          r.y = BOX_Y
-          r.width = BOX_WIDTH
-          r.height = BOX_HEIGHT
+          r.x = geometry.x
+          r.y = geometry.y
+          r.width = geometry.width
+          r.height = geometry.height
           r.fill = "#FFEBEE"
           r.stroke = "#D32F2F"
           r.stroke_width = "2"
-          r.rx = "8"
-          r.ry = "8"
+          r.rx = geometry.corner_radius
+          r.ry = geometry.corner_radius
         end
 
         svg << box
       end
 
       def render_error_icon(svg)
+        render_typed_error_icon(svg, Layout::Error.from_graph({}))
+      end
+
+      def render_typed_error_icon(svg, scene)
         # Error icon circle
         circle = Svg::Circle.new.tap do |c|
-          c.cx = ICON_CENTER_X
-          c.cy = ICON_CENTER_Y
-          c.r = ICON_RADIUS
+          c.cx = scene.icon.x
+          c.cy = scene.icon.y
+          c.r = scene.icon.radius
           c.fill = "#D32F2F"
           c.stroke = "#B71C1C"
           c.stroke_width = "2"
@@ -90,41 +95,51 @@ module Sirena
 
         # Exclamation mark - vertical line
         line = Svg::Rect.new.tap do |r|
-          r.x = ICON_CENTER_X - 2
-          r.y = ICON_CENTER_Y - 10
-          r.width = 4
-          r.height = 12
+          r.x = scene.mark.x
+          r.y = scene.mark.y
+          r.width = scene.mark.width
+          r.height = scene.mark.height
           r.fill = "#FFFFFF"
-          r.rx = "2"
+          r.rx = scene.mark.corner_radius
         end
         svg << line
 
         # Exclamation mark - dot
         dot = Svg::Circle.new.tap do |c|
-          c.cx = ICON_CENTER_X
-          c.cy = ICON_CENTER_Y + 6
-          c.r = 2
+          c.cx = scene.dot.x
+          c.cy = scene.dot.y
+          c.r = scene.dot.radius
           c.fill = "#FFFFFF"
         end
         svg << dot
       end
 
       def render_error_text(graph, svg)
-        message = graph[:message] || "Error"
+        label = typed_scene(graph).label
 
         text = Svg::Text.new.tap do |t|
-          t.x = TEXT_X
-          t.y = TEXT_Y
-          t.content = message
+          t.x = label.x
+          t.y = label.y
+          t.content = label.text
           t.fill = "#C62828"
           t.font_family = theme_typography(:font_family) ||
                           "Arial, sans-serif"
-          t.font_size = (theme_typography(:font_size_base) || 16).to_s
-          t.text_anchor = "start"
-          t.font_weight = "bold"
+          t.font_size = number_string(label.font_size)
+          t.text_anchor = label.text_anchor
+          t.font_weight = label.font_weight
         end
 
         svg << text
+      end
+
+      def typed_scene(graph)
+        return graph if graph.is_a?(Layout::Error::Scene)
+
+        Layout::Error.from_graph(graph, theme: theme)
+      end
+
+      def number_string(value)
+        value.to_i == value ? value.to_i.to_s : value.to_s
       end
     end
   end

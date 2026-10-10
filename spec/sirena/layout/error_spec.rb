@@ -4,40 +4,32 @@ require "spec_helper"
 require "sirena/layout/error"
 
 RSpec.describe Sirena::Layout::Error do
-  subject(:graph) { described_class.new.to_graph(diagram) }
+  subject(:scene) { described_class.new.to_graph(diagram) }
 
   let(:diagram) { Sirena::Diagram::Error.new }
 
   it "keeps a missing message for the renderer's default" do
-    expect(graph).to eq(default_graph)
+    expect(scene_geometry).to eq(
+      [described_class::Scene, "error", nil, "Error", 500.0, 220.0],
+    )
   end
 
   it "preserves explicit identity, title, and message" do
     populate_diagram
-    expect(graph).to eq(populated_graph)
+    expect(scene_geometry).to eq(
+      [described_class::Scene, "failure", "Build failed",
+       "Dependency missing", 500.0, 220.0],
+    )
   end
 
-  def default_graph
-    {
-      id: "error",
-      title: nil,
-      message: nil,
-      metadata: { diagram_type: :error },
-    }
+  def scene_geometry
+    [scene.class, scene.id, scene.title, scene.label.text,
+     scene.width, scene.height]
   end
 
   def populate_diagram
     diagram.id = "failure"
     diagram.title = "Build failed"
     diagram.message = "Dependency missing"
-  end
-
-  def populated_graph
-    {
-      id: "failure",
-      title: "Build failed",
-      message: "Dependency missing",
-      metadata: { diagram_type: :error },
-    }
   end
 end

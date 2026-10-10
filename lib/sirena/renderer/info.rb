@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/info"
 require_relative "../svg/document"
 require_relative "../svg/rect"
 require_relative "../svg/text"
@@ -27,66 +28,72 @@ module Sirena
       # @param graph [Hash] the info diagram graph structure from transform
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
-        svg = create_document_for_info(graph)
+        scene = typed_scene(graph)
+        svg = create_document_for_info(scene)
 
         # Render info box
-        render_info_box(graph, svg)
+        render_info_box(scene, svg)
 
         # Render info text
-        render_info_text(graph, svg)
+        render_info_text(scene, svg)
 
         svg
       end
 
       protected
 
-      def create_document_for_info(_graph)
-        width = 500
-        height = 200
-
+      def create_document_for_info(graph)
+        scene = typed_scene(graph)
         Svg::Document.new.tap do |doc|
-          doc.width = width
-          doc.height = height
-          doc.view_box = "0 0 #{width} #{height}"
+          doc.width = scene.width
+          doc.height = scene.height
+          doc.view_box = scene.view_box
         end
       end
 
-      def render_info_box(_graph, svg)
+      def render_info_box(graph, svg)
+        geometry = typed_scene(graph).box
         box = Svg::Rect.new.tap do |r|
-          r.x = BOX_X
-          r.y = BOX_Y
-          r.width = BOX_WIDTH
-          r.height = BOX_HEIGHT
+          r.x = geometry.x
+          r.y = geometry.y
+          r.width = geometry.width
+          r.height = geometry.height
           r.fill = theme_color(:node_bg) || "#E3F2FD"
           r.stroke = theme_color(:node_stroke) || "#2196F3"
           r.stroke_width = "2"
-          r.rx = "8"
-          r.ry = "8"
+          r.rx = geometry.corner_radius
+          r.ry = geometry.corner_radius
         end
 
         svg << box
       end
 
       def render_info_text(graph, svg)
-        message = if graph[:show_info]
-                    "Info: showInfo enabled"
-                  else
-                    "Info"
-                  end
+        label = typed_scene(graph).label
 
         text = Svg::Text.new.tap do |t|
-          t.x = BOX_X + (BOX_WIDTH / 2)
-          t.y = TEXT_Y
-          t.content = message
+          t.x = label.x
+          t.y = label.y
+          t.content = label.text
           t.fill = theme_color(:label_text) || "#1976D2"
           t.font_family = theme_typography(:font_family) ||
                           "Arial, sans-serif"
-          t.font_size = (theme_typography(:font_size_base) || 16).to_s
-          t.text_anchor = "middle"
-          t.font_weight = "bold"
+          t.font_size = number_string(label.font_size)
+          t.text_anchor = label.text_anchor
+          t.font_weight = label.font_weight
         end
 
         svg << text
+      end
+
+      def typed_scene(graph)
+        return graph if graph.is_a?(Layout::Info::Scene)
+
+        Layout::Info.from_graph(graph, theme: theme)
+      end
+
+      def number_string(value)
+        value.to_i == value ? value.to_i.to_s : value.to_s
       end
     end
   end

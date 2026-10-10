@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/treemap"
 require_relative "../svg/document"
 require_relative "../svg/rect"
 require_relative "../svg/text"
@@ -11,99 +12,99 @@ module Sirena
     # Renderer for treemap diagrams
     class Treemap < Base
       def render(layout)
+        scene = typed_scene(layout)
         doc = Svg::Document.new(
-          width: layout[:width],
-          height: layout[:height],
+          width: scene.width, height: scene.height, view_box: scene.view_box,
         )
 
-        # Add title if present
-        if layout[:title]
-          add_title(doc, layout[:title], layout[:width])
-        end
+        add_title(doc, scene.title) if scene.title
 
-        # Render all cells
-        layout[:cells].each do |cell|
-          render_cell(doc, cell, layout[:class_defs])
-        end
+        scene.cells.each { |cell| render_cell(doc, cell) }
 
         doc
       end
 
       private
 
-      def add_title(doc, title, width)
+      def typed_scene(layout)
+        return layout if layout.is_a?(Layout::Treemap::Scene)
+
+        Layout::Treemap.from_graph(layout, theme: theme)
+      end
+
+      def add_title(doc, label)
         text = Svg::Text.new.tap do |t|
-          t.content = title
-          t.x = width / 2
-          t.y = 25
+          t.content = label.text
+          t.x = label.x
+          t.y = label.y
           t.fill = theme_color(:label_text) || "#333"
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-          t.font_size = "18"
-          t.font_weight = "bold"
-          t.text_anchor = "middle"
+          t.font_size = number_string(label.font_size)
+          t.font_weight = label.font_weight
+          t.text_anchor = label.text_anchor
         end
         doc << text
       end
 
-      def render_cell(doc, cell, class_defs, parent_group = nil)
+      def render_cell(doc, cell, parent_group = nil)
         group = Svg::Group.new
-
-        # Determine fill color based on depth and CSS class
-        fill_color = cell_fill_color(cell, class_defs)
-        stroke_color = cell_stroke_color(cell, class_defs)
 
         # Draw cell rectangle
         rect = Svg::Rect.new.tap do |r|
-          r.x = cell[:x]
-          r.y = cell[:y]
-          r.width = cell[:width]
-          r.height = cell[:height]
-          r.fill = fill_color
-          r.stroke = stroke_color
+          r.x = cell.box.x
+          r.y = cell.box.y
+          r.width = cell.box.width
+          r.height = cell.box.height
+          r.fill = cell.fill
+          r.stroke = cell.stroke
           r.stroke_width = "2"
-          r.rx = 4
-          r.ry = 4
+          r.rx = cell.box.corner_radius
+          r.ry = cell.box.corner_radius
         end
         group << rect
 
         # Add label
-        label_y = cell[:y] + 15
-        label = Svg::Text.new.tap do |t|
-          t.content = truncate_label(cell[:label], cell[:width] - 10)
-          t.x = cell[:x] + 5
-          t.y = label_y
-          t.fill = theme_color(:label_text) || "#333"
-          t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-          t.font_size = "12"
-          t.font_weight = "bold"
-        end
-        group << label
+        group << label_element(cell.label)
 
         # Add value if it's a leaf
-        if cell[:value] && cell[:children].empty?
-          value_text = format_value(cell[:value])
-          value_y = label_y + 15
-          value_label = Svg::Text.new.tap do |t|
-            t.content = value_text
-            t.x = cell[:x] + 5
-            t.y = value_y
-            t.fill = theme_color(:label_text) || "#666"
-            t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-            t.font_size = "10"
-          end
-          group << value_label
-        end
+        group << label_element(cell.value_label) if cell.value_label
 
         # Render children recursively
-        cell[:children].each do |child|
-          render_cell(group, child, class_defs, group)
-        end
+        cell.children.each { |child| render_cell(group, child, group) }
 
         if parent_group
           parent_group << group
         else
           doc << group
         end
+      end
+
+      def label_element(label)
+        Svg::Text.new.tap do |text|
+          set_label_geometry(text, label)
+          set_label_style(text, label)
+        end
+      end
+
+      def set_label_geometry(text, label)
+        text.content = label.text
+        text.x = label.x
+        text.y = label.y
+      end
+
+      def set_label_style(text, label)
+        text.fill = theme_color(:label_text) || label_fallback(label)
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = number_string(label.font_size)
+        text.font_weight = label.font_weight if label.font_weight
+      end
+
+      def label_fallback(label)
+        label.style == "value" ? "#666" : "#333"
+      end
+
+      def number_string(value)
+        value.to_i == value ? value.to_i.to_s : value.to_s
       end
 
       def cell_fill_color(cell, class_defs)
