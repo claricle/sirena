@@ -89,8 +89,14 @@ module Sirena
                       [RETURN, :reply], [DIVIDER, :divider],
                       [DESTROY, :destroy], [NEWPAGE, :newpage],
                       [AUTONUMBER, :autonumber]].freeze
+          SETTINGS = [[SKINPARAM_WIDTH, :min_width],
+                      [SKINPARAM_MAXMESSAGE, :max_message],
+                      [SKINPARAM_OPEN, :open_skinparam],
+                      [HIDE_FOOTBOX, :hide_footbox],
+                      [AUTOACTIVATE, :autoactivate],
+                      [STYLE_OPEN, :open_style]].freeze
 
-          private_constant :TIMELINE, :NAME, :QUOTED, :KINDS,
+          private_constant :TIMELINE, :SETTINGS, :NAME, :QUOTED, :KINDS,
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
                            :LINE_END, :PRAGMA, :ACTIVATION, :MARKS, :TARGET,
                            :NOTE, :END_NOTE, :REF, :BLOCK, :BRANCH, :RETURN,
@@ -124,6 +130,10 @@ module Sirena
             @pending_note = nil
             @pending_style = nil
             @skin_open = nil
+            start_settings
+          end
+
+          def start_settings
             @appearance = Appearance.new
             @teoz = false
             @parallel = false
@@ -194,21 +204,35 @@ module Sirena
           end
 
           def read_setting(text, number)
-            if (match = SKINPARAM_WIDTH.match(text))
-              set(min_width: match[1].to_i)
-            elsif (match = SKINPARAM_MAXMESSAGE.match(text))
-              set(max_message: match[1].to_i)
-            elsif SKINPARAM_OPEN.match?(text)
-              @skin_open = number
-            elsif HIDE_FOOTBOX.match?(text)
-              @footbox = false
-            elsif (match = AUTOACTIVATE.match(text))
-              @autoactivate = match[1].casecmp?("on")
-            elsif STYLE_OPEN.match?(text)
-              @pending_style = { line: number, text: text, lines: [] }
-            else
-              read_structure(text, number)
+            SETTINGS.each do |pattern, reader|
+              match = pattern.match(text)
+              return send(reader, match, number, text) if match
             end
+            read_structure(text, number)
+          end
+
+          def min_width(match, *)
+            set(min_width: match[1].to_i)
+          end
+
+          def max_message(match, *)
+            set(max_message: match[1].to_i)
+          end
+
+          def open_skinparam(_match, number, _text)
+            @skin_open = number
+          end
+
+          def hide_footbox(*)
+            @footbox = false
+          end
+
+          def autoactivate(match, *)
+            @autoactivate = match[1].casecmp?("on")
+          end
+
+          def open_style(_match, number, text)
+            @pending_style = { line: number, text: text, lines: [] }
           end
 
           # A stereotype is drawn above the label, where the other kinds
@@ -431,11 +455,15 @@ module Sirena
           def declare(match)
             display = unquote(match[2])
             id = match[3] || display
-            @participants[id] ||= Participant.new(
+            @participants[id] ||= participant(match, id, display)
+            @open_boxes.last[:members] << id if @open_boxes.any?
+          end
+
+          def participant(match, id, display)
+            Participant.new(
               id: id, label: display, kind: match[1].downcase.to_sym,
               stereotype: match[4], fill: Fill.read(match[5])
             )
-            @open_boxes.last[:members] << id if @open_boxes.any?
           end
 
           def message(match)
