@@ -5,6 +5,14 @@ require "spec_helper"
 RSpec.describe Sirena::Layout::StateDiagram do
   let(:transform) { described_class.new }
   let(:high_contrast) { Sirena::Theme::Registry.get(:high_contrast) }
+  let(:engine_source) do
+    <<~MERMAID
+      stateDiagram-v2
+      direction TB
+      A --> B
+      B --> C
+    MERMAID
+  end
   let(:section_graph) do
     {
       id: "s",
@@ -217,6 +225,18 @@ RSpec.describe Sirena::Layout::StateDiagram do
       graph = transform.send(:build_graph, diagram)
 
       expect(graph[:layoutOptions]["elk.direction"]).to eq("RIGHT")
+    end
+
+    it "lets Engine select ELK for an acyclic DOWN diagram" do
+      elk = Sirena::Engine.new.render(engine_source, layout_engine: :elk)
+      grid = Sirena::Engine.new.render(engine_source)
+      expect(elk).not_to eq(grid)
+    end
+
+    it "retains the explicit ELK error for an unsupported direction" do
+      source = engine_source.sub("direction TB", "direction LR")
+      expect { Sirena::Engine.new.render(source, layout_engine: :elk) }
+        .to raise_error(Sirena::Layout::LayoutError, /direction RIGHT/)
     end
 
     # A REGRESSION GUARD for pre-existing transform behaviour. The branch

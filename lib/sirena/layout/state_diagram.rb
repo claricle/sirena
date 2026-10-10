@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "elk_placement"
 require_relative "grid"
 require_relative "../diagram/state_diagram"
 require_relative "../notation/mermaid/ir_adapters/state_diagram"
@@ -82,6 +83,10 @@ module Sirena
         attribute :children, Node, collection: true, default: -> { [] }
         attribute :edges, Edge, collection: true, default: -> { [] }
       end
+
+      # :grid (the default) or :elk. Grid remains the default until the
+      # parity ratchet permits changing it.
+      attr_accessor :placement
 
       class << self
         def from_graph(graph, theme: nil)
@@ -199,11 +204,15 @@ module Sirena
 
       def scene(diagram)
         graph = build_graph(diagram)
-        Grid.apply(graph)
+        placer.apply(graph)
         scene_from_graph(graph)
       end
 
       private
+
+      def placer
+        placement == :elk ? ElkPlacement : Grid
+      end
 
       # Converts a state diagram to a graph structure.
       #
