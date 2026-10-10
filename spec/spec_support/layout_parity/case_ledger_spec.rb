@@ -19,14 +19,14 @@ RSpec.describe SpecSupport::LayoutParity::CaseLedger do
     }
   end
   let(:build_result) do
-    lambda do |case_id:, invariants: [], sirena_status: "rendered"|
+    lambda do |case_id:, invariants: [], measured_geometry: geometry|
       case_result.new(
         case_id: case_id,
         type: "flowchart",
         reference: "spec/fixtures_mermaid/#{case_id}.svg",
-        sirena_status: sirena_status,
+        sirena_status: "rendered",
         invariants: invariants,
-        geometry: geometry,
+        geometry: measured_geometry,
         reproduce: "bundle exec rspec spec/layout_parity_spec.rb",
       )
     end
@@ -67,6 +67,16 @@ RSpec.describe SpecSupport::LayoutParity::CaseLedger do
     expect(summary).to eq(["Infinity", ["node", nil, "a"]])
   end
 
+  it "collapses float noise below the scoreboard precision" do
+    expected = [0.123456789012, 0.123456789012]
+    expect(recorded_noisy_centers).to eq([expected, expected])
+  end
+
+  it "keeps meaningful center-threshold changes detectable" do
+    expect(center_regressions(0.08, 0.080001))
+      .to include(include(field: "worst_e_c", before: 0.08, after: 0.080001))
+  end
+
   it "rejects duplicate case IDs instead of overwriting a row" do
     duplicate = build_result.call(case_id: "flowchart/a")
 
@@ -87,5 +97,27 @@ RSpec.describe SpecSupport::LayoutParity::CaseLedger do
 
     expect { described_class.build([result]) }
       .to raise_error(ArgumentError, /JSON value/)
+  end
+
+  def ledger_with_center(value, case_id: "flowchart/a")
+    measured_geometry = geometry.merge(worst_e_c: value)
+    result = build_result.call(case_id: case_id,
+                               measured_geometry: measured_geometry)
+    described_class.build([result])
+  end
+
+  def recorded_noisy_centers
+    [0.12345678901231, 0.12345678901239].map.with_index do |value, index|
+      row = ledger_with_center(value, case_id: "flowchart/#{index}").fetch(0)
+      [row.dig("geometry", "worst_e_c"),
+       row.dig("summary", "metrics", "worst_e_c")]
+    end
+  end
+
+  def center_regressions(before, after)
+    SpecSupport::LayoutParity::ScoreboardRatchet.diff(
+      committed: ledger_with_center(before),
+      fresh: ledger_with_center(after),
+    ).fetch(:regressions)
   end
 end
