@@ -25,12 +25,13 @@ module Sirena
           BANNER_FILL = "#FFFFCC"
           BANNER_STROKE = "#FFDD88"
           WARNING_SIZE = "10"
+          LEGEND_FILL = "#DDDDDD"
           private_constant :LAYERS, :BANNER_FILL, :BANNER_STROKE,
-                           :WARNING_SIZE
+                           :WARNING_SIZE, :LEGEND_FILL
 
           def render(scene)
             document = blank_document(scene)
-            document << title_group(scene.title) if scene.title
+            chrome_groups(document, scene)
             LAYERS.each do |collection, drawer|
               items = scene.public_send(collection)
               items.each { |item| document << send(drawer, item) }
@@ -61,6 +62,25 @@ module Sirena
               children.each { |child| group << child }
               texts.each { |text| group << text_element(text) }
             end
+          end
+
+          def chrome_groups(document, scene)
+            document << title_group(scene.title) if scene.title
+            scene.text_blocks.each { |block| document << block_group(block) }
+            document << legend_group(scene.legend) if scene.legend
+          end
+
+          def block_group(block)
+            group(block.id, [], block.texts)
+          end
+
+          def legend_group(legend)
+            frame = element(Svg::Rect, x: legend.x, y: legend.y,
+                                       width: legend.width,
+                                       height: legend.height, rx: 7.5, ry: 7.5,
+                                       fill: LEGEND_FILL, stroke: "#000000",
+                                       stroke_width: "1")
+            group("legend", [frame], legend.texts)
           end
 
           def title_group(title)

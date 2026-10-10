@@ -20,6 +20,12 @@ module Sirena
               appearance(diagram.appearance, sink)
               diagram.warnings.each { |line| sink.node("warning", line) }
               sink.node("title", diagram.title) if diagram.title
+              chrome(diagram.chrome, sink)
+            end
+
+            def chrome(chrome, sink)
+              chrome.to_h.each { |kind, text| sink.node(kind.to_s, text) }
+              sink.node("legend_place", chrome.legend_place)
             end
 
             def appearance(appearance, sink)
