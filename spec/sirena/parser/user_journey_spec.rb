@@ -139,6 +139,24 @@ RSpec.describe Sirena::Parser::UserJourney do
       end
     end
 
+    # mmdc renders a task written before the first `section` (checked with
+    # `mmdc -i case.mmd`): it keeps the task and draws no section header.
+    describe "a task before the first section" do
+      let(:diagram) do
+        parser.parse("journey\n  Lead: 3: Me\n  section S1\n  Next: 4: You\n")
+      end
+
+      it "keeps it in an unnamed first section" do
+        expect(diagram.sections.map(&:name)).to eq(["", "S1"])
+      end
+
+      it "keeps its name, score and actors" do
+        task = diagram.sections.first.tasks.first
+
+        expect([task.name, task.score, task.actors]).to eq(["Lead", 3, ["Me"]])
+      end
+    end
+
     it "raises ScoreError for score out of range" do
       source = <<~MERMAID
         journey

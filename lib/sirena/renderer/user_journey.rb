@@ -57,7 +57,10 @@ module Sirena
         scene = typed_scene(graph)
         svg = create_document(scene)
         render_scene_title(svg, scene)
-        scene.sections.each { |label| svg << label_element(label) }
+        scene.sections.each do |label|
+          # mmdc draws no header for tasks written before the first section.
+          svg << label_element(label) unless label.text.to_s.empty?
+        end
         scene.tasks.each { |task| render_typed_task(svg, task) }
         scene.arrows.each { |arrow| render_typed_arrow(arrow, svg) }
         svg
