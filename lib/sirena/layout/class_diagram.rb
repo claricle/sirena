@@ -371,59 +371,71 @@ module Sirena
       end
 
       def transform_entities(diagram)
-        diagram.entities.map do |entity|
-          dimensions = calculate_entity_dimensions(entity)
-          {
-            id: entity.id,
-            width: dimensions[:width],
-            height: dimensions[:height],
-            labels: entity_labels(entity),
-            metadata: {
-              name: entity.name,
-              stereotype: entity.stereotype,
-              attributes: entity.attributes.map do |item|
-                attribute_to_hash(item)
-              end,
-              methods: entity.class_methods.map { |item| method_to_hash(item) },
-            },
-          }
-        end
+        diagram.entities.map { |entity| transform_entity(entity) }
+      end
+
+      def transform_entity(entity)
+        dimensions = calculate_entity_dimensions(entity)
+        {
+          id: entity.id, width: dimensions[:width],
+          height: dimensions[:height], labels: entity_labels(entity),
+          metadata: entity_metadata(entity)
+        }
+      end
+
+      def entity_metadata(entity)
+        {
+          name: entity.name, stereotype: entity.stereotype,
+          attributes: entity.attributes.map { |item| attribute_to_hash(item) },
+          methods: entity.class_methods.map { |item| method_to_hash(item) }
+        }
       end
 
       def transform_relationships(diagram)
-        diagram.relationships.map do |relationship|
-          {
-            id: "#{relationship.from_id}_to_#{relationship.to_id}",
-            sources: [relationship.from_id],
-            targets: [relationship.to_id],
-            labels: relationship_labels(relationship),
-            metadata: {
-              relationship_type: relationship.relationship_type,
-              start_marker: relationship.start_marker,
-              end_marker: relationship.end_marker,
-              dashed: relationship.dashed,
-            },
-          }
-        end
+        diagram.relationships.map { |item| transform_relationship(item) }
+      end
+
+      def transform_relationship(relationship)
+        {
+          id: "#{relationship.from_id}_to_#{relationship.to_id}",
+          sources: [relationship.from_id], targets: [relationship.to_id],
+          labels: relationship_labels(relationship),
+          metadata: relationship_metadata(relationship)
+        }
+      end
+
+      def relationship_metadata(relationship)
+        {
+          relationship_type: relationship.relationship_type,
+          start_marker: relationship.start_marker,
+          end_marker: relationship.end_marker,
+          dashed: relationship.dashed,
+        }
       end
 
       def calculate_entity_dimensions(entity)
-        widths = [MIN_CLASS_WIDTH, name_block_width(entity)]
-        widths.concat(
-          entity.attributes.map { |item| member_width(item.display_text) },
-        )
-        widths.concat(
-          entity.class_methods.map { |item| member_width(item.display_text) },
-        )
-        compartments = 1 + present_compartments(entity)
-        lines = (entity.stereotype ? 2 : 1) + entity.attributes.length +
-          entity.class_methods.length
-
         {
-          width: widths.max + (COMPARTMENT_PADDING * 2),
-          height: (lines * LINE_HEIGHT) + ((compartments - 1) * 2) +
-            (COMPARTMENT_PADDING * 2),
+          width: entity_width(entity),
+          height: entity_height(entity),
         }
+      end
+
+      def entity_width(entity)
+        widths = [MIN_CLASS_WIDTH, name_block_width(entity)]
+        widths.concat(member_widths(entity.attributes))
+        widths.concat(member_widths(entity.class_methods))
+        widths.max + (COMPARTMENT_PADDING * 2)
+      end
+
+      def member_widths(items)
+        items.map { |item| member_width(item.display_text) }
+      end
+
+      def entity_height(entity)
+        lines = entity.attributes.length + entity.class_methods.length
+        lines += entity.stereotype ? 2 : 1
+        separators = present_compartments(entity) * 2
+        (lines * LINE_HEIGHT) + separators + (COMPARTMENT_PADDING * 2)
       end
 
       def present_compartments(entity)
@@ -532,23 +544,34 @@ module Sirena
       end
 
       def node_rows(x_coord, y_coord, width, id, metadata)
-        cursor = y_coord + COMPARTMENT_PADDING
-        stereotype, cursor = stereotype_row(
-          x_coord, cursor, width, metadata[:stereotype]
+        stereotype, name, cursor = node_header_rows(
+          x_coord, y_coord, width, id, metadata
         )
-        name, cursor = name_row(
-          metadata[:name] || id, x_coord, cursor, width
+        attributes, cursor, separator_ys = node_attribute_rows(
+          metadata, x_coord, cursor
         )
-        attributes, cursor, separator_ys = attribute_rows(
-          metadata[:attributes] || [], x_coord, cursor
-        )
-        methods, = member_rows(
-          metadata[:methods] || [], x_coord, cursor
-        )
+        methods, = member_rows(metadata[:methods] || [], x_coord, cursor)
+        node_row_data(stereotype, name, attributes, methods, separator_ys)
+      end
+
+      def node_row_data(stereotype, name, attributes, methods, separator_ys)
         {
           name: name, stereotype: stereotype, attributes: attributes,
           methods: methods, separator_ys: separator_ys
         }
+      end
+
+      def node_attribute_rows(metadata, x_coord, cursor)
+        attribute_rows(metadata[:attributes] || [], x_coord, cursor)
+      end
+
+      def node_header_rows(x_coord, y_coord, width, id, metadata)
+        stereotype, cursor = stereotype_row(
+          x_coord, y_coord + COMPARTMENT_PADDING, width,
+          metadata[:stereotype]
+        )
+        name, cursor = name_row(metadata[:name] || id, x_coord, cursor, width)
+        [stereotype, name, cursor]
       end
 
       def name_row(name, x_coord, y_coord, width)
@@ -595,10 +618,14 @@ module Sirena
       def typed_edges(edges, nodes)
         by_id = nodes.to_h { |node| [node[:id], node] }
         edges.filter_map do |edge|
-          source = by_id[edge[:sources]&.first]
-          target = by_id[edge[:targets]&.first]
-          typed_edge(edge, source, target) if source && target
+          typed_edge_for_nodes(edge, by_id)
         end
+      end
+
+      def typed_edge_for_nodes(edge, nodes_by_id)
+        source = nodes_by_id[edge[:sources]&.first]
+        target = nodes_by_id[edge[:targets]&.first]
+        typed_edge(edge, source, target) if source && target
       end
 
       def typed_edge(edge, source, target)
@@ -684,36 +711,63 @@ module Sirena
       end
 
       def connection_point(from_node, to_node)
-        from_x, from_y, from_width, from_height = box_values(from_node)
-        to_x, to_y, to_width, to_height = box_values(to_node)
-        from_center = {
-          x: from_x + (from_width / 2),
-          y: from_y + (from_height / 2),
-        }
-        to_center = {
-          x: to_x + (to_width / 2),
-          y: to_y + (to_height / 2),
-        }
-        dx = to_center[:x] - from_center[:x]
-        dy = to_center[:y] - from_center[:y]
-        return from_center if dx.abs < 0.001 && dy.abs < 0.001
+        from_box = box_geometry(from_node)
+        from_center = box_center(from_box)
+        to_center = box_center(box_geometry(to_node))
+        delta = point_delta(from_center, to_center)
+        return from_center if same_point?(delta)
 
-        if dx.abs > dy.abs
-          x = dx.positive? ? from_x + from_width : from_x
-          y = if dy.abs < 0.001
-                from_center[:y]
-              else
-                from_center[:y] + ((dy / dx) * (x - from_center[:x]))
-              end
+        box_connection_point(from_box, from_center, delta)
+      end
+
+      def box_geometry(node)
+        x_coord, y_coord, width, height = box_values(node)
+        { x: x_coord, y: y_coord, width: width, height: height }
+      end
+
+      def box_center(box)
+        {
+          x: box[:x] + (box[:width] / 2),
+          y: box[:y] + (box[:height] / 2),
+        }
+      end
+
+      def point_delta(from, to)
+        { x: to[:x] - from[:x], y: to[:y] - from[:y] }
+      end
+
+      def same_point?(delta)
+        delta[:x].abs < 0.001 && delta[:y].abs < 0.001
+      end
+
+      def box_connection_point(box, center, delta)
+        if delta[:x].abs > delta[:y].abs
+          horizontal_connection_point(box, center, delta)
         else
-          y = dy.positive? ? from_y + from_height : from_y
-          x = if dx.abs < 0.001
-                from_center[:x]
-              else
-                from_center[:x] + ((dx / dy) * (y - from_center[:y]))
-              end
+          vertical_connection_point(box, center, delta)
         end
-        { x: x, y: y }
+      end
+
+      def horizontal_connection_point(box, center, delta)
+        x_coord = delta[:x].positive? ? box[:x] + box[:width] : box[:x]
+        y_coord = projected_coordinate(
+          center[:y], delta[:y], delta[:x], x_coord - center[:x]
+        )
+        { x: x_coord, y: y_coord }
+      end
+
+      def vertical_connection_point(box, center, delta)
+        y_coord = delta[:y].positive? ? box[:y] + box[:height] : box[:y]
+        x_coord = projected_coordinate(
+          center[:x], delta[:x], delta[:y], y_coord - center[:y]
+        )
+        { x: x_coord, y: y_coord }
+      end
+
+      def projected_coordinate(origin, numerator, denominator, offset)
+        return origin if numerator.abs < 0.001
+
+        origin + ((numerator / denominator) * offset)
       end
 
       def box_values(node)
@@ -851,19 +905,33 @@ module Sirena
 
       def positioned_labels(labels, from, to)
         (labels || []).filter_map do |item|
-          case item[:position]
-          when "source"
-            label(item[:text], from[:x] + 5, from[:y] - 5, small_font_size,
-                  family: "Arial, sans-serif")
-          when "target"
-            label(item[:text], to[:x] - 5, to[:y] - 5, small_font_size,
-                  family: "Arial, sans-serif", anchor: "end")
-          when nil
-            label(item[:text], (from[:x] + to[:x]) / 2,
-                  ((from[:y] + to[:y]) / 2) - 5, small_font_size,
-                  family: "Arial, sans-serif", anchor: "middle")
-          end
+          positioned_label(item, from, to)
         end
+      end
+
+      def positioned_label(item, from, to)
+        case item[:position]
+        when "source" then source_label(item[:text], from)
+        when "target" then target_label(item[:text], to)
+        when nil then center_label(item[:text], from, to)
+        end
+      end
+
+      def source_label(text, point)
+        label(text, point[:x] + 5, point[:y] - 5, small_font_size,
+              family: "Arial, sans-serif")
+      end
+
+      def target_label(text, point)
+        label(text, point[:x] - 5, point[:y] - 5, small_font_size,
+              family: "Arial, sans-serif", anchor: "end")
+      end
+
+      def center_label(text, from, to)
+        x_coord = (from[:x] + to[:x]) / 2
+        y_coord = ((from[:y] + to[:y]) / 2) - 5
+        label(text, x_coord, y_coord, small_font_size,
+              family: "Arial, sans-serif", anchor: "middle")
       end
 
       def label(text, x_coord, y_coord, font_size, style = {})
@@ -908,6 +976,12 @@ module Sirena
         build_elk_options(
           algorithm: ALGORITHM_LAYERED,
           direction: direction_to_layout(diagram.direction),
+          **class_layout_spacing,
+        )
+      end
+
+      def class_layout_spacing
+        {
           ElkOptions::NODE_NODE_SPACING => CLASS_SPACING,
           ElkOptions::LAYER_SPACING => CLASS_SPACING,
           ElkOptions::EDGE_NODE_SPACING => 40,
@@ -915,7 +989,7 @@ module Sirena
           ElkOptions::NODE_PLACEMENT => "NETWORK_SIMPLEX",
           ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
           ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
-        )
+        }
       end
 
       def direction_to_layout(direction)
