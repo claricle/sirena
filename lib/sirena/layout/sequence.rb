@@ -63,9 +63,10 @@ module Sirena
         attribute :y, :float
         attribute :font_size, :float
         # Drawn lines when the text wraps or holds a `<br>`; empty for
-        # a one-line text. Line i sits `line_pitch * i` below `y`.
+        # a one-line text. `line_ys` holds each line's final baseline.
         attribute :lines, :string, collection: true, default: -> { [] }
         attribute :line_pitch, :float
+        attribute :line_ys, :float, collection: true, default: -> { [] }
       end
 
       class Head < Lutaml::Model::Serializable
@@ -617,12 +618,11 @@ module Sirena
         return if text.nil? || text.empty?
 
         source_label = edge[:labels]&.first || {}
+        top = label_top(source_x, target_x, vertical, index)
         Label.new(
           text: text, width: source_label[:width],
-          height: source_label[:height],
-          x: midpoint(source_x, target_x),
-          y: label_top(source_x, target_x, vertical, index),
-          font_size: message_font_size, **drawn_lines(index)
+          height: source_label[:height], x: midpoint(source_x, target_x),
+          y: top, font_size: message_font_size, **drawn_lines(index, top)
         )
       end
 
@@ -633,11 +633,13 @@ module Sirena
           rows.extra(index)
       end
 
-      def drawn_lines(index)
+      def drawn_lines(index, top)
         shown = rows.lines(index)
         return {} unless shown.length > 1
 
-        { lines: shown, line_pitch: rows.line_pitch }
+        pitch = rows.line_pitch
+        { lines: shown, line_pitch: pitch,
+          line_ys: shown.each_index.map { |row| top + (row * pitch) } }
       end
 
       def midpoint(source_x, target_x)
