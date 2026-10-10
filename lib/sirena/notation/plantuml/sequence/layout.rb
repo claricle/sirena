@@ -193,9 +193,17 @@ module Sirena
 
           def widen(gaps, message)
             low, high = indexes(message).sort
-            span = (low...[high, low + 1].max).select { |i| i < gaps.size }
+            span = gap_span(gaps, message, low, high)
             need = message_room(message, low == high)
             span.each { |i| raise_gap(gaps, i, need / span.size) }
+          end
+
+          # The gaps a message crosses; a leftward loop uses the one on the
+          # left of its participant.
+          def gap_span(gaps, message, low, high)
+            return [low - 1] if message.self_message? && message.leftward?
+
+            (low...[high, low + 1].max).select { |i| i < gaps.size }
           end
 
           def message_room(message, self_message)
@@ -221,7 +229,7 @@ module Sirena
 
           def self_reach(index)
             labels = @diagram.messages.select do |m|
-              m.self_message? && indexes(m).first == index
+              m.self_message? && !m.leftward? && indexes(m).first == index
             end
             return 0.0 if labels.empty?
 

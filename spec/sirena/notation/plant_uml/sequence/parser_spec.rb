@@ -320,6 +320,25 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       end
     end
 
+    {
+      "->x" => [:cross, nil], "x->" => %i[filled cross],
+      "<-x" => %i[filled cross], "x<-" => [:cross, nil],
+      "o->" => [:filled, nil], "<->" => %i[filled filled],
+      "x<->x" => %i[cross cross], "-\\" => [:upper, nil],
+      "-//" => [:lower_open, nil], "-/" => [:lower, nil],
+      "-\\\\" => [:upper_open, nil]
+    }.each do |arrow, (head, tail)|
+      it "reads #{arrow} as head #{head.inspect}, tail #{tail.inspect}" do
+        style = parse("A #{arrow} B").messages.first.style
+
+        expect([style.head.glyph, style.tail.glyph]).to eq([head, tail])
+      end
+    end
+
+    it "reads x glued to a name as part of the name" do
+      expect(parse("A -> xB").messages.first.to).to eq("xB")
+    end
+
     it "keeps the label as written" do
       expect(message_of("->").label).to eq("hi")
     end
@@ -385,8 +404,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     {
       "newpage" => "newpage",
       "!pragma layout smetana" => "preprocessor directive",
-      "A ->x B" => "message arrow", "A -[#red]> B" => "message arrow",
-      "title T" => "title"
+      "A -[#red]> B" => "message arrow",
+      "title T" => "title",
     }.each do |line, name|
       it "refuses #{line.inspect} as #{name}" do
         expect(refusal_of("A -> B", line)).to have_attributes(construct: name)

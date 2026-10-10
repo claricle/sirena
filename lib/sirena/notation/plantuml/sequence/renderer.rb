@@ -82,8 +82,8 @@ module Sirena
           end
 
           def arrow_group(arrow)
-            group(arrow.id, [arrow_path(arrow), arrow_head(arrow)],
-                  arrow.texts)
+            marks = arrow.marks.map { |mark| arrow_mark(mark) }
+            group(arrow.id, [arrow_path(arrow), *marks], arrow.texts)
           end
 
           def arrow_path(arrow)
@@ -92,11 +92,32 @@ module Sirena
                                stroke_dasharray: arrow.dashed ? "6,4" : nil)
           end
 
-          def arrow_head(arrow)
-            fill = arrow.marker_filled ? edge_colour : node_fill
-            element(Svg::Polygon, points: arrow.marker_points, fill: fill,
+          def arrow_mark(mark)
+            case mark.kind
+            when "polygon" then mark_polygon(mark)
+            when "circle" then mark_circle(mark)
+            else mark_line(mark)
+            end
+          end
+
+          def mark_polygon(mark)
+            fill = mark.filled ? edge_colour : node_fill
+            element(Svg::Polygon, points: mark.points, fill: fill,
                                   stroke: edge_colour,
                                   stroke_width: stroke_width)
+          end
+
+          def mark_circle(mark)
+            element(Svg::Circle, cx: mark.cx, cy: mark.cy, r: mark.r,
+                                 fill: node_fill, stroke: edge_colour,
+                                 stroke_width: stroke_width)
+          end
+
+          def mark_line(mark)
+            width = mark.heavy ? (stroke_width.to_f * 2).to_s : stroke_width
+            element(Svg::Line, x1: mark.x1, y1: mark.y1, x2: mark.x2,
+                               y2: mark.y2, stroke: edge_colour,
+                               stroke_width: width)
           end
 
           def fragment_group(fragment)
