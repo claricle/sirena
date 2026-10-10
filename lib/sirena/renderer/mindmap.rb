@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "line_break_text"
 require_relative "../svg/document"
 require_relative "../svg/circle"
 require_relative "../svg/rect"
@@ -226,8 +227,8 @@ module Sirena
           t.fill = theme_color(:text) || "#000000"
           t.font_size = (theme_typography(:font_size) || 12).to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-          t.content = label.text
         end
+        LineBreakText.fill(text, label.text)
 
         svg.add_element(text)
       end
