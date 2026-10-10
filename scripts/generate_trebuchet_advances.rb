@@ -11,10 +11,10 @@ require "ttfunk"
 
 RANGES = [0x20..0x7E, 0xA0..0x24F].freeze
 
-def advances(path)
+def advances(path, ranges = RANGES)
   font = TTFunk::File.open(path)
   scale = 1000.0 / font.header.units_per_em
-  RANGES.flat_map(&:to_a).filter_map do |code|
+  ranges.flat_map(&:to_a).filter_map do |code|
     advance(font, code, scale)
   end.to_h
 end
