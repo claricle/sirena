@@ -125,7 +125,7 @@ class PerformanceBenchmarker
   end
 
   def print_summary(results)
-    puts "\n" + "=" * 80
+    puts "\n#{'=' * 80}"
     puts "BENCHMARK SUMMARY"
     puts "=" * 80
 

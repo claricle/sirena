@@ -274,13 +274,13 @@ module Sirena
       end
 
       def calculate_x_position(col, col_widths)
-        return DEFAULT_SPACING if col == 0
+        return DEFAULT_SPACING if col.zero?
 
         col_widths[0...col].sum + (DEFAULT_SPACING * (col + 1))
       end
 
       def calculate_y_position(row, row_heights)
-        return DEFAULT_SPACING if row == 0
+        return DEFAULT_SPACING if row.zero?
 
         # A skipped row (span wider than the column count, or filled by
         # "space" placeholders) leaves a nil row_heights entry and

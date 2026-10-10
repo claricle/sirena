@@ -276,22 +276,6 @@ Style/ConditionalAssignment:
   Exclude:
     - 'lib/sirena/parser/builders/requirement.rb'
 
-# Offense count: 14
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: MaxUnannotatedPlaceholdersAllowed, Mode, AllowedMethods, AllowedPatterns.
-# SupportedStyles: annotated, template, unannotated
-Style/FormatStringToken:
-  EnforcedStyle: unannotated
-
-# Offense count: 3
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: AllowedReceivers.
-# AllowedReceivers: Thread.current
-Style/HashEachMethods:
-  Exclude:
-    - 'lib/sirena/renderer/requirement.rb'
-    - 'lib/sirena/layout/requirement.rb'
-
 # Offense count: 2
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/IdenticalConditionalBranches:
@@ -325,13 +309,6 @@ Style/NegatedIfElseCondition:
   Exclude:
     - 'tasks/generate_mermaid_fixtures.rake'
 
-# Offense count: 39
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: EnforcedStyle, AllowedMethods, AllowedPatterns.
-# SupportedStyles: predicate, comparison
-Style/NumericPredicate:
-  Enabled: false
-
 # Offense count: 5
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: Methods.
@@ -346,17 +323,6 @@ Style/RedundantArgument:
 # This cop supports safe autocorrection (--autocorrect).
 Style/RedundantAssignment:
   Enabled: false
-
-# Offense count: 10
-# This cop supports safe autocorrection (--autocorrect).
-Style/RedundantParentheses:
-  Exclude:
-    - 'lib/sirena/parser/grammars/block.rb'
-    - 'lib/sirena/parser/grammars/c4.rb'
-    - 'lib/sirena/parser/grammars/kanban.rb'
-    - 'lib/sirena/parser/grammars/mindmap.rb'
-    - 'lib/sirena/layout/requirement.rb'
-    - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 13
 # This cop supports safe autocorrection (--autocorrect).
@@ -393,21 +359,6 @@ Style/SafeNavigation:
 Style/SoleNestedConditional:
   Exclude:
     - 'lib/sirena/layout/gantt.rb'
-
-# Offense count: 9
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: Mode.
-Style/StringConcatenation:
-  Exclude:
-    - 'lib/sirena/commands/batch.rb'
-    - 'lib/sirena/parser/architecture.rb'
-    - 'lib/sirena/parser/block.rb'
-    - 'lib/sirena/parser/flowchart.rb'
-    - 'lib/sirena/parser/requirement.rb'
-    - 'tasks/benchmark.rake'
-    - 'tasks/examples.rake'
-    - 'tasks/generate_mermaid_fixtures.rake'
-    - 'scripts/extract_mermaid_tests.rb'
 
 # Offense count: 1
 # This cop supports unsafe autocorrection (--autocorrect-all).

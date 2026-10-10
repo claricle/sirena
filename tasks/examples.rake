@@ -27,7 +27,7 @@ namespace :examples do
     rescue ExampleTasks::UnexpectedRenderFailure
       exit 1
     end
-    puts "\n" + "=" * 60
+    puts "\n#{'=' * 60}"
     puts "✅ Example generation complete!"
     puts "   Generated: #{total_generated}"
     puts "   Failed: #{failed_renders.size}"
@@ -187,7 +187,7 @@ namespace :examples do
     end.max || 0
     number = existing + 1
 
-    basename = format("%02d-%s", number, name)
+    basename = format("%<number>02d-%<name>s", number: number, name: name)
 
     # Create .mmd file
     mmd_file = File.join(type_dir, "#{basename}.mmd")
@@ -258,7 +258,7 @@ namespace :examples do
       end
     end
 
-    puts "\n" + "=" * 60
+    puts "\n#{'=' * 60}"
     puts "Total: #{total_examples} examples across #{diagram_dirs.size} diagram types"
     puts "=" * 60
   end

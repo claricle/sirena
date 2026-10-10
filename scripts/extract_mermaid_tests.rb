@@ -167,7 +167,9 @@ class MermaidTestExtractor
       end
 
       @file_stats[file] = file_count
-      puts "  #{File.basename(file)}: #{file_count} tests" if file_count > 0
+      if file_count.positive?
+        puts "  #{File.basename(file)}: #{file_count} tests"
+      end
     end
   end
 
@@ -216,7 +218,9 @@ class MermaidTestExtractor
       end
 
       @file_stats[file] = file_count
-      puts "  #{File.basename(file)}: #{file_count} tests" if file_count > 0
+      if file_count.positive?
+        puts "  #{File.basename(file)}: #{file_count} tests"
+      end
     end
   end
 
@@ -264,7 +268,9 @@ class MermaidTestExtractor
       end
 
       @file_stats[file] = file_count
-      puts "  #{File.basename(file)}: #{file_count} tests" if file_count > 0
+      if file_count.positive?
+        puts "  #{File.basename(file)}: #{file_count} tests"
+      end
     end
   end
 
@@ -320,7 +326,9 @@ class MermaidTestExtractor
       end
 
       @file_stats[file] = file_count
-      puts "  #{File.basename(file)}: #{file_count} tests" if file_count > 0
+      if file_count.positive?
+        puts "  #{File.basename(file)}: #{file_count} tests"
+      end
     end
   end
 
@@ -352,7 +360,9 @@ class MermaidTestExtractor
       end
 
       @file_stats[file] = file_count
-      puts "  #{File.basename(file)}: #{file_count} tests" if file_count > 0
+      if file_count.positive?
+        puts "  #{File.basename(file)}: #{file_count} tests"
+      end
     end
   end
 
@@ -368,7 +378,7 @@ class MermaidTestExtractor
 
     additional_patterns.each do |pattern|
       Dir.glob(pattern).each do |file|
-        next if @file_stats[file] && @file_stats[file] > 0 # Skip already processed
+        next if @file_stats[file]&.positive? # Skip files already processed by primary extractors
 
         content = File.read(file)
         file_count = 0
@@ -391,7 +401,7 @@ class MermaidTestExtractor
           file_count += 1
         end
 
-        if file_count > 0
+        if file_count.positive?
           @file_stats[file] = file_count
           puts "  #{File.basename(file)}: #{file_count} tests"
         end
@@ -436,7 +446,7 @@ class MermaidTestExtractor
   end
 
   def organize_and_save
-    puts "\n" + "=" * 80
+    puts "\n#{'=' * 80}"
     puts "Organizing extracted tests..."
     puts "=" * 80
 
@@ -468,7 +478,7 @@ class MermaidTestExtractor
   end
 
   def print_summary
-    puts "\n" + "=" * 80
+    puts "\n#{'=' * 80}"
     puts "EXTRACTION COMPLETE"
     puts "=" * 80
     puts "Total test cases extracted: #{@test_cases.length}"

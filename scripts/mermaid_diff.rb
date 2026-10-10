@@ -115,14 +115,21 @@ def report(verdicts, only_gaps:)
 
   shown.each do |verdict|
     label = LABELS.fetch(verdict.kind)
-    puts format("%-16s %s", label, one_line(verdict.source))
+    puts format(
+      "%<label>-16s %<source>s",
+      label: label, source: one_line(verdict.source),
+    )
   end
 
   tally = verdicts.group_by(&:kind).transform_values(&:size)
   puts
-  puts format("%d probes: %d agree, %d gaps, %d over-accepted, %d mmdc failures",
-              verdicts.size, tally[:agree].to_i, tally[:gap].to_i,
-              tally[:over_acceptance].to_i, tally[:infrastructure].to_i)
+  puts format("%<total>d probes: %<agree>d agree, %<gaps>d gaps, " \
+              "%<over_accepted>d over-accepted, %<mmdc_failures>d mmdc failures",
+              total: verdicts.size,
+              agree: tally[:agree].to_i,
+              gaps: tally[:gap].to_i,
+              over_accepted: tally[:over_acceptance].to_i,
+              mmdc_failures: tally[:infrastructure].to_i)
 end
 
 # Leading whitespace is often the whole point of a probe — the indented

@@ -59,23 +59,27 @@ namespace :mermaid do
     validator = MermaidTestValidator.new
     results = validator.validate_all
 
-    puts "\n" + "=" * 60
+    puts "\n#{'=' * 60}"
     puts "VALIDATION SUMMARY"
     puts "=" * 60
 
     results.each do |type, result|
       status = result[:passing] == result[:total] ? "✅" : "⚠️ "
-      puts format("%-20s %s %3d/%3d passing (%.1f%%)",
-                  type, status, result[:passing], result[:total],
-                  (result[:passing].to_f / result[:total] * 100))
+      puts format("%<type>-20s %<status>s %<passing>3d/%<total>3d passing " \
+                  "(%<rate>.1f%%)",
+                  type: type, status: status, passing: result[:passing],
+                  total: result[:total],
+                  rate: result[:passing].to_f / result[:total] * 100)
     end
 
     total_passing = results.values.sum { |r| r[:passing] }
     total_tests = results.values.sum { |r| r[:total] }
     overall_pct = (total_passing.to_f / total_tests * 100)
 
-    puts "\n%-20s    %3d/%3d passing (%.1f%%)" %
-         ["OVERALL", total_passing, total_tests, overall_pct]
+    puts format("\n%<label>-20s    %<passing>3d/%<total>3d passing " \
+                "(%<rate>.1f%%)",
+                label: "OVERALL", passing: total_passing,
+                total: total_tests, rate: overall_pct)
   end
 end
 
@@ -168,7 +172,7 @@ class MermaidFixtureGenerator
       end
 
       # Progress indicator every 50 files
-      if (idx + 1) % 50 == 0
+      if ((idx + 1) % 50).zero?
         puts " [#{idx + 1}/#{mmd_files.length}]"
       end
     end
@@ -176,7 +180,7 @@ class MermaidFixtureGenerator
     puts if mmd_files.length % 50 != 0
 
     # Print summary
-    puts "\n" + "=" * 60
+    puts "\n#{'=' * 60}"
     puts "RESULTS SUMMARY"
     puts "=" * 60
     puts "✅ Correct behaviors: #{stats[:correct_success] + stats[:error_expected_fail]}"
@@ -184,19 +188,19 @@ class MermaidFixtureGenerator
     puts "   - Failed as expected: #{stats[:error_expected_fail]}"
 
     total_unexpected = stats[:correct_unexpected_fail] + stats[:error_unexpected_success]
-    if total_unexpected > 0
+    if total_unexpected.positive?
       puts "\n⚠️  Unexpected behaviors: #{total_unexpected}"
       puts "   - Should succeed but failed: #{stats[:correct_unexpected_fail]}"
       puts "   - Should fail but succeeded: #{stats[:error_unexpected_success]}"
 
-      if stats[:correct_unexpected_fail] > 0
+      if stats[:correct_unexpected_fail].positive?
         puts "\n  Unexpected failures (first 10):"
         unexpected_failures.first(10).each do |f|
           puts "    #{f[:file]}: #{f[:error]}"
         end
       end
 
-      if stats[:error_unexpected_success] > 0
+      if stats[:error_unexpected_success].positive?
         puts "\n  Unexpected successes (first 10):"
         unexpected_successes.first(10).each do |f|
           puts "    #{f[:file]}: #{f[:note]}"
@@ -204,13 +208,13 @@ class MermaidFixtureGenerator
       end
 
       # Save detailed logs
-      if stats[:correct_unexpected_fail] > 0
+      if stats[:correct_unexpected_fail].positive?
         fail_log = File.join(output_dir, "_unexpected_failures.log")
         File.write(fail_log, unexpected_failures.map { |f| "#{f[:file]}: #{f[:error]}" }.join("\n"))
         puts "\n📝 Failure log: #{fail_log}"
       end
 
-      if stats[:error_unexpected_success] > 0
+      if stats[:error_unexpected_success].positive?
         success_log = File.join(output_dir, "_unexpected_successes.log")
         File.write(success_log, unexpected_successes.map { |f| "#{f[:file]}: #{f[:note]}" }.join("\n"))
         puts "📝 Success log: #{success_log}"
@@ -294,10 +298,10 @@ class MermaidOutputComparator
     end
 
     total = matches + differences
-    if total > 0
+    if total.positive?
       pct = (matches.to_f / total * 100)
       puts "✅ #{matches}/#{total} similar (#{pct.round(1)}%)"
-      puts "⚠️  #{differences} differences" if differences > 0
+      puts "⚠️  #{differences} differences" if differences.positive?
     else
       puts "⚠️  No comparisons performed"
     end

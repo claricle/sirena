@@ -67,7 +67,7 @@ module Sirena
       def valid?
         !source.nil? && !source.empty? &&
           !target.nil? && !target.empty? &&
-          value > 0
+          value.positive?
       end
 
       # Check if this is a self-loop.

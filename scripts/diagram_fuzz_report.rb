@@ -132,7 +132,9 @@ module DiagramFuzzReport
       puts "type               cases  divergences   breakdown"
       results.each do |r|
         by_kind = r.divergences.group_by(&:kind).transform_values(&:size)
-        puts format("%-15s %8d %12d   %s", r.label, r.cases_total, r.divergences.size, by_kind)
+        puts format("%<label>-15s %<cases>8d %<divergences>12d   %<breakdown>s",
+                    label: r.label, cases: r.cases_total,
+                    divergences: r.divergences.size, breakdown: by_kind)
       end
     end
   end

@@ -364,7 +364,7 @@ module Sirena
       # @return [Hash] axis layout
       def position_categorical_axis(axis, width)
         num_categories = axis.values.length
-        return default_x_axis(width) if num_categories == 0
+        return default_x_axis(width) if num_categories.zero?
 
         # Calculate spacing between categories
         spacing = width / [num_categories, 1].max

@@ -132,7 +132,7 @@ module Sirena
         rule(:block_with_shape) do
           block_id.as(:block_id) >>
             (space? >> block_shape.as(:block_shape)).maybe >>
-            (block_width.as(:block_width)).maybe >>
+            block_width.as(:block_width).maybe >>
             line_end
         end
 
@@ -172,7 +172,7 @@ module Sirena
         # Only keywords that would be ambiguous in block_statement context
         rule(:reserved_keyword) do
           (str("block") | str("end") | str("space")) >>
-            (identifier_char.absent?)
+            identifier_char.absent?
         end
 
         # Identifier character (for lookahead)

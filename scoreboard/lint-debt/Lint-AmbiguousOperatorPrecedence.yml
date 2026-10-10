@@ -1,8 +1,6 @@
 ---
 cop: Lint/AmbiguousOperatorPrecedence
 rows:
-- file: lib/sirena/commands/batch.rb
-  count: 1
 - file: lib/sirena/layout/architecture.rb
   count: 8
 - file: lib/sirena/layout/block.rb
@@ -63,13 +61,5 @@ rows:
   count: 6
 - file: lib/sirena/renderer/user_journey.rb
   count: 14
-- file: scripts/extract_mermaid_tests.rb
-  count: 2
 - file: spec/sirena/renderer/flowchart_cluster_spec.rb
-  count: 2
-- file: tasks/benchmark.rake
-  count: 1
-- file: tasks/examples.rake
-  count: 2
-- file: tasks/generate_mermaid_fixtures.rake
   count: 2

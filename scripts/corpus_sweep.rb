@@ -159,13 +159,17 @@ def report(sweep_results, list_failing:)
 
     tally = results.values.tally
     passed = tally.fetch(:pass, 0)
-    puts format("%-15s %6d %6d %8d %6.1f%%",
-                type, passed, tally.fetch(:fail, 0), tally.fetch(:timeout, 0),
-                100.0 * passed / results.size)
+    puts format("%<type>-15s %<passed>6d %<failed>6d %<timeout>8d %<rate>6.1f%%",
+                type: type, passed: passed,
+                failed: tally.fetch(:fail, 0),
+                timeout: tally.fetch(:timeout, 0),
+                rate: 100.0 * passed / results.size)
   end
   all = sweep_results.values.flat_map(&:values)
   total_passed = all.count(:pass)
-  puts format("TOTAL: %d/%d = %.1f%%", total_passed, all.size, 100.0 * total_passed / all.size)
+  puts format("TOTAL: %<passed>d/%<total>d = %<rate>.1f%%",
+              passed: total_passed, total: all.size,
+              rate: 100.0 * total_passed / all.size)
   report_by_verdict(sweep_results)
   return unless list_failing
 
@@ -210,8 +214,9 @@ def report_by_verdict(sweep_results)
 
   puts "\nBY VERDICT (see scripts/corpus_verdicts.rb)"
   tally.sort.each do |verdict, (passed, total)|
-    puts format("  %-9s %5d/%-5d = %5.1f%%", verdict, passed, total,
-                100.0 * passed / total)
+    puts format("  %<verdict>-9s %<passed>5d/%<total>-5d = %<rate>5.1f%%",
+                verdict: verdict, passed: passed, total: total,
+                rate: 100.0 * passed / total)
   end
 
   # `tally` has a default block, so reading tally['valid'] would materialise
@@ -219,8 +224,11 @@ def report_by_verdict(sweep_results)
   return unless tally.key?("valid")
 
   valid = tally["valid"]
-  puts format("  --> against valid cases only: %d/%d = %.1f%%",
-              valid[0], valid[1], 100.0 * valid[0] / valid[1])
+  puts format(
+    "  --> against valid cases only: %<passed>d/%<total>d = %<rate>.1f%%",
+    passed: valid[0], total: valid[1],
+    rate: 100.0 * valid[0] / valid[1]
+  )
 end
 
 return unless File.expand_path($PROGRAM_NAME) == File.expand_path(__FILE__)

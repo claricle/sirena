@@ -153,16 +153,17 @@ module Sirena
 
     def print_summary(rows, label:)
       passed = rows.count { |row| row["pass"] }
-      puts format("%s: %d/%d cases render (%.1f%%)", label, passed, rows.size,
-                  rows.empty? ? 0.0 : (100.0 * passed / rows.size))
+      puts format("%<label>s: %<ok>d/%<all>d cases render (%<rate>.1f%%)",
+                  label: label, ok: passed, all: rows.size,
+                  rate: rows.empty? ? 0.0 : (100.0 * passed / rows.size))
 
       valid_pass, valid_total = rate_over_valid(rows)
       return if valid_total.zero?
 
-      puts format(
-        "  against evidence-valid cases only: %d/%d = %.1f%%",
-        valid_pass, valid_total, 100.0 * valid_pass / valid_total
-      )
+      puts format("  against evidence-valid cases only: " \
+                  "%<passed>d/%<total>d = %<rate>.1f%%",
+                  passed: valid_pass, total: valid_total,
+                  rate: 100.0 * valid_pass / valid_total)
     end
 
     # `rake corpus` (no type): renders the WHOLE corpus and writes the

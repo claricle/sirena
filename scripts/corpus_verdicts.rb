@@ -375,12 +375,17 @@ tally = rows.group_by { |r| r["verdict"] }.transform_values(&:size)
 puts "TYPE       VALID    INVALID  ARTIFACT  UNKNOWN"
 rows.group_by { |r| r["case"].split("/").first }.sort.each do |type, list|
   t = list.group_by { |r| r["verdict"] }.transform_values(&:size)
-  puts format("%-10s %-8d %-8d %-9d %d", type, t.fetch("valid", 0),
-              t.fetch("invalid", 0), t.fetch("artifact", 0), t.fetch("unknown", 0))
+  puts format("%<type>-10s %<valid>-8d %<invalid>-8d %<artifact>-9d %<unknown>d",
+              type: type, valid: t.fetch("valid", 0),
+              invalid: t.fetch("invalid", 0),
+              artifact: t.fetch("artifact", 0), unknown: t.fetch("unknown", 0))
 end
-puts format("\nTOTAL %d cases: valid=%d invalid=%d artifact=%d unknown=%d",
-            rows.size, tally.fetch("valid", 0), tally.fetch("invalid", 0),
-            tally.fetch("artifact", 0), tally.fetch("unknown", 0))
+puts format("\nTOTAL %<total>d cases: valid=%<valid>d invalid=%<invalid>d " \
+            "artifact=%<artifact>d unknown=%<unknown>d",
+            total: rows.size, valid: tally.fetch("valid", 0),
+            invalid: tally.fetch("invalid", 0),
+            artifact: tally.fetch("artifact", 0),
+            unknown: tally.fetch("unknown", 0))
 
 if write
   out = File.join(CORPUS_ROOT, "corpus-verdicts.yml")

@@ -53,5 +53,3 @@ rows:
   count: 1
 - file: spec/support/mermaid_diff_spec_support.rb
   count: 2
-- file: tasks/generate_mermaid_fixtures.rake
-  count: 1
