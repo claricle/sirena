@@ -208,13 +208,17 @@ module Sirena
       end
 
       def inset_point(from, toward)
-        dx = toward[0] - from[0]
-        dy = toward[1] - from[1]
-        distance = Math.hypot(dx, dy)
+        axes = from.zip(toward)
+        distance = Math.hypot(*axes.map { |start, stop| stop - start })
         return Point.new(x: from[0], y: from[1]) if distance.zero?
 
-        Point.new(x: from[0] + (dx * EDGE_INSET / distance),
-                  y: from[1] + (dy * EDGE_INSET / distance))
+        x, y = axes.map { |start, stop| inset(start, stop, distance) }
+        Point.new(x: x, y: y)
+      end
+
+      # One coordinate of the point EDGE_INSET along the way to +toward+.
+      def inset(from, toward, distance)
+        from + ((toward - from) * EDGE_INSET / distance)
       end
 
       def midpoint(first, second)
@@ -339,11 +343,15 @@ module Sirena
       # Moves the nodes so their bounding box starts PADDING from the
       # canvas origin.
       def frame(nodes)
-        left = nodes.map { |node| node[:x] - (node[:width] / 2) }.min
-        top = nodes.map { |node| node[:y] }.min
+        left, top = top_left(nodes)
         nodes.map do |node|
           node.merge(x: node[:x] - left + PADDING, y: node[:y] - top + PADDING)
         end
+      end
+
+      def top_left(nodes)
+        [nodes.map { |node| node[:x] - (node[:width] / 2) }.min,
+         nodes.map { |node| node[:y] }.min]
       end
 
       # The mmdc box of a node: width, height and wrapped label lines.
