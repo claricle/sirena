@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Layout::ErDiagram do
+RSpec.describe Sirena::Layout::ErDiagram, :aggregate_failures do
   let(:layout) { described_class.new }
   let(:diagram) do
     Sirena::Diagram::ErDiagram.new.tap do |value|

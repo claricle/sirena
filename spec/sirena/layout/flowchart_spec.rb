@@ -123,7 +123,7 @@ module LayoutFlowchartSpecHelpers
   end
 end
 
-RSpec.describe Sirena::Layout::Flowchart do
+RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
   include LayoutFlowchartSpecHelpers
 
   let(:transform) { described_class.new }

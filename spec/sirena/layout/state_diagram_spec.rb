@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Layout::StateDiagram do
+RSpec.describe Sirena::Layout::StateDiagram, :aggregate_failures do
   let(:transform) { described_class.new }
   let(:high_contrast) { Sirena::Theme::Registry.get(:high_contrast) }
   let(:engine_source) do
