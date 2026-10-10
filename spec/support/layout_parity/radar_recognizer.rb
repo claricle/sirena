@@ -22,7 +22,10 @@ module SpecSupport
           labeled_element(extractor, text, text.text, :radar_axis)
         end
         curves = nodes_with_class(doc, "radarLegendText", tag: "text")
-        curve_nodes = doc.xpath("//path[starts-with(@class, 'radarCurve-')]")
+        curve_nodes = doc.xpath(
+          "//*[self::path or self::polygon]" \
+          "[starts-with(@class, 'radarCurve-')]",
+        )
         titles = nodes_with_class(doc, "radarTitle", tag: "text")
         axis_elements + curve_elements(extractor, curve_nodes, curves) +
           title_elements(extractor, titles)

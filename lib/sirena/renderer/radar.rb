@@ -5,6 +5,7 @@ require_relative "../layout/radar"
 require_relative "../svg/document"
 require_relative "../svg/circle"
 require_relative "../svg/line"
+require_relative "../svg/path"
 require_relative "../svg/polygon"
 require_relative "../svg/text"
 
@@ -23,9 +24,9 @@ module Sirena
       def render(scene)
         scene = typed_scene(scene)
         svg = create_document(scene)
-        scene.grid_circles.each { |circle| svg << grid_circle(circle) }
+        scene.grid_circles.each { |ring| svg << grid_ring(ring, scene) }
         scene.axes.each { |axis| render_axis(axis, svg) }
-        scene.curves.each { |curve| render_curve(curve, svg) }
+        scene.curves.each { |curve| render_curve(curve, svg, scene) }
         scene.legend.each { |entry| render_legend(entry, svg) }
         svg << label_element(scene.title) if scene.title
         svg
@@ -39,15 +40,41 @@ module Sirena
         Layout::Radar.from_graph(scene, theme: theme)
       end
 
+      def grid_ring(ring, scene)
+        return grid_circle(ring) unless scene.grid_shape == "polygon"
+
+        grid_polygon(ring, scene)
+      end
+
+      def grid_polygon(ring, scene)
+        Svg::Polygon.new.tap do |element|
+          element.points = scene.axes.map { |axis| ring_point(ring, axis) }
+            .join(" ")
+          style_ring(element)
+        end
+      end
+
+      def ring_point(ring, axis)
+        radians = axis.angle * Math::PI / 180
+        x_pos = ring.x + (Math.cos(radians) * ring.radius)
+        y_pos = ring.y + (Math.sin(radians) * ring.radius)
+        "#{x_pos},#{y_pos}"
+      end
+
       def grid_circle(circle)
         Svg::Circle.new.tap do |element|
           element.cx = circle.x
           element.cy = circle.y
           element.r = circle.radius
-          element.fill = "none"
-          element.stroke = theme_color(:grid_line) || "#e5e7eb"
-          element.stroke_width = "1"
+          style_ring(element)
         end
+      end
+
+      def style_ring(element)
+        element.fill = "none"
+        element.stroke = theme_color(:grid_line) || "#e5e7eb"
+        element.stroke_width = "1"
+        element.class_name = "radarGraticule"
       end
 
       def render_axis(axis, svg)
@@ -58,22 +85,45 @@ module Sirena
           line.y2 = axis.line.y2
           line.stroke = theme_color(:axis_line) || "#9ca3af"
           line.stroke_width = "1"
+          line.class_name = "radarAxisLine"
         end
         svg << label_element(axis.label)
       end
 
-      def render_curve(curve, svg)
+      def render_curve(curve, svg, scene)
         return if curve.points.empty?
 
         color = curve_color(curve.color_index)
-        svg << Svg::Polygon.new.tap do |polygon|
-          polygon.points = curve.polygon_points
-          polygon.fill = color
-          polygon.fill_opacity = "0.3"
-          polygon.stroke = color
-          polygon.stroke_width = "2"
-        end
+        svg << curve_shape(curve, color, scene)
         curve.points.each { |point| svg << point_element(point, color) }
+      end
+
+      def curve_shape(curve, color, scene)
+        return curve_path(curve, color) unless scene.grid_shape == "polygon"
+
+        curve_polygon(curve, color)
+      end
+
+      def curve_polygon(curve, color)
+        Svg::Polygon.new.tap do |polygon|
+          polygon.points = curve.polygon_points
+          paint_curve(polygon, curve, color)
+        end
+      end
+
+      def curve_path(curve, color)
+        Svg::Path.new.tap do |path|
+          path.d = curve.path_data
+          paint_curve(path, curve, color)
+        end
+      end
+
+      def paint_curve(shape, curve, color)
+        shape.class_name = "radarCurve-#{curve.color_index}"
+        shape.fill = color
+        shape.fill_opacity = "0.3"
+        shape.stroke = color
+        shape.stroke_width = "2"
       end
 
       def point_element(point, color)
@@ -112,6 +162,7 @@ module Sirena
           text.font_family =
             theme_typography(:font_family) || "Arial, sans-serif"
           text.font_weight = label.font_weight if label.font_weight
+          text.class_name = label.class_name
           text.content = label.text
         end
       end

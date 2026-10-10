@@ -21,17 +21,16 @@ RSpec.describe Sirena::Layout::Radar do
     layout.call(diagram)
   end
 
-  it "selects anchors and baselines for all four compass directions" do
+  it "centres every axis label on its anchor like mermaid" do
     labels = four_axis_scene.axes.map(&:label)
     expect([labels.map(&:text_anchor), labels.map(&:dominant_baseline)])
-      .to eq([%w[end middle start middle],
-              %w[middle auto middle hanging]])
+      .to eq([%w[middle] * 4, %w[middle] * 4])
   end
 
   it "defaults absent measurements to zero and honors a hidden legend" do
     scene = missing_measurement_scene
     point = scene.curves.fetch(0).points.fetch(0)
     expect([point.value, point.normalized, point.x, point.y, scene.legend])
-      .to eq([0.0, 0.0, 280.0, 280.0, []])
+      .to eq([0.0, 0.0, 350.0, 350.0, []])
   end
 end

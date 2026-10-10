@@ -135,9 +135,9 @@ RSpec.describe Sirena::Renderer::Radar do
         expect(texts.length).to be >= layout[:axes].length
       end
 
-      it "includes data polygons" do
+      it "includes data paths" do
         svg = renderer.render(layout)
-        polygons = svg.children.grep(Sirena::Svg::Polygon)
+        polygons = svg.children.grep(Sirena::Svg::Path)
         expect(polygons.length).to eq(layout[:curves].length)
       end
     end
@@ -216,15 +216,15 @@ RSpec.describe Sirena::Renderer::Radar do
         }
       end
 
-      it "renders multiple data polygons" do
+      it "renders multiple data paths" do
         svg = renderer.render(layout)
-        polygons = svg.children.grep(Sirena::Svg::Polygon)
+        polygons = svg.children.grep(Sirena::Svg::Path)
         expect(polygons.length).to eq(2)
       end
 
       it "applies different colors to different datasets" do
         svg = renderer.render(layout)
-        polygons = svg.children.grep(Sirena::Svg::Polygon)
+        polygons = svg.children.grep(Sirena::Svg::Path)
         colors = polygons.map(&:stroke).uniq
         expect(colors.length).to eq(2)
       end

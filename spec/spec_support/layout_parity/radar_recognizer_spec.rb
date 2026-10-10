@@ -20,11 +20,9 @@ RSpec.describe SpecSupport::LayoutParity::RadarRecognizer do
     [summaries(reference), summaries(sirena)]
   end
 
-  it "matches axes and curves while keeping the missing title visible" do
+  it "matches axes, curves and the title on both producers" do
     reference_summary, sirena_summary = real_pair
-    missing = [[:radar_title, "Best Radar Ever"]]
 
-    expect([sirena_summary, reference_summary - sirena_summary])
-      .to eq([reference_summary - missing, missing])
+    expect(sirena_summary).to match_array(reference_summary)
   end
 end
