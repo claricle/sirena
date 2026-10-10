@@ -9,12 +9,12 @@ require "sirena/commands/batch"
 # `rendering` needs `described_class`, so it is included; `capture_stdout`
 # is pure and needs no example state, so it is a module function.
 module CliSpecHelpers
-  def rendering(exception)
+  def rendering(exception, args = ["render", "unused.mmd"])
     fake_command = instance_double(Sirena::Commands::RenderCommand)
     allow(fake_command).to receive(:run).and_raise(exception)
     allow(Sirena::Commands::RenderCommand).to receive(:new)
       .and_return(fake_command)
-    -> { described_class.start(["render", "unused.mmd"]) }
+    -> { described_class.start(args) }
   end
 
   def capture_stdout
@@ -124,6 +124,34 @@ RSpec.describe Sirena::Cli do
       expect { described_class.start(["render", "unused.mmd", "--verbose"]) }
         .to output("Error: failed to allocate memory\n\n").to_stderr
         .and raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+    end
+
+    context "with --verbose and a failure that has a backtrace and a cause" do
+      let(:failure) do
+        begin
+          raise ArgumentError, "inner cause"
+        rescue ArgumentError
+          raise Sirena::Engine::PipelineError, "outer failure"
+        end
+      rescue Sirena::Engine::PipelineError => e
+        e
+      end
+
+      let(:verbose_run) do
+        rendering(failure, ["render", "unused.mmd", "--verbose"])
+      end
+
+      it "prints the backtrace of the failure" do
+        expect(&verbose_run)
+          .to output(/cli_spec\.rb:\d+/).to_stderr
+          .and raise_error(SystemExit)
+      end
+
+      it "prints the cause chain" do
+        expect(&verbose_run)
+          .to output(/Caused by: ArgumentError: inner cause/).to_stderr
+          .and raise_error(SystemExit)
+      end
     end
   end
 
