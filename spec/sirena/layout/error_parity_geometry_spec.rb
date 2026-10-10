@@ -57,7 +57,7 @@ RSpec.describe Sirena::Layout::Error do
 
   it "aligns shared error roles without regressing recorded geometry" do
     expect(parity_evidence).to eq(
-      [case_ids, [[["error_text", nil, "version"]]],
+      [case_ids, [[]],
        [[0.0, 0.0, 0.0, 0.0]], []],
     )
   end

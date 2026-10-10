@@ -34,7 +34,7 @@ RSpec.describe Sirena::Renderer::Error do
     ring, dot = children_of(Sirena::Svg::Circle)
     [document_geometry, box_geometry(box), circle_geometry(ring),
      mark_geometry(mark), circle_geometry(dot),
-     text_geometry(children_of(Sirena::Svg::Text).first)]
+     children_of(Sirena::Svg::Text).map { |label| text_geometry(label) }]
   end
 
   def children_of(type)
@@ -45,7 +45,8 @@ RSpec.describe Sirena::Renderer::Error do
     [[2412.0, 512.0, "0 0 2412 512"],
      [0.0, 0.0, 2412.0, 512.0], [256.0, 256.0, 256.0],
      [240.0, 128.0, 32.0, 192.0], [256.0, 384.0, 16.0],
-     [1440.0, 250.0, "middle", "Dependency missing"]]
+     [[1440.0, 250.0, "middle", "Dependency missing"],
+      [1250.0, 400.0, "middle", "mermaid version 11.12.0"]]]
   end
 
   def document_geometry

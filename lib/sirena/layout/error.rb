@@ -48,6 +48,7 @@ module Sirena
         attribute :mark, Box
         attribute :dot, Circle
         attribute :label, Label
+        attribute :version_label, Label
       end
 
       def self.from_graph(graph, theme: nil)
@@ -94,7 +95,8 @@ module Sirena
           icon: Circle.new(x: 256, y: 256, radius: 256),
           mark: error_mark,
           dot: Circle.new(x: 256, y: 384, radius: 16),
-          label: error_label(graph)
+          label: error_label(graph),
+          version_label: version_label
         )
       end
 
@@ -110,6 +112,13 @@ module Sirena
         Label.new(
           text: graph[:message] || "Error", x: 1440, y: 250,
           font_size: font_size, text_anchor: "middle", font_weight: "bold"
+        )
+      end
+
+      def version_label
+        Label.new(
+          text: "mermaid version 11.12.0", x: 1250, y: 400,
+          font_size: 100, text_anchor: "middle", font_weight: "normal"
         )
       end
 

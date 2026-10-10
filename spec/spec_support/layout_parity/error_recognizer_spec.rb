@@ -58,7 +58,8 @@ RSpec.describe SpecSupport::LayoutParity::ErrorRecognizer do
        [:error_text, "message", nil, "Syntax error in text"],
        [:error_text, "version", nil, "mermaid version 11.12.0"]],
       [[:error_icon, "error-icon", nil, nil],
-       [:error_text, "message", nil, "Error"]],
+       [:error_text, "message", nil, "Error"],
+       [:error_text, "version", nil, "mermaid version 11.12.0"]],
     ]
   end
 
@@ -72,10 +73,10 @@ RSpec.describe SpecSupport::LayoutParity::ErrorRecognizer do
     expect(real_pair).to eq(expected_pair)
   end
 
-  it "matches shared roles while retaining the missing version role" do
+  it "matches all fixed roles" do
     expect(match_evidence).to eq(
-      [[%w[error-icon error-icon], %w[message message]],
-       [[:missing, [:error_text, nil, "version"], :id]]],
+      [[%w[error-icon error-icon], %w[message message],
+        %w[version version]], []],
     )
   end
 end

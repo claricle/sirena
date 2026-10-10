@@ -106,9 +106,14 @@ module Sirena
       end
 
       def render_error_text(graph, svg)
-        label = typed_scene(graph).label
+        scene = typed_scene(graph)
+        [scene.label, scene.version_label].each do |label|
+          svg << text_element(label)
+        end
+      end
 
-        text = Svg::Text.new.tap do |t|
+      def text_element(label)
+        Svg::Text.new.tap do |t|
           t.x = label.x
           t.y = label.y
           t.content = label.text
@@ -119,8 +124,6 @@ module Sirena
           t.text_anchor = label.text_anchor
           t.font_weight = label.font_weight
         end
-
-        svg << text
       end
 
       def typed_scene(graph)
