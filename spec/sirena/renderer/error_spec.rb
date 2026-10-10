@@ -42,10 +42,10 @@ RSpec.describe Sirena::Renderer::Error do
   end
 
   def expected_geometry
-    [[500.0, 220.0, "0 0 500 220"],
-     [50.0, 50.0, 400.0, 120.0], [100.0, 110.0, 20.0],
-     [98.0, 100.0, 4.0, 12.0], [100.0, 116.0, 2.0],
-     [140.0, 105.0, "Dependency missing"]]
+    [[2412.0, 512.0, "0 0 2412 512"],
+     [0.0, 0.0, 2412.0, 512.0], [256.0, 256.0, 256.0],
+     [240.0, 128.0, 32.0, 192.0], [256.0, 384.0, 16.0],
+     [1440.0, 250.0, "middle", "Dependency missing"]]
   end
 
   def document_geometry
@@ -65,6 +65,6 @@ RSpec.describe Sirena::Renderer::Error do
   end
 
   def text_geometry(label)
-    [label.x, label.y, Array(label.content).join]
+    [label.x, label.y, label.text_anchor, Array(label.content).join]
   end
 end
