@@ -718,6 +718,36 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
   end
 
+  describe "Maxmessagesize" do
+    let(:label) { "alpha beta gamma delta epsilon zeta eta theta iota" }
+    let(:plain) { scene_of("A -> B : #{label}", "B -> A : x") }
+    let(:wrapped) do
+      scene_of("skinparam maxmessagesize 100", "A -> B : #{label}", "B -> A : x")
+    end
+
+    it "breaks the label into lines" do
+      expect(wrapped.arrows.first.texts.size).to be > 1
+    end
+
+    it "keeps the label whole when no limit is set" do
+      expect(plain.arrows.first.texts.size).to eq(1)
+    end
+
+    it "lowers the arrow by the lines above it" do
+      expect(arrow_ys(wrapped).first).to be > arrow_ys(plain).first
+    end
+
+    it "pushes the next message down" do
+      expect(arrow_ys(wrapped).last).to be > arrow_ys(plain).last
+    end
+
+    it "stacks the lines above the arrow" do
+      ys = wrapped.arrows.first.texts.map(&:y)
+
+      expect(ys).to eq(ys.sort)
+    end
+  end
+
   describe "participant fills" do
     let(:head) { top_heads(scene_of("participant A #CCCCCC01")).first }
 

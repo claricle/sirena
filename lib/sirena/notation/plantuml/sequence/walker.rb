@@ -2,6 +2,7 @@
 
 require_relative "activation"
 require_relative "appearance"
+require_relative "message_wrap"
 require_relative "tab_size"
 require_relative "arrow_marks"
 require_relative "bar_tracker"
@@ -28,6 +29,7 @@ module Sirena
         # `left`, `right` and `y` describe the space the items ended up using.
         class Walker
           ROW = 40.0
+          LINE_LEADING = 1.1776
           SELF_WIDTH = 36.0
           SELF_HEIGHT = 20.0
           TAB_HEIGHT = 20.0
@@ -138,7 +140,12 @@ module Sirena
             send(handler ? handler.last : :divider, item)
           end
 
+          def wrap
+            MessageWrap.new(@appearance.max_message, @measure)
+          end
+
           def message(message)
+            @y += [label_lines(message).size - 1, 0].max * line_step
             @self_drop = message.self_message? ? SELF_HEIGHT : 0.0
             @last_y = @mark_y = @y
             from, to = [message.from, message.to].map do |place|
@@ -185,7 +192,7 @@ module Sirena
           end
 
           def local_x(edge, message)
-            run = @measure.call(message.label.to_s) + Edge::RUN_PADDING
+            run = wrap.width(message.label.to_s) + Edge::RUN_PADDING
             centre(message.participants.first) + (edge.left? ? -run : run)
           end
 
@@ -228,7 +235,7 @@ module Sirena
           end
 
           def reach(message)
-            SELF_WIDTH + 6 + @measure.call(message.label.to_s)
+            SELF_WIDTH + 6 + wrap.width(message.label.to_s)
           end
 
           def straight(message, from, to)
@@ -269,7 +276,22 @@ module Sirena
             return [] unless message.label && !message.label.empty?
 
             x, y, anchor = geometry
-            [text(message.label, x, y, "message_label", anchor)]
+            lines = label_lines(message)
+            lines.each_with_index.map do |line, index|
+              up = (lines.size - 1 - index) * line_step
+              text(line, x, y - up, "message_label", anchor)
+            end
+          end
+
+          def label_lines(message)
+            return [] if message.label.to_s.empty?
+
+            wrap.lines(message.label)
+          end
+
+          # PlantUML stacks wrapped lines 1.1776 of the text size apart.
+          def line_step
+            @font_size * LINE_LEADING
           end
 
           def text(content, at_x, at_y, role, anchor = "middle")
