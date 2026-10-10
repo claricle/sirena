@@ -113,11 +113,16 @@ module PlantUmlSequenceIrHelpers
     case value
     when Sirena::Notation::PlantUML::Sequence::Appearance
       appearance_shape(value)
-    when Array then value.map { |item| sequence_shape(item) }
-    when Hash then value.transform_values { |item| sequence_shape(item) }
+    when Array, Hash then collection_shape(value)
     when Symbol, String, Numeric, nil, true, false then value
     else object_shape(value)
     end
+  end
+
+  def collection_shape(value)
+    return value.map { |item| sequence_shape(item) } if value.is_a?(Array)
+
+    value.transform_values { |item| sequence_shape(item) }
   end
 
   def object_shape(value)
