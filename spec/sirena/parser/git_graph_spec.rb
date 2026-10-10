@@ -138,7 +138,8 @@ RSpec.describe Sirena::Parser::GitGraph do
 
         %w[.foo /foo foo. foo/].each do |name|
           expect { grammar.branch_name.parse(name) }
-            .to raise_error(Parslet::ParseFailed), "expected #{name.inspect} to be rejected"
+            .to raise_error(Parslet::ParseFailed),
+                "expected #{name.inspect} to be rejected"
         end
       end
 
@@ -165,7 +166,8 @@ RSpec.describe Sirena::Parser::GitGraph do
             "dot then word" => "a#{'b' * (run_length - 1)}.c",
           }.filter_map do |shape, name|
             got = grammar.branch_name.parse(name, prefix: true).to_s
-            "#{shape} with run length #{run_length}" if got != whole_input_regex.match(name)[0]
+            expected = whole_input_regex.match(name)[0]
+            "#{shape} with run length #{run_length}" if got != expected
           end
         end
 
@@ -194,12 +196,15 @@ RSpec.describe Sirena::Parser::GitGraph do
       # Noise (a space) only ever trails the run, never interrupts it: an
       # early interruption would end the run before it reached the edge
       # under test.
-      it "matches the whole-input reference regex across random inputs near the chunk edges" do
+      it "matches the whole-input reference regex across random inputs near " \
+         "the chunk edges" do
         grammar = Sirena::Parser::Grammars::GitGraph.new
         whole_input_regex = Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)', Regexp::MULTILINE)
         broad_pool = ("a".."z").to_a + ("0".."9").to_a + ["-", ".", "/", "_"]
         rng = Random.new(20_260_929)
-        lengths = chunk_edges.flat_map { |edge| ((edge - 2)..(edge + 2)).to_a } +
+        lengths = chunk_edges.flat_map do |edge|
+          ((edge - 2)..(edge + 2)).to_a
+        end +
                   Array.new(20) { rng.rand(1..150_000) }
 
         mismatches = lengths.filter_map do |length|
@@ -207,10 +212,14 @@ RSpec.describe Sirena::Parser::GitGraph do
           input = "a#{tail}#{' !' if rng.rand(2) == 1}"
           expected = whole_input_regex.match(input)[0]
           got = grammar.branch_name.parse(input, prefix: true).to_s
-          { length: length, expected: expected.length, got: got.length } if got != expected
+          if got != expected
+            { length: length, expected: expected.length, got: got.length }
+          end
         end
 
-        expect(mismatches).to eq([]), "#{mismatches.size}/#{lengths.size} cases mismatched: #{mismatches.first(3)}"
+        message = "#{mismatches.size}/#{lengths.size} cases mismatched: " \
+                  "#{mismatches.first(3)}"
+        expect(mismatches).to eq([]), message
       end
 
       # Guards against the OTHER shape a fixed-size-chunk atom can
@@ -221,9 +230,12 @@ RSpec.describe Sirena::Parser::GitGraph do
       # linear in the chunk size per branch, not in the name's own
       # length. Scaling ratio, not an absolute bound, for the same
       # reason as spec/support/cpu_timing.rb.
-      it "parses many branches with short names at a linear rate, not one per fixed chunk", :speed do
-        small_time = min_call_time { cpu_time { parser.parse(many_branches_source(500)) } }
-        large_time = min_call_time { cpu_time { parser.parse(many_branches_source(4_000)) } }
+      it "parses many branches with short names at a linear rate, not one " \
+         "per fixed chunk", :speed do
+        small_parse = -> { parser.parse(many_branches_source(500)) }
+        large_parse = -> { parser.parse(many_branches_source(4_000)) }
+        small_time = min_call_time { cpu_time(&small_parse) }
+        large_time = min_call_time { cpu_time(&large_parse) }
 
         expect(large_time / small_time).to be < 30
       end
@@ -363,15 +375,18 @@ RSpec.describe Sirena::Parser::GitGraph do
   # spec_helper has loaded the whole gem ($LOADED_FEATURES makes a
   # second `require` a no-op), so this shells out to a real subprocess.
   describe "grammar file, required standalone" do
-    it "loads sirena/parser/grammars/git_graph and parses a branch name without the ER grammar loaded first" do
+    it "loads sirena/parser/grammars/git_graph and parses a branch name " \
+       "without the ER grammar loaded first" do
       out, status = Open3.capture2e(
         "ruby", "-Ilib", "-e",
         'require "sirena/parser/grammars/git_graph"; ' \
-        'tree = Sirena::Parser::Grammars::GitGraph.new.parse("gitGraph\n  branch release/1.0\n"); ' \
+        "tree = Sirena::Parser::Grammars::GitGraph.new" \
+        ".parse(\"gitGraph\n  branch release/1.0\n\"); " \
         "puts tree[:statements].first[:branch][:name]"
       )
 
-      expect(status).to be_success, "expected exit 0, got #{status.exitstatus}:\n#{out}"
+      message = "expected exit 0, got #{status.exitstatus}:\n#{out}"
+      expect(status).to be_success, message
       expect(out.strip).to eq("release/1.0")
     end
   end
