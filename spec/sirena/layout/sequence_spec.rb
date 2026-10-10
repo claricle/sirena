@@ -130,7 +130,8 @@ RSpec.describe Sirena::Layout::Sequence do
           described_class::PARTICIPANT_MARGIN,
         label_center: first.label.x == first.x + (first.width / 2),
         lifeline_center: contrast_scene.lifelines.first.x1 == first.label.x,
-        message_source: contrast_scene.messages.first.shaft.x1 == first.label.x + 1,
+        message_source:
+          contrast_scene.messages.first.shaft.x1 == first.label.x + 1,
         message_target: contrast_scene.messages.first.shaft.x2 ==
           second.label.x - described_class::ARROW_SIZE,
         left_containment: label_left >= first.x,
