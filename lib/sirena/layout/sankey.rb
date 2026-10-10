@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/sankey"
+require_relative "../notation/mermaid/ir_adapters/sankey"
 
 module Sirena
   module Layout
@@ -69,7 +70,7 @@ module Sirena
       end
 
       def scene(diagram)
-        @diagram = diagram
+        @graph = ir_graph(diagram)
         @node_layers = {}
         @node_positions = {}
 
@@ -84,8 +85,8 @@ module Sirena
           height: height,
           view_box: "0 0 #{width} #{height}",
           title: title_geometry(width),
-          acc_title: diagram.acc_title,
-          acc_description: diagram.acc_description,
+          acc_title: @graph.accessibility_title,
+          acc_description: @graph.accessibility_description,
           nodes: typed_nodes,
           flows: typed_flows,
         )
@@ -93,9 +94,17 @@ module Sirena
 
       private
 
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::Sankey.call(diagram)
+      end
+
       def assign_layers
         visited = Set.new
-        source_nodes = @diagram.source_nodes
+        source_nodes = @graph.nodes.filter_map do |node|
+          node.id if total_inflow(node.id).zero?
+        end
 
         source_nodes.each do |node_id|
           @node_layers[node_id] = 0
@@ -107,8 +116,8 @@ module Sirena
           current_id = queue.shift
           current_layer = @node_layers[current_id]
 
-          @diagram.flows_from(current_id).each do |flow|
-            target_id = flow.target
+          flows_from(current_id).each do |flow|
+            target_id = flow.target_id
             next if visited.include?(target_id)
 
             @node_layers[target_id] = [
@@ -122,7 +131,8 @@ module Sirena
           end
         end
 
-        @diagram.all_node_ids.each do |node_id|
+        @graph.nodes.each do |node|
+          node_id = node.id
           @node_layers[node_id] = 0 unless @node_layers.key?(node_id)
         end
       end
@@ -133,7 +143,7 @@ module Sirena
 
         layers.each do |layer, node_ids|
           sorted_nodes = node_ids.sort_by do |id|
-            -(@diagram.total_inflow(id) + @diagram.total_outflow(id))
+            -(total_inflow(id) + total_outflow(id))
           end
 
           sorted_nodes.each_with_index do |node_id, index|
@@ -148,11 +158,10 @@ module Sirena
       end
 
       def calculate_node_width(node_id)
-        total_flow = @diagram.total_inflow(node_id) +
-                     @diagram.total_outflow(node_id)
+        total_flow = total_inflow(node_id) + total_outflow(node_id)
         return MIN_NODE_WIDTH unless scalable_flow?(total_flow)
 
-        ratio = total_flow / (@diagram.max_flow * 2)
+        ratio = total_flow / (max_flow * 2)
         width = MIN_NODE_WIDTH + (ratio * (MAX_NODE_WIDTH - MIN_NODE_WIDTH))
         width.round
       end
@@ -176,13 +185,13 @@ module Sirena
       end
 
       def title_geometry(width)
-        return unless @diagram.title
+        return unless @graph.label
 
-        Label.new(text: @diagram.title, x: width.to_i / 2, y: TITLE_Y)
+        Label.new(text: @graph.label, x: width.to_i / 2, y: TITLE_Y)
       end
 
       def typed_nodes
-        @diagram.nodes.map do |node|
+        @graph.nodes.map do |node|
           position = @node_positions.fetch(
             node.id,
             { x: 0, y: 0, width: MIN_NODE_WIDTH, height: NODE_HEIGHT },
@@ -201,57 +210,60 @@ module Sirena
             height: height,
             corner_radius: 3,
             label: Label.new(
-              text: node.display_label,
+              text: node.label || node.id,
               x: x + (width / 2),
               y: y + (height / 2) + NODE_LABEL_BASELINE_OFFSET,
             ),
-            inflow: @diagram.total_inflow(node.id),
-            outflow: @diagram.total_outflow(node.id),
+            inflow: total_inflow(node.id),
+            outflow: total_outflow(node.id),
           )
         end
       end
 
       def typed_flows
         colour_index = 0
-        @diagram.flows.map.with_index do |flow, index|
+        @graph.edges.map do |flow|
           geometry = flow_geometry(flow)
           current_colour = colour_index
-          colour_index += 1 unless flow.self_loop?
+          colour_index += 1 unless self_loop?(flow)
 
           Flow.new(
-            id: "flow_#{index}",
-            source: flow.source,
-            target: flow.target,
-            value: flow.value,
+            id: flow.id,
+            source: flow.source_id,
+            target: flow.target_id,
+            value: flow.properties.weight,
             width: geometry[:width],
             source_x: geometry[:source_x],
             source_y: geometry[:source_y],
             target_x: geometry[:target_x],
             target_y: geometry[:target_y],
-            path: flow.self_loop? ? nil : flow_path(geometry),
-            label: flow.self_loop? ? nil : flow_label(flow, geometry),
+            path: self_loop?(flow) ? nil : flow_path(geometry),
+            label: self_loop?(flow) ? nil : flow_label(flow, geometry),
             colour_index: current_colour,
-            self_loop: flow.self_loop?,
+            self_loop: self_loop?(flow),
           )
         end
       end
 
       def flow_geometry(flow)
-        source = @node_positions[flow.source]
-        target = @node_positions[flow.target]
         {
-          width: calculate_flow_width(flow.value),
-          source_x: MARGIN_LEFT + source_edge(source),
+          width: calculate_flow_width(flow.properties.weight),
+        }.merge(endpoint_geometry(flow))
+      end
+
+      def endpoint_geometry(flow)
+        source = @node_positions[flow.source_id]
+        target = @node_positions[flow.target_id]
+        { source_x: MARGIN_LEFT + source_edge(source),
           source_y: MARGIN_TOP + vertical_center(source),
           target_x: MARGIN_LEFT + target_edge(target),
-          target_y: MARGIN_TOP + vertical_center(target),
-        }
+          target_y: MARGIN_TOP + vertical_center(target) }
       end
 
       def calculate_flow_width(value)
-        return 1 if @diagram.max_flow.zero?
+        return 1 if max_flow.zero?
 
-        width = 2 + ((value / @diagram.max_flow) * 48)
+        width = 2 + ((value / max_flow) * 48)
         [width.round, 2].max
       end
 
@@ -294,7 +306,7 @@ module Sirena
       end
 
       def scalable_flow?(total_flow)
-        total_flow.positive? && @diagram.max_flow.positive?
+        total_flow.positive? && max_flow.positive?
       end
 
       def empty_canvas_width
@@ -318,10 +330,11 @@ module Sirena
       end
 
       def flow_label(flow, geometry)
-        return unless flow.value.positive?
+        value = flow.properties.weight
+        return unless value.positive?
 
         Label.new(
-          text: format_flow_value(flow.value),
+          text: format_flow_value(value),
           x: (geometry[:source_x] + geometry[:target_x]) / 2.0,
           y: (geometry[:source_y] + geometry[:target_y]) / 2.0,
         )
@@ -331,6 +344,28 @@ module Sirena
         return value.to_i.to_s if value == value.to_i
 
         format("%.2f", value).gsub(/\.?0+$/, "")
+      end
+
+      def flows_from(node_id)
+        @graph.edges.select { |flow| flow.source_id == node_id }
+      end
+
+      def total_inflow(node_id)
+        @graph.edges.filter_map do |flow|
+          flow.properties.weight if flow.target_id == node_id
+        end.sum
+      end
+
+      def total_outflow(node_id)
+        flows_from(node_id).sum { |flow| flow.properties.weight }
+      end
+
+      def max_flow
+        @graph.edges.filter_map { |flow| flow.properties.weight }.max || 0.0
+      end
+
+      def self_loop?(flow)
+        flow.source_id == flow.target_id
       end
     end
   end

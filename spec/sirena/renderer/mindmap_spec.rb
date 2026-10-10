@@ -19,6 +19,14 @@ RSpec.describe Sirena::Renderer::Mindmap do
   end
   let(:diagram) { Sirena::Parser::Mindmap.new.parse(source) }
   let(:scene) { Sirena::Layout::Mindmap.new.call(diagram) }
+  let(:compatible_summaries) do
+    graph = Sirena::Notation::Mermaid::IRAdapter.call(:mindmap, diagram)
+    [diagram, graph].map do |input|
+      result = Sirena::Layout::Mindmap.new.call(input)
+      [result.children.map { |node| [node.id, node.x, node.y, node.shape] },
+       result.edges.map { |edge| [edge.source, edge.target, edge.path] }]
+    end
+  end
 
   it "returns typed final canvas geometry" do
     actual = [scene.class, scene.children.map(&:class).uniq,
@@ -56,5 +64,9 @@ RSpec.describe Sirena::Renderer::Mindmap do
 
     expect([svg.width, svg.height, svg.view_box])
       .to eq([scene.width, scene.height, scene.view_box])
+  end
+
+  it "lays out shared IR without changing direct Diagram compatibility" do
+    expect(compatible_summaries.uniq.one?).to be(true)
   end
 end

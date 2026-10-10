@@ -13,6 +13,8 @@ module Sirena
       attribute :label, :string
       attribute :role, :string
       attribute :parent_id, :string
+      attribute :accessibility_title, :string
+      attribute :accessibility_description, :string
       attribute :properties, PropertySet, default: -> { PropertySet.new }
 
       private

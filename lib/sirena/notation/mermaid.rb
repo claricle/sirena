@@ -4,6 +4,7 @@ require_relative "../source"
 require_relative "../error/diagram_type_error"
 require_relative "../error/pipeline_error"
 require_relative "parsed"
+require_relative "mermaid/ir_adapter"
 
 module Sirena
   module Notation
@@ -261,6 +262,7 @@ module Sirena
         logger&.debug("Detected diagram type: #{type}")
         reject_degenerate_preamble(type, preamble[:degenerate])
         diagram = parse_diagram(type, preamble[:body], title, logger)
+        diagram = IRAdapter.call(type, diagram)
         Parsed.new(type: type, diagram: diagram,
                    transform: layer_class(Layout, type, Layout::LayoutError),
                    renderer: layer_class(Renderer, type, Renderer::RenderError))

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../notation/mermaid/ir_adapters/mindmap"
 
 module Sirena
   module Layout
@@ -84,13 +85,21 @@ module Sirena
       # @param diagram [Diagram::Mindmap] the mindmap diagram
       # @return [Hash] layout data with nodes and connections
       def build_graph(diagram)
-        return empty_graph unless diagram.root
+        graph = ir_graph(diagram)
+        root = graph.nodes.find { |node| node.parent_id.nil? }
+        return empty_graph unless root
+
+        @children_by_parent = graph.nodes.group_by(&:parent_id)
+        @nodes_by_id = graph.nodes.to_h { |node| [node.id, node] }
+        @levels = {}
 
         # Position nodes using tree layout
-        positioned_nodes = position_tree(diagram.root)
+        positioned_nodes = position_tree(root)
 
         # Build connections between nodes
-        connections = build_connections(diagram.root)
+        connections = graph.edges.map do |edge|
+          { from: edge.source_id, to: edge.target_id, type: edge.role.to_sym }
+        end
 
         # Calculate bounds
         bounds = calculate_bounds(positioned_nodes)
@@ -105,6 +114,12 @@ module Sirena
       end
 
       private
+
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::Mindmap.call(diagram)
+      end
 
       def scene(diagram)
         graph = build_graph(diagram)
@@ -280,19 +295,17 @@ module Sirena
         # Position root
         nodes << {
           id: root.id,
-          content: root.content,
+          content: root.label,
           x: root_x,
           y: ROOT_PADDING,
           width: root_width,
           height: root_height,
-          level: root.level,
-          shape: root.shape,
-          icon: root.icon,
-          classes: root.classes,
+          level: level_for(root),
+          shape: root.role,
         }
 
         # Position children recursively
-        if root.children.any?
+        if children_of(root).any?
           position_children(
             root,
             root_x,
@@ -311,7 +324,7 @@ module Sirena
       # @param y [Numeric] Y position for this level
       # @param nodes [Array<Hash>] accumulator for positioned nodes
       def position_children(parent, parent_x, y, nodes)
-        children = parent.children
+        children = children_of(parent)
         return if children.empty?
 
         # Calculate total width needed for all children
@@ -332,20 +345,18 @@ module Sirena
 
           nodes << {
             id: child.id,
-            content: child.content,
+            content: child.label,
             x: node_x,
             y: y,
             width: child_width,
             height: child_height,
-            level: child.level,
-            shape: child.shape,
-            icon: child.icon,
-            classes: child.classes,
+            level: level_for(child),
+            shape: child.role,
             parent_id: parent.id,
           }
 
           # Recursively position grandchildren
-          if child.children.any?
+          if children_of(child).any?
             position_children(
               child,
               node_x,
@@ -363,11 +374,11 @@ module Sirena
       # @param node [Diagram::Mindmap::MindmapNode] node
       # @return [Numeric] estimated width
       def estimate_node_width(node)
-        measured = measure_text(node.content.to_s, font_size: node_font_size)
+        measured = measure_text(node.label.to_s, font_size: node_font_size)
         base_width = [measured[:width] + 20, DEFAULT_NODE_WIDTH].max
 
         # Adjust for shape
-        case node.shape
+        case node.role
         when "circle", "hexagon"
           base_width * 1.2
         else
@@ -394,11 +405,12 @@ module Sirena
       # @return [Numeric] total width
       def estimate_subtree_width(node)
         node_width = estimate_node_width(node)
-        return node_width if node.children.empty?
+        children = children_of(node)
+        return node_width if children.empty?
 
         # Width is max of node width or sum of children widths
-        children_width = node.children.sum { |c| estimate_subtree_width(c) }
-        children_width += (node.children.size - 1) * NODE_HORIZONTAL_SPACING
+        children_width = children.sum { |child| estimate_subtree_width(child) }
+        children_width += (children.size - 1) * NODE_HORIZONTAL_SPACING
 
         [node_width, children_width].max
       end
@@ -411,24 +423,15 @@ module Sirena
         estimate_subtree_width(root) + ROOT_PADDING * 2
       end
 
-      # Builds connections between parent and child nodes
-      #
-      # @param node [Diagram::Mindmap::MindmapNode] current node
-      # @param connections [Array<Hash>] accumulator
-      # @return [Array<Hash>] all connections
-      def build_connections(node, connections = [])
-        node.children.each do |child|
-          connections << {
-            from: node.id,
-            to: child.id,
-            type: :parent_child,
-          }
+      def children_of(node)
+        @children_by_parent.fetch(node.id, [])
+      end
 
-          # Recursively build connections for children
-          build_connections(child, connections)
+      def level_for(node)
+        @levels[node.id] ||= begin
+          parent = @nodes_by_id[node.parent_id]
+          parent ? level_for(parent) + 1 : 0
         end
-
-        connections
       end
 
       # Calculates the bounding box for all positioned nodes
