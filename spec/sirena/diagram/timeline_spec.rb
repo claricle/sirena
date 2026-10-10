@@ -71,10 +71,11 @@ RSpec.describe Sirena::Diagram::Timeline do
 
     it "reports events and tasks independently" do
       states = [[section.has_events?, section.has_tasks?]]
-      section.events << Sirena::Diagram::TimelineEvent.new
-      section.tasks << "Research"
+      section.events << event("2020", "Started")
       states << [section.has_events?, section.has_tasks?]
-      expect(states).to eq([[false, false], [true, true]])
+      section.events << Sirena::Diagram::TimelineEvent.new(time: "Research")
+      states << [section.has_events?, section.has_tasks?]
+      expect(states).to eq([[false, false], [true, false], [true, true]])
     end
   end
 

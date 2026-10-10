@@ -33,7 +33,7 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapters::Timeline do
   def history_section
     Sirena::Diagram::TimelineSection.new("History").tap do |section|
       section.events << timeline_event("2020", "Started", "Expanded")
-      section.tasks << "Research"
+      section.events << timeline_event("Research")
     end
   end
 
@@ -64,7 +64,7 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapters::Timeline do
       "description", 0, 0.0],
      ["description_1", "Expanded", "description", "event_0",
       "description", 1, 1.0],
-     ["task_0", "Research", "task", "section_0_2", "task", 0, 0.0],
+     ["event_1", "Research", "event", "section_0_2", "time", 1, "Research"],
      ["event_0_2", "2024", "event", nil, "time", 0, "2024"],
      ["description_0_2", "Released", "description", "event_0_2",
       "description", 0, 0.0]]
