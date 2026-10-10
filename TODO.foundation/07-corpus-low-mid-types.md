@@ -5,14 +5,14 @@ scoreboard records 831 oracle-valid cases across the types owned by 07a–07f,
 and all 831 pass. Their other rows are fully classified (172 invalid and 173
 artifacts; no unknown verdicts).
 
-Three explicit acceptance artifacts are still missing. First, none of the six
-sub-tracks records the required singleton-capture grep-audit result (including
-an explicit zero-hit result), so the audits for 07a, 07b, 07c, 07d, 07e and
-07f remain open. Second, `DiagramTypeGaps::BY_TYPE` still creates pending
-contract examples for sankey empty input and theme output for user_journey, c4
-and error, so the suite-wide zero-pending criterion is not yet true. Third,
-item 07 must complete the joint item-14 handoff to the 90% branch floor; the
-current enforced floor is 89%.
+The six required singleton-capture grep audits are recorded in the generated
+`docs/singleton-capture-audit.md`; its generator scans the owned parser and
+builder paths and records 07e's explicit zero-hit result. Two acceptance
+criteria are still open. First, `DiagramTypeGaps::BY_TYPE` still creates
+pending contract examples for sankey empty input and theme output for
+user_journey, c4 and error, so the suite-wide zero-pending criterion is not yet
+true. Second, item 07 must complete the joint item-14 handoff to the 90% branch
+floor; the current enforced floor is 89%.
 
 Can start: after 02. Same target, method, and parallelism rules as item
 06 — including the serialized shared-grammar track for anything touching
@@ -59,8 +59,10 @@ Every sub-track records its singleton-capture grep audit result,
 including an explicit "zero hits" where that is the answer — an audit
 with no artifact is indistinguishable from one nobody ran.
 
-**Still open:** there is currently no recorded audit artifact for any of
-07a–07f. The passing corpus does not substitute for this structural audit.
+**Audit artifact satisfied:** `docs/singleton-capture-audit.md`, generated and
+freshness-checked by `scripts/audit_singleton_captures.rb`, records all six
+07a–07f results. This closes only the structural-audit artifact; it does not
+close the pending-contract or branch-floor criteria below.
 
 Every canonical corpus type that has oracle-valid cases sits at 100% on
 the scoreboard — quantified over the CORPUS, not over registrations, so
