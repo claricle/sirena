@@ -1,44 +1,44 @@
 <svg
- width="560.0"
- height="560.0"
- viewBox="0 0 560 560"
+ width="700.0"
+ height="700.0"
+ viewBox="0 0 700 700"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
-<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="40.0"/>
-<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="80.0"/>
-<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="120.0"/>
-<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="160.0"/>
-<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="200.0"/>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="280.0" y2="80.0"/>
-<text fill="#000000" x="280.0" y="54.9" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">A</text>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="453.20508075688775" y2="180.0"/>
-<text fill="#000000" x="479.1858428704209" y="165.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">B</text>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="453.20508075688775" y2="380.0"/>
-<text fill="#000000" x="479.1858428704209" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">C</text>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="280.0" y2="480.0"/>
-<text fill="#000000" x="280.0" y="514.9" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">D</text>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="106.79491924311225" y2="380.0"/>
-<text fill="#000000" x="80.81415712957909" y="406.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">E</text>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="106.79491924311228" y2="179.99999999999997"/>
-<text fill="#000000" x="80.81415712957912" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">F</text>
-<polygon fill="#2563eb" fill-opacity="0.3" stroke="#2563eb" stroke-width="2" points="280.0,180.0 424.3375672974065,196.66666666666669 308.8675134594813,296.6666666666667 280.0,413.3333333333333 222.26497308103743,313.3333333333333 106.79491924311228,179.99999999999997"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="280.0" cy="180.0" r="3.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="424.3375672974065" cy="196.66666666666669" r="3.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="308.8675134594813" cy="296.6666666666667" r="3.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="280.0" cy="413.3333333333333" r="3.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="222.26497308103743" cy="313.3333333333333" r="3.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="106.79491924311228" cy="179.99999999999997" r="3.0"/>
-<polygon fill="#7c3aed" fill-opacity="0.3" stroke="#7c3aed" stroke-width="2" points="280.0,280.0 337.7350269189626,246.66666666666669 395.47005383792515,346.66666666666663 280.0,380.0 135.66243270259352,363.3333333333333 251.13248654051873,263.3333333333333"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="280.0" cy="280.0" r="3.0"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="337.7350269189626" cy="246.66666666666669" r="3.0"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="395.47005383792515" cy="346.66666666666663" r="3.0"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="280.0" cy="380.0" r="3.0"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="135.66243270259352" cy="363.3333333333333" r="3.0"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="251.13248654051873" cy="263.3333333333333" r="3.0"/>
-<circle fill="#2563eb" stroke="none" cx="20.0" cy="520.0" r="5.0"/>
-<text fill="#000000" x="35.0" y="524.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">TeamA</text>
-<circle fill="#7c3aed" stroke="none" cx="20.0" cy="540.0" r="5.0"/>
-<text fill="#000000" x="35.0" y="544.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">TeamB</text>
+<circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="60.0"/>
+<circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="120.0"/>
+<circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="180.0"/>
+<circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="240.0"/>
+<circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="300.0"/>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="350.0" y2="50.0"/>
+<text class="radarAxisLabel" fill="#000000" x="350.0" y="39.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">A</text>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="609.8076211353316" y2="200.00000000000003"/>
+<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="197.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">B</text>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="609.8076211353316" y2="500.0"/>
+<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="512.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">C</text>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="350.0" y2="650.0"/>
+<text class="radarAxisLabel" fill="#000000" x="350.0" y="669.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">D</text>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="90.1923788646684" y2="500.0"/>
+<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="512.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">E</text>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="90.1923788646684" y2="199.99999999999997"/>
+<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="197.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">F</text>
+<path class="radarCurve-0" fill="#2563eb" fill-opacity="0.3" stroke="#2563eb" stroke-width="2" d="M350.0,97.36842105263159 C436.0099966811177,98.7105263157895 563.5892127438885,146.15789473684214 596.1335358124195,207.8947368421053 C628.6778588809505,269.63157894736844 583.2798956088819,390.7368421052631 541.4371945207706,460.52631578947364 C499.5944934326593,530.3157894736842 417.4132406419571,617.078947368421 350.0,618.421052631579 C282.5867593580429,619.7631578947369 189.05601574932354,539.5526315789474 144.88872015631716,468.42105263157896 C100.72142456331079,397.2894736842105 55.32346129124232,263.07894736842104 90.1923788646684,199.99999999999997 C125.06129643809447,136.9210526315789 263.9900033188823,96.02631578947368 350.0,97.36842105263159 Z"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="350.0" cy="97.36842105263159" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="596.1335358124195" cy="207.8947368421053" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="541.4371945207706" cy="460.52631578947364" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="350.0" cy="618.421052631579" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="144.88872015631716" cy="468.42105263157896" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="90.1923788646684" cy="199.99999999999997" r="3.0"/>
+<path class="radarCurve-1" fill="#7c3aed" fill-opacity="0.3" stroke="#7c3aed" stroke-width="2" d="M350.0,144.73684210526315 C417.4132406419571,143.39473684210526 515.5931732604666,173.8684210526316 555.1112798436828,231.57894736842107 C594.629386426899,289.2894736842106 617.3283680629334,421.13157894736844 582.4594504895073,484.2105263157895 C547.5905329160812,547.2894736842105 431.36080767132756,601.2894736842105 350.0,602.6315789473684 C268.63919232867244,603.9736842105264 136.41078725611158,553.8421052631578 103.86646418758056,492.1052631578947 C71.32214111904955,430.3684210526315 116.72010439111804,298.52631578947364 158.56280547922935,239.4736842105263 C200.40550656734067,180.42105263157893 282.5867593580429,146.07894736842104 350.0,144.73684210526315 Z"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="350.0" cy="144.73684210526315" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="555.1112798436828" cy="231.57894736842107" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="582.4594504895073" cy="484.2105263157895" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="350.0" cy="602.6315789473684" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="103.86646418758056" cy="492.1052631578947" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="158.56280547922935" cy="239.4736842105263" r="3.0"/>
+<circle fill="#2563eb" stroke="none" cx="618.5" cy="93.5" r="6.0"/>
+<text class="radarLegendText" fill="#000000" x="628.5" y="97.1" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">TeamA</text>
+<circle fill="#7c3aed" stroke="none" cx="618.5" cy="113.5" r="6.0"/>
+<text class="radarLegendText" fill="#000000" x="628.5" y="117.1" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">TeamB</text>
 </svg>

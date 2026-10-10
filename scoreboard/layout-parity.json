@@ -2351,63 +2351,44 @@
     "case": "c4/007_example_c4_6.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 6,
+      "matched": 16,
       "top5": [
         {
           "bbox_reference": [
-            150.0,
-            122.0,
-            1336.0,
-            2313.0
+            250.0,
+            1589.0,
+            588.0,
+            1695.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            6550.0,
-            2320.0
-          ],
-          "key": [
-            "c4_boundary",
-            null,
-            "BankBoundary0"
-          ]
-        },
-        {
-          "bbox_reference": [
-            200.0,
-            1127.0,
-            1286.0,
-            2263.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            50.0,
-            2110.0,
-            1040.0
-          ],
-          "key": [
-            "c4_boundary",
-            "BankBoundary0",
-            "BankBoundary"
-          ]
-        },
-        {
-          "bbox_reference": [
-            300.0,
-            1891.0,
-            516.0,
-            1951.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            50.0,
-            210.0,
-            170.0
+            250.0,
+            1589.0,
+            589.0,
+            1695.0
           ],
           "key": [
             "c4_element",
-            "BankBoundary2",
-            "Banking System A"
+            "BankBoundary",
+            "Banking System D Database"
+          ]
+        },
+        {
+          "bbox_reference": [
+            843.0,
+            2077.0,
+            1191.0,
+            2163.0
+          ],
+          "bbox_sirena": [
+            844.0,
+            2077.0,
+            1193.0,
+            2163.0
+          ],
+          "key": [
+            "c4_element",
+            "BankBoundary3",
+            "Banking System G Queue"
           ]
         },
         {
@@ -2419,9 +2400,9 @@
           ],
           "bbox_sirena": [
             300.0,
-            50.0,
-            460.0,
-            170.0
+            2051.0,
+            699.0,
+            2137.0
           ],
           "key": [
             "c4_element",
@@ -2437,564 +2418,78 @@
             2213.0
           ],
           "bbox_sirena": [
-            300.0,
-            50.0,
-            880.0,
-            400.0
+            799.0,
+            1791.0,
+            1238.0,
+            2213.0
           ],
           "key": [
             "c4_boundary",
             "BankBoundary",
             "BankBoundary3"
           ]
-        }
-      ],
-      "worst_analog": null,
-      "worst_e_a": 4.289872298698,
-      "worst_e_c": 1.066586234355,
-      "worst_e_h": 1.0,
-      "worst_e_w": 4.480607082631,
-      "worst_keys": {
-        "analog": null,
-        "e_a": [
-          "c4_boundary",
-          null,
-          "BankBoundary0"
-        ],
-        "e_c": [
-          "c4_boundary",
-          null,
-          "BankBoundary0"
-        ],
-        "e_h": [
-          "c4_element",
-          "BankBoundary2",
-          "Banking System A"
-        ],
-        "e_w": [
-          "c4_boundary",
-          null,
-          "BankBoundary0"
-        ]
-      }
-    },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
         },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary0",
-          "Banking Customer A"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary0",
-          "Banking Customer B"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary0",
-          "Banking Customer C"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary0",
-          "Banking Customer D"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary0",
-          "Internet Banking System"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary",
-          "Mainframe Banking System"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary",
-          "E-mail system"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary",
-          "Banking System D Database"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary",
-          "Banking Customer C"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary",
-          "Banking Customer D"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary2",
-          "Banking System F Queue"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary2",
-          "Banking System G Queue"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary2",
-          "E-mail system"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary2",
-          "Banking System D Database"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary2",
-          "Banking Customer A"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary3",
-          "Banking System F Queue"
-        ]
-      },
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary3",
-          "Banking System G Queue"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary3",
-          "Mainframe Banking System"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary3",
-          "Banking Customer B"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "c4_element",
-          "BankBoundary3",
-          "Internet Banking System"
-        ]
-      },
-      {
-        "actual": true,
-        "bbox_reference": [
-          [
+        {
+          "bbox_reference": [
             250.0,
             1791.0,
             748.0,
             2187.0
           ],
-          [
-            798.0,
+          "bbox_sirena": [
+            250.0,
             1791.0,
-            1236.0,
-            2213.0
+            749.0,
+            2187.0
+          ],
+          "key": [
+            "c4_boundary",
+            "BankBoundary",
+            "BankBoundary2"
           ]
+        }
+      ],
+      "worst_analog": null,
+      "worst_e_a": 0.002958579882,
+      "worst_e_c": 0.000602070977,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.002958579882,
+      "worst_keys": {
+        "analog": null,
+        "e_a": [
+          "c4_element",
+          "BankBoundary",
+          "Banking System D Database"
         ],
-        "bbox_sirena": [
-          [
-            50.0,
-            50.0,
-            630.0,
-            400.0
-          ],
-          [
-            300.0,
-            50.0,
-            880.0,
-            400.0
-          ]
+        "e_c": [
+          "c4_boundary",
+          "BankBoundary",
+          "BankBoundary3"
         ],
-        "expected": false,
-        "normalized": {
-          "intersection_height": 350.0,
-          "intersection_width": 330.0,
-          "threshold": 0.5
-        },
-        "rule": "peer-overlap",
-        "subject_keys": [
-          [
-            [
-              "c4_boundary",
-              "BankBoundary",
-              "BankBoundary2"
-            ],
-            0
-          ],
-          [
-            [
-              "c4_boundary",
-              "BankBoundary",
-              "BankBoundary3"
-            ],
-            0
-          ]
-        ]
-      },
-      {
-        "actual": true,
-        "bbox_reference": [
-          [
-            798.0,
-            1791.0,
-            1236.0,
-            2213.0
-          ],
-          [
-            300.0,
-            2051.0,
-            698.0,
-            2137.0
-          ]
+        "e_h": [
+          "c4_boundary",
+          "BankBoundary",
+          "BankBoundary2"
         ],
-        "bbox_sirena": [
-          [
-            300.0,
-            50.0,
-            880.0,
-            400.0
-          ],
-          [
-            300.0,
-            50.0,
-            460.0,
-            170.0
-          ]
-        ],
-        "expected": false,
-        "normalized": null,
-        "rule": "unexpected-sirena-containment",
-        "subject_keys": [
-          [
-            [
-              "c4_boundary",
-              "BankBoundary",
-              "BankBoundary3"
-            ],
-            0
-          ],
-          [
-            [
-              "c4_element",
-              "BankBoundary2",
-              "Banking System B"
-            ],
-            0
-          ]
-        ]
-      },
-      {
-        "actual": true,
-        "bbox_reference": [
-          [
-            798.0,
-            1791.0,
-            1236.0,
-            2213.0
-          ],
-          [
-            300.0,
-            2051.0,
-            698.0,
-            2137.0
-          ]
-        ],
-        "bbox_sirena": [
-          [
-            300.0,
-            50.0,
-            880.0,
-            400.0
-          ],
-          [
-            300.0,
-            50.0,
-            460.0,
-            170.0
-          ]
-        ],
-        "expected": false,
-        "normalized": {
-          "intersection_height": 120.0,
-          "intersection_width": 160.0,
-          "threshold": 0.5
-        },
-        "rule": "peer-overlap",
-        "subject_keys": [
-          [
-            [
-              "c4_boundary",
-              "BankBoundary",
-              "BankBoundary3"
-            ],
-            0
-          ],
-          [
-            [
-              "c4_element",
-              "BankBoundary2",
-              "Banking System B"
-            ],
-            0
-          ]
+        "e_w": [
+          "c4_element",
+          "BankBoundary",
+          "Banking System D Database"
         ]
       }
-    ],
+    },
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/c4/007_example_c4_6.svg",
     "reproduce": "bundle exec rake 'corpus[c4,valid]'",
     "sirena_status": "rendered",
     "type": "c4",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 1.066586234355,
-        "worst_e_w": 4.480607082631,
-        "worst_e_h": 1.0,
-        "worst_e_a": 4.289872298698,
+        "worst_e_c": 0.000602070977,
+        "worst_e_w": 0.002958579882,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.002958579882,
         "worst_analog": null
       }
     }
@@ -3013,10 +2508,10 @@
             300.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            190.0,
-            230.0
+            150.0,
+            166.0,
+            366.0,
+            300.0
           ],
           "key": [
             "c4_element",
@@ -3026,10 +2521,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.517489711934,
-      "worst_e_c": 0.174745882128,
-      "worst_e_h": 0.34328358209,
-      "worst_e_w": 0.351851851852,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -3062,10 +2557,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.174745882128,
-        "worst_e_w": 0.351851851852,
-        "worst_e_h": 0.34328358209,
-        "worst_e_a": 0.517489711934,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -3084,10 +2579,10 @@
             300.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            190.0,
-            230.0
+            150.0,
+            166.0,
+            366.0,
+            300.0
           ],
           "key": [
             "c4_element",
@@ -3097,10 +2592,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.517489711934,
-      "worst_e_c": 0.174745882128,
-      "worst_e_h": 0.34328358209,
-      "worst_e_w": 0.351851851852,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -3133,10 +2628,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.174745882128,
-        "worst_e_w": 0.351851851852,
-        "worst_e_h": 0.34328358209,
-        "worst_e_a": 0.517489711934,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -3155,10 +2650,10 @@
             300.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            190.0,
-            230.0
+            150.0,
+            166.0,
+            502.0,
+            300.0
           ],
           "key": [
             "c4_element",
@@ -3168,10 +2663,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.703914141414,
-      "worst_e_c": 0.287982427366,
-      "worst_e_h": 0.34328358209,
-      "worst_e_w": 0.602272727273,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -3204,10 +2699,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.287982427366,
-        "worst_e_w": 0.602272727273,
-        "worst_e_h": 0.34328358209,
-        "worst_e_a": 0.703914141414,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -3226,10 +2721,10 @@
             269.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            190.0,
-            230.0
+            150.0,
+            166.0,
+            366.0,
+            269.0
           ],
           "key": [
             "c4_element",
@@ -3239,10 +2734,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.629115226337,
-      "worst_e_c": 0.226053419423,
-      "worst_e_h": 0.747572815534,
-      "worst_e_w": 0.351851851852,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -3275,10 +2770,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.226053419423,
-        "worst_e_w": 0.351851851852,
-        "worst_e_h": 0.747572815534,
-        "worst_e_a": 0.629115226337,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -3297,10 +2792,10 @@
             269.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            190.0,
-            230.0
+            150.0,
+            166.0,
+            366.0,
+            269.0
           ],
           "key": [
             "c4_element",
@@ -3310,10 +2805,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.629115226337,
-      "worst_e_c": 0.226053419423,
-      "worst_e_h": 0.747572815534,
-      "worst_e_w": 0.351851851852,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -3346,10 +2841,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.226053419423,
-        "worst_e_w": 0.351851851852,
-        "worst_e_h": 0.747572815534,
-        "worst_e_a": 0.629115226337,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -3358,19 +2853,55 @@
     "case": "c4/028_parser_should_parse_the_description_27.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 0,
-      "top5": [],
+      "matched": 1,
+      "top5": [
+        {
+          "bbox_reference": [
+            150.0,
+            166.0,
+            502.0,
+            283.0
+          ],
+          "bbox_sirena": [
+            150.0,
+            166.0,
+            502.0,
+            283.0
+          ],
+          "key": [
+            "c4_element",
+            null,
+            "A customer of the bank, with personal bank accounts."
+          ]
+        }
+      ],
       "worst_analog": null,
-      "worst_e_a": null,
-      "worst_e_c": null,
-      "worst_e_h": null,
-      "worst_e_w": null,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
-        "e_a": null,
-        "e_c": null,
-        "e_h": null,
-        "e_w": null
+        "e_a": [
+          "c4_element",
+          null,
+          "A customer of the bank, with personal bank accounts."
+        ],
+        "e_c": [
+          "c4_element",
+          null,
+          "A customer of the bank, with personal bank accounts."
+        ],
+        "e_h": [
+          "c4_element",
+          null,
+          "A customer of the bank, with personal bank accounts."
+        ],
+        "e_w": [
+          "c4_element",
+          null,
+          "A customer of the bank, with personal bank accounts."
+        ]
       }
     },
     "invariants": [],
@@ -3381,10 +2912,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": null,
-        "worst_e_w": null,
-        "worst_e_h": null,
-        "worst_e_a": null,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -3403,10 +2934,10 @@
             300.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            190.0,
-            230.0
+            150.0,
+            166.0,
+            502.0,
+            300.0
           ],
           "key": [
             "c4_element",
@@ -3416,10 +2947,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.703914141414,
-      "worst_e_c": 0.287982427366,
-      "worst_e_h": 0.34328358209,
-      "worst_e_w": 0.602272727273,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -3452,10 +2983,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.287982427366,
-        "worst_e_w": 0.602272727273,
-        "worst_e_h": 0.34328358209,
-        "worst_e_a": 0.703914141414,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -3474,10 +3005,10 @@
             269.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            190.0,
-            230.0
+            150.0,
+            166.0,
+            366.0,
+            269.0
           ],
           "key": [
             "c4_element",
@@ -3487,10 +3018,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.629115226337,
-      "worst_e_c": 0.226053419423,
-      "worst_e_h": 0.747572815534,
-      "worst_e_w": 0.351851851852,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -3523,10 +3054,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.226053419423,
-        "worst_e_w": 0.351851851852,
-        "worst_e_h": 0.747572815534,
-        "worst_e_a": 0.629115226337,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -3545,10 +3076,10 @@
             269.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            190.0,
-            230.0
+            150.0,
+            166.0,
+            366.0,
+            269.0
           ],
           "key": [
             "c4_element",
@@ -3558,10 +3089,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.629115226337,
-      "worst_e_c": 0.226053419423,
-      "worst_e_h": 0.747572815534,
-      "worst_e_w": 0.351851851852,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -3594,10 +3125,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.226053419423,
-        "worst_e_w": 0.351851851852,
-        "worst_e_h": 0.747572815534,
-        "worst_e_a": 0.629115226337,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -3606,19 +3137,55 @@
     "case": "c4/035_parser_should_parse_the_description_34.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 0,
-      "top5": [],
+      "matched": 1,
+      "top5": [
+        {
+          "bbox_reference": [
+            150.0,
+            166.0,
+            502.0,
+            283.0
+          ],
+          "bbox_sirena": [
+            150.0,
+            166.0,
+            502.0,
+            283.0
+          ],
+          "key": [
+            "c4_element",
+            null,
+            "A customer of the bank, with personal bank accounts."
+          ]
+        }
+      ],
       "worst_analog": null,
-      "worst_e_a": null,
-      "worst_e_c": null,
-      "worst_e_h": null,
-      "worst_e_w": null,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
-        "e_a": null,
-        "e_c": null,
-        "e_h": null,
-        "e_w": null
+        "e_a": [
+          "c4_element",
+          null,
+          "A customer of the bank, with personal bank accounts."
+        ],
+        "e_c": [
+          "c4_element",
+          null,
+          "A customer of the bank, with personal bank accounts."
+        ],
+        "e_h": [
+          "c4_element",
+          null,
+          "A customer of the bank, with personal bank accounts."
+        ],
+        "e_w": [
+          "c4_element",
+          null,
+          "A customer of the bank, with personal bank accounts."
+        ]
       }
     },
     "invariants": [],
@@ -3629,10 +3196,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": null,
-        "worst_e_w": null,
-        "worst_e_h": null,
-        "worst_e_a": null,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -80117,7 +79684,7 @@
     "case": "radar/001_rendering_radar_spec_radar_0.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 4,
+      "matched": 5,
       "top5": [
         {
           "bbox_reference": [
@@ -80127,34 +79694,15 @@
             512.5078125000001
           ],
           "bbox_sirena": [
-            106.79491924311225,
-            280.0,
-            366.6025403784439,
-            380.0
+            87.44904888075651,
+            249.70526123046875,
+            531.4627682984417,
+            512.5078125
           ],
           "key": [
             "radar_curve",
             null,
             "c1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            622.7980021920982,
-            507.49999999999994,
-            622.7980021920982,
-            507.49999999999994
-          ],
-          "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
-          ],
-          "key": [
-            "radar_axis",
-            null,
-            "B"
           ]
         },
         {
@@ -80165,10 +79713,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -80184,23 +79732,61 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
             null,
             "A"
           ]
+        },
+        {
+          "bbox_reference": [
+            622.7980021920982,
+            507.49999999999994,
+            622.7980021920982,
+            507.49999999999994
+          ],
+          "bbox_sirena": [
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
+          ],
+          "key": [
+            "radar_axis",
+            null,
+            "B"
+          ]
+        },
+        {
+          "bbox_reference": [
+            350.0,
+            0.0,
+            350.0,
+            0.0
+          ],
+          "bbox_sirena": [
+            350.0,
+            12.8,
+            350.0,
+            12.8
+          ],
+          "key": [
+            "radar_title",
+            null,
+            "Best Radar Ever"
+          ]
         }
       ],
-      "worst_analog": 0.333333333333,
-      "worst_e_a": 0.537747657058,
-      "worst_e_c": 0.273089545336,
-      "worst_e_h": 0.619486190233,
-      "worst_e_w": 0.414865780553,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.017099540665,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "graticule-1",
@@ -80212,9 +79798,9 @@
           "c1"
         ],
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "B"
+          "c1"
         ],
         "e_h": [
           "radar_curve",
@@ -80228,37 +79814,19 @@
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "radar_title",
-          null,
-          "Best Radar Ever"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/radar/001_rendering_radar_spec_radar_0.svg",
     "reproduce": "bundle exec rake 'corpus[radar,valid]'",
     "sirena_status": "rendered",
     "type": "radar",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.273089545336,
-        "worst_e_w": 0.414865780553,
-        "worst_e_h": 0.619486190233,
-        "worst_e_a": 0.537747657058,
-        "worst_analog": 0.333333333333
+        "worst_e_c": 0.017099540665,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -80266,7 +79834,7 @@
     "case": "radar/002_rendering_radar_spec_radar_1.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 5,
+      "matched": 6,
       "top5": [
         {
           "bbox_reference": [
@@ -80276,10 +79844,10 @@
             512.5078125000001
           ],
           "bbox_sirena": [
-            106.79491924311225,
-            280.0,
-            366.6025403784439,
-            380.0
+            87.44904888075651,
+            249.70526123046875,
+            531.4627682984417,
+            512.5078125
           ],
           "key": [
             "radar_curve",
@@ -80295,34 +79863,15 @@
             511.65209960937494
           ],
           "bbox_sirena": [
-            280.0,
-            180.0,
-            453.20508075688775,
-            380.0
+            249.72111392382195,
+            149.05259704589844,
+            610.5247719938426,
+            511.652099609375
           ],
           "key": [
             "radar_curve",
             null,
             "c2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            622.7980021920982,
-            507.49999999999994,
-            622.7980021920982,
-            507.49999999999994
-          ],
-          "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
-          ],
-          "key": [
-            "radar_axis",
-            null,
-            "B"
           ]
         },
         {
@@ -80333,10 +79882,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -80352,23 +79901,42 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
             null,
             "A"
           ]
+        },
+        {
+          "bbox_reference": [
+            622.7980021920982,
+            507.49999999999994,
+            622.7980021920982,
+            507.49999999999994
+          ],
+          "bbox_sirena": [
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
+          ],
+          "key": [
+            "radar_axis",
+            null,
+            "B"
+          ]
         }
       ],
-      "worst_analog": 0.333333333333,
-      "worst_e_a": 0.537747657058,
-      "worst_e_c": 0.273089545336,
-      "worst_e_h": 0.619486190233,
-      "worst_e_w": 0.519946439337,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.017099540665,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "graticule-1",
@@ -80380,9 +79948,9 @@
           "c1"
         ],
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "B"
+          "c1"
         ],
         "e_h": [
           "radar_curve",
@@ -80392,41 +79960,23 @@
         "e_w": [
           "radar_curve",
           null,
-          "c2"
+          "c1"
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "radar_title",
-          null,
-          "Best Radar Ever"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/radar/002_rendering_radar_spec_radar_1.svg",
     "reproduce": "bundle exec rake 'corpus[radar,valid]'",
     "sirena_status": "rendered",
     "type": "radar",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.273089545336,
-        "worst_e_w": 0.519946439337,
-        "worst_e_h": 0.619486190233,
-        "worst_e_a": 0.537747657058,
-        "worst_analog": 0.333333333333
+        "worst_e_c": 0.017099540665,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -80434,82 +79984,63 @@
     "case": "radar/003_rendering_radar_spec_radar_2.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 5,
+      "matched": 9,
       "top5": [
         {
           "bbox_reference": [
-            535.152354472129,
-            604.8403532281085,
-            535.152354472129,
-            604.8403532281085
+            239.7902651951613,
+            275.0,
+            421.3292387221365,
+            501.6906864453026
           ],
           "bbox_sirena": [
-            415.1906080272688,
-            470.9739,
-            415.1906080272688,
-            470.9739
+            239.7902651951613,
+            275.0,
+            421.3292387221365,
+            501.6906864453026
           ],
           "key": [
-            "radar_axis",
+            "radar_curve",
             null,
-            "Strength"
+            "Naruto Uzumaki"
           ]
         },
         {
           "bbox_reference": [
-            649.5828026329734,
-            252.65964677189157,
-            649.5828026329734,
-            252.65964677189157
+            171.67690319465868,
+            275.0,
+            456.99385808320477,
+            471.3525491562421
           ],
           "bbox_sirena": [
-            498.7429987478853,
-            208.9260912937621,
-            498.7429987478853,
-            208.9260912937621
+            171.6769031946587,
+            275.0,
+            456.99385808320477,
+            471.3525491562421
           ],
           "key": [
-            "radar_axis",
+            "radar_curve",
             null,
-            "Speed"
+            "Sasuke"
           ]
         },
         {
           "bbox_reference": [
-            164.847645527871,
-            604.8403532281085,
-            164.847645527871,
-            604.8403532281085
+            207.34152255572695,
+            237.5,
+            421.3292387221365,
+            501.6906864453026
           ],
           "bbox_sirena": [
-            144.8093919727312,
-            470.9739,
-            144.8093919727312,
-            470.9739
+            207.34152255572698,
+            237.5,
+            421.3292387221365,
+            501.6906864453026
           ],
           "key": [
-            "radar_axis",
+            "radar_curve",
             null,
-            "Stamina"
-          ]
-        },
-        {
-          "bbox_reference": [
-            350.0,
-            35.0,
-            350.0,
-            35.0
-          ],
-          "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
-          ],
-          "key": [
-            "radar_axis",
-            null,
-            "Agility"
+            "Ninja3"
           ]
         },
         {
@@ -80520,121 +80051,79 @@
             252.6596467718916
           ],
           "bbox_sirena": [
-            61.25700125211469,
-            220.1261,
-            61.25700125211469,
-            220.1261
+            50.41719736702663,
+            257.5596,
+            50.41719736702663,
+            257.5596
           ],
           "key": [
             "radar_axis",
             null,
             "Intelligence"
           ]
+        },
+        {
+          "bbox_reference": [
+            649.5828026329734,
+            252.65964677189157,
+            649.5828026329734,
+            252.65964677189157
+          ],
+          "bbox_sirena": [
+            649.5828026329734,
+            257.5596,
+            649.5828026329734,
+            257.5596
+          ],
+          "key": [
+            "radar_axis",
+            null,
+            "Speed"
+          ]
         }
       ],
-      "worst_analog": "Infinity",
-      "worst_e_a": null,
-      "worst_e_c": 0.244141918799,
-      "worst_e_h": null,
-      "worst_e_w": null,
+      "worst_analog": null,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.015034587173,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
-        "analog": [
-          "radar",
-          "measurement_error",
-          "graticule counts differ"
+        "analog": null,
+        "e_a": [
+          "radar_curve",
+          null,
+          "Ninja3"
         ],
-        "e_a": null,
         "e_c": [
-          "radar_axis",
-          null,
-          "Strength"
-        ],
-        "e_h": null,
-        "e_w": null
-      }
-    },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "radar_title",
-          null,
-          "My favorite ninjas"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
           "radar_curve",
           null,
           "Naruto Uzumaki"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
+        ],
+        "e_h": [
           "radar_curve",
           null,
-          "Sasuke"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
+          "Naruto Uzumaki"
+        ],
+        "e_w": [
           "radar_curve",
           null,
           "Ninja3"
         ]
       }
-    ],
+    },
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/radar/003_rendering_radar_spec_radar_2.svg",
     "reproduce": "bundle exec rake 'corpus[radar,valid]'",
     "sirena_status": "rendered",
     "type": "radar",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.244141918799,
-        "worst_e_w": null,
-        "worst_e_h": null,
-        "worst_e_a": null,
-        "worst_analog": "Infinity"
+        "worst_e_c": 0.015034587173,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": null
       }
     }
   },
@@ -80642,7 +80131,7 @@
     "case": "radar/004_rendering_radar_spec_radar_3.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 4,
+      "matched": 5,
       "top5": [
         {
           "bbox_reference": [
@@ -80652,34 +80141,15 @@
             512.5078125000001
           ],
           "bbox_sirena": [
-            106.79491924311225,
-            280.0,
-            366.6025403784439,
-            380.0
+            87.44904888075651,
+            249.70526123046875,
+            531.4627682984417,
+            512.5078125
           ],
           "key": [
             "radar_curve",
             null,
             "mycurve"
-          ]
-        },
-        {
-          "bbox_reference": [
-            622.7980021920982,
-            507.49999999999994,
-            622.7980021920982,
-            507.49999999999994
-          ],
-          "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
-          ],
-          "key": [
-            "radar_axis",
-            null,
-            "B"
           ]
         },
         {
@@ -80690,10 +80160,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -80709,23 +80179,61 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
             null,
             "A"
           ]
+        },
+        {
+          "bbox_reference": [
+            622.7980021920982,
+            507.49999999999994,
+            622.7980021920982,
+            507.49999999999994
+          ],
+          "bbox_sirena": [
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
+          ],
+          "key": [
+            "radar_axis",
+            null,
+            "B"
+          ]
+        },
+        {
+          "bbox_reference": [
+            350.0,
+            0.0,
+            350.0,
+            0.0
+          ],
+          "bbox_sirena": [
+            350.0,
+            12.8,
+            350.0,
+            12.8
+          ],
+          "key": [
+            "radar_title",
+            null,
+            "Best Radar Ever"
+          ]
         }
       ],
-      "worst_analog": 0.333333333333,
-      "worst_e_a": 0.537747657058,
-      "worst_e_c": 0.273089545336,
-      "worst_e_h": 0.619486190233,
-      "worst_e_w": 0.414865780553,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.017099540665,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "graticule-1",
@@ -80737,9 +80245,9 @@
           "mycurve"
         ],
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "B"
+          "mycurve"
         ],
         "e_h": [
           "radar_curve",
@@ -80753,37 +80261,19 @@
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "radar_title",
-          null,
-          "Best Radar Ever"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/radar/004_rendering_radar_spec_radar_3.svg",
     "reproduce": "bundle exec rake 'corpus[radar,valid]'",
     "sirena_status": "rendered",
     "type": "radar",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.273089545336,
-        "worst_e_w": 0.414865780553,
-        "worst_e_h": 0.619486190233,
-        "worst_e_a": 0.537747657058,
-        "worst_analog": 0.333333333333
+        "worst_e_c": 0.017099540665,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -80801,10 +80291,10 @@
             512.5078125000001
           ],
           "bbox_sirena": [
-            106.79491924311225,
-            280.0,
-            366.6025403784439,
-            380.0
+            87.44904888075651,
+            249.70526123046875,
+            531.4627682984417,
+            512.5078125
           ],
           "key": [
             "radar_curve",
@@ -80820,10 +80310,10 @@
             507.49999999999994
           ],
           "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -80839,10 +80329,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -80858,10 +80348,10 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
@@ -80870,11 +80360,11 @@
           ]
         }
       ],
-      "worst_analog": 0.333333333333,
-      "worst_e_a": 0.537747657058,
-      "worst_e_c": 0.273089545336,
-      "worst_e_h": 0.619486190233,
-      "worst_e_w": 0.414865780553,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.006758211121,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "graticule-1",
@@ -80886,9 +80376,9 @@
           "mycurve"
         ],
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "B"
+          "mycurve"
         ],
         "e_h": [
           "radar_curve",
@@ -80910,11 +80400,11 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.273089545336,
-        "worst_e_w": 0.414865780553,
-        "worst_e_h": 0.619486190233,
-        "worst_e_a": 0.537747657058,
-        "worst_analog": 0.333333333333
+        "worst_e_c": 0.006758211121,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -80932,10 +80422,10 @@
             512.5078125000001
           ],
           "bbox_sirena": [
-            106.79491924311225,
-            280.0,
-            366.6025403784439,
-            380.0
+            87.44904888075651,
+            249.70526123046875,
+            531.4627682984417,
+            512.5078125
           ],
           "key": [
             "radar_curve",
@@ -80951,10 +80441,10 @@
             507.49999999999994
           ],
           "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -80970,10 +80460,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -80989,10 +80479,10 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
@@ -81001,11 +80491,11 @@
           ]
         }
       ],
-      "worst_analog": 0.333333333333,
-      "worst_e_a": 0.537747657058,
-      "worst_e_c": 0.273089545336,
-      "worst_e_h": 0.619486190233,
-      "worst_e_w": 0.414865780553,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.006758211121,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "graticule-1",
@@ -81017,9 +80507,9 @@
           "mycurve"
         ],
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "B"
+          "mycurve"
         ],
         "e_h": [
           "radar_curve",
@@ -81041,11 +80531,11 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.273089545336,
-        "worst_e_w": 0.414865780553,
-        "worst_e_h": 0.619486190233,
-        "worst_e_a": 0.537747657058,
-        "worst_analog": 0.333333333333
+        "worst_e_c": 0.006758211121,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -81063,10 +80553,10 @@
             512.5078125000001
           ],
           "bbox_sirena": [
-            106.79491924311225,
-            280.0,
-            366.6025403784439,
-            380.0
+            87.44904888075651,
+            249.70526123046875,
+            531.4627682984417,
+            512.5078125
           ],
           "key": [
             "radar_curve",
@@ -81082,10 +80572,10 @@
             507.49999999999994
           ],
           "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -81101,10 +80591,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -81120,10 +80610,10 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
@@ -81132,11 +80622,11 @@
           ]
         }
       ],
-      "worst_analog": 0.333333333333,
-      "worst_e_a": 0.537747657058,
-      "worst_e_c": 0.273089545336,
-      "worst_e_h": 0.619486190233,
-      "worst_e_w": 0.414865780553,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.006758211121,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "graticule-1",
@@ -81148,9 +80638,9 @@
           "mycurve"
         ],
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "B"
+          "mycurve"
         ],
         "e_h": [
           "radar_curve",
@@ -81172,11 +80662,11 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.273089545336,
-        "worst_e_w": 0.414865780553,
-        "worst_e_h": 0.619486190233,
-        "worst_e_a": 0.537747657058,
-        "worst_analog": 0.333333333333
+        "worst_e_c": 0.006758211121,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -81184,7 +80674,7 @@
     "case": "radar/010_parser_should_handle_diagram_with_data_and_title_9.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 4,
+      "matched": 5,
       "top5": [
         {
           "bbox_reference": [
@@ -81194,34 +80684,15 @@
             512.5078125000001
           ],
           "bbox_sirena": [
-            106.79491924311225,
-            280.0,
-            366.6025403784439,
-            380.0
+            87.44904888075651,
+            249.70526123046875,
+            531.4627682984417,
+            512.5078125
           ],
           "key": [
             "radar_curve",
             null,
             "My Curve"
-          ]
-        },
-        {
-          "bbox_reference": [
-            622.7980021920982,
-            507.49999999999994,
-            622.7980021920982,
-            507.49999999999994
-          ],
-          "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
-          ],
-          "key": [
-            "radar_axis",
-            null,
-            "Axis B"
           ]
         },
         {
@@ -81232,10 +80703,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -81251,23 +80722,61 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
             null,
             "Axis A"
           ]
+        },
+        {
+          "bbox_reference": [
+            622.7980021920982,
+            507.49999999999994,
+            622.7980021920982,
+            507.49999999999994
+          ],
+          "bbox_sirena": [
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
+          ],
+          "key": [
+            "radar_axis",
+            null,
+            "Axis B"
+          ]
+        },
+        {
+          "bbox_reference": [
+            350.0,
+            0.0,
+            350.0,
+            0.0
+          ],
+          "bbox_sirena": [
+            350.0,
+            12.8,
+            350.0,
+            12.8
+          ],
+          "key": [
+            "radar_title",
+            null,
+            "Radar diagram"
+          ]
         }
       ],
-      "worst_analog": 0.333333333333,
-      "worst_e_a": 0.537747657058,
-      "worst_e_c": 0.273089545336,
-      "worst_e_h": 0.619486190233,
-      "worst_e_w": 0.414865780553,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.017099540665,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "graticule-1",
@@ -81279,9 +80788,9 @@
           "My Curve"
         ],
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "Axis B"
+          "My Curve"
         ],
         "e_h": [
           "radar_curve",
@@ -81295,37 +80804,19 @@
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "radar_title",
-          null,
-          "Radar diagram"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/radar/010_parser_should_handle_diagram_with_data_and_title_9.svg",
     "reproduce": "bundle exec rake 'corpus[radar,valid]'",
     "sirena_status": "rendered",
     "type": "radar",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.273089545336,
-        "worst_e_w": 0.414865780553,
-        "worst_e_h": 0.619486190233,
-        "worst_e_a": 0.537747657058,
-        "worst_analog": 0.333333333333
+        "worst_e_c": 0.017099540665,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -81378,10 +80869,10 @@
             512.5078125000001
           ],
           "bbox_sirena": [
-            106.79491924311225,
-            280.0,
-            366.6025403784439,
-            380.0
+            87.44904888075651,
+            249.70526123046875,
+            531.4627682984417,
+            512.5078125
           ],
           "key": [
             "radar_curve",
@@ -81397,10 +80888,10 @@
             507.49999999999994
           ],
           "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -81416,10 +80907,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -81435,10 +80926,10 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
@@ -81447,11 +80938,11 @@
           ]
         }
       ],
-      "worst_analog": 0.333333333333,
-      "worst_e_a": 0.537747657058,
-      "worst_e_c": 0.273089545336,
-      "worst_e_h": 0.619486190233,
-      "worst_e_w": 0.414865780553,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.006758211121,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "graticule-1",
@@ -81463,9 +80954,9 @@
           "mycurve"
         ],
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "B"
+          "mycurve"
         ],
         "e_h": [
           "radar_curve",
@@ -81487,11 +80978,11 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.273089545336,
-        "worst_e_w": 0.414865780553,
-        "worst_e_h": 0.619486190233,
-        "worst_e_a": 0.537747657058,
-        "worst_analog": 0.333333333333
+        "worst_e_c": 0.006758211121,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -81509,10 +81000,10 @@
             512.5078125000001
           ],
           "bbox_sirena": [
-            106.79491924311225,
-            280.0,
-            366.6025403784439,
-            380.0
+            87.44904888075651,
+            249.70526123046875,
+            531.4627682984417,
+            512.5078125
           ],
           "key": [
             "radar_curve",
@@ -81528,10 +81019,10 @@
             507.49999999999994
           ],
           "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -81547,10 +81038,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -81566,10 +81057,10 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
@@ -81578,11 +81069,11 @@
           ]
         }
       ],
-      "worst_analog": 0.333333333333,
-      "worst_e_a": 0.537747657058,
-      "worst_e_c": 0.273089545336,
-      "worst_e_h": 0.619486190233,
-      "worst_e_w": 0.414865780553,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.006758211121,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "graticule-1",
@@ -81594,9 +81085,9 @@
           "mycurve"
         ],
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "B"
+          "mycurve"
         ],
         "e_h": [
           "radar_curve",
@@ -81618,11 +81109,11 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.273089545336,
-        "worst_e_w": 0.414865780553,
-        "worst_e_h": 0.619486190233,
-        "worst_e_a": 0.537747657058,
-        "worst_analog": 0.333333333333
+        "worst_e_c": 0.006758211121,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -81640,10 +81131,10 @@
             512.5078125000001
           ],
           "bbox_sirena": [
-            106.79491924311225,
-            280.0,
-            366.6025403784439,
-            380.0
+            87.44904888075651,
+            249.70526123046875,
+            531.4627682984417,
+            512.5078125
           ],
           "key": [
             "radar_curve",
@@ -81659,10 +81150,10 @@
             507.49999999999994
           ],
           "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -81678,10 +81169,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -81697,10 +81188,10 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
@@ -81709,11 +81200,11 @@
           ]
         }
       ],
-      "worst_analog": 0.333333333333,
-      "worst_e_a": 0.537747657058,
-      "worst_e_c": 0.273089545336,
-      "worst_e_h": 0.619486190233,
-      "worst_e_w": 0.414865780553,
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.006758211121,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
           "graticule-1",
@@ -81725,9 +81216,9 @@
           "mycurve"
         ],
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "B"
+          "mycurve"
         ],
         "e_h": [
           "radar_curve",
@@ -81749,11 +81240,11 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.273089545336,
-        "worst_e_w": 0.414865780553,
-        "worst_e_h": 0.619486190233,
-        "worst_e_a": 0.537747657058,
-        "worst_analog": 0.333333333333
+        "worst_e_c": 0.006758211121,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
       }
     }
   },
@@ -81761,25 +81252,44 @@
     "case": "radar/015_parser_should_draw_a_complex_radar_diagram_14.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 3,
+      "matched": 6,
       "top5": [
         {
           "bbox_reference": [
-            622.7980021920982,
-            507.49999999999994,
-            622.7980021920982,
-            507.49999999999994
+            90.19237886466846,
+            250.0,
+            523.2050807568878,
+            500.0000000000001
           ],
           "bbox_sirena": [
-            479.1858428704209,
-            395.0,
-            479.1858428704209,
-            395.0
+            90.1923788646684,
+            250.0,
+            523.2050807568878,
+            500.0
           ],
           "key": [
-            "radar_axis",
+            "radar_curve",
             null,
-            "Axis B"
+            "My Curve"
+          ]
+        },
+        {
+          "bbox_reference": [
+            263.39745962155615,
+            150.0,
+            609.8076211353316,
+            499.99999999999994
+          ],
+          "bbox_sirena": [
+            263.3974596215561,
+            150.0,
+            609.8076211353316,
+            500.0
+          ],
+          "key": [
+            "radar_curve",
+            null,
+            "My Curve 2"
           ]
         },
         {
@@ -81790,10 +81300,10 @@
             507.5000000000001
           ],
           "bbox_sirena": [
-            80.81415712957909,
-            406.2,
-            80.81415712957909,
-            406.2
+            77.20199780790182,
+            512.4,
+            77.20199780790182,
+            512.4
           ],
           "key": [
             "radar_axis",
@@ -81809,104 +81319,79 @@
             35.0
           ],
           "bbox_sirena": [
-            280.0,
-            54.9,
-            280.0,
-            54.9
+            350.0,
+            39.9,
+            350.0,
+            39.9
           ],
           "key": [
             "radar_axis",
             null,
             "Axis A"
           ]
+        },
+        {
+          "bbox_reference": [
+            622.7980021920982,
+            507.49999999999994,
+            622.7980021920982,
+            507.49999999999994
+          ],
+          "bbox_sirena": [
+            622.7980021920982,
+            512.4,
+            622.7980021920982,
+            512.4
+          ],
+          "key": [
+            "radar_axis",
+            null,
+            "Axis B"
+          ]
         }
       ],
-      "worst_analog": "Infinity",
-      "worst_e_a": null,
-      "worst_e_c": 0.274333721058,
-      "worst_e_h": null,
-      "worst_e_w": null,
+      "worst_analog": null,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.017178016633,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
-        "analog": [
-          "radar",
-          "measurement_error",
-          "graticule counts differ"
+        "analog": null,
+        "e_a": [
+          "radar_curve",
+          null,
+          "My Curve"
         ],
-        "e_a": null,
         "e_c": [
-          "radar_axis",
+          "radar_curve",
           null,
-          "Axis B"
+          "My Curve"
         ],
-        "e_h": null,
-        "e_w": null
-      }
-    },
-    "invariants": [
-      {
-        "actual": 0,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 1,
-          "difference": "missing",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "radar_title",
+        "e_h": [
+          "radar_curve",
           null,
-          "Radar diagram"
-        ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
+          "My Curve"
+        ],
+        "e_w": [
           "radar_curve",
           null,
           "My Curve"
         ]
-      },
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "radar_curve",
-          null,
-          "My Curve 2"
-        ]
       }
-    ],
+    },
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/radar/015_parser_should_draw_a_complex_radar_diagram_14.svg",
     "reproduce": "bundle exec rake 'corpus[radar,valid]'",
     "sirena_status": "rendered",
     "type": "radar",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.274333721058,
-        "worst_e_w": null,
-        "worst_e_h": null,
-        "worst_e_a": null,
-        "worst_analog": "Infinity"
+        "worst_e_c": 0.017178016633,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": null
       }
     }
   },
@@ -81916,16 +81401,15 @@
       "ambiguous": 0,
       "matched": 0,
       "top5": [],
-      "worst_analog": "Infinity",
+      "worst_analog": 0.0,
       "worst_e_a": null,
       "worst_e_c": null,
       "worst_e_h": null,
       "worst_e_w": null,
       "worst_keys": {
         "analog": [
-          "radar",
-          "measurement_error",
-          "graticule counts differ"
+          "graticule-1",
+          "radius"
         ],
         "e_a": null,
         "e_c": null,
@@ -81945,7 +81429,7 @@
         "worst_e_w": null,
         "worst_e_h": null,
         "worst_e_a": null,
-        "worst_analog": "Infinity"
+        "worst_analog": 0.0
       }
     }
   },
@@ -84758,10 +84242,10 @@
             92.0
           ],
           "bbox_sirena": [
-            290.0,
-            38.0,
-            440.0,
-            103.0
+            285.0,
+            37.0,
+            435.0,
+            102.0
           ],
           "key": [
             "participant-top",
@@ -84777,10 +84261,10 @@
             92.0
           ],
           "bbox_sirena": [
-            60.0,
-            38.0,
-            210.0,
-            103.0
+            55.0,
+            37.0,
+            205.0,
+            102.0
           ],
           "key": [
             "participant-top",
@@ -91903,9 +91387,9 @@
           ],
           "bbox_sirena": [
             470.0,
-            38.0,
+            37.0,
             620.0,
-            103.0
+            102.0
           ],
           "key": [
             "participant-top",
@@ -91921,10 +91405,10 @@
             92.0
           ],
           "bbox_sirena": [
-            260.0,
-            38.0,
-            410.0,
-            103.0
+            255.0,
+            37.0,
+            405.0,
+            102.0
           ],
           "key": [
             "participant-top",
@@ -91940,10 +91424,10 @@
             92.0
           ],
           "bbox_sirena": [
-            60.0,
-            38.0,
-            210.0,
-            103.0
+            55.0,
+            37.0,
+            205.0,
+            102.0
           ],
           "key": [
             "participant-top",
@@ -91954,7 +91438,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.008791569762,
+      "worst_e_c": 0.0,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -91989,7 +91473,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.008791569762,
+        "worst_e_c": 0.0,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -92456,10 +91940,10 @@
             92.0
           ],
           "bbox_sirena": [
-            290.0,
-            38.0,
-            440.0,
-            103.0
+            285.0,
+            37.0,
+            435.0,
+            102.0
           ],
           "key": [
             "participant-top",
@@ -92475,10 +91959,10 @@
             92.0
           ],
           "bbox_sirena": [
-            60.0,
-            38.0,
-            210.0,
-            103.0
+            55.0,
+            37.0,
+            205.0,
+            102.0
           ],
           "key": [
             "participant-top",
@@ -98284,7 +97768,7 @@
     "case": "timeline/001_rendering_timeline_spec_timeline_0.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 9,
+      "matched": 10,
       "top5": [
         {
           "bbox_reference": [
@@ -98431,7 +97915,7 @@
     "case": "timeline/002_rendering_timeline_spec_timeline_1.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 10,
+      "matched": 13,
       "top5": [
         {
           "bbox_reference": [
@@ -98531,7 +98015,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.000000036768,
-      "worst_e_c": 0.000000001482,
+      "worst_e_c": 0.00000000113,
       "worst_e_h": 0.000000036768,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -98566,7 +98050,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.000000001482,
+        "worst_e_c": 0.00000000113,
         "worst_e_w": 0.0,
         "worst_e_h": 0.000000036768,
         "worst_e_a": 0.000000036768,
@@ -98578,7 +98062,7 @@
     "case": "timeline/003_rendering_timeline_spec_timeline_2.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 10,
+      "matched": 13,
       "top5": [
         {
           "bbox_reference": [
@@ -98678,7 +98162,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.000000059682,
-      "worst_e_c": 0.000000013879,
+      "worst_e_c": 0.000000010355,
       "worst_e_h": 0.000000059682,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -98713,7 +98197,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.000000013879,
+        "worst_e_c": 0.000000010355,
         "worst_e_w": 0.0,
         "worst_e_h": 0.000000059682,
         "worst_e_a": 0.000000059682,
@@ -98725,7 +98209,7 @@
     "case": "timeline/004_rendering_timeline_spec_timeline_3.mmd",
     "geometry": {
       "ambiguous": 2,
-      "matched": 22,
+      "matched": 26,
       "top5": [
         {
           "bbox_reference": [
@@ -98825,7 +98309,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.000000023331,
-      "worst_e_c": 0.000000003032,
+      "worst_e_c": 0.000000002431,
       "worst_e_h": 0.000000023331,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -98860,7 +98344,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.000000003032,
+        "worst_e_c": 0.000000002431,
         "worst_e_w": 0.0,
         "worst_e_h": 0.000000023331,
         "worst_e_a": 0.000000023331,
@@ -98872,19 +98356,47 @@
     "case": "timeline/006_rendering_timeline_spec_timeline_5.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 0,
-      "top5": [],
+      "matched": 1,
+      "top5": [
+        {
+          "bbox_reference": [
+            150.0,
+            100.0,
+            450.0,
+            100.0
+          ],
+          "bbox_sirena": [
+            50.0,
+            50.0,
+            350.0,
+            50.0
+          ],
+          "key": [
+            "timeline_axis",
+            null,
+            "axis"
+          ]
+        }
+      ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": null,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
-      "worst_e_w": null,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": null,
-        "e_c": null,
+        "e_c": [
+          "timeline_axis",
+          null,
+          "axis"
+        ],
         "e_h": null,
-        "e_w": null
+        "e_w": [
+          "timeline_axis",
+          null,
+          "axis"
+        ]
       }
     },
     "invariants": [],
@@ -98895,8 +98407,8 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": null,
-        "worst_e_w": null,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
         "worst_e_h": null,
         "worst_e_a": null,
         "worst_analog": null
@@ -98907,7 +98419,7 @@
     "case": "timeline/007_example_timeline_6.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 9,
+      "matched": 10,
       "top5": [
         {
           "bbox_reference": [
@@ -99054,19 +98566,74 @@
     "case": "timeline/008_parser_should_handle_a_simple_section_definition_abc-123_7.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 0,
-      "top5": [],
+      "matched": 2,
+      "top5": [
+        {
+          "bbox_reference": [
+            200.0,
+            50.0,
+            390.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            100.0,
+            50.0,
+            290.0,
+            117.8
+          ],
+          "key": [
+            "timeline_section",
+            null,
+            "abc-123"
+          ]
+        },
+        {
+          "bbox_reference": [
+            150.0,
+            217.8,
+            640.0,
+            217.8
+          ],
+          "bbox_sirena": [
+            50.0,
+            217.8,
+            540.0,
+            217.8
+          ],
+          "key": [
+            "timeline_axis",
+            null,
+            "axis"
+          ]
+        }
+      ],
       "worst_analog": null,
-      "worst_e_a": null,
-      "worst_e_c": null,
-      "worst_e_h": null,
-      "worst_e_w": null,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
-        "e_a": null,
-        "e_c": null,
-        "e_h": null,
-        "e_w": null
+        "e_a": [
+          "timeline_section",
+          null,
+          "abc-123"
+        ],
+        "e_c": [
+          "timeline_section",
+          null,
+          "abc-123"
+        ],
+        "e_h": [
+          "timeline_section",
+          null,
+          "abc-123"
+        ],
+        "e_w": [
+          "timeline_section",
+          null,
+          "abc-123"
+        ]
       }
     },
     "invariants": [],
@@ -99077,10 +98644,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": null,
-        "worst_e_w": null,
-        "worst_e_h": null,
-        "worst_e_a": null,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -99089,7 +98656,7 @@
     "case": "timeline/009_parser_should_handle_a_simple_section_and_only_two_tasks_8.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 2,
+      "matched": 4,
       "top5": [
         {
           "bbox_reference": [
@@ -99127,6 +98694,44 @@
             "timeline_period",
             null,
             "task2"
+          ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
+            50.0,
+            590.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            100.0,
+            50.0,
+            490.0,
+            117.8
+          ],
+          "key": [
+            "timeline_section",
+            null,
+            "abc-123"
+          ]
+        },
+        {
+          "bbox_reference": [
+            150.0,
+            285.6,
+            840.0,
+            285.6
+          ],
+          "bbox_sirena": [
+            50.0,
+            285.6,
+            740.0,
+            285.6
+          ],
+          "key": [
+            "timeline_axis",
+            null,
+            "axis"
           ]
         }
       ],
@@ -99179,7 +98784,7 @@
     "case": "timeline/010_parser_should_handle_a_two_section_and_two_corresponding_tasks_9.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 4,
+      "matched": 7,
       "top5": [
         {
           "bbox_reference": [
@@ -99256,6 +98861,25 @@
             null,
             "task4"
           ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
+            50.0,
+            590.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            100.0,
+            50.0,
+            490.0,
+            117.8
+          ],
+          "key": [
+            "timeline_section",
+            null,
+            "abc-123"
+          ]
         }
       ],
       "worst_analog": null,
@@ -99307,7 +98931,7 @@
     "case": "timeline/011_parser_should_handle_a_section_and_task_and_its_events_10.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 5,
+      "matched": 7,
       "top5": [
         {
           "bbox_reference": [
@@ -99454,8 +99078,27 @@
     "case": "timeline/012_parser_should_handle_a_section_and_task_and_its_events_including_markdown_link_11.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 5,
+      "matched": 7,
       "top5": [
+        {
+          "bbox_reference": [
+            150.0,
+            285.6,
+            855.859375,
+            285.6
+          ],
+          "bbox_sirena": [
+            50.0,
+            285.6,
+            755.808,
+            285.6
+          ],
+          "key": [
+            "timeline_axis",
+            null,
+            "axis"
+          ]
+        },
         {
           "bbox_reference": [
             200.0,
@@ -99531,32 +99174,13 @@
             null,
             "event2"
           ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            427.8,
-            590.0,
-            477.8
-          ],
-          "bbox_sirena": [
-            300.0,
-            427.8,
-            490.0,
-            477.8
-          ],
-          "key": [
-            "timeline_event",
-            null,
-            "event3"
-          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.0,
+      "worst_e_c": 0.000031122071,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.0,
+      "worst_e_w": 0.000072783619,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -99565,9 +99189,9 @@
           "task1"
         ],
         "e_c": [
-          "timeline_period",
+          "timeline_axis",
           null,
-          "task1"
+          "axis"
         ],
         "e_h": [
           "timeline_period",
@@ -99575,9 +99199,9 @@
           "task1"
         ],
         "e_w": [
-          "timeline_period",
+          "timeline_axis",
           null,
-          "task1"
+          "axis"
         ]
       }
     },
@@ -99589,8 +99213,8 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.0,
-        "worst_e_w": 0.0,
+        "worst_e_c": 0.000031122071,
+        "worst_e_w": 0.000072783619,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
         "worst_analog": null
@@ -99601,7 +99225,7 @@
     "case": "timeline/013_parser_should_handle_a_section_and_task_and_its_multi_line_events_12.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 7,
+      "matched": 9,
       "top5": [
         {
           "bbox_reference": [
@@ -99748,7 +99372,7 @@
     "case": "timeline/014_parser_should_handle_a_title_section_task_and_events_with_semicolons_13.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 4,
+      "matched": 6,
       "top5": [
         {
           "bbox_reference": [
@@ -99786,6 +99410,25 @@
             "timeline_event",
             null,
             ";ev;ent2;"
+          ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
+            50.0,
+            390.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            305.0,
+            111.0,
+            495.0,
+            178.8
+          ],
+          "key": [
+            "timeline_section",
+            null,
+            ";a;bc-123;"
           ]
         },
         {
@@ -99876,7 +99519,7 @@
     "case": "timeline/015_parser_should_handle_a_title_section_task_and_events_with_hashtags_14.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 4,
+      "matched": 6,
       "top5": [
         {
           "bbox_reference": [
@@ -99914,6 +99557,25 @@
             "timeline_event",
             null,
             "#ev#ent2#"
+          ]
+        },
+        {
+          "bbox_reference": [
+            200.0,
+            50.0,
+            390.0,
+            117.8
+          ],
+          "bbox_sirena": [
+            305.0,
+            111.0,
+            495.0,
+            178.8
+          ],
+          "key": [
+            "timeline_section",
+            null,
+            "#a#bc-123#"
           ]
         },
         {
@@ -100004,19 +99666,47 @@
     "case": "timeline/016_spec_diagram-orchestration_spec_15.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 0,
-      "top5": [],
+      "matched": 1,
+      "top5": [
+        {
+          "bbox_reference": [
+            150.0,
+            100.0,
+            450.0,
+            100.0
+          ],
+          "bbox_sirena": [
+            50.0,
+            50.0,
+            350.0,
+            50.0
+          ],
+          "key": [
+            "timeline_axis",
+            null,
+            "axis"
+          ]
+        }
+      ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": null,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
-      "worst_e_w": null,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": null,
-        "e_c": null,
+        "e_c": [
+          "timeline_axis",
+          null,
+          "axis"
+        ],
         "e_h": null,
-        "e_w": null
+        "e_w": [
+          "timeline_axis",
+          null,
+          "axis"
+        ]
       }
     },
     "invariants": [],
@@ -100027,8 +99717,8 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": null,
-        "worst_e_w": null,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
         "worst_e_h": null,
         "worst_e_a": null,
         "worst_analog": null
@@ -100039,19 +99729,47 @@
     "case": "timeline/017_spec_diagram-orchestration_spec_16.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 0,
-      "top5": [],
+      "matched": 1,
+      "top5": [
+        {
+          "bbox_reference": [
+            150.0,
+            100.0,
+            450.0,
+            100.0
+          ],
+          "bbox_sirena": [
+            50.0,
+            50.0,
+            350.0,
+            50.0
+          ],
+          "key": [
+            "timeline_axis",
+            null,
+            "axis"
+          ]
+        }
+      ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": null,
+      "worst_e_c": 0.0,
       "worst_e_h": null,
-      "worst_e_w": null,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": null,
-        "e_c": null,
+        "e_c": [
+          "timeline_axis",
+          null,
+          "axis"
+        ],
         "e_h": null,
-        "e_w": null
+        "e_w": [
+          "timeline_axis",
+          null,
+          "axis"
+        ]
       }
     },
     "invariants": [],
@@ -100062,8 +99780,8 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": null,
-        "worst_e_w": null,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
         "worst_e_h": null,
         "worst_e_a": null,
         "worst_analog": null
