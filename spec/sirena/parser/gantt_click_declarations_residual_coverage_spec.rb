@@ -16,9 +16,13 @@ RSpec.describe Sirena::Parser::Gantt do
         click b call handleB
     GANTT
   end
+  let(:actual) do
+    tasks.map do |task|
+      [task.id, task.click_href, task.click_callback]
+    end
+  end
 
   it "attaches href and callback declarations to their tasks" do
-    actual = tasks.map { |task| [task.id, task.click_href, task.click_callback] }
     expect(actual).to eq([
                            ["a", "https://example.test/a", nil],
                            ["b", nil, "handleB"],
