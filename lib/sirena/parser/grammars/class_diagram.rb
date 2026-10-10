@@ -193,10 +193,10 @@ module Sirena
         rule(:colon_member_definition) do
           class_ref >> space? >>
             colon >> space? >>
-            (colon_body_annotation >> line_end |
+            ((colon_body_annotation >> line_end) |
               (visibility_modifier.maybe.as(:visibility) >>
                 member_definition.as(:member) >> line_end) |
-              colon_text.as(:raw_member) >> line_end)
+              (colon_text.as(:raw_member) >> line_end))
         end
 
         # Link statement: link ClassName "url" "tooltip"
@@ -575,7 +575,7 @@ module Sirena
 
         # Line terminators for class diagrams
         rule(:line_end) do
-          semicolon.maybe >> space? >> (comment.maybe >> newline | eof)
+          semicolon.maybe >> space? >> ((comment.maybe >> newline) | eof)
         end
 
         # `line_end`, but also accepts a following `}` with no newline before

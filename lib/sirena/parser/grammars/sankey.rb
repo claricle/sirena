@@ -46,7 +46,7 @@ module Sirena
         rule(:statement) do
           node_declaration |
             flow_entry |
-            comment >> line_end
+            (comment >> line_end)
         end
 
         # Node declaration with optional label

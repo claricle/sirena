@@ -182,7 +182,7 @@ module Sirena
 
         # Line terminator
         rule(:line_end) do
-          semicolon.maybe >> space? >> (comment.maybe >> newline | eof)
+          semicolon.maybe >> space? >> ((comment.maybe >> newline) | eof)
         end
       end
     end

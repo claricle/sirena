@@ -88,8 +88,8 @@ module Sirena
 
         rule(:commit_id) do
           str("id:") >> space? >>
-            (str('"') >> match('[^"]').repeat(1).as(:id) >> str('"') |
-             str("'") >> match("[^']").repeat(1).as(:id) >> str("'") |
+            ((str('"') >> match('[^"]').repeat(1).as(:id) >> str('"')) |
+             (str("'") >> match("[^']").repeat(1).as(:id) >> str("'")) |
              match('[^\s,]').repeat(1).as(:id))
         end
 
@@ -100,8 +100,8 @@ module Sirena
 
         rule(:commit_tag) do
           str("tag:") >> space? >>
-            (str('"') >> match('[^"]').repeat(1).as(:tag) >> str('"') |
-             str("'") >> match("[^']").repeat(1).as(:tag) >> str("'") |
+            ((str('"') >> match('[^"]').repeat(1).as(:tag) >> str('"')) |
+             (str("'") >> match("[^']").repeat(1).as(:tag) >> str("'")) |
              match('[^\s,]').repeat(1).as(:tag))
         end
 
@@ -208,21 +208,21 @@ module Sirena
 
         rule(:cherry_pick_id) do
           str("id:") >> space? >>
-            (str('"') >> match('[^"]').repeat(1).as(:id) >> str('"') |
-             str("'") >> match("[^']").repeat(1).as(:id) >> str("'") |
+            ((str('"') >> match('[^"]').repeat(1).as(:id) >> str('"')) |
+             (str("'") >> match("[^']").repeat(1).as(:id) >> str("'")) |
              match('[^\s,]').repeat(1).as(:id))
         end
 
         rule(:cherry_pick_parent) do
           str("parent:") >> space? >>
-            (str('"') >> match('[^"]').repeat(1).as(:parent) >> str('"') |
-             str("'") >> match("[^']").repeat(1).as(:parent) >> str("'") |
+            ((str('"') >> match('[^"]').repeat(1).as(:parent) >> str('"')) |
+             (str("'") >> match("[^']").repeat(1).as(:parent) >> str("'")) |
              match('[^\s,]').repeat(1).as(:parent))
         end
 
         rule(:quoted_string) do
-          str('"') >> match('[^"]').repeat(0) >> str('"') |
-            str("'") >> match("[^']").repeat(0) >> str("'")
+          (str('"') >> match('[^"]').repeat(0) >> str('"')) |
+            (str("'") >> match("[^']").repeat(0) >> str("'"))
         end
 
         root(:diagram)

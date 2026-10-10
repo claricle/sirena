@@ -217,7 +217,7 @@ module Sirena
         # Override string to capture content
         rule(:quoted_string) do
           str('"') >> (
-            str("\\") >> any | str('"').absent? >> any
+            (str("\\") >> any) | (str('"').absent? >> any)
           ).repeat.as(:string) >> str('"')
         end
       end

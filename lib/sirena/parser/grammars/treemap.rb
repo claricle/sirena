@@ -30,8 +30,8 @@ module Sirena
         # Quoted strings
         rule(:quoted_string) do
           str('"') >> (
-            str("\\") >> any |
-            str('"').absent? >> any
+            (str("\\") >> any) |
+            (str('"').absent? >> any)
           ).repeat.as(:string) >> str('"')
         end
 
@@ -96,13 +96,13 @@ module Sirena
 
         # Statement (title, acc, node, or class def)
         rule(:statement) do
-          title_decl >> spaces? |
-            acc_title >> spaces? |
-            acc_descr >> spaces? |
-            class_def.as(:class_def) >> spaces? |
+          (title_decl >> spaces?) |
+            (acc_title >> spaces?) |
+            (acc_descr >> spaces?) |
+            (class_def.as(:class_def) >> spaces?) |
             node_line.as(:node) |
-            comment >> spaces? |
-            spaces? >> newline
+            (comment >> spaces?) |
+            (spaces? >> newline)
         end
 
         # Main diagram

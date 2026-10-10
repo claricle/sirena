@@ -105,7 +105,7 @@ module Sirena
         end
 
         rule(:title_statement) do
-          str("title") >> (colon >> space? | space.repeat(1)) >>
+          str("title") >> ((colon >> space?) | space.repeat(1)) >>
             match['^#;\n'].repeat >> content_boundary
         end
 

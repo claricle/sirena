@@ -50,7 +50,7 @@ module Sirena
             quadrant_label_declaration |
             class_def_declaration |
             data_point |
-            comment >> line_end
+            (comment >> line_end)
         end
 
         # Title declaration
@@ -186,7 +186,7 @@ module Sirena
 
         # Color value (#hex or named color)
         rule(:color_value) do
-          str("#") >> match["0-9a-fA-F"].repeat(3, 8) |
+          (str("#") >> match["0-9a-fA-F"].repeat(3, 8)) |
             match["a-zA-Z"].repeat(1)
         end
 
