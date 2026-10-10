@@ -307,9 +307,9 @@ module Sirena
         end
       end
 
-      def corner_radius(kind, _width, height)
+      def corner_radius(kind, width, height)
         return CLUSTER_CORNER if kind == "cluster"
-        return height / 2.0 if kind == "rounded"
+        return [width, height].min / 2.0 if kind == "rounded"
 
         0.0
       end
@@ -651,7 +651,9 @@ module Sirena
       end
 
       def stadium_scale(half_w, half_h, x_diff, y_diff)
-        return ellipse_scale(half_w, half_h, x_diff, y_diff) if half_w <= half_h
+        return ellipse_scale(half_w, half_h, x_diff, y_diff) if half_w == half_h
+        # A tall stadium is a wide one turned on its side.
+        return stadium_scale(half_h, half_w, y_diff, x_diff) if half_w < half_h
 
         flat = y_diff.zero? ? Float::INFINITY : half_h / y_diff.abs
         straight = half_w - half_h
