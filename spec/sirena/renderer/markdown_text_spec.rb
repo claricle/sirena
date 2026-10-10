@@ -2,7 +2,17 @@
 
 require "spec_helper"
 
+module MarkdownTextRendererSpecHelpers
+  def tspan_summary(source)
+    lines = Sirena::MarkdownText.parse_lines(source)
+    tspans = Sirena::Renderer::MarkdownText.build_markdown_tspans(lines, x: 5)
+    tspans.map { |tspan| [Array(tspan.content).join, tspan.line_shift] }
+  end
+end
+
 RSpec.describe Sirena::Renderer::MarkdownText do
+  include MarkdownTextRendererSpecHelpers
+
   describe ".assign_markdown_text" do
     it "renders an empty parsed label as an empty text element" do
       lines = Sirena::MarkdownText.parse_lines("")
@@ -21,13 +31,12 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     # break. `Sirena::MarkdownText.parse_lines` must not produce an
     # intervening empty runs array for any number of blank lines, so this
     # exercises both the producer and `build_markdown_tspans` together.
-    it "advances by exactly one line-height across a blank-line gap, however many blank lines" do
-      one_blank = described_class.build_markdown_tspans(Sirena::MarkdownText.parse_lines("Title\n\nSubtitle"), x: 5)
-      two_blank = described_class.build_markdown_tspans(Sirena::MarkdownText.parse_lines("A\n\n\nB"), x: 5)
-
+    it "advances by exactly one line-height across a blank-line gap, " \
+       "however many blank lines" do
       # `content` is `collection: true`, so read it through Array(...).
-      expect(one_blank.map { |t| [Array(t.content).join, t.line_shift] }).to eq([["Title", nil], ["Subtitle", 1]])
-      expect(two_blank.map { |t| [Array(t.content).join, t.line_shift] }).to eq([["A", nil], ["B", 1]])
+      expect([tspan_summary("Title\n\nSubtitle"), tspan_summary("A\n\n\nB")])
+        .to eq([[["Title", nil], ["Subtitle", 1]],
+                [["A", nil], ["B", 1]]])
     end
   end
 end
