@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "er_diagram_adjacency"
+
 module Sirena
   module Layout
     # Orders the nodes within each rank to cut edge crossings, following
@@ -18,32 +20,20 @@ module Sirena
 
       def initialize(ranks, edges)
         @ranks = ranks
-        @successors = Hash.new { |hash, key| hash[key] = [] }
-        @predecessors = Hash.new { |hash, key| hash[key] = [] }
-        edges.each do |from, to|
-          @successors[from] << to
-          @predecessors[to] << from
-        end
+        adjacency = ErDiagramAdjacency.new(edges)
+        @successors = adjacency.successors
+        @predecessors = adjacency.predecessors
       end
 
       def call
         layers = starting_layers
         best = nil
-        best_crossings = Float::INFINITY
         stalled = 0
-        sweep = 0
-        while stalled < STALL_LIMIT
+        0.step do |sweep|
           layers = sweep_once(layers, sweep)
-          crossings = crossing_count(layers)
-          if crossings < best_crossings
-            best = layers.map(&:dup)
-            best_crossings = crossings
-            stalled = 0
-          end
-          stalled += 1
-          sweep += 1
+          best, stalled = better(best, layers, stalled)
+          return best.first if stalled >= STALL_LIMIT
         end
-        best
       end
 
       private
@@ -64,55 +54,72 @@ module Sirena
         @successors[id].each { |to| descend(to, layers, seen) }
       end
 
+      # @param best [Array(Array, Integer), nil] layers and their crossings
+      # @return [Array(Array, Integer)] the fewer-crossings candidate, and
+      #   how many sweeps in a row it has stood
+      def better(best, layers, stalled)
+        crossings = crossing_count(layers)
+        return [best, stalled + 1] if best && best.last <= crossings
+
+        [[layers, crossings], 1]
+      end
+
       def sweep_once(layers, sweep)
-        layers = layers.map(&:dup)
-        bias_right = (sweep % 4) >= 2
-        if sweep.odd?
-          (1...layers.length).each do |rank|
-            layers[rank] = reorder(layers[rank], layers[rank - 1],
-                                   @predecessors, bias_right)
-          end
-        else
-          (layers.length - 2).downto(0) do |rank|
-            layers[rank] = reorder(layers[rank], layers[rank + 1],
-                                   @successors, bias_right)
-          end
+        layers = layers.dup
+        order, offset, neighbours = sweep_plan(layers.length, sweep.odd?)
+        order.each do |rank|
+          layers[rank] = reorder(layers[rank], layers[rank + offset],
+                                 neighbours, (sweep % 4) >= 2)
         end
         layers
+      end
+
+      # The ranks to visit, where the fixed rank lies relative to each, and
+      # which edges say where a node belongs.
+      def sweep_plan(count, downwards)
+        if downwards
+          [(1...count), -1, @predecessors]
+        else
+          [(count - 2).downto(0), 1, @successors]
+        end
       end
 
       # A node with no neighbour in the fixed layer keeps its slot.
       def reorder(layer, fixed, neighbours, bias_right)
         position = fixed.each_with_index.to_h
-        entries = layer.each_with_index.map do |id, index|
-          near = neighbours[id].filter_map { |other| position[other] }
-          { id: id, index: index,
-            barycenter: near.empty? ? nil : near.sum.fdiv(near.length) }
-        end
-        merge(entries.reject { |entry| entry[:barycenter].nil? }, entries
-          .select { |entry| entry[:barycenter].nil? }, bias_right)
+        centres = layer.to_h { |id| [id, barycenter(neighbours[id], position)] }
+        movable, keepers =
+          layer.each_with_index.partition { |id, _| centres[id] }
+        merge(rank(movable, centres, bias_right), keepers)
       end
 
-      def merge(sortable, unsortable, bias_right)
-        sortable = sortable.sort do |a, b|
-          compare = a[:barycenter] <=> b[:barycenter]
-          next compare unless compare.zero?
+      # Ties on the barycenter keep the old order, or reverse it on a
+      # right-biased sweep.
+      def rank(movable, centres, bias_right)
+        movable.sort_by do |id, index|
+          [centres[id], bias_right ? -index : index]
+        end.map(&:first)
+      end
 
-          bias_right ? b[:index] - a[:index] : a[:index] - b[:index]
-        end
-        pending = unsortable.sort_by { |entry| -entry[:index] }
+      def barycenter(neighbours, position)
+        near = neighbours.filter_map { |other| position[other] }
+        near.sum.fdiv(near.length) unless near.empty?
+      end
+
+      # Puts each keeper back at its old index once enough nodes precede it.
+      def merge(movable, keepers)
         ordered = []
-        take_pending(ordered, pending)
-        sortable.each do |entry|
-          ordered << entry[:id]
-          take_pending(ordered, pending)
+        take_keepers(ordered, keepers)
+        movable.each do |id|
+          ordered << id
+          take_keepers(ordered, keepers)
         end
         ordered
       end
 
-      def take_pending(ordered, pending)
-        while pending.any? && pending.last[:index] <= ordered.length
-          ordered << pending.pop[:id]
+      def take_keepers(ordered, keepers)
+        while keepers.any? && keepers.first.last <= ordered.length
+          ordered << keepers.shift.first
         end
       end
 
