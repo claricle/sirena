@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "grid"
 require_relative "../diagram/c4"
 
 module Sirena
@@ -15,9 +16,6 @@ module Sirena
     #   transform = C4.new
     #   graph = transform.to_graph(c4_diagram)
     class C4 < Base
-      # Default font size for text measurement
-      DEFAULT_FONT_SIZE = 14
-
       # Element dimensions based on type
       PERSON_WIDTH = 140
       PERSON_HEIGHT = 180
@@ -32,6 +30,62 @@ module Sirena
       ELEMENT_SPACING = 60
       BOUNDARY_PADDING = 40
       LEVEL_SPACING = 80
+      DIAGRAM_PADDING = 40
+      TEXT_PADDING = 10
+      LINE_HEIGHT = 16
+      ARROW_SIZE = 8
+
+      class Point < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :width, :float
+        attribute :height, :float
+        attribute :x, :float
+        attribute :y, :float
+        attribute :font_size, :float
+        attribute :font_weight, :string
+        attribute :font_style, :string
+      end
+
+      class Section < Lutaml::Model::Serializable
+        attribute :start_point, Point
+        attribute :end_point, Point
+        attribute :bend_points, Point, collection: true, default: -> { [] }
+      end
+
+      class Node < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+        attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :kind, :string
+        attribute :external, :boolean, default: false
+        attribute :head_center, Point
+        attribute :body_center, Point
+        attribute :children, Node, collection: true, default: -> { [] }
+      end
+
+      class Edge < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :source, :string
+        attribute :target, :string
+        attribute :sections, Section, collection: true, default: -> { [] }
+        attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :line_end, Point
+        attribute :arrowheads, :string, collection: true, default: -> { [] }
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :children, Node, collection: true, default: -> { [] }
+        attribute :edges, Edge, collection: true, default: -> { [] }
+      end
 
       # Converts a C4 diagram to a graph structure.
       #
@@ -58,6 +112,186 @@ module Sirena
       end
 
       private
+
+      def scene(diagram)
+        graph = build_graph(diagram)
+        Grid.apply(graph)
+        children = graph[:children].map { |node| typed_node(node) }
+        width, height = scene_dimensions(children)
+        Scene.new(
+          width: width, height: height, view_box: "0 0 #{width} #{height}",
+          children: children,
+          edges: typed_edges(graph[:edges], children)
+        )
+      end
+
+      def typed_node(node)
+        kind = node_kind(node)
+        Node.new(
+          id: node[:id], x: node[:x], y: node[:y], width: node[:width],
+          height: node[:height], kind: kind,
+          external: node.dig(:metadata, :external) || false,
+          labels: positioned_node_labels(node, kind),
+          head_center: person_head(node, kind),
+          body_center: person_body(node, kind),
+          children: (node[:children] || []).map { |child| typed_node(child) }
+        )
+      end
+
+      def node_kind(node)
+        metadata = node[:metadata] || {}
+        return "boundary" if metadata[:boundary_type]
+        return "person" if metadata[:person]
+        return "container" if metadata[:container]
+        return "component" if metadata[:component]
+
+        "system"
+      end
+
+      def positioned_node_labels(node, kind)
+        labels = node[:labels] || []
+        return [] unless node[:x] && node[:y]
+        return boundary_labels(labels, node) if kind == "boundary"
+
+        start_y = node[:y] + { "person" => 95, "component" => 15 }
+          .fetch(kind, 20)
+        labels.map.with_index do |label, index|
+          positioned_node_label(label, node, start_y, index)
+        end
+      end
+
+      def boundary_labels(labels, node)
+        labels.first ? [boundary_label(labels.first, node)] : []
+      end
+
+      def positioned_node_label(label, node, start_y, index)
+        Label.new(
+          **label_measurements(label), x: node[:x] + (node[:width] / 2),
+                                       y: start_y + (index * LINE_HEIGHT),
+                                       font_size: [14, 11, 10].fetch(index, 10),
+                                       font_weight: label_weight(index),
+                                       font_style: label_style(index)
+        )
+      end
+
+      def label_weight(index)
+        index.zero? ? "bold" : "normal"
+      end
+
+      def label_style(index)
+        index == 2 ? "italic" : "normal"
+      end
+
+      def label_measurements(label)
+        { text: label[:text], width: label[:width], height: label[:height] }
+      end
+
+      def boundary_label(label, node)
+        Label.new(
+          **label_measurements(label),
+          x: node[:x] + TEXT_PADDING, y: node[:y] + 20,
+          font_size: 16, font_weight: "bold"
+        )
+      end
+
+      def person_head(node, kind)
+        return unless kind == "person"
+
+        Point.new(x: node[:x] + (node[:width] / 2), y: node[:y] + 30)
+      end
+
+      def person_body(node, kind)
+        head = person_head(node, kind)
+        Point.new(x: head.x, y: head.y + 35) if head
+      end
+
+      def typed_edges(edges, nodes)
+        index = index_nodes(nodes)
+        edges.filter_map do |edge|
+          source = index[edge[:sources]&.first]
+          target = index[edge[:targets]&.first]
+          next unless source && target
+
+          typed_edge(edge, source, target)
+        end
+      end
+
+      def index_nodes(nodes, result = {})
+        nodes.each do |node|
+          result[node.id] = node unless node.kind == "boundary"
+          index_nodes(node.children, result)
+        end
+        result
+      end
+
+      def typed_edge(edge, source, target)
+        start_point = node_center(source)
+        end_point = node_center(target)
+        section = Section.new(start_point: start_point, end_point: end_point)
+        Edge.new(
+          id: edge[:id], source: source.id, target: target.id,
+          sections: [section], line_end: line_end(end_point),
+          arrowheads: edge_arrowheads(edge, start_point, end_point),
+          labels: relationship_labels(edge[:labels], start_point, end_point)
+        )
+      end
+
+      def node_center(node)
+        Point.new(x: node.x + (node.width / 2),
+                  y: node.y + (node.height / 2))
+      end
+
+      def line_end(end_point)
+        Point.new(x: end_point.x - ARROW_SIZE, y: end_point.y)
+      end
+
+      def edge_arrowheads(edge, start_point, end_point)
+        heads = [arrowhead_points(start_point, end_point)]
+        if edge.dig(:metadata, :bidirectional)
+          heads << arrowhead_points(end_point, start_point)
+        end
+        heads
+      end
+
+      def arrowhead_points(from, to)
+        wing_x = to.x + arrowhead_offset(from, to)
+        half_height = ARROW_SIZE / 2
+        [[to.x, to.y], [wing_x, to.y - half_height],
+         [wing_x, to.y + half_height]].map { |point| point.join(",") }.join(" ")
+      end
+
+      def arrowhead_offset(from, to)
+        to.x > from.x ? -ARROW_SIZE : ARROW_SIZE
+      end
+
+      def relationship_labels(labels, from, to)
+        (labels || []).map.with_index do |label, index|
+          relationship_label(label, from, to, index)
+        end
+      end
+
+      def relationship_label(label, from, to, index)
+        Label.new(
+          **label_measurements(label), x: (from.x + to.x) / 2,
+                                       y: relationship_label_y(from, to, index),
+                                       font_size: index.zero? ? 12 : 10
+        )
+      end
+
+      def relationship_label_y(from, to, index)
+        ((from.y + to.y) / 2) - 15 + (index * 14)
+      end
+
+      def scene_dimensions(nodes)
+        flat_nodes = flatten_nodes(nodes)
+        width = flat_nodes.map { |node| node.x + node.width }.max || 760
+        height = flat_nodes.map { |node| node.y + node.height }.max || 560
+        [width + DIAGRAM_PADDING, height + DIAGRAM_PADDING]
+      end
+
+      def flatten_nodes(nodes)
+        nodes.flat_map { |node| [node, *flatten_nodes(node.children)] }
+      end
 
       def transform_root_nodes(diagram, elements, boundaries)
         nodes = []
@@ -103,9 +337,9 @@ module Sirena
             {
               text: boundary.label,
               width: measure_text(boundary.label,
-                                  font_size: DEFAULT_FONT_SIZE + 2)[:width],
+                                  font_size: large_font_size)[:width],
               height: measure_text(boundary.label,
-                                   font_size: DEFAULT_FONT_SIZE + 2)[:height],
+                                   font_size: large_font_size)[:height],
             },
           ],
           children: children,
@@ -125,8 +359,7 @@ module Sirena
         labels = []
 
         # Main label
-        label_dims = measure_text(element.label,
-                                  font_size: DEFAULT_FONT_SIZE + 2)
+        label_dims = measure_text(element.label, font_size: large_font_size)
         labels << {
           text: element.label,
           width: label_dims[:width],
@@ -136,7 +369,7 @@ module Sirena
         # Description (if present)
         if element.description && !element.description.empty?
           desc_dims = measure_text(element.description,
-                                   font_size: DEFAULT_FONT_SIZE - 2)
+                                   font_size: small_font_size)
           labels << {
             text: element.description,
             width: desc_dims[:width],
@@ -147,7 +380,7 @@ module Sirena
         # Technology (if present)
         if element.technology && !element.technology.empty?
           tech_dims = measure_text(element.technology,
-                                   font_size: DEFAULT_FONT_SIZE - 2)
+                                   font_size: small_font_size)
           labels << {
             text: "[#{element.technology}]",
             width: tech_dims[:width],
@@ -182,7 +415,7 @@ module Sirena
           labels = []
 
           if rel.label && !rel.label.empty?
-            label_dims = measure_text(rel.label, font_size: DEFAULT_FONT_SIZE)
+            label_dims = measure_text(rel.label, font_size: normal_font_size)
             labels << {
               text: rel.label,
               width: label_dims[:width],
@@ -192,7 +425,7 @@ module Sirena
 
           if rel.technology && !rel.technology.empty?
             tech_dims = measure_text("[#{rel.technology}]",
-                                     font_size: DEFAULT_FONT_SIZE - 2)
+                                     font_size: small_font_size)
             labels << {
               text: "[#{rel.technology}]",
               width: tech_dims[:width],
@@ -272,13 +505,27 @@ module Sirena
 
       def boundary_layout_options
         # Boundaries use box packing for internal layout
+        padding = "[top=#{BOUNDARY_PADDING},left=#{BOUNDARY_PADDING}," \
+                  "bottom=#{BOUNDARY_PADDING},right=#{BOUNDARY_PADDING}]"
         {
           "elk.algorithm" => "box",
           "elk.box.packingMode" => "GROUP_MIXED",
-          "elk.padding" => "[top=#{BOUNDARY_PADDING},left=#{BOUNDARY_PADDING}," \
-                          "bottom=#{BOUNDARY_PADDING},right=#{BOUNDARY_PADDING}]",
+          "elk.padding" => padding,
           "elk.spacing.nodeNode" => ELEMENT_SPACING.to_s,
         }
+      end
+
+      def normal_font_size
+        theme.typography&.font_size_normal ||
+          Theme::Registry.get(:default).typography.font_size_normal
+      end
+
+      def large_font_size
+        theme.typography&.font_size_large || (normal_font_size + 2)
+      end
+
+      def small_font_size
+        theme.typography&.font_size_small || (normal_font_size - 2)
       end
     end
   end

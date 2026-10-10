@@ -1,391 +1,178 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/requirement"
 
 module Sirena
   module Renderer
-    # Requirement diagram renderer for converting positioned layouts to SVG.
-    #
-    # Converts a positioned requirement diagram layout into SVG using the Svg
-    # builder classes. Handles requirements with properties, elements, and
-    # relationships between them.
-    #
-    # @example Render a requirement diagram
-    #   renderer = Requirement.new
-    #   svg = renderer.render(layout)
+    # Emits SVG from final, typed requirement geometry.
     class Requirement < Base
-      # Risk level color mapping
       RISK_COLORS = {
         "high" => "#ff6b6b",
         "medium" => "#ffd93d",
         "low" => "#6bcf7f",
       }.freeze
 
-      # Requirement type labels
-      REQUIREMENT_TYPE_LABELS = {
-        "requirement" => "Requirement",
-        "functionalRequirement" => "Functional Requirement",
-        "interfaceRequirement" => "Interface Requirement",
-        "performanceRequirement" => "Performance Requirement",
-        "physicalRequirement" => "Physical Requirement",
-        "designConstraint" => "Design Constraint",
-      }.freeze
+      REQUIREMENT_TYPE_LABELS = Layout::Requirement::REQUIREMENT_TYPE_LABELS
 
-      # Renders a positioned layout to SVG.
-      #
-      # @param layout [Hash] positioned layout with requirement and element positions
-      # @return [Svg::Document] the rendered SVG document
-      def render(layout)
-        svg = create_document_from_layout(layout)
-
-        # Render relationships first (so they appear under nodes)
-        render_relationships(layout, svg) if layout[:relationships]
-
-        # Render requirements
-        render_requirements(layout, svg) if layout[:requirements]
-
-        # Render elements
-        render_elements(layout, svg) if layout[:elements]
-
+      # @param scene [Layout::Requirement::Scene] final canvas geometry
+      # @return [Svg::Document] rendered SVG document
+      def render(scene)
+        svg = Svg::Document.new(width: scene.width, height: scene.height,
+                                view_box: scene.view_box)
+        scene.edges.each { |edge| render_relationship(edge, svg) }
+        scene.children.each { |node| render_node(node, svg) }
         svg
       end
 
       protected
 
-      def create_document_from_layout(layout)
-        width = layout[:width] || 800
-        height = layout[:height] || 600
-
-        Svg::Document.new(width: width, height: height)
-      end
-
-      def render_requirements(layout, svg)
-        layout[:requirements].each do |_req_name, req_info|
-          render_requirement(req_info, svg)
+      def render_node(node, svg)
+        if node.kind == "requirement"
+          render_requirement(node, svg)
+        else
+          render_element(node, svg)
         end
       end
 
-      def render_requirement(req_info, svg)
-        requirement = req_info[:requirement]
-        x = req_info[:x]
-        y = req_info[:y]
-        width = req_info[:width]
-        height = req_info[:height]
-
-        # Create group for requirement
-        group = Svg::Group.new.tap do |g|
-          g.id = "requirement-#{requirement.name}"
+      def render_requirement(node, svg)
+        group = Svg::Group.new.tap do |item|
+          item.id = "requirement-#{node.id}"
         end
-
-        # Draw main box
-        box = create_requirement_box(x, y, width, height, requirement)
-        group.children << box
-
-        # Draw header section with type
-        header_height = 30
-        header = create_requirement_header(x, y, width, header_height, requirement)
-        group.children << header
-
-        # Add text content
-        text_y = y + header_height + 15
-        line_height = 16
-
-        # ID
-        if requirement.id
-          id_text = create_property_text(x + 10, text_y, "ID: #{requirement.id}")
-          group.children << id_text
-          text_y += line_height
+        group.children << requirement_box(node)
+        group.children << requirement_header(node)
+        node.labels.reject { |label| label.role == "header" }.each do |label|
+          group.children << requirement_label(label, node.risk)
         end
-
-        # Text
-        if requirement.text
-          text_lines = wrap_text("Text: #{requirement.text}", width - 20, 12)
-          text_lines.each do |line|
-            text_element = create_property_text(x + 10, text_y, line)
-            group.children << text_element
-            text_y += line_height
-          end
-          text_y += 5
-        end
-
-        # Risk
-        if requirement.risk
-          risk_text = create_property_text(x + 10, text_y, "Risk: #{requirement.risk.capitalize}")
-          risk_text.fill = get_risk_color(requirement.risk)
-          risk_text.font_weight = "bold"
-          group.children << risk_text
-          text_y += line_height
-        end
-
-        # Verify method
-        if requirement.verifymethod
-          verify = "Verification: #{requirement.verifymethod.capitalize}"
-          verify_text = create_property_text(x + 10, text_y, verify)
-          group.children << verify_text
-        end
-
         svg << group
       end
 
-      def create_requirement_box(x, y, width, height, requirement)
+      def requirement_box(node)
         Svg::Rect.new.tap do |rect|
-          rect.x = x
-          rect.y = y
-          rect.width = width
-          rect.height = height
+          apply_rect(rect, node.box)
           rect.fill = theme_color(:node_fill) || "#f9f9f9"
-          rect.stroke = get_risk_color(requirement.risk) || theme_color(:border_color) || "#333"
+          rect.stroke = risk_color(node.risk) ||
+            theme_color(:border_color) || "#333"
           rect.stroke_width = "2"
           rect.rx = "5"
           rect.ry = "5"
         end
       end
 
-      def create_requirement_header(x, y, width, height, requirement)
-        group = Svg::Group.new
-
-        # Header background
-        header_bg = Svg::Rect.new.tap do |rect|
-          rect.x = x
-          rect.y = y
-          rect.width = width
-          rect.height = height
-          rect.fill = get_risk_color(requirement.risk) || theme_color(:node_fill) || "#e0e0e0"
-          rect.opacity = "0.3"
-        end
-        group.children << header_bg
-
-        # Type label
-        type_label = REQUIREMENT_TYPE_LABELS[requirement.type] || requirement.type
-        type_text = Svg::Text.new.tap do |text|
-          text.x = x + 10
-          text.y = y + height / 2
-          text.content = "<<#{type_label}>>"
-          text.fill = theme_color(:text_color) || "#000"
-          text.font_size = "12"
-          text.font_weight = "bold"
-          text.dominant_baseline = "middle"
-        end
-        group.children << type_text
-
-        # Name on the right
-        name_text = Svg::Text.new.tap do |text|
-          text.x = x + width - 10
-          text.y = y + height / 2
-          text.content = requirement.name
-          text.fill = theme_color(:text_color) || "#000"
-          text.font_size = "11"
-          text.text_anchor = "end"
-          text.dominant_baseline = "middle"
-        end
-        group.children << name_text
-
-        group
-      end
-
-      def render_elements(layout, svg)
-        layout[:elements].each do |_elem_name, elem_info|
-          render_element(elem_info, svg)
+      def requirement_header(node)
+        labels = node.labels.select { |label| label.role == "header" }
+        Svg::Group.new.tap do |group|
+          group.children << Svg::Rect.new.tap do |rect|
+            apply_rect(rect, node.header)
+            rect.fill = risk_color(node.risk) ||
+              theme_color(:node_fill) || "#e0e0e0"
+            rect.opacity = "0.3"
+          end
+          labels.each { |label| group.children << header_label(label) }
         end
       end
 
-      def render_element(elem_info, svg)
-        element = elem_info[:element]
-        x = elem_info[:x]
-        y = elem_info[:y]
-        width = elem_info[:width]
-        height = elem_info[:height]
-
-        # Create group for element
-        group = Svg::Group.new.tap do |g|
-          g.id = "element-#{element.name}"
-        end
-
-        # Draw hexagon shape for elements
-        hexagon = create_hexagon(x, y, width, height)
-        group.children << hexagon
-
-        # Add name
-        name_text = Svg::Text.new.tap do |text|
-          text.x = x + width / 2
-          text.y = y + height / 2 - 10
-          text.content = element.name
-          text.fill = theme_color(:text_color) || "#000"
-          text.font_size = "14"
-          text.font_weight = "bold"
-          text.text_anchor = "middle"
-          text.dominant_baseline = "middle"
-        end
-        group.children << name_text
-
-        stereotype = Svg::Text.new.tap do |text|
-          text.x = x + (width / 2)
-          text.y = y + (height / 2) - 26
-          text.content = "<<Element>>"
-          text.fill = theme_color(:text_color) || "#000"
-          text.font_size = "11"
-          text.text_anchor = "middle"
-          text.dominant_baseline = "middle"
-        end
-        group.children << stereotype
-
-        center_x = x + (width / 2)
-        center_y = y + (height / 2)
-        if element.type
-          group.children << detail_text("Type: #{element.type}",
-                                        center_x, center_y + 10)
-        end
-        if element.docref
-          group.children << detail_text("Doc Ref: #{element.docref}",
-                                        center_x, center_y + 26)
-        end
-
-        svg << group
-      end
-
-      def detail_text(content, center_x, center_y)
+      def header_label(label)
         Svg::Text.new.tap do |text|
-          text.x = center_x
-          text.y = center_y
-          text.content = content
-          text.fill = theme_color(:text_color) || "#666"
-          text.font_size = "11"
-          text.text_anchor = "middle"
+          apply_label(text, label)
+          text.fill = theme_color(:text_color) || "#000"
           text.dominant_baseline = "middle"
         end
       end
 
-      def create_hexagon(x, y, width, height)
-        cx = x + width / 2
-        cy = y + height / 2
-        w = width / 2
-        h = height / 2
+      def requirement_label(label, risk)
+        Svg::Text.new.tap do |text|
+          apply_label(text, label)
+          text.fill = if label.role == "risk"
+                        risk_color(risk)
+                      else
+                        theme_color(:text_color) || "#000"
+                      end
+        end
+      end
 
-        points = [
-          "#{cx - w},#{cy}",
-          "#{cx - w/2},#{cy - h}",
-          "#{cx + w/2},#{cy - h}",
-          "#{cx + w},#{cy}",
-          "#{cx + w/2},#{cy + h}",
-          "#{cx - w/2},#{cy + h}",
-        ].join(" ")
-
-        Svg::Polygon.new.tap do |polygon|
-          polygon.points = points
+      def render_element(node, svg)
+        group = Svg::Group.new.tap { |item| item.id = "element-#{node.id}" }
+        group.children << Svg::Polygon.new.tap do |polygon|
+          polygon.points = node.shape_points
           polygon.fill = theme_color(:node_fill) || "#e0f2f1"
           polygon.stroke = theme_color(:border_color) || "#00796b"
           polygon.stroke_width = "2"
         end
-      end
-
-      def render_relationships(layout, svg)
-        layout[:relationships].each do |rel_info|
-          render_relationship(rel_info, svg)
+        node.labels.each do |label|
+          group.children << element_label(label)
         end
-      end
-
-      def render_relationship(rel_info, svg)
-        # Calculate path for relationship
-        path_data = calculate_relationship_path(rel_info)
-
-        # Create path element
-        path = Svg::Path.new.tap do |p|
-          p.d = path_data
-          p.fill = "none"
-          p.stroke = theme_color(:edge_color) || "#666"
-          p.stroke_width = "2"
-          p.marker_end = "url(#arrowhead)"
-        end
-
-        # Create group for relationship
-        group = Svg::Group.new.tap do |g|
-          g.id = "relationship-#{rel_info[:source]}-#{rel_info[:target]}"
-        end
-
-        group.children << path
-
-        # Add label for relationship type
-        if rel_info[:type]
-          mid_x = (rel_info[:from_x] + rel_info[:to_x]) / 2
-          mid_y = (rel_info[:from_y] + rel_info[:to_y]) / 2
-
-          label_bg = Svg::Rect.new.tap do |rect|
-            label_width = (rel_info[:type].length + 4) * 7
-            rect.x = mid_x - label_width / 2
-            rect.y = mid_y - 10
-            rect.width = label_width
-            rect.height = 18
-            rect.fill = "#fff"
-            rect.stroke = theme_color(:edge_color) || "#666"
-            rect.stroke_width = "1"
-            rect.rx = "3"
-          end
-          group.children << label_bg
-
-          label = Svg::Text.new.tap do |text|
-            text.x = mid_x
-            text.y = mid_y
-            text.content = "<<#{rel_info[:type]}>>"
-            text.fill = theme_color(:text_color) || "#000"
-            text.font_size = "10"
-            text.text_anchor = "middle"
-            text.dominant_baseline = "middle"
-          end
-          group.children << label
-        end
-
         svg << group
       end
 
-      def calculate_relationship_path(rel_info)
-        from_x = rel_info[:from_x]
-        from_y = rel_info[:from_y]
-        to_x = rel_info[:to_x]
-        to_y = rel_info[:to_y]
-
-        # Use bezier curve for better aesthetics
-        control_offset = (to_y - from_y).abs / 3
-
-        "M #{from_x} #{from_y} C #{from_x} #{from_y + control_offset}, " \
-          "#{to_x} #{to_y - control_offset}, #{to_x} #{to_y}"
-      end
-
-      def create_property_text(x, y, content)
+      def element_label(label)
         Svg::Text.new.tap do |text|
-          text.x = x
-          text.y = y
-          text.content = content
-          text.fill = theme_color(:text_color) || "#000"
-          text.font_size = "12"
+          apply_label(text, label)
+          text.fill = if label.role == "detail"
+                        theme_color(:text_color) || "#666"
+                      else
+                        theme_color(:text_color) || "#000"
+                      end
+          text.dominant_baseline = "middle"
         end
       end
 
-      def get_risk_color(risk)
-        return nil unless risk
+      def render_relationship(edge, svg)
+        group = Svg::Group.new.tap do |item|
+          item.id = "relationship-#{edge.source}-#{edge.target}"
+        end
+        group.children << Svg::Path.new.tap do |path|
+          path.d = edge.path
+          path.fill = "none"
+          path.stroke = theme_color(:edge_color) || "#666"
+          path.stroke_width = "2"
+          path.marker_end = "url(#arrowhead)"
+        end
+        unless edge.labels.empty?
+          group.children << relationship_label_background(edge)
+          group.children << relationship_label(edge.labels.first)
+        end
+        svg << group
+      end
+
+      def relationship_label_background(edge)
+        Svg::Rect.new.tap do |rect|
+          apply_rect(rect, edge.label_background)
+          rect.fill = "#fff"
+          rect.stroke = theme_color(:edge_color) || "#666"
+          rect.stroke_width = "1"
+          rect.rx = "3"
+        end
+      end
+
+      def relationship_label(label)
+        Svg::Text.new.tap do |text|
+          apply_label(text, label)
+          text.fill = theme_color(:text_color) || "#000"
+          text.dominant_baseline = "middle"
+        end
+      end
+
+      def apply_rect(rect, geometry)
+        rect.x = geometry.x
+        rect.y = geometry.y
+        rect.width = geometry.width
+        rect.height = geometry.height
+      end
+
+      def apply_label(text, label)
+        text.x = label.x
+        text.y = label.y
+        text.content = label.text
+        text.font_size = label.font_size.to_s
+        text.font_weight = label.font_weight
+        text.text_anchor = label.text_anchor
+      end
+
+      def risk_color(risk)
+        return unless risk
 
         RISK_COLORS[risk.downcase] || theme_color(:border_color) || "#666"
-      end
-
-      def wrap_text(text, max_width, font_size)
-        # Simple text wrapping
-        words = text.split(" ")
-        lines = []
-        current_line = []
-
-        chars_per_line = (max_width / (font_size * 0.6)).to_i
-
-        words.each do |word|
-          test_line = (current_line + [word]).join(" ")
-          if test_line.length <= chars_per_line
-            current_line << word
-          else
-            lines << current_line.join(" ") unless current_line.empty?
-            current_line = [word]
-          end
-        end
-
-        lines << current_line.join(" ") unless current_line.empty?
-        lines
       end
     end
   end

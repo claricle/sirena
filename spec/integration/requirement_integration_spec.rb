@@ -53,14 +53,15 @@ RSpec.describe "Requirement Integration" do
       expect(rel.type).to eq("satisfies")
 
       # Transform
-      graph = transform.to_graph(diagram)
-      expect(graph).to be_a(Hash)
-      expect(graph[:requirements].length).to eq(1)
-      expect(graph[:elements].length).to eq(1)
-      expect(graph[:relationships].length).to eq(1)
+      scene = transform.call(diagram)
+      expect(scene).to be_a(Sirena::Layout::Requirement::Scene)
+      requirements = scene.children.select { |node| node.kind == "requirement" }
+      expect(requirements.length).to eq(1)
+      expect(scene.children.count { |node| node.kind == "element" }).to eq(1)
+      expect(scene.edges.length).to eq(1)
 
       # Render
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.children).not_to be_empty
     end
@@ -93,8 +94,8 @@ RSpec.describe "Requirement Integration" do
       perf_req = diagram.requirements.find { |r| r.name == "perf_req" }
       expect(perf_req.type).to eq("performanceRequirement")
 
-      graph = transform.to_graph(diagram)
-      svg = renderer.render(graph)
+      scene = transform.call(diagram)
+      svg = renderer.render(scene)
 
       expect(svg).to be_a(Sirena::Svg::Document)
     end

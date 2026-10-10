@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/block"
 
 module Sirena
   module Renderer
@@ -16,107 +17,58 @@ module Sirena
     class Block < Base
       # Renders a positioned layout to SVG.
       #
-      # @param layout [Hash] positioned layout with block positions
+      # @param scene [Layout::Block::Scene] final canvas geometry
       # @return [Svg::Document] the rendered SVG document
-      def render(layout)
-        svg = create_document_from_layout(layout)
-
-        # Render connections first (so they appear under blocks)
-        render_connections(layout, svg) if layout[:connections]
-
-        # Render blocks
-        render_blocks(layout, svg) if layout[:blocks]
+      def render(scene)
+        svg = create_document_from_layout(scene)
+        render_connections(scene, svg)
+        render_blocks(scene, svg)
 
         svg
       end
 
       protected
 
-      def create_document_from_layout(layout)
-        width = layout[:width] || 800
-        height = layout[:height] || 600
-
-        Svg::Document.new(width: width, height: height)
+      def create_document_from_layout(scene)
+        Svg::Document.new(width: scene.width, height: scene.height,
+                          view_box: scene.view_box)
       end
 
-      def render_blocks(layout, svg)
-        # Render all blocks (including children)
-        layout[:blocks].each_value do |block_info|
-          render_block(block_info, svg, layout)
-        end
+      def render_blocks(scene, svg)
+        scene.children.each { |node| render_block(node, svg) }
       end
 
-      def render_block(block_info, svg, layout)
-        block = block_info[:block]
-
-        # Skip space blocks (they're just placeholders)
-        return if block.space?
-
-        # Create group for block
+      def render_block(node, svg)
         group = Svg::Group.new.tap do |g|
-          g.id = "block-#{block.id}"
+          g.id = "block-#{node.id}"
         end
 
-        # Render compound block border if compound
-        if block.compound?
-          border = create_compound_border(block_info)
-          group.children << border if border
-
-          # Render child blocks within the compound block
-          block.children.each do |child|
-            child_info = layout[:blocks][child.id]
-            if child_info
-              child_group = render_child_block(child_info)
-              group.children << child_group if child_group
-            end
-          end
+        if node.compound
+          group.children << create_compound_border(node)
+          node.children.each { |child| group.children << block_group(child) }
         else
-          # Only render shape and label for non-compound blocks that aren't children
-          unless block_info[:parent_id]
-            # Render block shape
-            group.children << create_block_shape(block_info)
-
-            # Render block label
-            if block.label && !block.label.empty?
-              group.children << create_block_label(block_info)
-            end
-          end
+          group.children << create_block_shape(node)
+          group.children << create_block_label(node) unless node.labels.empty?
         end
 
-        svg << group unless block_info[:parent_id]
+        svg << group
       end
 
-      def render_child_block(block_info)
-        block = block_info[:block]
-        return nil if block.space?
-
+      def block_group(node)
         group = Svg::Group.new.tap do |g|
-          g.id = "block-#{block.id}"
+          g.id = "block-#{node.id}"
         end
-
-        # Render block shape
-        shape_element = create_block_shape(block_info)
-        group.children << shape_element if shape_element
-
-        # Render block label
-        if block.label && !block.label.empty?
-          group.children << create_block_label(block_info)
-        end
-
+        group.children << create_block_shape(node)
+        group.children << create_block_label(node) unless node.labels.empty?
         group
       end
 
-      def create_compound_border(block_info)
-        x = block_info[:x]
-        y = block_info[:y]
-        width = block_info[:width]
-        height = block_info[:height]
-
+      def create_compound_border(node)
         Svg::Rect.new.tap do |rect|
-          rect.x = x
-          rect.y = y
-          rect.width = width
-          rect.height = height
+          rect.x = node.x
+          rect.y = node.y
+          rect.width = node.width
+          rect.height = node.height
           rect.fill = "none"
           rect.stroke = theme_color(:border_color) || "#666"
           rect.stroke_width = "2"
@@ -124,23 +76,15 @@ module Sirena
         end
       end
 
-      def create_block_shape(block_info)
-        block = block_info[:block]
-        x = block_info[:x]
-        y = block_info[:y]
-        width = block_info[:width]
-        height = block_info[:height]
-
-        # Don't draw shape for compound blocks (just border)
-        return nil if block.compound?
-
-        case block.shape
+      def create_block_shape(node)
+        case node.shape
         when "circle"
-          create_circle_block(x, y, width, height)
+          create_circle_block(node.x, node.y, node.width, node.height)
         when "arrow"
-          create_arrow_block(x, y, width, height, block.direction)
+          create_arrow_block(node.x, node.y, node.width, node.height,
+                             node.direction)
         else
-          create_rectangle_block(x, y, width, height)
+          create_rectangle_block(node.x, node.y, node.width, node.height)
         end
       end
 
@@ -211,48 +155,32 @@ module Sirena
         end
       end
 
-      def create_block_label(block_info)
-        block = block_info[:block]
-        x = block_info[:x]
-        y = block_info[:y]
-        width = block_info[:width]
-        height = block_info[:height]
-
-        # Center text in block
-        text_x = x + width / 2
-        text_y = y + height / 2
-
+      def create_block_label(node)
+        label = node.labels.first
         Svg::Text.new.tap do |text|
-          text.x = text_x
-          text.y = text_y
-          text.content = block.label
+          text.x = label.x
+          text.y = label.y
+          text.content = label.text
           apply_theme_to_text(text)
           text.text_anchor = "middle"
           text.dominant_baseline = "middle"
         end
       end
 
-      def render_connections(layout, svg)
-        layout[:connections].each do |conn|
-          render_connection(conn, svg)
-        end
+      def render_connections(scene, svg)
+        scene.edges.each { |edge| render_connection(edge, svg) }
       end
 
-      def render_connection(conn, svg)
-        # Calculate path for connection
-        path_data = calculate_connection_path(conn)
-
-        # Create path element
+      def render_connection(edge, svg)
         path = Svg::Path.new.tap do |p|
-          p.d = path_data
+          p.d = calculate_connection_path(edge)
           p.fill = "none"
           apply_theme_to_edge(p)
-          p.marker_end = "url(#arrowhead)" if conn[:connection_type] == "arrow"
+          p.marker_end = "url(#arrowhead)" if edge.connection_type == "arrow"
         end
 
-        # Create group for connection
         group = Svg::Group.new.tap do |g|
-          g.id = "connection-#{conn[:from]}-#{conn[:to]}"
+          g.id = "connection-#{edge.source}-#{edge.target}"
         end
 
         group.children << path
@@ -260,23 +188,11 @@ module Sirena
         svg << group
       end
 
-      def calculate_connection_path(conn)
-        from_x = conn[:from_x]
-        from_y = conn[:from_y]
-        to_x = conn[:to_x]
-        to_y = conn[:to_y]
-
-        # Simple straight line for now
-        # Could be enhanced with bezier curves for better aesthetics
-        "M #{from_x} #{from_y} L #{to_x} #{to_y}"
-      end
-
-      def calculate_width(layout)
-        layout[:width] || 800
-      end
-
-      def calculate_height(layout)
-        layout[:height] || 600
+      def calculate_connection_path(edge)
+        section = edge.sections.first
+        start_point = section.start_point
+        end_point = section.end_point
+        "M #{start_point.x} #{start_point.y} L #{end_point.x} #{end_point.y}"
       end
     end
   end

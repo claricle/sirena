@@ -23,6 +23,78 @@ module Sirena
       DEFAULT_SPACING_X = 100
       DEFAULT_SPACING_Y = 80
       DEFAULT_PADDING = 20
+      HEADER_HEIGHT = 30
+      LINE_HEIGHT = 16
+      HEXAGON_FACTORS = [[-1, 0], [-0.5, -1], [0.5, -1], [1, 0],
+                         [0.5, 1], [-0.5, 1]].freeze
+
+      REQUIREMENT_TYPE_LABELS = {
+        "requirement" => "Requirement",
+        "functionalRequirement" => "Functional Requirement",
+        "interfaceRequirement" => "Interface Requirement",
+        "performanceRequirement" => "Performance Requirement",
+        "physicalRequirement" => "Physical Requirement",
+        "designConstraint" => "Design Constraint",
+      }.freeze
+
+      class Point < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Rect < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+      end
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :font_size, :float
+        attribute :font_weight, :string
+        attribute :text_anchor, :string
+        attribute :role, :string
+      end
+
+      class Section < Lutaml::Model::Serializable
+        attribute :start_point, Point
+        attribute :end_point, Point
+        attribute :bend_points, Point, collection: true, default: -> { [] }
+      end
+
+      class Node < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+        attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :kind, :string
+        attribute :risk, :string
+        attribute :box, Rect
+        attribute :header, Rect
+        attribute :shape_points, :string
+        attribute :children, Node, collection: true, default: -> { [] }
+      end
+
+      class Edge < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :source, :string
+        attribute :target, :string
+        attribute :sections, Section, collection: true, default: -> { [] }
+        attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :label_background, Rect
+        attribute :path, :string
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :children, Node, collection: true, default: -> { [] }
+        attribute :edges, Edge, collection: true, default: -> { [] }
+      end
 
       # Converts a requirement diagram to a positioned layout structure.
       #
@@ -45,6 +117,255 @@ module Sirena
       end
 
       private
+
+      def scene(diagram)
+        graph = build_graph(diagram)
+        nodes = typed_requirement_nodes(graph[:requirements]) +
+          typed_element_nodes(graph[:elements])
+        Scene.new(
+          width: graph[:width], height: graph[:height],
+          view_box: "0 0 #{graph[:width]} #{graph[:height]}",
+          children: nodes, edges: typed_relationships(graph[:relationships])
+        )
+      end
+
+      def typed_requirement_nodes(requirements)
+        requirements.values.map do |info|
+          requirement_node(info[:requirement], info)
+        end
+      end
+
+      def requirement_node(requirement, geometry)
+        Node.new(
+          id: requirement.name, kind: "requirement", risk: requirement.risk,
+          x: geometry[:x], y: geometry[:y], width: geometry[:width],
+          height: geometry[:height], box: rect(geometry),
+          header: Rect.new(x: geometry[:x], y: geometry[:y],
+                           width: geometry[:width], height: HEADER_HEIGHT),
+          labels: requirement_labels(requirement, geometry)
+        )
+      end
+
+      def requirement_labels(requirement, geometry)
+        requirement_header_labels(requirement, geometry) +
+          positioned_property_labels(requirement, geometry)
+      end
+
+      def requirement_header_labels(requirement, geometry)
+        type_label = REQUIREMENT_TYPE_LABELS.fetch(requirement.type,
+                                                   requirement.type)
+        middle_y = geometry[:y] + (HEADER_HEIGHT / 2)
+        [requirement_type_label(type_label, geometry, middle_y),
+         requirement_name_label(requirement.name, geometry, middle_y)]
+      end
+
+      def requirement_type_label(type_label, geometry, middle_y)
+        Label.new(text: "<<#{type_label}>>", x: geometry[:x] + 10,
+                  y: middle_y, font_size: 12, font_weight: "bold",
+                  role: "header")
+      end
+
+      def requirement_name_label(name, geometry, middle_y)
+        Label.new(text: name, x: geometry[:x] + geometry[:width] - 10,
+                  y: middle_y, font_size: 11, text_anchor: "end",
+                  role: "header")
+      end
+
+      def positioned_property_labels(requirement, geometry)
+        y_coord = geometry[:y] + HEADER_HEIGHT + 15
+        requirement_property_rows(requirement, geometry).map do |row|
+          label = property_label(row[:text], geometry[:x], y_coord,
+                                 role: row[:role], weight: row[:weight])
+          y_coord += row[:advance]
+          label
+        end
+      end
+
+      def requirement_property_rows(requirement, geometry)
+        id_rows(requirement) + text_rows(requirement, geometry) +
+          risk_rows(requirement) + verification_rows(requirement)
+      end
+
+      def id_rows(requirement)
+        return [] unless requirement.id
+
+        [property_row("ID: #{requirement.id}")]
+      end
+
+      def text_rows(requirement, geometry)
+        return [] unless requirement.text
+
+        lines = wrap_text("Text: #{requirement.text}", geometry[:width] - 20,
+                          property_font_size)
+        lines.map.with_index do |line, index|
+          gap = index == lines.length - 1 ? 5 : 0
+          property_row(line, advance: LINE_HEIGHT + gap)
+        end
+      end
+
+      def risk_rows(requirement)
+        return [] unless requirement.risk
+
+        [property_row("Risk: #{requirement.risk.capitalize}",
+                      role: "risk", weight: "bold")]
+      end
+
+      def verification_rows(requirement)
+        return [] unless requirement.verifymethod
+
+        [property_row("Verification: #{requirement.verifymethod.capitalize}")]
+      end
+
+      def property_row(text, advance: LINE_HEIGHT, role: "property",
+                       weight: nil)
+        { text: text, advance: advance, role: role, weight: weight }
+      end
+
+      def property_label(text, left, y_coord, role: "property", weight: nil)
+        Label.new(text: text, x: left + 10, y: y_coord,
+                  font_size: property_font_size, font_weight: weight,
+                  role: role)
+      end
+
+      def typed_element_nodes(elements)
+        elements.values.map do |info|
+          element = info[:element]
+          Node.new(
+            id: element.name, kind: "element", x: info[:x], y: info[:y],
+            width: info[:width], height: info[:height], box: rect(info),
+            shape_points: hexagon_points(info),
+            labels: element_labels(element, info)
+          )
+        end
+      end
+
+      def element_labels(element, geometry)
+        center_x = geometry[:x] + (geometry[:width] / 2)
+        center_y = geometry[:y] + (geometry[:height] / 2)
+        [element_stereotype(center_x, center_y),
+         element_name(element.name, center_x, center_y),
+         *element_detail_labels(element, center_x, center_y)]
+      end
+
+      def element_stereotype(center_x, center_y)
+        Label.new(text: "<<Element>>", x: center_x, y: center_y - 26,
+                  font_size: 11, text_anchor: "middle", role: "element")
+      end
+
+      def element_name(name, center_x, center_y)
+        Label.new(text: name, x: center_x, y: center_y - 10,
+                  font_size: 14, font_weight: "bold",
+                  text_anchor: "middle", role: "element")
+      end
+
+      def element_detail_labels(element, center_x, center_y)
+        [element.type && element_detail("Type: #{element.type}", center_x,
+                                        center_y + 10),
+         element.docref && element_detail("Doc Ref: #{element.docref}",
+                                          center_x, center_y + 26)].compact
+      end
+
+      def element_detail(text, center_x, center_y)
+        Label.new(text: text, x: center_x, y: center_y, font_size: 11,
+                  text_anchor: "middle", role: "detail")
+      end
+
+      def hexagon_points(geometry)
+        center = box_center(geometry)
+        half_size = Point.new(x: geometry[:width] / 2,
+                              y: geometry[:height] / 2)
+        HEXAGON_FACTORS.map do |factors|
+          scaled_point(center, half_size, factors)
+        end.join(" ")
+      end
+
+      def box_center(geometry)
+        Point.new(x: geometry[:x] + (geometry[:width] / 2),
+                  y: geometry[:y] + (geometry[:height] / 2))
+      end
+
+      def scaled_point(center, half_size, factors)
+        [center.x + (half_size.x * factors[0]),
+         center.y + (half_size.y * factors[1])].join(",")
+      end
+
+      def typed_relationships(relationships)
+        relationships.map.with_index do |relationship, index|
+          typed_relationship(relationship, index)
+        end
+      end
+
+      def typed_relationship(relationship, index)
+        points = relationship_points(relationship)
+        start_point, end_point = points
+        bends = relationship_bends(start_point, end_point)
+        decoration = relationship_label(relationship, start_point, end_point)
+        relationship_edge(relationship, index, points, bends, decoration)
+      end
+
+      def relationship_points(relationship)
+        [Point.new(x: relationship[:from_x], y: relationship[:from_y]),
+         Point.new(x: relationship[:to_x], y: relationship[:to_y])]
+      end
+
+      def relationship_bends(start_point, end_point)
+        offset = (end_point.y - start_point.y).abs / 3
+        [Point.new(x: start_point.x, y: start_point.y + offset),
+         Point.new(x: end_point.x, y: end_point.y - offset)]
+      end
+
+      def relationship_edge(relationship, index, points, bends, decoration)
+        start_point, end_point = points
+        label, background = decoration
+        Edge.new(
+          id: "relationship_#{index}", source: relationship[:source],
+          target: relationship[:target],
+          sections: [relationship_section(start_point, end_point, bends)],
+          labels: [label].compact, label_background: background,
+          path: bezier_path(start_point, bends, end_point)
+        )
+      end
+
+      def relationship_section(start_point, end_point, bends)
+        Section.new(start_point: start_point, end_point: end_point,
+                    bend_points: bends)
+      end
+
+      def relationship_label(relationship, start_point, end_point)
+        return [nil, nil] unless relationship[:type]
+
+        text = "<<#{relationship[:type]}>>"
+        midpoint = relationship_midpoint(start_point, end_point)
+        width = (relationship[:type].length + 4) * 7
+        [relationship_text(text, midpoint),
+         relationship_background(midpoint, width)]
+      end
+
+      def relationship_midpoint(start_point, end_point)
+        Point.new(x: (start_point.x + end_point.x) / 2,
+                  y: (start_point.y + end_point.y) / 2)
+      end
+
+      def relationship_text(text, midpoint)
+        Label.new(text: text, x: midpoint.x, y: midpoint.y, font_size: 10,
+                  text_anchor: "middle", role: "relationship")
+      end
+
+      def relationship_background(midpoint, width)
+        Rect.new(x: midpoint.x - (width / 2), y: midpoint.y - 10,
+                 width: width, height: 18)
+      end
+
+      def bezier_path(start_point, bends, end_point)
+        "M #{start_point.x} #{start_point.y} " \
+          "C #{bends[0].x} #{bends[0].y}, " \
+          "#{bends[1].x} #{bends[1].y}, #{end_point.x} #{end_point.y}"
+      end
+
+      def rect(geometry)
+        Rect.new(x: geometry[:x], y: geometry[:y], width: geometry[:width],
+                 height: geometry[:height])
+      end
 
       def calculate_node_positions(diagram)
         requirements = diagram.requirements
@@ -176,17 +497,16 @@ module Sirena
       end
 
       def calculate_requirement_dimensions(requirement)
-        # Calculate based on text content
-        text = requirement.text || ""
-        text_lines = text.empty? ? 1 : ((text.length / 25.0).ceil)
-
-        width = DEFAULT_REQ_WIDTH
+        text_lines = requirement_text_line_count(requirement.text)
         height = DEFAULT_REQ_HEIGHT + (text_lines - 1) * 20
+        { width: DEFAULT_REQ_WIDTH,
+          height: [height, DEFAULT_REQ_HEIGHT].max }
+      end
 
-        {
-          width: width,
-          height: [height, DEFAULT_REQ_HEIGHT].max,
-        }
+      def requirement_text_line_count(text)
+        return 1 if !text || text.empty?
+
+        wrap_text(text, DEFAULT_REQ_WIDTH - 20, property_font_size).length
       end
 
       def calculate_element_dimensions(element)
@@ -224,6 +544,24 @@ module Sirena
             to_y: target_y,
           }
         end.compact
+      end
+
+      def wrap_text(text, max_width, font_size)
+        text.split.each_with_object([]) do |word, lines|
+          candidate = [lines.pop, word].compact.join(" ")
+          if measure_text(candidate, font_size: font_size)[:width] <= max_width
+            lines << candidate
+          else
+            previous, current = candidate.rpartition(" ").values_at(0, 2)
+            lines << previous unless previous.empty?
+            lines << current
+          end
+        end
+      end
+
+      def property_font_size
+        theme.typography&.font_size_small ||
+          Theme::Registry.get(:default).typography.font_size_small
       end
     end
   end

@@ -84,14 +84,28 @@ module ArchitectureEdgeRouterSpecHelpers
                   "../../mermaid/architecture/011_rendering_architecture_spec_architecture_10.mmd", __dir__
                 )),
     )
-    graph = Sirena::Layout::Architecture.new.to_graph(diagram)
-    nodes = graph[:services].merge(graph[:junctions])
-    edge_entry = graph[:edges].find { |e| e[:edge].from_id == "edge" && e[:edge].to_id == "firewall" }
-    from = { point: { x: edge_entry[:from_x], y: edge_entry[:from_y] }, box: nodes["edge"], side: "R" }
-    to = { point: { x: edge_entry[:to_x], y: edge_entry[:to_y] }, box: nodes["firewall"], side: "L" }
+    scene = Sirena::Layout::Architecture.new.call(diagram)
+    nodes = scene.children.reject { |node| node.kind == "group" }
+      .to_h { |node| [node.id, node_box(node)] }
+    edge_entry = scene.edges.find do |edge|
+      edge.source == "edge" && edge.target == "firewall"
+    end
+    section = edge_entry.sections.first
+    from = { point: point_hash(section.start_point), box: nodes["edge"],
+             side: "R" }
+    to = { point: point_hash(section.end_point), box: nodes["firewall"],
+           side: "L" }
     obstacles = nodes.except("edge", "firewall").values
 
     [router.route(from: from, to: to, obstacles: obstacles), obstacles]
+  end
+
+  def node_box(node)
+    { x: node.x, y: node.y, width: node.width, height: node.height }
+  end
+
+  def point_hash(point)
+    { x: point.x, y: point.y }
   end
 
   # service a(server)[A] / service b(server)[B]. a:R -- T:b. The

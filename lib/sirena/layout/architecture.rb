@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/architecture"
+require_relative "../renderer/architecture_edge_router"
 
 module Sirena
   module Layout
@@ -16,6 +17,52 @@ module Sirena
       DEFAULT_JUNCTION_SIZE = 12
 
       VALID_SIDES = %w[L R T B].freeze
+
+      class Point < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Node < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+        attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :kind, :string
+        attribute :icon, :string
+        attribute :icon_x, :float
+        attribute :icon_y, :float
+        attribute :group_id, :string
+        attribute :parent_id, :string
+      end
+
+      class Section < Lutaml::Model::Serializable
+        attribute :start_point, Point
+        attribute :end_point, Point
+        attribute :bend_points, Point, collection: true, default: -> { [] }
+      end
+
+      class Edge < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :source, :string
+        attribute :target, :string
+        attribute :sections, Section, collection: true, default: -> { [] }
+        attribute :labels, Label, collection: true, default: -> { [] }
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :children, Node, collection: true, default: -> { [] }
+        attribute :edges, Edge, collection: true, default: -> { [] }
+      end
 
       # Converts an architecture diagram to a positioned layout structure
       #
@@ -42,6 +89,201 @@ module Sirena
       end
 
       private
+
+      def scene(diagram)
+        graph = build_graph(diagram)
+        routed = route_edges(graph)
+        width, height = scene_dimensions(graph, routed)
+        Scene.new(
+          width: width, height: height, view_box: "0 0 #{width} #{height}",
+          children: typed_nodes(graph), edges: typed_edges(routed)
+        )
+      end
+
+      def typed_nodes(graph)
+        typed_groups(graph[:groups]) + typed_services(graph[:services]) +
+          typed_junctions(graph[:junctions])
+      end
+
+      def typed_groups(groups)
+        groups.values.map { |info| typed_group(info) }
+      end
+
+      def typed_group(info)
+        group = info[:group]
+        attributes = node_geometry(info).merge(
+          id: group.id, kind: "group", icon: group.icon,
+          icon_x: info[:x] + info[:width] - 30,
+          icon_y: info[:y] + 25, parent_id: group.parent_id,
+          labels: group_labels(group, info)
+        )
+        Node.new(**attributes)
+      end
+
+      def group_labels(group, info)
+        positioned_label(group.label, info[:x] + 10, info[:y] + 20)
+      end
+
+      def typed_services(services)
+        services.values.map { |info| typed_service(info) }
+      end
+
+      def typed_service(info)
+        service = info[:service]
+        attributes = node_geometry(info).merge(
+          id: service.id, kind: "service",
+          icon: service.icon, icon_x: horizontal_center(info),
+          icon_y: info[:y] + (info[:height] / 3),
+          group_id: normalized_group_id(info[:group_id]),
+          labels: service_labels(service, info)
+        )
+        Node.new(**attributes)
+      end
+
+      def service_labels(service, info)
+        positioned_label(service.label, horizontal_center(info),
+                         info[:y] + (info[:height] * 2 / 3))
+      end
+
+      def horizontal_center(info)
+        info[:x] + (info[:width] / 2)
+      end
+
+      def node_geometry(info)
+        { x: info[:x], y: info[:y], width: info[:width], height: info[:height] }
+      end
+
+      def typed_junctions(junctions)
+        junctions.values.map do |info|
+          Node.new(
+            id: info[:junction].id, kind: "junction",
+            x: info[:x], y: info[:y], width: info[:width],
+            height: info[:height],
+            group_id: normalized_group_id(info[:group_id])
+          )
+        end
+      end
+
+      def normalized_group_id(group_id)
+        group_id == :root ? nil : group_id
+      end
+
+      def positioned_label(text, x_coord, y_coord)
+        return [] unless text
+
+        [Label.new(text: text, x: x_coord, y: y_coord)]
+      end
+
+      def typed_edges(routed_edges)
+        routed_edges.map.with_index do |routed, index|
+          typed_edge(routed, index)
+        end
+      end
+
+      def typed_edge(routed, index)
+        edge = routed[:edge]
+        points = routed[:points].map { |point| typed_point(point) }
+        Edge.new(
+          id: "edge_#{index}", source: edge.from_id, target: edge.to_id,
+          sections: [typed_section(points)],
+          labels: edge_label(edge.label, points)
+        )
+      end
+
+      def typed_point(point)
+        Point.new(x: point[:x], y: point[:y])
+      end
+
+      def typed_section(points)
+        Section.new(start_point: points.first, end_point: points.last,
+                    bend_points: points[1...-1])
+      end
+
+      def edge_label(text, points)
+        return [] unless text && !text.empty?
+
+        first, second = points
+        [Label.new(text: text, x: midpoint(first.x, second.x),
+                   y: midpoint(first.y, second.y) - 5)]
+      end
+
+      def midpoint(first, second)
+        (first + second) / 2
+      end
+
+      def route_edges(graph)
+        graph[:edges].map do |edge_info|
+          edge = edge_info[:edge]
+          from = route_endpoint(edge_info, find_node(graph, edge.from_id),
+                                :from)
+          to = route_endpoint(edge_info, find_node(graph, edge.to_id), :to)
+          { edge: edge, points: routed_points(edge, from, to, graph) }
+        end
+      end
+
+      def route_endpoint(edge_info, box, endpoint)
+        { point: { x: edge_info[:"#{endpoint}_x"],
+                   y: edge_info[:"#{endpoint}_y"] },
+          box: box, side: edge_info[:"#{endpoint}_side"] }
+      end
+
+      def routed_points(edge, from, to, graph)
+        architecture_edge_router.route(
+          from: from, to: to, obstacles: obstacles_for(edge, graph),
+        )
+      rescue StandardError
+        [from[:point], to[:point]]
+      end
+
+      def architecture_edge_router
+        @architecture_edge_router ||=
+          Renderer::ArchitectureEdgeRouter.new
+      end
+
+      def obstacles_for(edge, graph)
+        excluded_ids = [edge.from_id, edge.to_id]
+        node_obstacles(graph, excluded_ids) + group_obstacles(edge, graph)
+      end
+
+      def node_obstacles(graph, excluded_ids)
+        nodes = graph[:services].values + graph[:junctions].values
+        nodes.reject { |info| excluded_ids.include?(positioned_node_id(info)) }
+      end
+
+      def group_obstacles(edge, graph)
+        excluded = endpoint_ancestor_groups(edge.from_id, graph) |
+          endpoint_ancestor_groups(edge.to_id, graph)
+        graph[:groups].except(*excluded).values
+      end
+
+      def endpoint_ancestor_groups(node_id, graph)
+        ancestor_group_ids(find_node(graph, node_id)[:group_id], graph)
+      end
+
+      def ancestor_group_ids(group_id, graph)
+        ids = []
+        current_id = group_id
+        while current_id && current_id != :root && !ids.include?(current_id)
+          ids << current_id
+          current_id = graph[:groups][current_id]&.dig(:group)&.parent_id
+        end
+        ids
+      end
+
+      def find_node(graph, id)
+        graph[:services][id] || graph[:junctions][id]
+      end
+
+      def positioned_node_id(info)
+        info[:service]&.id || info[:junction]&.id
+      end
+
+      def scene_dimensions(graph, routed_edges)
+        points = routed_edges.flat_map { |routed| routed[:points] }
+        width = [graph[:width], *points.map { |point| point[:x] }].max
+        height = [graph[:height], *points.map { |point| point[:y] }].max
+        [width, height]
+      end
 
       def build_hierarchy(diagram)
         hierarchy = {
@@ -195,7 +437,7 @@ module Sirena
 
       def calculate_service_dimensions(service)
         label = service.label || service.id
-        label_dims = measure_text(label, font_size: 14)
+        label_dims = measure_text(label, font_size: normal_font_size)
 
         width = [label_dims[:width] + 40, DEFAULT_SERVICE_WIDTH].max
         height = DEFAULT_SERVICE_HEIGHT
@@ -361,6 +603,11 @@ module Sirena
         max_group_y = group_bounds.values.map { |g| g[:y] + g[:height] }.max || 0
 
         [max_service_y, max_junction_y, max_group_y].max + DEFAULT_SPACING
+      end
+
+      def normal_font_size
+        theme.typography&.font_size_normal ||
+          Theme::Registry.get(:default).typography.font_size_normal
       end
     end
   end

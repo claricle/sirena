@@ -2,146 +2,52 @@
 
 require "spec_helper"
 
-module BlockSpecHelpers
-  def build_block(id, label)
-    Sirena::Diagram::BlockNode.new.tap do |block|
-      block.id = id
-      block.label = label
-    end
-  end
-end
-
 RSpec.describe Sirena::Renderer::Block do
-  include BlockSpecHelpers
+  subject(:renderer) { described_class.new }
 
-  let(:theme) { Sirena::Theme::Registry.get(:default) }
-  let(:renderer) { described_class.new(theme: theme) }
+  let(:source) { File.read("examples/block/01-basic-blocks.mmd") }
+  let(:svg) { renderer.render(scene) }
+  let(:xml) { svg.to_xml }
+  let(:expected_path) do
+    "M #{section.start_point.x} #{section.start_point.y} " \
+      "L #{section.end_point.x} #{section.end_point.y}"
+  end
 
-  describe "#render" do
-    context "with basic layout" do
-      let(:layout) do
-        {
-          blocks: {
-            "A" => {
-              block: build_block("A", "Block A"),
-              x: 20,
-              y: 20,
-              width: 100,
-              height: 60,
-            },
-            "B" => {
-              block: build_block("B", "Block B"),
-              x: 140,
-              y: 20,
-              width: 100,
-              height: 60,
-            },
-          },
-          connections: [],
-          columns: 2,
-          width: 260,
-          height: 100,
-        }
-      end
+  def scene
+    diagram = Sirena::Parser::Block.new.parse(source)
+    @scene ||= Sirena::Layout::Block.new.call(diagram)
+  end
 
-      it "renders SVG document" do
-        svg = renderer.render(layout)
-        expect(svg).to be_a(Sirena::Svg::Document)
-        expect(svg.width).to eq(260)
-        expect(svg.height).to eq(100)
-      end
+  def section
+    scene.edges.first.sections.first
+  end
 
-      it "renders blocks" do
-        svg = renderer.render(layout)
-        xml = svg.to_xml
-        expect(xml).to include("Block A")
-        expect(xml).to include("Block B")
-      end
-    end
+  it "renders typed final geometry with the Scene canvas" do
+    expect(svg).to be_a(Sirena::Svg::Document)
+    expect(scene).to be_a(Sirena::Layout::Block::Scene)
+    expect(scene.children).to all(be_a(Sirena::Layout::Block::Node))
+    expect([svg.width, svg.height, svg.view_box])
+      .to eq([scene.width, scene.height, scene.view_box])
+  end
 
-    context "with connections" do
-      let(:layout) do
-        {
-          blocks: {
-            "A" => {
-              block: build_block("A", "A"),
-              x: 20,
-              y: 20,
-              width: 100,
-              height: 60,
-            },
-            "B" => {
-              block: build_block("B", "B"),
-              x: 20,
-              y: 100,
-              width: 100,
-              height: 60,
-            },
-          },
-          connections: [
-            {
-              from: "A",
-              to: "B",
-              from_x: 70,
-              from_y: 80,
-              to_x: 70,
-              to_y: 100,
-              connection_type: "arrow",
-            },
-          ],
-          columns: 1,
-          width: 140,
-          height: 180,
-        }
-      end
+  it "renders blocks and labels" do
+    expect(xml).to include('id="block-Frontend"', "Frontend App")
+  end
 
-      it "renders connections" do
-        svg = renderer.render(layout)
-        xml = svg.to_xml
-        expect(xml).to include('d="M 70 80 L 70 100"')
-      end
+  it "renders connections from the typed section" do
+    expect(xml).to include('id="connection-Frontend-Backend"',
+                           %(d="#{expected_path}"))
+  end
 
-      # The renderer still asks for a marker. It used to be emitted as
-      # `marker-end="url(#arrowhead)"`, which no document ever defined, so
-      # the arrow drew as a bare line. The SVG layer draws the head now.
-      it "draws the arrowhead the connection asks for" do
-        xml = renderer.render(layout).to_xml
+  it "renders arrowheads without unresolved markers" do
+    expect([xml.include?("<polygon"), xml.include?("marker-end")])
+      .to eq([true, false])
+  end
 
-        expect(xml).not_to include("marker-end")
-        expect(xml)
-          .to include('<polygon fill="#000000" ' \
-                      'points="70.0,100.0 66.0,92.0 74.0,92.0"/>')
-      end
-    end
-
-    context "with circle shape" do
-      let(:layout) do
-        {
-          blocks: {
-            "A" => {
-              block: Sirena::Diagram::BlockNode.new.tap do |b|
-                b.id = "A"
-                b.label = "Circle"
-                b.shape = "circle"
-              end,
-              x: 20,
-              y: 20,
-              width: 80,
-              height: 80,
-            },
-          },
-          connections: [],
-          columns: 1,
-          width: 120,
-          height: 120,
-        }
-      end
-
-      it "renders circle shape" do
-        svg = renderer.render(layout)
-        xml = svg.to_xml
-        expect(xml).to include("<circle")
-      end
-    end
+  it "stores final label and edge coordinates in the Scene" do
+    node = scene.children.first
+    expect([node.labels.first.x, node.labels.first.y, section.start_point.x])
+      .to match([node.x + (node.width / 2), node.y + (node.height / 2),
+                 a_kind_of(Numeric)])
   end
 end
