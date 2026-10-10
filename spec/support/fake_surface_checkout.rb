@@ -2,7 +2,7 @@
 
 require "fileutils"
 
-# Writes a tiny checkout (lib/sirena.rb and exe/sirena) whose API and CLI
+# Writes a tiny checkout (Gemfile, lib/sirena.rb and exe/sirena) whose API and CLI
 # behaviour is set by keyword, so a spec can seed a difference in one surface.
 module FakeSurfaceCheckout
   DEFAULTS = {
@@ -13,6 +13,7 @@ module FakeSurfaceCheckout
   def build_fake_checkout(dir, **overrides)
     opts = DEFAULTS.merge(overrides)
     FileUtils.mkdir_p([File.join(dir, "lib"), File.join(dir, "exe")])
+    File.write(File.join(dir, "Gemfile"), "# frozen_string_literal: true\n")
     File.write(File.join(dir, "lib", "sirena.rb"), fake_api(opts))
     File.write(File.join(dir, "exe", "sirena"), fake_cli(opts))
     dir

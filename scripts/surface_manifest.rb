@@ -4,6 +4,7 @@ require "date"
 require "digest"
 require "fileutils"
 require "json"
+require "bundler"
 require "open3"
 
 # Records and compares what each public surface does for a list of cases, so
@@ -118,8 +119,17 @@ module SurfaceManifest
   end
 
   # Runs argv, killing its whole process group past the timeout.
+  # The child must see ONLY its own checkout's Gemfile: an inherited
+  # BUNDLE_GEMFILE or RUBYOPT from `bundle exec` loads the caller's lib too.
+  def checkout_env(root)
+    Bundler.unbundled_env.merge(
+      "BUNDLE_GEMFILE" => File.join(root, "Gemfile"),
+    )
+  end
+
   def run_process(argv, chdir:, timeout:, stdin_data: "")
-    Open3.popen3(*argv, chdir: chdir, pgroup: true) do |stdin, out, err, wait|
+    env = checkout_env(chdir)
+    Open3.popen3(env, *argv, chdir: chdir, pgroup: true) do |stdin, out, err, wait|
       begin
         stdin.write(stdin_data)
       rescue Errno::EPIPE
