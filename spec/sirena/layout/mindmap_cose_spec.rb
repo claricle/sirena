@@ -18,6 +18,29 @@ module MindmapCoseReferenceHelpers
     root = centres.first
     centres.map { |centre| [centre[0] - root[0], centre[1] - root[1]] }
   end
+
+  # The placed centres of +nodes+ relative to the first, as one flat list.
+  def layout_offsets(nodes, placed)
+    offsets_from_first(nodes.map { |node| placed.fetch(node[:id]) }).flatten
+  end
+
+  # The mmdc centres of +nodes+ relative to the first, as one flat list.
+  def reference_offsets(nodes)
+    offsets_from_first(nodes.map { |node| node[:centre] }).flatten
+  end
+
+  def match_offsets(expected)
+    match(expected.map { |value| be_within(0.01).of(value) })
+  end
+
+  def fixture_nodes(fixture)
+    fixture["nodes"].map { |node| { id: node["id"], centre: node["centre"] } }
+  end
+
+  def fixture_placement(fixture)
+    sizes = fixture["nodes"].map { |n| [n["id"], n["width"], n["height"]] }
+    described_class.call(sizes, fixture["edges"])
+  end
 end
 
 RSpec.describe Sirena::Layout::MindmapCose do
@@ -32,12 +55,9 @@ RSpec.describe Sirena::Layout::MindmapCose do
   }.each do |name, description|
     it "puts #{description} where mmdc does (#{name})" do
       nodes, placed = reference_layout(name)
-      actual = offsets_from_first(nodes.map { |node| placed.fetch(node[:id]) })
-      expected = offsets_from_first(nodes.map { |node| node[:centre] })
 
-      expect(actual.flatten).to match(
-        expected.flatten.map { |value| be_within(0.01).of(value) },
-      )
+      expect(layout_offsets(nodes, placed))
+        .to match_offsets(reference_offsets(nodes))
     end
   end
 
@@ -48,14 +68,11 @@ RSpec.describe Sirena::Layout::MindmapCose do
     name = File.basename(path, ".json")
     it "puts every node where mmdc does (#{name})" do
       fixture = JSON.parse(File.read(path))
-      sizes = fixture["nodes"].map { |n| [n["id"], n["width"], n["height"]] }
-      placed = described_class.call(sizes, fixture["edges"])
-      actual = offsets_from_first(fixture["nodes"].map { |n| placed.fetch(n["id"]) })
-      expected = offsets_from_first(fixture["nodes"].map { |n| n["centre"] })
+      nodes = fixture_nodes(fixture)
+      placed = fixture_placement(fixture)
 
-      expect(actual.flatten).to match(
-        expected.flatten.map { |value| be_within(0.01).of(value) },
-      )
+      expect(layout_offsets(nodes, placed))
+        .to match_offsets(reference_offsets(nodes))
     end
   end
 

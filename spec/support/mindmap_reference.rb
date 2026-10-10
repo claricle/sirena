@@ -19,9 +19,13 @@ module MindmapReference
   def nodes(name)
     document(name).xpath("//g[contains(@class, 'mindmap-node')]").map do |group|
       { id: group["id"].delete_prefix("node_"),
-        centre: group["transform"][/translate\(([^)]*)\)/, 1].split(",").map(&:to_f),
+        centre: translation(group).split(",").map(&:to_f),
         size: rounded_size(group.at_xpath("path")) }
     end
+  end
+
+  def translation(group)
+    group["transform"][/translate\(([^)]*)\)/, 1]
   end
 
   # @return [Array<Array<String>>] [parent id, child id] per edge
