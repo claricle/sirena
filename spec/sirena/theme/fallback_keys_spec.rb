@@ -5,9 +5,11 @@ require "spec_helper"
 RSpec.describe Sirena::Theme::ColorPalette do
   include ThemeFallbacks
 
-  # One key, several fallback colours: each needs its own role first.
+  # One key, several fallback colours in other renderers: each needs its own
+  # role first. Kanban and the XY chart already use card_text, xy_axis_line
+  # and xy_grid_line instead.
   let(:awaiting_roles) { %i[axis_line border_color grid_line text text_color] }
-  let(:asked_for) { theme_fallbacks.keys - awaiting_roles }
+  let(:asked_for) { theme_keys_asked - awaiting_roles }
 
   let(:carried) do
     %i[border edge_color field_background field_border field_text
@@ -43,5 +45,42 @@ RSpec.describe Sirena::Theme::ColorPalette do
       pinned.keys.to_h { |key| [key, theme.colors.public_send(key)] }
     end
     expect(drawn.uniq).to eq([pinned])
+  end
+
+  describe "categorical palettes" do
+    let(:sizes) do
+      { flow: 8, xy: 10, timeline_fill: 12, timeline_text: 12,
+        timeline_rule: 12 }
+    end
+
+    it "has every palette at its full length in every builtin theme" do
+      drawn = builtin_themes.map do |theme|
+        sizes.keys.to_h { |name| [name, theme.colors.public_send(:"#{name}_palette")&.size] }
+      end
+      expect(drawn).to all(eq(sizes))
+    end
+
+    it "gives every theme the same palette colours" do
+      drawn = builtin_themes.map do |theme|
+        sizes.keys.map { |name| theme.colors.public_send(:"#{name}_palette") }
+      end
+      expect(drawn.uniq.size).to eq(1)
+    end
+
+    it "wraps an index past the end of a palette" do
+      colors = builtin_themes.first.colors
+      wrapped = sizes.map { |name, size| colors.palette(name, size + 1) }
+      expect(wrapped).to eq(sizes.keys.map { |name| colors.palette(name, 1) })
+    end
+
+    it "refuses a palette name it does not define" do
+      expect { builtin_themes.first.colors.palette(:pie, 0) }
+        .to raise_error(KeyError, /unknown palette/)
+    end
+
+    it "refuses a theme that lacks the palette" do
+      bare = described_class.new
+      expect { bare.palette(:flow, 0) }.to raise_error(KeyError, /no flow/)
+    end
   end
 end
