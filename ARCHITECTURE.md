@@ -27,8 +27,9 @@ components.
 temporary hybrid layout boundary. Converted layouts return a typed
 `Layout::Scene` containing final canvas geometry. Layouts that have not yet
 been converted return a Hash wrapped in `Layout::Legacy`; only that branch
-passes through the built-in fallback grid (`Layout::Grid`). elkrb is a
-declared dependency but is not called from `lib/`.
+passes through the built-in fallback grid (`Layout::Grid`). Flowcharts can
+instead be placed by elkrb (`Layout::ElkPlacement`) when `layout_engine: :elk`
+is passed to `Engine#render`; the default is `:grid`.
 
 ```mermaid
 flowchart TD
@@ -274,7 +275,9 @@ Layout::Base#call result
 renderer unchanged. This branch is the migration boundary: converted types
 keep intermediate Hashes inside their layout when they need them, while
 unconverted types retain the legacy Hash contract until they move to a
-Scene. elkrb is declared but is not called from `lib/`.
+Scene. elkrb is called only for flowcharts, and only with
+`layout_engine: :elk`; any other diagram type raises `Layout::LayoutError`
+for that option.
 
 ### 4. Rendering Phase
 
@@ -601,7 +604,8 @@ sequenceDiagram
      geometry
    - A Legacy result is unwrapped and its Hash is positioned by
      `Layout::Grid`
-   - elkrb is not called from `lib/`
+   - With `layout_engine: :elk`, a flowchart is placed by
+     `Layout::ElkPlacement` (`Elkrb.layout`) instead of `Layout::Grid`
 
 5. **Renderer generates SVG**
    - Creates Svg::Document root
@@ -715,8 +719,8 @@ Declared in `sirena.gemspec`:
 - **plurimath-parslet (~> 3.0)**: Parslet fork used to build all diagram grammars
 - **lutaml-model (~> 0.8.0)**: Serialization framework for diagram, Scene,
   theme, and SVG models
-- **elkrb (~> 1.0)**: Declared for the planned layout integration, but not
-  called from `lib/`
+- **elkrb (~> 1.0)**: Flowchart placement when `layout_engine: :elk` is
+  passed; the default layout does not call it
 - **kramdown (~> 2.5)**: Markdown label text
 - **thor**: CLI framework
 

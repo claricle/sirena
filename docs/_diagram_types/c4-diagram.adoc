@@ -490,7 +490,7 @@ C4 diagrams are implemented using the standard 7-file Parslet architecture:
 4. https://github.com/claricle/sirena/blob/main/lib/sirena/parser/c4.rb#L29[`Parser::C4`] - Main parser class
 5. https://github.com/claricle/sirena/blob/main/lib/sirena/layout/c4.rb#L17[`Layout::C4`] - Diagram to graph layout
 6. https://github.com/claricle/sirena/blob/main/lib/sirena/renderer/c4.rb#L16[`Renderer::C4`] - SVG renderer
-7. Layout - Fallback grid positioning (`lib/sirena/engine.rb:359-365`); `elkrb` is a declared dependency but is not called
+7. Layout - Fallback grid positioning (`Layout::Grid`); `layout_engine: :elk` is not available for C4
 
 === Rendering Pipeline
 
