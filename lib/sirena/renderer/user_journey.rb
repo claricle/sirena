@@ -368,6 +368,7 @@ module Sirena
         Svg::Text.new.tap do |text|
           set_label_geometry(text, label)
           set_label_style(text, label)
+          set_label_class(text, label)
         end
       end
 
@@ -383,6 +384,10 @@ module Sirena
         text.font_family = "Arial, sans-serif"
         text.font_size = number_string(label.font_size)
         text.font_weight = label.font_weight if label.font_weight
+      end
+
+      def set_label_class(text, label)
+        text.class_name = "journey-section" if label.style == "section"
       end
 
       def render_typed_arrow(arrow, svg)

@@ -24,7 +24,7 @@ rows:
 - file: lib/sirena/layout/base.rb
   count: 2
 - file: lib/sirena/layout/block.rb
-  count: 4
+  count: 3
 - file: lib/sirena/layout/c4.rb
   count: 7
 - file: lib/sirena/layout/class_diagram.rb

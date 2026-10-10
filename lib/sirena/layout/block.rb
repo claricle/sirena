@@ -198,7 +198,7 @@ module Sirena
 
           # Handle compound blocks
           if block.compound? && !block.children.empty?
-            child_layout = layout_compound_children(block, x, y, dims)
+            child_layout = layout_compound_children(block, x, y)
             positioned_blocks.merge!(child_layout)
           end
 
@@ -213,26 +213,34 @@ module Sirena
         positioned_blocks
       end
 
-      def layout_compound_children(parent_block, parent_x, parent_y, parent_dims)
+      def layout_compound_children(parent_block, parent_x, parent_y)
         positioned = {}
         child_y = parent_y + DEFAULT_COMPOUND_PADDING
 
         parent_block.children.each do |child|
-          child_dims = calculate_block_dimensions(child)
-
-          positioned[child.id] = {
-            block: child,
-            x: parent_x + DEFAULT_COMPOUND_PADDING,
-            y: child_y,
-            width: child_dims[:width],
-            height: child_dims[:height],
-            parent_id: parent_block.id,
-          }
-
-          child_y += child_dims[:height] + DEFAULT_SPACING
+          geometry = compound_child_geometry(child, parent_block, parent_x,
+                                             child_y)
+          positioned[child.id] = geometry
+          positioned.merge!(nested_compound_children(child, geometry))
+          child_y += geometry[:height] + DEFAULT_SPACING
         end
 
         positioned
+      end
+
+      def compound_child_geometry(child, parent, parent_x, child_y)
+        dimensions = calculate_block_dimensions(child)
+        {
+          block: child, x: parent_x + DEFAULT_COMPOUND_PADDING, y: child_y,
+          width: dimensions[:width], height: dimensions[:height],
+          parent_id: parent.id
+        }
+      end
+
+      def nested_compound_children(child, geometry)
+        return {} unless child.compound? && !child.children.empty?
+
+        layout_compound_children(child, geometry[:x], geometry[:y])
       end
 
       def calculate_block_dimensions(block)

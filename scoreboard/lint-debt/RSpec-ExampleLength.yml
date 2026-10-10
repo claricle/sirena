@@ -128,7 +128,7 @@ rows:
 - file: spec/sirena/parser/packet_spec.rb
   count: 6
 - file: spec/sirena/parser/pie_spec.rb
-  count: 3
+  count: 2
 - file: spec/sirena/parser/quadrant_spec.rb
   count: 7
 - file: spec/sirena/parser/radar_spec.rb

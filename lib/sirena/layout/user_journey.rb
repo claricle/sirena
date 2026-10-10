@@ -66,6 +66,8 @@ module Sirena
         attribute :id, :string
         attribute :box, Box
         attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :section_name, :string
+        attribute :section_index, :integer
       end
 
       class Line < Lutaml::Model::Serializable
@@ -77,6 +79,8 @@ module Sirena
 
       class Arrow < Lutaml::Model::Serializable
         attribute :id, :string
+        attribute :source, :string
+        attribute :target, :string
         attribute :line, Line
         attribute :head_path, :string
       end
@@ -171,11 +175,15 @@ module Sirena
 
       def section_labels(graph)
         current_y = section_start_y(graph)
-        grouped_tasks(graph).map do |section_name, _tasks|
+        section_names(graph).map do |section_name|
           label = section_label(section_name, current_y)
           current_y += SECTION_FONT_SIZE + SECTION_PADDING + 20
           label
         end
+      end
+
+      def section_names(graph)
+        graph.dig(:metadata, :sections) || grouped_tasks(graph).keys
       end
 
       def section_start_y(graph)
@@ -207,6 +215,8 @@ module Sirena
           id: node[:id],
           box: task_box(node, metadata),
           labels: task_content(metadata, node),
+          section_name: metadata[:section_name],
+          section_index: metadata[:section_index],
         )
       end
 
@@ -265,16 +275,22 @@ module Sirena
       end
 
       def typed_arrow(edge, nodes)
-        source = find_node(nodes, edge[:sources]&.first)
-        target = find_node(nodes, edge[:targets]&.first)
+        source_id = Array(edge[:sources]).first
+        target_id = Array(edge[:targets]).first
+        source = find_node(nodes, source_id)
+        target = find_node(nodes, target_id)
         return unless source && target
 
+        build_typed_arrow(edge[:id], source_id, target_id, source, target)
+      end
+
+      def build_typed_arrow(id, source_id, target_id, source, target)
         from_x, from_y = task_right_center(source)
         to_x, to_y = task_left_center(target)
         Arrow.new(
-          id: edge[:id],
+          id: id, source: source_id, target: target_id,
           line: Line.new(x1: from_x, y1: from_y, x2: to_x, y2: to_y),
-          head_path: arrowhead_path(to_x, to_y, from_x, from_y),
+          head_path: arrowhead_path(to_x, to_y, from_x, from_y)
         )
       end
 

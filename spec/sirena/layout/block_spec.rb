@@ -14,6 +14,19 @@ RSpec.describe Sirena::Layout::Block do
     transform.call(parser.parse(source))
   end
 
+  def nested_scene
+    transform.call(parser.parse(<<~MERMAID))
+      block-beta
+        block:outer
+          A
+          block:inner
+            B
+            C
+          end
+        end
+    MERMAID
+  end
+
   describe "#call" do
     it "filters space nodes from typed final geometry" do
       expect(basic_scene.children.map(&:id))
@@ -24,6 +37,13 @@ RSpec.describe Sirena::Layout::Block do
       compound = shaped_scene.children.find { |node| node.id == "compound" }
       expect(compound.children)
         .to contain_exactly(have_attributes(id: "D"), have_attributes(id: "E"))
+    end
+
+    it "positions recursively nested compound children" do
+      children = nested_scene.children.first.children
+      inner = children.find { |node| node.id == "inner" }
+      expect([inner.children.map(&:id), inner.children.map(&:x).uniq])
+        .to eq([%w[B C], [60.0]])
     end
 
     context "with a block whose span never fits the column count" do
