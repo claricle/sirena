@@ -14088,10 +14088,10 @@
             127.0
           ],
           "bbox_sirena": [
+            760.0,
             50.0,
-            250.0,
-            190.0,
-            290.0
+            900.0,
+            90.0
           ],
           "key": [
             "class",
@@ -14107,9 +14107,9 @@
             127.0
           ],
           "bbox_sirena": [
-            550.0,
+            510.0,
             50.0,
-            690.0,
+            650.0,
             90.0
           ],
           "key": [
@@ -14121,7 +14121,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 4.089532053016,
-      "worst_e_c": 1.91551560896,
+      "worst_e_c": 0.306357869949,
       "worst_e_h": 0.52380952381,
       "worst_e_w": 1.423586691912,
       "worst_keys": {
@@ -14134,7 +14134,7 @@
         "e_c": [
           "class",
           null,
-          "Admin"
+          "User"
         ],
         "e_h": [
           "class",
@@ -14191,7 +14191,7 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 1.91551560896,
+        "worst_e_c": 0.306357869949,
         "worst_e_w": 1.423586691912,
         "worst_e_h": 0.52380952381,
         "worst_e_a": 4.089532053016,
@@ -15115,10 +15115,10 @@
             153.0
           ],
           "bbox_sirena": [
-            50.0,
-            450.0,
-            190.0,
-            490.0
+            510.0,
+            250.0,
+            650.0,
+            290.0
           ],
           "key": [
             "class",
@@ -15134,9 +15134,9 @@
             373.0
           ],
           "bbox_sirena": [
-            300.0,
+            510.0,
             50.0,
-            440.0,
+            650.0,
             90.0
           ],
           "key": [
@@ -15153,10 +15153,10 @@
             373.0
           ],
           "bbox_sirena": [
-            300.0,
-            450.0,
-            440.0,
-            490.0
+            760.0,
+            250.0,
+            900.0,
+            290.0
           ],
           "key": [
             "class",
@@ -15186,7 +15186,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 3.164536369974,
-      "worst_e_c": 0.88728357735,
+      "worst_e_c": 1.26854484014,
       "worst_e_h": 0.666666666667,
       "worst_e_w": 0.388178789991,
       "worst_keys": {
@@ -15199,7 +15199,7 @@
         "e_c": [
           "class",
           null,
-          "A2"
+          "B2"
         ],
         "e_h": [
           "class",
@@ -15290,7 +15290,7 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.88728357735,
+        "worst_e_c": 1.26854484014,
         "worst_e_w": 0.388178789991,
         "worst_e_h": 0.666666666667,
         "worst_e_a": 3.164536369974,
@@ -63263,7 +63263,7 @@
             40.0,
             40.0,
             240.0,
-            285.0
+            303.0
           ],
           "key": [
             "section",
@@ -63274,7 +63274,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.464864864865,
-      "worst_e_c": 0.210982981443,
+      "worst_e_c": 0.220935008869,
       "worst_e_h": 0.818181818182,
       "worst_e_w": 0.027027027027,
       "worst_keys": {
@@ -63285,9 +63285,9 @@
           "Create Documentation"
         ],
         "e_c": [
-          "card",
-          "Todo",
-          "Create Documentation"
+          "section",
+          null,
+          "Todo"
         ],
         "e_h": [
           "card",
@@ -63333,7 +63333,7 @@
         "subject_keys": [
           "card",
           "Todo",
-          "Create Blog about the ..."
+          "Create Blog about thenew diagram"
         ]
       }
     ],
@@ -63344,7 +63344,7 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.210982981443,
+        "worst_e_c": 0.220935008869,
         "worst_e_w": 0.027027027027,
         "worst_e_h": 0.818181818182,
         "worst_e_a": 0.464864864865,
@@ -63407,7 +63407,7 @@
             300.0,
             40.0,
             500.0,
-            190.0
+            208.0
           ],
           "key": [
             "section",
@@ -63418,7 +63418,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.473333333333,
-      "worst_e_c": 0.143123268405,
+      "worst_e_c": 0.152873496385,
       "worst_e_h": 0.898734177215,
       "worst_e_w": 0.027027027027,
       "worst_keys": {
@@ -63477,7 +63477,7 @@
         "subject_keys": [
           "card",
           "id2",
-          "Create Blog about the ..."
+          "Create Blog about thenew diagram"
         ]
       }
     ],
@@ -63488,7 +63488,7 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.143123268405,
+        "worst_e_c": 0.152873496385,
         "worst_e_w": 0.027027027027,
         "worst_e_h": 0.898734177215,
         "worst_e_a": 0.473333333333,
@@ -63513,7 +63513,7 @@
             40.0,
             40.0,
             240.0,
-            190.0
+            244.0
           ],
           "key": [
             "section",
@@ -63523,9 +63523,9 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.166666666667,
-      "worst_e_c": 0.047036043419,
-      "worst_e_h": 0.142857142857,
+      "worst_e_a": 0.142156862745,
+      "worst_e_c": 0.054561810366,
+      "worst_e_h": 0.165714285714,
       "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
@@ -63583,7 +63583,7 @@
         "subject_keys": [
           "card",
           "Todo",
-          "Title of diagram is mo..."
+          "Title of diagram is morethan 100 chars whenuser duplicates diagramwith 100 char, wrapping"
         ]
       }
     ],
@@ -63594,10 +63594,10 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.047036043419,
+        "worst_e_c": 0.054561810366,
         "worst_e_w": 0.0,
-        "worst_e_h": 0.142857142857,
-        "worst_e_a": 0.166666666667,
+        "worst_e_h": 0.165714285714,
+        "worst_e_a": 0.142156862745,
         "worst_analog": null
       }
     }
@@ -63638,7 +63638,7 @@
             40.0,
             40.0,
             240.0,
-            285.0
+            339.0
           ],
           "key": [
             "section",
@@ -63708,7 +63708,7 @@
         "subject_keys": [
           "card",
           "Todo",
-          "Title of diagram is mo..."
+          "Title of diagram is morethan 100 chars whenuser duplicates diagramwith 100 char, wrapping"
         ]
       }
     ],
@@ -63742,9 +63742,9 @@
           ],
           "bbox_sirena": [
             50.0,
-            195.0,
+            249.0,
             230.0,
-            275.0
+            329.0
           ],
           "key": [
             "card",
@@ -63763,7 +63763,7 @@
             40.0,
             40.0,
             240.0,
-            285.0
+            339.0
           ],
           "key": [
             "section",
@@ -63774,7 +63774,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.464864864865,
-      "worst_e_c": 0.034965827889,
+      "worst_e_c": 0.189814494253,
       "worst_e_h": 0.818181818182,
       "worst_e_w": 0.027027027027,
       "worst_keys": {
@@ -63785,9 +63785,9 @@
           "One line"
         ],
         "e_c": [
-          "section",
-          null,
-          "Todo"
+          "card",
+          "Todo",
+          "One line"
         ],
         "e_h": [
           "card",
@@ -63833,7 +63833,7 @@
         "subject_keys": [
           "card",
           "Todo",
-          "Title of diagram is mo..."
+          "Title of diagram is morethan 100 chars whenuser duplicates diagramwith 100 char, wrapping"
         ]
       }
     ],
@@ -63844,7 +63844,7 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.034965827889,
+        "worst_e_c": 0.189814494253,
         "worst_e_w": 0.027027027027,
         "worst_e_h": 0.818181818182,
         "worst_e_a": 0.464864864865,
@@ -63886,9 +63886,9 @@
           ],
           "bbox_sirena": [
             50.0,
-            290.0,
+            344.0,
             230.0,
-            370.0
+            424.0
           ],
           "key": [
             "card",
@@ -63907,7 +63907,7 @@
             40.0,
             40.0,
             240.0,
-            380.0
+            434.0
           ],
           "key": [
             "section",
@@ -63918,7 +63918,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.464864864865,
-      "worst_e_c": 0.15660951162,
+      "worst_e_c": 0.304354333903,
       "worst_e_h": 0.818181818182,
       "worst_e_w": 0.027027027027,
       "worst_keys": {
@@ -63977,7 +63977,7 @@
         "subject_keys": [
           "card",
           "Todo",
-          "Title of diagram is mo..."
+          "Title of diagram is morethan 100 chars whenuser duplicates diagramwith 100 char, wrapping"
         ]
       }
     ],
@@ -63988,7 +63988,7 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.15660951162,
+        "worst_e_c": 0.304354333903,
         "worst_e_w": 0.027027027027,
         "worst_e_h": 0.818181818182,
         "worst_e_a": 0.464864864865,
@@ -64051,7 +64051,7 @@
             300.0,
             40.0,
             500.0,
-            208.0
+            226.0
           ],
           "key": [
             "section",
@@ -64062,7 +64062,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.473333333333,
-      "worst_e_c": 0.145011064215,
+      "worst_e_c": 0.155487313484,
       "worst_e_h": 0.898734177215,
       "worst_e_w": 0.027027027027,
       "worst_keys": {
@@ -64121,7 +64121,7 @@
         "subject_keys": [
           "card",
           "In progress",
-          "Create Blog about the ..."
+          "Create Blog about thenew diagram"
         ]
       }
     ],
@@ -64132,7 +64132,7 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.145011064215,
+        "worst_e_c": 0.155487313484,
         "worst_e_w": 0.027027027027,
         "worst_e_h": 0.898734177215,
         "worst_e_a": 0.473333333333,
@@ -64342,7 +64342,7 @@
             300.0,
             40.0,
             500.0,
-            208.0
+            226.0
           ],
           "key": [
             "section",
@@ -64353,7 +64353,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.473333333333,
-      "worst_e_c": 0.145011064215,
+      "worst_e_c": 0.155487313484,
       "worst_e_h": 0.898734177215,
       "worst_e_w": 0.027027027027,
       "worst_keys": {
@@ -64412,7 +64412,7 @@
         "subject_keys": [
           "card",
           "In progress",
-          "Create Blog about the ..."
+          "Create Blog about thenew diagram"
         ]
       }
     ],
@@ -64423,7 +64423,7 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.145011064215,
+        "worst_e_c": 0.155487313484,
         "worst_e_w": 0.027027027027,
         "worst_e_h": 0.898734177215,
         "worst_e_a": 0.473333333333,
@@ -64448,7 +64448,7 @@
             40.0,
             40.0,
             240.0,
-            244.0
+            262.0
           ],
           "key": [
             "section",
@@ -64458,9 +64458,9 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.436274509804,
-      "worst_e_c": 0.19288665243,
-      "worst_e_h": 0.773913043478,
+      "worst_e_a": 0.481981981982,
+      "worst_e_c": 0.231897436068,
+      "worst_e_h": 0.930434782609,
       "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
@@ -64518,7 +64518,7 @@
         "subject_keys": [
           "card",
           "In progress",
-          "Create Blog about the ..."
+          "Create Blog about thenew diagram"
         ]
       }
     ],
@@ -64529,10 +64529,10 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.19288665243,
+        "worst_e_c": 0.231897436068,
         "worst_e_w": 0.0,
-        "worst_e_h": 0.773913043478,
-        "worst_e_a": 0.436274509804,
+        "worst_e_h": 0.930434782609,
+        "worst_e_a": 0.481981981982,
         "worst_analog": null
       }
     }
@@ -69081,7 +69081,7 @@
         "subject_keys": [
           "mindmap_node",
           null,
-          "On effectiveness<br/>and features"
+          "On effectivenessand features"
         ]
       }
     ],
@@ -80773,10 +80773,10 @@
             92.0
           ],
           "bbox_sirena": [
-            160.0,
-            20.0,
-            280.0,
-            60.0
+            170.0,
+            48.0,
+            290.0,
+            88.0
           ],
           "key": [
             "participant-top",
@@ -80792,10 +80792,10 @@
             92.0
           ],
           "bbox_sirena": [
-            20.0,
-            20.0,
-            140.0,
-            60.0
+            30.0,
+            48.0,
+            150.0,
+            88.0
           ],
           "key": [
             "participant-top",
@@ -90949,10 +90949,10 @@
             92.0
           ],
           "bbox_sirena": [
-            300.0,
-            20.0,
-            420.0,
-            60.0
+            320.0,
+            48.0,
+            440.0,
+            88.0
           ],
           "key": [
             "participant-top",
@@ -90968,10 +90968,10 @@
             92.0
           ],
           "bbox_sirena": [
-            160.0,
-            20.0,
-            280.0,
-            60.0
+            170.0,
+            48.0,
+            290.0,
+            88.0
           ],
           "key": [
             "participant-top",
@@ -90987,10 +90987,10 @@
             92.0
           ],
           "bbox_sirena": [
-            20.0,
-            20.0,
-            140.0,
-            60.0
+            30.0,
+            48.0,
+            150.0,
+            88.0
           ],
           "key": [
             "participant-top",
@@ -91001,7 +91001,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.3,
-      "worst_e_c": 0.264661296948,
+      "worst_e_c": 0.24714320754,
       "worst_e_h": 0.384615384615,
       "worst_e_w": 0.2,
       "worst_keys": {
@@ -91088,7 +91088,7 @@
     "summary": {
       "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.264661296948,
+        "worst_e_c": 0.24714320754,
         "worst_e_w": 0.2,
         "worst_e_h": 0.384615384615,
         "worst_e_a": 0.3,
@@ -91680,10 +91680,10 @@
             92.0
           ],
           "bbox_sirena": [
-            160.0,
-            20.0,
-            280.0,
-            60.0
+            170.0,
+            48.0,
+            290.0,
+            88.0
           ],
           "key": [
             "participant-top",
@@ -91699,10 +91699,10 @@
             92.0
           ],
           "bbox_sirena": [
-            20.0,
-            20.0,
-            140.0,
-            60.0
+            30.0,
+            48.0,
+            150.0,
+            88.0
           ],
           "key": [
             "participant-top",
@@ -96768,7 +96768,7 @@
         "subject_keys": [
           "timeline_event",
           null,
-          "Machinery, Water power, Steam <br>power"
+          "Machinery, Water power, Steampower"
         ]
       },
       {
@@ -97101,7 +97101,7 @@
         "subject_keys": [
           "timeline_event",
           null,
-          "Sea levels rise and Britain becomes an island.<br> The people who live here are hunter-gatherers."
+          "Sea levels rise and Britain becomes an island.The people who live here are hunter-gatherers."
         ]
       },
       {
@@ -97118,7 +97118,7 @@
         "subject_keys": [
           "timeline_event",
           null,
-          "People arrive from Europe and settle in Britain. <br>They bring farming and metalworking."
+          "People arrive from Europe and settle in Britain.They bring farming and metalworking."
         ]
       },
       {
@@ -97152,7 +97152,7 @@
         "subject_keys": [
           "timeline_event",
           null,
-          "The last major building works are completed at Stonehenge.<br> People now bury their dead in stone circles."
+          "The last major building works are completed at Stonehenge.People now bury their dead in stone circles."
         ]
       },
       {

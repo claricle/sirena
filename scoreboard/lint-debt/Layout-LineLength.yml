@@ -34,7 +34,7 @@ rows:
 - file: lib/sirena/parser/metadata_yaml.rb
   count: 1
 - file: lib/sirena/parser/user_journey.rb
-  count: 5
+  count: 4
 - file: lib/sirena/renderer/architecture.rb
   count: 1
 - file: lib/sirena/renderer/architecture_edge_router.rb
@@ -128,7 +128,7 @@ rows:
 - file: spec/scripts/corpus_sweep_malformed_xml_spec.rb
   count: 3
 - file: spec/scripts/corpus_sweep_task_spec.rb
-  count: 7
+  count: 6
 - file: spec/scripts/docs_site_verifier_spec.rb
   count: 179
 - file: spec/scripts/hardened_mmdc_spec.rb
@@ -174,7 +174,7 @@ rows:
 - file: spec/sirena/layout/grid_spec.rb
   count: 1
 - file: spec/sirena/layout/kanban_spec.rb
-  count: 19
+  count: 17
 - file: spec/sirena/lint_debt_spec.rb
   count: 1
 - file: spec/sirena/markdown_text_spec.rb
