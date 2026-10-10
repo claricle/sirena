@@ -15,6 +15,9 @@ module Sirena
   module Renderer
     # Emits SVG from final, typed mindmap geometry.
     class Mindmap < Base
+      # mmdc's class on every node group.
+      NODE_CLASS = "node mindmap-node"
+
       # @param scene [Layout::Mindmap::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
@@ -67,19 +70,25 @@ module Sirena
       # @param svg [Svg::Document] SVG document
       # @return [void]
       def render_node(node, svg)
+        group = Svg::Group.new.tap { |item| item.class_name = NODE_CLASS }
+        render_shape(node, group)
+        svg.add_element(group)
+      end
+
+      def render_shape(node, group)
         case node.shape
         when "circle"
-          render_circle_node(node, svg)
+          render_circle_node(node, group)
         when "cloud"
-          render_cloud_node(node, svg)
+          render_cloud_node(node, group)
         when "bang"
-          render_bang_node(node, svg)
+          render_bang_node(node, group)
         when "hexagon"
-          render_hexagon_node(node, svg)
+          render_hexagon_node(node, group)
         when "square"
-          render_square_node(node, svg)
+          render_square_node(node, group)
         else
-          render_default_node(node, svg)
+          render_default_node(node, group)
         end
       end
 
@@ -88,9 +97,9 @@ module Sirena
       # @param node [Hash] node data
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
-      # @param svg [Svg::Document] SVG document
+      # @param group [Svg::Group] the node's group
       # @return [void]
-      def render_default_node(node, svg)
+      def render_default_node(node, group)
         color = level_color(node.level)
         rect = Svg::Rect.new.tap do |r|
           r.x = node.x
@@ -104,9 +113,9 @@ module Sirena
           r.stroke_width = "2"
         end
 
-        svg.add_element(rect)
+        group.add_child(rect)
 
-        render_node_text(node, svg)
+        render_node_text(node, group)
       end
 
       # Renders a circle node.
@@ -114,9 +123,9 @@ module Sirena
       # @param node [Hash] node data
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
-      # @param svg [Svg::Document] SVG document
+      # @param group [Svg::Group] the node's group
       # @return [void]
-      def render_circle_node(node, svg)
+      def render_circle_node(node, group)
         color = level_color(node.level)
 
         circle = Svg::Circle.new.tap do |c|
@@ -128,9 +137,9 @@ module Sirena
           c.stroke_width = "2"
         end
 
-        svg.add_element(circle)
+        group.add_child(circle)
 
-        render_node_text(node, svg)
+        render_node_text(node, group)
       end
 
       # Renders a square node.
@@ -138,9 +147,9 @@ module Sirena
       # @param node [Hash] node data
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
-      # @param svg [Svg::Document] SVG document
+      # @param group [Svg::Group] the node's group
       # @return [void]
-      def render_square_node(node, svg)
+      def render_square_node(node, group)
         color = level_color(node.level)
 
         rect = Svg::Rect.new.tap do |r|
@@ -153,9 +162,9 @@ module Sirena
           r.stroke_width = "2"
         end
 
-        svg.add_element(rect)
+        group.add_child(rect)
 
-        render_node_text(node, svg)
+        render_node_text(node, group)
       end
 
       # Renders a hexagon node.
@@ -163,9 +172,9 @@ module Sirena
       # @param node [Hash] node data
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
-      # @param svg [Svg::Document] SVG document
+      # @param group [Svg::Group] the node's group
       # @return [void]
-      def render_hexagon_node(node, svg)
+      def render_hexagon_node(node, group)
         color = level_color(node.level)
         polygon = Svg::Polygon.new.tap do |p|
           p.points = node.shape_points
@@ -174,9 +183,9 @@ module Sirena
           p.stroke_width = "2"
         end
 
-        svg.add_element(polygon)
+        group.add_child(polygon)
 
-        render_node_text(node, svg)
+        render_node_text(node, group)
       end
 
       # Renders a cloud node.
@@ -184,9 +193,9 @@ module Sirena
       # @param node [Hash] node data
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
-      # @param svg [Svg::Document] SVG document
+      # @param group [Svg::Group] the node's group
       # @return [void]
-      def render_cloud_node(node, svg)
+      def render_cloud_node(node, group)
         color = level_color(node.level)
         path = Svg::Path.new.tap do |p|
           p.d = node.shape_path
@@ -195,9 +204,9 @@ module Sirena
           p.stroke_width = "2"
         end
 
-        svg.add_element(path)
+        group.add_child(path)
 
-        render_node_text(node, svg)
+        render_node_text(node, group)
       end
 
       # Renders a bang node (cloud with emphasis).
@@ -205,18 +214,18 @@ module Sirena
       # @param node [Hash] node data
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
-      # @param svg [Svg::Document] SVG document
+      # @param group [Svg::Group] the node's group
       # @return [void]
-      def render_bang_node(node, svg)
-        render_cloud_node(node, svg)
+      def render_bang_node(node, group)
+        render_cloud_node(node, group)
       end
 
       # Renders text content for a node.
       #
       # @param node [Layout::Mindmap::Node] node geometry
-      # @param svg [Svg::Document] SVG document
+      # @param group [Svg::Group] the node's group
       # @return [void]
-      def render_node_text(node, svg)
+      def render_node_text(node, group)
         label = node.labels.first
         return unless label&.text
 
@@ -225,12 +234,22 @@ module Sirena
           t.y = label.y
           t.text_anchor = "middle"
           t.fill = theme_color(:text) || "#000000"
-          t.font_size = (theme_typography(:font_size) || 12).to_s
+          t.font_size = (label.font_size || 12).to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         end
-        LineBreakText.fill(text, label.text)
+        fill_lines(text, label.text)
 
-        svg.add_element(text)
+        group.add_child(text)
+      end
+
+      # One tspan per line. A line that is followed by another ends in a
+      # space, so the label still reads as one sentence.
+      def fill_lines(text, raw)
+        lines = raw.split("\n", -1)
+        return text.tap { text.content = raw } if lines.one?
+
+        spaced = lines[0...-1].map { |line| "#{line} " } << lines.last
+        LineBreakText.fill_lines(text, spaced)
       end
 
       # Gets the color for a level.

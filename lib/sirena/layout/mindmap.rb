@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "mindmap_node_size"
 require_relative "../notation/mermaid/ir_adapters/mindmap"
 
 module Sirena
@@ -25,10 +26,6 @@ module Sirena
       # Vertical spacing between levels
       LEVEL_VERTICAL_SPACING = 80
 
-      # Default node dimensions
-      DEFAULT_NODE_WIDTH = 100
-      DEFAULT_NODE_HEIGHT = 40
-
       # Padding for root node
       ROOT_PADDING = 20
 
@@ -36,6 +33,7 @@ module Sirena
         attribute :text, :string
         attribute :x, :float
         attribute :y, :float
+        attribute :font_size, :float
       end
 
       class Node < Lutaml::Model::Serializable
@@ -92,6 +90,7 @@ module Sirena
         @children_by_parent = graph.nodes.group_by(&:parent_id)
         @nodes_by_id = graph.nodes.to_h { |node| [node.id, node] }
         @levels = {}
+        @sizes = {}
 
         # Position nodes using tree layout
         positioned_nodes = position_tree(root)
@@ -172,7 +171,15 @@ module Sirena
       def node_label(node, geometry)
         center_y = geometry[:y] + (geometry[:height] / 2)
         center_y = geometry[:y] + geometry[:radius] if node[:shape] == "circle"
-        Label.new(text: node[:content], x: geometry[:center_x], y: center_y + 5)
+        lines = node[:lines]
+        Label.new(text: lines.join("\n"), x: geometry[:center_x],
+                  y: center_y + 5 - first_line_lift(lines),
+                  font_size: MindmapNodeSize::FONT_SIZE.to_f)
+      end
+
+      # Lifts the first line so a stack of lines stays centred on the node.
+      def first_line_lift(lines)
+        (lines.length - 1) * MindmapNodeSize::FONT_SIZE * 0.6
       end
 
       def typed_edges(connections, nodes)
@@ -300,6 +307,7 @@ module Sirena
           y: ROOT_PADDING,
           width: root_width,
           height: root_height,
+          lines: node_size(root)[:lines],
           level: level_for(root),
           shape: root.role,
         }
@@ -350,6 +358,7 @@ module Sirena
             y: y,
             width: child_width,
             height: child_height,
+            lines: node_size(child)[:lines],
             level: level_for(child),
             shape: child.role,
             parent_id: parent.id,
@@ -369,34 +378,20 @@ module Sirena
         end
       end
 
-      # Estimates the width of a single node based on content and shape
+      # The mmdc box of a node: width, height and wrapped label lines.
       #
-      # @param node [Diagram::Mindmap::MindmapNode] node
-      # @return [Numeric] estimated width
+      # @param node [IR::Node] node
+      # @return [Hash] :width, :height, :lines
+      def node_size(node)
+        @sizes[node.id] ||= MindmapNodeSize.call(node.label, node.role)
+      end
+
       def estimate_node_width(node)
-        measured = measure_text(node.label.to_s, font_size: node_font_size)
-        base_width = [measured[:width] + 20, DEFAULT_NODE_WIDTH].max
-
-        # Adjust for shape
-        case node.role
-        when "circle", "hexagon"
-          base_width * 1.2
-        else
-          base_width
-        end
+        node_size(node)[:width]
       end
 
-      def node_font_size
-        theme.typography&.font_size_small ||
-          Theme::Registry.get(:default).typography.font_size_small
-      end
-
-      # Estimates the height of a node
-      #
-      # @param node [Diagram::Mindmap::MindmapNode] node
-      # @return [Numeric] estimated height
-      def estimate_node_height(_node)
-        DEFAULT_NODE_HEIGHT
+      def estimate_node_height(node)
+        node_size(node)[:height]
       end
 
       # Calculates the total width needed for a subtree

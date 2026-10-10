@@ -50,13 +50,24 @@ RSpec.describe Sirena::Renderer::Mindmap do
       .to eq([true, true, true])
   end
 
-  it "renders all node shapes, labels, and links" do
+  it "renders all node shapes and labels inside node groups" do
     svg = renderer.render(scene)
+    parts = svg.children.grep(Sirena::Svg::Group).flat_map(&:children)
 
-    types = [Sirena::Svg::Circle, Sirena::Svg::Rect, Sirena::Svg::Polygon,
-             Sirena::Svg::Path, Sirena::Svg::Text]
-    expect(types.map { |type| svg.children.grep(type).length })
-      .to eq([1, 1, 1, 4, 4])
+    expect(parts.map { |part| part.class.name.split("::").last }.tally)
+      .to eq("Circle" => 1, "Rect" => 1, "Polygon" => 1, "Path" => 1,
+             "Text" => 4)
+  end
+
+  it "renders one link per child outside the node groups" do
+    expect(renderer.render(scene).children.grep(Sirena::Svg::Path).length)
+      .to eq(3)
+  end
+
+  it "wraps every node in an mmdc node group" do
+    groups = renderer.render(scene).children.grep(Sirena::Svg::Group)
+
+    expect(groups.map(&:class_name).uniq).to eq(["node mindmap-node"])
   end
 
   it "uses the Scene dimensions without renderer offsets" do
@@ -68,5 +79,13 @@ RSpec.describe Sirena::Renderer::Mindmap do
 
   it "lays out shared IR without changing direct Diagram compatibility" do
     expect(compatible_summaries.uniq.one?).to be(true)
+  end
+
+  it "ends a line that is followed by another with a space" do
+    diagram = Sirena::Parser::Mindmap.new.parse("mindmap\n  a[one<br/>two]\n")
+    scene = Sirena::Layout::Mindmap.new.call(diagram)
+    xml = described_class.new.render(scene).to_xml
+
+    expect(xml).to include(">one </tspan>")
   end
 end
