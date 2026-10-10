@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "c4_stereotype"
 require_relative "elk_placement"
 require_relative "grid"
 require_relative "../diagram/c4"
@@ -86,6 +87,9 @@ module Sirena
       TEXT_PADDING = 10
       LINE_HEIGHT = 16
       ARROW_SIZE = 8
+      TITLE_Y = 30
+      TITLE_FONT_SIZE = 16
+      STEREOTYPE_FONT_SIZE = 12
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -116,6 +120,7 @@ module Sirena
         attribute :width, :float
         attribute :height, :float
         attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :stereotype, Label
         attribute :kind, :string
         attribute :external, :boolean, default: false
         attribute :head_center, Point
@@ -137,6 +142,7 @@ module Sirena
         attribute :view_box, :string
         attribute :children, Node, collection: true, default: -> { [] }
         attribute :edges, Edge, collection: true, default: -> { [] }
+        attribute :title, Label
       end
 
       # :grid (the default) or :elk. Grid remains the default until the
@@ -298,12 +304,22 @@ module Sirena
         graph = build_graph(diagram)
         placer.apply(graph)
         children = graph[:children].map { |node| typed_node(node) }
-        width, height = scene_dimensions(children)
+        title = title_label(graph.dig(:metadata, :title))
+        width, height = scene_dimensions(children, title)
         Scene.new(
           width: width, height: height, view_box: "0 0 #{width} #{height}",
-          children: children,
+          children: children, title: title,
           edges: typed_edges(graph[:edges], children)
         )
+      end
+
+      def title_label(title)
+        return if title.nil? || title.empty?
+
+        size = measure_text(title, font_size: TITLE_FONT_SIZE)
+        Label.new(text: title, width: size[:width], height: size[:height],
+                  x: DIAGRAM_PADDING, y: TITLE_Y,
+                  font_size: TITLE_FONT_SIZE, font_weight: "bold")
       end
 
       def placer
@@ -317,6 +333,7 @@ module Sirena
           height: node[:height], kind: kind,
           external: node.dig(:metadata, :external) || false,
           labels: positioned_node_labels(node, kind),
+          stereotype: positioned_stereotype(node, kind),
           head_center: person_head(node, kind),
           body_center: person_body(node, kind),
           children: (node[:children] || []).map { |child| typed_node(child) }
@@ -338,11 +355,31 @@ module Sirena
         return [] unless node[:x] && node[:y]
         return boundary_labels(labels, node) if kind == "boundary"
 
-        start_y = node[:y] + { "person" => 95, "component" => 15 }
-          .fetch(kind, 20)
+        start_y = label_top(node, kind) + LINE_HEIGHT
         labels.map.with_index do |label, index|
           positioned_node_label(label, node, start_y, index)
         end
+      end
+
+      def label_top(node, kind)
+        node[:y] + { "person" => 108, "component" => 15 }.fetch(kind, 20)
+      end
+
+      def positioned_stereotype(node, kind)
+        text = node[:stereotype]
+        return unless text && node[:x] && node[:y] && kind != "boundary"
+
+        Label.new(
+          text: text, **stereotype_size(text),
+          x: node[:x] + (node[:width] / 2), y: label_top(node, kind),
+          font_size: STEREOTYPE_FONT_SIZE, font_style: "italic",
+          font_weight: "normal"
+        )
+      end
+
+      def stereotype_size(text)
+        size = measure_text(text, font_size: STEREOTYPE_FONT_SIZE)
+        { width: size[:width], height: size[:height] }
       end
 
       def boundary_labels(labels, node)
@@ -467,9 +504,10 @@ module Sirena
         ((from.y + to.y) / 2) - 15 + (index * 14)
       end
 
-      def scene_dimensions(nodes)
+      def scene_dimensions(nodes, title = nil)
         flat_nodes = flatten_nodes(nodes)
         width = flat_nodes.map { |node| node.x + node.width }.max || 760
+        width = [width, title.x + title.width].max if title
         height = flat_nodes.map { |node| node.y + node.height }.max || 560
         [width + DIAGRAM_PADDING, height + DIAGRAM_PADDING]
       end
@@ -574,6 +612,7 @@ module Sirena
           width: dims[:width],
           height: dims[:height],
           labels: labels,
+          stereotype: C4Stereotype.text(element.element_type),
           metadata: {
             element_type: element.element_type,
             base_type: element.base_type,
