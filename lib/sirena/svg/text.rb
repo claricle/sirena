@@ -47,7 +47,10 @@ module Sirena
       # request but no size of its own. Every renderer sets one; this keeps
       # a hand-built element from shifting by an arbitrary amount.
       DEFAULT_FONT_SIZE = 16.0
-      private_constant :BASELINE_SHIFTS, :DEFAULT_FONT_SIZE
+
+      # One line of a multi-line label, in ems (the former `dy="1.2em"`).
+      LINE_HEIGHT_EMS = 1.2
+      private_constant :BASELINE_SHIFTS, :DEFAULT_FONT_SIZE, :LINE_HEIGHT_EMS
 
       # `dx` and `dy` are folded into x/y rather than emitted, never written
       # out directly.
@@ -125,7 +128,28 @@ module Sirena
       #
       # @return [String]
       def body
+        place_lines
         Escaping.escape_text(Array(content).join) + Array(tspans).map(&:to_xml).join
+      end
+
+      # Gives each run that starts a new line an absolute `y`: this text's
+      # baseline plus the lines accumulated so far. Idempotent, so repeated
+      # serialisation writes the same values.
+      def place_lines
+        lines = 0
+        Array(tspans).each do |run|
+          next unless run.line_shift
+
+          lines += run.line_shift
+          run.y = line_y(lines)
+        end
+      end
+
+      def line_y(lines)
+        size = Numbers.read(font_size) || DEFAULT_FONT_SIZE
+        base = Numbers.read(baseline_y) || 0.0
+        placed = base + (lines * LINE_HEIGHT_EMS * size)
+        placed.finite? ? placed.round(4) : nil
       end
 
       # May be non-finite when the font size is: #baseline_y is the one place

@@ -31,4 +31,9 @@ RSpec.describe Sirena::Renderer::LineBreakText do
     svg = Sirena::Engine.new.render("mindmap\n  root\n    plain\n")
     expect(svg).not_to include("<tspan")
   end
+
+  it "places the second line by absolute y, never by dy" do
+    svg = Sirena::Engine.new.render(mindmap)
+    expect(svg).not_to match(/<tspan[^>]* dy=/)
+  end
 end
