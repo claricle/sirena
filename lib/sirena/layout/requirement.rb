@@ -593,7 +593,7 @@ module Sirena
 
       def calculate_requirement_dimensions(requirement)
         text_lines = requirement_text_line_count(requirement.text)
-        height = DEFAULT_REQ_HEIGHT + (text_lines - 1) * 20
+        height = DEFAULT_REQ_HEIGHT + ((text_lines - 1) * 20)
         { width: DEFAULT_REQ_WIDTH,
           height: [height, DEFAULT_REQ_HEIGHT].max }
       end
@@ -623,9 +623,9 @@ module Sirena
           next unless source_node && target_node
 
           # Calculate connection points
-          source_x = source_node[:x] + source_node[:width] / 2
+          source_x = source_node[:x] + (source_node[:width] / 2)
           source_y = source_node[:y] + source_node[:height]
-          target_x = target_node[:x] + target_node[:width] / 2
+          target_x = target_node[:x] + (target_node[:width] / 2)
           target_y = target_node[:y]
 
           {

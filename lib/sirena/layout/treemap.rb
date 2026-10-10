@@ -92,7 +92,7 @@ module Sirena
         title = data.label
         y_offset = title ? HEADER_HEIGHT + PADDING : PADDING
         bounds = canvas_bounds(
-          PADDING, y_offset, width - 2 * PADDING,
+          PADDING, y_offset, width - (2 * PADDING),
           height - y_offset - PADDING
         )
         cells = root_cells(roots, context, total, bounds)
@@ -265,7 +265,7 @@ module Sirena
       def child_bounds(bounds, child_y_position, parent_height)
         {
           x: bounds.fetch(:x) + PADDING, y: child_y_position,
-          width: bounds.fetch(:width) - 2 * PADDING,
+          width: bounds.fetch(:width) - (2 * PADDING),
           height: parent_height - LABEL_HEIGHT - PADDING
         }
       end
