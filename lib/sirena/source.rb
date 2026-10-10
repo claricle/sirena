@@ -12,7 +12,8 @@ module Sirena
   #
   # @example
   #   Source.split("---\ntitle: T\n---\nflowchart LR\n  A-->B\n")
-  #   # => { frontmatter: "title: T\n", directives: [], body: "flowchart LR\n..." }
+  #   # => { frontmatter: "title: T\n", directives: [],
+  #          body: "flowchart LR\n..." }
   class Source
     # Malformed frontmatter is an error, not an absent title. Collapsing
     # the two meant sirena rendered `title: [` and a duplicated title,
@@ -74,18 +75,13 @@ module Sirena
       # @return [Hash] :frontmatter (String or nil), :directives (Array),
       #   :body (String), and :degenerate — the preamble items only some
       #   diagram types tolerate
+      # Frontmatter is read before the BOM comes off or comments are consumed;
+      # a later fence can be removed from the body but does not provide title.
       def split(source)
         scanner = StringScanner.new(normalize(source))
-
-        # Frontmatter is read at the very start of the file and nowhere
-        # else, so this runs before the BOM comes off and before any
-        # comment is consumed. A fence anywhere behind them is still
-        # lifted off the body, but its title is not read — see
-        # `take_preamble`.
         frontmatter = take_frontmatter(scanner)
         scanner.skip(BOM)
         directives, degenerate = take_preamble(scanner)
-
         { frontmatter: frontmatter, directives: directives,
           body: scanner.rest, degenerate: degenerate }
       end
@@ -173,29 +169,53 @@ module Sirena
         directives = []
         degenerate = []
         erased = false
-
-        loop do
-          next if scanner.skip(BLANK_LINE)
-
-          if (directive = scanner.scan(DIRECTIVE))
-            directives << directive.strip
-          elsif scanner.skip(DEGENERATE_DIRECTIVE)
-            degenerate << :directive
-            erased = true
-          elsif scanner.match?(COMMENT)
-            if scanner.match?(BARE_COMMENT)
-              degenerate << :comment
-              erased = true
-            end
-            scanner.skip(COMMENT)
-          elsif !erased && scanner.skip(FRONTMATTER)
-            degenerate << :frontmatter
-          else
-            break
-          end
+        while (state = consume_preamble_item(
+          scanner, directives, degenerate, erased
+        ))
+          erased = state.first
         end
-
         [directives, degenerate.uniq]
+      end
+
+      def consume_preamble_item(scanner, directives, degenerate, erased)
+        return [erased] if scanner.skip(BLANK_LINE)
+        return take_directive(scanner, directives, erased) if
+          scanner.match?(DIRECTIVE)
+
+        return take_degenerate_directive(scanner, degenerate) if
+          scanner.skip(DEGENERATE_DIRECTIVE)
+        return take_comment(scanner, degenerate, erased) if
+          scanner.match?(COMMENT)
+
+        take_late_frontmatter_unless_erased(scanner, degenerate, erased)
+      end
+
+      def take_late_frontmatter_unless_erased(scanner, degenerate, erased)
+        return if erased || !scanner.skip(FRONTMATTER)
+
+        take_late_frontmatter(scanner, degenerate)
+      end
+
+      def take_directive(scanner, directives, erased)
+        directives << scanner.scan(DIRECTIVE).strip
+        [erased]
+      end
+
+      def take_degenerate_directive(_scanner, degenerate)
+        degenerate << :directive
+        [true]
+      end
+
+      def take_comment(scanner, degenerate, erased)
+        bare = scanner.match?(BARE_COMMENT)
+        degenerate << :comment if bare
+        scanner.skip(COMMENT)
+        [erased || bare]
+      end
+
+      def take_late_frontmatter(_scanner, degenerate)
+        degenerate << :frontmatter
+        [false]
       end
     end
   end

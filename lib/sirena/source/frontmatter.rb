@@ -164,10 +164,22 @@ module Sirena
         reject_depth if depth > MAX_NESTING
         return check_alias(node) if node.is_a?(Psych::Nodes::Alias)
 
-        @anchors[node.anchor] = node if node.anchor
+        register_anchor(node)
         check_tag(node)
-        return check_mapping(node, budget, depth) if node.is_a?(Psych::Nodes::Mapping)
+        return check_mapping(node, budget, depth) if mapping?(node)
 
+        check_children(node, budget, depth)
+      end
+
+      def register_anchor(node)
+        @anchors[node.anchor] = node if node.anchor
+      end
+
+      def mapping?(node)
+        node.is_a?(Psych::Nodes::Mapping)
+      end
+
+      def check_children(node, budget, depth)
         node.children.to_a.each { |child| check(child, budget, depth + 1) }
       end
 
@@ -194,14 +206,20 @@ module Sirena
       def check_mapping(mapping, budget, depth)
         seen = {}
         mapping.children.each_slice(2) do |key, value|
-          check(key, budget, depth + 1)
-          reject_nested_key if nested_sequence_key?(key)
-          name = js_string(value_of(key, budget))
-          reject_duplicate(name) if seen.key?(name)
-          seen[name] = true
-          check(value, budget, depth + 1)
-          note_title(name, value) if mapping.equal?(@root)
+          pair = [key, value]
+          check_mapping_pair(pair, seen, budget, depth, mapping.equal?(@root))
         end
+      end
+
+      def check_mapping_pair(pair, seen, budget, depth, root_mapping)
+        key, value = pair
+        check(key, budget, depth + 1)
+        reject_nested_key if nested_sequence_key?(key)
+        name = js_string(value_of(key, budget))
+        reject_duplicate(name) if seen.key?(name)
+        seen[name] = true
+        check(value, budget, depth + 1)
+        note_title(name, value) if root_mapping
       end
 
       # Only the node is kept. Everything under it was bound as the walk
@@ -257,13 +275,10 @@ module Sirena
               "Frontmatter nests a sequence inside a key."
       end
 
+      # Psych does not validate a decoded tag URI's encoding, so reject an
+      # invalid tag by name before applying TAG to it.
       def check_tag(node)
         return if node.tag.nil?
-
-        # A percent-escaped custom tag URI (`!<!%C0%80>`) parses fine —
-        # Psych only validates encoding on scalar TEXT, not on a decoded
-        # tag string — so `String#[]` below can meet invalid bytes. Reject
-        # by name rather than let `Regexp#match?` raise a bare ArgumentError.
         unless node.tag.valid_encoding?
           raise MalformedFrontmatter, "Frontmatter carries an unknown tag."
         end
@@ -322,15 +337,25 @@ module Sirena
 
         case node
         when Psych::Nodes::Alias
-          target = bound(node)
-          return nil if target.nil? || open.include?(target)
-
-          value_of(target, budget, open, depth + 1)
+          alias_value(node, budget, open, depth)
         when Psych::Nodes::Scalar then scalar_value(node)
         when Psych::Nodes::Sequence
-          inside = open + [node]
-          node.children.map { |child| value_of(child, budget, inside, depth + 1) }
+          sequence_value(node, budget, open, depth)
         else OBJECT
+        end
+      end
+
+      def alias_value(node, budget, open, depth)
+        target = bound(node)
+        return nil if target.nil? || open.include?(target)
+
+        value_of(target, budget, open, depth + 1)
+      end
+
+      def sequence_value(node, budget, open, depth)
+        inside = open + [node]
+        node.children.map do |child|
+          value_of(child, budget, inside, depth + 1)
         end
       end
 

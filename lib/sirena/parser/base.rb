@@ -124,7 +124,7 @@ module Sirena
       # @param cause [Parslet::Cause] the failure to describe
       # @return [String] the message alone
       def failure_message(cause)
-        Array(cause.message).map { |part| message_part(part) }.join("")
+        Array(cause.message).map { |part| message_part(part) }.join
       end
 
       # Parslet quotes a Slice and leaves everything else alone. Quoting by
@@ -165,11 +165,19 @@ module Sirena
       # @return [Array(Integer, Integer)] 1-based line and character column
       def failure_position(cause, source)
         line, = cause.source.line_and_column(cause.pos)
-        lines = source.lines("\n")
-        preceding = lines[0, line - 1].to_a.join("")
-        offset = cause.pos.bytepos - preceding.bytesize
+        lines = source.lines
+        preceding = lines[0, line - 1].to_a.join
+        offset = failure_byte_offset(cause, preceding)
 
-        [line, lines[line - 1].to_s.byteslice(0, offset).to_s.length + 1]
+        [line, character_column(lines[line - 1], offset)]
+      end
+
+      def failure_byte_offset(cause, preceding)
+        cause.pos.bytepos - preceding.bytesize
+      end
+
+      def character_column(line, byte_offset)
+        line.to_s.byteslice(0, byte_offset).to_s.length + 1
       end
 
       # The caret has to sit under the character the column names once the
@@ -191,21 +199,23 @@ module Sirena
       # @param source [String] the source that was parsed
       # @return [String] the positioned, multi-line error message
       def format_parse_error(cause, source)
-        lines = source.lines("\n")
+        lines = source.lines
         line_num, col_num = failure_position(cause, source)
-
-        context = []
-        context << "Parse error at line #{line_num}, column #{col_num}:"
-        context << if line_num.positive? && line_num <= lines.length
-                     lines[line_num - 1].chomp("\n")
-                   else
-                     "(end of input)"
-                   end
-        context << caret_for(lines[line_num - 1], col_num)
-        context << failure_message(cause)
-        context.join("\n")
+        [
+          "Parse error at line #{line_num}, column #{col_num}:",
+          source_line(lines, line_num),
+          caret_for(lines[line_num - 1], col_num),
+          failure_message(cause),
+        ].join("\n")
       rescue StandardError
         fallback_message(cause)
+      end
+
+      def source_line(lines, line_num)
+        in_range = line_num.positive? && line_num <= lines.length
+        return "(end of input)" unless in_range
+
+        lines[line_num - 1].chomp
       end
     end
   end

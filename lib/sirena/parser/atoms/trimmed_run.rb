@@ -27,12 +27,15 @@ module Sirena
           # matches zero or more, so it can never fail; there is no
           # failure branch to handle here.
           result = @run.apply(source, context, false).last
-          matched = result.to_s
-          trimmed = matched[@trim_re]
-
+          kept, trimmed = trim_match(result.to_s)
           source.bytepos -= trimmed.bytesize
-          kept = matched[0...(matched.length - trimmed.length)]
           succ(Parslet::Slice.new(result.position, kept, result.line_cache))
+        end
+
+        def trim_match(matched)
+          trimmed = matched[@trim_re]
+          kept = matched[0...(matched.length - trimmed.length)]
+          [kept, trimmed]
         end
 
         def to_s_inner(_prec)
