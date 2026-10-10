@@ -44,13 +44,16 @@ module ClassDiagramSpecHelpers
   end
 
   def polygon_points(element)
-    element.attributes["points"].split(" ").map { |pt| pt.split(",").map(&:to_f) }
+    element.attributes["points"].split.map do |point|
+      point.split(",").map(&:to_f)
+    end
   end
 
   def rect_bounds(rect)
     x = rect.attributes["x"].to_f
     y = rect.attributes["y"].to_f
-    [x, x + rect.attributes["width"].to_f, y, y + rect.attributes["height"].to_f]
+    [x, x + rect.attributes["width"].to_f, y,
+     y + rect.attributes["height"].to_f]
   end
 
   def inside_rect?(point, rect)
@@ -63,15 +66,22 @@ module ClassDiagramSpecHelpers
   # coordinate threshold, so this holds under whatever the fallback grid
   # layout actually placed the two nodes at.
   def nearer_endpoint(points, line)
-    centroid = [
-      points.sum { |point| point[0] } / points.length,
-      points.sum { |point| point[1] } / points.length,
-    ]
-    start_pt = [line.attributes["x1"].to_f, line.attributes["y1"].to_f]
-    end_pt = [line.attributes["x2"].to_f, line.attributes["y2"].to_f]
-    dist_start = Math.hypot(centroid[0] - start_pt[0], centroid[1] - start_pt[1])
-    dist_end = Math.hypot(centroid[0] - end_pt[0], centroid[1] - end_pt[1])
-    dist_start < dist_end ? :start : :end
+    center = centroid(points)
+    start_distance = distance(center, line_endpoint(line, "1"))
+    end_distance = distance(center, line_endpoint(line, "2"))
+    start_distance < end_distance ? :start : :end
+  end
+
+  def centroid(points)
+    [points.sum(&:first) / points.length, points.sum(&:last) / points.length]
+  end
+
+  def line_endpoint(line, suffix)
+    %w[x y].map { |axis| line.attributes["#{axis}#{suffix}"].to_f }
+  end
+
+  def distance(first, second)
+    Math.hypot(first[0] - second[0], first[1] - second[1])
   end
 
   # Composition/aggregation's diamond is a rhombus: all four edges equal
@@ -81,9 +91,12 @@ module ClassDiagramSpecHelpers
   def rhombus?(points)
     return false unless points.length == 4
 
-    edges = points.each_cons(2).to_a.push([points.last, points.first])
-      .map { |(x1, y1), (x2, y2)| Math.hypot(x2 - x1, y2 - y1) }
-    edges.map { |e| e.round(2) }.uniq.length == 1
+    polygon_edge_lengths(points).map { |edge| edge.round(2) }.uniq.one?
+  end
+
+  def polygon_edge_lengths(points)
+    pairs = points.each_cons(2).to_a << [points.last, points.first]
+    pairs.map { |first, second| distance(first, second) }
   end
 
   # Twice the signed area of triangle a-b-c: zero exactly when a, b, c
@@ -134,6 +147,87 @@ module ClassDiagramSpecHelpers
       end
     end
     renderer.singleton_class.prepend(hooks)
+  end
+
+  def svg_texts(svg)
+    groups = svg.children.grep(Sirena::Svg::Group)
+    groups.flat_map(&:children).grep(Sirena::Svg::Text)
+      .map { |text| Array(text.content).join }
+  end
+
+  def relationship_parts(source)
+    doc = rendered_document(source)
+    group = relationship_group(doc, "A_to_B")
+    [doc, REXML::XPath.first(group, "line"),
+     REXML::XPath.match(group, "polygon")]
+  end
+
+  def polygon_near(polygons, line, endpoint)
+    polygons.find do |polygon|
+      nearer_endpoint(polygon_points(polygon), line) == endpoint
+    end
+  end
+
+  def aggregation_inheritance_summary
+    _doc, line, polygons = relationship_parts("A o--|> B")
+    diamond = polygons.find { |polygon| polygon_points(polygon).length == 4 }
+    triangle = polygons.find { |polygon| polygon_points(polygon).length == 3 }
+    [line.attributes["stroke-dasharray"], *marker_summary(diamond, line),
+     *marker_summary(triangle, line)]
+  end
+
+  def marker_summary(marker, line)
+    [marker.attributes["fill"], nearer_endpoint(polygon_points(marker), line)]
+  end
+
+  def dependency_composition_summary
+    doc, line, polygons = relationship_parts("A <--* B")
+    dependency = polygon_near(polygons, line, :start)
+    composition = polygon_near(polygons, line, :end)
+    dependency_summary(doc, dependency) + composition_summary(composition) +
+      [polygon_points(dependency) != polygon_points(composition)]
+  end
+
+  def dependency_summary(doc, polygon)
+    points = polygon_points(polygon)
+    rect = node_rect(doc, "A")
+    [points.length, polygon.attributes["fill"], no_three_collinear?(points),
+     rhombus?(points), points.none? { |point| inside_rect?(point, rect) }]
+  end
+
+  def composition_summary(polygon)
+    points = polygon_points(polygon)
+    [points.length, polygon.attributes["fill"], rhombus?(points)]
+  end
+
+  def filled_diamond_summary
+    _doc, line, polygons = relationship_parts("A *--* B")
+    [polygons.length, polygons.map { |polygon| polygon.attributes["fill"] },
+     polygons.map { |polygon| polygon_points(polygon).length },
+     polygons.map do |polygon|
+       nearer_endpoint(polygon_points(polygon), line)
+     end.sort]
+  end
+
+  def hollow_diamond_summary
+    _doc, line, polygons = relationship_parts("A o.. B")
+    polygon = polygons.first
+    [line.attributes["stroke-dasharray"], polygons.length,
+     polygon.attributes["fill"], nearer_endpoint(polygon_points(polygon), line)]
+  end
+
+  def two_way_marker_summary(source, edge_id)
+    doc = rendered_document(source)
+    group = relationship_group(doc, edge_id)
+    [group.nil?, REXML::XPath.match(group, "polygon").empty?]
+  end
+
+  def two_way_marker_summaries
+    [
+      ["Animal <|--|> Zebra", "Animal_to_Zebra"],
+      ["Animal o--< Zebra", "Animal_to_Zebra"],
+      ["Animal *..|> Zebra", "Animal_to_Zebra"],
+    ].map { |source, edge_id| two_way_marker_summary(source, edge_id) }
   end
 end
 
@@ -203,9 +297,8 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     it "renders graph to SVG document" do
       svg = renderer.render(scene)
 
-      expect(svg).to be_a(Sirena::Svg::Document)
-      expect(svg.width).to be > 0
-      expect(svg.height).to be > 0
+      expect([svg.class, svg.width.positive?, svg.height.positive?])
+        .to eq([Sirena::Svg::Document, true, true])
     end
 
     it "serializes routed Scene bends without recalculating them" do
@@ -239,40 +332,20 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     end
 
     it "renders class names as text elements" do
-      svg = renderer.render(scene)
-
-      groups = svg.children.grep(Sirena::Svg::Group)
-
-      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-
-      expect(texts).not_to be_empty
-      # `content` is `collection: true`, so read it through Array(...).
-      class_names = texts.map { |t| Array(t.content).join }
-      expect(class_names).to include("Animal")
+      texts = ClassDiagramSpecHelpers.svg_texts(renderer.render(scene))
+      expect([texts.empty?, texts.include?("Animal")]).to eq([false, true])
     end
 
     it "renders attributes with visibility symbols" do
-      svg = renderer.render(scene)
-
-      groups = svg.children.grep(Sirena::Svg::Group)
-
-      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-
-      attr_texts = texts.map { |t| Array(t.content).join }.grep(/age/)
-      expect(attr_texts).not_to be_empty
-      expect(attr_texts.first).to include("#")
+      texts = ClassDiagramSpecHelpers.svg_texts(renderer.render(scene))
+        .grep(/age/)
+      expect([texts.empty?, texts.first.include?("#")]).to eq([false, true])
     end
 
     it "renders methods with visibility symbols" do
-      svg = renderer.render(scene)
-
-      groups = svg.children.grep(Sirena::Svg::Group)
-
-      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-
-      method_texts = texts.map { |t| Array(t.content).join }.grep(/breathe|bark/)
-      expect(method_texts).not_to be_empty
-      expect(method_texts.first).to include("+")
+      texts = ClassDiagramSpecHelpers.svg_texts(renderer.render(scene))
+        .grep(/breathe|bark/)
+      expect([texts.empty?, texts.first.include?("+")]).to eq([false, true])
     end
 
     it "renders compartment separators" do
@@ -297,15 +370,10 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
 
     it "renders stereotypes when present" do
       graph[:children][0][:metadata][:stereotype] = "interface"
-      svg = renderer.render(scene)
-
-      groups = svg.children.grep(Sirena::Svg::Group)
-
-      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-
-      stereotype_texts = texts.map { |t| Array(t.content).join }.grep(/«.*»/)
-      expect(stereotype_texts).not_to be_empty
-      expect(stereotype_texts.first).to include("interface")
+      texts = ClassDiagramSpecHelpers.svg_texts(renderer.render(scene))
+        .grep(/«.*»/)
+      expect([texts.empty?, texts.first.include?("interface")])
+        .to eq([false, true])
     end
 
     it "keeps unchanged default output byte-equivalent to the legacy graph" do
@@ -392,86 +460,27 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
   # coordinates from a direct render_dart_marker call bore no relation to
   # what the real render path actually drew.
   describe "#render mixed-marker relationships, from real mermaid source" do
-    it "renders an aggregation-start/inheritance-end marker pair on a solid line (o--|>)" do
-      doc = ClassDiagramSpecHelpers.rendered_document("A o--|> B")
-      group = ClassDiagramSpecHelpers.relationship_group(doc, "A_to_B")
-      line = REXML::XPath.first(group, "line")
-      expect(line.attributes["stroke-dasharray"]).to be_nil
-
-      polygons = REXML::XPath.match(group, "polygon")
-      diamond = polygons.find { |p| ClassDiagramSpecHelpers.polygon_points(p).length == 4 }
-      triangle = polygons.find { |p| ClassDiagramSpecHelpers.polygon_points(p).length == 3 }
-      expect(diamond.attributes["fill"]).to eq("#ffffff")
-      expect(ClassDiagramSpecHelpers.nearer_endpoint(ClassDiagramSpecHelpers.polygon_points(diamond), line)).to eq(:start)
-      # mermaid's extension/inheritance marker is hollow, not filled.
-      expect(triangle.attributes["fill"]).to eq("#ffffff")
-      expect(ClassDiagramSpecHelpers.nearer_endpoint(ClassDiagramSpecHelpers.polygon_points(triangle), line)).to eq(:end)
+    it "renders an aggregation-start/inheritance-end marker pair " \
+       "on a solid line (o--|>)" do
+      expect(ClassDiagramSpecHelpers.aggregation_inheritance_summary)
+        .to eq([nil, "#ffffff", :start, "#ffffff", :end])
     end
 
-    it "renders a dependency-start/composition-end marker pair on a solid line (<--*)" do
-      doc = ClassDiagramSpecHelpers.rendered_document("A <--* B")
-      group = ClassDiagramSpecHelpers.relationship_group(doc, "A_to_B")
-      line = REXML::XPath.first(group, "line")
-      expect(line.attributes["stroke-dasharray"]).to be_nil
-
-      polygons = REXML::XPath.match(group, "polygon")
-      expect(polygons.length).to eq(2)
-      dependency = polygons.find { |p| ClassDiagramSpecHelpers.nearer_endpoint(ClassDiagramSpecHelpers.polygon_points(p), line) == :start }
-      composition = polygons.find { |p| ClassDiagramSpecHelpers.nearer_endpoint(ClassDiagramSpecHelpers.polygon_points(p), line) == :end }
-      dep_points = ClassDiagramSpecHelpers.polygon_points(dependency)
-      comp_points = ClassDiagramSpecHelpers.polygon_points(composition)
-
-      expect(dep_points.length).to eq(4)
-      expect(dependency.attributes["fill"]).to eq("#000000")
-      expect(ClassDiagramSpecHelpers.no_three_collinear?(dep_points)).to be(true)
-      # Not the same filled shape as composition's diamond.
-      expect(ClassDiagramSpecHelpers.rhombus?(dep_points)).to be(false)
-
-      # Defects (b) and (c) -- wrong direction, and drawn inside the
-      # source node so it is painted over -- are ONE defect on this
-      # renderer: render_dart_marker builds the whole dart on the `to`
-      # side of its own anchor point (DART_NEAR and DART_FAR both offset
-      # the same direction), so a dart built on the wrong side is, by
-      # construction, also the dart whose wide back edge lands inside
-      # node A's box (Codex High, class_diagram.rb:482, coordinates
-      # (153,50) (136,55) (144.5,50) (136,45) against A's real box
-      # 0..150 -- reproduced against the real render, not a hand call).
-      # One property catches both: every vertex of the dart must sit
-      # strictly outside A's own rendered rectangle.
-      a_rect = ClassDiagramSpecHelpers.node_rect(doc, "A")
-      expect(dep_points.none? { |pt| ClassDiagramSpecHelpers.inside_rect?(pt, a_rect) }).to be(true)
-
-      expect(comp_points.length).to eq(4)
-      expect(composition.attributes["fill"]).to eq("#000000")
-      expect(ClassDiagramSpecHelpers.rhombus?(comp_points)).to be(true)
-      # The dependency dart is a distinct glyph from composition's diamond
-      # at the identical connection points, not just "not a rhombus".
-      expect(dep_points).not_to eq(comp_points)
+    it "renders a dependency-start/composition-end marker pair " \
+       "on a solid line (<--*)" do
+      expect(ClassDiagramSpecHelpers.dependency_composition_summary).to eq(
+        [4, "#000000", true, false, true, 4, "#000000", true, true],
+      )
     end
 
     it "renders a filled diamond at both ends (*--*)" do
-      doc = ClassDiagramSpecHelpers.rendered_document("A *--* B")
-      group = ClassDiagramSpecHelpers.relationship_group(doc, "A_to_B")
-      polygons = REXML::XPath.match(group, "polygon")
-      line = REXML::XPath.first(group, "line")
-
-      expect(polygons.length).to eq(2)
-      expect(polygons.map { |p| p.attributes["fill"] }).to all(eq("#000000"))
-      expect(polygons.map { |p| ClassDiagramSpecHelpers.polygon_points(p).length }).to all(eq(4))
-      expect(polygons.map { |p| ClassDiagramSpecHelpers.nearer_endpoint(ClassDiagramSpecHelpers.polygon_points(p), line) })
-        .to contain_exactly(:start, :end)
+      expect(ClassDiagramSpecHelpers.filled_diamond_summary)
+        .to eq([2, %w[#000000 #000000], [4, 4], %i[end start]])
     end
 
     it "renders a hollow diamond on a dashed line, no end marker (o..)" do
-      doc = ClassDiagramSpecHelpers.rendered_document("A o.. B")
-      group = ClassDiagramSpecHelpers.relationship_group(doc, "A_to_B")
-      line = REXML::XPath.first(group, "line")
-      expect(line.attributes["stroke-dasharray"]).to eq("5,5")
-
-      polygons = REXML::XPath.match(group, "polygon")
-      expect(polygons.length).to eq(1)
-      expect(polygons.first.attributes["fill"]).to eq("#ffffff")
-      expect(ClassDiagramSpecHelpers.nearer_endpoint(ClassDiagramSpecHelpers.polygon_points(polygons.first), line)).to eq(:start)
+      expect(ClassDiagramSpecHelpers.hollow_diamond_summary)
+        .to eq(["5,5", 1, "#ffffff", :start])
     end
 
     # H2: mermaid defines two-way relations structurally as
@@ -480,16 +489,8 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     # mermaid's own documented example, plus two combinations the old
     # 4-entry hardcoded table never had.
     it "renders every two-way marker combination, parsed structurally" do
-      [
-        ["Animal <|--|> Zebra", "Animal_to_Zebra"],
-        ["Animal o--< Zebra", "Animal_to_Zebra"],
-        ["Animal *..|> Zebra", "Animal_to_Zebra"],
-      ].each do |source, edge_id|
-        doc = ClassDiagramSpecHelpers.rendered_document(source)
-        group = ClassDiagramSpecHelpers.relationship_group(doc, edge_id)
-        expect(group).not_to be_nil
-        expect(REXML::XPath.match(group, "polygon")).not_to be_empty
-      end
+      expect(ClassDiagramSpecHelpers.two_way_marker_summaries)
+        .to eq([[false, false]] * 3)
     end
   end
 end

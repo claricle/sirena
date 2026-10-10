@@ -2,7 +2,39 @@
 
 require "spec_helper"
 
+module ClassDiagramModelSpecHelpers
+  def class_entity(**attributes)
+    Sirena::Diagram::ClassEntity.new(**attributes)
+  end
+
+  def class_relationship(**attributes)
+    Sirena::Diagram::ClassRelationship.new(**attributes)
+  end
+
+  def diagram_with_missing_target
+    diagram = Sirena::Diagram::ClassDiagram.new(direction: "TB")
+    diagram.entities << class_entity(id: "Dog", name: "Dog")
+    diagram.relationships << class_relationship(
+      from_id: "Dog", to_id: "Animal", relationship_type: "inheritance",
+    )
+    diagram
+  end
+
+  def inheritance_relationship_types
+    diagram = Sirena::Diagram::ClassDiagram.new
+    diagram.relationships << class_relationship(
+      from_id: "Dog", to_id: "Animal", relationship_type: "inheritance",
+    )
+    diagram.relationships << class_relationship(
+      from_id: "Car", to_id: "Engine", relationship_type: "composition",
+    )
+    diagram.inheritance_relationships.map(&:relationship_type)
+  end
+end
+
 RSpec.describe Sirena::Diagram::ClassDiagram do
+  include ClassDiagramModelSpecHelpers
+
   describe Sirena::Diagram::ClassDiagram do
     describe "#diagram_type" do
       it "returns :class_diagram" do
@@ -23,10 +55,7 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
 
       it "returns true for valid diagram with entities" do
         diagram = described_class.new(direction: "TB")
-        diagram.entities << Sirena::Diagram::ClassEntity.new(
-          id: "Animal",
-          name: "Animal",
-        )
+        diagram.entities << class_entity(id: "Animal", name: "Animal")
 
         expect(diagram.valid?).to be true
       end
@@ -37,18 +66,7 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
       end
 
       it "returns false when relationship references non-existent entity" do
-        diagram = described_class.new(direction: "TB")
-        diagram.entities << Sirena::Diagram::ClassEntity.new(
-          id: "Dog",
-          name: "Dog",
-        )
-        diagram.relationships << Sirena::Diagram::ClassRelationship.new(
-          from_id: "Dog",
-          to_id: "Animal",
-          relationship_type: "inheritance",
-        )
-
-        expect(diagram.valid?).to be false
+        expect(diagram_with_missing_target.valid?).to be false
       end
 
       it "returns false when an entity is invalid" do
@@ -124,24 +142,8 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
     end
 
     describe "#inheritance_relationships" do
-      let(:diagram) { described_class.new }
-
       it "returns only inheritance relationships" do
-        diagram.relationships << Sirena::Diagram::ClassRelationship.new(
-          from_id: "Dog",
-          to_id: "Animal",
-          relationship_type: "inheritance",
-        )
-        diagram.relationships << Sirena::Diagram::ClassRelationship.new(
-          from_id: "Car",
-          to_id: "Engine",
-          relationship_type: "composition",
-        )
-
-        expect(diagram.inheritance_relationships.length).to eq(1)
-        expect(diagram.inheritance_relationships.first.relationship_type).to eq(
-          "inheritance",
-        )
+        expect(inheritance_relationship_types).to eq(["inheritance"])
       end
     end
   end
@@ -166,11 +168,8 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
 
     describe "#interface?" do
       it "returns true when stereotype is interface" do
-        entity = described_class.new(
-          id: "Drawable",
-          name: "Drawable",
-          stereotype: "interface",
-        )
+        entity = described_class.new(id: "Drawable", name: "Drawable",
+                                     stereotype: "interface")
         expect(entity.interface?).to be true
       end
 
@@ -182,11 +181,8 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
 
     describe "#abstract?" do
       it "returns true when stereotype is abstract" do
-        entity = described_class.new(
-          id: "Animal",
-          name: "Animal",
-          stereotype: "abstract",
-        )
+        entity = described_class.new(id: "Animal", name: "Animal",
+                                     stereotype: "abstract")
         expect(entity.abstract?).to be true
       end
     end
@@ -258,11 +254,8 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
       end
 
       it "includes both parameters and return type" do
-        method = described_class.new(
-          name: "add",
-          parameters: "a: int, b: int",
-          return_type: "int",
-        )
+        method = described_class.new(name: "add", parameters: "a: int, b: int",
+                                     return_type: "int")
         expect(method.signature).to eq("add(a: int, b: int) int")
       end
     end
@@ -271,69 +264,50 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
   describe Sirena::Diagram::ClassRelationship do
     describe "#valid?" do
       it "returns true for relationship with from and to ids" do
-        relationship = described_class.new(
-          from_id: "Dog",
-          to_id: "Animal",
-          relationship_type: "inheritance",
-        )
+        relationship = described_class.new(from_id: "Dog", to_id: "Animal",
+                                           relationship_type: "inheritance")
         expect(relationship.valid?).to be true
       end
 
       it "returns false without from_id" do
-        relationship = described_class.new(
-          to_id: "Animal",
-          relationship_type: "inheritance",
-        )
+        relationship = described_class.new(to_id: "Animal",
+                                           relationship_type: "inheritance")
         expect(relationship.valid?).to be false
       end
 
       it "returns false without to_id" do
-        relationship = described_class.new(
-          from_id: "Dog",
-          relationship_type: "inheritance",
-        )
+        relationship = described_class.new(from_id: "Dog",
+                                           relationship_type: "inheritance")
         expect(relationship.valid?).to be false
       end
     end
 
     describe "#inheritance?" do
       it "returns true for inheritance type" do
-        relationship = described_class.new(
-          from_id: "Dog",
-          to_id: "Animal",
-          relationship_type: "inheritance",
-        )
+        relationship = described_class.new(from_id: "Dog", to_id: "Animal",
+                                           relationship_type: "inheritance")
         expect(relationship.inheritance?).to be true
       end
 
       it "returns false for other types" do
-        relationship = described_class.new(
-          from_id: "Car",
-          to_id: "Engine",
-          relationship_type: "composition",
-        )
+        relationship = described_class.new(from_id: "Car", to_id: "Engine",
+                                           relationship_type: "composition")
         expect(relationship.inheritance?).to be false
       end
     end
 
     describe "#composition?" do
       it "returns true for composition type" do
-        relationship = described_class.new(
-          from_id: "Car",
-          to_id: "Engine",
-          relationship_type: "composition",
-        )
+        relationship = described_class.new(from_id: "Car", to_id: "Engine",
+                                           relationship_type: "composition")
         expect(relationship.composition?).to be true
       end
     end
 
     describe "#aggregation?" do
       it "returns true for aggregation type" do
-        relationship = described_class.new(
-          from_id: "Team",
-          to_id: "Player",
-          relationship_type: "aggregation",
-        )
+        relationship = described_class.new(from_id: "Team", to_id: "Player",
+                                           relationship_type: "aggregation")
         expect(relationship.aggregation?).to be true
       end
     end
