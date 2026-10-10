@@ -60,15 +60,17 @@ RSpec.describe Sirena::Renderer::Packet do
         expect(field_texts.length).to eq(1)
       end
 
-      it "places the block and its bit numbers where mmdc does" do
-        svg = renderer.render(layout)
-        rect = svg.children.grep(Sirena::Svg::Rect).first
-        texts = svg.children.grep(Sirena::Svg::Text)
+      it "places the block where mmdc does" do
+        rect = renderer.render(layout).children.grep(Sirena::Svg::Rect).first
+        expect([rect.x, rect.y, rect.width, rect.height])
+          .to eq([1.0, 15.0, 347.0, 32.0])
+      end
+
+      it "places the first and last bit numbers where mmdc does" do
+        texts = renderer.render(layout).children.grep(Sirena::Svg::Text)
         numbers = texts.select { |t| text_content(t).match?(/\A\d+\z/) }
-        expect([[rect.x, rect.y, rect.width, rect.height],
-                numbers.map { |t| [text_content(t), t.x, t.y] }])
-          .to eq([[1.0, 15.0, 347.0, 32.0],
-                  [["0", 1.0, 13.0], ["10", 348.0, 13.0]]])
+        expect(numbers.map { |t| [text_content(t), t.x, t.y] })
+          .to eq([["0", 1.0, 13.0], ["10", 348.0, 13.0]])
       end
     end
 
