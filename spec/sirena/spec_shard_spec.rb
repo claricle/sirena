@@ -7,6 +7,11 @@ module SpecShardSpecHelpers
   def groups(count)
     (1..count).map { |index| Sirena::SpecShard.new(index, count).files }
   end
+
+  def weight_of(group)
+    weights = Sirena::SpecShard::WEIGHTS
+    group.sum { |file| weights.fetch(file, Sirena::SpecShard::DEFAULT_WEIGHT) }
+  end
 end
 
 RSpec.describe Sirena::SpecShard do
@@ -28,6 +33,13 @@ RSpec.describe Sirena::SpecShard do
       sizes = groups(2).map { |group| (group & heavy).size }
 
       expect(sizes).to eq([1, 1])
+    end
+
+    it "balances the weighted load of three groups within 30 seconds" do
+      loads = groups(3).map { |group| weight_of(group) }
+      loads[-1] += described_class::TAIL_SECONDS
+
+      expect(loads.max - loads.min).to be < 30
     end
 
     it "still runs a file the weight table does not know" do
