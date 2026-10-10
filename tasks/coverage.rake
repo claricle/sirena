@@ -17,6 +17,198 @@ require "digest"
 # they run in their own rspec process (spec:corpus), which never requires
 # simplecov, and spec:unit (via coverage:measure) excludes them with
 # --tag ~corpus.
+Object.send(:remove_const, :CoverageTasks) if defined?(CoverageTasks)
+module CoverageTasks
+  MANIFEST_PATH = "tmp/coverage-source-manifest.json"
+
+  module_function
+
+  def without_coverage(&)
+    with_coverage_value(nil, &)
+  end
+
+  def measure
+    with_coverage_value("true") { invoke("spec:unit") }
+    write_manifest
+  end
+
+  def invoke(name)
+    task = Rake::Task[name]
+    task.reenable
+    task.invoke
+  end
+
+  def with_coverage_value(value)
+    previous = ENV.fetch("COVERAGE", nil)
+    ENV["COVERAGE"] = value
+    yield
+  ensure
+    ENV["COVERAGE"] = previous
+  end
+
+  def write_manifest
+    tracked, tracked_ok = git_paths("ls-files", "-z")
+    untracked, untracked_ok = git_paths(
+      "ls-files", "--others", "--exclude-standard", "-z"
+    )
+    return unless tracked_ok && untracked_ok
+
+    write_manifest_paths((tracked + untracked).uniq)
+  end
+
+  def git_paths(*)
+    output, _error, status = Open3.capture3("git", *)
+    [output.split("\0"), status.success?]
+  end
+
+  def write_manifest_paths(paths)
+    manifest = paths.each_with_object({}) do |path, hashes|
+      next unless File.file?(path) && !File.symlink?(path)
+
+      hashes[path] = Digest::SHA256.file(path).hexdigest
+    end
+    FileUtils.mkdir_p("tmp")
+    File.unlink(MANIFEST_PATH) if File.symlink?(MANIFEST_PATH)
+    File.write(MANIFEST_PATH, JSON.generate(manifest))
+  end
+  REPORT_PATH = "coverage/coverage.json"
+  LINE_ONLY_PATH = "tmp/coverage-line-only.json"
+
+  def command
+    base = coverage_base
+    ensure_report!
+    paths = changed_paths(base)
+    ensure_report_mtime!(paths)
+    ensure_safe_deletions!(paths, base)
+    report = line_only_report
+    ensure_current_lib_sources!(paths, report)
+    ensure_current_non_lib_sources!(paths)
+    write_line_only_report(report)
+    patch_command(base)
+  end
+
+  def coverage_base
+    base = ENV["COVERAGE_BASE"] || "origin/main"
+    return base unless base.start_with?("-")
+
+    raise "COVERAGE_BASE #{base.inspect} looks like an option, not a ref"
+  end
+
+  def ensure_report!
+    return if File.exist?(REPORT_PATH)
+
+    raise "#{REPORT_PATH} is missing -- run `rake coverage:measure` " \
+          "(or `rake coverage:guard`, which does both) before " \
+          "coverage:changed_lines"
+  end
+
+  def changed_paths(base)
+    changed = git_output!(
+      "diff", "--name-only", "-z", "--merge-base", base,
+      label: "git diff --name-only --merge-base #{base}"
+    )
+    untracked = git_output!(
+      "ls-files", "--others", "--exclude-standard", "-z",
+      label: "git ls-files --others --exclude-standard"
+    )
+    (changed.split("\0") + untracked.split("\0")).uniq
+  end
+
+  def git_output!(*, label:)
+    output, error, status = Open3.capture3("git", *)
+    raise "#{label} failed: #{error.strip}" unless status.success?
+
+    output
+  end
+
+  def ensure_report_mtime!(paths)
+    report_mtime = File.mtime(REPORT_PATH)
+    stale = paths.select do |path|
+      File.exist?(path) && File.mtime(path) > report_mtime
+    end
+    return if stale.empty?
+
+    raise "#{REPORT_PATH} predates a newer edit to #{stale.join(', ')} -- " \
+          "run `rake coverage:measure` again before coverage:changed_lines"
+  end
+
+  def ensure_safe_deletions!(paths, base)
+    deleted = paths.reject { |path| File.exist?(path) || lib_source?(path) }
+    return if deleted.empty?
+
+    raise "#{deleted.join(', ')} deleted vs COVERAGE_BASE=#{base.inspect} -- " \
+          "this check has no way to confirm what still covers the lib/*.rb " \
+          "files that path exercised, and re-running `rake coverage:measure` " \
+          "cannot clear it (it does not change what changed vs " \
+          "COVERAGE_BASE). " \
+          "Move COVERAGE_BASE past this deletion instead."
+  end
+
+  def line_only_report
+    if File.symlink?(REPORT_PATH)
+      raise "#{REPORT_PATH} is a symlink -- refusing to read through it"
+    end
+
+    report = JSON.parse(File.read(REPORT_PATH))
+    report["coverage"].each_value do |file|
+      file.delete("branches")
+      file.delete("methods")
+    end
+    report
+  end
+
+  def ensure_current_lib_sources!(paths, report)
+    stale = paths.select do |path|
+      next false unless lib_source?(path) && File.exist?(path)
+
+      source = report.dig("coverage", path, "source")
+      source.nil? || source != File.readlines(path, chomp: true)
+    end
+    return if stale.empty?
+
+    raise "#{REPORT_PATH} has no entry (or a content mismatch against the " \
+          "file's current source) for #{stale.join(', ')} -- the report " \
+          "predates this change even though its mtime looks newer; run " \
+          "`rake coverage:measure` again before coverage:changed_lines"
+  end
+
+  def ensure_current_non_lib_sources!(paths)
+    manifest_path = MANIFEST_PATH
+    return unless File.exist?(manifest_path) && !File.symlink?(manifest_path)
+
+    manifest = JSON.parse(File.read(manifest_path))
+    stale = paths.select { |path| stale_non_lib?(path, manifest) }
+    return if stale.empty?
+
+    raise "#{REPORT_PATH} predates a newer edit to #{stale.join(', ')} " \
+          "(content differs from the coverage:measure-time snapshot, even " \
+          "though its mtime does not show it) -- run `rake coverage:measure` " \
+          "again before coverage:changed_lines"
+  end
+
+  def stale_non_lib?(path, manifest)
+    return false if lib_source?(path)
+    return false unless File.exist?(path) && !File.symlink?(path)
+
+    manifest[path] != Digest::SHA256.file(path).hexdigest
+  end
+
+  def lib_source?(path)
+    path.start_with?("lib/") && path.end_with?(".rb")
+  end
+
+  def write_line_only_report(report)
+    FileUtils.mkdir_p("tmp")
+    File.unlink(LINE_ONLY_PATH) if File.symlink?(LINE_ONLY_PATH)
+    File.write(LINE_ONLY_PATH, JSON.generate(report))
+  end
+
+  def patch_command(base)
+    ["bundle", "exec", "simplecov", "patch", "--input", LINE_ONLY_PATH,
+     "--base", base, "--find-renames", "--minimum", "100"]
+  end
+end
+
 namespace :spec do
   # `spec:corpus` below is the entry point -- this runner exists only so
   # `spec:corpus` can force COVERAGE off first. RSpec::Core::RakeTask spawns
@@ -36,21 +228,8 @@ namespace :spec do
   desc "Run only the corpus fixture sweep (spec/mermaid/**), " \
        "isolated from coverage"
   task :corpus do
-    previous_coverage_env = ENV.fetch("COVERAGE", nil)
-    begin
-      ENV.delete("COVERAGE")
-      # Same hazard as coverage:measure's spec:unit call below: a Rake task
-      # only ever runs once per process, so `rake spec:corpus_runner
-      # spec:corpus` on one command line -- reachable since corpus_runner is
-      # listed in `rake -T`, see above -- would otherwise leave this invoke
-      # a silent no-op (corpus_runner already marked complete from the
-      # earlier, direct, top-level invocation), so `spec:corpus` would
-      # report success without running the corpus sweep again. Reenable so
-      # this call always actually runs it.
-      Rake::Task["spec:corpus_runner"].reenable
-      Rake::Task["spec:corpus_runner"].invoke
-    ensure
-      ENV["COVERAGE"] = previous_coverage_env
+    CoverageTasks.without_coverage do
+      CoverageTasks.invoke("spec:corpus_runner")
     end
   end
 
@@ -63,208 +242,13 @@ end
 namespace :coverage do
   desc "Run spec:unit under SimpleCov (.simplecov enforces the line floor)"
   task :measure do
-    # Restore rather than leave set: ENV survives past this task in the same
-    # process, so `rake coverage:measure spec:corpus` on one command line
-    # would otherwise leave COVERAGE=true for spec:corpus's own subprocess
-    # too, and spec_helper.rb requires simplecov for ANY process that sees
-    # it -- defeating the corpus-exclusion this task depends on.
-    previous_coverage_env = ENV.fetch("COVERAGE", nil)
-    begin
-      ENV["COVERAGE"] = "true"
-      # A Rake task only ever runs once per process -- `invoke` is a no-op
-      # on a task already marked complete. `rake spec:unit coverage:measure`
-      # on one command line would otherwise skip the instrumented run
-      # entirely (spec:unit already ran, uninstrumented, as its own
-      # top-level task) and this task would silently do nothing.
-      Rake::Task["spec:unit"].reenable
-      Rake::Task["spec:unit"].invoke
-    ensure
-      ENV["COVERAGE"] = previous_coverage_env
-    end
-
-    # Snapshot a content hash of the whole tree so changed_lines below can
-    # catch a backdated-mtime edit to a non-lib file (spec files get no
-    # coverage.json 'source' entry to content-check against, unlike lib/*.rb).
-    # Best-effort: skip quietly if git fails here rather than failing this
-    # task -- changed_lines hard-requires git for its own diff regardless.
-    tracked_out, _tracked_err, tracked_status = Open3.capture3(
-      "git", "ls-files", "-z"
-    )
-    untracked_out, _untracked_err, untracked_status =
-      Open3.capture3("git", "ls-files", "--others", "--exclude-standard", "-z")
-
-    if tracked_status.success? && untracked_status.success?
-      paths = tracked_out.split("\0") + untracked_out.split("\0")
-      manifest = paths.uniq.each_with_object({}) do |path, hash|
-        next unless File.file?(path) && !File.symlink?(path)
-
-        hash[path] = Digest::SHA256.file(path).hexdigest
-      end
-      FileUtils.mkdir_p("tmp")
-      # Same symlink-write hazard as tmp/coverage-line-only.json below --
-      # clear any symlink left at this path rather than writing through it.
-      manifest_path = "tmp/coverage-source-manifest.json"
-      File.unlink(manifest_path) if File.symlink?(manifest_path)
-      File.write(manifest_path, JSON.generate(manifest))
-    end
+    CoverageTasks.measure
   end
 
   desc "Changed-line gate: every lib/ line this branch touches vs " \
        "COVERAGE_BASE must be 100% covered"
   task :changed_lines do
-    base = ENV["COVERAGE_BASE"] || "origin/main"
-    # A ref starting with `-` would be read as another option by `git diff`
-    # rather than a revision, in this task's own staleness check below and
-    # not just inside simplecov patch (which guards its own call the same
-    # way). Reject it here too, before either git invocation runs.
-    if base.start_with?("-")
-      raise "COVERAGE_BASE #{base.inspect} looks like an option, not a ref"
-    end
-
-    # --find-renames: a pure rename diffs to nothing, not the whole file as
-    # new. A changed file outside `.simplecov`'s `cover 'lib/**/*.rb'` glob
-    # carries no coverage.json entry, so `simplecov patch` scores it out of
-    # scope automatically; a changed file INSIDE lib/ always carries an
-    # entry (0% if unloaded), so it can't escape this gate the same way.
-    #
-    # Do not point --input at coverage/coverage.json directly: --minimum
-    # gates line/branch/method uniformly and .simplecov turns branch
-    # coverage on, so the raw report would also enforce 100% branch on
-    # every changed line. Strip branch/method into a scratch copy first so
-    # this task stays line-only.
-    unless File.exist?("coverage/coverage.json")
-      raise "coverage/coverage.json is missing -- run " \
-            "`rake coverage:measure` (or `rake coverage:guard`, which " \
-            "does both) before coverage:changed_lines"
-    end
-
-    # A report generated before this diff's own edits would silently pass
-    # them (simplecov patch has no lines to compare a fresher change
-    # against). Run coverage:measure again if any of these are listed.
-    # `git diff --name-only` alone misses a brand-new file that was never
-    # `git add`ed -- add `ls-files --others --exclude-standard` (untracked,
-    # unignored) the same way simplecov patch's own ChangedLines does, or a
-    # just-created uncovered file passes silently. `-z` on both: git quotes
-    # a non-ASCII path in newline-delimited output (e.g. "caf\303\251.rb"),
-    # and that quoted string never matches a real path on disk, so the
-    # unquoted, NUL-delimited form is the only one safe to split and stat.
-    diff_output, diff_stderr, diff_status =
-      Open3.capture3("git", "diff", "--name-only", "-z", "--merge-base", base)
-    unless diff_status.success?
-      raise "git diff --name-only --merge-base #{base} failed: " \
-            "#{diff_stderr.strip}"
-    end
-
-    untracked_output, untracked_stderr, untracked_status =
-      Open3.capture3("git", "ls-files", "--others", "--exclude-standard", "-z")
-    unless untracked_status.success?
-      raise "git ls-files --others --exclude-standard failed: " \
-            "#{untracked_stderr.strip}"
-    end
-
-    changed_paths = (
-      diff_output.split("\0") + untracked_output.split("\0")
-    ).uniq
-    report_mtime = File.mtime("coverage/coverage.json")
-    stale = changed_paths.select do |path|
-      File.exist?(path) && File.mtime(path) > report_mtime
-    end
-    unless stale.empty?
-      raise "coverage/coverage.json predates a newer edit to " \
-            "#{stale.join(', ')} -- " \
-            "run `rake coverage:measure` again before coverage:changed_lines"
-    end
-
-    # A deleted path has no mtime to compare against report_mtime, so the
-    # mtime check above silently lets it through. A deleted lib/*.rb file is
-    # fine -- `simplecov patch --find-renames` below handles that deletion
-    # itself. A deleted SPEC file is not: the report's coverage entry for
-    # whatever it alone exercised goes stale, and nothing else here catches
-    # that. Fail closed on any deletion outside lib/*.rb.
-    deleted_non_lib = changed_paths.reject { |path| File.exist?(path) }
-      .reject { |path| path.start_with?("lib/") && path.end_with?(".rb") }
-    unless deleted_non_lib.empty?
-      raise "#{deleted_non_lib.join(', ')} deleted vs " \
-            "COVERAGE_BASE=#{base.inspect} -- this check has no way to " \
-            "confirm what still covers the lib/*.rb files that path " \
-            "exercised, and re-running `rake coverage:measure` cannot " \
-            "clear it (it does not change what changed vs COVERAGE_BASE). " \
-            "Move COVERAGE_BASE past this deletion instead."
-    end
-
-    # coverage/coverage.json only ever comes from `rake coverage:measure`
-    # (a plain file SimpleCov writes itself) -- refuse a symlink here rather
-    # than following it. A PR that force-adds one (.gitignore does not block
-    # `git add -f`) could
-    # otherwise leak an arbitrary file's content into this task's own error
-    # messages below (a malformed target raises JSON::ParserError with a
-    # verbatim prefix of what File.read actually returned).
-    if File.symlink?("coverage/coverage.json")
-      raise "coverage/coverage.json is a symlink -- refusing to read through it"
-    end
-
-    FileUtils.mkdir_p("tmp")
-    line_only_report = JSON.parse(File.read("coverage/coverage.json"))
-    line_only_report["coverage"].each_value do |file|
-      file.delete("branches")
-      file.delete("methods")
-    end
-
-    # Beats mtime: compares each changed lib/ file's CURRENT content against
-    # the report's own `source` line-for-line, not just line count. Skip
-    # deleted paths -- `simplecov patch --find-renames` already passes those.
-    stale_entry = changed_paths.select do |path|
-      next false unless path.start_with?("lib/") && path.end_with?(".rb")
-      next false unless File.exist?(path)
-
-      entry = line_only_report["coverage"][path]
-      source = entry && entry["source"]
-      source.nil? || source != File.readlines(path, chomp: true)
-    end
-    unless stale_entry.empty?
-      raise "coverage/coverage.json has no entry (or a content mismatch " \
-            "against the file's current source) for " \
-            "#{stale_entry.join(', ')} -- the report predates this change " \
-            "even though its mtime looks newer; run " \
-            "`rake coverage:measure` again before " \
-            "coverage:changed_lines"
-    end
-
-    # Generalizes the content check above to non-lib files (no coverage.json
-    # entry to compare against there). Only enforced when the manifest
-    # coverage:measure writes is present -- absent, this stays mtime-only.
-    manifest_path = "tmp/coverage-source-manifest.json"
-    if File.exist?(manifest_path) && !File.symlink?(manifest_path)
-      source_manifest = JSON.parse(File.read(manifest_path))
-      non_lib_stale = changed_paths.select do |path|
-        next false if path.start_with?("lib/") && path.end_with?(".rb")
-        next false unless File.exist?(path) && !File.symlink?(path)
-
-        source_manifest[path] != Digest::SHA256.file(path).hexdigest
-      end
-      unless non_lib_stale.empty?
-        raise "coverage/coverage.json predates a newer edit to " \
-              "#{non_lib_stale.join(', ')} (content differs from the " \
-              "coverage:measure-time snapshot, even though its mtime does " \
-              "not show it) -- run `rake coverage:measure` again before " \
-              "coverage:changed_lines"
-      end
-    end
-
-    # Same symlink hazard as coverage/coverage.json above, but on the write
-    # side: `File.write` follows a symlink and overwrites whatever it points
-    # at. This scratch file is regenerated fresh every run, so clear any
-    # symlink left at this path (e.g. by a checked-out PR) before writing
-    # rather than following it.
-    line_only_path = "tmp/coverage-line-only.json"
-    File.unlink(line_only_path) if File.symlink?(line_only_path)
-    File.write(line_only_path, JSON.generate(line_only_report))
-
-    # Multi-arg form: bypasses the shell entirely, so a hostile COVERAGE_BASE
-    # (e.g. containing `;` or backticks) cannot execute a second command --
-    # the single-string form would have passed it to `sh -c` unescaped.
-    sh "bundle", "exec", "simplecov", "patch", "--input", line_only_path,
-       "--base", base, "--find-renames", "--minimum", "100"
+    sh(*CoverageTasks.command)
   end
 
   desc "coverage:measure, then the changed-line gate"

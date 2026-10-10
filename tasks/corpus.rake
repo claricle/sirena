@@ -47,17 +47,21 @@ module Sirena
     def cases(type)
       available = types
       selected = type ? [type] : available
-      unknown = selected - available
-      unless unknown.empty?
-        raise ArgumentError, "Unknown corpus type(s): #{unknown.join(', ')}. " \
-                             "Available: #{available.join(', ')}"
-      end
+      validate_types!(selected, available)
+      selected.flat_map { |corpus_type| case_paths(corpus_type) }
+    end
 
-      selected.flat_map do |t|
-        Dir.glob(File.join(CORPUS_ROOT, t, "*.mmd")).map do |path|
-          path.sub("#{CORPUS_ROOT}/", "")
-        end
-      end
+    def validate_types!(selected, available)
+      unknown = selected - available
+      return if unknown.empty?
+
+      raise ArgumentError, "Unknown corpus type(s): #{unknown.join(', ')}. " \
+                           "Available: #{available.join(', ')}"
+    end
+
+    def case_paths(corpus_type)
+      Dir.glob(File.join(CORPUS_ROOT, corpus_type, "*.mmd"))
+        .map { |path| path.sub("#{CORPUS_ROOT}/", "") }
     end
 
     # case path => oracle verdict (valid / invalid / artifact / unknown),
@@ -92,14 +96,18 @@ module Sirena
       Timeout.timeout(CASE_TIMEOUT) { Sirena::Engine.new.render(source) }
       { pass: true }
     rescue StandardError => e
+      failed_render(e)
+    end
+
+    def failed_render(error)
       {
         pass: false,
-        stage: stage_for(e),
-        exception_class: e.class.name,
+        stage: stage_for(error),
+        exception_class: error.class.name,
         # Console-only detail (never written to the committed scoreboard):
         # the first line, so a stray backtrace in a message can't leak into
         # a one-line failure report.
-        message: e.message.to_s.each_line.first.to_s.chomp,
+        message: error.message.to_s.each_line.first.to_s.chomp,
       }
     end
 
@@ -112,17 +120,19 @@ module Sirena
     # every rate is derived from these rows on demand.
     def rows_for_scoreboard(results, verdict_by_case)
       results.map do |path, result|
-        row = {
-          "case" => path,
-          "verdict" => verdict_by_case.fetch(path, "unknown"),
-          "pass" => result[:pass],
-        }
-        unless result[:pass]
-          row["stage"] = result[:stage]
-          row["exception_class"] = result[:exception_class]
-        end
-        row
-      end.sort_by { |row| row["case"] }
+        scoreboard_row(path, result, verdict_by_case)
+      end
+        .sort_by { |row| row["case"] }
+    end
+
+    def scoreboard_row(path, result, verdict_by_case)
+      verdict = verdict_by_case.fetch(path, "unknown")
+      row = { "case" => path, "verdict" => verdict,
+              "pass" => result[:pass] }
+      return row if result[:pass]
+
+      row.merge("stage" => result[:stage],
+                "exception_class" => result[:exception_class])
     end
 
     # Writes via a temp file + rename rather than File.write directly, so a
@@ -152,11 +162,18 @@ module Sirena
     end
 
     def print_summary(rows, label:)
+      print_all_rate(rows, label)
+      print_valid_rate(rows)
+    end
+
+    def print_all_rate(rows, label)
       passed = rows.count { |row| row["pass"] }
       puts format("%<label>s: %<ok>d/%<all>d cases render (%<rate>.1f%%)",
                   label: label, ok: passed, all: rows.size,
                   rate: rows.empty? ? 0.0 : (100.0 * passed / rows.size))
+    end
 
+    def print_valid_rate(rows)
       valid_pass, valid_total = rate_over_valid(rows)
       return if valid_total.zero?
 
@@ -179,15 +196,18 @@ module Sirena
       paths = cases(type)
       results = run_cases(paths)
       rows = rows_for_scoreboard(results, verdicts)
+      type ? report_type(type, scope, rows, results) : record_corpus(rows)
+    end
 
-      if type
-        print_summary(rows, label: "corpus[#{type}]")
-        print_failures(rows, results, only_valid: scope == :valid)
-      else
-        write_scoreboard(rows)
-        print_summary(rows, label: "corpus")
-        puts "wrote #{SCOREBOARD_PATH}"
-      end
+    def report_type(type, scope, rows, results)
+      print_summary(rows, label: "corpus[#{type}]")
+      print_failures(rows, results, only_valid: scope == :valid)
+    end
+
+    def record_corpus(rows)
+      write_scoreboard(rows)
+      print_summary(rows, label: "corpus")
+      puts "wrote #{SCOREBOARD_PATH}"
     end
 
     # The only filter on offer is "valid"; anything else is a typo that would
@@ -227,11 +247,14 @@ module Sirena
 
     def failure_lines(failing, results)
       width = failing.map { |row| row["case"].size }.max
-      failing.sort_by { |row| [row["stage"], row["case"]] }.map do |row|
-        message = tidy_message(results[row["case"]][:message])
-        format("  %-#{width}s  %-8s  %-8s  %s", row["case"],
-               row["stage"], row["verdict"], message)
-      end
+      failing.sort_by { |row| [row["stage"], row["case"]] }
+        .map { |row| failure_line(row, width, results) }
+    end
+
+    def failure_line(row, width, results)
+      message = tidy_message(results[row["case"]][:message])
+      format("  %-#{width}s  %-8s  %-8s  %s", row["case"],
+             row["stage"], row["verdict"], message)
     end
 
     # Pure comparison, no I/O -- takes two plain row arrays and says what
@@ -256,19 +279,25 @@ module Sirena
     # rate, so a changed verdict with an unchanged pass flag is a stale file
     # all the same.
     def diff_scoreboards(committed_rows, fresh_rows)
-      committed_pass = committed_rows.to_h { |row| [row["case"], row["pass"]] }
-      fresh_pass = fresh_rows.to_h { |row| [row["case"], row["pass"]] }
+      committed_pass = pass_by_case(committed_rows)
+      fresh_pass = pass_by_case(fresh_rows)
       all_cases = committed_pass.keys | fresh_pass.keys
-
-      regressed = all_cases.select do |c|
-        committed_pass[c] == true && fresh_pass.fetch(c, false) != true
-      end
-      unrecorded = all_cases.select do |c|
-        fresh_pass[c] == true && committed_pass.fetch(c, false) != true
-      end
-
+      regressed = changed_pass_cases(all_cases, committed_pass, fresh_pass)
+      unrecorded = changed_pass_cases(all_cases, fresh_pass, committed_pass)
       { regressed: regressed.sort, unrecorded: unrecorded.sort,
         reclassified: reclassified_cases(committed_rows, fresh_rows) }
+    end
+
+    def pass_by_case(rows)
+      rows.to_h { |row| [row["case"], row["pass"]] }
+    end
+
+    def changed_pass_cases(cases, passing, failing)
+      cases.select do |corpus_case|
+        passed_before = passing[corpus_case] == true
+        failed_now = failing.fetch(corpus_case, false) != true
+        passed_before && failed_now
+      end
     end
 
     # Cases in both files whose oracle verdict differs.
@@ -286,7 +315,8 @@ module Sirena
     def check!
       committed = load_scoreboard
       if committed.empty?
-        abort "scoreboard/corpus.json is missing or empty; run `rake corpus` first."
+        abort "scoreboard/corpus.json is missing or empty; " \
+              "run `rake corpus` first."
       end
 
       fresh_rows = rows_for_scoreboard(run_cases(cases(nil)), verdicts)
