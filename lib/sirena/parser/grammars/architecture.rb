@@ -134,7 +134,8 @@ module Sirena
 
         # In clause for group membership
         rule(:in_clause) do
-          space.repeat(1) >> str("in") >> space.repeat(1) >> arch_identifier.as(:group_id)
+          space.repeat(1) >> str("in") >> space.repeat(1) >>
+            arch_identifier.as(:group_id)
         end
 
         # Position specification (e.g., :L, :R, :T, :B)

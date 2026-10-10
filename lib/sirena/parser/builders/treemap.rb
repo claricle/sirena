@@ -78,32 +78,30 @@ module Sirena
         # @return [Diagram::Treemap] the built diagram
         def build_diagram(data)
           diagram = Diagram::Treemap.new
-
           statements = data[:statements] || []
-          nodes = []
-
-          statements.each do |stmt|
-            case stmt[:type]
-            when :title
-              diagram.title = stmt[:value]
-            when :acc_title
-              # Accessibility title: parsed, not yet stored on the model.
-            when :acc_descr
-              # Accessibility description: parsed, not yet stored on the model.
-            when :class_def
-              diagram.add_class_def(stmt[:name], stmt[:styles])
-            else
-              # Only :node is left: the rules above emit no other type.
-              nodes << stmt
-            end
-          end
-
+          nodes = statements.filter_map { |stmt| consume(stmt, diagram) }
           build_hierarchy(diagram, nodes)
-
           diagram
         end
 
         private
+
+        def consume(statement, diagram)
+          case statement[:type]
+          when :title then diagram.title = statement[:value]
+          when :class_def then add_class_def(statement, diagram)
+          when :acc_title, :acc_descr
+            # Accessibility metadata is parsed, not yet stored on the model.
+          else
+            # Only :node is left: the rules above emit no other type.
+            return statement
+          end
+          nil
+        end
+
+        def add_class_def(statement, diagram)
+          diagram.add_class_def(statement[:name], statement[:styles])
+        end
 
         # Builds the hierarchical node tree from the flat, indented
         # node list the parse tree produces.
@@ -113,30 +111,26 @@ module Sirena
         #   order, each carrying its indentation level
         # @return [void]
         def build_hierarchy(diagram, nodes)
-          # Stack to track the current parent at each indentation level
-          # Format: [[indent_level, node], ...]
           stack = []
-
           nodes.each do |node_data|
             indent = node_data[:indent] || 0
-            label = node_data[:label]
-            value = node_data[:value]
-            css_class = node_data[:css_class]
-
-            node = Diagram::TreemapNode.new(label, value)
-            node.css_class = css_class if css_class
-
+            node = build_node(node_data)
             stack.pop while stack.any? && stack.last[0] >= indent
-
-            if stack.empty?
-              diagram.add_root_node(node)
-            else
-              parent = stack.last[1]
-              parent.add_child(node)
-            end
-
+            attach_node(diagram, stack, node)
             stack.push([indent, node])
           end
+        end
+
+        def build_node(data)
+          Diagram::TreemapNode.new(data[:label], data[:value]).tap do |node|
+            node.css_class = data[:css_class] if data[:css_class]
+          end
+        end
+
+        def attach_node(diagram, stack, node)
+          return diagram.add_root_node(node) if stack.empty?
+
+          stack.last[1].add_child(node)
         end
       end
     end

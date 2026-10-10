@@ -578,11 +578,23 @@ module Sirena
         # private method, not `rule()`, since only the TERMINATOR differs
         # between the two callers (see `create_statement`'s comment).
         def declaration_body(keyword)
-          str(keyword) >> space.repeat(1) >>
-            declaration_name.as(:id) >> shape_metadata.maybe >> space? >>
-            (str("as") >> space.repeat(1) >> label.as(:label)).maybe
+          declaration_keyword(keyword) >> declaration_identity >>
+            declaration_label.maybe
         end
-        private :declaration_body
+
+        def declaration_keyword(keyword)
+          str(keyword) >> space.repeat(1)
+        end
+
+        def declaration_identity
+          declaration_name.as(:id) >> shape_metadata.maybe >> space?
+        end
+
+        def declaration_label
+          str("as") >> space.repeat(1) >> label.as(:label)
+        end
+        private :declaration_body, :declaration_keyword,
+                :declaration_identity, :declaration_label
 
         # Ends at `content_boundary`, not `line_end` — a declaration can be
         # followed by another statement on the same line after a `;`, and
