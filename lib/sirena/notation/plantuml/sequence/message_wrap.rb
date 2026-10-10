@@ -20,19 +20,24 @@ module Sirena
             return [label] unless @limit
 
             label.split(/[ \t]+/).each_with_object([]) do |word, lines|
-              joined = lines.empty? ? word : "#{lines.last} #{word}"
-              if lines.any? && @measure.call(joined) > @limit
-                lines << word
-              else
-                lines[-1] = joined if lines.any?
-                lines << joined if lines.empty?
-              end
+              add(lines, word)
             end
           end
 
           # @return [Float] the width of the widest line of `label`
           def width(label)
             lines(label).map { |line| @measure.call(line) }.max.to_f
+          end
+
+          private
+
+          def add(lines, word)
+            joined = "#{lines.last} #{word}"
+            if lines.empty? || @measure.call(joined) > @limit
+              lines << word
+            else
+              lines[-1] = joined
+            end
           end
         end
       end
