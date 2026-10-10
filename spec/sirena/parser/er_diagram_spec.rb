@@ -109,7 +109,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # `[]` a native `.repeat.as(:string)` capture would produce on no
     # match -- `extract_text` (`builders/er_diagram.rb`) relies on that
     # guarantee and calls `.to_s` on it directly.
-    it 'carries an empty quoted note as an empty string, not the literal "[]"' do
+    it "carries an empty quoted note as an empty string, " \
+       "not the literal \"[]\"" do
       source = <<~MERMAID
         erDiagram
         RENTAL {
@@ -213,7 +214,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # `tilde_prefix`'s scan behaves on the note's incompatible byte -- it
     # only proves the parser still returns the right `attribute_type` and
     # `note` for an ASCII-8BIT source that happens to hold one.
-    it "extracts a note holding a byte an encoding-fixed tilde regex cannot match" do
+    it "extracts a note holding a byte an encoding-fixed tilde regex cannot " \
+       "match" do
       source = (+"erDiagram\nCUSTOMER {\n  string name \"note \xFF here\"\n}\n")
         .force_encoding(Encoding::ASCII_8BIT)
 
@@ -234,8 +236,10 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # value) -- reproduced by hand against the pre-fix code. The scan's own
     # contract (what it returns, not just that the full parse doesn't blow
     # up) is pinned directly by greedy_run_spec.rb.
-    it "parses a tilde-quoted type followed by a note holding a byte the tilde regex cannot match" do
-      source = (+"erDiagram\nCUSTOMER {\n  List~type~ name \"note \xFF here\"\n}\n")
+    it "parses a tilde-quoted type followed by a note holding a byte the " \
+       "tilde regex cannot match" do
+      source = (+"erDiagram\nCUSTOMER {\n  " \
+                 "List~type~ name \"note \xFF here\"\n}\n")
         .force_encoding(Encoding::ASCII_8BIT)
 
       diagram = parser.parse(source)
@@ -246,7 +250,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
       expect(attr.note).to eq((+"note \xFF here").force_encoding(Encoding::ASCII_8BIT))
     end
 
-    it "refuses a tilde-quoted type whose core holds a byte the same regex cannot match" do
+    it "refuses a tilde-quoted type whose core holds a byte the same regex " \
+       "cannot match" do
       source = (+"erDiagram\nCUSTOMER {\n  List~\xFFtype\xFF~ name\n}\n")
         .force_encoding(Encoding::ASCII_8BIT)
 
@@ -260,10 +265,12 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # cache -- an empty cache assumes no newlines exist at all, so it
     # agrees with the real one at [1, 1]. Starting after a real newline
     # makes them disagree: an empty cache reports [1, 3].
-    it "keeps a captured tilde type slice able to report its real line and column" do
+    it "keeps a captured tilde type slice able to report its real line and " \
+       "column" do
       grammar = Sirena::Parser::Grammars::ErDiagram.new
 
-      result = (Parslet.str("x\n") >> grammar.tilde_type.as(:r)).parse("x\n~foo~")
+      result = (Parslet.str("x\n") >> grammar.tilde_type.as(:r))
+        .parse("x\n~foo~")
 
       expect(result[:r][:string].line_and_column).to eq([2, 1])
     end
@@ -376,7 +383,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # themselves (U+2028, U+2029) -- checked at the grammar rule directly
     # against the same whole-input reference regex used by the
     # chunk-boundary specs below, not hand-derived.
-    it "stops tilde_marked_run at U+2028 and U+2029, matching the whole-input reference regex" do
+    it "stops tilde_marked_run at U+2028 and U+2029, " \
+       "matching the whole-input reference regex" do
       grammar = Sirena::Parser::Grammars::ErDiagram.new
       whole_input_regex = Regexp.new("\\A(?:~(?:[^~\n\r\u2028\u2029]*~)+)", Regexp::MULTILINE)
 
@@ -541,7 +549,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # entirely, for a single run longer than one chunk). Compared
     # against the SAME whole-input regex mermaid's own lexer builds for
     # this token, not hand-derived.
-    it "matches a tilde-marked run whose content crosses the internal chunk boundary" do
+    it "matches a tilde-marked run whose content crosses the internal chunk " \
+       "boundary" do
       grammar = Sirena::Parser::Grammars::ErDiagram.new
       whole_input_regex = Regexp.new("\\A(?:~(?:[^~\n\r\u2028\u2029]*~)+)", Regexp::MULTILINE)
 
@@ -550,11 +559,13 @@ RSpec.describe Sirena::Parser::ErDiagram do
         "~#{Array.new(4_000) { 'a' * 12 }.join('~')}~",
       ].each do |input|
         expected = whole_input_regex.match(input)[0]
-        expect(grammar.tilde_marked_run.parse(input, prefix: true).to_s).to eq(expected)
+        parsed = grammar.tilde_marked_run.parse(input, prefix: true).to_s
+        expect(parsed).to eq(expected)
       end
     end
 
-    it "parses a full ER attribute type whose tilde run crosses the internal chunk boundary" do
+    it "parses a full ER attribute type whose tilde run crosses the internal " \
+       "chunk boundary" do
       inner = "a" * 60_000
       source = <<~MERMAID
         erDiagram
@@ -574,7 +585,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # clustered around the internal chunk boundary (plus a spread of
     # other sizes) -- proves the chunk-boundary fix generalises past the
     # two hand-picked counterexamples above.
-    it "matches the whole-input reference regex across random inputs near the chunk boundary" do
+    it "matches the whole-input reference regex across random inputs near " \
+       "the chunk boundary" do
       grammar = Sirena::Parser::Grammars::ErDiagram.new
       whole_input_regex = Regexp.new("\\A(?:~(?:[^~\n\r\u2028\u2029]*~)+)", Regexp::MULTILINE)
       broad_pool = ("a".."z").to_a + ("0".."9").to_a + ["-", ".", "/", "_"]
@@ -589,7 +601,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
           if rng.rand(15).zero?
             "~"
           else
-            rng.rand(20) < 19 ? broad_pool.sample(random: rng) : noise_pool.sample(random: rng)
+            pool = rng.rand(20) < 19 ? broad_pool : noise_pool
+            pool.sample(random: rng)
           end
         end.join
         input = "~#{body}"
@@ -599,10 +612,14 @@ RSpec.describe Sirena::Parser::ErDiagram do
         rescue Parslet::ParseFailed
           nil
         end
-        { length: length, expected: expected&.length, got: got&.length } if got != expected
+        if got != expected
+          { length: length, expected: expected&.length, got: got&.length }
+        end
       end
 
-      expect(mismatches).to eq([]), "#{mismatches.size}/#{lengths.size} cases mismatched: #{mismatches.first(3)}"
+      message = "#{mismatches.size}/#{lengths.size} cases mismatched: " \
+                "#{mismatches.first(3)}"
+      expect(mismatches).to eq([]), message
     end
 
     # Guards against the OTHER shape a fixed-size-chunk atom can regress
@@ -613,9 +630,12 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # own length. An absolute bound is too tight on a loaded CI box; the
     # scaling ratio between a small and 8x-larger attribute count
     # survives that (see spec/support/er_tilde_timing.rb's reasoning).
-    it "parses many short tilde-typed attributes at a linear rate, not one per fixed chunk", :speed do
-      small_time = min_call_time { cpu_time { parser.parse(many_tilde_attributes(500)) } }
-      large_time = min_call_time { cpu_time { parser.parse(many_tilde_attributes(4_000)) } }
+    it "parses many short tilde-typed attributes at a linear rate, not one " \
+       "per fixed chunk", :speed do
+      small_parse = -> { parser.parse(many_tilde_attributes(500)) }
+      large_parse = -> { parser.parse(many_tilde_attributes(4_000)) }
+      small_time = min_call_time { cpu_time(&small_parse) }
+      large_time = min_call_time { cpu_time(&large_parse) }
 
       expect(large_time / small_time).to be < ErTildeTiming::MAX_LINEAR_SCALING_RATIO
     end

@@ -94,7 +94,8 @@ RSpec.describe Sirena::Parser::Pie do
         diagram = parser.parse(source)
         expect(diagram.title).to eq("Sales Chart")
         expect(diagram.acc_title).to eq("Accessible Title")
-        expect(diagram.acc_description).to eq("This chart shows sales distribution")
+        expect(diagram.acc_description)
+          .to eq("This chart shows sales distribution")
       end
     end
 

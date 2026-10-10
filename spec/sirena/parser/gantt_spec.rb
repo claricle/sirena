@@ -174,7 +174,8 @@ RSpec.describe Sirena::Parser::Gantt do
       expect(task.id).to be_nil
     end
 
-    it "parses comma-separated tags followed by an after-dependency and a duration" do
+    it "parses comma-separated tags followed by an after-dependency and a " \
+       "duration" do
       source = <<~GANTT
         gantt
           section Tasks
@@ -225,7 +226,8 @@ RSpec.describe Sirena::Parser::Gantt do
     # counted — see the "counts an after-dependency..." example below) is
     # mermaid's "id, start, end/duration" shape. The id is always the first
     # of the three, even when its text happens to look like a date.
-    it "treats the first of three value fields as the id, even when it is date-shaped" do
+    it "treats the first of three value fields as the id, even when it is " \
+       "date-shaped" do
       source = <<~GANTT
         gantt
           dateFormat YYYY-MM-DD
@@ -267,7 +269,8 @@ RSpec.describe Sirena::Parser::Gantt do
     # rule, a leftover field like that must still be treated as a date and
     # never re-trigger id-by-shape classification, or it silently
     # overwrites the real id.
-    it "keeps the positional id when trailing dates have no separator (compact dateFormat)" do
+    it "keeps the positional id when trailing dates have no separator " \
+       "(compact dateFormat)" do
       source = <<~GANTT
         gantt
           dateFormat YYYYMMDD
@@ -290,7 +293,8 @@ RSpec.describe Sirena::Parser::Gantt do
     # both fields as the task's dates, with mermaid auto-generating the id
     # (Codex High, gantt.rb:207 — this exact input used to produce
     # `id="20240103"` with both dates nil).
-    it "treats two leftover compact-date fields as start/end when no id is given" do
+    it "treats two leftover compact-date fields as start/end when no id is " \
+       "given" do
       source = <<~GANTT
         gantt
           dateFormat YYYYMMDD
