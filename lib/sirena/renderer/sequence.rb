@@ -126,11 +126,25 @@ module Sirena
         Svg::Text.new.tap do |text|
           text.x = label.x
           text.y = label.y
-          text.content = label.text
+          label_content(text, label)
           text.fill = "#000000"
           text.font_family = "Arial, sans-serif"
           text.font_size = number_string(label.font_size)
           text.text_anchor = "middle"
+        end
+      end
+
+      # One run per line when the text wraps or breaks; each run places
+      # itself, so no line offset is written.
+      def label_content(text, label)
+        return text.content = label.text unless label.lines.length > 1
+
+        text.tspans = label.lines.each_with_index.map do |line, row|
+          Svg::Tspan.new.tap do |run|
+            run.x = label.x
+            run.y = label.y + (row * label.line_pitch)
+            run.content = line
+          end
         end
       end
 
