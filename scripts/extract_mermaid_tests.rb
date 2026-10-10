@@ -46,7 +46,12 @@ DIAGRAM_TYPES = {
 
 # Test case structure
 class TestCase
-  attr_accessor :name, :diagram_type, :source, :source_file, :line_number, :metadata
+  attr_accessor :name,
+                :diagram_type,
+                :source,
+                :source_file,
+                :line_number,
+                :metadata
 
   def initialize(name:, type:, source:, file:, line:, metadata: {})
     @name = name
@@ -99,7 +104,7 @@ class MermaidTestExtractor
     content = File.read(file)
 
     # Build regex pattern for all diagram keywords
-    keywords = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "").gsub("|", '\\|') }.join("|")
+    keywords = diagram_keywords(escape_pipes: true)
 
     # Find all backtick diagram blocks
     content.scan(/`((?:#{keywords})[^`]*)`/mi) do
@@ -127,12 +132,14 @@ class MermaidTestExtractor
   def extract_cypress_rendering_tests
     puts "\n[2/7] Extracting from cypress/integration/rendering/*.{js,ts}..."
 
-    Dir.glob("#{MERMAID_JS_ROOT}/cypress/integration/rendering/*.{js,ts}").each do |file|
+    rendering_glob = "#{MERMAID_JS_ROOT}/cypress/integration/rendering/" \
+                     "*.{js,ts}"
+    Dir.glob(rendering_glob).each do |file|
       content = File.read(file)
       file_count = 0
 
       # Pattern 1: Backtick strings
-      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "") }.join("|")
+      keywords_pattern = diagram_keywords
       content.scan(/`((?:#{keywords_pattern})[^`]*)`/mi) do
         match_pos = $~.begin(0)
         diagram_src = $1.strip
@@ -140,7 +147,8 @@ class MermaidTestExtractor
         next if type == :unknown
 
         add_test(
-          name: "rendering_#{File.basename(file, '.*')}_#{type}_#{@stats[type]}",
+          name: "rendering_#{File.basename(file, '.*')}_#{type}_" \
+                "#{@stats[type]}",
           type: type,
           source: diagram_src,
           file: file,
@@ -157,7 +165,8 @@ class MermaidTestExtractor
         next if type == :unknown
 
         add_test(
-          name: "rendering_#{File.basename(file, '.*')}_#{type}_#{@stats[type]}",
+          name: "rendering_#{File.basename(file, '.*')}_#{type}_" \
+                "#{@stats[type]}",
           type: type,
           source: diagram_src,
           file: file,
@@ -185,12 +194,15 @@ class MermaidTestExtractor
       content.scan(/<pre\s+class="mermaid"[^>]*>(.*?)<\/pre>/mi) do
         match_pos = $~.begin(0)
         diagram_src = $1.strip
-        diagram_src = diagram_src.gsub("&lt;", "<").gsub("&gt;", ">").gsub("&amp;", "&")
+        diagram_src = diagram_src.gsub("&lt;", "<")
+          .gsub("&gt;", ">")
+          .gsub("&amp;", "&")
         type = detect_diagram_type(diagram_src)
         next if type == :unknown
 
         add_test(
-          name: "platform_#{File.basename(file, '.html')}_#{type}_#{@stats[type]}",
+          name: "platform_#{File.basename(file, '.html')}_#{type}_" \
+                "#{@stats[type]}",
           type: type,
           source: diagram_src,
           file: file,
@@ -203,12 +215,15 @@ class MermaidTestExtractor
       content.scan(/<div\s+class="mermaid"[^>]*>(.*?)<\/div>/mi) do
         match_pos = $~.begin(0)
         diagram_src = $1.strip
-        diagram_src = diagram_src.gsub("&lt;", "<").gsub("&gt;", ">").gsub("&amp;", "&")
+        diagram_src = diagram_src.gsub("&lt;", "<")
+          .gsub("&gt;", ">")
+          .gsub("&amp;", "&")
         type = detect_diagram_type(diagram_src)
         next if type == :unknown
 
         add_test(
-          name: "platform_#{File.basename(file, '.html')}_#{type}_#{@stats[type]}",
+          name: "platform_#{File.basename(file, '.html')}_#{type}_" \
+                "#{@stats[type]}",
           type: type,
           source: diagram_src,
           file: file,
@@ -228,12 +243,13 @@ class MermaidTestExtractor
   def extract_package_examples
     puts "\n[4/7] Extracting from packages/examples/src/examples/*.ts..."
 
-    Dir.glob("#{MERMAID_JS_ROOT}/packages/examples/src/examples/*.ts").each do |file|
+    example_glob = "#{MERMAID_JS_ROOT}/packages/examples/src/examples/*.ts"
+    Dir.glob(example_glob).each do |file|
       content = File.read(file)
       file_count = 0
 
       # Pattern 1: diagram: `...`
-      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "") }.join("|")
+      keywords_pattern = diagram_keywords
       content.scan(/diagram\s*:\s*`((?:#{keywords_pattern})[^`]*)`/mi) do
         match_pos = $~.begin(0)
         diagram_src = $1.strip
@@ -276,14 +292,23 @@ class MermaidTestExtractor
 
   # 5. packages/mermaid/src/diagrams/**/*.{spec,test}.{ts,js} - parser tests
   def extract_diagram_parser_tests
-    puts "\n[5/7] Extracting from packages/mermaid/src/diagrams/**/*.{spec,test}.{ts,js}..."
+    puts "\n[5/7] Extracting from packages/mermaid/src/diagrams/" \
+         "**/*.{spec,test}.{ts,js}..."
 
-    Dir.glob("#{MERMAID_JS_ROOT}/packages/mermaid/src/diagrams/**/*.{spec,test}.{ts,js}").each do |file|
+    diagram_glob = "#{MERMAID_JS_ROOT}/packages/mermaid/src/diagrams/" \
+                   "**/*.{spec,test}.{ts,js}"
+    Dir.glob(diagram_glob).each do |file|
       content = File.read(file)
       file_count = 0
 
       # Pattern 1: it/test with const str = string concatenation
-      content.scan(/(?:it|test)\s*\(\s*['"]([^'"]+)['"]\s*,\s*(?:function\s*\(\s*\)\s*\{|\(\s*\)\s*=>|async\s*(?:function\s*)?\(\s*\)\s*(?:=>)?\s*\{)(.*?)(?:parser\.parse|expect)/mi) do
+      callback_pattern = /
+        (?:it|test)\s*\(\s*['"]([^'"]+)['"]\s*,\s*
+        (?:function\s*\(\s*\)\s*\{|\(\s*\)\s*=>|
+           async\s*(?:function\s*)?\(\s*\)\s*(?:=>)?\s*\{)
+        (.*?)(?:parser\.parse|expect)
+      /mix
+      content.scan(callback_pattern) do
         match_pos = $~.begin(0)
         test_name = $1
         test_body = $2
@@ -306,8 +331,12 @@ class MermaidTestExtractor
       end
 
       # Pattern 2: Direct backtick strings in tests
-      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "") }.join("|")
-      content.scan(/(?:it|test)\s*\(\s*['"]([^'"]+)['"]\s*,.*?`((?:#{keywords_pattern})[^`]*)`/mi) do
+      keywords_pattern = diagram_keywords
+      backtick_pattern = /
+        (?:it|test)\s*\(\s*['"]([^'"]+)['"]\s*,.*?
+        `((?:#{keywords_pattern})[^`]*)`
+      /mix
+      content.scan(backtick_pattern) do
         match_pos = $~.begin(0)
         test_name = $1
         diagram_src = $2
@@ -334,13 +363,16 @@ class MermaidTestExtractor
 
   # 6. packages/parser/tests/*.{spec,test}.{ts,js} - parser package tests
   def extract_parser_tests
-    puts "\n[6/7] Extracting from packages/parser/tests/*.{spec,test}.{ts,js}..."
+    puts "\n[6/7] Extracting from packages/parser/tests/" \
+         "*.{spec,test}.{ts,js}..."
 
-    Dir.glob("#{MERMAID_JS_ROOT}/packages/parser/tests/**/*.{spec,test}.{ts,js}").each do |file|
+    parser_glob = "#{MERMAID_JS_ROOT}/packages/parser/tests/" \
+                  "**/*.{spec,test}.{ts,js}"
+    Dir.glob(parser_glob).each do |file|
       content = File.read(file)
       file_count = 0
 
-      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "") }.join("|")
+      keywords_pattern = diagram_keywords
 
       # Backtick strings
       content.scan(/`((?:#{keywords_pattern})[^`]*)`/mi) do
@@ -378,12 +410,13 @@ class MermaidTestExtractor
 
     additional_patterns.each do |pattern|
       Dir.glob(pattern).each do |file|
-        next if @file_stats[file]&.positive? # Skip files already processed by primary extractors
+        # Skip files already processed by primary extractors.
+        next if @file_stats[file]&.positive?
 
         content = File.read(file)
         file_count = 0
 
-        keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "") }.join("|")
+        keywords_pattern = diagram_keywords
 
         content.scan(/[`'"]((?:#{keywords_pattern})[^`'"]*)[`'"]/mi) do
           match_pos = $~.begin(0)
@@ -409,11 +442,23 @@ class MermaidTestExtractor
     end
   end
 
+  def diagram_keywords(escape_pipes: false)
+    sources = DIAGRAM_TYPES.values.map do |pattern|
+      pattern.source.gsub(/[\\^$]/, "")
+    end
+    return sources.join("|") unless escape_pipes
+
+    sources.map { |source| source.gsub("|", '\\|') }.join("|")
+  end
+
   def extract_concatenated_string(str_value)
     parts = []
     # Match both single and double quoted strings, handling escaped characters
     str_value.scan(/['"]([^'"\\]*(?:\\.[^'"\\]*)*)['"]/) do |match|
-      parts << match[0].gsub("\\n", "\n").gsub("\\t", "\t").gsub('\\"', '"').gsub("\\'", "'")
+      parts << match[0].gsub("\\n", "\n")
+        .gsub("\\t", "\t")
+        .gsub('\\"', '"')
+        .gsub("\\'", "'")
     end
     parts.join("")
   end
@@ -459,7 +504,8 @@ class MermaidTestExtractor
       FileUtils.mkdir_p(type_dir)
 
       cases.each_with_index do |test_case, idx|
-        filename = "#{type_dir}/#{sprintf('%03d', idx + 1)}_#{test_case.to_mmd_filename}"
+        filename = "#{type_dir}/#{format('%03d', idx + 1)}_" \
+                   "#{test_case.to_mmd_filename}"
         File.write(filename, test_case.source)
 
         # Write metadata
@@ -499,7 +545,8 @@ class MermaidTestExtractor
     puts "\nNext steps:"
     puts "  1. Review extracted tests in spec/mermaid/"
     puts "  2. Run: ruby scripts/create_diagram_inventory.rb"
-    puts "  3. Generate fixtures: bundle exec rake fixtures:generate_from_mermaidjs"
+    puts "  3. Generate fixtures: bundle exec rake " \
+         "fixtures:generate_from_mermaidjs"
     puts "  4. Create RSpec tests for each type"
   end
 end
