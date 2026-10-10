@@ -53,11 +53,29 @@ reads the laid-out geometry back. Measured, same three labels:
 Sirena is pure Ruby with no browser and no font metrics dependency
 (`ttfunk` is NOT declared; it resolved only because another gem pulls it in).
 
-**One number is unexplained and should be settled before any work starts.**
-Chrome's `getComputedTextLength` gives `@` as 0.889 em; the font's own
-`hmtx` advance is 1.015 em. A 14% gap on the single character the current
-hint was calibrated against. Until that is understood, any new constant is
-built on an unverified reading.
+**The 0.889 reading does not reproduce; it was a different font, not a
+flaw in the `hmtx` table.** Measured with the pinned `chrome-headless-shell`
+131.0.6778.204 (puppeteer 23.11.1), `getComputedTextLength` of one `@` in an
+SVG `<text>`, with `CSS.getPlatformFontsForNode` naming the font Chrome
+resolved. The Chrome column is at 100 px; the system-ui row is at 16 px.
+
+    font-family                          resolved font     Chrome   hmtx
+    Arial / Helvetica / sans-serif       ArialMT           1.0152   1.01514
+    "trebuchet ms", verdana, arial       TrebuchetMS       0.7706   0.77051
+    "Noto Sans" (the pinned oracle font) NotoSans-Regular  0.8991   0.899
+    system-ui                            .SFNS-Regular     0.8984   -
+
+Chrome matches `hmtx` in every case (1.01514 = 2079/2048 for Arial). At 14
+and 16 px the browser rounds the advance to 1.0156; that is layout rounding,
+not a different font. No stack gives 0.889 exactly. The nearest are the
+pinned Noto Sans at 0.899 and the macOS system font at 0.898, so the old
+figure came from a non-Arial font, most likely Noto Sans or the system font.
+The oracle's CSS (`config/mermaid-oracle.css`) forces Noto Sans, so Arial
+widths are not what the oracle SVGs contain.
+
+**For the steps below:** an Arial-calibrated constant matches Chrome on
+Arial only. Measure against Noto Sans (`@` 0.899, `A` 0.639, `W` 0.930)
+when the target is the pinned oracle output.
 
 ## The routes, with what each actually buys
 
