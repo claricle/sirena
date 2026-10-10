@@ -35,8 +35,23 @@ RSpec.describe Sirena::Layout::Architecture do
   end
 
   def overlap?(left, right)
-    left.x < right.x + right.width && right.x < left.x + left.width &&
-      left.y < right.y + right.height && right.y < left.y + left.height
+    intervals_overlap?(left.x, left.width, right.x, right.width) &&
+      intervals_overlap?(left.y, left.height, right.y, right.height)
+  end
+
+  def intervals_overlap?(left_position, left_size, right_position, right_size)
+    left_position < right_position + right_size &&
+      right_position < left_position + left_size
+  end
+
+  def contains?(outer, inner)
+    interval_contains?(outer.x, outer.width, inner.x, inner.width) &&
+      interval_contains?(outer.y, outer.height, inner.y, inner.height)
+  end
+
+  def interval_contains?(outer_position, outer_size, inner_position, inner_size)
+    outer_position <= inner_position &&
+      outer_position + outer_size >= inner_position + inner_size
   end
 
   def points(edge)
@@ -108,6 +123,14 @@ RSpec.describe Sirena::Layout::Architecture do
     ).children.to_h { |node| [node.id, node] }
   end
 
+  def nested_group_nodes
+    nested = diagram(
+      junctions: [junction("j", group_id: "inner")],
+      groups: [group("outer"), group("inner", parent_id: "outer")],
+    )
+    layout.call(nested).children.to_h { |node| [node.id, node] }
+  end
+
   def service_face_route
     scene = layout.call(
       diagram(services: [service("a"), service("b")],
@@ -145,6 +168,35 @@ RSpec.describe Sirena::Layout::Architecture do
       diagram(services: [service("a"), service("b")],
               edges: [edge("a", "b")]),
     )
+  end
+
+  def router_failure_scene
+    transform = described_class.new
+    allow(transform).to receive(:architecture_edge_router)
+      .and_return(failing_router)
+    transform.call(router_failure_diagram)
+  end
+
+  def failing_router
+    calls = 0
+    instance_double(Sirena::Renderer::ArchitectureEdgeRouter).tap do |router|
+      allow(router).to receive(:route) do |from:, to:, **|
+        calls += 1
+        raise "boom" if calls == 1
+
+        alternate_route(from, to)
+      end
+    end
+  end
+
+  def alternate_route(from, to)
+    [from[:point], { x: from[:point][:x], y: from[:point][:y] + 10 },
+     to[:point]]
+  end
+
+  def router_failure_diagram
+    diagram(services: [service("a"), service("b"), service("c")],
+            edges: [edge("a", "b"), edge("b", "c")])
   end
 
   def unrelated_group_route
@@ -259,9 +311,10 @@ RSpec.describe Sirena::Layout::Architecture do
   it "sizes a junction-only canvas from the junction plus spacing" do
     scene = layout.call(diagram(junctions: [junction("mid")]))
     mid = scene.children.fetch(0)
+    spacing = described_class::DEFAULT_SPACING
 
-    expect(scene.width).to eq(mid.x + mid.width + described_class::DEFAULT_SPACING)
-    expect(scene.height).to eq(mid.y + mid.height + described_class::DEFAULT_SPACING)
+    expect([scene.width, scene.height])
+      .to eq([mid.x + mid.width + spacing, mid.y + mid.height + spacing])
   end
 
   it "keeps a junction-only group separate from other services" do
@@ -271,14 +324,16 @@ RSpec.describe Sirena::Layout::Architecture do
 
   it "positions a junction-only group below other services" do
     nodes = mixed_group_nodes
-    expected_y = nodes["a"].y + nodes["a"].height + described_class::DEFAULT_SPACING
+    spacing = described_class::DEFAULT_SPACING
+    expected_y = nodes["a"].y + nodes["a"].height + spacing
     expect(nodes["j"].y).to eq(expected_y)
   end
 
   it "advances junction rows horizontally" do
     same_group = same_group_junction_nodes
+    spacing = described_class::DEFAULT_SPACING
     expect(same_group["j2"].x - same_group["j1"].x)
-      .to eq(described_class::DEFAULT_JUNCTION_SIZE + described_class::DEFAULT_SPACING)
+      .to eq(described_class::DEFAULT_JUNCTION_SIZE + spacing)
   end
 
   it "keeps junctions in one row vertically aligned" do
@@ -288,30 +343,17 @@ RSpec.describe Sirena::Layout::Architecture do
 
   it "advances junction-only groups vertically" do
     separate_groups = separate_group_junction_nodes
+    spacing = described_class::DEFAULT_SPACING
     expect(separate_groups["j4"].y - separate_groups["j3"].y)
-      .to eq(described_class::DEFAULT_JUNCTION_SIZE + described_class::DEFAULT_SPACING)
+      .to eq(described_class::DEFAULT_JUNCTION_SIZE + spacing)
   end
 
   it "bounds junction-only and nested groups" do
-    scene = layout.call(
-      diagram(junctions: [junction("j", group_id: "inner")],
-              groups: [group("outer"), group("inner", parent_id: "outer")]),
-    )
-    nodes = scene.children.to_h { |node| [node.id, node] }
-    expect(nodes.keys).to include("outer", "inner", "j")
-    expect(overlap?(nodes["inner"], nodes["j"])).to be(true)
-    expect(nodes["inner"].x).to be <= nodes["j"].x
-    expect(nodes["inner"].y).to be <= nodes["j"].y
-    expect(nodes["inner"].x + nodes["inner"].width)
-      .to be >= nodes["j"].x + nodes["j"].width
-    expect(nodes["inner"].y + nodes["inner"].height)
-      .to be >= nodes["j"].y + nodes["j"].height
-    expect(nodes["outer"].x).to be <= nodes["inner"].x
-    expect(nodes["outer"].y).to be <= nodes["inner"].y
-    expect(nodes["outer"].x + nodes["outer"].width)
-      .to be >= nodes["inner"].x + nodes["inner"].width
-    expect(nodes["outer"].y + nodes["outer"].height)
-      .to be >= nodes["inner"].y + nodes["inner"].height
+    nodes = nested_group_nodes
+    summary = [nodes.keys.sort, overlap?(nodes["inner"], nodes["j"]),
+               contains?(nodes["inner"], nodes["j"]),
+               contains?(nodes["outer"], nodes["inner"])]
+    expect(summary).to eq([%w[inner j outer], true, true, true])
   end
 
   it "preserves declaration order for groups at the same depth" do
@@ -324,8 +366,8 @@ RSpec.describe Sirena::Layout::Architecture do
     scene = layout.call(
       diagram(groups: [group("a"), group("b", parent_id: "a")]),
     )
-    expect(scene.children).to be_empty
-    expect([scene.width, scene.height]).to all(be_finite)
+    expect([scene.children, [scene.width, scene.height].all?(&:finite?)])
+      .to eq([[], true])
   end
 
   it "stores multi-character face routes as typed points" do
@@ -365,25 +407,9 @@ RSpec.describe Sirena::Layout::Architecture do
   end
 
   it "isolates a router failure to its edge and preserves later routing" do
-    transform = described_class.new
-    router = instance_double(Sirena::Renderer::ArchitectureEdgeRouter)
-    calls = 0
-    allow(router).to receive(:route) do |from:, to:, **|
-      calls += 1
-      raise "boom" if calls == 1
-
-      [from[:point], { x: from[:point][:x], y: from[:point][:y] + 10 },
-       to[:point]]
-    end
-    allow(transform).to receive(:architecture_edge_router).and_return(router)
-    scene = transform.call(
-      diagram(services: [service("a"), service("b"), service("c")],
-              edges: [edge("a", "b"), edge("b", "c")]),
-    )
-
-    expect(scene.edges.length).to eq(2)
-    expect(scene.edges.first.sections.first.bend_points).to be_empty
-    expect(scene.edges.last.sections.first.bend_points.length).to eq(1)
+    scene = router_failure_scene
+    bend_points = scene.edges.map { |item| item.sections.first.bend_points }
+    expect([scene.edges.length, bend_points.map(&:length)]).to eq([2, [0, 1]])
   end
 
   it "does not raise when obstacle discovery fails" do
