@@ -82,7 +82,7 @@ rows:
 - file: spec/sirena/layout/state_diagram_spec.rb
   count: 10
 - file: spec/sirena/layout/user_journey_spec.rb
-  count: 5
+  count: 2
 - file: spec/sirena/markdown_text_spec.rb
   count: 12
 - file: spec/sirena/parser/architecture_spec.rb
@@ -185,8 +185,6 @@ rows:
   count: 5
 - file: spec/sirena/renderer/treemap_spec.rb
   count: 8
-- file: spec/sirena/renderer/user_journey_spec.rb
-  count: 2
 - file: spec/sirena/source_spec.rb
   count: 4
 - file: spec/sirena/svg/arrowhead_spec.rb

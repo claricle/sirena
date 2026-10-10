@@ -91,8 +91,6 @@ rows:
   count: 1
 - file: lib/sirena/renderer/packet.rb
   count: 1
-- file: lib/sirena/renderer/user_journey.rb
-  count: 3
 - file: lib/sirena/source.rb
   count: 1
 - file: lib/sirena/svg/style.rb
