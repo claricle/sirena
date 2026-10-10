@@ -1,8 +1,6 @@
 ---
 cop: Layout/LineLength
 rows:
-- file: lib/sirena/parser/builders/mindmap.rb
-  count: 6
 - file: lib/sirena/parser/grammars/mindmap.rb
   count: 2
 - file: lib/sirena/renderer/architecture.rb

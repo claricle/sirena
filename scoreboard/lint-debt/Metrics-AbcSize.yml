@@ -13,8 +13,6 @@ rows:
   count: 13
 - file: lib/sirena/layout/gantt.rb
   count: 6
-- file: lib/sirena/layout/mindmap.rb
-  count: 2
 - file: lib/sirena/layout/requirement.rb
   count: 3
 - file: lib/sirena/layout/treemap.rb
@@ -24,8 +22,6 @@ rows:
 - file: lib/sirena/parser/builders/class_diagram.rb
   count: 5
 - file: lib/sirena/parser/builders/gantt.rb
-  count: 2
-- file: lib/sirena/parser/builders/mindmap.rb
   count: 2
 - file: lib/sirena/parser/grammars/flowchart.rb
   count: 3
@@ -71,8 +67,6 @@ rows:
   count: 3
 - file: scripts/mmdc_oracle.rb
   count: 1
-- file: scripts/verify_docs_site.rb
-  count: 1
 - file: spec/integration/state_diagram_integration_spec.rb
   count: 1
 - file: spec/sirena/layout/flowchart_spec.rb
@@ -91,8 +85,6 @@ rows:
   count: 1
 - file: spec/support/mermaid_diff_spec_support.rb
   count: 1
-- file: tasks/benchmark.rake
-  count: 5
 - file: tasks/example_tasks.rb
   count: 5
 - file: tasks/generate_mermaid_fixtures.rake

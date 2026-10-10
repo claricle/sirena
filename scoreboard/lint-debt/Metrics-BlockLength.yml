@@ -5,14 +5,10 @@ rows:
   count: 1
 - file: lib/sirena/layout/block.rb
   count: 1
-- file: lib/sirena/layout/mindmap.rb
-  count: 1
 - file: lib/sirena/layout/requirement.rb
   count: 1
 - file: scripts/extract_mermaid_tests.rb
   count: 4
-- file: tasks/benchmark.rake
-  count: 1
 - file: tasks/example_tasks.rb
   count: 3
 - file: tasks/examples.rake
