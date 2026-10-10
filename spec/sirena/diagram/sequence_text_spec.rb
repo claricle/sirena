@@ -36,11 +36,25 @@ RSpec.describe Sirena::Diagram::SequenceText do
     it "decodes known named entities" do
       input = "#infin; #hearts; #amp; #lt; #gt; #quot; #nbsp;"
 
-      expect(described_class.display(input)).to eq("∞ ♥ & < > \"  ")
+      expect(described_class.display(input)).to eq("∞ ♥ & < > \" \u00A0")
     end
 
-    it "preserves an unknown named entity" do
-      expect(described_class.display("#unknown;")).to eq("#unknown;")
+    it "keeps an unknown name as the literal &name; mermaid draws" do
+      expect(described_class.display("#unknown;")).to eq("&unknown;")
+    end
+  end
+
+  describe ".decode" do
+    {
+      "#59;" => ";", "#0065;" => "A", "#35;59;" => "#59;",
+      "#x41;" => "&x41;", "#AMP;" => "&", "#Amp;" => "&Amp;",
+      "#amp;lt;" => "&lt;", "#128;" => "\u20AC", "#0;" => "\uFFFD",
+      "#55296;" => "\uFFFD", "#1114112;" => "\uFFFD",
+      "a # b; c" => "a # b; c"
+    }.each do |input, expected|
+      it "decodes #{input.inspect} like mmdc" do
+        expect(described_class.decode(input)).to eq(expected)
+      end
     end
   end
 end

@@ -265,7 +265,11 @@ module Sirena
         # accepting `/` elsewhere in a name.
         rule(:actor_lead) { match[")|>/"].absent? >> actor_char }
 
-        rule(:actor_name) { actor_lead >> actor_char.repeat }
+        # A character reference is one unit, so its own `;` does not end
+        # the name (`Note over A#65;: n`, `activate A#65;`).
+        rule(:actor_name) do
+          (char_ref | actor_lead) >> (char_ref | actor_char).repeat
+        end
 
         # `actor_name` above is shared by every OTHER actor reference
         # (notes, activate/deactivate) and stays untouched. Declarations

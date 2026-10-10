@@ -461,7 +461,7 @@ RSpec.describe Sirena::Parser::Sequence do
     it "reads a message whose sender opens with a character reference, not as a comment line" do
       diagram = parser.parse("sequenceDiagram\n#9829;B->>C: m\n")
 
-      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([["#9829;B", "C"]])
+      expect(diagram.messages.map { |m| [m.from_id, m.to_id] }).to eq([["♥B", "C"]])
     end
   end
 
@@ -830,9 +830,9 @@ RSpec.describe Sirena::Parser::Sequence do
       source = "sequenceDiagram\ncreate participant #9829;B as Heart\nA->>#9829;B: hi\n"
 
       diagram = parser.parse(source)
-      heart = diagram.find_participant("#9829;B")
+      heart = diagram.find_participant("♥B")
 
-      expect([heart.id, heart.label]).to eq(["#9829;B", "Heart"])
+      expect([heart.id, heart.label]).to eq(["♥B", "Heart"])
     end
 
     it "accepts a character reference as a destroy target" do
@@ -882,7 +882,7 @@ RSpec.describe Sirena::Parser::Sequence do
       # truncating the id. mermaid 11.16.1 gives the same full id.
       diagram = parser.parse("sequenceDiagram\nparticipant X#9829;Y\n")
 
-      expect(diagram.participants.map(&:id)).to eq(["X#9829;Y"])
+      expect(diagram.participants.map(&:id)).to eq(["X♥Y"])
     end
 
     it "consumes a character reference past the first character of a declared id, with an alias" do
@@ -893,9 +893,9 @@ RSpec.describe Sirena::Parser::Sequence do
       # falls through to the fallback branch and the alias is lost.
       # mermaid 11.16.1 gives id "X#9829;Y", label "H".
       diagram = parser.parse("sequenceDiagram\nparticipant X#9829;Y as H\n")
-      participant = diagram.find_participant("X#9829;Y")
+      participant = diagram.find_participant("X♥Y")
 
-      expect([participant.id, participant.label]).to eq(["X#9829;Y", "H"])
+      expect([participant.id, participant.label]).to eq(["X♥Y", "H"])
     end
 
     it "accepts a hash past the first character of a declared id" do
@@ -932,7 +932,7 @@ RSpec.describe Sirena::Parser::Sequence do
     it "accepts a character reference as a message actor" do
       diagram = parser.parse("sequenceDiagram\nA->>#9829;: m\n")
 
-      expect(diagram.messages.last.to_id).to eq("#9829;")
+      expect(diagram.messages.last.to_id).to eq("♥")
     end
 
     it "consumes a character reference in the middle of a message recipient's name" do
@@ -942,7 +942,7 @@ RSpec.describe Sirena::Parser::Sequence do
       # gives the full "X#9829;Y".
       diagram = parser.parse("sequenceDiagram\nA->>X#9829;Y: m\n")
 
-      expect(diagram.messages.last.to_id).to eq("X#9829;Y")
+      expect(diagram.messages.last.to_id).to eq("X♥Y")
     end
 
     it "consumes a character reference at the end of a message sender's name" do
@@ -951,7 +951,7 @@ RSpec.describe Sirena::Parser::Sequence do
       # after the `;`).
       diagram = parser.parse("sequenceDiagram\nX#9829;->>B: m\n")
 
-      expect(diagram.messages.last.from_id).to eq("X#9829;")
+      expect(diagram.messages.last.from_id).to eq("X♥")
     end
 
     it "accepts a hash past the first character of a message recipient" do
@@ -989,7 +989,7 @@ RSpec.describe Sirena::Parser::Sequence do
       "well-formed JSON payload" =>
         ["sequenceDiagram\nparticipant a\nlinks a: {\"Repo\": \"x\"}\n", ["a"]],
       "a character reference as the target" =>
-        ["sequenceDiagram\nlinks #9829;B: {}\n", ["#9829;B"]],
+        ["sequenceDiagram\nlinks #9829;B: {}\n", ["♥B"]],
       "no space before the colon" =>
         ["sequenceDiagram\nlinks 8:{}\n", ["8"]],
       "a space inside the name, not before the colon" =>
