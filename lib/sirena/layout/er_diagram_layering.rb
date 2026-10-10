@@ -84,21 +84,25 @@ module Sirena
       end
 
       def relocated?(id, ranks, edges)
-        incoming = edges.select { |_from, to| to == id }.map(&:first)
-        outgoing = edges.select { |from, _to| from == id }.map(&:last)
-        target = target_rank(ranks, incoming, outgoing)
+        target = target_rank(id, ranks, edges)
         return false if target.nil? || target == ranks[id]
 
         ranks[id] = target
         true
       end
 
-      def target_rank(ranks, incoming, outgoing)
-        if incoming.length > outgoing.length
-          incoming.map { |from| ranks[from] + MIN_LENGTH }.max
-        elsif outgoing.length > incoming.length
-          outgoing.map { |to| ranks[to] - MIN_LENGTH }.min
+      # A node follows whichever side has more edges; equal sides stay put.
+      def target_rank(id, ranks, edges)
+        incoming, outgoing = sides(id, edges)
+        case incoming.length <=> outgoing.length
+        when 1 then incoming.map { |from| ranks[from] + MIN_LENGTH }.max
+        when -1 then outgoing.map { |to| ranks[to] - MIN_LENGTH }.min
         end
+      end
+
+      def sides(id, edges)
+        [edges.select { |_from, to| to == id }.map(&:first),
+         edges.select { |from, _to| from == id }.map(&:last)]
       end
     end
   end
