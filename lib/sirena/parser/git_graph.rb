@@ -33,6 +33,14 @@ module Sirena
     #   MERMAID
     #   diagram = parser.parse(source)
     class GitGraph < Base
+      COMMIT_ATTRIBUTES = %i[
+        id message type tag branch_name parent_ids is_merge merge_branch
+        is_cherry_pick cherry_pick_parent
+      ].freeze
+      BRANCH_ATTRIBUTES = %i[
+        name order parent_branch created_at_commit
+      ].freeze
+
       # Parses git graph diagram source into a GitGraph model.
       #
       # @param source [String] the Mermaid git graph diagram source
@@ -52,36 +60,25 @@ module Sirena
           acc_title: result[:acc_title],
           acc_description: result[:acc_description],
         )
-
-        # Add commits
-        result[:commits].each do |commit_data|
-          commit = Diagram::GitGraph::Commit.new(
-            id: commit_data[:id],
-            message: commit_data[:message],
-            type: commit_data[:type],
-            tag: commit_data[:tag],
-            branch_name: commit_data[:branch_name],
-            parent_ids: commit_data[:parent_ids],
-            is_merge: commit_data[:is_merge],
-            merge_branch: commit_data[:merge_branch],
-            is_cherry_pick: commit_data[:is_cherry_pick],
-            cherry_pick_parent: commit_data[:cherry_pick_parent],
-          )
-          diagram.commits << commit
-        end
-
-        # Add branches
-        result[:branches].each do |branch_data|
-          branch = Diagram::GitGraph::Branch.new(
-            name: branch_data[:name],
-            order: branch_data[:order],
-            parent_branch: branch_data[:parent_branch],
-            created_at_commit: branch_data[:created_at_commit],
-          )
-          diagram.branches << branch
-        end
-
+        append_commits(diagram, result[:commits])
+        append_branches(diagram, result[:branches])
         diagram
+      end
+
+      def append_commits(diagram, commits)
+        commits.each { |data| diagram.commits << build_commit(data) }
+      end
+
+      def build_commit(data)
+        Diagram::GitGraph::Commit.new(**data.slice(*COMMIT_ATTRIBUTES))
+      end
+
+      def append_branches(diagram, branches)
+        branches.each { |data| diagram.branches << build_branch(data) }
+      end
+
+      def build_branch(data)
+        Diagram::GitGraph::Branch.new(**data.slice(*BRANCH_ATTRIBUTES))
       end
     end
   end

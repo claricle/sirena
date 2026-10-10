@@ -33,23 +33,21 @@ module Sirena
 
       def create_diagram(result)
         diagram = Diagram::Packet.new
-
-        # Handle case where result is not a hash (empty diagram)
         return diagram unless result.is_a?(Hash)
 
         diagram.title = result[:title]
-
-        # Create fields
-        Array(result[:fields]).each do |field_data|
-          field = Diagram::PacketField.new(
-            field_data[:bit_start],
-            field_data[:bit_end],
-            field_data[:label],
-          )
-          diagram.add_field(field)
-        end
-
+        append_fields(diagram, result[:fields])
         diagram
+      end
+
+      def append_fields(diagram, fields)
+        Array(fields).each { |data| diagram.add_field(build_field(data)) }
+      end
+
+      def build_field(data)
+        Diagram::PacketField.new(
+          data[:bit_start], data[:bit_end], data[:label]
+        )
       end
     end
   end
