@@ -8,8 +8,9 @@ module SequenceLabelTextHelpers
 
   def drawn_texts(source)
     doc = REXML::Document.new(Sirena::Engine.new.render(source))
-    REXML::XPath.match(doc, "//*[local-name()='text']").map do |node|
-      node.texts.map(&:value).join
+    REXML::XPath.match(doc, "//*[local-name()='text']").flat_map do |node|
+      runs = node.get_elements("tspan")
+      runs.empty? ? [node.texts.map(&:value).join] : runs.map(&:text)
     end
   end
 end
@@ -19,9 +20,9 @@ RSpec.describe Sirena::Renderer::Sequence do
   {
     "wrap: prefix" => ["Alice->>Bob:wrap: Hello there", "Hello there"],
     "nowrap: prefix" => ["Alice->>Bob:nowrap: one line", "one line"],
-    "<br> break" => ["Alice->>Bob: multiline<br>text", "multiline text"],
-    "<br/> break" => ["Alice->>Bob: multiline<br/>text", "multiline text"],
-    "<br /> break" => ["Alice->>Bob: multiline<br />text", "multiline text"],
+    "<br> break" => ["Alice->>Bob: multiline<br>text", "multiline"],
+    "<br/> break" => ["Alice->>Bob: multiline<br/>text", "multiline"],
+    "<br /> break" => ["Alice->>Bob: multiline<br />text", "multiline"],
     "numeric entity" => ["A->>B: I #9829; you!", "I ♥ you!"],
     "named entity" => ["A->>B: you #infin; times", "you ∞ times"],
   }.each do |name, (line, expected)|
