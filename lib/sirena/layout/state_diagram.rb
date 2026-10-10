@@ -16,7 +16,7 @@ module Sirena
       TERMINAL_TYPES = %w[start end].freeze
 
       State = Data.define(
-        :id, :label, :state_type, :description, :descriptions
+        :id, :label, :state_type, :description, :descriptions, :children
       )
       private_constant :State
 
@@ -90,6 +90,7 @@ module Sirena
         attribute :shape_points, :string
         attribute :shape_y, :float
         attribute :shape_height, :float
+        attribute :children, Node, collection: true, default: -> { [] }
       end
 
       class Scene < Layout::Scene
@@ -238,7 +239,7 @@ module Sirena
         return unless graph.dig(:layoutOptions, ElkOptions::DIRECTION) ==
           DIRECTION_DOWN
 
-        graph[:children].each do |state|
+        nested_states(graph[:children]).each do |state|
           shape_type = state.dig(:metadata, :shape_type)
           next unless TERMINAL_TYPES.include?(shape_type)
 
@@ -284,7 +285,20 @@ module Sirena
           description: semantic_value(semantics, node.id,
                                       "latest_description"),
           descriptions: semantic_values(semantics, node.id, "display_text"),
+          children: nested_state_nodes(node, semantics).map do |child|
+            state_from(child, semantics)
+          end,
         )
+      end
+
+      def nested_state_nodes(node, semantics)
+        Array(semantics[node.id]).select { |child| STATE_TYPES.key?(child.role) }
+      end
+
+      def nested_states(states)
+        Array(states).flat_map do |state|
+          [state, *nested_states(state[:children])]
+        end
       end
 
       def declared_state_type(node, semantics)
@@ -321,12 +335,13 @@ module Sirena
 
       def scene_from_graph(graph)
         children = typed_children(graph[:children] || [])
+        raw_children = positioned_children(graph[:children] || [])
         Scene.new(
           id: graph[:id] || "state_diagram",
           **scene_geometry(graph),
           children: children,
           edges: typed_edges(
-            graph[:edges] || [], children, graph[:children] || []
+            graph[:edges] || [], children, raw_children
           ),
         )
       end
@@ -338,17 +353,24 @@ module Sirena
         { width: width, height: height, view_box: "0 0 #{width} #{height}" }
       end
 
-      def typed_children(children)
-        children.map { |state| typed_node(state) }
+      def typed_children(children, parent_x = 0, parent_y = 0)
+        children.map { |state| typed_node(state, parent_x, parent_y) }
       end
 
-      def typed_node(state)
-        state_type = state.dig(:metadata, :state_type) || "normal"
-        shape_type = state.dig(:metadata, :shape_type) || state_type
+      def typed_node(state, parent_x, parent_y)
+        positioned = state.merge(
+          x: state[:x].to_f + parent_x,
+          y: state[:y].to_f + parent_y,
+        )
+        state_type = positioned.dig(:metadata, :state_type) || "normal"
+        shape_type = positioned.dig(:metadata, :shape_type) || state_type
         Node.new(
-          id: state[:id], labels: typed_labels(state), state_type: state_type,
+          id: positioned[:id], labels: typed_labels(positioned),
+          state_type: state_type,
           shape_type: shape_type,
-          **self.class.shape_geometry(state, shape_type)
+          children: typed_children(positioned[:children] || [],
+                                   positioned[:x], positioned[:y]),
+          **self.class.shape_geometry(positioned, shape_type)
         )
       end
 
@@ -362,9 +384,27 @@ module Sirena
       end
 
       def typed_edges(edges, children, raw_children)
-        nodes = children.to_h { |node| [node.id, node] }
+        nodes = flatten_typed_nodes(children).to_h { |node| [node.id, node] }
         raw_nodes = raw_children.to_h { |node| [node[:id], node] }
         edges.filter_map { |edge| typed_edge_for(edge, nodes, raw_nodes) }
+      end
+
+      def flatten_typed_nodes(children)
+        children.flat_map do |node|
+          [node, *flatten_typed_nodes(node.children)]
+        end
+      end
+
+      def positioned_children(children, parent_x = 0, parent_y = 0)
+        children.flat_map do |state|
+          positioned = state.merge(
+            x: state[:x].to_f + parent_x,
+            y: state[:y].to_f + parent_y,
+          )
+          [positioned, *positioned_children(
+            positioned[:children] || [], positioned[:x], positioned[:y]
+          )]
+        end
       end
 
       def typed_edge_for(edge, nodes, raw_nodes)
@@ -469,6 +509,7 @@ module Sirena
           height: dimensions[:height],
           labels: state_labels(state),
           metadata: state_metadata(state),
+          children: transform_states(state.children),
         }
       end
 
@@ -477,6 +518,7 @@ module Sirena
           state_type: state.state_type,
           shape_type: state_shape_type(state),
           description: state.description,
+          cluster: state.children.any?,
         }
         if TERMINAL_TYPES.include?(metadata[:shape_type])
           metadata[:shape_radius] = TERMINAL_RADIUS

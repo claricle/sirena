@@ -38,7 +38,11 @@ module Sirena
         children_for(graph).each { |state| render_state(state, svg) }
       end
 
-      def render_state(state, svg)
+      def render_state(state, parent)
+        parent << state_group(state)
+      end
+
+      def state_group(state)
         typed = typed_state(state)
         group = Svg::Group.new.tap { |item| item.id = "state-#{typed.id}" }
         shape = if state.is_a?(Layout::StateDiagram::Node)
@@ -50,7 +54,10 @@ module Sirena
         typed.labels.each_with_index do |label, index|
           group.children << create_state_label(typed, label, index)
         end
-        svg << group
+        state_children(typed).each do |child|
+          render_state(child, group)
+        end
+        group
       end
 
       def render_transitions(graph, svg)
@@ -97,13 +104,20 @@ module Sirena
       def find_state(graph, state_id)
         return unless state_id
 
-        children_for(graph).find do |state|
+        find_nested_state(children_for(graph), state_id)
+      end
+
+      def find_nested_state(states, state_id)
+        states.each do |state|
           if state.is_a?(Layout::StateDiagram::Node)
-            state.id == state_id
-          else
-            state[:id] == state_id
+            return state if state.id == state_id
+          elsif state[:id] == state_id
+            return state
           end
+          nested = find_nested_state(state_children(state), state_id)
+          return nested if nested
         end
+        nil
       end
 
       def calculate_transition_path(source, target, transition)
@@ -301,7 +315,9 @@ module Sirena
         end
         Layout::StateDiagram::Node.new(
           id: state[:id], state_type: state.dig(:metadata, :state_type),
-          shape_type: resolved_type, labels: labels, **geometry
+          shape_type: resolved_type, labels: labels,
+          children: (state[:children] || []).map { |child| typed_state(child) },
+          **geometry
         )
       end
 
@@ -350,6 +366,12 @@ module Sirena
         return graph.children if graph.is_a?(Layout::StateDiagram::Scene)
 
         graph[:children] || []
+      end
+
+      def state_children(state)
+        return state.children if state.is_a?(Layout::StateDiagram::Node)
+
+        state[:children] || []
       end
 
       def edges_for(graph)

@@ -19,6 +19,7 @@ module Sirena
         # @return [Diagram::StateDiagram] the State diagram model
         def apply(tree)
           @diagram = Diagram::StateDiagram.new
+          @states = @diagram.states
           @state_counter = 0
           statements_in(tree).each { |item| process_item(item) }
           @diagram
@@ -155,20 +156,31 @@ module Sirena
         end
 
         def process_composite_state(parent_id, label, composite_data)
-          # Create parent state
+          prior_state = find_state(parent_id)
           parent_state = add_or_update_state(parent_id, label)
+          children = composite_children(prior_state, parent_state, label)
 
-          # Process nested statements
-          if composite_data.is_a?(Hash) || composite_data.is_a?(Array)
-            statements = Array(composite_data)
-            statements.each do |stmt|
-              next unless stmt.is_a?(Hash)
-
-              process_statement(stmt)
-            end
+          within(children) do
+            statements_in(composite_data).each { |stmt| process_statement(stmt) }
           end
 
           parent_state
+        end
+
+        def composite_children(prior_state, parent_state, label)
+          # Bare and forward-declared composites retain their existing flat
+          # contract until their separate geometry families are migrated.
+          return @states if prior_state || label.nil?
+
+          parent_state.children
+        end
+
+        def within(states)
+          previous = @states
+          @states = states
+          yield
+        ensure
+          @states = previous
         end
 
         # A marker is a start state as a source and an end state as a target.
@@ -180,7 +192,7 @@ module Sirena
         end
 
         def ensure_start_state
-          start_state = @diagram.start_state
+          start_state = @states.find(&:start_state?)
           return start_state.id if start_state
 
           start_id = generate_state_id("start")
@@ -189,12 +201,12 @@ module Sirena
             s.label = START_END_MARKER
             s.state_type = "start"
           end
-          @diagram.states << state
+          @states << state
           start_id
         end
 
         def ensure_end_state
-          end_state = @diagram.end_states.first
+          end_state = @states.find(&:end_state?)
           return end_state.id if end_state
 
           end_id = generate_state_id("end")
@@ -203,12 +215,12 @@ module Sirena
             s.label = START_END_MARKER
             s.state_type = "end"
           end
-          @diagram.states << state
+          @states << state
           end_id
         end
 
         def ensure_state_exists(state_id)
-          existing = @diagram.find_state(state_id)
+          existing = find_state(state_id)
           return existing if existing
 
           state = Diagram::StateNode.new.tap do |s|
@@ -216,12 +228,12 @@ module Sirena
             s.label = state_id
             s.state_type = "normal"
           end
-          @diagram.states << state
+          @states << state
           state
         end
 
         def add_special_state(state_id, state_type)
-          existing = @diagram.find_state(state_id)
+          existing = find_state(state_id)
           return existing if existing
 
           state = ensure_state_exists(state_id)
@@ -231,12 +243,17 @@ module Sirena
         end
 
         def add_or_update_state(state_id, label = nil)
-          existing = @diagram.find_state(state_id)
+          existing = find_state(state_id)
           return update_state_label(existing, label) if existing
 
           state = build_state(state_id, label || state_id, "normal")
-          @diagram.states << state
+          @states << state
           state
+        end
+
+        def find_state(state_id)
+          @states.find { |state| state.id == state_id } ||
+            @diagram.find_state(state_id)
         end
 
         def update_state_label(state, label)
