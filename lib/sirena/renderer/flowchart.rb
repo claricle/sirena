@@ -40,20 +40,30 @@ module Sirena
       def render_cluster(cluster, svg)
         group = Svg::Group.new.tap { |item| item.id = "cluster-#{cluster.id}" }
         group.children << cluster_box(cluster)
-        group.children << cluster_title(cluster.labels.first) if cluster.labels.any?
+        append_cluster_title(group, cluster)
         svg << group
+      end
+
+      def append_cluster_title(group, cluster)
+        return if cluster.labels.empty?
+
+        group.children << cluster_title(cluster.labels.first)
       end
 
       def cluster_box(cluster)
         Svg::Rect.new.tap do |rect|
-          rect.x = cluster.shape_x
-          rect.y = cluster.shape_y
-          rect.width = cluster.shape_width
-          rect.height = cluster.shape_height
-          rect.rx = cluster.corner_radius
-          rect.ry = cluster.corner_radius
+          assign_cluster_geometry(rect, cluster)
           apply_theme_to_cluster(rect)
         end
+      end
+
+      def assign_cluster_geometry(rect, cluster)
+        rect.x = cluster.shape_x
+        rect.y = cluster.shape_y
+        rect.width = cluster.shape_width
+        rect.height = cluster.shape_height
+        rect.rx = cluster.corner_radius
+        rect.ry = cluster.corner_radius
       end
 
       def cluster_title(label)
@@ -68,9 +78,13 @@ module Sirena
       end
 
       def apply_theme_to_cluster(element)
-        element.fill = theme_color(:surface_variant) if theme_color(:surface_variant)
+        if theme_color(:surface_variant)
+          element.fill = theme_color(:surface_variant)
+        end
         element.stroke = theme_color(:node_stroke) if theme_color(:node_stroke)
-        element.stroke_width = theme_shape(:stroke_width).to_s if theme_shape(:stroke_width)
+        if theme_shape(:stroke_width)
+          element.stroke_width = theme_shape(:stroke_width).to_s
+        end
       end
 
       def render_nodes(nodes, svg)
@@ -83,8 +97,14 @@ module Sirena
       def render_node(node, svg)
         group = Svg::Group.new.tap { |item| item.id = "node-#{node.id}" }
         group.children << node_shape(node)
-        group.children << node_label(node.labels.first) if node.labels.any?
+        append_node_label(group, node)
         svg << group
+      end
+
+      def append_node_label(group, node)
+        return if node.labels.empty?
+
+        group.children << node_label(node.labels.first)
       end
 
       def node_shape(node)
@@ -141,11 +161,26 @@ module Sirena
       end
 
       def render_edge(edge, svg)
-        group = Svg::Group.new.tap { |item| item.id = "edge-#{edge.id}" }
+        svg << edge_group(edge)
+      end
+
+      def edge_group(edge)
+        Svg::Group.new.tap do |group|
+          group.id = "edge-#{edge.id}"
+          append_edge_geometry(group, edge)
+        end
+      end
+
+      def append_edge_geometry(group, edge)
         group.children << edge_path(edge)
         edge.heads.each { |head| group.children.concat(head_elements(head)) }
-        group.children << edge_label(edge.labels.first) if edge.labels.any?
-        svg << group
+        append_edge_label(group, edge)
+      end
+
+      def append_edge_label(group, edge)
+        return if edge.labels.empty?
+
+        group.children << edge_label(edge.labels.first)
       end
 
       def edge_path(edge)
@@ -200,15 +235,17 @@ module Sirena
       end
 
       def cross_head(head)
-        head.lines.map do |geometry|
-          Svg::Line.new.tap do |line|
-            line.x1 = geometry.x1
-            line.y1 = geometry.y1
-            line.x2 = geometry.x2
-            line.y2 = geometry.y2
-            line.stroke = edge_ink
-            line.stroke_width = CROSS_HEAD_STROKE
-          end
+        head.lines.map { |geometry| cross_line(geometry) }
+      end
+
+      def cross_line(geometry)
+        Svg::Line.new.tap do |line|
+          line.x1 = geometry.x1
+          line.y1 = geometry.y1
+          line.x2 = geometry.x2
+          line.y2 = geometry.y2
+          line.stroke = edge_ink
+          line.stroke_width = CROSS_HEAD_STROKE
         end
       end
 
@@ -218,15 +255,22 @@ module Sirena
 
       def edge_label(label)
         Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
-          text.content = label.text
+          assign_edge_label_geometry(text, label)
           apply_theme_to_text(text)
-          if theme_typography(:font_size_small)
-            text.font_size = theme_typography(:font_size_small).to_s
-          end
-          text.text_anchor = "middle"
+          apply_edge_label_style(text)
         end
+      end
+
+      def assign_edge_label_geometry(text, label)
+        text.x = label.x
+        text.y = label.y
+        text.content = label.text
+      end
+
+      def apply_edge_label_style(text)
+        font_size = theme_typography(:font_size_small)
+        text.font_size = font_size.to_s if font_size
+        text.text_anchor = "middle"
       end
     end
   end

@@ -21,27 +21,51 @@ module Sirena
       def render(scene)
         svg = create_document(scene)
         svg << text_element(scene.title) if scene.title
-        scene.quadrants.each { |quadrant| svg << quadrant_element(quadrant) }
-        scene.axes.each { |axis| svg << axis_element(axis) }
-        scene.axis_labels.each { |label| svg << text_element(label) }
-        scene.quadrant_labels.each { |label| svg << text_element(label) }
-        scene.points.each { |point| render_point(point, svg) }
+        render_chart(scene, svg)
         svg
+      end
+
+      def render_chart(scene, svg)
+        render_quadrants(scene.quadrants, svg)
+        render_axes(scene.axes, svg)
+        render_labels(scene.axis_labels, svg)
+        render_labels(scene.quadrant_labels, svg)
+        scene.points.each { |point| render_point(point, svg) }
+      end
+
+      def render_quadrants(quadrants, svg)
+        quadrants.each { |quadrant| svg << quadrant_element(quadrant) }
+      end
+
+      def render_axes(axes, svg)
+        axes.each { |axis| svg << axis_element(axis) }
+      end
+
+      def render_labels(labels, svg)
+        labels.each { |label| svg << text_element(label) }
       end
 
       protected
 
       def quadrant_element(quadrant)
         Svg::Rect.new.tap do |rect|
-          rect.x = quadrant.x
-          rect.y = quadrant.y
-          rect.width = quadrant.width
-          rect.height = quadrant.height
-          rect.fill = quadrant_color(quadrant.number)
-          rect.stroke = theme_color(:grid_line) || "#cccccc"
-          rect.stroke_width = "1"
-          rect.opacity = "0.3"
+          assign_quadrant_geometry(rect, quadrant)
+          apply_quadrant_style(rect, quadrant)
         end
+      end
+
+      def assign_quadrant_geometry(rect, quadrant)
+        rect.x = quadrant.x
+        rect.y = quadrant.y
+        rect.width = quadrant.width
+        rect.height = quadrant.height
+      end
+
+      def apply_quadrant_style(rect, quadrant)
+        rect.fill = quadrant_color(quadrant.number)
+        rect.stroke = theme_color(:grid_line) || "#cccccc"
+        rect.stroke_width = "1"
+        rect.opacity = "0.3"
       end
 
       def axis_element(axis)
@@ -56,32 +80,50 @@ module Sirena
       end
 
       def render_point(point, svg)
-        svg << Svg::Circle.new.tap do |circle|
+        svg << point_element(point)
+        svg << text_element(point.label)
+      end
+
+      def point_element(point)
+        Svg::Circle.new.tap do |circle|
           circle.cx = point.x
           circle.cy = point.y
           circle.r = point.radius
-          circle.fill = point.color || point_color(point.quadrant)
-          circle.stroke =
-            point.stroke_color || theme_color(:node_stroke) || "#ffffff"
-          circle.stroke_width = number_string(point.stroke_width)
-          circle.id = point.id
+          apply_point_style(circle, point)
         end
-        svg << text_element(point.label)
+      end
+
+      def apply_point_style(circle, point)
+        circle.fill = point.color || point_color(point.quadrant)
+        circle.stroke = point_stroke(point)
+        circle.stroke_width = number_string(point.stroke_width)
+        circle.id = point.id
+      end
+
+      def point_stroke(point)
+        point.stroke_color || theme_color(:node_stroke) || "#ffffff"
       end
 
       def text_element(label)
         Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
-          text.content = label.text
-          text.fill = label_color(label.style)
-          text.font_family =
-            theme_typography(:font_family) || "Arial, sans-serif"
-          text.font_size = number_string(label.font_size)
-          text.text_anchor = label.text_anchor if label.text_anchor
-          text.font_weight = label.font_weight if label.font_weight
-          text.opacity = "0.7" if label.style == "quadrant"
+          assign_text_geometry(text, label)
+          apply_text_style(text, label)
         end
+      end
+
+      def assign_text_geometry(text, label)
+        text.x = label.x
+        text.y = label.y
+        text.content = label.text
+        text.text_anchor = label.text_anchor if label.text_anchor
+      end
+
+      def apply_text_style(text, label)
+        text.fill = label_color(label.style)
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = number_string(label.font_size)
+        text.font_weight = label.font_weight if label.font_weight
+        text.opacity = "0.7" if label.style == "quadrant"
       end
 
       def label_color(style)
