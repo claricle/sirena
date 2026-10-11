@@ -70,9 +70,11 @@ RSpec.describe Sirena::Layout::ElkPlacement do
     end
 
     it "refuses an unsupported direction" do
-      graph = graph_for("flowchart RL\n A-->B\n")
+      graph = graph_for("flowchart TD\n A-->B\n")
+      key = Sirena::Layout::Base::ElkOptions::DIRECTION
+      graph[:layoutOptions][key] = "SIDEWAYS"
       expect { described_class.apply(graph) }
-        .to raise_error(Sirena::Layout::LayoutError, /direction LEFT/)
+        .to raise_error(Sirena::Layout::LayoutError, /direction SIDEWAYS/)
     end
 
     it "does not fall back to Grid when elkrb raises" do
