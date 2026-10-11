@@ -12,20 +12,25 @@ RSpec.describe Sirena::Layout::StateDiagram do
     described_class.new.to_graph(diagram).children
   end
 
-  it "packs two disconnected ordinary states like Mermaid" do
-    first, second = states
-    actual = [
-      states.map { |state| [state.id, state.shape_type, state.x, state.y] },
-      second.x - first.x - first.width,
-    ]
-    expected = [
+  let(:expected_geometry) do
+    [
       [
         ["assemble", "normal", 8.0, 8.0],
         ["assemblies", "normal", 139.734375, 8.0],
       ],
       50.0,
     ]
+  end
 
-    expect(actual).to eq(expected)
+  def pair_geometry(states)
+    first, second = states
+    [
+      states.map { |state| [state.id, state.shape_type, state.x, state.y] },
+      second.x - first.x - first.width,
+    ]
+  end
+
+  it "packs two disconnected ordinary states like Mermaid" do
+    expect(pair_geometry(states)).to eq(expected_geometry)
   end
 end
