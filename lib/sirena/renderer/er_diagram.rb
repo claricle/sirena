@@ -73,10 +73,16 @@ module Sirena
       end
 
       def apply_entity_styles(rect, styles, attributed)
-        rect.fill = box_property(styles, "fill", attributed) || "#f9f9f9"
-        rect.stroke = box_property(styles, "stroke", attributed) || "#333333"
+        rect.fill = box_property(styles, "fill", attributed) ||
+          theme_color(:node_fill) || "#f9f9f9"
+        rect.stroke = entity_stroke(styles, attributed)
         rect.stroke_width =
           box_property(styles, "stroke-width", attributed) || "2"
+      end
+
+      def entity_stroke(styles, attributed)
+        box_property(styles, "stroke", attributed) ||
+          theme_color(:node_stroke) || "#333333"
       end
 
       def emit_entity_content(node, group, styles)
@@ -88,7 +94,9 @@ module Sirena
 
       def emit_entity_header(node, group, styles)
         group.children << entity_header_text(node.labels.first, styles)
-        group.children << entity_separator(node.separator)
+        group.children << entity_separator(
+          node.separator, styles, node.attributes.any?
+        )
       end
 
       def entity_header_text(label, styles)
@@ -96,7 +104,7 @@ module Sirena
           x: label.x,
           y: label.y,
           content: label.text,
-          fill: styles["color"] || "#000000",
+          fill: styles["color"] || theme_color(:label_text) || "#000000",
           font_family: "Arial, sans-serif",
           font_size: font_size_value(label.font_size),
           text_anchor: "middle",
@@ -104,13 +112,13 @@ module Sirena
         )
       end
 
-      def entity_separator(geometry)
+      def entity_separator(geometry, styles, attributed)
         Svg::Line.new.tap do |line|
           line.x1 = geometry.x1
           line.y1 = geometry.y1
           line.x2 = geometry.x2
           line.y2 = geometry.y2
-          line.stroke = "#333333"
+          line.stroke = entity_stroke(styles, attributed)
           line.stroke_width = "1"
         end
       end
@@ -120,7 +128,7 @@ module Sirena
           x: attribute.x,
           y: attribute.y,
           content: attribute.text,
-          fill: styles["color"] || "#000000",
+          fill: styles["color"] || theme_color(:label_text) || "#000000",
           font_family: "monospace",
           font_size: font_size_value(attribute.font_size),
         )
@@ -598,7 +606,7 @@ module Sirena
       end
 
       def relationship_stroke(shape, relationship_type)
-        shape.stroke = "#333333"
+        shape.stroke = theme_color(:edge_stroke) || "#333333"
         shape.stroke_width = "2"
         if relationship_type == "non-identifying"
           shape.stroke_dasharray = "5,5"
@@ -618,7 +626,7 @@ module Sirena
           line.y1 = geometry.y1
           line.x2 = geometry.x2
           line.y2 = geometry.y2
-          line.stroke = "#333333"
+          line.stroke = theme_color(:edge_stroke) || "#333333"
           line.stroke_width = "2"
         end
       end
@@ -629,7 +637,7 @@ module Sirena
           circle.cy = geometry.cy
           circle.r = geometry.radius
           circle.fill = "none"
-          circle.stroke = "#333333"
+          circle.stroke = theme_color(:edge_stroke) || "#333333"
           circle.stroke_width = "2"
         end
       end
@@ -639,7 +647,7 @@ module Sirena
           x: label.x,
           y: label.y,
           content: label.text,
-          fill: "#000000",
+          fill: theme_color(:label_text) || "#000000",
           font_family: "Arial, sans-serif",
           font_size: font_size_value(label.font_size),
           text_anchor: "middle",
