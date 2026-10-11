@@ -123,7 +123,7 @@ module Sirena
       end
 
       def font_size
-        value = theme.typography&.font_size_base
+        value = theme.typography&.font_size_large
         value&.positive? ? value : 16
       rescue NoMethodError
         16
