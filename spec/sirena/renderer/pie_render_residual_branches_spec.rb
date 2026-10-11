@@ -9,8 +9,9 @@ RSpec.describe Sirena::Renderer::Pie, "#render" do
     { slices: [{ label: "A", percentage: 100.0, angle: 360.0 }] }
   end
   let(:theme) { Sirena::Theme::Registry.get(:default) }
+  let(:scene) { Sirena::Layout::Pie.from_graph(graph, theme: theme) }
   let(:fill) do
-    renderer.render(graph).children.grep(Sirena::Svg::Path).first.fill
+    renderer.render(scene).children.grep(Sirena::Svg::Path).first.fill
   end
 
   it "paints the first slice from the theme's pie palette" do
