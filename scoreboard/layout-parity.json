@@ -30297,6 +30297,53 @@
     }
   },
   {
+    "case": "er_diagram/erdiagram_spec-d8eaebdd.mmd",
+    "geometry": {
+      "ambiguous": 0,
+      "matched": 0,
+      "top5": [],
+      "worst_analog": null,
+      "worst_e_a": null,
+      "worst_e_c": null,
+      "worst_e_h": null,
+      "worst_e_w": null,
+      "worst_keys": {
+        "analog": null,
+        "e_a": null,
+        "e_c": null,
+        "e_h": null,
+        "e_w": null
+      }
+    },
+    "invariants": [
+      {
+        "actual": null,
+        "bbox_reference": null,
+        "bbox_sirena": null,
+        "expected": "spec/fixtures_mermaid/er_diagram/erdiagram_spec-d8eaebdd.svg",
+        "normalized": null,
+        "rule": "reference-presence",
+        "subject_keys": [
+          "er_diagram/erdiagram_spec-d8eaebdd.mmd"
+        ]
+      }
+    ],
+    "reference": "spec/fixtures_mermaid/er_diagram/erdiagram_spec-d8eaebdd.svg",
+    "reproduce": "bundle exec rake 'corpus[er_diagram,valid]'",
+    "sirena_status": "rendered",
+    "type": "er_diagram",
+    "summary": {
+      "hard_failure": true,
+      "metrics": {
+        "worst_e_c": null,
+        "worst_e_w": null,
+        "worst_e_h": null,
+        "worst_e_a": null,
+        "worst_analog": null
+      }
+    }
+  },
+  {
     "case": "er_diagram/journey_spec-1f8d17b6.mmd",
     "geometry": {
       "ambiguous": 0,
