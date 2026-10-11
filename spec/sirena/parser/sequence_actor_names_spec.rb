@@ -270,15 +270,14 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
       end
     end
 
-    # Oracle-independent bonus: verdict `unknown`, no reference SVG, so
-    # only "parses and renders" is pinned — no spec asserts its actor
-    # name (see the plan's declared residual on this case).
-    it "parses the unspecced bonus case 020 and renders well-formed SVG" do
+    # The pinned oracle rejects bonus case 020: its `\\|-` opens no arrow,
+    # so Mermaid's lexer reads the rest of the line as one actor name.
+    it "refuses bonus case 020, as Mermaid does" do
       case_name = "sequencediagram_spec-97601112"
       source = File.read(sequence_fixture(case_name))
-      svg = Sirena::Engine.new.render(source)
 
-      expect(REXML::Document.new(svg).root&.name).to eq("svg")
+      expect { Sirena::Engine.new.render(source) }
+        .to raise_error(Sirena::Parser::ParseError)
     end
   end
 
