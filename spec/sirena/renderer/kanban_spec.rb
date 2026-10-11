@@ -347,8 +347,9 @@ RSpec.describe Sirena::Renderer::Kanban do
       it "renders ticket values and priority accents like Mermaid" do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include("MC-1001", 'stroke="orange"')
-        expect(xml).not_to include("Priority:", "Ticket:")
+        expect([xml.include?("MC-1001"), xml.include?('stroke="orange"'),
+                xml.include?("Priority:"), xml.include?("Ticket:")])
+          .to eq([true, true, false, false])
       end
     end
 

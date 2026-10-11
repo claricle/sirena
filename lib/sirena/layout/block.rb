@@ -303,7 +303,9 @@ module Sirena
 
           # Handle space blocks
           if space?(block)
-            row_heights[current_row] = uniform_grid.fetch(:height) if uniform_grid
+            if uniform_grid
+              row_heights[current_row] = uniform_grid.fetch(:height)
+            end
             current_col += block_width
             if current_col >= columns
               current_col = 0
@@ -385,15 +387,19 @@ module Sirena
         compact = (auto_layout || span_layout) && !compound?(block)
         dimensions = calculate_block_dimensions(block, auto_layout: compact)
         return dimensions unless uniform_grid
-        if special_shape?(block)
-          return calculate_block_dimensions(block, auto_layout: true)
-        end
+        return calculate_block_dimensions(block, auto_layout: true) if
+          special_shape?(block)
 
         {
-          width: uniform_grid.fetch(:width) * block_span(block) +
-            DEFAULT_COMPOUND_PADDING * (block_span(block) - 1),
+          width: uniform_grid_width(block, uniform_grid),
           height: uniform_grid.fetch(:height),
         }
+      end
+
+      def uniform_grid_width(block, uniform_grid)
+        span = block_span(block)
+        (uniform_grid.fetch(:width) * span) +
+          (DEFAULT_COMPOUND_PADDING * (span - 1))
       end
 
       def compact_spacing(auto_layout, span_layout, uniform_grid)
@@ -406,15 +412,21 @@ module Sirena
       def uniform_grid_dimensions(blocks, auto_layout)
         return if auto_layout || blocks.none? { |block| compound?(block) }
 
-        dimensions = blocks.reject { |block| space?(block) }
-          .reject { |block| special_shape?(block) }
-          .map { |block| compact_dimensions(block) }
+        dimensions = compact_grid_dimensions(blocks)
         return if dimensions.empty?
 
-        {
-          width: dimensions.map { |item| item.fetch(:width) }.max,
-          height: dimensions.map { |item| item.fetch(:height) }.max,
-        }
+        maximum_dimensions(dimensions)
+      end
+
+      def compact_grid_dimensions(blocks)
+        blocks.reject { |block| space?(block) || special_shape?(block) }
+          .map { |block| compact_dimensions(block) }
+      end
+
+      def maximum_dimensions(dimensions)
+        %i[width height].to_h do |key|
+          [key, dimensions.map { |item| item.fetch(key) }.max]
+        end
       end
 
       def special_shape?(block)
@@ -424,7 +436,7 @@ module Sirena
       def compact_dimensions(block)
         label = block_label_text(block)
         label_dims = measure_text(label, font_size: normal_font_size)
-        width = label_dims[:width] * COMPACT_TEXT_WIDTH_SCALE + 8
+        width = (label_dims[:width] * COMPACT_TEXT_WIDTH_SCALE) + 8
         height = label_dims[:height] + 13
         return { width: width, height: height } unless compound?(block)
 
@@ -433,12 +445,12 @@ module Sirena
 
       def compact_compound_dimensions(block, width, height)
         dimensions = children(block).map { |child| compact_dimensions(child) }
-        child_width = dimensions.map { |child| child.fetch(:width) }.max.to_f
-        child_height = dimensions.map { |child| child.fetch(:height) }.max.to_f
+        child_width, child_height = maximum_dimensions(dimensions).values
+        count = dimensions.length
         {
-          width: [width, child_width * dimensions.length +
-            DEFAULT_COMPOUND_PADDING * (dimensions.length + 1)].max,
-          height: [height, child_height + DEFAULT_COMPOUND_PADDING * 2].max,
+          width: [width, (child_width * count) +
+            (DEFAULT_COMPOUND_PADDING * (count + 1))].max,
+          height: [height, child_height + (DEFAULT_COMPOUND_PADDING * 2)].max,
         }
       end
 
@@ -460,20 +472,28 @@ module Sirena
                                    compact: false, parent_width: nil)
         positioned = {}
         child_x = parent_x + DEFAULT_COMPOUND_PADDING
-        compact_width = if compact
-                          compact_child_width(parent_block, parent_width)
-                        end
+        compact_width = compact_child_width(parent_block, parent_width) if
+          compact
 
         children(parent_block).each do |child|
-          geometry = compound_child_geometry(child, parent_block, child_x,
-                                             compound_child_y(parent_y),
-                                             compact_width: compact_width)
-          positioned[child.id] = geometry
-          positioned.merge!(nested_compound_children(child, geometry))
-          child_x += geometry[:width] + DEFAULT_COMPOUND_PADDING
+          child_x = place_compound_child(
+            positioned, child, parent_block, [child_x, parent_y], compact_width
+          )
         end
 
         positioned
+      end
+
+      def place_compound_child(positioned, child, parent, position,
+                               compact_width)
+        child_x, parent_y = position
+        geometry = compound_child_geometry(
+          child, parent, child_x, compound_child_y(parent_y),
+          compact_width: compact_width
+        )
+        positioned[child.id] = geometry
+        positioned.merge!(nested_compound_children(child, geometry))
+        child_x + geometry[:width] + DEFAULT_COMPOUND_PADDING
       end
 
       def compound_child_y(parent_y)
@@ -482,7 +502,7 @@ module Sirena
 
       def compact_child_width(parent_block, parent_width)
         count = children(parent_block).length
-        (parent_width - DEFAULT_COMPOUND_PADDING * (count + 1)) / count
+        (parent_width - (DEFAULT_COMPOUND_PADDING * (count + 1))) / count
       end
 
       def compound_child_geometry(child, parent, child_x, child_y,

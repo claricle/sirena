@@ -13,13 +13,12 @@ RSpec.describe Sirena::Layout::Flowchart do
   end
 
   it "reserves one icon advance while retaining the displayed label" do
-    car = scene.children.find { |node| node.id == "F" }
+    expect(icon_geometry).to eq(["Car", 44.992, 104.992, 54.0])
+  end
 
-    expect([
-      car.labels.first.text,
-      car.labels.first.width.round(3),
-      car.width.round(3),
-      car.height,
-    ]).to eq(["Car", 44.992, 104.992, 54.0])
+  def icon_geometry
+    car = scene.children.find { |node| node.id == "F" }
+    [car.labels.first.text, car.labels.first.width.round(3),
+     car.width.round(3), car.height]
   end
 end
