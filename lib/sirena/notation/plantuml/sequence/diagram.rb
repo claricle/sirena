@@ -15,7 +15,7 @@ module Sirena
         # Private to this notation.
         class Diagram
           EXTRAS = { footbox: true, warnings: [].freeze, title: nil,
-                     chrome: Chrome::NONE }.freeze
+                     chrome: Chrome::NONE, teoz: false }.freeze
           private_constant :EXTRAS
 
           attr_reader :participants, :items, :boxes, :appearance, :warnings,
@@ -37,6 +37,7 @@ module Sirena
             @warnings = extras[:warnings]
             @title = extras[:title]
             @chrome = extras[:chrome]
+            @teoz = extras[:teoz]
             freeze
           end
 
@@ -49,12 +50,16 @@ module Sirena
             @footbox
           end
 
+          def teoz?
+            @teoz
+          end
+
           # @return [Diagram] this diagram with other items
           def with_items(items)
             Diagram.new(participants: participants, items: items,
                         boxes: boxes, appearance: appearance,
                         footbox: footbox?, warnings: warnings, title: title,
-                        chrome: chrome)
+                        chrome: chrome, teoz: teoz?)
           end
 
           def messages

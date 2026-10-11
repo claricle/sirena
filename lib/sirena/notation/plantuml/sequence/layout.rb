@@ -42,6 +42,14 @@ module Sirena
           MONOSPACE_ADVANCE = 6.02
           GLYPH_HEAD_HEIGHT = 76.4883
           GLYPH_BOX_HEIGHT = 30.4883
+          COMPACT_MARGIN = 10.0
+          COMPACT_HEAD_PADDING = 7.0
+          COMPACT_MIN_GAP = 20.0
+          COMPACT_HEAD_HEIGHT = 30.4883
+          COMPACT_HEAD_LABEL_INSET = 9.9531
+          COMPACT_FIRST_ROW_GAP = 30.1328
+          COMPACT_ROW = 29.1328
+          COMPACT_SELF_ROW = 42.1328
           GLYPH_BOX_OFFSET = 4.0
           QUEUE_HEIGHT = 26.4883
           ICON_LABEL_INSET = 2.9531
@@ -68,7 +76,12 @@ module Sirena
                            :PAGE_BREAK_INSET, :BANNER_LEFT, :BANNER_TOP,
                            :BANNER_HEIGHT, :BANNER_STEP, :BANNER_PADDING,
                            :MONOSPACE_ADVANCE, :GLYPH_HEAD_HEIGHT,
-                           :GLYPH_BOX_HEIGHT, :GLYPH_BOX_OFFSET, :QUEUE_HEIGHT,
+                           :GLYPH_BOX_HEIGHT, :COMPACT_MARGIN,
+                           :COMPACT_HEAD_PADDING, :COMPACT_MIN_GAP,
+                           :COMPACT_HEAD_HEIGHT, :COMPACT_HEAD_LABEL_INSET,
+                           :COMPACT_FIRST_ROW_GAP, :COMPACT_ROW,
+                           :COMPACT_SELF_ROW,
+                           :GLYPH_BOX_OFFSET, :QUEUE_HEIGHT,
                            :ICON_LABEL_INSET, :TAIL_ICON_LABEL,
                            :BOX_LABEL_INSET, :TAIL_BOX_LABEL,
                            :QUEUE_LABEL_INSET, :TAIL_QUEUE_LABEL,
@@ -80,14 +93,14 @@ module Sirena
             measure_heads
             place_origin
             @flow = walk
-            recentre if @flow.left < MARGIN
+            recentre if @flow.left < margin
             build(@widths)
           end
 
           private
 
           def place_origin
-            @origin = MARGIN + banner_room + chrome_rows.top_room
+            @origin = margin + banner_room + chrome_rows.top_room
             @top = @origin + (@diagram.boxes.empty? ? 0 : BOX_TITLE_HEIGHT)
           end
 
@@ -128,8 +141,13 @@ module Sirena
             @edge_right = right_edge
             Walker.new(lifelines: ids.zip(@centers).to_h, bounds: head_bounds,
                        measure: ->(text) { text_width(text) },
+                       message_measure: ->(text) { label_text_width(text) },
                        font_size: font_size,
-                       start_y: @top + @head_height + Walker::ROW)
+                       message_font_size: label_font_size,
+                       message_family: ("monospace" if compact?),
+                       label_inset: (7 if compact?), row: row_height,
+                       self_row: self_row_height,
+                       start_y: @top + @head_height + first_row_gap)
               .run(@diagram.items, edge_right: @edge_right,
                                    appearance: @diagram.appearance)
           end
@@ -165,7 +183,7 @@ module Sirena
           # Items such as a note left of the first participant stick out
           # past the margin; move everything right instead of clipping.
           def recentre
-            shift = MARGIN - @flow.left
+            shift = margin - @flow.left
             @centers = @centers.map { |centre| centre + shift }
             @flow = walk
           end
@@ -216,7 +234,7 @@ module Sirena
             plain = @diagram.participants.all? do |p|
               p.kind == :participant && p.stereotype.nil?
             end
-            (plain ? 36.0 : 56.0) + head_growth
+            (plain ? plain_head_height : 56.0) + head_growth
           end
 
           def glyph_participants?
@@ -242,7 +260,7 @@ module Sirena
 
           def head_width(participant)
             text = measure_text(participant.label, font_size: head_font_size)
-            [MIN_HEAD_WIDTH, text[:width] + (2 * HEAD_PADDING),
+            [minimum_head_width, text[:width] + (2 * head_padding),
              boxed_title_width(participant), requested_width].max
           end
 
@@ -266,7 +284,7 @@ module Sirena
 
           def centers(widths)
             gaps = required_gaps(widths)
-            x = MARGIN + (widths.first / 2) + left_edge_room(widths, gaps)
+            x = margin + (widths.first / 2) + left_edge_room(widths, gaps)
             widths.each_index.map do |index|
               x += gaps[index - 1] if index.positive?
               x
@@ -276,7 +294,7 @@ module Sirena
           # How far to push every head right so the label of a `[->` message
           # fits between the left edge and the head it points at.
           def left_edge_room(widths, gaps)
-            start = MARGIN + (widths.first / 2)
+            start = margin + (widths.first / 2)
             short = edge_messages(:left).map do |m|
               index = ids.index(m.to)
               edge_room(m) - start - gaps.first(index).sum
@@ -287,7 +305,9 @@ module Sirena
           # Distance between neighbouring centres: heads must not overlap and
           # every label must fit on the span it crosses.
           def required_gaps(widths)
-            gaps = widths.each_cons(2).map { |a, b| ((a + b) / 2) + MIN_GAP }
+            gaps = widths.each_cons(2).map do |a, b|
+              ((a + b) / 2) + minimum_gap
+            end
             widen_for_items(gaps)
             gaps
           end
@@ -383,8 +403,11 @@ module Sirena
           end
 
           def message_room(message, self_message)
-            room = label_width(message) + (2 * HEAD_PADDING)
-            self_message ? room + SELF_WIDTH : room
+            room = label_width(message) + (2 * head_padding)
+            return self_message ? room + SELF_WIDTH : room unless compact?
+            return room unless self_message
+
+            [SELF_WIDTH, 7 + label_width(message)].max + head_padding
           end
 
           def indexes(message)
@@ -399,15 +422,15 @@ module Sirena
 
           def wrap
             MessageWrap.new(@diagram.appearance.max_message,
-                            method(:text_width))
+                            method(:label_text_width))
           end
 
           def numbering
-            NumberedLabel.new(method(:text_width))
+            NumberedLabel.new(method(:label_text_width))
           end
 
           def canvas_width(widths)
-            padded = [head_extent(widths), @flow.right].max + MARGIN
+            padded = [head_extent(widths), @flow.right].max + margin
             [padded, edge_extent, banner_extent, title_extent].max
           end
 
@@ -424,11 +447,11 @@ module Sirena
           end
 
           def page_height
-            @flow.y + foot_height + MARGIN + chrome_rows.bottom_room
+            @flow.y + foot_height + margin + chrome_rows.bottom_room
           end
 
           def chrome_top
-            MARGIN + banner_room
+            margin + banner_room
           end
 
           def title_scene(widths)
@@ -561,8 +584,8 @@ module Sirena
           end
 
           def head_label(participant, centre, top)
-            label = text(participant.label, centre, top + @head_height - 12,
-                         "participant")
+            baseline = top + @head_height - head_label_inset
+            label = text(participant.label, centre, baseline, "participant")
             restyle(label, head_style)
           end
 
@@ -828,6 +851,63 @@ module Sirena
 
           def text_width(string)
             measure_text(string, font_size: font_size)[:width]
+          end
+
+          def message_font_size
+            font_size - 1
+          end
+
+          def message_text_width(string)
+            measure_text(string, font_size: message_font_size,
+                                 monospace: true)[:width]
+          end
+
+          def compact?
+            @diagram.teoz?
+          end
+
+          def margin
+            compact? ? COMPACT_MARGIN : MARGIN
+          end
+
+          def head_padding
+            compact? ? COMPACT_HEAD_PADDING : HEAD_PADDING
+          end
+
+          def minimum_head_width
+            compact? ? 0.0 : MIN_HEAD_WIDTH
+          end
+
+          def minimum_gap
+            compact? ? COMPACT_MIN_GAP : MIN_GAP
+          end
+
+          def plain_head_height
+            compact? ? COMPACT_HEAD_HEIGHT : 36.0
+          end
+
+          def head_label_inset
+            compact? ? COMPACT_HEAD_LABEL_INSET : 12
+          end
+
+          def first_row_gap
+            compact? ? COMPACT_FIRST_ROW_GAP : Walker::ROW
+          end
+
+          def row_height
+            compact? ? COMPACT_ROW : Walker::ROW
+          end
+
+          def self_row_height
+            compact? ? COMPACT_SELF_ROW : Walker::ROW * 1.5
+          end
+
+          def label_font_size
+            compact? ? message_font_size : font_size
+          end
+
+          def label_text_width(string)
+            compact? ? message_text_width(string) : text_width(string)
           end
         end
       end

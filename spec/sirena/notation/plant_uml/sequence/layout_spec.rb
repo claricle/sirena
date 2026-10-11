@@ -487,13 +487,13 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     it "continues below a taller parallel item" do
       scene = teoz_scene("A -> B", "& C -> C", "A -> B")
 
-      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(60.0)
+      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(42.1328)
     end
 
     it "continues below a taller message before a shorter parallel one" do
       scene = teoz_scene("A -> A", "& B -> C", "A -> B")
 
-      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(60.0)
+      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(42.1328)
     end
 
     it "puts a note beside the note before it at the same height" do
@@ -519,7 +519,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     it "continues below a taller message beside a short block" do
       scene = teoz_scene("A -> A", "& opt", "end", "B -> C")
 
-      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(60.0)
+      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(42.1328)
     end
   end
 

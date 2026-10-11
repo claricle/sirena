@@ -17,6 +17,7 @@ module Sirena
 
             def call(diagram, sink)
               sink.node("no_footbox") unless diagram.footbox?
+              sink.node("teoz") if diagram.teoz?
               appearance(diagram.appearance, sink)
               diagram.warnings.each { |line| sink.node("warning", line) }
               sink.node("title", diagram.title) if diagram.title

@@ -50,11 +50,20 @@ module Sirena
           # @param measure [#call] text width in pixels
           # @param bounds [Array<Float>] left and right edge of the heads
           # @param start_y [Float] where the first row goes
-          def initialize(lifelines:, measure:, font_size:, bounds:, start_y:)
+          def initialize(lifelines:, measure:, font_size:, bounds:, start_y:,
+                         message_measure: measure,
+                         message_font_size: font_size, message_family: nil,
+                         label_inset: nil, row: ROW, self_row: ROW * 1.5)
             @ids = lifelines.keys
             @centers = lifelines.values
             @measure = measure
             @font_size = font_size
+            @message_measure = message_measure
+            @message_font_size = message_font_size
+            @message_family = message_family
+            @label_inset = label_inset
+            @row = row
+            @self_row = self_row
             @bounds = bounds
             @y = start_y
             start_empty
@@ -112,6 +121,8 @@ module Sirena
           # A parallel item starts on the row of the one before it, and the
           # page continues below whichever of the two reaches further down.
           def visit(item, previous)
+            @previous_self_message = false unless item.is_a?(Message) ||
+                                                  item.is_a?(Activation)
             @resume = nil
             offset = row_offset(item)
             begin_row(item, offset) if offset
@@ -153,15 +164,27 @@ module Sirena
           end
 
           def wrap
-            MessageWrap.new(@appearance.max_message, @measure)
+            MessageWrap.new(@appearance.max_message, @message_measure)
           end
 
           def message(message)
+            adjust_self_run(message)
             start_row(message)
             from, to = ends_of(message)
             draw(message, from, to) unless message.style.hidden
             touch(*extent(message, from, to))
-            @y += message.self_message? ? ROW * 1.5 : ROW
+            @y += message.self_message? ? @self_row : @row
+            @previous_self_message = message.self_message? && !message.parallel?
+          end
+
+          def adjust_self_run(message)
+            return unless @label_inset
+            return if message.parallel?
+
+            entering = message.self_message? && !@previous_self_message
+            leaving = !message.self_message? && @previous_self_message
+            @y += @self_row - @row if entering
+            @y -= @self_row - @row if leaving
           end
 
           # A note hanging off a message reaches above it; a tall one pushes
@@ -271,7 +294,7 @@ module Sirena
           end
 
           def label_width(message)
-            NumberedLabel.new(@measure).extra(message) +
+            NumberedLabel.new(@message_measure).extra(message) +
               wrap.width(message.label.to_s)
           end
 
@@ -280,7 +303,13 @@ module Sirena
             tail, start = ArrowMarks.for(message.style.tail, from, @y, sign)
             head, stop = ArrowMarks.for(message.style.head, to, @y, -sign)
             { path: "M #{start} #{@y} L #{stop} #{@y}", marks: tail + head,
-              label: [(from + to) / 2, @y - 6, "middle"] }
+              label: straight_label(from, to) }
+          end
+
+          def straight_label(from, to)
+            return [(from + to) / 2, @y - 6, "middle"] unless @label_inset
+
+            [[from, to].min + @label_inset, @y - 5.0659, "start"]
           end
 
           # The loop leaves and returns on the same side of the lifeline; a
@@ -298,7 +327,14 @@ module Sirena
           end
 
           def loop_label(far, side)
-            [far + (side * 6), @y + 12, side.positive? ? "start" : "end"]
+            unless @label_inset
+              return [far + (side * 6), @y + 12,
+                      side.positive? ? "start" : "end"]
+            end
+
+            centre = far - (side * SELF_WIDTH)
+            [centre + (side * @label_inset), @y - 18.0659,
+             side.positive? ? "start" : "end"]
           end
 
           def arrow_record(message, geometry)
@@ -318,7 +354,7 @@ module Sirena
           end
 
           def numbered_texts(message, geometry)
-            NumberedLabel.new(@measure).texts(message, *geometry)
+            NumberedLabel.new(@message_measure).texts(message, *geometry)
           end
 
           def stacked_texts(message, at_x, at_y, anchor)
@@ -337,12 +373,16 @@ module Sirena
 
           # PlantUML stacks wrapped lines 1.1776 of the text size apart.
           def line_step
-            @font_size * LINE_LEADING
+            @message_font_size * LINE_LEADING
           end
 
           def text(content, at_x, at_y, role, anchor = "middle")
-            PlantUML::Scene::Text.new(content: content, x: at_x, y: at_y,
-                                      role: role, anchor: anchor)
+            message = role == "message_label"
+            PlantUML::Scene::Text.new(
+              content: content, x: at_x, y: at_y, role: role, anchor: anchor,
+              size: (@message_font_size if message && @message_family),
+              family: (@message_family if message),
+            )
           end
 
           def touch(low, high)
