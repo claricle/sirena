@@ -286,12 +286,18 @@ module Sirena
               return ACTOR_INTRINSIC_WIDTH
             end
 
-            intrinsic = intrinsic_group_heads?
-            text = measure_text(participant.label, font_size: head_font_size)
-            minimum = intrinsic ? 0.0 : minimum_head_width
-            padding = intrinsic ? INTRINSIC_HEAD_PADDING : head_padding
-            [minimum, text[:width] + (2 * padding),
+            minimum, padding = head_box_dimensions
+            label_width = measure_text(
+              participant.label, font_size: head_font_size
+            )[:width]
+            [minimum, label_width + (2 * padding),
              boxed_title_width(participant), requested_width].max
+          end
+
+          def head_box_dimensions
+            return [0.0, INTRINSIC_HEAD_PADDING] if intrinsic_group_heads?
+
+            [minimum_head_width, head_padding]
           end
 
           def intrinsic_group_heads?
