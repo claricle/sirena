@@ -59,7 +59,7 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
     reference_path = seed_deduplicated_reference_case
     results
     expect(deduplicated_summary).to eq(
-      reference_summary("class/original.svg", reference_path),
+      reference_summary("class_diagram/original.svg", reference_path),
     )
   end
 
@@ -129,7 +129,7 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
     source = "classDiagram\nclass A"
     write_case("class_diagram/example.mmd", source)
     write_scoreboard(row("class_diagram/example.mmd"))
-    reference_path = write_reference("class/example.svg")
+    reference_path = write_reference("class_diagram/example.svg")
     allow(renderer).to receive(:render).with(source).and_return(candidate_svg)
     reference_path
   end
@@ -159,8 +159,8 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
     write_scoreboard(row("class/first.mmd"), row("class/second.mmd"),
                      row("class_diagram/missing.mmd"))
     stub_conflicting_render(source)
-    write_reference("class/first.svg", candidate_svg)
-    write_reference("class/second.svg", '<svg viewBox="0 0 2 2"/>')
+    write_reference("class_diagram/first.svg", candidate_svg)
+    write_reference("class_diagram/second.svg", '<svg viewBox="0 0 2 2"/>')
   end
 
   def write_conflicting_cases(source)
@@ -175,7 +175,7 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
   end
 
   def alias_summary(reference_path)
-    reference_summary("class/example.svg", reference_path)
+    reference_summary("class_diagram/example.svg", reference_path)
   end
 
   def reference_summary(relative_path, reference_path)
