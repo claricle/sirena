@@ -7,6 +7,7 @@ module Sirena
     # and the mouth a few pixels below it.
     module UserJourneyFaceGeometry
       FACE_RADIUS = 15
+      EYE_RADIUS = 1.5
       FACE_TOP = 300
       FACE_STEP = 30
       SMILE_OFFSET = 2
@@ -32,6 +33,7 @@ module Sirena
           UserJourney::FacePoint.new(
             x: center_x + (side * FACE_RADIUS / 3.0),
             y: center_y - (FACE_RADIUS / 3.0),
+            radius: EYE_RADIUS,
           )
         end
       end

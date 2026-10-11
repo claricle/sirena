@@ -82,6 +82,7 @@ module Sirena
       class Dot < Lutaml::Model::Serializable
         attribute :x, :float
         attribute :y, :float
+        attribute :radius, :float
         attribute :colour, :string
         attribute :name, :string
         attribute :index, :integer

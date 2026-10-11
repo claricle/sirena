@@ -74,7 +74,8 @@ module Sirena
 
       def dot_circle(dot)
         Svg::Circle.new(
-          cx: dot.x, cy: dot.y, r: 7, class_name: "actor-#{dot.index}",
+          cx: dot.x, cy: dot.y, r: dot.radius,
+          class_name: "actor-#{dot.index}",
           fill: dot.colour, stroke: theme_color(:node_stroke)
         )
       end
@@ -100,7 +101,7 @@ module Sirena
         Svg::Text.new(
           x: label.x, y: label.y, content: label.text,
           class_name: class_name, fill: label.fill,
-          text_anchor: "middle", dominant_baseline: "central",
+          text_anchor: label.text_anchor,
           font_family: TEXT_FONT, font_size: number_string(label.font_size)
         )
       end
@@ -154,7 +155,7 @@ module Sirena
 
       def eye(point)
         Svg::Circle.new(
-          cx: point.x, cy: point.y, r: 1.5,
+          cx: point.x, cy: point.y, r: point.radius,
           fill: theme_color(:foreground),
           stroke: secondary_paint,
           stroke_width: "2"

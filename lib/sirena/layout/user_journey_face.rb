@@ -9,6 +9,7 @@ module Sirena
       class FacePoint < Lutaml::Model::Serializable
         attribute :x, :float
         attribute :y, :float
+        attribute :radius, :float
       end
 
       # The mouth, in canvas coordinates: closed arc path data for a smile or
