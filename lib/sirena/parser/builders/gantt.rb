@@ -11,7 +11,7 @@ module Sirena
       # fully-formed Diagram::Gantt object with sections and tasks.
       class Gantt
         TAG_KEYWORDS = %w[done active crit milestone].freeze
-        DURATION_PATTERN = /\A\d+[dwMh]\z/
+        DURATION_PATTERN = /\A\d+(?:\.\d+)?(?:ms|[Mdhmswy])\z/
         ITEM_HANDLERS = {
           header: :process_header,
           title: :process_title,
