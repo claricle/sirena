@@ -143,11 +143,11 @@ module Sirena
           colon >> match("[LRTB]").repeat(1).as(:pos_value)
         end
 
-        # Arrow patterns - order matters, check longer first
+        # Direction belongs in the endpoint position specs (`a:L -- R:b`).
+        # Mermaid rejects the legacy compact form (`a L--R b`) rather than
+        # treating L/R/T/B as part of the arrow token.
         rule(:arrow) do
-          str("L--R") | str("R--L") |
-            str("T--B") | str("B--T") |
-            str("-->") | str("--")
+          str("-->") | str("--")
         end
 
         # Edge label
