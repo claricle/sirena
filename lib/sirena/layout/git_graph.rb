@@ -93,6 +93,7 @@ module Sirena
 
       class Scene < Layout::Scene
         attribute :view_box, :string
+        attribute :orientation, :string
         attribute :commits, Commit, collection: true, default: -> { [] }
         attribute :branches, Branch, collection: true, default: -> { [] }
         attribute :connections, Connection, collection: true,
@@ -227,6 +228,7 @@ module Sirena
         Scene.new(
           width: width, height: height,
           view_box: "0 0 #{width.to_f} #{height.to_f}",
+          orientation: graph[:orientation],
           commits: typed_commits(graph, labels, shift),
           branches: typed_branches(graph, labels, shift),
           connections: typed_connections(graph[:connections], shift)
@@ -377,13 +379,13 @@ module Sirena
 
       def horizontal_branch_label_position(lane, width, graph)
         inset = BRANCH_LABEL_INSET
-        inset -= EMPTY_BRANCH_LABEL_CLEARANCE if lone_commit?(graph)
+        generated_only = graph[:commits].all? do |commit|
+          commit[:id].match?(/\Acommit-\d+\z/) && tag_labels(commit).empty?
+        end
+        inset -= EMPTY_BRANCH_LABEL_CLEARANCE if graph[:commits].one? ||
+          generated_only
         [inset - width,
          lane - BRANCH_LABEL_BASELINE_OFFSET, "start"]
-      end
-
-      def lone_commit?(graph)
-        graph[:commits].one?
       end
 
       def vertical_branch_label_position(lane, width, graph)
