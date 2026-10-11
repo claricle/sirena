@@ -25,6 +25,10 @@ module Sirena
       # @param scene [Layout::C4::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
+        unless scene.is_a?(Layout::C4::Scene)
+          raise RenderError, "C4 renderer requires Layout::C4::Scene"
+        end
+
         svg = create_document(scene)
         render_boundaries(scene.children, svg)
         scene.edges.each { |edge| render_relationship(edge, svg) }
@@ -70,8 +74,7 @@ module Sirena
           rect.stroke = colours[:border]
           rect.stroke_width = "2"
           rect.stroke_dasharray = "10,5"
-          rect.rx = 8
-          rect.ry = 8
+          apply_corner_radius(rect, node)
         end
       end
 
@@ -145,8 +148,7 @@ module Sirena
           rect.fill = colours[:bg]
           rect.stroke = colours[:border]
           rect.stroke_width = "2"
-          rect.rx = node.kind == "person" ? 10 : 5
-          rect.ry = node.kind == "person" ? 10 : 5
+          apply_corner_radius(rect, node)
         end
       end
 
@@ -157,21 +159,25 @@ module Sirena
 
       def person_head(node, colour)
         Svg::Circle.new.tap do |circle|
-          circle.cx = node.head_center.x
-          circle.cy = node.head_center.y
-          circle.r = 10
+          circle.cx = node.head.cx
+          circle.cy = node.head.cy
+          circle.r = node.head.radius
           circle.fill = colour
         end
       end
 
       def person_body(node, colour)
         Svg::Ellipse.new.tap do |ellipse|
-          ellipse.cx = node.body_center.x
-          ellipse.cy = node.body_center.y
-          ellipse.rx = 18
-          ellipse.ry = 12
+          apply_ellipse(ellipse, node.body)
           ellipse.fill = colour
         end
+      end
+
+      def apply_ellipse(ellipse, geometry)
+        ellipse.cx = geometry.cx
+        ellipse.cy = geometry.cy
+        ellipse.rx = geometry.radius_x
+        ellipse.ry = geometry.radius_y
       end
 
       def label_element(label, colour)
@@ -189,7 +195,6 @@ module Sirena
         text.font_size = label.font_size.to_s
         text.font_weight = label.font_weight
         text.font_style = label.font_style
-        text.dominant_baseline = label.baseline
         text.text_anchor = label.text_anchor
       end
 
@@ -255,6 +260,11 @@ module Sirena
         rect.y = node.y
         rect.width = node.width
         rect.height = node.height
+      end
+
+      def apply_corner_radius(rect, node)
+        rect.rx = node.corner_radius
+        rect.ry = node.corner_radius
       end
 
       def positioned?(node)

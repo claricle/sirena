@@ -36,7 +36,8 @@ RSpec.describe Sirena::Renderer::C4 do
 
   it "renders the person head and body from typed points" do
     person = context_scene.children.find { |node| node.kind == "person" }
-    expect(person.head_center).to be_a(Sirena::Layout::C4::Point)
+    expect(person.head).to be_a(Sirena::Layout::C4::Circle)
+    expect(person.body).to be_a(Sirena::Layout::C4::Ellipse)
     expect(context_xml).to include("<circle", "<ellipse")
   end
 
@@ -93,9 +94,9 @@ RSpec.describe Sirena::Renderer::C4 do
     expect(renderer.render(context_scene).view_box).to start_with("0 -70 ")
   end
 
-  it "shifts a middle-baseline label's y to centre it on its line" do
+  it "writes a label's final Scene y without another baseline shift" do
     label = context_scene.edges.first.labels.first
-    expect(context_xml).not_to include(%(y="#{label.y}"))
+    expect(context_xml).to include(%(y="#{label.y}"))
   end
 
   it "draws the person icon inside the 48 px image box" do

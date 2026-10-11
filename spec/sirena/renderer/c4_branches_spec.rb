@@ -76,10 +76,12 @@ RSpec.describe Sirena::Renderer::C4 do
   end
 
   def palette_nodes
-    point = Sirena::Layout::C4::Point
+    circle = Sirena::Layout::C4::Circle
+    ellipse = Sirena::Layout::C4::Ellipse
     person = node("p", "person", external: true,
-                                 head_center: point.new(x: 60, y: 40),
-                                 body_center: point.new(x: 60, y: 75))
+                                 head: circle.new(cx: 60, cy: 40, radius: 10),
+                                 body: ellipse.new(cx: 60, cy: 75,
+                                                   radius_x: 18, radius_y: 12))
     [person, node("s", "system", external: true),
      node("c", "container"), node("k", "component")]
   end
