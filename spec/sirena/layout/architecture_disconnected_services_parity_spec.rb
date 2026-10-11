@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Layout::Architecture do
+RSpec.describe Sirena::Layout::Architecture, :aggregate_failures do
   subject(:services) do
     source = File.read(
       "spec/mermaid/architecture/architecture_external-4b070abb.mmd",

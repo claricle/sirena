@@ -3,7 +3,7 @@
 require "spec_helper"
 require "nokogiri"
 
-RSpec.describe Sirena::Layout::GitGraph do
+RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
   def scene_for(source)
     diagram = Sirena::Parser::GitGraph.new.parse(source)
     described_class.new.call(diagram)
