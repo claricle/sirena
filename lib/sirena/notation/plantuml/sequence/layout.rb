@@ -26,6 +26,8 @@ module Sirena
           MARGIN = 20.0
           HEAD_PADDING = 12.0
           MIN_HEAD_WIDTH = 80.0
+          INTRINSIC_HEAD_PADDING = 7.0
+          INTRINSIC_HEAD_HEIGHT = 30.4883
           MIN_GAP = 30.0
           BOX_PADDING = 8.0
           BOX_TITLE_HEIGHT = 26.0
@@ -75,6 +77,7 @@ module Sirena
           }.freeze
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
+                           :INTRINSIC_HEAD_PADDING, :INTRINSIC_HEAD_HEIGHT,
                            :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT,
                            :MIN_WIDTH_PADDING, :HEAD_LEADING, :EDGE_GAP,
                            :EDGE_MARGIN,
@@ -247,10 +250,14 @@ module Sirena
           def head_height
             return GLYPH_HEAD_HEIGHT + head_growth if glyph_participants?
 
-            plain = @diagram.participants.all? do |p|
-              p.kind == :participant && p.stereotype.nil?
-            end
-            (plain ? plain_head_height : 56.0) + head_growth
+            height = if intrinsic_group_heads?
+                       INTRINSIC_HEAD_HEIGHT
+                     elsif plain_participants?
+                       plain_head_height
+                     else
+                       56.0
+                     end
+            height + head_growth
           end
 
           def glyph_participants?
@@ -279,9 +286,32 @@ module Sirena
               return ACTOR_INTRINSIC_WIDTH
             end
 
+            intrinsic = intrinsic_group_heads?
             text = measure_text(participant.label, font_size: head_font_size)
-            [minimum_head_width, text[:width] + (2 * head_padding),
+            minimum = intrinsic ? 0.0 : minimum_head_width
+            padding = intrinsic ? INTRINSIC_HEAD_PADDING : head_padding
+            [minimum, text[:width] + (2 * padding),
              boxed_title_width(participant), requested_width].max
+          end
+
+          def intrinsic_group_heads?
+            return false if compact?
+
+            @diagram.min_head_width.nil? && @diagram.boxes.empty? &&
+              plain_participants? && group_fragment?
+          end
+
+          def group_fragment?
+            @diagram.items.any? do |item|
+              item.is_a?(Fragment) && item.phase == :open &&
+                item.keyword == "group"
+            end
+          end
+
+          def plain_participants?
+            @diagram.participants.all? do |participant|
+              participant.kind == :participant && participant.stereotype.nil?
+            end
           end
 
           # PlantUML draws a head 14 wider than the minimum it is given.
