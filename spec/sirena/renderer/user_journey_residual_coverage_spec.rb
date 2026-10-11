@@ -21,8 +21,7 @@ RSpec.describe Sirena::Renderer::UserJourney do
     task = { id: "low", metadata: { score: 2 } }
     xml = renderer.render({ id: "journey", children: [task] }).to_xml
 
-    expect(xml).to include('d="M-7.5,0A7.5,7.5')
-      .and include('transform="translate(225.0,397.0)"')
+    expect(xml).to include('d="M217.5,397A7.5,7.5')
   end
 
   it "preserves a fractional font size in rendered text" do

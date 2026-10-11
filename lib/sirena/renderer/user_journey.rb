@@ -16,14 +16,7 @@ module Sirena
     #   svg = renderer.render(laid_out_graph)
     class UserJourney < Base
       TEXT_FONT = '"Open Sans", sans-serif'
-      FACE_RADIUS = 15
-      FACE_TOP = Layout::UserJourneyGeometry::FACE_TOP
-      FACE_STEP = Layout::UserJourneyGeometry::FACE_STEP
       GREY = "#666"
-      SMILE = "M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818," \
-              "0,1,0,6.818,0Z"
-      FROWN = "M-7.5,0A7.5,7.5,0,1,1,7.5,0L6.818,0A6.818,6.818," \
-              "0,1,0,-6.818,0Z"
 
       # Renders a laid-out graph to SVG.
       #
@@ -126,7 +119,7 @@ module Sirena
       end
 
       def task_line(task)
-        center_x = box_center(task.box)
+        center_x = task.face.center_x
         Svg::Line.new(
           x1: center_x, x2: center_x, y1: task.box.y, y2: task.line_end,
           class_name: "task-line", stroke: GREY, stroke_width: "1px",
@@ -134,57 +127,46 @@ module Sirena
         )
       end
 
-      def box_center(box)
-        box.x + (box.width / 2.0)
-      end
-
       def render_face(group, task)
-        center_x = box_center(task.box)
-        center_y = FACE_TOP + ((5 - task.score) * FACE_STEP)
-        group << face_circle(center_x, center_y)
-        group << face_features(center_x, center_y, task.score)
+        face = task.face
+        group << face_circle(face)
+        group << face_features(face)
       end
 
-      def face_circle(center_x, center_y)
+      def face_circle(face)
         Svg::Circle.new(
-          cx: center_x, cy: center_y, r: FACE_RADIUS, class_name: "face",
-          fill: "#FFF8DC", stroke: "#999", stroke_width: "2"
-        )
-      end
-
-      def face_features(center_x, center_y, score)
-        Svg::Group.new.tap do |group|
-          [-1, 1].each do |side|
-            group << eye(center_x + (side * FACE_RADIUS / 3.0),
-                         center_y - (FACE_RADIUS / 3.0))
-          end
-          group << mouth(center_x, center_y, score)
-        end
-      end
-
-      def eye(center_x, center_y)
-        Svg::Circle.new(
-          cx: center_x, cy: center_y, r: 1.5, fill: GREY, stroke: GREY,
+          cx: face.center_x, cy: face.center_y, r: face.radius,
+          class_name: "face", fill: "#FFF8DC", stroke: "#999",
           stroke_width: "2"
         )
       end
 
-      def mouth(center_x, center_y, score)
-        return flat_mouth(center_x, center_y) if score == 3
+      def face_features(face)
+        Svg::Group.new.tap do |group|
+          face.eyes.each { |point| group << eye(point) }
+          group << mouth(face.mouth)
+        end
+      end
 
-        smile = score > 3
-        Svg::Path.new(
-          d: smile ? SMILE : FROWN, class_name: "mouth", fill: "#000",
-          stroke: GREY,
-          transform: "translate(#{center_x},#{center_y + (smile ? 2 : 7)})"
+      def eye(point)
+        Svg::Circle.new(
+          cx: point.x, cy: point.y, r: 1.5, fill: GREY, stroke: GREY,
+          stroke_width: "2"
         )
       end
 
-      def flat_mouth(center_x, center_y)
+      def mouth(mouth)
+        return flat_mouth(mouth.line) unless mouth.path
+
+        Svg::Path.new(
+          d: mouth.path, class_name: "mouth", fill: "#000", stroke: GREY,
+        )
+      end
+
+      def flat_mouth(line)
         Svg::Line.new(
-          x1: center_x - 5, x2: center_x + 5, y1: center_y + 7,
-          y2: center_y + 7, class_name: "mouth", stroke: GREY,
-          stroke_width: "1px"
+          x1: line.x1, x2: line.x2, y1: line.y1, y2: line.y2,
+          class_name: "mouth", stroke: GREY, stroke_width: "1px"
         )
       end
 

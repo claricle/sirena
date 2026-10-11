@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "user_journey_legend"
+require_relative "user_journey_face_geometry"
 
 module Sirena
   module Layout
@@ -11,14 +12,14 @@ module Sirena
     # a 50px band above it; tasks hang from y=110 on a dashed line down to
     # y=450 with a face on it at a height set by the score.
     module UserJourneyGeometry
+      include UserJourneyFaceGeometry
+
       TASK_WIDTH = 150
       TASK_BOX_HEIGHT = 50
       TASK_PITCH = 200
       SECTION_Y = 50
       TASK_Y = 110
       LINE_END = 450
-      FACE_TOP = 300
-      FACE_STEP = 30
       LEGEND_ROW_HEIGHT = 50
       DIAGRAM_MARGIN = 100
       TITLE_EXTRA = 70
@@ -216,15 +217,22 @@ module Sirena
 
       def typed_task(node, x_position, style, indexes)
         metadata = node[:metadata] || {}
-        span = [x_position, TASK_WIDTH]
+        facts = task_facts(metadata)
         UserJourney::Task.new(
           id: node[:id], number: style[:type], line_end: LINE_END,
-          box: band_box(span, TASK_Y, style[:fill]),
-          labels: centered_labels(metadata[:name], span,
-                                  [TASK_Y, style[:colour]]),
           dots: task_dots(metadata[:actors], x_position, indexes),
-          **task_facts(metadata)
+          **task_frame(metadata, [x_position, TASK_WIDTH], style, facts),
+          **facts
         )
+      end
+
+      def task_frame(metadata, span, style, facts)
+        box = band_box(span, TASK_Y, style[:fill])
+        {
+          box: box, face: task_face(box, facts[:score]),
+          labels: centered_labels(metadata[:name], span,
+                                  [TASK_Y, style[:colour]])
+        }
       end
 
       def task_facts(metadata)

@@ -44,7 +44,7 @@ RSpec.describe Sirena::Renderer::UserJourney do
 
     it "draws a smile above score 3" do
       xml = xml_for({ id: "u", children: [scored] })
-      expect(xml).to include('d="M7.5,0A7.5,7.5')
+      expect(xml).to include('d="M232.5,332A7.5,7.5')
     end
 
     it "hangs the face at 300 plus 30 per point below 5" do
