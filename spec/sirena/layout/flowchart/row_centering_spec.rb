@@ -19,10 +19,12 @@ RSpec.describe Sirena::Layout::Flowchart::RowCentering do
     expect(found["B"].center_y).to be_within(0.01).of(found["A"].center_y)
   end
 
-  it "centres a parent over a row of two children" do
+  # Pinned mmdc 11.12.0 puts Parent 2.227 left of the children's row centre
+  # (Brandes-Koepf), not on it; text widths differ from mmdc's by ~2px.
+  it "sets a parent just left of its two children's row centre, as mmdc" do
     found = builder.placed("TD", [%w[Parent Left], %w[Parent Right]])
     row_centre = (found["Left"].x + found["Right"].x + found["Right"].width) / 2
 
-    expect(found["Parent"].center_x).to be_within(0.01).of(row_centre)
+    expect(found["Parent"].center_x - row_centre).to be_within(0.3).of(-2.227)
   end
 end
