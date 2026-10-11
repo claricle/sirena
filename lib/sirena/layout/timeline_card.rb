@@ -7,6 +7,13 @@ require_relative "timeline_text"
 
 module Sirena
   module Layout
+    # One fully positioned line of text inside a timeline card.
+    class TimelineTextRun < Lutaml::Model::Serializable
+      attribute :content, :string
+      attribute :x, :float
+      attribute :y, :float
+    end
+
     # One timeline box: a section, a period or an event.
     class TimelineCard < Lutaml::Model::Serializable
       attribute :kind, :string
@@ -29,6 +36,9 @@ module Sirena
       attribute :text_y, :float
       # Canvas baselines of the text lines after the first.
       attribute :next_baselines, :float, collection: true, default: -> { [] }
+      attribute :text_runs, TimelineTextRun,
+                collection: true,
+                default: -> { [] }
 
       CORNER = 5
       TEXT_TOP = 10
@@ -75,7 +85,21 @@ module Sirena
       def place_text
         self.text_x = tidy(x + (width / 2))
         self.text_y = tidy(y + TEXT_TOP + scaled_text(FIRST_BASELINE))
+        publish_text_lines
+      end
+
+      def publish_text_lines
         self.next_baselines = baselines_after_first
+        self.text_runs = positioned_text_runs
+      end
+
+      def positioned_text_runs
+        lines.each_with_index.map do |content, index|
+          TimelineTextRun.new(
+            content: content, x: text_x,
+            y: index.zero? ? nil : next_baselines.fetch(index - 1)
+          )
+        end
       end
 
       def baselines_after_first

@@ -38,6 +38,7 @@ module Sirena
       # @param scene [Layout::Gantt::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
+        validate_scene!(scene)
         svg = create_document(scene)
         svg << text_element(scene.title) if scene.title
         render_timeline(scene.timeline, svg) if scene.timeline
@@ -46,6 +47,13 @@ module Sirena
       end
 
       protected
+
+      def validate_scene!(scene)
+        return if scene.is_a?(Layout::Gantt::Scene)
+
+        raise RenderError,
+              "expected #{Layout::Gantt::Scene}, got #{scene.class}"
+      end
 
       def render_timeline(timeline, svg)
         svg << timeline_background(timeline.background)

@@ -16,6 +16,7 @@ module Sirena
       # @param scene [Layout::XyChart::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
+        validate_scene!(scene)
         svg = create_document(scene)
         svg << label(scene.title) if scene.title
         render_chart(scene, svg)
@@ -38,6 +39,13 @@ module Sirena
       end
 
       protected
+
+      def validate_scene!(scene)
+        return if scene.is_a?(Layout::XyChart::Scene)
+
+        raise RenderError,
+              "expected #{Layout::XyChart::Scene}, got #{scene.class}"
+      end
 
       def line(geometry)
         Svg::Line.new.tap do |item|
