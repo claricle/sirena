@@ -194,7 +194,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
     # than reads as actor-name material. Measured against mermaid
     # directly: `db.getActors()` on this source returns exactly these 5
     # entries, none of the decorated duplicates.
-    it "parses and discards @{...} shape metadata" do
+    it "parses @{...} shape metadata without adding actors" do
       ids = ids_for(
         "sequencediagram_v2_spec-54b8941d",
       )
