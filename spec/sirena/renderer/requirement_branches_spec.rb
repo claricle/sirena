@@ -30,11 +30,11 @@ RSpec.describe Sirena::Renderer::Requirement do
     expect([svg.width, svg.height, contains_drawing]).to eq([800, 600, false])
   end
 
-  it "falls back for an unknown type and risk while title-casing the risk" do
+  it "leaves an unset risk border unpainted while title-casing the risk" do
     evidence = xml_evidence(unknown_requirement_xml,
                             "&lt;&lt;customNeed&gt;&gt;", "Risk: Surprising",
                             'stroke="#666"')
-    expect(evidence).to eq([true, true, true])
+    expect(evidence).to eq([true, true, false])
   end
 
   it "emits the element fallback stereotype without absent properties" do
