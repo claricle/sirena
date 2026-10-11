@@ -19,8 +19,7 @@ module Sirena
       DEFAULT_NAME_FONT_SIZE = 16
       DEFAULT_SMALL_FONT_SIZE = 12
       HEADER_PADDING = 24
-      NAME_FONT_PX = 16
-      GENERIC = /~([^~]+)~/
+      MMDC_FONT_SIZE = 16
       EMPTY_CLASS_HEIGHT = 84
       STEREOTYPE_HEIGHT = 24
       MEMBER_HEIGHT = 24
@@ -467,14 +466,17 @@ module Sirena
       end
 
       def name_width(name)
-        shown_generics(name).each_char.sum { |char| bold_advance(char) }
+        Diagram::GenericText.display(name).each_char.sum do |char|
+          bold_advance(char)
+        end
       end
 
       def bold_advance(char)
         per_mille = ClassNameAdvances::TABLE[char]
-        return per_mille * NAME_FONT_PX / 1000.0 if per_mille
+        return per_mille * name_font_size / 1000.0 if per_mille
 
-        mmdc_text_width(char) * ClassNameAdvances::FALLBACK_RATIO
+        trebuchet_width(char, name_font_size) *
+          ClassNameAdvances::FALLBACK_RATIO
       end
 
       def member_widths(items)
@@ -482,13 +484,18 @@ module Sirena
       end
 
       def mmdc_text_width(text)
-        TextMeasurement.measure_in(:trebuchet, shown_generics(text),
-                                   font_size: NAME_FONT_PX)[:width]
+        shown = Diagram::GenericText.display(text)
+        trebuchet_width(shown, scaled_mmdc_font_size)
       end
 
-      # mmdc draws a generic `List~T~` as `List<T>`.
-      def shown_generics(text)
-        text.gsub(GENERIC, '<\\1>')
+      def scaled_mmdc_font_size
+        MMDC_FONT_SIZE * small_font_size / DEFAULT_SMALL_FONT_SIZE.to_f
+      end
+
+      def trebuchet_width(text, font_size)
+        TextMeasurement.measure_in(
+          :trebuchet, text, font_size: font_size
+        )[:width]
       end
 
       # mmdc stacks a 48px header (24 more with an annotation) over one
