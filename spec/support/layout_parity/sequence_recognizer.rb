@@ -5,6 +5,8 @@ module SpecSupport
     # Sequence participants (contract section 1). Mermaid's top and bottom
     # boxes are presentation copies of one semantic participant, so the top
     # copy supplies its geometry. Sirena draws that participant once.
+    # Mermaid draws a box participant as a top-level rect and an actor,
+    # boundary, control or entity participant as a g; both carry the name.
     class SequenceRecognizer
       REFERENCE_CLASS = "actor-top"
 
@@ -19,11 +21,11 @@ module SpecSupport
       private
 
       def reference(extractor, doc)
-        doc.xpath("//rect[@name]").filter_map do |rect|
-          next unless rect["class"].to_s.split.include?(REFERENCE_CLASS)
+        doc.xpath("//*[(self::rect or self::g)][@name]").filter_map do |node|
+          next unless node["class"].to_s.split.include?(REFERENCE_CLASS)
 
-          Element.new(kind: :"participant-top", key: rect["name"],
-                      bbox: extractor.bbox(rect), label: rect["name"])
+          Element.new(kind: :"participant-top", key: node["name"],
+                      bbox: extractor.bbox(node), label: node["name"])
         end
       end
 
