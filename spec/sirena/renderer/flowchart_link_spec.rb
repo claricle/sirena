@@ -677,7 +677,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
       )
     end
 
-    # An ordinary label sits at the midpoint of the two node centres,
+    # An ordinary label sits at the midpoint of the link, between the two
+    # node edges (the centres' midpoint only when the widths are equal),
     # lifted off the line it names. The loop specs below measure their
     # lift against this one, and nothing was holding it — the lift could
     # go and they would all still agree.
@@ -692,11 +693,11 @@ RSpec.describe Sirena::Renderer::Flowchart do
       xml = Sirena.render("flowchart LR\n  A -->|hi| B\n")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
       line = group[/<path[^>]*d="M [-\d.]+ ([-\d.]+)/, 1].to_f
-      midpoint = (node_centre(xml, "A").first + node_centre(xml, "B").first) / 2
+      midpoint = (node_span(xml, "A").last + node_span(xml, "B").first) / 2
 
       expect(group[/<text[^>]*y="([-\d.]+)"/, 1].to_f).to eq(line - 5)
       expect(group[/<text[^>]*x="([-\d.]+)"/, 1].to_f)
-        .to be_within(0.1).of(midpoint)
+        .to be_within(0.05).of(midpoint)
     end
   end
 
@@ -1121,6 +1122,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
   # outside the shape it was pointing at. mmdc lands it on the outline.
   describe "the head on a node that is not a box" do
     # The box answer puts this tip 7.6 out past the diamond's sloped edge.
+    # 0.1 is the rounding of the tip's two coordinates to 0.1 (up to 0.07
+    # off a 45 degree edge), not slack.
     it "lands on a diamond's sloped edge" do
       xml = Sirena.render("flowchart TD\n  A{x} --> A\n")
       gap = gap_to(tip_of(xml, "A_to_A"), outline(xml, "A"))
