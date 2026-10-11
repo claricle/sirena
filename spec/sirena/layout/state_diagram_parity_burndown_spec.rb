@@ -45,6 +45,14 @@ RSpec.describe Sirena::Layout::StateDiagram do
     SpecSupport::LayoutParity::CaseLedger.build(results)
   end
 
+  def composite_geometry_rows
+    live_behavior_rows.select do |row|
+      row.fetch("case").match?(
+        /(?:0033e4b1|13deff6f|3249fd2d)\.mmd\z/,
+      )
+    end
+  end
+
   it "omits an unconnected declaration-only state" do
     scene = described_class.new.scene(
       parser.parse(source("should_handle_floating_notes-bbec0e37")),
@@ -72,6 +80,16 @@ RSpec.describe Sirena::Layout::StateDiagram do
     expect(live_behavior_rows.map do |row|
       [row.fetch("case"), row.dig("summary", "hard_failure")]
     end).to all(end_with(false))
+  end
+
+  it "matches nested composite geometry in each duplicate corpus row" do
+    metrics = composite_geometry_rows.map do |row|
+      row.dig("summary", "metrics").values_at(
+        "worst_e_c", "worst_e_w", "worst_e_h", "worst_e_a"
+      )
+    end
+
+    expect(metrics).to eq(Array.new(3) { [0.0, 0.0, 0.0, 0.0] })
   end
 
   def concurrent_evidence
