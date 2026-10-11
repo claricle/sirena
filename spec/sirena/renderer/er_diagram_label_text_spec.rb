@@ -16,7 +16,7 @@ end
 
 RSpec.describe Sirena::Renderer::ErDiagram do
   # mermaid draws the type column before the name column
-  # (spec/fixtures_mermaid/er/002_platform_yari2_er_1.svg).
+  # (spec/fixtures_mermaid/er_diagram/yari2-9471fb3f.svg).
   it "draws an attribute row as type then name" do
     texts = ErLabelTextHelpers.drawn_texts(
       "erDiagram\nCAR {\n  string registrationNumber\n  int age\n}\n",

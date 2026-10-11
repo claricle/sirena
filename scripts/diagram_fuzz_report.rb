@@ -58,7 +58,7 @@ module DiagramFuzzReport
   #   find spec/mermaid/<dir> -name '*.mmd' | wc -l
   #
   # combining the two extraction batches that share one registered
-  # diagram type (spec/mermaid/class + spec/mermaid/class_diagram are
+  # diagram type (spec/mermaid/class_diagram + spec/mermaid/class_diagram are
   # both `:class_diagram`, and likewise state/state_diagram,
   # er/er_diagram, git/gitgraph -- see lib/sirena.rb's
   # DiagramRegistry.register calls):

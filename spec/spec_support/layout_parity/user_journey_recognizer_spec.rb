@@ -14,7 +14,7 @@ RSpec.describe SpecSupport::LayoutParity::UserJourneyRecognizer do
   end
 
   def real_pair
-    name = "002_rendering_journey_spec_user_journey_1"
+    name = "journey_spec-efcd431c"
     reference = reference_svg("user_journey/#{name}.svg")
     sirena = Sirena.render(corpus_source("user_journey/#{name}.mmd"))
     [summaries(reference), summaries(sirena)]

@@ -90,7 +90,7 @@ RSpec.describe SpecSupport::LayoutParity::SvgFigureExtractor do
     end
 
     it "reads the nested subgraphs of a real mmdc reference" do
-      name = "079_parser_should_handle_nested_subgraphs_3_74"
+      name = "subgraph_spec-f0825d5b"
       figure = extract(reference_svg("flowchart/#{name}.svg"), flowchart)
 
       expect(parents_of(figure)).to eq(nested_subgraph_parents)
@@ -106,7 +106,7 @@ RSpec.describe SpecSupport::LayoutParity::SvgFigureExtractor do
 
   describe "one code path for reference and Sirena" do
     it "gives a flowchart the same (kind, parent, key) set on both sides" do
-      keys = flowchart_sides("001_config_0").map do |svg|
+      keys = flowchart_sides("configuration_spec-67574f4a").map do |svg|
         extract(svg, flowchart).keys.sort_by(&:last)
       end
 

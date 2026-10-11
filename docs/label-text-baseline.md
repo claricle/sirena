@@ -109,28 +109,28 @@ heuristics; the examples are real.
 ```text
 failure shapes, owner-aware types (labels = mismatched pairs, cases = distinct cases, one example each)
 flowchart:
-  edge label drawn with its pipes (|text|)                   labels=58  cases=30  e.g. flowchart/001_config_0 reference="Get money" sirena="|Get money|"
-  literal markup or entity code (<br>, <a>, #9829;, &lt;)    labels=7   cases=7   e.g. flowchart/021_platform_xss22_flowchart_20 reference="AAA" sirena="\"<a href='javascript#9;t#colon;alert(doc"
-  label kept its quote marks                                 labels=7   cases=6   e.g. flowchart/016_platform_subgraph_flowchart_15 reference="id starting with number" sirena="\"id starting with number\""
-  icon syntax drawn as text (fa:fa-x)                        labels=5   cases=5   e.g. flowchart/001_config_0 reference="Car" sirena="fa:fa-car Car"
-  other                                                      labels=4   cases=4   e.g. flowchart/070_parser_should_allow_back_slashes_in_lean_left_vertices_65 reference="\\This node has a \\ as text\\" sirena="\\This node has a \\\\ as text\\"
+  edge label drawn with its pipes (|text|)                   labels=58  cases=30  e.g. flowchart/configuration_spec-67574f4a reference="Get money" sirena="|Get money|"
+  literal markup or entity code (<br>, <a>, #9829;, &lt;)    labels=7   cases=7   e.g. flowchart/xss22-3b590ae6 reference="AAA" sirena="\"<a href='javascript#9;t#colon;alert(doc"
+  label kept its quote marks                                 labels=7   cases=6   e.g. flowchart/subgraph-d37c1bec reference="id starting with number" sirena="\"id starting with number\""
+  icon syntax drawn as text (fa:fa-x)                        labels=5   cases=5   e.g. flowchart/configuration_spec-67574f4a reference="Car" sirena="fa:fa-car Car"
+  other                                                      labels=4   cases=4   e.g. flowchart/flow_text_spec-b588244a reference="\\This node has a \\ as text\\" sirena="\\This node has a \\\\ as text\\"
 class:
-  class member format (visibility prefix, spacing, colon)    labels=79  cases=36  e.g. class/033_platform_yari_class_32 reference="test" sirena="+ test"
-  other                                                      labels=47  cases=27  e.g. class/031_platform_yari_class_30 reference="+String beakColor" sirena="+ beakColor: String"
-  spacing or case only                                       labels=48  cases=22  e.g. class/003_rendering_classdiagram-elk-v3_spec_class_2 reference="+member1" sirena="+ member1"
-  angle-bracket annotation (<<x>>, guillemets or escaped)    labels=13  cases=13  e.g. class/034_platform_yari_class_33 reference="«interface»" sirena="<<interface>>"
-  literal markup or entity code (<br>, <a>, #9829;, &lt;)    labels=4   cases=4   e.g. class/003_rendering_classdiagram-elk-v3_spec_class_2 reference="<<interface>>" sirena="+ &lt;&lt;interface&gt;&gt;"
+  class member format (visibility prefix, spacing, colon)    labels=79  cases=36  e.g. class_diagram/yari-3e69d3e6 reference="test" sirena="+ test"
+  other                                                      labels=47  cases=27  e.g. class_diagram/yari-ca7091fd reference="+String beakColor" sirena="+ beakColor: String"
+  spacing or case only                                       labels=48  cases=22  e.g. class_diagram/classdiagram_elk_v3_spec-c57d14a6 reference="+member1" sirena="+ member1"
+  angle-bracket annotation (<<x>>, guillemets or escaped)    labels=13  cases=13  e.g. class_diagram/yari-635beb05 reference="«interface»" sirena="<<interface>>"
+  literal markup or entity code (<br>, <a>, #9829;, &lt;)    labels=4   cases=4   e.g. class_diagram/classdiagram_elk_v3_spec-c57d14a6 reference="<<interface>>" sirena="+ &lt;&lt;interface&gt;&gt;"
 er:
-  other                                                      labels=20  cases=3   e.g. er/002_platform_yari2_er_1 reference="string registrationNumber" sirena="registrationNumber string"
+  other                                                      labels=20  cases=3   e.g. er_diagram/yari2-9471fb3f reference="string registrationNumber" sirena="registrationNumber string"
 requirement:
-  angle-bracket annotation (<<x>>, guillemets or escaped)    labels=2   cases=1   e.g. requirement/001_example_requirement_0 reference="<<satisfies>>" sirena="satisfies"
-  other                                                      labels=1   cases=1   e.g. requirement/001_example_requirement_0 reference="Verification: Test" sirena="Verify: Test"
-  reference adds words or symbols                            labels=1   cases=1   e.g. requirement/001_example_requirement_0 reference="Text: the test text." sirena="the test text."
+  angle-bracket annotation (<<x>>, guillemets or escaped)    labels=2   cases=1   e.g. requirement/requirement-9f8b7e75 reference="<<satisfies>>" sirena="satisfies"
+  other                                                      labels=1   cases=1   e.g. requirement/requirement-9f8b7e75 reference="Verification: Test" sirena="Verify: Test"
+  reference adds words or symbols                            labels=1   cases=1   e.g. requirement/requirement-9f8b7e75 reference="Text: the test text." sirena="the test text."
 architecture:
-  other                                                      labels=5   cases=2   e.g. architecture/004_rendering_architecture_spec_architecture_3 reference="?" sirena="I"
+  other                                                      labels=5   cases=2   e.g. architecture/architecture_spec-ef15d347 reference="?" sirena="I"
 sequence:
-  literal markup or entity code (<br>, <a>, #9829;, &lt;)    labels=8   cases=4   e.g. sequence/030_parser_should_handle_different_line_breaks_29 reference="multiline text" sirena="multiline<br>text"
-  sequence wrap:/nowrap: prefix drawn                        labels=4   cases=4   e.g. sequence/019_parser_should_draw_two_actors_notes_to_the_left_with_text_wrapped_inline__18 reference="Hello Bob, how are you? If you are not a" sirena="wrap: Hello Bob, how are you? If you are"
+  literal markup or entity code (<br>, <a>, #9829;, &lt;)    labels=8   cases=4   e.g. sequence/sequencediagram_spec-4f5cf515 reference="multiline text" sirena="multiline<br>text"
+  sequence wrap:/nowrap: prefix drawn                        labels=4   cases=4   e.g. sequence/sequencediagram_spec-783aa83b reference="Hello Bob, how are you? If you are not a" sirena="wrap: Hello Bob, how are you? If you are"
 ```
 
 ## What the survey does not resolve
@@ -151,7 +151,7 @@ sequence:
 - The owner key of an edge is undirected here (endpoints sorted); the card's edge
   identity is directed. Removing the endpoint sorts changes no
   `label-text` count and the presence entries of one case
-  (`class/153_parser_should_parse_diagram_with_direction_152`).
+  (`class_diagram/should_parse_diagram_with_direction-ba994d6a`).
 - ER attribute rows have no key or comment cells in this corpus, so the row
   merge is measured on type and name only. The 3 ER cases with attributes fail
   on column order: the reference reads `string registrationNumber`, Sirena draws

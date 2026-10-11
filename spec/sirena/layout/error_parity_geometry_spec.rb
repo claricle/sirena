@@ -5,9 +5,9 @@ require "spec_helper"
 RSpec.describe Sirena::Layout::Error do
   let(:case_ids) do
     %w[
-      error/002_rendering_errordiagram_spec_error_1.mmd
-      error/003_spec_diagram-orchestration_spec_2.mmd
-      error/004_spec_diagram-orchestration_spec_3.mmd
+      error/errordiagram_spec-3a94a3a8.mmd
+      error/diagram_orchestration_spec-e3b8ea03.mmd
+      error/diagram_orchestration_spec-8666f6ad.mmd
     ]
   end
 

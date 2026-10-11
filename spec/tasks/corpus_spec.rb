@@ -90,14 +90,14 @@ RSpec.describe Sirena::Corpus, :aggregate_failures do
   end
 
   describe ".render_case" do
-    let(:passing_case) { "pie/001_rendering_theme_spec_pie_0.mmd" }
+    let(:passing_case) { "pie/theme_spec-a9670f7e.mmd" }
     let(:detection_failure_case) do
-      "architecture/012_rendering_architecture_spec_architecture_11.mmd"
+      "architecture/architecture_spec-05842252.mmd"
     end
     let(:parse_failure_case) do
-      "architecture/005_rendering_architecture_spec_architecture_4.mmd"
+      "architecture/architecture_spec-b52f4c78.mmd"
     end
-    let(:c4_case) { "c4/012_parser_should_parse_a_link_11.mmd" }
+    let(:c4_case) { "c4/should_parse_a_link-fe18b512.mmd" }
 
     it "reports pass with no stage or exception_class for a real passing " \
        "case" do

@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe SpecSupport::LayoutParity::RadarGraticuleGeometry do
-  let(:source_name) { "001_rendering_radar_spec_radar_0" }
+  let(:source_name) { "radar_spec-9dd39c75" }
 
   def reference_svg
     File.read("spec/fixtures_mermaid/radar/#{source_name}.svg")

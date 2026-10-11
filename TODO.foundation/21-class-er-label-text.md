@@ -22,16 +22,16 @@ Sirena draws text that differs from the reference's. The class
 failures include these shapes:
 
 - Member text: the reference draws `test`, Sirena draws `+ test`
-  (`class/033_platform_yari_class_32`); the reference draws `+String beakColor`,
-  Sirena draws `+ beakColor: String` (`class/031_platform_yari_class_30`).
+  (`class_diagram/yari-3e69d3e6`); the reference draws `+String beakColor`,
+  Sirena draws `+ beakColor: String` (`class_diagram/yari-ca7091fd`).
 - Annotation: the reference draws `«interface»`, Sirena draws `<<interface>>`
-  (13 cases, `class/034_platform_yari_class_33`).
+  (13 cases, `class_diagram/yari-635beb05`).
 - Class-name generics: the reference draws `Car<T>`, Sirena draws `Car~T~`
-  (7 cases, `class/108_parser_should_handle_generic_class_107`).
+  (7 cases, `class_diagram/should_handle_generic_class-0b14c539`).
 
 ER attribute rows read type then name in the reference and name then type in
 Sirena: `string registrationNumber` against `registrationNumber string`
-(3 cases, `er/002_platform_yari2_er_1`). The ER cells are merged per row by the
+(3 cases, `er_diagram/yari2-9471fb3f`). The ER cells are merged per row by the
 extractor rule in item 14 section 5, so this is a text difference and not a
 count difference.
 
@@ -59,7 +59,7 @@ yet, and 14's gate needs them at zero as well.
   without fixing the text. In the `--json` output, compare per case the
   `presence_diffs` entries (owner and both counts) and the `owner_only_ref` and
   `owner_only_sirena` counts: none may be new or larger, including in a case
-  that is already a `presence` case (`class/153_parser_should_parse_diagram_with_direction_152`
+  that is already a `presence` case (`class_diagram/should_parse_diagram_with_direction-ba994d6a`
   has 2 entries and 5 text mismatches). Once item 14's comparator exists, the
   comparator reports the same.
 - A spec per shape above asserts the drawn text against the reference text,

@@ -21,7 +21,7 @@ RSpec.describe Sirena::Layout::Timeline do
     layout.call(diagram)
   end
 
-  # mmdc 016_spec_diagram-orchestration_spec_15: viewBox 100 50 400 100
+  # mmdc diagram_orchestration_spec-74efe05c: viewBox 100 50 400 100
   it "draws only the base arrow for an empty timeline" do
     scene = layout.call(Sirena::Diagram::Timeline.new)
 

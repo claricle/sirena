@@ -69,7 +69,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     end
 
     # A type name that isn't a bare identifier -- mermaid accepts a
-    # `~...~`-quoted one. Corpus case unknown/079_platform_yari2_78.mmd.
+    # `~...~`-quoted one. Corpus case unknown/yari2-dc83acff.mmd.
     it "parses an attribute with a tilde-quoted multi-word type" do
       source = <<~MERMAID
         erDiagram
@@ -86,7 +86,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
 
     # A quoted note after the key type -- mermaid renders it as the
     # attribute's comment (its own `attribute-comment` SVG column,
-    # verified against spec/mermaid/unknown/079_platform_yari2_78.svg). It
+    # verified against spec/mermaid/unknown/yari2-dc83acff.svg). It
     # must reach the model, not just be consumed and dropped by the
     # grammar -- the renderer spec proves it reaches the rendered SVG too.
     it "carries the quoted note after the key type into the model" do
@@ -669,7 +669,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
 
     # `}|`, `o|` and `|o` are real crow's-foot cardinality tokens the
     # grammar was missing entirely. Corpus case
-    # unknown/079_platform_yari2_78.mmd uses `}|..||`.
+    # unknown/yari2-dc83acff.mmd uses `}|..||`.
     it "parses one-or-more and zero-or-one cardinality tokens" do
       source = "erDiagram\nFILM_ACTOR }|..|| FILM : fk"
       diagram = parser.parse(source)

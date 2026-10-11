@@ -65,7 +65,7 @@ RSpec.describe SpecSupport::LayoutParity::ErDiagramRecognizer do
   end
 
   it "recognizes the same entities and normalized labels in a real pair" do
-    path = "er/002_platform_yari2_er_1.mmd"
+    path = "er_diagram/yari2-9471fb3f.mmd"
     expect(recognized_pair(path)).to eq([real_expected] * 2)
   end
 end

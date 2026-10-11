@@ -32,19 +32,19 @@ RSpec.describe SpecSupport::LayoutParity::PieRecognizer do
   end
 
   it "associates value-sorted reference sectors with legend labels" do
-    expect(real_pair("002_rendering_pie_spec_pie_1"))
+    expect(real_pair("pie_spec-8e291061"))
       .to eq(value_sorted_expected)
   end
 
   it "normalizes show-data suffixes to the underlying section label" do
-    name = "014_parser_should_handle_simple_pie_with_showdata_13"
+    name = "should_handle_simple_pie_with_showdata-d716f461"
     expected = %w[ash bat].map { |label| [:pie_sector, label, :label] }
 
     expect(real_pair(name)).to eq([expected, expected])
   end
 
   it "sees no sector for a zero-value slice on either side" do
-    name = "022_parser_should_handle_simple_pie_with_zero_slice_value_21"
+    name = "should_handle_simple_pie_with_zero_slice_value-f2e60e59"
     expect(real_pair(name)).to eq([[sector("rats")], [sector("rats")]])
   end
 end

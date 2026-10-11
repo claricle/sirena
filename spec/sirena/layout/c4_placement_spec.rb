@@ -4,7 +4,7 @@ require "spec_helper"
 
 RSpec.describe Sirena::Layout::C4Placement do
   let(:scene) do
-    source = File.read("spec/mermaid/c4/007_example_c4_6.mmd")
+    source = File.read("spec/mermaid/c4/c4-8ab0b1ef.mmd")
     Sirena::Layout::C4.new.call(Sirena::Parser::C4.new.parse(source))
   end
   let(:outer) { scene.children.find { |node| node.id == "b0" } }

@@ -82,7 +82,7 @@ snapshot.
 
    **`git` is not on this list any more.** Its per-type figures in
    `TODO.foundation/06` and `07` are raw counts over every file in
-   `spec/mermaid/git*/`, and 27 of those are extraction artifacts while
+   `spec/mermaid/gitgraph*/`, and 27 of those are extraction artifacts while
    127 more carry no oracle evidence either way. Over the 12 cases
    mermaid actually accepts,
    `git` and `gitgraph` are both at 100%. Read those items for their

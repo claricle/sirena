@@ -26,14 +26,14 @@ RSpec.describe SpecSupport::LayoutParity::ErrorRecognizer do
   end
 
   def real_pair
-    name = "002_rendering_errordiagram_spec_error_1"
+    name = "errordiagram_spec-3a94a3a8"
     reference = reference_svg("error/#{name}.svg")
     sirena = Sirena.render(corpus_source("error/#{name}.mmd"))
     [recognized(reference), recognized(sirena)]
   end
 
   def matched_real_pair
-    name = "002_rendering_errordiagram_spec_error_1"
+    name = "errordiagram_spec-3a94a3a8"
     reference = extract(reference_svg("error/#{name}.svg"), recognizer)
     sirena = extract(
       Sirena.render(corpus_source("error/#{name}.mmd")), recognizer

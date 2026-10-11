@@ -90,13 +90,13 @@ RSpec.describe "Flowchart Integration", :aggregate_failures do
 
     empty_sources = {
       "147 (declare a class)" =>
-        File.read("#{corpus_dir}/147_parser_should_be_possible_to_declare_a_class_142.mmd"),
+        File.read("#{corpus_dir}/flow_style_spec-9a4da99b.mmd"),
       "148 (declare multiple classes)" =>
-        File.read("#{corpus_dir}/148_parser_should_be_possible_to_declare_multiple_classes_143.mmd"),
+        File.read("#{corpus_dir}/flow_style_spec-0a9a30d4.mmd"),
       "149 (declare a class with a dot in the style)" =>
-        File.read("#{corpus_dir}/149_parser_should_be_possible_to_declare_a_class_with_a_dot_in_the_style_144.mmd"),
+        File.read("#{corpus_dir}/flow_style_spec-82b844b5.mmd"),
       "150 (declare a class with a space in the style)" =>
-        File.read("#{corpus_dir}/150_parser_should_be_possible_to_declare_a_class_with_a_space_in_the_style_145.mmd"),
+        File.read("#{corpus_dir}/flow_style_spec-60fbb77e.mmd"),
       "a bare header" => "graph TD\n",
       "a header with only a comment" => "flowchart LR\n%% just a comment\n",
       "class without a matching classDef" => "graph TD\nclass A foo\n",

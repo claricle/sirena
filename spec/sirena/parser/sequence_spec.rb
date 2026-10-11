@@ -5,7 +5,7 @@ require "sirena/parser/sequence"
 require "rexml/document"
 
 module SequenceSpecHelpers
-  CASE_026 = "026_parser_should_handle_semicolons_25"
+  CASE_026 = "sequencediagram_spec-ce97d13c"
   CASE_026_SHAPE = [
     ["Hello Bob, how are you?", "I am good thanks!"],
     ["Bob thinks"],
@@ -1108,7 +1108,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
 
     it "matches case 056's full shape: a links line after a closed box" do
       diagram = parser.parse(
-        sequence_fixture("056_parser_should_handle_box_55"),
+        sequence_fixture("sequencediagram_spec-7c851a96"),
       )
 
       expect(diagram.participants.map(&:id)).to eq(%w[a b c])
@@ -1240,14 +1240,14 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
 
   describe "#parse the 8 target corpus cases" do
     target_cases = %w[
-      019_rendering_sequencediagram_spec_sequence_18
-      026_parser_should_handle_semicolons_25
-      028_spec_diagram_spec_27
-      041_parser_should_handle_critical_statements_with_options_40
-      053_parser_should_handle_no-label_alt_52
-      054_parser_should_handle_no-label_par_53
-      055_parser_should_handle_links_54
-      056_parser_should_handle_box_55
+      sequencediagram_spec-690f7aca
+      sequencediagram_spec-ce97d13c
+      diagram_spec-3c9c211b
+      sequencediagram_spec-1ffb4361
+      sequencediagram_spec-29df05a7
+      sequencediagram_spec-73beb438
+      sequencediagram_spec-44bf3db7
+      sequencediagram_spec-7c851a96
     ].freeze
 
     target_cases.each do |case_name|
@@ -1264,7 +1264,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
 
     it "case 019 parses every create/destroy declaration into a participant" do
       diagram = parser.parse(
-        sequence_fixture("019_rendering_sequencediagram_spec_sequence_18"),
+        sequence_fixture("sequencediagram_spec-690f7aca"),
       )
 
       expect(diagram.participants.map(&:id)).to eq(%w[Alice Bob Carl D])
@@ -1275,7 +1275,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
     it "raises because the destroy target does not match the following " \
        "message" do
       source = sequence_fixture(
-        "018_rendering_sequencediagram_spec_sequence_17",
+        "sequencediagram_spec-178a8c78",
       )
 
       expect_parse_error(source, /destroyed participant Bo does not/)
@@ -1288,13 +1288,13 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
     # that already worked. Not expected to discriminate HEAD from a
     # whole-file revert.
     regression_cases = %w[
-      030_spec_diagram_spec_29
-      044_parser_it_should_handle_par_over_statements_43
-      046_parser_should_handle_special_characters_in_notes_45
-      047_parser_should_handle_special_characters_in_loop_46
-      048_parser_should_handle_special_characters_in_opt_47
-      049_parser_should_handle_special_characters_in_alt_48
-      050_parser_should_handle_special_characters_in_par_49
+      diagram_spec-4837a79d
+      sequencediagram_spec-9f36a30d
+      sequencediagram_spec-88f16c5c
+      sequencediagram_spec-0f05d2d9
+      sequencediagram_spec-9de9b321
+      sequencediagram_spec-5b6e807f
+      sequencediagram_spec-61c4e17a
     ].freeze
 
     regression_cases.each do |case_name|

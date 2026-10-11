@@ -320,7 +320,7 @@ RSpec.describe Sirena::Parser::UserJourney do
     # Only the accdescr case actually contains an accDescr.
     describe "an accessibility directive from the corpus" do
       cases = {
-        "004_parser_should_handle_a_title_definition_3.mmd" => nil,
+        "journey_spec-1f8d17b6.mmd" => nil,
         "004_parser_should_handle_an_accessibility_description_" \
         "accdescr__3.mmd" =>
           "Adding journey diagram functionality to mermaid",

@@ -187,7 +187,7 @@ verdict, first line of the error.
 
 ```
 failing:
-  flowchart/007_platform_current_flowchart_6.mmd  parse  invalid  Parse error at line 1, column 14:
+  flowchart/current-e94c77cd.mmd  parse  invalid  Parse error at line 1, column 14:
 ```
 
 (The path column is padded to the widest case and the line is shortened
@@ -212,7 +212,7 @@ a fixed file, so reproduce it with the command below.
 To see the full error for one case:
 
 ```sh
-bundle exec exe/sirena render spec/mermaid/flowchart/007_platform_current_flowchart_6.mmd -o /dev/null
+bundle exec exe/sirena render spec/mermaid/flowchart/current-e94c77cd.mmd -o /dev/null
 ```
 
 ```

@@ -14,7 +14,7 @@ RSpec.describe SpecSupport::LayoutParity::ArchitectureRecognizer do
   end
 
   def real_pair
-    name = "002_rendering_architecture_spec_architecture_1"
+    name = "architecture_spec-2a3d0f20"
     reference = reference_svg("architecture/#{name}.svg")
     sirena = Sirena.render(corpus_source("architecture/#{name}.mmd"))
     [summaries(reference), summaries(sirena)]

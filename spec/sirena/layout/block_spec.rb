@@ -61,11 +61,11 @@ RSpec.describe Sirena::Layout::Block do
     end
 
     context "with a block whose span never fits the column count" do
-      # spec/mermaid/block/002_rendering_block_spec_block_1.mmd: columns 2,
+      # spec/mermaid/block/block_spec-e162d2fc.mmd: columns 2,
       # and every block after "fit" is wider than 2 columns, so each one
       # skips a row before it lands (see the comment in calculate_y_position).
       let(:source) do
-        path = "../../mermaid/block/002_rendering_block_spec_block_1.mmd"
+        path = "../../mermaid/block/block_spec-e162d2fc.mmd"
         File.read(File.expand_path(path, __dir__))
       end
 
@@ -79,7 +79,7 @@ RSpec.describe Sirena::Layout::Block do
       # exceeds it, so every row from B onward is skipped before landing.
       let(:source) do
         path = "../../mermaid/block/" \
-               "013_parser_a_node_with_a_square_shape_and_a_label_12.mmd"
+               "a_node_with_a_square_shape_and_a_label-807b8b5c.mmd"
         File.read(File.expand_path(path, __dir__))
       end
 

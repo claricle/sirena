@@ -4,7 +4,7 @@ require "spec_helper"
 
 RSpec.describe Sirena::Layout::Block do
   subject(:compound) do
-    source = File.read("spec/mermaid/block/004_example_block_3.mmd")
+    source = File.read("spec/mermaid/block/block-b7a88657.mmd")
     diagram = Sirena::Parser::Block.new.parse(source)
     described_class.new.call(diagram).children.find(&:compound)
   end

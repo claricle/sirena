@@ -33,7 +33,7 @@ RSpec.describe SpecSupport::LayoutParity::KanbanRecognizer do
   end
 
   def real_labels
-    name = "001_rendering_kanban_spec_kanban_0"
+    name = "kanban_spec-a9b46069"
     reference = reference_svg("kanban/#{name}.svg")
     sirena = Sirena.render(corpus_source("kanban/#{name}.mmd"))
     [reference, sirena].map do |svg|
@@ -52,9 +52,9 @@ RSpec.describe SpecSupport::LayoutParity::KanbanRecognizer do
 
   let(:metadata_card_labels) do
     %w[
-      007_rendering_kanban_spec_kanban_6
-      009_rendering_kanban_spec_kanban_8
-      010_rendering_kanban_spec_kanban_9
+      kanban_spec-cf23b2fc
+      kanban_spec-af29b4d6
+      kanban_spec-e33c6002
     ].map do |name|
       reference = reference_svg("kanban/#{name}.svg")
       sirena = Sirena.render(corpus_source("kanban/#{name}.mmd"))

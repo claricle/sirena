@@ -4,7 +4,7 @@ require "spec_helper"
 require "rexml/document"
 
 module GitGraphBucketHelpers
-  CORPUS = File.expand_path("../mermaid/git", __dir__)
+  CORPUS = File.expand_path("../mermaid/gitgraph", __dir__)
   ANCHOR_SHARE = { "start" => 0, "middle" => 0.5, "end" => 1 }.freeze
 
   # Source builders, also called from the describe bodies below.

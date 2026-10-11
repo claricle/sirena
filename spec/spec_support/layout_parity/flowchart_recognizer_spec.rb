@@ -31,14 +31,14 @@ RSpec.describe SpecSupport::LayoutParity::FlowchartRecognizer do
   end
 
   it "matches semantic node identities in a real reference and render" do
-    reference, sirena = flowchart_sides("001_config_0")
+    reference, sirena = flowchart_sides("configuration_spec-67574f4a")
 
     expect([recognized(reference), recognized(sirena)])
       .to eq([expected_nodes] * 2)
   end
 
   it "recognizes direct node ids created by node and subgraph collisions" do
-    names = %w[009_platform_current2_flowchart_8 011_platform_current2_6]
+    names = %w[current2-d5a29a70 current2-420bf58f]
     pairs = names.map do |name|
       flowchart_sides(name).map { |svg| node_parents(svg).fetch("B") }
     end

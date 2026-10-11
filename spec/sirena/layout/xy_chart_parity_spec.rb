@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::XyChart do
-  let(:case_id) { "xychart/001_example_xychart_0.mmd" }
+  let(:case_id) { "xychart/xychart-aaf2900f.mmd" }
   let(:runner) { SpecSupport::LayoutParity::CohortRunner.new }
 
   def parity_result

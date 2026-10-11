@@ -141,9 +141,9 @@ RSpec.describe "ErDiagram Integration", :aggregate_failures do
 
     # The bucket case this branch clears: CAR gets one class (fill only),
     # PERSON gets two (fill and color). This is the oracle split measured
-    # from spec/fixtures_mermaid/er/002_platform_yari2_er_1.svg.
+    # from spec/fixtures_mermaid/er_diagram/yari2-9471fb3f.svg.
     it "applies per-entity styles from the real corpus case (D1)" do
-      source = File.read("spec/mermaid/er/002_platform_yari2_er_1.mmd")
+      source = File.read("spec/mermaid/er_diagram/yari2-9471fb3f.mmd")
       svg = engine.render(source)
       doc = REXML::Document.new(svg)
 
@@ -266,7 +266,7 @@ RSpec.describe "ErDiagram Integration", :aggregate_failures do
     # comment on the way to SVG. Asserts on the rendered text itself, not
     # on an intermediate node surviving one layer.
     it "carries a real corpus attribute note through to the rendered SVG" do
-      source = File.read("spec/mermaid/unknown/079_platform_yari2_78.mmd")
+      source = File.read("spec/mermaid/unknown/yari2-dc83acff.mmd")
       expected_count = source.scan('"NN"').length
 
       svg = engine.render(source)

@@ -14,7 +14,7 @@ RSpec.describe SpecSupport::LayoutParity::XyChartRecognizer do
   end
 
   def real_pair
-    name = "001_example_xychart_0"
+    name = "xychart-aaf2900f"
     reference = reference_svg("xychart/#{name}.svg")
     sirena = Sirena.render(corpus_source("xychart/#{name}.mmd"))
     [keys(reference), keys(sirena)]

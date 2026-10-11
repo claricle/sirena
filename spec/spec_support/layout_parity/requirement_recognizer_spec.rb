@@ -36,7 +36,7 @@ RSpec.describe SpecSupport::LayoutParity::RequirementRecognizer do
   end
 
   def real_sides
-    name = "001_example_requirement_0"
+    name = "requirement-9f8b7e75"
     [reference_svg("requirement/#{name}.svg"),
      Sirena.render(corpus_source("requirement/#{name}.mmd"))]
   end

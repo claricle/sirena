@@ -14,7 +14,7 @@ RSpec.describe SpecSupport::LayoutParity::TreemapRecognizer do
   end
 
   def real_pair
-    name = "001_rendering_treemap_spec_treemap_0"
+    name = "treemap_spec-8b2a1e63"
     reference = reference_svg("treemap/#{name}.svg")
     sirena = Sirena.render(corpus_source("treemap/#{name}.mmd"))
     [summaries(reference), summaries(sirena)]

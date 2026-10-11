@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe SpecSupport::LayoutParity::GitGraphMarkerGeometry do
-  let(:source_name) { "002_platform_showcase_base_1" }
+  let(:source_name) { "showcase_base-f21356f4" }
 
   def reference_measurements
     path = "spec/fixtures_mermaid/gitgraph/#{source_name}.svg"

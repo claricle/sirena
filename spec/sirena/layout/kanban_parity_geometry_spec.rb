@@ -5,10 +5,10 @@ require "spec_helper"
 RSpec.describe Sirena::Layout::Kanban do
   let(:case_ids) do
     %w[
-      kanban/001_rendering_kanban_spec_kanban_0.mmd
-      kanban/002_rendering_kanban_spec_kanban_1.mmd
-      kanban/003_rendering_kanban_spec_kanban_2.mmd
-      kanban/004_rendering_kanban_spec_kanban_3.mmd
+      kanban/kanban_spec-a9b46069.mmd
+      kanban/kanban_spec-5ef28039.mmd
+      kanban/kanban_spec-36eec970.mmd
+      kanban/kanban_spec-fdfe0a01.mmd
     ]
   end
 
