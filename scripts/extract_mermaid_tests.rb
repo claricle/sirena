@@ -13,7 +13,6 @@ require "json"
 require_relative "corpus_case_identity"
 require_relative "corpus_refresh"
 
-MERMAID_JS_ROOT = "/Users/mulgogi/src/external/mermaid-js"
 SIRENA_ROOT = File.expand_path("..", __dir__)
 OUTPUT_DIR = "#{SIRENA_ROOT}/spec/mermaid".freeze
 
@@ -81,15 +80,14 @@ class TestCase
   end
 end
 
-# naming: :ordinal writes NNN_<name>.mmd, the layout the committed corpus
-# still uses. :stable writes <type>/<slug>-<hash8>.mmd from CorpusCaseIdentity.
-# Ordinal stays the default until the one-time rename lands; stable IDs are
-# computed in both modes, so a collision fails the run before any write.
+# naming: :stable writes <type>/<slug>-<hash8>.mmd from CorpusCaseIdentity.
+# :ordinal retains the old NNN_<name>.mmd layout only for migration tooling.
+# Stable IDs are computed in both modes, so a collision fails before any write.
 class MermaidTestExtractor
   NAMINGS = %i[ordinal stable].freeze
 
-  def initialize(root: MERMAID_JS_ROOT, output_dir: OUTPUT_DIR,
-                 naming: :ordinal, commit_sha: nil, accept_changes: false)
+  def initialize(root:, commit_sha:, output_dir: OUTPUT_DIR,
+                 naming: :stable, accept_changes: false)
     validate_options!(naming, commit_sha)
     @root = root
     @output_dir = output_dir
@@ -102,6 +100,10 @@ class MermaidTestExtractor
   end
 
   def validate_options!(naming, commit_sha)
+    unless commit_sha
+      raise CorpusRefresh::Error, "commit sha is required"
+    end
+
     CorpusRefresh.validate_sha!(commit_sha)
     return if NAMINGS.include?(naming)
 
@@ -572,7 +574,7 @@ class MermaidTestExtractor
       metadata: test_case.metadata,
     }
     meta[:case_id] = test_case.stable_id if @naming == :stable
-    meta[:upstream_sha] = @commit_sha if @commit_sha
+    meta[:upstream_sha] = @commit_sha
     meta
   end
 
@@ -606,15 +608,18 @@ end
 
 if $PROGRAM_NAME == __FILE__
   require "optparse"
-  options = { root: MERMAID_JS_ROOT, naming: :ordinal, accept_changes: false }
+  options = { naming: :stable, accept_changes: false }
   OptionParser.new do |o|
     o.on("--root PATH", "mermaid-js checkout") { |v| options[:root] = v }
     o.on("--sha SHA", "checkout commit sha") { |v| options[:commit_sha] = v }
-    o.on("--stable-ids") { options[:naming] = :stable }
+    o.on("--ordinal-ids", "use legacy ordinal names") do
+      options[:naming] = :ordinal
+    end
     o.on("--accept-changes", "allow counts/provenance to differ") do
       options[:accept_changes] = true
     end
   end.parse!
+  abort "--root is required" unless options[:root]
   abort "--sha is required" unless options[:commit_sha]
   begin
     MermaidTestExtractor.new(**options).extract_all

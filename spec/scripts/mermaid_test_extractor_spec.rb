@@ -14,6 +14,7 @@ module ExtractMermaidTestsHelpers
   def tests_b = ["handles showData", "pie showData\n  \"y\" : 2"]
   def tests_c = ["handles comments", "pie\n  %% note\n  \"z\" : 3"]
   def tests_new = ["handles a new thing", "pie title New\n  \"n\" : 9"]
+  def upstream_sha = "a" * 40
 
   def write_upstream(root, tests)
     path = File.join(root, UPSTREAM_FILE)
@@ -28,7 +29,12 @@ module ExtractMermaidTestsHelpers
   def run_extractor(root, out, naming: :stable)
     real = $stdout
     $stdout = StringIO.new
-    options = { root: root, output_dir: out, naming: naming }.compact
+    options = {
+      root: root,
+      output_dir: out,
+      naming: naming,
+      commit_sha: upstream_sha,
+    }.compact
     MermaidTestExtractor.new(**options).extract_all
   ensure
     $stdout = real
@@ -74,10 +80,10 @@ module ExtractMermaidTestsHelpers
     end
   end
 
-  def ordinal_meta(tests)
+  def extracted_meta(tests, **options)
     Dir.mktmpdir do |dir|
       write_upstream("#{dir}/mermaid-js", tests)
-      run_extractor("#{dir}/mermaid-js", "#{dir}/out", naming: :ordinal)
+      run_extractor("#{dir}/mermaid-js", "#{dir}/out", **options)
       JSON.parse(File.read(Dir.glob("#{dir}/out/pie/*.json")[0]))
     end
   end
@@ -141,13 +147,14 @@ RSpec.describe MermaidTestExtractor do
       .to be_a(CorpusCaseIdentity::CollisionError)
   end
 
-  it "keeps NNN_ file names under the default ordinal naming" do
+  it "keeps NNN_ file names under explicit ordinal naming" do
     names = ordinal_output([tests_a, tests_b]).grep(/\.mmd\z/)
     expect(names.map { _1[/\A\d{3}_/] }).to eq(%w[001_ 002_])
   end
 
-  it "uses ordinal naming unless told otherwise" do
-    expect(default_naming_files([tests_a]).first).to match(/\A001_/)
+  it "uses stable naming unless told otherwise" do
+    expect(default_naming_files([tests_a]).first)
+      .to match(/\Ahandles_titles-\h{8}\.mmd\z/)
   end
 
   it "builds each id from the upstream test title" do
@@ -155,11 +162,33 @@ RSpec.describe MermaidTestExtractor do
   end
 
   it "adds no case_id to the meta under ordinal naming" do
-    expect(ordinal_meta([tests_a])).not_to include("case_id")
+    expect(extracted_meta([tests_a], naming: :ordinal)).not_to include("case_id")
+  end
+
+  it "writes stable identity and upstream provenance by default" do
+    expect(extracted_meta([tests_a])).to include(
+      "case_id" => match(%r{\Apie/handles_titles-\h{8}\z}),
+      "source_file" => "/#{ExtractMermaidTestsHelpers::UPSTREAM_FILE}",
+      "upstream_sha" => upstream_sha,
+    )
+  end
+
+  it "requires the upstream commit sha" do
+    expect { described_class.new(root: "/tmp/mermaid-js", commit_sha: nil) }
+      .to raise_error(CorpusRefresh::Error, /commit sha is required/)
+  end
+
+  it "requires the upstream checkout path" do
+    expect { described_class.new(commit_sha: upstream_sha) }
+      .to raise_error(ArgumentError, /missing keyword: :root/)
   end
 
   it "rejects an unknown naming" do
-    expect { described_class.new(naming: :random) }
+    expect do
+      described_class.new(
+        root: "/tmp/mermaid-js", commit_sha: upstream_sha, naming: :random,
+      )
+    end
       .to raise_error(ArgumentError, /naming must be one of/)
   end
 end
