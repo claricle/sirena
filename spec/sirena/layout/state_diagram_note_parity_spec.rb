@@ -19,12 +19,9 @@ RSpec.describe Sirena::Layout::StateDiagram do
   let(:control_cases) do
     %w[
       state_diagram/should_handle_state_definitions_with_separation-cd10456b
-      state_diagram/should_handle_notes_for_composite_nested_states-0033e4b1
       state_diagram/should_handle_state_definitions_with_separation-a4e9be66
       state_diagram/statediagram_v2_spec-2d12b6d7
-      state_diagram/statediagram_v2_spec-13deff6f
       state_diagram/statediagram_spec-f56a2ffc
-      state_diagram/statediagram_v2_spec-3249fd2d
       state_diagram/statediagram_spec-ac7e4b11
       state_diagram/statediagram_spec-128d4533
     ].map { |id| "#{id}.mmd" }

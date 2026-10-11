@@ -21,7 +21,7 @@ module Sirena
           @diagram = Diagram::StateDiagram.new
           @states = @diagram.states
           @state_counter = 0
-          @composite_ids = []
+          @concurrent_region_counter = 0
           statements_in(tree).each { |item| process_item(item) }
           @diagram
         end
@@ -84,7 +84,7 @@ module Sirena
         def process_note(stmt)
           target_id = extract_text(stmt[:note_target])
           target = find_state(target_id)
-          return unless target && !@composite_ids.include?(target_id)
+          return unless target
 
           @diagram.notes << Diagram::StateNote.new(
             id: "#{target_id}----note",
@@ -113,13 +113,16 @@ module Sirena
         end
 
         def declare_composite_state(state_id, label, composite)
-          @composite_ids << state_id
           state = process_composite_state(state_id, label, composite)
+          state.declaration_only = false
           append_display_text(state, label)
         end
 
         def update_declared_state(state_id, label, description)
+          existing = find_state(state_id)
           state = add_or_update_state(state_id, label)
+          state.declaration_only = existing.nil? && label.nil? &&
+            description.nil?
           append_display_text(state, label)
           return unless description
 
@@ -177,25 +180,40 @@ module Sirena
         end
 
         def process_composite_state(parent_id, label, composite_data)
-          prior_state = find_state(parent_id)
           parent_state = add_or_update_state(parent_id, label)
-          children = composite_children(prior_state, parent_state, label)
-
-          within(children) do
-            statements_in(composite_data).each do |stmt|
-              process_statement(stmt)
-            end
-          end
+          process_composite_statements(parent_state, composite_data)
 
           parent_state
         end
 
-        def composite_children(prior_state, parent_state, label)
-          # Bare and forward-declared composites retain their existing flat
-          # contract until their separate geometry families are migrated.
-          return @states if prior_state || label.nil?
+        def process_composite_statements(parent, composite_data)
+          statements = statements_in(composite_data)
+          return process_nested_statements(parent.children, statements) unless
+            statements.any? { |item| item[:concurrent_sep] }
 
-          parent_state.children
+          concurrent_groups(statements).each_with_index do |group, index|
+            region = concurrent_region(parent, index)
+            parent.children << region
+            process_nested_statements(region.children, group)
+          end
+        end
+
+        def process_nested_statements(children, statements)
+          within(children) do
+            statements.each { |stmt| process_statement(stmt) }
+          end
+        end
+
+        def concurrent_groups(statements)
+          statements.each_with_object([[]]) do |statement, groups|
+            statement[:concurrent_sep] ? groups << [] : groups.last << statement
+          end
+        end
+
+        def concurrent_region(_parent, _index)
+          @concurrent_region_counter += 1
+          build_state("concurrent_region_#{@concurrent_region_counter}",
+                      nil, "normal")
         end
 
         def within(states)
@@ -244,7 +262,7 @@ module Sirena
 
         def ensure_state_exists(state_id)
           existing = find_state(state_id)
-          return existing if existing
+          return reveal_state(existing) if existing
 
           state = Diagram::StateNode.new.tap do |s|
             s.id = state_id
@@ -255,9 +273,17 @@ module Sirena
           state
         end
 
+        def reveal_state(state)
+          state.declaration_only = false
+          state
+        end
+
         def add_special_state(state_id, state_type)
           existing = find_state(state_id)
-          return existing if existing
+          if existing
+            existing.declaration_only = false
+            return existing
+          end
 
           state = ensure_state_exists(state_id)
           state.label = nil

@@ -29,6 +29,10 @@ module Sirena
       # Child states for composite/nested states
       attribute :children, StateNode, collection: true, default: -> { [] }
 
+      # A bare `state ID` declaration exists in Mermaid's database but is not
+      # drawn until another statement gives it display semantics or uses it.
+      attribute :declaration_only, :boolean, default: -> { false }
+
       # Initialize with default state type
       def initialize(*args)
         super
