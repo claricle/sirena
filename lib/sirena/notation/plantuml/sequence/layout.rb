@@ -40,6 +40,26 @@ module Sirena
           BANNER_STEP = 21.64
           BANNER_PADDING = 7.0
           MONOSPACE_ADVANCE = 6.02
+          GLYPH_HEAD_HEIGHT = 76.4883
+          GLYPH_BOX_HEIGHT = 30.4883
+          GLYPH_BOX_OFFSET = 4.0
+          QUEUE_HEIGHT = 26.4883
+          ICON_LABEL_INSET = 2.9531
+          TAIL_ICON_LABEL = 13.5352
+          BOX_LABEL_INSET = 10.9531
+          TAIL_BOX_LABEL = 20.5352
+          QUEUE_LABEL_INSET = 7.9531
+          TAIL_QUEUE_LABEL = 18.5352
+          ICON_RADIUS = 12.0
+          GLYPH_BUILDERS = {
+            actor: :actor_geometry,
+            boundary: :boundary_geometry,
+            collections: :collections_geometry,
+            control: :control_geometry,
+            database: :database_geometry,
+            entity: :entity_geometry,
+            queue: :queue_geometry,
+          }.freeze
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
                            :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT,
@@ -47,7 +67,12 @@ module Sirena
                            :EDGE_MARGIN,
                            :PAGE_BREAK_INSET, :BANNER_LEFT, :BANNER_TOP,
                            :BANNER_HEIGHT, :BANNER_STEP, :BANNER_PADDING,
-                           :MONOSPACE_ADVANCE
+                           :MONOSPACE_ADVANCE, :GLYPH_HEAD_HEIGHT,
+                           :GLYPH_BOX_HEIGHT, :GLYPH_BOX_OFFSET, :QUEUE_HEIGHT,
+                           :ICON_LABEL_INSET, :TAIL_ICON_LABEL,
+                           :BOX_LABEL_INSET, :TAIL_BOX_LABEL,
+                           :QUEUE_LABEL_INSET, :TAIL_QUEUE_LABEL,
+                           :ICON_RADIUS, :GLYPH_BUILDERS
 
           # @param graph [IR::Graph] from {IRAdapter}
           def scene(graph)
@@ -166,9 +191,12 @@ module Sirena
           end
 
           def heads(widths)
-            return place_heads(widths, @top) unless @diagram.footbox?
+            unless @diagram.footbox?
+              return place_heads(widths, @top, tail: false)
+            end
 
-            place_heads(widths, @top) + place_heads(widths, @flow.y)
+            place_heads(widths, @top, tail: false) +
+              place_heads(widths, @flow.y, tail: true)
           end
 
           # The lifelines end where the foot heads would begin.
@@ -183,10 +211,20 @@ module Sirena
           end
 
           def head_height
+            return GLYPH_HEAD_HEIGHT + head_growth if glyph_participants?
+
             plain = @diagram.participants.all? do |p|
               p.kind == :participant && p.stereotype.nil?
             end
             (plain ? 36.0 : 56.0) + head_growth
+          end
+
+          def glyph_participants?
+            @diagram.participants.any? { |participant| glyph?(participant) }
+          end
+
+          def glyph?(participant)
+            participant.kind != :participant
           end
 
           def head_style
@@ -457,30 +495,69 @@ module Sirena
             SELF_WIDTH + 6 + labels.map { |m| label_width(m) }.max
           end
 
-          def place_heads(widths, top)
+          def place_heads(widths, top, tail:)
             @diagram.participants.each_with_index.map do |participant, index|
-              head(participant, @centers[index], widths[index], top)
+              head(participant, @centers[index], widths[index], top, tail)
             end
           end
 
-          def head(participant, centre, width, top)
+          def head(participant, centre, width, top, tail)
+            geometry = head_geometry(participant, centre, width, top, tail)
             Scene::Head.new(
               id: participant.id, kind: participant.kind.to_s,
               x: centre - (width / 2), y: top, width: width,
               height: @head_height, fill: participant.fill&.colour,
               fill_opacity: participant.fill&.opacity,
               stroke: head_style.line,
-              texts: head_texts(participant, centre, top)
+              texts: head_texts(participant, centre, top, tail), **geometry
             )
           end
 
-          def head_texts(participant, centre, top)
+          def head_texts(participant, centre, top, tail)
+            unless glyph?(participant)
+              return participant_texts(participant, centre, top)
+            end
+
+            glyph_texts(participant, centre, top, tail)
+          end
+
+          def participant_texts(participant, centre, top)
             label = head_label(participant, centre, top)
             name = above_label(participant)
             return [label] unless name
 
             lines = [text(name, centre, top + 14, "kind"), label]
             participant.stereotype ? align(lines, centre) : lines
+          end
+
+          def glyph_texts(participant, centre, top, tail)
+            baseline = glyph_label_y(participant.kind, top, tail)
+            label = restyle(text(participant.label, centre, baseline,
+                                 "participant"), head_style)
+            return [label] unless participant.stereotype
+
+            stereotype = text("«#{participant.stereotype}»", centre,
+                              baseline - 18, "kind")
+            align([stereotype, label], centre)
+          end
+
+          def glyph_label_y(kind, top, tail)
+            top + glyph_label_offset(kind, tail)
+          end
+
+          def glyph_label_offset(kind, tail)
+            if boxed_glyph?(kind)
+              return label_offset(tail, TAIL_BOX_LABEL, BOX_LABEL_INSET)
+            end
+            if kind == :queue
+              return label_offset(tail, TAIL_QUEUE_LABEL, QUEUE_LABEL_INSET)
+            end
+
+            label_offset(tail, TAIL_ICON_LABEL, ICON_LABEL_INSET)
+          end
+
+          def label_offset(tail, tail_label, inset)
+            tail ? tail_label : @head_height - inset
           end
 
           def head_label(participant, centre, top)
@@ -518,10 +595,197 @@ module Sirena
           end
 
           def above_label(participant)
-            return "«#{participant.stereotype}»" if participant.stereotype
-            return if participant.kind == :participant
+            "«#{participant.stereotype}»" if participant.stereotype
+          end
 
-            participant.kind.to_s
+          def head_geometry(participant, centre, width, top, tail)
+            builder = GLYPH_BUILDERS[participant.kind]
+            return rectangle_geometry(centre, width, top, tail) unless builder
+
+            send(builder, centre, width, top, tail)
+          end
+
+          def rectangle_geometry(centre, width, top, tail)
+            left = centre - (width / 2)
+            height = glyph_participants? ? participant_box_height : @head_height
+            y = rectangle_top(top, height, tail)
+            radius = glyph_participants? ? 2.5 : 3
+            rectangle = glyph_rectangle(left, y, width, height, radius: radius)
+            { rectangles: [rectangle] }
+          end
+
+          def collections_geometry(centre, width, top, tail)
+            left = centre - (width / 2)
+            y = glyph_box_top(top, tail)
+            glyph_width = width - GLYPH_BOX_OFFSET
+            back = glyph_rectangle(left + GLYPH_BOX_OFFSET,
+                                   y - GLYPH_BOX_OFFSET, glyph_width)
+            front = glyph_rectangle(left, y, glyph_width)
+            { rectangles: [back, front] }
+          end
+
+          def rectangle_top(top, height, tail)
+            return top unless glyph_participants?
+
+            return top if tail
+
+            top + @head_height - height - 1
+          end
+
+          def glyph_rectangle(left, top, width, height = GLYPH_BOX_HEIGHT,
+                              radius: nil)
+            Scene::Head::Rectangle.new(
+              x: left, y: top, width: width, height: height,
+              rx: radius, ry: radius
+            )
+          end
+
+          def actor_geometry(centre, _width, top, tail)
+            centre_y = tail ? top + @head_height - 51.5 : top + 8.5
+            ellipse = Scene::Head::Ellipse.new(
+              cx: centre, cy: centre_y, rx: 8, ry: 8,
+            )
+            path = Scene::Head::Path.new(
+              data: actor_path(centre, centre_y), filled: false,
+            )
+            { ellipses: [ellipse], paths: [path] }
+          end
+
+          def actor_path(centre, centre_y)
+            body_top = centre_y + 8
+            body_bottom = centre_y + 35
+            foot = centre_y + 50
+            ["M #{centre} #{body_top} L #{centre} #{body_bottom}",
+             "M #{centre - 13} #{body_top + 8} " \
+             "L #{centre + 13} #{body_top + 8}",
+             "M #{centre} #{body_bottom} L #{centre - 13} #{foot}",
+             "M #{centre} #{body_bottom} L #{centre + 13} #{foot}"].join(" ")
+          end
+
+          def boundary_geometry(centre, _width, top, tail)
+            centre_y = icon_centre_y(top, tail)
+            stem_x = centre - 29
+            stem = Scene::Head::Path.new(
+              data: "M #{stem_x} #{centre_y - 12} " \
+                    "L #{stem_x} #{centre_y + 12} " \
+                    "M #{stem_x} #{centre_y} L #{centre - 12} #{centre_y}",
+              filled: false,
+            )
+            { ellipses: [icon_ellipse(centre, centre_y)], paths: [stem] }
+          end
+
+          def control_geometry(centre, _width, top, tail)
+            centre_y = icon_centre_y(top, tail)
+            points = [[centre - 4, centre_y - 12],
+                      [centre + 2, centre_y - 17],
+                      [centre, centre_y - 12],
+                      [centre + 2, centre_y - 7]]
+            pointer = Scene::Head::Polygon.new(
+              points: polygon_points(points << points.first),
+            )
+            { ellipses: [icon_ellipse(centre, centre_y)], polygons: [pointer] }
+          end
+
+          def entity_geometry(centre, _width, top, tail)
+            centre_y = icon_centre_y(top, tail)
+            base = Scene::Head::Line.new(
+              x1: centre - ICON_RADIUS, y1: centre_y + 14,
+              x2: centre + ICON_RADIUS, y2: centre_y + 14
+            )
+            { ellipses: [icon_ellipse(centre, centre_y)], lines: [base] }
+          end
+
+          def icon_ellipse(centre, centre_y)
+            Scene::Head::Ellipse.new(
+              cx: centre, cy: centre_y, rx: ICON_RADIUS, ry: ICON_RADIUS,
+            )
+          end
+
+          def icon_centre_y(top, tail)
+            tail ? top + @head_height - 44 : top + 44
+          end
+
+          def database_geometry(centre, _width, top, tail)
+            y = tail ? top + @head_height - 60 : top + 14
+            left = centre - 18
+            right = centre + 18
+            outline = Scene::Head::Path.new(
+              data: database_outline(left, centre, right, y), filled: true,
+            )
+            rim = Scene::Head::Path.new(
+              data: database_rim(left, centre, right, y), filled: false,
+            )
+            { paths: [outline, rim] }
+          end
+
+          def database_outline(left, centre, right, top)
+            ["M #{left} #{top + 10}",
+             "C #{left} #{top} #{centre} #{top} #{centre} #{top}",
+             "C #{centre} #{top} #{right} #{top} #{right} #{top + 10}",
+             "L #{right} #{top + 36}",
+             "C #{right} #{top + 46} #{centre} #{top + 46} " \
+             "#{centre} #{top + 46}",
+             "C #{centre} #{top + 46} #{left} #{top + 46} " \
+             "#{left} #{top + 36}",
+             "L #{left} #{top + 10}"].join(" ")
+          end
+
+          def database_rim(left, centre, right, top)
+            ["M #{left} #{top + 10}",
+             "C #{left} #{top + 20} #{centre} #{top + 20} " \
+             "#{centre} #{top + 20}",
+             "C #{centre} #{top + 20} #{right} #{top + 20} " \
+             "#{right} #{top + 10}"].join(" ")
+          end
+
+          def queue_geometry(centre, width, top, tail)
+            y = tail ? top : top + @head_height - QUEUE_HEIGHT
+            left = centre - (width / 2)
+            right = left + width
+            middle = y + (QUEUE_HEIGHT / 2)
+            outline = glyph_path(queue_outline(left, right, y, middle), true)
+            rim = glyph_path(queue_rim(right, y, middle), false)
+            { paths: [outline, rim] }
+          end
+
+          def queue_outline(left, right, top, middle)
+            ["M #{left + 5} #{top} L #{right - 5} #{top}",
+             "C #{right} #{top} #{right} #{middle} #{right} #{middle}",
+             "C #{right} #{middle} #{right} #{top + QUEUE_HEIGHT} " \
+             "#{right - 5} #{top + QUEUE_HEIGHT}",
+             "L #{left + 5} #{top + QUEUE_HEIGHT}",
+             "C #{left} #{top + QUEUE_HEIGHT} #{left} #{middle} " \
+             "#{left} #{middle}",
+             "C #{left} #{middle} #{left} #{top} #{left + 5} #{top}"].join(" ")
+          end
+
+          def queue_rim(right, top, middle)
+            ["M #{right - 5} #{top}",
+             "C #{right - 10} #{top} #{right - 10} #{middle} " \
+             "#{right - 10} #{middle}",
+             "C #{right - 10} #{top + QUEUE_HEIGHT} " \
+             "#{right - 5} #{top + QUEUE_HEIGHT}"]
+              .join(" ")
+          end
+
+          def polygon_points(points)
+            points.map { |point_x, point_y| "#{point_x},#{point_y}" }.join(" ")
+          end
+
+          def glyph_path(data, filled)
+            Scene::Head::Path.new(data: data, filled: filled)
+          end
+
+          def glyph_box_top(top, tail)
+            tail ? top : top + @head_height - GLYPH_BOX_HEIGHT - 1
+          end
+
+          def participant_box_height
+            @diagram.participants.any?(&:stereotype) ? 56.0 : GLYPH_BOX_HEIGHT
+          end
+
+          def boxed_glyph?(kind)
+            %i[collections participant].include?(kind)
           end
 
           def frames(widths)

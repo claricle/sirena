@@ -26,8 +26,15 @@ module Sirena
           BANNER_STROKE = "#FFDD88"
           WARNING_SIZE = "10"
           LEGEND_FILL = "#DDDDDD"
+          HEAD_SHAPE_DRAWERS = {
+            rectangles: :head_rectangle,
+            ellipses: :head_ellipse,
+            paths: :head_path,
+            lines: :head_line,
+            polygons: :head_polygon,
+          }.freeze
           private_constant :LAYERS, :BANNER_FILL, :BANNER_STROKE,
-                           :WARNING_SIZE, :LEGEND_FILL
+                           :WARNING_SIZE, :LEGEND_FILL, :HEAD_SHAPE_DRAWERS
 
           def render(scene)
             document = blank_document(scene)
@@ -225,17 +232,74 @@ module Sirena
           end
 
           def head_group(head)
-            group("participant-#{head.id}-#{head.y}", [head_rectangle(head)],
+            group("participant-#{head.id}-#{head.y}", head_shapes(head),
                   head.texts)
           end
 
-          def head_rectangle(head)
+          def head_shapes(head)
+            shapes = HEAD_SHAPE_DRAWERS.flat_map do |collection, drawer|
+              Array(head.public_send(collection)).map do |shape|
+                send(drawer, shape, head)
+              end
+            end
+            return shapes unless shapes.empty?
+
+            [legacy_head_rectangle(head)]
+          end
+
+          # v0.1 callers may still construct a Head directly. Its x/y/width/
+          # height are already final geometry; this only preserves that Scene
+          # input while Layout-published heads use typed primitives above.
+          def legacy_head_rectangle(head)
             element(Svg::Rect, x: head.x, y: head.y, width: head.width,
                                height: head.height, rx: 3, ry: 3,
                                fill: head.fill || node_fill,
                                fill_opacity: head.fill_opacity&.to_s,
                                stroke: head.stroke || node_stroke,
                                stroke_width: stroke_width)
+          end
+
+          def head_rectangle(shape, head)
+            element(Svg::Rect, x: shape.x, y: shape.y, width: shape.width,
+                               height: shape.height, rx: shape.rx, ry: shape.ry,
+                               fill: head.fill || node_fill,
+                               fill_opacity: head.fill_opacity&.to_s,
+                               stroke: head.stroke || node_stroke,
+                               stroke_width: stroke_width)
+          end
+
+          def head_ellipse(shape, head)
+            element(Svg::Ellipse, cx: shape.cx, cy: shape.cy,
+                                  rx: shape.rx, ry: shape.ry,
+                                  fill: head.fill || node_fill,
+                                  fill_opacity: head.fill_opacity&.to_s,
+                                  stroke: head.stroke || node_stroke,
+                                  stroke_width: stroke_width)
+          end
+
+          def head_path(shape, head)
+            fill = shape.filled ? head.fill || node_fill : "none"
+            element(Svg::Path, d: shape.data, fill: fill,
+                               fill_opacity: head_path_opacity(shape, head),
+                               stroke: head.stroke || node_stroke,
+                               stroke_width: stroke_width)
+          end
+
+          def head_path_opacity(shape, head)
+            head.fill_opacity&.to_s if shape.filled
+          end
+
+          def head_line(shape, head)
+            element(Svg::Line, x1: shape.x1, y1: shape.y1,
+                               x2: shape.x2, y2: shape.y2,
+                               stroke: head.stroke || node_stroke,
+                               stroke_width: stroke_width)
+          end
+
+          def head_polygon(shape, head)
+            colour = head.stroke || node_stroke
+            element(Svg::Polygon, points: shape.points, fill: colour,
+                                  stroke: colour, stroke_width: stroke_width)
           end
 
           def text_element(scene_text)

@@ -12,6 +12,38 @@ module Sirena
         # drawable roles only; the renderer picks colours and strokes.
         class Scene < Sirena::Layout::Scene
           class Head < Lutaml::Model::Serializable
+            class Rectangle < Lutaml::Model::Serializable
+              attribute :x, :float
+              attribute :y, :float
+              attribute :width, :float
+              attribute :height, :float
+              attribute :rx, :float
+              attribute :ry, :float
+            end
+
+            class Ellipse < Lutaml::Model::Serializable
+              attribute :cx, :float
+              attribute :cy, :float
+              attribute :rx, :float
+              attribute :ry, :float
+            end
+
+            class Path < Lutaml::Model::Serializable
+              attribute :data, :string
+              attribute :filled, :boolean
+            end
+
+            class Line < Lutaml::Model::Serializable
+              attribute :x1, :float
+              attribute :y1, :float
+              attribute :x2, :float
+              attribute :y2, :float
+            end
+
+            class Polygon < Lutaml::Model::Serializable
+              attribute :points, :string
+            end
+
             attribute :id, :string
             attribute :kind, :string
             attribute :x, :float
@@ -22,6 +54,11 @@ module Sirena
             attribute :fill_opacity, :float
             attribute :stroke, :string
             attribute :texts, PlantUML::Scene::Text, collection: true
+            attribute :rectangles, Rectangle, collection: true
+            attribute :ellipses, Ellipse, collection: true
+            attribute :paths, Path, collection: true
+            attribute :lines, Line, collection: true
+            attribute :polygons, Polygon, collection: true
           end
 
           # One shape at an arrow end: a "polygon" (points), a "line" or a
