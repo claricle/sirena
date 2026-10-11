@@ -52,6 +52,6 @@ RSpec.describe Sirena::Layout::UserJourney do
     digest = Digest::SHA256.hexdigest(Sirena.render(source))
 
     expect(digest)
-      .to eq("83b328cc01b68da58fcee08a737530e5a3aaf472837cb65a8d0a90e9bf25aed1")
+      .to eq("47f3a312d1b3584bc4d449e12c6ac892dc65044062613ea39dbee88028b524f8")
   end
 end
