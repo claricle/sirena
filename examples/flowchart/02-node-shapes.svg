@@ -1,38 +1,38 @@
 <svg
- width="729.906"
- height="374.0"
- viewBox="0 0 729.906 374.0"
+ width="146.89600000000002"
+ height="448.76"
+ viewBox="0 0 146.89600000000002 448.76"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
  overflow="hidden"
 >
 <g id="edge-A_to_B">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 143.0 67.0 L 300.0 67.0"/>
-  <polygon fill="#000000" stroke="#000000" points="300.0,67.0 292.0,63.0 292.0,71.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 73.4 62.0 L 73.4 112.0"/>
+  <polygon fill="#000000" stroke="#000000" points="73.4,112.0 77.4,104.0 69.4,104.0"/>
 </g>
 <g id="edge-B_to_C">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 386.7 68.7 L 553.4 75.2"/>
-  <polygon fill="#000000" stroke="#000000" points="553.4,75.2 545.5,70.9 545.2,78.9"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 73.4 166.0 L 73.4 216.0"/>
+  <polygon fill="#000000" stroke="#000000" points="73.4,216.0 77.4,208.0 69.4,208.0"/>
 </g>
 <g id="edge-C_to_D">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 570.5 88.1 L 103.5 264.2"/>
-  <polygon fill="#000000" stroke="#000000" points="103.5,264.2 112.4,265.2 109.5,257.7"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 73.4 334.0 L 73.4 384.0"/>
+  <polygon fill="#000000" stroke="#000000" points="73.4,384.0 77.4,376.0 69.4,376.1"/>
 </g>
 <g id="node-A">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="93.02799999999999" height="34.0"/>
-  <text fill="#000000" x="96.514" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Rectangle</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="8.0" y="8.0" width="130.89600000000002" height="54.0"/>
+  <text fill="#000000" x="73.44800000000001" y="40.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Rectangle</text>
 </g>
 <g id="node-B">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="86.812" height="34.0" rx="17.0" ry="17.0"/>
-  <text fill="#000000" x="343.406" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Rounded</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="27.488000000000007" y="112.0" width="91.92" height="54.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="73.44800000000001" y="144.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Rounded</text>
 </g>
 <g id="node-C">
-  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="599.953,50.0 649.906,77.0 599.953,104.0 550.0,77.0"/>
-  <text fill="#000000" x="599.953" y="81.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Rhombus</text>
+  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="73.44800000000001,216.0 132.472,275.024 73.44800000000001,334.048 14.424000000000007,275.024"/>
+  <text fill="#000000" x="73.44800000000001" y="280.624" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Rhombus</text>
 </g>
 <g id="node-D">
-  <circle fill="#ffffff" stroke="#000000" stroke-width="2.0" cx="82.885" cy="272.0" r="22.0"/>
-  <text fill="#000000" x="82.885" y="276.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Circle</text>
+  <circle fill="#ffffff" stroke="#000000" stroke-width="2.0" cx="73.44800000000001" cy="412.404" r="28.356"/>
+  <text fill="#000000" x="73.44800000000001" y="418.004" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Circle</text>
 </g>
 </svg>

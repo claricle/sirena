@@ -124,7 +124,7 @@ rows:
 - file: spec/sirena/renderer/flowchart_cluster_spec.rb
   count: 26
 - file: spec/sirena/renderer/flowchart_link_spec.rb
-  count: 40
+  count: 39
 - file: spec/sirena/renderer/flowchart_spec.rb
   count: 1
 - file: spec/sirena/renderer/mindmap_spec.rb
