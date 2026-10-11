@@ -10,6 +10,12 @@ RSpec.describe Sirena do
       expect(svg).to include('width="27.0"', ">Flag</text>")
     end
 
+    it "renders an escaped quote inside a field label" do
+      svg = described_class.render("packet-beta\n  0-7: \"Say \\\"hi\\\"\"\n")
+
+      expect(svg).to include('>Say "hi"</text>')
+    end
+
     it "rejects a range whose end precedes its start" do
       source = "packet-beta\n  7-0: \"Reverse\"\n"
 

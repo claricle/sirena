@@ -28,7 +28,7 @@ module Sirena
 
         rule(:field_label) do
           str('"') >>
-            match('[^"]').repeat(0).as(:label) >>
+            ((str("\\") >> any) | match('[^"\\\\]')).repeat(0).as(:label) >>
             str('"')
         end
 
