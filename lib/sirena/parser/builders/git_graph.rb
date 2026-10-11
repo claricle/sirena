@@ -176,7 +176,9 @@ module Sirena
           def process_branch(data)
             options = data[:options]
             order = options.first[:order].to_i if options
-            add_branch(State.unquote(data[:name]), order)
+            name = State.unquote(data[:name])
+            add_branch(name, order)
+            checkout_branch(name)
           end
 
           def process_checkout(data)
