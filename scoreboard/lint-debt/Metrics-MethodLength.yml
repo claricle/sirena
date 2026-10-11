@@ -14,7 +14,7 @@ rows:
 - file: lib/sirena/layout/sequence.rb
   count: 3
 - file: lib/sirena/layout/xy_chart.rb
-  count: 3
+  count: 2
 - file: lib/sirena/parser/builders/architecture.rb
   count: 2
 - file: lib/sirena/parser/grammars/flowchart.rb

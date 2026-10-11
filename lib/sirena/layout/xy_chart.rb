@@ -25,10 +25,11 @@ module Sirena
       MARGIN_TOP = 51
       MARGIN_RIGHT = 0
       MARGIN_BOTTOM = 41
-      MARGIN_LEFT = 82
+      MARGIN_LEFT = 82.71875190734863
 
       GRID_LINES = 5
-      BAR_WIDTH_RATIO = 0.6
+      BAR_PADDING_RATIO = 0.95
+      CATEGORICAL_INSET = 17.0
       # Bars terminate below the plotted y range at Mermaid's bar baseline.
       BAR_BASELINE_OFFSET = 8
 
@@ -318,7 +319,15 @@ module Sirena
         axis = graph[:x_axis]
         return 20 unless axis[:type] == :categorical && axis[:positions]
 
-        (graph[:plot_width] / axis[:positions].length) * BAR_WIDTH_RATIO
+        categorical_bar_width(axis[:positions])
+      end
+
+      def categorical_bar_width(positions)
+        return 20 if positions.length < 2
+
+        inner_width = positions.last[:position] - positions.first[:position]
+        tick_distance = inner_width / positions.length
+        [CATEGORICAL_INSET * 2, tick_distance].min * BAR_PADDING_RATIO
       end
 
       def legends(graph)
@@ -426,25 +435,40 @@ module Sirena
         num_categories = axis[:values].length
         return default_x_axis(width) if num_categories.zero?
 
-        # Calculate spacing between categories
-        spacing = width / [num_categories, 1].max
+        return single_category_axis(axis, width) if num_categories == 1
 
-        # Position each category
-        positions = axis[:values].map.with_index do |label, idx|
+        positions = categorical_positions(axis[:values], width)
+        categorical_axis(axis, width, positions)
+      end
+
+      def categorical_positions(values, width)
+        spacing = (width - (CATEGORICAL_INSET * 2)) / (values.length - 1)
+        values.map.with_index do |label, index|
           {
             label: label,
-            position: (idx * spacing) + (spacing / 2),
-            index: idx,
+            position: CATEGORICAL_INSET + (index * spacing),
+            index: index,
           }
         end
+      end
 
+      def categorical_axis(axis, width, positions)
         {
           label: axis[:label],
           type: :categorical,
           positions: positions,
           min: 0,
-          max: num_categories - 1,
+          max: positions.length - 1,
           width: width,
+        }
+      end
+
+      def single_category_axis(axis, width)
+        {
+          label: axis[:label], type: :categorical,
+          positions: [{ label: axis[:values].first,
+                        position: width / 2, index: 0 }],
+          min: 0, max: 0, width: width
         }
       end
 
