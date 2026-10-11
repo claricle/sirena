@@ -89,11 +89,18 @@ module Sirena
         lines = label.text.to_s.split("\n", -1)
         return text.content = label.text if lines.one?
 
+        stack_lines(text, label, lines)
+      end
+
+      def stack_lines(text, label, lines)
         pitch = label.height / lines.size
         text.dominant_baseline = nil
         text.y = first_baseline(label, lines.size, pitch, text.font_size)
-        spaced = lines[0...-1].map { |line| "#{line} " } << lines.last
-        LineBreakText.fill_lines(text, spaced, pitch: pitch)
+        LineBreakText.fill_lines(text, sentence_lines(lines), pitch: pitch)
+      end
+
+      def sentence_lines(lines)
+        lines[0...-1].map { |line| "#{line} " } << lines.last
       end
 
       def first_baseline(label, count, pitch, font_size)
