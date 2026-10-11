@@ -66,7 +66,6 @@ module Sirena
         attribute :x, :float
         attribute :y, :float
         attribute :font_size, :float
-        attribute :font_family, :string
         attribute :font_weight, :string
         attribute :text_anchor, :string
       end
@@ -662,8 +661,7 @@ module Sirena
       def label_style(kind)
         {
           group: { font_weight: typography_value(:font_weight_bold) || "bold" },
-          service: { font_family: typography_value(:font_family),
-                     text_anchor: "middle" },
+          service: { text_anchor: "middle" },
           edge: { text_anchor: "middle" },
         }.fetch(kind)
       end
