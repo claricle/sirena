@@ -85,9 +85,24 @@ RSpec.describe Sirena::Layout::ElkPlacement do
   end
 
   describe "Engine#render with layout_engine: :elk" do
-    it "renders a flowchart whose coordinates differ from the grid's" do
-      elk = Sirena::Engine.new.render(source, layout_engine: :elk)
-      expect(elk).not_to eq(Sirena::Engine.new.render(source))
+    it "places a class diagram differently from the grid default" do
+      class_source = "classDiagram\n A <|-- B\n A <|-- C\n A <|-- D\n"
+      elk = Sirena::Engine.new.render(class_source, layout_engine: :elk)
+      expect(elk).not_to eq(Sirena::Engine.new.render(class_source))
+    end
+
+    it "places a flowchart through ElkPlacement with or without the option" do
+      placed = 0
+      allow(described_class).to receive(:apply).and_wrap_original do |orig, *a|
+        placed += 1
+        orig.call(*a)
+      end
+      explicit = Sirena::Engine.new.render(source, layout_engine: :elk)
+      explicit_placed = placed
+      default = Sirena::Engine.new.render(source)
+
+      expect([explicit_placed.positive?, placed > explicit_placed, default])
+        .to eq([true, true, explicit])
     end
 
     it "retains a self-loop for Flowchart to route after elkrb placement" do
