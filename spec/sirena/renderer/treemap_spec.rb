@@ -152,21 +152,23 @@ RSpec.describe Sirena::Renderer::Treemap do
         expect(svg).to include("123.7")
       end
 
-      it "skips nonpositive root nodes" do
+      it "retains zero root nodes and skips negative ones" do
         add_root_nodes([["Positive", 10], ["Zero", 0], ["Negative", -2]])
 
         layout = transform.to_graph(diagram)
 
-        expect(layout.cells.map { |cell| cell.label.text }).to eq(["Positive"])
+        expect(layout.cells.map { |cell| cell.label.text })
+          .to eq(%w[Positive Zero])
       end
 
-      it "skips valueless and negative children" do
+      it "retains valueless children and skips negative ones" do
         add_root_with_children([["Positive", 10], ["Valueless"],
                                 ["Negative", -2]])
 
         children = transform.to_graph(diagram).cells.first.children
 
-        expect(children.map { |cell| cell.label.text }).to eq(["Positive"])
+        expect(children.map { |cell| cell.label.text })
+          .to eq(%w[Positive Valueless])
       end
     end
 
