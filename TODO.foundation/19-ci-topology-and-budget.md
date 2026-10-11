@@ -173,6 +173,30 @@ conformance (04), and the fresh-resolution install (01).
 10. Re-verify that branch protection still names the aggregators, in
     case the topology moved during consolidation.
 
+## Measured lane timings (19b)
+
+Measured 2026-10-11 with `scripts/ci_lane_timings.rb claricle/sirena
+2026-10-10T13:00:00Z 200`, then filtered to `ci` runs on `main` that succeeded
+and use the sharded topology: 23 runs, ids 38068467558 through 38115384187
+(`push`, 2026-10-10 16:38Z to 2026-10-11 05:37Z). A lane's time is its slowest
+job, started to completed (queue time excluded), as the script defines it.
+
+| Lane | Cache state | Runs | Minutes | Budget | Within |
+|---|---|---|---|---|---|
+| Fast (slowest `unit` job) | warm (exact key hit) | 21 | 7.2 to 8.8 | < 10 | yes |
+| Fast | restore-key hit (38088636381, 38102081409) | 2 | 7.8 and 8.7 | < 10 | yes |
+| Fast | cold (nothing restored) | 0 | not measured | < 10 | unknown |
+| Full (slowest job is always `fresh-resolution`) | no cache by design | 23 | 8.2 median, 9.0 max | < 30 | yes |
+| Full | cold / warm split | n/a | n/a | < 30 | not applicable |
+
+What is missing: no `main` run in the window, and none among the 51 runs the
+script covered including PR runs, logged a cold ruby/setup-ruby cache, so the
+fast lane has no cold sample. The full lane's slowest job installs without a
+bundler cache, so it has no cold/warm split; the other full-lane jobs ran
+0.5 to 1.5 minutes in run 38115384187. Cold timing needs a run after the cache
+key changes or is evicted. 19b's "cold and warm timings recorded" is therefore
+only half met: warm is recorded, cold is not.
+
 ## Done when
 
 **19a**
