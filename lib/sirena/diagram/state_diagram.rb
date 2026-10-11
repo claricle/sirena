@@ -124,6 +124,18 @@ module Sirena
       end
     end
 
+    # A note attached to a state in a state diagram.
+    class StateNote < Lutaml::Model::Serializable
+      attribute :id, :string
+      attribute :text, :string
+      attribute :target_id, :string
+      attribute :position, :string
+
+      def valid?
+        [id, text, target_id].all? { |value| value && !value.empty? }
+      end
+    end
+
     # State diagram model.
     #
     # Represents a complete state machine diagram with states and
@@ -154,6 +166,9 @@ module Sirena
       attribute :transitions, StateTransition, collection: true,
                                                default: -> { [] }
 
+      # Collection of notes attached to states
+      attribute :notes, StateNote, collection: true, default: -> { [] }
+
       # Returns the diagram type identifier.
       #
       # @return [Symbol] :state_diagram
@@ -178,7 +193,7 @@ module Sirena
       def valid?
         return false if states.nil?
 
-        states.all?(&:valid?) && valid_transitions?
+        all_states.all?(&:valid?) && valid_transitions? && valid_notes?
       end
 
       # Finds a state by its identifier.
@@ -186,7 +201,7 @@ module Sirena
       # @param id [String] the state identifier to find
       # @return [StateNode, nil] the state or nil if not found
       def find_state(id)
-        states.find { |s| s.id == id }
+        all_states.find { |state| state.id == id }
       end
 
       # Finds all transitions originating from a specific state.
@@ -209,31 +224,37 @@ module Sirena
       #
       # @return [StateNode, nil] the start state or nil if not found
       def start_state
-        states.find(&:start_state?)
+        all_states.find(&:start_state?)
       end
 
       # Finds all end states.
       #
       # @return [Array<StateNode>] end states
       def end_states
-        states.select(&:end_state?)
+        all_states.select(&:end_state?)
       end
 
       # Finds all composite states.
       #
       # @return [Array<StateNode>] composite states
       def composite_states
-        states.select(&:composite_state?)
+        all_states.select(&:composite_state?)
       end
 
       # Finds all choice states.
       #
       # @return [Array<StateNode>] choice states
       def choice_states
-        states.select(&:choice_state?)
+        all_states.select(&:choice_state?)
       end
 
       private
+
+      def all_states(collection = states)
+        Array(collection).flat_map do |state|
+          [state, *all_states(state.children)]
+        end
+      end
 
       def valid_transitions?
         transitions.nil? || transitions.all? do |transition|
@@ -241,8 +262,14 @@ module Sirena
         end
       end
 
+      def valid_notes?
+        notes.nil? || notes.all? do |note|
+          note.valid? && !find_state(note.target_id).nil?
+        end
+      end
+
       def transition_references_resolve?(transition)
-        state_ids = states.map(&:id)
+        state_ids = all_states.map(&:id)
         state_ids.include?(transition.from_id) &&
           state_ids.include?(transition.to_id)
       end

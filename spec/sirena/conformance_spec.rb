@@ -146,12 +146,21 @@ RSpec.describe Sirena::Conformance do
   end
 
   describe ".render with a source that depends on today's date" do
-    let(:name) do
-      "gantt/021_parser_should_handle_a_dateformat_definition_20.mmd"
+    let(:root) { Dir.mktmpdir }
+    let(:name) { "gantt/date-dependent.mmd" }
+    let(:source) do
+      "gantt\ndateFormat MM-DD\nsection S\nA :a, 01-02, 30d\n"
     end
-    let(:source) { File.read(File.join(described_class::CORPUS_ROOT, name)) }
     let(:engine) { Sirena::Engine.new }
     let(:pinned) { engine.render(source, today: Date.new(2026, 1, 1)) }
+
+    before do
+      FileUtils.mkdir_p(File.join(root, "gantt"))
+      File.write(File.join(root, name), source)
+      stub_const("Sirena::Conformance::CORPUS_ROOT", root)
+    end
+
+    after { FileUtils.remove_entry(root) }
 
     it "depends on the date, so the render has to be pinned" do
       later = engine.render(source, today: Date.new(2030, 6, 1))

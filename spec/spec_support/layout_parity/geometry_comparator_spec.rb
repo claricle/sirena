@@ -84,6 +84,14 @@ RSpec.describe SpecSupport::LayoutParity::GeometryComparator do
     end
   end
 
+  it "selects evidence keys deterministically below scoreboard precision" do
+    expect(stable_evidence).to eq(expected_stable_evidence)
+  end
+
+  it "selects tied duplicate-key evidence deterministically" do
+    expect(stable_duplicate_evidence).to eq(expected_duplicate_evidence)
+  end
+
   it "skips a dimension only when both sides are zero" do
     result = compare([pair("line", box(0, 0, 0, 10), box(0, 0, 0, 20))])
 
@@ -121,5 +129,33 @@ RSpec.describe SpecSupport::LayoutParity::GeometryComparator do
     end
 
     expect(&action).to raise_error(ArgumentError, /no root extent/)
+  end
+
+  def near_tied_pairs
+    [pair("z", box(0, 0, 10, 10), box(0, 0, 11.000002, 10)),
+     pair("a", box(20, 0, 10, 10), box(20, 0, 11.000001, 10))]
+  end
+
+  def stable_evidence
+    sets = [near_tied_pairs, near_tied_pairs.reverse]
+    sets.map { |set| compare(set) }.map do |result|
+      [result[:worst_keys][:e_w], result[:top5].map { |row| row[:key] }]
+    end.uniq
+  end
+
+  def expected_stable_evidence
+    [[[:node, nil, "a"], [[:node, nil, "a"], [:node, nil, "z"]]]]
+  end
+
+  def stable_duplicate_evidence
+    pairs = [pair("same", box(20, 0, 10, 10), box(20, 0, 11.000002, 10)),
+             pair("same", box(0, 0, 10, 10), box(0, 0, 11.000001, 10))]
+    [pairs, pairs.reverse].map { |set| compare(set) }.map do |result|
+      result[:top5].map { |row| row[:bbox_reference] }
+    end.uniq
+  end
+
+  def expected_duplicate_evidence
+    [[[0.0, 0.0, 10.0, 10.0], [20.0, 0.0, 30.0, 10.0]]]
   end
 end

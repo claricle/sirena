@@ -68,8 +68,17 @@ RSpec.describe SpecSupport::LayoutParity::CaseLedger do
   end
 
   it "collapses float noise below the scoreboard precision" do
-    expected = [0.123456789012, 0.123456789012]
+    expected = [0.123456, 0.123456]
     expect(recorded_noisy_centers).to eq([expected, expected])
+  end
+
+  it "collapses float noise inside nested geometry evidence" do
+    rows = [0.12345641, 0.12345649].map.with_index do |value, index|
+      measured = geometry.merge(top5: [{ bbox_reference: [value] }])
+      ledger_with_geometry(measured, case_id: "git/#{index}").fetch(0)
+    end
+
+    expect(rows.map { |row| row.dig("geometry", "top5") }.uniq.length).to eq(1)
   end
 
   it "keeps meaningful center-threshold changes detectable" do
@@ -101,13 +110,17 @@ RSpec.describe SpecSupport::LayoutParity::CaseLedger do
 
   def ledger_with_center(value, case_id: "flowchart/a")
     measured_geometry = geometry.merge(worst_e_c: value)
+    ledger_with_geometry(measured_geometry, case_id: case_id)
+  end
+
+  def ledger_with_geometry(measured_geometry, case_id:)
     result = build_result.call(case_id: case_id,
                                measured_geometry: measured_geometry)
     described_class.build([result])
   end
 
   def recorded_noisy_centers
-    [0.12345678901231, 0.12345678901239].map.with_index do |value, index|
+    [0.12345641, 0.12345649].map.with_index do |value, index|
       row = ledger_with_center(value, case_id: "flowchart/#{index}").fetch(0)
       [row.dig("geometry", "worst_e_c"),
        row.dig("summary", "metrics", "worst_e_c")]

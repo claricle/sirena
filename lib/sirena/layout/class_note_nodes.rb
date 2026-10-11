@@ -59,9 +59,16 @@ module Sirena
         ClassNote.new(
           id: node[:id].delete_prefix("note:"), text: node[:metadata][:text],
           target_id: node[:metadata][:target_id],
-          x: node[:x], y: node[:y], width: node[:width], height: node[:height],
+          **geometry(node),
           **link(node, target)
         )
+      end
+
+      def geometry(node)
+        {
+          x: node[:x], y: node[:y], width: node[:width], height: node[:height],
+          text_x: node[:x] + (node[:width] / 2), text_y: node[:y] + 23
+        }
       end
 
       def link(node, target)

@@ -12,8 +12,9 @@ module SpecSupport
         worst_analog
       ].freeze
       JSON_SCALARS = [String, Integer, TrueClass, FalseClass, NilClass].freeze
-      # Suppress runtime noise far below the 0.08 and 0.15 contract thresholds.
-      SCOREBOARD_DECIMAL_PLACES = 12
+      # Suppress cross-platform runtime noise far below the 0.08 and 0.15
+      # contract thresholds while retaining changes as small as 0.000001.
+      SCOREBOARD_DECIMAL_PLACES = 6
 
       def self.build(results)
         new(results).build
@@ -106,7 +107,10 @@ module SpecSupport
       end
 
       def json_float(value)
-        return value if value.finite?
+        if value.finite?
+          rounded = value.round(SCOREBOARD_DECIMAL_PLACES)
+          return rounded.zero? ? 0.0 : rounded
+        end
         return "Infinity" if value.infinite? == 1
         return "-Infinity" if value.infinite? == -1
 
@@ -116,8 +120,7 @@ module SpecSupport
       def normalized_metric(value)
         return value unless value.is_a?(Float) && value.finite?
 
-        rounded = value.round(SCOREBOARD_DECIMAL_PLACES)
-        rounded.zero? ? 0.0 : rounded
+        json_float(value)
       end
     end
   end

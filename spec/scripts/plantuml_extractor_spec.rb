@@ -122,6 +122,11 @@ RSpec.describe PlantumlExtractor do
         expect(cases.values.first[:meta][:occurrences]).to eq(2)
       end
     end
+
+    it "rejects distinct sources that resolve to one case ID" do
+      allow(described_class::CaseId).to receive(:call).and_return("collision")
+      expect_collision("#{diagram_a}\n#{diagram_b}\n")
+    end
   end
 
   describe "selection" do
@@ -164,6 +169,12 @@ RSpec.describe PlantumlExtractor do
         expect(found.first.source).to eq(diagram_b)
       end
     end
+  end
+
+  def expect_collision(source)
+    expect { described_class::Cases.build(block(source)) }
+      .to raise_error(described_class::CaseIdCollision,
+                      /case ID collision.*collision/i)
   end
 
   describe "the committed corpus" do

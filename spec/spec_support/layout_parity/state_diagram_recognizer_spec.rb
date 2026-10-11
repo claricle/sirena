@@ -57,15 +57,6 @@ RSpec.describe SpecSupport::LayoutParity::StateDiagramRecognizer do
     ].sort_by { |item| item.map(&:to_s) }
   end
 
-  def real_sirena_elements
-    [
-      [:state, "Configuring", nil, :id],
-      [:state, "Idle", nil, :id],
-      [:state, "NotShooting", nil, :id],
-      [:"terminal-start", "[*]", nil, :id],
-    ].sort_by { |item| item.map(&:to_s) }
-  end
-
   def simple_terminal_match
     name = "002_example_state_1"
     reference = extract(reference_svg("state/#{name}.svg"), recognizer)
@@ -85,11 +76,11 @@ RSpec.describe SpecSupport::LayoutParity::StateDiagramRecognizer do
     expect(actual).to eq([synthetic_elements, synthetic_elements, [:composite]])
   end
 
-  it "exposes missing composite metadata in a real Sirena render" do
+  it "recovers composite metadata from a real Sirena render" do
     reference, sirena = real_sides
 
     expect([recognized(reference), recognized(sirena)])
-      .to eq([real_reference_elements, real_sirena_elements])
+      .to eq([real_reference_elements, real_reference_elements])
   end
 
   it "matches terminal roles by their fixed contract key" do

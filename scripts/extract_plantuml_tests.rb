@@ -21,6 +21,8 @@ require "optparse"
 module PlantumlExtractor
   TYPES = %w[class sequence].freeze
 
+  class CaseIdCollision < StandardError; end
+
   SOURCE_ROOTS = {
     resources: "src/test/resources",
     java: "src/test/java",
@@ -179,11 +181,19 @@ module PlantumlExtractor
       return unless TYPES.include?(type)
 
       id = CaseId.call(path: block.path, test: block.test, source: block.source)
-      if cases.key?(id)
-        cases[id][:meta][:occurrences] += 1
-      else
-        cases[id] = entry(block, id, type)
-      end
+      candidate = entry(block, id, type)
+      cases.key?(id) ? merge!(cases[id], candidate, id) : cases[id] = candidate
+    end
+
+    def merge!(existing, candidate, id)
+      reject_collision!(existing, candidate, id)
+      existing[:meta][:occurrences] += 1
+    end
+
+    def reject_collision!(existing, candidate, id)
+      return if existing[:source] == candidate[:source]
+
+      raise CaseIdCollision, "case ID collision for #{id}"
     end
 
     def entry(block, id, type)

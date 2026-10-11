@@ -25,10 +25,22 @@ RSpec.describe Sirena::Renderer::Block do
   end
 
   def arrow_xml
-    nodes = %w[up down left right sideways].map do |direction|
-      node(direction, shape: "arrow", direction: direction, label: nil)
+    points = arrow_points
+    nodes = points.map do |direction, shape_points|
+      node(direction, shape: "arrow", direction: direction, label: nil,
+                      shape_points: shape_points)
     end
     renderer.render(scene(children: nodes)).to_xml
+  end
+
+  def arrow_points
+    {
+      "up" => "50.0,0.0 100.0,60.0 0.0,60.0",
+      "down" => "0.0,0.0 100.0,0.0 50.0,60.0",
+      "left" => "0.0,30.0 100.0,0.0 100.0,60.0",
+      "right" => "0.0,0.0 100.0,30.0 0.0,60.0",
+      "sideways" => "0.0,0.0 100.0,30.0 0.0,60.0",
+    }
   end
 
   def compound_xml
@@ -85,7 +97,8 @@ RSpec.describe Sirena::Renderer::Block do
   end
 
   it "uses the smaller side for a circle radius" do
-    circle = node("c", shape: "circle", width: 80, height: 40)
+    circle = node("c", shape: "circle", width: 80, height: 40,
+                       center_x: 40, center_y: 20, radius: 20)
     xml = renderer.render(scene(children: [circle])).to_xml
     expect(xml).to match(/<circle[^>]*cx="40.0"[^>]*cy="20.0"[^>]*r="20.0"/)
   end

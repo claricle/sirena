@@ -3183,7 +3183,7 @@
   evidence: mmdc rendered it
 - case: gantt/001_rendering_gantt_spec_gantt_0.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gantt/002_rendering_gantt_spec_gantt_1.mmd
   verdict: valid
   evidence: mmdc rendered it

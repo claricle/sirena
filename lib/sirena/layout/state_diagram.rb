@@ -16,7 +16,8 @@ module Sirena
       TERMINAL_TYPES = %w[start end].freeze
 
       State = Data.define(
-        :id, :label, :state_type, :description, :descriptions
+        :id, :label, :state_type, :description, :descriptions, :children,
+        :target_id, :position
       )
       private_constant :State
 
@@ -90,6 +91,7 @@ module Sirena
         attribute :shape_points, :string
         attribute :shape_y, :float
         attribute :shape_height, :float
+        attribute :children, Node, collection: true, default: -> { [] }
       end
 
       class Scene < Layout::Scene
@@ -224,6 +226,7 @@ module Sirena
         graph = build_graph(diagram)
         placer.apply(graph)
         orient_grid_terminals(graph)
+        place_attached_notes(graph)
         scene_from_graph(graph)
       end
 
@@ -238,7 +241,7 @@ module Sirena
         return unless graph.dig(:layoutOptions, ElkOptions::DIRECTION) ==
           DIRECTION_DOWN
 
-        graph[:children].each do |state|
+        nested_states(graph[:children]).each do |state|
           shape_type = state.dig(:metadata, :shape_type)
           next unless TERMINAL_TYPES.include?(shape_type)
 
@@ -256,7 +259,7 @@ module Sirena
         states = layout_states(graph, semantics)
         {
           id: diagram_identifier(graph, semantics),
-          children: transform_states(states),
+          children: transform_states(states + layout_notes(graph, semantics)),
           edges: transform_transitions(graph, semantics),
           layoutOptions: layout_options(layout_direction(graph, semantics)),
         }
@@ -276,6 +279,12 @@ module Sirena
         end
       end
 
+      def layout_notes(graph, semantics)
+        graph.nodes.filter_map do |node|
+          note_from(node, semantics) if node.role == "annotation"
+        end
+      end
+
       def state_from(node, semantics)
         State.new(
           id: state_identifier(node, semantics),
@@ -284,7 +293,45 @@ module Sirena
           description: semantic_value(semantics, node.id,
                                       "latest_description"),
           descriptions: semantic_values(semantics, node.id, "display_text"),
+          children: state_children_from(node, semantics),
+          target_id: nil, position: nil
         )
+      end
+
+      def state_children_from(node, semantics)
+        nested_state_nodes(node, semantics).map do |child|
+          state_from(child, semantics)
+        end
+      end
+
+      def note_from(node, semantics)
+        State.new(
+          id: state_identifier(node, semantics), label: nil,
+          state_type: "note", description: nil,
+          descriptions: note_lines(node.label), children: [],
+          target_id: state_identifier_from_id(node.parent_id, semantics),
+          position: semantic_value(semantics, node.id, "placement_side")
+        )
+      end
+
+      def state_identifier_from_id(node_id, semantics)
+        semantic_value(semantics, node_id, "original_identifier") || node_id
+      end
+
+      def note_lines(text)
+        text.to_s.split(/\s*<br\s*\/?\s*>\s*/i).map(&:strip).reject(&:empty?)
+      end
+
+      def nested_state_nodes(node, semantics)
+        Array(semantics[node.id]).select do |child|
+          STATE_TYPES.key?(child.role)
+        end
+      end
+
+      def nested_states(states)
+        Array(states).flat_map do |state|
+          [state, *nested_states(state[:children])]
+        end
       end
 
       def declared_state_type(node, semantics)
@@ -321,12 +368,13 @@ module Sirena
 
       def scene_from_graph(graph)
         children = typed_children(graph[:children] || [])
+        raw_children = positioned_children(graph[:children] || [])
         Scene.new(
           id: graph[:id] || "state_diagram",
           **scene_geometry(graph),
           children: children,
           edges: typed_edges(
-            graph[:edges] || [], children, graph[:children] || []
+            graph[:edges] || [], children, raw_children
           ),
         )
       end
@@ -338,18 +386,33 @@ module Sirena
         { width: width, height: height, view_box: "0 0 #{width} #{height}" }
       end
 
-      def typed_children(children)
-        children.map { |state| typed_node(state) }
+      def typed_children(children, parent_x = 0, parent_y = 0)
+        children.map { |state| typed_node(state, parent_x, parent_y) }
       end
 
-      def typed_node(state)
-        state_type = state.dig(:metadata, :state_type) || "normal"
-        shape_type = state.dig(:metadata, :shape_type) || state_type
-        Node.new(
-          id: state[:id], labels: typed_labels(state), state_type: state_type,
-          shape_type: shape_type,
-          **self.class.shape_geometry(state, shape_type)
-        )
+      def typed_node(state, parent_x, parent_y)
+        positioned = position_state(state, parent_x, parent_y)
+        state_type = positioned.dig(:metadata, :state_type) || "normal"
+        shape_type = positioned.dig(:metadata, :shape_type) || state_type
+        Node.new(**typed_node_values(positioned, state_type, shape_type))
+      end
+
+      def position_state(state, parent_x, parent_y)
+        state.merge(x: state[:x].to_f + parent_x,
+                    y: state[:y].to_f + parent_y)
+      end
+
+      def typed_node_values(positioned, state_type, shape_type)
+        {
+          id: positioned[:id], labels: typed_labels(positioned),
+          state_type: state_type, shape_type: shape_type,
+          children: typed_child_nodes(positioned),
+          **self.class.shape_geometry(positioned, shape_type)
+        }
+      end
+
+      def typed_child_nodes(state)
+        typed_children(state[:children] || [], state[:x], state[:y])
       end
 
       def typed_labels(state)
@@ -362,9 +425,27 @@ module Sirena
       end
 
       def typed_edges(edges, children, raw_children)
-        nodes = children.to_h { |node| [node.id, node] }
+        nodes = flatten_typed_nodes(children).to_h { |node| [node.id, node] }
         raw_nodes = raw_children.to_h { |node| [node[:id], node] }
         edges.filter_map { |edge| typed_edge_for(edge, nodes, raw_nodes) }
+      end
+
+      def flatten_typed_nodes(children)
+        children.flat_map do |node|
+          [node, *flatten_typed_nodes(node.children)]
+        end
+      end
+
+      def positioned_children(children, parent_x = 0, parent_y = 0)
+        children.flat_map do |state|
+          positioned = state.merge(
+            x: state[:x].to_f + parent_x,
+            y: state[:y].to_f + parent_y,
+          )
+          [positioned, *positioned_children(
+            positioned[:children] || [], positioned[:x], positioned[:y]
+          )]
+        end
       end
 
       def typed_edge_for(edge, nodes, raw_nodes)
@@ -469,15 +550,27 @@ module Sirena
           height: dimensions[:height],
           labels: state_labels(state),
           metadata: state_metadata(state),
+          children: transform_states(state.children),
         }
       end
 
       def state_metadata(state)
-        metadata = {
+        metadata = base_state_metadata(state)
+        add_terminal_radius(metadata)
+      end
+
+      def base_state_metadata(state)
+        {
           state_type: state.state_type,
           shape_type: state_shape_type(state),
           description: state.description,
+          cluster: state.children.any?,
+          note_target: state.target_id,
+          note_position: state.position,
         }
+      end
+
+      def add_terminal_radius(metadata)
         if TERMINAL_TYPES.include?(metadata[:shape_type])
           metadata[:shape_radius] = TERMINAL_RADIUS
         end
@@ -565,6 +658,7 @@ module Sirena
         when "start", "end" then calculate_terminal_dimensions
         when "choice" then calculate_choice_dimensions(label_dims)
         when "fork", "join" then calculate_fork_join_dimensions
+        when "note" then calculate_note_dimensions(label_dims, descriptions)
         else calculate_normal_state_dimensions(label_dims, descriptions)
         end
       end
@@ -608,6 +702,7 @@ module Sirena
       # directly built model can hold that combination, and it keeps its
       # declared marker type.
       def state_shape_type(state)
+        return "note" if state.state_type == "note"
         return "normal" unless Array(state.descriptions).reject(&:empty?).empty?
         return "normal" if state.description && !state.description.empty?
 
@@ -648,6 +743,16 @@ module Sirena
         { width: [width, 100].max, height: [height, 50].max }
       end
 
+      def calculate_note_dimensions(label_dims, descriptions)
+        dimensions = descriptions.map do |description|
+          measure_text(description, font_size: small_font_size)
+        end
+        {
+          width: normal_state_width(label_dims, dimensions),
+          height: normal_state_height(label_dims, dimensions),
+        }
+      end
+
       def normal_state_width(label_dims, descriptions)
         descriptions.map { |item| item[:width] }
           .push(label_dims[:width]).max + 40
@@ -685,6 +790,26 @@ module Sirena
 
       def direction_to_layout(direction)
         DIRECTIONS.fetch(direction, DIRECTION_DOWN)
+      end
+
+      def place_attached_notes(graph)
+        nodes = nested_states(graph[:children]).to_h do |node|
+          [node[:id], node]
+        end
+        nodes.each_value { |note| place_attached_note(note, nodes) }
+      end
+
+      def place_attached_note(note, nodes)
+        target = nodes[note.dig(:metadata, :note_target)]
+        return unless target
+
+        note[:x], note[:y] = attached_note_coordinates(note, target)
+      end
+
+      def attached_note_coordinates(note, target)
+        x_position = target[:x] + ((target[:width] - note[:width]) / 2.0)
+        y_position = target[:y] + target[:height] + 75
+        [x_position, y_position]
       end
     end
   end

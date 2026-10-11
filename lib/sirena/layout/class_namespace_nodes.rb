@@ -111,7 +111,8 @@ module Sirena
       def box(node, left, top)
         ClassNamespaceBox.new(
           id: node[:id], title: node[:metadata][:title], x: left, y: top,
-          width: node[:width], height: node[:height]
+          width: node[:width], height: node[:height],
+          title_x: left + (node[:width] / 2), title_y: top + 22
         )
       end
     end

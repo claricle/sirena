@@ -35,6 +35,10 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphRecognizer do
     end
   end
 
+  def real_commit_labels
+    real_pair.map { |elements| keys_of(elements, :commit_label) }
+  end
+
   def expected_commits
     (1..18).map { |index| "commit-#{index}" }
   end
@@ -73,6 +77,14 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphRecognizer do
 
     expect(real_summary.map { |side| side.first(2) })
       .to eq([expected, expected])
+  end
+
+  it "excludes producer-generated commit labels from semantic identity" do
+    expect(real_commit_labels).to eq([["An id"], ["An id"]])
+  end
+
+  it "preserves source-provided named commit labels exactly" do
+    expect(real_commit_labels).to all(eq(["An id"]))
   end
 
   it "recognizes semantic lanes from both rendered representations" do

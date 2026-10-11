@@ -548,7 +548,7 @@ module Sirena
 
       def settle_explicit_task_end(task)
         if task.end_date
-          settle_end(task, midnight(parse_date(task.end_date)))
+          settle_end(task, explicit_end(task))
         elsif task.duration && task.calculated_start
           settle_end(task, end_for(task.calculated_start, task.duration))
         end
@@ -573,7 +573,7 @@ module Sirena
         if task.duration
           settle_end(task, end_for(task.calculated_start, task.duration))
         elsif task.end_date
-          settle_end(task, midnight(parse_date(task.end_date)))
+          settle_end(task, explicit_end(task))
         elsif task.until_task
           settle_until_end(task)
         end
@@ -618,14 +618,23 @@ module Sirena
       # missing day becomes the 1st, and a missing month becomes January when
       # the year IS explicit — both to preserve what Date.parse returned, so
       # "2024/01" still reads as 2024-01-01 rather than moving with the pin.
-      def parse_date(date_str)
+      def parse_date(date_str, fallback: today)
+        return fallback if date_str.to_s.include?("\\")
+
         parts = Date._parse(date_str.to_s)
         return ordinal_date(parts) if parts[:yday]
-        return today unless parts[:mon] || parts[:mday]
+        return fallback unless parts[:mon] || parts[:mday]
 
         Date.new(*calendar_date_parts(parts))
       rescue ArgumentError, TypeError
-        today
+        fallback
+      end
+
+      # Mermaid collapses an invalid explicit end onto its already-resolved
+      # start instead of extending the task to the current date.
+      def explicit_end(task)
+        fallback = task.calculated_start.to_date
+        midnight(parse_date(task.end_date, fallback: fallback))
       end
 
       # Ordinal dates carry a day-of-year instead of a month and day.
