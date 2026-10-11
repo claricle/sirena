@@ -27,8 +27,8 @@ RSpec.describe Sirena::Renderer::Sequence do
   end
   let(:default_digests) do
     %w[
-      2ac51b15049238594d801f746656f382f6ac3d71da1b65af6e07fe3288ed2462
-      54a8594a958e8a8da8fb53632b2997847d4969dbd9e4ee3d02900979a5b7f0f7
+      476c3544eec4e062740aceb28b6a53a93439ca072474f4662035d4bf033ce6fa
+      c765fca366762aa4da6e92fea0ef33fc5925b984f0734435d6eacec20b4cd934
     ]
   end
 

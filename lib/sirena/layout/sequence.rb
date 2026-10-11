@@ -515,29 +515,31 @@ module Sirena
         actor_type == "actor" ? ACTOR_LABEL_OFFSET : PARTICIPANT_HEIGHT / 2
       end
 
+      # The stick figure mmdc draws for an actor: a 15 radius head at y+10,
+      # a 20 tall torso, 18 wide arms and legs ending at y+60.
       def actor_head(position, actor_type)
         return unless actor_type == "actor"
 
-        Circle.new(x: position[:center_x], y: position[:y] + 10, radius: 8)
+        Circle.new(x: position[:center_x], y: position[:y] + 10, radius: 15)
       end
 
       def actor_lines(position, actor_type)
         return [] unless actor_type == "actor"
 
         center = position[:center_x]
-        body_top = position[:y] + 18
-        body_bottom = body_top + 15
+        body_top = position[:y] + 25
+        body_bottom = body_top + 20
         [
           line(center, body_top, center, body_bottom),
-          line(center - 10, body_top + 7, center + 10, body_top + 7),
+          line(center - 18, body_top + 8, center + 18, body_top + 8),
           *actor_leg_lines(center, body_bottom),
         ]
       end
 
       def actor_leg_lines(center, body_bottom)
         [
-          line(center, body_bottom, center - 8, body_bottom + 10),
-          line(center, body_bottom, center + 8, body_bottom + 10),
+          line(center, body_bottom, center - 18, body_bottom + 15),
+          line(center, body_bottom, center + 16, body_bottom + 15),
         ]
       end
 
