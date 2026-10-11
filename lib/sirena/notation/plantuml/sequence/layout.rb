@@ -153,23 +153,38 @@ module Sirena
           # An explicit box declaration moves a participant that an earlier
           # message created implicitly behind the unboxed peer created with it.
           def order_boxed_member(diagram)
-            participants = diagram.participants
-            box = diagram.boxes.first if diagram.boxes.one?
-            return diagram unless box&.members&.one?
+            from, to = boxed_member_move(diagram)
+            return diagram unless from
 
-            member = box.members.first
-            peer = first_message_peer(diagram, member)
-            return diagram unless peer && !box.members.include?(peer)
-
-            from = participants.index { |participant| participant.id == member }
-            to = participants.index { |participant| participant.id == peer }
-            return diagram unless from && to && from < to
-
-            moved = participants.dup
-            participant = moved.delete_at(from)
-            peer_index = moved.index { |candidate| candidate.id == peer }
-            moved.insert(peer_index + 1, participant)
+            moved = diagram.participants.dup
+            moved.insert(to, moved.delete_at(from))
             diagram_with_participants(diagram, moved.freeze)
+          end
+
+          # Indexes of the sole boxed member and of the unboxed peer it
+          # follows, when the member was declared before that peer.
+          def boxed_member_move(diagram)
+            member = sole_boxed_member(diagram)
+            peer = member && outside_peer(diagram, member)
+            return unless peer
+
+            from = participant_index(diagram, member)
+            to = participant_index(diagram, peer)
+            [from, to] if from && to && from < to
+          end
+
+          def sole_boxed_member(diagram)
+            box = diagram.boxes.first if diagram.boxes.one?
+            box.members.first if box&.members&.one?
+          end
+
+          def outside_peer(diagram, member)
+            peer = first_message_peer(diagram, member)
+            peer unless peer == member
+          end
+
+          def participant_index(diagram, id)
+            diagram.participants.index { |participant| participant.id == id }
           end
 
           def first_message_peer(diagram, member)
@@ -329,12 +344,15 @@ module Sirena
             end
 
             minimum, padding = head_box_dimensions
-            label_width = measure_text(
-              participant.label, font_size: head_font_size
-            )[:width]
-            widths = [minimum, label_width + (2 * padding), requested_width]
+            widths = [minimum, padded_label_width(participant, padding),
+                      requested_width]
             widths << boxed_title_width(participant) unless boxed_plain_heads?
             widths.max
+          end
+
+          def padded_label_width(participant, padding)
+            label = measure_text(participant.label, font_size: head_font_size)
+            label[:width] + (2 * padding)
           end
 
           def head_box_dimensions
@@ -949,16 +967,24 @@ module Sirena
           end
 
           def frame_edges(box, widths)
-            first, last = member_indexes(box).minmax
-            left = @centers[first] - (widths[first] / 2) - BOX_PADDING
-            right = @centers[last] + (widths[last] / 2) + BOX_PADDING
+            left, right = member_edges(box, widths)
             return [left, right] unless boxed_plain_heads?
 
-            title_shortfall = title_width(box) + (2 * BOX_TITLE_PADDING) -
-              (right - left)
-            return [left, right] unless title_shortfall.positive?
+            widen_to_title(box, left, right)
+          end
 
-            [left - (title_shortfall / 2), right + (title_shortfall / 2)]
+          def member_edges(box, widths)
+            first, last = member_indexes(box).minmax
+            [@centers[first] - (widths[first] / 2) - BOX_PADDING,
+             @centers[last] + (widths[last] / 2) + BOX_PADDING]
+          end
+
+          def widen_to_title(box, left, right)
+            shortfall = title_width(box) + (2 * BOX_TITLE_PADDING) -
+              (right - left)
+            return [left, right] unless shortfall.positive?
+
+            [left - (shortfall / 2), right + (shortfall / 2)]
           end
 
           def lifelines

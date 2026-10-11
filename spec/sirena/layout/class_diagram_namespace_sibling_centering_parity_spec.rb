@@ -15,11 +15,13 @@ RSpec.describe Sirena::Layout::ClassDiagram do
     "classdiagram_spec-4440fcd7.mmd" => 2,
     "yari-8803143a.mmd" => 2,
   }.each do |case_id, count|
-    it "centers the vertical namespace siblings in #{case_id}" do
-      centers = centers_for(case_id)
+    it "places every class of #{case_id}" do
+      expect(centers_for(case_id).size).to eq(count)
+    end
 
-      expect(centers.size).to eq(count)
-      expect(centers.map { |center| center.round(3) }.uniq.size).to eq(1)
+    it "centers the vertical namespace siblings in #{case_id}" do
+      centers = centers_for(case_id).map { |center| center.round(3) }
+      expect(centers.uniq.size).to eq(1)
     end
   end
 end

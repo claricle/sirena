@@ -29,15 +29,26 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       parsed.transform.new.call(parsed.diagram)
     end
 
-    it "uses the pinned intrinsic head size and leaves title width to the box" do
+    it "uses the pinned intrinsic head width" do
       reference_head = reference.at_xpath('//g[@id="part1-head"]/rect')
+      expect(scene.heads.first.width)
+        .to be_within(0.1).of(reference_head["width"].to_f)
+    end
+
+    it "uses the pinned intrinsic head height" do
+      reference_head = reference.at_xpath('//g[@id="part1-head"]/rect')
+      expect(scene.heads.first.height).to eq(reference_head["height"].to_f)
+    end
+
+    it "leaves the title width to the box" do
       reference_frame = reference.at_xpath("/svg/g/rect[1]")
+      expect(scene.frames.first.width)
+        .to be_within(1).of(reference_frame["width"].to_f)
+    end
+
+    it "centers the box on its head" do
       head = scene.heads.first
       frame = scene.frames.first
-
-      expect(head.width).to be_within(0.1).of(reference_head["width"].to_f)
-      expect(head.height).to eq(reference_head["height"].to_f)
-      expect(frame.width).to be_within(1).of(reference_frame["width"].to_f)
       expect(frame.x + (frame.width / 2)).to be_within(1e-9)
         .of(head.x + (head.width / 2))
     end
@@ -73,12 +84,10 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
     it "places the external before the redeclared box member" do
       path = File.join(root, "references", "sequence", "#{case_id}.svg")
-      reference = Nokogiri::XML(File.read(path)).remove_namespaces!
-      reference_ids = reference.xpath('//g[contains(@class,"participant-head")]')
-        .map { |group| group["data-qualified-name"] }
-      actual_ids = scene.heads.first(scene.lifelines.size).map(&:id)
-
-      expect(actual_ids).to eq(reference_ids)
+      heads = Nokogiri::XML(File.read(path)).remove_namespaces!
+        .xpath('//g[contains(@class,"participant-head")]')
+      expect(scene.heads.first(scene.lifelines.size).map(&:id))
+        .to eq(heads.map { |group| group["data-qualified-name"] })
     end
 
     it "improves the pinned center error without changing element presence" do

@@ -33,11 +33,15 @@ module Sirena
           center_vertical_siblings(child[:children])
         end
         Array(children).group_by { |child| child[:x] }.each_value do |column|
-          next unless column.map { |child| child[:y] }.uniq.size > 1
-
-          width = column.map { |child| child[:width] }.max
-          column.each { |child| child[:x] += (width - child[:width]) / 2.0 }
+          center_column(column)
         end
+      end
+
+      def center_column(column)
+        return unless column.map { |child| child[:y] }.uniq.size > 1
+
+        width = column.map { |child| child[:width] }.max
+        column.each { |child| child[:x] += (width - child[:width]) / 2.0 }
       end
 
       def nested?(graph)
@@ -45,7 +49,8 @@ module Sirena
           child[:children] || child[:id].to_s.start_with?("namespace:")
         end
       end
-      private_class_method :center_vertical_siblings, :directed, :nested?
+      private_class_method :center_vertical_siblings, :center_column,
+                           :directed, :nested?
     end
   end
 end
