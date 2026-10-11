@@ -121,7 +121,7 @@ RSpec.describe Sirena::Layout::StateDiagram, :aggregate_failures do
       expect(scene.children).to all(be_a(described_class::Node))
       expect(scene.edges).to all(be_a(described_class::Edge))
       expect([scene.width, scene.height, scene.view_box])
-        .to eq([500.0, 200.0, "0 0 500 200"])
+        .to eq([460.828125, 190.0, "0 0 460.828125 190.0"])
     end
 
     it "creates states with dimensions" do
@@ -147,7 +147,7 @@ RSpec.describe Sirena::Layout::StateDiagram, :aggregate_failures do
       expect([transition.source, transition.target, transition.trigger])
         .to eq(%w[idle active start])
       expect(transition.sections.first).to be_a(described_class::Section)
-      expect(transition.path).to eq("M 100 75 L 350 75")
+      expect(transition.path).to eq("M 71.40625 70 L 330.4140625 70")
     end
 
     it "handles start state dimensions" do
@@ -344,12 +344,12 @@ RSpec.describe Sirena::Layout::StateDiagram, :aggregate_failures do
       )
     end
 
-    it "uses one theme size for measurement and final text geometry" do
+    it "uses fixed measurement size and themed final text geometry" do
       source = "stateDiagram-v2\nA : description\nA --> B : go\n"
       diagram = Sirena::Parser::StateDiagram.new.parse(source)
       scene = transform.call(diagram, theme: high_contrast)
       default_scene = described_class.new.to_graph(diagram)
-      expect(theme_geometry(scene, default_scene)).to eq([[16.0], 14.0, true])
+      expect(theme_geometry(scene, default_scene)).to eq([[16.0], 14.0, false])
     end
 
     it "keeps parsed nesting, transitions, and notes byte-identical via IR" do

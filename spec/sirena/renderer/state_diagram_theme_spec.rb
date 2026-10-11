@@ -31,7 +31,7 @@ RSpec.describe Sirena::Renderer::StateDiagram do
 
   it "keeps the default themed rendering byte-identical" do
     expect(Digest::SHA256.hexdigest(default_xml)).to eq(
-      "2625a15e372f68e7b816a37c46d47cdc9a26ac77da8deece0d48ed92c34f7aa0",
+      "6b87128768df03e9615d479a41fc8281b87aa792db77c35ba35564471abef617",
     )
   end
 

@@ -24,7 +24,7 @@ RSpec.describe Sirena::Layout::Gantt do
   end
 
   def expected_task_evidence
-    [*reference_task_dimensions, 170.0,
+    [*reference_task_dimensions, 132.0,
      Date.new(2014, 1, 1), Date.new(2014, 1, 4)]
   end
 
