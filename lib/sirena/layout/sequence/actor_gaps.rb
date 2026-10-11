@@ -24,13 +24,16 @@ module Sirena
         #   participant_ids
         # @param font_size [Numeric] message and note text size
         # @param wrap [Boolean] the global wrap setting
-        def initialize(children, edges, notes, font_size:, wrap: false)
+        # @param creations [Creations] participants a `create` declares
+        def initialize(children, edges, notes, font_size:, wrap: false,
+                       creations: nil)
           @ids = children.map { |child| child[:id] }
           @widths = children.to_h { |child| [child[:id], child[:width]] }
           @edges = edges
           @notes = notes || []
           @font_size = font_size
           @wrap = wrap
+          @created = creations ? creations.ids : []
         end
 
         # @param id [String] participant id
@@ -40,10 +43,15 @@ module Sirena
           return 0 unless following
 
           half_boxes = (@widths[id] + @widths[following]) / 2.0
-          [claims[id].to_f - half_boxes, 0].max
+          [claims[id].to_f - half_boxes, 0].max + created_room(following)
         end
 
         private
+
+        # mmdc seats a created participant half a box further out.
+        def created_room(id)
+          @created.include?(id) ? @widths[id] / 2.0 : 0
+        end
 
         def claims
           @claims ||= widest_per_actor(message_claims + note_claims)
