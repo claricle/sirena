@@ -159,8 +159,6 @@ rows:
   count: 1
 - file: spec/sirena/renderer/quadrant_spec.rb
   count: 7
-- file: spec/sirena/renderer/radar_theme_roles_spec.rb
-  count: 1
 - file: spec/sirena/renderer/sankey_spec.rb
   count: 5
 - file: spec/sirena/renderer/sequence_participant_shapes_54b8941d_spec.rb

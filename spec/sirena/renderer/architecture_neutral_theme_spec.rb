@@ -75,19 +75,30 @@ RSpec.describe Sirena::Renderer::Architecture do
 
   def paints(xml)
     document = REXML::Document.new(xml)
+    boundary_paints(document).merge(
+      group_label: group_label_fill(document),
+      neutral_text: neutral_text_fills(document),
+    )
+  end
+
+  def boundary_paints(document)
     boundary = REXML::XPath.first(document, "//*[@id='group-api']/rect")
-    group_label = REXML::XPath.match(document, "//*[@id='group-api']/text")
-      .find { |text| text.text == "API" }
-    neutral_text = %w[☁ ▦ ⬢ HTTP].map do |content|
-      node = REXML::XPath.match(document, "//*[local-name()='text']")
-        .find { |text| text.text == content }
-      node.attributes["fill"]
-    end
     {
       group_fill: boundary.attributes["fill"],
       group_stroke: boundary.attributes["stroke"],
-      group_label: group_label.attributes["fill"],
-      neutral_text: neutral_text.uniq,
     }
+  end
+
+  def group_label_fill(document)
+    REXML::XPath.match(document, "//*[@id='group-api']/text")
+      .find { |text| text.text == "API" }
+      .attributes["fill"]
+  end
+
+  def neutral_text_fills(document)
+    text_nodes = REXML::XPath.match(document, "//*[local-name()='text']")
+    %w[☁ ▦ ⬢ HTTP].map do |content|
+      text_nodes.find { |text| text.text == content }.attributes["fill"]
+    end.uniq
   end
 end

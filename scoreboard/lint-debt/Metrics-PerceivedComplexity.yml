@@ -11,8 +11,6 @@ rows:
   count: 4
 - file: lib/sirena/layout/state_diagram.rb
   count: 3
-- file: lib/sirena/renderer/requirement.rb
-  count: 1
 - file: scripts/corpus_sweep.rb
   count: 4
 - file: scripts/corpus_verdicts.rb

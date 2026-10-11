@@ -78,17 +78,7 @@ RSpec.describe Sirena::Renderer::Radar do
   end
 
   it "consumes every dark curve colour in order" do
-    curves = Array.new(10) do |index|
-      "  curve c#{index}{#{index + 1}, #{index + 2}, #{index + 3}}"
-    end
-    palette_source = (["radar-beta", "  axis A, B, C"] + curves).join("\n")
-    paths = REXML::XPath.match(document_for(palette_source, :dark), "//path")
-      .select { |path| path.attributes["class"]&.start_with?("radarCurve-") }
-
-    expect(paths.map do |path|
-      [path.attributes["fill"],
-       path.attributes["stroke"]]
-    end)
+    expect(dark_curve_paints)
       .to eq(dark_palette.map { |color| [color, color] })
   end
 
@@ -99,15 +89,33 @@ RSpec.describe Sirena::Renderer::Radar do
   end
 
   it "uses custom graticule and axis roles" do
-    theme = Sirena::Theme.new(
+    expect(paints(document(custom_role_theme)).first(2))
+      .to eq([["#123456"], ["#abcdef"]])
+  end
+
+  def dark_curve_paints
+    paths = REXML::XPath.match(document_for(palette_source, :dark), "//path")
+    paths.filter_map do |path|
+      next unless path.attributes["class"]&.start_with?("radarCurve-")
+
+      [path.attributes["fill"], path.attributes["stroke"]]
+    end
+  end
+
+  def palette_source
+    curves = Array.new(10) do |index|
+      "  curve c#{index}{#{index + 1}, #{index + 2}, #{index + 3}}"
+    end
+    (["radar-beta", "  axis A, B, C"] + curves).join("\n")
+  end
+
+  def custom_role_theme
+    Sirena::Theme.new(
       colors: {
         radar_grid_line: "#123456", radar_axis_line: "#abcdef",
         radar_palette: ["#654321"]
       },
     )
-
-    expect(paints(document(theme)).first(2))
-      .to eq([["#123456"], ["#abcdef"]])
   end
 
   def document_for(input, theme)
