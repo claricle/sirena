@@ -215,7 +215,7 @@ module Sirena
           ),
           label: card_label(card, position),
           metadata: metadata_labels(card, position),
-          accent: priority_accent(card, position),
+          accent: priority_accent(card, position)
         )
       end
 
@@ -227,7 +227,7 @@ module Sirena
           x1: position[0] + 2, y1: position[1] + 2,
           x2: position[0] + 2,
           y2: position[1] + card[:height] - 2,
-          color: color,
+          color: color
         )
       end
 
@@ -254,7 +254,7 @@ module Sirena
         return [] if metadata.empty?
 
         labels = peer_metadata_labels(metadata, card, position)
-        remaining = metadata.reject { |key, _| %i[ticket assigned].include?(key) }
+        remaining = metadata.except(:ticket, :assigned)
         start_y = metadata_start_y(card[:text], position[1])
         labels + remaining.each_with_index.flat_map do |(key, value), index|
           metadata_label_pair(key, value, position[0], start_y, index)
@@ -264,19 +264,26 @@ module Sirena
       def peer_metadata_labels(metadata, card, position)
         y_position = position[1] + card[:height] - 10
         labels = []
-        labels << label(metadata[:ticket].to_s,
-                        [position[0] + 10, y_position],
-                        font_size(:font_size_small, 10), "metadata_value") if
+        labels << ticket_label(metadata, position, y_position) if
           metadata[:ticket]
-        labels << label(metadata[:assigned].to_s,
-                        [position[0] + card[:width] - 10, y_position],
-                        font_size(:font_size_small, 10), "metadata_value",
-                        anchor: "end") if metadata[:assigned]
+        labels << assigned_label(metadata, card, position, y_position) if
+          metadata[:assigned]
         labels
       end
 
+      def ticket_label(metadata, position, y_position)
+        label(metadata[:ticket].to_s, [position[0] + 10, y_position],
+              font_size(:font_size_small, 10), "metadata_value")
+      end
+
+      def assigned_label(metadata, card, position, y_position)
+        x_position = position[0] + card[:width] - 10
+        label(metadata[:assigned].to_s, [x_position, y_position],
+              font_size(:font_size_small, 10), "metadata_value", anchor: "end")
+      end
+
       def display_metadata(card)
-        (card[:metadata] || {}).reject { |key, _| key == :priority }
+        (card[:metadata] || {}).except(:priority)
       end
 
       def priority_value(card)
@@ -394,7 +401,7 @@ module Sirena
         card_height = cards.sum do |card|
           calculate_card_height(
             card.label,
-            metadata_for(data, card).reject { |key, _| key == :priority },
+            metadata_for(data, card).except(:priority),
           )
         end
         spacing = (cards.size - 1) * CARD_VERTICAL_SPACING

@@ -46,7 +46,7 @@ module Sirena
         Svg::Line.new(
           x1: accent.x1, y1: accent.y1,
           x2: accent.x2, y2: accent.y2,
-          stroke: accent.color, stroke_width: "4",
+          stroke: accent.color, stroke_width: "4"
         )
       end
 

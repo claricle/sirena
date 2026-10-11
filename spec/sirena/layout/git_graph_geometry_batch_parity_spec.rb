@@ -20,11 +20,15 @@ RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
 
   def branch_offsets
     scene = scene_for(generated_branch_source)
-    first_x = scene.commits.group_by(&:branch)
-      .transform_values { |commits| commits.first.x }
+    first_x = first_commit_x(scene)
     scene.branches.to_h do |branch|
       [branch.name, (branch.label.x - first_x.fetch(branch.name)).round(3)]
     end
+  end
+
+  def first_commit_x(scene)
+    scene.commits.group_by(&:branch)
+      .transform_values { |commits| commits.first.x }
   end
 
   def bottom_to_top_marker_y

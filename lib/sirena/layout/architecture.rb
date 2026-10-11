@@ -847,7 +847,7 @@ module Sirena
             x: DEFAULT_SPACING + offset[0],
             y: DEFAULT_SPACING + offset[1],
             width: dimensions[:width], height: dimensions[:height],
-            group_id: :root,
+            group_id: :root
           }]
         end
       end

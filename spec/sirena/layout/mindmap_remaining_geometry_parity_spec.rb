@@ -31,7 +31,11 @@ RSpec.describe Sirena::Layout::Mindmap, :aggregate_failures do
   def multiline_circle_geometry
     scene.children.select { |node| node.shape == "circle" }
       .select { |node| node.labels.first.lines.length > 1 }
-      .map { |node| [node.width, node.height, node.labels.first.lines.length] }
+      .map { |node| circle_geometry(node) }
+  end
+
+  def circle_geometry(node)
+    [node.width, node.height, node.labels.first.lines.length]
   end
 
   def long_word_geometry

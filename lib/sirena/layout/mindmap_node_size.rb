@@ -65,8 +65,12 @@ module Sirena
 
       def circle_dimensions
         two_lines = @font_size * @line_height * 2
-        side = [text_width, [text_height, two_lines].min].max + 20
-        [side, side]
+        side = if text_width > two_lines
+                 text_width
+               else
+                 text_height.clamp(text_width, two_lines)
+               end
+        [side + 20, side + 20]
       end
 
       def wrap(line)

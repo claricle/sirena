@@ -225,6 +225,10 @@ module Sirena
         graph = build_graph(diagram)
         labels = label_hashes(graph)
         shift, width, height = scene_dimensions(graph, labels)
+        typed_scene(graph, labels, shift, width, height)
+      end
+
+      def typed_scene(graph, labels, shift, width, height)
         Scene.new(
           width: width, height: height,
           view_box: "0 0 #{width.to_f} #{height.to_f}",
