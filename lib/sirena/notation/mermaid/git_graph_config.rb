@@ -26,7 +26,7 @@ module Sirena
 
           config = Psych.safe_load(
             match[:payload], permitted_classes: [],
-            permitted_symbols: [], aliases: false
+                             permitted_symbols: [], aliases: false
           )
           name = config.dig("gitGraph", "mainBranchName") if
             config.is_a?(Hash)

@@ -333,12 +333,21 @@ module Sirena
         creation = graph[:commits].find do |commit|
           commit[:id] == branch[:created_at_commit]
         end
-        return unless creation
+        return empty_root_anchor(branch, graph) unless creation
 
         orientation = graph[:orientation]
         time = vertical?(orientation) ? creation[:y] : creation[:x]
         lane = branch[:lane] * LANE_SPACING
         x_coordinate, y_coordinate = coordinates(time, lane, orientation)
+        { x: x_coordinate, y: y_coordinate }
+      end
+
+      def empty_root_anchor(branch, graph)
+        return unless branch[:parent_branch].nil?
+
+        x_coordinate, y_coordinate = coordinates(
+          0, branch[:lane] * LANE_SPACING, graph[:orientation]
+        )
         { x: x_coordinate, y: y_coordinate }
       end
 

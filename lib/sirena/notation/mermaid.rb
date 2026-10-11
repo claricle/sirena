@@ -342,7 +342,7 @@ module Sirena
         parser.parse(
           preamble[:body],
           main_branch_name: GitGraphConfig.main_branch_name(
-            preamble[:directives]
+            preamble[:directives],
           ),
         )
       end
