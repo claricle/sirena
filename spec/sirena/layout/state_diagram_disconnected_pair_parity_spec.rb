@@ -14,14 +14,18 @@ RSpec.describe Sirena::Layout::StateDiagram do
 
   it "packs two disconnected ordinary states like Mermaid" do
     first, second = states
-
-    expect([
+    actual = [
       states.map { |state| [state.id, state.shape_type, state.x, state.y] },
       second.x - first.x - first.width,
-    ]).to eq([
-      [["assemble", "normal", 8.0, 8.0],
-       ["assemblies", "normal", 139.734375, 8.0]],
+    ]
+    expected = [
+      [
+        ["assemble", "normal", 8.0, 8.0],
+        ["assemblies", "normal", 139.734375, 8.0],
+      ],
       50.0,
-    ])
+    ]
+
+    expect(actual).to eq(expected)
   end
 end
