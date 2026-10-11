@@ -12,6 +12,9 @@ RSpec.describe Sirena::Layout::Block do
 
     it "measures their width at Mermaid's browser font size" do
       expect(relative_width_error([21.484375])).to be <= 0.05
+    end
+
+    it "keeps their compact height" do
       expect(scene.children.map(&:height)).to eq([27.0])
     end
   end
@@ -19,10 +22,12 @@ RSpec.describe Sirena::Layout::Block do
   context "with an automatically sized compact row" do
     let(:source) { fixture("block_spec-e104ba37") }
 
-    it "matches the browser widths without changing the compact gap" do
-      left, right = scene.children
-
+    it "matches the browser widths" do
       expect(relative_width_error([16.921875, 16.921875])).to be <= 0.002
+    end
+
+    it "keeps the compact gap" do
+      left, right = scene.children
       expect(right.x - left.x - left.width).to eq(8.0)
     end
   end
