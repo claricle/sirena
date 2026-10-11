@@ -764,6 +764,7 @@ module Sirena
              "C #{right - 10} #{top} #{right - 10} #{middle} " \
              "#{right - 10} #{middle}",
              "C #{right - 10} #{top + QUEUE_HEIGHT} " \
+             "#{right - 5} #{top + QUEUE_HEIGHT} " \
              "#{right - 5} #{top + QUEUE_HEIGHT}"]
               .join(" ")
           end
