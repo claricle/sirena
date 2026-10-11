@@ -49,7 +49,7 @@ RSpec.describe Sirena::Theme::ColorPalette do
 
   describe "categorical palettes" do
     let(:sizes) do
-      { flow: 8, pie: 12, radar: 10, xy: 10, timeline_fill: 12,
+      { flow: 8, git_graph: 10, pie: 12, radar: 10, xy: 10, timeline_fill: 12,
         timeline_text: 12, timeline_rule: 12 }
     end
 
@@ -75,7 +75,7 @@ RSpec.describe Sirena::Theme::ColorPalette do
     end
 
     it "refuses a palette name it does not define" do
-      expect { builtin_themes.first.colors.palette(:git_graph, 0) }
+      expect { builtin_themes.first.colors.palette(:missing, 0) }
         .to raise_error(KeyError, /unknown palette/)
     end
 
