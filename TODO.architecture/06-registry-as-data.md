@@ -140,6 +140,32 @@ TYPES = {
       matches its OWN prior behaviour, not that the two surfaces match each
       other. The gate is: API-before vs API-after (SVG checksum and exact
       error text), and CLI-before vs CLI-after (stdout, stderr and exit status)
+
+      Measured 2026-10-11 with `scripts/surface_manifest.rb` (`cases`, `record`
+      per ref, `compare`): 507 cases (500 evenly spaced `spec/mermaid` sources
+      plus 7 fixed shapes), each ref in its own detached worktree. A
+      single-commit pair isolates the refactor, because the span between the
+      commits holds unrelated product changes.
+
+      | Pair (before to after) | Commit | API differences | CLI differences |
+      |---|---|---|---|
+      | `86db8f29e` to `1a6ff4172` | move mermaid detection into `Notation::Mermaid` (`lib/sirena.rb` 369 to 40 lines) | 0 | 0 |
+      | `18403b313` to `5386bb590` | add notation registry and resolver | 0 | 0 |
+      | `03a237565` to `d8e78e375` | table-driven diagram registry (`Parser.for`, `Layout.for`, `Renderer.for`) | 0 | 1 |
+
+      The one difference is `shape/verbose` `cli_stderr`: `--verbose` no longer
+      logs `[Sirena::Engine] Retrieved handlers for architecture` (the debug
+      line in `Notation::Mermaid`, removed by `d8e78e375`). SVG, stdout, exit
+      status and every error class and message are identical. The box below
+      stays unticked until that log line is either restored or accepted as a
+      change. Not a clean result for "CLI behaviour unchanged".
+
+      Do not read the whole span `86db8f29e` to `d8e78e375` as the refactor:
+      it has 234 differences (74 API SVG, 42 API error, 74 CLI stdout, 43 CLI
+      stderr, 1 CLI exit) across 125 commits, mostly `class_diagram`,
+      `er_diagram` and `flowchart` cases, and was not attributed to the
+      refactor. The 507 cases are a sample, not the 2,082-file corpus.
+
 - [ ] `corpus:check` unchanged
 - [ ] `contract_spec.rb` iterates `TYPES` and covers every entry
 - [ ] it still resolves each model by convention, and still runs each
