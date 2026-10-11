@@ -4338,6 +4338,198 @@
         "spec/fixtures_mermaid/gitgraph/utils_spec-b464f46c.svg"
       ],
       "output_sha256": "a0bfa996f134c19c47efd5c5a824494aa4f0972285e5dad4d892cdb26cc4e54b"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-22024e01.svg",
+      "cases": [
+        "sequence/sequencediagram_v2_spec-22024e01.mmd"
+      ],
+      "source_sha256": "a49c58a0d258d3a2328ab3429c4dde7477cd8cc869d04425325a1d4aa517aafc",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/cypress/integration/rendering/sequencediagram-v2.spec.js",
+      "upstream_line_number": 744,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/sequence/sequencediagram_v2_spec-22024e01.mmd",
+        "-o",
+        "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-22024e01.svg"
+      ],
+      "output_sha256": "f91c8689b25cc7cc2d8c3d00ab6e643532d5e058709df7f3038cd855b743ce82"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-4fdaa92d.svg",
+      "cases": [
+        "sequence/sequencediagram_v2_spec-4fdaa92d.mmd"
+      ],
+      "source_sha256": "07eed6e2eded826368d5234157476785ab8dd121f7415723c379428b6fafc64a",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/cypress/integration/rendering/sequencediagram-v2.spec.js",
+      "upstream_line_number": 714,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/sequence/sequencediagram_v2_spec-4fdaa92d.mmd",
+        "-o",
+        "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-4fdaa92d.svg"
+      ],
+      "output_sha256": "65e592af0c538079713700af7af009c76a7e924ed6a2eb6b0b3fe7041ec85914"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-51478eeb.svg",
+      "cases": [
+        "sequence/sequencediagram_v2_spec-51478eeb.mmd"
+      ],
+      "source_sha256": "6ef954d6742f87f364626155c58d66d81a985a2346ae7fadbc452bf8f4787016",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/cypress/integration/rendering/sequencediagram-v2.spec.js",
+      "upstream_line_number": 674,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/sequence/sequencediagram_v2_spec-51478eeb.mmd",
+        "-o",
+        "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-51478eeb.svg"
+      ],
+      "output_sha256": "1177f11d3d8f67fb9d63d0f540f16d49b77f91a400a6695a8412a28b5a4b4737"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-54b8941d.svg",
+      "cases": [
+        "sequence/sequencediagram_v2_spec-54b8941d.mmd"
+      ],
+      "source_sha256": "b8e93d56dedabe70c95bb47c75f4f7b9de87242f1ca406b49e3ad4f66e25e4ae",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/cypress/integration/rendering/sequencediagram-v2.spec.js",
+      "upstream_line_number": 763,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/sequence/sequencediagram_v2_spec-54b8941d.mmd",
+        "-o",
+        "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-54b8941d.svg"
+      ],
+      "output_sha256": "184ef68b721e7fb874f1e00a82ce76a3bc6ba71695dcda96dbeb77979f8d59fd"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-7bd17012.svg",
+      "cases": [
+        "sequence/sequencediagram_v2_spec-7bd17012.mmd"
+      ],
+      "source_sha256": "c597a73a710a461bd4daaaf6536c03bdafb49893d8d458399301c0ad5d3018ff",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/cypress/integration/rendering/sequencediagram-v2.spec.js",
+      "upstream_line_number": 661,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/sequence/sequencediagram_v2_spec-7bd17012.mmd",
+        "-o",
+        "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-7bd17012.svg"
+      ],
+      "output_sha256": "3bbdaa9fbdd23a4ceb00081c728fb470228bdbadca12c2e9102f65927dcbc1fe"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-904559a9.svg",
+      "cases": [
+        "sequence/sequencediagram_v2_spec-904559a9.mmd"
+      ],
+      "source_sha256": "6b541ab6e371f1e8fcc101276e73a170770877d48733dda966fe7bbcbcb05bd6",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/cypress/integration/rendering/sequencediagram-v2.spec.js",
+      "upstream_line_number": 699,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/sequence/sequencediagram_v2_spec-904559a9.mmd",
+        "-o",
+        "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-904559a9.svg"
+      ],
+      "output_sha256": "1f932bb0378ea90f139e8cd619da1bd88d48bc70f154d4f602d08212242d59a6"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-a5d1d349.svg",
+      "cases": [
+        "sequence/sequencediagram_v2_spec-a5d1d349.mmd"
+      ],
+      "source_sha256": "2025d3bb12eb64506da6264a60274926654d7bc2f396b8dba06ef2d5b962a54f",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/cypress/integration/rendering/sequencediagram-v2.spec.js",
+      "upstream_line_number": 688,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/sequence/sequencediagram_v2_spec-a5d1d349.mmd",
+        "-o",
+        "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-a5d1d349.svg"
+      ],
+      "output_sha256": "c834c7881af6cd9b167f2573fd69f296a715cc05287b144e17436a1e769e3fd0"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-c9b61e4d.svg",
+      "cases": [
+        "sequence/sequencediagram_v2_spec-c9b61e4d.mmd"
+      ],
+      "source_sha256": "a0ad2737f6df8968385f33d87c2b2eed8718b1400102d166284f422220c04739",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/cypress/integration/rendering/sequencediagram-v2.spec.js",
+      "upstream_line_number": 729,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/sequence/sequencediagram_v2_spec-c9b61e4d.mmd",
+        "-o",
+        "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-c9b61e4d.svg"
+      ],
+      "output_sha256": "761437cc54f9420387c372cafacf85324358891d373a9cb24a35449a50288e18"
     }
   ]
 }
