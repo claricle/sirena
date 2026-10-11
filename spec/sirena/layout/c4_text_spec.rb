@@ -28,6 +28,12 @@ RSpec.describe Sirena::Layout::C4Text do
     expect(described_class.width("Banking System G Queue", 16)).to eq(185)
   end
 
+  it "applies the browser's A-space kerning before rounding" do
+    text = "A system of the bank, with personal bank accounts."
+
+    expect(described_class.width(text, 14)).to eq(318)
+  end
+
   it "takes the widest of several lines" do
     wide = described_class.width("Banking System G Queue", 16)
     expect(described_class.width("a<br/>Banking System G Queue", 16))
