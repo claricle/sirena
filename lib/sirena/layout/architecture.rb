@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "elk_placement"
 require_relative "../diagram/architecture"
 require_relative "../notation/mermaid/ir_adapters/architecture"
 require_relative "../renderer/architecture_edge_router"
@@ -98,6 +99,11 @@ module Sirena
         attribute :children, Node, collection: true, default: -> { [] }
         attribute :edges, Edge, collection: true, default: -> { [] }
       end
+
+      # :grid (the byte-compatible default) or :elk. The explicit switch
+      # lets the parity ratchet measure real elkrb output before it becomes
+      # the default.
+      attr_accessor :placement
 
       # Converts an architecture diagram to a positioned layout structure
       #
@@ -251,6 +257,8 @@ module Sirena
       end
 
       def scene(diagram)
+        return elk_scene(diagram) if placement == :elk
+
         graph = build_graph(diagram)
         routed = route_edges(graph)
         width, height = scene_dimensions(graph, routed)
@@ -258,6 +266,109 @@ module Sirena
           width: width, height: height, view_box: "0 0 #{width} #{height}",
           children: typed_nodes(graph), edges: typed_edges(routed)
         )
+      end
+
+      def elk_scene(source)
+        diagram = semantic_diagram(ir_graph(source))
+        reject_elk_groups!(diagram)
+        elk_graph = build_elk_graph(diagram)
+        ElkPlacement.apply(elk_graph)
+        graph = positioned_elk_graph(diagram, elk_graph)
+        routed = routed_elk_edges(elk_graph)
+        width, height = scene_dimensions(graph, routed)
+        Scene.new(
+          width: width, height: height, view_box: "0 0 #{width} #{height}",
+          children: typed_nodes(graph), edges: typed_edges(routed)
+        )
+      end
+
+      def reject_elk_groups!(diagram)
+        return if diagram.groups.empty?
+
+        raise LayoutError,
+              "elkrb architecture layout does not support group containment"
+      end
+
+      def build_elk_graph(diagram)
+        node_ids = (diagram.services.map(&:id) + diagram.junctions.map(&:id))
+          .to_h { |id| [id, true] }
+        {
+          id: diagram.id || "architecture",
+          children: elk_service_nodes(diagram.services) +
+            elk_junction_nodes(diagram.junctions),
+          edges: elk_edges(diagram.edges, node_ids),
+          layoutOptions: {
+            ElkOptions::ALGORITHM => ALGORITHM_LAYERED,
+            ElkOptions::DIRECTION => DIRECTION_DOWN,
+            ElkOptions::NODE_NODE_SPACING => DEFAULT_SPACING,
+            ElkOptions::LAYER_SPACING => DEFAULT_SPACING,
+          },
+        }
+      end
+
+      def elk_service_nodes(services)
+        services.map do |service|
+          dimensions = calculate_service_dimensions(service)
+          { id: service.id, **dimensions,
+            metadata: { kind: :service, model: service } }
+        end
+      end
+
+      def elk_junction_nodes(junctions)
+        junctions.map do |junction|
+          { id: junction.id, width: DEFAULT_JUNCTION_SIZE,
+            height: DEFAULT_JUNCTION_SIZE,
+            metadata: { kind: :junction, model: junction } }
+        end
+      end
+
+      def elk_edges(edges, node_ids)
+        edges.filter_map.with_index do |edge, index|
+          next unless node_ids[edge.from_id] && node_ids[edge.to_id]
+
+          { id: "edge_#{index}", sources: [edge.from_id],
+            targets: [edge.to_id], metadata: { edge: edge } }
+        end
+      end
+
+      def positioned_elk_graph(diagram, elk_graph)
+        by_id = elk_graph.fetch(:children).to_h { |node| [node[:id], node] }
+        services = diagram.services.to_h do |service|
+          [service.id, positioned_elk_node(by_id.fetch(service.id),
+                                           service: service)]
+        end
+        junctions = diagram.junctions.to_h do |junction|
+          [junction.id, positioned_elk_node(by_id.fetch(junction.id),
+                                            junction: junction)]
+        end
+        {
+          services: services, junctions: junctions, groups: {},
+          width: calculate_total_width(services, junctions, {}),
+          height: calculate_total_height(services, junctions, {})
+        }
+      end
+
+      def positioned_elk_node(node, model)
+        model.merge(
+          x: node.fetch(:x), y: node.fetch(:y),
+          width: node.fetch(:width), height: node.fetch(:height),
+          group_id: :root
+        )
+      end
+
+      def routed_elk_edges(elk_graph)
+        elk_graph.fetch(:edges).filter_map do |edge|
+          section = Array(edge[:sections]).first
+          next unless section
+
+          { edge: edge.dig(:metadata, :edge),
+            points: elk_section_points(section) }
+        end
+      end
+
+      def elk_section_points(section)
+        [section.fetch(:startPoint), *Array(section[:bendPoints]),
+         section.fetch(:endPoint)]
       end
 
       def typed_nodes(graph)
