@@ -12,7 +12,7 @@ RSpec.describe Sirena::Layout::Mindmap, :aggregate_failures do
 
     it "caps the circle diameter at two lines without dropping label lines" do
       expect(multiline_circle_geometry)
-        .to contain_exactly([68.0, 68.0, 2], [68.0, 68.0, 3])
+        .to contain_exactly([68.048, 68.048, 2], [68.048, 68.048, 3])
     end
   end
 
@@ -44,7 +44,7 @@ RSpec.describe Sirena::Layout::Mindmap, :aggregate_failures do
   end
 
   def expected_long_word_geometry
-    [425.056, 116.0,
+    [433.568, 116.0,
      ["A few smaller words but then ",
       "averylongsetofcharacterswithoutwhitespacetoseparate ",
       "that we expect to ",

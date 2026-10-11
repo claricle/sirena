@@ -6,8 +6,10 @@ module Sirena
   module Layout
     # The box mmdc draws around a mindmap label. mmdc measures the label at
     # 16px, wraps it at 200px, stacks lines at 1.5 times their size, and
-    # pads that text box per shape. Hexagon, bang and cloud sizes are linear
-    # fits to the mmdc references, not mmdc's own rule.
+    # pads that text box per shape. Mindmaps draw in Trebuchet MS, so their
+    # browser widths use the generated Trebuchet advance table. Hexagon, bang
+    # and cloud sizes are linear fits to the mmdc references, not mmdc's own
+    # rule.
     class MindmapNodeSize
       FONT_SIZE = 16
       LINE_HEIGHT = 24
@@ -106,7 +108,9 @@ module Sirena
       end
 
       def measure(text)
-        TextMeasurement.measure(text, font_size: @font_size)[:width]
+        TextMeasurement.measure_in(
+          :trebuchet, text, font_size: @font_size
+        )[:width]
       end
     end
   end

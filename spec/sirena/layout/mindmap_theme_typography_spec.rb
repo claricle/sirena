@@ -97,7 +97,7 @@ RSpec.describe Sirena::Layout::Mindmap do
 
   it "preserves the representative default SVG exactly" do
     expect(Digest::SHA256.hexdigest(Sirena.render(source))).to eq(
-      "9a77533cd6527bf23744e9a5d95c538605773137267688194c0f103f876d9e29",
+      "b52ebb347b1240e33a95043d9ff778293e6ae710ef82ef60ef23f9c45aec0d0c",
     )
   end
 

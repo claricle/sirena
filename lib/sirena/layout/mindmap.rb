@@ -302,7 +302,8 @@ module Sirena
         [
           "M #{left} #{lower} Q #{left} #{shoulder}, #{inner_left} #{upper} ",
           "Q #{inner_left} #{top}, #{near_left} #{high} ",
-          "Q #{center_x} #{top}, #{near_right} #{high} ",
+          "Q #{near_left} #{top}, #{center_x} #{top} ",
+          "Q #{near_right} #{top}, #{near_right} #{high} ",
           "Q #{inner_right} #{top}, #{inner_right} #{upper} ",
           "Q #{right} #{shoulder}, #{right} #{lower} ",
           "Q #{right} #{bottom}, #{center_x} #{bottom} ",

@@ -5,13 +5,15 @@ require "sirena/layout/mindmap_node_size"
 
 RSpec.describe Sirena::Layout::MindmapNodeSize do
   # Sizes read off the mmdc reference SVGs in spec/fixtures_mermaid/mindmap.
-  # The text width is mmdc's own 29.734; ours is the Arial table's 27.568.
+  # The text width is mmdc's own 29.734; our Trebuchet table gives 29.744.
   def size(label, shape)
     described_class.call(label, shape)
   end
 
   def text_width(label)
-    Sirena::TextMeasurement.measure(label, font_size: 16)[:width]
+    Sirena::TextMeasurement.measure_in(
+      :trebuchet, label, font_size: 16
+    )[:width]
   end
 
   it "pads a default node by 40 across and 10 down" do
