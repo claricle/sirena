@@ -45,7 +45,6 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
   include DirectedPlacementGraphs
 
   let(:builder) { FlowchartSceneBuilder }
-  let(:subgraph_source) { "flowchart TD\nsubgraph s [T]\nA --> B\nend\n" }
 
   {
     "TD" => [%w[A B], :y],
@@ -66,19 +65,48 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
     expect(found["B"].y).to eq(found["A"].y)
   end
 
-  it "boxes a subgraph 8 points beside and 25 above and below its members" do
-    expect(builder.cluster_margins(subgraph_source)).to match(
-      [be_within(1.0).of(8), be_within(1.0).of(8),
-       be_within(0.01).of(25), be_within(1.0).of(25)],
-    )
-  end
+  describe "the box round a subgraph" do
+    def size_of(box)
+      [box[:width], box[:height]]
+    end
 
-  # The SVG writes whole points, so a width not rounded up can leave less
-  # than the 8 mmdc keeps beside the members.
-  it "never leaves a member closer than 8 points to its subgraph box" do
-    source = "flowchart TD\nsubgraph s\nA[Laptop computer]\nend\n"
+    it "keeps 37.5 along the flow and 35 across it round a lone member" do
+      boxes = placed(level_graph("DOWN", [subgraph("s", [node("a", 68.390625)])]))
 
-    expect(builder.cluster_margins(source).first(2)).to all(be >= 8.0)
+      expect(size_of(member(boxes, "s"))).to eq([143.390625, 124.0])
+    end
+
+    it "keeps those margins at both ends of a chain" do
+      chain = [node("a"), node("b"), node("c")]
+      boxes = placed(level_graph("DOWN", [subgraph("s", chain)],
+                                 [%w[a b], %w[b c]]))
+
+      expect(size_of(member(boxes, "s"))).to eq([455.390625, 124.0])
+    end
+
+    it "turns the margins with the subgraph's own direction" do
+      sub = subgraph("s", [node("a", 68.40625), node("b", 68.921875)],
+                     direction: "UP")
+      boxes = placed(level_graph("DOWN", [sub], [%w[a b]]))
+
+      expect(size_of(member(boxes, "s"))).to eq([138.921875, 258.0])
+    end
+
+    it "keeps half the graph's rank step along the flow of a joint subgraph" do
+      boxes = placed(level_graph("DOWN",
+                                 [subgraph("s", [node("a", 130.078125)]),
+                                  node("b")], [%w[a b]]))
+
+      expect(size_of(member(boxes, "s"))).to eq([200.078125, 104.0])
+    end
+
+    it "centres the members in a box widened by its title" do
+      titled = subgraph("s", [node("a", 20.0)])
+      titled[:labels].first[:width] = 200.0
+      held = member(placed(level_graph("DOWN", [titled])), "s")
+
+      expect([held[:width], held[:children].first[:x]]).to eq([240.0, 110.0])
+    end
   end
 
   describe "a subgraph laid out as a graph of its own" do
