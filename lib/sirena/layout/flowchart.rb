@@ -38,6 +38,9 @@ module Sirena
         "trapezoid_alt" => [60.0, 15.0],
       }.freeze
       BOX_PADDING = [60.0, 30.0].freeze
+      # A hexagon grows wider with each line under the first: 45 for one
+      # line, 48.15 for two in mmdc's output, so 0.118 a pixel of height.
+      HEXAGON_WIDTH_PER_HEIGHT = 0.118
       # Square shapes: a rhombus is label width + label height + 30 on a
       # side; a circle is label width + 15 across (25 for a double one).
       CIRCLE_PADDING = { "circle" => 15.0, "double_circle" => 25.0 }.freeze
@@ -819,7 +822,7 @@ module Sirena
           height: dims[:height],
           labels: [
             {
-              text: display_text(node.label),
+              text: Diagram::FlowchartLabelText.lines(node.label).join("\n"),
               width: dims[:label_width],
               height: dims[:label_height],
             },
@@ -873,32 +876,49 @@ module Sirena
       end
 
       def calculate_dimensions(label, shape)
-        text = display_text(label)
-        label_dims = measure_text(text, font_size: layout_font_size)
-        line_height = label_dims[:height] * NODE_LINE_HEIGHT
-        node_dims = node_box(label_dims[:width], line_height, shape)
+        lines = Diagram::FlowchartLabelText.lines(label)
+        widest = lines.map { |line| line_width(line) }.max
+        line_height = layout_font_size * NODE_LINE_HEIGHT * lines.size
 
-        {
-          width: node_dims[:width],
-          height: node_dims[:height],
-          label_width: label_dims[:width],
-          label_height: line_height,
-        }
+        node_box(widest, line_height, shape)
+          .merge(label_width: widest, label_height: line_height)
+      end
+
+      def line_width(line)
+        measure_text(line, font_size: layout_font_size)[:width]
       end
 
       def node_box(label_width, label_height, shape)
         if shape == "rhombus"
-          side = label_width + label_height + RHOMBUS_PADDING
-          return { width: side, height: side }
+          return square(label_width + label_height + RHOMBUS_PADDING)
         end
         if CIRCLE_PADDING.key?(shape)
-          return { width: label_width + CIRCLE_PADDING[shape],
-                   height: label_width + CIRCLE_PADDING[shape] }
+          return square(label_width + CIRCLE_PADDING[shape])
         end
 
+        padded_box(label_width, label_height, shape)
+      end
+
+      def square(side)
+        { width: side, height: side }
+      end
+
+      def padded_box(label_width, label_height, shape)
         extra_width, extra_height = SHAPE_PADDING.fetch(shape, BOX_PADDING)
+        extra_width += hexagon_widening(label_height) if shape == "hexagon"
         { width: label_width + extra_width,
           height: label_height + extra_height }
+      end
+
+      # mmdc measures a flowchart label in Trebuchet MS, the first face of
+      # its stylesheet.
+      def measure_text(text, font_size:)
+        TextMeasurement.measure_in(:trebuchet, text, font_size: font_size)
+      end
+
+      def hexagon_widening(label_height)
+        extra = label_height - (layout_font_size * NODE_LINE_HEIGHT)
+        HEXAGON_WIDTH_PER_HEIGHT * extra
       end
 
       def layout_font_size

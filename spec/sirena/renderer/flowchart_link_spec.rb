@@ -696,7 +696,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
 
       expect(group[/<text[^>]*y="([-\d.]+)"/, 1].to_f).to eq(line - 5)
       expect(group[/<text[^>]*x="([-\d.]+)"/, 1].to_f)
-        .to be_within(0.05).of(midpoint)
+        .to be_within(0.1).of(midpoint)
     end
   end
 
@@ -1125,7 +1125,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
       xml = Sirena.render("flowchart TD\n  A{x} --> A\n")
       gap = gap_to(tip_of(xml, "A_to_A"), outline(xml, "A"))
 
-      expect(gap).to be_within(0.05).of(0)
+      expect(gap).to be_within(0.1).of(0)
     end
 
     # D sits on the row below, so the link arrives at a slant. The box

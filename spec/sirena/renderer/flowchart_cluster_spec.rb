@@ -736,7 +736,7 @@ RSpec.describe Sirena::Engine do
       # no longer than three, which rounding to two or fewer also
       # satisfies. The start is where the ray between the two boxes' exact
       # centres leaves `one`.
-      expect(path).to eq("M 78.9 112.0 L 42.888 189.0")
+      expect(path).to eq("M 77.95 112.0 L 42.4 189.0")
     end
 
     it "joins a box to a plain node" do
