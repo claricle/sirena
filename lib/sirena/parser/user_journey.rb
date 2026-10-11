@@ -212,17 +212,19 @@ module Sirena
         task.name = line[:task].to_s.strip
         task.score = line[:score].to_s.to_i
         validate_score!(task.score)
-        task.actors = actor_names(line[:actors])
+        task.actors = actor_names(
+          line[:actors], explicit: line.key?(:actors)
+        )
         task
       end
 
-      def actor_names(data)
+      def actor_names(data, explicit:)
         if data.is_a?(Array)
           return data.filter_map { |actor| actor_name(actor) }
         end
         return [data[:actor].to_s.strip] if data.is_a?(Hash) && data[:actor]
 
-        []
+        explicit ? [""] : []
       end
 
       def actor_name(data)

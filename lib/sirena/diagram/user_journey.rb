@@ -19,10 +19,11 @@ module Sirena
       # Collection of actor names involved in this task
       attribute :actors, :string, collection: true, default: -> { [] }
 
-      # Validates the task has required fields. A task with no actors is
-      # still valid: mmdc renders `task: 5` (no actor colon at all) and
-      # `task: 5:` (an empty actor list) the same as a task with actors,
-      # so `actors` being empty must not fail validation.
+      # Validates the task has required fields. A task with no actors is still
+      # valid. Mermaid distinguishes an omitted actor group (`task: 5`, stored
+      # as []) from an explicit empty actor group (`task: 5:`, stored as [""])
+      # because the latter renders a blank palette entry and task dot. Neither
+      # form should fail validation.
       #
       # @return [Boolean] true if task is valid
       def valid?
