@@ -11,15 +11,9 @@ RSpec.describe Sirena::Layout::Kanban, :aggregate_failures do
   end
 
   it "draws priorities as fixed-height card-edge accents" do
-    scene = scene_for("kanban_spec-5bba2c43")
-    cards = scene.cards.to_h { |card| [card.id, card] }
-
-    expect(cards.values.map { |card| card.background.height }.uniq).to eq([44])
-    expect(cards.transform_values { |card| card.accent&.color }).to eq(
-      "vh" => "red", "h" => "orange", "m" => nil,
-      "l" => "blue", "vl" => "lightblue",
+    expect(priority_geometry).to eq(
+      heights: [44], colors: expected_priority_colors, metadata: [],
     )
-    expect(cards.values.flat_map(&:metadata)).to be_empty
   end
 
   it "places ticket and assignee values together below a wrapped label" do
@@ -32,14 +26,30 @@ RSpec.describe Sirena::Layout::Kanban, :aggregate_failures do
   end
 
   it "renders the priority accent without metadata key labels" do
-    source = File.read("spec/mermaid/kanban/kanban_spec-e33c6002.mmd")
-    xml = Sirena.render(source)
-    document = REXML::Document.new(xml)
+    expect(rendered_metadata).to eq(
+      accent: true, values: %w[MC-2037 knsv], forbidden: [],
+    )
+  end
 
-    expect(REXML::XPath.first(document, "//line[@stroke='lightblue']"))
-      .not_to be_nil
+  def priority_geometry
+    cards = scene_for("kanban_spec-5bba2c43").cards
+    { heights: cards.map { |card| card.background.height }.uniq,
+      colors: cards.to_h { |card| [card.id, card.accent&.color] },
+      metadata: cards.flat_map(&:metadata) }
+  end
+
+  def expected_priority_colors
+    { "vh" => "red", "h" => "orange", "m" => nil,
+      "l" => "blue", "vl" => "lightblue" }
+  end
+
+  def rendered_metadata
+    source = File.read("spec/mermaid/kanban/kanban_spec-e33c6002.mmd")
+    document = REXML::Document.new(Sirena.render(source))
     texts = REXML::XPath.match(document, "//text").map(&:text)
-    expect(texts).to include("MC-2037", "knsv")
-    expect(texts).not_to include("Priority:", "Ticket:", "Assigned:")
+    { accent: !REXML::XPath.first(
+      document, "//line[@stroke='lightblue']"
+    ).nil?, values: texts & %w[MC-2037 knsv],
+      forbidden: texts & ["Priority:", "Ticket:", "Assigned:"] }
   end
 end
