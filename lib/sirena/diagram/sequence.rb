@@ -21,6 +21,14 @@ module Sirena
       # Participant type: :participant, :actor
       attribute :actor_type, :string
 
+      # Declared with `create participant|actor`: the box is drawn at the
+      # creating message's row, not at the top of the diagram.
+      attribute :created, :boolean, default: -> { false }
+
+      # Type named by `@{ "type": ... }` (boundary, control, entity,
+      # database, collections, queue); nil for a plain box or stick figure.
+      attribute :shape_type, :string
+
       # Initialize with default actor type
       def initialize(*args)
         super

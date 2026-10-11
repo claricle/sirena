@@ -72,6 +72,10 @@ module Sirena
         ].freeze
         private_constant :STATEMENT_HANDLERS
 
+        # The `type` of `@{ "type": "boundary" }` or `@{ type: boundary }`.
+        SHAPE_TYPE = /["']?type["']?\s*:\s*["']?([A-Za-z]+)/
+        private_constant :SHAPE_TYPE
+
         # Transform parse tree into Sequence diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
@@ -156,9 +160,17 @@ module Sirena
           @box_ids&.push(id)
           label = participant_label(id, stmt[:label])
           existing = diagram.find_participant(id)
-          return update_participant(existing, label, actor_type) if existing
+          shape = shape_type_of(stmt[:shape_metadata])
+          return update_participant(existing, label, actor_type, shape) if existing
 
-          diagram.participants << participant(id, label, actor_type)
+          diagram.participants << participant(id, label, actor_type).tap do |item|
+            item.created = true if stmt[:create]
+            item.shape_type = shape
+          end
+        end
+
+        def shape_type_of(metadata)
+          SHAPE_TYPE.match(metadata.to_s)&.[](1)&.downcase
         end
 
         def participant_label(id, captured_label)
@@ -175,9 +187,10 @@ module Sirena
           end
         end
 
-        def update_participant(participant, label, actor_type)
+        def update_participant(participant, label, actor_type, shape_type = nil)
           participant.label = label unless label.empty?
           participant.actor_type = actor_type
+          participant.shape_type = shape_type if shape_type
         end
 
         def add_message(diagram, stmt)

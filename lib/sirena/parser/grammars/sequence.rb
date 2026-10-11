@@ -557,8 +557,9 @@ module Sirena
         # are both legal).
         rule(:central_connection) { str("()") }
 
-        # Shape metadata (`@{"type":"boundary"}`) is parsed and discarded,
-        # not validated as JSON — a nested `{...}` on one line still ends
+        # Shape metadata (`@{"type":"boundary"}`) is captured whole as
+        # `:shape_metadata`; the builder reads only its `type`. It is not
+        # validated as JSON — a nested `{...}` on one line still ends
         # the payload at its first `}` (no corpus case has one). Bounded
         # to one line — `newline.absent?` is load-bearing, not tidiness:
         # an unclosed `@{` would otherwise scan into a later statement's
@@ -587,7 +588,8 @@ module Sirena
         end
 
         def declaration_identity
-          declaration_name.as(:id) >> shape_metadata.maybe >> space?
+          declaration_name.as(:id) >>
+            shape_metadata.as(:shape_metadata).maybe >> space?
         end
 
         def declaration_label

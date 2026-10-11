@@ -55,6 +55,8 @@ module Sirena
               values = [
                 ["original_identifier", participant.id],
                 ["participant_type", participant.actor_type],
+                ["participant_shape", participant.shape_type],
+                ["participant_created", (true if participant.created)],
                 ["sequence_index", index],
               ]
               [entity, *semantic_nodes(id, values, occupied)]
