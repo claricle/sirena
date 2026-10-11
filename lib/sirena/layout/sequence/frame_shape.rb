@@ -13,6 +13,8 @@ module Sirena
         attribute :y, :float
         attribute :width, :float
         attribute :height, :float
+        attribute :font_size, :float
+        attribute :font_family, :string
 
         # Colour of a `rect`; nil for the other kinds
         attribute :color, :string
