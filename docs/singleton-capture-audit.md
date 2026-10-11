@@ -140,7 +140,7 @@ ruby scripts/audit_singleton_captures.rb --check
 **Result:** 11 executable `Array(...)` hits
 
 - `lib/sirena/parser/builders/mindmap.rb:250` — `nodes_array = Array(nodes)`
-- `lib/sirena/parser/builders/packet.rb:63` — `Array(statements).each do |stmt|`
+- `lib/sirena/parser/builders/packet.rb:60` — `Array(statements).each do |stmt|`
 - `lib/sirena/parser/builders/requirement.rb:224` — `Array(class_data)`
 - `lib/sirena/parser/builders/sankey.rb:43` — `Array(statements).each do |stmt|`
 - `lib/sirena/parser/builders/xy_chart.rb:33` — `values: Array(values),`
