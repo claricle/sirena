@@ -271,7 +271,8 @@ RSpec.describe Sirena::Parser::UserJourney do
     describe "a task line with no actors" do
       cases = {
         "no second colon at all" => ["Task: 5", 5, []],
-        "a trailing colon with no actors" => ["Task: 5:", 5, []],
+        # Pinned mmdc draws one empty actor (dot + legend) for `Task: 5:`.
+        "a trailing colon as one empty actor" => ["Task: 5:", 5, [""]],
         "a space before the second colon" => ["Task : 5 : Alice", 5, ["Alice"]],
       }
 
