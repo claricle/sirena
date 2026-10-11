@@ -18,9 +18,8 @@ The pie chart implementation in Sirena follows the established Parslet architect
 * Optional title display
 * Optional data value display (`showData` flag)
 * Accessibility features (accTitle, accDescr)
-* Decimal and negative values
+* Decimal values
 * Theme integration for colors
-* Case-insensitive syntax
 
 == Architecture
 
@@ -87,7 +86,7 @@ pie
 Where,
 
 `"Label Text"`:: The label for the slice, must be in quotes (single or double).
-`value`:: Numeric value (integer or decimal), can be negative.
+`value`:: Numeric value (integer or decimal), zero or greater. Mermaid refuses a negative value, and so does Sirena.
 
 === Accessibility features
 
@@ -241,14 +240,8 @@ pie title Market Share
 
 === Negative values
 
-Negative values are allowed (though uncommon in pie charts):
-
-[source,mermaid]
-----
-pie
-    "Profit" : 100
-    "Loss" : -20
-----
+A negative slice value is refused, as Mermaid refuses it
+("Negative values are not allowed in pie charts").
 
 === Empty diagrams
 
@@ -259,17 +252,10 @@ Empty pie charts (for testing) are valid:
 pie
 ----
 
-=== Case-insensitive syntax
+=== Keyword
 
-The pie keyword is case-insensitive and accepts variants:
-
-[source,mermaid]
-----
-pie          # lowercase
-Pie          # capitalized
-pie chart    # with 'chart' suffix
-Pie Chart    # fully capitalized
-----
+The keyword is exactly `pie`. Mermaid's parser rejects `Pie`, `pie chart`
+and `Pie Chart`, and so does Sirena.
 
 == Examples
 
