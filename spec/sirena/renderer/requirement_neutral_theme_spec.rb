@@ -46,6 +46,7 @@ RSpec.describe Sirena::Renderer::Requirement do
         .filter_map { |text| text.attributes["fill"] }.last,
     ]
   end
+
   def specific_role_paint
     plain = "//*[@id='requirement-plain']"
     element = "//*[@id='element-e']"
