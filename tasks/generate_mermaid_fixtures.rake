@@ -110,6 +110,7 @@ class MermaidReferenceGenerator
     flowchart: "flowchart",
     gantt: "gantt",
     git_graph: "gitgraph",
+    sequence: "sequence",
     state_diagram: "state_diagram",
   }.freeze
   CASE_PATH = %r{\A[a-z0-9_]+/[A-Za-z0-9_.-]+\.mmd\z}

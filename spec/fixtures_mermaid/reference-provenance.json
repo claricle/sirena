@@ -4340,6 +4340,30 @@
       "output_sha256": "a0bfa996f134c19c47efd5c5a824494aa4f0972285e5dad4d892cdb26cc4e54b"
     },
     {
+      "reference": "spec/fixtures_mermaid/sequence/sequencediagram_spec-6559020b.svg",
+      "cases": [
+        "unknown/sequencediagram_spec-6559020b.mmd"
+      ],
+      "source_sha256": "7243d398502846e14a9b8949b4a46c82dcbe1e47a5dd2534c8f3f40ac6e12c26",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/sequence/sequenceDiagram.spec.js",
+      "upstream_line_number": 0,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/unknown/sequencediagram_spec-6559020b.mmd",
+        "-o",
+        "spec/fixtures_mermaid/sequence/sequencediagram_spec-6559020b.svg"
+      ],
+      "output_sha256": "6cfbc481a3183671748b11e59b57dd33c1516f4eb40599b90914933583bafa6b"
+    },
+    {
       "reference": "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-22024e01.svg",
       "cases": [
         "sequence/sequencediagram_v2_spec-22024e01.mmd"
@@ -4530,6 +4554,30 @@
         "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-c9b61e4d.svg"
       ],
       "output_sha256": "761437cc54f9420387c372cafacf85324358891d373a9cb24a35449a50288e18"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/sequence/xss2-4cf62fc2.svg",
+      "cases": [
+        "unknown/xss2-4cf62fc2.mmd"
+      ],
+      "source_sha256": "5e9856aca41e98c10d950fe36d281e411db08e93dd51448563d694c5cf7931aa",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/cypress/platform/xss2.html",
+      "upstream_line_number": 43,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/unknown/xss2-4cf62fc2.mmd",
+        "-o",
+        "spec/fixtures_mermaid/sequence/xss2-4cf62fc2.svg"
+      ],
+      "output_sha256": "d1b4c6e2a23aff6662103872fb1cb7ddb4f301109dfa4f6398c98508af99195f"
     },
     {
       "reference": "spec/fixtures_mermaid/state_diagram/state_parser_spec-77e3df20.svg",
