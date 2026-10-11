@@ -47,7 +47,7 @@ ruby scripts/audit_singleton_captures.rb --check
 
 **Result:** 1 executable `Array(...)` hit
 
-- `lib/sirena/parser/builders/sequence.rb:110` — `Array(statements).each do |stmt|`
+- `lib/sirena/parser/builders/sequence.rb:114` — `Array(statements).each do |stmt|`
 
 ## 07c — git, gitgraph
 
@@ -59,8 +59,8 @@ ruby scripts/audit_singleton_captures.rb --check
 
 **Result:** 2 executable `Array(...)` hits
 
-- `lib/sirena/parser/builders/git_graph.rb:75` — `Array(statements).each do |statement|`
-- `lib/sirena/parser/builders/git_graph.rb:91` — `Array(options).each_with_object({}) do |option, result|`
+- `lib/sirena/parser/builders/git_graph.rb:77` — `Array(statements).each do |statement|`
+- `lib/sirena/parser/builders/git_graph.rb:94` — `Array(options).each_with_object({}) do |option, result|`
 
 ## 07d — gantt, radar, kanban, user_journey
 

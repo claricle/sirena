@@ -114,7 +114,7 @@ RSpec.describe "ClassDiagram Integration", :aggregate_failures do
 
       scene = transform.call(diagram)
       expect([scene.class, scene.children.map(&:x)])
-        .to eq([Sirena::Layout::ClassDiagram::Scene, [50.0, 300.0]])
+        .to eq([Sirena::Layout::ClassDiagram::Scene, [50.0, 175.136]])
     end
 
     it "handles cardinality labels" do

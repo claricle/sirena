@@ -1782,7 +1782,7 @@
   evidence: literal \n escape
 - case: er_diagram/erdiagram_spec-2f91223b.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: er_diagram/erdiagram_spec-346c8a84.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -1827,7 +1827,7 @@
   evidence: literal \n escape
 - case: er_diagram/erdiagram_spec-4fb39e72.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: er_diagram/erdiagram_spec-50d759c6.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -2157,7 +2157,7 @@
   evidence: mmdc rendered it
 - case: er_diagram/should_handle_complex_diagram_with_special_entit-af26ddf3.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: er_diagram/should_limit_the_number_of_relationships_between-4f41bb6a.mmd
   verdict: artifact
   evidence: uninterpolated ${} template

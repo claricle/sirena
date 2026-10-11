@@ -344,7 +344,7 @@ module Sirena
       end
 
       def empty_root_anchor(branch, graph)
-        return unless branch[:parent_branch].nil?
+        return if graph[:commits].empty? || !branch[:parent_branch].nil?
 
         x_coordinate, y_coordinate = coordinates(
           0, branch[:lane] * LANE_SPACING, graph[:orientation]
