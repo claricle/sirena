@@ -112,50 +112,61 @@ module Sirena
       end
 
       def assign_layers
-        visited = Set.new
-        sources = source_node_ids
-        seed_source_layers(sources, visited)
-        assign_reachable_layers(sources.dup, visited)
-        default_unvisited_layers
+        incoming_counts = incoming_flow_counts
+        seed_node_layers
+        processed = assign_reachable_layers(
+          source_node_ids(incoming_counts), incoming_counts
+        )
+        reset_unprocessed_layers(processed)
       end
 
-      def source_node_ids
+      def incoming_flow_counts
+        counts = Hash.new(0)
+        @graph.nodes.each { |node| counts[node.id] = 0 }
+        @graph.edges.each { |flow| counts[flow.target_id] += 1 }
+        counts
+      end
+
+      def source_node_ids(incoming_counts)
         @graph.nodes.filter_map do |node|
-          node.id if total_inflow(node.id).zero?
+          node.id if incoming_counts[node.id].zero?
         end
       end
 
-      def seed_source_layers(source_ids, visited)
-        source_ids.each do |node_id|
-          @node_layers[node_id] = 0
-          visited.add(node_id)
-        end
+      def seed_node_layers
+        @graph.nodes.each { |node| @node_layers[node.id] = 0 }
       end
 
-      def assign_reachable_layers(queue, visited)
+      def assign_reachable_layers(queue, incoming_counts)
+        processed = Set.new
         until queue.empty?
           current_id = queue.shift
-          current_layer = @node_layers[current_id]
-          flows_from(current_id).each do |flow|
-            assign_target_layer(flow.target_id, current_layer, queue, visited)
-          end
+          processed.add(current_id)
+          assign_outgoing_layers(current_id, queue, incoming_counts)
+        end
+        processed
+      end
+
+      def assign_outgoing_layers(current_id, queue, incoming_counts)
+        flows_from(current_id).each do |flow|
+          assign_target_layer(
+            flow.target_id, @node_layers[current_id], queue, incoming_counts
+          )
         end
       end
 
-      def assign_target_layer(target_id, current_layer, queue, visited)
-        return if visited.include?(target_id)
-
+      def assign_target_layer(target_id, current_layer, queue, incoming_counts)
         current = @node_layers[target_id] || 0
         @node_layers[target_id] = [current, current_layer + 1].max
-        return if queue.include?(target_id)
+        incoming_counts[target_id] -= 1
+        return unless incoming_counts[target_id].zero?
 
         queue << target_id
-        visited.add(target_id)
       end
 
-      def default_unvisited_layers
+      def reset_unprocessed_layers(processed)
         @graph.nodes.each do |node|
-          @node_layers[node.id] = 0 unless @node_layers.key?(node.id)
+          @node_layers[node.id] = 0 unless processed.include?(node.id)
         end
       end
 
