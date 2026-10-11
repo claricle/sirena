@@ -3,7 +3,13 @@
 require "spec_helper"
 require "sirena/notation/plantuml"
 
+Sirena::Notation.send(:entries).delete(:plantuml)
+
 RSpec.describe "PlantUML SequenceArrows parity" do
+  include_context "with an isolated notation registry"
+
+  before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
+
   let(:case_ids) do
     %w[
       java.nonreg.simple.SequenceArrows_0001_Test--d918f796209f

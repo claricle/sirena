@@ -44,8 +44,8 @@ RSpec.describe Sirena::Layout::Kanban do
                                              [0.0, 0.0, 0.0, 0.0],
                                              [0.0, 0.0, 0.0, 0.0])
     expect(diff).to include(
-      missing: [], new: [], regressions: [], stale: case_ids,
+      missing: [], new: [], regressions: [], stale: [],
     )
-    expect(diff.fetch(:unrecorded_improvements).length).to eq(9)
+    expect(diff.fetch(:unrecorded_improvements)).to be_empty
   end
 end
