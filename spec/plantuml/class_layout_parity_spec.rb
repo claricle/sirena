@@ -67,8 +67,11 @@ module Plantuml
       File.join(ROOT, "references", "class", "#{id}.svg")
     end
 
+    # Windows checkouts turn LF into CRLF; provenance records the LF bytes.
     def digest(path)
-      Digest::SHA256.file(path).hexdigest if File.file?(path)
+      return unless File.file?(path)
+
+      Digest::SHA256.hexdigest(File.binread(path).gsub("\r\n", "\n"))
     end
 
     def evidence_failures
