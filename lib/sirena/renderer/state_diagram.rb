@@ -13,12 +13,8 @@ module Sirena
       # @param scene [Layout::StateDiagram::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        canvas = scene
-        if scene.is_a?(Hash)
-          canvas = LAYOUT_SCENE.new(width: calculate_width(scene) + 40,
-                                    height: calculate_height(scene) + 40)
-        end
-        svg = create_document(canvas)
+        require_typed_scene!(scene)
+        svg = create_document(scene)
         render_transitions(scene, svg)
         render_states(scene, svg)
         svg
@@ -26,16 +22,14 @@ module Sirena
 
       protected
 
-      def calculate_width(graph)
-        Layout::StateDiagram.renderer_extent(graph, :width)
+      def require_typed_scene!(scene)
+        return if scene.is_a?(LAYOUT_SCENE)
+
+        raise ArgumentError, "StateDiagram renderer requires a typed Scene"
       end
 
-      def calculate_height(graph)
-        Layout::StateDiagram.renderer_extent(graph, :height)
-      end
-
-      def render_states(graph, svg)
-        children_for(graph).each { |state| render_state(state, svg) }
+      def render_states(scene, svg)
+        scene.children.each { |state| render_state(state, svg) }
       end
 
       def render_state(state, parent)
@@ -43,48 +37,32 @@ module Sirena
       end
 
       def state_group(state)
-        typed = typed_state(state)
-        group = Svg::Group.new.tap { |item| item.id = "state-#{typed.id}" }
-        shape = if state.is_a?(Layout::StateDiagram::Node)
-                  final_state_shape(typed)
-                else
-                  create_state_shape(state, typed.shape_type)
-                end
-        group.children << shape
-        typed.labels.each_with_index do |label, index|
-          group.children << create_state_label(typed, label, index)
+        group = Svg::Group.new.tap { |item| item.id = "state-#{state.id}" }
+        group.children << final_state_shape(state)
+        state.labels.each do |label|
+          group.children << state_label(label)
         end
-        state_children(typed).each do |child|
+        state.children.each do |child|
           render_state(child, group)
         end
         group
       end
 
-      def render_transitions(graph, svg)
-        edges_for(graph).each do |transition|
-          render_transition(transition, graph, svg)
-        end
+      def render_transitions(scene, svg)
+        scene.edges.each { |edge| render_transition(edge, svg) }
       end
 
-      def render_transition(transition, graph, svg)
-        edge = typed_transition(transition, graph)
-        return unless edge
-
-        source = find_state(graph, edge.source)
-        target = find_state(graph, edge.target)
-
+      def render_transition(edge, svg)
         group = Svg::Group.new.tap { |item| item.id = "transition-#{edge.id}" }
         group.children << Svg::Path.new.tap do |path|
-          path.d = calculate_transition_path(source, target, edge)
+          path.d = edge.path
           path.fill = "none"
           path.stroke = theme_color(:edge_stroke)
           path.stroke_width = "2"
           path.marker_end = "url(#arrowhead)"
         end
         if edge.labels.any?
-          group.children << create_transition_label(
-            source, target, edge.labels.first
-          )
+          group.children << transition_label(edge.labels.first)
         end
         svg << group
       end
@@ -101,117 +79,7 @@ module Sirena
         end
       end
 
-      def find_state(graph, state_id)
-        return unless state_id
-
-        find_nested_state(children_for(graph), state_id)
-      end
-
-      def find_nested_state(states, state_id)
-        states.each do |state|
-          if state.is_a?(Layout::StateDiagram::Node)
-            return state if state.id == state_id
-          elsif state[:id] == state_id
-            return state
-          end
-          nested = find_nested_state(state_children(state), state_id)
-          return nested if nested
-        end
-        nil
-      end
-
-      def calculate_transition_path(source, target, transition)
-        if transition.is_a?(Layout::StateDiagram::Edge)
-          return transition.sections.map do |section|
-            create_path_with_bends(
-              section.start_point.x, section.start_point.y,
-              section.end_point.x, section.end_point.y, section.bend_points
-            )
-          end.join(" ")
-        end
-
-        source_point = point(Layout::StateDiagram.center(source))
-        target_point = point(Layout::StateDiagram.center(target))
-        bends = transition.dig(:sections, 0, :bendPoints) || []
-        create_path_with_bends(
-          source_point.x, source_point.y, target_point.x, target_point.y, bends
-        )
-      end
-
-      def create_path_with_bends(
-        source_x, source_y, target_x, target_y, bend_points
-      )
-        Layout::StateDiagram.path_data(
-          point(x: source_x, y: source_y),
-          point(x: target_x, y: target_y),
-          bend_points.map { |item| point(item) },
-        )
-      end
-
-      def create_transition_label(source, target, label)
-        return transition_label(label) if label.is_a?(Layout::StateDiagram::Label)
-
-        geometry = Layout::StateDiagram.transition_label_geometry(
-          source, target, label, small_font_size
-        )
-        transition_label(Layout::StateDiagram::Label.new(**geometry))
-      end
-
-      def create_state_shape(state, state_type)
-        typed = typed_state(state, state_type)
-        coordinates = compatibility_shape_values(
-          state, typed, state_type
-        )
-        compatibility_state_shape(state_type, coordinates)
-      end
-
-      def create_normal_state(x_position, y_position, width, height)
-        normal_state_shape(x_position, y_position, width, height)
-      end
-
-      def create_start_state(x_position, y_position, width, height)
-        coordinates = [x_position, y_position, width, height]
-        start_state_shape(compatibility_state(coordinates, "start"))
-      end
-
-      def create_end_state(x_position, y_position, width, height)
-        coordinates = [x_position, y_position, width, height]
-        end_state_shape(compatibility_state(coordinates, "end"))
-      end
-
-      def create_choice_state(x_position, y_position, width, height)
-        coordinates = [x_position, y_position, width, height]
-        state = compatibility_state(coordinates, "choice")
-        choice_state_shape(state)
-      end
-
-      def create_fork_join_state(x_position, y_position, width, height)
-        coordinates = [x_position, y_position, width, height]
-        state = compatibility_state(coordinates, "fork")
-        fork_join_state_shape(state)
-      end
-
-      def create_state_label(state, label, index)
-        return state_label(label) if label.is_a?(Layout::StateDiagram::Label)
-
-        geometry = Layout::StateDiagram.label_geometry(
-          state, label, index,
-          { normal: normal_font_size, small: small_font_size }
-        )
-        state_label(Layout::StateDiagram::Label.new(**geometry))
-      end
-
       private
-
-      def compatibility_state_shape(state_type, arguments)
-        case state_type
-        when "start" then create_start_state(*arguments)
-        when "end" then create_end_state(*arguments)
-        when "choice" then create_choice_state(*arguments)
-        when "fork", "join" then create_fork_join_state(*arguments)
-        else create_normal_state(*arguments)
-        end
-      end
 
       def final_state_shape(state)
         case state.shape_type
@@ -315,99 +183,6 @@ module Sirena
           text.text_anchor = "middle"
           text.dominant_baseline = "middle"
         end
-      end
-
-      def typed_state(state, shape_type = nil)
-        return state if state.is_a?(Layout::StateDiagram::Node)
-
-        resolved_type = shape_type || state.dig(:metadata, :shape_type) ||
-          state.dig(:metadata, :state_type) || "normal"
-        geometry = Layout::StateDiagram.shape_geometry(state, resolved_type)
-        labels = (state[:labels] || []).each_with_index.map do |label, index|
-          values = Layout::StateDiagram.label_geometry(
-            state, label, index,
-            { normal: normal_font_size, small: small_font_size }
-          )
-          Layout::StateDiagram::Label.new(**values)
-        end
-        Layout::StateDiagram::Node.new(
-          id: state[:id], state_type: state.dig(:metadata, :state_type),
-          shape_type: resolved_type, labels: labels,
-          children: typed_state_children(state),
-          **geometry
-        )
-      end
-
-      def typed_state_children(state)
-        Array(state[:children]).map { |child| typed_state(child) }
-      end
-
-      def typed_transition(transition, graph)
-        return transition if transition.is_a?(Layout::StateDiagram::Edge)
-
-        source = find_state(graph, transition[:sources]&.first)
-        target = find_state(graph, transition[:targets]&.first)
-        return unless source && target
-
-        scene = Layout::StateDiagram.from_graph(
-          { id: "state_diagram", children: [source, target],
-            edges: [transition] },
-          theme: theme,
-        )
-        scene.edges.first
-      end
-
-      def compatibility_state(coordinates, shape_type)
-        x_position, y_position, width, height = coordinates
-        values = {
-          x: x_position, y: y_position, width: width, height: height
-        }
-        Layout::StateDiagram::Node.new(
-          shape_type: shape_type,
-          **Layout::StateDiagram.shape_geometry(values, shape_type),
-        )
-      end
-
-      def compatibility_shape_values(state, typed, shape_type)
-        unless state.is_a?(Hash)
-          return [typed.x, typed.y, typed.width, typed.height]
-        end
-
-        geometry = Layout::StateDiagram.shape_geometry(state, shape_type)
-        geometry.values_at(:x, :y, :width, :height)
-      end
-
-      def point(value)
-        return value if value.is_a?(Layout::StateDiagram::Point)
-
-        Layout::StateDiagram::Point.new(x: value[:x], y: value[:y])
-      end
-
-      def children_for(graph)
-        return graph.children if graph.is_a?(Layout::StateDiagram::Scene)
-
-        graph[:children] || []
-      end
-
-      def state_children(state)
-        return state.children if state.is_a?(Layout::StateDiagram::Node)
-
-        state[:children] || []
-      end
-
-      def edges_for(graph)
-        return graph.edges if graph.is_a?(Layout::StateDiagram::Scene)
-
-        graph[:edges] || []
-      end
-
-      def normal_font_size
-        theme_typography(:font_size_normal) || Layout::StateDiagram::DEFAULT_FONT_SIZE
-      end
-
-      def small_font_size
-        theme_typography(:font_size_small) ||
-          Layout::StateDiagram::DEFAULT_SMALL_FONT_SIZE
       end
 
       def formatted_number(number)

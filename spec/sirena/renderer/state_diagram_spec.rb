@@ -4,66 +4,6 @@ require "spec_helper"
 
 RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
   let(:renderer) { described_class.new }
-  let(:expected_hook_calls) do
-    {
-      calculate_width: 1,
-      calculate_height: 1,
-      create_state_shape: 2,
-      create_normal_state: 2,
-      calculate_transition_path: 1,
-      create_path_with_bends: 1,
-      create_transition_label: 1,
-    }
-  end
-  let(:hook_renderer_class) do
-    Class.new(described_class) do
-      attr_reader :hook_calls
-
-      def initialize(...)
-        super
-        @hook_calls = Hash.new(0)
-      end
-
-      protected
-
-      def calculate_width(graph)
-        @hook_calls[:calculate_width] += 1
-        super
-      end
-
-      def calculate_height(graph)
-        @hook_calls[:calculate_height] += 1
-        super
-      end
-
-      def create_state_shape(state, state_type)
-        @hook_calls[:create_state_shape] += 1
-        super
-      end
-
-      def create_normal_state(x_position, y_position, width, height)
-        @hook_calls[:create_normal_state] += 1
-        super
-      end
-
-      def calculate_transition_path(source, target, transition)
-        @hook_calls[:calculate_transition_path] += 1
-        super
-      end
-
-      def create_path_with_bends(
-        source_x, source_y, target_x, target_y, bend_points
-      )
-        @hook_calls[:create_path_with_bends] += 1
-        super
-      end
-
-      def create_transition_label(source, target, label)
-        @hook_calls[:create_transition_label] += 1
-        super
-      end
-    end
-  end
 
   def first_typed_scene
     typed_scene(final_end_node, final_choice_node)
@@ -123,6 +63,7 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
     section = Sirena::Layout::StateDiagram::Section
     edge = Sirena::Layout::StateDiagram::Edge.new(
       id: "route", source: "start", target: "end",
+      path: "M 10 10 L 20 20 M 20 20 L 30 10",
       sections: [
         section.new(start_point: point.new(x: 10, y: 10),
                     end_point: point.new(x: 20, y: 20)),
@@ -189,9 +130,16 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
         ],
       }
     end
+    let(:scene) { Sirena::Layout::StateDiagram.from_graph(graph) }
+
+    it "rejects a bare Hash at the renderer boundary" do
+      expect { renderer.render(graph) }.to raise_error(
+        ArgumentError, "StateDiagram renderer requires a typed Scene"
+      )
+    end
 
     it "renders graph to SVG document" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.width).to be > 0
@@ -199,14 +147,14 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
     end
 
     it "includes states in SVG" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
       expect(groups.length).to be > 0
     end
 
     it "renders normal states as rounded rectangles" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -219,7 +167,7 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
     it "renders start state as filled circle" do
       graph[:children][0][:metadata][:state_type] = "start"
 
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -233,7 +181,7 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
     it "renders end state as double circle" do
       graph[:children][0][:metadata][:state_type] = "end"
 
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       # Find all groups including nested ones
       all_circles = []
@@ -257,7 +205,7 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
     it "renders choice state as diamond" do
       graph[:children][0][:metadata][:state_type] = "choice"
 
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -269,7 +217,7 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
     it "renders fork state as thick bar" do
       graph[:children][0][:metadata][:state_type] = "fork"
 
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -281,7 +229,7 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
     end
 
     it "renders state labels as text elements" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -319,7 +267,7 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
     end
 
     it "renders transitions as paths" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -329,7 +277,7 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
     end
 
     it "renders transition labels" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -344,7 +292,6 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
       scene = Sirena::Layout::StateDiagram.from_graph(graph)
       forbid_layout_geometry(:shape_geometry)
       forbid_layout_geometry(:transition_label_geometry)
-      allow(renderer).to receive(:create_state_shape).and_raise("hook used")
       expect { renderer.render(scene) }.not_to raise_error
     end
 
@@ -368,14 +315,6 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
       second_document = renderer.render(second_typed_scene)
       expect(final_geometry_observation(first_document, second_document))
         .to eq(expected_final_geometry)
-    end
-
-    it "routes public rendering through every released geometry hook" do
-      hook_renderer = hook_renderer_class.new
-
-      hook_renderer.render(graph)
-
-      expect(hook_renderer.hook_calls).to eq(expected_hook_calls)
     end
 
     it "emits the font sizes already resolved by the themed layout" do
