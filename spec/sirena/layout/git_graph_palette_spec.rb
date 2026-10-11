@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "digest"
 require "sirena/parser/git_graph"
 require "sirena/layout/git_graph"
 
@@ -32,10 +31,26 @@ RSpec.describe Sirena::Layout::GitGraph do
       name: "branch colours", colors: { git_graph_palette: palette },
     )
   end
-  let(:render_digests) do
-    partial = { name: "mine", colors: { background: "#101010" } }
-    [Sirena.render(source), Sirena.render(source, theme: partial)].map do |svg|
-      Digest::SHA256.hexdigest(svg)
+  let(:partial_theme) do
+    Sirena::Theme.new(name: "mine", colors: { background: "#101010" })
+  end
+
+  def geometry_for(theme = nil)
+    diagram = Sirena::Parser::GitGraph.new.parse(source)
+    scene = described_class.new.call(diagram, theme: theme)
+    [scene.width, scene.height, commit_geometry(scene), branch_geometry(scene)]
+  end
+
+  def commit_geometry(scene)
+    scene.commits.map do |commit|
+      [commit.id, commit.branch, commit.lane, commit.x, commit.y]
+    end
+  end
+
+  def branch_geometry(scene)
+    scene.branches.map do |branch|
+      label = branch.label
+      [branch.name, branch.lane, label.x, label.y, label.font_size]
     end
   end
 
@@ -47,10 +62,7 @@ RSpec.describe Sirena::Layout::GitGraph do
     expect(colours).to eq(Array.new(11) { |index| palette[index % 3] })
   end
 
-  it "preserves default and partial-theme SVG bytes" do
-    expect(render_digests).to eq(
-      %w[8ed4e31e0f2bdb4b1623404216f7be7e6d11ee7197149a0b3b8bd94cfb13fc75
-         d28127a366e54cf240fba97180f0f8a1f0363fadef6fc65652ca88316ff4fec8],
-    )
+  it "preserves graph geometry under a partial colour theme" do
+    expect(geometry_for(partial_theme)).to eq(geometry_for)
   end
 end

@@ -35,6 +35,9 @@ module Sirena
 
       PADDING = 40
       LABEL_HEADROOM = 1.2
+      BRANCH_LABEL_INSET = 8.5
+      BRANCH_LABEL_BASELINE_OFFSET = 10.5
+      VERTICAL_BRANCH_LABEL_CLEARANCE = 40
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -243,7 +246,7 @@ module Sirena
         x, y, anchor = label_position(commit[:x], commit[:y], orientation, kind)
         { text: text, x: x + PADDING, y: y + PADDING,
           text_anchor: anchor, kind: kind, branch: commit[:branch],
-          owner_id: commit[:id] }
+          owner_id: commit[:id], font_size: small_font_size }
       end
 
       def label_position(x_coordinate, y_coordinate, orientation, kind)
@@ -265,7 +268,7 @@ module Sirena
       def branch_labels(graph)
         commits = representative_branch_commits(graph)
         commits.map do |branch, commit|
-          branch_label(branch, commit, graph[:orientation])
+          branch_label(branch, commit, graph)
         end
       end
 
@@ -304,9 +307,9 @@ module Sirena
         { x: x_coordinate, y: y_coordinate }
       end
 
-      def branch_label(branch, commit, orientation)
+      def branch_label(branch, commit, graph)
         x_coordinate, y_coordinate, anchor = branch_label_position(
-          commit[:x], commit[:y], orientation
+          branch, commit, graph
         )
         branch_label_geometry(
           branch, x_coordinate, y_coordinate, anchor
@@ -316,15 +319,29 @@ module Sirena
       def branch_label_geometry(branch, x_coordinate, y_coordinate, anchor)
         { text: branch, x: x_coordinate + PADDING,
           y: y_coordinate + PADDING, text_anchor: anchor,
-          kind: "branch", branch: branch }
+          kind: "branch", branch: branch, font_size: branch_font_size }
       end
 
-      def branch_label_position(x_coordinate, y_coordinate, orientation)
-        case orientation
-        when "TB" then [x_coordinate, y_coordinate + 24, "middle"]
-        when "BT" then [x_coordinate, y_coordinate - 16, "middle"]
-        else [x_coordinate + 15, y_coordinate + 4, "start"]
-        end
+      def branch_label_position(branch, commit, graph)
+        width = measure_text(branch, font_size: branch_font_size)[:width]
+        return horizontal_branch_label_position(commit[:y], width) unless
+          vertical?(graph[:orientation])
+
+        vertical_branch_label_position(commit[:x], width, graph)
+      end
+
+      def horizontal_branch_label_position(lane, width)
+        [BRANCH_LABEL_INSET - width,
+         lane - BRANCH_LABEL_BASELINE_OFFSET, "start"]
+      end
+
+      def vertical_branch_label_position(lane, width, graph)
+        boundary = if graph[:orientation] == "TB"
+                     COMMIT_RADIUS - VERTICAL_BRANCH_LABEL_CLEARANCE
+                   else
+                     graph[:height]
+                   end
+        [lane - (width / 2.0), boundary, "start"]
       end
 
       def label_spill(labels, width)
@@ -337,7 +354,7 @@ module Sirena
 
       def label_span(label)
         width = measure_text(
-          label[:text], font_size: small_font_size
+          label[:text], font_size: label.fetch(:font_size)
         )[:width] * LABEL_HEADROOM
         share = { "start" => 0.0, "middle" => 0.5, "end" => 1.0 }
           .fetch(label[:text_anchor])
@@ -411,7 +428,7 @@ module Sirena
         Label.new(text: label[:text], x: label[:x] + extra_shift,
                   y: label[:y], text_anchor: label[:text_anchor],
                   kind: label[:kind], branch: label[:branch],
-                  font_size: small_font_size)
+                  font_size: label.fetch(:font_size))
       end
 
       def typed_connections(connections, shift)
@@ -466,6 +483,11 @@ module Sirena
       def small_font_size
         theme.typography&.font_size_small ||
           Theme::Registry.get(:default).typography.font_size_small
+      end
+
+      def branch_font_size
+        theme.typography&.font_size_large ||
+          Theme::Registry.get(:default).typography.font_size_large
       end
 
       # Builds branch information from the shared graph's branch entries.

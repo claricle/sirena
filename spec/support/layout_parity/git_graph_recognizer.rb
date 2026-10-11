@@ -142,48 +142,56 @@ module SpecSupport
       def sirena_label(extractor, text, markers, orientation)
         entry = text_entry(extractor, text)
         marker = nearest_element(entry[:box], markers) if entry
-        return unless near_sirena_marker?(entry, marker)
+        return unless marker
 
-        kind = sirena_label_kind(entry[:box], marker.bbox, orientation)
+        kind = sirena_label_kind(entry[:box], marker.bbox, markers, orientation,
+                                 text["font-weight"] == "bold")
+        return unless recognized_label_position?(kind, entry[:box], marker)
+
+        logical_sirena_label(kind, entry)
+      end
+
+      def logical_sirena_label(kind, entry)
         return if generated_commit_label?(kind, entry[:label])
 
         logical_element(kind, entry[:label], entry[:box])
       end
 
-      def near_sirena_marker?(entry, marker)
-        entry && marker && near_marker?(entry[:box], marker.bbox)
+      def recognized_label_position?(kind, label, marker)
+        kind == :branch_label || near_marker?(label, marker.bbox)
       end
 
       def generated_commit_label?(kind, label)
         kind == :commit_label && label.match?(GENERATED_COMMIT_LABEL)
       end
 
-      def sirena_label_kind(label, marker, orientation)
-        return :branch_label if branch_position?(label, marker, orientation)
+      def sirena_label_kind(label, marker, markers, orientation, bold)
+        if bold && branch_position?(label, markers, orientation)
+          return :branch_label
+        end
 
         tag_position?(label, marker, orientation) ? :tag_label : :commit_label
       end
 
-      def branch_position?(label, marker, orientation)
-        delta_x, delta_y = offset(label, marker)
-        case orientation
-        when :lr then horizontal_branch?(delta_x, delta_y, marker)
-        when :tb then downward_branch?(delta_x, delta_y, marker)
-        else upward_branch?(delta_x, delta_y, marker)
-        end
+      def branch_position?(label, markers, orientation)
+        x_coordinate, y_coordinate = label.center
+        clearance = marker_clearance(markers)
+        left, top, bottom = marker_boundaries(markers, clearance)
+        { lr: x_coordinate < left, tb: y_coordinate < top,
+          bt: y_coordinate > bottom }.fetch(orientation)
       end
 
-      def horizontal_branch?(delta_x, delta_y, marker)
-        delta_x.positive? && delta_x <= marker.width * 2 &&
-          delta_y.abs <= marker.height
+      def marker_clearance(markers)
+        markers.map(&:bbox)
+          .map { |box| [box.width, box.height].max }.max / 4.0
       end
 
-      def downward_branch?(delta_x, delta_y, marker)
-        delta_x.abs <= marker.width && delta_y > marker.height
-      end
-
-      def upward_branch?(delta_x, delta_y, marker)
-        delta_x.abs <= marker.width && delta_y < -marker.height / 2
+      def marker_boundaries(markers, clearance = 0)
+        centers = markers.map { |marker| marker.bbox.center }
+        x_coordinates = centers.map(&:first)
+        y_coordinates = centers.map(&:last)
+        [x_coordinates.min - clearance, y_coordinates.min - clearance,
+         y_coordinates.max + clearance]
       end
 
       def tag_position?(label, marker, orientation)
@@ -202,21 +210,28 @@ module SpecSupport
       end
 
       def label_orientation(extractor, doc, markers)
-        labels = doc.xpath("//text").select do |text|
-          text["font-weight"] == "bold"
-        end
-        return :lr if labels.any? { |text| text["text-anchor"] == "start" }
+        labels = bold_label_boxes(extractor, doc)
+        return if labels.empty?
 
-        vertical_label_orientation(extractor, labels, markers)
+        orientation, distance = boundary_distances(labels, markers)
+          .max_by { |_, value| value }
+
+        orientation if distance.positive?
       end
 
-      def vertical_label_orientation(extractor, labels, markers)
-        node = labels.find { |text| text["text-anchor"] == "middle" }
-        entry = text_entry(extractor, node) if node
-        marker = nearest_element(entry[:box], markers) if entry
-        return unless marker
+      def bold_label_boxes(extractor, doc)
+        doc.xpath("//text").filter_map do |text|
+          next unless text["font-weight"] == "bold"
 
-        entry[:box].center.last > marker.bbox.center.last ? :tb : :bt
+          text_entry(extractor, text)&.fetch(:box)
+        end
+      end
+
+      def boundary_distances(labels, markers)
+        marker_left, marker_top, marker_bottom = marker_boundaries(markers)
+        { lr: marker_left - labels.map(&:min_x).min,
+          tb: marker_top - labels.map(&:min_y).min,
+          bt: labels.map(&:max_y).max - marker_bottom }
       end
 
       def marker_orientation(markers)
