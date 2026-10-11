@@ -13,7 +13,8 @@ RSpec.describe Sirena::Layout::ErDiagramEntitySize do
   include ErEntityCells
 
   # Each row: entity, attributes, then the width and height mmdc drew,
-  # read from spec/fixtures_mermaid/er/{002,003,058}*.svg.
+  # read from spec/fixtures_mermaid/er_diagram/{yari2-9471fb3f,er-f17280c6,
+  # should_handle_attributes_with_numbers_in_names_b-9966ce0b}.svg.
   [
     ["CAR",
      [%w[string registrationNumber], %w[string make], %w[string model]],

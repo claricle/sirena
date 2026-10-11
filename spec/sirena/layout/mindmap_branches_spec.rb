@@ -11,7 +11,7 @@ module MindmapBranchesHelpers
   end
 
   def reference_source(name)
-    path = Dir[File.join(__dir__, "../../mermaid/mindmap/#{name}_*.mmd")].first
+    path = File.join(__dir__, "../../mermaid/mindmap/#{name}.mmd")
     File.read(path)
   end
 
@@ -103,9 +103,9 @@ RSpec.describe Sirena::Layout::Mindmap do
       .to eq("one\ntwo")
   end
 
-  describe "canvas and edges for a two-child mindmap (mmdc 028)" do
-    let(:scene) { scene_for(reference_source("028")) }
-    let(:reference_box) { MindmapReference.view_box("028") }
+  describe "canvas and edges for a two-child mindmap (mmdc mmp_2 hierarchical)" do
+    let(:scene) { scene_for(reference_source("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5")) }
+    let(:reference_box) { MindmapReference.view_box("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5") }
 
     it "frames the node boxes with 10 on every side" do
       expect(canvas_margins(scene)).to eq([10.0, 10.0, 10.0, 10.0])
@@ -113,7 +113,7 @@ RSpec.describe Sirena::Layout::Mindmap do
 
     it "places the first child right and the second left, as mmdc does" do
       root, first, second = scene.children
-      reference = MindmapReference.nodes("028").map { |node| node[:centre][0] }
+      reference = MindmapReference.nodes("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5").map { |node| node[:centre][0] }
 
       expect([first.center_x > root.center_x, second.center_x < root.center_x])
         .to eq([reference[1] > reference[0], reference[2] < reference[0]])
@@ -128,13 +128,13 @@ RSpec.describe Sirena::Layout::Mindmap do
     end
 
     it "starts and ends each edge 15 from the node centres" do
-      inset = be_within(0.01).of(reference_inset("028"))
+      inset = be_within(0.01).of(reference_inset("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5"))
 
       expect(edge_end_distances(scene)).to match([inset, inset])
     end
 
     it "bends each edge through its midpoint as mmdc's curve does" do
-      reference = path_fractions(MindmapReference.edge_paths("028").first)
+      reference = path_fractions(MindmapReference.edge_paths("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5").first)
 
       expect(path_fractions(scene_path_points(scene)))
         .to match(reference.map { |value| be_within(1e-3).of(value) })

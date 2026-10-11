@@ -237,7 +237,7 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
       expect(edge.sections.first.end_point).to be_a(described_class::Point)
     end
 
-    # mmdc leaves 8px round the diagram (reference 001: node A at y 8).
+    # mmdc leaves 8px round the diagram (configuration_spec-67574f4a: node A at y 8).
     it "places nodes in final canvas coordinates" do
       node = transform.to_graph(diagram).children.first
 
@@ -245,8 +245,8 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
       expect(node.y).to eq(8.0)
     end
 
-    # Reference 001: viewBox 437.8125 x 521.28125 round a node ending at
-    # 429.8125 x 513.28125.
+    # configuration_spec-67574f4a: viewBox 437.8125 x 521.28125 round a node
+    # ending at 429.8125 x 513.28125.
     it "ends the page 8px after the last node" do
       scene = transform.to_graph(diagram)
       rights = scene.children.map { |node| node.x + node.width }
