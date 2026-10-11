@@ -701,7 +701,7 @@ module Sirena
                         items: @outline.items.freeze, boxes: @boxes.freeze,
                         appearance: @appearance, footbox: @footbox,
                         warnings: @warnings.freeze, title: @title,
-                        chrome: @chrome)
+                        chrome: @chrome, teoz: @teoz)
           end
 
           # The number of a wrapped label would sit on one of its lines,

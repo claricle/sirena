@@ -23,6 +23,7 @@ module Sirena
             def call(index)
               { appearance: appearance(index),
                 footbox: index.with_role("no_footbox").empty?,
+                teoz: !index.with_role("teoz").empty?,
                 warnings: index.with_role("warning").map(&:label).freeze,
                 title: index.with_role("title").first&.label,
                 chrome: chrome(index) }
