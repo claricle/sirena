@@ -19,8 +19,9 @@ module Sirena
       ROW_STEP = 20
 
       # @param names [Array<String>] actor names in any order
-      def initialize(names)
+      def initialize(names, font_size: FONT_SIZE)
         @names = names.uniq.sort
+        @font_size = font_size
       end
 
       # @return [Array<Array>] [name, index, y, lines] per actor
@@ -76,7 +77,7 @@ module Sirena
       end
 
       def width(text)
-        TextMeasurement.measure(text, font_size: FONT_SIZE)[:width]
+        TextMeasurement.measure(text, font_size: @font_size)[:width]
       end
     end
   end
