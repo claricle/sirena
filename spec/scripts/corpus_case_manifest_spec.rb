@@ -150,49 +150,25 @@ RSpec.describe CorpusCaseManifest do
     end
   end
 
-  it "has a committed manifest that matches the committed corpus" do
-    expect(described_class.stale?).to be(false)
+  it "keeps the recorded old names when the corpus no longer has them" do
+    with_written_manifest("pie/001_a.mmd" => a) do |dir, out|
+      manifest = JSON.parse(File.read(out))
+      manifest["pairs"].each { _1["old"] = "pie/gone.mmd" }
+      File.write(out, JSON.generate(manifest))
+      expect(described_class.stale?(corpus_dir: dir, path: out)).to be(false)
+    end
   end
 
-  describe "duplicate directories of one diagram type" do
-    def git_twin = pie_case("gitGraph\n  commit\n")
-
-    def merged
-      manifest_for("git/001_a_0.mmd" => git_twin,
-                   "gitgraph/001_b_0.mmd" => git_twin,
-                   "class/001_c_0.mmd" => a,
-                   "class_diagram/001_d_0.mmd" => b)
+  it "reports a manifest as stale once a recorded new id left the corpus" do
+    with_written_manifest("pie/001_a.mmd" => a) do |dir, out|
+      manifest = JSON.parse(File.read(out))
+      manifest["pairs"].each { _1["new"] = "pie/renamed-00000000" }
+      File.write(out, JSON.generate(manifest))
+      expect(described_class.stale?(corpus_dir: dir, path: out)).to be(true)
     end
+  end
 
-    [%w[class class_diagram], %w[er er_diagram], %w[git gitgraph],
-     %w[gitgraph gitgraph], %w[state state_diagram],
-     %w[state_diagram state_diagram], %w[unknown unknown],
-     %w[pie pie], %w[nonesuch nonesuch]].each do |directory, canonical|
-      it "sends #{directory}/ to #{canonical}/" do
-        expect(described_class.canonical_directory(directory))
-          .to eq(canonical)
-      end
-    end
-
-    it "names the canonical directory in every new id" do
-      expect(new_ids(merged).transform_values { _1.split("/").first })
-        .to eq("git/001_a_0.mmd" => "gitgraph",
-               "gitgraph/001_b_0.mmd" => "gitgraph",
-               "class/001_c_0.mmd" => "class_diagram",
-               "class_diagram/001_d_0.mmd" => "class_diagram")
-    end
-
-    it "keeps twins from the merged directories unique" do
-      ids = new_ids(merged).values_at("git/001_a_0.mmd",
-                                      "gitgraph/001_b_0.mmd")
-      expect(ids.map { _1.split("/").last }.uniq.length).to eq(2)
-    end
-
-    it "gives identical ids on a second run" do
-      cases = { "git/001_a_0.mmd" => git_twin,
-                "gitgraph/001_b_0.mmd" => git_twin }
-      runs = Array.new(2) { described_class.render(manifest_for(cases)) }
-      expect(runs.uniq.length).to eq(1)
-    end
+  it "has a committed manifest that matches the committed corpus" do
+    expect(described_class.stale?).to be(false)
   end
 end

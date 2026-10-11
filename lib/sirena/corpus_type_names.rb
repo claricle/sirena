@@ -6,21 +6,18 @@ module Sirena
   # type (diagrams that must fail detection) maps to nil.
   #
   # Read by {Sirena::DiagramRegistry.corpus_directories} and by
-  # Sirena::Corpus.registry_type in tasks/corpus.rake. Several directories
-  # may name one type until the duplicate directories are merged.
+  # Sirena::Corpus.registry_type in tasks/corpus.rake. One directory names
+  # each type.
   module CorpusTypeNames
     DIRECTORIES = {
       "architecture" => :architecture,
       "block" => :block,
       "c4" => :c4,
-      "class" => :class_diagram,
       "class_diagram" => :class_diagram,
-      "er" => :er_diagram,
       "er_diagram" => :er_diagram,
       "error" => :error,
       "flowchart" => :flowchart,
       "gantt" => :gantt,
-      "git" => :git_graph,
       "gitgraph" => :git_graph,
       "info" => :info,
       "kanban" => :kanban,
@@ -32,7 +29,6 @@ module Sirena
       "requirement" => :requirement,
       "sankey" => :sankey,
       "sequence" => :sequence,
-      "state" => :state_diagram,
       "state_diagram" => :state_diagram,
       "timeline" => :timeline,
       "treemap" => :treemap,

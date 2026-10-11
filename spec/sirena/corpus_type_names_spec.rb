@@ -39,7 +39,7 @@ RSpec.describe Sirena::CorpusTypeNames do
 
     it "gives the registry the directories of a type" do
       expect(Sirena::DiagramRegistry.corpus_directories(:git_graph))
-        .to eq(%w[git gitgraph])
+        .to eq(%w[gitgraph])
     end
 
     it "reads one table: a seeded wrong entry changes both readers" do
@@ -48,7 +48,7 @@ RSpec.describe Sirena::CorpusTypeNames do
 
       expect([rake_answers[3],
               Sirena::DiagramRegistry.corpus_directories(:git_graph)])
-        .to eq(["pie", %w[git]])
+        .to eq(["pie", []])
     end
   end
 end
