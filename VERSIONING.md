@@ -23,7 +23,7 @@ Only these are covered by the promise:
 | Surface | Contract |
 |---|---|
 | `Sirena.render(source, options = {})` | Returns an SVG String; raises on unparseable or unsupported input. |
-| `Sirena::Engine#render(source, options = {})` | Same behaviour; the documented `options` keys are `theme:` (name, `Theme` or Hash), `verbose:` and `today:`. Other keys are ignored. |
+| `Sirena::Engine#render(source, options = {})` | Same behaviour; documented `options` include `theme:` (name, `Theme` or Hash), `verbose:`, `today:`, and `layout_engine:` (`:grid` or `:elk`). Unknown keys are ignored; invalid documented values may raise. |
 | CLI `sirena render`, `sirena batch`, `sirena types`, `sirena version` (`--version`, `-V`) | Command names, documented options, `render` exiting 1 on error. `batch` rescues per-file failures and exits 0; that is current behaviour, not a promise. |
 | `Sirena::VERSION` | The released version string. |
 

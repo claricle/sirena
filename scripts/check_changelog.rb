@@ -26,14 +26,23 @@ module Sirena
     def target_version(next_version, current)
       return current if next_version == "skip"
 
-      segments = Gem::Version.new(current).segments
+      current_version = Gem::Version.new(current)
+      segments = current_version.segments
       case next_version
       when "major" then [segments[0] + 1, 0, 0].join(".")
       when "minor" then [segments[0], segments[1] + 1, 0].join(".")
       when "patch" then [segments[0], segments[1], segments[2] + 1].join(".")
-      when /\A\d+\.\d+\.\d+\z/ then next_version
+      when /\A\d+\.\d+\.\d+\z/
+        explicit_version(next_version, current_version)
       else invalid_bump!(next_version)
       end
+    end
+
+    def explicit_version(next_version, current)
+      return next_version if Gem::Version.new(next_version) > current
+
+      raise ArgumentError,
+            "explicit version #{next_version} must be greater than current #{current}"
     end
 
     # Returns a list of problems; empty means releasable.
