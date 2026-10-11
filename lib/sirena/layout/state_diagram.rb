@@ -247,6 +247,8 @@ module Sirena
         placer.apply(graph)
         place_disconnected_normal_pair(graph)
         orient_grid_terminals(graph)
+        place_connected_state_chain(graph)
+        place_nested_plain_composite(graph)
         place_nested_note_composite(graph)
         place_attached_notes(graph)
         scene_from_graph(graph)
@@ -296,6 +298,96 @@ module Sirena
 
           state[:x], state[:y] = state[:y], state[:x]
         end
+      end
+
+      def place_connected_state_chain(graph)
+        topology = connected_state_chain(graph)
+        return unless topology
+
+        start, states, finish = topology
+        if graph.dig(:layoutOptions, ElkOptions::DIRECTION) == DIRECTION_RIGHT
+          place_horizontal_state_chain(start, states, finish)
+        else
+          place_vertical_state_chain(start, states, finish)
+        end
+      end
+
+      def connected_state_chain(graph)
+        return if placement == :elk
+
+        direction = graph.dig(:layoutOptions, ElkOptions::DIRECTION)
+        return unless [DIRECTION_DOWN, DIRECTION_RIGHT].include?(direction)
+
+        nodes = Array(graph[:children])
+        return if nodes.empty? || nodes.any? do |node|
+          Array(node[:children]).any? ||
+            !%w[start end normal].include?(node.dig(:metadata, :shape_type))
+        end
+
+        start = nodes.select do |node|
+          node.dig(:metadata, :shape_type) == "start"
+        end
+        finish = nodes.select do |node|
+          node.dig(:metadata, :shape_type) == "end"
+        end
+        states = nodes.select do |node|
+          node.dig(:metadata, :shape_type) == "normal"
+        end
+        return unless start.one? && finish.length <= 1 && states.any?
+
+        ordered = ordered_chain_states(graph, start.first, states)
+        return unless ordered.length == states.length
+
+        [start.first, ordered, finish.first]
+      end
+
+      def ordered_chain_states(graph, start, states)
+        ordered = []
+        current = start
+        loop do
+          candidates = outgoing_nodes(graph, current, states - ordered)
+          return [] if candidates.length > 1
+          break if candidates.empty?
+
+          current = candidates.first
+          ordered << current
+        end
+        ordered
+      end
+
+      def outgoing_nodes(graph, source, candidates)
+        target_ids = Array(graph[:edges]).filter_map do |edge|
+          edge[:targets]&.first if edge[:sources] == [source[:id]]
+        end
+        candidates.select { |candidate| target_ids.include?(candidate[:id]) }
+      end
+
+      def place_vertical_state_chain(start, states, finish)
+        center = states.map { |state| state[:width] }.max / 2.0
+        start.merge!(x: center - (start[:width] / 2.0), y: 0.0)
+        position = 72.0
+        states.each do |state|
+          state.merge!(x: center - (state[:width] / 2.0), y: position)
+          position += state[:height] + 50.0
+        end
+        return unless finish
+
+        finish.merge!(x: center - (finish[:width] / 2.0),
+                      y: position - 8.0)
+      end
+
+      def place_horizontal_state_chain(start, states, finish)
+        center = states.map { |state| state[:height] }.max / 2.0
+        start.merge!(x: 0.0, y: center - (start[:height] / 2.0))
+        position = 72.0
+        states.each do |state|
+          state.merge!(x: position, y: center - (state[:height] / 2.0))
+          position += state[:width] + 50.0
+        end
+        return unless finish
+
+        finish.merge!(x: position - 8.0,
+                      y: center - (finish[:height] / 2.0))
       end
 
       # Converts a state diagram to a graph structure.
@@ -864,6 +956,36 @@ module Sirena
         place_nested_note_nodes(root, composite, start, first, second)
       end
 
+      def place_nested_plain_composite(graph)
+        composite = plain_nested_composite(graph)
+        return unless composite
+
+        start, first, second = nested_note_nodes(graph, composite)
+        size_nested_states(first, second)
+        width = nested_composite_width(first, second)
+        height = nested_composite_height(second)
+        composite.merge!(x: Grid::MARGIN, y: Grid::MARGIN,
+                         width: width, height: height)
+        place_nested_children(width, start, first, second)
+      end
+
+      def plain_nested_composite(graph)
+        return if placement == :elk
+        return unless normal_font_size == DEFAULT_FONT_SIZE &&
+          small_font_size == DEFAULT_SMALL_FONT_SIZE
+        return unless graph.dig(:layoutOptions, ElkOptions::DIRECTION) ==
+          DIRECTION_DOWN
+
+        children = Array(graph[:children])
+        return unless children.one?
+
+        composite = children.first
+        return unless composite.dig(:metadata, :cluster)
+        return unless nested_note_nodes(graph, composite).any?
+
+        composite
+      end
+
       def nested_note_topology(graph)
         return if placement == :elk
         return unless normal_font_size == DEFAULT_FONT_SIZE &&
@@ -931,12 +1053,16 @@ module Sirena
       end
 
       def size_nested_note_nodes(note, first, second)
+        size_nested_states(first, second)
+        note[:width] = MMDC_NOTE_WIDTH
+        note[:height] = MMDC_NOTE_HEIGHT
+      end
+
+      def size_nested_states(first, second)
         [first, second].each do |state|
           state[:width] = mmdc_state_width(state)
           state[:height] = MMDC_STATE_HEIGHT
         end
-        note[:width] = MMDC_NOTE_WIDTH
-        note[:height] = MMDC_NOTE_HEIGHT
       end
 
       def mmdc_state_width(state)
@@ -953,15 +1079,23 @@ module Sirena
       end
 
       def place_nested_note_nodes(root, composite, start, first, second)
-        width = [first[:width], second[:width]].max +
-          (MMDC_COMPOSITE_SIDE_PADDING * 2)
-        height = MMDC_COMPOSITE_SECOND_STATE_Y + second[:height] +
-          MMDC_COMPOSITE_BOTTOM_PADDING
+        width = nested_composite_width(first, second)
+        height = nested_composite_height(second)
         composite.merge!(x: Grid::MARGIN, y: Grid::MARGIN + 72,
                          width: width, height: height)
         root[:x] = composite[:x] + ((width - root[:width]) / 2)
         root[:y] = Grid::MARGIN
         place_nested_children(width, start, first, second)
+      end
+
+      def nested_composite_width(first, second)
+        [first[:width], second[:width]].max +
+          (MMDC_COMPOSITE_SIDE_PADDING * 2)
+      end
+
+      def nested_composite_height(second)
+        MMDC_COMPOSITE_SECOND_STATE_Y + second[:height] +
+          MMDC_COMPOSITE_BOTTOM_PADDING
       end
 
       def place_nested_children(width, start, first, second)
