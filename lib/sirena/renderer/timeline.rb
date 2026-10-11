@@ -24,6 +24,7 @@ module Sirena
       # @param scene [Layout::Timeline::Scene] final timeline geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
+        validate_scene!(scene)
         svg = create_document(scene)
         scene.cards.each { |card| render_card(card, svg) }
         svg << title_element(scene) if scene.title
@@ -32,6 +33,13 @@ module Sirena
       end
 
       protected
+
+      def validate_scene!(scene)
+        return if scene.is_a?(Layout::Timeline::Scene)
+
+        raise RenderError,
+              "expected #{Layout::Timeline::Scene}, got #{scene.class}"
+      end
 
       def render_card(card, svg)
         svg << card_group(card)
@@ -77,20 +85,17 @@ module Sirena
       end
 
       def fill_text(text, card)
-        if card.lines.length < 2
-          text.content = card.lines.first.to_s
+        if card.text_runs.length < 2
+          text.content = card.text_runs.first&.content.to_s
         else
-          text.tspans = tspans(card)
+          text.tspans = card.text_runs.map { |run| tspan(run) }
         end
         text
       end
 
-      def tspans(card)
-        baselines = [nil, *card.next_baselines]
-        card.lines.zip(baselines).map do |line, baseline|
-          Svg::Tspan.new(x: card.text_x, y: baseline).tap do |run|
-            run.content = line
-          end
+      def tspan(geometry)
+        Svg::Tspan.new(x: geometry.x, y: geometry.y).tap do |run|
+          run.content = geometry.content
         end
       end
 
