@@ -377,13 +377,13 @@ module Sirena
 
       def horizontal_branch_label_position(lane, width, graph)
         inset = BRANCH_LABEL_INSET
-        inset -= EMPTY_BRANCH_LABEL_CLEARANCE if lone_commit_with_empty_lanes?(graph)
+        inset -= EMPTY_BRANCH_LABEL_CLEARANCE if lone_commit?(graph)
         [inset - width,
          lane - BRANCH_LABEL_BASELINE_OFFSET, "start"]
       end
 
-      def lone_commit_with_empty_lanes?(graph)
-        graph[:commits].one? && graph[:branches].length > 1
+      def lone_commit?(graph)
+        graph[:commits].one?
       end
 
       def vertical_branch_label_position(lane, width, graph)
