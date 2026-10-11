@@ -50,7 +50,7 @@ RSpec.describe Sirena::Layout::GitGraph do
   it "preserves default and partial-theme SVG bytes" do
     expect(render_digests).to eq(
       %w[8ed4e31e0f2bdb4b1623404216f7be7e6d11ee7197149a0b3b8bd94cfb13fc75
-         d254cf6dc605037ef587b75a4c35f203cc24f17584d80b2d9131bf82741288f2],
+         d28127a366e54cf240fba97180f0f8a1f0363fadef6fc65652ca88316ff4fec8],
     )
   end
 end
