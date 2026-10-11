@@ -33,12 +33,6 @@ module Sirena
       # Radius of commit circles
       COMMIT_RADIUS = 10
 
-      # Default branch colors (cycling through these)
-      DEFAULT_COLORS = %w[
-        #2563eb #7c3aed #db2777 #ea580c #ca8a04
-        #16a34a #0891b2 #4f46e5 #c026d3 #dc2626
-      ].freeze
-
       PADDING = 40
       LABEL_HEADROOM = 1.2
 
@@ -628,7 +622,7 @@ module Sirena
         main = {
           name: "main",
           lane: lane_assignments["main"] || 0,
-          color: DEFAULT_COLORS[0],
+          color: branch_color(0),
         }
         branches.reject { |branch| branch[:name] == "main" }
           .each_with_index.with_object([main]) do |pair, metadata|
@@ -641,10 +635,19 @@ module Sirena
         {
           name: branch[:name],
           lane: lane_assignments[branch[:name]] || (index + 1),
-          color: DEFAULT_COLORS[(index + 1) % DEFAULT_COLORS.length],
+          color: branch_color(index + 1),
           order: branch[:order], parent_branch: branch[:parent_branch],
           created_at_commit: branch[:created_at_commit]
         }
+      end
+
+      def branch_color(index)
+        palette = theme.colors&.git_graph_palette
+        if palette && !palette.empty?
+          return theme.colors.palette(:git_graph, index)
+        end
+
+        Theme::Registry.get(:default).colors.palette(:git_graph, index)
       end
 
       # Calculates the extent along the time axis.
