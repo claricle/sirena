@@ -18,17 +18,19 @@ module Sirena
     #   layout = transform.to_graph(diagram)
     class XyChart < Base
       # Default chart dimensions
-      DEFAULT_WIDTH = 800
+      DEFAULT_WIDTH = 700
       DEFAULT_HEIGHT = 500
 
       # Margins around the chart
-      MARGIN_TOP = 80
-      MARGIN_RIGHT = 60
-      MARGIN_BOTTOM = 80
-      MARGIN_LEFT = 100
+      MARGIN_TOP = 51
+      MARGIN_RIGHT = 0
+      MARGIN_BOTTOM = 41
+      MARGIN_LEFT = 82
 
       GRID_LINES = 5
       BAR_WIDTH_RATIO = 0.6
+      # Bars terminate below the plotted y range at Mermaid's bar baseline.
+      BAR_BASELINE_OFFSET = 8
 
       class Line < Lutaml::Model::Serializable
         attribute :x1, :float
@@ -305,9 +307,11 @@ module Sirena
       end
 
       def bar(graph, point, width)
+        height = graph[:plot_height] - point[:y]
+        height += BAR_BASELINE_OFFSET if height.positive?
         Bar.new(x: graph[:plot_x] + point[:x] - (width / 2),
                 y: graph[:plot_y] + point[:y], width: width,
-                height: graph[:plot_height] - point[:y])
+                height: height)
       end
 
       def bar_width(graph)
