@@ -24,4 +24,5 @@
 <text fill="#000000" x="300.0" y="60.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">commit-6</text>
 <text fill="#2563eb" x="65.0" y="44.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">main</text>
 <text fill="#7c3aed" x="115.0" y="134.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">develop</text>
+<text fill="#db2777" x="215.0" y="224.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">hotfix</text>
 </svg>
