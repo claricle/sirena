@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../diagram/sequence_text"
+require_relative "creations"
 require_relative "geometry"
 require_relative "text_wrap"
 
@@ -28,13 +29,15 @@ module Sirena
         # @param font_size [Numeric] message text size
         # @param wrap [Boolean] the diagram's wrap setting
         # @param closers [Array<Integer>] messages a frame ends right after
+        # @param creators [Array<Integer>] messages that create a participant
         def initialize(edges, positions, font_size:, wrap: false,
-                       closers: [])
+                       closers: [], creators: [])
           @edges = edges || []
           @positions = positions
           @font_size = font_size
           @wrap = wrap
           @closers = closers
+          @creators = creators
         end
 
         # @return [Boolean] the diagram's wrap setting
@@ -60,7 +63,7 @@ module Sirena
 
         # @return [Numeric] height added by the messages above `index`
         def extra_before(index)
-          (0...index).sum { |at| extra(at) + self_drop(at) }
+          (0...index).sum { |at| extra(at) + self_drop(at) + creation_drop(at) }
         end
 
         # @return [Numeric] height added above and within `index`'s own row;
@@ -92,6 +95,11 @@ module Sirena
           return 0 unless edge && edge[:sources].first == edge[:targets].first
 
           @closers.include?(index) ? 2 * SELF_DROP : SELF_DROP
+        end
+
+        # mmdc leaves half a box below the message that creates one.
+        def creation_drop(index)
+          @creators.include?(index) ? Creations::DROP : 0
         end
 
         def line_advance

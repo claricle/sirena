@@ -8,6 +8,7 @@ require_relative "sequence/geometry"
 require_relative "sequence/actor_gaps"
 require_relative "sequence/text_width"
 require_relative "sequence/text_wrap"
+require_relative "sequence/creations"
 require_relative "sequence/message_rows"
 require_relative "sequence/note_placement"
 require_relative "sequence/frame_reader"
@@ -158,6 +159,7 @@ module Sirena
         graph = build_graph(diagram)
         @wrap = graph.dig(:metadata, :wrap) || false
         @frame_layout = frame_placement(graph)
+        @creations = Creations.new(graph[:children], graph[:edges])
         @gaps = build_gaps(graph)
         build_scene(graph, *shifted_placement(graph))
       end
@@ -180,7 +182,8 @@ module Sirena
         frame_layout.fit_titles(positions)
         @rows = MessageRows.new(graph[:edges], positions,
                                 font_size: message_font_size, wrap: @wrap,
-                                closers: frame_closers(graph))
+                                closers: frame_closers(graph),
+                                creators: creations.rows)
       end
 
       def frame_layout
@@ -192,8 +195,12 @@ module Sirena
       def build_gaps(graph)
         ActorGaps.new(graph[:children], graph[:edges],
                       graph.dig(:metadata, :note_entries),
-                      font_size: message_font_size,
+                      creations: creations, font_size: message_font_size,
                       wrap: graph.dig(:metadata, :wrap))
+      end
+
+      def creations
+        @creations ||= Creations.new([], [])
       end
 
       def gaps
@@ -229,7 +236,9 @@ module Sirena
         Scene.new(
           id: graph[:id], width: width, height: height,
           view_box: "0 0 #{width} #{height}",
-          participants: typed_participants(graph[:children], positions),
+          participants: typed_participants(
+            graph[:children], created_positions(positions, placement)
+          ),
           **placed_geometry(graph, positions, placement)
         )
       end
@@ -237,8 +246,10 @@ module Sirena
       def placed_geometry(graph, positions, placement)
         count = graph.dig(:metadata, :message_count) || 0
         {
-          lifelines: lifeline_geometry(positions, count,
-                                       stack_height(placement)),
+          lifelines: lifeline_geometry(
+            created_positions(positions, placement), count,
+            stack_height(placement)
+          ),
           messages: typed_messages(graph[:edges], positions, placement),
           notes: placement.notes,
           frames: frame_shapes(positions, placement),
@@ -291,6 +302,7 @@ module Sirena
             labels: [label],
             metadata: {
               actor_type: participant_type(graph, participant),
+              created: created?(graph, participant),
               index: index,
               lifeline_length: calculate_lifeline_length(graph),
             },
@@ -307,6 +319,10 @@ module Sirena
       def participant_type(graph, participant)
         semantic_value(graph, participant.id, "participant_type") ||
           participant.role
+      end
+
+      def created?(graph, participant)
+        semantic_value(graph, participant.id, "participant_created") == "true"
       end
 
       def transform_messages(graph)
@@ -561,10 +577,27 @@ module Sirena
         length = lifeline_length(message_count, note_height)
         positions.values.map do |position|
           line(
-            position[:center_x], origin_y + PARTICIPANT_HEIGHT,
+            position[:center_x], position[:y] + PARTICIPANT_HEIGHT,
             position[:center_x], origin_y + PARTICIPANT_HEIGHT + length
           )
         end
+      end
+
+      # A created participant sits on its creating message's row, not on
+      # the first row.
+      def created_positions(positions, placement)
+        positions.to_h do |id, position|
+          row = creations.row(id)
+          next [id, position] unless row
+
+          line_y = message_row_y(row, placement)
+          [id, position.merge(y: creations.top(line_y))]
+        end
+      end
+
+      def message_row_y(index, placement)
+        message_vertical(index) + placement.shift_for(index) +
+          rows.extra_through(index)
       end
 
       def typed_messages(edges, positions, placement)
@@ -577,6 +610,7 @@ module Sirena
         source, target = message_endpoints(edge, positions)
         return unless source && target
 
+        target = stopped_short(edge, index, source, target)
         vertical = message_vertical(index) + shift + rows.extra_through(index)
         build_typed_message(edge, index, source, target, vertical)
       end
@@ -584,6 +618,18 @@ module Sirena
       def message_endpoints(edge, positions)
         [positions[edge[:sources]&.first],
          positions[edge[:targets]&.first]]
+      end
+
+      # The arrow that creates a participant stops at its box, not at its
+      # lifeline.
+      def stopped_short(edge, index, source, target)
+        id = edge[:targets].first
+        return target unless creations.row(id) == index
+
+        direction = source[:center_x] <= target[:center_x] ? -1 : 1
+        target.merge(
+          center_x: target[:center_x] + (direction * creations.gap(id)),
+        )
       end
 
       def message_vertical(index)
