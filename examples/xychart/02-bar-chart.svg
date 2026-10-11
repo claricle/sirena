@@ -7,39 +7,39 @@
  xmlns="http://www.w3.org/2000/svg"
 >
 <text fill="#000000" x="350.0" y="30.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="bold">Quarterly Revenue Comparison</text>
-<line stroke="#e5e7eb" stroke-width="1" x1="82.0" y1="51.0" x2="700.0" y2="51.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="82.0" y1="132.0" x2="700.0" y2="132.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="82.0" y1="214.0" x2="700.0" y2="214.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="82.0" y1="295.0" x2="700.0" y2="295.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="82.0" y1="377.0" x2="700.0" y2="377.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="159.0" y1="51.0" x2="159.0" y2="459.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="313.0" y1="51.0" x2="313.0" y2="459.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="467.0" y1="51.0" x2="467.0" y2="459.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="621.0" y1="51.0" x2="621.0" y2="459.0" stroke-dasharray="3,3"/>
-<line stroke="#000000" stroke-width="2" x1="82.0" y1="459.0" x2="700.0" y2="459.0"/>
-<line stroke="#000000" stroke-width="2" x1="82.0" y1="51.0" x2="82.0" y2="459.0"/>
-<rect fill="#2563eb" fill-opacity="0.8" stroke="#2563eb" stroke-width="1" x="112.80000000000001" y="193.8" width="92.39999999999999" height="273.2"/>
-<rect fill="#2563eb" fill-opacity="0.8" stroke="#2563eb" stroke-width="1" x="266.8" y="153.0" width="92.39999999999999" height="314.0"/>
-<rect fill="#2563eb" fill-opacity="0.8" stroke="#2563eb" stroke-width="1" x="420.8" y="112.19999999999999" width="92.39999999999999" height="354.8"/>
-<rect fill="#2563eb" fill-opacity="0.8" stroke="#2563eb" stroke-width="1" x="574.8" y="71.40000000000003" width="92.39999999999999" height="395.59999999999997"/>
-<rect fill="#7c3aed" fill-opacity="0.8" stroke="#7c3aed" stroke-width="1" x="112.80000000000001" y="234.6" width="92.39999999999999" height="232.4"/>
-<rect fill="#7c3aed" fill-opacity="0.8" stroke="#7c3aed" stroke-width="1" x="266.8" y="173.40000000000003" width="92.39999999999999" height="293.59999999999997"/>
-<rect fill="#7c3aed" fill-opacity="0.8" stroke="#7c3aed" stroke-width="1" x="420.8" y="132.59999999999997" width="92.39999999999999" height="334.40000000000003"/>
-<rect fill="#7c3aed" fill-opacity="0.8" stroke="#7c3aed" stroke-width="1" x="574.8" y="91.80000000000001" width="92.39999999999999" height="375.2"/>
-<rect fill="#db2777" fill-opacity="0.8" stroke="#db2777" stroke-width="1" x="112.80000000000001" y="275.4" width="92.39999999999999" height="191.6"/>
-<rect fill="#db2777" fill-opacity="0.8" stroke="#db2777" stroke-width="1" x="266.8" y="214.20000000000002" width="92.39999999999999" height="252.79999999999998"/>
-<rect fill="#db2777" fill-opacity="0.8" stroke="#db2777" stroke-width="1" x="420.8" y="153.0" width="92.39999999999999" height="314.0"/>
-<rect fill="#db2777" fill-opacity="0.8" stroke="#db2777" stroke-width="1" x="574.8" y="112.19999999999999" width="92.39999999999999" height="354.8"/>
-<text fill="#000000" x="159.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Q1</text>
-<text fill="#000000" x="313.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Q2</text>
-<text fill="#000000" x="467.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Q3</text>
-<text fill="#000000" x="621.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Q4</text>
+<line stroke="#e5e7eb" stroke-width="1" x1="82.71875190734863" y1="51.0" x2="700.0" y2="51.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="82.71875190734863" y1="132.0" x2="700.0" y2="132.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="82.71875190734863" y1="214.0" x2="700.0" y2="214.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="82.71875190734863" y1="295.0" x2="700.0" y2="295.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="82.71875190734863" y1="377.0" x2="700.0" y2="377.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="99.71875190734863" y1="51.0" x2="99.71875190734863" y2="459.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="294.14583460489905" y1="51.0" x2="294.14583460489905" y2="459.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="488.5729173024495" y1="51.0" x2="488.5729173024495" y2="459.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="683.0" y1="51.0" x2="683.0" y2="459.0" stroke-dasharray="3,3"/>
+<line stroke="#000000" stroke-width="2" x1="82.71875190734863" y1="459.0" x2="700.0" y2="459.0"/>
+<line stroke="#000000" stroke-width="2" x1="82.71875190734863" y1="51.0" x2="82.71875190734863" y2="459.0"/>
+<rect fill="#2563eb" fill-opacity="0.8" stroke="#2563eb" stroke-width="1" x="83.56875190734863" y="193.8" width="32.3" height="273.2"/>
+<rect fill="#2563eb" fill-opacity="0.8" stroke="#2563eb" stroke-width="1" x="277.9958346048991" y="153.0" width="32.3" height="314.0"/>
+<rect fill="#2563eb" fill-opacity="0.8" stroke="#2563eb" stroke-width="1" x="472.42291730244955" y="112.19999999999999" width="32.3" height="354.8"/>
+<rect fill="#2563eb" fill-opacity="0.8" stroke="#2563eb" stroke-width="1" x="666.85" y="71.40000000000003" width="32.3" height="395.59999999999997"/>
+<rect fill="#7c3aed" fill-opacity="0.8" stroke="#7c3aed" stroke-width="1" x="83.56875190734863" y="234.6" width="32.3" height="232.4"/>
+<rect fill="#7c3aed" fill-opacity="0.8" stroke="#7c3aed" stroke-width="1" x="277.9958346048991" y="173.40000000000003" width="32.3" height="293.59999999999997"/>
+<rect fill="#7c3aed" fill-opacity="0.8" stroke="#7c3aed" stroke-width="1" x="472.42291730244955" y="132.59999999999997" width="32.3" height="334.40000000000003"/>
+<rect fill="#7c3aed" fill-opacity="0.8" stroke="#7c3aed" stroke-width="1" x="666.85" y="91.80000000000001" width="32.3" height="375.2"/>
+<rect fill="#db2777" fill-opacity="0.8" stroke="#db2777" stroke-width="1" x="83.56875190734863" y="275.4" width="32.3" height="191.6"/>
+<rect fill="#db2777" fill-opacity="0.8" stroke="#db2777" stroke-width="1" x="277.9958346048991" y="214.20000000000002" width="32.3" height="252.79999999999998"/>
+<rect fill="#db2777" fill-opacity="0.8" stroke="#db2777" stroke-width="1" x="472.42291730244955" y="153.0" width="32.3" height="314.0"/>
+<rect fill="#db2777" fill-opacity="0.8" stroke="#db2777" stroke-width="1" x="666.85" y="112.19999999999999" width="32.3" height="354.8"/>
+<text fill="#000000" x="99.71875190734863" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Q1</text>
+<text fill="#000000" x="294.14583460489905" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Q2</text>
+<text fill="#000000" x="488.5729173024495" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Q3</text>
+<text fill="#000000" x="683.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Q4</text>
 <text transform="rotate(-90, 20, 255)" fill="#000000" x="20.0" y="255.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Revenue (Million USD)</text>
-<text fill="#000000" x="72.0" y="55.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">100.0</text>
-<text fill="#000000" x="72.0" y="136.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">80.0</text>
-<text fill="#000000" x="72.0" y="218.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">60.0</text>
-<text fill="#000000" x="72.0" y="299.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">40.0</text>
-<text fill="#000000" x="72.0" y="381.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">20.0</text>
+<text fill="#000000" x="72.71875190734863" y="55.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">100.0</text>
+<text fill="#000000" x="72.71875190734863" y="136.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">80.0</text>
+<text fill="#000000" x="72.71875190734863" y="218.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">60.0</text>
+<text fill="#000000" x="72.71875190734863" y="299.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">40.0</text>
+<text fill="#000000" x="72.71875190734863" y="381.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">20.0</text>
 <rect fill="#2563eb" stroke="none" x="550.0" y="52.0" width="15.0" height="15.0"/>
 <text fill="#000000" x="570.0" y="64.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Bar</text>
 <rect fill="#7c3aed" stroke="none" x="550.0" y="77.0" width="15.0" height="15.0"/>
