@@ -6,7 +6,8 @@ require "sirena/renderer/info"
 
 RSpec.describe Sirena::Renderer::Info do
   subject(:svg) do
-    described_class.new(theme: theme).render(show_info: false)
+    scene = Sirena::Layout::Info.from_graph({ show_info: false }, theme: theme)
+    described_class.new(theme: theme).render(scene)
   end
 
   let(:theme) { Sirena::Theme::Registry.get(:default) }

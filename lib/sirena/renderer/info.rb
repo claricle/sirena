@@ -7,20 +7,19 @@ require_relative "../svg/text"
 
 module Sirena
   module Renderer
-    # Info diagram renderer for converting info diagrams to SVG.
+    # Emits SVG from final, typed Info geometry.
     #
     # Renders a simple informational message box with centered text.
     #
     # @example Render an info diagram
     #   renderer = Info.new
-    #   svg = renderer.render(info_diagram)
+    #   svg = renderer.render(scene)
     class Info < Base
-      # Renders an info diagram to SVG.
+      # Renders an Info Scene to SVG.
       #
-      # @param graph [Hash] the info diagram graph structure from transform
+      # @param scene [Layout::Info::Scene] final canvas and label geometry
       # @return [Svg::Document] the rendered SVG document
-      def render(graph)
-        scene = typed_scene(graph)
+      def render(scene)
         svg = create_document(scene)
 
         # Render info text
@@ -31,8 +30,8 @@ module Sirena
 
       protected
 
-      def render_info_text(graph, svg)
-        label = typed_scene(graph).label
+      def render_info_text(scene, svg)
+        label = scene.label
 
         text = Svg::Text.new.tap do |t|
           t.x = label.x
@@ -47,12 +46,6 @@ module Sirena
         end
 
         svg << text
-      end
-
-      def typed_scene(graph)
-        return graph if graph.is_a?(Layout::Info::Scene)
-
-        Layout::Info.from_graph(graph, theme: theme)
       end
 
       def number_string(value)
