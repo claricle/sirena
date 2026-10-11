@@ -81,7 +81,7 @@ module ArchitectureEdgeRouterSpecHelpers
   def case_011_edge_route(router)
     diagram = Sirena::Parser::Architecture.new.parse(
       File.read(File.expand_path(
-                  "../../mermaid/architecture/011_rendering_architecture_spec_architecture_10.mmd", __dir__
+                  "../../mermaid/architecture/architecture_spec-f1819a63.mmd", __dir__
                 )),
     )
     scene = Sirena::Layout::Architecture.new.call(diagram)

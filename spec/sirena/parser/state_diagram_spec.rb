@@ -300,7 +300,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     describe "id : description" do
       it "describes a state, spaces around the colon (state_diagram/002)" do
         diagram = corpus(
-          "state_diagram/002_parser_space_before_and_after_the_colon_1.mmd",
+          "state_diagram/state_parser_spec-5ace89b8.mmd",
         )
 
         expect(diagram.find_state("namedState1").description)
@@ -327,7 +327,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
       it "describes a state, no spaces (state_diagram/003)" do
         diagram = corpus(
-          "state_diagram/003_parser_no_spaces_before_and_after_the_colon_2.mmd",
+          "state_diagram/state_parser_spec-4f6d8252.mmd",
         )
 
         expect(diagram.find_state("namedState1").description)
@@ -424,7 +424,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       # mmdc parses a floating note and draws nothing for it.
       it "drops a floating note (state_diagram/027)" do
         diagram = corpus(
-          "state_diagram/027_parser_should_handle_floating_notes_26.mmd",
+          "state_diagram/statediagram_v2_spec-7f54c592.mmd",
         )
 
         expect(diagram.states.map(&:id)).to eq(["foo"])
@@ -469,7 +469,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
     describe "direction statements" do
       it "sets the direction (state/060)" do
-        diagram = corpus("state/060_spec_mermaidapi_spec_59.mmd")
+        diagram = corpus("state_diagram/mermaidapi_spec-c352a65c.mmd")
 
         expect(diagram.direction).to eq("LR")
         expect(diagram.find_state("direction")).to be_nil
@@ -488,7 +488,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     describe "state ids" do
       it "takes a digits-only id (state/001)" do
         diagram = corpus(
-          "state/001_rendering_statediagram-v2_spec_state_0.mmd",
+          "state_diagram/statediagram_v2_spec-c351b77a.mmd",
         )
 
         expect(diagram.states.map(&:id)).to eq(%w[s2 s3 s4 55])
@@ -499,7 +499,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       it "refuses a bare note as a state (state_diagram/031)" do
         expect do
           corpus(
-            "state_diagram/031_parser_should_handle_floating_notes_30.mmd",
+            "state_diagram/statediagram_v2_spec-649d05f6.mmd",
           )
         end.to raise_error(Sirena::Parser::ParseError)
       end
@@ -546,7 +546,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
     describe "a diagram with no statements" do
       it "parses to an empty, valid diagram (state/055)" do
-        diagram = corpus("state/055_spec_diagram-orchestration_spec_54.mmd")
+        diagram = corpus("state_diagram/diagram_orchestration_spec-367b369a.mmd")
 
         expect(diagram.states).to be_empty
         expect(diagram.valid?).to be true

@@ -26,12 +26,12 @@ RSpec.describe Sirena::Parser::Flowchart do
     end
 
     it "keeps the paren text of the corpus case that holds it" do
-      source = File.read("spec/mermaid/unknown/018_platform_knsv_17.mmd")
+      source = File.read("spec/mermaid/unknown/knsv-1307e7ca.mmd")
 
       expect(svg_text(source)).to include("The dog in the hog.(1)")
     end
 
-    %w[016_platform_knsv_15 017_platform_knsv_16].each do |name|
+    %w[knsv-2f8c3deb knsv-5441fe6f].each do |name|
       it "renders corpus case #{name}" do
         source = File.read("spec/mermaid/unknown/#{name}.mmd")
 

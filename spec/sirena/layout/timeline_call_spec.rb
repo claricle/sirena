@@ -10,7 +10,7 @@ RSpec.describe Sirena::Layout::Timeline, "#call" do
   let(:fixture_path) do
     File.expand_path("../../mermaid/timeline/#{fixture}.mmd", __dir__)
   end
-  let(:fixture) { "003_rendering_timeline_spec_timeline_2" }
+  let(:fixture) { "timeline_spec-c4dfe5d4" }
   let(:scene) { lay_out(source) }
   let(:published) { floats_in(scene.to_hash) }
 

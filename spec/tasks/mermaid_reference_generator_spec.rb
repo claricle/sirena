@@ -19,7 +19,7 @@ RSpec.describe MermaidReferenceGenerator do
   let(:runner) { class_double(HardenedMmdc) }
   let(:detector) { ->(source) { source.lines.first.strip.to_sym } }
   let(:target_paths) do
-    %w[spec/fixtures_mermaid/class/class_case.svg
+    %w[spec/fixtures_mermaid/class_diagram/class_case.svg
        spec/fixtures_mermaid/gantt/gantt_case.svg
        spec/fixtures_mermaid/gitgraph/git_case.svg]
   end

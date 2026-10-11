@@ -84,7 +84,7 @@ RSpec.describe Sirena::Engine do
 
     context "with an empty ER diagram" do
       # The bare keyword, which is all three empty rows of the ER corpus
-      # hold: spec/mermaid/er/059, 060 and 061.
+      # hold: spec/mermaid/er_diagram/059, 060 and 061.
       let(:source) { "erDiagram" }
 
       let(:document) { REXML::Document.new(engine.render(source)) }
@@ -124,7 +124,7 @@ RSpec.describe Sirena::Engine do
       # probably-oracle-invalid (pending item 02's verdict).
       Dir.glob(File.expand_path("../mermaid/treemap/*.mmd", __dir__))
         .reject do |path|
-          path.end_with?("007_rendering_treemap_spec_treemap_6.mmd")
+          path.end_with?("treemap_spec-da322cba.mmd")
         end
         .each do |fixture_file|
         it "renders #{File.basename(fixture_file)}" do
@@ -209,9 +209,9 @@ RSpec.describe Sirena::Engine do
       let(:corpus) { File.expand_path("../mermaid", __dir__) }
 
       {
-        "gantt/023_spec_diagram-orchestration_spec_22.mmd" => "gantt",
-        "gantt/025_spec_mermaidapi_spec_24.mmd" => "gantt",
-        "pie/025_parsertest_pie_test_24.mmd" => "pie",
+        "gantt/diagram_orchestration_spec-22111909.mmd" => "gantt",
+        "gantt/mermaidapi_spec-76c6390a.mmd" => "gantt",
+        "pie/pie_test-4d578df7.mmd" => "pie",
       }.each do |file, keyword|
         it "renders corpus case #{file}" do
           expect(engine.render(File.read(File.join(corpus, file))))
@@ -481,7 +481,7 @@ RSpec.describe Sirena::Engine do
        "%%\nflowchart TD\nA-->B\n",
        :flowchart],
       # mmdc's ELK-layout flowchart keyword — corpus case
-      # unknown/012_platform_flow-elk_11.mmd.
+      # unknown/flow_elk-951c7b80.mmd.
       ["the flowchart-elk keyword",
        "flowchart-elk\na[hello] --> b[world]\n",
        :flowchart],

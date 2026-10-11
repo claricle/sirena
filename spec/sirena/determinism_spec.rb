@@ -68,9 +68,9 @@ RSpec.describe Sirena::Engine do
     # One case per shape of the problem: block exercised the rand path,
     # gantt the clock path, flowchart is the ordinary control.
     {
-      "block" => "001_rendering_block_spec_block_0.mmd",
-      "gantt" => "001_rendering_gantt_spec_gantt_0.mmd",
-      "flowchart" => "001_config_0.mmd",
+      "block" => "block_spec-532fdf55.mmd",
+      "gantt" => "gantt_spec-54a41452.mmd",
+      "flowchart" => "configuration_spec-67574f4a.mmd",
     }.each do |type, file|
       it "is stable across runs for #{type}" do
         source = corpus_source(type, file)

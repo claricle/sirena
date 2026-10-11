@@ -67,10 +67,10 @@ RSpec.describe SpecSupport::LayoutParity::MeasurementPolicy do
 
   def analog_summaries
     {
-      pie: analog_summary(:pie, "002_rendering_pie_spec_pie_1"),
-      quadrant: analog_summary(:quadrant, "001_example_quadrant-chart_0"),
-      radar: analog_summary(:radar, "001_rendering_radar_spec_radar_0"),
-      git_graph: analog_summary(:git_graph, "002_platform_showcase_base_1"),
+      pie: analog_summary(:pie, "pie_spec-8e291061"),
+      quadrant: analog_summary(:quadrant, "quadrant_chart-579fb996"),
+      radar: analog_summary(:radar, "radar_spec-9dd39c75"),
+      git_graph: analog_summary(:git_graph, "showcase_base-f21356f4"),
     }
   end
 

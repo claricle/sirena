@@ -43,7 +43,7 @@ RSpec.describe SpecSupport::LayoutParity::StateDiagramRecognizer do
   end
 
   def real_sides
-    name = "020_parser_should_handle_state_definitions_with_separation_of_id_19"
+    name = "should_handle_state_definitions_with_separation-cd10456b"
     [reference_svg("state/#{name}.svg"),
      Sirena.render(corpus_source("state/#{name}.mmd"))]
   end
@@ -58,7 +58,7 @@ RSpec.describe SpecSupport::LayoutParity::StateDiagramRecognizer do
   end
 
   def simple_terminal_match
-    name = "002_example_state_1"
+    name = "state-5753bc25"
     reference = extract(reference_svg("state/#{name}.svg"), recognizer)
     sirena = extract(Sirena.render(corpus_source("state/#{name}.mmd")),
                      recognizer)

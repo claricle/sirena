@@ -81,7 +81,7 @@ RSpec.describe SpecSupport::LayoutParity::QuadrantPointGeometry do
   end
 
   it "matches the real default radius by semantic label" do
-    expect(comparison_values("001_example_quadrant-chart_0"))
+    expect(comparison_values("quadrant_chart-579fb996"))
       .to match(expected_default_values)
   end
 

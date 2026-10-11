@@ -13,14 +13,14 @@ RSpec.describe SpecSupport::LayoutParity::QuadrantRecognizer do
     end.sort_by { |item| item.map(&:to_s) }
   end
 
-  def real_pair(name = "001_example_quadrant-chart_0")
+  def real_pair(name = "quadrant_chart-579fb996")
     reference = reference_svg("quadrant/#{name}.svg")
     sirena = Sirena.render(corpus_source("quadrant/#{name}.mmd"))
     [summaries(reference), summaries(sirena)]
   end
 
   def ibm_points
-    name = "003_parser_should_throw_error_if_quadrantchart_text_is_not_there_2"
+    name = "should_throw_error_if_quadrantchart_text_is_not-656aae70"
     real_pair(name).map do |summary|
       summary.find do |kind, key, _parent|
         kind == :quadrant_point && key == "IBM"

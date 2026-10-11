@@ -3,7 +3,7 @@
 require "spec_helper"
 
 # `namespace Name { <statement> }` closes on the same line as its one
-# statement with no newline before the `}` (spec/mermaid/class/159_*,
+# statement with no newline before the `}` (spec/mermaid/class_diagram/159_*,
 # class_diagram/035_*, 051_*, 132_* — all named "comment inside brackets"
 # by the corpus extractor but actually this same-line-namespace shape).
 RSpec.describe Sirena::Parser::ClassDiagram, "#parse namespace line endings" do

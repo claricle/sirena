@@ -350,7 +350,7 @@ RSpec.describe Sirena::Parser::Treemap do
     context "with fixture 001" do
       let(:source) do
         File.read(
-          "spec/mermaid/treemap/001_rendering_treemap_spec_treemap_0.mmd",
+          "spec/mermaid/treemap/treemap_spec-8b2a1e63.mmd",
         )
       end
 
@@ -362,7 +362,7 @@ RSpec.describe Sirena::Parser::Treemap do
     context "with fixture 002" do
       let(:source) do
         File.read(
-          "spec/mermaid/treemap/002_rendering_treemap_spec_treemap_1.mmd",
+          "spec/mermaid/treemap/treemap_spec-1d309e55.mmd",
         )
       end
 
@@ -373,7 +373,7 @@ RSpec.describe Sirena::Parser::Treemap do
 
     context "with fixture 008" do
       let(:source) do
-        File.read("spec/mermaid/treemap/008_example_treemap_7.mmd")
+        File.read("spec/mermaid/treemap/treemap-f9daf341.mmd")
       end
 
       it "parses fixture 008 (example)" do
@@ -385,7 +385,7 @@ RSpec.describe Sirena::Parser::Treemap do
     context "with fixture 010" do
       let(:source) do
         File.read(
-          "spec/mermaid/treemap/010_parsertest_treemap_test_9.mmd",
+          "spec/mermaid/treemap/treemap_test-6637a498.mmd",
         )
       end
 

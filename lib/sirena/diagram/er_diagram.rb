@@ -24,7 +24,7 @@ module Sirena
       # `int rental_id PK "NN"`. Mermaid renders this as the attribute's
       # comment column; without carrying it here the grammar consumes the
       # text and the renderer never emits it -- silent data loss on valid
-      # input. Verified against spec/mermaid/unknown/079_platform_yari2_78:
+      # input. Verified against spec/mermaid/unknown/yari2-dc83acff:
       # mmdc's own SVG puts the comment text in a
       # `class="label attribute-comment"` node.
       attribute :note, :string

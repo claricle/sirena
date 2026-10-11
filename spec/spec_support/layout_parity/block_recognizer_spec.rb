@@ -26,14 +26,14 @@ RSpec.describe SpecSupport::LayoutParity::BlockRecognizer do
   end
 
   it "matches anonymous compounds and their labeled leaves" do
-    name = "001_rendering_block_spec_block_0"
+    name = "block_spec-532fdf55"
     reference_summary, sirena_summary = real_pair(name)
 
     expect(sirena_summary).to eq(reference_summary)
   end
 
   it "matches semantic-id compounds and scopes their nested leaves" do
-    name = "004_example_block_3"
+    name = "block-b7a88657"
     reference = reference_svg("block/#{name}.svg")
     sirena = Sirena.render(corpus_source("block/#{name}.mmd"))
 

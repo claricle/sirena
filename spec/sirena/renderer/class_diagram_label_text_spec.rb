@@ -16,7 +16,7 @@ module ClassLabelTextHelpers
 end
 
 # The expected texts are what mermaid's own SVG draws for the same source
-# (spec/fixtures_mermaid/class/<case>.svg).
+# (spec/fixtures_mermaid/class_diagram/<case>.svg).
 RSpec.describe Sirena::Renderer::ClassDiagram do
   {
     "a member without a visibility mark (class/033)" => [

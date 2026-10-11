@@ -14,7 +14,7 @@ RSpec.describe SpecSupport::LayoutParity::C4Recognizer do
   end
 
   def real_pair
-    name = "007_example_c4_6"
+    name = "c4-8ab0b1ef"
     reference = reference_svg("c4/#{name}.svg")
     sirena = Sirena.render(corpus_source("c4/#{name}.mmd"))
     [summaries(reference), summaries(sirena)]
@@ -43,7 +43,7 @@ RSpec.describe SpecSupport::LayoutParity::C4Recognizer do
   end
 
   it "keys an element declared with an empty name by its description" do
-    name = "c4/028_parser_should_parse_the_description_27"
+    name = "c4/should_parse_the_description-82dca309"
     key = "A customer of the bank, with personal bank accounts."
     expect([identities(summaries(reference_svg("#{name}.svg"))),
             identities(summaries(Sirena.render(corpus_source("#{name}.mmd"))))])

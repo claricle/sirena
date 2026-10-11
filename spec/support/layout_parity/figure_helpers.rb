@@ -67,7 +67,7 @@ module SpecSupport
 
       # [mmdc reference, Sirena render] of a two-participant sequence.
       def sequence_sides
-        [reference_svg("sequence/001_platform_knsv_0.svg"),
+        [reference_svg("sequence/knsv-8bc11092.svg"),
          Sirena.render("sequenceDiagram\n  Alice->>Bob: Hi\n")]
       end
 

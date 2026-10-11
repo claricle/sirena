@@ -257,7 +257,7 @@ Part of the hard gate, together with all-nodes-present.
   extractor details that sentence leaves open: a block boundary (`br`, `p`,
   `div`, `li`, `tr`, `ul`, `ol`, `h1` to `h6`) counts as whitespace, because
   without it `a<br>b` reads `ab` and Sirena's correct text then fails against
-  it (`flowchart/054_parser_multi_line_strings_should_be_supported_49`); any
+  it (`flowchart/flow_node_data_spec-9daa0459`); any
   Unicode space collapses, so a decoded `&nbsp;` does; adjacent `tspan`
   elements are separated by a space; and a reference sequence message drawn as
   several text lines is one label, the lines joined by one space. Label counts
@@ -296,12 +296,12 @@ starts red on these cases.
 
 | Type | Cohort | `label-text` failures | Shapes (cases, one example) |
 |---|---|---|---|
-| flowchart | 218 | 43, of which 21 fail only the pipe bug | edge label drawn as `\|text\|` (30, `flowchart/001_config_0`); markup or entity code kept (7, `flowchart/021_platform_xss22_flowchart_20`); quote marks kept (6, `flowchart/016_platform_subgraph_flowchart_15`); `fa:fa-car` drawn as text (5, `flowchart/001_config_0`) |
-| class | 142 | 73 | member text rewritten: `+ ` prefix, `name: type` order, spacing (`class/033_platform_yari_class_32`: `test` against `+ test`); `«interface»` against `<<interface>>` (13, `class/034_platform_yari_class_33`); class-name generics `Car<T>` against `Car~T~` (7, `class/108_parser_should_handle_generic_class_107`) |
-| sequence | 107 | 6 | markup or entity code kept in a message (4, `sequence/030_parser_should_handle_different_line_breaks_29`); `wrap:` prefix drawn (4, `sequence/019_parser_should_draw_two_actors_notes_to_the_left_with_text_wrapped_inline__18`) |
-| architecture | 19 | 2 | icon placeholder, `?` against `I` (`architecture/004_rendering_architecture_spec_architecture_3`) |
-| requirement | 24 | 1 | `<<satisfies>>` against `satisfies`, `Verification: Test` against `Verify: Test` (`requirement/001_example_requirement_0`) |
-| er | 6 | 3 | attribute rows read type then name in the reference, name then type in Sirena (3, `er/002_platform_yari2_er_1`: `string registrationNumber` against `registrationNumber string`) |
+| flowchart | 218 | 43, of which 21 fail only the pipe bug | edge label drawn as `\|text\|` (30, `flowchart/configuration_spec-67574f4a`); markup or entity code kept (7, `flowchart/xss22-3b590ae6`); quote marks kept (6, `flowchart/subgraph-d37c1bec`); `fa:fa-car` drawn as text (5, `flowchart/configuration_spec-67574f4a`) |
+| class | 142 | 73 | member text rewritten: `+ ` prefix, `name: type` order, spacing (`class_diagram/yari-3e69d3e6`: `test` against `+ test`); `«interface»` against `<<interface>>` (13, `class_diagram/yari-635beb05`); class-name generics `Car<T>` against `Car~T~` (7, `class_diagram/should_handle_generic_class-0b14c539`) |
+| sequence | 107 | 6 | markup or entity code kept in a message (4, `sequence/sequencediagram_spec-4f5cf515`); `wrap:` prefix drawn (4, `sequence/sequencediagram_spec-783aa83b`) |
+| architecture | 19 | 2 | icon placeholder, `?` against `I` (`architecture/architecture_spec-ef15d347`) |
+| requirement | 24 | 1 | `<<satisfies>>` against `satisfies`, `Verification: Test` against `Verify: Test` (`requirement/requirement-9f8b7e75`) |
+| er | 6 | 3 | attribute rows read type then name in the reference, name then type in Sirena (3, `er_diagram/yari2-9471fb3f`: `string registrationNumber` against `registrationNumber string`) |
 | state | 22 | 0 | 4 cases have a note owner on one side only (presence) and are not text-compared; no compared state label differs |
 | other 16 types | 1 to 45 each | 0 by construction | keyed by label text: a text difference is a `node-presence` failure |
 
@@ -369,7 +369,7 @@ A `label-text` record uses the same shape: `rule` is `label-text`, `subject_keys
 is the owner key and the pair's index in reading order, `expected` and `actual`
 are the reference's and Sirena's normalized texts, and `bbox_sirena` and
 `bbox_reference` are the two label anchors; `normalized` is unused. For the
-flowchart edge `A` to `B` in `flowchart/001_config_0`:
+flowchart edge `A` to `B` in `flowchart/configuration_spec-67574f4a`:
 
 ```
 { rule: "label-text", subject_keys: [["edge", "A", "B", 0], 0],
@@ -393,7 +393,7 @@ became meaningless:
 
 - **Not every corpus case has a reference.** There are 1,997 corpus
   inputs and only ~847 references. mmdc renders cases that have no
-  reference at all (`class_diagram/001_platform_click_security_loose_0.mmd`
+  reference at all (`class_diagram/click_security_loose-a4179337.mmd`
   is one), and the comparator silently skips a missing reference
   (`tasks/generate_mermaid_fixtures.rake:284`). So corpus completion does NOT
   produce references — reference GENERATION does. That is item 02b step

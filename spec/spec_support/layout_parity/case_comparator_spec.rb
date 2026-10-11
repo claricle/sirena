@@ -195,7 +195,7 @@ RSpec.describe SpecSupport::LayoutParity::CaseComparator do
 
   context "with one real Flowchart pair" do
     let(:arguments) do
-      reference, sirena = flowchart_sides("001_config_0")
+      reference, sirena = flowchart_sides("configuration_spec-67574f4a")
       super().merge(reference_svg: reference, sirena_svg: sirena)
     end
 

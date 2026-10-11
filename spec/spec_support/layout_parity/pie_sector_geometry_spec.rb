@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe SpecSupport::LayoutParity::PieSectorGeometry do
-  let(:source_name) { "002_rendering_pie_spec_pie_1" }
+  let(:source_name) { "pie_spec-8e291061" }
 
   def measurements(svg)
     described_class.extract(svg)

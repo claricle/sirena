@@ -205,7 +205,7 @@ module Sirena
         # non-whitespace prefix/suffix plus both tildes -- so mermaid's
         # `foo~bar baz~qux` keeps its inner tilde untouched. Mermaid does
         # NOT strip the tildes on display: it renders `~T~` as `<T>` (see
-        # `spec/mermaid/unknown/079_platform_yari2_78.svg`, which shows
+        # `spec/mermaid/unknown/yari2-dc83acff.svg`, which shows
         # `&lt;timestamp with time zone&gt;`). `parse_generic_types` below
         # ports mermaid's own function of the same name
         # (`packages/mermaid/src/diagrams/common/common.ts`), which is

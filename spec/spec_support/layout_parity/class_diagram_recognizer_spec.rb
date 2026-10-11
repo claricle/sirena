@@ -63,7 +63,7 @@ RSpec.describe SpecSupport::LayoutParity::ClassDiagramRecognizer do
   end
 
   it "recognizes the same logical nodes in a real reference and render" do
-    path = "class/001_rendering_classdiagram-elk-v3_spec_class_0.mmd"
+    path = "class_diagram/classdiagram_elk_v3_spec-04c6aafa.mmd"
     expect(recognized_pair(path)).to eq([real_expected] * 2)
   end
 end

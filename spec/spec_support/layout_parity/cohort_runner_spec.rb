@@ -224,7 +224,7 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
   end
 
   def conflicting_reference_summary
-    ["spec/fixtures_mermaid/class/missing.svg", nil, nil]
+    ["spec/fixtures_mermaid/class_diagram/missing.svg", nil, nil]
   end
 
   def seed_render_failure

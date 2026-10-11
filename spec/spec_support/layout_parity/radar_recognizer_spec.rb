@@ -14,7 +14,7 @@ RSpec.describe SpecSupport::LayoutParity::RadarRecognizer do
   end
 
   def real_pair
-    name = "001_rendering_radar_spec_radar_0"
+    name = "radar_spec-9dd39c75"
     reference = reference_svg("radar/#{name}.svg")
     sirena = Sirena.render(corpus_source("radar/#{name}.mmd"))
     [summaries(reference), summaries(sirena)]

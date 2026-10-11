@@ -7,7 +7,7 @@ RSpec.describe Sirena::Layout::StateDiagram do
 
   let(:source) do
     File.read(
-      "spec/mermaid/state/020_parser_should_handle_state_definitions_with_" \
+      "spec/mermaid/state_diagram/020_parser_should_handle_state_definitions_with_" \
       "separation_of_id_19.mmd",
     )
   end

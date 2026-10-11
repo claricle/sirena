@@ -87,7 +87,7 @@ the rename, under this pin.
      `error` cases render error-LOOKING diagrams on purpose — rejecting
      those deletes a whole registered type's cohort.
    - But mmdc exits **0** while emitting an error page:
-     `radar/020_parsertest_radar_test_19.mmd` declares `radar-beta`,
+     `radar/radar_test-be00dd54.mmd` declares `radar-beta`,
      exits 0, and returns `<svg aria-roledescription="error">` reading
      "Syntax error in text". Ignoring the marker counts that failure as
      valid and inflates the denominator.

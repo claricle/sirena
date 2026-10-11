@@ -14,7 +14,7 @@ RSpec.describe SpecSupport::LayoutParity::GanttRecognizer do
   end
 
   def real_pair
-    name = "017_parser_should_handle_a_task_definition_16"
+    name = "should_handle_a_task_definition-09f6496b"
     reference = reference_svg("gantt/#{name}.svg")
     sirena = Sirena.render(corpus_source("gantt/#{name}.mmd"))
     [recognized(reference), recognized(sirena)]
@@ -41,7 +41,7 @@ RSpec.describe SpecSupport::LayoutParity::GanttRecognizer do
   end
 
   def repeated_task_counts
-    name = "005_platform_click_security_loose_gantt_4"
+    name = "click_security_loose-0d2cc455"
     svg = reference_svg("gantt/#{name}.svg")
     labels = recognized(svg).filter_map do |kind, label, _identity|
       label if kind == :task && label.include?("diagram to demo page")

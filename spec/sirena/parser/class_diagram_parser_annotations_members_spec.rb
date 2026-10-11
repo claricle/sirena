@@ -272,7 +272,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
     %w[003 009 015 021 033 035 065 076 077 092 093 099 100 102 103 105 106
        111 112 129 130 132 133 160 166].each do |number|
       it "parses class case #{number}" do
-        path = Dir[File.expand_path("../../mermaid/class/#{number}_*.mmd",
+        path = Dir[File.expand_path("../../mermaid/class_diagram/#{number}_*.mmd",
                                     __dir__)].first
 
         expect { parser.parse(File.read(path)) }.not_to raise_error

@@ -14,7 +14,7 @@ RSpec.describe SpecSupport::LayoutParity::TimelineRecognizer do
   end
 
   def real_pair
-    name = "001_rendering_timeline_spec_timeline_0"
+    name = "timeline_spec-e03904ce"
     reference = reference_svg("timeline/#{name}.svg")
     sirena = Sirena.render(corpus_source("timeline/#{name}.mmd"))
     [summaries(reference), summaries(sirena)]
@@ -28,21 +28,21 @@ RSpec.describe SpecSupport::LayoutParity::TimelineRecognizer do
 
   it "keeps a section that has no tasks" do
     reference_summary, sirena_summary =
-      pair_for("008_parser_should_handle_a_simple_section_definition_abc-123_7")
+      pair_for("should_handle_a_simple_section_definition_abc_12-d5c1af25")
 
     expect(sirena_summary).to eq(reference_summary)
   end
 
   it "reads the section label of a task-less timeline" do
     summary, = pair_for(
-      "008_parser_should_handle_a_simple_section_definition_abc-123_7",
+      "should_handle_a_simple_section_definition_abc_12-d5c1af25",
     )
 
     expect(summary).to include([:timeline_section, "abc-123"])
   end
 
   it "measures the axis of an empty timeline" do
-    summary, = pair_for("006_rendering_timeline_spec_timeline_5")
+    summary, = pair_for("timeline_spec-72a1338f")
 
     expect(summary).to eq([[:timeline_axis, "axis"]])
   end

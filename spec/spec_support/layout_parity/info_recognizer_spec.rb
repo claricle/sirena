@@ -14,14 +14,14 @@ RSpec.describe SpecSupport::LayoutParity::InfoRecognizer do
   end
 
   def real_pair
-    name = "001_rendering_info_spec_info_0"
+    name = "info_spec-e8bdfd49"
     reference = reference_svg("info/#{name}.svg")
     sirena = Sirena.render(corpus_source("info/#{name}.mmd"))
     [recognized(reference), recognized(sirena)]
   end
 
   def matched_real_pair
-    name = "001_rendering_info_spec_info_0"
+    name = "info_spec-e8bdfd49"
     reference = extract(reference_svg("info/#{name}.svg"), recognizer)
     sirena = extract(
       Sirena.render(corpus_source("info/#{name}.mmd")), recognizer

@@ -12,7 +12,7 @@ RSpec.describe SpecSupport::LayoutParity::MindmapRecognizer do
   end
 
   def real_pair
-    name = "009_rendering_mindmap_spec_mindmap_8"
+    name = "mindmap_spec-7104af54"
     reference = reference_svg("mindmap/#{name}.svg")
     sirena = Sirena.render(corpus_source("mindmap/#{name}.mmd"))
     [keys(reference), keys(sirena)]

@@ -302,7 +302,7 @@ RSpec.describe Sirena::Parser::Radar do
 
       corpus_source = File.read(
         File.expand_path(
-          "../../mermaid/radar/003_rendering_radar_spec_radar_2.mmd",
+          "../../mermaid/radar/radar_spec-32f156dc.mmd",
           __dir__,
         ),
       )

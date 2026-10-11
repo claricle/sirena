@@ -17,7 +17,7 @@ interpolates content straight into `<text>…</text>`, and
 `lib/sirena/svg/element.rb:39` interpolates every attribute value the
 same way. There is no escape helper anywhere under `lib/sirena/svg/`.
 The corpus already carries the proof case:
-`spec/mermaid/sequence/025_spec_xss_spec_24.mmd` renders `Alice<img
+`spec/mermaid/sequence/xss_spec-c01ed3ad.mmd` renders `Alice<img
 src=` inside a `<text>` element and emits malformed XML.
 `scripts/corpus_sweep.rb:24` only checks the outer SVG shape, so it
 scores that output as a pass.

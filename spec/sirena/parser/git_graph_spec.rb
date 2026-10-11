@@ -104,7 +104,7 @@ RSpec.describe Sirena::Parser::GitGraph do
       end
 
       # mermaid accepts real git branch names, not just identifiers.
-      # Corpus case unknown/013_platform_gitgraph_12.mmd checks out
+      # Corpus case unknown/gitgraph-1aeddce4.mmd checks out
       # "release/1.0.0".
       it "parses a branch name with a slash and dots", :aggregate_failures do
         source = <<~MERMAID

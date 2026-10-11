@@ -92,7 +92,7 @@ RSpec.describe Sirena::Conformance do
     end
 
     it "calls what Sirena renders for a real case conformant" do
-      svg = described_class.render("pie/001_rendering_theme_spec_pie_0.mmd")
+      svg = described_class.render("pie/theme_spec-a9670f7e.mmd")
 
       expect(described_class.status_for(svg)).to eq("conformant")
     end

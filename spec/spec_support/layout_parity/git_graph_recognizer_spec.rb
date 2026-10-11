@@ -18,7 +18,7 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphRecognizer do
   end
 
   def real_pair
-    name = "002_platform_showcase_base_1"
+    name = "showcase_base-f21356f4"
     reference = reference_svg("gitgraph/#{name}.svg")
     sirena = Sirena.render(corpus_source("gitgraph/#{name}.mmd"))
     [recognized(reference), recognized(sirena)]
@@ -67,7 +67,7 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphRecognizer do
   end
 
   def real_svgs
-    name = "002_platform_showcase_base_1"
+    name = "showcase_base-f21356f4"
     [reference_svg("gitgraph/#{name}.svg"),
      Sirena.render(corpus_source("gitgraph/#{name}.mmd"))]
   end

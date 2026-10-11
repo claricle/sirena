@@ -23,7 +23,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
   describe "the actor-name token — four sub-shapes" do
     it "keeps a dash inside an actor name distinct from the arrow" do
       ids = ids_for(
-        "012_parser_should_handle_dashes_in_actor_names_11",
+        "sequencediagram_spec-491a3b83",
       )
 
       expect(ids).to eq(%w[Alice-in-Wonderland Bob])
@@ -31,7 +31,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
 
     it "keeps an = inside a participant name distinct from an assignment" do
       ids = ids_for(
-        "014_parser_should_handle_equals_in_participant_names_13",
+        "sequencediagram_spec-0f2afc7d",
       )
 
       expect(ids).to eq(%w[Alice=Wonderland Bob])
@@ -39,7 +39,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
 
     it "accepts a leading-digit actor name" do
       ids = ids_for(
-        "031_parser_should_handle_notes_and_messages_without_wrap_specified_30",
+        "sequencediagram_spec-3a5059a6",
       )
 
       expect(ids).to eq(%w[1 2 3 4])
@@ -58,7 +58,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
     it "discards () as a central-connection decoration, " \
        "not actor-name material" do
       ids = ids_for(
-        "010_rendering_sequencediagram-v2_spec_sequence_9",
+        "sequencediagram_v2_spec-7bd17012",
       )
 
       expect(ids).to eq(%w[Alice Bob Charlie])
@@ -74,7 +74,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
     # source returns exactly the three declared actors.
     it "does not turn a central-connection decoration into an implicit actor" do
       ids = ids_for(
-        "014_rendering_sequencediagram-v2_spec_sequence_13",
+        "sequencediagram_v2_spec-4fdaa92d",
       )
 
       expect(ids).to eq(%w[Alice Bob Charlie])
@@ -163,7 +163,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
 
   describe "the as alias hazard" do
     it "does not let the alias keyword eat the label" do
-      case_name = "030_parser_should_handle_different_line_breaks_29"
+      case_name = "sequencediagram_spec-4f5cf515"
       diagram = parser.parse(File.read(sequence_fixture(case_name)))
       expected = { participants: %w[1 2 3 4], labels: multiline_labels }
 
@@ -196,7 +196,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
     # entries, none of the decorated duplicates.
     it "parses and discards @{...} shape metadata" do
       ids = ids_for(
-        "017_rendering_sequencediagram-v2_spec_sequence_16",
+        "sequencediagram_v2_spec-54b8941d",
       )
 
       expect(ids).to eq(%w[Alice Bob Charlie David Eve])
@@ -239,21 +239,21 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
 
   describe "the bucket regression net" do
     bucket_cases = %w[
-      010_rendering_sequencediagram-v2_spec_sequence_9
-      011_rendering_sequencediagram-v2_spec_sequence_10
-      012_parser_should_handle_dashes_in_actor_names_11
-      012_rendering_sequencediagram-v2_spec_sequence_11
-      013_parser_should_handle_dashes_in_participant_names_12
-      013_rendering_sequencediagram-v2_spec_sequence_12
-      014_parser_should_handle_equals_in_participant_names_13
-      014_rendering_sequencediagram-v2_spec_sequence_13
-      015_rendering_sequencediagram-v2_spec_sequence_14
-      016_rendering_sequencediagram-v2_spec_sequence_15
-      017_rendering_sequencediagram-v2_spec_sequence_16
-      030_parser_should_handle_different_line_breaks_29
-      031_parser_should_handle_notes_and_messages_without_wrap_specified_30
-      032_parser_should_handle_notes_and_messages_with_wrap_specified_31
-      033_parser_should_handle_notes_and_messages_with_nowrap_or_line_breaks_32
+      sequencediagram_v2_spec-7bd17012
+      sequencediagram_v2_spec-51478eeb
+      sequencediagram_spec-491a3b83
+      sequencediagram_v2_spec-a5d1d349
+      sequencediagram_spec-ab7b0e29
+      sequencediagram_v2_spec-904559a9
+      sequencediagram_spec-0f2afc7d
+      sequencediagram_v2_spec-4fdaa92d
+      sequencediagram_v2_spec-c9b61e4d
+      sequencediagram_v2_spec-22024e01
+      sequencediagram_v2_spec-54b8941d
+      sequencediagram_spec-4f5cf515
+      sequencediagram_spec-3a5059a6
+      sequencediagram_spec-5346ad9c
+      sequencediagram_spec-8e007ba5
     ].freeze
 
     # `REXML::Document.new("")` does not raise — it constructs a document
@@ -274,7 +274,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
     # only "parses and renders" is pinned — no spec asserts its actor
     # name (see the plan's declared residual on this case).
     it "parses the unspecced bonus case 020 and renders well-formed SVG" do
-      case_name = "020_rendering_sequencediagram_spec_sequence_19"
+      case_name = "sequencediagram_spec-97601112"
       source = File.read(sequence_fixture(case_name))
       svg = Sirena::Engine.new.render(source)
 
