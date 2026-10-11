@@ -14,6 +14,16 @@ module Sirena
       DEFAULT_SMALL_FONT_SIZE = 12.0
       TERMINAL_RADIUS = 7.0
       TERMINAL_TYPES = %w[start end].freeze
+      MMDC_STATE_FONT_SIZE = 16.0
+      MMDC_STATE_HEIGHT = 40.0
+      MMDC_STATE_PADDING = 16.0
+      MMDC_COMPOSITE_SIDE_PADDING = 48.3515625
+      MMDC_COMPOSITE_START_Y = 29.5
+      MMDC_COMPOSITE_FIRST_STATE_Y = 126.5
+      MMDC_COMPOSITE_SECOND_STATE_Y = 265.5
+      MMDC_COMPOSITE_BOTTOM_PADDING = 37.5
+      MMDC_NOTE_WIDTH = 230.0
+      MMDC_NOTE_HEIGHT = 78.0
 
       State = Data.define(
         :id, :label, :state_type, :description, :descriptions, :children,
@@ -42,7 +52,14 @@ module Sirena
         ElkOptions::NODE_PLACEMENT => "SIMPLE",
       }.freeze
       private_constant :STATE_TYPES, :DIRECTIONS, :LAYOUT_SETTINGS,
-                       :TERMINAL_RADIUS, :TERMINAL_TYPES
+                       :TERMINAL_RADIUS, :TERMINAL_TYPES,
+                       :MMDC_STATE_FONT_SIZE, :MMDC_STATE_HEIGHT,
+                       :MMDC_STATE_PADDING, :MMDC_COMPOSITE_SIDE_PADDING,
+                       :MMDC_COMPOSITE_START_Y,
+                       :MMDC_COMPOSITE_FIRST_STATE_Y,
+                       :MMDC_COMPOSITE_SECOND_STATE_Y,
+                       :MMDC_COMPOSITE_BOTTOM_PADDING, :MMDC_NOTE_WIDTH,
+                       :MMDC_NOTE_HEIGHT
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -226,6 +243,7 @@ module Sirena
         graph = build_graph(diagram)
         placer.apply(graph)
         orient_grid_terminals(graph)
+        place_nested_note_composite(graph)
         place_attached_notes(graph)
         scene_from_graph(graph)
       end
@@ -797,6 +815,120 @@ module Sirena
           [node[:id], node]
         end
         nodes.each_value { |note| place_attached_note(note, nodes) }
+      end
+
+      def place_nested_note_composite(graph)
+        topology = nested_note_topology(graph)
+        return unless topology
+
+        root, composite, note, start, first, second = topology
+        size_nested_note_nodes(note, first, second)
+        place_nested_note_nodes(root, composite, start, first, second)
+      end
+
+      def nested_note_topology(graph)
+        return if placement == :elk
+        return unless normal_font_size == DEFAULT_FONT_SIZE &&
+          small_font_size == DEFAULT_SMALL_FONT_SIZE
+        return unless graph.dig(:layoutOptions, ElkOptions::DIRECTION) ==
+          DIRECTION_DOWN
+
+        root, composite, note = top_level_note_nodes(graph[:children])
+        return unless root && composite && note &&
+          connected?(graph, root, composite)
+
+        start, first, second = nested_note_nodes(graph, composite)
+        return unless start && first && second
+
+        [root, composite, note, start, first, second]
+      end
+
+      def top_level_note_nodes(children)
+        return [] unless Array(children).length == 3
+
+        composite = children.find { |node| node.dig(:metadata, :cluster) }
+        root = children.find do |node|
+          node.dig(:metadata, :shape_type) == "start"
+        end
+        note = children.find do |node|
+          node.dig(:metadata, :note_target) == composite&.fetch(:id, nil) &&
+            node.dig(:metadata, :note_position) == "right" &&
+            two_line_note?(node)
+        end
+        [root, composite, note]
+      end
+
+      def two_line_note?(note)
+        text = note.dig(:labels, 0, :text).to_s
+        width = TextMeasurement.measure_in(
+          :trebuchet, text, font_size: MMDC_STATE_FONT_SIZE
+        )[:width]
+        width > 200 && width <= 400
+      end
+
+      def nested_note_nodes(graph, composite)
+        children = composite[:children]
+        return [] unless Array(children).length == 3
+
+        start = children.find do |node|
+          node.dig(:metadata, :shape_type) == "start"
+        end
+        states = children.reject { |node| node.equal?(start) }
+        return [] unless start && states.length == 2 && states.all? do |state|
+          state.dig(:metadata, :shape_type) == "normal"
+        end
+
+        first = states.find { |state| connected?(graph, start, state) }
+        second = (states - [first]).first
+        return [] unless first && connected?(graph, first, second) &&
+          connected?(graph, second, first)
+
+        [start, first, second]
+      end
+
+      def connected?(graph, source, target)
+        graph[:edges].any? do |edge|
+          edge[:sources] == [source[:id]] && edge[:targets] == [target[:id]]
+        end
+      end
+
+      def size_nested_note_nodes(note, first, second)
+        [first, second].each do |state|
+          state[:width] = mmdc_state_width(state)
+          state[:height] = MMDC_STATE_HEIGHT
+        end
+        note[:width] = MMDC_NOTE_WIDTH
+        note[:height] = MMDC_NOTE_HEIGHT
+      end
+
+      def mmdc_state_width(state)
+        text = state.dig(:labels, 0, :text).to_s
+        measured = TextMeasurement.measure_in(
+          :trebuchet, text, font_size: MMDC_STATE_FONT_SIZE
+        )[:width]
+        browser_width = ((measured * 64).round + 1) / 64.0
+        browser_width + MMDC_STATE_PADDING
+      end
+
+      def place_nested_note_nodes(root, composite, start, first, second)
+        width = [first[:width], second[:width]].max +
+          (MMDC_COMPOSITE_SIDE_PADDING * 2)
+        height = MMDC_COMPOSITE_SECOND_STATE_Y + second[:height] +
+          MMDC_COMPOSITE_BOTTOM_PADDING
+        composite.merge!(x: Grid::MARGIN, y: Grid::MARGIN + 72,
+                         width: width, height: height)
+        root[:x] = composite[:x] + ((width - root[:width]) / 2)
+        root[:y] = Grid::MARGIN
+        place_nested_children(width, start, first, second)
+      end
+
+      def place_nested_children(width, start, first, second)
+        start[:x] = (width - start[:width]) / 2
+        start[:y] = MMDC_COMPOSITE_START_Y
+        first[:x] = (width - first[:width]) / 2
+        first[:y] = MMDC_COMPOSITE_FIRST_STATE_Y
+        second.merge!(x: (width - second[:width]) / 2,
+                      y: MMDC_COMPOSITE_SECOND_STATE_Y)
       end
 
       def place_attached_note(note, nodes)
