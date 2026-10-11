@@ -159,6 +159,11 @@ module DocsSiteVerifierSpecHelpers
     "content: #{page} renders no text in main-content-wrap"
   end
 
+  def generated_examples_failure
+    "content: diagram_types/flowchart/index.html omits generated " \
+      "Flowchart examples"
+  end
+
   def asset_failure(asset, page, resolved_path)
     "asset: #{asset} (referenced by #{page}) does not resolve to " \
       "#{resolved_path}"
@@ -193,6 +198,19 @@ RSpec.describe Sirena::DocsSiteVerifier do
                  page_html(extra: { dangling_anchor: true }))
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  it "reports a Flowchart page that omits its generated examples" do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_source(docs_dir, "flowchart")
+      write_page(site_dir, "diagram_types/flowchart/index.html", page_html)
+      write_page(site_dir, "_diagram_types/flowchart/index.html", page_html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        generated_examples_failure,
+      )
     end
   end
 

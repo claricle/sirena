@@ -196,7 +196,7 @@ end
 
 === Examples
 
-include::examples/flowchart-examples.adoc[]
+include::_diagram_types/examples/flowchart-examples.adoc[]
 
 ==== Basic flowchart
 

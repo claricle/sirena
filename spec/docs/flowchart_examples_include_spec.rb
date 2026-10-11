@@ -25,7 +25,7 @@ module FlowchartExamplesInclude
   end
 
   def resolved_include
-    File.expand_path(include_match[:target], File.dirname(HOST))
+    File.expand_path(include_match[:target], File.join(ROOT, "docs"))
   end
 
   def expanded_host_source
