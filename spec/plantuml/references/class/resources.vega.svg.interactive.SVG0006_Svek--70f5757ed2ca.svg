@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" data-diagram-type="CLASS" height="253px" preserveAspectRatio="none" style="width:426px;height:253px;background:#FFFFFF;" version="1.1" viewBox="0 0 426 253" width="426px" zoomAndPan="magnify"><?plantuml 1.2026.6?><defs><style type="text/css"><![CDATA[svg .entity {
+    cursor: pointer;
+}
+svg.mouseover-active > g > * {
+	opacity: 0.2 !important;
+}
+svg.mouseover-active > g > g.mouseover-highlighted {
+	opacity: 1.0 !important;
+}
+svg.click-active > g > * {
+    opacity: 0.3;
+}
+svg.click-active > g > g.click-highlighted {
+    opacity: 1.0;
+}
+]]></style><script>(function (){
+    function escapeForCssAttributeSelector(entityName) {
+        return entityName
+            ?.replaceAll('\\', '\\\\')
+            ?.replaceAll('"', '\\"');
+    }
+
+    function getLineEdgesAndNodes(startingNode) {
+        function findNextEdgesAndNodes(startingNode, forwards, elementsEncounteredSoFar = new Set()) {
+            elementsEncounteredSoFar.add(startingNode);
+            const nodeName = startingNode.id;
+            const escapedNodeName = escapeForCssAttributeSelector(nodeName);
+            const thisLinkAttributeIndex = forwards ? 2 : 1;
+            const nextLinkAttributeIndex = forwards ? 1 : 2;
+
+            svg.querySelectorAll(`.link[data-entity-${nextLinkAttributeIndex}="${escapedNodeName}"]`).forEach(link =&gt; {
+                if (! elementsEncounteredSoFar.has(link)) {
+                    elementsEncounteredSoFar.add(link);
+
+                    const linkStartNodeName = link.getAttribute(`data-entity-${thisLinkAttributeIndex}`);
+                    const linkStartNode = svg.querySelector(`[id="${escapeForCssAttributeSelector(linkStartNodeName)}"]`);
+
+                    if (! elementsEncounteredSoFar.has(linkStartNode)) {
+                        elementsEncounteredSoFar.add(linkStartNode);
+                        findNextEdgesAndNodes(linkStartNode, forwards, elementsEncounteredSoFar);
+                    }
+                }
+            });
+
+            return elementsEncounteredSoFar;
+        }
+
+        const ancestors = findNextEdgesAndNodes(startingNode, false);
+        const descendants = findNextEdgesAndNodes(startingNode, true);
+
+        return ancestors.union(descendants);
+    }
+
+	function getEdgesAndDistance1Nodes(startingNode) {
+		const nodeName = startingNode.id;
+		const escapedNodeName = escapeForCssAttributeSelector(nodeName);
+		let results = new Set();
+
+        svg.querySelectorAll(`.link[data-entity-1="${escapedNodeName}"], .link[data-entity-2="${escapedNodeName}"]`).forEach(link =&gt; {
+            const linkStartNodeName = link.getAttribute("data-entity-1");
+            const linkEndNodeName = link.getAttribute("data-entity-2");
+
+            if (linkStartNodeName === nodeName) {
+                results.add(svg.querySelector(`[id="${escapeForCssAttributeSelector(linkEndNodeName)}"]`));
+                results.add(link);
+            } else if (linkEndNodeName === nodeName) {
+                results.add(svg.querySelector(`[id="${escapeForCssAttributeSelector(linkStartNodeName)}"]`));
+                results.add(link);
+			}
+		});
+
+		return results;
+	}
+
+	/**
+	 * @param {SVGElement} elem
+	 * @param tagName in lowercase, e.g. "g" or "svg"
+	 * @return {{SVGElement}} or null if no matching ancestor is found
+	 */
+	function findAncestorWithTagName(elem, tagName) {
+		while (elem &amp;&amp; elem.nodeName.toLowerCase() !== tagName) {
+			elem = elem.parentElement;
+		}
+		return elem;
+	}
+
+    function onClickEntity() {
+        if (svg.classList.contains("click-active") &amp;&amp; this.classList.contains("click-selected")) {
+            handleDeselect("click");
+        } else {
+            handleSelectNeighbors(this, "click");
+        }
+    }
+
+    function onDoubleClickEntity() {
+        if (svg.classList.contains("click-active") &amp;&amp; this.classList.contains("click-selected")) {
+            handleDeselect("click");
+        } else {
+            handleSelectLine(this, "click");
+        }
+    }
+
+	function onMouseOverEntity() {
+	    handleSelectNeighbors(this, "mouseover");
+	}
+
+	function onMouseOutEntity() {
+	    handleDeselect("mouseover");
+	}
+
+    // CSS class descriptions:
+    //   xxx-active: highlight styles will be ignored when this is not added to the the parent &lt;svg&gt;.
+    //   xxx-selected: lets us track which entity `&lt;g&gt;` was clicked/hovered.
+    //   xxx-highlighted: when highlighting is 'active', elements without this class will be dimmed.
+    //
+    // 'xxx' event type will be 'click' or 'mouseover'.
+	function handleSelectNeighbors(selectedEntityElem, eventType) {
+	    svg.querySelectorAll(`.${eventType}-selected, .${eventType}-highlighted`).forEach(elem =&gt; {
+            elem.classList.remove(`${eventType}-selected`, `${eventType}-highlighted`);
+        });
+
+        svg.classList.add(`${eventType}-active`);
+        selectedEntityElem.classList.add(`${eventType}-selected`, `${eventType}-highlighted`);
+
+        getEdgesAndDistance1Nodes(selectedEntityElem).forEach(node =&gt; {
+            node.classList.add(`${eventType}-highlighted`);
+        });
+	}
+	
+    function handleSelectLine(selectedEntityElem, eventType) {
+        svg.querySelectorAll(`.${eventType}-selected, .${eventType}-highlighted`).forEach(elem =&gt; {
+            elem.classList.remove(`${eventType}-selected`, `${eventType}-highlighted`);
+        });
+
+        svg.classList.add(`${eventType}-active`);
+        selectedEntityElem.classList.add(`${eventType}-selected`, `${eventType}-highlighted`);
+
+        getLineEdgesAndNodes(selectedEntityElem).forEach(node =&gt; {
+            node.classList.add(`${eventType}-highlighted`);
+        });
+    }
+
+    function handleDeselect(eventType) {
+		svg.classList.remove(`${eventType}-active`);
+    }
+
+	const svg = findAncestorWithTagName(document.currentScript, "svg");
+
+    document.addEventListener("DOMContentLoaded", () =&gt; {
+        svg.querySelectorAll("g.entity").forEach(entity =&gt; {
+            entity.addEventListener("mouseover", onMouseOverEntity);
+            entity.addEventListener("mouseout", onMouseOutEntity);
+            entity.addEventListener("click", onClickEntity);
+            entity.addEventListener("dblclick", onDoubleClickEntity);
+        });
+
+        svg.addEventListener("keydown", event =&gt; {
+            if (event.code === "Escape") {
+              handleDeselect("click");
+            }
+          });
+    });
+})();
+</script></defs><g><!--class A--><g class="entity" data-qualified-name="A" data-source-line="3" id="ent0001"><rect fill="#F1F1F1" height="32" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="41.6592" x="7" y="27.9522"/><ellipse cx="22" cy="43.9522" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1;"/><path d="M24.4731,50.0953 Q23.8921,50.3941 23.2529,50.5435 Q22.6138,50.6929 21.9082,50.6929 Q19.4014,50.6929 18.0815,49.0411 Q16.7617,47.3892 16.7617,44.2681 Q16.7617,41.1387 18.0815,39.4869 Q19.4014,37.835 21.9082,37.835 Q22.6138,37.835 23.2612,37.9844 Q23.9087,38.1338 24.4731,38.4327 L24.4731,41.1553 Q23.8423,40.5743 23.2488,40.3045 Q22.6553,40.0347 22.0244,40.0347 Q20.6797,40.0347 19.9949,41.1014 Q19.3101,42.168 19.3101,44.2681 Q19.3101,46.3599 19.9949,47.4266 Q20.6797,48.4932 22.0244,48.4932 Q22.6553,48.4932 23.2488,48.2234 Q23.8423,47.9537 24.4731,47.3726 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="9.6592" x="36" y="49.2432">A</text></g><!--class B--><g class="entity" data-qualified-name="B" data-source-line="4" id="ent0002"><rect fill="#F1F1F1" height="32" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="57.0451" x="184" y="18.9522"/><ellipse cx="206.6466" cy="34.9522" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1;"/><path d="M209.1197,41.0953 Q208.5387,41.3941 207.8995,41.5435 Q207.2603,41.6929 206.5548,41.6929 Q204.0479,41.6929 202.7281,40.0411 Q201.4083,38.3892 201.4083,35.2681 Q201.4083,32.1387 202.7281,30.4869 Q204.0479,28.835 206.5548,28.835 Q207.2603,28.835 207.9078,28.9844 Q208.5553,29.1338 209.1197,29.4327 L209.1197,32.1553 Q208.4889,31.5743 207.8954,31.3045 Q207.3018,31.0347 206.671,31.0347 Q205.3263,31.0347 204.6414,32.1014 Q203.9566,33.168 203.9566,35.2681 Q203.9566,37.3599 204.6414,38.4266 Q205.3263,39.4932 206.671,39.4932 Q207.3018,39.4932 207.8954,39.2234 Q208.4889,38.9537 209.1197,38.3726 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="8.0527" x="222.3458" y="40.2432">B</text></g><!--class C--><g class="entity" data-qualified-name="C" data-source-line="5" id="ent0003"><rect fill="#F1F1F1" height="32" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="58.4492" x="183.5" y="171.9522"/><ellipse cx="206.0432" cy="187.9522" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1;"/><path d="M208.5164,194.0953 Q207.9353,194.3941 207.2961,194.5435 Q206.657,194.6929 205.9514,194.6929 Q203.4446,194.6929 202.1248,193.0411 Q200.8049,191.3892 200.8049,188.2681 Q200.8049,185.1387 202.1248,183.4869 Q203.4446,181.835 205.9514,181.835 Q206.657,181.835 207.3044,181.9844 Q207.9519,182.1338 208.5164,182.4327 L208.5164,185.1553 Q207.8855,184.5743 207.292,184.3045 Q206.6985,184.0347 206.0676,184.0347 Q204.7229,184.0347 204.0381,185.1014 Q203.3533,186.168 203.3533,188.2681 Q203.3533,190.3599 204.0381,191.4266 Q204.7229,192.4932 206.0676,192.4932 Q206.6985,192.4932 207.292,192.2234 Q207.8855,191.9537 208.5164,191.3726 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="9.6865" x="221.7195" y="193.2432">C</text></g><!--class D--><g class="entity" data-qualified-name="D" data-source-line="6" id="ent0004"><rect fill="#F1F1F1" height="32" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="42.4863" x="369.26" y="162.9522"/><ellipse cx="384.26" cy="178.9522" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1;"/><path d="M386.7331,185.0953 Q386.1521,185.3941 385.5129,185.5435 Q384.8738,185.6929 384.1682,185.6929 Q381.6614,185.6929 380.3415,184.0411 Q379.0217,182.3892 379.0217,179.2681 Q379.0217,176.1387 380.3415,174.4869 Q381.6614,172.835 384.1682,172.835 Q384.8738,172.835 385.5212,172.9844 Q386.1687,173.1338 386.7331,173.4327 L386.7331,176.1553 Q386.1023,175.5743 385.5088,175.3045 Q384.9153,175.0347 384.2844,175.0347 Q382.9397,175.0347 382.2549,176.1014 Q381.5701,177.168 381.5701,179.2681 Q381.5701,181.3599 382.2549,182.4266 Q382.9397,183.4932 384.2844,183.4932 Q384.9153,183.4932 385.5088,183.2234 Q386.1023,182.9537 386.7331,182.3726 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="10.4863" x="398.26" y="184.2432">D</text></g><!--reverse link A to B--><g class="link" data-entity-1="ent0001" data-entity-2="ent0002" data-link-type="composition" data-source-line="8" id="lnk5"><path codeLine="8" d="M95.6149,34.7908 C111.8849,30.1808 88.12,27.4222 109.5,24.9522 C131.13,22.4422 136.82,22.9222 158.5,24.9522 C166.89,25.7322 175.93,27.2022 184.13,28.7822" fill="none" id="A-backto-B" style="stroke:#181818;stroke-width:1;"/><polygon fill="#181818" points="84.0694,38.0622,90.9326,40.275,95.6149,34.7908,88.7517,32.578,84.0694,38.0622" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><polygon fill="#000000" points="119.4885,14.5588,110.2652,12.2392,110.6632,18.1036,119.4885,14.5588" style="stroke:#000000;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="34.6201" x="123.5" y="19.8105">holds</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="8.2202" x="167.8576" y="22.8874">1</text><rect fill="#F1F1F1" height="18.4883" style="stroke:#181818;stroke-width:0.5;" width="36.1494" x="47.92" y="28.818"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="32.1494" x="49.92" y="43.3532">key1</text></g><!--reverse link B to C--><g class="link" data-entity-1="ent0002" data-entity-2="ent0003" data-link-type="aggregation" data-source-line="9" id="lnk6"><path codeLine="9" d="M212.5,81.1905 C212.5,110.1305 212.5,143.5522 212.5,172.3622" fill="none" id="B-backto-C" style="stroke:#181818;stroke-width:1;"/><polygon fill="none" points="212.5,69.1905,208.5,75.1905,212.5,81.1905,216.5,75.1905,212.5,69.1905" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><polygon fill="#000000" points="217.5,116.6075,220.4389,107.5624,214.5611,107.5624,217.5,116.6075" style="stroke:#000000;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="34.6201" x="226.5" y="116.5205">holds</text><rect fill="#F1F1F1" height="18.4883" style="stroke:#181818;stroke-width:0.5;" width="43.8809" x="190.5596" y="50.7022"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="39.8809" x="192.5596" y="65.2373">key2a</text><rect fill="#F1F1F1" height="18.4883" style="stroke:#181818;stroke-width:0.5;" width="44.9609" x="190.0195" y="154.3739"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="40.9609" x="192.0195" y="168.9091">key2b</text></g><!--link C to D--><g class="link" data-entity-1="ent0003" data-entity-2="ent0004" data-link-type="association" data-source-line="10" id="lnk7"><path codeLine="10" d="M238.92,203.8922 C267.4,219.5822 314.48,238.9222 351.88,221.9522 C363.98,216.4522 373.72,204.9322 380.26,195.1922" fill="none" id="C-D" style="stroke:#181818;stroke-width:1;"/><polygon fill="#000000" points="312.8706,213.3003,303.662,210.9226,304.0231,216.7894,312.8706,213.3003" style="stroke:#000000;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="34.6201" x="316.88" y="218.5205">holds</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="8.2202" x="367.7551" y="215.3772">1</text><rect fill="#F1F1F1" height="18.4883" style="stroke:#181818;stroke-width:0.5;" width="36.1494" x="238.92" y="194.648"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="32.1494" x="240.92" y="209.1832">key3</text></g><?plantuml-src JOj12eCm54Jt_nHJbuKiR7Sk2YRUGhBuwaT3JPKa5RnzGGDrzOPvCxSryEWPSHlT9qdWFhbDaC9NQ7A3GFoQTdZndOH8_SmneixKcIQp8QhHlcKlBUuAHLb0eyAqp4F4Y_JX7conA7Ncpi9S5kPednRdkVch7m00?></g></svg>
