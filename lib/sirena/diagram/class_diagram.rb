@@ -240,6 +240,10 @@ module Sirena
       # Marker drawn at the to_id end. Same rules as start_marker.
       attribute :end_marker, :string
 
+      # True when the source wrote the ends the other way round (`A <|-- B`
+      # is stored B -> A). mmdc ranks the written order, so layout needs it.
+      attribute :written_reversed, :boolean
+
       # Line style override for mixed-marker operators (nil elsewhere):
       # true renders a dashed line, matching the operator's own line type
       # rather than relationship_type's usual dash rule.

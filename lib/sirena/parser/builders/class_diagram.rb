@@ -450,7 +450,8 @@ module Sirena
             ),
             label: relationship_label(stmt),
             source_cardinality: source_card,
-            target_cardinality: target_card
+            target_cardinality: target_card,
+            written_reversed: LEFT_POINTING.include?(operator) || nil
           }
         end
 

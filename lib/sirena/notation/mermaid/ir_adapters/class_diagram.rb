@@ -156,6 +156,7 @@ module Sirena
               ["source_marker", relationship.start_marker],
               ["target_marker", relationship.end_marker],
               ["dashed", relationship.dashed],
+              ["written_reversed", relationship.written_reversed],
             ]
             [node, *semantic_nodes(id, values, occupied)]
           end

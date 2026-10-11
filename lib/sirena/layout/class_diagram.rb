@@ -58,7 +58,7 @@ module Sirena
       SemanticRelationship = Struct.new(
         :from_id, :to_id, :relationship_type, :label,
         :source_cardinality, :target_cardinality, :start_marker, :end_marker,
-        :dashed, keyword_init: true
+        :dashed, :written_reversed, keyword_init: true
       )
       SemanticDiagram = Struct.new(
         :id, :title, :direction, :theme, :entities, :relationships,
@@ -345,6 +345,7 @@ module Sirena
           start_marker: fields["source_marker"],
           end_marker: fields["target_marker"],
           dashed: boolean_field(fields["dashed"]),
+          written_reversed: boolean_field(fields["written_reversed"]),
         }
       end
 
@@ -433,12 +434,15 @@ module Sirena
       end
 
       def relationship_metadata(relationship)
-        {
+        metadata = {
           relationship_type: relationship.relationship_type,
           start_marker: relationship.start_marker,
           end_marker: relationship.end_marker,
           dashed: relationship.dashed,
         }
+        return metadata unless relationship.written_reversed
+
+        metadata.merge(written_reversed: true)
       end
 
       def calculate_entity_dimensions(entity)
