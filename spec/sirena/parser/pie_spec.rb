@@ -145,15 +145,12 @@ RSpec.describe Sirena::Parser::Pie do
       end
     end
 
-    context "with case-insensitive pie keyword" do
-      it 'parses "Pie Chart"' do
-        diagram = parser.parse("Pie Chart")
-        expect(diagram).to be_a(Sirena::Diagram::Pie)
-      end
-
-      it 'parses "pie chart"' do
-        diagram = parser.parse("pie chart")
-        expect(diagram).to be_a(Sirena::Diagram::Pie)
+    context "with the pie keyword" do
+      ["Pie Chart", "pie chart", "Pie"].each do |header|
+        it "refuses #{header.inspect}, as Mermaid's lexer does" do
+          expect { parser.parse(header) }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
       end
 
       it 'parses "pie"' do

@@ -15,6 +15,16 @@ RSpec.describe Sirena do
       end
     end
 
+    {
+      "the \"pie chart\" header" => "pie chart\n  \"a\" : 1\n",
+      "the \"Pie Chart\" header" => "Pie Chart\n  \"a\" : 1\n",
+    }.each do |name, source|
+      it "refuses #{name}" do
+        expect { described_class.render(source) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
     [
       "pie\n  \"GitHub\"\t:\t100\n",
       "pie\n  \ttitle sample title\n  \"A\" : 1\n",

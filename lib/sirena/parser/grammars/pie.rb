@@ -31,7 +31,7 @@ module Sirena
             ws?
         end
 
-        # Header: pie|Pie|pie chart|Pie Chart [showData] [title <text>]
+        # Header: pie [showData] [title <text>]
         rule(:header) do
           pie_keyword.as(:header) >>
             (space.repeat(1) >> show_data_flag).maybe.as(:show_data) >>
@@ -39,10 +39,10 @@ module Sirena
             ws?
         end
 
-        # Pie keyword - case insensitive with optional "chart" suffix
+        # Mermaid's keyword is exactly "pie": "Pie" and "pie chart" are
+        # lexer errors there.
         rule(:pie_keyword) do
-          match["Pp"] >> str("ie") >>
-            (space.repeat(1) >> match["Cc"] >> str("hart")).maybe
+          str("pie")
         end
 
         rule(:show_data_flag) do
