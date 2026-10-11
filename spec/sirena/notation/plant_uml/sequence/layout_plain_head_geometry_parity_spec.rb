@@ -74,7 +74,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     expect(parity_evidence).to eq(expected)
   end
 
-  it "keeps the established boxed-participant dimensions" do
-    expect(boxed_participant_dimensions).to eq([80.0, 36.0])
+  it "uses intrinsic boxed-participant dimensions" do
+    expect(boxed_participant_dimensions).to eq([23.338, 30.4883])
   end
 end

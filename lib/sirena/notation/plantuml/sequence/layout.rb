@@ -30,6 +30,7 @@ module Sirena
           INTRINSIC_HEAD_HEIGHT = 30.4883
           MIN_GAP = 30.0
           BOX_PADDING = 8.0
+          BOX_TITLE_PADDING = 3.0
           BOX_TITLE_HEIGHT = 26.0
           MIN_WIDTH_PADDING = 14.0
           HEAD_LEADING = 1.1776
@@ -78,7 +79,8 @@ module Sirena
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
                            :INTRINSIC_HEAD_PADDING, :INTRINSIC_HEAD_HEIGHT,
-                           :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT,
+                           :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_PADDING,
+                           :BOX_TITLE_HEIGHT,
                            :MIN_WIDTH_PADDING, :HEAD_LEADING, :EDGE_GAP,
                            :EDGE_MARGIN,
                            :PAGE_BREAK_INSET, :BANNER_LEFT, :BANNER_TOP,
@@ -100,7 +102,7 @@ module Sirena
 
           # @param graph [IR::Graph] from {IRAdapter}
           def scene(graph)
-            @diagram = pictured(IRReader.call(graph))
+            @diagram = order_boxed_member(pictured(IRReader.call(graph)))
             measure_heads
             place_origin
             @flow = walk
@@ -146,6 +148,46 @@ module Sirena
             @widths = @diagram.participants.map { |p| head_width(p) }
             @centers = centers(@widths)
             @head_height = head_height
+          end
+
+          # An explicit box declaration moves a participant that an earlier
+          # message created implicitly behind the unboxed peer created with it.
+          def order_boxed_member(diagram)
+            participants = diagram.participants
+            box = diagram.boxes.first if diagram.boxes.one?
+            return diagram unless box&.members&.one?
+
+            member = box.members.first
+            peer = first_message_peer(diagram, member)
+            return diagram unless peer && !box.members.include?(peer)
+
+            from = participants.index { |participant| participant.id == member }
+            to = participants.index { |participant| participant.id == peer }
+            return diagram unless from && to && from < to
+
+            moved = participants.dup
+            participant = moved.delete_at(from)
+            peer_index = moved.index { |candidate| candidate.id == peer }
+            moved.insert(peer_index + 1, participant)
+            diagram_with_participants(diagram, moved.freeze)
+          end
+
+          def first_message_peer(diagram, member)
+            message = diagram.messages.find do |item|
+              item.from == member || item.to == member
+            end
+            return unless message
+
+            message.from == member ? message.to : message.from
+          end
+
+          def diagram_with_participants(diagram, participants)
+            Diagram.new(
+              participants: participants, items: diagram.items,
+              boxes: diagram.boxes, appearance: diagram.appearance,
+              footbox: diagram.footbox?, warnings: diagram.warnings,
+              title: diagram.title, chrome: diagram.chrome, teoz: diagram.teoz?
+            )
           end
 
           def walk
@@ -250,7 +292,7 @@ module Sirena
           def head_height
             return GLYPH_HEAD_HEIGHT + head_growth if glyph_participants?
 
-            height = if intrinsic_group_heads?
+            height = if intrinsic_plain_heads?
                        INTRINSIC_HEAD_HEIGHT
                      elsif plain_participants?
                        plain_head_height
@@ -290,14 +332,19 @@ module Sirena
             label_width = measure_text(
               participant.label, font_size: head_font_size
             )[:width]
-            [minimum, label_width + (2 * padding),
-             boxed_title_width(participant), requested_width].max
+            widths = [minimum, label_width + (2 * padding), requested_width]
+            widths << boxed_title_width(participant) unless boxed_plain_heads?
+            widths.max
           end
 
           def head_box_dimensions
-            return [0.0, INTRINSIC_HEAD_PADDING] if intrinsic_group_heads?
+            return [0.0, INTRINSIC_HEAD_PADDING] if intrinsic_plain_heads?
 
             [minimum_head_width, head_padding]
+          end
+
+          def intrinsic_plain_heads?
+            intrinsic_group_heads? || boxed_plain_heads?
           end
 
           def intrinsic_group_heads?
@@ -305,6 +352,13 @@ module Sirena
 
             @diagram.min_head_width.nil? && @diagram.boxes.empty? &&
               plain_participants? && group_fragment?
+          end
+
+          def boxed_plain_heads?
+            return false if compact?
+
+            @diagram.min_head_width.nil? && @diagram.boxes.any? &&
+              plain_participants?
           end
 
           def group_fragment?
@@ -896,8 +950,15 @@ module Sirena
 
           def frame_edges(box, widths)
             first, last = member_indexes(box).minmax
-            [@centers[first] - (widths[first] / 2) - BOX_PADDING,
-             @centers[last] + (widths[last] / 2) + BOX_PADDING]
+            left = @centers[first] - (widths[first] / 2) - BOX_PADDING
+            right = @centers[last] + (widths[last] / 2) + BOX_PADDING
+            return [left, right] unless boxed_plain_heads?
+
+            title_shortfall = title_width(box) + (2 * BOX_TITLE_PADDING) -
+              (right - left)
+            return [left, right] unless title_shortfall.positive?
+
+            [left - (title_shortfall / 2), right + (title_shortfall / 2)]
           end
 
           def lifelines
