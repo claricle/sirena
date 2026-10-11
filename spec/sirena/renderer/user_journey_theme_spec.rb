@@ -88,10 +88,16 @@ RSpec.describe Sirena::Renderer::UserJourney do
   end
 
   context "with every dark categorical colour" do
-    let(:theme) { Sirena::Theme::Registry.get(:dark) }
-    let(:actors) { 6.times.map { |index| "actor #{index}" } }
+    def theme
+      Sirena::Theme::Registry.get(:dark)
+    end
+
+    def actors
+      Array.new(6) { |index| "actor #{index}" }
+    end
+
     let(:palette_graph) do
-      children = 7.times.map do |index|
+      children = Array.new(7) do |index|
         {
           id: "task_#{index}", metadata: {
             name: "task #{index}", score: 5,

@@ -56,7 +56,8 @@ RSpec.describe Sirena::Theme::ColorPalette do
         user_journey_actor: 6, user_journey_section: 7, xy: 10
       }
     end
-    let(:new_dark_palettes) do
+
+    def new_dark_palettes
       {
         mindmap: %w[#3794ff #858585 #4ec9b0 #f48771 #89d185 #9cdcfe],
         treemap: %w[#2d2d30 #3e3e42 #404040 #505050],
@@ -67,7 +68,7 @@ RSpec.describe Sirena::Theme::ColorPalette do
         ],
         user_journey_section: %w[
           #1d4ed8 #6d28d9 #be123c #a16207 #15803d #0f766e #0369a1
-        ]
+        ],
       }
     end
 

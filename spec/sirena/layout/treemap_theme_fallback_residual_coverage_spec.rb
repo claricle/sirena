@@ -16,7 +16,7 @@ RSpec.describe Sirena::Layout::Treemap do
         {
           label: "Unstyled", value: 1, x: 40, y: 0,
           width: 40, height: 40, depth: 1, children: []
-        }
+        },
       ],
       class_defs: { "fill-only" => "fill: #abc" }
     }

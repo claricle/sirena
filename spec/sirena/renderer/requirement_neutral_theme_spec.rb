@@ -9,24 +9,6 @@ RSpec.describe Sirena::Renderer::Requirement do
   subject(:xml) { described_class.new(theme: theme).render(scene).to_xml }
 
   let(:theme) { Sirena::Theme::Registry.get(:default) }
-  let(:source) do
-    <<~MERMAID
-      requirementDiagram
-        requirement r {
-          id: 1
-          text: Need
-          risk: high
-        }
-        requirement plain {
-          id: 2
-          text: Plain
-        }
-        element e {
-          type: system
-        }
-        e - satisfies -> r
-    MERMAID
-  end
   let(:scene) do
     diagram = Sirena::Parser::Requirement.new.parse(source)
     Sirena::Layout::Requirement.new.call(diagram, theme: theme)
@@ -61,8 +43,27 @@ RSpec.describe Sirena::Renderer::Requirement do
       REXML::XPath.first(document, "#{requirement}/g/rect")
         .attributes["fill"],
       REXML::XPath.match(document, "#{requirement}/text")
-        .map { |text| text.attributes["fill"] }.compact.last,
+        .filter_map { |text| text.attributes["fill"] }.last,
     ]
+  end
+
+  def source
+    <<~MERMAID
+      requirementDiagram
+        requirement r {
+          id: 1
+          text: Need
+          risk: high
+        }
+        requirement plain {
+          id: 2
+          text: Plain
+        }
+        element e {
+          type: system
+        }
+        e - satisfies -> r
+    MERMAID
   end
 
   it "preserves the exact default render" do

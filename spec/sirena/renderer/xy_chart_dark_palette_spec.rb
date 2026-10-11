@@ -9,7 +9,7 @@ RSpec.describe Sirena::Renderer::XyChart do
        #969696 #fbbf24 #d4d4d4]
   end
   let(:source) do
-    series = 10.times.map do |index|
+    series = Array.new(10) do |index|
       "  line [#{index + 1}, #{index + 2}, #{index + 3}]"
     end
     (["xychart-beta", "  x-axis [a, b, c]", "  y-axis 0 --> 20"] + series)
