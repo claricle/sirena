@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::Radar, "#render" do
+RSpec.describe Sirena::Renderer::Radar do
   subject(:renderer) { described_class.new }
 
   let(:source) do
