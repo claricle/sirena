@@ -97,7 +97,7 @@ module Sirena
       def title_element(scene)
         text = Svg::Text.new(
           x: scene.title_x, y: scene.title_y,
-          fill: theme_color(:label_text) || "#333333",
+          fill: theme_color(:label_text),
           font_family: FONT_FAMILY, font_size: number(scene.title_size),
           font_weight: "bold"
         )
@@ -114,7 +114,7 @@ module Sirena
         Svg::Path.new(
           d: "M #{number(line.x1)} #{number(line.y1)} " \
              "L #{number(line.x2)} #{number(line.y2)}",
-          fill: "none", stroke: theme_color(:edge_stroke) || "#000000",
+          fill: "none", stroke: theme_color(:edge_stroke),
           marker_end: ARROW,
           stroke_width: number(line.stroke_width),
           stroke_dasharray: ("5,5" if line.dashed)

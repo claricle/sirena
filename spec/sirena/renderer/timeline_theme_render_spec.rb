@@ -101,8 +101,8 @@ RSpec.describe Sirena::Renderer::Timeline, "#render" do
         .attributes["fill"]
     end
 
-    it "falls back to the legacy edge and title colors" do
-      expect([edge_strokes, title_fill]).to eq([["#000000"], "#333333"])
+    it "leaves missing edge and title roles unpainted" do
+      expect([edge_strokes, title_fill]).to eq([[nil], nil])
     end
   end
 end
