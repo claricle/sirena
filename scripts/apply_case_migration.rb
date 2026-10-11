@@ -202,14 +202,27 @@ module ApplyCaseMigration
       end
     end
 
+    # Generators emit LF, but a checkout may hold the file with CRLF
+    # (Windows text mode). Compare and emit in the file's own convention;
+    # mixed line endings stay unverified.
     def structured(format, original, rewritten)
+      newline = newline_of(original)
       before = parse(format, original)
-      return [rewritten, :unverified] unless dump(format, before).b == original
+      canonical = in_newline(dump(format, before), newline)
+      return [rewritten, :unverified] unless canonical.b == original.b
 
       after = order_like(before, parse(format, rewritten))
-      [dump(format, after), :structured]
+      [in_newline(dump(format, after), newline), :structured]
     rescue JSON::ParserError, Psych::Exception, EncodingError, ArgumentError
       [rewritten, :unverified]
+    end
+
+    def newline_of(text)
+      text.b.include?("\r\n") ? "\r\n" : "\n"
+    end
+
+    def in_newline(text, newline)
+      newline == "\n" ? text : text.gsub("\n", newline)
     end
 
     def lines(original, rewritten)
@@ -274,7 +287,8 @@ module ApplyCaseMigration
       ORDERING_KEYS.filter_map { |name| item[name] }.grep(String).first
     end
 
-    private_class_method :structured, :lines, :listing?, :parse, :dump,
+    private_class_method :structured, :newline_of, :in_newline, :lines,
+                         :listing?, :parse, :dump,
                          :order_like, :order_hash, :order_array,
                          :sorted_keys?, :sort_key
   end
