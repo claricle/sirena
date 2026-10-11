@@ -4,7 +4,9 @@ require "ripper"
 require "spec_helper"
 
 RSpec.describe Sirena::Engine do
-  let(:engine_path) { File.expand_path("../../../lib/sirena/engine.rb", __dir__) }
+  let(:engine_path) do
+    File.expand_path("../../lib/sirena/engine.rb", __dir__)
+  end
 
   def plantuml_tokens(path)
     comments = %i[on_comment on_embdoc on_embdoc_beg on_embdoc_end]

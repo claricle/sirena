@@ -11,13 +11,18 @@ load File.expand_path("../../tasks/generate_mermaid_fixtures.rake", __dir__)
 RSpec.describe MermaidReferenceGenerator do
   subject(:generator) do
     described_class.new(root: root, toolchain: toolchain, runner: runner,
-                        detector: ->(source) { source.lines.first.strip.to_sym },
-                        canary: -> { true })
+                        detector: detector, canary: -> { true })
   end
 
   let(:root) { Dir.mktmpdir }
   let(:toolchain) { class_double(MermaidToolchain) }
   let(:runner) { class_double(HardenedMmdc) }
+  let(:detector) { ->(source) { source.lines.first.strip.to_sym } }
+  let(:target_paths) do
+    %w[spec/fixtures_mermaid/class/class_case.svg
+       spec/fixtures_mermaid/gantt/gantt_case.svg
+       spec/fixtures_mermaid/gitgraph/git_case.svg]
+  end
 
   before do
     FileUtils.mkdir_p(File.join(root, "scoreboard"))
@@ -37,11 +42,8 @@ RSpec.describe MermaidReferenceGenerator do
     seed_targets
     references = generator.generate
 
-    expect(references.map { |entry| relative(entry.reference_path) }).to eq(
-      %w[spec/fixtures_mermaid/class/class_case.svg
-         spec/fixtures_mermaid/gantt/gantt_case.svg
-         spec/fixtures_mermaid/gitgraph/git_case.svg],
-    )
+    expect(references.map { |entry| relative(entry.reference_path) })
+      .to eq(target_paths)
   end
 
   it "records source, toolchain, command, output, and unknown upstream SHA" do
@@ -81,8 +83,7 @@ RSpec.describe MermaidReferenceGenerator do
     seed_case("gantt/broken.mmd", "gantt\nbody\n")
     allow(runner).to receive(:run_mmdc).and_return([nil, "browser crashed"])
 
-    expect { generator.generate }.to raise_error(/browser crashed/)
-    expect(reference_files).to be_empty
+    expect_generation_failure
   end
 
   it "verifies committed source and output checksums" do
@@ -113,11 +114,19 @@ RSpec.describe MermaidReferenceGenerator do
     path = File.join(root, "spec", "mermaid", case_id)
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, source)
-    metadata = { "source_file" => "/upstream/#{case_id}",
-                 "line_number" => 7 }
+    write_metadata(path, case_id)
+    write_corpus_row(case_id)
+  end
+
+  def write_metadata(path, case_id)
+    metadata = { "source_file" => "/upstream/#{case_id}", "line_number" => 7 }
     File.write(path.sub(/\.mmd\z/, ".meta.json"), JSON.generate(metadata))
+  end
+
+  def write_corpus_row(case_id)
     rows << { "case" => case_id, "verdict" => "valid", "pass" => true }
-    File.write(File.join(root, "scoreboard", "corpus.json"), JSON.generate(rows))
+    path = File.join(root, "scoreboard", "corpus.json")
+    File.write(path, JSON.generate(rows))
   end
 
   def rows
@@ -138,11 +147,19 @@ RSpec.describe MermaidReferenceGenerator do
     path = File.join(root, "spec", "fixtures_mermaid",
                      "reference-provenance.json")
     payload = JSON.parse(File.read(path))
-    record = payload.fetch("references").fetch(0)
+    provenance_values(payload, payload.fetch("references").fetch(0))
+  end
+
+  def provenance_values(payload, record)
     [payload.dig("toolchain", "mmdc"), record["upstream_sha"],
      record.fetch("upstream_sha_status"), !record.fetch("command").empty?,
      record.fetch("source_sha256").length == 64,
      record.fetch("output_sha256").length == 64]
+  end
+
+  def expect_generation_failure
+    expect { generator.generate }.to raise_error(/browser crashed/)
+    expect(reference_files).to be_empty
   end
 
   def relative(path)

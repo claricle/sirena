@@ -135,17 +135,27 @@ class MermaidReferenceGenerator
     references = missing_references
     return verify_provenance! && [] if references.empty?
 
+    generate_missing(references)
+  end
+
+  def generate_missing(references)
     toolchain_provenance = toolchain.verify_toolchain
     canary.call
     generated = []
-    records = references.map do |reference|
-      generate_reference(reference).tap { generated << reference.reference_path }
-    end
+    records = generate_records(references, generated)
     write_provenance(records, toolchain_provenance)
     references
   rescue StandardError
     generated&.each { |path| FileUtils.rm_f(path) }
     raise
+  end
+
+  def generate_records(references, generated)
+    references.map do |reference|
+      generate_reference(reference).tap do
+        generated << reference.reference_path
+      end
+    end
   end
 
   def verify_provenance!
@@ -186,12 +196,17 @@ class MermaidReferenceGenerator
     directory = TARGETS[type]
     return unless directory
 
-    basename = "#{File.basename(case_id, '.mmd')}.svg"
+    reference_attributes(case_id, source_path, source, directory)
+  end
+
+  def reference_attributes(case_id, source_path, source, directory)
     {
       case_id: case_id,
       source_path: source_path,
       source_sha256: Digest::SHA256.hexdigest(source),
-      reference_path: File.join(reference_root, directory, basename),
+      reference_path: File.join(
+        reference_root, directory, "#{File.basename(case_id, '.mmd')}.svg"
+      ),
       metadata: source_metadata(source_path),
     }
   end
@@ -227,7 +242,8 @@ class MermaidReferenceGenerator
 
     path, entries = conflict
     cases = entries.map { |entry| entry[:case_id] }.join(", ")
-    raise ConflictError, "conflicting sources target #{relative(path)}: #{cases}"
+    message = "conflicting sources target #{relative(path)}: #{cases}"
+    raise ConflictError, message
   end
 
   def existing_reference_index(cases)
@@ -238,13 +254,16 @@ class MermaidReferenceGenerator
   def unresolved_reference?(entry, index)
     return false if File.file?(entry[:reference_path])
 
-    twins = index.fetch(entry[:source_sha256], []).select do |candidate|
-      File.binread(candidate[:source_path]) == File.binread(entry[:source_path])
-    end
-    return true if twins.empty?
+    exact_twins(entry, index).map do |candidate|
+      File.binread(candidate[:reference_path])
+    end.uniq.length != 1
+  end
 
-    twins.map { |candidate| File.binread(candidate[:reference_path]) }
-      .uniq.length != 1
+  def exact_twins(entry, index)
+    index.fetch(entry[:source_sha256], []).select do |candidate|
+      candidate_source = File.binread(candidate[:source_path])
+      candidate_source == File.binread(entry[:source_path])
+    end
   end
 
   def build_reference(entries)
@@ -275,30 +294,57 @@ class MermaidReferenceGenerator
 
   def validate_render!(path, status, diagnostic)
     document = REXML::Document.new(File.read(path)) if File.file?(path)
-    root_element = document&.root
-    valid = status&.success? && root_element&.name == "svg" &&
-      root_element.attributes["aria-roledescription"] != "error"
-    return if valid
+    return if valid_render?(document, status)
 
-    raise GenerationError, "pinned mmdc failed for #{relative(path)}: #{diagnostic}"
+    message = "pinned mmdc failed for #{relative(path)}: #{diagnostic}"
+    raise GenerationError, message
   rescue REXML::ParseException => e
     raise GenerationError, "pinned mmdc wrote invalid SVG for " \
                            "#{relative(path)}: #{e.message}"
   end
 
+  def valid_render?(document, status)
+    root_element = document&.root
+    status&.success? && root_element&.name == "svg" &&
+      root_element.attributes["aria-roledescription"] != "error"
+  end
+
   def provenance_record(reference, arguments)
     metadata = reference.metadata
+    reference_provenance(reference)
+      .merge(upstream_provenance(metadata))
+      .merge(source_provenance(metadata))
+      .merge(generation_provenance(reference, arguments))
+  end
+
+  def reference_provenance(reference)
     {
       "reference" => relative(reference.reference_path),
       "cases" => reference.cases,
       "source_sha256" => reference.source_sha256,
-      "upstream_sha" => metadata["upstream_sha"],
-      "upstream_sha_status" => metadata["upstream_sha"] ? "recorded" : UNKNOWN_UPSTREAM,
+    }
+  end
+
+  def source_provenance(metadata)
+    {
       "upstream_source_file" => metadata["source_file"],
       "upstream_line_number" => metadata["line_number"],
+    }
+  end
+
+  def generation_provenance(reference, arguments)
+    {
       "generated_on" => Date.today.iso8601,
       "command" => reproducible_command(arguments),
       "output_sha256" => Digest::SHA256.file(reference.reference_path).hexdigest,
+    }
+  end
+
+  def upstream_provenance(metadata)
+    status = metadata["upstream_sha"] ? "recorded" : UNKNOWN_UPSTREAM
+    {
+      "upstream_sha" => metadata["upstream_sha"],
+      "upstream_sha_status" => status,
     }
   end
 
@@ -308,7 +354,9 @@ class MermaidReferenceGenerator
 
   def write_provenance(new_records, toolchain_provenance)
     current = provenance_file? ? read_provenance.fetch("references") : []
-    merged = (current + new_records).sort_by { |record| record.fetch("reference") }
+    merged = (current + new_records).sort_by do |record|
+      record.fetch("reference")
+    end
     payload = {
       "schema" => 1,
       "toolchain" => toolchain_provenance,
@@ -330,7 +378,13 @@ class MermaidReferenceGenerator
     source = File.join(root, "spec", "mermaid", record.fetch("cases").first)
     verify_hash!(reference, record.fetch("output_sha256"), "output")
     verify_hash!(source, record.fetch("source_sha256"), "source")
-    raise GenerationError, "missing exact command for #{relative(reference)}" if record.fetch("command").empty?
+    verify_command!(reference, record.fetch("command"))
+  end
+
+  def verify_command!(reference, command)
+    return unless command.empty?
+
+    raise GenerationError, "missing exact command for #{relative(reference)}"
   end
 
   def verify_hash!(path, expected, label)
@@ -614,45 +668,49 @@ class MermaidOutputComparator
     # Allow 20% variation
     (svg1_elements - svg2_elements).abs < (svg2_elements * 0.2)
   end
-end
 
-# Test validator class
-class MermaidTestValidator
-  def validate_all
-    require "sirena"
+  # Test validator class
+  class TestValidator
+    def self.name = "MermaidTestValidator"
 
-    results = {}
+    def validate_all
+      require "sirena"
 
-    MermaidFixtureGenerator::DIAGRAM_TYPES.each do |type|
-      results[type] = validate_type(type)
-    end
+      results = {}
 
-    results
-  end
-
-  private
-
-  def validate_type(diagram_type)
-    mmd_files = Dir.glob("spec/mermaid/#{diagram_type}/*.mmd")
-
-    passing = 0
-    failing = 0
-
-    mmd_files.each do |file|
-      source = File.read(file)
-      begin
-        Sirena.render(source)
-        passing += 1
-      rescue StandardError
-        failing += 1
+      MermaidFixtureGenerator::DIAGRAM_TYPES.each do |type|
+        results[type] = validate_type(type)
       end
+
+      results
     end
 
-    {
-      total: mmd_files.length,
-      passing: passing,
-      failing: failing,
-    }
+    private
+
+    def validate_type(diagram_type)
+      mmd_files = Dir.glob("spec/mermaid/#{diagram_type}/*.mmd")
+
+      passing = 0
+      failing = 0
+
+      mmd_files.each do |file|
+        source = File.read(file)
+        begin
+          Sirena.render(source)
+          passing += 1
+        rescue StandardError
+          failing += 1
+        end
+      end
+
+      {
+        total: mmd_files.length,
+        passing: passing,
+        failing: failing,
+      }
+    end
   end
 end
+
+MermaidTestValidator = MermaidOutputComparator::TestValidator
 # rubocop:enable Style/OneClassPerFile

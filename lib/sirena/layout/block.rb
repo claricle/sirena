@@ -163,13 +163,19 @@ module Sirena
         shape = value(block, "shape")
         direction = value(block, "direction")
         Node.new(
-          id: block.id, x: geometry[:x], y: geometry[:y],
-          width: geometry[:width], height: geometry[:height],
-          labels: block_label(block, geometry), shape: shape,
-          direction: direction, compound: compound?(block),
+          **node_attributes(block, geometry),
+          shape: shape, direction: direction, compound: compound?(block),
           children: typed_nodes(children(block), positioned),
           **shape_geometry(shape, direction, geometry)
         )
+      end
+
+      def node_attributes(block, geometry)
+        {
+          id: block.id, x: geometry[:x], y: geometry[:y],
+          width: geometry[:width], height: geometry[:height],
+          labels: block_label(block, geometry)
+        }
       end
 
       def shape_geometry(shape, direction, box)

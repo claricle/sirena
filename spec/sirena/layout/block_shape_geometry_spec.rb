@@ -12,6 +12,14 @@ RSpec.describe Sirena::Layout::Block do
       %w[up down left right].map { |direction| arrow(direction) }
     Sirena::Diagram::Block.new(columns: 5, blocks: blocks)
   end
+  let(:arrow_points) do
+    {
+      "up" => "190.0,20.0 240.0,80.0 140.0,80.0",
+      "down" => "260.0,20.0 360.0,20.0 310.0,80.0",
+      "left" => "380.0,50.0 480.0,20.0 480.0,80.0",
+      "right" => "500.0,20.0 600.0,50.0 500.0,80.0",
+    }
+  end
 
   def block(id, shape, direction = nil)
     Sirena::Diagram::BlockNode.new(
@@ -32,11 +40,6 @@ RSpec.describe Sirena::Layout::Block do
   end
 
   it "publishes final points for every arrow direction" do
-    expect(nodes.transform_values(&:shape_points)).to include(
-      "up" => "190.0,20.0 240.0,80.0 140.0,80.0",
-      "down" => "260.0,20.0 360.0,20.0 310.0,80.0",
-      "left" => "380.0,50.0 480.0,20.0 480.0,80.0",
-      "right" => "500.0,20.0 600.0,50.0 500.0,80.0",
-    )
+    expect(nodes.transform_values(&:shape_points)).to include(arrow_points)
   end
 end

@@ -182,12 +182,12 @@ module PlantumlExtractor
 
       id = CaseId.call(path: block.path, test: block.test, source: block.source)
       candidate = entry(block, id, type)
-      if cases.key?(id)
-        reject_collision!(cases[id], candidate, id)
-        cases[id][:meta][:occurrences] += 1
-      else
-        cases[id] = candidate
-      end
+      cases.key?(id) ? merge!(cases[id], candidate, id) : cases[id] = candidate
+    end
+
+    def merge!(existing, candidate, id)
+      reject_collision!(existing, candidate, id)
+      existing[:meta][:occurrences] += 1
     end
 
     def reject_collision!(existing, candidate, id)

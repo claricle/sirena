@@ -285,14 +285,16 @@ RSpec.describe PlantumlOracle do
 
       it "records the configured rendering command" do
         binary = "/opt/pinned/plantuml"
-        described_class.refresh(
-          cases, path, runner: alive_runner, binary: binary
-        )
-        commands = YAML.load_file(path).fetch("verdicts")
-          .map { |record| record.fetch("command") }
+        commands = rendering_commands(binary)
 
         expect(commands).to all(eq("#{binary} --svg --pipe --charset UTF-8"))
       end
+    end
+
+    def rendering_commands(binary)
+      described_class.refresh(cases, path, runner: alive_runner, binary: binary)
+      YAML.load_file(path).fetch("verdicts")
+        .map { |record| record.fetch("command") }
     end
 
     context "when one case hits an infrastructure failure" do

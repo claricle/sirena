@@ -142,12 +142,16 @@ module SpecSupport
       def sirena_label(extractor, text, markers, orientation)
         entry = text_entry(extractor, text)
         marker = nearest_element(entry[:box], markers) if entry
-        return unless entry && marker && near_marker?(entry[:box], marker.bbox)
+        return unless near_sirena_marker?(entry, marker)
 
         kind = sirena_label_kind(entry[:box], marker.bbox, orientation)
         return if generated_commit_label?(kind, entry[:label])
 
         logical_element(kind, entry[:label], entry[:box])
+      end
+
+      def near_sirena_marker?(entry, marker)
+        entry && marker && near_marker?(entry[:box], marker.bbox)
       end
 
       def generated_commit_label?(kind, label)

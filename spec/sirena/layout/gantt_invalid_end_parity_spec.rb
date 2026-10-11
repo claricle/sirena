@@ -11,7 +11,8 @@ RSpec.describe Sirena::Layout::Gantt do
   let(:source) do
     File.read(
       File.join(__dir__, "../../mermaid/gantt/" \
-                         "021_parser_should_handle_a_dateformat_definition_20.mmd"),
+                         "021_parser_should_handle_a_dateformat_" \
+                         "definition_20.mmd"),
     )
   end
 
