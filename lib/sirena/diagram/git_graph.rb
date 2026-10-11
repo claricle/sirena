@@ -13,6 +13,7 @@ module Sirena
         attribute :message, :string
         attribute :type, :string, default: -> { "NORMAL" }
         attribute :tag, :string
+        attribute :tags, :string, collection: true, default: -> { [] }
         attribute :branch_name, :string
         attribute :parent_ids, :string, collection: true, default: -> { [] }
         attribute :is_merge, :boolean, default: -> { false }

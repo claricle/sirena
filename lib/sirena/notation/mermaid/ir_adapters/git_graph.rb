@@ -9,7 +9,7 @@ module Sirena
         # Maps Mermaid's private Git Graph model to a notation-neutral graph.
         module GitGraph
           COMMIT_FIELDS = %i[
-            message type tag branch_name merge_branch cherry_pick_parent
+            message type branch_name merge_branch cherry_pick_parent
           ].freeze
           BRANCH_FIELDS = %i[order parent_branch created_at_commit].freeze
           private_constant :COMMIT_FIELDS, :BRANCH_FIELDS
@@ -59,11 +59,18 @@ module Sirena
 
           def commit_semantics(commit, parent_id, occupied)
             values = field_values(commit, COMMIT_FIELDS)
+            values.concat(tag_values(commit))
             values.concat(parent_values(commit))
             values.concat(action_values(commit))
             values.map do |role, value|
               semantic_node(parent_id, role, value, occupied)
             end
+          end
+
+          def tag_values(commit)
+            tags = Array(commit.tags)
+            tags = [commit.tag] if tags.empty? && !commit.tag.nil?
+            tags.map { |tag| ["tag", tag] }
           end
 
           def field_values(source, fields)
@@ -156,7 +163,8 @@ module Sirena
           end
           private_class_method :graph_attributes, :orientation_node,
                                :commit_nodes, :commit_semantics,
-                               :field_values, :parent_values, :action_values,
+                               :field_values, :tag_values, :parent_values,
+                               :action_values,
                                :branch_nodes, :parent_edges, :parent_edge,
                                :source_node_index, :edge_role, :semantic_node,
                                :reserve_id
