@@ -219,21 +219,27 @@ module Sirena
         end
 
         def member_note_shape(box)
+          outline = [*member_note_near_edge(box), *member_note_far_edge(box),
+                     "Z"].join(" ")
+          Svg::Path.new(d: outline, fill: note_fill(box), stroke: node_stroke,
+                        stroke_width: stroke_width)
+        end
+
+        def member_note_near_edge(box)
           pointer = box.separators.first
           left = box.x
           top = box.y
-          right = left + box.width
-          bottom = top + box.height
           middle = top + (box.height / 2)
+          ["M #{left} #{top}", "L #{left} #{middle - 4}",
+           "L #{pointer.x1} #{pointer.y1}", "L #{left} #{middle + 4}",
+           "L #{left} #{top + box.height}"]
+        end
+
+        def member_note_far_edge(box)
+          right = box.x + box.width
           fold = 10.0
-          outline = [
-            "M #{left} #{top}", "L #{left} #{middle - 4}",
-            "L #{pointer.x1} #{pointer.y1}", "L #{left} #{middle + 4}",
-            "L #{left} #{bottom}", "L #{right} #{bottom}",
-            "L #{right} #{top + fold}", "L #{right - fold} #{top}", "Z"
-          ].join(" ")
-          Svg::Path.new(d: outline, fill: note_fill(box), stroke: node_stroke,
-                        stroke_width: stroke_width)
+          ["L #{right} #{box.y + box.height}", "L #{right} #{box.y + fold}",
+           "L #{right - fold} #{box.y}"]
         end
 
         def apply_box_geometry(rectangle, box)

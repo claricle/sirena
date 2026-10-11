@@ -21,8 +21,31 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     ]
   end
 
+  let(:ordinary) do
+    "@startuml\nparticipant A\nactor X\nA -> X : hi\n@enduml\n"
+  end
+  let(:teoz) do
+    <<~PLANTUML
+      @startuml
+      !pragma teoz true
+      <style>
+      sequenceDiagram { participant { MinimumWidth 100 } }
+      </style>
+      participant A
+      actor X
+      A -> X : hi
+      @enduml
+    PLANTUML
+  end
+  let(:expected_digests) do
+    %w[
+      49c4f351162c17532b8b9b6378b6f40ec45fb400feb3d3febaee27ccaeb75530
+      55db1383aedfb8fd7917bc0bdf1a1020d92e639565159881b6b039519c19504c
+    ]
+  end
+
   def root
-    File.expand_path("../../plantuml", __dir__)
+    File.expand_path("../../../../plantuml", __dir__)
   end
 
   def source(id)
@@ -50,36 +73,22 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     Digest::SHA256.hexdigest(Sirena.render(document, notation: :plantuml))
   end
 
+  def parity_evidence(id)
+    row = parity_row(id)
+    [row.dig("summary", "hard_failure"), row.dig("geometry", "matched"),
+     row.dig("summary", "metrics").values_at(
+       "worst_e_c", "worst_e_w", "worst_e_h", "worst_e_a"
+     )]
+  end
+
   it "matches all five minimum-width mixed-glyph cases" do
-    evidence = case_ids.map do |id|
-      row = parity_row(id)
-      [row.dig("summary", "hard_failure"), row.dig("geometry", "matched"),
-       row.dig("summary", "metrics").values_at(
-         "worst_e_c", "worst_e_w", "worst_e_h", "worst_e_a"
-       )]
-    end
+    evidence = case_ids.map { |id| parity_evidence(id) }
 
     expect(evidence).to all(eq([false, 5,
                                 [0.002195, 0.013916, 0.0, 0.013916]]))
   end
 
   it "preserves ordinary and teoz output bytes" do
-    ordinary = "@startuml\nparticipant A\nactor X\nA -> X : hi\n@enduml\n"
-    teoz = <<~PLANTUML
-      @startuml
-      !pragma teoz true
-      <style>
-      sequenceDiagram { participant { MinimumWidth 100 } }
-      </style>
-      participant A
-      actor X
-      A -> X : hi
-      @enduml
-    PLANTUML
-
-    expect([digest(ordinary), digest(teoz)]).to eq([
-                                                     "49c4f351162c17532b8b9b6378b6f40ec45fb400feb3d3febaee27ccaeb75530",
-                                                     "55db1383aedfb8fd7917bc0bdf1a1020d92e639565159881b6b039519c19504c",
-                                                   ])
+    expect([digest(ordinary), digest(teoz)]).to eq(expected_digests)
   end
 end

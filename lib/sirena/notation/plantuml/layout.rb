@@ -43,8 +43,17 @@ module Sirena
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
           diagram = IRReader.call(graph)
-          return dress(diagram, member_note_scene(diagram)) if member_note_family?(diagram)
+          body = if member_note_family?(diagram)
+                   member_note_scene(diagram)
+                 else
+                   standard_scene(diagram)
+                 end
+          dress(diagram, body)
+        end
 
+        private
+
+        def standard_scene(diagram)
           specifications = diagram.classes.map do |klass|
             box_specification(klass, diagram)
           end
@@ -53,21 +62,30 @@ module Sirena
           boxes = position_boxes(rows_by_package(specifications, diagram),
                                  box_width)
 
-          dress(diagram, build_scene(diagram, boxes, box_width))
+          build_scene(diagram, boxes, box_width)
         end
-
-        private
 
         def member_note_family?(diagram)
           return false unless diagram.classes.one? && diagram.notes.any?
-          return false unless diagram.relations.empty? &&
-            diagram.junctions.empty? && diagram.packages.empty?
+          return false unless standalone_diagram?(diagram)
 
           klass = diagram.classes.first
-          plain_class = klass.kind == :class && klass.stereotypes.empty? &&
+          plain_class?(klass) && member_notes?(diagram.notes, klass)
+        end
+
+        def standalone_diagram?(diagram)
+          diagram.relations.empty? && diagram.junctions.empty? &&
+            diagram.packages.empty?
+        end
+
+        def plain_class?(klass)
+          klass.kind == :class && klass.stereotypes.empty? &&
             klass.generics.nil?
+        end
+
+        def member_notes?(notes, klass)
           members = klass.body.map(&:name)
-          plain_class && diagram.notes.all? do |note|
+          notes.all? do |note|
             note.member && members.include?(note.member) &&
               note.target == klass.name && note.side == :right
           end
@@ -78,9 +96,13 @@ module Sirena
           class_box = member_note_class_box(klass)
           notes = member_note_boxes(diagram, klass, class_box)
           boxes = [class_box, *notes]
-          Scene.new(width: boxes.map { |box| box.x + box.width }.max + MARGIN,
-                    height: boxes.map { |box| box.y + box.height }.max + MARGIN,
+          Scene.new(width: far_edge(boxes) { |box| box.x + box.width },
+                    height: far_edge(boxes) { |box| box.y + box.height },
                     boxes: boxes, relations: [], frames: [])
+        end
+
+        def far_edge(boxes, &)
+          boxes.map(&).max + MARGIN
         end
 
         def member_note_class_box(klass)
@@ -88,15 +110,17 @@ module Sirena
           height = MEMBER_NOTE_CLASS_HEIGHT +
             (klass.body.size * MEMBER_NOTE_ROW_HEIGHT)
           texts = member_note_class_texts(klass, width)
-          separator_y = MARGIN + MEMBER_NOTE_CLASS_HEIGHT -
-            MEMBER_NOTE_ROW_HEIGHT
           Scene::Box.new(
             id: klass.name, x: MARGIN, y: MARGIN, width: width, height: height,
-            texts: texts,
-            separators: [segment(MARGIN, separator_y,
-                                 MARGIN + width, separator_y)],
+            texts: texts, separators: [member_note_separator(width)],
             kind: "class"
           )
+        end
+
+        def member_note_separator(width)
+          separator_y = MARGIN + MEMBER_NOTE_CLASS_HEIGHT -
+            MEMBER_NOTE_ROW_HEIGHT
+          segment(MARGIN, separator_y, MARGIN + width, separator_y)
         end
 
         def member_note_class_width(klass)
@@ -115,49 +139,70 @@ module Sirena
           title = scene_text(klass.name, MARGIN + (width / 2), MARGIN + 21.291,
                              "class_name", "middle")
           members = klass.body.each_with_index.map do |member, index|
-            vertical = MARGIN + 49.535 + (index * MEMBER_NOTE_ROW_HEIGHT)
-            role = member.type_position == :prefix ? "member_prefix" : "member"
-            scene_text(member_text(member), MARGIN + MEMBER_NOTE_SIDE_PADDING,
-                       vertical, role, "start")
+            member_note_row_text(member, index)
           end
           [title, *members]
         end
 
+        def member_note_row_text(member, index)
+          vertical = MARGIN + 49.535 + (index * MEMBER_NOTE_ROW_HEIGHT)
+          role = member.type_position == :prefix ? "member_prefix" : "member"
+          scene_text(member_text(member), MARGIN + MEMBER_NOTE_SIDE_PADDING,
+                     vertical, role, "start")
+        end
+
         def member_note_boxes(diagram, klass, class_box)
-          heights = diagram.notes.map { |note| member_note_height(note) }
-          total = heights.sum +
-            (MEMBER_NOTE_STACK_GAP * (heights.size - 1))
-          top = class_box.y + ((class_box.height - total) / 2) - 5.0
+          tops = member_note_tops(diagram.notes, class_box)
           fill = shared_member_note_fill(diagram)
           diagram.notes.each_with_index.map do |note, index|
-            box = member_note_box(note, index, klass, class_box,
-                                  top, fill)
-            top += heights[index] + MEMBER_NOTE_STACK_GAP
-            box
+            box = member_note_box(note, index, klass, class_box, tops[index])
+            box.tap { |placed| placed.fill = fill }
           end
         end
 
-        def member_note_box(note, index, klass, class_box, top, fill)
+        def member_note_tops(notes, class_box)
+          heights = notes.map { |note| member_note_height(note) }
+          first = first_note_top(class_box, heights)
+          heights.each_with_object([first]) do |height, tops|
+            tops << (tops.last + (height + MEMBER_NOTE_STACK_GAP))
+          end
+        end
+
+        def first_note_top(class_box, heights)
+          total = heights.sum +
+            (MEMBER_NOTE_STACK_GAP * (heights.size - 1))
+          class_box.y + ((class_box.height - total) / 2) - 5.0
+        end
+
+        def member_note_box(note, index, klass, class_box, top)
           height = member_note_height(note)
-          body_left = class_box.x + class_box.width + MEMBER_NOTE_BODY_GAP
-          width = note.lines.map { |line| plantuml_note_width(line) }.max.to_f +
-            21.0
+          left = class_box.x + class_box.width + MEMBER_NOTE_BODY_GAP
+          pointer = member_note_pointer(note, klass, class_box,
+                                        [left, top + (height / 2)])
+          Scene::Box.new(id: "note-#{index}", x: left, y: top,
+                         width: member_note_width(note), height: height,
+                         texts: member_note_texts(note, left, top),
+                         separators: [pointer], kind: "member_note")
+        end
+
+        def member_note_width(note)
+          note.lines.map { |line| plantuml_note_width(line) }.max.to_f + 21.0
+        end
+
+        def member_note_pointer(note, klass, class_box, anchor)
           target = member_note_target(note, klass, class_box)
-          texts = member_note_texts(note, body_left, top)
-          pointer = segment(target[0], target[1], body_left, top + (height / 2))
-          Scene::Box.new(id: "note-#{index}", x: body_left, y: top,
-                         width: width, height: height, texts: texts,
-                         separators: [pointer], kind: "member_note", fill: fill)
+          segment(target[0], target[1], anchor[0], anchor[1])
         end
 
         def member_note_target(note, klass, class_box)
           index = klass.body.index { |member| member.name == note.member }
-          member = klass.body.fetch(index)
-          text = member_text(member)
-          horizontal = class_box.x + MEMBER_NOTE_SIDE_PADDING +
-            plantuml_text_width(text)
-          vertical = class_box.y + 44.244 + (index * MEMBER_NOTE_ROW_HEIGHT)
-          [horizontal, vertical]
+          [member_note_target_x(klass.body.fetch(index), class_box),
+           class_box.y + 44.244 + (index * MEMBER_NOTE_ROW_HEIGHT)]
+        end
+
+        def member_note_target_x(member, class_box)
+          class_box.x + MEMBER_NOTE_SIDE_PADDING +
+            plantuml_text_width(member_text(member))
         end
 
         def member_note_texts(note, left, top)
@@ -183,7 +228,8 @@ module Sirena
           return unless stereotype
 
           name = stereotype.delete_prefix("<<").delete_suffix(">>")
-          pattern = /\Askinparam\s+noteBackgroundColor<<#{Regexp.escape(name)}>>\s+(\S+)\z/i
+          prefix = "skinparam\\s+noteBackgroundColor<<#{Regexp.escape(name)}>>"
+          pattern = /\A#{prefix}\s+(\S+)\z/i
           directive = directives.reverse.find { |line| line.match?(pattern) }
           directive&.match(pattern)&.[](1)
         end

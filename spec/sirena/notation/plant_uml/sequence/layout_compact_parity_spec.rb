@@ -20,8 +20,18 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     ]
   end
 
+  let(:teoz_source) { "@startuml\n!pragma teoz true\nA -> B\n@enduml" }
+  let(:noted_source) do
+    <<~PLANTUML
+      @startuml
+      A -> B : hi
+      note right : a note
+      @enduml
+    PLANTUML
+  end
+
   def root
-    File.expand_path("../../plantuml", __dir__)
+    File.expand_path("../../../../plantuml", __dir__)
   end
 
   def source(id)
@@ -68,58 +78,65 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     SpecSupport::LayoutParity::CaseLedger.build([result]).first
   end
 
+  def teoz_round_trip(source)
+    diagram = Sirena::Notation::PlantUML::Sequence::Parser.new.parse(source)
+    graph = Sirena::Notation::PlantUML::Sequence::IRAdapter.call(diagram)
+    [graph.nodes.any? { |node| node.role == "teoz" },
+     Sirena::Notation::PlantUML::Sequence::IRReader.call(graph).teoz?]
+  end
+
+  def digest(document)
+    Digest::SHA256.hexdigest(Sirena.render(document, notation: :plantuml))
+  end
+
+  def head_errors(id)
+    expected = participants(reference(id))
+    actual = participants(rendered(id))
+    expected.keys.flat_map do |label|
+      head_error(expected.fetch(label), actual.fetch(label))
+    end
+  end
+
+  def head_error(reference_box, sirena_box)
+    [(sirena_box.width - reference_box.width).abs / reference_box.width,
+     (sirena_box.height - reference_box.height).abs / reference_box.height]
+  end
+
+  def baseline_evidence(id)
+    expected = message_baselines(reference(id), reference: true)
+    actual = message_baselines(rendered(id), reference: false)
+    [expected.size, actual.size,
+     expected.zip(actual).map { |left, right| (left - right).abs }.max]
+  end
+
+  def center_parity_evidence(id)
+    row = parity_row(id)
+    [row.dig("summary", "hard_failure"),
+     row.dig("geometry", "matched"),
+     row.dig("summary", "metrics", "worst_e_c")]
+  end
+
   it "carries teoz through typed IR without selecting it for ordinary input" do
-    parse = Sirena::Notation::PlantUML::Sequence::Parser.new.method(:parse)
-    diagrams = [parse.call("@startuml\n!pragma teoz true\nA -> B\n@enduml"),
-                parse.call("@startuml\nA -> B\n@enduml")]
-    round_trips = diagrams.map do |diagram|
-      graph = Sirena::Notation::PlantUML::Sequence::IRAdapter.call(diagram)
-      [graph.nodes.any? { |node| node.role == "teoz" },
-       Sirena::Notation::PlantUML::Sequence::IRReader.call(graph).teoz?]
+    round_trips = [teoz_source, "@startuml\nA -> B\n@enduml"].map do |text|
+      teoz_round_trip(text)
     end
 
     expect(round_trips).to eq([[true, true], [false, false]])
   end
 
   it "preserves the established non-teoz SVG bytes" do
-    source = <<~PLANTUML
-      @startuml
-      A -> B : hi
-      note right : a note
-      @enduml
-    PLANTUML
-
-    digest = Digest::SHA256.hexdigest(Sirena.render(source,
-                                                    notation: :plantuml))
-    expect(digest)
+    expect(digest(noted_source))
       .to eq("26704b2d8430aef533b123ddd820b4086288ecd9d89e6fdef123d3e21960155a")
   end
 
   it "matches the pinned teoz participant-head dimensions" do
-    errors = case_ids.flat_map do |id|
-      expected = participants(reference(id))
-      actual = participants(rendered(id))
-      expected.keys.flat_map do |label|
-        reference_box = expected.fetch(label)
-        sirena_box = actual.fetch(label)
-        [
-          (sirena_box.width - reference_box.width).abs / reference_box.width,
-          (sirena_box.height - reference_box.height).abs /
-            reference_box.height,
-        ]
-      end
-    end
+    errors = case_ids.flat_map { |id| head_errors(id) }
 
     expect(errors.max).to be < 0.08
   end
 
   it "matches all 124 pinned message baselines in each case" do
-    evidence = case_ids.map do |id|
-      expected = message_baselines(reference(id), reference: true)
-      actual = message_baselines(rendered(id), reference: false)
-      [expected.size, actual.size,
-       expected.zip(actual).map { |left, right| (left - right).abs }.max]
-    end
+    evidence = case_ids.map { |id| baseline_evidence(id) }
 
     expect(evidence).to all(satisfy do |expected, actual, worst|
       expected == 124 && actual == 124 && worst < 0.002
@@ -127,12 +144,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "removes the measured center-parity misses without losing elements" do
-    evidence = case_ids.map do |id|
-      row = parity_row(id)
-      [row.dig("summary", "hard_failure"),
-       row.dig("geometry", "matched"),
-       row.dig("summary", "metrics", "worst_e_c")]
-    end
+    evidence = case_ids.map { |id| center_parity_evidence(id) }
 
     expect(evidence).to all(satisfy do |hard_failure, matched, center_error|
       !hard_failure && matched == 128 && center_error < 0.01

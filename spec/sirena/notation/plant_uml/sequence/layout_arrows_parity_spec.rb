@@ -18,7 +18,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   def root
-    File.expand_path("../../plantuml", __dir__)
+    File.expand_path("../../../../plantuml", __dir__)
   end
 
   def source(id)
@@ -50,6 +50,17 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       .messages.first.label
   end
 
+  def reference_kind_counts(id)
+    figure = SpecSupport::LayoutParity::SvgFigureExtractor
+      .new(recognizer).extract(reference(id))
+    figure.elements.map(&:kind).tally
+  end
+
+  def presence_evidence(id)
+    row = SpecSupport::LayoutParity::CaseLedger.build([result(id)]).first
+    [row.dig("summary", "hard_failure"), row.dig("geometry", "matched")]
+  end
+
   it "reads PlantUML's doubled-quote message labels without their delimiters" do
     expect([
              message_label('""  -\\\\ \\"quoted\\"  ""'),
@@ -58,23 +69,14 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "recognizes four participants and 124 arrows in each pinned reference" do
-    counts = case_ids.map do |id|
-      figure = SpecSupport::LayoutParity::SvgFigureExtractor
-        .new(recognizer).extract(reference(id))
-      figure.elements.map(&:kind).tally
-    end
+    counts = case_ids.map { |id| reference_kind_counts(id) }
 
     expect(counts).to eq(Array.new(2) { { participant: 4, message: 124 } })
   end
 
   it "matches every participant and arrow by semantic presence" do
-    rows = case_ids.map do |id|
-      SpecSupport::LayoutParity::CaseLedger.build([result(id)]).first
-    end
+    evidence = case_ids.map { |id| presence_evidence(id) }
 
-    evidence = rows.map do |row|
-      [row.dig("summary", "hard_failure"), row.dig("geometry", "matched")]
-    end
     expect(evidence).to eq([[false, 128], [false, 128]])
   end
 end

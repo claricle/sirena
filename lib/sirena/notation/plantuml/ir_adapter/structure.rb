@@ -62,10 +62,13 @@ module Sirena
             node = sink.node(member.kind.to_s, member.name, parent: parent)
             sink.detail(node, "visibility", member.visibility)
             sink.detail(node, "type", member.type)
-            position = member.type_position unless member.type_position == :suffix
-            sink.detail(node, "type_position", position)
+            sink.detail(node, "type_position", declared_type_position(member))
             sink.detail(node, "parameters", member.parameters)
             sink.details(node, "modifier", member.modifiers)
+          end
+
+          def declared_type_position(member)
+            member.type_position unless member.type_position == :suffix
           end
         end
       end

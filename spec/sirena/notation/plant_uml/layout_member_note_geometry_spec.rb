@@ -29,9 +29,13 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     File.read(source_path(name))
   end
 
-  def parity_result(name)
-    reference = source_path(name).sub("/class/", "/references/class/")
+  def reference_path(name)
+    source_path(name).sub("/class/", "/references/class/")
       .sub(/\.puml\z/, ".svg")
+  end
+
+  def parity_result(name)
+    reference = reference_path(name)
     SpecSupport::LayoutParity::CaseComparator.compare(
       case_id: name, type: "plantuml_class", reference: reference,
       reference_svg: File.read(reference),
@@ -50,25 +54,21 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
       .map { |shape| shape.attributes["fill"] }
   end
 
+  def svg_document(svg)
+    Nokogiri::XML(svg).tap(&:remove_namespaces!)
+  end
+
+  def path_bbox(path)
+    points = SpecSupport::LayoutParity::PathPoints.new(path["d"]).points
+    SpecSupport::LayoutParity::Bbox.from_points(points)
+  end
+
   def callout_boxes(name)
-    reference = Nokogiri::XML(
-      File.read(source_path(name).sub("/class/", "/references/class/")
-        .sub(/\.puml\z/, ".svg")),
-    )
-    rendered = Nokogiri::XML(
-      Sirena.render(source(name), notation: :plantuml),
-    )
-    reference.remove_namespaces!
-    rendered.remove_namespaces!
-    reference_paths = reference.xpath("//path[contains(@d, 'A0,0')]")
-    rendered_paths = rendered.xpath(
-      "//g[starts-with(@id, 'note-')]/path",
-    )
-    [reference_paths, rendered_paths].map do |paths|
-      paths.map do |path|
-        points = SpecSupport::LayoutParity::PathPoints.new(path["d"]).points
-        SpecSupport::LayoutParity::Bbox.from_points(points)
-      end
+    reference = svg_document(File.read(reference_path(name)))
+    rendered = svg_document(Sirena.render(source(name), notation: :plantuml))
+    [reference.xpath("//path[contains(@d, 'A0,0')]"),
+     rendered.xpath("//g[starts-with(@id, 'note-')]/path")].map do |paths|
+      paths.map { |path| path_bbox(path) }
     end
   end
 
@@ -78,6 +78,14 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
       [((actual.width / expected.width) - 1).abs,
        ((actual.height / expected.height) - 1).abs]
     end
+  end
+
+  def geometry_evidence(name)
+    result = parity_result(name)
+    metrics = result.geometry.values_at(
+      :worst_e_c, :worst_e_w, :worst_e_h, :worst_e_a
+    )
+    [result.hard_failure?, metrics.all? { |metric| metric <= 0.15 }]
   end
 
   it "preserves prefix and suffix member type order through the IR" do
@@ -90,14 +98,7 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
   end
 
   it "matches the pinned class geometry without presence failures" do
-    evidence = member_note_cases.keys.map do |name|
-      result = parity_result(name)
-      metrics = result.geometry.values_at(
-        :worst_e_c, :worst_e_w, :worst_e_h, :worst_e_a
-      )
-      [result.hard_failure?, metrics.all? { |metric| metric <= 0.15 }]
-    end
-
+    evidence = member_note_cases.keys.map { |name| geometry_evidence(name) }
     expected = Array.new(member_note_cases.length) { [false, true] }
     expect(evidence).to eq(expected)
   end

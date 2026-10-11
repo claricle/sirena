@@ -28,16 +28,11 @@ module Sirena
           # @param chrome [Chrome] the header, footer, caption and legend
           def initialize(participants:, items:, boxes: [].freeze,
                          appearance: Appearance.new, **extras)
-            extras = KeywordDefaults.resolve(extras, EXTRAS)
             @participants = participants
             @items = items
             @boxes = boxes
             @appearance = appearance
-            @footbox = extras[:footbox]
-            @warnings = extras[:warnings]
-            @title = extras[:title]
-            @chrome = extras[:chrome]
-            @teoz = extras[:teoz]
+            assign_extras(KeywordDefaults.resolve(extras, EXTRAS))
             freeze
           end
 
@@ -73,6 +68,16 @@ module Sirena
 
           def diagram_type
             :sequence_diagram
+          end
+
+          private
+
+          def assign_extras(extras)
+            @footbox = extras[:footbox]
+            @warnings = extras[:warnings]
+            @title = extras[:title]
+            @chrome = extras[:chrome]
+            @teoz = extras[:teoz]
           end
         end
       end
