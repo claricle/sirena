@@ -130,21 +130,28 @@ module SurfaceManifest
   end
 
   def run_process(argv, chdir:, timeout:, stdin_data: "")
-    env = checkout_env(chdir)
-    Open3.popen3(env, *argv, chdir: chdir, pgroup: true) do |stdin, out, err, wait|
-      begin
-        stdin.write(stdin_data)
-      rescue Errno::EPIPE
-        nil
-      end
-      stdin.close
-      readers = [out, err].map { |io| Thread.new { io.binmode.read } }
-      timed_out = wait.join(timeout).nil?
-      Process.kill("KILL", -wait.pid) if timed_out
-      stdout, stderr = readers.map(&:value)
-      { stdout: stdout, stderr: stderr, timed_out: timed_out,
-        status: timed_out ? nil : wait.value.exitstatus }
+    options = { chdir: chdir, pgroup: true }
+    Open3.popen3(checkout_env(chdir), *argv, **options) do |stdin, *pipes, wait|
+      feed(stdin, stdin_data)
+      collect(pipes, wait, timeout)
     end
+  end
+
+  def feed(stdin, data)
+    stdin.write(data)
+  rescue Errno::EPIPE
+    nil
+  ensure
+    stdin.close
+  end
+
+  def collect(pipes, wait, timeout)
+    readers = pipes.map { |io| Thread.new { io.binmode.read } }
+    timed_out = wait.join(timeout).nil?
+    Process.kill("KILL", -wait.pid) if timed_out
+    stdout, stderr = readers.map(&:value)
+    { stdout: stdout, stderr: stderr, timed_out: timed_out,
+      status: timed_out ? nil : wait.value.exitstatus }
   end
 
   def scrub(text, root)
@@ -153,17 +160,20 @@ module SurfaceManifest
   end
 
   def api_results(root, cases, launcher: LAUNCHER, timeout: API_TIMEOUT)
-    argv = launcher + ["ruby", "-I", File.join(root, "lib"), "-e", API_PROBE,
-                       TODAY, CASE_TIMEOUT.to_s]
-    result = run_process(argv, chdir: root, timeout: timeout,
-                               stdin_data: JSON.generate(cases))
+    result = run_process(api_argv(root, launcher), chdir: root,
+                                                   timeout: timeout,
+                                                   stdin_data: cases.to_json)
     unless !result[:timed_out] && result[:status]&.zero?
       raise ManifestError,
             "API probe failed in #{root}: #{scrub(result[:stderr], root)}"
     end
 
-    rows = JSON.parse(result[:stdout])
-    rows.transform_values { |row| scrub_row(row, root) }
+    JSON.parse(result[:stdout]).transform_values { |row| scrub_row(row, root) }
+  end
+
+  def api_argv(root, launcher)
+    launcher + ["ruby", "-I", File.join(root, "lib"), "-e", API_PROBE,
+                TODAY, CASE_TIMEOUT.to_s]
   end
 
   def scrub_row(row, root)
@@ -172,8 +182,8 @@ module SurfaceManifest
   end
 
   def cli_result(root, kase, launcher: LAUNCHER, timeout: CASE_TIMEOUT)
-    argv = launcher + ["ruby", "exe/sirena", "render", kase.fetch("source_path"),
-                       *kase.fetch("cli_args", [])]
+    argv = launcher + ["ruby", "exe/sirena", "render",
+                       kase.fetch("source_path"), *kase.fetch("cli_args", [])]
     result = run_process(argv, chdir: root, timeout: timeout)
     {
       "stdout_sha256" => Digest::SHA256.hexdigest(result[:stdout]),
@@ -197,11 +207,15 @@ module SurfaceManifest
     left = before.fetch("cases")
     right = after.fetch("cases")
     (left.keys | right.keys).sort.flat_map do |id|
-      next [difference(id, "case_set", left.key?(id), right.key?(id))] \
-        unless left.key?(id) && right.key?(id)
-
-      case_differences(id, left.fetch(id), right.fetch(id))
+      differences_for(id, left, right)
     end
+  end
+
+  def differences_for(id, left, right)
+    return case_differences(id, left.fetch(id), right.fetch(id)) \
+      if left.key?(id) && right.key?(id)
+
+    [difference(id, "case_set", left.key?(id), right.key?(id))]
   end
 
   def case_differences(id, before, after)

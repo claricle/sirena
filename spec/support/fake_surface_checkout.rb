@@ -2,8 +2,9 @@
 
 require "fileutils"
 
-# Writes a tiny checkout (Gemfile, lib/sirena.rb and exe/sirena) whose API and CLI
-# behaviour is set by keyword, so a spec can seed a difference in one surface.
+# Writes a tiny checkout (Gemfile, lib/sirena.rb and exe/sirena) whose API and
+# CLI behaviour is set by keyword, so a spec can seed a difference in one
+# surface.
 module FakeSurfaceCheckout
   DEFAULTS = {
     svg_suffix: "", api_error: "boom", cli_out_suffix: "",
