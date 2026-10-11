@@ -73,8 +73,7 @@ module Sirena
 
         # Title as a standalone statement (not in header)
         rule(:standalone_title_declaration) do
-          # Allow escaped tabs and other whitespace
-          (str('\\t') | space).repeat >>
+          space.repeat >>
             str("title") >> space.repeat(1) >>
             title_text.as(:standalone_title) >>
             line_end
@@ -105,12 +104,11 @@ module Sirena
         end
 
         # Data entry: "label" : value
-        # Allow escaped tabs in data entries
         rule(:data_entry) do
-          (str('\\t') | space).repeat >>
+          space.repeat >>
             label_text.as(:label) >>
-            (str('\\t') | space).repeat >> colon >>
-            (str('\\t') | space).repeat >>
+            space.repeat >> colon >>
+            space.repeat >>
             numeric_value.as(:value) >>
             line_end.as(:data_entry)
         end
