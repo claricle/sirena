@@ -12,6 +12,18 @@ RSpec.describe Sirena::Layout::Flowchart do
     ]
   end
 
+  let(:ordinary_sources) do
+    [
+      "flowchart TB\n  A --> B\n",
+      "flowchart TB\n  A -- text --> B\n",
+    ]
+  end
+
+  def first_edge_spans(source)
+    [diagram_for(source).edges.first.minimum_rank_span,
+     ir_for(source).edges.first.minimum_rank_span]
+  end
+
   def source_for(name)
     File.read("spec/mermaid/flowchart/#{name}.mmd")
   end
@@ -42,29 +54,29 @@ RSpec.describe Sirena::Layout::Flowchart do
   end
 
   it "leaves an ordinary arrow without a minimum-rank override" do
-    sources = [
-      "flowchart TB\n  A --> B\n",
-      "flowchart TB\n  A -- text --> B\n",
-    ]
+    spans = ordinary_sources.flat_map { |source| first_edge_spans(source) }
 
-    spans = sources.flat_map do |source|
-      [diagram_for(source).edges.first.minimum_rank_span,
-       ir_for(source).edges.first.minimum_rank_span]
-    end
     expect(spans).to eq([nil, nil, nil, nil])
   end
 
-  it "accepts only positive minimum rank spans at the typed IR boundary" do
-    edges = [nil, 2, 0].map do |span|
-      Sirena::IR::Edge.new(
-        id: "a_to_b", source_id: "a", target_id: "b",
-        minimum_rank_span: span
-      )
+  context "with minimum rank spans nil, 2 and 0 on typed IR edges" do
+    let(:edges) do
+      [nil, 2, 0].map do |span|
+        Sirena::IR::Edge.new(
+          id: "a_to_b", source_id: "a", target_id: "b",
+          minimum_rank_span: span
+        )
+      end
     end
 
-    expect(edges.map(&:valid?)).to eq([true, true, false])
-    expect(edges.last.validate.map(&:message))
-      .to include("minimum_rank_span must be a positive integer")
+    it "accepts only positive minimum rank spans" do
+      expect(edges.map(&:valid?)).to eq([true, true, false])
+    end
+
+    it "explains why a zero span is rejected" do
+      expect(edges.last.validate.map(&:message))
+        .to include("minimum_rank_span must be a positive integer")
+    end
   end
 
   it "places every click-security target one extra rank below its source" do

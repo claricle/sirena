@@ -28,9 +28,22 @@ RSpec.describe Sirena::Diagram::FlowchartLabelText do
     }
   end
 
+  let(:evidence) do
+    parity_rows.to_h do |row|
+      summary = row.fetch("summary")
+      metrics = summary.fetch("metrics").values_at(
+        "worst_e_c", "worst_e_w", "worst_e_h", "worst_e_a"
+      )
+      [row.fetch("case"), [summary.fetch("hard_failure"), metrics]]
+    end
+  end
+
   it "turns a quoted escaped newline into a hard label break" do
     expect(described_class.lines('"first\\nsecond"'))
       .to eq(%w[first second])
+  end
+
+  it "leaves an unquoted escaped newline in the label" do
     expect(described_class.lines("first\\nsecond"))
       .to eq(["first\\nsecond"])
   end
@@ -40,18 +53,13 @@ RSpec.describe Sirena::Diagram::FlowchartLabelText do
 
     expect(described_class.lines(written))
       .to eq(["The dog in the hog.(1)", "NL"])
+  end
+
+  it "displays a markdown label without its emphasis markers" do
     expect(described_class.display("`1o **bold**`")).to eq("1o bold")
   end
 
   it "brings all three reference cases within the geometry thresholds" do
-    evidence = parity_rows.to_h do |row|
-      summary = row.fetch("summary")
-      metrics = summary.fetch("metrics").values_at(
-        "worst_e_c", "worst_e_w", "worst_e_h", "worst_e_a"
-      )
-      [row.fetch("case"), [summary.fetch("hard_failure"), metrics]]
-    end
-
     expect(evidence).to eq(expected_metrics.transform_values do |metrics|
       [false, metrics]
     end)

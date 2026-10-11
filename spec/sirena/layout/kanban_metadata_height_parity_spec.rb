@@ -10,10 +10,12 @@ RSpec.describe Sirena::Layout::Kanban do
       kanban/kanban_spec-e33c6002.mmd
     ]
   end
-  let(:runner) { SpecSupport::LayoutParity::CohortRunner.new }
   let(:fresh_rows) do
+    runner = SpecSupport::LayoutParity::CohortRunner.new
     results = runner.comparison_cases.filter_map do |candidate|
-      runner.send(:compare, candidate) if candidate.case_id.start_with?("kanban/")
+      next unless candidate.case_id.start_with?("kanban/")
+
+      runner.send(:compare, candidate)
     end
     SpecSupport::LayoutParity::CaseLedger.build(results)
   end
@@ -30,22 +32,33 @@ RSpec.describe Sirena::Layout::Kanban do
     )
   end
 
-  it "matches metadata card geometry without changing other Kanban cases" do
-    exact_metrics = fresh_rows.filter_map do |row|
+  let(:exact_metrics) do
+    fresh_rows.filter_map do |row|
       next unless case_ids.include?(row.fetch("case"))
 
       row.dig("summary", "metrics").values_at(
         "worst_e_c", "worst_e_w", "worst_e_h", "worst_e_a"
       )
     end
+  end
 
+  it "covers every Kanban case" do
     expect(fresh_rows.length).to eq(39)
+  end
+
+  it "matches metadata card geometry exactly" do
     expect(exact_metrics).to contain_exactly([0.0, 0.0, 0.0, 0.0],
                                              [0.0, 0.0, 0.0, 0.0],
                                              [0.0, 0.0, 0.0, 0.0])
+  end
+
+  it "leaves the other Kanban cases unchanged against the scoreboard" do
     expect(diff).to include(
       missing: [], new: [], regressions: [], stale: [],
     )
+  end
+
+  it "has no unrecorded Kanban improvements" do
     expect(diff.fetch(:unrecorded_improvements)).to be_empty
   end
 end
