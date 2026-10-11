@@ -4530,6 +4530,198 @@
         "spec/fixtures_mermaid/sequence/sequencediagram_v2_spec-c9b61e4d.svg"
       ],
       "output_sha256": "761437cc54f9420387c372cafacf85324358891d373a9cb24a35449a50288e18"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/state_diagram/state_parser_spec-77e3df20.svg",
+      "cases": [
+        "state_diagram/state_parser_spec-77e3df20.mmd"
+      ],
+      "source_sha256": "a2dedbd61870045374e102b1fe577446865739b1eb2b48f62d840c41c9360f5b",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/state/parser/state-parser.spec.js",
+      "upstream_line_number": 0,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/state_diagram/state_parser_spec-77e3df20.mmd",
+        "-o",
+        "spec/fixtures_mermaid/state_diagram/state_parser_spec-77e3df20.svg"
+      ],
+      "output_sha256": "b67966b27e8a0bb23ec7c538ba3dc9cfa3c013f2b74e867a2373ba417f06e673"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/state_diagram/statediagram_spec-061d556a.svg",
+      "cases": [
+        "state_diagram/statediagram_spec-061d556a.mmd"
+      ],
+      "source_sha256": "79fc949134535030b57f051f6e8a4d9e3fb219bd89bf7f54dd89a9ca58310105",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/state/stateDiagram.spec.js",
+      "upstream_line_number": 0,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/state_diagram/statediagram_spec-061d556a.mmd",
+        "-o",
+        "spec/fixtures_mermaid/state_diagram/statediagram_spec-061d556a.svg"
+      ],
+      "output_sha256": "9440cf2ad2b29397bdb09632a3b02b93c31feb98bc7517edf486d6c757d1eda2"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/state_diagram/statediagram_spec-9b9b640a.svg",
+      "cases": [
+        "unknown/statediagram_spec-9b9b640a.mmd"
+      ],
+      "source_sha256": "466b16847a4d2af096b1bbe65befe792732fbe0dec18f1f1dc244ee38ad369bd",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/state/stateDiagram.spec.js",
+      "upstream_line_number": 0,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/unknown/statediagram_spec-9b9b640a.mmd",
+        "-o",
+        "spec/fixtures_mermaid/state_diagram/statediagram_spec-9b9b640a.svg"
+      ],
+      "output_sha256": "d2a33c3780fbb5231f28d1575a9787d3b7cc2b1c7ec83401331840b963f76466"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/state_diagram/statediagram_spec-ae578725.svg",
+      "cases": [
+        "state_diagram/statediagram_spec-ae578725.mmd"
+      ],
+      "source_sha256": "375639f5073b6b3e81b113b0ac5f3956aa20215394586ee27e1b99b890e2f802",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/state/stateDiagram.spec.js",
+      "upstream_line_number": 0,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/state_diagram/statediagram_spec-ae578725.mmd",
+        "-o",
+        "spec/fixtures_mermaid/state_diagram/statediagram_spec-ae578725.svg"
+      ],
+      "output_sha256": "e78760a565699af5bb14da2634997ca9fcc817c36d776cfe5440152655a7efa1"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/state_diagram/statediagram_v2_spec-330443ed.svg",
+      "cases": [
+        "state_diagram/statediagram_v2_spec-330443ed.mmd"
+      ],
+      "source_sha256": "b5b32574e907d98cb70fbf0b47f787cf756003b697453a4c2d2157e4fef3d96b",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+      "upstream_line_number": 0,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/state_diagram/statediagram_v2_spec-330443ed.mmd",
+        "-o",
+        "spec/fixtures_mermaid/state_diagram/statediagram_v2_spec-330443ed.svg"
+      ],
+      "output_sha256": "ecfb86439e9bd2b10498776a8e90c18a6acf6e505b65afcd14f644af4fcad5ef"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/state_diagram/statediagram_v2_spec-4d71f460.svg",
+      "cases": [
+        "unknown/statediagram_v2_spec-4d71f460.mmd"
+      ],
+      "source_sha256": "8abbbf821b384aaa13a1a099fedca2316b3aa3838231e82f87543547c3c30bf2",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+      "upstream_line_number": 0,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/unknown/statediagram_v2_spec-4d71f460.mmd",
+        "-o",
+        "spec/fixtures_mermaid/state_diagram/statediagram_v2_spec-4d71f460.svg"
+      ],
+      "output_sha256": "d2a33c3780fbb5231f28d1575a9787d3b7cc2b1c7ec83401331840b963f76466"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/state_diagram/statediagram_v2_spec-5f17d693.svg",
+      "cases": [
+        "state_diagram/statediagram_v2_spec-5f17d693.mmd"
+      ],
+      "source_sha256": "b97c158e49b77062159f71ffcc6feb5f95e01bcc4422d1886bad96ed5dbe564d",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+      "upstream_line_number": 0,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/state_diagram/statediagram_v2_spec-5f17d693.mmd",
+        "-o",
+        "spec/fixtures_mermaid/state_diagram/statediagram_v2_spec-5f17d693.svg"
+      ],
+      "output_sha256": "3281bbedbca1c9f6d14daf53f0b201ba9871768215446f20fed9090de4fe66f6"
+    },
+    {
+      "reference": "spec/fixtures_mermaid/state_diagram/statediagram_v2_spec-907b0443.svg",
+      "cases": [
+        "state_diagram/statediagram_v2_spec-907b0443.mmd"
+      ],
+      "source_sha256": "f7952346864b72ea54c772de6f9e4c2234faab296a5aee98c6c0827b90063d06",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+      "upstream_line_number": 0,
+      "generated_on": "2026-10-11",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/state_diagram/statediagram_v2_spec-907b0443.mmd",
+        "-o",
+        "spec/fixtures_mermaid/state_diagram/statediagram_v2_spec-907b0443.svg"
+      ],
+      "output_sha256": "9440cf2ad2b29397bdb09632a3b02b93c31feb98bc7517edf486d6c757d1eda2"
     }
   ]
 }

@@ -34,6 +34,19 @@ RSpec.describe SpecSupport::LayoutParity::StateDiagramRecognizer do
     SVG
   end
 
+  def synthetic_prefixed_reference
+    <<~SVG
+      <svg id="my-svg" viewBox="0 0 100 100">
+        <g class="node" id="my-svg-state-order-2026-7">
+          <rect width="20" height="20"/>
+        </g>
+        <g class="node" id="my-svg-state-checkout_start-8">
+          <circle cx="10" cy="10" r="5"/>
+        </g>
+      </svg>
+    SVG
+  end
+
   def synthetic_elements
     [
       [:composite, "checkout", nil, :id],
@@ -81,6 +94,15 @@ RSpec.describe SpecSupport::LayoutParity::StateDiagramRecognizer do
 
     expect([recognized(reference), recognized(sirena)])
       .to eq([real_reference_elements, real_reference_elements])
+  end
+
+  it "normalizes the SVG root prefix from pinned references" do
+    expected = [
+      [:state, "order-2026", nil, :id],
+      [:"terminal-start", "[*]", nil, :id],
+    ]
+
+    expect(recognized(synthetic_prefixed_reference)).to eq(expected)
   end
 
   it "matches terminal roles by their fixed contract key" do
