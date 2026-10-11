@@ -113,10 +113,14 @@ module Sirena
         source = edge[:sources]&.first
         target = edge[:targets]&.first
         return false unless source && target
-        return true if source == target || reachable?(target, source, links)
+        return true if cycle_between?(source, target, links)
 
         links[source] << target
         false
+      end
+
+      def cycle_between?(source, target, links)
+        source == target || reachable?(target, source, links)
       end
 
       # elkrb 1.0.2 only breaks root-level cycles. Keep its private input
