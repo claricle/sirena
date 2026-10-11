@@ -162,7 +162,14 @@ module SpecSupport
       def evidence_order(row, metric_or_value)
         metric = row[:metrics][metric_or_value] if metric_or_value.is_a?(Symbol)
         metric ||= metric_or_value
-        [-evidence_value(metric), row.fetch(:key).map(&:to_s)]
+        [-evidence_value(metric), row.fetch(:key).map(&:to_s),
+         evidence_box_order(row)]
+      end
+
+      def evidence_box_order(row)
+        %i[bbox_reference bbox_sirena].flat_map do |box|
+          row.fetch(box).map { |value| evidence_value(value) }
+        end
       end
 
       def evidence_value(metric)
