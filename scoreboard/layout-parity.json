@@ -3136,10 +3136,10 @@
             226.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            184.0,
+            166.5616,
+            268.0
           ],
           "key": [
             "class",
@@ -3169,7 +3169,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.739624,
+      "worst_e_c": 0.000052,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -3182,7 +3182,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -3204,7 +3204,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.739624,
+        "worst_e_c": 0.000052,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -3377,10 +3377,10 @@
             226.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            471.3488,
-            134.0
+            54.1528,
+            184.0,
+            235.6744,
+            268.0
           ],
           "key": [
             "class",
@@ -3410,7 +3410,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001943,
-      "worst_e_c": 0.937983,
+      "worst_e_c": 0.000052,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001943,
       "worst_keys": {
@@ -3423,7 +3423,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -3445,7 +3445,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.937983,
+        "worst_e_c": 0.000052,
         "worst_e_w": 0.001943,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001943,
@@ -3580,10 +3580,10 @@
             286.0
           ],
           "bbox_sirena": [
-            305.9856,
-            50.0,
-            349.2816,
-            134.0
+            131.3448,
+            244.0,
+            174.6408,
+            328.0
           ],
           "key": [
             "class",
@@ -3613,7 +3613,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.754335,
+      "worst_e_c": 0.000055,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -3626,7 +3626,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -3648,7 +3648,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.754335,
+        "worst_e_c": 0.000055,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -3666,15 +3666,34 @@
       "top5": [
         {
           "bbox_reference": [
+            58.0625,
+            8.0,
+            133.40625,
+            92.0
+          ],
+          "bbox_sirena": [
+            100.1692,
+            184.0,
+            175.3052,
+            268.0
+          ],
+          "key": [
+            "class",
+            null,
+            "Animal"
+          ]
+        },
+        {
+          "bbox_reference": [
             8.0,
             142.0,
             183.46875,
             226.0
           ],
           "bbox_sirena": [
-            175.136,
             50.0,
-            350.6104,
+            50.0,
+            225.4744,
             134.0
           ],
           "key": [
@@ -3682,30 +3701,11 @@
             null,
             "Duck"
           ]
-        },
-        {
-          "bbox_reference": [
-            58.0625,
-            8.0,
-            133.40625,
-            92.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            50.0,
-            125.136,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "Animal"
-          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.002757,
-      "worst_e_c": 0.655169,
+      "worst_e_c": 0.478836,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002757,
       "worst_keys": {
@@ -3718,7 +3718,7 @@
         "e_c": [
           "class",
           null,
-          "Duck"
+          "Animal"
         ],
         "e_h": [
           "class",
@@ -3740,7 +3740,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.655169,
+        "worst_e_c": 0.478836,
         "worst_e_w": 0.002757,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002757,
@@ -3875,10 +3875,10 @@
             226.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            184.0,
+            166.5616,
+            268.0
           ],
           "key": [
             "class",
@@ -3908,7 +3908,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.739624,
+      "worst_e_c": 0.000052,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -3921,7 +3921,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -3943,7 +3943,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.739624,
+        "worst_e_c": 0.000052,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -3967,10 +3967,10 @@
             226.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            471.3488,
-            134.0
+            54.1528,
+            184.0,
+            235.6744,
+            268.0
           ],
           "key": [
             "class",
@@ -4000,7 +4000,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001943,
-      "worst_e_c": 0.937983,
+      "worst_e_c": 0.000052,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001943,
       "worst_keys": {
@@ -4013,7 +4013,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -4035,7 +4035,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.937983,
+        "worst_e_c": 0.000052,
         "worst_e_w": 0.001943,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001943,
@@ -4059,10 +4059,10 @@
             286.0
           ],
           "bbox_sirena": [
-            305.9856,
-            50.0,
-            349.2816,
-            134.0
+            131.3448,
+            244.0,
+            174.6408,
+            328.0
           ],
           "key": [
             "class",
@@ -4092,7 +4092,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.754335,
+      "worst_e_c": 0.000055,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -4105,7 +4105,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -4127,7 +4127,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.754335,
+        "worst_e_c": 0.000055,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -4145,15 +4145,34 @@
       "top5": [
         {
           "bbox_reference": [
+            58.0625,
+            8.0,
+            133.40625,
+            92.0
+          ],
+          "bbox_sirena": [
+            100.1692,
+            184.0,
+            175.3052,
+            268.0
+          ],
+          "key": [
+            "class",
+            null,
+            "Animal"
+          ]
+        },
+        {
+          "bbox_reference": [
             8.0,
             142.0,
             183.46875,
             226.0
           ],
           "bbox_sirena": [
-            175.136,
             50.0,
-            350.6104,
+            50.0,
+            225.4744,
             134.0
           ],
           "key": [
@@ -4161,30 +4180,11 @@
             null,
             "Duck"
           ]
-        },
-        {
-          "bbox_reference": [
-            58.0625,
-            8.0,
-            133.40625,
-            92.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            50.0,
-            125.136,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "Animal"
-          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.002757,
-      "worst_e_c": 0.655169,
+      "worst_e_c": 0.478836,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002757,
       "worst_keys": {
@@ -4197,7 +4197,7 @@
         "e_c": [
           "class",
           null,
-          "Duck"
+          "Animal"
         ],
         "e_h": [
           "class",
@@ -4219,7 +4219,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.655169,
+        "worst_e_c": 0.478836,
         "worst_e_w": 0.002757,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002757,
@@ -5385,10 +5385,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            220.0,
+            166.5616,
+            304.0
           ],
           "key": [
             "class",
@@ -5418,7 +5418,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.750628,
+      "worst_e_c": 0.000048,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -5431,7 +5431,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -5453,7 +5453,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.750628,
+        "worst_e_c": 0.000048,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -5550,10 +5550,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            220.0,
+            166.5616,
+            304.0
           ],
           "key": [
             "class",
@@ -5583,7 +5583,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.750628,
+      "worst_e_c": 0.000048,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -5596,7 +5596,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -5618,7 +5618,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.750628,
+        "worst_e_c": 0.000048,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -5899,10 +5899,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
             50.0,
-            497.4432,
-            134.0
+            220.0,
+            257.616,
+            304.0
           ],
           "key": [
             "class",
@@ -5918,9 +5918,9 @@
             128.0
           ],
           "bbox_sirena": [
+            58.8944,
             50.0,
-            50.0,
-            239.8272,
+            248.7216,
             170.0
           ],
           "key": [
@@ -5932,7 +5932,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.003493,
-      "worst_e_c": 0.893931,
+      "worst_e_c": 0.001108,
       "worst_e_h": 0.0,
       "worst_e_w": 0.003493,
       "worst_keys": {
@@ -5945,7 +5945,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -5967,7 +5967,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.893931,
+        "worst_e_c": 0.001108,
         "worst_e_w": 0.003493,
         "worst_e_h": 0.0,
         "worst_e_a": 0.003493,
@@ -5991,10 +5991,10 @@
             286.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            244.0,
+            166.5616,
+            328.0
           ],
           "key": [
             "class",
@@ -6024,7 +6024,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.759639,
+      "worst_e_c": 0.000045,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -6037,7 +6037,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -6059,7 +6059,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.759639,
+        "worst_e_c": 0.000045,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -6499,25 +6499,6 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            142.0,
-            182.890625,
-            226.0
-          ],
-          "bbox_sirena": [
-            289.8272,
-            50.0,
-            471.3488,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "C2"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.78125,
             8.0,
             182.109375,
@@ -6534,11 +6515,30 @@
             null,
             "C1"
           ]
+        },
+        {
+          "bbox_reference": [
+            8.0,
+            142.0,
+            182.890625,
+            226.0
+          ],
+          "bbox_sirena": [
+            54.1528,
+            184.0,
+            235.6744,
+            268.0
+          ],
+          "key": [
+            "class",
+            null,
+            "C2"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.09519,
-      "worst_e_c": 0.993344,
+      "worst_e_c": 0.026722,
       "worst_e_h": 0.0,
       "worst_e_w": 0.09519,
       "worst_keys": {
@@ -6551,7 +6551,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -6573,7 +6573,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.993344,
+        "worst_e_c": 0.026722,
         "worst_e_w": 0.09519,
         "worst_e_h": 0.0,
         "worst_e_a": 0.09519,
@@ -7755,10 +7755,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            220.0,
+            166.5616,
+            304.0
           ],
           "key": [
             "class",
@@ -7788,7 +7788,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.750628,
+      "worst_e_c": 0.000048,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -7801,7 +7801,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -7823,7 +7823,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.750628,
+        "worst_e_c": 0.000048,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -8288,10 +8288,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            220.0,
+            166.5616,
+            304.0
           ],
           "key": [
             "class",
@@ -8321,7 +8321,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.750628,
+      "worst_e_c": 0.000048,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -8334,7 +8334,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -8356,7 +8356,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.750628,
+        "worst_e_c": 0.000048,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -8674,10 +8674,10 @@
             226.0
           ],
           "bbox_sirena": [
-            170.176,
             50.0,
-            249.632,
-            134.0
+            184.0,
+            129.456,
+            268.0
           ],
           "key": [
             "class",
@@ -8693,9 +8693,9 @@
             92.0
           ],
           "bbox_sirena": [
+            54.64,
             50.0,
-            50.0,
-            120.176,
+            124.816,
             134.0
           ],
           "key": [
@@ -8707,7 +8707,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001339,
-      "worst_e_c": 0.775471,
+      "worst_e_c": 0.000229,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001339,
       "worst_keys": {
@@ -8742,7 +8742,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.775471,
+        "worst_e_c": 0.000229,
         "worst_e_w": 0.001339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001339,
@@ -8803,10 +8803,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
             50.0,
-            714.6832,
-            134.0
+            220.0,
+            474.856,
+            304.0
           ],
           "key": [
             "class",
@@ -8822,9 +8822,9 @@
             128.0
           ],
           "bbox_sirena": [
+            167.5144,
             50.0,
-            50.0,
-            239.8272,
+            357.3416,
             170.0
           ],
           "key": [
@@ -8836,7 +8836,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001037,
-      "worst_e_c": 0.593065,
+      "worst_e_c": 0.000445,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001037,
       "worst_keys": {
@@ -8849,7 +8849,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -8871,7 +8871,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.593065,
+        "worst_e_c": 0.000445,
         "worst_e_w": 0.001037,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001037,
@@ -9114,10 +9114,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            220.0,
+            166.5616,
+            304.0
           ],
           "key": [
             "class",
@@ -9147,7 +9147,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.750628,
+      "worst_e_c": 0.000048,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -9160,7 +9160,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -9182,7 +9182,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.750628,
+        "worst_e_c": 0.000048,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -9298,10 +9298,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
             50.0,
-            714.6832,
-            134.0
+            220.0,
+            474.856,
+            304.0
           ],
           "key": [
             "class",
@@ -9317,9 +9317,9 @@
             128.0
           ],
           "bbox_sirena": [
+            167.5144,
             50.0,
-            50.0,
-            239.8272,
+            357.3416,
             170.0
           ],
           "key": [
@@ -9331,7 +9331,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001037,
-      "worst_e_c": 0.593065,
+      "worst_e_c": 0.000445,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001037,
       "worst_keys": {
@@ -9344,7 +9344,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -9366,7 +9366,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.593065,
+        "worst_e_c": 0.000445,
         "worst_e_w": 0.001037,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001037,
@@ -9482,9 +9482,9 @@
             226.0
           ],
           "bbox_sirena": [
-            170.176,
             50.0,
-            249.632,
+            50.0,
+            129.456,
             134.0
           ],
           "key": [
@@ -9501,10 +9501,10 @@
             92.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            120.176,
-            134.0
+            54.64,
+            184.0,
+            124.816,
+            268.0
           ],
           "key": [
             "class",
@@ -9515,7 +9515,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001339,
-      "worst_e_c": 0.775471,
+      "worst_e_c": 0.577424,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001339,
       "worst_keys": {
@@ -9550,7 +9550,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.775471,
+        "worst_e_c": 0.577424,
         "worst_e_w": 0.001339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001339,
@@ -10053,9 +10053,9 @@
             226.0
           ],
           "bbox_sirena": [
-            198.416,
+            59.48,
             50.0,
-            277.872,
+            138.936,
             134.0
           ],
           "key": [
@@ -10073,9 +10073,9 @@
           ],
           "bbox_sirena": [
             50.0,
-            50.0,
+            184.0,
             148.416,
-            134.0
+            268.0
           ],
           "key": [
             "class",
@@ -10086,7 +10086,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.003225,
-      "worst_e_c": 0.806095,
+      "worst_e_c": 0.559928,
       "worst_e_h": 0.0,
       "worst_e_w": 0.003225,
       "worst_keys": {
@@ -10121,7 +10121,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.806095,
+        "worst_e_c": 0.559928,
         "worst_e_w": 0.003225,
         "worst_e_h": 0.0,
         "worst_e_a": 0.003225,
@@ -10488,25 +10488,6 @@
       "top5": [
         {
           "bbox_reference": [
-            72.882813,
-            142.0,
-            116.445313,
-            226.0
-          ],
-          "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "C2"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             181.328125,
@@ -10523,11 +10504,30 @@
             null,
             "C1"
           ]
+        },
+        {
+          "bbox_reference": [
+            72.882813,
+            142.0,
+            116.445313,
+            226.0
+          ],
+          "bbox_sirena": [
+            123.2656,
+            184.0,
+            166.5616,
+            268.0
+          ],
+          "key": [
+            "class",
+            null,
+            "C2"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.09519,
-      "worst_e_c": 0.790861,
+      "worst_e_c": 0.02962,
       "worst_e_h": 0.0,
       "worst_e_w": 0.09519,
       "worst_keys": {
@@ -10540,7 +10540,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -10562,7 +10562,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.790861,
+        "worst_e_c": 0.02962,
         "worst_e_w": 0.09519,
         "worst_e_h": 0.0,
         "worst_e_a": 0.09519,
@@ -10586,10 +10586,10 @@
             226.0
           ],
           "bbox_sirena": [
-            170.176,
             50.0,
-            249.632,
-            134.0
+            184.0,
+            129.456,
+            268.0
           ],
           "key": [
             "class",
@@ -10605,9 +10605,9 @@
             92.0
           ],
           "bbox_sirena": [
+            54.64,
             50.0,
-            50.0,
-            120.176,
+            124.816,
             134.0
           ],
           "key": [
@@ -10619,7 +10619,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001339,
-      "worst_e_c": 0.775471,
+      "worst_e_c": 0.000229,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001339,
       "worst_keys": {
@@ -10654,7 +10654,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.775471,
+        "worst_e_c": 0.000229,
         "worst_e_w": 0.001339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001339,
@@ -11284,10 +11284,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            220.0,
+            166.5616,
+            304.0
           ],
           "key": [
             "class",
@@ -11317,7 +11317,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.750628,
+      "worst_e_c": 0.000048,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -11330,7 +11330,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -11352,7 +11352,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.750628,
+        "worst_e_c": 0.000048,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -11984,10 +11984,10 @@
             226.0
           ],
           "bbox_sirena": [
-            170.176,
             50.0,
-            249.632,
-            134.0
+            184.0,
+            129.456,
+            268.0
           ],
           "key": [
             "class",
@@ -12003,9 +12003,9 @@
             92.0
           ],
           "bbox_sirena": [
+            54.64,
             50.0,
-            50.0,
-            120.176,
+            124.816,
             134.0
           ],
           "key": [
@@ -12017,7 +12017,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001339,
-      "worst_e_c": 0.775471,
+      "worst_e_c": 0.000229,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001339,
       "worst_keys": {
@@ -12052,7 +12052,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.775471,
+        "worst_e_c": 0.000229,
         "worst_e_w": 0.001339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001339,
@@ -13190,25 +13190,6 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            142.0,
-            182.890625,
-            226.0
-          ],
-          "bbox_sirena": [
-            289.8272,
-            50.0,
-            471.3488,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "C2"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.78125,
             8.0,
             182.109375,
@@ -13225,11 +13206,30 @@
             null,
             "C1"
           ]
+        },
+        {
+          "bbox_reference": [
+            8.0,
+            142.0,
+            182.890625,
+            226.0
+          ],
+          "bbox_sirena": [
+            54.1528,
+            184.0,
+            235.6744,
+            268.0
+          ],
+          "key": [
+            "class",
+            null,
+            "C2"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.09519,
-      "worst_e_c": 0.993344,
+      "worst_e_c": 0.026722,
       "worst_e_h": 0.0,
       "worst_e_w": 0.09519,
       "worst_keys": {
@@ -13242,7 +13242,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -13264,7 +13264,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.993344,
+        "worst_e_c": 0.026722,
         "worst_e_w": 0.09519,
         "worst_e_h": 0.0,
         "worst_e_a": 0.09519,
@@ -14867,10 +14867,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
             50.0,
-            497.4432,
-            134.0
+            220.0,
+            257.616,
+            304.0
           ],
           "key": [
             "class",
@@ -14886,9 +14886,9 @@
             128.0
           ],
           "bbox_sirena": [
+            58.8944,
             50.0,
-            50.0,
-            239.8272,
+            248.7216,
             170.0
           ],
           "key": [
@@ -14900,7 +14900,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.003493,
-      "worst_e_c": 0.893931,
+      "worst_e_c": 0.001108,
       "worst_e_h": 0.0,
       "worst_e_w": 0.003493,
       "worst_keys": {
@@ -14913,7 +14913,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -14935,7 +14935,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.893931,
+        "worst_e_c": 0.001108,
         "worst_e_w": 0.003493,
         "worst_e_h": 0.0,
         "worst_e_a": 0.003493,
@@ -15472,10 +15472,10 @@
             286.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            244.0,
+            166.5616,
+            328.0
           ],
           "key": [
             "class",
@@ -15505,7 +15505,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.759639,
+      "worst_e_c": 0.000045,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -15518,7 +15518,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -15540,7 +15540,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.759639,
+        "worst_e_c": 0.000045,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -15564,10 +15564,10 @@
             226.0
           ],
           "bbox_sirena": [
-            170.176,
             50.0,
-            249.632,
-            134.0
+            184.0,
+            129.456,
+            268.0
           ],
           "key": [
             "class",
@@ -15583,9 +15583,9 @@
             92.0
           ],
           "bbox_sirena": [
+            54.64,
             50.0,
-            50.0,
-            120.176,
+            124.816,
             134.0
           ],
           "key": [
@@ -15597,7 +15597,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001339,
-      "worst_e_c": 0.775471,
+      "worst_e_c": 0.000229,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001339,
       "worst_keys": {
@@ -15632,7 +15632,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.775471,
+        "worst_e_c": 0.000229,
         "worst_e_w": 0.001339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001339,
@@ -15650,25 +15650,6 @@
       "top5": [
         {
           "bbox_reference": [
-            22.273438,
-            142.0,
-            101.835938,
-            226.0
-          ],
-          "bbox_sirena": [
-            207.728,
-            50.0,
-            287.184,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "Class02"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             116.109375,
@@ -15676,20 +15657,39 @@
           ],
           "bbox_sirena": [
             50.0,
-            50.0,
+            184.0,
             157.728,
-            134.0
+            268.0
           ],
           "key": [
             "class",
             null,
             "Class01"
           ]
+        },
+        {
+          "bbox_reference": [
+            22.273438,
+            142.0,
+            101.835938,
+            226.0
+          ],
+          "bbox_sirena": [
+            64.136,
+            50.0,
+            143.592,
+            134.0
+          ],
+          "key": [
+            "class",
+            null,
+            "Class02"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.003528,
-      "worst_e_c": 0.806565,
+      "worst_e_c": 0.550683,
       "worst_e_h": 0.0,
       "worst_e_w": 0.003528,
       "worst_keys": {
@@ -15702,7 +15702,7 @@
         "e_c": [
           "class",
           null,
-          "Class02"
+          "Class01"
         ],
         "e_h": [
           "class",
@@ -15724,7 +15724,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.806565,
+        "worst_e_c": 0.550683,
         "worst_e_w": 0.003528,
         "worst_e_h": 0.0,
         "worst_e_a": 0.003528,
@@ -15779,25 +15779,6 @@
       "top5": [
         {
           "bbox_reference": [
-            72.882813,
-            142.0,
-            116.445313,
-            226.0
-          ],
-          "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "C2"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             181.328125,
@@ -15814,11 +15795,30 @@
             null,
             "C1"
           ]
+        },
+        {
+          "bbox_reference": [
+            72.882813,
+            142.0,
+            116.445313,
+            226.0
+          ],
+          "bbox_sirena": [
+            123.2656,
+            184.0,
+            166.5616,
+            268.0
+          ],
+          "key": [
+            "class",
+            null,
+            "C2"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.09519,
-      "worst_e_c": 0.790861,
+      "worst_e_c": 0.02962,
       "worst_e_h": 0.0,
       "worst_e_w": 0.09519,
       "worst_keys": {
@@ -15831,7 +15831,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -15853,7 +15853,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.790861,
+        "worst_e_c": 0.02962,
         "worst_e_w": 0.09519,
         "worst_e_h": 0.0,
         "worst_e_a": 0.09519,
@@ -16499,10 +16499,10 @@
             286.0
           ],
           "bbox_sirena": [
-            305.9856,
-            50.0,
-            349.2816,
-            134.0
+            131.3448,
+            244.0,
+            174.6408,
+            328.0
           ],
           "key": [
             "class",
@@ -16532,7 +16532,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.754335,
+      "worst_e_c": 0.000055,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -16545,7 +16545,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -16567,7 +16567,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.754335,
+        "worst_e_c": 0.000055,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -16702,10 +16702,10 @@
             226.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            184.0,
+            166.5616,
+            268.0
           ],
           "key": [
             "class",
@@ -16735,7 +16735,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.739624,
+      "worst_e_c": 0.000052,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -16748,7 +16748,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -16770,7 +16770,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.739624,
+        "worst_e_c": 0.000052,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -16788,15 +16788,34 @@
       "top5": [
         {
           "bbox_reference": [
+            58.0625,
+            8.0,
+            133.40625,
+            92.0
+          ],
+          "bbox_sirena": [
+            100.1692,
+            184.0,
+            175.3052,
+            268.0
+          ],
+          "key": [
+            "class",
+            null,
+            "Animal"
+          ]
+        },
+        {
+          "bbox_reference": [
             8.0,
             142.0,
             183.46875,
             226.0
           ],
           "bbox_sirena": [
-            175.136,
             50.0,
-            350.6104,
+            50.0,
+            225.4744,
             134.0
           ],
           "key": [
@@ -16804,30 +16823,11 @@
             null,
             "Duck"
           ]
-        },
-        {
-          "bbox_reference": [
-            58.0625,
-            8.0,
-            133.40625,
-            92.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            50.0,
-            125.136,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "Animal"
-          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.002757,
-      "worst_e_c": 0.655169,
+      "worst_e_c": 0.478836,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002757,
       "worst_keys": {
@@ -16840,7 +16840,7 @@
         "e_c": [
           "class",
           null,
-          "Duck"
+          "Animal"
         ],
         "e_h": [
           "class",
@@ -16862,7 +16862,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.655169,
+        "worst_e_c": 0.478836,
         "worst_e_w": 0.002757,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002757,
@@ -17035,10 +17035,10 @@
             226.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            471.3488,
-            134.0
+            54.1528,
+            184.0,
+            235.6744,
+            268.0
           ],
           "key": [
             "class",
@@ -17068,7 +17068,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001943,
-      "worst_e_c": 0.937983,
+      "worst_e_c": 0.000052,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001943,
       "worst_keys": {
@@ -17081,7 +17081,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -17103,7 +17103,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.937983,
+        "worst_e_c": 0.000052,
         "worst_e_w": 0.001943,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001943,
@@ -17238,10 +17238,10 @@
             226.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            471.3488,
-            134.0
+            54.1528,
+            184.0,
+            235.6744,
+            268.0
           ],
           "key": [
             "class",
@@ -17271,7 +17271,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001943,
-      "worst_e_c": 0.937983,
+      "worst_e_c": 0.000052,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001943,
       "worst_keys": {
@@ -17284,7 +17284,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -17306,7 +17306,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.937983,
+        "worst_e_c": 0.000052,
         "worst_e_w": 0.001943,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001943,
@@ -17330,10 +17330,10 @@
             226.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            184.0,
+            166.5616,
+            268.0
           ],
           "key": [
             "class",
@@ -17363,7 +17363,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.739624,
+      "worst_e_c": 0.000052,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -17376,7 +17376,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -17398,7 +17398,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.739624,
+        "worst_e_c": 0.000052,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -17416,15 +17416,34 @@
       "top5": [
         {
           "bbox_reference": [
+            58.0625,
+            8.0,
+            133.40625,
+            92.0
+          ],
+          "bbox_sirena": [
+            100.1692,
+            184.0,
+            175.3052,
+            268.0
+          ],
+          "key": [
+            "class",
+            null,
+            "Animal"
+          ]
+        },
+        {
+          "bbox_reference": [
             8.0,
             142.0,
             183.46875,
             226.0
           ],
           "bbox_sirena": [
-            175.136,
             50.0,
-            350.6104,
+            50.0,
+            225.4744,
             134.0
           ],
           "key": [
@@ -17432,30 +17451,11 @@
             null,
             "Duck"
           ]
-        },
-        {
-          "bbox_reference": [
-            58.0625,
-            8.0,
-            133.40625,
-            92.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            50.0,
-            125.136,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "Animal"
-          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.002757,
-      "worst_e_c": 0.655169,
+      "worst_e_c": 0.478836,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002757,
       "worst_keys": {
@@ -17468,7 +17468,7 @@
         "e_c": [
           "class",
           null,
-          "Duck"
+          "Animal"
         ],
         "e_h": [
           "class",
@@ -17490,7 +17490,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.655169,
+        "worst_e_c": 0.478836,
         "worst_e_w": 0.002757,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002757,
@@ -17514,10 +17514,10 @@
             286.0
           ],
           "bbox_sirena": [
-            305.9856,
-            50.0,
-            349.2816,
-            134.0
+            131.3448,
+            244.0,
+            174.6408,
+            328.0
           ],
           "key": [
             "class",
@@ -17547,7 +17547,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.754335,
+      "worst_e_c": 0.000055,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -17560,7 +17560,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -17582,7 +17582,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.754335,
+        "worst_e_c": 0.000055,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -22691,25 +22691,6 @@
       "top5": [
         {
           "bbox_reference": [
-            22.273438,
-            142.0,
-            101.835938,
-            226.0
-          ],
-          "bbox_sirena": [
-            207.728,
-            50.0,
-            287.184,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "Class02"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             116.109375,
@@ -22717,20 +22698,39 @@
           ],
           "bbox_sirena": [
             50.0,
-            50.0,
+            184.0,
             157.728,
-            134.0
+            268.0
           ],
           "key": [
             "class",
             null,
             "Class01"
           ]
+        },
+        {
+          "bbox_reference": [
+            22.273438,
+            142.0,
+            101.835938,
+            226.0
+          ],
+          "bbox_sirena": [
+            64.136,
+            50.0,
+            143.592,
+            134.0
+          ],
+          "key": [
+            "class",
+            null,
+            "Class02"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.003528,
-      "worst_e_c": 0.806565,
+      "worst_e_c": 0.550683,
       "worst_e_h": 0.0,
       "worst_e_w": 0.003528,
       "worst_keys": {
@@ -22743,7 +22743,7 @@
         "e_c": [
           "class",
           null,
-          "Class02"
+          "Class01"
         ],
         "e_h": [
           "class",
@@ -22765,7 +22765,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.806565,
+        "worst_e_c": 0.550683,
         "worst_e_w": 0.003528,
         "worst_e_h": 0.0,
         "worst_e_a": 0.003528,
@@ -23284,9 +23284,9 @@
             226.0
           ],
           "bbox_sirena": [
-            198.416,
+            59.48,
             50.0,
-            277.872,
+            138.936,
             134.0
           ],
           "key": [
@@ -23304,9 +23304,9 @@
           ],
           "bbox_sirena": [
             50.0,
-            50.0,
+            184.0,
             148.416,
-            134.0
+            268.0
           ],
           "key": [
             "class",
@@ -23317,7 +23317,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.003225,
-      "worst_e_c": 0.806095,
+      "worst_e_c": 0.559928,
       "worst_e_h": 0.0,
       "worst_e_w": 0.003225,
       "worst_keys": {
@@ -23352,7 +23352,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.806095,
+        "worst_e_c": 0.559928,
         "worst_e_w": 0.003225,
         "worst_e_h": 0.0,
         "worst_e_a": 0.003225,
@@ -24241,10 +24241,10 @@
             226.0
           ],
           "bbox_sirena": [
-            170.176,
             50.0,
-            249.632,
-            134.0
+            184.0,
+            129.456,
+            268.0
           ],
           "key": [
             "class",
@@ -24260,9 +24260,9 @@
             92.0
           ],
           "bbox_sirena": [
+            54.64,
             50.0,
-            50.0,
-            120.176,
+            124.816,
             134.0
           ],
           "key": [
@@ -24274,7 +24274,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001339,
-      "worst_e_c": 0.775471,
+      "worst_e_c": 0.000229,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001339,
       "worst_keys": {
@@ -24309,7 +24309,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.775471,
+        "worst_e_c": 0.000229,
         "worst_e_w": 0.001339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001339,
@@ -24333,10 +24333,10 @@
             226.0
           ],
           "bbox_sirena": [
-            170.176,
             50.0,
-            249.632,
-            134.0
+            184.0,
+            129.456,
+            268.0
           ],
           "key": [
             "class",
@@ -24352,9 +24352,9 @@
             92.0
           ],
           "bbox_sirena": [
+            54.64,
             50.0,
-            50.0,
-            120.176,
+            124.816,
             134.0
           ],
           "key": [
@@ -24366,7 +24366,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001339,
-      "worst_e_c": 0.775471,
+      "worst_e_c": 0.000229,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001339,
       "worst_keys": {
@@ -24401,7 +24401,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.775471,
+        "worst_e_c": 0.000229,
         "worst_e_w": 0.001339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001339,
@@ -24425,9 +24425,9 @@
             226.0
           ],
           "bbox_sirena": [
-            170.176,
             50.0,
-            249.632,
+            50.0,
+            129.456,
             134.0
           ],
           "key": [
@@ -24444,10 +24444,10 @@
             92.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            120.176,
-            134.0
+            54.64,
+            184.0,
+            124.816,
+            268.0
           ],
           "key": [
             "class",
@@ -24458,7 +24458,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001339,
-      "worst_e_c": 0.775471,
+      "worst_e_c": 0.577424,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001339,
       "worst_keys": {
@@ -24493,7 +24493,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.775471,
+        "worst_e_c": 0.577424,
         "worst_e_w": 0.001339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001339,
@@ -24517,10 +24517,10 @@
             226.0
           ],
           "bbox_sirena": [
-            170.176,
             50.0,
-            249.632,
-            134.0
+            184.0,
+            129.456,
+            268.0
           ],
           "key": [
             "class",
@@ -24536,9 +24536,9 @@
             92.0
           ],
           "bbox_sirena": [
+            54.64,
             50.0,
-            50.0,
-            120.176,
+            124.816,
             134.0
           ],
           "key": [
@@ -24550,7 +24550,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001339,
-      "worst_e_c": 0.775471,
+      "worst_e_c": 0.000229,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001339,
       "worst_keys": {
@@ -24585,7 +24585,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.775471,
+        "worst_e_c": 0.000229,
         "worst_e_w": 0.001339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001339,
@@ -24609,10 +24609,10 @@
             226.0
           ],
           "bbox_sirena": [
-            170.176,
             50.0,
-            249.632,
-            134.0
+            184.0,
+            129.456,
+            268.0
           ],
           "key": [
             "class",
@@ -24628,9 +24628,9 @@
             92.0
           ],
           "bbox_sirena": [
+            54.64,
             50.0,
-            50.0,
-            120.176,
+            124.816,
             134.0
           ],
           "key": [
@@ -24642,7 +24642,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001339,
-      "worst_e_c": 0.775471,
+      "worst_e_c": 0.000229,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001339,
       "worst_keys": {
@@ -24677,7 +24677,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.775471,
+        "worst_e_c": 0.000229,
         "worst_e_w": 0.001339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001339,
@@ -25488,10 +25488,10 @@
             226.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            184.0,
+            166.5616,
+            268.0
           ],
           "key": [
             "class",
@@ -25521,7 +25521,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.739624,
+      "worst_e_c": 0.000052,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -25534,7 +25534,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -25556,7 +25556,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.739624,
+        "worst_e_c": 0.000052,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -25580,10 +25580,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            220.0,
+            166.5616,
+            304.0
           ],
           "key": [
             "class",
@@ -25613,7 +25613,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.750628,
+      "worst_e_c": 0.000048,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -25626,7 +25626,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -25648,7 +25648,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.750628,
+        "worst_e_c": 0.000048,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -25672,10 +25672,10 @@
             286.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            244.0,
+            166.5616,
+            328.0
           ],
           "key": [
             "class",
@@ -25705,7 +25705,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.759639,
+      "worst_e_c": 0.000045,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -25718,7 +25718,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -25740,7 +25740,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.759639,
+        "worst_e_c": 0.000045,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -25764,10 +25764,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            220.0,
+            166.5616,
+            304.0
           ],
           "key": [
             "class",
@@ -25797,7 +25797,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.750628,
+      "worst_e_c": 0.000048,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -25810,7 +25810,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -25832,7 +25832,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.750628,
+        "worst_e_c": 0.000048,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -25856,10 +25856,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            333.1232,
-            134.0
+            123.2656,
+            220.0,
+            166.5616,
+            304.0
           ],
           "key": [
             "class",
@@ -25889,7 +25889,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002875,
-      "worst_e_c": 0.750628,
+      "worst_e_c": 0.000048,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002875,
       "worst_keys": {
@@ -25902,7 +25902,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -25924,7 +25924,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.750628,
+        "worst_e_c": 0.000048,
         "worst_e_w": 0.002875,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002875,
@@ -26170,10 +26170,10 @@
             226.0
           ],
           "bbox_sirena": [
-            289.8272,
-            50.0,
-            471.3488,
-            134.0
+            54.1528,
+            184.0,
+            235.6744,
+            268.0
           ],
           "key": [
             "class",
@@ -26203,7 +26203,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001943,
-      "worst_e_c": 0.937983,
+      "worst_e_c": 0.000052,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001943,
       "worst_keys": {
@@ -26216,7 +26216,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -26238,7 +26238,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.937983,
+        "worst_e_c": 0.000052,
         "worst_e_w": 0.001943,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001943,
@@ -26262,10 +26262,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
             50.0,
-            497.4432,
-            134.0
+            220.0,
+            257.616,
+            304.0
           ],
           "key": [
             "class",
@@ -26281,9 +26281,9 @@
             128.0
           ],
           "bbox_sirena": [
+            58.8944,
             50.0,
-            50.0,
-            239.8272,
+            248.7216,
             170.0
           ],
           "key": [
@@ -26295,7 +26295,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.003493,
-      "worst_e_c": 0.893931,
+      "worst_e_c": 0.001108,
       "worst_e_h": 0.0,
       "worst_e_w": 0.003493,
       "worst_keys": {
@@ -26308,7 +26308,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -26330,7 +26330,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.893931,
+        "worst_e_c": 0.001108,
         "worst_e_w": 0.003493,
         "worst_e_h": 0.0,
         "worst_e_a": 0.003493,
@@ -26354,10 +26354,10 @@
             262.0
           ],
           "bbox_sirena": [
-            289.8272,
             50.0,
-            714.6832,
-            134.0
+            220.0,
+            474.856,
+            304.0
           ],
           "key": [
             "class",
@@ -26373,9 +26373,9 @@
             128.0
           ],
           "bbox_sirena": [
+            167.5144,
             50.0,
-            50.0,
-            239.8272,
+            357.3416,
             170.0
           ],
           "key": [
@@ -26387,7 +26387,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.001037,
-      "worst_e_c": 0.593065,
+      "worst_e_c": 0.000445,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001037,
       "worst_keys": {
@@ -26400,7 +26400,7 @@
         "e_c": [
           "class",
           null,
-          "C2"
+          "C1"
         ],
         "e_h": [
           "class",
@@ -26422,7 +26422,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.593065,
+        "worst_e_c": 0.000445,
         "worst_e_w": 0.001037,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001037,
@@ -27414,25 +27414,6 @@
       "top5": [
         {
           "bbox_reference": [
-            10.253906,
-            202.0,
-            107.246094,
-            346.0
-          ],
-          "bbox_sirena": [
-            201.376,
-            50.0,
-            298.352,
-            194.0
-          ],
-          "key": [
-            "class",
-            null,
-            "Zebra"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             109.5,
@@ -27449,11 +27430,30 @@
             null,
             "Animal"
           ]
+        },
+        {
+          "bbox_reference": [
+            10.253906,
+            202.0,
+            107.246094,
+            346.0
+          ],
+          "bbox_sirena": [
+            52.2,
+            244.0,
+            149.176,
+            388.0
+          ],
+          "key": [
+            "class",
+            null,
+            "Zebra"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.001222,
-      "worst_e_c": 0.693335,
+      "worst_e_c": 0.000176,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001222,
       "worst_keys": {
@@ -27466,7 +27466,7 @@
         "e_c": [
           "class",
           null,
-          "Zebra"
+          "Animal"
         ],
         "e_h": [
           "class",
@@ -27488,7 +27488,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.693335,
+        "worst_e_c": 0.000176,
         "worst_e_w": 0.001222,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001222,
@@ -29089,25 +29089,6 @@
       "top5": [
         {
           "bbox_reference": [
-            10.253906,
-            202.0,
-            107.246094,
-            346.0
-          ],
-          "bbox_sirena": [
-            201.376,
-            50.0,
-            298.352,
-            194.0
-          ],
-          "key": [
-            "class",
-            null,
-            "Zebra"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             109.5,
@@ -29124,11 +29105,30 @@
             null,
             "Animal"
           ]
+        },
+        {
+          "bbox_reference": [
+            10.253906,
+            202.0,
+            107.246094,
+            346.0
+          ],
+          "bbox_sirena": [
+            52.2,
+            244.0,
+            149.176,
+            388.0
+          ],
+          "key": [
+            "class",
+            null,
+            "Zebra"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.001222,
-      "worst_e_c": 0.693335,
+      "worst_e_c": 0.000176,
       "worst_e_h": 0.0,
       "worst_e_w": 0.001222,
       "worst_keys": {
@@ -29141,7 +29141,7 @@
         "e_c": [
           "class",
           null,
-          "Zebra"
+          "Animal"
         ],
         "e_h": [
           "class",
@@ -29163,7 +29163,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.693335,
+        "worst_e_c": 0.000176,
         "worst_e_w": 0.001222,
         "worst_e_h": 0.0,
         "worst_e_a": 0.001222,
@@ -35894,15 +35894,53 @@
       "top5": [
         {
           "bbox_reference": [
+            263.421875,
+            157.0,
+            332.34375,
+            211.0
+          ],
+          "bbox_sirena": [
+            263.544,
+            52.0,
+            332.456,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
+        },
+        {
+          "bbox_reference": [
+            263.679688,
+            53.0,
+            332.085938,
+            107.0
+          ],
+          "bbox_sirena": [
+            264.056,
+            156.0,
+            332.456,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             45.5,
             29.0,
             188.421875,
             225.0
           ],
           "bbox_sirena": [
-            16.0,
+            45.0,
             33.0,
-            100.0,
+            188.0,
             229.0
           ],
           "key": [
@@ -35921,7 +35959,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -35932,53 +35970,15 @@
         },
         {
           "bbox_reference": [
-            263.421875,
-            157.0,
-            332.34375,
-            211.0
-          ],
-          "bbox_sirena": [
-            175.044,
-            52.0,
-            243.956,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            263.679688,
-            53.0,
-            332.085938,
-            107.0
-          ],
-          "bbox_sirena": [
-            175.556,
-            156.0,
-            243.956,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             83.0,
             105.0,
             150.921875,
             159.0
           ],
           "bbox_sirena": [
-            24.084,
+            83.084,
             104.0,
-            92.004,
+            151.004,
             158.0
           ],
           "key": [
@@ -35989,16 +35989,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.312866,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.239358,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "node",
@@ -36025,10 +36025,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.312866,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.239358,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -36154,15 +36154,53 @@
       "top5": [
         {
           "bbox_reference": [
+            263.421875,
+            157.0,
+            332.34375,
+            211.0
+          ],
+          "bbox_sirena": [
+            263.544,
+            52.0,
+            332.456,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
+        },
+        {
+          "bbox_reference": [
+            263.679688,
+            53.0,
+            332.085938,
+            107.0
+          ],
+          "bbox_sirena": [
+            264.056,
+            156.0,
+            332.456,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             45.5,
             29.0,
             188.421875,
             225.0
           ],
           "bbox_sirena": [
-            16.0,
+            45.0,
             33.0,
-            100.0,
+            188.0,
             229.0
           ],
           "key": [
@@ -36181,7 +36219,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -36192,53 +36230,15 @@
         },
         {
           "bbox_reference": [
-            263.421875,
-            157.0,
-            332.34375,
-            211.0
-          ],
-          "bbox_sirena": [
-            175.044,
-            52.0,
-            243.956,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            263.679688,
-            53.0,
-            332.085938,
-            107.0
-          ],
-          "bbox_sirena": [
-            175.556,
-            156.0,
-            243.956,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             83.0,
             105.0,
             150.921875,
             159.0
           ],
           "bbox_sirena": [
-            24.084,
+            83.084,
             104.0,
-            92.004,
+            151.004,
             158.0
           ],
           "key": [
@@ -36249,16 +36249,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.312866,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.239358,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "node",
@@ -36285,10 +36285,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.312866,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.239358,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -50193,15 +50193,53 @@
       "top5": [
         {
           "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            114.456,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
+        },
+        {
+          "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            113.944,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             189.421875,
             29.0,
             332.34375,
             225.0
           ],
           "bbox_sirena": [
-            159.0,
+            189.0,
             33.0,
-            243.0,
+            332.0,
             229.0
           ],
           "key": [
@@ -50220,7 +50258,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -50231,53 +50269,15 @@
         },
         {
           "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            52.0,
-            84.956,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            156.0,
-            84.444,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
             159.0
           ],
           "bbox_sirena": [
-            167.996,
+            226.996,
             104.0,
-            235.916,
+            294.916,
             158.0
           ],
           "key": [
@@ -50288,16 +50288,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.248601,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.239358,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "node",
@@ -50324,10 +50324,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.248601,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.239358,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -50342,15 +50342,53 @@
       "top5": [
         {
           "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            114.456,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
+        },
+        {
+          "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            113.944,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             189.421875,
             29.0,
             332.34375,
             225.0
           ],
           "bbox_sirena": [
-            159.0,
+            189.0,
             33.0,
-            243.0,
+            332.0,
             229.0
           ],
           "key": [
@@ -50369,7 +50407,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -50380,53 +50418,15 @@
         },
         {
           "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            52.0,
-            84.956,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            156.0,
-            84.444,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
             159.0
           ],
           "bbox_sirena": [
-            167.996,
+            226.996,
             104.0,
-            235.916,
+            294.916,
             158.0
           ],
           "key": [
@@ -50437,16 +50437,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.248601,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.239358,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "node",
@@ -50473,10 +50473,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.248601,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.239358,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -50491,15 +50491,53 @@
       "top5": [
         {
           "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            114.456,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
+        },
+        {
+          "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            113.944,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             189.421875,
             29.0,
             332.34375,
             225.0
           ],
           "bbox_sirena": [
-            159.0,
+            189.0,
             33.0,
-            243.0,
+            332.0,
             229.0
           ],
           "key": [
@@ -50518,7 +50556,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -50529,53 +50567,15 @@
         },
         {
           "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            52.0,
-            84.956,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            156.0,
-            84.444,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
             159.0
           ],
           "bbox_sirena": [
-            167.996,
+            226.996,
             104.0,
-            235.916,
+            294.916,
             158.0
           ],
           "key": [
@@ -50586,16 +50586,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.248601,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.239358,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "node",
@@ -50622,10 +50622,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.248601,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.239358,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -50946,7 +50946,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            155.0,
+            209.0,
             112.0
           ],
           "key": [
@@ -50963,9 +50963,9 @@
             240.0
           ],
           "bbox_sirena": [
-            22.908,
+            49.908,
             186.0,
-            140.092,
+            167.092,
             240.0
           ],
           "key": [
@@ -50982,9 +50982,9 @@
             87.0
           ],
           "bbox_sirena": [
-            16.468,
+            43.468,
             33.0,
-            146.532,
+            173.532,
             87.0
           ],
           "key": [
@@ -50995,10 +50995,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.265287,
-      "worst_e_c": 0.086628,
+      "worst_e_a": 0.004608,
+      "worst_e_c": 0.001505,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.265287,
+      "worst_e_w": 0.004608,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -51031,10 +51031,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.086628,
-        "worst_e_w": 0.265287,
+        "worst_e_c": 0.001505,
+        "worst_e_w": 0.004608,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.265287,
+        "worst_e_a": 0.004608,
         "worst_analog": null
       }
     }
@@ -51049,15 +51049,53 @@
       "top5": [
         {
           "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            114.456,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
+        },
+        {
+          "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            113.944,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             189.421875,
             29.0,
             332.34375,
             225.0
           ],
           "bbox_sirena": [
-            159.0,
+            189.0,
             33.0,
-            243.0,
+            332.0,
             229.0
           ],
           "key": [
@@ -51076,7 +51114,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -51087,53 +51125,15 @@
         },
         {
           "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            52.0,
-            84.956,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            156.0,
-            84.444,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
             159.0
           ],
           "bbox_sirena": [
-            167.996,
+            226.996,
             104.0,
-            235.916,
+            294.916,
             158.0
           ],
           "key": [
@@ -51144,16 +51144,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.248601,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.239358,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "node",
@@ -51180,10 +51180,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.248601,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.239358,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -51198,15 +51198,53 @@
       "top5": [
         {
           "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            114.456,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
+        },
+        {
+          "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            113.944,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             189.421875,
             29.0,
             332.34375,
             225.0
           ],
           "bbox_sirena": [
-            159.0,
+            189.0,
             33.0,
-            243.0,
+            332.0,
             229.0
           ],
           "key": [
@@ -51225,7 +51263,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -51236,53 +51274,15 @@
         },
         {
           "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            52.0,
-            84.956,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            156.0,
-            84.444,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
             159.0
           ],
           "bbox_sirena": [
-            167.996,
+            226.996,
             104.0,
-            235.916,
+            294.916,
             158.0
           ],
           "key": [
@@ -51293,16 +51293,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.248601,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.239358,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "node",
@@ -51329,10 +51329,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.248601,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.239358,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -51353,9 +51353,9 @@
             225.0
           ],
           "bbox_sirena": [
-            159.0,
+            189.0,
             33.0,
-            243.0,
+            332.0,
             229.0
           ],
           "key": [
@@ -51374,7 +51374,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -51385,34 +51385,15 @@
         },
         {
           "bbox_reference": [
-            226.921875,
-            105.0,
-            294.84375,
-            159.0
-          ],
-          "bbox_sirena": [
-            167.996,
-            104.0,
-            235.916,
-            158.0
-          ],
-          "key": [
-            "node",
-            "B",
-            "c"
-          ]
-        },
-        {
-          "bbox_reference": [
             45.757813,
             53.0,
             114.164063,
             107.0
           ],
           "bbox_sirena": [
-            16.044,
+            45.544,
             52.0,
-            84.444,
+            113.944,
             106.0
           ],
           "key": [
@@ -51423,15 +51404,34 @@
         },
         {
           "bbox_reference": [
+            226.921875,
+            105.0,
+            294.84375,
+            159.0
+          ],
+          "bbox_sirena": [
+            226.996,
+            104.0,
+            294.916,
+            158.0
+          ],
+          "key": [
+            "node",
+            "B",
+            "c"
+          ]
+        },
+        {
+          "bbox_reference": [
             45.5,
             157.0,
             114.421875,
             211.0
           ],
           "bbox_sirena": [
-            16.044,
+            45.544,
             156.0,
-            84.956,
+            114.456,
             210.0
           ],
           "key": [
@@ -51442,16 +51442,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.136813,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.00916,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "cluster",
@@ -51478,10 +51478,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.136813,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.00916,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -51653,7 +51653,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            155.0,
+            209.0,
             112.0
           ],
           "key": [
@@ -51670,9 +51670,9 @@
             240.0
           ],
           "bbox_sirena": [
-            22.908,
+            49.908,
             186.0,
-            140.092,
+            167.092,
             240.0
           ],
           "key": [
@@ -51689,9 +51689,9 @@
             87.0
           ],
           "bbox_sirena": [
-            16.468,
+            43.468,
             33.0,
-            146.532,
+            173.532,
             87.0
           ],
           "key": [
@@ -51702,10 +51702,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.265287,
-      "worst_e_c": 0.086628,
+      "worst_e_a": 0.004608,
+      "worst_e_c": 0.001505,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.265287,
+      "worst_e_w": 0.004608,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -51738,10 +51738,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.086628,
-        "worst_e_w": 0.265287,
+        "worst_e_c": 0.001505,
+        "worst_e_w": 0.004608,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.265287,
+        "worst_e_a": 0.004608,
         "worst_analog": null
       }
     }
@@ -51762,9 +51762,9 @@
             225.0
           ],
           "bbox_sirena": [
-            159.0,
+            189.0,
             33.0,
-            243.0,
+            332.0,
             229.0
           ],
           "key": [
@@ -51783,7 +51783,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -51794,34 +51794,15 @@
         },
         {
           "bbox_reference": [
-            226.921875,
-            105.0,
-            294.84375,
-            159.0
-          ],
-          "bbox_sirena": [
-            167.996,
-            104.0,
-            235.916,
-            158.0
-          ],
-          "key": [
-            "node",
-            "B",
-            "c"
-          ]
-        },
-        {
-          "bbox_reference": [
             45.757813,
             53.0,
             114.164063,
             107.0
           ],
           "bbox_sirena": [
-            16.044,
+            45.544,
             52.0,
-            84.444,
+            113.944,
             106.0
           ],
           "key": [
@@ -51832,15 +51813,34 @@
         },
         {
           "bbox_reference": [
+            226.921875,
+            105.0,
+            294.84375,
+            159.0
+          ],
+          "bbox_sirena": [
+            226.996,
+            104.0,
+            294.916,
+            158.0
+          ],
+          "key": [
+            "node",
+            "B",
+            "c"
+          ]
+        },
+        {
+          "bbox_reference": [
             45.5,
             157.0,
             114.421875,
             211.0
           ],
           "bbox_sirena": [
-            16.044,
+            45.544,
             156.0,
-            84.956,
+            114.456,
             210.0
           ],
           "key": [
@@ -51851,16 +51851,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.136813,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.00916,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "cluster",
@@ -51887,10 +51887,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.136813,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.00916,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -52352,15 +52352,53 @@
       "top5": [
         {
           "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            114.456,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
+        },
+        {
+          "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            113.944,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             189.421875,
             29.0,
             332.34375,
             225.0
           ],
           "bbox_sirena": [
-            159.0,
+            189.0,
             33.0,
-            243.0,
+            332.0,
             229.0
           ],
           "key": [
@@ -52379,7 +52417,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -52390,53 +52428,15 @@
         },
         {
           "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            52.0,
-            84.956,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            16.044,
-            156.0,
-            84.444,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
             159.0
           ],
           "bbox_sirena": [
-            167.996,
+            226.996,
             104.0,
-            235.916,
+            294.916,
             158.0
           ],
           "key": [
@@ -52447,16 +52447,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.248601,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.239358,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "node",
@@ -52483,10 +52483,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.248601,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.239358,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -52507,9 +52507,9 @@
             225.0
           ],
           "bbox_sirena": [
-            159.0,
+            189.0,
             33.0,
-            243.0,
+            332.0,
             229.0
           ],
           "key": [
@@ -52528,7 +52528,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            252.0,
+            370.0,
             254.0
           ],
           "key": [
@@ -52539,34 +52539,15 @@
         },
         {
           "bbox_reference": [
-            226.921875,
-            105.0,
-            294.84375,
-            159.0
-          ],
-          "bbox_sirena": [
-            167.996,
-            104.0,
-            235.916,
-            158.0
-          ],
-          "key": [
-            "node",
-            "B",
-            "c"
-          ]
-        },
-        {
-          "bbox_reference": [
             45.757813,
             53.0,
             114.164063,
             107.0
           ],
           "bbox_sirena": [
-            16.044,
+            45.544,
             52.0,
-            84.444,
+            113.944,
             106.0
           ],
           "key": [
@@ -52577,15 +52558,34 @@
         },
         {
           "bbox_reference": [
+            226.921875,
+            105.0,
+            294.84375,
+            159.0
+          ],
+          "bbox_sirena": [
+            226.996,
+            104.0,
+            294.916,
+            158.0
+          ],
+          "key": [
+            "node",
+            "B",
+            "c"
+          ]
+        },
+        {
+          "bbox_reference": [
             45.5,
             157.0,
             114.421875,
             211.0
           ],
           "bbox_sirena": [
-            16.044,
+            45.544,
             156.0,
-            84.956,
+            114.456,
             210.0
           ],
           "key": [
@@ -52596,16 +52596,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.412266,
-      "worst_e_c": 0.136813,
+      "worst_e_a": 0.008565,
+      "worst_e_c": 0.00916,
       "worst_e_h": 0.008065,
-      "worst_e_w": 0.412266,
+      "worst_e_w": 0.000547,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "cluster",
-          "A",
-          "B"
+          null,
+          "A"
         ],
         "e_c": [
           "cluster",
@@ -52632,10 +52632,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.136813,
-        "worst_e_w": 0.412266,
+        "worst_e_c": 0.00916,
+        "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
-        "worst_e_a": 0.412266,
+        "worst_e_a": 0.008565,
         "worst_analog": null
       }
     }
@@ -52658,7 +52658,7 @@
           "bbox_sirena": [
             8.0,
             8.0,
-            155.0,
+            209.0,
             112.0
           ],
           "key": [
@@ -52675,9 +52675,9 @@
             240.0
           ],
           "bbox_sirena": [
-            22.908,
+            49.908,
             186.0,
-            140.092,
+            167.092,
             240.0
           ],
           "key": [
@@ -52694,9 +52694,9 @@
             87.0
           ],
           "bbox_sirena": [
-            16.468,
+            43.468,
             33.0,
-            146.532,
+            173.532,
             87.0
           ],
           "key": [
@@ -52707,10 +52707,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.265287,
-      "worst_e_c": 0.086628,
+      "worst_e_a": 0.004608,
+      "worst_e_c": 0.001505,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.265287,
+      "worst_e_w": 0.004608,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -52743,10 +52743,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.086628,
-        "worst_e_w": 0.265287,
+        "worst_e_c": 0.001505,
+        "worst_e_w": 0.004608,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.265287,
+        "worst_e_a": 0.004608,
         "worst_analog": null
       }
     }
@@ -98333,46 +98333,46 @@
       "top5": [
         {
           "bbox_reference": [
-            139.734375,
-            8.0,
-            232.5,
-            48.0
-          ],
-          "bbox_sirena": [
-            300.0,
-            50.0,
-            392.765625,
-            90.0
-          ],
-          "key": [
-            "state",
-            null,
-            "assemblies"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             89.734375,
             48.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            131.734375,
-            90.0
+            8.0,
+            8.0,
+            89.734375,
+            48.0
           ],
           "key": [
             "state",
             null,
             "assemble"
           ]
+        },
+        {
+          "bbox_reference": [
+            139.734375,
+            8.0,
+            232.5,
+            48.0
+          ],
+          "bbox_sirena": [
+            139.734375,
+            8.0,
+            232.5,
+            48.0
+          ],
+          "key": [
+            "state",
+            null,
+            "assemblies"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.518628,
+      "worst_e_c": 0.0,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -98385,7 +98385,7 @@
         "e_c": [
           "state",
           null,
-          "assemblies"
+          "assemble"
         ],
         "e_h": [
           "state",
@@ -98407,7 +98407,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.518628,
+        "worst_e_c": 0.0,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -98425,46 +98425,46 @@
       "top5": [
         {
           "bbox_reference": [
-            98.09375,
-            8.0,
-            138.1875,
-            48.0
-          ],
-          "bbox_sirena": [
-            300.0,
-            50.0,
-            337.875,
-            90.0
-          ],
-          "key": [
-            "state",
-            null,
-            "id2"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             48.09375,
             48.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            87.875,
-            90.0
+            8.0,
+            8.0,
+            45.875,
+            48.0
           ],
           "key": [
             "state",
             null,
             "id1"
           ]
+        },
+        {
+          "bbox_reference": [
+            98.09375,
+            8.0,
+            138.1875,
+            48.0
+          ],
+          "bbox_sirena": [
+            95.875,
+            8.0,
+            133.75,
+            48.0
+          ],
+          "key": [
+            "state",
+            null,
+            "id2"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.055339,
-      "worst_e_c": 1.165962,
+      "worst_e_c": 0.024437,
       "worst_e_h": 0.0,
       "worst_e_w": 0.055339,
       "worst_keys": {
@@ -98499,7 +98499,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 1.165962,
+        "worst_e_c": 0.024437,
         "worst_e_w": 0.055339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.055339,
@@ -100439,46 +100439,46 @@
       "top5": [
         {
           "bbox_reference": [
-            132.65625,
-            8.0,
-            217.984375,
-            48.0
-          ],
-          "bbox_sirena": [
-            300.0,
-            50.0,
-            392.765625,
-            90.0
-          ],
-          "key": [
-            "state",
-            null,
-            "assemblies"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             82.65625,
             48.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            131.734375,
-            90.0
+            8.0,
+            8.0,
+            89.734375,
+            48.0
           ],
           "key": [
             "state",
             null,
             "assemble"
           ]
+        },
+        {
+          "bbox_reference": [
+            132.65625,
+            8.0,
+            217.984375,
+            48.0
+          ],
+          "bbox_sirena": [
+            139.734375,
+            8.0,
+            232.5,
+            48.0
+          ],
+          "key": [
+            "state",
+            null,
+            "assemblies"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.09481,
-      "worst_e_c": 0.603772,
+      "worst_e_c": 0.050509,
       "worst_e_h": 0.0,
       "worst_e_w": 0.09481,
       "worst_keys": {
@@ -100513,7 +100513,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.603772,
+        "worst_e_c": 0.050509,
         "worst_e_w": 0.09481,
         "worst_e_h": 0.0,
         "worst_e_a": 0.09481,
@@ -100531,46 +100531,46 @@
       "top5": [
         {
           "bbox_reference": [
-            139.734375,
-            8.0,
-            232.5,
-            48.0
-          ],
-          "bbox_sirena": [
-            300.0,
-            50.0,
-            392.765625,
-            90.0
-          ],
-          "key": [
-            "state",
-            null,
-            "assemblies"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             89.734375,
             48.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            131.734375,
-            90.0
+            8.0,
+            8.0,
+            89.734375,
+            48.0
           ],
           "key": [
             "state",
             null,
             "assemble"
           ]
+        },
+        {
+          "bbox_reference": [
+            139.734375,
+            8.0,
+            232.5,
+            48.0
+          ],
+          "bbox_sirena": [
+            139.734375,
+            8.0,
+            232.5,
+            48.0
+          ],
+          "key": [
+            "state",
+            null,
+            "assemblies"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.518628,
+      "worst_e_c": 0.0,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -100583,7 +100583,7 @@
         "e_c": [
           "state",
           null,
-          "assemblies"
+          "assemble"
         ],
         "e_h": [
           "state",
@@ -100605,7 +100605,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.518628,
+        "worst_e_c": 0.0,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -100623,46 +100623,46 @@
       "top5": [
         {
           "bbox_reference": [
-            98.09375,
-            8.0,
-            138.1875,
-            48.0
-          ],
-          "bbox_sirena": [
-            300.0,
-            50.0,
-            337.875,
-            90.0
-          ],
-          "key": [
-            "state",
-            null,
-            "id2"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             48.09375,
             48.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            87.875,
-            90.0
+            8.0,
+            8.0,
+            45.875,
+            48.0
           ],
           "key": [
             "state",
             null,
             "id1"
           ]
+        },
+        {
+          "bbox_reference": [
+            98.09375,
+            8.0,
+            138.1875,
+            48.0
+          ],
+          "bbox_sirena": [
+            95.875,
+            8.0,
+            133.75,
+            48.0
+          ],
+          "key": [
+            "state",
+            null,
+            "id2"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.055339,
-      "worst_e_c": 1.165962,
+      "worst_e_c": 0.024437,
       "worst_e_h": 0.0,
       "worst_e_w": 0.055339,
       "worst_keys": {
@@ -100697,7 +100697,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 1.165962,
+        "worst_e_c": 0.024437,
         "worst_e_w": 0.055339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.055339,
@@ -100788,46 +100788,46 @@
       "top5": [
         {
           "bbox_reference": [
-            98.09375,
-            8.0,
-            138.1875,
-            48.0
-          ],
-          "bbox_sirena": [
-            300.0,
-            50.0,
-            337.875,
-            90.0
-          ],
-          "key": [
-            "state",
-            null,
-            "id2"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             48.09375,
             48.0
           ],
           "bbox_sirena": [
-            50.0,
-            50.0,
-            87.875,
-            90.0
+            8.0,
+            8.0,
+            45.875,
+            48.0
           ],
           "key": [
             "state",
             null,
             "id1"
           ]
+        },
+        {
+          "bbox_reference": [
+            98.09375,
+            8.0,
+            138.1875,
+            48.0
+          ],
+          "bbox_sirena": [
+            95.875,
+            8.0,
+            133.75,
+            48.0
+          ],
+          "key": [
+            "state",
+            null,
+            "id2"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.055339,
-      "worst_e_c": 1.165962,
+      "worst_e_c": 0.024437,
       "worst_e_h": 0.0,
       "worst_e_w": 0.055339,
       "worst_keys": {
@@ -100862,7 +100862,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 1.165962,
+        "worst_e_c": 0.024437,
         "worst_e_w": 0.055339,
         "worst_e_h": 0.0,
         "worst_e_a": 0.055339,
@@ -109146,34 +109146,15 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            97.0,
-            320.21875,
-            201.0
-          ],
-          "bbox_sirena": [
-            8.0,
-            97.0,
-            278.0,
-            201.0
-          ],
-          "key": [
-            "cluster",
-            null,
-            "section"
-          ]
-        },
-        {
-          "bbox_reference": [
             116.054688,
             8.0,
             222.492188,
             47.0
           ],
           "bbox_sirena": [
-            84.608,
+            111.608,
             8.0,
-            201.392,
+            228.392,
             47.0
           ],
           "key": [
@@ -109190,9 +109171,9 @@
             168.5
           ],
           "bbox_sirena": [
-            16.496,
+            43.496,
             122.0,
-            133.28,
+            160.28,
             161.0
           ],
           "key": [
@@ -109203,15 +109184,34 @@
         },
         {
           "bbox_reference": [
+            8.0,
+            97.0,
+            320.21875,
+            201.0
+          ],
+          "bbox_sirena": [
+            8.0,
+            97.0,
+            332.0,
+            201.0
+          ],
+          "key": [
+            "cluster",
+            null,
+            "section"
+          ]
+        },
+        {
+          "bbox_reference": [
             199.4375,
             122.0,
             285.21875,
             176.0
           ],
           "bbox_sirena": [
-            183.28,
+            210.28,
             122.0,
-            269.504,
+            296.504,
             176.0
           ],
           "key": [
@@ -109222,21 +109222,21 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.135222,
-      "worst_e_c": 0.071579,
+      "worst_e_a": 0.097207,
+      "worst_e_c": 0.030142,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.135222,
+      "worst_e_w": 0.097207,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "cluster",
-          null,
-          "section"
-        ],
-        "e_c": [
           "node",
           null,
           "A"
+        ],
+        "e_c": [
+          "node",
+          "section",
+          "C"
         ],
         "e_h": [
           "cluster",
@@ -109244,9 +109244,9 @@
           "section"
         ],
         "e_w": [
-          "cluster",
+          "node",
           null,
-          "section"
+          "A"
         ]
       }
     },
@@ -109258,10 +109258,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.071579,
-        "worst_e_w": 0.135222,
+        "worst_e_c": 0.030142,
+        "worst_e_w": 0.097207,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.135222,
+        "worst_e_a": 0.097207,
         "worst_analog": null
       }
     }
@@ -109276,34 +109276,15 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            97.0,
-            320.21875,
-            201.0
-          ],
-          "bbox_sirena": [
-            8.0,
-            97.0,
-            278.0,
-            201.0
-          ],
-          "key": [
-            "cluster",
-            null,
-            "section"
-          ]
-        },
-        {
-          "bbox_reference": [
             116.054688,
             8.0,
             222.492188,
             47.0
           ],
           "bbox_sirena": [
-            84.608,
+            111.608,
             8.0,
-            201.392,
+            228.392,
             47.0
           ],
           "key": [
@@ -109320,9 +109301,9 @@
             168.5
           ],
           "bbox_sirena": [
-            16.496,
+            43.496,
             122.0,
-            133.28,
+            160.28,
             161.0
           ],
           "key": [
@@ -109333,15 +109314,34 @@
         },
         {
           "bbox_reference": [
+            8.0,
+            97.0,
+            320.21875,
+            201.0
+          ],
+          "bbox_sirena": [
+            8.0,
+            97.0,
+            332.0,
+            201.0
+          ],
+          "key": [
+            "cluster",
+            null,
+            "section"
+          ]
+        },
+        {
+          "bbox_reference": [
             199.4375,
             122.0,
             285.21875,
             176.0
           ],
           "bbox_sirena": [
-            183.28,
+            210.28,
             122.0,
-            269.504,
+            296.504,
             176.0
           ],
           "key": [
@@ -109352,21 +109352,21 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.135222,
-      "worst_e_c": 0.071579,
+      "worst_e_a": 0.097207,
+      "worst_e_c": 0.030142,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.135222,
+      "worst_e_w": 0.097207,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "cluster",
-          null,
-          "section"
-        ],
-        "e_c": [
           "node",
           null,
           "A"
+        ],
+        "e_c": [
+          "node",
+          "section",
+          "C"
         ],
         "e_h": [
           "cluster",
@@ -109374,9 +109374,9 @@
           "section"
         ],
         "e_w": [
-          "cluster",
+          "node",
           null,
-          "section"
+          "A"
         ]
       }
     },
@@ -109388,10 +109388,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.071579,
-        "worst_e_w": 0.135222,
+        "worst_e_c": 0.030142,
+        "worst_e_w": 0.097207,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.135222,
+        "worst_e_a": 0.097207,
         "worst_analog": null
       }
     }
@@ -109406,34 +109406,15 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            97.0,
-            320.21875,
-            201.0
-          ],
-          "bbox_sirena": [
-            8.0,
-            97.0,
-            278.0,
-            201.0
-          ],
-          "key": [
-            "cluster",
-            null,
-            "section"
-          ]
-        },
-        {
-          "bbox_reference": [
             116.054688,
             8.0,
             222.492188,
             47.0
           ],
           "bbox_sirena": [
-            84.608,
+            111.608,
             8.0,
-            201.392,
+            228.392,
             47.0
           ],
           "key": [
@@ -109450,9 +109431,9 @@
             168.5
           ],
           "bbox_sirena": [
-            16.496,
+            43.496,
             122.0,
-            133.28,
+            160.28,
             161.0
           ],
           "key": [
@@ -109463,15 +109444,34 @@
         },
         {
           "bbox_reference": [
+            8.0,
+            97.0,
+            320.21875,
+            201.0
+          ],
+          "bbox_sirena": [
+            8.0,
+            97.0,
+            332.0,
+            201.0
+          ],
+          "key": [
+            "cluster",
+            null,
+            "section"
+          ]
+        },
+        {
+          "bbox_reference": [
             199.4375,
             122.0,
             285.21875,
             176.0
           ],
           "bbox_sirena": [
-            183.28,
+            210.28,
             122.0,
-            269.504,
+            296.504,
             176.0
           ],
           "key": [
@@ -109482,21 +109482,21 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.135222,
-      "worst_e_c": 0.071579,
+      "worst_e_a": 0.097207,
+      "worst_e_c": 0.030142,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.135222,
+      "worst_e_w": 0.097207,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "cluster",
-          null,
-          "section"
-        ],
-        "e_c": [
           "node",
           null,
           "A"
+        ],
+        "e_c": [
+          "node",
+          "section",
+          "C"
         ],
         "e_h": [
           "cluster",
@@ -109504,9 +109504,9 @@
           "section"
         ],
         "e_w": [
-          "cluster",
+          "node",
           null,
-          "section"
+          "A"
         ]
       }
     },
@@ -109518,10 +109518,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.071579,
-        "worst_e_w": 0.135222,
+        "worst_e_c": 0.030142,
+        "worst_e_w": 0.097207,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.135222,
+        "worst_e_a": 0.097207,
         "worst_analog": null
       }
     }
@@ -109536,34 +109536,15 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            97.0,
-            320.21875,
-            201.0
-          ],
-          "bbox_sirena": [
-            8.0,
-            97.0,
-            278.0,
-            201.0
-          ],
-          "key": [
-            "cluster",
-            null,
-            "section"
-          ]
-        },
-        {
-          "bbox_reference": [
             116.054688,
             8.0,
             222.492188,
             47.0
           ],
           "bbox_sirena": [
-            84.608,
+            111.608,
             8.0,
-            201.392,
+            228.392,
             47.0
           ],
           "key": [
@@ -109580,9 +109561,9 @@
             168.5
           ],
           "bbox_sirena": [
-            16.496,
+            43.496,
             122.0,
-            133.28,
+            160.28,
             161.0
           ],
           "key": [
@@ -109593,15 +109574,34 @@
         },
         {
           "bbox_reference": [
+            8.0,
+            97.0,
+            320.21875,
+            201.0
+          ],
+          "bbox_sirena": [
+            8.0,
+            97.0,
+            332.0,
+            201.0
+          ],
+          "key": [
+            "cluster",
+            null,
+            "section"
+          ]
+        },
+        {
+          "bbox_reference": [
             199.4375,
             122.0,
             285.21875,
             176.0
           ],
           "bbox_sirena": [
-            183.28,
+            210.28,
             122.0,
-            269.504,
+            296.504,
             176.0
           ],
           "key": [
@@ -109612,21 +109612,21 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.135222,
-      "worst_e_c": 0.071579,
+      "worst_e_a": 0.097207,
+      "worst_e_c": 0.030142,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.135222,
+      "worst_e_w": 0.097207,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "cluster",
-          null,
-          "section"
-        ],
-        "e_c": [
           "node",
           null,
           "A"
+        ],
+        "e_c": [
+          "node",
+          "section",
+          "C"
         ],
         "e_h": [
           "cluster",
@@ -109634,9 +109634,9 @@
           "section"
         ],
         "e_w": [
-          "cluster",
+          "node",
           null,
-          "section"
+          "A"
         ]
       }
     },
@@ -109648,10 +109648,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.071579,
-        "worst_e_w": 0.135222,
+        "worst_e_c": 0.030142,
+        "worst_e_w": 0.097207,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.135222,
+        "worst_e_a": 0.097207,
         "worst_analog": null
       }
     }
@@ -109666,34 +109666,15 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            97.0,
-            320.21875,
-            201.0
-          ],
-          "bbox_sirena": [
-            8.0,
-            97.0,
-            278.0,
-            201.0
-          ],
-          "key": [
-            "cluster",
-            null,
-            "section"
-          ]
-        },
-        {
-          "bbox_reference": [
             116.054688,
             8.0,
             222.492188,
             47.0
           ],
           "bbox_sirena": [
-            84.608,
+            111.608,
             8.0,
-            201.392,
+            228.392,
             47.0
           ],
           "key": [
@@ -109710,9 +109691,9 @@
             168.5
           ],
           "bbox_sirena": [
-            16.496,
+            43.496,
             122.0,
-            133.28,
+            160.28,
             161.0
           ],
           "key": [
@@ -109723,15 +109704,34 @@
         },
         {
           "bbox_reference": [
+            8.0,
+            97.0,
+            320.21875,
+            201.0
+          ],
+          "bbox_sirena": [
+            8.0,
+            97.0,
+            332.0,
+            201.0
+          ],
+          "key": [
+            "cluster",
+            null,
+            "section"
+          ]
+        },
+        {
+          "bbox_reference": [
             199.4375,
             122.0,
             285.21875,
             176.0
           ],
           "bbox_sirena": [
-            183.28,
+            210.28,
             122.0,
-            269.504,
+            296.504,
             176.0
           ],
           "key": [
@@ -109742,21 +109742,21 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.135222,
-      "worst_e_c": 0.071579,
+      "worst_e_a": 0.097207,
+      "worst_e_c": 0.030142,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.135222,
+      "worst_e_w": 0.097207,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "cluster",
-          null,
-          "section"
-        ],
-        "e_c": [
           "node",
           null,
           "A"
+        ],
+        "e_c": [
+          "node",
+          "section",
+          "C"
         ],
         "e_h": [
           "cluster",
@@ -109764,9 +109764,9 @@
           "section"
         ],
         "e_w": [
-          "cluster",
+          "node",
           null,
-          "section"
+          "A"
         ]
       }
     },
@@ -109778,10 +109778,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.071579,
-        "worst_e_w": 0.135222,
+        "worst_e_c": 0.030142,
+        "worst_e_w": 0.097207,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.135222,
+        "worst_e_a": 0.097207,
         "worst_analog": null
       }
     }
@@ -109796,34 +109796,15 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            97.0,
-            320.21875,
-            201.0
-          ],
-          "bbox_sirena": [
-            8.0,
-            97.0,
-            278.0,
-            201.0
-          ],
-          "key": [
-            "cluster",
-            null,
-            "section"
-          ]
-        },
-        {
-          "bbox_reference": [
             116.054688,
             8.0,
             222.492188,
             47.0
           ],
           "bbox_sirena": [
-            84.608,
+            111.608,
             8.0,
-            201.392,
+            228.392,
             47.0
           ],
           "key": [
@@ -109840,9 +109821,9 @@
             168.5
           ],
           "bbox_sirena": [
-            16.496,
+            43.496,
             122.0,
-            133.28,
+            160.28,
             161.0
           ],
           "key": [
@@ -109853,15 +109834,34 @@
         },
         {
           "bbox_reference": [
+            8.0,
+            97.0,
+            320.21875,
+            201.0
+          ],
+          "bbox_sirena": [
+            8.0,
+            97.0,
+            332.0,
+            201.0
+          ],
+          "key": [
+            "cluster",
+            null,
+            "section"
+          ]
+        },
+        {
+          "bbox_reference": [
             199.4375,
             122.0,
             285.21875,
             176.0
           ],
           "bbox_sirena": [
-            183.28,
+            210.28,
             122.0,
-            269.504,
+            296.504,
             176.0
           ],
           "key": [
@@ -109872,21 +109872,21 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.135222,
-      "worst_e_c": 0.071579,
+      "worst_e_a": 0.097207,
+      "worst_e_c": 0.030142,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.135222,
+      "worst_e_w": 0.097207,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "cluster",
-          null,
-          "section"
-        ],
-        "e_c": [
           "node",
           null,
           "A"
+        ],
+        "e_c": [
+          "node",
+          "section",
+          "C"
         ],
         "e_h": [
           "cluster",
@@ -109894,9 +109894,9 @@
           "section"
         ],
         "e_w": [
-          "cluster",
+          "node",
           null,
-          "section"
+          "A"
         ]
       }
     },
@@ -109908,10 +109908,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.071579,
-        "worst_e_w": 0.135222,
+        "worst_e_c": 0.030142,
+        "worst_e_w": 0.097207,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.135222,
+        "worst_e_a": 0.097207,
         "worst_analog": null
       }
     }
@@ -110263,25 +110263,6 @@
       "top5": [
         {
           "bbox_reference": [
-            62.730469,
-            226.0,
-            114.292969,
-            310.0
-          ],
-          "bbox_sirena": [
-            269.016,
-            50.0,
-            320.344,
-            134.0
-          ],
-          "key": [
-            "class",
-            null,
-            "Dog"
-          ]
-        },
-        {
-          "bbox_reference": [
             8.0,
             8.0,
             169.023438,
@@ -110298,11 +110279,30 @@
             null,
             "Duck"
           ]
+        },
+        {
+          "bbox_reference": [
+            62.730469,
+            226.0,
+            114.292969,
+            310.0
+          ],
+          "bbox_sirena": [
+            108.844,
+            268.0,
+            160.172,
+            352.0
+          ],
+          "key": [
+            "class",
+            null,
+            "Dog"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.049636,
-      "worst_e_c": 0.797383,
+      "worst_e_c": 0.011677,
       "worst_e_h": 0.0,
       "worst_e_w": 0.049636,
       "worst_keys": {
@@ -110337,7 +110337,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.797383,
+        "worst_e_c": 0.011677,
         "worst_e_w": 0.049636,
         "worst_e_h": 0.0,
         "worst_e_a": 0.049636,
