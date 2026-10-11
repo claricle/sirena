@@ -79,6 +79,7 @@ module Sirena
       class Participant < Lutaml::Model::Serializable
         attribute :id, :string
         attribute :actor_type, :string
+        attribute :shape_type, :string
         attribute :x, :float
         attribute :y, :float
         attribute :width, :float
@@ -87,6 +88,8 @@ module Sirena
         attribute :label, Label
         attribute :actor_head, Circle
         attribute :actor_lines, Line, collection: true, default: -> { [] }
+        attribute :shape_circle, Circle
+        attribute :shape_lines, Line, collection: true, default: -> { [] }
       end
 
       class Message < Lutaml::Model::Serializable
@@ -302,6 +305,7 @@ module Sirena
             labels: [label],
             metadata: {
               actor_type: participant_type(graph, participant),
+              shape_type: participant_shape(graph, participant),
               created: created?(graph, participant),
               index: index,
               lifeline_length: calculate_lifeline_length(graph),
@@ -323,6 +327,10 @@ module Sirena
 
       def created?(graph, participant)
         semantic_value(graph, participant.id, "participant_created") == "true"
+      end
+
+      def participant_shape(graph, participant)
+        semantic_value(graph, participant.id, "participant_shape")
       end
 
       def transform_messages(graph)
@@ -474,15 +482,20 @@ module Sirena
 
         label = participant[:labels]&.first
         actor_type = participant.dig(:metadata, :actor_type) || "participant"
+        shape_type = participant.dig(:metadata, :shape_type)
         Participant.new(
-          id: participant[:id], actor_type: actor_type,
+          id: participant[:id], actor_type: actor_type, shape_type: shape_type,
           x: position[:x], y: position[:y],
           width: participant[:width] || PARTICIPANT_WIDTH,
           height: participant[:height] || PARTICIPANT_HEIGHT,
           corner_radius: 5,
-          label: typed_participant_label(label, position, actor_type),
+          label: typed_participant_label(
+            label, position, actor_type, shape_type
+          ),
           actor_head: actor_head(position, actor_type),
-          actor_lines: actor_lines(position, actor_type)
+          actor_lines: actor_lines(position, actor_type),
+          shape_circle: participant_shape_circle(position, shape_type),
+          shape_lines: participant_shape_lines(position, shape_type)
         )
       end
 
@@ -516,19 +529,50 @@ module Sirena
         participant.is_a?(Participant) ? participant.id : participant[:id]
       end
 
-      def typed_participant_label(label, position, actor_type = nil)
+      def typed_participant_label(label, position, actor_type = nil,
+                                  shape_type = nil)
         return unless label
 
         Label.new(
           text: label[:text], width: label[:width], height: label[:height],
           x: position[:center_x],
-          y: position[:y] + label_offset(actor_type),
+          y: position[:y] + label_offset(actor_type, shape_type),
           font_size: participant_font_size
         )
       end
 
-      def label_offset(actor_type)
+      def label_offset(actor_type, shape_type = nil)
+        return 61 if shape_type == "control"
+        return 63 if %w[boundary entity].include?(shape_type)
+
         actor_type == "actor" ? ACTOR_LABEL_OFFSET : PARTICIPANT_HEIGHT / 2
+      end
+
+      def participant_shape_circle(position, shape_type)
+        vertical_offsets = { "boundary" => 33, "control" => 32,
+                             "entity" => 31 }
+        offset = vertical_offsets[shape_type]
+        return unless offset
+
+        Circle.new(x: position[:center_x], y: position[:y] + offset,
+                   radius: 22)
+      end
+
+      def participant_shape_lines(position, shape_type)
+        center = position[:center_x]
+        top = position[:y]
+        case shape_type
+        when "boundary"
+          [line(center - 55, top + 33, center - 15, top + 33),
+           line(center - 55, top + 23, center - 55, top + 43)]
+        when "control"
+          [line(center - 4, top + 13, center + 4, top + 13),
+           line(center + 4, top + 13, center + 1, top + 17)]
+        when "entity"
+          [line(center - 22, top + 53, center + 22, top + 53)]
+        else
+          []
+        end
       end
 
       # The stick figure mmdc draws for an actor: a 15 radius head at y+10,
