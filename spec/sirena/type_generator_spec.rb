@@ -46,6 +46,21 @@ module TypeGeneratorSpecHelpers
     nil
   end
 
+  def fail_write(number, error)
+    writes = 0
+    allow(File).to receive(:write).and_wrap_original do |method, *args|
+      writes += 1
+      result = method.call(*args)
+      raise error if writes == number
+
+      result
+    end
+  end
+
+  def tree_snapshot(root, table_path, ir_map_path)
+    [written_paths(root), File.binread(table_path), File.binread(ir_map_path)]
+  end
+
   def copy_acceptance_tree(destination)
     ACCEPTANCE_PATHS.each do |relative|
       source = File.join(REPO, relative)
@@ -174,6 +189,7 @@ RSpec.describe Sirena::TypeGenerator do
       "a name with a dash" => "my-chart",
       "a name starting with a digit" => "1demo",
       "an existing type" => "pie",
+      "a name that reuses an existing handler" => "xy_chart",
       "a keyword an earlier row claims" => "information",
     }.each do |label, name|
       it "refuses #{label}" do
@@ -203,6 +219,33 @@ RSpec.describe Sirena::TypeGenerator do
         suppress_refusal { generate(TypeGeneratorSpecHelpers::UNIT_NAME) }
         expect(File.read(table_path)).to eq(before_table)
       end
+    end
+  end
+
+  describe "filesystem failures" do
+    let!(:before_files) { written_paths(root) }
+    let!(:before_table) { File.binread(table_path) }
+    let!(:before_map) { File.binread(ir_map_path) }
+
+    before { fail_write(15, Errno::ENOSPC.new) }
+
+    it "reports a generator error instead of a raw filesystem exception" do
+      expect { generate(TypeGeneratorSpecHelpers::UNIT_NAME) }
+        .to raise_error(described_class::Error, /could not write scaffold/)
+    end
+
+    it "restores the complete tree after a partial write" do
+      suppress_refusal { generate(TypeGeneratorSpecHelpers::UNIT_NAME) }
+
+      expect(tree_snapshot(root, table_path, ir_map_path))
+        .to eq([before_files, before_table, before_map])
+    end
+
+    it "can retry cleanly after the transient failure" do
+      suppress_refusal { generate(TypeGeneratorSpecHelpers::UNIT_NAME) }
+
+      expect { generate(TypeGeneratorSpecHelpers::UNIT_NAME) }
+        .not_to raise_error
     end
   end
 
