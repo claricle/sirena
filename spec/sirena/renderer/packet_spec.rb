@@ -6,28 +6,35 @@ require "sirena/layout/packet"
 require "sirena/diagram/packet"
 
 RSpec.describe Sirena::Renderer::Packet do
-  let(:theme) { Sirena::Theme::Registry.get(:default) }
-  let(:renderer) { described_class.new(theme: theme) }
+  let(:renderer) { described_class.new }
+  let(:title) { nil }
+  let(:fields) { [] }
+  let(:source) do
+    lines = ["packet-beta"]
+    lines << "  title #{title}" if title
+    fields.each do |first, last, label|
+      lines << %(  #{first}-#{last}: "#{label}")
+    end
+    lines.join("\n")
+  end
+  let(:layout) do
+    diagram = Sirena::Parser::Packet.new.parse(source)
+    Sirena::Layout::Packet.new.call(diagram)
+  end
 
   def text_content(text)
     Array(text.content).join
   end
 
   describe "#render" do
+    it "refuses legacy Hash geometry at the typed Scene boundary" do
+      expect { renderer.render(fields: [], row_count: 0, title: nil) }
+        .to raise_error(NoMethodError)
+    end
+
     context "with a simple packet" do
-      let(:layout) do
-        {
-          fields: [
-            {
-              label: "hello",
-              bit_start: 0,
-              bit_end: 10,
-            },
-          ],
-          row_count: 1,
-          title: "Hello world",
-        }
-      end
+      let(:title) { "Hello world" }
+      let(:fields) { [[0, 10, "hello"]] }
 
       it "renders an SVG document" do
         svg = renderer.render(layout)
@@ -75,28 +82,9 @@ RSpec.describe Sirena::Renderer::Packet do
     end
 
     context "with multiple fields" do
-      let(:layout) do
-        {
-          fields: [
-            {
-              label: "Source Port",
-              bit_start: 0,
-              bit_end: 7,
-            },
-            {
-              label: "Destination Port",
-              bit_start: 8,
-              bit_end: 15,
-            },
-            {
-              label: "Sequence Number",
-              bit_start: 16,
-              bit_end: 31,
-            },
-          ],
-          row_count: 1,
-          title: nil,
-        }
+      let(:fields) do
+        [[0, 7, "Source Port"], [8, 15, "Destination Port"],
+         [16, 31, "Sequence Number"]]
       end
 
       it "renders all fields" do
@@ -115,24 +103,7 @@ RSpec.describe Sirena::Renderer::Packet do
     end
 
     context "with multi-row packet" do
-      let(:layout) do
-        {
-          fields: [
-            {
-              label: "Field 1",
-              bit_start: 0,
-              bit_end: 31,
-            },
-            {
-              label: "Field 2",
-              bit_start: 32,
-              bit_end: 63,
-            },
-          ],
-          row_count: 2,
-          title: nil,
-        }
-      end
+      let(:fields) { [[0, 31, "Field 1"], [32, 63, "Field 2"]] }
 
       it "renders fields in different rows" do
         svg = renderer.render(layout)
@@ -149,15 +120,7 @@ RSpec.describe Sirena::Renderer::Packet do
       end
     end
 
-    context "with empty layout" do
-      let(:layout) do
-        {
-          fields: [],
-          row_count: 0,
-          title: nil,
-        }
-      end
-
+    context "with an empty Scene" do
       it "renders without errors" do
         expect { renderer.render(layout) }.not_to raise_error
       end
@@ -169,34 +132,8 @@ RSpec.describe Sirena::Renderer::Packet do
     end
 
     context "with field spanning multiple rows" do
-      let(:layout) do
-        {
-          fields: [
-            {
-              label: "Short Field",
-              bit_start: 0,
-              bit_end: 15,
-              is_continuation: false,
-              is_final: true,
-            },
-            {
-              label: "Long Field",
-              bit_start: 16,
-              bit_end: 31,
-              is_continuation: false,
-              is_final: false,
-            },
-            {
-              label: "Long Field",
-              bit_start: 32,
-              bit_end: 47,
-              is_continuation: true,
-              is_final: true,
-            },
-          ],
-          row_count: 2,
-          title: nil,
-        }
+      let(:fields) do
+        [[0, 15, "Short Field"], [16, 47, "Long Field"]]
       end
 
       it "renders all field segments" do

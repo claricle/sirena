@@ -19,10 +19,9 @@ module Sirena
     class Packet < Base
       # Renders the layout structure to SVG.
       #
-      # @param layout [Layout::Packet::Scene, Hash] scene or legacy graph
+      # @param scene [Layout::Packet::Scene] final packet geometry
       # @return [Svg::Document] rendered SVG document
-      def render(layout)
-        scene = typed_scene(layout)
+      def render(scene)
         svg = create_document(scene)
         scene.fields.each { |field| render_typed_field(field, svg) }
         svg << label_element(scene.title) if scene.title
@@ -30,12 +29,6 @@ module Sirena
       end
 
       protected
-
-      def typed_scene(layout)
-        return layout if layout.is_a?(Layout::Packet::Scene)
-
-        Layout::Packet.from_graph(layout, theme: theme)
-      end
 
       def render_typed_field(field, svg)
         svg << field_box(field.box)

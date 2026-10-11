@@ -54,12 +54,6 @@ module Sirena
         attribute :fields, Field, collection: true, default: -> { [] }
       end
 
-      def self.from_graph(graph, theme: nil)
-        layout = new
-        layout.theme = theme if theme
-        layout.send(:scene_from_graph, graph)
-      end
-
       # Transforms the diagram into a layout structure.
       #
       # @param diagram [Diagram::Packet] the packet diagram
