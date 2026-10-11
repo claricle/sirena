@@ -23,7 +23,8 @@ module Sirena
       class DirectedPlacement
         PAGE_MARGIN = 8.0
         CLUSTER_PADDING = 20.0
-        EMPTY_CLUSTER_HEIGHT = 50.0
+        CLUSTER_SIDE = 8.0
+        CLUSTER_VERTICAL = 25.0
         MIRRORED_X = [Base::DIRECTION_LEFT].freeze
         MIRRORED_Y = [Base::DIRECTION_UP].freeze
 
@@ -103,15 +104,14 @@ module Sirena
 
         def place_cluster(cluster, frame)
           contents = cluster[:children] || []
-          inner = inner_frame(cluster, frame)
-          place_level(contents, cluster[:id], inner)
+          place_level(contents, cluster[:id], inner_frame(cluster, frame))
           if contents.empty?
             cluster[:width] = titled_width(cluster)
-            cluster[:height] = EMPTY_CLUSTER_HEIGHT
+            cluster[:height] = CLUSTER_VERTICAL * 2
             return
           end
 
-          fit(cluster, contents, inner.box_margins)
+          fit(cluster, contents)
         end
 
         # A subgraph with its own `direction`, or with no edge crossing its
@@ -125,20 +125,23 @@ module Sirena
           frame.nested
         end
 
-        # The contents sit one margin from the left and the top; a title
-        # wider than them stretches the box and the contents are centred in
-        # it.
-        def fit(cluster, contents, margins)
-          beside, above = margins
+        # The contents sit CLUSTER_SIDE from the left and CLUSTER_VERTICAL
+        # below the top; a title wider than them stretches the box and the
+        # contents are centred in it.
+        def fit(cluster, contents)
           inner = right_of(contents) - left_of(contents)
-          cluster[:width] = [inner + (beside * 2), titled_width(cluster)].max
-          settle(contents, cluster[:width] - inner, above)
-          cluster[:height] = bottom_of(contents) + above
+          cluster[:width] = boxed_width(cluster, inner)
+          settle(contents, cluster[:width] - inner)
+          cluster[:height] = bottom_of(contents) + CLUSTER_VERTICAL
         end
 
-        def settle(contents, spare, above)
+        def boxed_width(cluster, inner)
+          [inner + (CLUSTER_SIDE * 2), titled_width(cluster)].max.ceil
+        end
+
+        def settle(contents, spare)
           shift(contents, (spare / 2.0) - left_of(contents),
-                above - top_of(contents))
+                CLUSTER_VERTICAL - top_of(contents))
         end
 
         def left_of(boxes)

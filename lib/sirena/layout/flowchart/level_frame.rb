@@ -9,12 +9,8 @@ module Sirena
       # than the graph around it. Without a `direction` of its own it turns
       # the graph sideways: a downward graph holds a rightward subgraph and
       # any other graph holds a downward one.
-      #
-      # A subgraph box keeps half a rank step from its contents along the
-      # flow and CROSS_MARGIN across it.
       class LevelFrame
         RANK_STEP = 25.0
-        CROSS_MARGIN = 35.0
         SIDEWAYS = [Base::DIRECTION_RIGHT, Base::DIRECTION_LEFT].freeze
 
         attr_reader :direction, :rank_spacing
@@ -34,13 +30,6 @@ module Sirena
 
         def sideways?
           SIDEWAYS.include?(direction)
-        end
-
-        # @return [Array<Float>] the room a subgraph box keeps from its
-        #   contents on each side, as [beside, above and below]
-        def box_margins
-          along = rank_spacing / 2.0
-          sideways? ? [along, CROSS_MARGIN] : [CROSS_MARGIN, along]
         end
 
         private

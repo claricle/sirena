@@ -2,6 +2,8 @@
 
 # Lays out small flowcharts of rect nodes for the flowchart layout specs.
 module FlowchartSceneBuilder
+  BOX_ATTRIBUTES = %w[x y width height].freeze
+
   module_function
 
   # @param links [Array<Array>] [from, to] or [from, to, label]
@@ -44,6 +46,39 @@ module FlowchartSceneBuilder
   def gap(scene, from_id, to_id, axis)
     nodes = scene.children.to_h { |node| [node.id, node] }
     clearance(nodes[from_id], nodes[to_id], axis)
+  end
+
+  # How far a flowchart's one subgraph box sits outside the boxes it
+  # holds, as [left, right, top, bottom], read off the rendered SVG.
+  def cluster_margins(source)
+    rects = svg_rects(source)
+    cluster = rects.max_by { |_, _, width, height| width * height }
+    margins(cluster, rects.reject { |rect| rect == cluster })
+  end
+
+  def svg_rects(source)
+    Sirena::Engine.new.render(source).scan(/<rect[^>]*>/).map do |tag|
+      BOX_ATTRIBUTES.map { |name| tag[/\s#{name}="(-?[\d.]+)"/, 1].to_f }
+    end
+  end
+
+  def margins(cluster, inner)
+    held = hull(inner)
+    outer = sides(cluster)
+    [held[0] - outer[0], outer[2] - held[2],
+     held[1] - outer[1], outer[3] - held[3]]
+  end
+
+  # The [left, top, right, bottom] of the smallest box around the rectangles.
+  def hull(rects)
+    lefts, tops, rights, bottoms = rects.map { |rect| sides(rect) }.transpose
+    [lefts.min, tops.min, rights.max, bottoms.max]
+  end
+
+  # [left, top, right, bottom] of an [x, y, width, height] rectangle.
+  def sides(rect)
+    x, y, width, height = rect
+    [x, y, x + width, y + height]
   end
 
   def rect(id, label)
