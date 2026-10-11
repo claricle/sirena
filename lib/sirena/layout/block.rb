@@ -23,6 +23,7 @@ module Sirena
       DEFAULT_SPACING = 20
       DEFAULT_COMPOUND_PADDING = 8
       COMPACT_TEXT_WIDTH_SCALE = 1.16
+      COMPACT_TEXT_WIDTH_FONT_SIZE = 16
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -295,7 +296,9 @@ module Sirena
         current_col = 0
         row_heights = []
         col_widths = Array.new(columns, 0)
-        span_column_width = span_column_width(blocks) if span_layout
+        width_font_size = compact_width_font_size(columns, span_layout)
+        span_column_width = span_column_width(blocks, width_font_size) if
+          span_layout
         uniform_grid = uniform_grid_dimensions(blocks, auto_layout)
 
         blocks.each do |block|
@@ -317,7 +320,8 @@ module Sirena
           # Calculate block dimensions
           dims = block_dimensions(
             block, auto_layout: auto_layout, span_layout: span_layout,
-                   uniform_grid: uniform_grid
+                   uniform_grid: uniform_grid,
+                   width_font_size: width_font_size
           )
 
           # Check if block fits in current row
@@ -383,9 +387,13 @@ module Sirena
         positioned_blocks
       end
 
-      def block_dimensions(block, auto_layout:, span_layout:, uniform_grid:)
+      def block_dimensions(block, auto_layout:, span_layout:, uniform_grid:,
+                           width_font_size:)
         compact = (auto_layout || span_layout) && !compound?(block)
-        dimensions = calculate_block_dimensions(block, auto_layout: compact)
+        width_font_size = normal_font_size if special_shape?(block)
+        dimensions = calculate_block_dimensions(
+          block, auto_layout: compact, width_font_size: width_font_size
+        )
         return dimensions unless uniform_grid
         return calculate_block_dimensions(block, auto_layout: true) if
           special_shape?(block)
@@ -454,10 +462,17 @@ module Sirena
         }
       end
 
-      def span_column_width(blocks)
+      def compact_width_font_size(columns, span_layout)
+        return normal_font_size if span_layout && columns == 1
+
+        COMPACT_TEXT_WIDTH_FONT_SIZE
+      end
+
+      def span_column_width(blocks, width_font_size)
         blocks.reject { |block| space?(block) }.map do |block|
           calculate_block_dimensions(
-            block, auto_layout: !compound?(block)
+            block, auto_layout: !compound?(block),
+                   width_font_size: width_font_size
           )[:width]
         end.max
       end
@@ -525,7 +540,8 @@ module Sirena
         layout_compound_children(child, geometry[:x], geometry[:y])
       end
 
-      def calculate_block_dimensions(block, auto_layout:)
+      def calculate_block_dimensions(block, auto_layout:,
+                                     width_font_size: normal_font_size)
         if arrow?(block)
           return {
             width: DEFAULT_BLOCK_WIDTH / 2,
@@ -535,7 +551,12 @@ module Sirena
 
         label = block_label_text(block)
         label_dims = measure_text(label, font_size: normal_font_size)
-        width = label_dims[:width] + (auto_layout ? 8 : 40)
+        label_width = if auto_layout && width_font_size != normal_font_size
+                        measure_text(label, font_size: width_font_size)[:width]
+                      else
+                        label_dims[:width]
+                      end
+        width = label_width + (auto_layout ? 8 : 40)
         height = label_dims[:height] + (auto_layout ? 13 : 30)
         unless auto_layout
           width = [width, DEFAULT_BLOCK_WIDTH].max
