@@ -303,7 +303,8 @@ module Sirena
 
         GanttTicks.times(start, stop, interval).map do |tick|
           fraction = (tick - origin) / (days * DAY_SECONDS)
-          [tick, fraction * width / TIMELINE_WIDTH]
+          pixels = (fraction * width).round + 0.5
+          [tick, pixels / TIMELINE_WIDTH]
         end
       end
 
@@ -754,11 +755,14 @@ module Sirena
       end
 
       def task_timing(task, axis)
+        start_x = calculate_x_position(task.calculated_start, axis)
+        width = task_width(task, axis)
+        snapped_start = start_x.round
         {
           start_date: task.calculated_start&.to_date,
           end_date: task.calculated_end&.to_date,
-          start_x: calculate_x_position(task.calculated_start, axis),
-          width: task_width(task, axis),
+          start_x: snapped_start,
+          width: (start_x + width).round - snapped_start,
         }
       end
 
