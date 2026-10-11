@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 require_relative "base"
-require_relative "line_break_text"
 require_relative "../svg/document"
 require_relative "../svg/circle"
 require_relative "../svg/rect"
 require_relative "../svg/path"
 require_relative "../svg/line"
 require_relative "../svg/text"
+require_relative "../svg/tspan"
 require_relative "../svg/group"
 require_relative "../svg/polygon"
 
@@ -237,19 +237,29 @@ module Sirena
           t.font_size = (label.font_size || 12).to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         end
-        fill_lines(text, label.text)
+        fill_lines(text, label)
 
         group.add_child(text)
       end
 
       # One tspan per line. A line that is followed by another ends in a
       # space, so the label still reads as one sentence.
-      def fill_lines(text, raw)
-        lines = raw.split("\n", -1)
-        return text.tap { text.content = raw } if lines.one?
+      def fill_lines(text, label)
+        if label.lines.one?
+          return text.tap { text.content = label.lines.first.text }
+        end
 
-        spaced = lines[0...-1].map { |line| "#{line} " } << lines.last
-        LineBreakText.fill_lines(text, spaced)
+        text.tspans = label.lines.each_with_index.map do |line, index|
+          label_run(line, first: index.zero?)
+        end
+      end
+
+      def label_run(line, first:)
+        Svg::Tspan.new.tap do |run|
+          run.content = line.text
+          run.x = line.x
+          run.y = line.y unless first
+        end
       end
 
       # Gets the color for a level.

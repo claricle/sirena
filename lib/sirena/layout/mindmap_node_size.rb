@@ -5,12 +5,13 @@ require_relative "../text_measurement"
 module Sirena
   module Layout
     # The box mmdc draws around a mindmap label. mmdc measures the label at
-    # 16px, wraps it at 200px, stacks 24px lines, and pads that text box per
-    # shape. Hexagon, bang and cloud sizes are linear fits to the mmdc
-    # references (one, three and two measured labels), not mmdc's own rule.
+    # 16px, wraps it at 200px, stacks lines at 1.5 times their size, and
+    # pads that text box per shape. Hexagon, bang and cloud sizes are linear
+    # fits to the mmdc references, not mmdc's own rule.
     class MindmapNodeSize
       FONT_SIZE = 16
       LINE_HEIGHT = 24
+      LINE_HEIGHT_RATIO = LINE_HEIGHT.fdiv(FONT_SIZE)
       MAX_TEXT_WIDTH = 200
       BREAK = %r{<br\s*/?>|\r?\n}i
 
@@ -32,11 +33,14 @@ module Sirena
       # @param label [String] node label, possibly with line breaks
       # @param shape [String] mindmap node shape
       # @return [Hash] :width, :height and the wrapped :lines
-      def self.call(label, shape)
-        new(label).call(shape)
+      def self.call(label, shape, font_size: FONT_SIZE,
+                    line_height: LINE_HEIGHT_RATIO)
+        new(label, font_size, line_height).call(shape)
       end
 
-      def initialize(label)
+      def initialize(label, font_size, line_height)
+        @font_size = font_size
+        @line_height = line_height
         @lines = label.to_s.split(BREAK).map(&:strip).reject(&:empty?)
         @lines = [""] if @lines.empty?
       end
@@ -74,11 +78,11 @@ module Sirena
       end
 
       def text_height
-        wrapped.length * LINE_HEIGHT
+        wrapped.length * @font_size * @line_height
       end
 
       def measure(text)
-        TextMeasurement.measure(text, font_size: FONT_SIZE)[:width]
+        TextMeasurement.measure(text, font_size: @font_size)[:width]
       end
     end
   end
