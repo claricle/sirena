@@ -137,21 +137,21 @@ RSpec.describe Sirena::Layout::ClassDiagram do
 
   it "positions class nodes through the fallback grid inside layout" do
     expect(scene.children.map { |node| [node.id, node.x, node.y] })
-      .to eq([["Animal", 50.0, 50.0], ["Dog", 68.176, 244.0]])
+      .to eq([["Animal", 50.0, 226.0], ["Dog", 68.176, 50.0]])
   end
 
   it "carries final member rows without renderer graph lookups" do
     expect(member_rows(scene.children.first)).to eq(
       [["#int age"], ["+breathe()"],
-       [[50.0, 83.0, 175.744, 83.0],
-        [50.0, 116.0, 175.744, 116.0]]],
+       [[50.0, 259.0, 175.744, 259.0],
+        [50.0, 292.0, 175.744, 292.0]]],
     )
   end
 
   it "carries final relationship endpoints, labels, and marker geometry" do
     expect(edge_geometry(scene.edges.first)).to eq(
-      ["Animal", "Dog", [112.872, 194.0],
-       [112.872, 244.0],
+      ["Animal", "Dog", [112.872, 226.0],
+       [112.872, 176.0],
        ["knows"], ["#000000"]],
     )
   end

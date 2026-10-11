@@ -37,19 +37,27 @@ module Sirena
           Base::ElkOptions::NODE_NODE_SPACING => DAGRE_GAP,
           Base::ElkOptions::LAYER_SPACING => DAGRE_GAP,
         )
-        Flowchart::DirectedPlacement.apply(graph)
+        ranked = graph.merge(edges: written(graph))
+        Flowchart::DirectedPlacement.apply(ranked)
+        graph.merge!(ranked.except(:edges))
+      end
+
+      # mmdc ranks every relation in written order; the builder stores
+      # `A <|-- B` as B -> A and flags it, so flip flagged edges back for
+      # ranking only (the graph's own edges keep their routing direction).
+      def self.written(graph)
+        Array(graph[:edges]).map do |edge|
+          next edge unless edge.dig(:metadata, :written_reversed)
+
+          edge.merge(sources: edge[:targets], targets: edge[:sources])
+        end
       end
 
       def self.connected_pair(graph, children)
         return unless connected_pair_candidate?(graph, children)
 
-        edge = Array(graph[:edges]).first
-        terminals = edge_terminals(edge)
-        map_pair(children, terminals, inheritance?(edge)) if terminals
-      end
-
-      def self.inheritance?(edge)
-        edge.dig(:metadata, :relationship_type) == "inheritance"
+        terminals = edge_terminals(written(graph).first)
+        map_pair(children, terminals) if terminals
       end
 
       def self.connected_pair_candidate?(graph, children)
@@ -57,14 +65,10 @@ module Sirena
           ordinary_pair?(children) && Array(graph[:edges]).one?
       end
 
-      # mmdc ranks a relation as written, first class on top. The builder
-      # swaps `<|--` ends, so for inheritance the earlier-mentioned class is
-      # the written first one; other pairs keep the edge direction.
-      def self.map_pair(children, terminals, mention_order)
+      def self.map_pair(children, terminals)
         children_by_id = children.to_h { |child| [child[:id], child] }
         return unless children_by_id.size == 2
         return unless terminals.all? { |id| children_by_id.key?(id) }
-        return children if mention_order
 
         terminals.map { |id| children_by_id.fetch(id) }
       end
@@ -135,7 +139,7 @@ module Sirena
       end
 
       private_class_method :layered?, :layered, :connected_pair,
-                           :connected_pair_candidate?, :inheritance?, :map_pair,
+                           :connected_pair_candidate?, :written, :map_pair,
                            :ordinary_pair?, :edge_terminals,
                            :pack_connected_pair, :target_y, :centered_x, :pack,
                            :columns, :place, :offsets, :cell, :nested?
