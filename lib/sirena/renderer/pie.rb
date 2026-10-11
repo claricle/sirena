@@ -40,7 +40,7 @@ module Sirena
         Svg::Circle.new(
           cx: Layout::Pie::CENTER_X, cy: Layout::Pie::CENTER_Y,
           r: Layout::Pie::OUTER_RADIUS, fill: "none", stroke_width: "2",
-          stroke: theme_color(:label_text) || "#000000"
+          stroke: theme_color(:label_text)
         )
       end
 
@@ -59,7 +59,7 @@ module Sirena
         Svg::Path.new.tap do |path|
           path.d = slice.path
           path.fill = get_slice_color(slice.color_index)
-          path.stroke = theme_color(:node_stroke) || "#ffffff"
+          path.stroke = theme_color(:node_stroke)
           path.stroke_width = "2"
           path.id = slice.id.sub("_", "-")
         end
@@ -82,7 +82,7 @@ module Sirena
       end
 
       def apply_text_theme(text, font_size)
-        text.fill = theme_color(:label_text) || "#000000"
+        text.fill = theme_color(:label_text)
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         text.font_size = number_string(font_size)
       end
