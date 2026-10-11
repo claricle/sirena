@@ -7663,9 +7663,9 @@
             369.0
           ],
           "bbox_sirena": [
-            45.968,
+            73.928,
             287.5,
-            116.112,
+            144.072,
             371.5
           ],
           "key": [
@@ -7696,7 +7696,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.00062,
-      "worst_e_c": 0.080013,
+      "worst_e_c": 0.00002,
       "worst_e_h": 0.0,
       "worst_e_w": 0.00062,
       "worst_keys": {
@@ -7709,7 +7709,7 @@
         "e_c": [
           "class",
           null,
-          "Class2"
+          "Class1"
         ],
         "e_h": [
           "class",
@@ -7731,7 +7731,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.080013,
+        "worst_e_c": 0.00002,
         "worst_e_w": 0.00062,
         "worst_e_h": 0.0,
         "worst_e_a": 0.00062,
@@ -9888,9 +9888,9 @@
             573.0
           ],
           "bbox_sirena": [
-            45.968,
+            45.976,
             383.5,
-            172.016,
+            172.024,
             575.5
           ],
           "key": [
@@ -9921,7 +9921,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.000239,
-      "worst_e_c": 0.000028,
+      "worst_e_c": 0.000013,
       "worst_e_h": 0.0,
       "worst_e_w": 0.000239,
       "worst_keys": {
@@ -9934,7 +9934,7 @@
         "e_c": [
           "class",
           null,
-          "Class2"
+          "Class1"
         ],
         "e_h": [
           "class",
@@ -9956,7 +9956,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.000028,
+        "worst_e_c": 0.000013,
         "worst_e_w": 0.000239,
         "worst_e_h": 0.0,
         "worst_e_a": 0.000239,
@@ -11376,9 +11376,9 @@
             573.0
           ],
           "bbox_sirena": [
-            45.968,
+            45.976,
             383.5,
-            172.016,
+            172.024,
             575.5
           ],
           "key": [
@@ -11409,7 +11409,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.000239,
-      "worst_e_c": 0.000028,
+      "worst_e_c": 0.000013,
       "worst_e_h": 0.0,
       "worst_e_w": 0.000239,
       "worst_keys": {
@@ -11422,7 +11422,7 @@
         "e_c": [
           "class",
           null,
-          "Class2"
+          "Class1"
         ],
         "e_h": [
           "class",
@@ -11444,7 +11444,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.000028,
+        "worst_e_c": 0.000013,
         "worst_e_w": 0.000239,
         "worst_e_h": 0.0,
         "worst_e_a": 0.000239,
@@ -13104,9 +13104,9 @@
             369.0
           ],
           "bbox_sirena": [
-            45.968,
+            73.928,
             287.5,
-            116.112,
+            144.072,
             371.5
           ],
           "key": [
@@ -13137,7 +13137,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.00062,
-      "worst_e_c": 0.080013,
+      "worst_e_c": 0.00002,
       "worst_e_h": 0.0,
       "worst_e_w": 0.00062,
       "worst_keys": {
@@ -13150,7 +13150,7 @@
         "e_c": [
           "class",
           null,
-          "Class2"
+          "Class1"
         ],
         "e_h": [
           "class",
@@ -13172,7 +13172,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.080013,
+        "worst_e_c": 0.00002,
         "worst_e_w": 0.00062,
         "worst_e_h": 0.0,
         "worst_e_a": 0.00062,
@@ -13434,9 +13434,9 @@
             573.0
           ],
           "bbox_sirena": [
-            45.968,
+            45.976,
             383.5,
-            172.016,
+            172.024,
             575.5
           ],
           "key": [
@@ -13467,7 +13467,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.000239,
-      "worst_e_c": 0.000028,
+      "worst_e_c": 0.000013,
       "worst_e_h": 0.0,
       "worst_e_w": 0.000239,
       "worst_keys": {
@@ -13480,7 +13480,7 @@
         "e_c": [
           "class",
           null,
-          "Class2"
+          "Class1"
         ],
         "e_h": [
           "class",
@@ -13502,7 +13502,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.000028,
+        "worst_e_c": 0.000013,
         "worst_e_w": 0.000239,
         "worst_e_h": 0.0,
         "worst_e_a": 0.000239,
@@ -13929,9 +13929,9 @@
             369.0
           ],
           "bbox_sirena": [
-            45.968,
+            73.928,
             287.5,
-            116.112,
+            144.072,
             371.5
           ],
           "key": [
@@ -13962,7 +13962,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.00062,
-      "worst_e_c": 0.080013,
+      "worst_e_c": 0.00002,
       "worst_e_h": 0.0,
       "worst_e_w": 0.00062,
       "worst_keys": {
@@ -13975,7 +13975,7 @@
         "e_c": [
           "class",
           null,
-          "Class2"
+          "Class1"
         ],
         "e_h": [
           "class",
@@ -13997,7 +13997,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.080013,
+        "worst_e_c": 0.00002,
         "worst_e_w": 0.00062,
         "worst_e_h": 0.0,
         "worst_e_a": 0.00062,
@@ -14297,9 +14297,9 @@
             369.0
           ],
           "bbox_sirena": [
-            45.968,
+            73.928,
             287.5,
-            116.112,
+            144.072,
             371.5
           ],
           "key": [
@@ -14330,7 +14330,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.00062,
-      "worst_e_c": 0.080013,
+      "worst_e_c": 0.00002,
       "worst_e_h": 0.0,
       "worst_e_w": 0.00062,
       "worst_keys": {
@@ -14343,7 +14343,7 @@
         "e_c": [
           "class",
           null,
-          "Class2"
+          "Class1"
         ],
         "e_h": [
           "class",
@@ -14365,7 +14365,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.080013,
+        "worst_e_c": 0.00002,
         "worst_e_w": 0.00062,
         "worst_e_h": 0.0,
         "worst_e_a": 0.00062,
@@ -19592,9 +19592,9 @@
             573.0
           ],
           "bbox_sirena": [
-            45.968,
+            45.976,
             383.5,
-            172.016,
+            172.024,
             575.5
           ],
           "key": [
@@ -19625,7 +19625,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.000239,
-      "worst_e_c": 0.000028,
+      "worst_e_c": 0.000013,
       "worst_e_h": 0.0,
       "worst_e_w": 0.000239,
       "worst_keys": {
@@ -19638,7 +19638,7 @@
         "e_c": [
           "class",
           null,
-          "Class2"
+          "Class1"
         ],
         "e_h": [
           "class",
@@ -19660,7 +19660,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.000028,
+        "worst_e_c": 0.000013,
         "worst_e_w": 0.000239,
         "worst_e_h": 0.0,
         "worst_e_a": 0.000239,
@@ -20086,9 +20086,9 @@
             369.0
           ],
           "bbox_sirena": [
-            45.968,
+            73.928,
             287.5,
-            116.112,
+            144.072,
             371.5
           ],
           "key": [
@@ -20119,7 +20119,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.00062,
-      "worst_e_c": 0.080013,
+      "worst_e_c": 0.00002,
       "worst_e_h": 0.0,
       "worst_e_w": 0.00062,
       "worst_keys": {
@@ -20132,7 +20132,7 @@
         "e_c": [
           "class",
           null,
-          "Class2"
+          "Class1"
         ],
         "e_h": [
           "class",
@@ -20154,7 +20154,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.080013,
+        "worst_e_c": 0.00002,
         "worst_e_w": 0.00062,
         "worst_e_h": 0.0,
         "worst_e_a": 0.00062,
@@ -27880,9 +27880,9 @@
             127.0
           ],
           "bbox_sirena": [
-            45.916,
+            83.548,
             45.5,
-            129.82,
+            167.452,
             129.5
           ],
           "key": [
@@ -27913,7 +27913,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002774,
-      "worst_e_c": 0.117642,
+      "worst_e_c": 0.000189,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002774,
       "worst_keys": {
@@ -27926,7 +27926,7 @@
         "e_c": [
           "class",
           null,
-          "Triangle"
+          "Rectangle"
         ],
         "e_h": [
           "class",
@@ -27948,7 +27948,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.117642,
+        "worst_e_c": 0.000189,
         "worst_e_w": 0.002774,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002774,
@@ -28194,9 +28194,9 @@
             127.0
           ],
           "bbox_sirena": [
-            45.916,
+            83.548,
             45.5,
-            129.82,
+            167.452,
             129.5
           ],
           "key": [
@@ -28227,7 +28227,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.002774,
-      "worst_e_c": 0.117642,
+      "worst_e_c": 0.000189,
       "worst_e_h": 0.0,
       "worst_e_w": 0.002774,
       "worst_keys": {
@@ -28240,7 +28240,7 @@
         "e_c": [
           "class",
           null,
-          "Triangle"
+          "Rectangle"
         ],
         "e_h": [
           "class",
@@ -28262,7 +28262,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.117642,
+        "worst_e_c": 0.000189,
         "worst_e_w": 0.002774,
         "worst_e_h": 0.0,
         "worst_e_a": 0.002774,
@@ -35941,44 +35941,6 @@
       "top5": [
         {
           "bbox_reference": [
-            263.421875,
-            157.0,
-            332.34375,
-            211.0
-          ],
-          "bbox_sirena": [
-            263.544,
-            52.0,
-            332.456,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            263.679688,
-            53.0,
-            332.085938,
-            107.0
-          ],
-          "bbox_sirena": [
-            264.056,
-            156.0,
-            332.456,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             45.5,
             29.0,
             188.421875,
@@ -36017,6 +35979,44 @@
         },
         {
           "bbox_reference": [
+            263.679688,
+            53.0,
+            332.085938,
+            107.0
+          ],
+          "bbox_sirena": [
+            264.056,
+            52.0,
+            332.456,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
+            263.421875,
+            157.0,
+            332.34375,
+            211.0
+          ],
+          "bbox_sirena": [
+            263.544,
+            156.0,
+            332.456,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
+        },
+        {
+          "bbox_reference": [
             83.0,
             105.0,
             150.921875,
@@ -36037,7 +36037,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.008565,
-      "worst_e_c": 0.239358,
+      "worst_e_c": 0.009179,
       "worst_e_h": 0.008065,
       "worst_e_w": 0.000547,
       "worst_keys": {
@@ -36048,9 +36048,9 @@
           "A"
         ],
         "e_c": [
-          "node",
+          "cluster",
           "A",
-          "b"
+          "B"
         ],
         "e_h": [
           "cluster",
@@ -36072,7 +36072,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.239358,
+        "worst_e_c": 0.009179,
         "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
         "worst_e_a": 0.008565,
@@ -36201,44 +36201,6 @@
       "top5": [
         {
           "bbox_reference": [
-            263.421875,
-            157.0,
-            332.34375,
-            211.0
-          ],
-          "bbox_sirena": [
-            263.544,
-            52.0,
-            332.456,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            263.679688,
-            53.0,
-            332.085938,
-            107.0
-          ],
-          "bbox_sirena": [
-            264.056,
-            156.0,
-            332.456,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             45.5,
             29.0,
             188.421875,
@@ -36277,6 +36239,44 @@
         },
         {
           "bbox_reference": [
+            263.679688,
+            53.0,
+            332.085938,
+            107.0
+          ],
+          "bbox_sirena": [
+            264.056,
+            52.0,
+            332.456,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
+            263.421875,
+            157.0,
+            332.34375,
+            211.0
+          ],
+          "bbox_sirena": [
+            263.544,
+            156.0,
+            332.456,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
+        },
+        {
+          "bbox_reference": [
             83.0,
             105.0,
             150.921875,
@@ -36297,7 +36297,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.008565,
-      "worst_e_c": 0.239358,
+      "worst_e_c": 0.009179,
       "worst_e_h": 0.008065,
       "worst_e_w": 0.000547,
       "worst_keys": {
@@ -36308,9 +36308,9 @@
           "A"
         ],
         "e_c": [
-          "node",
+          "cluster",
           "A",
-          "b"
+          "B"
         ],
         "e_h": [
           "cluster",
@@ -36332,7 +36332,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.239358,
+        "worst_e_c": 0.009179,
         "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
         "worst_e_a": 0.008565,
@@ -50240,44 +50240,6 @@
       "top5": [
         {
           "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            52.0,
-            114.456,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            156.0,
-            113.944,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             189.421875,
             29.0,
             332.34375,
@@ -50316,6 +50278,25 @@
         },
         {
           "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            113.944,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
@@ -50332,11 +50313,30 @@
             "B",
             "c"
           ]
+        },
+        {
+          "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            114.456,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.008565,
-      "worst_e_c": 0.239358,
+      "worst_e_c": 0.00916,
       "worst_e_h": 0.008065,
       "worst_e_w": 0.000547,
       "worst_keys": {
@@ -50347,9 +50347,9 @@
           "A"
         ],
         "e_c": [
-          "node",
+          "cluster",
           "A",
-          "b"
+          "B"
         ],
         "e_h": [
           "cluster",
@@ -50371,7 +50371,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.239358,
+        "worst_e_c": 0.00916,
         "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
         "worst_e_a": 0.008565,
@@ -50387,44 +50387,6 @@
       "reference_elements": 5,
       "sirena_elements": 5,
       "top5": [
-        {
-          "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            52.0,
-            114.456,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            156.0,
-            113.944,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
         {
           "bbox_reference": [
             189.421875,
@@ -50465,6 +50427,25 @@
         },
         {
           "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            113.944,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
@@ -50481,11 +50462,30 @@
             "B",
             "c"
           ]
+        },
+        {
+          "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            114.456,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.008565,
-      "worst_e_c": 0.239358,
+      "worst_e_c": 0.00916,
       "worst_e_h": 0.008065,
       "worst_e_w": 0.000547,
       "worst_keys": {
@@ -50496,9 +50496,9 @@
           "A"
         ],
         "e_c": [
-          "node",
+          "cluster",
           "A",
-          "b"
+          "B"
         ],
         "e_h": [
           "cluster",
@@ -50520,7 +50520,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.239358,
+        "worst_e_c": 0.00916,
         "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
         "worst_e_a": 0.008565,
@@ -50536,44 +50536,6 @@
       "reference_elements": 5,
       "sirena_elements": 5,
       "top5": [
-        {
-          "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            52.0,
-            114.456,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            156.0,
-            113.944,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
         {
           "bbox_reference": [
             189.421875,
@@ -50614,6 +50576,25 @@
         },
         {
           "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            113.944,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
@@ -50630,11 +50611,30 @@
             "B",
             "c"
           ]
+        },
+        {
+          "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            114.456,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.008565,
-      "worst_e_c": 0.239358,
+      "worst_e_c": 0.00916,
       "worst_e_h": 0.008065,
       "worst_e_w": 0.000547,
       "worst_keys": {
@@ -50645,9 +50645,9 @@
           "A"
         ],
         "e_c": [
-          "node",
+          "cluster",
           "A",
-          "b"
+          "B"
         ],
         "e_h": [
           "cluster",
@@ -50669,7 +50669,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.239358,
+        "worst_e_c": 0.00916,
         "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
         "worst_e_a": 0.008565,
@@ -51096,44 +51096,6 @@
       "top5": [
         {
           "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            52.0,
-            114.456,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            156.0,
-            113.944,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             189.421875,
             29.0,
             332.34375,
@@ -51172,6 +51134,25 @@
         },
         {
           "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            113.944,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
@@ -51188,11 +51169,30 @@
             "B",
             "c"
           ]
+        },
+        {
+          "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            114.456,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.008565,
-      "worst_e_c": 0.239358,
+      "worst_e_c": 0.00916,
       "worst_e_h": 0.008065,
       "worst_e_w": 0.000547,
       "worst_keys": {
@@ -51203,9 +51203,9 @@
           "A"
         ],
         "e_c": [
-          "node",
+          "cluster",
           "A",
-          "b"
+          "B"
         ],
         "e_h": [
           "cluster",
@@ -51227,7 +51227,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.239358,
+        "worst_e_c": 0.00916,
         "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
         "worst_e_a": 0.008565,
@@ -51243,44 +51243,6 @@
       "reference_elements": 5,
       "sirena_elements": 5,
       "top5": [
-        {
-          "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            52.0,
-            114.456,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            156.0,
-            113.944,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
         {
           "bbox_reference": [
             189.421875,
@@ -51321,6 +51283,25 @@
         },
         {
           "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            113.944,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
@@ -51337,11 +51318,30 @@
             "B",
             "c"
           ]
+        },
+        {
+          "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            114.456,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.008565,
-      "worst_e_c": 0.239358,
+      "worst_e_c": 0.00916,
       "worst_e_h": 0.008065,
       "worst_e_w": 0.000547,
       "worst_keys": {
@@ -51352,9 +51352,9 @@
           "A"
         ],
         "e_c": [
-          "node",
+          "cluster",
           "A",
-          "b"
+          "B"
         ],
         "e_h": [
           "cluster",
@@ -51376,7 +51376,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.239358,
+        "worst_e_c": 0.00916,
         "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
         "worst_e_a": 0.008565,
@@ -52399,44 +52399,6 @@
       "top5": [
         {
           "bbox_reference": [
-            45.5,
-            157.0,
-            114.421875,
-            211.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            52.0,
-            114.456,
-            106.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "b"
-          ]
-        },
-        {
-          "bbox_reference": [
-            45.757813,
-            53.0,
-            114.164063,
-            107.0
-          ],
-          "bbox_sirena": [
-            45.544,
-            156.0,
-            113.944,
-            210.0
-          ],
-          "key": [
-            "node",
-            "A",
-            "a"
-          ]
-        },
-        {
-          "bbox_reference": [
             189.421875,
             29.0,
             332.34375,
@@ -52475,6 +52437,25 @@
         },
         {
           "bbox_reference": [
+            45.757813,
+            53.0,
+            114.164063,
+            107.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            52.0,
+            113.944,
+            106.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "a"
+          ]
+        },
+        {
+          "bbox_reference": [
             226.921875,
             105.0,
             294.84375,
@@ -52491,11 +52472,30 @@
             "B",
             "c"
           ]
+        },
+        {
+          "bbox_reference": [
+            45.5,
+            157.0,
+            114.421875,
+            211.0
+          ],
+          "bbox_sirena": [
+            45.544,
+            156.0,
+            114.456,
+            210.0
+          ],
+          "key": [
+            "node",
+            "A",
+            "b"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.008565,
-      "worst_e_c": 0.239358,
+      "worst_e_c": 0.00916,
       "worst_e_h": 0.008065,
       "worst_e_w": 0.000547,
       "worst_keys": {
@@ -52506,9 +52506,9 @@
           "A"
         ],
         "e_c": [
-          "node",
+          "cluster",
           "A",
-          "b"
+          "B"
         ],
         "e_h": [
           "cluster",
@@ -52530,7 +52530,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.239358,
+        "worst_e_c": 0.00916,
         "worst_e_w": 0.000547,
         "worst_e_h": 0.008065,
         "worst_e_a": 0.008565,
@@ -55841,15 +55841,34 @@
       "top5": [
         {
           "bbox_reference": [
+            186.048297,
+            128.991691,
+            186.048297,
+            128.991691
+          ],
+          "bbox_sirena": [
+            198.437566,
+            145.512221,
+            198.437566,
+            145.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "2-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
             216.230469,
             80.0,
             236.230469,
             100.0
           ],
           "bbox_sirena": [
-            210.0,
+            235.364,
             90.0,
-            230.0,
+            255.364,
             110.0
           ],
           "key": [
@@ -55866,9 +55885,9 @@
             200.0
           ],
           "bbox_sirena": [
-            210.0,
+            235.364,
             190.0,
-            230.0,
+            255.364,
             210.0
           ],
           "key": [
@@ -55885,9 +55904,9 @@
             0.0
           ],
           "bbox_sirena": [
-            187.544,
+            212.908,
             10.0,
-            187.544,
+            212.908,
             10.0
           ],
           "key": [
@@ -55904,9 +55923,9 @@
             0.0
           ],
           "bbox_sirena": [
-            187.544,
+            212.908,
             10.0,
-            187.544,
+            212.908,
             10.0
           ],
           "key": [
@@ -55914,30 +55933,11 @@
             null,
             "branch-B"
           ]
-        },
-        {
-          "bbox_reference": [
-            -40.182171,
-            78.991691,
-            -40.182171,
-            78.991691
-          ],
-          "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1-abcdefg"
-          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.202464,
+      "worst_e_c": 0.136843,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -55951,9 +55951,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-2"
+          "2-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -55975,7 +55975,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.202464,
+        "worst_e_c": 0.136843,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -55993,103 +55993,103 @@
       "top5": [
         {
           "bbox_reference": [
-            0.0,
-            258.0,
-            20.0,
-            278.0
+            -15.881937,
+            316.337901,
+            -15.881937,
+            316.337901
           ],
           "bbox_sirena": [
-            40.0,
-            300.0,
+            83.172,
+            330.0,
+            83.172,
+            330.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            34.118063,
+            316.337901,
+            34.118063,
+            316.337901
+          ],
+          "bbox_sirena": [
+            133.172,
+            330.0,
+            133.172,
+            330.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "2-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            84.118063,
+            46.337901,
+            84.118063,
+            46.337901
+          ],
+          "bbox_sirena": [
+            183.172,
             60.0,
-            320.0
+            183.172,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-1"
+            "3-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            50.0,
-            258.0,
-            70.0,
-            278.0
+            134.118063,
+            136.337901,
+            134.118063,
+            136.337901
           ],
           "bbox_sirena": [
-            90.0,
-            300.0,
-            110.0,
-            320.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            100.0,
-            -12.0,
-            120.0,
-            8.0
-          ],
-          "bbox_sirena": [
-            140.0,
-            30.0,
-            160.0,
-            50.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
+            233.172,
             150.0,
-            78.0,
-            170.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            190.0,
-            120.0,
-            210.0,
-            140.0
+            233.172,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-4"
+            "4-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            200.0,
-            168.0,
-            220.0,
-            188.0
+            184.118063,
+            226.337901,
+            184.118063,
+            226.337901
           ],
           "bbox_sirena": [
+            283.172,
             240.0,
-            210.0,
-            260.0,
-            230.0
+            283.172,
+            240.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-5"
+            "5-abcdefg"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.104388,
+      "worst_e_c": 0.076531,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -56103,9 +56103,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -56127,7 +56127,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.104388,
+        "worst_e_c": 0.076531,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -56145,103 +56145,103 @@
       "top5": [
         {
           "bbox_reference": [
-            0.0,
-            -12.0,
-            20.0,
-            8.0
+            9.78097,
+            22.074369,
+            9.78097,
+            22.074369
           ],
           "bbox_sirena": [
-            47.532,
-            30.0,
-            67.532,
-            50.0
+            104.532,
+            60.0,
+            104.532,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-1"
+            "1"
           ]
         },
         {
           "bbox_reference": [
-            50.0,
-            -12.0,
-            70.0,
-            8.0
+            59.78097,
+            22.074369,
+            59.78097,
+            22.074369
           ],
           "bbox_sirena": [
-            97.532,
-            30.0,
-            117.532,
-            50.0
+            154.532,
+            60.0,
+            154.532,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-2"
+            "2"
           ]
         },
         {
           "bbox_reference": [
-            100.0,
-            78.0,
-            120.0,
-            98.0
+            109.78097,
+            112.074369,
+            109.78097,
+            112.074369
           ],
           "bbox_sirena": [
-            147.532,
-            120.0,
-            167.532,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
+            204.532,
             150.0,
-            78.0,
-            170.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            197.532,
-            120.0,
-            217.532,
-            140.0
+            204.532,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-4"
+            "3"
           ]
         },
         {
           "bbox_reference": [
-            200.0,
-            -12.0,
-            220.0,
-            8.0
+            159.78097,
+            112.074369,
+            159.78097,
+            112.074369
           ],
           "bbox_sirena": [
-            247.532,
-            30.0,
-            267.532,
-            50.0
+            254.532,
+            150.0,
+            254.532,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-5"
+            "4"
+          ]
+        },
+        {
+          "bbox_reference": [
+            209.78097,
+            22.074369,
+            209.78097,
+            22.074369
+          ],
+          "bbox_sirena": [
+            304.532,
+            60.0,
+            304.532,
+            60.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.12229,
+      "worst_e_c": 0.010576,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -56255,9 +56255,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1"
         ],
         "e_h": [
           "commit",
@@ -56279,7 +56279,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.12229,
+        "worst_e_c": 0.010576,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -56297,103 +56297,103 @@
       "top5": [
         {
           "bbox_reference": [
-            0.0,
-            -12.0,
-            20.0,
-            8.0
+            9.78097,
+            22.074369,
+            9.78097,
+            22.074369
           ],
           "bbox_sirena": [
-            47.532,
-            30.0,
-            67.532,
-            50.0
+            104.532,
+            60.0,
+            104.532,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-1"
+            "1"
           ]
         },
         {
           "bbox_reference": [
-            50.0,
-            -12.0,
-            70.0,
-            8.0
+            59.78097,
+            22.074369,
+            59.78097,
+            22.074369
           ],
           "bbox_sirena": [
-            97.532,
-            30.0,
-            117.532,
-            50.0
+            154.532,
+            60.0,
+            154.532,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-2"
+            "2"
           ]
         },
         {
           "bbox_reference": [
-            100.0,
-            78.0,
-            120.0,
-            98.0
+            109.78097,
+            112.074369,
+            109.78097,
+            112.074369
           ],
           "bbox_sirena": [
-            147.532,
-            120.0,
-            167.532,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
+            204.532,
             150.0,
-            78.0,
-            170.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            197.532,
-            120.0,
-            217.532,
-            140.0
+            204.532,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-4"
+            "3"
           ]
         },
         {
           "bbox_reference": [
-            200.0,
-            -12.0,
-            220.0,
-            8.0
+            159.78097,
+            112.074369,
+            159.78097,
+            112.074369
           ],
           "bbox_sirena": [
-            247.532,
-            30.0,
-            267.532,
-            50.0
+            254.532,
+            150.0,
+            254.532,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-5"
+            "4"
+          ]
+        },
+        {
+          "bbox_reference": [
+            259.78097,
+            22.074369,
+            259.78097,
+            22.074369
+          ],
+          "bbox_sirena": [
+            354.532,
+            60.0,
+            354.532,
+            60.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.108841,
+      "worst_e_c": 0.009413,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -56407,9 +56407,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1"
         ],
         "e_h": [
           "commit",
@@ -56431,7 +56431,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.108841,
+        "worst_e_c": 0.009413,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -56447,63 +56447,6 @@
       "reference_elements": 19,
       "sirena_elements": 19,
       "top5": [
-        {
-          "bbox_reference": [
-            -18.318485,
-            56.904271,
-            -18.318485,
-            56.904271
-          ],
-          "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "s1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -18.318485,
-            106.904271,
-            -18.318485,
-            106.904271
-          ],
-          "bbox_sirena": [
-            54.0,
-            104.0,
-            54.0,
-            104.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "s2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -18.318485,
-            256.904271,
-            -18.318485,
-            256.904271
-          ],
-          "bbox_sirena": [
-            54.0,
-            254.0,
-            54.0,
-            254.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "s5"
-          ]
-        },
         {
           "bbox_reference": [
             96.0,
@@ -56541,11 +56484,68 @@
             null,
             "commit-4"
           ]
+        },
+        {
+          "bbox_reference": [
+            96.0,
+            280.0,
+            116.0,
+            300.0
+          ],
+          "bbox_sirena": [
+            120.0,
+            290.0,
+            140.0,
+            310.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-6"
+          ]
+        },
+        {
+          "bbox_reference": [
+            96.0,
+            330.0,
+            116.0,
+            350.0
+          ],
+          "bbox_sirena": [
+            120.0,
+            340.0,
+            140.0,
+            360.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-7"
+          ]
+        },
+        {
+          "bbox_reference": [
+            96.0,
+            380.0,
+            116.0,
+            400.0
+          ],
+          "bbox_sirena": [
+            120.0,
+            390.0,
+            140.0,
+            410.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-8"
+          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.074327,
+      "worst_e_c": 0.044576,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -56559,9 +56559,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "commit",
           null,
-          "s1"
+          "commit-3"
         ],
         "e_h": [
           "commit",
@@ -56583,7 +56583,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.074327,
+        "worst_e_c": 0.044576,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -56601,91 +56601,15 @@
       "top5": [
         {
           "bbox_reference": [
-            0.0,
-            -12.0,
-            20.0,
-            8.0
-          ],
-          "bbox_sirena": [
-            56.412,
-            30.0,
-            76.412,
-            50.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            50.0,
-            168.0,
-            70.0,
-            188.0
-          ],
-          "bbox_sirena": [
-            106.412,
-            210.0,
-            126.412,
-            230.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            100.0,
-            78.0,
-            120.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            156.412,
-            120.0,
-            176.412,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
-            150.0,
-            168.0,
-            170.0,
-            188.0
-          ],
-          "bbox_sirena": [
-            206.412,
-            210.0,
-            226.412,
-            230.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-4"
-          ]
-        },
-        {
-          "bbox_reference": [
             -15.881937,
             46.337901,
             -15.881937,
             46.337901
           ],
           "bbox_sirena": [
-            66.412,
+            113.412,
             60.0,
-            66.412,
+            113.412,
             60.0
           ],
           "key": [
@@ -56693,11 +56617,87 @@
             null,
             "1-abcdefg"
           ]
+        },
+        {
+          "bbox_reference": [
+            34.118063,
+            226.337901,
+            34.118063,
+            226.337901
+          ],
+          "bbox_sirena": [
+            163.412,
+            240.0,
+            163.412,
+            240.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "2-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -76.0,
+            -12.5,
+            -76.0,
+            -12.5
+          ],
+          "bbox_sirena": [
+            30.24,
+            29.5,
+            30.24,
+            29.5
+          ],
+          "key": [
+            "branch_label",
+            null,
+            "main"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -76.0,
+            -12.5,
+            -76.0,
+            -12.5
+          ],
+          "bbox_sirena": [
+            30.24,
+            29.5,
+            30.24,
+            29.5
+          ],
+          "key": [
+            "lane",
+            null,
+            "main"
+          ]
+        },
+        {
+          "bbox_reference": [
+            0.0,
+            -12.0,
+            20.0,
+            8.0
+          ],
+          "bbox_sirena": [
+            103.412,
+            30.0,
+            123.412,
+            50.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-1"
+          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.132064,
+      "worst_e_c": 0.103562,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -56711,9 +56711,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -56735,7 +56735,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.132064,
+        "worst_e_c": 0.103562,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -56981,27 +56981,27 @@
         },
         {
           "bbox_reference": [
-            15.414214,
-            399.656854,
-            15.414214,
-            399.656854
+            219.974901,
+            254.142136,
+            219.974901,
+            254.142136
           ],
           "bbox_sirena": [
-            71.2224,
-            404.0,
-            71.2224,
-            404.0
+            251.312195,
+            262.495991,
+            251.312195,
+            262.495991
           ],
           "key": [
-            "tag_label",
+            "commit_label",
             null,
-            "customTag"
+            "5"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.136284,
+      "worst_e_c": 0.088489,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -57039,7 +57039,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.136284,
+        "worst_e_c": 0.088489,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -57209,15 +57209,34 @@
       "top5": [
         {
           "bbox_reference": [
+            192.685016,
+            128.991691,
+            192.685016,
+            128.991691
+          ],
+          "bbox_sirena": [
+            198.437566,
+            145.512221,
+            198.437566,
+            145.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
             222.867188,
             80.0,
             242.867188,
             100.0
           ],
           "bbox_sirena": [
-            210.0,
+            235.364,
             90.0,
-            230.0,
+            255.364,
             110.0
           ],
           "key": [
@@ -57234,9 +57253,9 @@
             330.0
           ],
           "bbox_sirena": [
-            179.088,
+            204.452,
             340.0,
-            179.088,
+            204.452,
             340.0
           ],
           "key": [
@@ -57253,9 +57272,9 @@
             330.0
           ],
           "bbox_sirena": [
-            179.088,
+            204.452,
             340.0,
-            179.088,
+            204.452,
             340.0
           ],
           "key": [
@@ -57266,46 +57285,27 @@
         },
         {
           "bbox_reference": [
-            -40.182171,
-            328.991691,
-            -40.182171,
-            328.991691
+            65.817829,
+            228.991691,
+            65.817829,
+            228.991691
           ],
           "bbox_sirena": [
-            54.0,
-            304.0,
-            54.0,
-            304.0
+            108.437566,
+            245.512221,
+            108.437566,
+            245.512221
           ],
           "key": [
             "commit_label",
             null,
-            "1-abcdefg"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -40.182171,
-            278.991691,
-            -40.182171,
-            278.991691
-          ],
-          "bbox_sirena": [
-            54.0,
-            254.0,
-            54.0,
-            254.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "2-abcdefg"
+            "3-abcdefg"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.183569,
+      "worst_e_c": 0.129149,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -57319,9 +57319,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-2"
+          "5-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -57343,7 +57343,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.183569,
+        "worst_e_c": 0.129149,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -57361,91 +57361,15 @@
       "top5": [
         {
           "bbox_reference": [
-            0.0,
-            -12.0,
-            20.0,
-            8.0
-          ],
-          "bbox_sirena": [
-            56.412,
-            30.0,
-            76.412,
-            50.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            50.0,
-            168.0,
-            70.0,
-            188.0
-          ],
-          "bbox_sirena": [
-            106.412,
-            210.0,
-            126.412,
-            230.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            100.0,
-            78.0,
-            120.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            156.412,
-            120.0,
-            176.412,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
-            150.0,
-            168.0,
-            170.0,
-            188.0
-          ],
-          "bbox_sirena": [
-            206.412,
-            210.0,
-            226.412,
-            230.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-4"
-          ]
-        },
-        {
-          "bbox_reference": [
             -15.881937,
             46.337901,
             -15.881937,
             46.337901
           ],
           "bbox_sirena": [
-            66.412,
+            113.412,
             60.0,
-            66.412,
+            113.412,
             60.0
           ],
           "key": [
@@ -57453,11 +57377,87 @@
             null,
             "1-abcdefg"
           ]
+        },
+        {
+          "bbox_reference": [
+            34.118063,
+            226.337901,
+            34.118063,
+            226.337901
+          ],
+          "bbox_sirena": [
+            163.412,
+            240.0,
+            163.412,
+            240.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "2-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -76.0,
+            -12.5,
+            -76.0,
+            -12.5
+          ],
+          "bbox_sirena": [
+            30.24,
+            29.5,
+            30.24,
+            29.5
+          ],
+          "key": [
+            "branch_label",
+            null,
+            "main"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -76.0,
+            -12.5,
+            -76.0,
+            -12.5
+          ],
+          "bbox_sirena": [
+            30.24,
+            29.5,
+            30.24,
+            29.5
+          ],
+          "key": [
+            "lane",
+            null,
+            "main"
+          ]
+        },
+        {
+          "bbox_reference": [
+            0.0,
+            -12.0,
+            20.0,
+            8.0
+          ],
+          "bbox_sirena": [
+            103.412,
+            30.0,
+            123.412,
+            50.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-1"
+          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.132064,
+      "worst_e_c": 0.103562,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -57471,9 +57471,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -57495,7 +57495,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.132064,
+        "worst_e_c": 0.103562,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -57513,15 +57513,72 @@
       "top5": [
         {
           "bbox_reference": [
+            -15.881937,
+            46.337901,
+            -15.881937,
+            46.337901
+          ],
+          "bbox_sirena": [
+            83.172,
+            60.0,
+            83.172,
+            60.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            34.118063,
+            46.337901,
+            34.118063,
+            46.337901
+          ],
+          "bbox_sirena": [
+            133.172,
+            60.0,
+            133.172,
+            60.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "2-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            84.118063,
+            136.337901,
+            84.118063,
+            136.337901
+          ],
+          "bbox_sirena": [
+            183.172,
+            150.0,
+            183.172,
+            150.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "3-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
             0.0,
             -12.0,
             20.0,
             8.0
           ],
           "bbox_sirena": [
-            40.0,
+            73.172,
             30.0,
-            60.0,
+            93.172,
             50.0
           ],
           "key": [
@@ -57538,9 +57595,9 @@
             8.0
           ],
           "bbox_sirena": [
-            90.0,
+            123.172,
             30.0,
-            110.0,
+            143.172,
             50.0
           ],
           "key": [
@@ -57548,68 +57605,11 @@
             null,
             "commit-2"
           ]
-        },
-        {
-          "bbox_reference": [
-            100.0,
-            78.0,
-            120.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            140.0,
-            120.0,
-            160.0,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
-            150.0,
-            -12.0,
-            170.0,
-            8.0
-          ],
-          "bbox_sirena": [
-            190.0,
-            30.0,
-            210.0,
-            50.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-4"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.881937,
-            46.337901,
-            -15.881937,
-            46.337901
-          ],
-          "bbox_sirena": [
-            50.0,
-            60.0,
-            50.0,
-            60.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1-abcdefg"
-          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.173302,
+      "worst_e_c": 0.127055,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -57623,9 +57623,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -57647,7 +57647,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.173302,
+        "worst_e_c": 0.127055,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -57817,103 +57817,103 @@
       "top5": [
         {
           "bbox_reference": [
-            0.0,
-            -12.0,
-            20.0,
-            8.0
+            -15.881937,
+            46.337901,
+            -15.881937,
+            46.337901
           ],
           "bbox_sirena": [
-            40.0,
-            30.0,
+            83.172,
             60.0,
-            50.0
+            83.172,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-1"
+            "1-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            50.0,
-            -12.0,
-            70.0,
-            8.0
+            34.118063,
+            46.337901,
+            34.118063,
+            46.337901
           ],
           "bbox_sirena": [
-            90.0,
-            30.0,
-            110.0,
-            50.0
+            133.172,
+            60.0,
+            133.172,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-2"
+            "2-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            100.0,
-            78.0,
-            120.0,
-            98.0
+            84.118063,
+            136.337901,
+            84.118063,
+            136.337901
           ],
           "bbox_sirena": [
-            140.0,
-            120.0,
-            160.0,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
+            183.172,
             150.0,
-            -12.0,
-            170.0,
-            8.0
-          ],
-          "bbox_sirena": [
-            190.0,
-            30.0,
-            210.0,
-            50.0
+            183.172,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-4"
+            "3-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            200.0,
-            78.0,
-            220.0,
-            98.0
+            184.118063,
+            136.337901,
+            184.118063,
+            136.337901
           ],
           "bbox_sirena": [
-            240.0,
-            120.0,
-            260.0,
-            140.0
+            283.172,
+            150.0,
+            283.172,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-5"
+            "4-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            234.118063,
+            226.337901,
+            234.118063,
+            226.337901
+          ],
+          "bbox_sirena": [
+            333.172,
+            240.0,
+            333.172,
+            240.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5-abcdefg"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.107748,
+      "worst_e_c": 0.078995,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -57927,9 +57927,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -57951,7 +57951,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.107748,
+        "worst_e_c": 0.078995,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -58425,103 +58425,103 @@
       "top5": [
         {
           "bbox_reference": [
-            0.0,
-            258.0,
-            20.0,
-            278.0
+            -15.881937,
+            316.337901,
+            -15.881937,
+            316.337901
           ],
           "bbox_sirena": [
-            40.0,
-            300.0,
+            83.172,
+            330.0,
+            83.172,
+            330.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            34.118063,
+            316.337901,
+            34.118063,
+            316.337901
+          ],
+          "bbox_sirena": [
+            133.172,
+            330.0,
+            133.172,
+            330.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "2-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            84.118063,
+            46.337901,
+            84.118063,
+            46.337901
+          ],
+          "bbox_sirena": [
+            183.172,
             60.0,
-            320.0
+            183.172,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-1"
+            "3-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            50.0,
-            258.0,
-            70.0,
-            278.0
+            134.118063,
+            136.337901,
+            134.118063,
+            136.337901
           ],
           "bbox_sirena": [
-            90.0,
-            300.0,
-            110.0,
-            320.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            100.0,
-            -12.0,
-            120.0,
-            8.0
-          ],
-          "bbox_sirena": [
-            140.0,
-            30.0,
-            160.0,
-            50.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
+            233.172,
             150.0,
-            78.0,
-            170.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            190.0,
-            120.0,
-            210.0,
-            140.0
+            233.172,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-4"
+            "4-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            200.0,
-            168.0,
-            220.0,
-            188.0
+            184.118063,
+            226.337901,
+            184.118063,
+            226.337901
           ],
           "bbox_sirena": [
+            283.172,
             240.0,
-            210.0,
-            260.0,
-            230.0
+            283.172,
+            240.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-5"
+            "5-abcdefg"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.104388,
+      "worst_e_c": 0.076531,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -58535,9 +58535,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -58559,7 +58559,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.104388,
+        "worst_e_c": 0.076531,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -58614,44 +58614,6 @@
       "top5": [
         {
           "bbox_reference": [
-            15.414214,
-            149.656854,
-            15.414214,
-            149.656854
-          ],
-          "bbox_sirena": [
-            80.8416,
-            154.0,
-            80.8416,
-            154.0
-          ],
-          "key": [
-            "tag_label",
-            null,
-            "OpenID v1.1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -44.614018,
-            183.199805,
-            -44.614018,
-            183.199805
-          ],
-          "bbox_sirena": [
-            108.8416,
-            154.0,
-            108.8416,
-            154.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "Release 1.0"
-          ]
-        },
-        {
-          "bbox_reference": [
             1.272078,
             163.79899,
             1.272078,
@@ -58671,46 +58633,84 @@
         },
         {
           "bbox_reference": [
-            96.0,
-            30.0,
-            116.0,
-            50.0
+            15.414214,
+            149.656854,
+            15.414214,
+            149.656854
           ],
           "bbox_sirena": [
-            174.8416,
-            40.0,
-            194.8416,
-            60.0
+            80.8416,
+            154.0,
+            80.8416,
+            154.0
           ],
           "key": [
-            "commit",
+            "tag_label",
             null,
-            "commit-1"
+            "OpenID v1.1"
           ]
         },
         {
           "bbox_reference": [
-            96.0,
-            180.0,
-            116.0,
-            200.0
+            -21.0,
+            380.0,
+            -21.0,
+            380.0
           ],
           "bbox_sirena": [
-            174.8416,
-            190.0,
-            194.8416,
-            210.0
+            77.5056,
+            390.0,
+            77.5056,
+            390.0
+          ],
+          "key": [
+            "branch_label",
+            null,
+            "main"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -21.0,
+            380.0,
+            -21.0,
+            380.0
+          ],
+          "bbox_sirena": [
+            77.5056,
+            390.0,
+            77.5056,
+            390.0
+          ],
+          "key": [
+            "lane",
+            null,
+            "main"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -10.0,
+            80.0,
+            10.0,
+            100.0
+          ],
+          "bbox_sirena": [
+            84.8416,
+            90.0,
+            104.8416,
+            110.0
           ],
           "key": [
             "commit",
             null,
-            "commit-4"
+            "commit-2"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.147948,
+      "worst_e_c": 0.053303,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -58726,7 +58726,7 @@
         "e_c": [
           "tag_label",
           null,
-          "OpenID v1.1"
+          "SAML v2.0"
         ],
         "e_h": [
           "commit",
@@ -58748,7 +58748,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.147948,
+        "worst_e_c": 0.053303,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -59108,40 +59108,59 @@
       "top5": [
         {
           "bbox_reference": [
-            -40.182171,
-            378.991691,
-            -40.182171,
-            378.991691
+            159.817829,
+            128.991691,
+            159.817829,
+            128.991691
           ],
           "bbox_sirena": [
-            54.0,
-            354.0,
-            54.0,
-            354.0
+            198.437566,
+            145.512221,
+            198.437566,
+            145.512221
           ],
           "key": [
             "commit_label",
             null,
-            "1-abcdefg"
+            "5-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            -40.182171,
-            328.991691,
-            -40.182171,
-            328.991691
+            65.817829,
+            278.991691,
+            65.817829,
+            278.991691
           ],
           "bbox_sirena": [
-            54.0,
-            304.0,
-            54.0,
-            304.0
+            108.437566,
+            295.512221,
+            108.437566,
+            295.512221
           ],
           "key": [
             "commit_label",
             null,
-            "2-abcdefg"
+            "3-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            65.817829,
+            178.991691,
+            65.817829,
+            178.991691
+          ],
+          "bbox_sirena": [
+            108.437566,
+            195.512221,
+            108.437566,
+            195.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "4-abcdefg"
           ]
         },
         {
@@ -59152,9 +59171,9 @@
             100.0
           ],
           "bbox_sirena": [
-            210.0,
+            235.364,
             90.0,
-            230.0,
+            255.364,
             110.0
           ],
           "key": [
@@ -59165,46 +59184,27 @@
         },
         {
           "bbox_reference": [
-            96.0,
-            30.0,
-            116.0,
-            50.0
+            -21.0,
+            380.0,
+            -21.0,
+            380.0
           ],
           "bbox_sirena": [
-            120.0,
-            40.0,
-            140.0,
-            60.0
+            48.028,
+            390.0,
+            48.028,
+            390.0
           ],
           "key": [
-            "commit",
+            "branch_label",
             null,
-            "commit-1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            96.0,
-            130.0,
-            116.0,
-            150.0
-          ],
-          "bbox_sirena": [
-            120.0,
-            140.0,
-            140.0,
-            160.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
+            "main"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.109181,
+      "worst_e_c": 0.048896,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -59220,7 +59220,7 @@
         "e_c": [
           "commit_label",
           null,
-          "1-abcdefg"
+          "5-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -59242,7 +59242,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.109181,
+        "worst_e_c": 0.048896,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -59336,27 +59336,27 @@
         },
         {
           "bbox_reference": [
-            15.414214,
-            149.656854,
-            15.414214,
-            149.656854
+            219.974901,
+            304.142136,
+            219.974901,
+            304.142136
           ],
           "bbox_sirena": [
-            114.408,
-            154.0,
-            114.408,
-            154.0
+            294.497795,
+            312.495991,
+            294.497795,
+            312.495991
           ],
           "key": [
-            "tag_label",
+            "commit_label",
             null,
-            "my merge commit"
+            "5"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.120431,
+      "worst_e_c": 0.093369,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -59394,7 +59394,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.120431,
+        "worst_e_c": 0.093369,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -59449,15 +59449,34 @@
       "top5": [
         {
           "bbox_reference": [
+            186.048297,
+            128.991691,
+            186.048297,
+            128.991691
+          ],
+          "bbox_sirena": [
+            198.437566,
+            145.512221,
+            198.437566,
+            145.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "2-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
             216.230469,
             80.0,
             236.230469,
             100.0
           ],
           "bbox_sirena": [
-            210.0,
+            235.364,
             90.0,
-            230.0,
+            255.364,
             110.0
           ],
           "key": [
@@ -59474,9 +59493,9 @@
             200.0
           ],
           "bbox_sirena": [
-            210.0,
+            235.364,
             190.0,
-            230.0,
+            255.364,
             210.0
           ],
           "key": [
@@ -59493,9 +59512,9 @@
             0.0
           ],
           "bbox_sirena": [
-            187.544,
+            212.908,
             10.0,
-            187.544,
+            212.908,
             10.0
           ],
           "key": [
@@ -59512,9 +59531,9 @@
             0.0
           ],
           "bbox_sirena": [
-            187.544,
+            212.908,
             10.0,
-            187.544,
+            212.908,
             10.0
           ],
           "key": [
@@ -59522,30 +59541,11 @@
             null,
             "branch-B"
           ]
-        },
-        {
-          "bbox_reference": [
-            -40.182171,
-            78.991691,
-            -40.182171,
-            78.991691
-          ],
-          "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1-abcdefg"
-          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.202464,
+      "worst_e_c": 0.136843,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -59559,9 +59559,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-2"
+          "2-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -59583,7 +59583,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.202464,
+        "worst_e_c": 0.136843,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -59638,21 +59638,40 @@
       "top5": [
         {
           "bbox_reference": [
-            -63.97521,
-            102.784729,
-            -63.97521,
-            102.784729
+            -21.0,
+            180.0,
+            -21.0,
+            180.0
           ],
           "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
+            86.008,
+            190.0,
+            86.008,
+            190.0
           ],
           "key": [
-            "commit_label",
+            "branch_label",
             null,
-            "Highlight Commit"
+            "main"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -21.0,
+            180.0,
+            -21.0,
+            180.0
+          ],
+          "bbox_sirena": [
+            86.008,
+            190.0,
+            86.008,
+            190.0
+          ],
+          "key": [
+            "lane",
+            null,
+            "main"
           ]
         },
         {
@@ -59663,34 +59682,15 @@
             148.339762
           ],
           "bbox_sirena": [
-            54.0,
-            104.0,
-            54.0,
-            104.0
+            30.978692,
+            170.951094,
+            30.978692,
+            170.951094
           ],
           "key": [
             "commit_label",
             null,
             "Reverse Commit"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -58.67329,
-            197.259076,
-            -58.67329,
-            197.259076
-          ],
-          "bbox_sirena": [
-            54.0,
-            154.0,
-            54.0,
-            154.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "Normal Commit"
           ]
         },
         {
@@ -59701,9 +59701,9 @@
             50.0
           ],
           "bbox_sirena": [
-            30.0,
+            93.344,
             40.0,
-            50.0,
+            113.344,
             60.0
           ],
           "key": [
@@ -59720,9 +59720,9 @@
             100.0
           ],
           "bbox_sirena": [
-            30.0,
+            93.344,
             90.0,
-            50.0,
+            113.344,
             110.0
           ],
           "key": [
@@ -59734,7 +59734,7 @@
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.364241,
+      "worst_e_c": 0.073658,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -59748,9 +59748,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "branch_label",
           null,
-          "Highlight Commit"
+          "main"
         ],
         "e_h": [
           "commit",
@@ -59772,7 +59772,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.364241,
+        "worst_e_c": 0.073658,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -59790,103 +59790,103 @@
       "top5": [
         {
           "bbox_reference": [
-            0.0,
-            -12.0,
-            20.0,
-            8.0
+            -15.881937,
+            46.337901,
+            -15.881937,
+            46.337901
           ],
           "bbox_sirena": [
-            47.532,
-            30.0,
-            67.532,
-            50.0
+            104.532,
+            60.0,
+            104.532,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-1"
+            "1-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            50.0,
-            -12.0,
-            70.0,
-            8.0
+            34.118063,
+            46.337901,
+            34.118063,
+            46.337901
           ],
           "bbox_sirena": [
-            97.532,
-            30.0,
-            117.532,
-            50.0
+            154.532,
+            60.0,
+            154.532,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-2"
+            "2-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            100.0,
-            78.0,
-            120.0,
-            98.0
+            84.118063,
+            136.337901,
+            84.118063,
+            136.337901
           ],
           "bbox_sirena": [
-            147.532,
-            120.0,
-            167.532,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
+            204.532,
             150.0,
-            78.0,
-            170.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            197.532,
-            120.0,
-            217.532,
-            140.0
+            204.532,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-4"
+            "3-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            200.0,
-            168.0,
-            220.0,
-            188.0
+            134.118063,
+            136.337901,
+            134.118063,
+            136.337901
           ],
           "bbox_sirena": [
-            247.532,
-            210.0,
-            267.532,
-            230.0
+            254.532,
+            150.0,
+            254.532,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-5"
+            "4-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            184.118063,
+            226.337901,
+            184.118063,
+            226.337901
+          ],
+          "bbox_sirena": [
+            304.532,
+            240.0,
+            304.532,
+            240.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5-abcdefg"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.090199,
+      "worst_e_c": 0.073299,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -59900,9 +59900,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -59924,7 +59924,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.090199,
+        "worst_e_c": 0.073299,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -59942,15 +59942,34 @@
       "top5": [
         {
           "bbox_reference": [
+            192.685016,
+            278.991691,
+            192.685016,
+            278.991691
+          ],
+          "bbox_sirena": [
+            198.437566,
+            295.512221,
+            198.437566,
+            295.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
             222.867188,
             230.0,
             242.867188,
             250.0
           ],
           "bbox_sirena": [
-            210.0,
+            235.364,
             240.0,
-            230.0,
+            255.364,
             260.0
           ],
           "key": [
@@ -59967,9 +59986,9 @@
             0.0
           ],
           "bbox_sirena": [
-            179.088,
+            204.452,
             10.0,
-            179.088,
+            204.452,
             10.0
           ],
           "key": [
@@ -59986,9 +60005,9 @@
             0.0
           ],
           "bbox_sirena": [
-            179.088,
+            204.452,
             10.0,
-            179.088,
+            204.452,
             10.0
           ],
           "key": [
@@ -59999,46 +60018,27 @@
         },
         {
           "bbox_reference": [
-            -40.182171,
-            78.991691,
-            -40.182171,
-            78.991691
+            65.817829,
+            178.991691,
+            65.817829,
+            178.991691
           ],
           "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
+            108.437566,
+            195.512221,
+            108.437566,
+            195.512221
           ],
           "key": [
             "commit_label",
             null,
-            "1-abcdefg"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -40.182171,
-            128.991691,
-            -40.182171,
-            128.991691
-          ],
-          "bbox_sirena": [
-            54.0,
-            104.0,
-            54.0,
-            104.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "2-abcdefg"
+            "3-abcdefg"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.183569,
+      "worst_e_c": 0.129149,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -60052,9 +60052,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-5"
+          "5-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -60076,7 +60076,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.183569,
+        "worst_e_c": 0.129149,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -60092,82 +60092,6 @@
       "reference_elements": 16,
       "sirena_elements": 16,
       "top5": [
-        {
-          "bbox_reference": [
-            -15.556349,
-            54.142136,
-            -15.556349,
-            54.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            104.142136,
-            -15.556349,
-            104.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            104.0,
-            54.0,
-            104.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            254.142136,
-            -15.556349,
-            254.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            254.0,
-            54.0,
-            254.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "5"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            304.142136,
-            -15.556349,
-            304.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            304.0,
-            54.0,
-            304.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "6"
-          ]
-        },
         {
           "bbox_reference": [
             96.0,
@@ -60186,11 +60110,87 @@
             null,
             "commit-3"
           ]
+        },
+        {
+          "bbox_reference": [
+            96.0,
+            180.0,
+            116.0,
+            200.0
+          ],
+          "bbox_sirena": [
+            120.0,
+            190.0,
+            140.0,
+            210.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-4"
+          ]
+        },
+        {
+          "bbox_reference": [
+            90.443651,
+            154.142136,
+            90.443651,
+            154.142136
+          ],
+          "bbox_sirena": [
+            116.089795,
+            162.495991,
+            116.089795,
+            162.495991
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "3"
+          ]
+        },
+        {
+          "bbox_reference": [
+            90.443651,
+            204.142136,
+            90.443651,
+            204.142136
+          ],
+          "bbox_sirena": [
+            116.089795,
+            212.495991,
+            116.089795,
+            212.495991
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "4"
+          ]
+        },
+        {
+          "bbox_reference": [
+            75.671875,
+            0.0,
+            75.671875,
+            0.0
+          ],
+          "bbox_sirena": [
+            101.984,
+            10.0,
+            101.984,
+            10.0
+          ],
+          "key": [
+            "branch_label",
+            null,
+            "develop"
+          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.083363,
+      "worst_e_c": 0.058949,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -60204,9 +60204,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "commit",
           null,
-          "1"
+          "commit-3"
         ],
         "e_h": [
           "commit",
@@ -60228,7 +60228,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.083363,
+        "worst_e_c": 0.058949,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -60246,21 +60246,40 @@
       "top5": [
         {
           "bbox_reference": [
-            -63.97521,
-            202.784729,
-            -63.97521,
-            202.784729
+            -21.0,
+            0.0,
+            -21.0,
+            0.0
           ],
           "bbox_sirena": [
-            54.0,
-            154.0,
-            54.0,
-            154.0
+            86.008,
+            10.0,
+            86.008,
+            10.0
           ],
           "key": [
-            "commit_label",
+            "branch_label",
             null,
-            "Highlight Commit"
+            "main"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -21.0,
+            0.0,
+            -21.0,
+            0.0
+          ],
+          "bbox_sirena": [
+            86.008,
+            10.0,
+            86.008,
+            10.0
+          ],
+          "key": [
+            "lane",
+            null,
+            "main"
           ]
         },
         {
@@ -60271,34 +60290,15 @@
             148.339762
           ],
           "bbox_sirena": [
-            54.0,
-            104.0,
-            54.0,
-            104.0
+            30.978692,
+            170.951094,
+            30.978692,
+            170.951094
           ],
           "key": [
             "commit_label",
             null,
             "Reverse Commit"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -58.67329,
-            97.259076,
-            -58.67329,
-            97.259076
-          ],
-          "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "Normal Commit"
           ]
         },
         {
@@ -60309,9 +60309,9 @@
             50.0
           ],
           "bbox_sirena": [
-            30.0,
+            93.344,
             40.0,
-            50.0,
+            113.344,
             60.0
           ],
           "key": [
@@ -60328,9 +60328,9 @@
             100.0
           ],
           "bbox_sirena": [
-            30.0,
+            93.344,
             90.0,
-            50.0,
+            113.344,
             110.0
           ],
           "key": [
@@ -60342,7 +60342,7 @@
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.308609,
+      "worst_e_c": 0.062408,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -60356,9 +60356,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "branch_label",
           null,
-          "Highlight Commit"
+          "main"
         ],
         "e_h": [
           "commit",
@@ -60380,7 +60380,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.308609,
+        "worst_e_c": 0.062408,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -60398,15 +60398,53 @@
       "top5": [
         {
           "bbox_reference": [
+            265.372516,
+            78.991691,
+            265.372516,
+            78.991691
+          ],
+          "bbox_sirena": [
+            288.437566,
+            95.512221,
+            288.437566,
+            95.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            265.372516,
+            128.991691,
+            265.372516,
+            128.991691
+          ],
+          "bbox_sirena": [
+            288.437566,
+            145.512221,
+            288.437566,
+            145.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "2-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
             295.554688,
             30.0,
             315.554688,
             50.0
           ],
           "bbox_sirena": [
-            300.0,
+            325.364,
             40.0,
-            320.0,
+            345.364,
             60.0
           ],
           "key": [
@@ -60423,9 +60461,9 @@
             100.0
           ],
           "bbox_sirena": [
-            300.0,
+            325.364,
             90.0,
-            320.0,
+            345.364,
             110.0
           ],
           "key": [
@@ -60436,65 +60474,27 @@
         },
         {
           "bbox_reference": [
-            288.554688,
-            0.0,
-            288.554688,
-            0.0
+            167.372516,
+            278.991691,
+            167.372516,
+            278.991691
           ],
           "bbox_sirena": [
-            296.656,
-            10.0,
-            296.656,
-            10.0
+            198.437566,
+            295.512221,
+            198.437566,
+            295.512221
           ],
           "key": [
-            "branch_label",
+            "commit_label",
             null,
-            "feat"
-          ]
-        },
-        {
-          "bbox_reference": [
-            288.554688,
-            0.0,
-            288.554688,
-            0.0
-          ],
-          "bbox_sirena": [
-            296.656,
-            10.0,
-            296.656,
-            10.0
-          ],
-          "key": [
-            "lane",
-            null,
-            "feat"
-          ]
-        },
-        {
-          "bbox_reference": [
-            197.554688,
-            230.0,
-            217.554688,
-            250.0
-          ],
-          "bbox_sirena": [
-            210.0,
-            240.0,
-            230.0,
-            260.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-5"
+            "5-abcdefg"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.120527,
+      "worst_e_c": 0.074601,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -60508,9 +60508,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -60532,7 +60532,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.120527,
+        "worst_e_c": 0.074601,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -60550,91 +60550,15 @@
       "top5": [
         {
           "bbox_reference": [
-            -15.556349,
-            354.142136,
-            -15.556349,
-            354.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            354.0,
-            54.0,
-            354.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            304.142136,
-            -15.556349,
-            304.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            304.0,
-            54.0,
-            304.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            104.142136,
-            -15.556349,
-            104.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            104.0,
-            54.0,
-            104.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "5"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            54.142136,
-            -15.556349,
-            54.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "6"
-          ]
-        },
-        {
-          "bbox_reference": [
             96.0,
             180.0,
             116.0,
             200.0
           ],
           "bbox_sirena": [
-            120.0,
+            141.332,
             190.0,
-            140.0,
+            161.332,
             210.0
           ],
           "key": [
@@ -60642,11 +60566,87 @@
             null,
             "commit-4"
           ]
+        },
+        {
+          "bbox_reference": [
+            96.0,
+            230.0,
+            116.0,
+            250.0
+          ],
+          "bbox_sirena": [
+            141.332,
+            240.0,
+            161.332,
+            260.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-5"
+          ]
+        },
+        {
+          "bbox_reference": [
+            90.443651,
+            254.142136,
+            90.443651,
+            254.142136
+          ],
+          "bbox_sirena": [
+            137.421795,
+            262.495991,
+            137.421795,
+            262.495991
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "3"
+          ]
+        },
+        {
+          "bbox_reference": [
+            90.443651,
+            204.142136,
+            90.443651,
+            204.142136
+          ],
+          "bbox_sirena": [
+            137.421795,
+            212.495991,
+            137.421795,
+            212.495991
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "4"
+          ]
+        },
+        {
+          "bbox_reference": [
+            75.671875,
+            380.0,
+            75.671875,
+            380.0
+          ],
+          "bbox_sirena": [
+            123.316,
+            390.0,
+            123.316,
+            390.0
+          ],
+          "key": [
+            "branch_label",
+            null,
+            "develop"
+          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.073985,
+      "worst_e_c": 0.052318,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -60660,9 +60660,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "commit",
           null,
-          "1"
+          "commit-4"
         ],
         "e_h": [
           "commit",
@@ -60684,7 +60684,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.073985,
+        "worst_e_c": 0.052318,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -60700,82 +60700,6 @@
       "reference_elements": 16,
       "sirena_elements": 16,
       "top5": [
-        {
-          "bbox_reference": [
-            -15.556349,
-            304.142136,
-            -15.556349,
-            304.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            304.0,
-            54.0,
-            304.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            254.142136,
-            -15.556349,
-            254.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            254.0,
-            54.0,
-            254.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            104.142136,
-            -15.556349,
-            104.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            104.0,
-            54.0,
-            104.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "5"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            54.142136,
-            -15.556349,
-            54.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "6"
-          ]
-        },
         {
           "bbox_reference": [
             96.0,
@@ -60794,11 +60718,87 @@
             null,
             "commit-3"
           ]
+        },
+        {
+          "bbox_reference": [
+            96.0,
+            180.0,
+            116.0,
+            200.0
+          ],
+          "bbox_sirena": [
+            120.0,
+            190.0,
+            140.0,
+            210.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-4"
+          ]
+        },
+        {
+          "bbox_reference": [
+            90.443651,
+            204.142136,
+            90.443651,
+            204.142136
+          ],
+          "bbox_sirena": [
+            116.089795,
+            212.495991,
+            116.089795,
+            212.495991
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "3"
+          ]
+        },
+        {
+          "bbox_reference": [
+            90.443651,
+            154.142136,
+            90.443651,
+            154.142136
+          ],
+          "bbox_sirena": [
+            116.089795,
+            162.495991,
+            116.089795,
+            162.495991
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "4"
+          ]
+        },
+        {
+          "bbox_reference": [
+            75.671875,
+            330.0,
+            75.671875,
+            330.0
+          ],
+          "bbox_sirena": [
+            101.984,
+            340.0,
+            101.984,
+            340.0
+          ],
+          "key": [
+            "branch_label",
+            null,
+            "develop"
+          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.084317,
+      "worst_e_c": 0.059624,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -60812,9 +60812,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "commit",
           null,
-          "1"
+          "commit-3"
         ],
         "e_h": [
           "commit",
@@ -60836,7 +60836,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.084317,
+        "worst_e_c": 0.059624,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -60854,103 +60854,103 @@
       "top5": [
         {
           "bbox_reference": [
-            0.0,
-            -12.0,
-            20.0,
-            8.0
+            -15.881937,
+            46.337901,
+            -15.881937,
+            46.337901
           ],
           "bbox_sirena": [
-            47.532,
-            30.0,
-            67.532,
-            50.0
+            104.532,
+            60.0,
+            104.532,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-1"
+            "1-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            50.0,
-            -12.0,
-            70.0,
-            8.0
+            34.118063,
+            46.337901,
+            34.118063,
+            46.337901
           ],
           "bbox_sirena": [
-            97.532,
-            30.0,
-            117.532,
-            50.0
+            154.532,
+            60.0,
+            154.532,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-2"
+            "2-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            100.0,
-            78.0,
-            120.0,
-            98.0
+            84.118063,
+            136.337901,
+            84.118063,
+            136.337901
           ],
           "bbox_sirena": [
-            147.532,
-            120.0,
-            167.532,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
+            204.532,
             150.0,
-            78.0,
-            170.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            197.532,
-            120.0,
-            217.532,
-            140.0
+            204.532,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-4"
+            "3-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            200.0,
-            168.0,
-            220.0,
-            188.0
+            134.118063,
+            136.337901,
+            134.118063,
+            136.337901
           ],
           "bbox_sirena": [
-            247.532,
-            210.0,
-            267.532,
-            230.0
+            254.532,
+            150.0,
+            254.532,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-5"
+            "4-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            184.118063,
+            226.337901,
+            184.118063,
+            226.337901
+          ],
+          "bbox_sirena": [
+            304.532,
+            240.0,
+            304.532,
+            240.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5-abcdefg"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.090199,
+      "worst_e_c": 0.073299,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -60964,9 +60964,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -60988,7 +60988,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.090199,
+        "worst_e_c": 0.073299,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -61006,103 +61006,103 @@
       "top5": [
         {
           "bbox_reference": [
-            15.414214,
-            49.656854,
-            15.414214,
-            49.656854
+            -21.0,
+            180.0,
+            -21.0,
+            180.0
           ],
           "bbox_sirena": [
-            39.2256,
-            54.0,
-            39.2256,
-            54.0
+            128.692,
+            190.0,
+            128.692,
+            190.0
           ],
           "key": [
-            "tag_label",
+            "branch_label",
             null,
-            "8.8.4"
+            "main"
           ]
         },
         {
           "bbox_reference": [
-            15.414214,
-            99.656854,
-            15.414214,
-            99.656854
+            -21.0,
+            180.0,
+            -21.0,
+            180.0
           ],
           "bbox_sirena": [
-            39.2256,
-            104.0,
-            39.2256,
-            104.0
+            128.692,
+            190.0,
+            128.692,
+            190.0
           ],
           "key": [
-            "tag_label",
+            "lane",
             null,
-            "RC_1"
+            "main"
           ]
         },
         {
           "bbox_reference": [
-            15.414214,
-            149.656854,
-            15.414214,
-            149.656854
+            -10.0,
+            30.0,
+            10.0,
+            50.0
           ],
           "bbox_sirena": [
-            39.2256,
-            154.0,
-            39.2256,
-            154.0
+            136.028,
+            40.0,
+            156.028,
+            60.0
           ],
           "key": [
-            "tag_label",
+            "commit",
             null,
-            "v1.0.0"
+            "commit-1"
           ]
         },
         {
           "bbox_reference": [
-            -84.387394,
-            173.196913,
-            -84.387394,
-            173.196913
+            -10.0,
+            80.0,
+            10.0,
+            100.0
           ],
           "bbox_sirena": [
-            67.2256,
-            104.0,
-            67.2256,
-            104.0
+            136.028,
+            90.0,
+            156.028,
+            110.0
           ],
           "key": [
-            "commit_label",
+            "commit",
             null,
-            "Reverse Commit with tag"
+            "commit-2"
           ]
         },
         {
           "bbox_reference": [
-            -83.298422,
-            222.107941,
-            -83.298422,
-            222.107941
+            -10.0,
+            130.0,
+            10.0,
+            150.0
           ],
           "bbox_sirena": [
-            67.2256,
-            154.0,
-            67.2256,
-            154.0
+            136.028,
+            140.0,
+            156.028,
+            160.0
           ],
           "key": [
-            "commit_label",
+            "commit",
             null,
-            "Normal Commit with tag"
+            "commit-3"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.446365,
+      "worst_e_c": 0.107357,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -61116,9 +61116,9 @@
           "commit-1"
         ],
         "e_c": [
-          "tag_label",
+          "branch_label",
           null,
-          "8.8.4"
+          "main"
         ],
         "e_h": [
           "commit",
@@ -61140,7 +61140,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.446365,
+        "worst_e_c": 0.107357,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -61195,15 +61195,53 @@
       "top5": [
         {
           "bbox_reference": [
+            181.145954,
+            278.991691,
+            181.145954,
+            278.991691
+          ],
+          "bbox_sirena": [
+            198.437566,
+            295.512221,
+            198.437566,
+            295.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            181.145954,
+            328.991691,
+            181.145954,
+            328.991691
+          ],
+          "bbox_sirena": [
+            198.437566,
+            345.512221,
+            198.437566,
+            345.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "6-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
             211.328125,
             230.0,
             231.328125,
             250.0
           ],
           "bbox_sirena": [
-            210.0,
+            235.364,
             240.0,
-            230.0,
+            255.364,
             260.0
           ],
           "key": [
@@ -61220,9 +61258,9 @@
             300.0
           ],
           "bbox_sirena": [
-            210.0,
+            235.364,
             290.0,
-            230.0,
+            255.364,
             310.0
           ],
           "key": [
@@ -61239,9 +61277,9 @@
             0.0
           ],
           "bbox_sirena": [
-            195.096,
+            220.46,
             10.0,
-            195.096,
+            220.46,
             10.0
           ],
           "key": [
@@ -61249,49 +61287,11 @@
             null,
             "feature"
           ]
-        },
-        {
-          "bbox_reference": [
-            194.125,
-            0.0,
-            194.125,
-            0.0
-          ],
-          "bbox_sirena": [
-            195.096,
-            10.0,
-            195.096,
-            10.0
-          ],
-          "key": [
-            "lane",
-            null,
-            "feature"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -40.182171,
-            78.991691,
-            -40.182171,
-            78.991691
-          ],
-          "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1-abcdefg"
-          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.126404,
+      "worst_e_c": 0.082411,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -61305,9 +61305,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-5"
+          "5-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -61329,7 +61329,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.126404,
+        "worst_e_c": 0.082411,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -61423,27 +61423,27 @@
         },
         {
           "bbox_reference": [
-            15.414214,
-            399.656854,
-            15.414214,
-            399.656854
+            219.974901,
+            254.142136,
+            219.974901,
+            254.142136
           ],
           "bbox_sirena": [
-            114.408,
-            404.0,
-            114.408,
-            404.0
+            294.497795,
+            262.495991,
+            294.497795,
+            262.495991
           ],
           "key": [
-            "tag_label",
+            "commit_label",
             null,
-            "my merge commit"
+            "5"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.119669,
+      "worst_e_c": 0.092779,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -61481,7 +61481,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.119669,
+        "worst_e_c": 0.092779,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -61651,103 +61651,103 @@
       "top5": [
         {
           "bbox_reference": [
-            0.0,
-            -12.0,
-            20.0,
-            8.0
+            -15.881937,
+            46.337901,
+            -15.881937,
+            46.337901
           ],
           "bbox_sirena": [
-            73.324,
-            30.0,
-            93.324,
-            50.0
+            130.324,
+            60.0,
+            130.324,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-1"
+            "1-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            50.0,
-            -12.0,
-            70.0,
-            8.0
+            34.118063,
+            46.337901,
+            34.118063,
+            46.337901
           ],
           "bbox_sirena": [
-            123.324,
-            30.0,
-            143.324,
-            50.0
+            180.324,
+            60.0,
+            180.324,
+            60.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-2"
+            "2-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            100.0,
-            78.0,
-            120.0,
-            98.0
+            84.118063,
+            136.337901,
+            84.118063,
+            136.337901
           ],
           "bbox_sirena": [
-            173.324,
-            120.0,
-            193.324,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
+            230.324,
             150.0,
-            78.0,
-            170.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            223.324,
-            120.0,
-            243.324,
-            140.0
+            230.324,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-4"
+            "3-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            200.0,
-            168.0,
-            220.0,
-            188.0
+            134.118063,
+            136.337901,
+            134.118063,
+            136.337901
           ],
           "bbox_sirena": [
-            273.324,
-            210.0,
-            293.324,
-            230.0
+            280.324,
+            150.0,
+            280.324,
+            150.0
           ],
           "key": [
-            "commit",
+            "commit_label",
             null,
-            "commit-5"
+            "4-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            184.118063,
+            226.337901,
+            184.118063,
+            226.337901
+          ],
+          "bbox_sirena": [
+            330.324,
+            240.0,
+            330.324,
+            240.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5-abcdefg"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.097521,
+      "worst_e_c": 0.088211,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -61761,9 +61761,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-1"
+          "1-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -61785,7 +61785,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.097521,
+        "worst_e_c": 0.088211,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -61803,167 +61803,15 @@
       "top5": [
         {
           "bbox_reference": [
-            -15.556349,
-            54.142136,
-            -15.556349,
-            54.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            104.142136,
-            -15.556349,
-            104.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            104.0,
-            54.0,
-            104.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            304.142136,
-            -15.556349,
-            304.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            304.0,
-            54.0,
-            304.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "5"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -15.556349,
-            354.142136,
-            -15.556349,
-            354.142136
-          ],
-          "bbox_sirena": [
-            54.0,
-            354.0,
-            54.0,
-            354.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "6"
-          ]
-        },
-        {
-          "bbox_reference": [
             96.0,
             130.0,
             116.0,
             150.0
           ],
           "bbox_sirena": [
-            120.0,
+            141.332,
             140.0,
-            140.0,
-            160.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        }
-      ],
-      "worst_analog": 0.0,
-      "worst_e_a": 0.0,
-      "worst_e_c": 0.073233,
-      "worst_e_h": 0.0,
-      "worst_e_w": 0.0,
-      "worst_keys": {
-        "analog": [
-          "commit-1",
-          "radius"
-        ],
-        "e_a": [
-          "commit",
-          null,
-          "commit-1"
-        ],
-        "e_c": [
-          "commit_label",
-          null,
-          "1"
-        ],
-        "e_h": [
-          "commit",
-          null,
-          "commit-1"
-        ],
-        "e_w": [
-          "commit",
-          null,
-          "commit-1"
-        ]
-      }
-    },
-    "invariants": [],
-    "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-ca73a116.svg",
-    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
-    "sirena_status": "rendered",
-    "type": "git_graph",
-    "summary": {
-      "hard_failure": false,
-      "metrics": {
-        "worst_e_c": 0.073233,
-        "worst_e_w": 0.0,
-        "worst_e_h": 0.0,
-        "worst_e_a": 0.0,
-        "worst_analog": 0.0
-      }
-    }
-  },
-  {
-    "case": "gitgraph/gitgraph_spec-d0791e6a.mmd",
-    "geometry": {
-      "ambiguous": 8,
-      "matched": 22,
-      "reference_elements": 22,
-      "sirena_elements": 22,
-      "top5": [
-        {
-          "bbox_reference": [
-            211.328125,
-            130.0,
-            231.328125,
-            150.0
-          ],
-          "bbox_sirena": [
-            210.0,
-            140.0,
-            230.0,
+            161.332,
             160.0
           ],
           "key": [
@@ -61974,15 +61822,15 @@
         },
         {
           "bbox_reference": [
-            211.328125,
+            96.0,
             180.0,
-            231.328125,
+            116.0,
             200.0
           ],
           "bbox_sirena": [
-            210.0,
+            141.332,
             190.0,
-            230.0,
+            161.332,
             210.0
           ],
           "key": [
@@ -61993,65 +61841,65 @@
         },
         {
           "bbox_reference": [
-            194.125,
-            430.0,
-            194.125,
-            430.0
+            90.443651,
+            154.142136,
+            90.443651,
+            154.142136
           ],
           "bbox_sirena": [
-            195.096,
-            440.0,
-            195.096,
-            440.0
-          ],
-          "key": [
-            "branch_label",
-            null,
-            "feature"
-          ]
-        },
-        {
-          "bbox_reference": [
-            194.125,
-            430.0,
-            194.125,
-            430.0
-          ],
-          "bbox_sirena": [
-            195.096,
-            440.0,
-            195.096,
-            440.0
-          ],
-          "key": [
-            "lane",
-            null,
-            "feature"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -40.182171,
-            428.991691,
-            -40.182171,
-            428.991691
-          ],
-          "bbox_sirena": [
-            54.0,
-            404.0,
-            54.0,
-            404.0
+            137.421795,
+            162.495991,
+            137.421795,
+            162.495991
           ],
           "key": [
             "commit_label",
             null,
-            "1-abcdefg"
+            "3"
+          ]
+        },
+        {
+          "bbox_reference": [
+            90.443651,
+            204.142136,
+            90.443651,
+            204.142136
+          ],
+          "bbox_sirena": [
+            137.421795,
+            212.495991,
+            137.421795,
+            212.495991
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "4"
+          ]
+        },
+        {
+          "bbox_reference": [
+            75.671875,
+            0.0,
+            75.671875,
+            0.0
+          ],
+          "bbox_sirena": [
+            123.316,
+            10.0,
+            123.316,
+            10.0
+          ],
+          "key": [
+            "branch_label",
+            null,
+            "develop"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.132744,
+      "worst_e_c": 0.051786,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -62082,6 +61930,158 @@
       }
     },
     "invariants": [],
+    "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-ca73a116.svg",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
+    "sirena_status": "rendered",
+    "type": "git_graph",
+    "summary": {
+      "hard_failure": false,
+      "metrics": {
+        "worst_e_c": 0.051786,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
+      }
+    }
+  },
+  {
+    "case": "gitgraph/gitgraph_spec-d0791e6a.mmd",
+    "geometry": {
+      "ambiguous": 8,
+      "matched": 22,
+      "reference_elements": 22,
+      "sirena_elements": 22,
+      "top5": [
+        {
+          "bbox_reference": [
+            181.145954,
+            228.991691,
+            181.145954,
+            228.991691
+          ],
+          "bbox_sirena": [
+            198.437566,
+            245.512221,
+            198.437566,
+            245.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            181.145954,
+            178.991691,
+            181.145954,
+            178.991691
+          ],
+          "bbox_sirena": [
+            198.437566,
+            195.512221,
+            198.437566,
+            195.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "6-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            211.328125,
+            130.0,
+            231.328125,
+            150.0
+          ],
+          "bbox_sirena": [
+            235.364,
+            140.0,
+            255.364,
+            160.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-3"
+          ]
+        },
+        {
+          "bbox_reference": [
+            211.328125,
+            180.0,
+            231.328125,
+            200.0
+          ],
+          "bbox_sirena": [
+            235.364,
+            190.0,
+            255.364,
+            210.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-4"
+          ]
+        },
+        {
+          "bbox_reference": [
+            194.125,
+            430.0,
+            194.125,
+            430.0
+          ],
+          "bbox_sirena": [
+            220.46,
+            440.0,
+            220.46,
+            440.0
+          ],
+          "key": [
+            "branch_label",
+            null,
+            "feature"
+          ]
+        }
+      ],
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.086544,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
+      "worst_keys": {
+        "analog": [
+          "commit-1",
+          "radius"
+        ],
+        "e_a": [
+          "commit",
+          null,
+          "commit-1"
+        ],
+        "e_c": [
+          "commit_label",
+          null,
+          "5-abcdefg"
+        ],
+        "e_h": [
+          "commit",
+          null,
+          "commit-1"
+        ],
+        "e_w": [
+          "commit",
+          null,
+          "commit-1"
+        ]
+      }
+    },
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-d0791e6a.svg",
     "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
@@ -62089,7 +62089,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.132744,
+        "worst_e_c": 0.086544,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -62524,27 +62524,27 @@
         },
         {
           "bbox_reference": [
-            15.414214,
-            149.656854,
-            15.414214,
-            149.656854
+            219.974901,
+            304.142136,
+            219.974901,
+            304.142136
           ],
           "bbox_sirena": [
-            71.2224,
-            154.0,
-            71.2224,
-            154.0
+            251.312195,
+            312.495991,
+            251.312195,
+            312.495991
           ],
           "key": [
-            "tag_label",
+            "commit_label",
             null,
-            "customTag"
+            "5"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.137136,
+      "worst_e_c": 0.089043,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -62582,7 +62582,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.137136,
+        "worst_e_c": 0.089043,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -62752,40 +62752,59 @@
       "top5": [
         {
           "bbox_reference": [
-            -40.182171,
-            78.991691,
-            -40.182171,
-            78.991691
+            65.817829,
+            178.991691,
+            65.817829,
+            178.991691
           ],
           "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
+            108.437566,
+            195.512221,
+            108.437566,
+            195.512221
           ],
           "key": [
             "commit_label",
             null,
-            "1-abcdefg"
+            "3-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            -40.182171,
-            128.991691,
-            -40.182171,
-            128.991691
+            -21.0,
+            0.0,
+            -21.0,
+            0.0
           ],
           "bbox_sirena": [
-            54.0,
-            104.0,
-            54.0,
-            104.0
+            48.028,
+            10.0,
+            48.028,
+            10.0
           ],
           "key": [
-            "commit_label",
+            "branch_label",
             null,
-            "2-abcdefg"
+            "main"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -21.0,
+            0.0,
+            -21.0,
+            0.0
+          ],
+          "bbox_sirena": [
+            48.028,
+            10.0,
+            48.028,
+            10.0
+          ],
+          "key": [
+            "lane",
+            null,
+            "main"
           ]
         },
         {
@@ -62796,9 +62815,9 @@
             150.0
           ],
           "bbox_sirena": [
-            120.0,
+            145.364,
             140.0,
-            140.0,
+            165.364,
             160.0
           ],
           "key": [
@@ -62809,46 +62828,27 @@
         },
         {
           "bbox_reference": [
-            65.817829,
-            178.991691,
-            65.817829,
-            178.991691
-          ],
-          "bbox_sirena": [
-            144.0,
-            154.0,
-            144.0,
-            154.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "3-abcdefg"
-          ]
-        },
-        {
-          "bbox_reference": [
-            97.0,
-            0.0,
-            97.0,
-            0.0
-          ],
-          "bbox_sirena": [
-            126.0,
+            -10.0,
+            30.0,
             10.0,
-            126.0,
-            10.0
+            50.0
+          ],
+          "bbox_sirena": [
+            55.364,
+            40.0,
+            75.364,
+            60.0
           ],
           "key": [
-            "branch_label",
+            "commit",
             null,
-            "x"
+            "commit-1"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.185106,
+      "worst_e_c": 0.068087,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -62864,7 +62864,7 @@
         "e_c": [
           "commit_label",
           null,
-          "1-abcdefg"
+          "3-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -62886,7 +62886,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.185106,
+        "worst_e_c": 0.068087,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -62904,40 +62904,59 @@
       "top5": [
         {
           "bbox_reference": [
-            -40.182171,
-            78.991691,
-            -40.182171,
-            78.991691
+            159.817829,
+            328.991691,
+            159.817829,
+            328.991691
           ],
           "bbox_sirena": [
-            54.0,
-            54.0,
-            54.0,
-            54.0
+            198.437566,
+            345.512221,
+            198.437566,
+            345.512221
           ],
           "key": [
             "commit_label",
             null,
-            "1-abcdefg"
+            "5-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            -40.182171,
-            128.991691,
-            -40.182171,
-            128.991691
+            65.817829,
+            178.991691,
+            65.817829,
+            178.991691
           ],
           "bbox_sirena": [
-            54.0,
-            104.0,
-            54.0,
-            104.0
+            108.437566,
+            195.512221,
+            108.437566,
+            195.512221
           ],
           "key": [
             "commit_label",
             null,
-            "2-abcdefg"
+            "3-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            65.817829,
+            278.991691,
+            65.817829,
+            278.991691
+          ],
+          "bbox_sirena": [
+            108.437566,
+            295.512221,
+            108.437566,
+            295.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "4-abcdefg"
           ]
         },
         {
@@ -62948,9 +62967,9 @@
             300.0
           ],
           "bbox_sirena": [
-            210.0,
+            235.364,
             290.0,
-            230.0,
+            255.364,
             310.0
           ],
           "key": [
@@ -62961,34 +62980,129 @@
         },
         {
           "bbox_reference": [
-            96.0,
-            130.0,
-            116.0,
-            150.0
+            -21.0,
+            0.0,
+            -21.0,
+            0.0
           ],
           "bbox_sirena": [
-            120.0,
-            140.0,
-            140.0,
-            160.0
+            48.028,
+            10.0,
+            48.028,
+            10.0
           ],
           "key": [
-            "commit",
+            "branch_label",
             null,
-            "commit-3"
+            "main"
+          ]
+        }
+      ],
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.048896,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
+      "worst_keys": {
+        "analog": [
+          "commit-1",
+          "radius"
+        ],
+        "e_a": [
+          "commit",
+          null,
+          "commit-1"
+        ],
+        "e_c": [
+          "commit_label",
+          null,
+          "5-abcdefg"
+        ],
+        "e_h": [
+          "commit",
+          null,
+          "commit-1"
+        ],
+        "e_w": [
+          "commit",
+          null,
+          "commit-1"
+        ]
+      }
+    },
+    "invariants": [],
+    "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-f2a04b5e.svg",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
+    "sirena_status": "rendered",
+    "type": "git_graph",
+    "summary": {
+      "hard_failure": false,
+      "metrics": {
+        "worst_e_c": 0.048896,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
+      }
+    }
+  },
+  {
+    "case": "gitgraph/gitgraph_spec-f45d7013.mmd",
+    "geometry": {
+      "ambiguous": 6,
+      "matched": 20,
+      "reference_elements": 20,
+      "sirena_elements": 20,
+      "top5": [
+        {
+          "bbox_reference": [
+            265.372516,
+            328.991691,
+            265.372516,
+            328.991691
+          ],
+          "bbox_sirena": [
+            288.437566,
+            345.512221,
+            288.437566,
+            345.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            96.0,
+            265.372516,
+            278.991691,
+            265.372516,
+            278.991691
+          ],
+          "bbox_sirena": [
+            288.437566,
+            295.512221,
+            288.437566,
+            295.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "2-abcdefg"
+          ]
+        },
+        {
+          "bbox_reference": [
+            295.554688,
             230.0,
-            116.0,
+            315.554688,
             250.0
           ],
           "bbox_sirena": [
-            120.0,
+            325.364,
             240.0,
-            140.0,
+            345.364,
             260.0
           ],
           "key": [
@@ -62996,11 +63110,49 @@
             null,
             "commit-5"
           ]
+        },
+        {
+          "bbox_reference": [
+            295.554688,
+            280.0,
+            315.554688,
+            300.0
+          ],
+          "bbox_sirena": [
+            325.364,
+            290.0,
+            345.364,
+            310.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-6"
+          ]
+        },
+        {
+          "bbox_reference": [
+            167.372516,
+            128.991691,
+            167.372516,
+            128.991691
+          ],
+          "bbox_sirena": [
+            198.437566,
+            145.512221,
+            198.437566,
+            145.512221
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "5-abcdefg"
+          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.109181,
+      "worst_e_c": 0.077679,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -63031,158 +63183,6 @@
       }
     },
     "invariants": [],
-    "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-f2a04b5e.svg",
-    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
-    "sirena_status": "rendered",
-    "type": "git_graph",
-    "summary": {
-      "hard_failure": false,
-      "metrics": {
-        "worst_e_c": 0.109181,
-        "worst_e_w": 0.0,
-        "worst_e_h": 0.0,
-        "worst_e_a": 0.0,
-        "worst_analog": 0.0
-      }
-    }
-  },
-  {
-    "case": "gitgraph/gitgraph_spec-f45d7013.mmd",
-    "geometry": {
-      "ambiguous": 6,
-      "matched": 20,
-      "reference_elements": 20,
-      "sirena_elements": 20,
-      "top5": [
-        {
-          "bbox_reference": [
-            295.554688,
-            230.0,
-            315.554688,
-            250.0
-          ],
-          "bbox_sirena": [
-            300.0,
-            240.0,
-            320.0,
-            260.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-5"
-          ]
-        },
-        {
-          "bbox_reference": [
-            295.554688,
-            280.0,
-            315.554688,
-            300.0
-          ],
-          "bbox_sirena": [
-            300.0,
-            290.0,
-            320.0,
-            310.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-6"
-          ]
-        },
-        {
-          "bbox_reference": [
-            288.554688,
-            330.0,
-            288.554688,
-            330.0
-          ],
-          "bbox_sirena": [
-            296.656,
-            340.0,
-            296.656,
-            340.0
-          ],
-          "key": [
-            "branch_label",
-            null,
-            "feat"
-          ]
-        },
-        {
-          "bbox_reference": [
-            288.554688,
-            330.0,
-            288.554688,
-            330.0
-          ],
-          "bbox_sirena": [
-            296.656,
-            340.0,
-            296.656,
-            340.0
-          ],
-          "key": [
-            "lane",
-            null,
-            "feat"
-          ]
-        },
-        {
-          "bbox_reference": [
-            197.554688,
-            80.0,
-            217.554688,
-            100.0
-          ],
-          "bbox_sirena": [
-            210.0,
-            90.0,
-            230.0,
-            110.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-2"
-          ]
-        }
-      ],
-      "worst_analog": 0.0,
-      "worst_e_a": 0.0,
-      "worst_e_c": 0.125499,
-      "worst_e_h": 0.0,
-      "worst_e_w": 0.0,
-      "worst_keys": {
-        "analog": [
-          "commit-1",
-          "radius"
-        ],
-        "e_a": [
-          "commit",
-          null,
-          "commit-1"
-        ],
-        "e_c": [
-          "commit",
-          null,
-          "commit-5"
-        ],
-        "e_h": [
-          "commit",
-          null,
-          "commit-1"
-        ],
-        "e_w": [
-          "commit",
-          null,
-          "commit-1"
-        ]
-      }
-    },
-    "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-f45d7013.svg",
     "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
@@ -63190,7 +63190,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.125499,
+        "worst_e_c": 0.077679,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -63206,63 +63206,6 @@
       "reference_elements": 19,
       "sirena_elements": 19,
       "top5": [
-        {
-          "bbox_reference": [
-            -18.318485,
-            406.904271,
-            -18.318485,
-            406.904271
-          ],
-          "bbox_sirena": [
-            54.0,
-            404.0,
-            54.0,
-            404.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "s1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -18.318485,
-            356.904271,
-            -18.318485,
-            356.904271
-          ],
-          "bbox_sirena": [
-            54.0,
-            354.0,
-            54.0,
-            354.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "s2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            -18.318485,
-            206.904271,
-            -18.318485,
-            206.904271
-          ],
-          "bbox_sirena": [
-            54.0,
-            204.0,
-            54.0,
-            204.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "s5"
-          ]
-        },
         {
           "bbox_reference": [
             96.0,
@@ -63300,11 +63243,220 @@
             null,
             "commit-2"
           ]
+        },
+        {
+          "bbox_reference": [
+            96.0,
+            130.0,
+            116.0,
+            150.0
+          ],
+          "bbox_sirena": [
+            120.0,
+            140.0,
+            140.0,
+            160.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-3"
+          ]
+        },
+        {
+          "bbox_reference": [
+            96.0,
+            230.0,
+            116.0,
+            250.0
+          ],
+          "bbox_sirena": [
+            120.0,
+            240.0,
+            140.0,
+            260.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-5"
+          ]
+        },
+        {
+          "bbox_reference": [
+            96.0,
+            280.0,
+            116.0,
+            300.0
+          ],
+          "bbox_sirena": [
+            120.0,
+            290.0,
+            140.0,
+            310.0
+          ],
+          "key": [
+            "commit",
+            null,
+            "commit-6"
+          ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.074327,
+      "worst_e_c": 0.044576,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
+      "worst_keys": {
+        "analog": [
+          "commit-1",
+          "radius"
+        ],
+        "e_a": [
+          "commit",
+          null,
+          "commit-1"
+        ],
+        "e_c": [
+          "commit",
+          null,
+          "commit-1"
+        ],
+        "e_h": [
+          "commit",
+          null,
+          "commit-1"
+        ],
+        "e_w": [
+          "commit",
+          null,
+          "commit-1"
+        ]
+      }
+    },
+    "invariants": [],
+    "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-f4bbbafe.svg",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
+    "sirena_status": "rendered",
+    "type": "git_graph",
+    "summary": {
+      "hard_failure": false,
+      "metrics": {
+        "worst_e_c": 0.044576,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
+        "worst_analog": 0.0
+      }
+    }
+  },
+  {
+    "case": "gitgraph/gitgraph_spec-fbfbfcbd.mmd",
+    "geometry": {
+      "ambiguous": 8,
+      "matched": 19,
+      "reference_elements": 19,
+      "sirena_elements": 19,
+      "top5": [
+        {
+          "bbox_reference": [
+            6.915527,
+            24.783562,
+            6.915527,
+            24.783562
+          ],
+          "bbox_sirena": [
+            106.308,
+            60.0,
+            106.308,
+            60.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "s1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            56.915527,
+            24.783562,
+            56.915527,
+            24.783562
+          ],
+          "bbox_sirena": [
+            156.308,
+            60.0,
+            156.308,
+            60.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "s2"
+          ]
+        },
+        {
+          "bbox_reference": [
+            106.915527,
+            114.783562,
+            106.915527,
+            114.783562
+          ],
+          "bbox_sirena": [
+            206.308,
+            150.0,
+            206.308,
+            150.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "s3"
+          ]
+        },
+        {
+          "bbox_reference": [
+            156.915527,
+            114.783562,
+            156.915527,
+            114.783562
+          ],
+          "bbox_sirena": [
+            256.308,
+            150.0,
+            256.308,
+            150.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "s4"
+          ]
+        },
+        {
+          "bbox_reference": [
+            206.915527,
+            24.783562,
+            206.915527,
+            24.783562
+          ],
+          "bbox_sirena": [
+            306.308,
+            60.0,
+            306.308,
+            60.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "s5"
+          ]
+        }
+      ],
+      "worst_analog": 0.0,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.016132,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -63335,158 +63487,6 @@
       }
     },
     "invariants": [],
-    "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-f4bbbafe.svg",
-    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
-    "sirena_status": "rendered",
-    "type": "git_graph",
-    "summary": {
-      "hard_failure": false,
-      "metrics": {
-        "worst_e_c": 0.074327,
-        "worst_e_w": 0.0,
-        "worst_e_h": 0.0,
-        "worst_e_a": 0.0,
-        "worst_analog": 0.0
-      }
-    }
-  },
-  {
-    "case": "gitgraph/gitgraph_spec-fbfbfcbd.mmd",
-    "geometry": {
-      "ambiguous": 8,
-      "matched": 19,
-      "reference_elements": 19,
-      "sirena_elements": 19,
-      "top5": [
-        {
-          "bbox_reference": [
-            0.0,
-            -12.0,
-            20.0,
-            8.0
-          ],
-          "bbox_sirena": [
-            49.308,
-            30.0,
-            69.308,
-            50.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-1"
-          ]
-        },
-        {
-          "bbox_reference": [
-            50.0,
-            -12.0,
-            70.0,
-            8.0
-          ],
-          "bbox_sirena": [
-            99.308,
-            30.0,
-            119.308,
-            50.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-2"
-          ]
-        },
-        {
-          "bbox_reference": [
-            100.0,
-            78.0,
-            120.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            149.308,
-            120.0,
-            169.308,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-3"
-          ]
-        },
-        {
-          "bbox_reference": [
-            150.0,
-            78.0,
-            170.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            199.308,
-            120.0,
-            219.308,
-            140.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-4"
-          ]
-        },
-        {
-          "bbox_reference": [
-            200.0,
-            -12.0,
-            220.0,
-            8.0
-          ],
-          "bbox_sirena": [
-            249.308,
-            30.0,
-            269.308,
-            50.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-5"
-          ]
-        }
-      ],
-      "worst_analog": 0.0,
-      "worst_e_a": 0.0,
-      "worst_e_c": 0.095849,
-      "worst_e_h": 0.0,
-      "worst_e_w": 0.0,
-      "worst_keys": {
-        "analog": [
-          "commit-1",
-          "radius"
-        ],
-        "e_a": [
-          "commit",
-          null,
-          "commit-1"
-        ],
-        "e_c": [
-          "commit",
-          null,
-          "commit-1"
-        ],
-        "e_h": [
-          "commit",
-          null,
-          "commit-1"
-        ],
-        "e_w": [
-          "commit",
-          null,
-          "commit-1"
-        ]
-      }
-    },
-    "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-fbfbfcbd.svg",
     "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
@@ -63494,7 +63494,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.095849,
+        "worst_e_c": 0.016132,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -63512,103 +63512,103 @@
       "top5": [
         {
           "bbox_reference": [
-            15.414214,
-            149.656854,
-            15.414214,
-            149.656854
+            -21.0,
+            0.0,
+            -21.0,
+            0.0
           ],
           "bbox_sirena": [
-            39.2256,
-            154.0,
-            39.2256,
-            154.0
+            128.692,
+            10.0,
+            128.692,
+            10.0
           ],
           "key": [
-            "tag_label",
+            "branch_label",
             null,
-            "8.8.4"
+            "main"
           ]
         },
         {
           "bbox_reference": [
-            15.414214,
-            99.656854,
-            15.414214,
-            99.656854
+            -21.0,
+            0.0,
+            -21.0,
+            0.0
           ],
           "bbox_sirena": [
-            39.2256,
-            104.0,
-            39.2256,
-            104.0
+            128.692,
+            10.0,
+            128.692,
+            10.0
           ],
           "key": [
-            "tag_label",
+            "lane",
             null,
-            "RC_1"
+            "main"
           ]
         },
         {
           "bbox_reference": [
-            15.414214,
-            49.656854,
-            15.414214,
-            49.656854
+            -10.0,
+            30.0,
+            10.0,
+            50.0
           ],
           "bbox_sirena": [
-            39.2256,
-            54.0,
-            39.2256,
-            54.0
+            136.028,
+            40.0,
+            156.028,
+            60.0
           ],
           "key": [
-            "tag_label",
+            "commit",
             null,
-            "v1.0.0"
+            "commit-1"
           ]
         },
         {
           "bbox_reference": [
-            -84.387394,
-            173.196913,
-            -84.387394,
-            173.196913
+            -10.0,
+            80.0,
+            10.0,
+            100.0
           ],
           "bbox_sirena": [
-            67.2256,
-            104.0,
-            67.2256,
-            104.0
+            136.028,
+            90.0,
+            156.028,
+            110.0
           ],
           "key": [
-            "commit_label",
+            "commit",
             null,
-            "Reverse Commit with tag"
+            "commit-2"
           ]
         },
         {
           "bbox_reference": [
-            -83.298422,
-            122.107941,
-            -83.298422,
-            122.107941
+            -10.0,
+            130.0,
+            10.0,
+            150.0
           ],
           "bbox_sirena": [
-            67.2256,
-            54.0,
-            67.2256,
-            54.0
+            136.028,
+            140.0,
+            156.028,
+            160.0
           ],
           "key": [
-            "commit_label",
+            "commit",
             null,
-            "Normal Commit with tag"
+            "commit-3"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.427547,
+      "worst_e_c": 0.102831,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -63622,9 +63622,9 @@
           "commit-1"
         ],
         "e_c": [
-          "tag_label",
+          "branch_label",
           null,
-          "8.8.4"
+          "main"
         ],
         "e_h": [
           "commit",
@@ -63646,7 +63646,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.427547,
+        "worst_e_c": 0.102831,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -63816,40 +63816,59 @@
       "top5": [
         {
           "bbox_reference": [
-            -40.182171,
-            228.991691,
-            -40.182171,
-            228.991691
+            65.817829,
+            128.991691,
+            65.817829,
+            128.991691
           ],
           "bbox_sirena": [
-            54.0,
-            204.0,
-            54.0,
-            204.0
+            108.437566,
+            145.512221,
+            108.437566,
+            145.512221
           ],
           "key": [
             "commit_label",
             null,
-            "1-abcdefg"
+            "3-abcdefg"
           ]
         },
         {
           "bbox_reference": [
-            -40.182171,
-            178.991691,
-            -40.182171,
-            178.991691
+            -21.0,
+            230.0,
+            -21.0,
+            230.0
           ],
           "bbox_sirena": [
-            54.0,
-            154.0,
-            54.0,
-            154.0
+            48.028,
+            240.0,
+            48.028,
+            240.0
           ],
           "key": [
-            "commit_label",
+            "branch_label",
             null,
-            "2-abcdefg"
+            "main"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -21.0,
+            230.0,
+            -21.0,
+            230.0
+          ],
+          "bbox_sirena": [
+            48.028,
+            240.0,
+            48.028,
+            240.0
+          ],
+          "key": [
+            "lane",
+            null,
+            "main"
           ]
         },
         {
@@ -63860,9 +63879,9 @@
             100.0
           ],
           "bbox_sirena": [
-            120.0,
+            145.364,
             90.0,
-            140.0,
+            165.364,
             110.0
           ],
           "key": [
@@ -63873,46 +63892,27 @@
         },
         {
           "bbox_reference": [
-            65.817829,
-            128.991691,
-            65.817829,
-            128.991691
+            -10.0,
+            30.0,
+            10.0,
+            50.0
           ],
           "bbox_sirena": [
-            144.0,
-            104.0,
-            144.0,
-            104.0
+            55.364,
+            40.0,
+            75.364,
+            60.0
           ],
           "key": [
-            "commit_label",
+            "commit",
             null,
-            "3-abcdefg"
-          ]
-        },
-        {
-          "bbox_reference": [
-            97.0,
-            230.0,
-            97.0,
-            230.0
-          ],
-          "bbox_sirena": [
-            126.0,
-            240.0,
-            126.0,
-            240.0
-          ],
-          "key": [
-            "branch_label",
-            null,
-            "x"
+            "commit-1"
           ]
         }
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.185106,
+      "worst_e_c": 0.068087,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -63928,7 +63928,7 @@
         "e_c": [
           "commit_label",
           null,
-          "1-abcdefg"
+          "3-abcdefg"
         ],
         "e_h": [
           "commit",
@@ -63950,7 +63950,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.185106,
+        "worst_e_c": 0.068087,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -65149,10 +65149,10 @@
             -18.0
           ],
           "bbox_sirena": [
-            86.172,
-            25.0,
-            86.172,
-            25.0
+            79.2404,
+            24.0,
+            79.2404,
+            24.0
           ],
           "key": [
             "tag_label",
@@ -65220,7 +65220,7 @@
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.071615,
+      "worst_e_c": 0.001921,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -65258,7 +65258,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.071615,
+        "worst_e_c": 0.001921,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -65282,10 +65282,10 @@
             -18.0
           ],
           "bbox_sirena": [
-            86.172,
-            25.0,
-            86.172,
-            25.0
+            72.068,
+            24.0,
+            72.068,
+            24.0
           ],
           "key": [
             "tag_label",
@@ -65353,7 +65353,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.145555,
+      "worst_e_c": 0.003747,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -65388,7 +65388,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.145555,
+        "worst_e_c": 0.003747,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -65520,35 +65520,16 @@
       "top5": [
         {
           "bbox_reference": [
-            -0.408545,
-            31.708259,
-            -0.408545,
-            31.708259
-          ],
-          "bbox_sirena": [
-            86.172,
-            60.0,
-            86.172,
-            60.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1111"
-          ]
-        },
-        {
-          "bbox_reference": [
             -4.304688,
             -18.0,
             -4.304688,
             -18.0
           ],
           "bbox_sirena": [
-            86.172,
-            25.0,
-            86.172,
-            25.0
+            72.068,
+            24.0,
+            72.068,
+            24.0
           ],
           "key": [
             "tag_label",
@@ -65573,6 +65554,25 @@
             "commit",
             null,
             "commit-1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -0.408545,
+            31.708259,
+            -0.408545,
+            31.708259
+          ],
+          "bbox_sirena": [
+            75.590502,
+            73.871781,
+            75.590502,
+            73.871781
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1111"
           ]
         },
         {
@@ -65616,7 +65616,7 @@
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.1676,
+      "worst_e_c": 0.003447,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -65630,9 +65630,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "tag_label",
           null,
-          "1111"
+          "test tag"
         ],
         "e_h": [
           "commit",
@@ -65654,7 +65654,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.1676,
+        "worst_e_c": 0.003447,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -65786,35 +65786,16 @@
       "top5": [
         {
           "bbox_reference": [
-            -0.408545,
-            31.708259,
-            -0.408545,
-            31.708259
-          ],
-          "bbox_sirena": [
-            86.172,
-            60.0,
-            86.172,
-            60.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1111"
-          ]
-        },
-        {
-          "bbox_reference": [
             -4.304688,
             -18.0,
             -4.304688,
             -18.0
           ],
           "bbox_sirena": [
-            86.172,
-            25.0,
-            86.172,
-            25.0
+            72.068,
+            24.0,
+            72.068,
+            24.0
           ],
           "key": [
             "tag_label",
@@ -65839,6 +65820,25 @@
             "commit",
             null,
             "commit-1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -0.408545,
+            31.708259,
+            -0.408545,
+            31.708259
+          ],
+          "bbox_sirena": [
+            75.590502,
+            73.871781,
+            75.590502,
+            73.871781
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1111"
           ]
         },
         {
@@ -65882,7 +65882,7 @@
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.1676,
+      "worst_e_c": 0.003447,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -65896,9 +65896,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "tag_label",
           null,
-          "1111"
+          "test tag"
         ],
         "e_h": [
           "commit",
@@ -65920,7 +65920,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.1676,
+        "worst_e_c": 0.003447,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -65944,10 +65944,10 @@
             -18.0
           ],
           "bbox_sirena": [
-            86.172,
-            25.0,
-            86.172,
-            25.0
+            72.068,
+            24.0,
+            72.068,
+            24.0
           ],
           "key": [
             "tag_label",
@@ -66015,7 +66015,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.145555,
+      "worst_e_c": 0.003747,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -66050,7 +66050,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.145555,
+        "worst_e_c": 0.003747,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -66068,25 +66068,6 @@
       "top5": [
         {
           "bbox_reference": [
-            -0.408545,
-            31.708259,
-            -0.408545,
-            31.708259
-          ],
-          "bbox_sirena": [
-            86.172,
-            60.0,
-            86.172,
-            60.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1111"
-          ]
-        },
-        {
-          "bbox_reference": [
             0.0,
             -12.0,
             20.0,
@@ -66102,6 +66083,25 @@
             "commit",
             null,
             "commit-1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -0.408545,
+            31.708259,
+            -0.408545,
+            31.708259
+          ],
+          "bbox_sirena": [
+            75.590502,
+            73.871781,
+            75.590502,
+            73.871781
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1111"
           ]
         },
         {
@@ -66145,7 +66145,7 @@
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.163843,
+      "worst_e_c": 0.001627,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -66159,9 +66159,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "commit",
           null,
-          "1111"
+          "commit-1"
         ],
         "e_h": [
           "commit",
@@ -66183,7 +66183,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.163843,
+        "worst_e_c": 0.001627,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -66201,35 +66201,16 @@
       "top5": [
         {
           "bbox_reference": [
-            -0.408545,
-            31.708259,
-            -0.408545,
-            31.708259
-          ],
-          "bbox_sirena": [
-            86.172,
-            60.0,
-            86.172,
-            60.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1111"
-          ]
-        },
-        {
-          "bbox_reference": [
             -4.304688,
             -18.0,
             -4.304688,
             -18.0
           ],
           "bbox_sirena": [
-            86.172,
-            25.0,
-            86.172,
-            25.0
+            72.068,
+            24.0,
+            72.068,
+            24.0
           ],
           "key": [
             "tag_label",
@@ -66258,6 +66239,25 @@
         },
         {
           "bbox_reference": [
+            -0.408545,
+            31.708259,
+            -0.408545,
+            31.708259
+          ],
+          "bbox_sirena": [
+            75.590502,
+            73.871781,
+            75.590502,
+            73.871781
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1111"
+          ]
+        },
+        {
+          "bbox_reference": [
             -76.0,
             -12.5,
             -76.0,
@@ -66297,7 +66297,7 @@
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.1676,
+      "worst_e_c": 0.003447,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -66311,9 +66311,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "tag_label",
           null,
-          "1111"
+          "test tag"
         ],
         "e_h": [
           "commit",
@@ -66335,7 +66335,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.1676,
+        "worst_e_c": 0.003447,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -66578,35 +66578,16 @@
       "top5": [
         {
           "bbox_reference": [
-            -0.408545,
-            31.708259,
-            -0.408545,
-            31.708259
-          ],
-          "bbox_sirena": [
-            86.172,
-            60.0,
-            86.172,
-            60.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1111"
-          ]
-        },
-        {
-          "bbox_reference": [
             -4.304688,
             -18.0,
             -4.304688,
             -18.0
           ],
           "bbox_sirena": [
-            86.172,
-            25.0,
-            86.172,
-            25.0
+            72.068,
+            24.0,
+            72.068,
+            24.0
           ],
           "key": [
             "tag_label",
@@ -66631,6 +66612,25 @@
             "commit",
             null,
             "commit-1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -0.408545,
+            31.708259,
+            -0.408545,
+            31.708259
+          ],
+          "bbox_sirena": [
+            75.590502,
+            73.871781,
+            75.590502,
+            73.871781
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1111"
           ]
         },
         {
@@ -66674,7 +66674,7 @@
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.1676,
+      "worst_e_c": 0.003447,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -66688,9 +66688,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "tag_label",
           null,
-          "1111"
+          "test tag"
         ],
         "e_h": [
           "commit",
@@ -66712,7 +66712,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.1676,
+        "worst_e_c": 0.003447,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -66730,35 +66730,16 @@
       "top5": [
         {
           "bbox_reference": [
-            -0.408545,
-            31.708259,
-            -0.408545,
-            31.708259
-          ],
-          "bbox_sirena": [
-            86.172,
-            60.0,
-            86.172,
-            60.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1111"
-          ]
-        },
-        {
-          "bbox_reference": [
             -4.304688,
             -18.0,
             -4.304688,
             -18.0
           ],
           "bbox_sirena": [
-            86.172,
-            25.0,
-            86.172,
-            25.0
+            72.068,
+            24.0,
+            72.068,
+            24.0
           ],
           "key": [
             "tag_label",
@@ -66783,6 +66764,25 @@
             "commit",
             null,
             "commit-1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -0.408545,
+            31.708259,
+            -0.408545,
+            31.708259
+          ],
+          "bbox_sirena": [
+            75.590502,
+            73.871781,
+            75.590502,
+            73.871781
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1111"
           ]
         },
         {
@@ -66826,7 +66826,7 @@
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.1676,
+      "worst_e_c": 0.003447,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -66840,9 +66840,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "tag_label",
           null,
-          "1111"
+          "test tag"
         ],
         "e_h": [
           "commit",
@@ -66864,7 +66864,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.1676,
+        "worst_e_c": 0.003447,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -66882,35 +66882,16 @@
       "top5": [
         {
           "bbox_reference": [
-            -0.408545,
-            31.708259,
-            -0.408545,
-            31.708259
-          ],
-          "bbox_sirena": [
-            86.172,
-            60.0,
-            86.172,
-            60.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "1111"
-          ]
-        },
-        {
-          "bbox_reference": [
             -4.304688,
             -18.0,
             -4.304688,
             -18.0
           ],
           "bbox_sirena": [
-            86.172,
-            25.0,
-            86.172,
-            25.0
+            72.068,
+            24.0,
+            72.068,
+            24.0
           ],
           "key": [
             "tag_label",
@@ -66935,6 +66916,25 @@
             "commit",
             null,
             "commit-1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            -0.408545,
+            31.708259,
+            -0.408545,
+            31.708259
+          ],
+          "bbox_sirena": [
+            75.590502,
+            73.871781,
+            75.590502,
+            73.871781
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "1111"
           ]
         },
         {
@@ -66978,7 +66978,7 @@
       ],
       "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.1676,
+      "worst_e_c": 0.003447,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -66992,9 +66992,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit_label",
+          "tag_label",
           null,
-          "1111"
+          "test tag"
         ],
         "e_h": [
           "commit",
@@ -67016,7 +67016,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.1676,
+        "worst_e_c": 0.003447,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -69358,9 +69358,9 @@
             50.0
           ],
           "bbox_sirena": [
-            30.0,
+            51.332,
             40.0,
-            50.0,
+            71.332,
             60.0
           ],
           "key": [
@@ -69377,9 +69377,9 @@
             80.0
           ],
           "bbox_sirena": [
-            22.664,
+            43.996,
             90.0,
-            22.664,
+            43.996,
             90.0
           ],
           "key": [
@@ -69396,9 +69396,9 @@
             80.0
           ],
           "bbox_sirena": [
-            22.664,
+            43.996,
             90.0,
-            22.664,
+            43.996,
             90.0
           ],
           "key": [
@@ -69586,9 +69586,9 @@
             50.0
           ],
           "bbox_sirena": [
-            30.0,
+            51.332,
             40.0,
-            50.0,
+            71.332,
             60.0
           ],
           "key": [
@@ -69605,9 +69605,9 @@
             0.0
           ],
           "bbox_sirena": [
-            22.664,
+            43.996,
             10.0,
-            22.664,
+            43.996,
             10.0
           ],
           "key": [
@@ -69624,9 +69624,9 @@
             0.0
           ],
           "bbox_sirena": [
-            22.664,
+            43.996,
             10.0,
-            22.664,
+            43.996,
             10.0
           ],
           "key": [
@@ -106500,44 +106500,6 @@
       "top5": [
         {
           "bbox_reference": [
-            278.421875,
-            8.0,
-            360.03125,
-            92.0
-          ],
-          "bbox_sirena": [
-            246.528,
-            8.0,
-            314.784,
-            92.0
-          ],
-          "key": [
-            "class",
-            null,
-            "classE"
-          ]
-        },
-        {
-          "bbox_reference": [
-            278.421875,
-            166.0,
-            360.03125,
-            250.0
-          ],
-          "bbox_sirena": [
-            246.4,
-            160.0,
-            314.8,
-            244.0
-          ],
-          "key": [
-            "class",
-            null,
-            "classF"
-          ]
-        },
-        {
-          "bbox_reference": [
             15.203125,
             166.0,
             96.8125,
@@ -106546,7 +106508,7 @@
           "bbox_sirena": [
             8.0,
             160.0,
-            76.784,
+            89.609375,
             244.0
           ],
           "key": [
@@ -106558,20 +106520,39 @@
         {
           "bbox_reference": [
             146.8125,
-            8.0,
+            166.0,
             228.421875,
-            92.0
+            250.0
           ],
           "bbox_sirena": [
-            127.296,
-            8.0,
-            196.528,
-            92.0
+            139.609375,
+            160.0,
+            221.21875,
+            244.0
           ],
           "key": [
             "class",
             null,
-            "classC"
+            "classD"
+          ]
+        },
+        {
+          "bbox_reference": [
+            278.421875,
+            166.0,
+            360.03125,
+            250.0
+          ],
+          "bbox_sirena": [
+            271.21875,
+            160.0,
+            352.828125,
+            244.0
+          ],
+          "key": [
+            "class",
+            null,
+            "classF"
           ]
         },
         {
@@ -106582,9 +106563,9 @@
             92.0
           ],
           "bbox_sirena": [
-            8.016,
             8.0,
-            77.296,
+            8.0,
+            89.609375,
             92.0
           ],
           "key": [
@@ -106592,24 +106573,43 @@
             null,
             "classA"
           ]
+        },
+        {
+          "bbox_reference": [
+            146.8125,
+            8.0,
+            228.421875,
+            92.0
+          ],
+          "bbox_sirena": [
+            139.609375,
+            8.0,
+            221.21875,
+            92.0
+          ],
+          "key": [
+            "class",
+            null,
+            "classC"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.163626,
-      "worst_e_c": 0.075939,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.014243,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.163626,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "class",
           null,
-          "classE"
+          "classA"
         ],
         "e_c": [
           "class",
           null,
-          "classF"
+          "classB"
         ],
         "e_h": [
           "class",
@@ -106619,7 +106619,7 @@
         "e_w": [
           "class",
           null,
-          "classE"
+          "classA"
         ]
       }
     },
@@ -106631,10 +106631,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.075939,
-        "worst_e_w": 0.163626,
+        "worst_e_c": 0.014243,
+        "worst_e_w": 0.0,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.163626,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -106657,7 +106657,7 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            311.784,
+            366.847656,
             242.0
           ],
           "key": [
@@ -106668,10 +106668,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.173816,
-      "worst_e_c": 0.074327,
+      "worst_e_a": 0.000037,
+      "worst_e_c": 0.000016,
       "worst_e_h": 0.0,
-      "worst_e_w": 0.173816,
+      "worst_e_w": 0.000037,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -106704,10 +106704,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.074327,
-        "worst_e_w": 0.173816,
+        "worst_e_c": 0.000016,
+        "worst_e_w": 0.000037,
         "worst_e_h": 0.0,
-        "worst_e_a": 0.173816,
+        "worst_e_a": 0.000037,
         "worst_analog": null
       }
     }
