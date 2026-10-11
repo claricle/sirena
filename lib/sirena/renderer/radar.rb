@@ -119,7 +119,7 @@ module Sirena
           circle.cy = point.y
           circle.r = 3
           circle.fill = color
-          circle.stroke = theme_color(:background) || "#ffffff"
+          circle.stroke = theme_color(:background)
           circle.stroke_width = "1"
         end
       end
@@ -144,7 +144,7 @@ module Sirena
           if label.dominant_baseline
             text.dominant_baseline = label.dominant_baseline
           end
-          text.fill = theme_color(:label_text) || "#000000"
+          text.fill = theme_color(:label_text)
           text.font_size = number_string(label.font_size)
           text.font_family =
             theme_typography(:font_family) || "Arial, sans-serif"
