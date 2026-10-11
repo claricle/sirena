@@ -92,12 +92,19 @@ module Sirena
               next unless option.is_a?(Hash)
 
               OPTION_KEYS.each do |source, target|
-                result[target] = option[source].to_s if option[source]
+                assign_option(result, option, source, target)
               end
               if option[:message]
                 result[:message] = State.unquote(option[:message])
               end
             end
+          end
+
+          def assign_option(result, option, source, target)
+            value = option[source]&.to_s
+            return if value.nil? || (target == :tag && value == '""')
+
+            result[target] = value
           end
 
           def commit_identity(commit_id, options)
