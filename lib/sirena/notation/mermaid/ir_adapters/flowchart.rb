@@ -76,6 +76,7 @@ module Sirena
               source_id: endpoints.fetch(edge.source_id),
               target_id: endpoints.fetch(edge.target_id),
               label: edge.label, role: edge.arrow_type,
+              minimum_rank_span: edge.minimum_rank_span,
               properties: marker_properties(edge.arrow_type)
             )
           end

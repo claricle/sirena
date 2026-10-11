@@ -59,6 +59,10 @@ module Sirena
       # Weights are `thick_` and `dotted_`. `invisible` carries neither.
       attribute :arrow_type, :string
 
+      # Minimum number of layout ranks crossed by an explicitly long link.
+      # nil is the ordinary one-rank Mermaid default.
+      attribute :minimum_rank_span, :integer
+
       # Initialize with default arrow type
       def initialize(*args)
         super
