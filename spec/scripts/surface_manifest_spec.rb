@@ -70,6 +70,13 @@ RSpec.describe SurfaceManifest do
   end
 
   describe ".checkout_env" do
+    around do |example|
+      previous = ENV.fetch("BUNDLE_LOCKFILE", nil)
+      example.run
+    ensure
+      ENV["BUNDLE_LOCKFILE"] = previous
+    end
+
     it "points the child at the checkout's own Gemfile, not the caller's" do
       env = described_class.checkout_env("/some/checkout")
 
@@ -77,22 +84,19 @@ RSpec.describe SurfaceManifest do
     end
 
     it "unsets the caller's absolute Bundler lockfile" do
-      previous = ENV.fetch("BUNDLE_LOCKFILE", nil)
       ENV["BUNDLE_LOCKFILE"] = "/caller/Gemfile.lock"
 
       expect(described_class.checkout_env("/some/checkout"))
         .to include("BUNDLE_LOCKFILE" => nil)
-    ensure
-      ENV["BUNDLE_LOCKFILE"] = previous
     end
   end
 
   describe ".scrub" do
-    it "masks the checkout path and per-run object addresses" do
-      text = "/r/lib: #<Position:0x0000000123cf3540>"
+    it "normalizes newlines and masks checkout paths and object addresses" do
+      text = "/r/lib: #<Position:0x0000000123cf3540>\r\n"
 
       expect(described_class.scrub(text, "/r"))
-        .to eq("<ROOT>/lib: #<Position:0xADDR>")
+        .to eq("<ROOT>/lib: #<Position:0xADDR>\n")
     end
   end
 
@@ -179,12 +183,17 @@ RSpec.describe SurfaceManifest do
   end
 
   describe ".run_process" do
-    it "does not request a POSIX process group on Windows" do
-      allow(Gem).to receive(:win_platform?).and_return(true)
-
-      allow(Open3).to receive(:popen3)
-
+    subject(:run_process) do
       described_class.run_process(["env"], chdir: directory, timeout: 1)
+    end
+
+    before do
+      allow(Gem).to receive(:win_platform?).and_return(true)
+      allow(Open3).to receive(:popen3)
+    end
+
+    it "does not request a POSIX process group on Windows" do
+      run_process
 
       expect(Open3).to have_received(:popen3)
         .with(instance_of(Hash), "env", chdir: directory)
