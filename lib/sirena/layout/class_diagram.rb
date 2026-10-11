@@ -2,7 +2,8 @@
 
 require_relative "base"
 require_relative "elk_placement"
-require_relative "grid"
+require_relative "class_cell_placement"
+require_relative "class_name_advances"
 require_relative "class_note_nodes"
 require_relative "class_diagram_notes"
 require_relative "class_diagram_namespaces"
@@ -18,7 +19,8 @@ module Sirena
       DEFAULT_NAME_FONT_SIZE = 16
       DEFAULT_SMALL_FONT_SIZE = 12
       HEADER_PADDING = 24
-      BOLD_NAME_RATIO = 1.05
+      NAME_FONT_PX = 16
+      GENERIC = /~([^~]+)~/
       EMPTY_CLASS_HEIGHT = 84
       STEREOTYPE_HEIGHT = 24
       MEMBER_HEIGHT = 24
@@ -169,7 +171,7 @@ module Sirena
       private
 
       def placer
-        placement == :elk ? ElkPlacement : Grid
+        placement == :elk ? ElkPlacement : ClassCellPlacement
       end
 
       def reject_unsupported_elk_graph!(graph)
@@ -465,7 +467,14 @@ module Sirena
       end
 
       def name_width(name)
-        mmdc_text_width(name) * BOLD_NAME_RATIO
+        shown_generics(name).each_char.sum { |char| bold_advance(char) }
+      end
+
+      def bold_advance(char)
+        per_mille = ClassNameAdvances::TABLE[char]
+        return per_mille * NAME_FONT_PX / 1000.0 if per_mille
+
+        mmdc_text_width(char) * ClassNameAdvances::FALLBACK_RATIO
       end
 
       def member_widths(items)
@@ -473,7 +482,13 @@ module Sirena
       end
 
       def mmdc_text_width(text)
-        TextMeasurement.measure_in(:trebuchet, text, font_size: 16)[:width]
+        TextMeasurement.measure_in(:trebuchet, shown_generics(text),
+                                   font_size: NAME_FONT_PX)[:width]
+      end
+
+      # mmdc draws a generic `List~T~` as `List<T>`.
+      def shown_generics(text)
+        text.gsub(GENERIC, '<\\1>')
       end
 
       # mmdc stacks a 48px header (24 more with an annotation) over one
