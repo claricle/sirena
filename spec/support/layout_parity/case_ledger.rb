@@ -12,8 +12,9 @@ module SpecSupport
         worst_analog
       ].freeze
       JSON_SCALARS = [String, Integer, TrueClass, FalseClass, NilClass].freeze
-      # Suppress runtime noise far below the 0.08 and 0.15 contract thresholds.
-      SCOREBOARD_DECIMAL_PLACES = 12
+      # Suppress cross-platform runtime noise far below the 0.08 and 0.15
+      # contract thresholds while retaining changes as small as 0.000001.
+      SCOREBOARD_DECIMAL_PLACES = 6
 
       def self.build(results)
         new(results).build
