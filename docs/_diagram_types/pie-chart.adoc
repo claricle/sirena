@@ -316,7 +316,11 @@ pie title Department Budget Allocation
 
 The pie chart implementation includes:
 
-* Coverage against the oracle-valid mermaid-js corpus cases: `--> against valid cases only: 40/40 = 100.0%` (`bundle exec ruby scripts/corpus_sweep.rb --failing pie`, BY VERDICT section). The remaining 9 corpus cases are outside the oracle-valid set: 1 `artifact`, 6 `invalid`, 2 `unknown`, per `spec/mermaid/corpus-verdicts.yml`.
+// BEGIN GENERATED: rake docs:compatibility pie
+* Oracle-valid corpus coverage: `40/40 passing (100.0%)`.
+* Outside the compatibility denominator: 1/1 `artifact` cases currently render; 8/8 `invalid` cases currently render.
+* Generated from `scoreboard/corpus.json` by `bundle exec rake docs:compatibility`.
+// END GENERATED: rake docs:compatibility pie
 * 13 RSpec examples in `spec/sirena/parser/pie_spec.rb`
 * Parser, transform, and renderer tests
 * Edge case handling (empty diagrams, negative values, etc.)
