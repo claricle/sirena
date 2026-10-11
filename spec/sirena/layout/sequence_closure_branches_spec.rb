@@ -3,9 +3,9 @@
 require "spec_helper"
 
 module SequenceClosureBranchesSpecHelpers
-  def scene_for(body, **options)
+  def scene_for(body, **)
     diagram = Sirena::Parser::Sequence.new.parse("sequenceDiagram\n#{body}\n")
-    Sirena::Layout::Sequence.new.call(diagram, **options)
+    Sirena::Layout::Sequence.new.call(diagram, **)
   end
 
   def gap_after_a(children, edges: [], notes: [])
@@ -188,9 +188,9 @@ RSpec.describe Sirena::Layout::Sequence do
       rows = Sirena::Layout::Sequence::MessageRows.new(
         [], positions, font_size: 16, wrap: true
       )
-      note = described_class.new([note_entry(["B"])], positions, font_size: 16,
-                                                            rows: rows)
-                            .notes.first
+      placed = described_class.new([note_entry(["B"])], positions,
+                                   font_size: 16, rows: rows)
+      note = placed.notes.first
 
       expect(note.width).to eq(Sirena::Layout::Sequence::NoteBox::MIN_WIDTH)
     end
