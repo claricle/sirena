@@ -190,7 +190,7 @@ module Sirena
         text.font_weight = label.font_weight
         text.font_style = label.font_style
         text.dominant_baseline = label.baseline
-        text.text_anchor = "middle" unless label.font_size == 16
+        text.text_anchor = label.text_anchor
       end
 
       def render_relationship(edge, svg)

@@ -15,9 +15,12 @@ module Sirena
 
       # @param label [String] the boundary name
       # @param type [String, nil] the type, drawn as "[type]"
-      def initialize(label:, type: nil)
+      def initialize(label:, type: nil, label_font_size: LABEL_FONT_SIZE,
+                     type_font_size: TYPE_FONT_SIZE)
+        @label_font_size = label_font_size
+        @type_font_size = type_font_size
         @label_offset = 8
-        offset = @label_offset + C4Text.height(label.to_s, LABEL_FONT_SIZE)
+        offset = @label_offset + C4Text.height(label.to_s, @label_font_size)
         @type_offset = type.to_s.empty? ? nil : offset + 5
         @height = @type_offset ? type_bottom(type) : offset
       end
@@ -25,7 +28,7 @@ module Sirena
       private
 
       def type_bottom(type)
-        @type_offset + C4Text.height("[#{type}]", TYPE_FONT_SIZE)
+        @type_offset + C4Text.height("[#{type}]", @type_font_size)
       end
     end
   end
