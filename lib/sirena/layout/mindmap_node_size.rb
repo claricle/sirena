@@ -46,8 +46,7 @@ module Sirena
       end
 
       def call(shape)
-        rule = SHAPES.fetch(shape.to_s, SHAPES["default"])
-        wide, high = rule.call(text_width, text_height)
+        wide, high = dimensions(shape)
         { width: wide.to_f, height: high.to_f, lines: wrapped }
       end
 
@@ -57,15 +56,28 @@ module Sirena
         @wrapped ||= @lines.flat_map { |line| wrap(line) }
       end
 
+      def dimensions(shape)
+        return circle_dimensions if shape.to_s == "circle"
+
+        SHAPES.fetch(shape.to_s, SHAPES["default"])
+          .call(text_width, text_height)
+      end
+
+      def circle_dimensions
+        two_lines = @font_size * @line_height * 2
+        side = [text_width, [text_height, two_lines].min].max + 20
+        [side, side]
+      end
+
       def wrap(line)
-        return [line] if measure(line) <= MAX_TEXT_WIDTH
+        return [line] if measure(line) <= wrap_width
 
         line.split.each_with_object([]) { |word, rows| add_word(rows, word) }
       end
 
       def add_word(rows, word)
         joined = "#{rows.last} #{word}"
-        if rows.any? && measure(joined) <= MAX_TEXT_WIDTH
+        if rows.any? && measure(joined) <= wrap_width
           rows[-1] = joined
         else
           rows << word
@@ -75,6 +87,14 @@ module Sirena
       def text_width
         widest = wrapped.map { |line| measure(line) }.max
         wrapped.length > @lines.length ? [widest, MAX_TEXT_WIDTH].max : widest
+      end
+
+      def wrap_width
+        @wrap_width ||= [MAX_TEXT_WIDTH, widest_word].max
+      end
+
+      def widest_word
+        @lines.flat_map(&:split).map { |word| measure(word) }.max.to_f
       end
 
       def text_height
