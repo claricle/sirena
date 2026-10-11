@@ -174,10 +174,19 @@ module Sirena
         #     `class C1["a\"b"]`; mmdc rejects that with
         #     "Expecting 'SQE', got 'ALPHA'".
         #
+        # A visible character is required after any leading horizontal
+        # whitespace. Mermaid rejects both an empty label and one containing
+        # only spaces, while preserving the whitespace around a real label.
         # Defined here rather than by changing quoted_string, which 15
         # grammars share.
         rule(:label_string) do
-          str('"') >> (str('"').absent? >> any).repeat.as(:string) >> str('"')
+          str('"') >>
+            (
+              match[' \t'].repeat >>
+                match('[^" \t\r\n]').present? >>
+                (str('"').absent? >> any).repeat
+            ).as(:string) >>
+            str('"')
         end
 
         # Standalone stereotype: <<interface>> ClassName
@@ -245,10 +254,11 @@ module Sirena
             line_end
         end
 
-        # cssClass "A,B" styleName
+        # cssClass "A,B" styleName. Both the quoted target list and style
+        # name are mandatory; a one-argument statement is invalid.
         rule(:css_class_statement) do
           str("cssClass").as(:ignored) >> space >>
-            rest_of_line >>
+            quoted_string >> space >> class_name >>
             line_end
         end
 
