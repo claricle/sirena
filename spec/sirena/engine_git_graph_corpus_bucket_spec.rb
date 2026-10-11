@@ -202,8 +202,9 @@ RSpec.describe Sirena::Engine do
       expect(label_y).to be_within(5).of(centers.first.last)
     end
 
-    it "puts the branch name past the last commit" do
-      expect(number(text_named(svg, "main"), "y")).to be < centers.last.last
+    it "puts the branch name below every commit" do
+      expect(number(text_named(svg, "main"), "y"))
+        .to be > centers.map(&:last).max + 10
     end
 
     it "puts a tag left of the commit" do
@@ -220,11 +221,11 @@ RSpec.describe Sirena::Engine do
         .to be > circle_centers(tagged).first.first
     end
 
-    it "puts the branch name below the last commit for TB" do
+    it "puts the branch name above every commit for TB" do
       tb = render_svg(source.sub("BT", "TB"))
 
       expect(number(text_named(tb, "main"), "y"))
-        .to be > circle_centers(tb).last.last + 10
+        .to be < circle_centers(tb).map(&:last).min
     end
 
     it "sizes the document with commits along the vertical axis" do

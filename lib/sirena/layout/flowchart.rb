@@ -337,7 +337,7 @@ module Sirena
       end
 
       def label_geometry(label, y_pos)
-        lines = label[:text].to_s.split("\n", -1)
+        lines = label[:text].to_s.scrub.split("\n", -1)
         drawn_lines = lines.one? ? [] : sentence_lines(lines)
         font_size = layout_font_size
         {
