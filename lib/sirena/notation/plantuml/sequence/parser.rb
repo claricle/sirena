@@ -603,7 +603,18 @@ module Sirena
 
             from, to = reversed ? ends.reverse : ends
             kind = @parallel ? ParallelMessage : Message
-            kind.new(from: from, to: to, label: match[7], style: style)
+            kind.new(from: from, to: to, label: message_label(match[7]),
+                     style: style)
+          end
+
+          # PlantUML treats doubled quotes around a message label as display
+          # delimiters. Backslashes inside that form use pair escaping; a
+          # single backslash and escaped quote remain content.
+          def message_label(label)
+            doubled_quotes = label&.start_with?('""') && label.end_with?('""')
+            return label unless doubled_quotes
+
+            label[2...-2].strip.gsub("\\\\", "\\")
           end
 
           def endpoint(token, side)

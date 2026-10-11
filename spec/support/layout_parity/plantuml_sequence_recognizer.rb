@@ -28,10 +28,31 @@ module SpecSupport
       end
 
       def reference_participants(extractor, doc)
-        doc.xpath("//g").filter_map do |group|
+        found = doc.xpath("//g").filter_map do |group|
           next unless classes(group).include?(REFERENCE_HEAD)
 
           participant(extractor, group, group["data-qualified-name"])
+        end
+        return found unless found.empty?
+
+        legacy_reference_participants(extractor, doc)
+      end
+
+      # Teoz omits PlantUML's interactive participant wrappers. Its first
+      # rectangle/text pair for each lifeline title is still the participant
+      # head; label identity lets it match Sirena even when the source used an
+      # alias that the legacy SVG did not preserve.
+      def legacy_reference_participants(extractor, doc)
+        root = legacy_root(doc)
+        return [] unless root
+
+        legacy_lifelines(root).filter_map do |group|
+          label = group.at_xpath("./title")&.text
+          text = participant_texts(root, label).min_by { |node| node["y"].to_f }
+          shape = text&.previous_element
+          box = extractor.bbox(shape) if shape&.name == "rect"
+          Element.new(kind: :participant, key: label, bbox: box,
+                      label: label, identity: :label) if box
         end
       end
 
@@ -61,6 +82,8 @@ module SpecSupport
 
       def messages(extractor, doc)
         groups = doc.xpath("//g").select { |group| message?(group) }
+        return legacy_reference_messages(extractor, doc) if groups.empty?
+
         groups.each_with_index.filter_map do |group, index|
           box = extractor.bbox(group)
           next unless box
@@ -68,6 +91,62 @@ module SpecSupport
           Element.new(kind: :message, key: index + 1, bbox: box,
                       label: normalize(group.xpath(".//text").map(&:text)))
         end
+      end
+
+      # The same Teoz output leaves each arrow's primitives and label as a
+      # direct run of siblings. A horizontal line distinguishes a message run
+      # from participant labels and other unwrapped text.
+      def legacy_reference_messages(extractor, doc)
+        root = legacy_root(doc)
+        return [] unless root
+
+        children = root.element_children
+        children.each_with_index.filter_map do |node, index|
+          next unless node.name == "text"
+
+          run = preceding_run(children, index)
+          next unless run.any? { |item| horizontal_line?(item) }
+
+          box = Bbox.union([*run, node].filter_map do |item|
+            extractor.bbox(item)
+          end)
+          next unless box
+
+          Element.new(kind: :message, key: index, bbox: box,
+                      label: normalize([node.text]), identity: :label)
+        end
+      end
+
+      def legacy_root(doc)
+        doc.at_xpath("/svg/g")
+      end
+
+      def legacy_lifelines(root)
+        root.xpath("./g").select do |group|
+          group.at_xpath("./title") &&
+            group.xpath("./line").any? { |line| dashed?(line) }
+        end
+      end
+
+      def participant_texts(root, label)
+        root.xpath("./text").select do |text|
+          normalize([text.text]) == normalize([label]) &&
+            text.previous_element&.name == "rect"
+        end
+      end
+
+      def preceding_run(children, index)
+        children[0...index].reverse_each.take_while do |node|
+          node.name != "text"
+        end.reverse
+      end
+
+      def horizontal_line?(node)
+        node.name == "line" && node["y1"] == node["y2"]
+      end
+
+      def dashed?(line)
+        line["style"].to_s.include?("stroke-dasharray")
       end
 
       def message?(group)
