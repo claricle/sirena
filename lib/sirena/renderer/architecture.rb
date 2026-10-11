@@ -55,8 +55,6 @@ module Sirena
 
       def group_label(node)
         positioned_text(node.labels.first).tap do |text|
-          text.font_size = "14"
-          text.font_weight = "bold"
           text.fill = theme_color(:text_color) || "#333"
         end
       end
@@ -100,19 +98,18 @@ module Sirena
 
       def service_label(node)
         positioned_text(node.labels.first).tap do |text|
-          apply_theme_to_text(text)
-          text.text_anchor = "middle"
+          text.fill = theme_color(:label_text)
           text.dominant_baseline = "middle"
-          text.font_size = "12"
         end
       end
 
       def positioned_text(label)
-        Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
-          text.content = label.text
-        end
+        Svg::Text.new(
+          x: label.x, y: label.y, content: label.text,
+          font_size: number_string(label.font_size),
+          font_family: label.font_family, font_weight: label.font_weight,
+          text_anchor: label.text_anchor
+        )
       end
 
       def render_junction(node, svg)
@@ -151,14 +148,13 @@ module Sirena
       end
 
       def edge_label(label)
-        Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
-          text.content = label.text
-          text.font_size = "10"
-          text.text_anchor = "middle"
+        positioned_text(label).tap do |text|
           text.fill = theme_color(:edge_color)
         end
+      end
+
+      def number_string(value)
+        value.to_i == value ? value.to_i.to_s : value.to_s
       end
 
       def apply_box(rect, node)

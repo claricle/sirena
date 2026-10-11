@@ -32,6 +32,11 @@ module Sirena
       DEFAULT_JUNCTION_SIZE = 12
 
       VALID_SIDES = %w[L R T B].freeze
+      LABEL_FONT_ROLES = {
+        group: [:font_size_title, 14],
+        service: [:font_size_normal, 12],
+        edge: [:font_size_small, 10],
+      }.freeze
 
       SemanticGroup = Struct.new(
         :id, :label, :icon, :parent_id, keyword_init: true
@@ -60,6 +65,10 @@ module Sirena
         attribute :text, :string
         attribute :x, :float
         attribute :y, :float
+        attribute :font_size, :float
+        attribute :font_family, :string
+        attribute :font_weight, :string
+        attribute :text_anchor, :string
       end
 
       class Node < Lutaml::Model::Serializable
@@ -545,7 +554,10 @@ module Sirena
       end
 
       def group_labels(group, info)
-        positioned_label(group.label, info[:x] + 10, info[:y] + 20)
+        positioned_label(
+          group.label, info[:x] + 10, info[:y] + 20,
+          **label_typography(:group)
+        )
       end
 
       def typed_services(services)
@@ -565,8 +577,11 @@ module Sirena
       end
 
       def service_labels(service, info)
-        positioned_label(service.label, horizontal_center(info),
-                         info[:y] + info[:height] + SERVICE_LABEL_OFFSET)
+        positioned_label(
+          service.label, horizontal_center(info),
+          info[:y] + info[:height] + SERVICE_LABEL_OFFSET,
+          **label_typography(:service)
+        )
       end
 
       def horizontal_center(info)
@@ -599,10 +614,10 @@ module Sirena
         group_id == :root ? nil : group_id
       end
 
-      def positioned_label(text, x_coord, y_coord)
+      def positioned_label(text, x_coord, y_coord, **typography)
         return [] unless text
 
-        [Label.new(text: text, x: x_coord, y: y_coord)]
+        [Label.new(text: text, x: x_coord, y: y_coord, **typography)]
       end
 
       def typed_edges(routed_edges)
@@ -635,7 +650,38 @@ module Sirena
 
         first, second = points
         [Label.new(text: text, x: midpoint(first.x, second.x),
-                   y: midpoint(first.y, second.y) - 5)]
+                   y: midpoint(first.y, second.y) - 5,
+                   **label_typography(:edge))]
+      end
+
+      def label_typography(kind)
+        role, target = LABEL_FONT_ROLES.fetch(kind)
+        { font_size: scaled_font_size(role, target) }.merge(label_style(kind))
+      end
+
+      def label_style(kind)
+        {
+          group: { font_weight: typography_value(:font_weight_bold) || "bold" },
+          service: { font_family: typography_value(:font_family),
+                     text_anchor: "middle" },
+          edge: { text_anchor: "middle" },
+        }.fetch(kind)
+      end
+
+      def scaled_font_size(role, target)
+        default = Theme::Registry.get(:default).typography.public_send(role)
+        configured = typography_value(role)
+        configured = default unless configured&.positive?
+        size = configured * target / default
+        size.to_i == size ? size.to_i : size
+      rescue NoMethodError
+        target
+      end
+
+      def typography_value(role)
+        theme.typography&.public_send(role)
+      rescue NoMethodError
+        nil
       end
 
       def midpoint(first, second)
