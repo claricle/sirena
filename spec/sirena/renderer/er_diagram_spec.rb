@@ -569,7 +569,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
 
         expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#f96")
         other_rect = ErDiagramSpecHelpers.rect_for(svg, "OTHER")
-        expect(other_rect.fill).to eq("#f9f9f9")
+        expect(other_rect.fill).to eq("#ffffff")
       end
 
       # Resolves classes BY NAME, not by position in the class list — an
@@ -612,7 +612,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
 
         expect(car_texts.map(&:fill).uniq).to eq(["blue"])
         expect(other_texts.map(&:fill).uniq).to eq(["#000000"])
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#f9f9f9")
+        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#ffffff")
       end
 
       # Order (ghost, known) is load-bearing: an abort-on-first-unknown
@@ -701,8 +701,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         multi_value_rect = ErDiagramSpecHelpers.rect_for(
           renderer.render(multi_value_graph), "CAR"
         )
-        expect(no_colon_rect.fill).to eq("#f9f9f9")
-        expect(multi_value_rect.fill).to eq("#f9f9f9")
+        expect(no_colon_rect.fill).to eq("#ffffff")
+        expect(multi_value_rect.fill).to eq("#ffffff")
       end
 
       # Verified against mermaid's own bundle and a real browser: its
@@ -996,7 +996,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         }
         svg = renderer.render(graph)
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#f9f9f9")
+        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#ffffff")
       end
 
       # Verified against a real browser: Chrome rejects "bogus" as an
