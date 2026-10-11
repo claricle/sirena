@@ -151,7 +151,7 @@ module WorkflowHelpers
 end
 
 # The subject is a set of YAML files, not a class.
-RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
+RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/DescribeClass
   let(:root) { File.expand_path("../..", __dir__) }
   let(:ci) { YAML.safe_load_file(File.join(root, ".github/workflows/ci.yml")) }
   let(:release) do

@@ -146,7 +146,7 @@ module ExampleTasksSpecHelpers
   module_function :module_body
 end
 
-RSpec.describe ExampleTasks do
+RSpec.describe ExampleTasks, :aggregate_failures do
   include ExampleTasksSpecHelpers
 
   around do |example|

@@ -28,7 +28,7 @@ module TypedArchitectureSpecHelpers
   end
 end
 
-RSpec.describe Sirena::Renderer::Architecture do
+RSpec.describe Sirena::Renderer::Architecture, :aggregate_failures do
   subject(:renderer) { described_class.new }
 
   let(:source) { File.read("examples/architecture/01-basic-services.mmd") }

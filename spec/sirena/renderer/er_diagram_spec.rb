@@ -204,7 +204,7 @@ module ErDiagramSpecHelpers
   end
 end
 
-RSpec.describe Sirena::Renderer::ErDiagram do
+RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
   include ErDiagramSpecHelpers
 
   let(:renderer) { described_class.new }
