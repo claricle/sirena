@@ -110,10 +110,8 @@ module GanttRendererSpecHelpers
   end
 
   def axis_counts(xml)
-    renderer_class = Sirena::Renderer::Gantt
-    label_y = renderer_class::MARGIN_TOP + renderer_class::TIMELINE_HEIGHT - 10
     [xml.scan('stroke-dasharray="2,2"').length,
-     xml.scan(/<text[^>]*\sy="#{label_y}[^0-9]/).length]
+     xml.scan(%r{<text\b[^>]*>\d{4}-\d{2}-\d{2}</text>}).length]
   end
 end
 
