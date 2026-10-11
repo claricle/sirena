@@ -18,10 +18,45 @@ module Sirena
           diagram = Diagram::Sankey.new
           process_tree(diagram, tree)
           ensure_nodes_from_flows(diagram)
+          reject_circular_flows(diagram)
           diagram
         end
 
         private
+
+        # Mermaid lays sankeys out with d3-sankey, which throws
+        # "circular link" for any directed cycle, a self-flow included.
+        def reject_circular_flows(diagram)
+          return if acyclic?(diagram.flows)
+
+          raise Parser::ParseError, "Circular link in sankey flows."
+        end
+
+        # Iterative, so a long chain cannot exhaust the VM stack.
+        def acyclic?(flows)
+          indegree = in_degrees(flows)
+          nodes = flows.flat_map { |flow| [flow.source, flow.target] }.uniq
+          ready = nodes.reject { |id| indegree[id].positive? }
+          drain(ready, flows.group_by(&:source), indegree) == nodes.size
+        end
+
+        def in_degrees(flows)
+          flows.each_with_object(Hash.new(0)) do |flow, counts|
+            counts[flow.target] += 1
+          end
+        end
+
+        def drain(ready, successors, indegree)
+          drained = 0
+          until ready.empty?
+            drained += 1
+            successors.fetch(ready.pop, []).each do |flow|
+              indegree[flow.target] -= 1
+              ready << flow.target if indegree[flow.target].zero?
+            end
+          end
+          drained
+        end
 
         def process_tree(diagram, tree)
           items = tree.is_a?(Array) ? tree : [tree]
