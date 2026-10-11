@@ -66,7 +66,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     document = Nokogiri::XML(Sirena.render(source, notation: :plantuml))
       .remove_namespaces!
     rectangle = document.at_xpath(
-      '//g[starts-with(@id,"participant-A-")]/rect'
+      '//g[starts-with(@id,"participant-A-")]/rect',
     )
 
     expect(%w[width height].map { |attribute| rectangle[attribute].to_f })

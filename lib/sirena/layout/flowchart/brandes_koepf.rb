@@ -103,9 +103,9 @@ module Sirena
         def pack_left(lefts, root)
           memo = {}
           visit = lambda do |block|
-            memo[block] ||= lefts[block].map { |near, gap|
+            memo[block] ||= lefts[block].map do |near, gap|
               visit.call(near) + gap
-            }.push(0).max
+            end.push(0).max
           end
           root.values.uniq.each { |block| visit.call(block) }
           memo

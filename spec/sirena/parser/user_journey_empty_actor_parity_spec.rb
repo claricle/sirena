@@ -2,8 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "User Journey explicit empty actor parity",
-               :aggregate_failures do
+RSpec.describe Sirena::Parser::UserJourney, :aggregate_failures do
   let(:source) do
     <<~MERMAID
       journey
@@ -14,7 +13,7 @@ RSpec.describe "User Journey explicit empty actor parity",
     MERMAID
   end
 
-  let(:diagram) { Sirena::Parser::UserJourney.new.parse(source) }
+  let(:diagram) { described_class.new.parse(source) }
   let(:scene) { Sirena::Layout::UserJourney.new.call(diagram) }
 
   it "preserves an explicit empty actor without changing an omitted group" do
@@ -31,7 +30,7 @@ RSpec.describe "User Journey explicit empty actor parity",
           "hard_failure" => false,
           "metrics" => include(
             "worst_e_c" => 0.0, "worst_e_w" => 0.0,
-            "worst_e_h" => 0.0, "worst_e_a" => 0.0,
+            "worst_e_h" => 0.0, "worst_e_a" => 0.0
           ),
         },
       ),

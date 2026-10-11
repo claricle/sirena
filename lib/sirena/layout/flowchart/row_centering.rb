@@ -95,7 +95,7 @@ module Sirena
 
         def standins(stand, ids)
           stand.select { |(upper, _), _| ids.include?(upper) }
-               .map { |_, k| [:edge, k] }
+            .map { |_, k| [:edge, k] }
         end
 
         def place(boxes, centres)
