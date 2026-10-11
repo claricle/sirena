@@ -20,7 +20,10 @@ module Sirena
       HEADER_PADDING = 24
       BOLD_NAME_RATIO = 1.05
       EMPTY_CLASS_HEIGHT = 84
-      LINE_HEIGHT = 20
+      STEREOTYPE_HEIGHT = 24
+      MEMBER_HEIGHT = 24
+      ATTRIBUTES_BASE = 96
+      METHODS_ONLY_BASE = 102
       RENDER_LINE_HEIGHT = 18
       COMPARTMENT_PADDING = 10
       CLASS_SPACING = 80
@@ -394,16 +397,11 @@ module Sirena
       end
 
       def transform_entities(diagram)
-        compact_empty = diagram.entities.one?
-        diagram.entities.map do |entity|
-          transform_entity(entity, compact_empty: compact_empty)
-        end
+        diagram.entities.map { |entity| transform_entity(entity) }
       end
 
-      def transform_entity(entity, compact_empty: false)
-        dimensions = calculate_entity_dimensions(
-          entity, compact_empty: compact_empty
-        )
+      def transform_entity(entity)
+        dimensions = calculate_entity_dimensions(entity)
         {
           id: entity.id, width: dimensions[:width],
           height: dimensions[:height], labels: entity_labels(entity),
@@ -441,10 +439,10 @@ module Sirena
         }
       end
 
-      def calculate_entity_dimensions(entity, compact_empty: false)
+      def calculate_entity_dimensions(entity)
         {
           width: entity_width(entity),
-          height: entity_height(entity, compact_empty: compact_empty),
+          height: entity_height(entity),
         }
       end
 
@@ -478,25 +476,17 @@ module Sirena
         TextMeasurement.measure_in(:trebuchet, text, font_size: 16)[:width]
       end
 
-      def entity_height(entity, compact_empty: false)
-        if compact_empty && empty_plain_entity?(entity)
-          return EMPTY_CLASS_HEIGHT
-        end
+      # mmdc stacks a 48px header (24 more with an annotation) over one
+      # 24px row per member, with 12px of padding above and below each
+      # compartment that holds members.
+      def entity_height(entity)
+        attributes = entity.attributes.length
+        methods = entity.class_methods.length
+        header = entity.stereotype ? STEREOTYPE_HEIGHT : 0
+        return EMPTY_CLASS_HEIGHT + header if (attributes + methods).zero?
 
-        lines = entity.attributes.length + entity.class_methods.length
-        lines += entity.stereotype ? 2 : 1
-        separators = present_compartments(entity) * 2
-        (lines * LINE_HEIGHT) + separators + (COMPARTMENT_PADDING * 2)
-      end
-
-      def present_compartments(entity)
-        [entity.attributes, entity.class_methods]
-          .count { |items| !items.empty? }
-      end
-
-      def empty_plain_entity?(entity)
-        entity.stereotype.nil? && entity.attributes.empty? &&
-          entity.class_methods.empty?
+        base = attributes.zero? ? METHODS_ONLY_BASE : ATTRIBUTES_BASE
+        base + header + (MEMBER_HEIGHT * (attributes + methods))
       end
 
       def name_block_width(entity)
