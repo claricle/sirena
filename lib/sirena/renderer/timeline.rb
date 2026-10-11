@@ -96,7 +96,8 @@ module Sirena
 
       def title_element(scene)
         text = Svg::Text.new(
-          x: scene.title_x, y: scene.title_y, fill: "#333333",
+          x: scene.title_x, y: scene.title_y,
+          fill: theme_color(:label_text) || "#333333",
           font_family: FONT_FAMILY, font_size: number(scene.title_size),
           font_weight: "bold"
         )
