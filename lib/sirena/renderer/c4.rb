@@ -29,7 +29,7 @@ module Sirena
           raise RenderError, "C4 renderer requires Layout::C4::Scene"
         end
 
-        svg = create_document(scene)
+        svg = document_for(scene)
         render_boundaries(scene.children, svg)
         scene.edges.each { |edge| render_relationship(edge, svg) }
         render_elements(scene.children, svg)
@@ -39,10 +39,9 @@ module Sirena
 
       protected
 
-      # Keeps the scene's own view box: the title shifts its origin above 0.
-      def create_document(scene, overflow: nil)
-        super.tap do |svg|
-          svg.view_box = scene.view_box if scene.view_box
+      def document_for(scene)
+        create_document(scene, overflow: scene.overflow).tap do |document|
+          document.view_box = scene.view_box
         end
       end
 

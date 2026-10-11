@@ -153,6 +153,7 @@ module Sirena
 
       class Scene < Layout::Scene
         attribute :view_box, :string
+        attribute :overflow, :string
         attribute :children, Node, collection: true, default: -> { [] }
         attribute :edges, Edge, collection: true, default: -> { [] }
         attribute :title, Label
