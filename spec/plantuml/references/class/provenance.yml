@@ -1,0 +1,111 @@
+toolchain:
+  plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
+  java: 26.0.2
+  graphviz: 15.1.1 (20260805.0921)
+  command: plantuml -charset UTF-8 -tsvg -pipe
+cases:
+  java.net.sourceforge.plantuml.explain.DiagramExplainerTest--d715317341a6:
+    source_sha256: f03e4627337ed5c969fc8fde8913bda0150848f0a4046c8f773cd3231e5e3615
+    reference_sha256: 05feb71022e03335a0252d17e588a171f3f66b6ad20f849b103e849cb7428b69
+  resources.vega.migration.HideShow001_Test--9be85612e170:
+    source_sha256: afce9b8011422e95778b8355e91038a85cb2ef169459657f4930ea0423e448bb
+    reference_sha256: d296e27790404af2f8bd36616986edf39f6ba3e4542c525271cbe724907d35e0
+  resources.vega.migration.HideShow004_Test--16625d433c68:
+    source_sha256: 0e37b89ecf77ab32527fc73ec038d9b823963ed1dad2b0a2fe571db2ac655cc0
+    reference_sha256: 4d183b41cd50e42b3a9c62c326cd9f82ff6e66ff32899df1c0720b7b1a33243c
+  resources.vega.nonreg.group2712.down_direction--b7562ecaf08a:
+    source_sha256: c8534f8f84a4f6df56f085b979de5487774312d476ed3c3f1e682e841310c933
+    reference_sha256: 032e45291a9df717fe031664488849dcf1b2fbb783d25fb1df5082e1de537197
+  resources.vega.nonreg.group2712.left_direction--817e051688df:
+    source_sha256: 77077a52ad6c2b26927096aee17d2faca12d691bc1b60425600e02e37e5d3d45
+    reference_sha256: a4dd820a640070764b26383d2afe577629be561cb7b00f32c7623b03f65d9c35
+  resources.vega.nonreg.group2712.reported_case--4d4d68cc75f8:
+    source_sha256: a712c42840f6daa0dccdda9dbd98a6c7e920056831fa1000428bb986049acfee
+    reference_sha256: dee3d168f0706d1a5855ebdbf656693915a6e5346971b021cf0a99414989acfc
+  resources.vega.nonreg.group2712.right_direction--4bc244e3377d:
+    source_sha256: ef451bbc3b5394c7d13e679889a5d7c7def1a0d29d6ea736b019577c69e6a9f2
+    reference_sha256: a20caa9f986ccd67943109fd6d99c803996dc6e9f4b809bf1b172b17c6aa288f
+  resources.vega.nonreg.group2814.class_level_note_unaffected--8b789ec547c0:
+    source_sha256: 65656242ff8557fd34c4f991e94618b00456922812ea6ddef0c0b3a336947c5d
+    reference_sha256: 0b6501e70cab154263016c7658a423962e51d69360a1a5277532a2d54a139e53
+  resources.vega.nonreg.group2814.field_and_method_note--dad15be25c38:
+    source_sha256: f96c58725e79e4a75ee99d76b7ac1570e5686130df292c9581d4f9b31da64488
+    reference_sha256: '0371860b9e26d28ad6c4df285f891ff42963585bf4d035b9737bc0c06716b3a8'
+  resources.vega.nonreg.group2814.reported_case--cab9ac83dbb5:
+    source_sha256: a6dc990bb52d1995dc7451a846a1712a22a492c844a12274e39cdfa1564bb16b
+    reference_sha256: 0d22c96df6a7cd1b349e73c940ed2a9eb7e69bb572e9f0367268d548ab5fa552
+  resources.vega.nonreg.group2814.reversed_order--0dac1bb4078f:
+    source_sha256: 2492a1e82e4383f82fc5412b9449343ee6c5a88bb2ba2a7670e00fe5ebc7612f
+    reference_sha256: d38dff674e8b86162f0dd991d4f142e2ef17614632053e56c7c2637c085c80f2
+  resources.vega.nonreg.group2814.stereotype_colors--2b02c27ca536:
+    source_sha256: 213c429640ec65e65ee62b1ede7fe04a032323ad1fdde0bcecaf0e99ca50f53d
+    reference_sha256: c9cbdb8a18d68226f16ce710e3912ccfc555541c4de614579dfe558530caefdd
+  resources.vega.nonreg.group2814.three_members--15d11a71125a:
+    source_sha256: fa31d1c4fdd8d9975856ff88e824d89ae877a77f6dcdd2eed009c5de8b7a07f2
+    reference_sha256: efbd1ae2ac8a9e7e3cada6e150d6919ffb6648402988d8f5e84b5360c7d3e565
+  resources.vega.nonreg.group2846.correct_code--c4f1bf12e099:
+    source_sha256: d5c766395d0f45b6389fb587751723898b173ae107a7a245c2e317ff2f18cb97
+    reference_sha256: 0a6e78964befaadcf84577b761900ec2fdcbd6b1eff2441dbbe73d9df52eb17a
+  resources.vega.nonreg.group2846.dollar_sign_code--64ad77e9de1f:
+    source_sha256: 4231495e888b0c9f72c9cdbc291a4aba8bba44653666a68a514776a2ec8a8a80
+    reference_sha256: 168c32659f02d55caaae4151bd0ad509fef9cfc6b714c9b19c7d85b8acb5d893
+  resources.vega.nonreg.group2903.left_to_right--8310bfc61aae:
+    source_sha256: 5b785bf3bca17f7f4b3b3c12e29a00243cfa0b8299ca9df0f35eb7abf1f6e43c
+    reference_sha256: 6583b11468de582f6990ec3dadaadb67745890f03360df4977bda4d4a6a3950e
+  resources.vega.nonreg.group2903.nodesep_ranksep--7c073f601760:
+    source_sha256: c01426a063ee161c8b72f664811ba2d761384f46ad4c4190e1433dac34d26423
+    reference_sha256: 72d4f3156756d03e754fdc464ce4f75855e53cf85bdaf9f40bc379de03aa59ab
+  resources.vega.nonreg.group2903.reported_case--fd42e1abb616:
+    source_sha256: 39b1aefae4d73c0aa892ec70c77b4c4c8f05d5bc534b206b87403a502d141d3a
+    reference_sha256: dd236140f55ec4d6449e20e89886ede8547e5e3d261df0c70898213777efd1c3
+  resources.vega.nonreg.group2903.two_association_classes--5589df921b7b:
+    source_sha256: 3aa5ef091fab4064278f99747d9ff2b622fdeca805343b2974449345e5ab4a2f
+    reference_sha256: a3a5c952eef0635d7130687ac82b22b5a09b4e48bd47bc41734b33a70fc9dc59
+  resources.vega.nonreg.group2903.without_association_class--633626f844fa:
+    source_sha256: 23c83006039a80514625bf87be90a9865b74aa852a60862b2bfff5246a878584
+    reference_sha256: 40c8c4923d9e8cedbff18cabc1845520f32862cba0df944d24840971acfdb4da
+  resources.vega.nonreg.group2904.all_visibilities--00480b0ff655:
+    source_sha256: 9a3b8bd6c60354f16c8686d5a1ef264bb6bba20d0db2004381b792e3cc925060
+    reference_sha256: f7f4e653175680dd81f421301bdc5cae1ac5105c75a943216ddda3f11cb9faf7
+  resources.vega.nonreg.group2904.diamond_at_tail--bb82b36b91be:
+    source_sha256: 8dca456a750385bc30f035a215c0146669e1d26081cf1e69e96714f818f01d4e
+    reference_sha256: e1342c7ccc81a5a0a01a3a9803f8dca81bfd1d6c322ffecf7b4a0ed3feacaa4f
+  resources.vega.nonreg.group2904.icon_size_zero--5d137d5deadd:
+    source_sha256: 90f2dfedc9277a54d2d3fba10b36b8b8857dc7c2c31572670de9d4cb970e572c
+    reference_sha256: f697a8cb081989e2a37edcdce833d6f1b72a5b0a33568ee3aa7de58a5babc552
+  resources.vega.nonreg.group2904.left_to_right--4e7a191e1721:
+    source_sha256: 1910f668fb193811262f48580f8a1604ae8fb1fa04ee07678ca852c7d3242a0e
+    reference_sha256: 85095358117acd69be676e5e34a4eb3e0552c0b57cb35d2435457179c9bdd06c
+  resources.vega.nonreg.group2904.role_tail_only--c95e6006dcac:
+    source_sha256: 75bb9eb5f25dafd9300969dd6aab13e7654ceeb8d89491ebee9c77189898c1de
+    reference_sha256: 6710f03a144e34b2e3a01636228ab651dada8df8ac56330b9838968abf5088fc
+  resources.vega.nonreg.group2904.role_without_visibility--6318bda823a1:
+    source_sha256: a11f7c8066f16c3e67893a1d5eb152f3b163882fb04d8fa9d4fdb6b06ceba6e9
+    reference_sha256: 833bc5299f1efe0ef2d06925421e657c3c14dc17d6ea2745184daf0ab9d4a934
+  resources.vega.nonreg.group2917.smetana_hide_class--cda3c6a5e269:
+    source_sha256: 80e1915a3ad95f2545328730bb1063d05f20e72db6bf358b124324215242fe03
+    reference_sha256: 946a9c29a569a8911bde84804e64360046e26bd831d2e1ecb8d8b56a065b269c
+  resources.vega.nonreg.simple.A0005--f83e486078d0:
+    source_sha256: 2afbdced150d6bb59071ced159f83351708fa10a1acf4ec8b935c78867b49cdb
+    reference_sha256: 19f98f32505f9c5b1ea320a9348905de3828dbbfca16df9d91e71e754a9c2459
+  resources.vega.nonreg.simple.QualifiedAssoc001--8c3b78057dc3:
+    source_sha256: '0936dc109c9f0c93f0251a34958d8eccd227deccaa19cebbf613b34cc50569d0'
+    reference_sha256: ff99a759f28bc2e2f6894e98cbb6c7bdabd31771818512281e51eacb723b8f60
+  resources.vega.nonreg.simple.QualifiedAssoc002--d57fb49a9920:
+    source_sha256: 46d6eda829d6f17d5d3428b4fb9be96f53da7ec38e190734c40bf80f05408ab5
+    reference_sha256: 26decab3c34e232db3e77c3f06157118337d13e92aad576103b18f456cf46c3e
+  resources.vega.svg.interactive.SVG0004_Svek--d500aa856a7e:
+    source_sha256: 9f4999e8231119a68b7f1d35df767574f02c95ac869117d00f5d7a52ae7dcb6f
+    reference_sha256: 1118ad3861de3d96cc62b2620f8beb76f69e63b913f60417a88c157697dc12be
+  resources.vega.svg.interactive.SVG0006_Svek--70f5757ed2ca:
+    source_sha256: eb6693722aecf0074594c29df687fae0fd794200c1589bbc364b695c9ee5c264
+    reference_sha256: 00fd65d3a9246c160c356e7ed3d1473fbf72a4cde6df96b9734aff60a3dd6d7f
+  resources.vega.xmi.clazz.XMI0002_class--9616cd0e75d4:
+    source_sha256: 5f7f3b81a1ccebe41be2b8cc51d9951517048cdae3dc337a0a29725bdb9c7170
+    reference_sha256: fc2430ba1d590f030bee6386bd8d2ef61dda353091cedaffe6dbc794a6f728d1
+  resources.vega.xmi.clazz.XMI0003_class--d50636ffecaf:
+    source_sha256: 96b996f557adaa4766bf65523d4ab6322dd04d82117e0327f549eaaf2266a4d8
+    reference_sha256: 04a8bd5e34194626e97fcee23b91ab685394458bec14aef830f00e2681dae418
+  resources.vega.xmi.clazz.XMI0004_class--32636d47dbd7:
+    source_sha256: f4234c162bfe0f3ab09954fb80acf434b47e04a614b71d410f2f66786b4613b6
+    reference_sha256: 58a9114e5a5a832913cb2a050c0d309e4a1d1311b15685db858bd6342a9fc8b6
