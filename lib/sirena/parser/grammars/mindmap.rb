@@ -19,7 +19,8 @@ module Sirena
         # becomes the root, handled below by node_line falling through to
         # node_with_content with a zero-length indent.
         rule(:header) do
-          str("mindmap") >> match["a-zA-Z0-9_"].absent? >> header_tail
+          str("mindmap") >> match["a-zA-Z0-9_"].absent? >> eof.absent? >>
+            header_tail
         end
 
         # A run of separators after the keyword is only ever discarded when
@@ -198,9 +199,18 @@ module Sirena
             str("").as(:shape_round)
         end
 
+        # A "(" or "[" with no ")" or "]" after it on the line: mermaid's
+        # lexer opens a shape at the bracket and never finds a closing
+        # token, which is a parse error (mindmap.jison NODE_DSTART).
+        rule(:unterminated_opener) do
+          match('[^\r\n(\[]').repeat >> match("[(\\[]") >>
+            match('[^\r\n)\]]').repeat >> (newline | eof)
+        end
+
         # Plain text node
         rule(:node_plain) do
-          match('[^\r\n:]').repeat(1).as(:content)
+          unterminated_opener.absent? >>
+            match('[^\r\n:]').repeat(1).as(:content)
         end
 
         root(:diagram)
