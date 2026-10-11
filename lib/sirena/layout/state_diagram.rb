@@ -27,6 +27,14 @@ module Sirena
       MMDC_NOTE_HEIGHT = 78.0
       MMDC_DISCONNECTED_PAIR_INSET = 8.0
       MMDC_DISCONNECTED_PAIR_GAP = 50.0
+      MMDC_CONCURRENT_REGION_LAYOUT = {
+        outer_padding: 35.0,
+        top: 37.5,
+        width_padding: 70.0,
+        height: 140.0,
+        child_top: 50.0,
+        gap: 50.0,
+      }.freeze
 
       State = Data.define(
         :id, :label, :state_type, :description, :descriptions, :children,
@@ -64,7 +72,8 @@ module Sirena
                        :MMDC_COMPOSITE_SECOND_STATE_Y,
                        :MMDC_COMPOSITE_BOTTOM_PADDING, :MMDC_NOTE_WIDTH,
                        :MMDC_NOTE_HEIGHT, :MMDC_DISCONNECTED_PAIR_INSET,
-                       :MMDC_DISCONNECTED_PAIR_GAP
+                       :MMDC_DISCONNECTED_PAIR_GAP,
+                       :MMDC_CONCURRENT_REGION_LAYOUT
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -250,6 +259,7 @@ module Sirena
         place_disconnected_normal_pair(graph)
         orient_grid_terminals(graph)
         place_connected_state_chain(graph)
+        place_concurrent_regions(graph)
         place_nested_plain_composite(graph)
         place_nested_note_composite(graph)
         place_attached_notes(graph)
@@ -989,6 +999,57 @@ module Sirena
         composite.merge!(x: Grid::MARGIN, y: Grid::MARGIN,
                          width: width, height: height)
         place_nested_children(width, start, first, second)
+      end
+
+      def place_concurrent_regions(graph)
+        composite, regions = concurrent_region_topology(graph)
+        return unless composite
+
+        position = MMDC_CONCURRENT_REGION_LAYOUT.fetch(:outer_padding)
+        regions.each do |region|
+          position = place_concurrent_region(region, position)
+        end
+        padding = MMDC_CONCURRENT_REGION_LAYOUT.fetch(:outer_padding)
+        bottom = MMDC_CONCURRENT_REGION_LAYOUT.fetch(:top) +
+          MMDC_CONCURRENT_REGION_LAYOUT.fetch(:height) +
+          MMDC_CONCURRENT_REGION_LAYOUT.fetch(:top)
+        composite.merge!(x: Grid::MARGIN, y: Grid::MARGIN,
+                         width: position - MMDC_CONCURRENT_REGION_LAYOUT
+                           .fetch(:gap) + padding,
+                         height: bottom)
+      end
+
+      def concurrent_region_topology(graph)
+        return [] unless plain_nested_graph?(graph)
+        return [] unless Array(graph[:edges]).empty?
+
+        children = Array(graph[:children])
+        return [] unless children.one?
+
+        composite = children.first
+        regions = Array(composite[:children])
+        return [] unless composite.dig(:metadata, :cluster) &&
+          regions.length > 1 && regions.all? { |region| concurrent_region?(region) }
+
+        [composite, regions]
+      end
+
+      def concurrent_region?(region)
+        child = Array(region[:children])
+        region.dig(:metadata, :cluster) &&
+          region[:id].match?(/\Aconcurrent_region_\d+\z/) &&
+          child.one? && !child.first.dig(:metadata, :cluster)
+      end
+
+      def place_concurrent_region(region, position)
+        layout = MMDC_CONCURRENT_REGION_LAYOUT
+        child = region[:children].first
+        width = child[:width] + layout.fetch(:width_padding)
+        region.merge!(x: position, y: layout.fetch(:top), width: width,
+                      height: layout.fetch(:height))
+        child.merge!(x: layout.fetch(:outer_padding),
+                     y: layout.fetch(:child_top))
+        position + width + layout.fetch(:gap)
       end
 
       def plain_nested_composite(graph)
