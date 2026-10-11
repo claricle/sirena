@@ -97,6 +97,15 @@ module Sirena
         attribute :number, :integer
       end
 
+      class Line < Lutaml::Model::Serializable
+        attribute :x1, :float
+        attribute :y1, :float
+        attribute :x2, :float
+        attribute :y2, :float
+      end
+
+      require_relative "user_journey_face"
+
       class Task < Lutaml::Model::Serializable
         attribute :id, :string
         attribute :box, Box
@@ -107,13 +116,7 @@ module Sirena
         attribute :line_end, :float
         attribute :section_name, :string
         attribute :section_index, :integer
-      end
-
-      class Line < Lutaml::Model::Serializable
-        attribute :x1, :float
-        attribute :y1, :float
-        attribute :x2, :float
-        attribute :y2, :float
+        attribute :face, Face
       end
 
       class Arrow < Lutaml::Model::Serializable

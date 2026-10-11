@@ -38,7 +38,7 @@
   <g>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="350.72" cy="295.0" r="1.5"/>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="360.72" cy="295.0" r="1.5"/>
-    <path class="mouth" transform="translate(355.72,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+    <path class="mouth" fill="#000" stroke="#666" d="M363.22,302A7.5,7.5,0,1,1,348.22,302L348.902,302A6.818,6.818,0,1,0,362.538,302Z"/>
   </g>
   <rect class="task task-type-0" fill="#191970" stroke="#666" x="280.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
   <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="294.72" cy="110.0" r="7.0"/>
@@ -50,7 +50,7 @@
   <g>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="550.72" cy="325.0" r="1.5"/>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="560.72" cy="325.0" r="1.5"/>
-    <path class="mouth" transform="translate(555.72,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+    <path class="mouth" fill="#000" stroke="#666" d="M563.22,332A7.5,7.5,0,1,1,548.22,332L548.902,332A6.818,6.818,0,1,0,562.538,332Z"/>
   </g>
   <rect class="task task-type-0" fill="#191970" stroke="#666" x="480.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
   <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="494.72" cy="110.0" r="7.0"/>
@@ -74,7 +74,7 @@
   <g>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="950.72" cy="295.0" r="1.5"/>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="960.72" cy="295.0" r="1.5"/>
-    <path class="mouth" transform="translate(955.72,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+    <path class="mouth" fill="#000" stroke="#666" d="M963.22,302A7.5,7.5,0,1,1,948.22,302L948.902,302A6.818,6.818,0,1,0,962.538,302Z"/>
   </g>
   <rect class="task task-type-1" fill="#8B008B" stroke="#666" x="880.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
   <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="894.72" cy="110.0" r="7.0"/>
@@ -98,7 +98,7 @@
   <g>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="1350.72" cy="325.0" r="1.5"/>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="1360.72" cy="325.0" r="1.5"/>
-    <path class="mouth" transform="translate(1355.72,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+    <path class="mouth" fill="#000" stroke="#666" d="M1363.22,332A7.5,7.5,0,1,1,1348.22,332L1348.902,332A6.818,6.818,0,1,0,1362.538,332Z"/>
   </g>
   <rect class="task task-type-1" fill="#8B008B" stroke="#666" x="1280.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
   <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="1294.72" cy="110.0" r="7.0"/>
@@ -111,7 +111,7 @@
   <g>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="1550.72" cy="325.0" r="1.5"/>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="1560.72" cy="325.0" r="1.5"/>
-    <path class="mouth" transform="translate(1555.72,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+    <path class="mouth" fill="#000" stroke="#666" d="M1563.22,332A7.5,7.5,0,1,1,1548.22,332L1548.902,332A6.818,6.818,0,1,0,1562.538,332Z"/>
   </g>
   <rect class="task task-type-2" fill="#4B0082" stroke="#666" x="1480.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
   <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="1494.72" cy="110.0" r="7.0"/>
@@ -123,7 +123,7 @@
   <g>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="1750.72" cy="295.0" r="1.5"/>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="1760.72" cy="295.0" r="1.5"/>
-    <path class="mouth" transform="translate(1755.72,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+    <path class="mouth" fill="#000" stroke="#666" d="M1763.22,302A7.5,7.5,0,1,1,1748.22,302L1748.902,302A6.818,6.818,0,1,0,1762.538,302Z"/>
   </g>
   <rect class="task task-type-2" fill="#4B0082" stroke="#666" x="1680.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
   <circle class="actor-2" fill="#00FFFF" stroke="#000" cx="1694.72" cy="110.0" r="7.0"/>
@@ -135,7 +135,7 @@
   <g>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="1950.72" cy="295.0" r="1.5"/>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="1960.72" cy="295.0" r="1.5"/>
-    <path class="mouth" transform="translate(1955.72,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+    <path class="mouth" fill="#000" stroke="#666" d="M1963.22,302A7.5,7.5,0,1,1,1948.22,302L1948.902,302A6.818,6.818,0,1,0,1962.538,302Z"/>
   </g>
   <rect class="task task-type-2" fill="#4B0082" stroke="#666" x="1880.72" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
   <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="1894.72" cy="110.0" r="7.0"/>
@@ -148,7 +148,7 @@
   <g>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="2150.7200000000003" cy="325.0" r="1.5"/>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="2160.7200000000003" cy="325.0" r="1.5"/>
-    <path class="mouth" transform="translate(2155.7200000000003,332.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+    <path class="mouth" fill="#000" stroke="#666" d="M2163.22,332A7.5,7.5,0,1,1,2148.22,332L2148.902,332A6.818,6.818,0,1,0,2162.538,332Z"/>
   </g>
   <rect class="task task-type-3" fill="#2F4F4F" stroke="#666" x="2080.7200000000003" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
   <circle class="actor-4" fill="#B0E0E6" stroke="#000" cx="2094.7200000000003" cy="110.0" r="7.0"/>
@@ -160,7 +160,7 @@
   <g>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="2350.7200000000003" cy="295.0" r="1.5"/>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="2360.7200000000003" cy="295.0" r="1.5"/>
-    <path class="mouth" transform="translate(2355.7200000000003,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+    <path class="mouth" fill="#000" stroke="#666" d="M2363.22,302A7.5,7.5,0,1,1,2348.22,302L2348.902,302A6.818,6.818,0,1,0,2362.538,302Z"/>
   </g>
   <rect class="task task-type-3" fill="#2F4F4F" stroke="#666" x="2280.7200000000003" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
   <circle class="actor-0" fill="#8FBC8F" stroke="#000" cx="2294.7200000000003" cy="110.0" r="7.0"/>
@@ -172,7 +172,7 @@
   <g>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="2550.7200000000003" cy="295.0" r="1.5"/>
     <circle fill="#666" stroke="#666" stroke-width="2" cx="2560.7200000000003" cy="295.0" r="1.5"/>
-    <path class="mouth" transform="translate(2555.7200000000003,302.0)" fill="#000" stroke="#666" d="M7.5,0A7.5,7.5,0,1,1,-7.5,0L-6.818,0A6.818,6.818,0,1,0,6.818,0Z"/>
+    <path class="mouth" fill="#000" stroke="#666" d="M2563.22,302A7.5,7.5,0,1,1,2548.22,302L2548.902,302A6.818,6.818,0,1,0,2562.538,302Z"/>
   </g>
   <rect class="task task-type-3" fill="#2F4F4F" stroke="#666" x="2480.7200000000003" y="110.0" width="150.0" height="50.0" rx="3.0" ry="3.0"/>
   <circle class="actor-1" fill="#7CFC00" stroke="#000" cx="2494.7200000000003" cy="110.0" r="7.0"/>
