@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Layout::Mindmap do
+RSpec.describe Sirena::Layout::Mindmap, :aggregate_failures do
   subject(:scene) { described_class.new.call(parser.parse(source)) }
 
   let(:parser) { Sirena::Parser::Mindmap.new }

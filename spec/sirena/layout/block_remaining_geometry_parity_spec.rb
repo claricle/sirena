@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Layout::Block do
+RSpec.describe Sirena::Layout::Block, :aggregate_failures do
   subject(:scene) { described_class.new.call(parser.parse(source)) }
 
   let(:parser) { Sirena::Parser::Block.new }
