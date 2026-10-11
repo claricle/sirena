@@ -49,7 +49,7 @@ module Sirena
       def requirement_box(node)
         Svg::Rect.new.tap do |rect|
           apply_rect(rect, node.box)
-          rect.fill = theme_color(:node_fill) || "#f9f9f9"
+          rect.fill = theme_color(:node_fill)
           rect.stroke = risk_color(node.risk) ||
             theme_color(:border_color) || "#333"
           rect.stroke_width = "2"
@@ -71,8 +71,7 @@ module Sirena
       def requirement_header_background(node)
         Svg::Rect.new.tap do |rect|
           apply_rect(rect, node.header)
-          rect.fill = risk_color(node.risk) ||
-            theme_color(:node_fill) || "#e0e0e0"
+          rect.fill = risk_color(node.risk) || theme_color(:node_fill)
           rect.opacity = "0.3"
         end
       end
@@ -105,7 +104,7 @@ module Sirena
       def element_shape(node)
         Svg::Polygon.new.tap do |polygon|
           polygon.points = node.shape_points
-          polygon.fill = theme_color(:node_fill) || "#e0f2f1"
+          polygon.fill = theme_color(:node_fill)
           polygon.stroke = theme_color(:border_color) || "#00796b"
           polygon.stroke_width = "2"
         end
@@ -134,7 +133,7 @@ module Sirena
         Svg::Path.new.tap do |path|
           path.d = edge.path
           path.fill = "none"
-          path.stroke = theme_color(:edge_color) || "#666"
+          path.stroke = theme_color(:edge_color)
           path.stroke_width = "2"
           path.marker_end = "url(#arrowhead)"
         end
@@ -153,7 +152,7 @@ module Sirena
         Svg::Rect.new.tap do |rect|
           apply_rect(rect, edge.label_background)
           rect.fill = "#fff"
-          rect.stroke = theme_color(:edge_color) || "#666"
+          rect.stroke = theme_color(:edge_color)
           rect.stroke_width = "1"
           rect.rx = "3"
         end

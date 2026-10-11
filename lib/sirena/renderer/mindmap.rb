@@ -233,7 +233,7 @@ module Sirena
           t.x = label.x
           t.y = label.y
           t.text_anchor = "middle"
-          t.fill = theme_color(:text) || "#000000"
+          t.fill = theme_color(:label_text)
           t.font_size = (label.font_size || 12).to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         end

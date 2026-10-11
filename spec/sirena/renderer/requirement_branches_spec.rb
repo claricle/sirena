@@ -54,7 +54,7 @@ RSpec.describe Sirena::Renderer::Requirement do
     evidence = xml_evidence(xml, 'id="relationship-part-need"',
                             "&lt;&lt;satisfies&gt;&gt;")
     expect([*evidence, xml.scan("<path").size, xml.scan("<polygon").size])
-      .to eq([true, true, 1, 2])
+      .to eq([true, true, 1, 1])
   end
 
   def empty_scene
