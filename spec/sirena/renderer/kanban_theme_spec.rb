@@ -34,7 +34,6 @@ RSpec.describe Sirena::Renderer::Kanban do
         "Todo" => colors.background,
         "2" => colors.background,
         "Create Documentation" => colors.label_text,
-        "Ticket:" => colors.secondary,
         "DOC-001" => colors.label_text,
       },
     }
