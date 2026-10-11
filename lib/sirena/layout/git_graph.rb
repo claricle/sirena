@@ -39,6 +39,8 @@ module Sirena
       EMPTY_BRANCH_LABEL_CLEARANCE = 50
       BRANCH_LABEL_BASELINE_OFFSET = 10.5
       VERTICAL_BRANCH_LABEL_CLEARANCE = 40
+      MERMAID_LABEL_FONT_SIZE = 10
+      MERMAID_LABEL_WIDTH_SCALE = 0.86
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -257,27 +259,34 @@ module Sirena
       end
 
       def commit_labels(graph)
-        linear = simple_three_commit_graph?(graph)
+        style = commit_label_style(graph)
         graph[:commits].flat_map do |commit|
-          labels_for_commit(commit, graph[:orientation], linear)
+          labels_for_commit(commit, graph[:orientation], style)
         end
       end
 
-      def labels_for_commit(commit, orientation, linear)
-        labels = [commit_id_label(commit, orientation, linear)].compact
-        labels.concat(positioned_tag_labels(commit, orientation, linear))
+      def commit_label_style(graph)
+        return :lone if graph[:orientation] == "LR" && graph[:commits].one?
+        return :linear if simple_three_commit_graph?(graph)
+
+        :legacy
       end
 
-      def commit_id_label(commit, orientation, linear)
+      def labels_for_commit(commit, orientation, style)
+        labels = [commit_id_label(commit, orientation, style)].compact
+        labels.concat(positioned_tag_labels(commit, orientation, style))
+      end
+
+      def commit_id_label(commit, orientation, style)
         return if commit[:is_cherry_pick] || commit[:id].nil?
         return if commit[:id].start_with?("commit_")
 
-        positioned_label(commit[:id], commit, orientation, "id", linear)
+        positioned_label(commit[:id], commit, orientation, "id", style)
       end
 
-      def positioned_tag_labels(commit, orientation, linear)
+      def positioned_tag_labels(commit, orientation, style)
         tag_labels(commit).map do |tag|
-          positioned_label(tag, commit, orientation, "tag", linear)
+          positioned_label(tag, commit, orientation, "tag", style)
         end
       end
 
@@ -314,9 +323,9 @@ module Sirena
         parent ? "#{label}|parent:#{parent}" : label
       end
 
-      def positioned_label(text, commit, orientation, kind, linear)
+      def positioned_label(text, commit, orientation, kind, style)
         position = label_position(
-          text, commit, orientation, kind, linear
+          text, commit, orientation, kind, style
         )
         label_geometry(text, commit, kind, position)
       end
@@ -336,15 +345,43 @@ module Sirena
         coordinate && (coordinate + PADDING)
       end
 
-      def label_position(text, commit, orientation, kind, linear)
+      def label_position(text, commit, orientation, kind, style)
         x_coordinate, y_coordinate = commit.values_at(:x, :y)
-        if linear && kind == "id"
+        if style == :lone
+          return lone_label_position(
+            text, x_coordinate, y_coordinate, kind
+          )
+        end
+        if style == :linear && kind == "id"
           return linear_label_position(
             text, x_coordinate, y_coordinate, orientation
           )
         end
 
         legacy_label_position(x_coordinate, y_coordinate, orientation, kind)
+      end
+
+      def lone_label_position(text, x_coordinate, y_coordinate, kind)
+        width = mermaid_label_width(text)
+        return [x_coordinate - (width / 2.0), y_coordinate - 16, "middle"] if
+          kind == "tag"
+
+        lone_id_label_position(width, x_coordinate, y_coordinate)
+      end
+
+      def mermaid_label_width(text)
+        TextMeasurement.measure_in(
+          :arial, text, font_size: MERMAID_LABEL_FONT_SIZE
+        )[:width] * MERMAID_LABEL_WIDTH_SCALE
+      end
+
+      def lone_id_label_position(width, x_coordinate, y_coordinate)
+        shift_x = -7.5 - (((width + 10) / 25.0) * 9.5)
+        shift_y = 10 + ((width / 25.0) * 8.5)
+        diagonal = Math.sqrt(2)
+        [x_coordinate - (width / 2.0) + ((shift_x - shift_y) / diagonal),
+         y_coordinate + 25 + ((shift_x + shift_y) / diagonal), "start", -45.0,
+         x_coordinate - COMMIT_RADIUS, y_coordinate]
       end
 
       def linear_label_position(text, x_coordinate, y_coordinate, orientation)
