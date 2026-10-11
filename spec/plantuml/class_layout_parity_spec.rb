@@ -51,9 +51,11 @@ module Plantuml
 
     def valid_ids
       verdicts = YAML.load_file(File.join(ROOT, "oracle-verdicts.yml"))
-      verdicts.fetch("verdicts").filter_map do |row|
-        row["id"].delete_prefix("class/") if row["verdict"] == "valid" &&
-                                             row["id"].start_with?("class/")
+      ids = verdicts.fetch("verdicts").filter_map do |row|
+        row["id"] if row["verdict"] == "valid"
+      end
+      ids.filter_map do |id|
+        id.delete_prefix("class/") if id.start_with?("class/")
       end
     end
 
