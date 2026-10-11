@@ -37,7 +37,7 @@ module Sirena
           Base::ElkOptions::NODE_NODE_SPACING => DAGRE_GAP,
           Base::ElkOptions::LAYER_SPACING => DAGRE_GAP,
         )
-        ranked = graph.merge(edges: written(graph))
+        ranked = graph.merge(edges: written_edges(graph))
         Flowchart::DirectedPlacement.apply(ranked)
         graph.merge!(ranked.except(:edges))
       end
@@ -45,7 +45,7 @@ module Sirena
       # mmdc ranks every relation in written order; the builder stores
       # `A <|-- B` as B -> A and flags it, so flip flagged edges back for
       # ranking only (the graph's own edges keep their routing direction).
-      def self.written(graph)
+      def self.written_edges(graph)
         Array(graph[:edges]).map do |edge|
           next edge unless edge.dig(:metadata, :written_reversed)
 
@@ -56,7 +56,7 @@ module Sirena
       def self.connected_pair(graph, children)
         return unless connected_pair_candidate?(graph, children)
 
-        terminals = edge_terminals(written(graph).first)
+        terminals = edge_terminals(written_edges(graph).first)
         map_pair(children, terminals) if terminals
       end
 
@@ -139,7 +139,7 @@ module Sirena
       end
 
       private_class_method :layered?, :layered, :connected_pair,
-                           :connected_pair_candidate?, :written, :map_pair,
+                           :connected_pair_candidate?, :map_pair,
                            :ordinary_pair?, :edge_terminals,
                            :pack_connected_pair, :target_y, :centered_x, :pack,
                            :columns, :place, :offsets, :cell, :nested?
