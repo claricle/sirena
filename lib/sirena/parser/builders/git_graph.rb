@@ -66,6 +66,7 @@ module Sirena
           def add_commit(options = {})
             @commit_counter += 1
             commit_id = options[:id] || "commit-#{@commit_counter}"
+            validate_commit_id!(commit_id, options)
             commit = commit_identity(commit_id, options).merge(
               commit_semantics(options),
             )
@@ -127,7 +128,7 @@ module Sirena
               tag: options[:tag],
               tags: options.fetch(:tags, []),
               branch_name: @current_branch,
-              parent_ids: find_parents,
+              parent_ids: options[:parent_ids] || find_parents,
             }
           end
 
@@ -146,24 +147,33 @@ module Sirena
             @branches[name] = {
               order: order,
               parent_branch: @current_branch,
-              created_at: @commits.last&.fetch(:id),
+              created_at: branch_tip(@current_branch),
             }
           end
 
           def checkout_branch(name)
+            unless @branches.key?(name)
+              raise Parser::ParseError, "Unknown branch: #{name}."
+            end
+
             @current_branch = name
           end
 
           def merge_branch(branch_name, options = {})
+            validate_merge!(branch_name)
+            source_tip = branch_tip(branch_name)
+            current_tip = branch_tip(@current_branch)
             add_commit(
               options.merge(
                 is_merge: true,
                 merge_branch: branch_name,
+                parent_ids: [current_tip, source_tip].compact,
               ),
             )
           end
 
           def cherry_pick(options = {})
+            validate_cherry_pick!(options)
             add_commit(
               options.merge(is_cherry_pick: true),
             )
@@ -223,12 +233,62 @@ module Sirena
           end
 
           def find_parents
-            # Find the last commit on the current branch
-            parent = @commits.reverse.find do |c|
-              c[:branch_name] == @current_branch
+            tip = branch_tip(@current_branch)
+            tip ? [tip] : []
+          end
+
+          def branch_tip(name)
+            commit = @commits.reverse.find { |item| item[:branch_name] == name }
+            commit&.fetch(:id) || @branches.fetch(name).fetch(:created_at)
+          end
+
+          def validate_commit_id!(commit_id, options)
+            return if options[:is_cherry_pick]
+            return unless @commits.any? { |item| item[:id] == commit_id }
+
+            raise Parser::ParseError, "Commit id #{commit_id} already exists."
+          end
+
+          def validate_merge!(branch_name)
+            unless @branches.key?(branch_name)
+              raise Parser::ParseError, "Unknown branch: #{branch_name}."
+            end
+            if branch_name == @current_branch
+              raise Parser::ParseError, "Cannot merge a branch into itself."
             end
 
-            parent ? [parent[:id]] : []
+            source_tip = branch_tip(branch_name)
+            current_tip = branch_tip(@current_branch)
+            return if source_tip && !ancestor?(source_tip, current_tip)
+
+            raise Parser::ParseError,
+                  "Branch #{branch_name} has no new commits to merge."
+          end
+
+          def validate_cherry_pick!(options)
+            target = @commits.find { |item| item[:id] == options[:id] }
+            unless target
+              raise Parser::ParseError,
+                    "Unknown cherry-pick commit: #{options[:id]}."
+            end
+
+            parent = options[:cherry_pick_parent]
+            valid_parent = parent && target[:parent_ids].include?(parent)
+            return unless target[:is_merge] && !valid_parent
+
+            raise Parser::ParseError,
+                  "Cherry-picking merge commit #{target[:id]} requires " \
+                  "a valid parent."
+          end
+
+          def ancestor?(candidate, descendant)
+            return false unless candidate && descendant
+            return true if candidate == descendant
+
+            commit = @commits.reverse.find { |item| item[:id] == descendant }
+            commit && commit[:parent_ids].any? do |parent|
+              ancestor?(candidate, parent)
+            end
           end
         end
 
