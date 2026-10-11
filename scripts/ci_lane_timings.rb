@@ -16,6 +16,11 @@ module CiLaneTimings
   }.freeze
 
   BUCKETS = %i[warm restore_key cold none].freeze
+  BUDGETS = { "fast" => 10, "full" => 30 }.freeze
+  REQUIRED_EVIDENCE = {
+    "fast" => { warm: "warm", cold: "cold" }.freeze,
+    "full" => { none: "cache-independent" }.freeze,
+  }.freeze
 
   module_function
 
@@ -73,6 +78,35 @@ module CiLaneTimings
   def bucket_minutes(samples, bucket)
     samples.select { |s| s[:cache] == bucket }.map { |s| s[:seconds] / 60.0 }
   end
+
+  # Returns every reason the collected samples cannot close the CI budget
+  # criterion. The lane budgets are strict, so a ten-minute fast sample is
+  # already outside the documented "< 10 min" contract.
+  def budget_problems(samples)
+    missing_evidence(samples) + over_budget(samples)
+  end
+
+  def missing_evidence(samples)
+    REQUIRED_EVIDENCE.flat_map do |lane, required|
+      measured = samples.fetch(lane, []).map { |sample| sample.fetch(:cache) }
+      required.filter_map do |cache, label|
+        "#{lane}: no #{label} sample" unless measured.include?(cache)
+      end
+    end
+  end
+
+  def over_budget(samples)
+    samples.flat_map do |lane, lane_samples|
+      budget = BUDGETS.fetch(lane)
+      lane_samples.filter_map do |sample|
+        minutes = sample.fetch(:seconds) / 60.0
+        next if minutes < budget
+
+        "#{lane}: #{sample.fetch(:job)} #{sample.fetch(:cache)} sample is " \
+          "#{minutes.round(1)} min (budget < #{budget} min)"
+      end
+    end
+  end
 end
 
 # Fetching lives here so the module above stays pure. Read-only gh calls.
@@ -120,4 +154,8 @@ if __FILE__ == $PROGRAM_NAME
            "median=#{v[:median]&.round(1)} max=#{v[:max]&.round(1)}"
     end
   end
+
+  problems = CiLaneTimings.budget_problems(samples)
+  abort "CI lane budget evidence failed:\n#{problems.join("\n")}" \
+    unless problems.empty?
 end

@@ -92,4 +92,51 @@ RSpec.describe CiLaneTimings, :aggregate_failures do
         .to include(cache: :warm)
     end
   end
+
+  describe ".budget_problems" do
+    let(:within_budget) do
+      {
+        "fast" => [
+          { job: unit_name, cache: :warm, seconds: 480 },
+          { job: unit_name, cache: :cold, seconds: 540 },
+        ],
+        "full" => [
+          { job: "fresh-resolution", cache: :none, seconds: 600 },
+        ],
+      }
+    end
+
+    it "accepts complete evidence when every observed sample is in budget" do
+      expect(described_class.budget_problems(within_budget)).to eq([])
+    end
+
+    it "reports every required cache state that was not measured" do
+      samples = within_budget.merge(
+        "fast" => [{ job: unit_name, cache: :warm, seconds: 480 }],
+        "full" => [],
+      )
+
+      expect(described_class.budget_problems(samples)).to contain_exactly(
+        "fast: no cold sample",
+        "full: no cache-independent sample",
+      )
+    end
+
+    it "rejects every sample at or above a lane's strict budget" do
+      samples = within_budget.merge(
+        "fast" => within_budget.fetch("fast") + [
+          { job: "lint", cache: :restore_key, seconds: 600 },
+        ],
+        "full" => within_budget.fetch("full") + [
+          { job: "fresh-resolution", cache: :none, seconds: 1_860 },
+        ],
+      )
+
+      expect(described_class.budget_problems(samples)).to contain_exactly(
+        "fast: lint restore_key sample is 10.0 min (budget < 10 min)",
+        "full: fresh-resolution none sample is 31.0 min " \
+        "(budget < 30 min)",
+      )
+    end
+  end
 end
