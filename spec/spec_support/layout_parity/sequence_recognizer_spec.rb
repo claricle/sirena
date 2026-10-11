@@ -42,4 +42,14 @@ RSpec.describe SpecSupport::LayoutParity::SequenceRecognizer do
     expect(failure_identities(reference, alice))
       .to eq([[:missing, [:"participant-top", nil, "Bob"]]])
   end
+
+  it "recognizes stick-figure participants the way it recognizes boxes" do
+    stick = reference_svg("sequence/sequencediagram_spec-28d5e36c.svg")
+    sirena = Sirena.render("sequenceDiagram\n  actor A\n  actor B\n")
+
+    expect([recognized(stick), recognized(sirena)]).to eq(
+      [[[:"participant-top", "A", "A"], [:"participant-top", "B", "B"]],
+       [[:"participant-top", "A", "A"], [:"participant-top", "B", "B"]]],
+    )
+  end
 end
