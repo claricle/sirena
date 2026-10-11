@@ -433,6 +433,13 @@ fail rather than pass silently.
 4. After each type flips, refresh every doc statement about its layout
    (owned here, not hoped from item 11).
 
+## Approved layout exceptions
+
+Owner-approved 2026-10-11 (Hassan, recorded in the campaign MESSAGES). These types stay off elkrb; no other type has an exception.
+
+- **Mindmap: cose-bilkent, not elkrb.** mmdc lays mindmaps out with cose-bilkent, and Sirena ports that algorithm (`lib/sirena/layout/mindmap_cose*.rb`). Measured against the committed parity scoreboard, the port improves 21 of 45 mindmap rows and makes none worse. A layered elkrb placement would move nodes away from the reference and reduce parity.
+- **GitGraph: semantic lane layout, not elkrb.** mmdc's gitGraph renderer places commits by branch lane and commit order, with no graph-placement phase upstream. Sirena does the same (`lib/sirena/layout/git_graph.rb`). There is nothing for elkrb to decide.
+
 ## Done when
 
 - Every type whose layout elkrb can meaningfully own is on elkrb. Some
