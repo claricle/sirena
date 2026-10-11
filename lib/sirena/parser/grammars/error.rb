@@ -7,13 +7,11 @@ module Sirena
     module Grammars
       # Parslet grammar for error diagrams.
       #
-      # Handles simple error diagram syntax with optional error message.
+      # Mermaid only detects a source that is exactly "error" (any case
+      # in its detector, trimmed); "Error Diagrams" is no diagram there.
       #
       # @example Simple error diagram
       #   error
-      #
-      # @example Error diagram with message
-      #   Error Diagrams
       class Error < Common
         root(:diagram)
 
@@ -24,15 +22,9 @@ module Sirena
             ws?
         end
 
-        # Header: error [message text] or Error [message text]
+        # Header: error or Error, alone
         rule(:header) do
-          (str("Error") | str("error")).as(:header) >>
-            (space.repeat(1) >> message_text).maybe.as(:message) >>
-            ws?
-        end
-
-        rule(:message_text) do
-          (line_end.absent? >> any).repeat(1)
+          (str("Error") | str("error")).as(:header) >> ws?
         end
       end
     end
