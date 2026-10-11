@@ -15,30 +15,32 @@ module Sirena
 
         # Main diagram structure
         rule(:diagram) do
-          ws? >>
-            header >>
-            ws? >>
-            statements.maybe >>
-            ws?
+          ws? >> (
+            (canonical_header >> ws? >> statements >> ws?) |
+            (compatibility_header >> ws? >> statements.maybe >> ws?)
+          )
         end
 
         # C4 level headers
-        rule(:header) do
+        rule(:canonical_header) do
           (
             str("C4Context") |
             str("C4Container") |
             str("C4Component") |
             str("C4Dynamic") |
-            str("C4Deployment") |
-            str("C4 diagram")
+            str("C4Deployment")
           ).as(:header) >>
-            # Allow optional ${whitespace}, ${variable}, or semicolon after
-            # the header.
-            (
-              (dollar >> lbrace >> identifier >> rbrace) |
-              str(";")
-            ).maybe >>
-            ws?
+            header_suffix
+        end
+
+        rule(:compatibility_header) do
+          str("C4 diagram").as(:header) >> header_suffix
+        end
+
+        # Allow optional ${whitespace}, ${variable}, or semicolon after
+        # the header.
+        rule(:header_suffix) do
+          ((dollar >> lbrace >> identifier >> rbrace) | str(";")).maybe
         end
 
         rule(:statements) do
@@ -146,8 +148,8 @@ module Sirena
 
         rule(:element_params) do
           variable_or_identifier.as(:id) >>
-            (space? >> comma >> space? >>
-             param_value.as(:label)).maybe >>
+            space? >> comma >> space? >>
+            param_value.as(:label) >>
             (space? >> comma >> space? >>
              param_value.as(:description)).maybe >>
             (space? >> comma >> space? >>
