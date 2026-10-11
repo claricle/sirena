@@ -92,59 +92,59 @@ rows:
   status: hard-failure
 - case: resources.vega.nonreg.group2814.field_and_method_note--dad15be25c38
   summary:
-    hard_failure: true
+    hard_failure: false
     metrics:
-      worst_e_c: 0.55214
-      worst_e_w: 1.585056
-      worst_e_h: 0.185528
-      worst_e_a: 1.180511
+      worst_e_c: 0.015028
+      worst_e_w: 0.043464
+      worst_e_h: 0.0
+      worst_e_a: 0.043464
       worst_analog:
-  matched: 1
-  status: hard-failure
+  matched: 2
+  status: pass
 - case: resources.vega.nonreg.group2814.reported_case--cab9ac83dbb5
   summary:
-    hard_failure: true
+    hard_failure: false
     metrics:
-      worst_e_c: 0.355816
-      worst_e_w: 0.798663
-      worst_e_h: 0.185528
-      worst_e_a: 0.517184
+      worst_e_c: 0.011028
+      worst_e_w: 0.024939
+      worst_e_h: 0.0
+      worst_e_a: 0.024939
       worst_analog:
-  matched: 1
-  status: hard-failure
+  matched: 2
+  status: pass
 - case: resources.vega.nonreg.group2814.reversed_order--0dac1bb4078f
   summary:
-    hard_failure: true
+    hard_failure: false
     metrics:
-      worst_e_c: 0.270016
-      worst_e_w: 0.693192
-      worst_e_h: 0.185528
-      worst_e_a: 0.428218
+      worst_e_c: 0.004268
+      worst_e_w: 0.011242
+      worst_e_h: 0.0
+      worst_e_a: 0.011241
       worst_analog:
-  matched: 1
-  status: hard-failure
+  matched: 2
+  status: pass
 - case: resources.vega.nonreg.group2814.stereotype_colors--2b02c27ca536
   summary:
-    hard_failure: true
+    hard_failure: false
     metrics:
-      worst_e_c: 0.903852
-      worst_e_w: 3.15452
-      worst_e_h: 0.185528
-      worst_e_a: 2.504363
+      worst_e_c: 0.002453
+      worst_e_w: 0.008591
+      worst_e_h: 0.0
+      worst_e_a: 0.008591
       worst_analog:
-  matched: 1
-  status: hard-failure
+  matched: 2
+  status: pass
 - case: resources.vega.nonreg.group2814.three_members--15d11a71125a
   summary:
-    hard_failure: true
+    hard_failure: false
     metrics:
-      worst_e_c: 0.366186
-      worst_e_w: 1.187361
-      worst_e_h: 0.210694
-      worst_e_a: 0.806701
+      worst_e_c: 0.006145
+      worst_e_w: 0.020474
+      worst_e_h: 0.0
+      worst_e_a: 0.020473
       worst_analog:
-  matched: 1
-  status: hard-failure
+  matched: 2
+  status: pass
 - case: resources.vega.nonreg.group2846.correct_code--c4f1bf12e099
   summary:
     hard_failure: true
