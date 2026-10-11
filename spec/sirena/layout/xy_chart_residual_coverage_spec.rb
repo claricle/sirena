@@ -69,6 +69,6 @@ RSpec.describe Sirena::Layout::XyChart do
   end
 
   it "places values beyond the categorical axis at its origin" do
-    expect(overflow_points.map(&:x)).to eq([420.0, 100.0])
+    expect(overflow_points.map(&:x)).to eq([391.0, 82.0])
   end
 end

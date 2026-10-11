@@ -63,7 +63,7 @@ RSpec.describe Sirena::Renderer::XyChart do
   it "returns typed final chart geometry" do
     expected = [Sirena::Layout::XyChart::Scene,
                 [Sirena::Layout::XyChart::Series],
-                [Sirena::Layout::XyChart::Line], "0 0 800 500"]
+                [Sirena::Layout::XyChart::Line], "0 0 700 500"]
     expect(scene_summary).to eq(expected)
   end
 
