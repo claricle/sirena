@@ -1,60 +1,60 @@
 <svg
  width="1050.0"
- height="610.0"
- viewBox="0 0 1050 610"
+ height="362.0"
+ viewBox="0 0 1050 362"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <text fill="#000000" x="600.0" y="40.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="bold">Project Development Timeline</text>
 <rect fill="#ffffff" stroke="#000000" stroke-width="1" x="200.0" y="80.0" width="800.0" height="40.0"/>
-<text fill="#000000" x="250.72" y="110.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-07</text>
-<text fill="#000000" x="309.8933333333333" y="110.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-14</text>
-<text fill="#000000" x="369.06666666666666" y="110.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-21</text>
-<text fill="#000000" x="428.24" y="110.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-28</text>
-<text fill="#000000" x="487.4133333333333" y="110.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-04</text>
-<text fill="#000000" x="546.5866666666666" y="110.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-11</text>
-<text fill="#000000" x="605.76" y="110.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-18</text>
-<text fill="#000000" x="664.9333333333333" y="110.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-25</text>
-<text fill="#000000" x="724.1066666666667" y="110.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-03-03</text>
-<text fill="#000000" x="783.28" y="110.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-03-10</text>
-<line stroke="#000000" stroke-width="1" x1="250.72" y1="120.0" x2="250.72" y2="560.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="309.8933333333333" y1="120.0" x2="309.8933333333333" y2="560.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="369.06666666666666" y1="120.0" x2="369.06666666666666" y2="560.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="428.24" y1="120.0" x2="428.24" y2="560.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="487.4133333333333" y1="120.0" x2="487.4133333333333" y2="560.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="546.5866666666666" y1="120.0" x2="546.5866666666666" y2="560.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="605.76" y1="120.0" x2="605.76" y2="560.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="664.9333333333333" y1="120.0" x2="664.9333333333333" y2="560.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="724.1066666666667" y1="120.0" x2="724.1066666666667" y2="560.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="783.28" y1="120.0" x2="783.28" y2="560.0" stroke-dasharray="2,2"/>
-<rect fill="#f0f0f0" stroke="none" x="0.0" y="120.0" width="1050.0" height="30.0"/>
-<text fill="#000000" x="10.0" y="139.9" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Planning</text>
-<text fill="#000000" x="10.0" y="174.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Requirements Gathering</text>
-<rect fill="#007bff" stroke="#000000" stroke-width="1" x="200.0" y="160.0" width="126.80000000000001" height="20.0" rx="3.0" ry="3.0"/>
-<text fill="#ffffff" x="263.4" y="174.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">a1</text>
-<text fill="#000000" x="10.0" y="214.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Design Phase</text>
-<rect fill="#007bff" stroke="#000000" stroke-width="1" x="326.8" y="200.0" width="84.53333333333333" height="20.0" rx="3.0" ry="3.0"/>
-<text fill="#ffffff" x="369.06666666666666" y="214.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">a2</text>
-<rect fill="#f0f0f0" stroke="none" x="0.0" y="230.0" width="1050.0" height="30.0"/>
-<text fill="#000000" x="10.0" y="249.9" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Development</text>
-<text fill="#000000" x="10.0" y="284.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Backend Development</text>
-<rect fill="#007bff" stroke="#000000" stroke-width="1" x="411.3333333333333" y="270.0" width="253.60000000000002" height="20.0" rx="3.0" ry="3.0"/>
-<text fill="#ffffff" x="538.1333333333333" y="284.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">a3</text>
-<text fill="#000000" x="10.0" y="324.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Frontend Development</text>
-<rect fill="#007bff" stroke="#000000" stroke-width="1" x="411.3333333333333" y="310.0" width="253.60000000000002" height="20.0" rx="3.0" ry="3.0"/>
-<text fill="#ffffff" x="538.1333333333333" y="324.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">a4</text>
-<text fill="#000000" x="10.0" y="364.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Integration</text>
-<rect fill="#007bff" stroke="#000000" stroke-width="1" x="664.9333333333333" y="350.0" width="84.53333333333333" height="20.0" rx="3.0" ry="3.0"/>
-<text fill="#ffffff" x="707.1999999999999" y="364.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">a5</text>
-<rect fill="#f0f0f0" stroke="none" x="0.0" y="380.0" width="1050.0" height="30.0"/>
-<text fill="#000000" x="10.0" y="399.9" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Testing</text>
-<text fill="#000000" x="10.0" y="434.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Unit Testing</text>
-<rect fill="#007bff" stroke="#000000" stroke-width="1" x="664.9333333333333" y="420.0" width="126.80000000000001" height="20.0" rx="3.0" ry="3.0"/>
-<text fill="#ffffff" x="728.3333333333333" y="434.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">task_2_0</text>
-<text fill="#000000" x="10.0" y="474.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Integration Testing</text>
-<rect fill="#007bff" stroke="#000000" stroke-width="1" x="749.4666666666667" y="460.0" width="84.53333333333333" height="20.0" rx="3.0" ry="3.0"/>
-<text fill="#ffffff" x="791.7333333333333" y="474.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">task_2_1</text>
-<text fill="#000000" x="10.0" y="514.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">User Acceptance</text>
-<rect fill="#007bff" stroke="#000000" stroke-width="1" x="200.0" y="500.0" width="20.0" height="20.0" rx="3.0" ry="3.0"/>
+<text fill="#000000" x="250.72" y="317.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-07</text>
+<text fill="#000000" x="309.8933333333333" y="317.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-14</text>
+<text fill="#000000" x="369.06666666666666" y="317.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-21</text>
+<text fill="#000000" x="428.24" y="317.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-28</text>
+<text fill="#000000" x="487.4133333333333" y="317.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-04</text>
+<text fill="#000000" x="546.5866666666666" y="317.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-11</text>
+<text fill="#000000" x="605.76" y="317.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-18</text>
+<text fill="#000000" x="664.9333333333333" y="317.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-25</text>
+<text fill="#000000" x="724.1066666666667" y="317.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-03-03</text>
+<text fill="#000000" x="783.28" y="317.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-03-10</text>
+<line stroke="#000000" stroke-width="1" x1="250.72" y1="120.0" x2="250.72" y2="312.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="309.8933333333333" y1="120.0" x2="309.8933333333333" y2="312.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="369.06666666666666" y1="120.0" x2="369.06666666666666" y2="312.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="428.24" y1="120.0" x2="428.24" y2="312.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="487.4133333333333" y1="120.0" x2="487.4133333333333" y2="312.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="546.5866666666666" y1="120.0" x2="546.5866666666666" y2="312.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="605.76" y1="120.0" x2="605.76" y2="312.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="664.9333333333333" y1="120.0" x2="664.9333333333333" y2="312.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="724.1066666666667" y1="120.0" x2="724.1066666666667" y2="312.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="783.28" y1="120.0" x2="783.28" y2="312.0" stroke-dasharray="2,2"/>
+<rect fill="#f0f0f0" stroke="none" x="0.0" y="120.0" width="1050.0" height="48.0"/>
+<text fill="#000000" x="10.0" y="148.9" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Planning</text>
+<text fill="#000000" x="10.0" y="136.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Requirements Gathering</text>
+<rect fill="#007bff" stroke="#000000" stroke-width="1" x="200.0" y="122.0" width="126.80000000000001" height="20.0" rx="3.0" ry="3.0"/>
+<text fill="#ffffff" x="263.4" y="136.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">a1</text>
+<text fill="#000000" x="10.0" y="160.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Design Phase</text>
+<rect fill="#007bff" stroke="#000000" stroke-width="1" x="326.8" y="146.0" width="84.53333333333333" height="20.0" rx="3.0" ry="3.0"/>
+<text fill="#ffffff" x="369.06666666666666" y="160.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">a2</text>
+<rect fill="#f0f0f0" stroke="none" x="0.0" y="168.0" width="1050.0" height="72.0"/>
+<text fill="#000000" x="10.0" y="208.9" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Development</text>
+<text fill="#000000" x="10.0" y="184.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Backend Development</text>
+<rect fill="#007bff" stroke="#000000" stroke-width="1" x="411.3333333333333" y="170.0" width="253.60000000000002" height="20.0" rx="3.0" ry="3.0"/>
+<text fill="#ffffff" x="538.1333333333333" y="184.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">a3</text>
+<text fill="#000000" x="10.0" y="208.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Frontend Development</text>
+<rect fill="#007bff" stroke="#000000" stroke-width="1" x="411.3333333333333" y="194.0" width="253.60000000000002" height="20.0" rx="3.0" ry="3.0"/>
+<text fill="#ffffff" x="538.1333333333333" y="208.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">a4</text>
+<text fill="#000000" x="10.0" y="232.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Integration</text>
+<rect fill="#007bff" stroke="#000000" stroke-width="1" x="664.9333333333333" y="218.0" width="84.53333333333333" height="20.0" rx="3.0" ry="3.0"/>
+<text fill="#ffffff" x="707.1999999999999" y="232.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">a5</text>
+<rect fill="#f0f0f0" stroke="none" x="0.0" y="240.0" width="1050.0" height="72.0"/>
+<text fill="#000000" x="10.0" y="280.9" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Testing</text>
+<text fill="#000000" x="10.0" y="256.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Unit Testing</text>
+<rect fill="#007bff" stroke="#000000" stroke-width="1" x="664.9333333333333" y="242.0" width="126.80000000000001" height="20.0" rx="3.0" ry="3.0"/>
+<text fill="#ffffff" x="728.3333333333333" y="256.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">task_2_0</text>
+<text fill="#000000" x="10.0" y="280.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Integration Testing</text>
+<rect fill="#007bff" stroke="#000000" stroke-width="1" x="749.4666666666667" y="266.0" width="84.53333333333333" height="20.0" rx="3.0" ry="3.0"/>
+<text fill="#ffffff" x="791.7333333333333" y="280.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">task_2_1</text>
+<text fill="#000000" x="10.0" y="304.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">User Acceptance</text>
+<rect fill="#007bff" stroke="#000000" stroke-width="1" x="200.0" y="290.0" width="20.0" height="20.0" rx="3.0" ry="3.0"/>
 </svg>

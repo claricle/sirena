@@ -88,27 +88,26 @@ module SpecSupport
       end
 
       def sirena_ticks(extractor, doc)
-        timeline = sirena_timeline(extractor, doc)
-        return [] unless timeline
-
-        nodes = doc.xpath("//text").select do |text|
-          timeline.contain?(extractor.bbox(text))
+        labels = text_entries(extractor, doc)
+        entries = vertical_grid_lines(extractor, doc).filter_map do |line|
+          bottom_axis_label(line, labels)
         end
-        tick_elements(extractor, nodes)
+        tick_elements(extractor, entries.map { |entry| entry[:node] }.uniq)
       end
 
-      def sirena_timeline(extractor, doc)
-        lines = doc.xpath("//line").filter_map { |line| extractor.bbox(line) }
-        doc.xpath("//rect").filter_map do |rect|
-          box = extractor.bbox(rect)
-          box if lines.any? { |line| starts_below?(line, box) }
-        end.first
+      def vertical_grid_lines(extractor, doc)
+        doc.xpath("//line").filter_map do |line|
+          box = extractor.bbox(line)
+          box if box&.width&.zero? && box.height.positive?
+        end
       end
 
-      def starts_below?(line, box)
-        aligned = (line.min_y - box.max_y).abs <= 0.01
-        inside = line.min_x.between?(box.min_x, box.max_x)
-        line.width.zero? && aligned && inside
+      def bottom_axis_label(line, labels)
+        labels.select do |entry|
+          box = entry[:box]
+          (box.center.first - line.center.first).abs <= 0.01 &&
+            box.min_y >= line.max_y
+        end.min_by { |entry| entry[:box].min_y - line.max_y }
       end
 
       def tick_elements(extractor, nodes)
