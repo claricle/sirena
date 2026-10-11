@@ -24,11 +24,12 @@ module ExtractMermaidTestsHelpers
     File.write(path, "describe('pie', () => {\n#{body.join}});\n")
   end
 
+  # naming: nil leaves the extractor's own default in force.
   def run_extractor(root, out, naming: :stable)
     real = $stdout
     $stdout = StringIO.new
-    MermaidTestExtractor.new(root: root, output_dir: out, naming: naming)
-      .extract_all
+    options = { root: root, output_dir: out, naming: naming }.compact
+    MermaidTestExtractor.new(**options).extract_all
   ensure
     $stdout = real
   end
@@ -62,6 +63,14 @@ module ExtractMermaidTestsHelpers
       write_upstream("#{dir}/mermaid-js", tests)
       run_extractor("#{dir}/mermaid-js", "#{dir}/out", naming: :ordinal)
       Dir.glob("#{dir}/out/pie/*").map { File.basename(_1) }.sort
+    end
+  end
+
+  def default_naming_files(tests)
+    Dir.mktmpdir do |dir|
+      write_upstream("#{dir}/mermaid-js", tests)
+      run_extractor("#{dir}/mermaid-js", "#{dir}/out", naming: nil)
+      Dir.glob("#{dir}/out/pie/*.mmd").map { File.basename(_1) }
     end
   end
 
@@ -135,6 +144,14 @@ RSpec.describe MermaidTestExtractor do
   it "keeps NNN_ file names under the default ordinal naming" do
     names = ordinal_output([tests_a, tests_b]).grep(/\.mmd\z/)
     expect(names.map { _1[/\A\d{3}_/] }).to eq(%w[001_ 002_])
+  end
+
+  it "uses ordinal naming unless told otherwise" do
+    expect(default_naming_files([tests_a]).first).to match(/\A001_/)
+  end
+
+  it "builds each id from the upstream test title" do
+    expect(base_ids[tests_a.first]).to start_with("pie/handles_titles-")
   end
 
   it "adds no case_id to the meta under ordinal naming" do
