@@ -50,6 +50,11 @@ module Sirena
           COMPACT_FIRST_ROW_GAP = 30.1328
           COMPACT_ROW = 29.1328
           COMPACT_SELF_ROW = 42.1328
+          MIN_WIDTH_GLYPH_MARGIN = 5.0
+          MIN_WIDTH_GLYPH_GAP = 10.0
+          MIN_WIDTH_GLYPH_FIRST_ROW_GAP = 31.3105
+          ACTOR_INTRINSIC_WIDTH = 26.0
+          STEREOTYPE_BOX_HEIGHT = 46.9766
           GLYPH_BOX_OFFSET = 4.0
           QUEUE_HEIGHT = 26.4883
           ICON_LABEL_INSET = 2.9531
@@ -81,6 +86,9 @@ module Sirena
                            :COMPACT_HEAD_HEIGHT, :COMPACT_HEAD_LABEL_INSET,
                            :COMPACT_FIRST_ROW_GAP, :COMPACT_ROW,
                            :COMPACT_SELF_ROW,
+                           :MIN_WIDTH_GLYPH_MARGIN, :MIN_WIDTH_GLYPH_GAP,
+                           :MIN_WIDTH_GLYPH_FIRST_ROW_GAP,
+                           :ACTOR_INTRINSIC_WIDTH, :STEREOTYPE_BOX_HEIGHT,
                            :GLYPH_BOX_OFFSET, :QUEUE_HEIGHT,
                            :ICON_LABEL_INSET, :TAIL_ICON_LABEL,
                            :BOX_LABEL_INSET, :TAIL_BOX_LABEL,
@@ -259,6 +267,9 @@ module Sirena
           end
 
           def head_width(participant)
+            return ACTOR_INTRINSIC_WIDTH if minimum_width_mixed_glyphs? &&
+                                            participant.kind == :actor
+
             text = measure_text(participant.label, font_size: head_font_size)
             [minimum_head_width, text[:width] + (2 * head_padding),
              boxed_title_width(participant), requested_width].max
@@ -623,14 +634,20 @@ module Sirena
 
           def head_geometry(participant, centre, width, top, tail)
             builder = GLYPH_BUILDERS[participant.kind]
-            return rectangle_geometry(centre, width, top, tail) unless builder
+            unless builder
+              return rectangle_geometry(participant, centre, width, top, tail)
+            end
 
             send(builder, centre, width, top, tail)
           end
 
-          def rectangle_geometry(centre, width, top, tail)
+          def rectangle_geometry(participant, centre, width, top, tail)
             left = centre - (width / 2)
-            height = glyph_participants? ? participant_box_height : @head_height
+            height = if glyph_participants?
+                       participant_box_height(participant)
+                     else
+                       @head_height
+                     end
             y = rectangle_top(top, height, tail)
             radius = glyph_participants? ? 2.5 : 3
             rectangle = glyph_rectangle(left, y, width, height, radius: radius)
@@ -804,7 +821,13 @@ module Sirena
             tail ? top : top + @head_height - GLYPH_BOX_HEIGHT - 1
           end
 
-          def participant_box_height
+          def participant_box_height(participant)
+            if minimum_width_mixed_glyphs?
+              return STEREOTYPE_BOX_HEIGHT if participant.stereotype
+
+              return GLYPH_BOX_HEIGHT
+            end
+
             @diagram.participants.any?(&:stereotype) ? 56.0 : GLYPH_BOX_HEIGHT
           end
 
@@ -866,7 +889,16 @@ module Sirena
             @diagram.teoz?
           end
 
+          def minimum_width_mixed_glyphs?
+            return false if compact? || !@diagram.min_head_width
+
+            @diagram.participants.any? { |participant| glyph?(participant) } &&
+              @diagram.participants.any? { |participant| !glyph?(participant) }
+          end
+
           def margin
+            return MIN_WIDTH_GLYPH_MARGIN if minimum_width_mixed_glyphs?
+
             compact? ? COMPACT_MARGIN : MARGIN
           end
 
@@ -879,6 +911,8 @@ module Sirena
           end
 
           def minimum_gap
+            return MIN_WIDTH_GLYPH_GAP if minimum_width_mixed_glyphs?
+
             compact? ? COMPACT_MIN_GAP : MIN_GAP
           end
 
@@ -891,6 +925,10 @@ module Sirena
           end
 
           def first_row_gap
+            if minimum_width_mixed_glyphs?
+              return MIN_WIDTH_GLYPH_FIRST_ROW_GAP
+            end
+
             compact? ? COMPACT_FIRST_ROW_GAP : Walker::ROW
           end
 
