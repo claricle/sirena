@@ -40,10 +40,10 @@ module SpecSupport
       }.freeze
 
       REFERENCE_DIRECTORIES = {
-        class_diagram: "class",
-        er_diagram: "er",
+        class_diagram: "class_diagram",
+        er_diagram: "er_diagram",
         git_graph: "gitgraph",
-        state_diagram: "state",
+        state_diagram: "state_diagram",
       }.freeze
 
       def self.fetch(type)
