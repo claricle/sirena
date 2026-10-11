@@ -115,19 +115,46 @@ module Sirena
       # @raise [MalformedFrontmatter] when the document is malformed or
       #   exceeds Sirena's safety bounds
       def title
-        @root = parse
-        return nil unless @root
-
-        budget = { remaining: MAX_VALUES }
-        check(@root, budget)
+        load_document
         return nil unless @title_node
 
+        budget = value_budget
         drawn(value_of(@title_node, budget))
       rescue SystemStackError
         raise MalformedFrontmatter, "Frontmatter is nested too deeply."
       end
 
+      # The optional Mermaid layout engine named at `config.layout`.
+      # The complete document is validated by the same bounded walk as
+      # {#title}; mappings, aliases and scalar resolution therefore cannot
+      # bypass the frontmatter safety contract.
+      #
+      # @return [String, nil]
+      def config_layout
+        load_document
+        return nil unless @config_node
+
+        value = mapping_value(@config_node, "layout", value_budget)
+        value if value.is_a?(String)
+      rescue SystemStackError
+        raise MalformedFrontmatter, "Frontmatter is nested too deeply."
+      end
+
       private
+
+      def load_document
+        return if @document_loaded
+
+        @root = parse
+        budget = { remaining: MAX_VALUES }
+        check(@root, budget) if @root
+        @remaining_values = budget.fetch(:remaining)
+        @document_loaded = true
+      end
+
+      def value_budget
+        { remaining: @remaining_values }
+      end
 
       # parse_stream rather than parse: `parse` hands back the FIRST
       # document and says nothing about the rest, so `title: T` followed
@@ -219,16 +246,26 @@ module Sirena
         reject_duplicate(name) if seen.key?(name)
         seen[name] = true
         check(value, budget, depth + 1)
-        note_title(name, value) if root_mapping
+        note_root_value(name, value) if root_mapping
       end
 
       # Only the node is kept. Everything under it was bound as the walk
       # passed it, so the value can be built once the walk is over and
       # still read the anchors that stood where each alias sat.
-      def note_title(name, value)
-        return unless name == "title"
+      def note_root_value(name, value)
+        @title_node = value if name == "title"
+        @config_node = value if name == "config"
+      end
 
-        @title_node = value
+      def mapping_value(node, name, budget)
+        mapping = resolved(node)
+        return unless mapping?(mapping)
+
+        mapping.children.each_slice(2) do |key, value|
+          return value_of(value, budget) if
+            js_string(value_of(key, budget)) == name
+        end
+        nil
       end
 
       def reject_duplicate(name)
