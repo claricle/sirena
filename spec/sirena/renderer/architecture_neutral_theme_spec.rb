@@ -15,18 +15,18 @@ RSpec.describe Sirena::Renderer::Architecture do
     MERMAID
   end
   let(:expected_builtin_paints) do
-    {
-      "default" => ["#f0f0f0", ["#666"]],
-      "light" => ["#f0f0f0", ["#666"]],
-      "dark" => ["#f0f0f0", ["#666"]],
-      "high_contrast" => ["#f0f0f0", ["#666"]],
+    paint = {
+      group_fill: "#f0f0f0", group_stroke: "#999",
+      group_label: "#333", neutral_text: ["#666"],
     }
+    %w[default light dark high_contrast].to_h { |name| [name, paint] }
   end
   let(:custom_theme) do
     Sirena::Theme.new(
       name: "custom",
       colors: Sirena::Theme::ColorPalette.new(
-        group_background: "#123456", edge_color: "#abcdef",
+        group_background: "#123456", architecture_group_border: "#654321",
+        architecture_group_label: "#fedcba", edge_color: "#abcdef",
       ),
     )
   end
@@ -50,11 +50,17 @@ RSpec.describe Sirena::Renderer::Architecture do
 
   it "uses custom group and neutral text roles" do
     expect(paints(render_with(custom_theme)))
-      .to eq(["#123456", ["#abcdef"]])
+      .to eq(
+        group_fill: "#123456", group_stroke: "#654321",
+        group_label: "#fedcba", neutral_text: ["#abcdef"],
+      )
   end
 
   it "does not inject neutral paint into a scalar-empty partial theme" do
-    expect(paints(render_with(partial_theme))).to eq([nil, [nil]])
+    expect(paints(render_with(partial_theme))).to eq(
+      group_fill: nil, group_stroke: nil,
+      group_label: nil, neutral_text: [nil],
+    )
   end
 
   def public_render(name)
@@ -69,12 +75,19 @@ RSpec.describe Sirena::Renderer::Architecture do
 
   def paints(xml)
     document = REXML::Document.new(xml)
-    group = REXML::XPath.first(document, "//*[@id='group-api']/rect")
+    boundary = REXML::XPath.first(document, "//*[@id='group-api']/rect")
+    group_label = REXML::XPath.match(document, "//*[@id='group-api']/text")
+      .find { |text| text.text == "API" }
     neutral_text = %w[☁ ▦ ⬢ HTTP].map do |content|
       node = REXML::XPath.match(document, "//*[local-name()='text']")
         .find { |text| text.text == content }
       node.attributes["fill"]
     end
-    [group.attributes["fill"], neutral_text.uniq]
+    {
+      group_fill: boundary.attributes["fill"],
+      group_stroke: boundary.attributes["stroke"],
+      group_label: group_label.attributes["fill"],
+      neutral_text: neutral_text.uniq,
+    }
   end
 end

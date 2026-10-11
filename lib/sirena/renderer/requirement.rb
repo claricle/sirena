@@ -48,7 +48,7 @@ module Sirena
           apply_rect(rect, node.box)
           rect.fill = theme_color(:node_fill)
           rect.stroke = risk_color(node.risk) ||
-            theme_color(:border_color) || "#333"
+            theme_color(:requirement_box_border)
           rect.stroke_width = "2"
           rect.rx = "5"
           rect.ry = "5"
@@ -76,7 +76,7 @@ module Sirena
       def header_label(label)
         Svg::Text.new.tap do |text|
           apply_label(text, label)
-          text.fill = theme_color(:text_color) || "#000"
+          text.fill = theme_color(:requirement_text)
           text.dominant_baseline = "middle"
         end
       end
@@ -87,7 +87,7 @@ module Sirena
           text.fill = if label.role == "risk"
                         risk_color(risk)
                       else
-                        theme_color(:text_color) || "#000"
+                        theme_color(:requirement_text)
                       end
         end
       end
@@ -102,7 +102,7 @@ module Sirena
         Svg::Polygon.new.tap do |polygon|
           polygon.points = node.shape_points
           polygon.fill = theme_color(:node_fill)
-          polygon.stroke = theme_color(:border_color) || "#00796b"
+          polygon.stroke = theme_color(:requirement_element_border)
           polygon.stroke_width = "2"
         end
       end
@@ -111,9 +111,9 @@ module Sirena
         Svg::Text.new.tap do |text|
           apply_label(text, label)
           text.fill = if label.role == "detail"
-                        theme_color(:text_color) || "#666"
+                        theme_color(:requirement_detail_text)
                       else
-                        theme_color(:text_color) || "#000"
+                        theme_color(:requirement_text)
                       end
           text.dominant_baseline = "middle"
         end
@@ -158,7 +158,7 @@ module Sirena
       def relationship_label(label)
         Svg::Text.new.tap do |text|
           apply_label(text, label)
-          text.fill = theme_color(:text_color) || "#000"
+          text.fill = theme_color(:requirement_text)
           text.dominant_baseline = "middle"
         end
       end
@@ -190,7 +190,7 @@ module Sirena
         return unless risk
 
         index = RISK_LEVELS.index(risk.downcase)
-        return theme_color(:border_color) || "#666" unless index
+        return theme_color(:requirement_unknown_risk_border) unless index
 
         colors = theme&.colors
         palette = colors&.requirement_risk_palette

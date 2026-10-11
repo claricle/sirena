@@ -45,7 +45,7 @@ module Sirena
           apply_box(rect, node)
           rect.fill = theme_color(:group_background)
           rect.fill_opacity = "0.3"
-          rect.stroke = theme_color(:border_color) || "#999"
+          rect.stroke = theme_color(:architecture_group_border)
           rect.stroke_width = "2"
           rect.stroke_dasharray = "5,5"
           rect.rx = "8"
@@ -55,7 +55,7 @@ module Sirena
 
       def group_label(node)
         positioned_text(node.labels.first).tap do |text|
-          text.fill = theme_color(:text_color) || "#333"
+          text.fill = theme_color(:architecture_group_label)
         end
       end
 

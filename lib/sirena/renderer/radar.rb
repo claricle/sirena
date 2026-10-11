@@ -59,7 +59,7 @@ module Sirena
 
       def style_ring(element)
         element.fill = "none"
-        element.stroke = theme_color(:grid_line) || "#e5e7eb"
+        element.stroke = theme_color(:radar_grid_line)
         element.stroke_width = "1"
         element.class_name = "radarGraticule"
       end
@@ -70,7 +70,7 @@ module Sirena
           line.y1 = axis.line.y1
           line.x2 = axis.line.x2
           line.y2 = axis.line.y2
-          line.stroke = theme_color(:axis_line) || "#9ca3af"
+          line.stroke = theme_color(:radar_axis_line)
           line.stroke_width = "1"
           line.class_name = "radarAxisLine"
         end
