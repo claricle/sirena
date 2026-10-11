@@ -6,6 +6,7 @@ require_relative "../error/diagram_type_error"
 require_relative "../error/pipeline_error"
 require_relative "parsed"
 require_relative "mermaid/ir_adapter"
+require_relative "mermaid/git_graph_config"
 
 module Sirena
   module Notation
@@ -286,7 +287,7 @@ module Sirena
         type = detect_type(preamble[:body])
         logger&.debug("Detected diagram type: #{type}")
         reject_degenerate_preamble(type, preamble[:degenerate])
-        diagram = parse_diagram(type, preamble[:body], title, logger)
+        diagram = parse_diagram(type, preamble, title, logger)
         diagram = IRAdapter.call(type, with_wrap(type, diagram, source))
         parsed(type, diagram)
       end
@@ -325,13 +326,25 @@ module Sirena
         type == :sequence && Diagram::SequenceWrap.on?(source)
       end
 
-      def parse_diagram(type, body, title, logger)
+      def parse_diagram(type, preamble, title, logger)
         logger&.debug("Retrieved handlers for #{type}")
         logger&.debug("Parsing diagram...")
-        diagram = Parser.for(type).parse(body)
+        diagram = parse_body(type, preamble)
         logger&.debug("Parse complete: #{diagram.class.name}")
         diagram.title = title if title && diagram.title.nil?
         diagram
+      end
+
+      def parse_body(type, preamble)
+        parser = Parser.for(type)
+        return parser.parse(preamble[:body]) unless type == :git_graph
+
+        parser.parse(
+          preamble[:body],
+          main_branch_name: GitGraphConfig.main_branch_name(
+            preamble[:directives]
+          ),
+        )
       end
 
       def registered_type_names

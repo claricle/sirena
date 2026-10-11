@@ -46,9 +46,11 @@ module Sirena
       # @param source [String] the Mermaid git graph diagram source
       # @return [Diagram::GitGraph] the parsed git graph diagram
       # @raise [ParseError] if syntax is invalid
-      def parse(source)
+      def parse(source, main_branch_name: "main")
         tree = parse_with_grammar(Grammars::GitGraph.new, source)
-        result = Builders::GitGraph.new.apply(tree.slice(:statements))
+        result = Builders::GitGraph.build(
+          tree[:statements], main_branch_name: main_branch_name
+        )
         create_diagram(result, tree.fetch(:direction, "LR").to_s)
       end
 
@@ -57,6 +59,7 @@ module Sirena
       def create_diagram(result, orientation)
         diagram = Diagram::GitGraph.new(
           orientation: orientation,
+          main_branch_name: result[:main_branch_name],
           acc_title: result[:acc_title],
           acc_description: result[:acc_description],
         )
