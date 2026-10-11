@@ -19,9 +19,7 @@ require "yaml"
 EXAMPLE_TODAY = Date.new(2026, 1, 1)
 
 # The only example sources legitimately unrenderable today.
-EXPECTED_UNRENDERABLE_SOURCES = [
-  "packet/01-basic-packet.beta.mmd",
-].freeze
+EXPECTED_UNRENDERABLE_SOURCES = [].freeze
 
 # Keeps helper methods off Object; ExampleTasks itself remains top-level.
 # `extend self` rather than `module_function`: the internal, race-sensitive

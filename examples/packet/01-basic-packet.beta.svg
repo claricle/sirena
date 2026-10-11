@@ -1,0 +1,64 @@
+<svg
+ width="1026.0"
+ height="282.0"
+ viewBox="0 0 1026 282"
+ version="1.2"
+ baseProfile="tiny"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="1.0" y="15.0" width="507.0" height="32.0"/>
+<text fill="#000000" x="254.5" y="35.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Source Port</text>
+<text fill="#000000" x="1.0" y="13.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">0</text>
+<text fill="#000000" x="508.0" y="13.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">15</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="513.0" y="15.0" width="507.0" height="32.0"/>
+<text fill="#000000" x="766.5" y="35.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Destination Port</text>
+<text fill="#000000" x="513.0" y="13.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">16</text>
+<text fill="#000000" x="1020.0" y="13.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">31</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="1.0" y="62.0" width="1019.0" height="32.0"/>
+<text fill="#000000" x="510.5" y="82.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Sequence Number</text>
+<text fill="#000000" x="1.0" y="60.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">32</text>
+<text fill="#000000" x="1020.0" y="60.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">63</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="1.0" y="109.0" width="1019.0" height="32.0"/>
+<text fill="#000000" x="510.5" y="129.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Acknowledgment Number</text>
+<text fill="#000000" x="1.0" y="107.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">64</text>
+<text fill="#000000" x="1020.0" y="107.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">95</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="1.0" y="156.0" width="123.0" height="32.0"/>
+<text fill="#000000" x="62.5" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Data Offset</text>
+<text fill="#000000" x="1.0" y="154.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">96</text>
+<text fill="#000000" x="124.0" y="154.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">99</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="129.0" y="156.0" width="187.0" height="32.0"/>
+<text fill="#000000" x="222.5" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Reserved</text>
+<text fill="#000000" x="129.0" y="154.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">100</text>
+<text fill="#000000" x="316.0" y="154.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">105</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="321.0" y="156.0" width="27.0" height="32.0"/>
+<text fill="#000000" x="334.5" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">URG</text>
+<text fill="#000000" x="334.5" y="154.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10">106</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="353.0" y="156.0" width="27.0" height="32.0"/>
+<text fill="#000000" x="366.5" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">ACK</text>
+<text fill="#000000" x="366.5" y="154.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10">107</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="385.0" y="156.0" width="27.0" height="32.0"/>
+<text fill="#000000" x="398.5" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">PSH</text>
+<text fill="#000000" x="398.5" y="154.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10">108</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="417.0" y="156.0" width="27.0" height="32.0"/>
+<text fill="#000000" x="430.5" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">RST</text>
+<text fill="#000000" x="430.5" y="154.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10">109</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="449.0" y="156.0" width="27.0" height="32.0"/>
+<text fill="#000000" x="462.5" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">SYN</text>
+<text fill="#000000" x="462.5" y="154.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10">110</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="481.0" y="156.0" width="27.0" height="32.0"/>
+<text fill="#000000" x="494.5" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">FIN</text>
+<text fill="#000000" x="494.5" y="154.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10">111</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="513.0" y="156.0" width="507.0" height="32.0"/>
+<text fill="#000000" x="766.5" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Window Size</text>
+<text fill="#000000" x="513.0" y="154.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">112</text>
+<text fill="#000000" x="1020.0" y="154.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">127</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="1.0" y="203.0" width="507.0" height="32.0"/>
+<text fill="#000000" x="254.5" y="223.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Checksum</text>
+<text fill="#000000" x="1.0" y="201.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">128</text>
+<text fill="#000000" x="508.0" y="201.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">143</text>
+<rect fill="#efefef" stroke="#000000" stroke-width="1" x="513.0" y="203.0" width="507.0" height="32.0"/>
+<text fill="#000000" x="766.5" y="223.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Urgent Pointer</text>
+<text fill="#000000" x="513.0" y="201.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="10">144</text>
+<text fill="#000000" x="1020.0" y="201.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="10">159</text>
+<text fill="#000000" x="513.0" y="263.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">TCP Header</text>
+</svg>
