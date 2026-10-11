@@ -38,8 +38,15 @@ module Sirena
       def scene(diagram)
         document = ir_document(diagram)
         sectioned = sectioned?(document)
-        flow = TimelineFlow.new(groups(document), sectioned: sectioned)
+        flow = TimelineFlow.new(
+          groups(document), sectioned: sectioned, font_size: card_font_size
+        )
         shift_to_origin(build_scene(document, flow))
+      end
+
+      def card_font_size
+        value = theme.typography&.font_size_large
+        value&.positive? ? value : TimelineText::FONT_SIZE
       end
 
       def build_scene(document, flow)
