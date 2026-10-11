@@ -22,15 +22,20 @@ RSpec.describe Sirena::Layout::ElkPlacement do
     ].map { |id| "transition-#{id}" }
   end
 
+  let(:document) do
+    svg = Sirena.render(source, layout_engine: :elk)
+    REXML::Document.new(svg)
+  end
+
+  let(:rendered_ids) do
+    REXML::XPath.match(document, "//*[@id]").filter_map do |node|
+      id = node.attributes["id"]
+      id if id.start_with?("transition-")
+    end
+  end
+
   describe "State diagram cycles" do
     it "renders nested cycles and a cross-hierarchy transition" do
-      svg = Sirena.render(source, layout_engine: :elk)
-      document = REXML::Document.new(svg)
-      rendered_ids = REXML::XPath.match(document, "//*[@id]").filter_map do |node|
-        id = node.attributes["id"]
-        id if id.start_with?("transition-")
-      end
-
       expect([document.root.name, rendered_ids]).to eq(["svg", transition_ids])
     end
   end
