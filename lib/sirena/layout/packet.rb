@@ -105,7 +105,7 @@ module Sirena
 
         Label.new(
           text: title, x: width / 2.0, y: height - (ROW_PITCH / 2.0),
-          font_size: 14, text_anchor: "middle",
+          font_size: normal_font_size, text_anchor: "middle",
           dominant_baseline: "middle", style: "title"
         )
       end
@@ -133,7 +133,7 @@ module Sirena
       def block_label(text, box)
         Label.new(
           text: text, x: box.x + (box.width / 2.0),
-          y: box.y + (ROW_HEIGHT / 2.0), font_size: 12,
+          y: box.y + (ROW_HEIGHT / 2.0), font_size: small_font_size,
           text_anchor: "middle", dominant_baseline: "middle", style: "field"
         )
       end
@@ -142,7 +142,7 @@ module Sirena
         single = first == last
         Label.new(
           text: first.to_s, x: box.x + (single ? box.width / 2.0 : 0),
-          y: box.y - 2, font_size: 10,
+          y: box.y - 2, font_size: bit_font_size,
           text_anchor: single ? "middle" : "start",
           dominant_baseline: "auto", style: "start"
         )
@@ -153,9 +153,22 @@ module Sirena
 
         Label.new(
           text: last.to_s, x: box.x + box.width, y: box.y - 2,
-          font_size: 10, text_anchor: "end",
+          font_size: bit_font_size, text_anchor: "end",
           dominant_baseline: "auto", style: "end"
         )
+      end
+
+      def normal_font_size
+        theme.typography&.font_size_normal || 14
+      end
+
+      def small_font_size
+        theme.typography&.font_size_small || 12
+      end
+
+      # Packet bit numbers sit one typography step below field labels.
+      def bit_font_size
+        small_font_size - (normal_font_size - small_font_size)
       end
 
       def packet_row_count(fields)
