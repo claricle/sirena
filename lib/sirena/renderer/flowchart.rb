@@ -78,20 +78,17 @@ module Sirena
       end
 
       def fill_node_lines(text, label)
-        return text.content = label.text if label.lines.empty?
+        return text.content = label.text if label.runs.empty?
 
         text.dominant_baseline = nil
-        text.y = label.line_ys.first
-        text.tspans = label.lines.each_with_index.map do |line, row|
-          line_run(line, label, row)
-        end
+        text.tspans = label.runs.map { |run| text_run(run) }
       end
 
-      def line_run(line, label, row)
-        Svg::Tspan.new.tap do |run|
-          run.x = label.x
-          run.y = label.line_ys.fetch(row) if row.positive?
-          run.content = line
+      def text_run(run)
+        Svg::Tspan.new.tap do |tspan|
+          tspan.x = run.x
+          tspan.y = run.y if run.y
+          tspan.content = run.content
         end
       end
 
@@ -170,7 +167,7 @@ module Sirena
       def node_label(label)
         Svg::Text.new.tap do |text|
           text.x = label.x
-          text.y = label.y
+          text.y = label.text_y || label.y
           apply_flowchart_text_style(text, label)
           text.text_anchor = "middle"
           text.dominant_baseline = "middle"

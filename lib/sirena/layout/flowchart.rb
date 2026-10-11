@@ -85,15 +85,36 @@ module Sirena
         attribute :y, :float
       end
 
+      class TextRun < Lutaml::Model::Serializable
+        attribute :content, :string
+        attribute :x, :float
+        attribute :y, :float
+      end
+
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
         attribute :width, :float
         attribute :height, :float
         attribute :x, :float
         attribute :y, :float
+        attribute :text_y, :float
         attribute :font_size, :float
         attribute :lines, :string, collection: true, default: -> { [] }
         attribute :line_ys, :float, collection: true, default: -> { [] }
+        attribute :runs, TextRun, collection: true, default: -> { [] }
+
+        alias assign_line_ys line_ys=
+        private :assign_line_ys
+
+        def line_ys=(values)
+          assign_line_ys(values)
+          return unless defined?(@runs) && runs.any?
+
+          self.text_y = line_ys.first || y
+          runs.each_with_index do |run, row|
+            run.y = row.zero? ? nil : line_ys.fetch(row, nil)
+          end
+        end
       end
 
       class Line < Lutaml::Model::Serializable
@@ -326,27 +347,35 @@ module Sirena
 
       def typed_node_labels(node, x_pos, y_pos, width, height, cluster)
         (node[:labels] || []).first(1).map do |label|
-          label_y = y_pos + (height / 2.0)
-          label_y = y_pos + CLUSTER_TITLE_BASELINE if cluster
+          label_y = y_pos + (cluster ? CLUSTER_TITLE_BASELINE : height / 2.0)
+          label_x = cluster ? x_pos + (width.to_i / 2) : x_pos + (width / 2.0)
           Label.new(
             text: label[:text], width: label[:width], height: label[:height],
-            x: cluster ? x_pos + (width.to_i / 2) : x_pos + (width / 2.0),
-            y: label_y, **label_geometry(label, label_y)
+            x: label_x, y: label_y,
+            **label_geometry(label, label_x, label_y, with_runs: !cluster)
           )
         end
       end
 
-      def label_geometry(label, y_pos)
+      def label_geometry(label, x_pos, y_pos, with_runs: false)
         lines = label[:text].to_s.scrub.split("\n", -1)
-        drawn_lines = lines.one? ? [] : sentence_lines(lines)
+        lines = lines.one? ? [] : sentence_lines(lines)
         font_size = layout_font_size
-        {
-          font_size: font_size,
-          lines: drawn_lines,
-          line_ys: line_baselines(
-            y_pos, label[:height], drawn_lines, font_size
-          ),
-        }
+        line_ys = line_baselines(y_pos, label[:height], lines, font_size)
+        text_y = line_ys.first || y_pos
+        runs = with_runs ? text_runs(lines, line_ys, x_pos) : []
+        { font_size: font_size, lines: lines, line_ys: line_ys,
+          text_y: text_y, runs: runs }
+      end
+
+      def text_runs(lines, baselines, x_pos)
+        lines.each_with_index.map do |line, row|
+          TextRun.new(
+            content: line,
+            x: x_pos,
+            y: row.zero? ? nil : baselines.fetch(row),
+          )
+        end
       end
 
       def sentence_lines(lines)
@@ -421,7 +450,7 @@ module Sirena
           x, y = edge_label_anchor(source, target, bends, route)
           Label.new(
             text: label[:text], width: label[:width], height: label[:height],
-            x: x, y: y, **label_geometry(label, y)
+            x: x, y: y, **label_geometry(label, x, y)
           )
         end
       end
