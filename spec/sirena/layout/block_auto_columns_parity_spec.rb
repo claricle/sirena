@@ -36,10 +36,10 @@ RSpec.describe Sirena::Layout::Block do
     let(:source) { "block-beta\n  a\n  b\n  a --- b\n" }
     let(:expected_geometry) do
       [
-        91.568, 67.0,
-        [["a", 20.0, 20.0, 15.784, 27.0],
-         ["b", 55.784, 20.0, 15.784, 27.0]],
-        [35.784, 33.5, 55.784, 33.5]
+        67.568, 55.0,
+        [["a", 8.0, 8.0, 15.784, 27.0],
+         ["b", 31.784, 8.0, 15.784, 27.0]],
+        [23.784, 21.5, 31.784, 21.5]
       ]
     end
 
@@ -54,7 +54,7 @@ RSpec.describe Sirena::Layout::Block do
        node.width.round(3), node.height]
     end
 
-    it { is_expected.to eq([55.784, 67.0, 20.0, 20.0, 15.784, 27.0]) }
+    it { is_expected.to eq([43.784, 55.0, 8.0, 8.0, 15.784, 27.0]) }
   end
 
   context "with an empty auto layout" do
