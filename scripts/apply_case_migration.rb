@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "digest"
-require "fileutils"
 require "json"
 require "open3"
 require "optparse"
@@ -20,10 +19,11 @@ require "yaml"
 # (`pie/001_a_0.mmd` becomes `pie/<slug>-<hash8>.mmd`), so a reference is
 # rewritten by swapping the name wherever it appears: a full case key, a
 # `spec/mermaid/...` path, a `spec/fixtures_mermaid/<dir>/[correct/]...` path
-# or a bare name next to a separate type. Twelve old names occur in more than
-# one type; those are resolved by the directory written just before the name
-# and, if there is none, listed as unresolved. Apply refuses to start while
-# anything is unresolved.
+# or a bare name next to a separate type. Some old names occur in more than
+# one type; those are resolved by the directory written just before the name,
+# then by byte-identity with the case the line is about (Twins), and
+# otherwise listed as unresolved. Apply refuses to start while anything is
+# unresolved or a rename target is taken.
 #
 # The scope is every file git knows about (tracked, or untracked and not
 # ignored) at run time, minus the manifest itself. A JSON, YAML or one-case-
@@ -57,7 +57,7 @@ module ApplyCaseMigration
   ORDERING_KEYS = %w[case reference].freeze
   REQUIRED_EXTENSIONS = %w[mmd meta.json].freeze
 
-  # One old->new case: `type`, the old and new file stem.
+  # One old->new case: its type, and the old and new file stem.
   class Pair
     attr_reader :type, :old_base, :new_base
 
@@ -66,25 +66,32 @@ module ApplyCaseMigration
       @old_base = old_base
       @new_base = new_base
     end
+
+    def old_id
+      "#{type}/#{old_base}"
+    end
+
+    def new_id
+      "#{type}/#{new_base}"
+    end
   end
 
   # Finds the pair a name refers to. A name used by several types needs a
   # directory to choose between them.
   class Catalog
-    attr_reader :pattern, :pairs
+    attr_reader :pairs
 
     def initialize(pairs)
       @pairs = pairs
       @by_base = pairs.group_by(&:old_base)
-      @pattern = TOKEN
     end
 
     def base?(name)
       @by_base.key?(name)
     end
 
-    def ambiguous
-      @by_base.select { |_, group| group.length > 1 }.keys
+    def types
+      pairs.map(&:type).uniq
     end
 
     def candidates(base)
@@ -92,14 +99,14 @@ module ApplyCaseMigration
     end
 
     def resolve(base, type)
-      candidates = @by_base.fetch(base)
-      return candidates.first if candidates.one?
+      found = candidates(base)
+      return found.first if found.one?
 
-      candidates.find { |pair| pair.type == type }
+      found.find { |pair| pair.type == type }
     end
 
     def resolve_in(base, directories)
-      return @by_base.fetch(base).first if @by_base.fetch(base).one?
+      return resolve(base, nil) if candidates(base).one?
 
       directories.reverse_each do |dir|
         pair = resolve(base, dir)
@@ -135,8 +142,8 @@ module ApplyCaseMigration
     end
   end
 
-  # What apply would do: [from, to] renames, rewritten file contents, and
-  # the references it cannot resolve.
+  # What apply would do: [from, to] renames, rewritten file contents, the
+  # references it cannot resolve and the renames that cannot happen.
   class Plan
     attr_reader :moves, :rewrites, :unresolved, :conflicts, :manual
 
@@ -183,16 +190,16 @@ module ApplyCaseMigration
 
     def lines(original, rewritten)
       before = original.split("\n")
-      return [rewritten, :plain] unless case_lines?(before) &&
-                                        "#{before.join("\n")}\n" == original
+      return [rewritten, :plain] unless listing?(before, original)
 
       after = rewritten.split("\n")
       after = after.sort if before == before.sort
       ["#{after.join("\n")}\n", :structured]
     end
 
-    def case_lines?(list)
-      !list.empty? && list.all? { |line| CASE_PATH.match?(line) }
+    def listing?(list, original)
+      !list.empty? && list.all? { |line| CASE_PATH.match?(line) } &&
+        "#{list.join("\n")}\n" == original
     end
 
     def parse(format, text)
@@ -220,8 +227,7 @@ module ApplyCaseMigration
       pairs = after.each_with_index.map do |(key, value), index|
         [key, order_like(before.values[index], value)]
       end
-      keys = before.keys
-      pairs.sort_by!(&:first) if sorted_keys?(keys)
+      pairs.sort_by!(&:first) if sorted_keys?(before.keys)
       pairs.to_h
     end
 
@@ -244,199 +250,458 @@ module ApplyCaseMigration
       ORDERING_KEYS.filter_map { |name| item[name] }.grep(String).first
     end
 
-    private_class_method :structured, :lines, :case_lines?, :parse, :dump,
+    private_class_method :structured, :lines, :listing?, :parse, :dump,
                          :order_like, :order_hash, :order_array,
                          :sorted_keys?, :sort_key
+  end
+
+  # Reads the manifest into Pairs.
+  module Manifest
+    module_function
+
+    def pairs(root)
+      text = File.read(File.join(root, MANIFEST))
+      entries = JSON.parse(text).fetch("pairs")
+      pairs = entries.map { |entry| pair(entry) }
+      %i[new_base old_base].each { |field| reject_twice(pairs, field) }
+      pairs
+    rescue Errno::ENOENT, JSON::ParserError, KeyError => e
+      raise ManifestError, "cannot read #{MANIFEST}: #{e.message}"
+    end
+
+    def pair(entry)
+      old = OLD_PATTERN.match(entry["old"].to_s)
+      new = NEW_PATTERN.match(entry["new"].to_s)
+      raise ManifestError, "bad manifest entry #{entry.inspect}" unless
+        old && new && old[1] == new[1]
+
+      Pair.new(type: old[1], old_base: old[2], new_base: new[2])
+    end
+
+    def reject_twice(pairs, field)
+      groups = pairs.group_by { |pair| [pair.type, pair.public_send(field)] }
+      clash = groups.select { |_, group| group.length > 1 }.keys
+      return if clash.empty?
+
+      names = clash.map { |key| key.join("/") }.join(", ")
+      raise ConflictError, "manifest lists #{field} twice: #{names}"
+    end
+
+    private_class_method :pair, :reject_twice
+  end
+
+  # The files a run looks at, and whether git considers the tree clean.
+  module Tree
+    module_function
+
+    def clean?(root)
+      out, status = Open3.capture2("git", "status", "--porcelain", chdir: root)
+      raise Error, "git status failed in #{root}" unless status.success?
+
+      out.empty?
+    end
+
+    def files(root)
+      out, status = Open3.capture2(
+        "git", "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+        chdir: root
+      )
+      raise Error, "git ls-files failed in #{root}" unless status.success?
+
+      out.split("\0").uniq.reject { |file| file == MANIFEST }
+        .select { |file| plain_file?(File.join(root, file)) }
+    end
+
+    def plain_file?(full)
+      File.file?(full) && !File.symlink?(full)
+    end
+
+    private_class_method :plain_file?
+  end
+
+  # Rewrites the old names in one file's bytes. A name found in a path with
+  # a directory before it is resolved by that directory; the last such case
+  # is the context a later bare name is matched against.
+  class Rewriter
+    attr_reader :unresolved
+
+    def initialize(root, catalog)
+      @catalog = catalog
+      @twins = Twins.new(root)
+      @unresolved = []
+    end
+
+    # { text:, count:, ordering: }, or nil when nothing in the file changed.
+    def call(file, bytes)
+      @file = file
+      @bytes = bytes
+      @count = 0
+      @context = nil
+      text = bytes.gsub(TOKEN) { replacement(Regexp.last_match) }
+      return if @count.zero?
+
+      ordered, ordering = Ordering.call(file, bytes, text)
+      { text: ordered, count: @count, ordering: ordering }
+    end
+
+    private
+
+    def replacement(match)
+      name = match[0]
+      return name unless @catalog.base?(name)
+
+      pair = pair_for(name, match.begin(0))
+      return left_alone(name, match.begin(0)) unless pair
+
+      @count += 1
+      pair.new_base
+    end
+
+    def pair_for(name, position)
+      hint = @bytes[[position - HINT_WINDOW, 0].max...position][HINT, 1]
+      pair = @catalog.resolve(name, hint)
+      @context = pair if pair && hint
+      pair || @twins.pick(@catalog.candidates(name), @context)
+    end
+
+    def left_alone(name, position)
+      line = @bytes[0, position].count("\n") + 1
+      @unresolved << "#{@file}:#{line} #{name} " \
+                     "(used by several types, no directory given)"
+      name
+    end
+  end
+
+  # Rewrites every file in scope and lists ordinal-only mentions
+  # (`type NNN`, `type/NNN...`) that no tool can rewrite.
+  class Scan
+    attr_reader :rewrites, :manual
+
+    def initialize(root, catalog)
+      @root = root
+      @rewriter = Rewriter.new(root, catalog)
+      types = catalog.types.sort_by { |type| -type.size }
+      @ordinal = %r{(?<![\w-])(?:#{Regexp.union(types)})[ /]\d{3}(?![\w-])}
+      @rewrites = {}
+      @manual = []
+    end
+
+    def unresolved
+      @rewriter.unresolved
+    end
+
+    def run(files)
+      files.each { |file| visit(file) }
+      self
+    end
+
+    private
+
+    def visit(file)
+      bytes = File.binread(File.join(@root, file))
+      return if bytes.include?("\0")
+
+      @manual.concat(ordinal_mentions(file, bytes))
+      entry = @rewriter.call(file, bytes)
+      @rewrites[file] = entry if entry
+    end
+
+    def ordinal_mentions(file, bytes)
+      bytes.each_line.with_index(1).filter_map do |line, number|
+        "#{file}:#{number} #{line[@ordinal]}" if line.match?(@ordinal)
+      end
+    end
+  end
+
+  # Which files are renamed to what.
+  module Moves
+    module_function
+
+    # [[from, to], ...] and the files whose owning case cannot be told.
+    def call(files, catalog)
+      moves = []
+      stranded = []
+      files.each do |file|
+        stem, rest = File.basename(file).split(".", 2)
+        next unless catalog.base?(stem)
+
+        pair = catalog.resolve_in(stem, File.dirname(file).split("/"))
+        pair ? moves << [file, target(file, pair, rest)] : stranded << file
+      end
+      [moves, stranded]
+    end
+
+    def target(file, pair, rest)
+      File.join(File.dirname(file), [pair.new_base, rest].compact.join("."))
+    end
+
+    private_class_method :target
+  end
+
+  # Renames that would overwrite something.
+  module Conflicts
+    module_function
+
+    def call(root, moves)
+      targets = moves.map(&:last)
+      doubled(targets) + taken(root, targets)
+    end
+
+    def doubled(targets)
+      targets.tally.select { |_, count| count > 1 }.map do |target, count|
+        "#{target} is the target of #{count} files"
+      end
+    end
+
+    def taken(root, targets)
+      existing = targets.select { |t| File.exist?(File.join(root, t)) }
+      existing.map { |target| "#{target} already exists" }
+    end
+
+    private_class_method :doubled, :taken
+  end
+
+  # What must hold once the migration has been applied.
+  module Verification
+    module_function
+
+    def call(root)
+      catalog = Catalog.new(Manifest.pairs(root))
+      files = Tree.files(root)
+      references(root, files, catalog) + names(files, catalog) +
+        cases(root, catalog)
+    end
+
+    def references(root, files, catalog)
+      files.flat_map do |file|
+        bytes = File.binread(File.join(root, file))
+        next [] if bytes.include?("\0")
+
+        old_names(bytes, catalog).map do |name|
+          "#{file}: old name #{name} still referenced"
+        end
+      end
+    end
+
+    def old_names(bytes, catalog)
+      bytes.scan(TOKEN).uniq.select { |name| catalog.base?(name) }
+    end
+
+    def names(files, catalog)
+      files.filter_map do |file|
+        stem = File.basename(file).split(".", 2).first
+        "#{file}: file still has an old name" if catalog.base?(stem)
+      end
+    end
+
+    def cases(root, catalog)
+      ids = catalog.pairs.map(&:new_id)
+      absent = ids.flat_map { |id| absent_files(root, id) }
+      absent + count_problems(root, ids)
+    end
+
+    def absent_files(root, id)
+      REQUIRED_EXTENSIONS.filter_map do |ext|
+        file = "#{CORPUS}/#{id}.#{ext}"
+        "#{file}: missing" unless File.file?(File.join(root, file))
+      end
+    end
+
+    def count_problems(root, ids)
+      on_disk = Dir.glob("*/*.mmd", base: File.join(root, CORPUS))
+        .map { |file| file.delete_suffix(".mmd") }
+      return [] if on_disk.sort == ids.sort
+
+      ["#{CORPUS} holds #{on_disk.length} cases, the manifest names " \
+       "#{ids.length}; extra: #{(on_disk - ids).first(3)}"]
+    end
+
+    private_class_method :references, :old_names, :names, :cases,
+                         :absent_files, :count_problems
+  end
+
+  # Writes a Plan: rewritten contents first, then the renames.
+  module Writer
+    module_function
+
+    def call(root, plan)
+      plan.rewrites.each { |file, entry| replace(root, file, entry[:text]) }
+      plan.moves.each do |from, to|
+        File.rename(File.join(root, from), File.join(root, to))
+      end
+    end
+
+    def replace(root, file, text)
+      full = File.join(root, file)
+      mode = File.stat(full).mode & 0o7777
+      Tempfile.create([File.basename(file), ".tmp"], File.dirname(full)) do |t|
+        t.binmode
+        t.write(text)
+        t.close
+        File.chmod(mode, t.path)
+        File.rename(t.path, full)
+      end
+    end
+
+    private_class_method :replace
+  end
+
+  # Text of a plan for people.
+  module Report
+    module_function
+
+    def call(plan, summary:)
+      lines = counts(plan)
+      lines.concat(details(plan)) unless summary
+      lines.join("\n")
+    end
+
+    def counts(plan)
+      ["moves: #{plan.moves.length}",
+       "files rewritten: #{plan.rewrites.length}",
+       "references rewritten: #{plan.references}",
+       "unresolved: #{plan.unresolved.length}",
+       "conflicts: #{plan.conflicts.length}",
+       "ordinal-only mentions for manual review: #{plan.manual.length}"]
+    end
+
+    def details(plan)
+      moves = plan.moves.map { |from, to| "move #{from} -> #{to}" }
+      moves + rewrites(plan) + flagged(plan)
+    end
+
+    def rewrites(plan)
+      plan.rewrites.sort.map do |file, entry|
+        "rewrite #{file}: #{entry[:count]} references (#{entry[:ordering]})"
+      end
+    end
+
+    def flagged(plan)
+      plan.unresolved.map { |item| "UNRESOLVED #{item}" } +
+        plan.conflicts.map { |item| "CONFLICT #{item}" } +
+        plan.manual.map { |item| "MANUAL #{item}" }
+    end
+
+    private_class_method :counts, :details, :rewrites, :flagged
+  end
+
+  # The command line. Only this module turns a result into an exit status.
+  module Cli
+    module_function
+
+    USAGE = "usage: apply_case_migration.rb " \
+            "--dry-run [--summary] | --apply | --verify [--root DIR]"
+    MODES = { "--dry-run" => :dry_run, "--apply" => :apply,
+              "--verify" => :verify }.freeze
+
+    def call(argv, root:, out:, err:)
+      options = parse(argv)
+      return usage(err) unless options[:mode]
+
+      dispatch(options, options.fetch(:root, root), out, err)
+    rescue OptionParser::ParseError
+      usage(err)
+    rescue Error => e
+      err.puts "#{e.class}: #{e.message}"
+      1
+    end
+
+    def parse(argv)
+      options = {}
+      OptionParser.new do |parser|
+        MODES.each { |flag, mode| parser.on(flag) { options[:mode] = mode } }
+        parser.on("--summary") { options[:summary] = true }
+        parser.on("--root DIR") { |dir| options[:root] = dir }
+      end.parse!(argv.dup)
+      options
+    end
+
+    def usage(err)
+      err.puts USAGE
+      2
+    end
+
+    def dispatch(options, root, out, err)
+      case options[:mode]
+      when :verify then verify(root, out, err)
+      when :apply then apply(root, out, err)
+      else dry_run(root, out, options[:summary])
+      end
+    end
+
+    def dry_run(root, out, summary)
+      plan = ApplyCaseMigration.plan(root: root)
+      out.puts Report.call(plan, summary: summary)
+      plan.blocked? ? 1 : 0
+    end
+
+    def apply(root, out, err)
+      plan = ApplyCaseMigration.apply!(root: root)
+      out.puts Report.call(plan, summary: true)
+      verify(root, out, err)
+    end
+
+    def verify(root, out, err)
+      problems = ApplyCaseMigration.verify(root: root)
+      problems.each { |problem| err.puts problem }
+      out.puts(problems.empty? ? "verify: ok" : "verify: #{problems.length}")
+      problems.empty? ? 0 : 1
+    end
+
+    private_class_method :parse, :usage, :dispatch, :dry_run, :apply, :verify
   end
 
   module_function
 
   def plan(root:)
     root = File.expand_path(root)
-    catalog = Catalog.new(load_pairs(root))
-    files = scope(root)
-    check_corpus(root, catalog)
-    rewrites, unresolved, manual = scan(root, files, catalog)
-    moves, stranded = moves_for(files, catalog)
-    Plan.new(moves: moves, rewrites: rewrites,
-             unresolved: unresolved + stranded,
-             conflicts: conflicts_for(root, moves), manual: manual)
+    catalog = Catalog.new(Manifest.pairs(root))
+    require_cases_on_disk(root, catalog)
+    build_plan(root, catalog, Tree.files(root))
+  end
+
+  def build_plan(root, catalog, files)
+    scan = Scan.new(root, catalog).run(files)
+    moves, stranded = Moves.call(files, catalog)
+    Plan.new(moves: moves, rewrites: scan.rewrites,
+             unresolved: scan.unresolved + untyped(stranded),
+             conflicts: Conflicts.call(root, moves), manual: scan.manual)
   end
 
   def apply!(root:)
     root = File.expand_path(root)
-    raise DirtyTreeError, "working tree is not clean" unless clean?(root)
+    raise DirtyTreeError, "working tree is not clean" unless Tree.clean?(root)
 
     plan = plan(root: root)
-    refuse_blocked(plan)
-
-    write_rewrites(root, plan)
-    plan.moves.each { |from, to| File.rename(path(root, from), path(root, to)) }
+    refuse(plan)
+    Writer.call(root, plan)
     plan
   end
 
-  # Returns the problems found; an empty list means the migration is complete.
+  # The problems found; an empty list means the migration is complete.
   def verify(root:)
-    root = File.expand_path(root)
-    catalog = Catalog.new(load_pairs(root))
-    files = scope(root)
-    problems = leftover_references(root, files, catalog)
-    problems += leftover_files(files, catalog)
-    problems + missing_cases(root, catalog)
+    Verification.call(File.expand_path(root))
   end
 
-  def clean?(root)
-    out, status = Open3.capture2("git", "status", "--porcelain", chdir: root)
-    raise Error, "git status failed in #{root}" unless status.success?
-
-    out.empty?
+  def run(argv, root: Dir.pwd, out: $stdout, err: $stderr)
+    Cli.call(argv, root: root, out: out, err: err)
   end
 
-  def scope(root)
-    out, status = Open3.capture2(
-      "git", "ls-files", "-z", "--cached", "--others", "--exclude-standard",
-      chdir: root
-    )
-    raise Error, "git ls-files failed in #{root}" unless status.success?
-
-    out.split("\0").uniq.reject { |file| file == MANIFEST }.select do |file|
-      full = path(root, file)
-      File.file?(full) && !File.symlink?(full)
-    end
-  end
-
-  def path(root, relative)
-    File.join(root, relative)
-  end
-
-  def load_pairs(root)
-    manifest = JSON.parse(File.read(path(root, MANIFEST)))
-    pairs = Array(manifest["pairs"]).map { |entry| pair_for(entry) }
-    reject_duplicates(pairs)
-    pairs
-  rescue Errno::ENOENT, JSON::ParserError => e
-    raise ManifestError, "cannot read #{MANIFEST}: #{e.message}"
-  end
-
-  def pair_for(entry)
-    old = OLD_PATTERN.match(entry["old"].to_s)
-    new = NEW_PATTERN.match(entry["new"].to_s)
-    unless old && new && old[1] == new[1]
-      raise ManifestError, "bad manifest entry #{entry.inspect}"
-    end
-
-    Pair.new(type: old[1], old_base: old[2], new_base: new[2])
-  end
-
-  def reject_duplicates(pairs)
-    %i[new_base old_base].each do |field|
-      clash = pairs.group_by { |pair| [pair.type, pair.public_send(field)] }
-        .select { |_, group| group.length > 1 }.keys
-      next if clash.empty?
-
-      raise ConflictError, "manifest lists #{field.to_s.tr('_', ' ')} twice: " \
-                           "#{clash.map { |key| key.join('/') }.join(', ')}"
-    end
-  end
-
-  def check_corpus(root, catalog)
+  def require_cases_on_disk(root, catalog)
     absent = catalog.pairs.reject do |pair|
-      File.file?(path(root, "#{CORPUS}/#{pair.type}/#{pair.old_base}.mmd"))
+      File.file?(File.join(root, CORPUS, pair.type, "#{pair.old_base}.mmd"))
     end
     return if absent.empty?
 
-    names = absent.first(5).map { |pair| "#{pair.type}/#{pair.old_base}" }
     raise ManifestError, "#{absent.length} manifest cases are not on disk " \
-                         "(already applied?): #{names.join(', ')}"
+                         "(already applied?), first: #{absent.first.old_id}"
   end
 
-  # [rewrites, unresolved, manual]. Files holding NUL bytes are left alone.
-  def scan(root, files, catalog)
-    rewrites = {}
-    unresolved = []
-    manual = []
-    manual_pattern = ordinal_pattern(catalog)
-    twins = Twins.new(root)
-    files.each do |file|
-      bytes = File.binread(path(root, file))
-      next if bytes.include?("\0")
-
-      manual.concat(ordinal_mentions(file, bytes, manual_pattern))
-      entry = rewrite(file, bytes, catalog, twins, unresolved)
-      rewrites[file] = entry if entry
-    end
-    [rewrites, unresolved, manual]
+  def untyped(files)
+    files.map { |file| "#{file} (named by several types, no type directory)" }
   end
 
-  def rewrite(file, bytes, catalog, twins, unresolved)
-    count = 0
-    context = nil
-    text = bytes.gsub(catalog.pattern) do
-      match = Regexp.last_match
-      next match[0] unless catalog.base?(match[0])
-
-      hint = hint_before(bytes, match.begin(0))
-      pair = catalog.resolve(match[0], hint)
-      context = pair if pair && hint
-      pair ||= twins.pick(catalog.candidates(match[0]), context)
-      if pair
-        count += 1
-        pair.new_base
-      else
-        unresolved << unresolved_at(file, bytes, match)
-        match[0]
-      end
-    end
-    return if count.zero?
-
-    ordered, ordering = Ordering.call(file, bytes, text)
-    { text: ordered, count: count, ordering: ordering }
-  end
-
-  def unresolved_at(file, bytes, match)
-    line = bytes[0, match.begin(0)].count("\n") + 1
-    "#{file}:#{line} #{match[0]} (used by several types, no directory given)"
-  end
-
-  def hint_before(bytes, position)
-    window = bytes[[position - HINT_WINDOW, 0].max...position]
-    window[HINT, 1]
-  end
-
-  # `type NNN` or `type/NNN...`: an ordinal without the rest of the name
-  # cannot be rewritten mechanically, so it is listed for a person.
-  def ordinal_pattern(catalog)
-    types = catalog.pairs.map(&:type).uniq.sort_by { |type| -type.size }
-    /(?<![\w-])(?:#{Regexp.union(types)})[ \/]\d{3}(?![\w-])/
-  end
-
-  def ordinal_mentions(file, bytes, pattern)
-    bytes.each_line.with_index(1).filter_map do |line, number|
-      "#{file}:#{number} #{line[pattern]}" if line.match?(pattern)
-    end
-  end
-
-  # [[from, to], ...] for every file named after a case, plus the files
-  # whose owning case cannot be told.
-  def moves_for(files, catalog)
-    moves = []
-    stranded = []
-    files.each do |file|
-      stem, rest = File.basename(file).split(".", 2)
-      next unless catalog.base?(stem)
-
-      suffix = rest ? ".#{rest}" : ""
-      pair = catalog.resolve_in(stem, File.dirname(file).split("/"))
-      if pair
-        moves << [file, File.join(File.dirname(file), "#{pair.new_base}#{suffix}")]
-      else
-        stranded << "#{file} (named by several types, no type directory)"
-      end
-    end
-    [moves, stranded]
-  end
-
-  def refuse_blocked(plan)
+  def refuse(plan)
     unless plan.conflicts.empty?
       raise ConflictError, "#{plan.conflicts.length} conflicts, first: " \
                            "#{plan.conflicts.first}; nothing written"
@@ -447,157 +712,7 @@ module ApplyCaseMigration
           "#{plan.unresolved.length} unresolved references; nothing written"
   end
 
-  def conflicts_for(root, moves)
-    targets = moves.map(&:last)
-    twice = targets.group_by(&:itself).select { |_, group| group.length > 1 }
-    taken = targets.select { |target| File.exist?(path(root, target)) }
-    twice.map { |target, group| "#{target} is the target of #{group.length} files" } +
-      taken.map { |target| "#{target} already exists" }
-  end
-
-  def write_rewrites(root, plan)
-    plan.rewrites.each do |file, entry|
-      full = path(root, file)
-      mode = File.stat(full).mode
-      Tempfile.create([File.basename(file), ".tmp"], File.dirname(full)) do |tmp|
-        tmp.binmode
-        tmp.write(entry[:text])
-        tmp.close
-        File.chmod(mode & 0o7777, tmp.path)
-        File.rename(tmp.path, full)
-      end
-    end
-  end
-
-  def leftover_references(root, files, catalog)
-    files.flat_map do |file|
-      bytes = File.binread(path(root, file))
-      next [] if bytes.include?("\0")
-
-      bytes.scan(catalog.pattern).uniq.select { |name| catalog.base?(name) }.map do |name|
-        "#{file}: old name #{name} still referenced"
-      end
-    end
-  end
-
-  def leftover_files(files, catalog)
-    files.filter_map do |file|
-      stem = File.basename(file).split(".", 2).first
-      "#{file}: file still has an old name" if catalog.base?(stem)
-    end
-  end
-
-  def missing_cases(root, catalog)
-    expected = catalog.pairs.to_h { |pair| ["#{pair.type}/#{pair.new_base}", pair] }
-    problems = expected.keys.flat_map do |id|
-      REQUIRED_EXTENSIONS.filter_map do |ext|
-        file = "#{CORPUS}/#{id}.#{ext}"
-        "#{file}: missing" unless File.file?(path(root, file))
-      end
-    end
-    problems + case_count_problems(root, expected.keys)
-  end
-
-  def case_count_problems(root, expected_ids)
-    found = Dir.glob("*/*.mmd", base: path(root, CORPUS)).map do |file|
-      file.delete_suffix(".mmd")
-    end
-    return [] if found.sort == expected_ids.sort
-
-    ["#{CORPUS} holds #{found.length} cases, the manifest names " \
-     "#{expected_ids.length}; extra: #{(found - expected_ids).first(3)}"]
-  end
-
-  def describe(plan, summary:)
-    lines = ["moves: #{plan.moves.length}",
-             "files rewritten: #{plan.rewrites.length}",
-             "references rewritten: #{plan.references}",
-             "unresolved: #{plan.unresolved.length}",
-             "conflicts: #{plan.conflicts.length}",
-             "ordinal-only mentions for manual review: #{plan.manual.length}"]
-    lines.concat(plan_details(plan)) unless summary
-    lines.join("\n")
-  end
-
-  def plan_details(plan)
-    moves = plan.moves.map { |from, to| "move #{from} -> #{to}" }
-    rewrites = plan.rewrites.sort.map do |file, entry|
-      "rewrite #{file}: #{entry[:count]} references (#{entry[:ordering]})"
-    end
-    moves + rewrites + plan.unresolved.map { |item| "UNRESOLVED #{item}" } +
-      plan.conflicts.map { |item| "CONFLICT #{item}" } +
-      plan.manual.map { |item| "MANUAL #{item}" }
-  end
-
-  def run(argv, root: Dir.pwd, out: $stdout, err: $stderr)
-    options = parse_options(argv)
-    return usage(err) unless options
-
-    root = options[:root] || root
-    dispatch(options, root, out, err)
-  rescue Error => e
-    err.puts "#{e.class}: #{e.message}"
-    1
-  end
-
-  def parse_options(argv)
-    options = {}
-    OptionParser.new do |parser|
-      parser.on("--dry-run") { options[:mode] = :dry_run }
-      parser.on("--apply") { options[:mode] = :apply }
-      parser.on("--verify") { options[:mode] = :verify }
-      parser.on("--summary") { options[:summary] = true }
-      parser.on("--root DIR") { |dir| options[:root] = dir }
-    end.parse!(argv.dup)
-    options[:mode] ? options : nil
-  rescue OptionParser::ParseError
-    nil
-  end
-
-  def usage(err)
-    err.puts "usage: apply_case_migration.rb " \
-             "--dry-run [--summary] | --apply | --verify [--root DIR]"
-    2
-  end
-
-  def dispatch(options, root, out, err)
-    case options[:mode]
-    when :verify then report_verify(root, out, err)
-    when :apply then report_apply(root, out, err)
-    else report_plan(root, out, options[:summary])
-    end
-  end
-
-  def report_plan(root, out, summary)
-    plan = plan(root: root)
-    out.puts describe(plan, summary: summary)
-    plan.blocked? ? 1 : 0
-  end
-
-  def report_apply(root, out, err)
-    plan = apply!(root: root)
-    out.puts describe(plan, summary: true)
-    problems = verify(root: root)
-    problems.each { |problem| err.puts problem }
-    problems.empty? ? 0 : 1
-  end
-
-  def report_verify(root, out, err)
-    problems = verify(root: root)
-    problems.each { |problem| err.puts problem }
-    out.puts(problems.empty? ? "verify: ok" : "verify: #{problems.length} problems")
-    problems.empty? ? 0 : 1
-  end
-
-  private_class_method :path, :load_pairs, :pair_for, :reject_duplicates,
-                       :check_corpus, :refuse_blocked, :conflicts_for, :scan,
-                       :rewrite, :unresolved_at, :hint_before,
-                       :ordinal_pattern, :ordinal_mentions, :moves_for,
-                       :write_rewrites,
-                       :leftover_references, :leftover_files, :missing_cases,
-                       :case_count_problems, :plan_details, :parse_options,
-                       :usage, :dispatch, :report_plan, :report_apply,
-                       :report_verify
+  private_class_method :build_plan, :require_cases_on_disk, :untyped, :refuse
 end
 
 exit(ApplyCaseMigration.run(ARGV)) if $PROGRAM_NAME == __FILE__
