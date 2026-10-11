@@ -39,6 +39,19 @@ RSpec.describe DiagramPageManifest do
       )
     end
   end
+  let(:build_facts) do
+    _, _, status = build_result
+    missing = described_class::MANIFEST.values.reject do |output|
+      File.file?(File.join(site_dir, output))
+    end
+    [status.success?, missing]
+  end
+  let(:build_diagnostic) do
+    success, missing = build_facts
+    next build_result[1] unless success
+
+    "missing outputs: #{missing.join(', ')}"
+  end
 
   after do
     FileUtils.rm_rf(site_dir)
@@ -51,12 +64,6 @@ RSpec.describe DiagramPageManifest do
   end
 
   it "publishes every manifest source to its exact site path" do
-    _, stderr, status = build_result
-    missing = described_class::MANIFEST.values.reject do |output|
-      File.file?(File.join(site_dir, output))
-    end
-    diagnostic = status.success? ? "missing outputs: #{missing.join(', ')}" : stderr
-
-    expect([status.success?, missing]).to eq([true, []]), diagnostic
+    expect(build_facts).to eq([true, []]), build_diagnostic
   end
 end
