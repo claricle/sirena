@@ -53,6 +53,11 @@ module Sirena
       TEXT_WRAP_WIDTH = 300
       EMPTY_WIDTH = 20
       EMPTY_HEIGHT = 40
+      BROWSER_WIDTH_SCALE = 64.0
+      # Per-mille pair adjustments for width-setting Requirement labels.
+      TREBUCHET_KERNING = {
+        "Re" => -38, "Te" => -119, "Ty" => -113, "Ve" => -86,
+      }.freeze
       # Font size by [role, row index]; every other row uses 11.
       FIXED_FONT_SIZES = { ["element", 1] => 14, ["header", 0] => 12 }.freeze
       REQUIREMENT_TYPE_LABELS = {
@@ -684,9 +689,19 @@ module Sirena
       def rows_width(rows)
         widest = rows.map do |row|
           scale = row[:weight] == "bold" ? BOLD_WIDTH_FACTOR : 1
-          measure_text(row[:text], font_size: LABEL_FONT_SIZE)[:width] * scale
+          browser_text_width(row[:text]) * scale
         end.max
         widest + (2 * PADDING_X)
+      end
+
+      def browser_text_width(text)
+        width = TextMeasurement.measure_in(
+          :trebuchet, text, font_size: LABEL_FONT_SIZE
+        )[:width]
+        pairs = text.each_char.each_cons(2)
+        adjustment = pairs.sum { |pair| TREBUCHET_KERNING.fetch(pair.join, 0) }
+        width += adjustment * LABEL_FONT_SIZE / 1000.0
+        (width * BROWSER_WIDTH_SCALE).round / BROWSER_WIDTH_SCALE
       end
 
       def rows_height(rows)
