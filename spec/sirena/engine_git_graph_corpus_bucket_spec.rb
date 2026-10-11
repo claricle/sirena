@@ -93,6 +93,10 @@ module GitGraphBucketHelpers
   def text_named(svg, content)
     REXML::XPath.match(svg, "//text").find { |t| t.text == content }
   end
+
+  def label_positions(svg, labels)
+    labels.map { |label| number(text_named(svg, label), "y") }
+  end
 end
 
 # The gitGraph corpus cases that used to fail at parse, one group per
@@ -188,12 +192,8 @@ RSpec.describe Sirena::Engine do
 
     it "orders time the opposite way to TB" do
       top_down = render_svg(source.sub("BT", "TB"))
-      top_down = %w[first third].map do |label|
-        number(text_named(top_down, label), "y")
-      end
-      bottom_up = %w[first third].map do |label|
-        number(text_named(svg, label), "y")
-      end
+      top_down = label_positions(top_down, %w[first third])
+      bottom_up = label_positions(svg, %w[first third])
 
       expect([bottom_up.first > bottom_up.last, top_down.first < top_down.last])
         .to eq([true, true])
@@ -205,7 +205,9 @@ RSpec.describe Sirena::Engine do
 
     it "puts a commit label level with the commit" do
       label_y = number(text_named(svg, "first"), "y")
-      nearest_commit = centers.map { |_, y_position| (label_y - y_position).abs }
+      nearest_commit = centers.map do |_, y_position|
+        (label_y - y_position).abs
+      end
 
       expect(nearest_commit.min).to be <= 5
     end
