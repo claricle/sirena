@@ -3106,7 +3106,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/class-7aa88444.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -3198,7 +3198,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_elk_v3_spec-04c6aafa.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -3347,7 +3347,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_elk_v3_spec-29977982.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -3439,7 +3439,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_elk_v3_spec-76ab7ba5.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -3550,7 +3550,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_elk_v3_spec-84a403f4.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -3642,7 +3642,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_elk_v3_spec-c57d14a6.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -3734,7 +3734,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_elk_v3_spec-d813b31f.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -3845,7 +3845,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_handdrawn_v3_spec-0f2609d5.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -3937,7 +3937,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_handdrawn_v3_spec-54bf00b0.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -4029,7 +4029,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_handdrawn_v3_spec-604514f1.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -4121,7 +4121,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_handdrawn_v3_spec-872bc713.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -4213,7 +4213,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_handdrawn_v3_spec-9be2f114.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -4362,7 +4362,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_handdrawn_v3_spec-c62816d4.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -12698,7 +12698,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_spec-b9b4b9c7.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -16073,7 +16073,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v2_spec-64857e52.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -16184,7 +16184,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v2_spec-80823a3a.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -16276,7 +16276,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v2_spec-876ad52b.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -16368,7 +16368,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v2_spec-9f6f35ba.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -16517,7 +16517,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v2_spec-db53ca65.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -16609,7 +16609,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v2_spec-f17774df.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -16720,7 +16720,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v3_spec-27e480a1.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -16812,7 +16812,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v3_spec-3498bf38.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -16904,7 +16904,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v3_spec-3591e38c.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -16996,7 +16996,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v3_spec-57b031e5.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -17088,7 +17088,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v3_spec-99de384d.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -17237,7 +17237,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/classdiagram_v3_spec-fb22cc13.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -17329,7 +17329,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/click_security_loose-00ed112a.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -17513,7 +17513,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/click_security_loose-805813e6.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -17789,7 +17789,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/click_security_loose-b83afcbe.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -17973,7 +17973,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/click_security_loose-f1b6a1c7.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18084,7 +18084,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/mermaidapi_spec-1486454c.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18195,7 +18195,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/mermaidapi_spec-a673aac1.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18268,7 +18268,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_add_bracket_members_in_right_order-5716bdac.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18341,7 +18341,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_add_bracket_members_in_right_order-e958b1f7.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18471,7 +18471,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_add_relations_between_classes_of_differen-fe8bafcb.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18544,7 +18544,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_associate_callback_appropriately_with_an-e4ca0495.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18617,7 +18617,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_associate_callback_with_tooltip-8cb1b6c6.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18690,7 +18690,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_associate_click_and_call_callback_appropr-5c102275.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18763,7 +18763,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_be_possible_to_apply_a_css_class_to_a_cla-3620f49a.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18836,7 +18836,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_be_possible_to_apply_a_css_class_to_a_cla-a593c027.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -18928,7 +18928,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_be_possible_to_apply_a_style_to_an_indivi-5597dbc5.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19001,7 +19001,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_be_possible_to_define_and_assign_a_class-2a55e80f.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19074,7 +19074,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_a_comment_inside_brackets-4231bac0.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19166,7 +19166,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_a_comment_inside_brackets-9eaf1705.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19239,7 +19239,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_a_comment_with_mermaid_class_diagr-692f71f8.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19312,7 +19312,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_a_comment_with_multiple_line_feeds-ef8a1000.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19385,7 +19385,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_a_mix_of_members_defined_in_and_ou-543a9200.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19458,7 +19458,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_abstract_methods-33310d77.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19531,7 +19531,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_abstract_methods-d9ff8aa4.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19568,7 +19568,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_acctitle_and_multiline_accdescr-1867b757.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19660,7 +19660,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_all_basic_relationships-6e0f8b09.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19809,7 +19809,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_all_basic_relationships-f8f449c3.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -19882,7 +19882,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_an_empty_class_body_with-3b7575b3.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20031,7 +20031,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_backticked_class_name-11b3c269.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20142,7 +20142,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_backticked_class_names-611e333e.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20215,7 +20215,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_backticked_class_names-864b5f8e.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20364,7 +20364,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_cardinality_and_labels-75d6fa28.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20437,7 +20437,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_class_annotations-334873ff.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20510,7 +20510,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_class_annotations-9de07271.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20583,7 +20583,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_class_annotations_in_brackets-3a72ef42.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20656,7 +20656,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_class_annotations_in_brackets-aa43c5da.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20729,7 +20729,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_class_annotations_in_brackets_with-826cd7f4.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20802,7 +20802,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_class_annotations_in_brackets_with-ca73d020.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20875,7 +20875,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_class_annotations_with_members_and-220badc4.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -20948,7 +20948,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_class_annotations_with_members_and-8ad5fd85.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21021,7 +21021,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_class_names_with_dash-803e581d.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21094,7 +21094,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_class_names_with_underscore-d09aea84.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21186,7 +21186,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_classes_within_namespaces-741db470.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21259,7 +21259,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_comments_at_the_end_no_trailing_ne-79c232c6.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21408,7 +21408,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_dashed_relation_definition_of_diff-f7cbe836.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21500,7 +21500,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_fully_qualified_class_names_in_rel-d86c96ce.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21573,7 +21573,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_function_call-91e10fae.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21646,7 +21646,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_function_call_with_an_arbitrary_nu-26f24f2f.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21719,7 +21719,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_function_call_with_an_arbitrary_nu-ca235165.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21792,7 +21792,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_function_call_with_tooltip-eb29efaa.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21865,7 +21865,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_class-0b14c539.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -21995,7 +21995,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_class_with_a_literal_name-3d8d65f3.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22087,7 +22087,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_class_with_brackets-f8114c2f.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22179,7 +22179,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_class_with_brackets_and_a-034af121.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22271,7 +22271,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_class_with_relation_defini-8c6b1348.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22401,7 +22401,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_class_with_relationships-df14b848.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22474,7 +22474,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_classes_within_namespaces-7cfcfa3c.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22547,7 +22547,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_return_types-5f2ca893.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22620,7 +22620,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_types-994062c2.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22693,7 +22693,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_types_in_arguments-a7d54a82.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22766,7 +22766,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generic_types_in_members_in_class-d04aac61.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22858,7 +22858,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_generics-88a95472.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -22931,7 +22931,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_member_and_method_definitions-33e71d97.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23004,7 +23004,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_member_definitions-4b4965ea.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23077,7 +23077,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_member_definitions-9186f66d.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23150,7 +23150,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_method_definition-168bb5b6.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23223,7 +23223,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_method_definitions-1b79fd93.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23372,7 +23372,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_multiple_classes_and_relation_defi-62d038d6.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23445,7 +23445,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_namespace_with_generic_types-b0517fc5.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23482,7 +23482,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_nested_namespaces_and_relationship-243d32d8.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23574,7 +23574,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_parsing_of_separators-0e01f6c1.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23723,7 +23723,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_relation_definition_of_different_t-19cdc466.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23815,7 +23815,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_relation_definitions_aggregation_a-0015a89f.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23907,7 +23907,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_relation_definitions_composition_o-fd4c5630.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -23999,7 +23999,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_relation_definitions_extension-dd7b04a9.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24091,7 +24091,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_relation_definitions_with_no_types-36b2e9a0.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24183,7 +24183,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_relation_definitions_with_type_onl-5100eeea.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24313,7 +24313,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_relationships_with_labels-a1a3cc69.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24386,7 +24386,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_return_types_as_array-a126f77c.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24459,7 +24459,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_return_types_on_methods-c45880da.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24532,7 +24532,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_simple_member_declaration-39181aa1.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24605,7 +24605,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_simple_member_declaration_with_typ-a4611a00.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24678,7 +24678,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_simple_return_types-c059da2c.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24751,7 +24751,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_static_methods-e10f9642.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24824,7 +24824,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_static_methods-ee0be48d.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24897,7 +24897,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_visibility-118815e0.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -24970,7 +24970,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_handle_visibility-d535dbb9.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -25062,7 +25062,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_parse_a_class_with_a_text_label-772f1fc1.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -25154,7 +25154,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_parse_a_class_with_a_text_label_and_membe-55b10b45.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -25246,7 +25246,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_parse_a_class_with_a_text_label_members_a-6a93a4c0.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -25338,7 +25338,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_parse_a_class_with_text_label_and_css_cla-78750f20.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -25430,7 +25430,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_parse_a_class_with_text_label_and_css_cla-c66bf15e.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -25541,7 +25541,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_parse_diagram_with_direction-ba994d6a.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -25652,7 +25652,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_parse_multiple_classes_with_same_text_lab-858d77d2.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -25744,7 +25744,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_parse_two_classes_with_text_labels-0115b07f.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -25836,7 +25836,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_parse_two_classes_with_text_labels_and_cs-0279db01.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -25928,7 +25928,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_parse_two_classes_with_text_labels_and_cs-df074ec4.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -26001,7 +26001,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_properly_assign_styles_from_a_class_defin-5f10c4d3.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -26074,7 +26074,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/should_revert_direction_to_default_once_directio-f92a90fc.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -26296,7 +26296,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-1cc8defb.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -26445,7 +26445,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-1dce3ec9.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -26518,7 +26518,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-25d6e9d7.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -26737,7 +26737,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-3e69d3e6.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -26810,7 +26810,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-54324c16.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -27067,7 +27067,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-635beb05.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -27289,7 +27289,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-77cd397a.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -27362,7 +27362,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-81f5db7a.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -27454,7 +27454,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-8803143a.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -27990,7 +27990,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-a45d14cd.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -28139,7 +28139,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-abd49307.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -28285,7 +28285,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-b4c8a3b9.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -28504,7 +28504,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-ca7091fd.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -28577,7 +28577,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-db0e5178.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -28669,7 +28669,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-dd4e97f0.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -28870,7 +28870,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-ee2e41a0.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -28962,7 +28962,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-f2988cb9.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -29035,7 +29035,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/class_diagram/yari-fe0ab2fc.svg",
-    "reproduce": "bundle exec rake 'corpus[class,valid]'",
+    "reproduce": "bundle exec rake 'corpus[class_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "class_diagram",
     "summary": {
@@ -29072,7 +29072,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/er_diagram/diagram_orchestration_spec-0b6a4661.svg",
-    "reproduce": "bundle exec rake 'corpus[er,valid]'",
+    "reproduce": "bundle exec rake 'corpus[er_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "er_diagram",
     "summary": {
@@ -29332,7 +29332,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/er_diagram/er-f17280c6.svg",
-    "reproduce": "bundle exec rake 'corpus[er,valid]'",
+    "reproduce": "bundle exec rake 'corpus[er_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "er_diagram",
     "summary": {
@@ -29499,7 +29499,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/er_diagram/erdiagram_spec-4fb39e72.svg",
-    "reproduce": "bundle exec rake 'corpus[er,valid]'",
+    "reproduce": "bundle exec rake 'corpus[er_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "er_diagram",
     "summary": {
@@ -29620,7 +29620,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/er_diagram/mermaidapi_spec-28c33f18.svg",
-    "reproduce": "bundle exec rake 'corpus[er,valid]'",
+    "reproduce": "bundle exec rake 'corpus[er_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "er_diagram",
     "summary": {
@@ -29693,7 +29693,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/er_diagram/should_handle_attributes_with_numbers_in_names_b-9966ce0b.svg",
-    "reproduce": "bundle exec rake 'corpus[er,valid]'",
+    "reproduce": "bundle exec rake 'corpus[er_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "er_diagram",
     "summary": {
@@ -29740,7 +29740,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/er_diagram/should_handle_complex_diagram_with_special_entit-af26ddf3.svg",
-    "reproduce": "bundle exec rake 'corpus[er,valid]'",
+    "reproduce": "bundle exec rake 'corpus[er_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "er_diagram",
     "summary": {
@@ -29777,7 +29777,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/er_diagram/xss_spec-8e4f16ee.svg",
-    "reproduce": "bundle exec rake 'corpus[er,valid]'",
+    "reproduce": "bundle exec rake 'corpus[er_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "er_diagram",
     "summary": {
@@ -29869,7 +29869,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/er_diagram/yari2-9471fb3f.svg",
-    "reproduce": "bundle exec rake 'corpus[er,valid]'",
+    "reproduce": "bundle exec rake 'corpus[er_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "er_diagram",
     "summary": {
@@ -54722,7 +54722,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/appli_spec-9896cabe.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -54759,7 +54759,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/diagram_orchestration_spec-7e74931b.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -54796,7 +54796,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/diagram_orchestration_spec-f91adec1.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -54948,7 +54948,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/git-c330ba11.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -55135,7 +55135,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-076af5a8.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -55322,7 +55322,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-0b6593b9.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -55474,7 +55474,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-10b01f23.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -55626,7 +55626,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-114a946d.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -55778,7 +55778,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-1f279738.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -55965,7 +55965,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-215c1704.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -56117,7 +56117,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-2624f69c.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -56269,7 +56269,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-27965d7e.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -56421,7 +56421,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-28053fe8.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -56608,7 +56608,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-2a707d2a.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -56760,7 +56760,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-302c1b10.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -56912,7 +56912,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-3a0ec594.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -57064,7 +57064,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-3c6bb236.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -57216,7 +57216,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-44d278b2.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -57368,7 +57368,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-48bd68ea.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -57520,7 +57520,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-4ecf8c56.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -57672,7 +57672,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-4f488ecd.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -57859,7 +57859,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-5ec00071.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -57896,7 +57896,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-62bd2181.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -58066,7 +58066,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-6422a3f5.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -58271,7 +58271,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-6dbfa6a3.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -58308,7 +58308,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-6fdae8bb.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -58478,7 +58478,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-72051fc1.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -58630,7 +58630,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-72370fac.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -58782,7 +58782,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-7601eeee.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -58819,7 +58819,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-785ef1ea.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -58971,7 +58971,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-7d932392.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -59008,7 +59008,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-833c0b64.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -59160,7 +59160,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-85c9fffd.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -59381,7 +59381,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-85d8094a.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -59568,7 +59568,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-87a15537.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -59720,7 +59720,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-88f6da03.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -59872,7 +59872,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-8a6b8cc3.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -60059,7 +60059,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-8ec1ba43.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -60211,7 +60211,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-92393861.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -60363,7 +60363,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-a2c9fdfa.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -60584,7 +60584,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-a3fd0bd6.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -60736,7 +60736,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-a80be08a.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -60773,7 +60773,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-a8592bb3.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -60994,7 +60994,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-b187a403.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -61146,7 +61146,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-b766651e.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -61298,7 +61298,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-b81d6654.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -61485,7 +61485,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-c9730706.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -61637,7 +61637,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-ca73a116.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -61858,7 +61858,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-d0791e6a.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -62010,7 +62010,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-d77717c8.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -62162,7 +62162,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-e1c6c758.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -62199,7 +62199,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-e720bcf2.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -62351,7 +62351,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-ecc8f1ae.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -62503,7 +62503,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-ef884d70.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -62655,7 +62655,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-efafa38a.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -62807,7 +62807,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-f2a04b5e.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -62994,7 +62994,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-f45d7013.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -63146,7 +63146,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-f4bbbafe.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -63298,7 +63298,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-fbfbfcbd.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -63450,7 +63450,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-fcc2f0dd.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -63602,7 +63602,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-fdc1c9db.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -63754,7 +63754,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/gitgraph_spec-ff5daf60.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -63791,7 +63791,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/mermaidapi_spec-36f7251d.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -63828,7 +63828,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/mermaidapi_spec-3bb9b8eb.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -63996,7 +63996,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_add_commits_to_checked_out_branch-13325e2c.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -64145,7 +64145,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_allow_branch_names_starting_with_numbers-45bc9820.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -64464,7 +64464,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_allow_branch_names_starting_with_unusual-2dd0cf15.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -64613,7 +64613,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_allow_characters_in_branch_names-c1db8816.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -64765,7 +64765,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_allow_quoted_branch_names-175db699.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -64802,7 +64802,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_checkout_a_branch-d808eabf.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -64989,7 +64989,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_generate_an_array_of_known_branches-24cef136.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -65141,7 +65141,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_3_straight_commits-a0c3914d.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -65274,7 +65274,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-24c19935.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -65404,7 +65404,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-319cfc9c.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -65518,7 +65518,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-38466754.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -65670,7 +65670,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-3a7948d6.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -65784,7 +65784,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-4c1a5d63.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -65936,7 +65936,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-4fcb935d.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -66066,7 +66066,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-5f8425ba.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -66199,7 +66199,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-dc4a307a.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -66351,7 +66351,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-e548d918.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -66462,7 +66462,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-e7cef3b4.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -66576,7 +66576,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-ed6bce28.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -66728,7 +66728,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_msg-1e0c305c.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -66880,7 +66880,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_tag-f23d9a2b.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -67032,7 +67032,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_gitgraph_commit_with_custom_type-bce4b490.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -67146,7 +67146,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_title_and_a_description_accdescr-e3f19c3c.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -67260,7 +67260,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_a_title_and_a_multiline_descriptio-a10aeee6.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -67412,7 +67412,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_cases_when_merge_is_a_noop-9267428e.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -67526,7 +67526,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_commit_with_args-8c4669e7.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -67678,7 +67678,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_merge_tags-7d11784d.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -67830,7 +67830,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_merge_with_2_parents-c9d72600.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -67982,7 +67982,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_merge_with_custom_ids_tags_and_typ-2e8ba4b5.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -68131,7 +68131,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_new_branch_checkout-70c26a6c.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -68283,7 +68283,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_new_branch_checkout_commit-cbfbd32c.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -68435,7 +68435,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_new_branch_checkout_commit_and_mer-6fba64e9.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -68652,7 +68652,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_new_branch_checkout_with_and_witho-322aea60.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -68869,7 +68869,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_new_branch_checkout_with_order-c0607086.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -69018,7 +69018,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_new_branch_creation-a0536f42.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -69167,7 +69167,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_new_branch_switch-e225c4e6.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -69319,7 +69319,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_new_branch_switch_commit-0648b447.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -69471,7 +69471,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_new_branch_switch_commit_and_merge-97bd3f84.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -69585,7 +69585,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_set_direction_bottom_to_top-cf21a460.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -69699,7 +69699,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_set_direction_top_to_bottom-b57546e7.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -69813,7 +69813,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_handle_set_direction_top_to_bottom-c32dbd08.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -70001,7 +70001,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_log_a_warning_when_two_commits_have_the_s-8c8c51d0.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -70240,7 +70240,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_support_cherry_picking_commits-ecf31fda.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -70479,7 +70479,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_support_cherry_picking_commits_with_custo-7bafb75f.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -70718,7 +70718,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_support_cherry_picking_commits_with_no_ta-0234be84.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -70923,7 +70923,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_support_cherry_picking_of_merge_commits-e48959ff.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -71128,7 +71128,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_support_cherry_picking_of_merge_commits_w-29165ad9.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -71333,7 +71333,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_support_cherry_picking_of_merge_commits_w-670f4b6c.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -71538,7 +71538,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/gitgraph/should_support_cherry_picking_of_merge_commits_w-a7e851e5.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -71575,7 +71575,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_switch_a_branch-e178f181.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -71727,7 +71727,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/showcase_base-29660eec.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -72183,7 +72183,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/showcase_base_dark-a09e11fe.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -72335,7 +72335,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/showcase_dark-205bcbde.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -72639,7 +72639,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/showcase_default-43c3e55f.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -73095,7 +73095,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/showcase_forest-fddedd2a.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -73247,7 +73247,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/showcase_neutral-09cbe86d.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -73436,7 +73436,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/utils_spec-111f4a6d.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -73473,7 +73473,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/utils_spec-b464f46c.svg",
-    "reproduce": "bundle exec rake 'corpus[git,valid]'",
+    "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
@@ -99680,7 +99680,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/assemble_assemblies_state_assemble_state_assembl-d98dd4e2.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -99772,7 +99772,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/can_define_multiple_attributes_separated_by_comm-60e1feb9.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -99845,7 +99845,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/can_define_multiple_attributes_separated_by_comm-865a1669.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -99882,7 +99882,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/diagram_orchestration_spec-367b369a.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -99919,7 +99919,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/diagram_orchestration_spec-b13a866c.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -99956,7 +99956,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/diagram_orchestration_spec-db85424e.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -99993,7 +99993,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/mermaidapi_spec-073911f4.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -100030,7 +100030,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/mermaidapi_spec-1d74349a.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -100179,7 +100179,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/mermaidapi_spec-5a5c8731.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -100328,7 +100328,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/mermaidapi_spec-c352a65c.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -100401,7 +100401,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/no_spaces_before_and_after_the_colon-1d3af6d2.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -100474,7 +100474,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/should_handle_floating_notes-6e33ecc6.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -100547,7 +100547,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/should_handle_floating_notes-79582bab.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -100602,7 +100602,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/state_diagram/should_handle_floating_notes-bbec0e37.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -100694,7 +100694,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/should_handle_multiline_notes_with_different_lin-90d75e03.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -100786,7 +100786,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/should_handle_multiline_notes_with_different_lin-b6ac271b.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -100996,7 +100996,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/state_diagram/should_handle_notes_for_composite_nested_states-0033e4b1.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -101126,7 +101126,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/should_handle_state_definitions_with_separation-a4e9be66.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -101256,7 +101256,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/should_handle_state_definitions_with_separation-cd10456b.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -101329,7 +101329,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/space_before_and_after_the_colon-2648f9df.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -101478,7 +101478,7 @@
     },
     "invariants": [],
     "reference": "spec/fixtures_mermaid/state_diagram/state-5753bc25.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -101930,45 +101930,90 @@
     "case": "state_diagram/state_style_spec-32e99892.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 0,
-      "top5": [],
+      "matched": 2,
+      "reference_elements": 2,
+      "sirena_elements": 2,
+      "top5": [
+        {
+          "bbox_reference": [
+            8.0,
+            8.0,
+            48.09375,
+            48.0
+          ],
+          "bbox_sirena": [
+            50.0,
+            50.0,
+            150.0,
+            100.0
+          ],
+          "key": [
+            "state",
+            null,
+            "id1"
+          ]
+        },
+        {
+          "bbox_reference": [
+            98.09375,
+            8.0,
+            138.1875,
+            48.0
+          ],
+          "bbox_sirena": [
+            300.0,
+            50.0,
+            400.0,
+            100.0
+          ],
+          "key": [
+            "state",
+            null,
+            "id2"
+          ]
+        }
+      ],
       "worst_analog": null,
-      "worst_e_a": null,
-      "worst_e_c": null,
-      "worst_e_h": null,
-      "worst_e_w": null,
+      "worst_e_a": 0.995323,
+      "worst_e_c": 1.39452,
+      "worst_e_h": 0.25,
+      "worst_e_w": 1.494154,
       "worst_keys": {
         "analog": null,
-        "e_a": null,
-        "e_c": null,
-        "e_h": null,
-        "e_w": null
-      }
-    },
-    "invariants": [
-      {
-        "actual": null,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": "spec/fixtures_mermaid/state_diagram/state_style_spec-32e99892.svg",
-        "normalized": null,
-        "rule": "reference-presence",
-        "subject_keys": [
-          "state_diagram/state_style_spec-32e99892.mmd"
+        "e_a": [
+          "state",
+          null,
+          "id1"
+        ],
+        "e_c": [
+          "state",
+          null,
+          "id2"
+        ],
+        "e_h": [
+          "state",
+          null,
+          "id1"
+        ],
+        "e_w": [
+          "state",
+          null,
+          "id1"
         ]
       }
-    ],
-    "reference": "spec/fixtures_mermaid/state_diagram/state_style_spec-32e99892.svg",
+    },
+    "invariants": [],
+    "reference": "spec/fixtures_mermaid/state_diagram/can_define_multiple_attributes_separated_by_comm-60e1feb9.svg",
     "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": null,
-        "worst_e_w": null,
-        "worst_e_h": null,
-        "worst_e_a": null,
+        "worst_e_c": 1.39452,
+        "worst_e_w": 1.494154,
+        "worst_e_h": 0.25,
+        "worst_e_a": 0.995323,
         "worst_analog": null
       }
     }
@@ -102050,15 +102095,15 @@
     "case": "state_diagram/state_style_spec-c53cfe2e.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 1,
-      "reference_elements": 1,
+      "matched": 2,
+      "reference_elements": 2,
       "sirena_elements": 2,
       "top5": [
         {
           "bbox_reference": [
             8.0,
             8.0,
-            45.875,
+            48.09375,
             48.0
           ],
           "bbox_sirena": [
@@ -102072,13 +102117,32 @@
             null,
             "id1"
           ]
+        },
+        {
+          "bbox_reference": [
+            98.09375,
+            8.0,
+            138.1875,
+            48.0
+          ],
+          "bbox_sirena": [
+            300.0,
+            50.0,
+            400.0,
+            100.0
+          ],
+          "key": [
+            "state",
+            null,
+            "id2"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.112211,
-      "worst_e_c": 0.571145,
+      "worst_e_a": 0.995323,
+      "worst_e_c": 1.39452,
       "worst_e_h": 0.25,
-      "worst_e_w": 1.640264,
+      "worst_e_w": 1.494154,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -102089,7 +102153,7 @@
         "e_c": [
           "state",
           null,
-          "id1"
+          "id2"
         ],
         "e_h": [
           "state",
@@ -102103,36 +102167,18 @@
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 1,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "id"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "state",
-          null,
-          "id2"
-        ]
-      }
-    ],
-    "reference": "spec/fixtures_mermaid/state_diagram/can_define_multiple_attributes_separated_by_comm-865a1669.svg",
+    "invariants": [],
+    "reference": "spec/fixtures_mermaid/state_diagram/can_define_multiple_attributes_separated_by_comm-60e1feb9.svg",
     "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.571145,
-        "worst_e_w": 1.640264,
+        "worst_e_c": 1.39452,
+        "worst_e_w": 1.494154,
         "worst_e_h": 0.25,
-        "worst_e_a": 1.112211,
+        "worst_e_a": 0.995323,
         "worst_analog": null
       }
     }
@@ -104348,7 +104394,7 @@
       }
     ],
     "reference": "spec/fixtures_mermaid/state_diagram/statediagram_v2_spec-c351b77a.svg",
-    "reproduce": "bundle exec rake 'corpus[state,valid]'",
+    "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
@@ -104366,71 +104412,53 @@
     "case": "state_diagram/statediagram_v2_spec-ed4440fd.mmd",
     "geometry": {
       "ambiguous": 0,
-      "matched": 1,
-      "reference_elements": 1,
+      "matched": 0,
+      "reference_elements": 0,
       "sirena_elements": 1,
-      "top5": [
-        {
-          "bbox_reference": [
-            8.0,
-            8.0,
-            47.546875,
-            48.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            50.0,
-            150.0,
-            100.0
-          ],
-          "key": [
-            "state",
-            null,
-            "foo"
-          ]
-        }
-      ],
+      "top5": [],
       "worst_analog": null,
-      "worst_e_a": 1.022916,
-      "worst_e_c": 0.544673,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.528645,
+      "worst_e_a": null,
+      "worst_e_c": null,
+      "worst_e_h": null,
+      "worst_e_w": null,
       "worst_keys": {
         "analog": null,
-        "e_a": [
-          "state",
-          null,
-          "foo"
-        ],
-        "e_c": [
-          "state",
-          null,
-          "foo"
-        ],
-        "e_h": [
-          "state",
-          null,
-          "foo"
-        ],
-        "e_w": [
+        "e_a": null,
+        "e_c": null,
+        "e_h": null,
+        "e_w": null
+      }
+    },
+    "invariants": [
+      {
+        "actual": 1,
+        "bbox_reference": null,
+        "bbox_sirena": null,
+        "expected": 0,
+        "normalized": {
+          "count": 1,
+          "difference": "extra",
+          "match_by": "id"
+        },
+        "rule": "element-presence",
+        "subject_keys": [
           "state",
           null,
           "foo"
         ]
       }
-    },
-    "invariants": [],
-    "reference": "spec/fixtures_mermaid/state_diagram/should_handle_floating_notes-79582bab.svg",
+    ],
+    "reference": "spec/fixtures_mermaid/state_diagram/should_handle_floating_notes-bbec0e37.svg",
     "reproduce": "bundle exec rake 'corpus[state_diagram,valid]'",
     "sirena_status": "rendered",
     "type": "state_diagram",
     "summary": {
-      "hard_failure": false,
+      "hard_failure": true,
       "metrics": {
-        "worst_e_c": 0.544673,
-        "worst_e_w": 1.528645,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.022916,
+        "worst_e_c": null,
+        "worst_e_w": null,
+        "worst_e_h": null,
+        "worst_e_a": null,
         "worst_analog": null
       }
     }
@@ -108583,7 +108611,7 @@
       }
     },
     "invariants": [],
-    "reference": "spec/fixtures_mermaid/gantt/click_security_loose-0d2cc455.svg",
+    "reference": "spec/fixtures_mermaid/gantt/click_security_sandbox-3c3c5ea2.svg",
     "reproduce": "bundle exec rake 'corpus[unknown,valid]'",
     "sirena_status": "rendered",
     "type": "gantt",
@@ -108732,7 +108760,7 @@
       }
     },
     "invariants": [],
-    "reference": "spec/fixtures_mermaid/gantt/click_security_loose-0d2cc455.svg",
+    "reference": "spec/fixtures_mermaid/gantt/click_security_strict-38043344.svg",
     "reproduce": "bundle exec rake 'corpus[unknown,valid]'",
     "sirena_status": "rendered",
     "type": "gantt",
@@ -110234,7 +110262,7 @@
       }
     },
     "invariants": [],
-    "reference": "spec/fixtures_mermaid/info/info_spec-e8bdfd49.svg",
+    "reference": "spec/fixtures_mermaid/info/vertices-fcdfb3d4.svg",
     "reproduce": "bundle exec rake 'corpus[unknown,valid]'",
     "sirena_status": "rendered",
     "type": "info",
