@@ -185,12 +185,18 @@ module Sirena
       end
 
       def style_label(text, label)
-        text.font_family = "Arial, sans-serif"
+        text.font_family = label_font_family
         text.font_size = label.font_size.to_s
         text.font_weight = label.font_weight
         text.font_style = label.font_style
         text.dominant_baseline = label.baseline
         text.text_anchor = label.text_anchor
+      end
+
+      def label_font_family
+        return "Arial, sans-serif" if theme.equal?(Theme::Registry.get(:default))
+
+        theme_typography(:font_family) || "Arial, sans-serif"
       end
 
       def render_relationship(edge, svg)
