@@ -30,7 +30,7 @@ rows:
 - file: spec/sirena/exhaustion_errors_spec.rb
   count: 2
 - file: spec/sirena/layout/base_call_spec.rb
-  count: 3
+  count: 2
 - file: spec/sirena/layout/grid_spec.rb
   count: 4
 - file: spec/sirena/markdown_text_spec.rb

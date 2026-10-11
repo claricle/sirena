@@ -30,7 +30,7 @@ rows:
 - file: lib/sirena/renderer/sequence.rb
   count: 4
 - file: lib/sirena/renderer/state_diagram.rb
-  count: 5
+  count: 4
 - file: lib/sirena/renderer/treemap.rb
   count: 2
 - file: lib/sirena/svg/document.rb
