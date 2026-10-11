@@ -18,30 +18,18 @@ module Sirena
     #   renderer = Error.new
     #   svg = renderer.render(error_diagram)
     class Error < Base
-      # Error box dimensions
-      BOX_WIDTH = 400
-      BOX_HEIGHT = 120
-      BOX_X = 50
-      BOX_Y = 50
-      ICON_CENTER_X = 100
-      ICON_CENTER_Y = 110
-      ICON_RADIUS = 20
-      TEXT_X = 140
-      TEXT_Y = 105
-
       # Renders an error diagram to SVG.
       #
-      # @param graph [Hash] the error diagram graph structure from transform
+      # @param scene [Layout::Error::Scene] the final error scene
       # @return [Svg::Document] the rendered SVG document
-      def render(graph)
-        scene = typed_scene(graph)
+      def render(scene)
         svg = create_document(scene)
 
         # Render error box
         render_error_box(scene, svg)
 
         # Render error icon
-        render_typed_error_icon(svg, scene)
+        render_error_icon(scene, svg)
 
         # Render error text
         render_error_text(scene, svg)
@@ -51,8 +39,8 @@ module Sirena
 
       protected
 
-      def render_error_box(graph, svg)
-        geometry = typed_scene(graph).box
+      def render_error_box(scene, svg)
+        geometry = scene.box
         box = Svg::Rect.new.tap do |r|
           r.x = geometry.x
           r.y = geometry.y
@@ -68,11 +56,7 @@ module Sirena
         svg << box
       end
 
-      def render_error_icon(svg)
-        render_typed_error_icon(svg, Layout::Error.from_graph({}))
-      end
-
-      def render_typed_error_icon(svg, scene)
+      def render_error_icon(scene, svg)
         # Error icon circle
         circle = Svg::Circle.new.tap do |c|
           c.cx = scene.icon.x
@@ -105,8 +89,7 @@ module Sirena
         svg << dot
       end
 
-      def render_error_text(graph, svg)
-        scene = typed_scene(graph)
+      def render_error_text(scene, svg)
         [scene.label, scene.version_label].each do |label|
           svg << text_element(label)
         end
@@ -124,12 +107,6 @@ module Sirena
           t.text_anchor = label.text_anchor
           t.font_weight = label.font_weight
         end
-      end
-
-      def typed_scene(graph)
-        return graph if graph.is_a?(Layout::Error::Scene)
-
-        Layout::Error.from_graph(graph, theme: theme)
       end
 
       def number_string(value)
