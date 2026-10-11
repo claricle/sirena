@@ -12,6 +12,7 @@ module Sirena
     # Times are UTC so the result does not depend on the machine's zone.
     class GanttTicks
       TARGET_COUNT = 10
+      MINUTE = 60
       HOUR = 3600
       DAY = 24 * HOUR
       # [unit, step, approximate seconds] as in d3-scale's tickIntervals.
@@ -21,14 +22,14 @@ module Sirena
         [:week, 1, 7 * DAY], [:month, 1, 30 * DAY], [:month, 3, 90 * DAY],
         [:year, 1, 365 * DAY]
       ].freeze
-      INTERVAL_PATTERN = /\A([1-9]\d*)(hour|day|week|month)\z/
+      INTERVAL_PATTERN = /\A([1-9]\d*)(minute|hour|day|week|month)\z/
       SUNDAY_OFFSET_DAYS = 4
       # An explicit tickInterval that would draw more ticks than this over
       # the range is ignored in favour of the automatic ladder, so a span of
       # millennia cannot produce millions of labels.
       MAX_TICKS = 2000
       UNIT_SECONDS = {
-        hour: HOUR, day: DAY, week: 7 * DAY, month: 30 * DAY
+        minute: MINUTE, hour: HOUR, day: DAY, week: 7 * DAY, month: 30 * DAY
       }.freeze
 
       def self.times(start_time, stop_time, interval = nil)
@@ -104,6 +105,7 @@ module Sirena
 
       def floor_to(unit, time)
         case unit
+        when :minute then floor_minute(time)
         when :hour then Time.utc(time.year, time.month, time.day, time.hour)
         when :month then Time.utc(time.year, time.month)
         when :year then Time.utc(time.year)
@@ -118,6 +120,7 @@ module Sirena
 
       def advance(unit, time)
         case unit
+        when :minute then time + MINUTE
         when :hour then time + HOUR
         when :day then time + DAY
         when :week then time + (7 * DAY)
@@ -136,12 +139,25 @@ module Sirena
 
       def index_of(unit, time)
         case unit
+        when :minute then time.min
         when :hour then time.hour
         when :day then time.day - 1
-        when :week then ((time.to_i / DAY) + SUNDAY_OFFSET_DAYS) / 7
-        when :month then ((time.year - 1970) * 12) + time.month - 1
+        when :week then week_index(time)
+        when :month then month_index(time)
         else time.year
         end
+      end
+
+      def floor_minute(time)
+        Time.utc(time.year, time.month, time.day, time.hour, time.min)
+      end
+
+      def week_index(time)
+        ((time.to_i / DAY) + SUNDAY_OFFSET_DAYS) / 7
+      end
+
+      def month_index(time)
+        ((time.year - 1970) * 12) + time.month - 1
       end
     end
   end
