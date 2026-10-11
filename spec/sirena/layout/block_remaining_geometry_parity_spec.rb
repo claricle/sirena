@@ -40,10 +40,17 @@ RSpec.describe Sirena::Layout::Block, :aggregate_failures do
   def mixed_geometry
     nodes = scene.children.to_h { |node| [node.id, node] }
     compound = nodes.fetch("ID")
+    mixed_shapes(nodes) + mixed_dimensions(nodes, compound)
+  end
+
+  def mixed_shapes(nodes)
+    arrow = nodes.fetch("blockArrowId6")
+    [nodes.fetch("db").shape, arrow.shape, arrow.labels.first.text]
+  end
+
+  def mixed_dimensions(nodes, compound)
     children = compound.children
-    [nodes.fetch("db").shape, nodes.fetch("blockArrowId6").shape,
-     nodes.fetch("blockArrowId6").labels.first.text,
-     children.map(&:width).uniq, children.map(&:height).uniq,
+    [children.map(&:width).uniq, children.map(&:height).uniq,
      nodes.fetch("D").width, compound.width]
   end
 
@@ -60,9 +67,17 @@ RSpec.describe Sirena::Layout::Block, :aggregate_failures do
   def compound_geometry
     compound, following = scene.children
     left, right = compound.children
+    compound_gaps(compound, following, left, right) +
+      compound_dimensions(compound, following, left, right)
+  end
+
+  def compound_gaps(compound, following, left, right)
     [following.x - compound.x - compound.width,
-     right.x - left.x - left.width,
-     [compound.width, following.width].uniq,
+     right.x - left.x - left.width]
+  end
+
+  def compound_dimensions(compound, following, left, right)
+    [[compound.width, following.width].uniq,
      [compound.height, following.height].uniq,
      [left.width, right.width].uniq, [left.height, right.height].uniq]
   end
