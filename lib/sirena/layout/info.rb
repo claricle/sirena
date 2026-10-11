@@ -100,7 +100,10 @@ module Sirena
       end
 
       def version_font_size
-        title_size = theme.typography&.font_size_title ||
+        typography = theme.typography
+        title_size = typography.font_size_title if
+          typography.respond_to?(:font_size_title)
+        title_size ||=
           Theme::Registry.get(:default).typography.font_size_title
         numerator, denominator = VERSION_FONT_RATIO
         title_size * numerator / denominator
