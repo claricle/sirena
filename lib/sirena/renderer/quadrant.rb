@@ -18,7 +18,6 @@ module Sirena
         1 => "#ECECFF", 2 => "#f1f1ff", 3 => "#f6f6ff", 4 => "#fbfbff"
       }.freeze
       BORDER_COLOR = "#c7c7f1"
-      TEXT_COLOR = "#131300"
 
       # @param scene [Layout::Quadrant::Scene] final chart geometry
       # @return [Svg::Document] rendered SVG document
@@ -139,7 +138,7 @@ module Sirena
       end
 
       def point_stroke(point)
-        point.stroke_color || theme_color(:node_stroke) || "#ffffff"
+        point.stroke_color || theme_color(:node_stroke)
       end
 
       # Scene labels already carry final canvas coordinates. A rotated label
@@ -170,7 +169,7 @@ module Sirena
       end
 
       def apply_text_style(text, label)
-        text.fill = theme_color(:label_text) || TEXT_COLOR
+        text.fill = theme_color(:label_text)
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         text.font_size = number_string(label.font_size)
         text.font_weight = label.font_weight if label.font_weight
@@ -182,11 +181,11 @@ module Sirena
 
       def point_color(number)
         {
-          1 => theme_color(:primary) || "#2196f3",
-          2 => theme_color(:secondary) || "#ff9800",
-          3 => theme_color(:accent) || "#9c27b0",
-          4 => theme_color(:success) || "#4caf50",
-        }.fetch(number, theme_color(:primary) || "#2196f3")
+          1 => theme_color(:primary),
+          2 => theme_color(:secondary),
+          3 => theme_color(:accent),
+          4 => theme_color(:success),
+        }.fetch(number, theme_color(:primary))
       end
 
       def number_string(value)
