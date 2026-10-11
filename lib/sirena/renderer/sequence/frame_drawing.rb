@@ -132,14 +132,15 @@ module Sirena
           line.stroke_dasharray = "3,3"
         end
 
-        def frame_text(content, horizontal, vertical, typography)
+        def frame_text(content, horizontal, vertical, shape)
           Svg::Text.new.tap do |text|
             text.x = horizontal
             text.y = vertical
             text.content = content
             text.fill = theme_color(:label_text)
-            text.font_family = typography.font_family
-            text.font_size = number_string(typography.font_size)
+            text.font_family = theme_typography(:font_family) ||
+              "Arial, sans-serif"
+            text.font_size = number_string(shape.font_size)
             text.text_anchor = "middle"
           end
         end

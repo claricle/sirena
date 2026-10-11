@@ -51,10 +51,6 @@ module Sirena
         TITLE_MARGIN = 20
         TITLE_LINE_ROOM = 17
         TITLE_FONT_SIZE = 16
-        DEFAULT_FONT_FAMILY = "Arial, sans-serif"
-        DEFAULT_TYPOGRAPHY = {
-          font_size: TITLE_FONT_SIZE, font_family: DEFAULT_FONT_FAMILY
-        }.freeze
         DIVIDER_OFFSET = 5
         LOOP_WIDTH = 56
         NO_NOTES = Class.new do
@@ -69,12 +65,12 @@ module Sirena
         #   message, by message index
         # @param ids [Array<String>] participant ids, left to right
         def initialize(frames: [], boxes: [], spans: [], ids: [],
-                       typography: DEFAULT_TYPOGRAPHY)
+                       font_size: TITLE_FONT_SIZE)
           @frames = frames
           @boxes = boxes
           @spans = spans
           @ids = ids
-          @typography = typography
+          @font_size = font_size
           @notes = NO_NOTES
           @title_lines = {}
         end
@@ -243,7 +239,7 @@ module Sirena
         def frame_shape(index, positions, row_y)
           frame = @frames.fetch(index)
           box = frame_box(index, frame, positions, row_y)
-          attributes = box.merge(frame_decoration(frame), typography)
+          attributes = box.merge(frame_decoration(frame), font_size: @font_size)
           shape = tab_geometry(FrameShape.new(kind: frame[:kind], **attributes))
           shape.dividers = dividers(index, row_y, shape)
           shape
@@ -410,15 +406,11 @@ module Sirena
           BoxShape.new(
             x: left, y: BOX_TOP, width: right - left,
             height: bottom - BOX_TOP, color: box[:color],
-            **typography,
+            font_size: @font_size,
             title: box[:title].empty? ? nil : box[:title],
             title_x: left + ((right - left) / 2),
             title_y: BOX_TOP + BOX_TITLE_BASELINE
           )
-        end
-
-        def typography
-          @typography
         end
 
         def box_extent(members, positions, widths)
