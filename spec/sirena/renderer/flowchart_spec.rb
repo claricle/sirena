@@ -181,4 +181,30 @@ RSpec.describe Sirena::Renderer::Flowchart do
         .to eq(["20.0"])
     end
   end
+
+  # mmdc draws a `<br>` in a node label as a second line of the same text.
+  describe "a node label of two lines" do
+    let(:xml) { Sirena.render("flowchart TD\n  A[\"one<br>two\"]\n") }
+    let(:group) { xml[%r{<g id="node-A".*?</g>}m] }
+    let(:box) do
+      group.match(/<rect[^>]*\sy="([\d.]+)"[^>]*height="([\d.]+)"/)
+        .captures.map(&:to_f)
+    end
+    let(:baselines) do
+      group.scan(/<tspan[^>]*\sy="([\d.]+)"/).flatten.map(&:to_f)
+    end
+
+    it "is one tspan for each line, the first holding its place with a space" do
+      expect(group.scan(%r{<tspan[^>]*>([^<]*)</tspan>}).flatten)
+        .to eq(["one ", "two"])
+    end
+
+    it "steps down one line and centres the pair on the node" do
+      centre = box.first + (box.last / 2)
+      first = group[/<text[^>]*\sy="([\d.]+)"/, 1].to_f
+
+      expect(baselines.first - first).to be_within(0.01).of(24.0)
+      expect((first + baselines.first) / 2 - 5.6).to be_within(0.01).of(centre)
+    end
+  end
 end
