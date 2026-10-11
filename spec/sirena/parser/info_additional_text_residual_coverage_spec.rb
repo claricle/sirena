@@ -4,10 +4,8 @@ require "spec_helper"
 require "sirena/parser/info"
 
 RSpec.describe Sirena::Parser::Info do
-  it "ignores additional header text without enabling showInfo" do
-    diagram = described_class.new.parse("info ignored words")
-
-    expect([diagram.class, diagram.show_info, diagram.valid?])
-      .to eq([Sirena::Diagram::Info, false, true])
+  it "refuses additional header text, as Mermaid's lexer does" do
+    expect { described_class.new.parse("info ignored words") }
+      .to raise_error(Sirena::Parser::ParseError)
   end
 end
