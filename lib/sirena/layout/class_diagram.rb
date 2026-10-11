@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "elk_placement"
 require_relative "grid"
 require_relative "class_note_nodes"
 require_relative "class_diagram_notes"
@@ -149,13 +150,33 @@ module Sirena
         new.send(:dart_marker, from, to)
       end
 
+      # :grid (the default) or :elk. The explicit switch lets Foundation 14
+      # ratchet ELK geometry before it becomes the default.
+      attr_accessor :placement
+
       def scene(diagram)
         graph = build_graph(diagram)
-        Grid.apply(graph)
+        reject_unsupported_elk_graph!(graph) if placement == :elk
+        placer.apply(graph)
         scene_from_graph(graph)
       end
 
       private
+
+      def placer
+        placement == :elk ? ElkPlacement : Grid
+      end
+
+      def reject_unsupported_elk_graph!(graph)
+        return unless graph[:children].any? { |node| namespace_node?(node) }
+
+        raise LayoutError,
+              "elkrb class layout does not support namespace nesting"
+      end
+
+      def namespace_node?(node)
+        node[:children] || node[:id].start_with?("namespace:")
+      end
 
       def build_graph(source)
         graph = ir_graph(source)
