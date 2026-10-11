@@ -34,7 +34,7 @@ module Sirena
     #   diagram = parser.parse(source)
     class GitGraph < Base
       COMMIT_ATTRIBUTES = %i[
-        id message type tag branch_name parent_ids is_merge merge_branch
+        id message type tag tags branch_name parent_ids is_merge merge_branch
         is_cherry_pick cherry_pick_parent
       ].freeze
       BRANCH_ATTRIBUTES = %i[

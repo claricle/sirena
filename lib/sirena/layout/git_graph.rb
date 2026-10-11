@@ -58,6 +58,7 @@ module Sirena
         attribute :lane, :integer
         attribute :type, :string
         attribute :tag, :string
+        attribute :tags, :string, collection: true, default: -> { [] }
         attribute :parent_ids, :string, collection: true, default: -> { [] }
         attribute :is_merge, :boolean
         attribute :merge_branch, :string
@@ -165,6 +166,7 @@ module Sirena
           message: semantic_value(semantics, "message"),
           type: semantic_value(semantics, "type") || "NORMAL",
           tag: semantic_value(semantics, "tag"),
+          tags: semantic_values(semantics, "tag"),
           branch_name: semantic_value(semantics, "branch_name"),
           parent_ids: semantic_values(semantics, "parent_reference")
         }
@@ -243,20 +245,35 @@ module Sirena
 
       def labels_for_commit(commit, orientation)
         labels = []
-        if commit[:id] && !commit[:id].start_with?("commit_")
+        if !commit[:is_cherry_pick] && commit[:id] &&
+            !commit[:id].start_with?("commit_")
           labels << positioned_label(commit[:id], commit, orientation, "id")
         end
-        if commit[:tag]
-          labels << positioned_label(commit[:tag], commit, orientation, "tag")
+        tag_labels(commit).each do |tag|
+          labels << positioned_label(tag, commit, orientation, "tag")
         end
         labels
+      end
+
+      def tag_labels(commit)
+        tags = Array(commit[:tags])
+        return tags.reject(&:empty?) unless tags.empty?
+        return [] unless commit[:is_cherry_pick]
+
+        [cherry_pick_label(commit)]
+      end
+
+      def cherry_pick_label(commit)
+        label = "cherry-pick:#{commit[:id]}"
+        parent = commit[:cherry_pick_parent]
+        parent ? "#{label}|parent:#{parent}" : label
       end
 
       def positioned_label(text, commit, orientation, kind)
         x, y, anchor = label_position(commit[:x], commit[:y], orientation, kind)
         { text: text, x: x + PADDING, y: y + PADDING,
           text_anchor: anchor, kind: kind, branch: commit[:branch],
-          owner_id: commit[:id], font_size: small_font_size }
+          owner_id: commit[:ir_id], font_size: small_font_size }
       end
 
       def label_position(x_coordinate, y_coordinate, orientation, kind)
@@ -400,13 +417,14 @@ module Sirena
           id: commit[:id], message: commit[:message],
           x: commit[:x] + shift, y: commit[:y] + PADDING,
           branch: commit[:branch], lane: commit[:lane], type: commit[:type],
-          tag: commit[:tag], parent_ids: commit[:parent_ids]
+          tag: commit[:tag], tags: commit[:tags],
+          parent_ids: commit[:parent_ids]
         }
       end
 
       def commit_labels_for(labels, commit)
         labels.select do |label|
-          label[:kind] != "branch" && label[:owner_id] == commit[:id]
+          label[:kind] != "branch" && label[:owner_id] == commit[:ir_id]
         end
       end
 
@@ -562,7 +580,7 @@ module Sirena
                        commit, [index, count], [branch, lane], orientation
                      )).slice(
                        :ir_id, :id, :x, :y, :branch, :lane, :message,
-                       :type, :tag,
+                       :type, :tag, :tags,
                        :parent_ids, :is_merge, :merge_branch, :is_cherry_pick,
                        :cherry_pick_parent
                      )

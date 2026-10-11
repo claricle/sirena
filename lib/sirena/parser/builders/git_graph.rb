@@ -24,7 +24,7 @@ module Sirena
           private_constant :ESCAPES
 
           OPTION_KEYS = {
-            id: :id, type: :type, tag: :tag,
+            id: :id, type: :type,
             parent: :cherry_pick_parent
           }.freeze
           private_constant :OPTION_KEYS
@@ -94,6 +94,7 @@ module Sirena
               OPTION_KEYS.each do |source, target|
                 assign_option(result, option, source, target)
               end
+              assign_tag(result, option) if option.key?(:tag)
               if option[:message]
                 result[:message] = State.unquote(option[:message])
               end
@@ -102,9 +103,17 @@ module Sirena
 
           def assign_option(result, option, source, target)
             value = option[source]&.to_s
-            return if value.nil? || (target == :tag && value == '""')
+            return if value.nil?
 
             result[target] = value
+          end
+
+          def assign_tag(result, option)
+            value = option[:tag]&.to_s
+            value = "" if value == '""'
+            result[:tags] ||= []
+            result[:tags] << value
+            result[:tag] = value unless value.empty?
           end
 
           def commit_identity(commit_id, options)
@@ -113,6 +122,7 @@ module Sirena
               message: options[:message],
               type: options[:type] || "NORMAL",
               tag: options[:tag],
+              tags: options.fetch(:tags, []),
               branch_name: @current_branch,
               parent_ids: find_parents,
             }
