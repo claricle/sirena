@@ -12,6 +12,7 @@ RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
       gitgraph/gitgraph_spec-b81d6654.mmd
       gitgraph/gitgraph_spec-e1c6c758.mmd
       gitgraph/gitgraph_spec-fdc1c9db.mmd
+      gitgraph/should_handle_3_straight_commits-a0c3914d.mmd
     ]
   end
 

@@ -264,24 +264,34 @@ module Sirena
       end
 
       def labels_for_commit(commit, orientation, linear)
-        labels = []
-        if !commit[:is_cherry_pick] && commit[:id] &&
-            !commit[:id].start_with?("commit_")
-          labels << positioned_label(
-            commit[:id], commit, orientation, "id", linear
-          )
+        labels = [commit_id_label(commit, orientation, linear)].compact
+        labels.concat(positioned_tag_labels(commit, orientation, linear))
+      end
+
+      def commit_id_label(commit, orientation, linear)
+        return if commit[:is_cherry_pick] || commit[:id].nil?
+        return if commit[:id].start_with?("commit_")
+
+        positioned_label(commit[:id], commit, orientation, "id", linear)
+      end
+
+      def positioned_tag_labels(commit, orientation, linear)
+        tag_labels(commit).map do |tag|
+          positioned_label(tag, commit, orientation, "tag", linear)
         end
-        tag_labels(commit).each do |tag|
-          labels << positioned_label(tag, commit, orientation, "tag", linear)
-        end
-        labels
       end
 
       def simple_three_commit_graph?(graph)
-        graph[:commits].size == 3 && graph[:branches].size == 1 &&
-          graph[:connections].size == 2 &&
-          graph[:connections].all? { |connection| connection[:type] == :normal } &&
+        graph_sizes(graph) == [3, 1, 2] && normal_connections?(graph) &&
           graph[:commits].all? { |commit| plain_linear_commit?(commit) }
+      end
+
+      def graph_sizes(graph)
+        %i[commits branches connections].map { |key| graph.fetch(key).size }
+      end
+
+      def normal_connections?(graph)
+        graph[:connections].all? { |connection| connection[:type] == :normal }
       end
 
       def plain_linear_commit?(commit)
@@ -306,32 +316,54 @@ module Sirena
 
       def positioned_label(text, commit, orientation, kind, linear)
         position = label_position(
-          text, commit[:x], commit[:y], orientation, kind, linear
+          text, commit, orientation, kind, linear
         )
+        label_geometry(text, commit, kind, position)
+      end
+
+      def label_geometry(text, commit, kind, position)
         x, y, anchor, rotation, center_x, center_y, translation_x = position
         { text: text, x: x + PADDING, y: y + PADDING,
           text_anchor: anchor, kind: kind, branch: commit[:branch],
           owner_id: commit[:ir_id], font_size: small_font_size,
           rotation: rotation,
-          rotation_center_x: center_x && center_x + PADDING,
-          rotation_center_y: center_y && center_y + PADDING,
+          rotation_center_x: padded_coordinate(center_x),
+          rotation_center_y: padded_coordinate(center_y),
           translation_x: translation_x }.compact
       end
 
-      def label_position(text, x_coordinate, y_coordinate, orientation, kind,
-                         linear)
-        if linear && kind == "id" && %w[TB BT].include?(orientation)
-          vertical_label_position(text, x_coordinate, y_coordinate, kind)
-        elsif linear && kind == "id"
-          width = measure_text(text, font_size: small_font_size)[:width]
-          [x_coordinate - (width / 2.0), y_coordinate + 24, "start"]
-        elsif %w[TB BT].include?(orientation)
-          legacy_vertical_label_position(x_coordinate, y_coordinate, kind)
-        elsif kind == "tag"
-          [x_coordinate, y_coordinate - 15, "middle"]
-        else
-          [x_coordinate, y_coordinate + 20, "middle"]
+      def padded_coordinate(coordinate)
+        coordinate && (coordinate + PADDING)
+      end
+
+      def label_position(text, commit, orientation, kind, linear)
+        x_coordinate, y_coordinate = commit.values_at(:x, :y)
+        if linear && kind == "id"
+          return linear_label_position(
+            text, x_coordinate, y_coordinate, orientation
+          )
         end
+
+        legacy_label_position(x_coordinate, y_coordinate, orientation, kind)
+      end
+
+      def linear_label_position(text, x_coordinate, y_coordinate, orientation)
+        return vertical_label_position(text, x_coordinate, y_coordinate) if
+          vertical?(orientation)
+
+        width = measure_text(text, font_size: small_font_size)[:width]
+        [x_coordinate - (width / 2.0), y_coordinate + 24, "start"]
+      end
+
+      def legacy_label_position(x_coordinate, y_coordinate, orientation, kind)
+        if vertical?(orientation)
+          return legacy_vertical_label_position(
+            x_coordinate, y_coordinate, kind
+          )
+        end
+        return [x_coordinate, y_coordinate - 15, "middle"] if kind == "tag"
+
+        [x_coordinate, y_coordinate + 20, "middle"]
       end
 
       def legacy_vertical_label_position(x_coordinate, y_coordinate, kind)
@@ -340,9 +372,7 @@ module Sirena
         [x_coordinate + 14, y_coordinate + 4, "start"]
       end
 
-      def vertical_label_position(text, x_coordinate, y_coordinate, kind)
-        return [x_coordinate - 14, y_coordinate + 4, "end"] if kind == "tag"
-
+      def vertical_label_position(text, x_coordinate, y_coordinate)
         width = measure_text(text, font_size: small_font_size)[:width]
         logical_x = x_coordinate + 14
         visual_x = x_coordinate - width - 12
@@ -402,17 +432,18 @@ module Sirena
       end
 
       def branch_label(branch, commit, graph)
-        x_coordinate, y_coordinate, anchor = branch_label_position(
-          branch, commit, graph
-        )
-        geometry = branch_label_geometry(
-          branch, x_coordinate, y_coordinate, anchor
-        )
+        position = branch_label_position(branch, commit, graph)
+        geometry = branch_label_geometry(branch, *position)
         # Mermaid reserves extra visual clearance without changing the
         # branch label's logical boundary anchor.
         geometry[:translation_x] = -EMPTY_BRANCH_LABEL_CLEARANCE if
-          simple_three_commit_graph?(graph) && !vertical?(graph[:orientation])
+          translated_branch_label?(graph)
         geometry
+      end
+
+      def translated_branch_label?(graph)
+        simple_three_commit_graph?(graph) &&
+          !vertical?(graph[:orientation]) && !generated_commits_only?(graph)
       end
 
       def branch_label_geometry(branch, x_coordinate, y_coordinate, anchor)
@@ -431,13 +462,16 @@ module Sirena
 
       def horizontal_branch_label_position(lane, width, graph)
         inset = BRANCH_LABEL_INSET
-        generated_only = graph[:commits].all? do |commit|
-          commit[:id].match?(/\Acommit-\d+\z/) && tag_labels(commit).empty?
-        end
         inset -= EMPTY_BRANCH_LABEL_CLEARANCE if graph[:commits].one? ||
-          generated_only
+          generated_commits_only?(graph)
         [inset - width,
          lane - BRANCH_LABEL_BASELINE_OFFSET, "start"]
+      end
+
+      def generated_commits_only?(graph)
+        graph[:commits].all? do |commit|
+          commit[:id].match?(/\Acommit-\d+\z/) && tag_labels(commit).empty?
+        end
       end
 
       def vertical_branch_label_position(lane, width, graph)
@@ -543,7 +577,7 @@ module Sirena
 
       def shifted_rotation_x(label, extra_shift)
         center = label[:rotation_center_x]
-        center && center + extra_shift
+        center && (center + extra_shift)
       end
 
       def typed_connections(connections, shift)
