@@ -76,12 +76,33 @@ module Sirena
       end
 
       def service_box(node)
+        return fallback_service_box(node) if node.icon.to_s.empty?
+
         Svg::Rect.new.tap do |rect|
           apply_box(rect, node)
           apply_theme_to_node(rect)
           rect.rx = "5"
           rect.ry = "5"
         end
+      end
+
+      def fallback_service_box(node)
+        Svg::Path.new.tap do |path|
+          path.d = fallback_service_path(node)
+          path.fill = "none"
+          path.stroke = theme_color(:node_stroke)
+          path.stroke_width = "2"
+          path.stroke_dasharray = "8"
+        end
+      end
+
+      def fallback_service_path(node)
+        top = node.y + 5
+        right = node.x + node.width
+        bottom = node.y + node.height
+        "M #{node.x} #{bottom} V #{top} Q #{node.x} #{node.y} " \
+          "#{node.x + 5} #{node.y} H #{right - 5} Q #{right} #{node.y} " \
+          "#{right} #{top} V #{bottom} H #{node.x} Z"
       end
 
       def icon(node, size)

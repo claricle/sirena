@@ -12,8 +12,12 @@ module Sirena
     class Architecture < Base
       # Default dimensions
       # Service icon boxes are 80x80 in mmdc; the label sits below the box.
+      # Without an icon, Mermaid's fallback outline extends 10px right and
+      # 5px above that placement box.
       DEFAULT_SERVICE_WIDTH = 80
       DEFAULT_SERVICE_HEIGHT = 80
+      FALLBACK_SERVICE_WIDTH = 90
+      FALLBACK_SERVICE_HEIGHT = 85
       SERVICE_LABEL_OFFSET = 16
       # Group padding measured from mmdc: 42.5 on three sides, 17 more below
       # for the service labels.
@@ -575,7 +579,7 @@ module Sirena
 
       def typed_service(info)
         service = info[:service]
-        attributes = node_geometry(info).merge(
+        attributes = service_geometry(service, info).merge(
           id: service.id, kind: "service",
           icon: service.icon, icon_x: horizontal_center(info),
           icon_y: info[:y] + (info[:height] / 2),
@@ -583,6 +587,15 @@ module Sirena
           labels: service_labels(service, info)
         )
         Node.new(**attributes)
+      end
+
+      def service_geometry(service, info)
+        return node_geometry(info) if service_icon?(service)
+
+        {
+          x: info[:x], y: info[:y] - 5,
+          width: FALLBACK_SERVICE_WIDTH, height: FALLBACK_SERVICE_HEIGHT,
+        }
       end
 
       def service_labels(service, info)
@@ -1261,6 +1274,10 @@ module Sirena
 
       def calculate_service_dimensions(_service)
         { width: DEFAULT_SERVICE_WIDTH, height: DEFAULT_SERVICE_HEIGHT }
+      end
+
+      def service_icon?(service)
+        !service.icon.to_s.empty?
       end
 
       def calculate_group_bounds(diagram, service_positions, junction_positions)
