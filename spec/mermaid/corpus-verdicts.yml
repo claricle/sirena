@@ -351,10 +351,10 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-033a40d3.mmd
   verdict: valid
-  evidence: 'twin rendered: should_revert_direction_to_default_once_directio-f92a90fc'
+  evidence: 'twin rendered: classdiagram_spec-82e5cb4f'
 - case: class_diagram/classdiagram_spec-035b3b8a.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_classes_within_namespaces-741db470'
+  evidence: 'twin rendered: classdiagram_spec-7652e2bc'
 - case: class_diagram/classdiagram_spec-05f1f840.mmd
   verdict: invalid
   evidence: 'mmdc 11.12.0 rejects it: Error: Parse error on line 3: (oracle-verdicts.yml)'
@@ -381,7 +381,7 @@
   evidence: 'twin rendered: should_handle_all_basic_relationships-f8f449c3'
 - case: class_diagram/classdiagram_spec-0e632919.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_class_annotations_in_brackets-3a72ef42'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-0fb101a2.mmd
   verdict: invalid
   evidence: 'mmdc 11.12.0 rejects it: Error: Parse error on line 4: (oracle-verdicts.yml)'
@@ -390,7 +390,7 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-10548117.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_a_comment_with_mermaid_class_diagr-692f71f8'
+  evidence: 'twin rendered: classdiagram_spec-ecb64073'
 - case: class_diagram/classdiagram_spec-1140eb47.mmd
   verdict: valid
   evidence: 'twin rendered: should_handle_generic_class_with_a_literal_name-3d8d65f3'
@@ -399,7 +399,7 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-11ce0652.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_nested_namespaces_and_relationship-243d32d8'
+  evidence: 'twin rendered: classdiagram_spec-0df8b35b'
 - case: class_diagram/classdiagram_spec-13ef4e54.mmd
   verdict: invalid
   evidence: 'mmdc 11.12.0 rejects it: Error: Parse error on line 2: (oracle-verdicts.yml)'
@@ -423,7 +423,7 @@
   evidence: 'twin rendered: should_parse_a_class_with_text_label_and_css_cla-c66bf15e'
 - case: class_diagram/classdiagram_spec-1928fc77.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_function_call-91e10fae'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-19f609c9.mmd
   verdict: valid
   evidence: 'twin rendered: should_parse_a_class_with_text_label_and_css_cla-c66bf15e'
@@ -444,7 +444,7 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-20717dd9.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_fully_qualified_class_names_in_rel-d86c96ce'
+  evidence: 'twin rendered: classdiagram_spec-c1910d20'
 - case: class_diagram/classdiagram_spec-22a4c599.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -468,7 +468,7 @@
   evidence: 'twin rendered: should_handle_class_names_with_dash-803e581d'
 - case: class_diagram/classdiagram_spec-2802434a.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_class_annotations_with_members_and-8ad5fd85'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-2a26d9d9.mmd
   verdict: valid
   evidence: 'twin rendered: should_handle_relationships_with_labels-a1a3cc69'
@@ -483,10 +483,10 @@
   evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-2f71f3b3.mmd
   verdict: valid
-  evidence: 'twin rendered: classdiagram_handdrawn_v3_spec-604514f1'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-2fe166c9.mmd
   verdict: valid
-  evidence: 'twin rendered: should_add_relations_between_classes_of_differen-fe8bafcb'
+  evidence: 'twin rendered: classdiagram_spec-8f1d808d'
 - case: class_diagram/classdiagram_spec-310e3a5a.mmd
   verdict: valid
   evidence: 'twin rendered: should_add_bracket_members_in_right_order-e958b1f7'
@@ -495,7 +495,7 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-36b2b0e0.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_a_comment_with_multiple_line_feeds-ef8a1000'
+  evidence: 'twin rendered: classdiagram_spec-fc1b2cd8'
 - case: class_diagram/classdiagram_spec-36d00a43.mmd
   verdict: valid
   evidence: 'twin rendered: should_parse_diagram_with_direction-ba994d6a'
@@ -525,19 +525,19 @@
   evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-40d4bc48.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_generic_classes_within_namespaces-7cfcfa3c'
+  evidence: 'twin rendered: classdiagram_spec-3efc3b0c'
 - case: class_diagram/classdiagram_spec-4209fde5.mmd
   verdict: artifact
   evidence: truncated source
 - case: class_diagram/classdiagram_spec-430ba411.mmd
   verdict: valid
-  evidence: 'twin rendered: classdiagram_handdrawn_v3_spec-0f2609d5'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-43797016.mmd
   verdict: artifact
   evidence: truncated source
 - case: class_diagram/classdiagram_spec-4440fcd7.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_all_basic_relationships-6e0f8b09'
+  evidence: 'twin rendered: classdiagram_spec-c77a4a9b'
 - case: class_diagram/classdiagram_spec-46111c63.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -549,7 +549,7 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-47a1ab30.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_class_annotations_in_brackets_with-ca73d020'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-48ac089d.mmd
   verdict: valid
   evidence: 'twin rendered: should_handle_backticked_class_names-864b5f8e'
@@ -567,10 +567,10 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-4ed372fc.mmd
   verdict: valid
-  evidence: 'twin rendered: should_associate_click_and_call_callback_appropr-5c102275'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-51fbde1b.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_class_annotations_in_brackets-3a72ef42'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-537116fd.mmd
   verdict: valid
   evidence: 'twin rendered: should_parse_a_class_with_text_label_and_css_cla-78750f20'
@@ -600,13 +600,13 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-5fcf0a71.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_acctitle_and_multiline_accdescr-1867b757'
+  evidence: 'twin rendered: classdiagram_spec-1513329b'
 - case: class_diagram/classdiagram_spec-61169526.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_generic_classes_within_namespaces-7cfcfa3c'
+  evidence: 'twin rendered: classdiagram_spec-3efc3b0c'
 - case: class_diagram/classdiagram_spec-62896016.mmd
   verdict: valid
-  evidence: 'twin rendered: classdiagram_handdrawn_v3_spec-0f2609d5'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-64f0497b.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -621,16 +621,16 @@
   evidence: truncated source
 - case: class_diagram/classdiagram_spec-6a1e8d0c.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-6b1ad564.mmd
   verdict: valid
   evidence: 'twin rendered: should_parse_two_classes_with_text_labels_and_cs-df074ec4'
 - case: class_diagram/classdiagram_spec-6c80628d.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_a_comment_with_multiple_line_feeds-ef8a1000'
+  evidence: 'twin rendered: classdiagram_spec-fc1b2cd8'
 - case: class_diagram/classdiagram_spec-6ca5b558.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_namespace_with_generic_types-b0517fc5'
+  evidence: 'twin rendered: classdiagram_spec-b5e96550'
 - case: class_diagram/classdiagram_spec-6e31fd51.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -648,7 +648,7 @@
   evidence: 'twin rendered: should_parse_a_class_with_text_label_and_css_cla-78750f20'
 - case: class_diagram/classdiagram_spec-71807c81.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_classes_within_namespaces-741db470'
+  evidence: 'twin rendered: classdiagram_spec-7652e2bc'
 - case: class_diagram/classdiagram_spec-73834d06.mmd
   verdict: valid
   evidence: 'twin rendered: should_parse_two_classes_with_text_labels_and_cs-df074ec4'
@@ -672,10 +672,10 @@
   evidence: 'mmdc 11.12.0 rejects it: Error: svg element not in render tree (oracle-verdicts.yml)'
 - case: class_diagram/classdiagram_spec-7fe746b8.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_classes_within_namespaces-741db470'
+  evidence: 'twin rendered: classdiagram_spec-7652e2bc'
 - case: class_diagram/classdiagram_spec-811e8909.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_function_call-91e10fae'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-81622533.mmd
   verdict: valid
   evidence: 'twin rendered: should_handle_a_comment_inside_brackets-9eaf1705'
@@ -690,16 +690,16 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-8545a3f2.mmd
   verdict: valid
-  evidence: 'twin rendered: should_revert_direction_to_default_once_directio-f92a90fc'
+  evidence: 'twin rendered: classdiagram_spec-82e5cb4f'
 - case: class_diagram/classdiagram_spec-8688e579.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_generic_classes_within_namespaces-7cfcfa3c'
+  evidence: 'twin rendered: classdiagram_spec-3efc3b0c'
 - case: class_diagram/classdiagram_spec-879ab896.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_class_annotations-9de07271'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-8827723c.mmd
   verdict: valid
-  evidence: 'twin rendered: should_add_relations_between_classes_of_differen-fe8bafcb'
+  evidence: 'twin rendered: classdiagram_spec-8f1d808d'
 - case: class_diagram/classdiagram_spec-882bceb7.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -717,7 +717,7 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-8c66ee58.mmd
   verdict: valid
-  evidence: 'twin rendered: classdiagram_handdrawn_v3_spec-54bf00b0'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-8c8ef44a.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -732,7 +732,7 @@
   evidence: 'mmdc 11.12.0 rejects it: Error: Parse error on line 3: (oracle-verdicts.yml)'
 - case: class_diagram/classdiagram_spec-8ec26131.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_comments_at_the_end_no_trailing_ne-79c232c6'
+  evidence: 'twin rendered: classdiagram_spec-2ec25484'
 - case: class_diagram/classdiagram_spec-8f1d808d.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -753,7 +753,7 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-9229606e.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_a_comment_with_mermaid_class_diagr-692f71f8'
+  evidence: 'twin rendered: classdiagram_spec-ecb64073'
 - case: class_diagram/classdiagram_spec-9337565e.mmd
   verdict: valid
   evidence: 'twin rendered: should_handle_a_mix_of_members_defined_in_and_ou-543a9200'
@@ -789,25 +789,25 @@
   evidence: 'twin rendered: should_handle_backticked_class_names-611e333e'
 - case: class_diagram/classdiagram_spec-9c8af7e4.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_a_comment_with_multiple_line_feeds-ef8a1000'
+  evidence: 'twin rendered: classdiagram_spec-fc1b2cd8'
 - case: class_diagram/classdiagram_spec-9cfcbf0d.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_class_annotations-9de07271'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-9d3089fc.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_function_call_with_an_arbitrary_nu-26f24f2f'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-9dc9fc3b.mmd
   verdict: valid
   evidence: 'twin rendered: should_handle_relation_definition_of_different_t-19cdc466'
 - case: class_diagram/classdiagram_spec-9e7a2de6.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_acctitle_and_multiline_accdescr-1867b757'
+  evidence: 'twin rendered: classdiagram_spec-1513329b'
 - case: class_diagram/classdiagram_spec-9fa40d12.mmd
   verdict: valid
   evidence: 'twin rendered: should_handle_relation_definitions_with_no_types-36b2e9a0'
 - case: class_diagram/classdiagram_spec-a0280572.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_abstract_methods-d9ff8aa4'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-a220c8c8.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -837,10 +837,10 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-ab0cc3b6.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_class_annotations_in_brackets_with-ca73d020'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-ac40f050.mmd
   verdict: valid
-  evidence: 'twin rendered: should_associate_click_and_call_callback_appropr-5c102275'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-ac76b282.mmd
   verdict: invalid
   evidence: 'mmdc 11.12.0 rejects it: Error: Parse error on line 4: (oracle-verdicts.yml)'
@@ -858,7 +858,7 @@
   evidence: truncated source
 - case: class_diagram/classdiagram_spec-b2e3a129.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_namespace_with_generic_types-b0517fc5'
+  evidence: 'twin rendered: classdiagram_spec-b5e96550'
 - case: class_diagram/classdiagram_spec-b5b05534.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -867,7 +867,7 @@
   evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-b7e4f265.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_function_call_with_an_arbitrary_nu-26f24f2f'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-b832406f.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -879,13 +879,13 @@
   evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-ba9343cb.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_all_basic_relationships-6e0f8b09'
+  evidence: 'twin rendered: classdiagram_spec-c77a4a9b'
 - case: class_diagram/classdiagram_spec-bbb83d9d.mmd
   verdict: invalid
   evidence: 'mmdc 11.12.0 rejects it: Error: Parse error on line 2: (oracle-verdicts.yml)'
 - case: class_diagram/classdiagram_spec-bc09f83d.mmd
   verdict: valid
-  evidence: 'twin rendered: classdiagram_handdrawn_v3_spec-604514f1'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-bc16b2f5.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -894,10 +894,10 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-bcf92af6.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_static_methods-ee0be48d'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-bdbb12bd.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_comments_at_the_end_no_trailing_ne-79c232c6'
+  evidence: 'twin rendered: classdiagram_spec-2ec25484'
 - case: class_diagram/classdiagram_spec-bde28df9.mmd
   verdict: valid
   evidence: 'twin rendered: should_handle_a_comment_inside_brackets-9eaf1705'
@@ -927,13 +927,13 @@
   evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-ce51712a.mmd
   verdict: valid
-  evidence: 'twin rendered: should_add_relations_between_classes_of_differen-fe8bafcb'
+  evidence: 'twin rendered: classdiagram_spec-8f1d808d'
 - case: class_diagram/classdiagram_spec-ce80c05a.mmd
   verdict: artifact
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-d0c7516d.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_abstract_methods-d9ff8aa4'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-d52f200c.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -954,16 +954,16 @@
   evidence: 'mmdc 11.12.0 rejects it: Error: Parse error on line 2: (oracle-verdicts.yml)'
 - case: class_diagram/classdiagram_spec-d8065ef7.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_all_basic_relationships-6e0f8b09'
+  evidence: 'twin rendered: classdiagram_spec-c77a4a9b'
 - case: class_diagram/classdiagram_spec-d8fa1400.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_class_annotations_with_members_and-8ad5fd85'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-d985c318.mmd
   verdict: artifact
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-db377a28.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_acctitle_and_multiline_accdescr-1867b757'
+  evidence: 'twin rendered: classdiagram_spec-1513329b'
 - case: class_diagram/classdiagram_spec-db5b1ab5.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -984,7 +984,7 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-de606d76.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_fully_qualified_class_names_in_rel-d86c96ce'
+  evidence: 'twin rendered: classdiagram_spec-c1910d20'
 - case: class_diagram/classdiagram_spec-e047c702.mmd
   verdict: valid
   evidence: 'twin rendered: should_parse_diagram_with_direction-ba994d6a'
@@ -993,7 +993,7 @@
   evidence: literal \n escape
 - case: class_diagram/classdiagram_spec-e2283033.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_fully_qualified_class_names_in_rel-d86c96ce'
+  evidence: 'twin rendered: classdiagram_spec-c1910d20'
 - case: class_diagram/classdiagram_spec-e2a923b1.mmd
   verdict: artifact
   evidence: truncated source
@@ -1002,19 +1002,19 @@
   evidence: 'twin rendered: should_parse_two_classes_with_text_labels_and_cs-0279db01'
 - case: class_diagram/classdiagram_spec-e4a0a3de.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_static_methods-ee0be48d'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-e67f67a1.mmd
   verdict: invalid
   evidence: 'mmdc 11.12.0 rejects it: Error: svg element not in render tree (oracle-verdicts.yml)'
 - case: class_diagram/classdiagram_spec-e6ecea55.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_comments_at_the_end_no_trailing_ne-79c232c6'
+  evidence: 'twin rendered: classdiagram_spec-2ec25484'
 - case: class_diagram/classdiagram_spec-e820f9e7.mmd
   verdict: valid
   evidence: 'twin rendered: should_handle_backticked_class_names-611e333e'
 - case: class_diagram/classdiagram_spec-e90ec3e0.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_a_comment_with_mermaid_class_diagr-692f71f8'
+  evidence: 'twin rendered: classdiagram_spec-ecb64073'
 - case: class_diagram/classdiagram_spec-e94dfee9.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -1050,7 +1050,7 @@
   evidence: 'mmdc 11.12.0 rejects it: Error: Parse error on line 2: (oracle-verdicts.yml)'
 - case: class_diagram/classdiagram_spec-f25cf0d9.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_nested_namespaces_and_relationship-243d32d8'
+  evidence: 'twin rendered: classdiagram_spec-0df8b35b'
 - case: class_diagram/classdiagram_spec-f417697f.mmd
   verdict: invalid
   evidence: 'mmdc 11.12.0 rejects it: Error: Parse error on line 2: (oracle-verdicts.yml)'
@@ -1068,13 +1068,13 @@
   evidence: 'twin rendered: should_handle_generic_class_with_relation_defini-8c6b1348'
 - case: class_diagram/classdiagram_spec-f7658522.mmd
   verdict: valid
-  evidence: 'twin rendered: should_handle_nested_namespaces_and_relationship-243d32d8'
+  evidence: 'twin rendered: classdiagram_spec-0df8b35b'
 - case: class_diagram/classdiagram_spec-f8d72790.mmd
   verdict: invalid
   evidence: 'mmdc 11.12.0 rejects it: Error: svg element not in render tree (oracle-verdicts.yml)'
 - case: class_diagram/classdiagram_spec-f9b0f05a.mmd
   verdict: valid
-  evidence: 'twin rendered: classdiagram_handdrawn_v3_spec-54bf00b0'
+  evidence: mmdc rendered it
 - case: class_diagram/classdiagram_spec-fb53320f.mmd
   verdict: artifact
   evidence: truncated source
@@ -3262,16 +3262,16 @@
   evidence: 'mmdc 11.12.0 rejects it: Error: Parse error on line 7: (oracle-verdicts.yml)'
 - case: gitgraph/appli_spec-9896cabe.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/diagram_orchestration_spec-7e74931b.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/diagram_orchestration_spec-f91adec1.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/git-c330ba11.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/git_graph-0b0b355f.mmd
   verdict: invalid
   evidence: mmdc rejected it
@@ -3280,178 +3280,178 @@
   evidence: 'twin rejected: git_graph-0b0b355f'
 - case: gitgraph/gitgraph_spec-076af5a8.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-0b6593b9.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-10b01f23.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-114a946d.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-1f279738.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-215c1704.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-2624f69c.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-27965d7e.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-28053fe8.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-2a707d2a.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-302c1b10.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-3a0ec594.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-3c6bb236.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-44d278b2.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-48bd68ea.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-4ecf8c56.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-4f488ecd.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-5ec00071.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-62bd2181.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-6422a3f5.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-6dbfa6a3.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-6fdae8bb.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-72051fc1.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-72370fac.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-7601eeee.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-785ef1ea.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-7d932392.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-833c0b64.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-85c9fffd.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-85d8094a.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-87a15537.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-88f6da03.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-8a6b8cc3.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-8ec1ba43.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-92393861.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-a2c9fdfa.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-a3fd0bd6.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-a80be08a.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-a8592bb3.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-b187a403.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-b766651e.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-b81d6654.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-c9730706.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-ca73a116.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-d0791e6a.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-d77717c8.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-e1c6c758.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-e720bcf2.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-ecc8f1ae.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-ef884d70.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-efafa38a.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-f2a04b5e.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-f45d7013.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-f4bbbafe.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-fbfbfcbd.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-fcc2f0dd.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-fdc1c9db.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_spec-ff5daf60.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/gitgraph_test-0b25d816.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -3532,28 +3532,28 @@
   evidence: literal \n escape
 - case: gitgraph/mermaidapi_spec-36f7251d.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/mermaidapi_spec-3bb9b8eb.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_add_commits_to_checked_out_branch-13325e2c.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_allow_branch_names_starting_with_numbers-45bc9820.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_allow_branch_names_starting_with_unusual-2dd0cf15.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_allow_characters_in_branch_names-c1db8816.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_allow_quoted_branch_names-175db699.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_checkout_a_branch-d808eabf.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_fail_cherry_picking_of_merge_commits_if_t-c9fa8ebb.mmd
   verdict: invalid
   evidence: 'mmdc 11.12.0 rejects it: Error: Incorrect usage of cherry-pick: If the
@@ -3564,139 +3564,139 @@
     commit is not an immediate parent of the cherry-picked commit. (oracle-verdicts.yml)'
 - case: gitgraph/should_generate_an_array_of_known_branches-24cef136.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_3_straight_commits-a0c3914d.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-24c19935.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-319cfc9c.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-38466754.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-3a7948d6.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-4c1a5d63.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-4fcb935d.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-5f8425ba.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-dc4a307a.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-e548d918.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-e7cef3b4.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_comm-ed6bce28.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_msg-1e0c305c.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_tag-f23d9a2b.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_commit_with_custom_type-bce4b490.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_gitgraph_definition-4acb9709.mmd
   verdict: artifact
   evidence: literal \n escape
 - case: gitgraph/should_handle_a_title_and_a_description_accdescr-e3f19c3c.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_a_title_and_a_multiline_descriptio-a10aeee6.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_cases_when_merge_is_a_noop-9267428e.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_commit_with_args-8c4669e7.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_merge_tags-7d11784d.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_merge_with_2_parents-c9d72600.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_merge_with_custom_ids_tags_and_typ-2e8ba4b5.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_new_branch_checkout-70c26a6c.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_new_branch_checkout_commit-cbfbd32c.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_new_branch_checkout_commit_and_mer-6fba64e9.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_new_branch_checkout_with_and_witho-322aea60.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_new_branch_checkout_with_order-c0607086.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_new_branch_creation-a0536f42.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_new_branch_switch-e225c4e6.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_new_branch_switch_commit-0648b447.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_new_branch_switch_commit_and_merge-97bd3f84.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_set_direction_bottom_to_top-cf21a460.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_set_direction_top_to_bottom-b57546e7.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_handle_set_direction_top_to_bottom-c32dbd08.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_log_a_warning_when_two_commits_have_the_s-8c8c51d0.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_support_cherry_picking_commits-ecf31fda.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_support_cherry_picking_commits_with_custo-7bafb75f.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_support_cherry_picking_commits_with_no_ta-0234be84.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_support_cherry_picking_of_merge_commits-e48959ff.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_support_cherry_picking_of_merge_commits_w-29165ad9.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_support_cherry_picking_of_merge_commits_w-670f4b6c.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_support_cherry_picking_of_merge_commits_w-a7e851e5.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_switch_a_branch-e178f181.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/should_throw_error_when_try_to_branch_existing_b-0bda3635.mmd
   verdict: invalid
   evidence: 'mmdc 11.12.0 rejects it: Error: Trying to create an existing branch.
@@ -3735,7 +3735,7 @@
     id:1-111 already exists, use different custom id (oracle-verdicts.yml)'
 - case: gitgraph/showcase_base-29660eec.mmd
   verdict: valid
-  evidence: 'twin rendered: showcase_base-f21356f4'
+  evidence: mmdc rendered it
 - case: gitgraph/showcase_base-f21356f4.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -3744,16 +3744,16 @@
   evidence: mmdc rendered it
 - case: gitgraph/showcase_base_dark-a09e11fe.mmd
   verdict: valid
-  evidence: 'twin rendered: showcase_base_dark-3d9e6b57'
+  evidence: mmdc rendered it
 - case: gitgraph/showcase_dark-205bcbde.mmd
   verdict: valid
-  evidence: 'twin rendered: showcase_base_dark-3d9e6b57'
+  evidence: mmdc rendered it
 - case: gitgraph/showcase_dark-da2734cf.mmd
   verdict: valid
   evidence: mmdc rendered it
 - case: gitgraph/showcase_default-43c3e55f.mmd
   verdict: valid
-  evidence: 'twin rendered: showcase_base_dark-3d9e6b57'
+  evidence: mmdc rendered it
 - case: gitgraph/showcase_default-fb3029f6.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -3762,19 +3762,19 @@
   evidence: mmdc rendered it
 - case: gitgraph/showcase_forest-fddedd2a.mmd
   verdict: valid
-  evidence: 'twin rendered: showcase_base-f21356f4'
+  evidence: mmdc rendered it
 - case: gitgraph/showcase_neutral-09cbe86d.mmd
   verdict: valid
-  evidence: 'twin rendered: showcase_base-f21356f4'
+  evidence: mmdc rendered it
 - case: gitgraph/showcase_neutral-751835b5.mmd
   verdict: valid
   evidence: mmdc rendered it
 - case: gitgraph/utils_spec-111f4a6d.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: gitgraph/utils_spec-b464f46c.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: info/info_spec-3c70df4a.mmd
   verdict: valid
   evidence: mmdc rendered it
