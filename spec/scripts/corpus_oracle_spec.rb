@@ -774,7 +774,7 @@ RSpec.describe CorpusOracle do
 
       expect(row).to include(
         "verdict" => "valid",
-        "evidence" => /mmdc 11\.12\.0 renders it/
+        "evidence" => /mmdc 11\.12\.0 renders it/,
       )
       expect(rows.to_yaml).to eq(File.read(verdicts_path))
     end

@@ -33,11 +33,12 @@ RSpec.describe Sirena::DocsCompatibility do
 
   it "reports non-valid verdicts outside the compatibility denominator" do
     path = File.join(Dir.mktmpdir, "corpus.json")
-    File.write(path, JSON.generate([
+    data = [
       { case: "pie/1.mmd", verdict: "valid", pass: true },
       { case: "pie/2.mmd", verdict: "valid", pass: false },
       { case: "pie/3.mmd", verdict: "invalid", pass: true },
-    ]))
+    ]
+    File.write(path, JSON.generate(data))
 
     region = board.type_page_region("Pie Chart", path)
 
@@ -52,10 +53,11 @@ RSpec.describe Sirena::DocsCompatibility do
 
   it "generates PlantUML pass counts from measured rows" do
     path = File.join(Dir.mktmpdir, "plantuml.json")
-    File.write(path, JSON.generate([
+    data = [
       { type: "class", oracle_valid: 4, passing: 3 },
       { type: "sequence", oracle_valid: 7, passing: 5 },
-    ]))
+    ]
+    File.write(path, JSON.generate(data))
 
     expect(board.plantuml_region(path))
       .to include("class 3/4, sequence 5/7 oracle-valid cases")

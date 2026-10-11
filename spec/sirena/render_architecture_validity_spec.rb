@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "Architecture public-render validity" do
+RSpec.describe Sirena do
   fixtures = %w[
     architecture_spec-5d965f8d
     architecture_spec-8afbb5a2
@@ -13,7 +13,7 @@ RSpec.describe "Architecture public-render validity" do
     it "refuses #{name}'s legacy compact edge syntax" do
       path = File.expand_path("../mermaid/architecture/#{name}.mmd", __dir__)
 
-      expect { Sirena.render(File.read(path)) }
+      expect { described_class.render(File.read(path)) }
         .to raise_error(Sirena::Parser::ParseError)
     end
   end
@@ -26,6 +26,6 @@ RSpec.describe "Architecture public-render validity" do
       left:R -- L:right
     MERMAID
 
-    expect(Sirena.render(source)).to include('id="edge-left-right"')
+    expect(described_class.render(source)).to include('id="edge-left-right"')
   end
 end
