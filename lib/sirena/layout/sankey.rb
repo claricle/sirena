@@ -23,11 +23,16 @@ module Sirena
       EMPTY_HEIGHT = 300
       TITLE_Y = 40
       NODE_LABEL_BASELINE_OFFSET = 5
+      DEFAULT_SMALL_FONT_SIZE = 12.0
+      TITLE_FONT_SIZE_FALLBACK = 18.0
+      NODE_FONT_SIZE_FALLBACK = 11.0
+      FLOW_FONT_SIZE_FALLBACK = 10.0
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
         attribute :x, :float
         attribute :y, :float
+        attribute :font_size, :float
       end
 
       class Node < Lutaml::Model::Serializable
@@ -189,9 +194,9 @@ module Sirena
         node_ids.each_with_index do |node_id, index|
           @node_positions[node_id] = {
             x: layer * LAYER_SPACING,
-            y: index * (NODE_HEIGHT + NODE_SPACING),
+            y: index * (node_height + NODE_SPACING),
             width: calculate_node_width(node_id),
-            height: NODE_HEIGHT,
+            height: node_height,
           }
         end
       end
@@ -226,7 +231,10 @@ module Sirena
       def title_geometry(width)
         return unless @graph.label
 
-        Label.new(text: @graph.label, x: width.to_i / 2, y: TITLE_Y)
+        Label.new(
+          text: @graph.label, x: width.to_i / 2, y: TITLE_Y,
+          font_size: title_font_size
+        )
       end
 
       def typed_nodes
@@ -263,17 +271,18 @@ module Sirena
       def node_position(node_id)
         @node_positions.fetch(
           node_id,
-          { x: 0, y: 0, width: MIN_NODE_WIDTH, height: NODE_HEIGHT },
+          { x: 0, y: 0, width: MIN_NODE_WIDTH, height: node_height },
         )
       end
 
       def node_label(node, position, x_coordinate, y_coordinate)
         x = x_coordinate + (position[:width] / 2)
-        y = y_coordinate + (position[:height] / 2) + NODE_LABEL_BASELINE_OFFSET
+        y = y_coordinate + (position[:height] / 2) + node_label_offset
         Label.new(
           text: node.label || node.id,
           x: x,
-          y: y,
+          y: tidy(y),
+          font_size: node_font_size,
         )
       end
 
@@ -413,9 +422,51 @@ module Sirena
 
         Label.new(
           text: format_flow_value(value),
-          x: (geometry[:source_x] + geometry[:target_x]) / 2.0,
-          y: (geometry[:source_y] + geometry[:target_y]) / 2.0,
+          font_size: flow_font_size,
+          **flow_label_coordinates(geometry),
         )
+      end
+
+      def flow_label_coordinates(geometry)
+        {
+          x: (geometry[:source_x] + geometry[:target_x]) / 2.0,
+          y: tidy((geometry[:source_y] + geometry[:target_y]) / 2.0),
+        }
+      end
+
+      def node_height
+        tidy(NODE_HEIGHT * node_font_size / DEFAULT_SMALL_FONT_SIZE)
+      end
+
+      def node_label_offset
+        NODE_LABEL_BASELINE_OFFSET * node_font_size / DEFAULT_SMALL_FONT_SIZE
+      end
+
+      def title_font_size
+        theme_font_size(:font_size_large, TITLE_FONT_SIZE_FALLBACK)
+      end
+
+      def node_font_size
+        theme_font_size(:font_size_small, NODE_FONT_SIZE_FALLBACK)
+      end
+
+      def flow_font_size
+        theme_font_size(:font_size_small, FLOW_FONT_SIZE_FALLBACK)
+      end
+
+      def theme_font_size(role, fallback)
+        value = theme.typography&.public_send(role)
+        return fallback unless value.is_a?(Numeric) && value.finite?
+        return fallback unless value.positive?
+
+        value
+      rescue NoMethodError
+        fallback
+      end
+
+      def tidy(value)
+        rounded = value.round(4)
+        rounded.to_i == rounded ? rounded.to_i : rounded
       end
 
       def format_flow_value(value)
