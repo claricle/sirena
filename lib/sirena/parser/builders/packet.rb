@@ -7,6 +7,11 @@ module Sirena
     module Builders
       # Transform for Packet diagrams
       class Packet < Parslet::Transform
+        LABEL_TEXT = lambda do |captured|
+          captured.is_a?(Array) ? "" : captured.to_s.gsub(/\\(.)/m, '\\1')
+        end
+        private_constant :LABEL_TEXT
+
         # Transform field definition. label is `subtree`, not `simple`,
         # because an empty quoted label ("") captures zero characters --
         # Parslet's `.repeat(0).as(:label)` has no bytes to build a Slice
@@ -23,7 +28,7 @@ module Sirena
             type: :field,
             bit_start: bit_start.to_s.to_i,
             bit_end: bit_end.to_s.to_i,
-            label: label.is_a?(Array) ? "" : label.to_s,
+            label: LABEL_TEXT.call(label),
           }
         end
 
@@ -36,7 +41,7 @@ module Sirena
             type: :field,
             bit_start: bit,
             bit_end: bit,
-            label: label.is_a?(Array) ? "" : label.to_s,
+            label: LABEL_TEXT.call(label),
           }
         end
 
