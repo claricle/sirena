@@ -14,7 +14,7 @@ module CorpusCaseManifestHelpers
     File.write("#{base}.mmd", source)
     return if source_file == :omit
 
-    meta = { name: "x", type: "pie", source_file: source_file,
+    meta = { name: "x", type: File.dirname(old_case), source_file: source_file,
              line_number: 1 }
     meta[:metadata] = { test_name: title } if title
     File.write("#{base}.meta.json", JSON.generate(meta))
@@ -152,5 +152,46 @@ RSpec.describe CorpusCaseManifest do
 
   it "has a committed manifest that matches the committed corpus" do
     expect(described_class.stale?).to be(false)
+  end
+
+  describe "duplicate directories of one diagram type" do
+    let(:git_twin) { pie_case("gitGraph\n  commit\n") }
+    let(:merged) do
+      manifest_for("git/001_a_0.mmd" => git_twin,
+                   "gitgraph/001_b_0.mmd" => git_twin,
+                   "class/001_c_0.mmd" => a,
+                   "class_diagram/001_d_0.mmd" => b)
+    end
+
+    [%w[class class_diagram], %w[er er_diagram], %w[git gitgraph],
+     %w[gitgraph gitgraph], %w[state state_diagram],
+     %w[state_diagram state_diagram], %w[unknown unknown],
+     %w[pie pie], %w[nonesuch nonesuch]].each do |directory, canonical|
+      it "sends #{directory}/ to #{canonical}/" do
+        expect(described_class.canonical_directory(directory))
+          .to eq(canonical)
+      end
+    end
+
+    it "names the canonical directory in every new id" do
+      expect(new_ids(merged).transform_values { _1.split("/").first })
+        .to eq("git/001_a_0.mmd" => "gitgraph",
+               "gitgraph/001_b_0.mmd" => "gitgraph",
+               "class/001_c_0.mmd" => "class_diagram",
+               "class_diagram/001_d_0.mmd" => "class_diagram")
+    end
+
+    it "keeps twins from the merged directories unique" do
+      ids = new_ids(merged).values_at("git/001_a_0.mmd",
+                                      "gitgraph/001_b_0.mmd")
+      expect(ids.map { _1.split("/").last }.uniq.length).to eq(2)
+    end
+
+    it "gives identical ids on a second run" do
+      cases = { "git/001_a_0.mmd" => git_twin,
+                "gitgraph/001_b_0.mmd" => git_twin }
+      runs = Array.new(2) { described_class.render(manifest_for(cases)) }
+      expect(runs.uniq.length).to eq(1)
+    end
   end
 end
