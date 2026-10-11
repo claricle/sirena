@@ -129,6 +129,21 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
     end
   end
 
+  context "when boxes beside a subgraph have an edge into it" do
+    let(:source) do
+      "flowchart TB\nsubgraph A\ndirection RL\nb-->B\na\nend\na-->c\n" \
+        "subgraph B\ndirection LR\nc\nend\n"
+    end
+
+    # mmdc: B is 196 tall, spanning the two boxes that point at it.
+    it "stretches the subgraph to cover them" do
+      xml = Sirena.render(source)
+      height = xml[/<g id="cluster-B">\s*<rect[^>]*\bheight="([^"]*)"/, 1]
+
+      expect(height.to_f).to eq(196.0)
+    end
+  end
+
   context "when a model repeats an id" do
     let(:scene) do
       diagram = Sirena::Diagram::Flowchart.new(direction: "TD")

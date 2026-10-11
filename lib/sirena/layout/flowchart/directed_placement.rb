@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../elk_placement"
+require_relative "cluster_reach"
 require_relative "layer_spacing"
 require_relative "level_edges"
 require_relative "level_frame"
@@ -69,11 +70,13 @@ module Sirena
           boxes.each { |box| place_cluster(box, frame) if cluster?(box) }
           return if boxes.empty?
 
-          flat = flat_graph(boxes, @level_edges.at(container))
+          level_edges = @level_edges.at(container)
+          flat = flat_graph(boxes, level_edges)
           place_flat(flat, frame)
           boxes.zip(flat[:children]) do |box, placed|
             box.merge!(x: placed[:x], y: placed[:y])
           end
+          ClusterReach.apply(boxes, level_edges, sideways: frame.sideways?)
         end
 
         # Boxes go to elkrb under their position, because a model may repeat

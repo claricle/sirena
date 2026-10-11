@@ -728,7 +728,7 @@ RSpec.describe Sirena::Engine do
     it "does not write full float precision into the path" do
       # A crossing that does NOT land on a whole number. Boxes in line
       # trim to exact coordinates, so a second target keeps this one slanted.
-      xml = render("flowchart TD\nsubgraph one [A Fairly Long Title]\nA\n" \
+      xml = render("flowchart TD\nsubgraph one [A Fairly Long Title Indeed Here]\nA\n" \
                    "end\none --> Z\none --> Y\n")
       path = xml[/<g id="edge-one_to_Z">\s*<path[^>]*\bd="([^"]*)"/, 1]
 
@@ -736,7 +736,7 @@ RSpec.describe Sirena::Engine do
       # no longer than three, which rounding to two or fewer also
       # satisfies. The start is where the ray between the two boxes' exact
       # centres leaves `one`.
-      expect(path).to eq("M 77.95 112.0 L 42.4 189.0")
+      expect(path).to eq("M 115.49 112.0 L 79.94 189.0")
     end
 
     it "joins a box to a plain node" do
