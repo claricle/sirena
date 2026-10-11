@@ -39,6 +39,19 @@ module DirectedPlacementGraphs
     size = axis == :x ? :width : :height
     to[axis] - (from[axis] + from[size])
   end
+
+  def box_margins(box)
+    outer = [0, 0, box[:width], box[:height]]
+    inner = box[:children].map do |child|
+      child.values_at(:x, :y, :width, :height)
+    end
+    FlowchartSceneBuilder.margins(outer, inner)
+  end
+
+  def compact_padding
+    [be_within(1.0).of(8), be_within(1.0).of(8),
+     be_within(0.01).of(25), be_within(0.01).of(25)]
+  end
 end
 
 RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
@@ -66,19 +79,36 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
     expect(found["B"].y).to eq(found["A"].y)
   end
 
-  it "boxes a subgraph 8 points beside and 25 above and below its members" do
+  it "matches the reference padding around an independent leaf subgraph" do
     expect(builder.cluster_margins(subgraph_source)).to match(
-      [be_within(1.0).of(8), be_within(1.0).of(8),
-       be_within(0.01).of(25), be_within(1.0).of(25)],
+      [be_within(1.0).of(37.5), be_within(1.0).of(37.5),
+       be_within(0.01).of(37.5), be_within(1.0).of(37.5)],
     )
   end
 
   # The SVG writes whole points, so a width not rounded up can leave less
-  # than the 8 mmdc keeps beside the members.
-  it "never leaves a member closer than 8 points to its subgraph box" do
+  # than the 37.5 mmdc keeps beside an independent leaf cluster.
+  it "never rounds an independent leaf cluster below its reference padding" do
     source = "flowchart TD\nsubgraph s\nA[Laptop computer]\nend\n"
 
-    expect(builder.cluster_margins(source).first(2)).to all(be >= 8.0)
+    expect(builder.cluster_margins(source).first(2)).to all(be >= 37.5)
+  end
+
+  it "keeps compact padding when an edge crosses the cluster boundary" do
+    boxes = [node("x"), subgraph("s", [node("a"), node("b")])]
+    graph = level_graph("DOWN", boxes, [%w[x a], %w[a b]])
+    cluster = member(placed(graph), "s")
+
+    expect(box_margins(cluster)).to match(compact_padding)
+  end
+
+  it "keeps compact padding around a leaf cluster nested inside another" do
+    inner = subgraph("inner", [node("a"), node("b")])
+    outer = subgraph("outer", [inner])
+    held = member(member(placed(level_graph("DOWN", [outer])), "outer")
+                    .fetch(:children), "inner")
+
+    expect(box_margins(held)).to match(compact_padding)
   end
 
   describe "a subgraph laid out as a graph of its own" do

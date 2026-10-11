@@ -26,6 +26,7 @@ module Sirena
         CLUSTER_PADDING = 20.0
         CLUSTER_SIDE = 8.0
         CLUSTER_VERTICAL = 25.0
+        INDEPENDENT_CLUSTER_PADDING = 37.5
         MIRRORED_X = [Base::DIRECTION_LEFT].freeze
         MIRRORED_Y = [Base::DIRECTION_UP].freeze
 
@@ -67,7 +68,11 @@ module Sirena
         end
 
         def place_level(boxes, container, frame)
-          boxes.each { |box| place_cluster(box, frame) if cluster?(box) }
+          boxes.each do |box|
+            next unless cluster?(box)
+
+            place_cluster(box, frame, top_level: container.nil?)
+          end
           return if boxes.empty?
 
           level_edges = @level_edges.at(container)
@@ -109,7 +114,7 @@ module Sirena
           end
         end
 
-        def place_cluster(cluster, frame)
+        def place_cluster(cluster, frame, top_level:)
           contents = cluster[:children] || []
           place_level(contents, cluster[:id], inner_frame(cluster, frame))
           if contents.empty?
@@ -118,7 +123,17 @@ module Sirena
             return
           end
 
-          fit(cluster, contents)
+          fit(cluster, contents, cluster_padding(cluster, contents, top_level))
+        end
+
+        def cluster_padding(cluster, contents, top_level)
+          independent = !@level_edges.external?(cluster[:id])
+          leaf = contents.none? { |box| cluster?(box) }
+          if top_level && leaf && independent
+            return [INDEPENDENT_CLUSTER_PADDING] * 2
+          end
+
+          [CLUSTER_SIDE, CLUSTER_VERTICAL]
         end
 
         # A subgraph with its own `direction`, or with no edge crossing its
@@ -132,23 +147,25 @@ module Sirena
           frame.nested
         end
 
-        # The contents sit CLUSTER_SIDE from the left and CLUSTER_VERTICAL
-        # below the top; a title wider than them stretches the box and the
-        # contents are centred in it.
-        def fit(cluster, contents)
+        # Independent leaf clusters use the pinned reference padding. Nested
+        # or externally crossed clusters keep the compact padding that lets
+        # their parent level own placement. A wider title still stretches the
+        # box, with its contents centred inside it.
+        def fit(cluster, contents, padding)
+          side, vertical = padding
           inner = right_of(contents) - left_of(contents)
-          cluster[:width] = boxed_width(cluster, inner)
-          settle(contents, cluster[:width] - inner)
-          cluster[:height] = bottom_of(contents) + CLUSTER_VERTICAL
+          cluster[:width] = boxed_width(cluster, inner, side)
+          settle(contents, cluster[:width] - inner, vertical)
+          cluster[:height] = bottom_of(contents) + vertical
         end
 
-        def boxed_width(cluster, inner)
-          [inner + (CLUSTER_SIDE * 2), titled_width(cluster)].max.ceil
+        def boxed_width(cluster, inner, side)
+          [inner + (side * 2), titled_width(cluster)].max.ceil
         end
 
-        def settle(contents, spare)
+        def settle(contents, spare, vertical)
           shift(contents, (spare / 2.0) - left_of(contents),
-                CLUSTER_VERTICAL - top_of(contents))
+                vertical - top_of(contents))
         end
 
         def left_of(boxes)
