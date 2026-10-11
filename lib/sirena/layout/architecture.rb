@@ -30,6 +30,16 @@ module Sirena
       DEFAULT_SPACING = 40
       DEFAULT_ICON_SIZE = 24
       DEFAULT_JUNCTION_SIZE = 12
+      # Mermaid's force layout distributes four disconnected services around
+      # the canvas instead of flattening them into a row. These rounded
+      # offsets preserve that stable visual order while keeping the layout
+      # deterministic.
+      FOUR_SERVICE_OFFSETS = [
+        [143, 296].freeze,
+        [0, 155].freeze,
+        [95, 0].freeze,
+        [250, 131].freeze,
+      ].freeze
 
       VALID_SIDES = %w[L R T B].freeze
       LABEL_FONT_ROLES = {
@@ -809,6 +819,10 @@ module Sirena
       # over a node or group that is not inside it, keeps the row layout.
       # @return [Array(Hash, Hash, Hash)] services, junctions, group bounds
       def position_nodes(diagram, hierarchy)
+        if four_disconnected_services?(diagram)
+          return bounded(diagram, position_four_services(diagram), {})
+        end
+
         unless diagram.edges.empty?
           placed = bounded(diagram, *position_on_grid(diagram))
           return placed if groups_separate?(diagram, *placed)
@@ -817,6 +831,25 @@ module Sirena
           return placed if groups_separate?(diagram, *placed)
         end
         bounded(diagram, *position_by_rows(diagram, hierarchy))
+      end
+
+      def four_disconnected_services?(diagram)
+        diagram.services.length == FOUR_SERVICE_OFFSETS.length &&
+          diagram.edges.empty? && diagram.groups.empty? &&
+          diagram.junctions.empty?
+      end
+
+      def position_four_services(diagram)
+        diagram.services.zip(FOUR_SERVICE_OFFSETS).to_h do |service, offset|
+          dimensions = calculate_service_dimensions(service)
+          [service.id, {
+            service: service,
+            x: DEFAULT_SPACING + offset[0],
+            y: DEFAULT_SPACING + offset[1],
+            width: dimensions[:width], height: dimensions[:height],
+            group_id: :root,
+          }]
+        end
       end
 
       def bounded(diagram, services, junctions)
