@@ -26,22 +26,16 @@ module Sirena
             ws?
         end
 
-        # Header: info [showInfo] [additional text...]
+        # Header: info [showInfo]. Mermaid's lexer rejects any other word.
         rule(:header) do
           str("info").as(:header) >>
             (space.repeat(1) >> show_info_inline).maybe.as(:show_info_inline) >>
-            (space.repeat(1) >> additional_text).maybe >>
             ws?
         end
 
         # showInfo on same line as info
         rule(:show_info_inline) do
           str("showInfo").as(:show_info)
-        end
-
-        # Additional text after info keyword (ignored, but not showInfo)
-        rule(:additional_text) do
-          (str("showInfo").absent? >> line_end.absent? >> any).repeat(1)
         end
 
         # Body: showInfo on separate line
