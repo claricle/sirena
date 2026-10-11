@@ -3,6 +3,7 @@
 require "lutaml/model"
 require_relative "timeline_line"
 require_relative "timeline_rounding"
+require_relative "timeline_text"
 
 module Sirena
   module Layout
@@ -73,12 +74,18 @@ module Sirena
 
       def place_text
         self.text_x = tidy(x + (width / 2))
-        self.text_y = tidy(y + TEXT_TOP + FIRST_BASELINE)
+        self.text_y = tidy(y + TEXT_TOP + scaled_text(FIRST_BASELINE))
         self.next_baselines = baselines_after_first
       end
 
       def baselines_after_first
-        (1...lines.length).map { |i| tidy(text_y + (i * LINE_PITCH)) }
+        pitch = scaled_text(LINE_PITCH)
+        (1...lines.length).map { |i| tidy(text_y + (i * pitch)) }
+      end
+
+      def scaled_text(value)
+        size = font_size&.positive? ? font_size : TimelineText::FONT_SIZE
+        value * size / TimelineText::FONT_SIZE.to_f
       end
 
       def tidy(value)

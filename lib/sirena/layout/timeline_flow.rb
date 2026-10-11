@@ -26,9 +26,10 @@ module Sirena
       # @param groups [Array<Hash>] {name:, periods: [{name:, events:}]};
       #   one unnamed group when the diagram has no sections
       # @param sectioned [Boolean] whether groups are drawn as sections
-      def initialize(groups, sectioned:)
+      def initialize(groups, sectioned:, font_size: TimelineText::FONT_SIZE)
         @groups = groups
         @sectioned = sectioned
+        @font_size = font_size
         @periods = groups.flat_map { |group| group[:periods] }
       end
 
@@ -68,8 +69,8 @@ module Sirena
 
       def section_card(name, columns, index, left)
         width = (COLUMN * columns) - 50
-        lines = TimelineText.wrap(name, width)
-        height = [TimelineText.card_height(lines), section_max].max
+        lines = wrap(name, width)
+        height = [card_height(lines), section_max].max
         card("section", lines, [left, TOP, width + 40, height], index)
       end
 
@@ -89,16 +90,16 @@ module Sirena
       end
 
       def period_card(name, origin, running, color)
-        lines = TimelineText.wrap(name, TEXT_WIDTH)
-        height = [TimelineText.card_height(lines), running].max
+        lines = wrap(name, TEXT_WIDTH)
+        height = [card_height(lines), running].max
         card("period", lines, [*origin, CARD_WIDTH, height], color)
       end
 
       def event_cards(events, period, color)
         top = period.y + EVENT_DROP
         events.map do |text|
-          lines = TimelineText.wrap(text, TEXT_WIDTH)
-          height = [TimelineText.card_height(lines), MIN_EVENT].max
+          lines = wrap(text, TEXT_WIDTH)
+          height = [card_height(lines), MIN_EVENT].max
           card("event", lines, [period.x, top, CARD_WIDTH, height], color)
             .tap { top += EVENT_GAP + height }
         end
@@ -117,8 +118,8 @@ module Sirena
         TimelineCard.new(
           kind: kind, lines: lines.reject(&:empty?), x: x, y: y,
           width: width, height: height, color_index: color,
-          font_size: TimelineText::FONT_SIZE,
-          text_width: lines.map { |line| TimelineText.width_of(line) }.max
+          font_size: @font_size,
+          text_width: lines.map { |line| text_width(line) }.max
         ).tap(&:place)
       end
 
@@ -144,7 +145,19 @@ module Sirena
       end
 
       def measured(text)
-        TimelineText.card_height(TimelineText.wrap(text, TEXT_WIDTH))
+        card_height(wrap(text, TEXT_WIDTH))
+      end
+
+      def wrap(text, width)
+        TimelineText.wrap(text, width, font_size: @font_size)
+      end
+
+      def card_height(lines)
+        TimelineText.card_height(lines, font_size: @font_size)
+      end
+
+      def text_width(line)
+        TimelineText.width_of(line, font_size: @font_size)
       end
     end
   end
