@@ -155,8 +155,9 @@ RSpec.describe CorpusCaseManifest do
   end
 
   describe "duplicate directories of one diagram type" do
-    let(:git_twin) { pie_case("gitGraph\n  commit\n") }
-    let(:merged) do
+    def git_twin = pie_case("gitGraph\n  commit\n")
+
+    def merged
       manifest_for("git/001_a_0.mmd" => git_twin,
                    "gitgraph/001_b_0.mmd" => git_twin,
                    "class/001_c_0.mmd" => a,

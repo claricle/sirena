@@ -287,8 +287,8 @@ module ApplyCaseMigration
       text = File.read(File.join(root, MANIFEST))
       entries = JSON.parse(text).fetch("pairs")
       pairs = entries.map { |entry| pair(entry) }
-      reject_twice(pairs, :old_base) { |pair| pair.type }
-      reject_twice(pairs, :new_base) { |pair| pair.new_type }
+      reject_twice(pairs, :type, :old_base)
+      reject_twice(pairs, :new_type, :new_base)
       reject_split_directories(pairs)
       pairs
     rescue Errno::ENOENT, JSON::ParserError, KeyError => e
@@ -305,9 +305,9 @@ module ApplyCaseMigration
                new_base: new[2])
     end
 
-    def reject_twice(pairs, field)
+    def reject_twice(pairs, directory, field)
       groups = pairs.group_by do |pair|
-        [yield(pair), pair.public_send(field)]
+        [pair.public_send(directory), pair.public_send(field)]
       end
       clash = groups.select { |_, group| group.length > 1 }.keys
       return if clash.empty?
@@ -548,8 +548,8 @@ module ApplyCaseMigration
 
     def left_behind(files, moves, catalog)
       moved = moves.map(&:first)
-      (files - moved).select do |file|
-        redirect(File.dirname(file), catalog) != File.dirname(file)
+      (files - moved).reject do |file|
+        redirect(File.dirname(file), catalog) == File.dirname(file)
       end
     end
 
