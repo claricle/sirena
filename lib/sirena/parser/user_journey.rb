@@ -212,10 +212,12 @@ module Sirena
         task.name = line[:task].to_s.strip
         task.score = line[:score].to_s.to_i
         validate_score!(task.score)
-        task.actors = actor_names(
-          line[:actors], explicit: line.key?(:actors)
-        )
+        task.actors = task_actors(line)
         task
+      end
+
+      def task_actors(line)
+        actor_names(line[:actors], explicit: line.key?(:actors))
       end
 
       def actor_names(data, explicit:)

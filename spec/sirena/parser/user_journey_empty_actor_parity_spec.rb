@@ -16,6 +16,16 @@ RSpec.describe Sirena::Parser::UserJourney, :aggregate_failures do
   let(:diagram) { described_class.new.parse(source) }
   let(:scene) { Sirena::Layout::UserJourney.new.call(diagram) }
 
+  let(:exact_summary) do
+    {
+      "hard_failure" => false,
+      "metrics" => include(
+        "worst_e_c" => 0.0, "worst_e_w" => 0.0,
+        "worst_e_h" => 0.0, "worst_e_a" => 0.0
+      ),
+    }
+  end
+
   it "preserves an explicit empty actor without changing an omitted group" do
     expect(diagram.all_tasks.map(&:actors)).to eq([[], [""], ["Alice"]])
     expect(scene.legend.map { |actor| actor.dot.name }).to eq(["", "Alice"])
@@ -24,17 +34,7 @@ RSpec.describe Sirena::Parser::UserJourney, :aggregate_failures do
   end
 
   it "matches both pinned task-definition references exactly" do
-    expect(parity_rows).to all(
-      include(
-        "summary" => {
-          "hard_failure" => false,
-          "metrics" => include(
-            "worst_e_c" => 0.0, "worst_e_w" => 0.0,
-            "worst_e_h" => 0.0, "worst_e_a" => 0.0
-          ),
-        },
-      ),
-    )
+    expect(parity_rows).to all(include("summary" => exact_summary))
   end
 
   def task_dots
