@@ -78,9 +78,15 @@ module Sirena
         branch_colours = scene.branches.to_h do |branch|
           [branch.name, branch.color]
         end
-        scene.commits.each do |commit|
+        commits_in_paint_order(scene).each do |commit|
           svg << commit_circle(commit, branch_colours)
         end
+      end
+
+      def commits_in_paint_order(scene)
+        return scene.commits unless scene.orientation == "BT"
+
+        scene.commits.sort_by(&:y)
       end
 
       def commit_circle(commit, branch_colours)
