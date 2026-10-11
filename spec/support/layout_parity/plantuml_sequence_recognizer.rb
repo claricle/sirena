@@ -47,15 +47,23 @@ module SpecSupport
         return [] unless root
 
         legacy_lifelines(root).filter_map do |group|
-          label = group.at_xpath("./title")&.text
-          text = participant_texts(root, label).min_by { |node| node["y"].to_f }
-          shape = text&.previous_element
-          box = extractor.bbox(shape) if shape&.name == "rect"
-          if box
-            Element.new(kind: :participant, key: label, bbox: box,
-                        label: label, identity: :label)
-          end
+          legacy_head(extractor, root, group)
         end
+      end
+
+      def legacy_head(extractor, root, group)
+        label = group.at_xpath("./title")&.text
+        box = legacy_head_bbox(extractor, root, label)
+        return unless box
+
+        Element.new(kind: :participant, key: label, bbox: box,
+                    label: label, identity: :label)
+      end
+
+      def legacy_head_bbox(extractor, root, label)
+        text = participant_texts(root, label).min_by { |node| node["y"].to_f }
+        shape = text&.previous_element
+        extractor.bbox(shape) if shape&.name == "rect"
       end
 
       def sirena_participants(extractor, doc)
@@ -104,19 +112,22 @@ module SpecSupport
 
         children = root.element_children
         children.each_with_index.filter_map do |node, index|
-          next unless node.name == "text"
-
-          run = preceding_run(children, index)
-          next unless run.any? { |item| horizontal_line?(item) }
-
-          box = Bbox.union([*run, node].filter_map do |item|
-            extractor.bbox(item)
-          end)
-          next unless box
-
-          Element.new(kind: :message, key: index, bbox: box,
-                      label: normalize([node.text]), identity: :label)
+          legacy_message(extractor, children, node, index)
         end
+      end
+
+      def legacy_message(extractor, children, node, index)
+        return unless node.name == "text"
+
+        run = preceding_run(children, index)
+        return unless run.any? { |item| horizontal_line?(item) }
+
+        boxes = [*run, node].filter_map { |item| extractor.bbox(item) }
+        box = Bbox.union(boxes)
+        return unless box
+
+        Element.new(kind: :message, key: index, bbox: box,
+                    label: normalize([node.text]), identity: :label)
       end
 
       def legacy_root(doc)

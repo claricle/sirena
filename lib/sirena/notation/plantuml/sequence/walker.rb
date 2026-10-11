@@ -43,7 +43,7 @@ module Sirena
                       Ref => :ref, PageBreak => :page_break }.freeze
           Config = Struct.new(:message_measure, :message_font_size,
                               :message_family, :label_inset, :row, :self_row,
-                              keyword_init: true)
+                              :bounds, keyword_init: true)
 
           attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
                       :right, :y, :page_breaks
@@ -51,22 +51,17 @@ module Sirena
           # @param lifelines [Hash{String => Float}] centre of each
           #   participant's lifeline, in participant order
           # @param measure [#call] text width in pixels
-          # @param bounds [Array<Float>] left and right edge of the heads
           # @param start_y [Float] where the first row goes
-          def initialize(lifelines:, measure:, font_size:, bounds:, start_y:,
+          # @param config [Config] `bounds` is the left and right edge of the
+          #   heads
+          def initialize(lifelines:, measure:, font_size:, start_y:,
                          config: Config.new)
             @ids = lifelines.keys
             @centers = lifelines.values
             @measure = measure
             @font_size = font_size
-            @message_measure = config.message_measure || measure
-            @message_font_size = config.message_font_size || font_size
-            @message_family = config.message_family
-            @label_inset = config.label_inset
-            @row = config.row || ROW
-            @self_row = config.self_row || ROW * 1.5
-            @bounds = bounds
             @y = start_y
+            apply_config(config)
             start_empty
           end
 
@@ -86,6 +81,16 @@ module Sirena
           end
 
           private
+
+          def apply_config(config)
+            @message_measure = config.message_measure || @measure
+            @message_font_size = config.message_font_size || @font_size
+            @message_family = config.message_family
+            @label_inset = config.label_inset
+            @row = config.row || ROW
+            @self_row = config.self_row || (ROW * 1.5)
+            @bounds = config.bounds
+          end
 
           def walk_items(items)
             previous = nil
@@ -122,8 +127,7 @@ module Sirena
           # A parallel item starts on the row of the one before it, and the
           # page continues below whichever of the two reaches further down.
           def visit(item, previous)
-            @previous_self_message = false unless item.is_a?(Message) ||
-                                                  item.is_a?(Activation)
+            @previous_self_message = false unless continues_self_run?(item)
             @resume = nil
             offset = row_offset(item)
             begin_row(item, offset) if offset
@@ -139,6 +143,10 @@ module Sirena
             when Note, Ref then TOP_OFFSET
             when Fragment then TOP_OFFSET if item.phase == :open
             end
+          end
+
+          def continues_self_run?(item)
+            item.is_a?(Message) || item.is_a?(Activation)
           end
 
           def opens_block?(item)
@@ -179,13 +187,18 @@ module Sirena
           end
 
           def adjust_self_run(message)
-            return unless @label_inset
-            return if message.parallel?
+            return unless @label_inset && !message.parallel?
 
-            entering = message.self_message? && !@previous_self_message
-            leaving = !message.self_message? && @previous_self_message
-            @y += @self_row - @row if entering
-            @y -= @self_row - @row if leaving
+            @y += @self_row - @row if entering_self_run?(message)
+            @y -= @self_row - @row if leaving_self_run?(message)
+          end
+
+          def entering_self_run?(message)
+            message.self_message? && !@previous_self_message
+          end
+
+          def leaving_self_run?(message)
+            !message.self_message? && @previous_self_message
           end
 
           # A note hanging off a message reaches above it; a tall one pushes

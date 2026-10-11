@@ -147,20 +147,25 @@ module Sirena
 
           def walk
             @edge_right = right_edge
-            config = Walker::Config.new(
+            build_walker.run(@diagram.items, edge_right: @edge_right,
+                                             appearance: @diagram.appearance)
+          end
+
+          def build_walker
+            Walker.new(lifelines: ids.zip(@centers).to_h,
+                       measure: ->(text) { text_width(text) },
+                       font_size: font_size, config: walker_config,
+                       start_y: @top + @head_height + first_row_gap)
+          end
+
+          def walker_config
+            Walker::Config.new(
               message_measure: ->(text) { label_text_width(text) },
               message_font_size: label_font_size,
               message_family: ("monospace" if compact?),
               label_inset: (7 if compact?), row: row_height,
-              self_row: self_row_height
+              self_row: self_row_height, bounds: head_bounds
             )
-            Walker.new(lifelines: ids.zip(@centers).to_h, bounds: head_bounds,
-                       measure: ->(text) { text_width(text) },
-                       font_size: font_size,
-                       config: config,
-                       start_y: @top + @head_height + first_row_gap)
-              .run(@diagram.items, edge_right: @edge_right,
-                                   appearance: @diagram.appearance)
           end
 
           # Where `->]` messages end: past every head, and far enough from
@@ -270,8 +275,9 @@ module Sirena
           end
 
           def head_width(participant)
-            return ACTOR_INTRINSIC_WIDTH if minimum_width_mixed_glyphs? &&
-                                            participant.kind == :actor
+            if minimum_width_mixed_glyphs? && participant.kind == :actor
+              return ACTOR_INTRINSIC_WIDTH
+            end
 
             text = measure_text(participant.label, font_size: head_font_size)
             [minimum_head_width, text[:width] + (2 * head_padding),
@@ -309,11 +315,12 @@ module Sirena
           # fits between the left edge and the head it points at.
           def left_edge_room(widths, gaps)
             start = margin + (widths.first / 2)
-            short = edge_messages(:left).map do |m|
-              index = ids.index(m.to)
-              edge_room(m) - start - gaps.first(index).sum
-            end
+            short = edge_messages(:left).map { |m| shortfall(m, start, gaps) }
             [0.0, *short].max
+          end
+
+          def shortfall(message, start, gaps)
+            edge_room(message) - start - gaps.first(ids.index(message.to)).sum
           end
 
           # Distance between neighbouring centres: heads must not overlap and
