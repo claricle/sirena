@@ -160,7 +160,7 @@ module KanbanRendererSpecHelpers
 
   def expect_metadata_below_label(xml)
     count, last = label_count_and_last_baseline(xml)
-    metadata = first_xml_element(xml, "//text[.='Assigned:']")
+    metadata = first_xml_element(xml, "//text[.='Alice']")
     metadata_y = metadata.attributes["y"].to_f
     expect(count).to eq(3)
     expect(metadata_y).to be > last
@@ -344,10 +344,11 @@ RSpec.describe Sirena::Renderer::Kanban do
         }
       end
 
-      it "renders metadata" do
+      it "renders ticket values and priority accents like Mermaid" do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include("Priority", "High", "Ticket", "MC-1001")
+        expect(xml).to include("MC-1001", 'stroke="orange"')
+        expect(xml).not_to include("Priority:", "Ticket:")
       end
     end
 
@@ -511,15 +512,11 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect_four_line_header(xml)
       end
 
-      # Round 3 Codex High: card metadata used to start at a fixed `y + 50`
+      # Card metadata used to start at a fixed `y + 50`
       # regardless of how many lines the card's own label actually
       # rendered, so a multi-line label's later lines overlapped the
       # metadata rows drawn below it.
       #
-      # Mutation-check: revert `render_card_metadata`'s `metadata_y` to
-      # the hardcoded `y + 50`. Watched red: the metadata label's y stays
-      # at the single-line offset, landing above the label's own last
-      # rendered line instead of below it.
       it "starts card metadata below a multi-line label's actual " \
          "rendered height" do
         xml = rendered_layout(

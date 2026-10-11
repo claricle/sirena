@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "../layout/kanban"
 require_relative "../svg/document"
+require_relative "../svg/line"
 require_relative "../svg/rect"
 require_relative "../svg/text"
 require_relative "markdown_text"
@@ -36,8 +37,17 @@ module Sirena
 
       def render_card(card, svg)
         svg << box_element(card.background)
+        svg << accent_element(card.accent) if card.accent
         svg << label_element(card.label)
         card.metadata.each { |label| svg << label_element(label) }
+      end
+
+      def accent_element(accent)
+        Svg::Line.new(
+          x1: accent.x1, y1: accent.y1,
+          x2: accent.x2, y2: accent.y2,
+          stroke: accent.color, stroke_width: "4",
+        )
       end
 
       def box_element(box)
