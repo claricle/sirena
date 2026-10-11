@@ -11,7 +11,8 @@ require "time"
 module CiLaneTimings
   LANES = {
     "fast" => /\A(?:unit \(|pins\z|oracle-toolchain\z|lint\z)/,
-    "full" => %r{\A(?:docs-build /|links /|conformance\z|fresh-resolution\z|plantuml-toolchain\z)},
+    "full" => %r{\A(?:docs-build\ /|links\ /|conformance\z|fresh-resolution\z|
+                     plantuml-toolchain\z)}x,
   }.freeze
 
   BUCKETS = %i[warm restore_key cold none].freeze
@@ -45,11 +46,12 @@ module CiLaneTimings
     end
   end
 
-  # +caches+ maps job name => classification for the jobs whose logs were read.
-  # Returns nil when the lane has no job that ran.
+  # +caches+ maps job name => classification for the jobs whose logs were
+  # read. Returns nil when the lane has no job that ran.
   def sample(jobs, lane, caches)
     job = slowest(jobs, lane) or return nil
-    { job: job["name"], seconds: duration(job), cache: caches[job["name"]] || :none }
+    { job: job["name"], seconds: duration(job),
+      cache: caches[job["name"]] || :none }
   end
 
   def median(values)
@@ -61,9 +63,15 @@ module CiLaneTimings
   # +samples+ is an array of #sample results. Minutes, per cache bucket.
   def summarize(samples)
     BUCKETS.to_h do |bucket|
-      minutes = samples.select { |s| s[:cache] == bucket }.map { |s| s[:seconds] / 60.0 }
-      [bucket, { count: minutes.size, median: minutes.empty? ? nil : median(minutes), max: minutes.max }]
+      minutes = bucket_minutes(samples, bucket)
+      [bucket, { count: minutes.size,
+                 median: minutes.empty? ? nil : median(minutes),
+                 max: minutes.max }]
     end
+  end
+
+  def bucket_minutes(samples, bucket)
+    samples.select { |s| s[:cache] == bucket }.map { |s| s[:seconds] / 60.0 }
   end
 end
 
@@ -71,31 +79,38 @@ end
 if __FILE__ == $PROGRAM_NAME
   require "open3"
   repo, since, limit = ARGV
-  abort "usage: ci_lane_timings.rb OWNER/REPO SINCE_ISO8601 [LIMIT]" unless repo && since
+  abort "usage: ci_lane_timings.rb OWNER/REPO SINCE_ISO8601 [LIMIT]" \
+    unless repo && since
 
   gh = lambda do |*args|
     out, err, status = Open3.capture3("gh", *args)
     status.success? ? out : (warn(err) || nil)
   end
 
-  runs = JSON.parse(gh.call("run", "list", "-R", repo, "--workflow", "ci", "--status", "success",
-                            "--limit", "200", "--json", "databaseId,createdAt,headBranch,event"))
+  runs = JSON.parse(gh.call("run", "list", "-R", repo, "--workflow", "ci",
+                            "--status", "success", "--limit", "200", "--json",
+                            "databaseId,createdAt,headBranch,event"))
   runs = runs.select { |r| Time.iso8601(r["createdAt"]) >= Time.iso8601(since) }
   runs = runs.first(Integer(limit || 60))
 
   samples = { "fast" => [], "full" => [] }
   runs.each do |run|
-    jobs = JSON.parse(gh.call("run", "view", run["databaseId"].to_s, "-R", repo, "--json", "jobs"))["jobs"]
-    next unless jobs.any? { |j| j["name"].include?("windows-latest, shard") } # sharded topology only
+    view = gh.call("run", "view", run["databaseId"].to_s, "-R", repo,
+                   "--json", "jobs")
+    jobs = JSON.parse(view)["jobs"]
+    # sharded topology only
+    next unless jobs.any? { |j| j["name"].include?("windows-latest, shard") }
 
     caches = {}
     CiLaneTimings::LANES.each_key do |lane|
       job = CiLaneTimings.slowest(jobs, lane) or next
-      log = gh.call("api", "repos/#{repo}/actions/jobs/#{job['databaseId']}/logs").to_s
+      log = gh.call("api",
+                    "repos/#{repo}/actions/jobs/#{job['databaseId']}/logs").to_s
       caches[job["name"]] = CiLaneTimings.classify_log(log)
       s = CiLaneTimings.sample(jobs, lane, caches)
       samples[lane] << s
-      puts [run["databaseId"], lane, s[:job], s[:seconds].round, s[:cache]].join("\t")
+      puts [run["databaseId"], lane, s[:job], s[:seconds].round,
+            s[:cache]].join("\t")
     end
   end
   samples.each do |lane, list|

@@ -7,6 +7,7 @@ module CiJobFixtures
     created = Time.utc(2026, 10, 10, 12, 0, 0)
     started = created + (queued * 60)
     { "name" => name, "conclusion" => conclusion,
-      "startedAt" => started.iso8601, "completedAt" => (started + (minutes * 60)).iso8601 }
+      "startedAt" => started.iso8601,
+      "completedAt" => (started + (minutes * 60)).iso8601 }
   end
 end
