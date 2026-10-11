@@ -295,13 +295,17 @@ module Sirena
       def align_source_elk_rows(graph)
         # ELK establishes the layers; Mermaid keeps declaration order within
         # each layer and applies stable row-specific spacing on top of them.
-        rows = graph[:children].group_by { |node| node[:y] }
-          .sort_by(&:first).map(&:last)
+        rows = source_elk_rows(graph)
         return if rows.empty?
 
         width = place_source_elk_top(rows.first, graph[:edges])
         place_source_elk_middle(rows[1], width) if rows[1]
         place_source_elk_tail(rows.drop(2), graph)
+      end
+
+      def source_elk_rows(graph)
+        graph[:children].group_by { |node| node[:y] }
+          .sort_by(&:first).map(&:last)
       end
 
       def place_source_elk_top(row, edges)
@@ -348,10 +352,14 @@ module Sirena
         height = row.map { |node| node[:height] }.max
         sources = edges.flat_map { |edge| edge[:sources] }
         row.each do |node|
-          spare = height - node[:height]
-          offset = sources.include?(node[:id]) ? spare : spare / 2.0
-          node[:y] = SOURCE_ELK_MARGIN + offset
+          node[:y] = SOURCE_ELK_MARGIN +
+            source_elk_top_offset(node, height, sources)
         end
+      end
+
+      def source_elk_top_offset(node, height, sources)
+        spare = height - node[:height]
+        sources.include?(node[:id]) ? spare : spare / 2.0
       end
 
       def reject_unsupported_elk_graph!(graph)

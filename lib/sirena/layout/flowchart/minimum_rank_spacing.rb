@@ -19,14 +19,22 @@ module Sirena
         end
 
         def apply
-          @tops = @flat[:children].map { |box| box[:y] }.uniq.sort
-          @shifts = Array.new(@tops.length, 0.0)
+          reset_shifts
           long_edges.each { |edge| satisfy(edge) }
-          @flat[:children].each { |box| box[:y] += shift_at(box[:y]) }
+          shift_boxes
           @flat
         end
 
         private
+
+        def reset_shifts
+          @tops = @flat[:children].map { |box| box[:y] }.uniq.sort
+          @shifts = Array.new(@tops.length, 0.0)
+        end
+
+        def shift_boxes
+          @flat[:children].each { |box| box[:y] += shift_at(box[:y]) }
+        end
 
         def long_edges
           (@flat[:edges] || []).select do |edge|

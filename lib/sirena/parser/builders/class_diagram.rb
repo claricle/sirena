@@ -445,14 +445,16 @@ module Sirena
           from_id, to_id, source_card, target_card = ends
           {
             from_id: from_id, to_id: to_id,
-            relationship_type: RELATIONSHIP_TYPES.fetch(
-              operator, "association"
-            ),
+            relationship_type: relationship_type(operator),
             label: relationship_label(stmt),
             source_cardinality: source_card,
             target_cardinality: target_card,
             written_reversed: LEFT_POINTING.include?(operator) || nil
           }
+        end
+
+        def relationship_type(operator)
+          RELATIONSHIP_TYPES.fetch(operator, "association")
         end
 
         def apply_mixed_markers(relationship, operator)
