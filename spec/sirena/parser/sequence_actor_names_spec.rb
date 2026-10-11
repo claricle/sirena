@@ -372,8 +372,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
   describe "extract_text — the nested empty-repeat capture" do
     it "renders an empty trailing message as an empty string, " \
        "not the literal []" do
-      case_name = "070_parser_should_parse_a_message_with_a_" \
-                  "trailing_colon_but_no_content_69"
+      case_name = "sequencediagram_spec-15a3f414"
       diagram = parser.parse(File.read(sequence_fixture(case_name)))
 
       # `first`, not `last` — case 070 has two messages and the empty one
@@ -383,8 +382,7 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
     end
 
     it "does not leak the literal [] into the rendered SVG" do
-      case_name = "070_parser_should_parse_a_message_with_a_" \
-                  "trailing_colon_but_no_content_69"
+      case_name = "sequencediagram_spec-15a3f414"
       source = File.read(sequence_fixture(case_name))
       svg = Sirena::Engine.new.render(source)
 

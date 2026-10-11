@@ -160,7 +160,8 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
     end
 
     context "with a bare service (no icon, no label, no group)" do
-      # spec/mermaid/architecture/017 and 029: "service db" with nothing else.
+      # spec/mermaid/architecture/should_handle_a_simple_radar_definition-0a5b3a96
+      # and architecture/xss_spec-3828c690: "service db" with nothing else.
       let(:input) { "architecture-beta\n            service db\n" }
 
       it "parses the service with nil icon and label" do
@@ -175,7 +176,8 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
     end
 
     context "with a multiline accessibility description block" do
-      # spec/mermaid/architecture/021 and 028: accDescr { ... } rather than
+      # spec/mermaid/architecture/should_handle_multiline_accessibility_descriptio-97345398
+      # and architecture/architecture_test-42e45099: accDescr { ... } rather than
       # the single-line accDescr: form.
       let(:input) do
         <<~MERMAID
@@ -252,7 +254,7 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
     end
 
     context "with a junction" do
-      # spec/mermaid/architecture/011: junctions route edges between
+      # spec/mermaid/architecture/architecture_spec-f1819a63: junctions route edges between
       # services and carry no icon or label of their own.
       let(:input) do
         <<~MERMAID

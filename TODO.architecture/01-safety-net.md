@@ -329,7 +329,7 @@ Status: 17 of 17 true on 2026-10-10; each line below names its proof.
 - [x] B — the reported rate is over evidence-valid cases, and says so
       Proof: `rake 'corpus[pie]'` prints `against evidence-valid cases only: 39/40`; committed board is 773/1032 valid (74.9%).
 - [x] B — `rake corpus:check` fails on a deliberately broken renderer
-      Proof: mutation: `PieRenderer#render` raises -> `corpus:check: FAILED`, REGRESSED pie/001 and pie/002.
+      Proof: mutation: `PieRenderer#render` raises -> `corpus:check: FAILED`, REGRESSED pie/theme_spec-a9670f7e and pie/pie_spec-8e291061.
 - [x] B — `rake corpus:check` fails on an unrecorded improvement
       Proof: mutation: one passing scoreboard row edited to fail -> `corpus:check: FAILED`, IMPROVED BUT NOT RECORDED.
 - [x] B — `rake 'corpus[pie]'` prints only pie results

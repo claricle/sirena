@@ -44,7 +44,7 @@ RSpec.describe Sirena::Layout::Requirement do
   end
 
   # mmdc: 8px above the first row, 24px rows, a 20px gap under the name,
-  # 12px below (spec/fixtures_mermaid/requirement/001: 184 and 112 tall).
+  # 12px below (spec/fixtures_mermaid/requirement/requirement-9f8b7e75: 184 and 112 tall).
   it "sizes a box from its row count, as mmdc does" do
     expect([node("test_req").height, node("test_entity").height])
       .to eq([184, 112])

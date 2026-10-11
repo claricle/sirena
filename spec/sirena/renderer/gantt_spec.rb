@@ -162,7 +162,7 @@ RSpec.describe Sirena::Renderer::Gantt do
     end
 
     it "renders a task tagged with an id and explicit start/end dates " \
-       "(corpus gantt/005)" do
+       "(corpus gantt/click_security_loose-0d2cc455)" do
       xml = rendered_xml(renderer, gantt_source(:tagged))
       # The timeline and section backgrounds are also <rect> elements, so a
       # bare `include("<rect")` passes even with the task bar itself never
@@ -175,7 +175,7 @@ RSpec.describe Sirena::Renderer::Gantt do
     end
 
     # mermaid accepts any year, so an explicit far-future date is valid
-    # input (corpus gantt/001). calculate_label_interval used to cap at a
+    # input (corpus gantt/gantt_spec-54a41452). calculate_label_interval used to cap at a
     # flat 30-day step regardless of range, which for a multi-millennium
     # span builds tens of thousands of label/grid-line nodes and blows
     # well past the corpus sweep's 10s timeout.

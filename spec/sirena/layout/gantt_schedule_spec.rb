@@ -3,7 +3,8 @@
 require "spec_helper"
 
 # Expected ends and ticks were read off mmdc's SVG for the same source
-# (spec/fixtures_mermaid/gantt/002 and 005).
+# (spec/fixtures_mermaid/gantt/gantt_spec-81070895 and
+# gantt/click_security_loose-0d2cc455).
 RSpec.describe Sirena::Layout::Gantt do
   let(:helper) { GanttCoverageScene }
   let(:friday_weekend) do

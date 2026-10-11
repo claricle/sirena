@@ -70,7 +70,7 @@ module ArchitectureEdgeRouterSpecHelpers
     [box(x: 40, y: 40), box(x: 200, y: 40), box(x: 360, y: 40)]
   end
 
-  # Real geometry from spec/mermaid/architecture/011: 8 services + 6
+  # Real geometry from spec/mermaid/architecture/architecture_spec-f1819a63: 8 services + 6
   # junctions, transformed with adjust_positions_for_edges removed.
   # edge:R -- L:firewall crosses server1 on a straight line - this is
   # the case-011 reproducer, pinned as a property (no interior

@@ -29,8 +29,8 @@ module GitGraphBucketHelpers
       "checkout develop\n commit id: \"#{id}\"\n"
   end
 
-  def corpus_case(number)
-    Dir.glob(File.join(CORPUS, format("%03d_*.mmd", number))).fetch(0)
+  def corpus_case(id)
+    File.join(CORPUS, "#{id}.mmd")
   end
 
   def parse(source)
@@ -101,15 +101,43 @@ RSpec.describe Sirena::Engine do
   include GitGraphBucketHelpers
 
   {
-    "gitGraph BT:" => [*37..50, 52, 69],
-    "commit with a message" => [84, 89, 90, 91, 92],
-    "quoted branch names" => [95],
-    "accTitle and accDescr" => [127, 128],
-  }.each do |bucket, numbers|
+    "gitGraph BT:" => %w[
+      gitgraph_spec-4ecf8c56
+      gitgraph_spec-fdc1c9db
+      gitgraph_spec-85c9fffd
+      gitgraph_spec-a80be08a
+      gitgraph_spec-a2c9fdfa
+      gitgraph_spec-92393861
+      gitgraph_spec-7601eeee
+      gitgraph_spec-ecc8f1ae
+      gitgraph_spec-f4bbbafe
+      gitgraph_spec-2a707d2a
+      gitgraph_spec-ff5daf60
+      gitgraph_spec-72370fac
+      gitgraph_spec-d0791e6a
+      gitgraph_spec-f45d7013
+      gitgraph_spec-6422a3f5
+      should_handle_set_direction_bottom_to_top-cf21a460
+    ],
+    "commit with a message" => %w[
+      should_handle_a_gitgraph_commit_with_custom_comm-4c1a5d63
+      should_handle_a_gitgraph_commit_with_custom_comm-3a7948d6
+      should_handle_a_gitgraph_commit_with_custom_type-bce4b490
+      should_handle_a_gitgraph_commit_with_custom_tag-f23d9a2b
+      should_handle_a_gitgraph_commit_with_custom_msg-1e0c305c
+    ],
+    "quoted branch names" => %w[
+      should_allow_quoted_branch_names-175db699
+    ],
+    "accTitle and accDescr" => %w[
+      should_handle_a_title_and_a_description_accdescr-e3f19c3c
+      should_handle_a_title_and_a_multiline_descriptio-a10aeee6
+    ],
+  }.each do |bucket, ids|
     describe bucket do
-      numbers.each do |number|
-        it "renders corpus case git/#{format('%03d', number)}" do
-          svg = render_svg(File.read(corpus_case(number)))
+      ids.each do |id|
+        it "renders corpus case gitgraph/#{id}" do
+          svg = render_svg(File.read(corpus_case(id)))
 
           expect(REXML::XPath.match(svg, "//circle")).not_to be_empty
         end

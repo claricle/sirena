@@ -106,7 +106,7 @@ per case. It is never silently excluded.
   nothing must not pass by making its size errors undefined. Mermaid
   nests `g.root` groups with a translate, places nodes as `translate(cx, cy)`
   with `rect x=-w/2`, and puts cluster rects at absolute positions inside the
-  nested roots (checked on `spec/fixtures_mermaid/flowchart/079*`).
+  nested roots (checked on `spec/fixtures_mermaid/flowchart/subgraph_spec-f0825d5b*`).
 - **Scale.** The document scale is removed by working in `viewBox` units. An
   SVG with no `viewBox` (11 of the 14 `info` references) uses its `width` and
   `height` attributes as the viewBox; where those are percentages, the root

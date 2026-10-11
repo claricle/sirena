@@ -177,10 +177,9 @@ RSpec.describe Sirena::Parser::StateDiagram do
   # claim about mermaid below was measured against mmdc 11.12.0.
   describe "mermaid corpus statement forms", :aggregate_failures do
     describe 'state "Label" as Id' do
-      it "names and labels a state (state_diagram/019)" do
+      it "names and labels a state (statediagram_v2_spec-2d12b6d7)" do
         diagram = corpus(
-          "state_diagram/019_parser_should_handle_state_definitions_" \
-          "with_separation_of_id_18.mmd",
+          "state_diagram/statediagram_v2_spec-2d12b6d7.mmd",
         )
 
         expect(diagram.find_state("NotShooting").label)
@@ -190,10 +189,9 @@ RSpec.describe Sirena::Parser::StateDiagram do
           .to eq("Configuring mode")
       end
 
-      it "labels a composite carrying a note (state_diagram/052)" do
+      it "labels a composite carrying a note (statediagram_v2_spec-3249fd2d)" do
         diagram = corpus(
-          "state_diagram/052_parser_should_handle_notes_for_composite_" \
-          "nested_states_51.mmd",
+          "state_diagram/statediagram_v2_spec-3249fd2d.mmd",
         )
 
         expect(diagram.find_state("NotShooting").label)
@@ -298,7 +296,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "id : description" do
-      it "describes a state, spaces around the colon (state_diagram/002)" do
+      it "describes a state, spaces around the colon (state_parser_spec-5ace89b8)" do
         diagram = corpus(
           "state_diagram/state_parser_spec-5ace89b8.mmd",
         )
@@ -325,7 +323,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
           .to eq(1)
       end
 
-      it "describes a state, no spaces (state_diagram/003)" do
+      it "describes a state, no spaces (state_parser_spec-4f6d8252)" do
         diagram = corpus(
           "state_diagram/state_parser_spec-4f6d8252.mmd",
         )
@@ -336,10 +334,9 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "note statements" do
-      it "reads a note block to its end note (state_diagram/026)" do
+      it "reads a note block to its end note (statediagram_v2_spec-6aad18a9)" do
         diagram = corpus(
-          "state_diagram/026_parser_should_handle_multiline_notes_with_" \
-          "different_line_breaks_25.mmd",
+          "state_diagram/statediagram_v2_spec-6aad18a9.mmd",
         )
 
         expect(diagram.states.map(&:id)).to eq(["State1"])
@@ -422,7 +419,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       end
 
       # mmdc parses a floating note and draws nothing for it.
-      it "drops a floating note (state_diagram/027)" do
+      it "drops a floating note (statediagram_v2_spec-7f54c592)" do
         diagram = corpus(
           "state_diagram/statediagram_v2_spec-7f54c592.mmd",
         )
@@ -433,10 +430,9 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "style statements" do
-      it "drops a style over several targets (state_diagram/006)" do
+      it "drops a style over several targets (state_style_spec-c53cfe2e)" do
         diagram = corpus(
-          "state_diagram/006_parser_can_define_multiple_attributes_" \
-          "separated_by_commas_5.mmd",
+          "state_diagram/state_style_spec-c53cfe2e.mmd",
         )
 
         expect(diagram.states.map(&:id)).to eq(%w[id1 id2])
@@ -468,7 +464,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "direction statements" do
-      it "sets the direction (state/060)" do
+      it "sets the direction (mermaidapi_spec-c352a65c)" do
         diagram = corpus("state_diagram/mermaidapi_spec-c352a65c.mmd")
 
         expect(diagram.direction).to eq("LR")
@@ -486,7 +482,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "state ids" do
-      it "takes a digits-only id (state/001)" do
+      it "takes a digits-only id (statediagram_v2_spec-c351b77a)" do
         diagram = corpus(
           "state_diagram/statediagram_v2_spec-c351b77a.mmd",
         )
@@ -496,7 +492,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
       # mmdc lexes `note` and `style` wherever a statement or a transition
       # end may start, so it refuses these three and renders `notes`.
-      it "refuses a bare note as a state (state_diagram/031)" do
+      it "refuses a bare note as a state (statediagram_v2_spec-649d05f6)" do
         expect do
           corpus(
             "state_diagram/statediagram_v2_spec-649d05f6.mmd",
@@ -545,7 +541,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "a diagram with no statements" do
-      it "parses to an empty, valid diagram (state/055)" do
+      it "parses to an empty, valid diagram (diagram_orchestration_spec-367b369a)" do
         diagram = corpus("state_diagram/diagram_orchestration_spec-367b369a.mmd")
 
         expect(diagram.states).to be_empty

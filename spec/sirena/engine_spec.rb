@@ -84,7 +84,8 @@ RSpec.describe Sirena::Engine do
 
     context "with an empty ER diagram" do
       # The bare keyword, which is all three empty rows of the ER corpus
-      # hold: spec/mermaid/er_diagram/059, 060 and 061.
+      # hold: spec/mermaid/er_diagram/xss_spec-8e4f16ee,
+      # diagram_orchestration_spec-0b6a4661 and mermaidapi_spec-28c33f18.
       let(:source) { "erDiagram" }
 
       let(:document) { REXML::Document.new(engine.render(source)) }
@@ -156,7 +157,7 @@ RSpec.describe Sirena::Engine do
         end
       end
 
-      it "detects flowchart-elk as a flowchart (unknown/012)" do
+      it "detects flowchart-elk as a flowchart (unknown/flow_elk-951c7b80)" do
         # mmdc renders flowchart-elk exactly like flowchart, only hinting
         # at the elk layout engine. Sirena has no elk layout yet, so it
         # renders like any other flowchart. Detection used to require the
