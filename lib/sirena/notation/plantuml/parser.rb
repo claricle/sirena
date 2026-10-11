@@ -505,17 +505,20 @@ module Sirena
           kind = words.include?("method") ? :method : member.kind
           Member.new(kind: kind, visibility: member.visibility,
                      name: member.name, type: member.type,
-                     parameters: member.parameters, modifiers: modifiers)
+                     parameters: member.parameters, modifiers: modifiers,
+                     type_position: member.type_position)
         end
 
         # `int x` and `void run(int a)`: the type comes first.
         def typed_member(text)
           if (match = TYPED_METHOD.match(text))
             Member.new(kind: :method, visibility: VISIBILITY[match[1]],
-                       name: match[3], type: match[2], parameters: match[4])
+                       name: match[3], type: match[2], parameters: match[4],
+                       type_position: :prefix)
           elsif (match = TYPED_FIELD.match(text))
             Member.new(kind: :field, visibility: VISIBILITY[match[1]],
-                       name: match[3], type: match[2], parameters: nil)
+                       name: match[3], type: match[2], parameters: nil,
+                       type_position: :prefix)
           end
         end
       end

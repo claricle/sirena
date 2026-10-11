@@ -23,15 +23,28 @@ module Sirena
         MARKER_HALF_WIDTH = 7.0
         LABEL_OFFSET = 10.0
         NESTING_RADIUS = 8.0
+        MEMBER_NOTE_TEXT_SCALE = 1.15
+        MEMBER_NOTE_ROW_HEIGHT = 16.48828125
+        MEMBER_NOTE_LINE_HEIGHT = 15.310546875
+        MEMBER_NOTE_STACK_GAP = 10.0
+        MEMBER_NOTE_BODY_GAP = 35.0
+        MEMBER_NOTE_CLASS_HEIGHT = 48.0
+        MEMBER_NOTE_SIDE_PADDING = 6.0
         FILLED_MARKERS = %i[association dependency composition].freeze
         private_constant :MARGIN, :COLUMN_GAP, :ROW_GAP, :MIN_BOX_WIDTH,
                          :BOX_PADDING, :ROW_HEIGHT, :MARKER_LENGTH,
                          :MARKER_HALF_WIDTH, :LABEL_OFFSET, :FILLED_MARKERS,
-                         :NESTING_RADIUS
+                         :NESTING_RADIUS, :MEMBER_NOTE_TEXT_SCALE,
+                         :MEMBER_NOTE_ROW_HEIGHT, :MEMBER_NOTE_LINE_HEIGHT,
+                         :MEMBER_NOTE_STACK_GAP, :MEMBER_NOTE_BODY_GAP,
+                         :MEMBER_NOTE_CLASS_HEIGHT,
+                         :MEMBER_NOTE_SIDE_PADDING
 
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
           diagram = IRReader.call(graph)
+          return dress(diagram, member_note_scene(diagram)) if member_note_family?(diagram)
+
           specifications = diagram.classes.map do |klass|
             box_specification(klass, diagram)
           end
@@ -44,6 +57,145 @@ module Sirena
         end
 
         private
+
+        def member_note_family?(diagram)
+          return false unless diagram.classes.one? && diagram.notes.any?
+          return false unless diagram.relations.empty? &&
+            diagram.junctions.empty? && diagram.packages.empty?
+
+          klass = diagram.classes.first
+          plain_class = klass.kind == :class && klass.stereotypes.empty? &&
+            klass.generics.nil?
+          members = klass.body.map(&:name)
+          plain_class && diagram.notes.all? do |note|
+            note.member && members.include?(note.member) &&
+              note.target == klass.name && note.side == :right
+          end
+        end
+
+        def member_note_scene(diagram)
+          klass = diagram.classes.first
+          class_box = member_note_class_box(klass)
+          notes = member_note_boxes(diagram, klass, class_box)
+          boxes = [class_box, *notes]
+          Scene.new(width: boxes.map { |box| box.x + box.width }.max + MARGIN,
+                    height: boxes.map { |box| box.y + box.height }.max + MARGIN,
+                    boxes: boxes, relations: [], frames: [])
+        end
+
+        def member_note_class_box(klass)
+          width = member_note_class_width(klass)
+          height = MEMBER_NOTE_CLASS_HEIGHT +
+            (klass.body.size * MEMBER_NOTE_ROW_HEIGHT)
+          texts = member_note_class_texts(klass, width)
+          separator_y = MARGIN + MEMBER_NOTE_CLASS_HEIGHT -
+            MEMBER_NOTE_ROW_HEIGHT
+          Scene::Box.new(
+            id: klass.name, x: MARGIN, y: MARGIN, width: width, height: height,
+            texts: texts,
+            separators: [segment(MARGIN, separator_y,
+                                 MARGIN + width, separator_y)],
+            kind: "class"
+          )
+        end
+
+        def member_note_class_width(klass)
+          # The pinned renderer's sans-serif is wider than the deterministic
+          # Arial table on this machine. This factor is measured across every
+          # member row in the reference-backed group2814 family.
+          name = plantuml_text_width(klass.name) + 32.0
+          members = klass.body.map do |member|
+            plantuml_text_width(member_text(member)) +
+              (MEMBER_NOTE_SIDE_PADDING * 2)
+          end
+          [name, *members].max
+        end
+
+        def member_note_class_texts(klass, width)
+          title = scene_text(klass.name, MARGIN + (width / 2), MARGIN + 21.291,
+                             "class_name", "middle")
+          members = klass.body.each_with_index.map do |member, index|
+            vertical = MARGIN + 49.535 + (index * MEMBER_NOTE_ROW_HEIGHT)
+            role = member.type_position == :prefix ? "member_prefix" : "member"
+            scene_text(member_text(member), MARGIN + MEMBER_NOTE_SIDE_PADDING,
+                       vertical, role, "start")
+          end
+          [title, *members]
+        end
+
+        def member_note_boxes(diagram, klass, class_box)
+          heights = diagram.notes.map { |note| member_note_height(note) }
+          total = heights.sum +
+            (MEMBER_NOTE_STACK_GAP * (heights.size - 1))
+          top = class_box.y + ((class_box.height - total) / 2) - 5.0
+          fill = shared_member_note_fill(diagram)
+          diagram.notes.each_with_index.map do |note, index|
+            box = member_note_box(note, index, klass, class_box,
+                                  top, heights[index], fill)
+            top += heights[index] + MEMBER_NOTE_STACK_GAP
+            box
+          end
+        end
+
+        def member_note_box(note, index, klass, class_box, top, height, fill)
+          body_left = class_box.x + class_box.width + MEMBER_NOTE_BODY_GAP
+          width = note.lines.map { |line| plantuml_note_width(line) }.max.to_f +
+            21.0
+          target = member_note_target(note, klass, class_box)
+          texts = member_note_texts(note, body_left, top)
+          pointer = segment(target[0], target[1], body_left, top + (height / 2))
+          Scene::Box.new(id: "note-#{index}", x: body_left, y: top,
+                         width: width, height: height, texts: texts,
+                         separators: [pointer], kind: "member_note", fill: fill)
+        end
+
+        def member_note_target(note, klass, class_box)
+          index = klass.body.index { |member| member.name == note.member }
+          member = klass.body.fetch(index)
+          text = member_text(member)
+          horizontal = class_box.x + MEMBER_NOTE_SIDE_PADDING +
+            plantuml_text_width(text)
+          vertical = class_box.y + 44.244 + (index * MEMBER_NOTE_ROW_HEIGHT)
+          [horizontal, vertical]
+        end
+
+        def member_note_texts(note, left, top)
+          note.lines.each_with_index.map do |line, index|
+            vertical = top + 17.568 + (index * MEMBER_NOTE_LINE_HEIGHT)
+            scene_text(line, left + 6.0, vertical, "member_note", "start")
+          end
+        end
+
+        def member_note_height(note)
+          10.0 + ([note.lines.size, 1].max * MEMBER_NOTE_LINE_HEIGHT)
+        end
+
+        def shared_member_note_fill(diagram)
+          # PlantUML 1.2026.6 gives one side's shared tips entity the last
+          # note's paint. Preserve that pinned visible behavior for the stack.
+          note = diagram.notes.last
+          note.color || stereotype_note_fill(note.stereotype,
+                                             diagram.directives)
+        end
+
+        def stereotype_note_fill(stereotype, directives)
+          return unless stereotype
+
+          name = stereotype.delete_prefix("<<").delete_suffix(">>")
+          pattern = /\Askinparam\s+noteBackgroundColor<<#{Regexp.escape(name)}>>\s+(\S+)\z/i
+          directive = directives.reverse.find { |line| line.match?(pattern) }
+          directive&.match(pattern)&.[](1)
+        end
+
+        def plantuml_text_width(text)
+          measure_text(text, font_size: font_size)[:width] *
+            MEMBER_NOTE_TEXT_SCALE
+        end
+
+        def plantuml_note_width(text)
+          measure_text(text, font_size: font_size * (13.0 / 14.0))[:width] *
+            MEMBER_NOTE_TEXT_SCALE
+        end
 
         def dress(diagram, scene)
           measure = lambda do |text, size|
@@ -140,10 +292,15 @@ module Sirena
         end
 
         def member_text(member)
-          text = "#{visibility_mark(member.visibility)}#{member.name}"
-          text += "(#{member.parameters})" if member.parameters
-          text += " : #{member.type}" if member.type
-          text
+          name = member.name.dup
+          name += "(#{member.parameters})" if member.parameters
+          type = member.type
+          content = if type && member.type_position == :prefix
+                      "#{type} #{name}"
+                    else
+                      "#{name}#{" : #{type}" if type}"
+                    end
+          "#{visibility_mark(member.visibility)}#{content}"
         end
 
         def visibility_mark(visibility)
