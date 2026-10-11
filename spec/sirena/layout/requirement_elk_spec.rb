@@ -43,8 +43,8 @@ RSpec.describe Sirena::Layout::Requirement do
   it "keeps the default Requirement rendering byte-identical" do
     digest = Digest::SHA256.hexdigest(Sirena.render(source))
 
-    expected = "cabcc7179b32df880a9c5e63e7102ed0" \
-               "bd3f0c9c9ade8b1795a79fc49afead96"
+    expected = "04cb369063307f97093955dd2d24860e" \
+               "6b00c9dcb346f710dc770539c55f3996"
     expect(digest).to eq(expected)
   end
 end

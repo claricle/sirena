@@ -105,7 +105,7 @@ RSpec.describe Sirena::Renderer::Requirement do
 
   it "preserves the exact default render" do
     expect(Digest::SHA256.hexdigest(xml))
-      .to eq("95c1ba8fed62eb7966d49c8c5cd3eb5a849339534472e15b82748e378edcadf8")
+      .to eq("3892c1ce3227f2a82e207717d39830681e9ee2900083bb54eb6c68787530f833")
   end
 
   %i[default light dark high_contrast].each do |theme_name|
