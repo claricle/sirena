@@ -17,8 +17,24 @@ RSpec.describe ApplyCaseMigration do
 
   after { FileUtils.remove_entry(root) }
 
+  shared_examples "a refusal that writes nothing" do |error|
+    it "raises #{error}" do
+      expect { described_class.apply!(root: root) }.to raise_error(error)
+    end
+
+    it "leaves every file as it was" do
+      seeded = snapshot
+      apply_quietly
+      expect(snapshot).to eq(seeded)
+    end
+  end
+
   def moved(old)
     "spec/mermaid/#{ids_of(old.delete_suffix('.mmd'))}.mmd"
+  end
+
+  def meta_path(old)
+    "spec/mermaid/#{ids_of(old)}.meta.json"
   end
 
   describe ".plan" do
@@ -88,13 +104,12 @@ RSpec.describe ApplyCaseMigration do
     end
 
     it "rewrites the type a merged case's meta names" do
-      meta = JSON.parse(read(moved("class/001_c_0.mmd").sub(/mmd\z/, "meta.json")))
+      meta = JSON.parse(read(meta_path("class/001_c_0")))
       expect(meta["type"]).to eq("class_diagram")
     end
 
     it "leaves the type of a case that did not move" do
-      meta = JSON.parse(read(moved("class_diagram/002_c_1.mmd")
-                               .sub(/mmd\z/, "meta.json")))
+      meta = JSON.parse(read(meta_path("class_diagram/002_c_1")))
       expect(meta["type"]).to eq("class_diagram")
     end
 
@@ -110,9 +125,12 @@ RSpec.describe ApplyCaseMigration do
   end
 
   describe "verify before the merge" do
-    it "reports a case left in a merged-away directory" do
+    before do
       described_class.apply!(root: root)
       put("spec/mermaid/class/straggler.txt", "x\n")
+    end
+
+    it "reports a case left in a merged-away directory" do
       expect(described_class.verify(root: root)).to include(
         "spec/mermaid/class/straggler.txt: still in a directory that was " \
         "merged away",
@@ -146,20 +164,18 @@ RSpec.describe ApplyCaseMigration do
       commit_all("squatter")
     end
 
-    it "refuses with a conflict and writes nothing" do
-      seeded = snapshot
-      expect { described_class.apply!(root: root) }
-        .to raise_error(ApplyCaseMigration::ConflictError)
-      expect(snapshot).to eq(seeded)
-    end
+    it_behaves_like "a refusal that writes nothing",
+                    ApplyCaseMigration::ConflictError
   end
 
   describe "a manifest that sends one directory two ways" do
-    it "is refused" do
-      pairs = [["class/001_c_0.mmd", "class_diagram/x-11111111"],
-               ["class/002_c_1.mmd", "er_diagram/y-22222222"]]
-      write_manifest(pairs)
+    before do
+      write_manifest([["class/001_c_0.mmd", "class_diagram/x-11111111"],
+                      ["class/002_c_1.mmd", "er_diagram/y-22222222"]])
       commit_all("split")
+    end
+
+    it "is refused" do
       expect { described_class.plan(root: root) }
         .to raise_error(ApplyCaseMigration::ConflictError, /two ways/)
     end
