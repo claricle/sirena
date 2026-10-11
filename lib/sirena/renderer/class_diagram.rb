@@ -131,14 +131,14 @@ module Sirena
         Svg::Rect.new(
           x: svg_number(box.x), y: svg_number(box.y),
           width: svg_number(box.width), height: svg_number(box.height),
-          fill: "none", stroke: "#000000", stroke_width: "1"
+          fill: "none", stroke: theme_color(:node_stroke), stroke_width: "1"
         )
       end
 
       def scene_namespace_title(box)
         Svg::Text.new(
           x: svg_number(box.title_x), y: svg_number(box.title_y),
-          content: box.title, fill: "#000000",
+          content: box.title, fill: theme_color(:label_text),
           font_family: "Arial, sans-serif", font_size: "16",
           text_anchor: "middle"
         )
@@ -191,7 +191,8 @@ module Sirena
         Svg::Rect.new(
           x: svg_number(node.x), y: svg_number(node.y),
           width: svg_number(node.width), height: svg_number(node.height),
-          fill: "#ffffff", stroke: "#000000", stroke_width: "2",
+          fill: theme_color(:node_fill),
+          stroke: theme_color(:node_stroke), stroke_width: "2",
           rx: 3, ry: 3
         )
       end
@@ -202,7 +203,7 @@ module Sirena
           y1: svg_number(separator.y1),
           x2: svg_number(separator.x2),
           y2: svg_number(separator.y2),
-          stroke: "#000000",
+          stroke: theme_color(:node_stroke),
           stroke_width: "1",
         )
       end
@@ -212,7 +213,7 @@ module Sirena
           x: svg_number(label.x),
           y: svg_number(label.y),
           content: label.text,
-          fill: "#000000",
+          fill: theme_color(:label_text),
           font_family: label.font_family,
           font_size: svg_number(label.font_size).to_s,
           text_anchor: label.text_anchor,
@@ -238,7 +239,8 @@ module Sirena
         return scene_edge_line(section, dashed) if section.bend_points.empty?
 
         Svg::Path.new(
-          d: section_path(section), fill: "none", stroke: "#000000",
+          d: section_path(section), fill: "none",
+          stroke: theme_color(:edge_stroke),
           stroke_width: "2", stroke_dasharray: dashed ? "5,5" : nil
         )
       end
@@ -257,7 +259,7 @@ module Sirena
           y1: svg_number(section.start_point.y),
           x2: svg_number(section.end_point.x),
           y2: svg_number(section.end_point.y),
-          stroke: "#000000",
+          stroke: theme_color(:edge_stroke),
           stroke_width: "2",
           stroke_dasharray: dashed ? "5,5" : nil,
         )
@@ -267,7 +269,7 @@ module Sirena
         Svg::Polygon.new.tap do |polygon|
           polygon.points = marker.points
           polygon.fill = marker.fill
-          polygon.stroke = "#000000"
+          polygon.stroke = theme_color(:edge_stroke)
           polygon.stroke_width = "2"
         end
       end
@@ -364,7 +366,8 @@ module Sirena
         Svg::Rect.new(
           x: geometry[:x], y: geometry[:y],
           width: geometry[:width], height: geometry[:height],
-          fill: "#ffffff", stroke: "#000000", stroke_width: "2",
+          fill: theme_color(:node_fill),
+          stroke: theme_color(:node_stroke), stroke_width: "2",
           rx: 3, ry: 3
         )
       end
@@ -404,7 +407,7 @@ module Sirena
         group.children << Svg::Line.new(
           x1: x_pos, y1: separator_y,
           x2: x_pos + width, y2: separator_y,
-          stroke: "#000000", stroke_width: "1"
+          stroke: theme_color(:node_stroke), stroke_width: "1"
         )
         separator_y + 10
       end
@@ -427,7 +430,7 @@ module Sirena
       def render_stereotype(x_pos, y_pos, width, stereotype, group)
         group.children << Svg::Text.new(
           x: x_pos + (width / 2), y: y_pos,
-          content: "«#{stereotype}»", fill: "#000000",
+          content: "«#{stereotype}»", fill: theme_color(:label_text),
           font_family: "Arial, sans-serif",
           font_size: STEREOTYPE_FONT_SIZE.to_s, text_anchor: "middle"
         )
@@ -437,7 +440,8 @@ module Sirena
       def render_class_name(x_pos, y_pos, width, name, group)
         group.children << Svg::Text.new(
           x: x_pos + (width / 2), y: y_pos,
-          content: Diagram::GenericText.display(name), fill: "#000000",
+          content: Diagram::GenericText.display(name),
+          fill: theme_color(:label_text),
           font_family: "Arial, sans-serif",
           font_size: CLASS_NAME_FONT_SIZE.to_s, text_anchor: "middle",
           font_weight: "bold"
@@ -464,7 +468,7 @@ module Sirena
       def member_text(x_pos, y_pos, content)
         Svg::Text.new(
           x: x_pos + BOX_PADDING, y: y_pos, content: content,
-          fill: "#000000", font_family: "monospace",
+          fill: theme_color(:label_text), font_family: "monospace",
           font_size: MEMBER_FONT_SIZE.to_s
         )
       end
@@ -539,7 +543,7 @@ module Sirena
       def render_relationship_line(from, to, rel_type, group)
         group.children << Svg::Line.new(
           x1: from[:x], y1: from[:y], x2: to[:x], y2: to[:y],
-          stroke: "#000000", stroke_width: "2",
+          stroke: theme_color(:edge_stroke), stroke_width: "2",
           stroke_dasharray: rel_type == "dependency" ? "5,5" : nil
         )
       end
@@ -573,7 +577,7 @@ module Sirena
         Svg::Line.new(
           x1: source_point[:x], y1: source_point[:y],
           x2: target_point[:x], y2: target_point[:y],
-          stroke: "#000000", stroke_width: "2",
+          stroke: theme_color(:edge_stroke), stroke_width: "2",
           stroke_dasharray: dashed ? "5,5" : nil
         )
       end
@@ -639,7 +643,7 @@ module Sirena
         Svg::Text.new(
           x: (from[:x] + to[:x]) / 2,
           y: ((from[:y] + to[:y]) / 2) - 5,
-          content: label[:text], fill: "#000000",
+          content: label[:text], fill: theme_color(:label_text),
           font_family: "Arial, sans-serif", font_size: "11",
           text_anchor: "middle"
         )
@@ -656,7 +660,7 @@ module Sirena
         target = position == "target"
         Svg::Text.new(
           x: point[:x] + (target ? -5 : 5), y: point[:y] - 5,
-          content: label[:text], fill: "#000000",
+          content: label[:text], fill: theme_color(:label_text),
           font_family: "Arial, sans-serif", font_size: "10",
           text_anchor: target ? "end" : nil
         )
