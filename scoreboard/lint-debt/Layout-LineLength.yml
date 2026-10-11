@@ -21,6 +21,8 @@ rows:
   count: 1
 - file: spec/sirena/layout/flowchart_spec.rb
   count: 1
+- file: spec/sirena/layout/state_diagram_box_geometry_parity_spec.rb
+  count: 1
 - file: spec/sirena/parser/architecture_spec.rb
   count: 6
 - file: spec/sirena/parser/c4_spec.rb
