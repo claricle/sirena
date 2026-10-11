@@ -80,12 +80,12 @@ module Sirena
       end
 
       def apply_badge_style(rect)
-        rect.fill = "#ffffff"
+        rect.fill = theme_color(:foreground)
         rect.opacity = "0.3"
       end
 
       def apply_card_style(rect)
-        rect.fill = "#ffffff"
+        rect.fill = theme_color(:node_fill)
         rect.stroke = theme_color(:border)
         rect.stroke_width = "1"
       end
@@ -137,9 +137,9 @@ module Sirena
 
       def label_color(style)
         case style
-        when "header", "badge" then "#ffffff"
+        when "header", "badge" then theme_color(:background)
         when "metadata_label" then theme_color(:secondary)
-        else theme_color(:card_text)
+        else theme_color(:label_text)
         end
       end
 
