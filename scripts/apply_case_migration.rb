@@ -71,7 +71,7 @@ module ApplyCaseMigration
     %r{(?<=\bmermaid/|fixtures_mermaid/)[a-z0-9_]+(?![\w-])}
   CASE_META = %r{\A#{Regexp.escape(CORPUS)}/([a-z0-9_]+)/[^/]+\.meta\.json\z}
   TOOLING = %r{\A(?:scripts/(?:apply_case_migration|corpus_case_\w+)\.rb|
-                  spec/scripts/(?:apply_case_migration|corpus_case_\w+)_spec\.rb)\z}x
+                  spec/scripts/(?:apply_case_migration|corpus_case_)\w*\.rb)\z}x
 
   # One old->new case: its old and new type directory, and the old and new
   # file stem.
@@ -323,9 +323,14 @@ module ApplyCaseMigration
         group.map(&:new_type).uniq
       end
       split = targets.select { |_, dirs| dirs.length > 1 }.keys
-      raise ConflictError, "directories moved two ways: #{split.join(', ')}" if
-        split.any?
+      unless split.empty?
+        raise ConflictError, "directories moved two ways: #{split.join(', ')}"
+      end
 
+      reject_merged_targets(pairs, targets)
+    end
+
+    def reject_merged_targets(pairs, targets)
       merged = targets.reject { |type, dirs| dirs == [type] }.keys
       kept = merged & pairs.map(&:new_type)
       return if kept.empty?
@@ -334,7 +339,8 @@ module ApplyCaseMigration
                            "#{kept.join(', ')}"
     end
 
-    private_class_method :pair, :reject_twice, :reject_split_directories
+    private_class_method :pair, :reject_twice, :reject_split_directories,
+                         :reject_merged_targets
   end
 
   # The files a run looks at, and whether git considers the tree clean.
@@ -355,15 +361,19 @@ module ApplyCaseMigration
       )
       raise Error, "git ls-files failed in #{root}" unless status.success?
 
-      out.split("\0").uniq.reject { |file| file == MANIFEST || TOOLING.match?(file) }
+      out.split("\0").uniq.reject { |file| out_of_scope?(file) }
         .select { |file| plain_file?(File.join(root, file)) }
+    end
+
+    def out_of_scope?(file)
+      file == MANIFEST || TOOLING.match?(file)
     end
 
     def plain_file?(full)
       File.file?(full) && !File.symlink?(full)
     end
 
-    private_class_method :plain_file?
+    private_class_method :plain_file?, :out_of_scope?
   end
 
   # Rewrites the old names in one file's bytes. A name found in a path with
@@ -398,15 +408,17 @@ module ApplyCaseMigration
 
     def collect_names
       @bytes.to_enum(:scan, TOKEN).map { Regexp.last_match }.each do |match|
-        name = match[0]
-        next unless @catalog.base?(name)
-
-        pair = pair_for(name, match.begin(0))
-        next left_alone(name, match.begin(0)) unless pair
-
-        edit(match.begin(0), name.length, pair.new_base)
-        rename_directory(pair, match.begin(0))
+        rename(match) if @catalog.base?(match[0])
       end
+    end
+
+    def rename(match)
+      name = match[0]
+      pair = pair_for(name, match.begin(0))
+      return left_alone(name, match.begin(0)) unless pair
+
+      edit(match.begin(0), name.length, pair.new_base)
+      rename_directory(pair, match.begin(0))
     end
 
     def collect_directories
@@ -526,7 +538,9 @@ module ApplyCaseMigration
         next unless catalog.base?(stem)
 
         pair = catalog.resolve_in(stem, File.dirname(file).split("/"))
-        pair ? moves << [file, target(file, pair, rest, catalog)] : stranded << file
+        next stranded << file unless pair
+
+        moves << [file, target(file, pair, rest, catalog)]
       end
       [moves, stranded, left_behind(files, moves, catalog)]
     end
@@ -592,7 +606,8 @@ module ApplyCaseMigration
 
     def directories(files, catalog)
       files.filter_map do |file|
-        next unless Moves.redirect(File.dirname(file), catalog) != File.dirname(file)
+        dir = File.dirname(file)
+        next if Moves.redirect(dir, catalog) == dir
 
         "#{file}: still in a directory that was merged away"
       end
@@ -653,11 +668,13 @@ module ApplyCaseMigration
 
     def call(root, plan)
       plan.rewrites.each { |file, entry| replace(root, file, entry[:text]) }
-      plan.moves.each do |from, to|
-        FileUtils.mkdir_p(File.dirname(File.join(root, to)))
-        File.rename(File.join(root, from), File.join(root, to))
-      end
+      plan.moves.each { |from, to| move(root, from, to) }
       remove_emptied(root, plan.moves.map { |from, _| File.dirname(from) })
+    end
+
+    def move(root, from, to)
+      FileUtils.mkdir_p(File.dirname(File.join(root, to)))
+      File.rename(File.join(root, from), File.join(root, to))
     end
 
     # A merged-away directory must not linger as an empty type directory.
@@ -680,7 +697,7 @@ module ApplyCaseMigration
       end
     end
 
-    private_class_method :replace, :remove_emptied
+    private_class_method :replace, :move, :remove_emptied
   end
 
   # Text of a plan for people.
@@ -839,7 +856,9 @@ module ApplyCaseMigration
   end
 
   def unmoved(files)
-    files.map { |file| "#{file} (in a directory being merged, not a manifest case)" }
+    files.map do |file|
+      "#{file} (in a directory being merged, not a manifest case)"
+    end
   end
 
   def refuse(plan)
