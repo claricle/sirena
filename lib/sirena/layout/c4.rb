@@ -84,10 +84,24 @@ module Sirena
       TITLE_Y = 30
       TITLE_FONT_SIZE = 16
       SMALL_FONT_SIZE = 12
+      MIDDLE_BASELINE_EMS = 0.35
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
         attribute :y, :float
+      end
+
+      class Circle < Lutaml::Model::Serializable
+        attribute :cx, :float
+        attribute :cy, :float
+        attribute :radius, :float
+      end
+
+      class Ellipse < Lutaml::Model::Serializable
+        attribute :cx, :float
+        attribute :cy, :float
+        attribute :radius_x, :float
+        attribute :radius_y, :float
       end
 
       class Label < Lutaml::Model::Serializable
@@ -99,7 +113,6 @@ module Sirena
         attribute :font_size, :float
         attribute :font_weight, :string
         attribute :font_style, :string
-        attribute :baseline, :string
         attribute :text_anchor, :string
       end
 
@@ -122,8 +135,9 @@ module Sirena
         attribute :shape, :string
         attribute :outline, :string
         attribute :rim, :string
-        attribute :head_center, Point
-        attribute :body_center, Point
+        attribute :corner_radius, :float
+        attribute :head, Circle
+        attribute :body, Ellipse
         attribute :children, Node, collection: true, default: -> { [] }
       end
 
@@ -364,9 +378,15 @@ module Sirena
           shape: shape, **shape_paths(node, shape),
           labels: positioned_node_labels(node),
           stereotype: positioned_stereotype(node, kind),
-          head_center: person_head(node, kind),
-          body_center: person_body(node, kind)
+          corner_radius: corner_radius(kind),
+          head: person_head(node, kind), body: person_body(node, kind)
         )
+      end
+
+      def corner_radius(kind)
+        return 8 if kind == "boundary"
+
+        kind == "person" ? 10 : 5
       end
 
       def shape_paths(node, shape)
@@ -395,10 +415,12 @@ module Sirena
       end
 
       def node_label(label, node)
+        font_size = label[:font_size]
+        y_coord = node[:y] + label[:offset]
         Label.new(
           **label_measurements(label), **label_style(label),
-          x: node[:x] + (node[:width] / 2.0), y: node[:y] + label[:offset],
-          baseline: "middle"
+          x: node[:x] + (node[:width] / 2.0),
+          y: middle_baseline_y(y_coord, font_size)
         )
       end
 
@@ -437,12 +459,16 @@ module Sirena
         return unless kind == "person" && node[:x] && node[:y]
 
         top = node[:y] + node.dig(:metadata, :image_offset)
-        Point.new(x: node[:x] + (node[:width] / 2.0), y: top + 14)
+        Circle.new(cx: node[:x] + (node[:width] / 2.0), cy: top + 14,
+                   radius: 10)
       end
 
       def person_body(node, kind)
         head = person_head(node, kind)
-        Point.new(x: head.x, y: head.y + 22) if head
+        return unless head
+
+        Ellipse.new(cx: head.cx, cy: head.cy + 22,
+                    radius_x: 18, radius_y: 12)
       end
 
       def typed_edges(edges, nodes)
@@ -549,13 +575,19 @@ module Sirena
       end
 
       def relationship_label(label, from, to, index)
+        y_coord = relationship_label_y(from, to, index)
         Label.new(
           **label_measurements(label),
-          x: (from.x + to.x) / 2.0, y: relationship_label_y(from, to, index),
-          font_size: small_font_size, baseline: "middle",
+          x: (from.x + to.x) / 2.0,
+          y: middle_baseline_y(y_coord, small_font_size),
+          font_size: small_font_size,
           font_style: index.zero? ? "normal" : "italic",
-          text_anchor: "middle"
+          text_anchor: "middle",
         )
+      end
+
+      def middle_baseline_y(y_coord, font_size)
+        (y_coord + (font_size * MIDDLE_BASELINE_EMS)).round(4)
       end
 
       def relationship_label_y(from, to, index)
