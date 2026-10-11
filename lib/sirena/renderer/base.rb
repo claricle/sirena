@@ -234,8 +234,8 @@ module Sirena
 
       def default_node_style
         Svg::Style.new.tap do |style|
-          style.fill = theme_color(:node_fill) || "#ffffff"
-          style.stroke = theme_color(:node_stroke) || "#000000"
+          style.fill = default_style_color(:node_fill)
+          style.stroke = default_style_color(:node_stroke)
           style.stroke_width = (theme_shape(:stroke_width) || 2).to_s
         end
       end
@@ -243,19 +243,25 @@ module Sirena
       def default_edge_style
         Svg::Style.new.tap do |style|
           style.fill = "none"
-          style.stroke = theme_color(:edge_stroke) || "#000000"
+          style.stroke = default_style_color(:edge_stroke)
           style.stroke_width = (theme_shape(:stroke_width) || 2).to_s
         end
       end
 
       def default_text_style
         Svg::Style.new.tap do |style|
-          style.fill = theme_color(:label_text) || "#000000"
+          style.fill = default_style_color(:label_text)
           style.font_family =
             theme_typography(:font_family) || "Arial, sans-serif"
           style.font_size = (theme_typography(:font_size_normal) || 14).to_s
           style.text_anchor = "middle"
         end
+      end
+
+      def default_style_color(property)
+        return theme_color(property) if theme
+
+        Theme::Registry.get(:default).colors.public_send(property)
       end
 
       # Creates an SVG path data string from bend points.
