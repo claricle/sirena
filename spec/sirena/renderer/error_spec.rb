@@ -4,11 +4,17 @@ require "spec_helper"
 require "sirena/renderer/error"
 
 RSpec.describe Sirena::Renderer::Error do
-  subject(:svg) { described_class.new.render(message: message) }
+  subject(:svg) { described_class.new.render(scene) }
 
   let(:message) { "Dependency missing" }
+  let(:scene) { Sirena::Layout::Error.from_graph({ message: message }) }
   let(:dark) { Sirena::Theme::Registry.get(:dark) }
-  let(:themed) { described_class.new(theme: dark).render(message: message) }
+  let(:themed) do
+    dark_scene = Sirena::Layout::Error.from_graph(
+      { message: message }, theme: dark
+    )
+    described_class.new(theme: dark).render(dark_scene)
+  end
   let(:theme_colors) do
     [dark.colors.surface, dark.colors.error, dark.colors.edge_stroke,
      dark.colors.background]
@@ -19,10 +25,24 @@ RSpec.describe Sirena::Renderer::Error do
   end
 
   it "falls back to the default error message" do
-    default_svg = described_class.new.render(message: nil)
+    default_scene = Sirena::Layout::Error.from_graph({ message: nil })
+    default_svg = described_class.new.render(default_scene)
     label = default_svg.children.grep(Sirena::Svg::Text).first
 
     expect(Array(label.content).join).to eq("Error")
+  end
+
+  it "requires final typed Scene input" do
+    expect do
+      described_class.new.render(message: message)
+    end.to raise_error(NoMethodError)
+  end
+
+  it "copies supplied icon geometry without manufacturing defaults" do
+    scene.icon.x = 17
+
+    ring = children_of(Sirena::Svg::Circle).first
+    expect(ring.cx).to eq(17.0)
   end
 
   it "uses semantic colors from the active theme" do
