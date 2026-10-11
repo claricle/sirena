@@ -37,7 +37,9 @@ module Sirena
 
       def scene_from_graph(graph, positioned: false)
         nodes = graph[:children] || []
-        legend = UserJourneyLegend.new(graph_actor_names(nodes))
+        legend = UserJourneyLegend.new(
+          graph_actor_names(nodes), font_size: journey_large_font_size
+        )
         left = legend.left_margin
         boxes = task_boxes(nodes, left, positioned)
         frame = frame_size(left, boxes, legend.rows.length, graph)
@@ -160,7 +162,7 @@ module Sirena
         lines.each_with_index.map do |line, offset|
           UserJourney::Label.new(
             text: line, x: 50, y: row_y + 7 + (offset * 20),
-            font_size: UserJourneyLegend::FONT_SIZE, style: "legend"
+            font_size: journey_large_font_size, style: "legend"
           )
         end
       end
@@ -242,12 +244,27 @@ module Sirena
       def centered_label(text, centre, shift, fill)
         UserJourney::Label.new(
           text: text, x: centre[0], y: centre[1] + shift,
-          font_size: TEXT_SIZE, text_anchor: "middle", fill: fill
+          font_size: journey_normal_font_size,
+          text_anchor: "middle", fill: fill
         )
       end
 
       def line_shift(offset, count)
-        (offset * TEXT_SIZE) - (TEXT_SIZE * (count - 1) / 2.0)
+        size = journey_normal_font_size
+        (offset * size) - (size * (count - 1) / 2.0)
+      end
+
+      def journey_large_font_size
+        theme_font_size(:font_size_large, UserJourneyLegend::FONT_SIZE)
+      end
+
+      def journey_normal_font_size
+        theme_font_size(:font_size_normal, TEXT_SIZE)
+      end
+
+      def theme_font_size(role, fallback)
+        value = theme.typography&.public_send(role)
+        value&.positive? ? value : fallback
       end
 
       def typed_tasks(nodes, boxes, runs, legend)
