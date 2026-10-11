@@ -105,12 +105,15 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
     expect(builder.cluster_margins(source).first(2)).to all(be >= 37.5)
   end
 
-  it "keeps compact padding when an edge crosses the cluster boundary" do
+  it "uses the reference side padding when an edge crosses the cluster boundary" do
     boxes = [node("x"), subgraph("s", [node("a"), node("b")])]
     graph = level_graph("DOWN", boxes, [%w[x a], %w[a b]])
     cluster = member(placed(graph), "s")
 
-    expect(box_margins(cluster)).to match(compact_padding)
+    expect(box_margins(cluster)).to match(
+      [be_within(1.0).of(35), be_within(1.0).of(35),
+       be_within(0.01).of(25), be_within(0.01).of(25)],
+    )
   end
 
   it "keeps compact padding around a leaf cluster nested inside another" do

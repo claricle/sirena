@@ -26,6 +26,8 @@ module Sirena
         PAGE_MARGIN = 8.0
         CLUSTER_PADDING = 20.0
         CLUSTER_SIDE = 8.0
+        EXTERNAL_CLUSTER_SIDE = 35.0
+        NESTED_CLUSTER_SIDE = 37.5
         CLUSTER_VERTICAL = 25.0
         INDEPENDENT_CLUSTER_PADDING = 37.5
         MIRRORED_X = [Base::DIRECTION_LEFT].freeze
@@ -134,10 +136,22 @@ module Sirena
         end
 
         def cluster_padding(cluster, contents, top_level)
-          independent = !@level_edges.external?(cluster[:id])
-          leaf = contents.none? { |box| cluster?(box) }
-          if top_level && leaf && independent
-            return [INDEPENDENT_CLUSTER_PADDING] * 2
+          return external_cluster_padding(top_level) if @level_edges.external?(cluster[:id])
+          return [CLUSTER_SIDE, CLUSTER_VERTICAL] unless top_level
+
+          top_level_independent_padding(contents)
+        end
+
+        def external_cluster_padding(top_level)
+          side = top_level ? EXTERNAL_CLUSTER_SIDE : NESTED_CLUSTER_SIDE
+          [side, CLUSTER_VERTICAL]
+        end
+
+        def top_level_independent_padding(contents)
+          nested = contents.select { |box| cluster?(box) }
+          return [INDEPENDENT_CLUSTER_PADDING] * 2 if nested.empty?
+          if nested.all? { |box| (box[:children] || []).one? }
+            return [INDEPENDENT_CLUSTER_PADDING, CLUSTER_VERTICAL]
           end
 
           [CLUSTER_SIDE, CLUSTER_VERTICAL]
