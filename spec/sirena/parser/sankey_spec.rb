@@ -84,11 +84,11 @@ RSpec.describe Sirena::Parser::Sankey, :aggregate_failures do
       expect(diagram.flows[0].target).to eq("node_2")
     end
 
-    it "parses the fixture file" do
+    it "parses __proto__ as an ordinary node name" do
       source = <<~SANKEY
         sankey-beta
               __proto__,A,0.597
-              A,__proto__,0.403
+              B,__proto__,0.403
       SANKEY
 
       diagram = parser.parse(source)
@@ -97,7 +97,7 @@ RSpec.describe Sirena::Parser::Sankey, :aggregate_failures do
       expect(diagram.flows[0].source).to eq("__proto__")
       expect(diagram.flows[0].target).to eq("A")
       expect(diagram.flows[0].value).to eq(0.597)
-      expect(diagram.flows[1].source).to eq("A")
+      expect(diagram.flows[1].source).to eq("B")
       expect(diagram.flows[1].target).to eq("__proto__")
       expect(diagram.flows[1].value).to eq(0.403)
     end
