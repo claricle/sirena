@@ -20,6 +20,8 @@ RSpec.describe MermaidReferenceGenerator do
   let(:detector) { ->(source) { source.lines.first.strip.to_sym } }
   let(:target_paths) do
     %w[spec/fixtures_mermaid/class_diagram/class_case.svg
+       spec/fixtures_mermaid/er_diagram/er_case.svg
+       spec/fixtures_mermaid/flowchart/flowchart_case.svg
        spec/fixtures_mermaid/gantt/gantt_case.svg
        spec/fixtures_mermaid/gitgraph/git_case.svg]
   end
@@ -96,6 +98,8 @@ RSpec.describe MermaidReferenceGenerator do
 
   def seed_targets
     seed_case("class_diagram/class_case.mmd", "class_diagram\nbody\n")
+    seed_case("er/er_case.mmd", "er_diagram\nbody\n")
+    seed_case("unknown/flowchart_case.mmd", "flowchart\nbody\n")
     seed_case("gantt/gantt_case.mmd", "gantt\nbody\n")
     seed_case("git/git_case.mmd", "git_graph\nbody\n")
     seed_case("pie/ignored.mmd", "pie\nbody\n")

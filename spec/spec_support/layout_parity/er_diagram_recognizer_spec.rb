@@ -33,6 +33,17 @@ RSpec.describe SpecSupport::LayoutParity::ErDiagramRecognizer do
     SVG
   end
 
+  let(:root_prefixed_reference) do
+    <<~SVG
+      <svg id="oracle" viewBox="0 0 30 10">
+        <g class="node default" id="oracle-entity-ORDER-ITEM-2026-17">
+          <rect width="10" height="10"/>
+          <text>Order item</text>
+        </g>
+      </svg>
+    SVG
+  end
+
   let(:ordinal_expected) do
     [[:entity, "ORDER-ITEM-2026", nil, "Order item"]]
   end
@@ -62,6 +73,10 @@ RSpec.describe SpecSupport::LayoutParity::ErDiagramRecognizer do
     actual = [recognized(ordinal_reference), recognized(ordinal_render)]
     expected = [[ordinal_expected] * 2, []]
     expect([actual, recognizer.container_kinds]).to eq(expected)
+  end
+
+  it "normalizes the actual reference root id prefix" do
+    expect(recognized(root_prefixed_reference)).to eq(ordinal_expected)
   end
 
   it "recognizes the same entities and normalized labels in a real pair" do
