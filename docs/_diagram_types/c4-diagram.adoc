@@ -437,7 +437,7 @@ The C4 rendering pipeline:
 * Layout is a fallback grid, not the hierarchical ELK layout this page previously described
 // BEGIN GENERATED: rake docs:compatibility c4
 * Oracle-valid corpus coverage: `11/11 passing (100.0%)`.
-* Outside the compatibility denominator: 22/22 `artifact` cases currently render; 9/14 `invalid` cases currently render.
+* Outside the compatibility denominator: 16/22 `artifact` cases currently render; 1/14 `invalid` cases currently render.
 * Generated from `scoreboard/corpus.json` by `bundle exec rake docs:compatibility`.
 // END GENERATED: rake docs:compatibility c4
 

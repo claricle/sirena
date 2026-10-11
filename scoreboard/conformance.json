@@ -12,18 +12,6 @@
     "status": "conformant"
   },
   {
-    "case": "architecture/architecture_spec-5d965f8d.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "architecture/architecture_spec-8afbb5a2.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "architecture/architecture_spec-ae158359.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "architecture/architecture_spec-ef15d347.mmd",
     "status": "conformant"
   },
@@ -1600,10 +1588,6 @@
     "status": "conformant"
   },
   {
-    "case": "error/errordiagram_spec-34805ce6.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "error/errordiagram_spec-3a94a3a8.mmd",
     "status": "conformant"
   },
@@ -2172,10 +2156,6 @@
     "status": "conformant"
   },
   {
-    "case": "flowchart/flow_text_spec-1e40cec6.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "flowchart/flow_text_spec-2ba8a9cf.mmd",
     "status": "conformant"
   },
@@ -2221,10 +2201,6 @@
   },
   {
     "case": "flowchart/flow_text_spec-66271020.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "flowchart/flow_text_spec-6c2697c9.mmd",
     "status": "conformant"
   },
   {
@@ -2296,15 +2272,7 @@
     "status": "conformant"
   },
   {
-    "case": "flowchart/flow_text_spec-b7613af6.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "flowchart/flow_text_spec-c87388a9.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "flowchart/flow_text_spec-cbaf90b9.mmd",
     "status": "conformant"
   },
   {
@@ -2341,10 +2309,6 @@
   },
   {
     "case": "flowchart/flow_text_spec-e06b1eca.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "flowchart/flow_text_spec-e500bc56.mmd",
     "status": "conformant"
   },
   {
@@ -3116,10 +3080,6 @@
     "status": "conformant"
   },
   {
-    "case": "info/info_spec-9a1bf395.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "info/info_spec-e8bdfd49.mmd",
     "status": "conformant"
   },
@@ -3153,14 +3113,6 @@
   },
   {
     "case": "info/should_handle_an_info_definition_with_showinfo-947a3fbd.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "info/should_throw_because_of_unsupported_info_grammar-04542f46.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "info/should_throw_because_of_unsupported_info_grammar-951f438a.mmd",
     "status": "conformant"
   },
   {
@@ -3328,26 +3280,6 @@
     "status": "conformant"
   },
   {
-    "case": "mindmap/config_spec-13ea20a0.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "mindmap/config_spec-a8c9cb63.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "mindmap/diagram_orchestration_spec-2a42239f.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "mindmap/diagram_orchestration_spec-8382c44f.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "mindmap/diagram_orchestration_spec-956735de.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "mindmap/diagram_orchestration_spec-e4d24522.mmd",
     "status": "conformant"
   },
@@ -3377,10 +3309,6 @@
   },
   {
     "case": "mindmap/mindmap_spec-53ca5724.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "mindmap/mindmap_spec-57ff3c5e.mmd",
     "status": "conformant"
   },
   {
@@ -3544,10 +3472,6 @@
     "status": "conformant"
   },
   {
-    "case": "pie/darshan-af04f5f1.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "pie/diagram_orchestration_spec-bea79c10.mmd",
     "status": "conformant"
   },
@@ -3565,10 +3489,6 @@
   },
   {
     "case": "pie/pie_spec-87ee3921.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "pie/pie_spec-8a2744c7.mmd",
     "status": "conformant"
   },
   {
@@ -3652,23 +3572,11 @@
     "status": "conformant"
   },
   {
-    "case": "pie/pie_test-993abc75.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "pie/pie_test-9ab8dc76.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "pie/pie_test-aa5adfc7.mmd",
     "status": "conformant"
   },
   {
     "case": "pie/pie_test-ab56dfdf.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "pie/pie_test-c695eeb1.mmd",
     "status": "conformant"
   },
   {
@@ -3708,14 +3616,6 @@
     "status": "conformant"
   },
   {
-    "case": "pie/should_handle_simple_pie_with_negative_decimal-4d099601.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "pie/should_handle_simple_pie_with_negative_slice_val-63fbc639.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "pie/should_handle_simple_pie_with_positive_decimal-c85e4e82.mmd",
     "status": "conformant"
   },
@@ -3736,10 +3636,6 @@
     "status": "conformant"
   },
   {
-    "case": "pie/theme_spec-a9670f7e.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "quadrant/quadrant_chart-579fb996.mmd",
     "status": "conformant"
   },
@@ -3757,10 +3653,6 @@
   },
   {
     "case": "quadrant/quadrantchart_spec-e41f4821.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "quadrant/should_be_able_to_handle_constructor_as_a_classn-0901aef7.mmd",
     "status": "conformant"
   },
   {
@@ -3929,10 +3821,6 @@
   },
   {
     "case": "requirement/will_use_a_accessibility_title_and_description_a-3638a406.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "sankey/parses_csv_with_sankey_beta_syntax-ac5bf38a.mmd",
     "status": "conformant"
   },
   {
@@ -4209,10 +4097,6 @@
   },
   {
     "case": "sequence/sequencediagram_spec-8f6b7361.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "sequence/sequencediagram_spec-97601112.mmd",
     "status": "conformant"
   },
   {
@@ -4713,10 +4597,6 @@
   },
   {
     "case": "unknown/css1-f611168c.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "unknown/darshan-af04f5f1.mmd",
     "status": "conformant"
   },
   {

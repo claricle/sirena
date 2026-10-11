@@ -107,7 +107,7 @@ artifacts and cases mmdc rejects are excluded from the denominator.
 
 |ER Diagram
 |`erDiagram`
-|14/14
+|15/15
 |100.0%
 
 |Error Diagram
