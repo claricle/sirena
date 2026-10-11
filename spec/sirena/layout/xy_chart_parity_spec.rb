@@ -21,8 +21,7 @@ RSpec.describe Sirena::Layout::XyChart do
 
   it "meets the geometry contract for every recognized series mark" do
     expect(parity_summary).to match(
-      [13, [], [(be <= 0.08), (be <= 0.15),
-                (be <= 0.15), (be <= 0.15)]],
+      [13, [], Array.new(4) { be <= 0.001 }],
     )
   end
 end
