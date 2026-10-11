@@ -53,6 +53,8 @@ module Sirena
     CONTENT_REGION_SELECTOR = "main"
     SEARCH_INDEX_PATH = "assets/js/search-data.json"
     REQUIRED_DIAGRAM_PERMALINK = "/:collection/:path/"
+    GENERATED_EXAMPLES_PAGE = "diagram_types/flowchart/index.html"
+    GENERATED_EXAMPLES_MARKER = "Example 1: Basic Flowchart"
 
     # A thin wrapper over Nokogiri::HTML5 -- a real DOM parser -- that
     # returns every tag on a page as { name:, attrs: }, with the CONTENT of
@@ -467,7 +469,20 @@ module Sirena
 
     # R12-R16
     def a3_document_content(pages)
-      diagram_pages(pages).flat_map { |page| content_failures_for(page) }
+      rendered_diagram_pages = diagram_pages(pages)
+      rendered_diagram_pages.flat_map { |page| content_failures_for(page) } +
+        generated_examples_failures(rendered_diagram_pages)
+    end
+
+    def generated_examples_failures(pages)
+      page = pages.find do |candidate|
+        candidate.rel_path == GENERATED_EXAMPLES_PAGE
+      end
+      return [] unless page
+      return [] if page.rendered_text.include?(GENERATED_EXAMPLES_MARKER)
+
+      ["content: #{GENERATED_EXAMPLES_PAGE} omits generated " \
+       "Flowchart examples"]
     end
 
     # Both halves are required and neither implies the other. A page can
