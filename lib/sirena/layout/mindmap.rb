@@ -21,12 +21,20 @@ module Sirena
 
       # Distance from a node's centre at which an edge starts or ends.
       EDGE_INSET = 15.0
+      LABEL_LINE_PITCH = 1.2
+
+      class LabelLine < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+      end
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
         attribute :x, :float
         attribute :y, :float
         attribute :font_size, :float
+        attribute :lines, LabelLine, collection: true, default: -> { [] }
       end
 
       class Node < Lutaml::Model::Serializable
@@ -161,9 +169,19 @@ module Sirena
 
       def node_label(node, geometry)
         lines = node[:lines]
+        x = geometry[:center_x]
+        y = label_baseline(node, geometry) - first_line_lift(lines)
         Label.new(text: lines.join("\n"), x: geometry[:center_x],
-                  y: label_baseline(node, geometry) - first_line_lift(lines),
-                  font_size: MindmapNodeSize::FONT_SIZE.to_f)
+                  y: y, font_size: layout_font_size,
+                  lines: positioned_label_lines(lines, x, y))
+      end
+
+      def positioned_label_lines(lines, label_x, first_y)
+        lines.each_with_index.map do |line, index|
+          text = index == lines.length - 1 ? line : "#{line} "
+          LabelLine.new(text: text, x: label_x,
+                        y: (first_y + (index * label_line_pitch)).round(4))
+        end
       end
 
       def label_baseline(node, geometry)
@@ -174,7 +192,11 @@ module Sirena
 
       # Lifts the first line so a stack of lines stays centred on the node.
       def first_line_lift(lines)
-        (lines.length - 1) * MindmapNodeSize::FONT_SIZE * 0.6
+        (lines.length - 1) * label_line_pitch / 2
+      end
+
+      def label_line_pitch
+        layout_font_size * LABEL_LINE_PITCH
       end
 
       def typed_edges(connections, nodes)
@@ -359,7 +381,24 @@ module Sirena
       # @param node [IR::Node] node
       # @return [Hash] :width, :height, :lines
       def node_size(node)
-        @sizes[node.id] ||= MindmapNodeSize.call(node.label, node.role)
+        @sizes[node.id] ||= MindmapNodeSize.call(
+          node.label, node.role,
+          font_size: layout_font_size, line_height: layout_line_height
+        )
+      end
+
+      def layout_font_size
+        positive_metric(theme.typography&.font_size_large) ||
+          MindmapNodeSize::FONT_SIZE.to_f
+      end
+
+      def layout_line_height
+        positive_metric(theme.typography&.line_height) ||
+          MindmapNodeSize::LINE_HEIGHT_RATIO
+      end
+
+      def positive_metric(value)
+        value if value.is_a?(Numeric) && value.finite? && value.positive?
       end
 
       def level_for(node)
