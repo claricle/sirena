@@ -78,16 +78,20 @@ module Sirena
         delta_y = FRAME - top_edge(scene)
         scene.cards.each { |card| card.shift(delta_x, delta_y) }
         scene.axis.shift(delta_x, delta_y)
-        scene.title_x += delta_x
-        scene.title_y += delta_y
+        move_title(scene, delta_x, delta_y)
         size(scene)
+      end
+
+      def move_title(scene, delta_x, delta_y)
+        scene.title_x = TimelineRounding.tidy(scene.title_x + delta_x)
+        scene.title_y = TimelineRounding.tidy(scene.title_y + delta_y)
       end
 
       def size(scene)
         width = scene.axis.x2 + FRAME
         height = bottom_edge(scene) + FRAME
-        scene.width = width.round(4)
-        scene.height = height.round(4)
+        scene.width = TimelineRounding.tidy(width)
+        scene.height = TimelineRounding.tidy(height)
         scene.view_box = "0 0 #{scene.width} #{scene.height}"
         scene
       end

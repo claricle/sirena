@@ -109,7 +109,7 @@
       <path class="node-bkg" fill="#ffff78" d="M700 489.2 v-55.4 q0,-5 5,-5 h180 q5,0 5,5 v60.4 H700 Z"/>
       <line class="node-line" stroke="#ababff" stroke-width="3" x1="700.0" y1="494.2" x2="890.0" y2="494.2"/>
     </g>
-    <text fill="#000000" x="795.0" y="459.8" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16"><tspan x="795.0">Java and JavaScript</tspan><tspan x="795.0" y="477.40000000000003">released</tspan></text>
+    <text fill="#000000" x="795.0" y="459.8" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16"><tspan x="795.0">Java and JavaScript</tspan><tspan x="795.0" y="477.4">released</tspan></text>
   </g>
 </g>
 <g>
@@ -140,7 +140,7 @@
       <path class="node-bkg" fill="#d7ff86" d="M900 489.2 v-55.4 q0,-5 5,-5 h180 q5,0 5,5 v60.4 H900 Z"/>
       <line class="node-line" stroke="#d0b9ff" stroke-width="3" x1="900.0" y1="494.2" x2="1090.0" y2="494.2"/>
     </g>
-    <text fill="#000000" x="995.0" y="459.8" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16"><tspan x="995.0">Go language</tspan><tspan x="995.0" y="477.40000000000003">released</tspan></text>
+    <text fill="#000000" x="995.0" y="459.8" text-anchor="middle" font-family="Trebuchet MS, Verdana, Arial, sans-serif" font-size="16"><tspan x="995.0">Go language</tspan><tspan x="995.0" y="477.4">released</tspan></text>
   </g>
 </g>
 <g class="taskWrapper">
