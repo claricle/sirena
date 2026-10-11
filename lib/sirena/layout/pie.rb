@@ -272,7 +272,7 @@ module Sirena
       end
 
       def segment_values(data)
-        data.values.select { |value| value.role == "segment" }
+        data.values.select { |value| value.role == "segment" }.uniq(&:label)
       end
 
       def segment_total(segments)
