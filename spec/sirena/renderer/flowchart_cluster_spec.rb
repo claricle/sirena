@@ -985,8 +985,10 @@ RSpec.describe Sirena::Engine do
         source = cluster("s", x: 0.0, y: 0.0, width: 0.0, height: 0.0)
         target = cluster("t", x: offset, y: offset, width: 0.0, height: 0.0)
 
+        serialized_offset = offset.round(2)
+        expected = [[0.0, 0.0], [serialized_offset, serialized_offset]]
         expect(path_points(path_of(graph_between(source, target), "s_to_t")))
-          .to eq([[0.0, 0.0], [offset, offset]]), "offset #{offset}"
+          .to eq(expected), "offset #{offset}"
       end
     end
 
