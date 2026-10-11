@@ -422,8 +422,7 @@ module Sirena
       end
 
       def line_height
-        multiplier = typography_value(:line_height) || 1.5
-        font_size(:font_size_small, 12) * multiplier
+        font_size(:font_size_small, 12)
       end
 
       def font_size(name, fallback)
