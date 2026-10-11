@@ -9,6 +9,8 @@ rows:
   count: 7
 - file: lib/sirena/layout/flowchart/edge_router.rb
   count: 5
+- file: lib/sirena/layout/state_diagram.rb
+  count: 3
 - file: scripts/corpus_sweep.rb
   count: 4
 - file: scripts/corpus_verdicts.rb
