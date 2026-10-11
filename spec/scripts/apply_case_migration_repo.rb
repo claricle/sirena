@@ -156,7 +156,7 @@ module ApplyCaseMigrationMergeRepo
     end
     pairs.each { |pair| pair["old"] = old_case_for(pair["old"]) }
     put("config/corpus_case_migration.json",
-        "#{JSON.pretty_generate("version" => 1, "pairs" => pairs)}\n")
+        "#{JSON.pretty_generate('version' => 1, 'pairs' => pairs)}\n")
   end
 
   def write_merge_corpus(dir)
