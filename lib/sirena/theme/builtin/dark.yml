@@ -64,6 +64,13 @@ colors:
     - "#969696"
     - "#fbbf24"
     - "#d4d4d4"
+  mindmap_palette:
+    - "#3794ff"
+    - "#858585"
+    - "#4ec9b0"
+    - "#f48771"
+    - "#89d185"
+    - "#9cdcfe"
   pie_palette:
     - "#3794ff"
     - "#4ec9b0"
@@ -88,6 +95,15 @@ colors:
     - "#969696"
     - "#fbbf24"
     - "#d4d4d4"
+  quadrant_palette:
+    - "#2d2d30"
+    - "#3e3e42"
+    - "#404040"
+    - "#505050"
+  requirement_risk_palette:
+    - "#f48771"
+    - "#dcdcaa"
+    - "#89d185"
   xy_palette:
     - "#3794ff"
     - "#858585"
@@ -138,6 +154,11 @@ colors:
     - "#d4d4d4"
     - "#d4d4d4"
     - "#d4d4d4"
+  treemap_palette:
+    - "#2d2d30"
+    - "#3e3e42"
+    - "#404040"
+    - "#505050"
 
 typography:
   font_family: "Arial, Helvetica, sans-serif"

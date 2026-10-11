@@ -266,16 +266,11 @@ module Sirena
       # @param level [Integer] depth in the tree
       # @return [String] color value
       def level_color(level)
-        colors = [
-          theme_color(:primary) || "#2563eb",
-          theme_color(:secondary) || "#7c3aed",
-          theme_color(:accent) || "#db2777",
-          "#ea580c",
-          "#16a34a",
-          "#0891b2",
-        ]
-
-        colors[(level || 0) % colors.length]
+        colors = theme&.colors
+        palette = colors&.mindmap_palette
+        colors = Theme::Registry.get(:default).colors if palette.nil? ||
+          palette.empty?
+        colors.palette(:mindmap, level || 0)
       end
 
       # Lightens a color by a given factor.

@@ -43,7 +43,7 @@ colors:
   xy_axis_line: "#000000"
   xy_grid_line: "#e5e7eb"
 
-  # Categorical palettes: same in every theme, indexed modulo length.
+  # Categorical palettes are indexed modulo length.
   flow_palette:
     - "#4472C4"
     - "#ED7D31"
@@ -64,6 +64,13 @@ colors:
     - "#4f46e5"
     - "#c026d3"
     - "#dc2626"
+  mindmap_palette:
+    - "#ffff00"
+    - "#00ffff"
+    - "#00ff00"
+    - "#ea580c"
+    - "#16a34a"
+    - "#0891b2"
   pie_palette:
     - "#4472C4"
     - "#ED7D31"
@@ -88,6 +95,15 @@ colors:
     - "#4f46e5"
     - "#c026d3"
     - "#dc2626"
+  quadrant_palette:
+    - "#ECECFF"
+    - "#f1f1ff"
+    - "#f6f6ff"
+    - "#fbfbff"
+  requirement_risk_palette:
+    - "#ff6b6b"
+    - "#ffd93d"
+    - "#6bcf7f"
   xy_palette:
     - "#2563eb"
     - "#7c3aed"
@@ -138,6 +154,11 @@ colors:
     - "#ffb9dc"
     - "#ffb9b9"
     - "#ffdcb9"
+  treemap_palette:
+    - "#8dd3c7"
+    - "#ffffb3"
+    - "#bebada"
+    - "#fb8072"
 
 typography:
   font_family: "Arial, Helvetica, sans-serif"

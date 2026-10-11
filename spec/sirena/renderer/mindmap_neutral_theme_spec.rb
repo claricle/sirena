@@ -37,6 +37,10 @@ RSpec.describe Sirena::Renderer::Mindmap do
       it "uses the semantic label role" do
         expect(text_fills).to eq([theme.colors.label_text])
       end
+
+      it "uses the named level palette" do
+        expect(node_strokes).to eq(theme.colors.mindmap_palette.first(2))
+      end
     end
   end
 
@@ -49,7 +53,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
 
     it "uses the custom label role while retaining the level palette" do
       expect([text_fills, node_strokes])
-        .to eq([["#123456"], ["#2563eb", "#7c3aed"]])
+        .to eq([["#123456"], %w[#007bff #6c757d]])
     end
   end
 
@@ -60,7 +64,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
 
     it "leaves absent label paint unset while retaining the level palette" do
       expect([text_fills, node_strokes])
-        .to eq([[nil], ["#2563eb", "#7c3aed"]])
+        .to eq([[nil], %w[#007bff #6c757d]])
     end
   end
 end

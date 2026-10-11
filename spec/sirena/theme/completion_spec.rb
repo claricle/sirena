@@ -29,6 +29,15 @@ RSpec.describe Sirena::Theme::Completion do
       .to eq(keys.map { |key| default.colors.public_send(key) })
   end
 
+  it "completes every named diagram palette" do
+    keys = %i[mindmap treemap quadrant requirement_risk].map do |name|
+      :"#{name}_palette"
+    end
+
+    expect(keys.map { |key| completed.colors.public_send(key) })
+      .to eq(keys.map { |key| default.colors.public_send(key) })
+  end
+
   it "leaves unset single colours unpainted" do
     expect([completed.colors.edge_stroke, completed.colors.card_text])
       .to eq([nil, nil])

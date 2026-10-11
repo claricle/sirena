@@ -12,7 +12,6 @@ module Sirena
       CANVAS_WIDTH = 1000
       CANVAS_HEIGHT = 400
 
-      DEPTH_COLORS = %w[#8dd3c7 #ffffb3 #bebada #fb8072].freeze
       STYLE_PROPERTIES = {
         "fill_color" => :fill,
         "stroke_color" => :stroke,
@@ -232,7 +231,15 @@ module Sirena
 
       def cell_fill_color(cell, class_defs)
         style_value(cell, class_defs, :fill) ||
-          DEPTH_COLORS[cell[:depth] % DEPTH_COLORS.length]
+          depth_color(cell[:depth])
+      end
+
+      def depth_color(depth)
+        colors = theme.colors
+        palette = colors&.treemap_palette
+        colors = Theme::Registry.get(:default).colors if palette.nil? ||
+          palette.empty?
+        colors.palette(:treemap, depth)
       end
 
       def cell_stroke_color(cell, class_defs)

@@ -70,10 +70,13 @@ RSpec.describe Sirena::Renderer::Requirement do
     end
   end
 
-  it "keeps the risk palettes public" do
-    expect(described_class::RISK_COLORS)
-      .to include("high" => "#ff6b6b", "medium" => "#ffd93d",
-                  "low" => "#6bcf7f")
+  it "takes requirement risk paint from the theme palette" do
+    theme = Sirena::Theme.new(
+      colors: { requirement_risk_palette: %w[#123456 #234567 #345678] },
+    )
+    xml = described_class.new(theme: theme).render(scene).to_xml
+
+    expect(xml).to include('stroke="#123456"', 'fill="#123456"')
   end
 
   def rendered_scene_evidence
