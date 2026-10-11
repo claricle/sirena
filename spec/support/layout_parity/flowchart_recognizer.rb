@@ -35,7 +35,12 @@ module SpecSupport
       def identify(group)
         id = group["id"]
         classes = group["class"].to_s.split
-        reference_kind(id, classes) || sirena_kind(id)
+        reference_kind(reference_id(group), classes) || sirena_kind(id)
+      end
+
+      def reference_id(group)
+        root_id = group.document.root["id"].to_s
+        group["id"].delete_prefix("#{root_id}-")
       end
 
       def reference_kind(id, classes)

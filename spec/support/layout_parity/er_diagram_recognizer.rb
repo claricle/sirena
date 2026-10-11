@@ -28,9 +28,16 @@ module SpecSupport
 
       def key_for(group)
         id = group["id"]
-        return id[REFERENCE_NODE, 1] if reference_node?(group)
+        if reference_node?(group)
+          return reference_id(group)[REFERENCE_NODE, 1]
+        end
 
         id[SIRENA_NODE, 1]
+      end
+
+      def reference_id(group)
+        root_id = group.document.root["id"].to_s
+        group["id"].delete_prefix("#{root_id}-")
       end
 
       def reference_node?(group)

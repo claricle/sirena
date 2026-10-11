@@ -106,6 +106,8 @@ class MermaidReferenceGenerator
 
   TARGETS = {
     class_diagram: "class_diagram",
+    er_diagram: "er_diagram",
+    flowchart: "flowchart",
     gantt: "gantt",
     git_graph: "gitgraph",
   }.freeze

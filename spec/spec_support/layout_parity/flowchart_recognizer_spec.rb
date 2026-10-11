@@ -18,6 +18,20 @@ RSpec.describe SpecSupport::LayoutParity::FlowchartRecognizer do
     ]
   end
 
+  let(:root_prefixed_reference) do
+    <<~SVG
+      <svg id="oracle" viewBox="0 0 30 10">
+        <g class="cluster" id="oracle-section">
+          <rect width="30" height="10"/>
+          <g class="node" id="oracle-flowchart-A-0">
+            <rect width="10" height="10"/>
+            <text>Alpha</text>
+          </g>
+        </g>
+      </svg>
+    SVG
+  end
+
   def recognized(svg)
     extract(svg, recognizer).elements.map do |element|
       [element.kind, element.key, element.parent, element.label]
@@ -44,5 +58,12 @@ RSpec.describe SpecSupport::LayoutParity::FlowchartRecognizer do
     end
 
     expect(pairs).to eq([["A", "A"], ["A", "A"]])
+  end
+
+  it "normalizes the actual reference root id prefix" do
+    expected = [[:cluster, "section", nil, "Alpha"],
+                [:node, "A", "section", "Alpha"]]
+
+    expect(recognized(root_prefixed_reference)).to eq(expected)
   end
 end
