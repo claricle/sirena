@@ -105,7 +105,7 @@ class MermaidReferenceGenerator
   class GenerationError < StandardError; end
 
   TARGETS = {
-    class_diagram: "class",
+    class_diagram: "class_diagram",
     gantt: "gantt",
     git_graph: "gitgraph",
   }.freeze
