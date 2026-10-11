@@ -31,6 +31,8 @@ rows:
   count: 2
 - file: spec/sirena/layout/base_call_spec.rb
   count: 2
+- file: spec/sirena/layout/git_graph_palette_spec.rb
+  count: 1
 - file: spec/sirena/layout/grid_spec.rb
   count: 4
 - file: spec/sirena/markdown_text_spec.rb
@@ -107,6 +109,8 @@ rows:
   count: 1
 - file: spec/sirena/tasks/examples_spec.rb
   count: 42
+- file: spec/sirena/theme/color_palette_fallback_keys_spec.rb
+  count: 1
 - file: spec/spec_helper_corpus_guard_spec.rb
   count: 1
 - file: spec/svg_conformance_spec.rb

@@ -37,5 +37,7 @@ rows:
   count: 9
 - file: spec/sirena/renderer/sequence_spec.rb
   count: 13
+- file: spec/sirena/renderer/timeline_dark_palette_spec.rb
+  count: 1
 - file: spec/spec_support/layout_parity/class_diagram_recognizer_spec.rb
   count: 1
