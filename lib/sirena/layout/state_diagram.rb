@@ -24,6 +24,8 @@ module Sirena
       MMDC_COMPOSITE_BOTTOM_PADDING = 37.5
       MMDC_NOTE_WIDTH = 230.0
       MMDC_NOTE_HEIGHT = 78.0
+      MMDC_DISCONNECTED_PAIR_INSET = 8.0
+      MMDC_DISCONNECTED_PAIR_GAP = 50.0
 
       State = Data.define(
         :id, :label, :state_type, :description, :descriptions, :children,
@@ -59,7 +61,8 @@ module Sirena
                        :MMDC_COMPOSITE_FIRST_STATE_Y,
                        :MMDC_COMPOSITE_SECOND_STATE_Y,
                        :MMDC_COMPOSITE_BOTTOM_PADDING, :MMDC_NOTE_WIDTH,
-                       :MMDC_NOTE_HEIGHT
+                       :MMDC_NOTE_HEIGHT, :MMDC_DISCONNECTED_PAIR_INSET,
+                       :MMDC_DISCONNECTED_PAIR_GAP
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -242,6 +245,7 @@ module Sirena
       def scene(diagram)
         graph = build_graph(diagram)
         placer.apply(graph)
+        place_disconnected_normal_pair(graph)
         orient_grid_terminals(graph)
         place_nested_note_composite(graph)
         place_attached_notes(graph)
@@ -252,6 +256,25 @@ module Sirena
 
       def placer
         placement == :elk ? ElkPlacement : Grid
+      end
+
+      def place_disconnected_normal_pair(graph)
+        states = Array(graph[:children])
+        return if placement == :elk || states.length != 2
+        return unless Array(graph[:edges]).empty?
+        return unless states.all? { |state| disconnected_normal?(state) }
+
+        x_position = MMDC_DISCONNECTED_PAIR_INSET
+        states.each do |state|
+          state[:x] = x_position
+          state[:y] = MMDC_DISCONNECTED_PAIR_INSET
+          x_position += state[:width] + MMDC_DISCONNECTED_PAIR_GAP
+        end
+      end
+
+      def disconnected_normal?(state)
+        state.dig(:metadata, :shape_type) == "normal" &&
+          Array(state[:children]).empty?
       end
 
       def orient_grid_terminals(graph)
