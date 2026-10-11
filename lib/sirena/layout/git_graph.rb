@@ -39,6 +39,7 @@ module Sirena
       EMPTY_BRANCH_LABEL_CLEARANCE = 50
       BRANCH_LABEL_BASELINE_OFFSET = 10.5
       VERTICAL_BRANCH_LABEL_CLEARANCE = 40
+      EXPLICIT_ID_BRANCH_LABEL_CLEARANCE = 47
       MERMAID_LABEL_FONT_SIZE = 10
       MERMAID_LABEL_WIDTH_SCALE = 0.86
 
@@ -474,14 +475,29 @@ module Sirena
         geometry = branch_label_geometry(branch, *position)
         # Mermaid reserves extra visual clearance without changing the
         # branch label's logical boundary anchor.
-        geometry[:translation_x] = -EMPTY_BRANCH_LABEL_CLEARANCE if
-          translated_branch_label?(graph)
+        translation = branch_label_translation(graph)
+        geometry[:translation_x] = -translation if translation
         geometry
+      end
+
+      def branch_label_translation(graph)
+        return EMPTY_BRANCH_LABEL_CLEARANCE if translated_branch_label?(graph)
+
+        EXPLICIT_ID_BRANCH_LABEL_CLEARANCE if
+          ordinary_explicit_id_graph?(graph)
       end
 
       def translated_branch_label?(graph)
         simple_three_commit_graph?(graph) &&
           !vertical?(graph[:orientation]) && !generated_commits_only?(graph)
+      end
+
+      def ordinary_explicit_id_graph?(graph)
+        !vertical?(graph[:orientation]) && graph[:commits].size > 1 &&
+          !generated_commits_only?(graph) && graph[:commits].all? do |commit|
+            commit[:message].nil? && commit[:tags].empty? &&
+              commit[:type] == "NORMAL" && !commit[:is_cherry_pick]
+          end
       end
 
       def branch_label_geometry(branch, x_coordinate, y_coordinate, anchor)
