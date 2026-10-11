@@ -19,7 +19,7 @@ require_relative "../lib/sirena/corpus_type_names"
 # directory name.
 #
 #   ruby scripts/corpus_case_manifest.rb           # rewrite the manifest
-#                                                  # (loses the recorded old names)
+#                                                  # (loses the old names)
 #   ruby scripts/corpus_case_manifest.rb --check   # exit 1 if it is stale
 module CorpusCaseManifest
   class Error < StandardError; end

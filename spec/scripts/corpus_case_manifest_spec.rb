@@ -53,6 +53,12 @@ module CorpusCaseManifestHelpers
     CorpusCaseManifest.write(corpus_dir: dir, path: out)
   end
 
+  def set_pairs(path, field, value)
+    manifest = JSON.parse(File.read(path))
+    manifest["pairs"].each { _1[field] = value }
+    File.write(path, JSON.generate(manifest))
+  end
+
   # Writes the manifest for `cases` into a fresh dir, yields dir and path.
   def with_written_manifest(cases)
     in_corpus do |dir|
@@ -152,18 +158,14 @@ RSpec.describe CorpusCaseManifest do
 
   it "keeps the recorded old names when the corpus no longer has them" do
     with_written_manifest("pie/001_a.mmd" => a) do |dir, out|
-      manifest = JSON.parse(File.read(out))
-      manifest["pairs"].each { _1["old"] = "pie/gone.mmd" }
-      File.write(out, JSON.generate(manifest))
+      set_pairs(out, "old", "pie/gone.mmd")
       expect(described_class.stale?(corpus_dir: dir, path: out)).to be(false)
     end
   end
 
   it "reports a manifest as stale once a recorded new id left the corpus" do
     with_written_manifest("pie/001_a.mmd" => a) do |dir, out|
-      manifest = JSON.parse(File.read(out))
-      manifest["pairs"].each { _1["new"] = "pie/renamed-00000000" }
-      File.write(out, JSON.generate(manifest))
+      set_pairs(out, "new", "pie/renamed-00000000")
       expect(described_class.stale?(corpus_dir: dir, path: out)).to be(true)
     end
   end

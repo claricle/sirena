@@ -160,7 +160,7 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
     end
 
     context "with a bare service (no icon, no label, no group)" do
-      # spec/mermaid/architecture/should_handle_a_simple_radar_definition-0a5b3a96
+      # architecture/should_handle_a_simple_radar_definition-0a5b3a96
       # and architecture/xss_spec-3828c690: "service db" with nothing else.
       let(:input) { "architecture-beta\n            service db\n" }
 
@@ -176,9 +176,9 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
     end
 
     context "with a multiline accessibility description block" do
-      # spec/mermaid/architecture/should_handle_multiline_accessibility_descriptio-97345398
-      # and architecture/architecture_test-42e45099: accDescr { ... } rather than
-      # the single-line accDescr: form.
+      # architecture/should_handle_multiline_accessibility_descriptio-97345398
+      # and architecture/architecture_test-42e45099: accDescr { ... } rather
+      # than the single-line accDescr: form.
       let(:input) do
         <<~MERMAID
           architecture-beta
@@ -254,8 +254,8 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
     end
 
     context "with a junction" do
-      # spec/mermaid/architecture/architecture_spec-f1819a63: junctions route edges between
-      # services and carry no icon or label of their own.
+      # architecture/architecture_spec-f1819a63: junctions route edges
+      # between services and carry no icon or label of their own.
       let(:input) do
         <<~MERMAID
           architecture-beta
@@ -288,8 +288,13 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
     end
 
     context "with corpus fixtures" do
+      let(:arch_dir) do
+        File.expand_path("../../mermaid/architecture", __dir__)
+      end
+
       it "parses fixture 011 (a group full of junctions)" do
-        source = File.read(File.expand_path("../../mermaid/architecture/architecture_spec-f1819a63.mmd", __dir__))
+        file = "architecture_spec-f1819a63.mmd"
+        source = File.read(File.join(arch_dir, file))
 
         result = parser.parse(source)
 
@@ -298,7 +303,8 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
       end
 
       it "parses fixture 017 (a bare service)" do
-        source = File.read(File.expand_path("../../mermaid/architecture/should_handle_a_simple_radar_definition-0a5b3a96.mmd", __dir__))
+        file = "should_handle_a_simple_radar_definition-0a5b3a96.mmd"
+        source = File.read(File.join(arch_dir, file))
 
         result = parser.parse(source)
 
@@ -306,7 +312,8 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
       end
 
       it "parses fixture 021 (multiline accDescr)" do
-        source = File.read(File.expand_path("../../mermaid/architecture/should_handle_multiline_accessibility_descriptio-97345398.mmd", __dir__))
+        file = "should_handle_multiline_accessibility_descriptio-97345398.mmd"
+        source = File.read(File.join(arch_dir, file))
 
         result = parser.parse(source)
 
@@ -314,7 +321,7 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
       end
 
       it "parses fixture 028 (title, accTitle and multiline accDescr together)" do
-        source = File.read(File.expand_path("../../mermaid/architecture/architecture_test-42e45099.mmd", __dir__))
+        source = File.read(File.join(arch_dir, "architecture_test-42e45099.mmd"))
 
         result = parser.parse(source)
 
@@ -324,7 +331,8 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
       end
 
       it "parses fixture 029 (a bare service inside a group)" do
-        source = File.read(File.expand_path("../../mermaid/architecture/xss_spec-3828c690.mmd", __dir__))
+        file = "xss_spec-3828c690.mmd"
+        source = File.read(File.join(arch_dir, file))
 
         result = parser.parse(source)
 

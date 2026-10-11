@@ -177,7 +177,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
   # claim about mermaid below was measured against mmdc 11.12.0.
   describe "mermaid corpus statement forms", :aggregate_failures do
     describe 'state "Label" as Id' do
-      it "names and labels a state (state_diagram/statediagram_v2_spec-2d12b6d7)" do
+      it "names and labels a state (statediagram_v2_spec-2d12b6d7)" do
         diagram = corpus(
           "state_diagram/statediagram_v2_spec-2d12b6d7.mmd",
         )
@@ -189,7 +189,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
           .to eq("Configuring mode")
       end
 
-      it "labels a composite carrying a note (state_diagram/statediagram_v2_spec-3249fd2d)" do
+      it "labels a composite carrying a note (statediagram_v2_spec-3249fd2d)" do
         diagram = corpus(
           "state_diagram/statediagram_v2_spec-3249fd2d.mmd",
         )
@@ -296,7 +296,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "id : description" do
-      it "describes a state, spaces around the colon (state_diagram/state_parser_spec-5ace89b8)" do
+      it "describes a state, spaced colon (state_parser_spec-5ace89b8)" do
         diagram = corpus(
           "state_diagram/state_parser_spec-5ace89b8.mmd",
         )
@@ -323,7 +323,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
           .to eq(1)
       end
 
-      it "describes a state, no spaces (state_diagram/state_parser_spec-4f6d8252)" do
+      it "describes a state, no spaces (state_parser_spec-4f6d8252)" do
         diagram = corpus(
           "state_diagram/state_parser_spec-4f6d8252.mmd",
         )
@@ -334,7 +334,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "note statements" do
-      it "reads a note block to its end note (state_diagram/statediagram_v2_spec-6aad18a9)" do
+      it "reads a note block to its end note (statediagram_v2_spec-6aad18a9)" do
         diagram = corpus(
           "state_diagram/statediagram_v2_spec-6aad18a9.mmd",
         )
@@ -419,7 +419,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       end
 
       # mmdc parses a floating note and draws nothing for it.
-      it "drops a floating note (state_diagram/statediagram_v2_spec-7f54c592)" do
+      it "drops a floating note (statediagram_v2_spec-7f54c592)" do
         diagram = corpus(
           "state_diagram/statediagram_v2_spec-7f54c592.mmd",
         )
@@ -430,7 +430,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "style statements" do
-      it "drops a style over several targets (state_diagram/state_style_spec-c53cfe2e)" do
+      it "drops a style over several targets (state_style_spec-c53cfe2e)" do
         diagram = corpus(
           "state_diagram/state_style_spec-c53cfe2e.mmd",
         )
@@ -482,7 +482,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "state ids" do
-      it "takes a digits-only id (state_diagram/statediagram_v2_spec-c351b77a)" do
+      it "takes a digits-only id (statediagram_v2_spec-c351b77a)" do
         diagram = corpus(
           "state_diagram/statediagram_v2_spec-c351b77a.mmd",
         )
@@ -492,7 +492,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
       # mmdc lexes `note` and `style` wherever a statement or a transition
       # end may start, so it refuses these three and renders `notes`.
-      it "refuses a bare note as a state (state_diagram/statediagram_v2_spec-649d05f6)" do
+      it "refuses a bare note as a state (statediagram_v2_spec-649d05f6)" do
         expect do
           corpus(
             "state_diagram/statediagram_v2_spec-649d05f6.mmd",
@@ -541,8 +541,10 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
 
     describe "a diagram with no statements" do
-      it "parses to an empty, valid diagram (state_diagram/diagram_orchestration_spec-367b369a)" do
-        diagram = corpus("state_diagram/diagram_orchestration_spec-367b369a.mmd")
+      it "parses to an empty diagram (diagram_orchestration_spec-367b369a)" do
+        diagram = corpus(
+          "state_diagram/diagram_orchestration_spec-367b369a.mmd",
+        )
 
         expect(diagram.states).to be_empty
         expect(diagram.valid?).to be true

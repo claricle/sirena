@@ -3,8 +3,8 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::C4BoundaryMetrics do
-  # 46 is the header mmdc leaves above the first box of c4/c4-8ab0b1ef: a 17 high
-  # label at 8, then the type 5 below it and 16 high.
+  # 46 is the header mmdc leaves above the first box of c4/c4-8ab0b1ef: a 17
+  # high label at 8, then the type 5 below it and 16 high.
   it "reserves label and type height above the first box" do
     metrics = described_class.new(label: "global", type: "global")
     expect(metrics.height).to eq(46)

@@ -134,7 +134,9 @@ module ApplyCaseMigrationMergeRepo
     "class_diagram/002_c_1" => "classDiagram\n  C --> D\n",
   }.freeze
 
-  MERGED_DIRECTORIES = { "git" => "gitgraph", "class" => "class_diagram" }.freeze
+  MERGED_DIRECTORIES = {
+    "git" => "gitgraph", "class" => "class_diagram"
+  }.freeze
 
   def build_merge_repo(extra_files: {})
     git("init", "-q")
@@ -174,7 +176,8 @@ module ApplyCaseMigrationMergeRepo
   end
 
   def old_case_for(canonical_mmd)
-    id = CASES.keys.find { canonical_case(_1) == canonical_mmd.delete_suffix(".mmd") }
+    stem = canonical_mmd.delete_suffix(".mmd")
+    id = CASES.keys.find { canonical_case(_1) == stem }
     "#{id}.mmd"
   end
 

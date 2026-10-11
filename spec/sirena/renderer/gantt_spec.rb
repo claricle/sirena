@@ -175,7 +175,8 @@ RSpec.describe Sirena::Renderer::Gantt do
     end
 
     # mermaid accepts any year, so an explicit far-future date is valid
-    # input (corpus gantt/gantt_spec-54a41452). calculate_label_interval used to cap at a
+    # input (corpus gantt/gantt_spec-54a41452). calculate_label_interval used
+    # to cap at a
     # flat 30-day step regardless of range, which for a multi-millennium
     # span builds tens of thousands of label/grid-line nodes and blows
     # well past the corpus sweep's 10s timeout.
