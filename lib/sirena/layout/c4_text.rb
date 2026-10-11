@@ -12,6 +12,9 @@ module Sirena
       LINE_BREAK = %r{<br\s*/?>}i
       LINE_HEIGHTS = { 12 => 14, 14 => 16, 16 => 17 }.freeze
       LINE_HEIGHT_RATIO = 1.15
+      # Arial's kern table shifts this pair by -113/2048 em. Apply it before
+      # browser-style whole-pixel rounding so C4 boxes fit the drawn text.
+      KERNING_PER_MILLE = { "A " => -55 }.freeze
 
       module_function
 
@@ -31,7 +34,14 @@ module Sirena
       end
 
       def line_width(line, font_size)
-        TextMeasurement.measure(line, font_size: font_size)[:width].round
+        measured = TextMeasurement.measure(line, font_size: font_size)[:width]
+        (measured + kerning(line, font_size)).round
+      end
+
+      def kerning(line, font_size)
+        pairs = line.each_char.each_cons(2)
+        adjustment = pairs.sum { |pair| KERNING_PER_MILLE.fetch(pair.join, 0) }
+        adjustment * font_size / 1000.0
       end
 
       def line_height(line, font_size)
