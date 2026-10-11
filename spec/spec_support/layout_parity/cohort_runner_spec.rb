@@ -141,7 +141,7 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
     write_scoreboard(row("class/original.mmd"),
                      row("class_diagram/duplicate.mmd"))
     allow(renderer).to receive(:render).with(source).and_return(candidate_svg)
-    write_reference("class/original.svg")
+    write_reference("class_diagram/original.svg")
   end
 
   def seed_unselected_reference_owner
