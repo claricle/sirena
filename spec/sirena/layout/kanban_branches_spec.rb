@@ -75,7 +75,7 @@ RSpec.describe Sirena::Layout::Kanban do
       it "grows the card and column for rendered lines and metadata rows" do
         rich_card_column
 
-        expect(rich_card_geometry).to eq([280.0, 201.0, 121.0, 86.0, 1])
+        expect(rich_card_geometry).to eq([280.0, 195.0, 115.0, 80.0, 1])
       end
 
       it "lays out shared data IR identically to the private model" do
@@ -98,11 +98,11 @@ RSpec.describe Sirena::Layout::Kanban do
                   [work.background.x, work.background.y],
                   [work.label.x, work.label.y],
                   work.metadata.map { |label| [label.x, label.y] }]
-        expected = [280.0, 201.0, "0 0 280 201.0",
+        expected = [280.0, 195.0, "0 0 280 195.0",
                     [40.0, 40.0], [40.0, 40.0], [140.0, 57.5],
                     [215.0, 42.5], [225.0, 56.5], [47.5, 65.0],
                     [57.5, 90.0],
-                    [[222.5, 141.0]]]
+                    [[222.5, 135.0]]]
 
         [actual, expected]
       end

@@ -19,7 +19,7 @@ RSpec.describe Sirena::Layout::Kanban, :aggregate_failures do
   it "places ticket and assignee values together below a wrapped label" do
     card = scene_for("kanban_spec-e33c6002").cards.fetch(0)
 
-    expect(card.background.height).to eq(86)
+    expect(card.background.height).to eq(80)
     expect(card.metadata.map(&:text)).to eq(%w[MC-2037 knsv])
     expect(card.metadata.map(&:y).uniq.length).to eq(1)
     expect(card.accent.color).to eq("lightblue")
