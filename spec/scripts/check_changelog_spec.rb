@@ -47,6 +47,18 @@ RSpec.describe Sirena::ChangelogCheck do
                                        "0.1.0")
       end.to raise_error(ArgumentError, /rc/)
     end
+
+    it "refuses an explicit version equal to the current version" do
+      expect do
+        described_class.target_version("0.1.9", "0.1.9")
+      end.to raise_error(ArgumentError, /must be greater than current 0\.1\.9/)
+    end
+
+    it "refuses an explicit version lower than the current version" do
+      expect do
+        described_class.target_version("0.1.8", "0.1.9")
+      end.to raise_error(ArgumentError, /must be greater than current 0\.1\.9/)
+    end
   end
 
   describe ".problems" do
@@ -98,6 +110,14 @@ RSpec.describe Sirena::ChangelogCheck do
     it "exits 1 when no releasable entry exists" do
       _out, err, status = run_script("patch", changelog: good)
       expect([status.exitstatus, err]).to match([1, /0\.1\.10/])
+    end
+
+    it "exits 1 before releasing an older explicit version" do
+      _out, err, status = run_script("0.1.8", changelog: good)
+
+      expect([status.exitstatus, err]).to match(
+        [1, /must be greater than current 0\.1\.9/],
+      )
     end
   end
 end
