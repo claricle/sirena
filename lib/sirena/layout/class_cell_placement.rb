@@ -1,19 +1,24 @@
 # frozen_string_literal: true
 
 require_relative "grid"
+require_relative "flowchart/directed_placement"
 
 module Sirena
   module Layout
-    # Places an ordinary connected pair in a vertical lane and every other
-    # flat class graph in Grid's three columns. Diagrams with namespaces keep
-    # Grid's own cells.
+    # Places an ordinary connected pair in a vertical lane, three or more flat
+    # classes in dagre-style ranks, and a lone class or a note pair in Grid's
+    # three columns. Diagrams with namespaces keep Grid's own cells.
     class ClassCellPlacement
       CELL_GAP = 50
+      # mmdc's dagre spaces class boxes 50 apart, not Grid's 80.
+      DAGRE_GAP = 50
 
       # @param graph [Hash] the graph to position in place
       # @return [Hash] the same graph
       def self.apply(graph)
         children = graph[:children] || []
+        return layered(graph) if layered?(children)
+
         pair = connected_pair(graph, children)
         if pair
           pack_connected_pair(*pair)
@@ -21,6 +26,18 @@ module Sirena
           pack(children)
         end
         Grid.apply(graph)
+      end
+
+      def self.layered?(children)
+        children.size >= 3 && children.none? { |child| nested?(child) }
+      end
+
+      def self.layered(graph)
+        graph[:layoutOptions] = (graph[:layoutOptions] || {}).merge(
+          Base::ElkOptions::NODE_NODE_SPACING => DAGRE_GAP,
+          Base::ElkOptions::LAYER_SPACING => DAGRE_GAP,
+        )
+        Flowchart::DirectedPlacement.apply(graph)
       end
 
       def self.connected_pair(graph, children)
@@ -114,9 +131,9 @@ module Sirena
         boxes.map { |box| box[axis].to_f }.max.to_f + CELL_GAP
       end
 
-      private_class_method :connected_pair, :connected_pair_candidate?,
-                           :inheritance?, :map_pair, :ordinary_pair?,
-                           :edge_terminals,
+      private_class_method :layered?, :layered, :connected_pair,
+                           :connected_pair_candidate?, :inheritance?, :map_pair,
+                           :ordinary_pair?, :edge_terminals,
                            :pack_connected_pair, :target_y, :centered_x, :pack,
                            :columns, :place, :offsets, :cell, :nested?
     end
