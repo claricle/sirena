@@ -75,7 +75,7 @@ module Sirena
       def dot_circle(dot)
         Svg::Circle.new(
           cx: dot.x, cy: dot.y, r: 7, class_name: "actor-#{dot.index}",
-          fill: dot.colour, stroke: theme_color(:node_stroke) || "#000"
+          fill: dot.colour, stroke: theme_color(:node_stroke)
         )
       end
 
@@ -140,7 +140,7 @@ module Sirena
         Svg::Circle.new(
           cx: face.center_x, cy: face.center_y, r: face.radius,
           class_name: "face", fill: "#FFF8DC",
-          stroke: theme_color(:node_stroke) || "#999",
+          stroke: theme_color(:node_stroke),
           stroke_width: "2"
         )
       end
@@ -155,7 +155,7 @@ module Sirena
       def eye(point)
         Svg::Circle.new(
           cx: point.x, cy: point.y, r: 1.5,
-          fill: theme_color(:foreground) || GREY,
+          fill: theme_color(:foreground),
           stroke: secondary_paint,
           stroke_width: "2"
         )
@@ -166,7 +166,7 @@ module Sirena
 
         Svg::Path.new(
           d: mouth.path, class_name: "mouth",
-          fill: theme_color(:foreground) || "#000",
+          fill: theme_color(:foreground),
           stroke: secondary_paint
         )
       end
@@ -187,7 +187,7 @@ module Sirena
       def timeline_line(source)
         Svg::Line.new(
           x1: source.x1, y1: source.y1, x2: source.x2, y2: source.y2,
-          stroke: theme_color(:edge_stroke) || "black", stroke_width: "4"
+          stroke: theme_color(:edge_stroke), stroke_width: "4"
         )
       end
 
@@ -197,11 +197,11 @@ module Sirena
 
       def secondary_paint
         color = theme_color(:foreground_secondary)
-        color == "#666666" ? GREY : color || GREY
+        color == "#666666" ? GREY : color
       end
 
       def timeline_head(path_data)
-        Svg::Path.new(d: path_data, fill: theme_color(:edge_stroke) || "black")
+        Svg::Path.new(d: path_data, fill: theme_color(:edge_stroke))
       end
     end
   end
