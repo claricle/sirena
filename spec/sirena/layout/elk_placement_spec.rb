@@ -29,6 +29,16 @@ module ElkPlacementSpecHelpers
       [edge[:id], edge[:labels], edge[:metadata], true]
     end
   end
+
+  def render_counting_placements(**)
+    calls = 0
+    allow(Sirena::Layout::ElkPlacement).to receive(:apply)
+      .and_wrap_original do |original, *args|
+        calls += 1
+        original.call(*args)
+      end
+    [Sirena::Engine.new.render(source, **), calls]
+  end
 end
 
 RSpec.describe Sirena::Layout::ElkPlacement do
@@ -92,17 +102,11 @@ RSpec.describe Sirena::Layout::ElkPlacement do
     end
 
     it "places a flowchart through ElkPlacement with or without the option" do
-      placed = 0
-      allow(described_class).to receive(:apply).and_wrap_original do |orig, *a|
-        placed += 1
-        orig.call(*a)
-      end
-      explicit = Sirena::Engine.new.render(source, layout_engine: :elk)
-      explicit_placed = placed
-      default = Sirena::Engine.new.render(source)
+      explicit, explicit_calls = render_counting_placements(layout_engine: :elk)
+      default, default_calls = render_counting_placements
 
-      expect([explicit_placed.positive?, placed > explicit_placed, default])
-        .to eq([true, true, explicit])
+      expect([explicit_calls, default_calls, default])
+        .to eq([1, 1, explicit])
     end
 
     it "retains a self-loop for Flowchart to route after elkrb placement" do
