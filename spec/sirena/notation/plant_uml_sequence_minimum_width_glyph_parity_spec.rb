@@ -4,7 +4,13 @@ require "digest"
 require "spec_helper"
 require "sirena/notation/plantuml"
 
+Sirena::Notation.send(:entries).delete(:plantuml)
+
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
+  include_context "with an isolated notation registry"
+
+  before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
+
   let(:case_ids) do
     %w[
       resources.vega.nonreg.group20505.min_width_center--0385427ea4be
