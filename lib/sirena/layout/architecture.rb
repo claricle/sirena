@@ -720,9 +720,21 @@ module Sirena
       end
 
       def route_endpoint(edge_info, box, endpoint)
-        { point: { x: edge_info[:"#{endpoint}_x"],
-                   y: edge_info[:"#{endpoint}_y"] },
-          box: box, side: edge_info[:"#{endpoint}_side"] }
+        side = edge_info[:"#{endpoint}_side"]
+        point = { x: edge_info[:"#{endpoint}_x"],
+                  y: edge_info[:"#{endpoint}_y"] }
+        { point: fallback_service_endpoint(point, box, side),
+          box: box, side: side }
+      end
+
+      def fallback_service_endpoint(point, box, side)
+        service = box[:service]
+        return point unless service && !service_icon?(service)
+
+        return point.merge(y: point[:y] - 5) if side == "T"
+        return point.merge(x: point[:x] + 10) if side == "R"
+
+        point
       end
 
       def routed_points(edge, from, to, graph)
