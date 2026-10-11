@@ -38,7 +38,7 @@ module Sirena
           t.x = label.x
           t.y = label.y
           t.content = label.text
-          t.fill = theme_color(:label_text) || "#1976D2"
+          t.fill = theme_color(:label_text)
           t.font_family = theme_typography(:font_family) ||
             "Arial, sans-serif"
           t.font_size = number_string(label.font_size)
