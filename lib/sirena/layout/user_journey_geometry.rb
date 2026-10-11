@@ -28,12 +28,6 @@ module Sirena
       DOT_RADIUS = 7
       CENTRAL_BASELINE_EMS = 0.35
       NO_SECTION_FILL = "#CCC"
-      SECTION_FILLS = %w[
-        #191970 #8B008B #4B0082 #2F4F4F #800000 #8B4513 #00008B
-      ].freeze
-      ACTOR_COLOURS = %w[
-        #8FBC8F #7CFC00 #00FFFF #20B2AA #B0E0E6 #FFFFE0
-      ].freeze
 
       private
 
@@ -173,7 +167,7 @@ module Sirena
         UserJourney::Dot.new(
           x: x_position, y: y_position, radius: DOT_RADIUS,
           name: name, index: index,
-          colour: ACTOR_COLOURS[index % ACTOR_COLOURS.length]
+          colour: journey_color(:user_journey_actor, index)
         )
       end
 
@@ -198,8 +192,22 @@ module Sirena
       def run_style(number)
         return { type: 0, fill: NO_SECTION_FILL, colour: "black" } unless number
 
-        { type: number % SECTION_FILLS.length, colour: "#fff",
-          fill: SECTION_FILLS[number % SECTION_FILLS.length] }
+        colors = journey_colors(:user_journey_section)
+        fills = colors.user_journey_section_palette
+        { type: number % fills.length, colour: "#fff",
+          fill: colors.palette(:user_journey_section, number) }
+      end
+
+      def journey_color(name, index)
+        journey_colors(name).palette(name, index)
+      end
+
+      def journey_colors(name)
+        colors = theme.colors
+        palette = colors&.public_send(:"#{name}_palette")
+        return colors if palette && !palette.empty?
+
+        Theme::Registry.get(:default).colors
       end
 
       def section_bands(runs, boxes)

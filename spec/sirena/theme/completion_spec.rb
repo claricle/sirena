@@ -30,7 +30,10 @@ RSpec.describe Sirena::Theme::Completion do
   end
 
   it "completes every named diagram palette" do
-    keys = %i[mindmap treemap quadrant requirement_risk].map do |name|
+    keys = %i[
+      mindmap treemap quadrant requirement_risk user_journey_actor
+      user_journey_section
+    ].map do |name|
       :"#{name}_palette"
     end
 

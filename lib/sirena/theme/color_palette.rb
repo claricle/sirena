@@ -38,7 +38,8 @@ module Sirena
 
       PALETTES = %i[
         flow git_graph mindmap pie quadrant radar requirement_risk timeline_fill
-        timeline_text timeline_rule treemap xy
+        timeline_text timeline_rule treemap user_journey_actor
+        user_journey_section xy
       ].freeze
 
       PALETTES.each do |name|

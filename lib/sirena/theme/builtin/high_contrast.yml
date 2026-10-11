@@ -159,6 +159,21 @@ colors:
     - "#ffffb3"
     - "#bebada"
     - "#fb8072"
+  user_journey_actor_palette:
+    - "#8FBC8F"
+    - "#7CFC00"
+    - "#00FFFF"
+    - "#20B2AA"
+    - "#B0E0E6"
+    - "#FFFFE0"
+  user_journey_section_palette:
+    - "#191970"
+    - "#8B008B"
+    - "#4B0082"
+    - "#2F4F4F"
+    - "#800000"
+    - "#8B4513"
+    - "#00008B"
 
 typography:
   font_family: "Arial, Helvetica, sans-serif"

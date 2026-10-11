@@ -52,7 +52,8 @@ RSpec.describe Sirena::Theme::ColorPalette do
       {
         flow: 8, git_graph: 10, mindmap: 6, pie: 12, quadrant: 4,
         radar: 10, requirement_risk: 3, timeline_fill: 12,
-        timeline_text: 12, timeline_rule: 12, treemap: 4, xy: 10
+        timeline_text: 12, timeline_rule: 12, treemap: 4,
+        user_journey_actor: 6, user_journey_section: 7, xy: 10
       }
     end
     let(:new_dark_palettes) do
@@ -60,7 +61,13 @@ RSpec.describe Sirena::Theme::ColorPalette do
         mindmap: %w[#3794ff #858585 #4ec9b0 #f48771 #89d185 #9cdcfe],
         treemap: %w[#2d2d30 #3e3e42 #404040 #505050],
         quadrant: %w[#2d2d30 #3e3e42 #404040 #505050],
-        requirement_risk: %w[#f48771 #dcdcaa #89d185]
+        requirement_risk: %w[#f48771 #dcdcaa #89d185],
+        user_journey_actor: %w[
+          #3794ff #858585 #4ec9b0 #f48771 #dcdcaa #89d185
+        ],
+        user_journey_section: %w[
+          #1d4ed8 #6d28d9 #be123c #a16207 #15803d #0f766e #0369a1
+        ]
       }
     end
 
@@ -85,6 +92,16 @@ RSpec.describe Sirena::Theme::ColorPalette do
       end)
       expect(palettes[:dark].slice(*new_dark_palettes.keys))
         .to eq(new_dark_palettes)
+      expect(palettes[:default].slice(
+               :user_journey_actor, :user_journey_section
+             )).to eq(
+               user_journey_actor: %w[
+                 #8FBC8F #7CFC00 #00FFFF #20B2AA #B0E0E6 #FFFFE0
+               ],
+               user_journey_section: %w[
+                 #191970 #8B008B #4B0082 #2F4F4F #800000 #8B4513 #00008B
+               ],
+             )
 
       shared_names = sizes.keys - [:mindmap]
       shared = palettes.values_at(:default, :light, :high_contrast).map do |set|
