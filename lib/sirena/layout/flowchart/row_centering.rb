@@ -38,16 +38,30 @@ module Sirena
         # an edge that dagre would lay out differently.
         def joins(rows)
           ranks = rank_of(rows)
-          pairs = (@flat[:edges] || []).map do |edge|
-            return nil unless edge[:labels].to_a.empty?
+          pairs = []
+          (@flat[:edges] || []).each do |edge|
+            pair = joined_ends(edge, ranks)
+            return unless pair
 
-            ends = [edge[:sources].first, edge[:targets].first]
-            ends.reverse! if ranks[ends.first] > ranks[ends.last]
-            return nil unless ranks[ends.last] - ranks[ends.first] == 1
-
-            ends
+            pairs << pair
           end
-          pairs.empty? ? nil : pairs
+          pairs unless pairs.empty?
+        end
+
+        def joined_ends(edge, ranks)
+          return unless edge[:labels].to_a.empty?
+
+          ends = edge_ends(edge)
+          ends.reverse! if ranks[ends.first] > ranks[ends.last]
+          ends if adjacent?(ends, ranks)
+        end
+
+        def edge_ends(edge)
+          [edge[:sources].first, edge[:targets].first]
+        end
+
+        def adjacent?(ends, ranks)
+          ranks[ends.last] - ranks[ends.first] == 1
         end
 
         def rank_of(rows)
@@ -61,11 +75,16 @@ module Sirena
         def aligned(rows, joins)
           ordered = rows.sort.map { |_, row| row.sort_by { |box| box[:x] } }
           layers, links, dummies = layered(ordered, joins)
-          widths = ordered.flatten.to_h { |box| [box[:id], box[:width]] }
-          dummies.each { |dummy| widths[dummy] = 0.0 }
+          widths = node_widths(ordered, dummies)
           centres = BrandesKoepf.positions(layers, widths, links, dummies)
           place(ordered.flatten, centres)
           @flat
+        end
+
+        def node_widths(ordered, dummies)
+          widths = ordered.flatten.to_h { |box| [box[:id], box[:width]] }
+          dummies.each { |dummy| widths[dummy] = 0.0 }
+          widths
         end
 
         # Rows alternate with a layer of edge stand-ins, as in dagre. Each
@@ -99,10 +118,14 @@ module Sirena
         end
 
         def place(boxes, centres)
-          left = boxes.map { |box| centres[box[:id]] - (box[:width] / 2.0) }.min
+          left = boxes.map { |box| left_edge(box, centres) }.min
           boxes.each do |box|
-            box[:x] = centres[box[:id]] - (box[:width] / 2.0) - left
+            box[:x] = left_edge(box, centres) - left
           end
+        end
+
+        def left_edge(box, centres)
+          centres[box[:id]] - (box[:width] / 2.0)
         end
 
         def centre(row, widest)
