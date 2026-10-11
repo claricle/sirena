@@ -7,18 +7,26 @@ RSpec.describe Sirena::Layout::Timeline do
 
   # Expected numbers come from the mmdc references under
   # spec/fixtures_mermaid/timeline, whose viewBox starts at x=100 where the
-  # scene starts at 0; 007 and 002 start 61 higher, so their y values here
-  # are mmdc's plus 61 (the title).
-  let(:sections) { lay_out(File.read(mmd("010"))) }
-  let(:untitled) { lay_out(File.read(mmd("007"))) }
-  let(:titled) { lay_out(File.read(mmd("002"))) }
-  let(:linked) { lay_out(File.read(mmd("012"))) }
+  # scene starts at 0; the untitled and titled cases start 61 higher, so their
+  # y values here are mmdc's plus 61 (the title).
+  let(:sections) do
+    case_scene("should_handle_a_two_section_and_two_correspondin-9b11e1d4")
+  end
+  let(:untitled) { case_scene("timeline-d5a486b2") }
+  let(:titled) { case_scene("timeline_spec-8a7dcf2b") }
+  let(:linked) do
+    case_scene("should_handle_a_section_and_task_and_its_events-1afb897a")
+  end
   let(:diagram) do
     Sirena::Parser::Timeline.new.parse("timeline\n  title T\n  2020 : A\n")
   end
 
   def mmd(prefix)
     Dir[File.join(__dir__, "../../mermaid/timeline", "#{prefix}*.mmd")].first
+  end
+
+  def case_scene(prefix)
+    lay_out(File.read(mmd(prefix)))
   end
 
   it "lays out shared pre-positioned IR identically to the private model" do
@@ -38,7 +46,7 @@ RSpec.describe Sirena::Layout::Timeline do
   end
 
   it "keeps float noise out of the canvas height" do
-    expect(lay_out(File.read(mmd("003"))).height).to eq(845.8)
+    expect(case_scene("timeline_spec-c4dfe5d4").height).to eq(845.8)
   end
 
   it "keeps the viewBox in step with the size" do
