@@ -20,6 +20,8 @@ module Sirena
       WIDTH = 400
       HEIGHT = 100
       VERSION_TEXT = "v11.12.0"
+      VERSION_FONT_RATIO = [8, 5].freeze
+      private_constant :VERSION_FONT_RATIO
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -91,9 +93,17 @@ module Sirena
 
       def version_label
         Label.new(
-          text: VERSION_TEXT, x: 100, y: 40, font_size: 32,
+          text: VERSION_TEXT, x: 100, y: 40,
+          font_size: version_font_size,
           text_anchor: "middle", font_weight: nil
         )
+      end
+
+      def version_font_size
+        title_size = theme.typography&.font_size_title ||
+          Theme::Registry.get(:default).typography.font_size_title
+        numerator, denominator = VERSION_FONT_RATIO
+        title_size * numerator / denominator
       end
     end
   end
