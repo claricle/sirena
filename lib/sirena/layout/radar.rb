@@ -15,7 +15,6 @@ module Sirena
       LEGEND_INSET = (DEFAULT_RADIUS + PADDING) * 0.75
       GRID_CIRCLES = 5
       MAX_TICKS = 32
-      BASELINE_SHIFTS = { "middle" => 0.35, "hanging" => 0.8 }.freeze
 
       class Circle < Lutaml::Model::Serializable
         attribute :x, :float
@@ -158,7 +157,7 @@ module Sirena
         font_size = font_size(:font_size_large, 16)
         Label.new(
           text: graph[:title], x: graph.fetch(:center_x),
-          y: final_label_y(0, font_size, "hanging"), font_size: font_size,
+          y: final_label_y(0), font_size: font_size,
           text_anchor: "middle", class_name: "radarTitle"
         )
       end
@@ -205,7 +204,7 @@ module Sirena
         y_coord = center_y + axis[:label_y]
         Label.new(
           text: axis[:label], x: center_x + axis[:label_x],
-          y: final_label_y(y_coord, font_size, "middle"),
+          y: final_label_y(y_coord),
           font_size: font_size,
           text_anchor: "middle", class_name: "radarAxisLabel"
         )
@@ -283,14 +282,14 @@ module Sirena
         font_size = font_size(:font_size_small, 12)
         Label.new(
           text: curve.label, x: x_pos,
-          y: final_label_y(y_pos, font_size, "hanging"),
+          y: final_label_y(y_pos),
           text_anchor: "start", font_size: font_size,
           class_name: "radarLegendText"
         )
       end
 
-      def final_label_y(y_coord, size, baseline)
-        (y_coord + (size * BASELINE_SHIFTS.fetch(baseline))).round(4)
+      def final_label_y(y_coord)
+        y_coord.round(4)
       end
 
       def font_size(name, fallback)
