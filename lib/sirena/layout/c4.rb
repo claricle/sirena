@@ -83,8 +83,7 @@ module Sirena
       ARROW_SIZE = 8
       TITLE_Y = 30
       TITLE_FONT_SIZE = 16
-      STEREOTYPE_FONT_SIZE = 12
-      RELATIONSHIP_FONT_SIZE = 12
+      SMALL_FONT_SIZE = 12
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -101,6 +100,7 @@ module Sirena
         attribute :font_weight, :string
         attribute :font_style, :string
         attribute :baseline, :string
+        attribute :text_anchor, :string
       end
 
       class Section < Lutaml::Model::Serializable
@@ -340,10 +340,11 @@ module Sirena
       def title_label(title, canvas)
         return if title.nil? || title.empty?
 
-        size = measure_text(title, font_size: TITLE_FONT_SIZE)
+        font_size = large_font_size
+        size = measure_text(title, font_size: font_size)
         Label.new(text: title, width: size[:width], height: size[:height],
                   x: canvas[:title_x], y: canvas[:title_y],
-                  font_size: TITLE_FONT_SIZE, font_weight: "bold")
+                  font_size: font_size, font_weight: "bold")
       end
 
       def placer
@@ -402,7 +403,7 @@ module Sirena
       end
 
       def label_style(label)
-        label.slice(:font_size, :font_weight, :font_style)
+        label.slice(:font_size, :font_weight, :font_style, :text_anchor)
       end
 
       def positioned_stereotype(node, kind)
@@ -413,17 +414,18 @@ module Sirena
       end
 
       def stereotype_label(node, text)
+        font_size = small_font_size
         Label.new(
-          text: text, **stereotype_size(text),
+          text: text, **stereotype_size(text, font_size),
           x: node[:x] + (node[:width] / 2.0),
           y: node[:y] + node.dig(:metadata, :stereotype_offset),
-          font_size: STEREOTYPE_FONT_SIZE, font_style: "italic",
-          font_weight: "normal"
+          font_size: font_size, font_style: "italic",
+          font_weight: "normal", text_anchor: "middle"
         )
       end
 
-      def stereotype_size(text)
-        size = measure_text(text, font_size: STEREOTYPE_FONT_SIZE)
+      def stereotype_size(text, font_size)
+        size = measure_text(text, font_size: font_size)
         { width: size[:width], height: size[:height] }
       end
 
@@ -550,14 +552,15 @@ module Sirena
         Label.new(
           **label_measurements(label),
           x: (from.x + to.x) / 2.0, y: relationship_label_y(from, to, index),
-          font_size: RELATIONSHIP_FONT_SIZE, baseline: "middle",
-          font_style: index.zero? ? "normal" : "italic"
+          font_size: small_font_size, baseline: "middle",
+          font_style: index.zero? ? "normal" : "italic",
+          text_anchor: "middle"
         )
       end
 
       def relationship_label_y(from, to, index)
         middle = (from.y + to.y) / 2.0
-        middle + (index * (RELATIONSHIP_FONT_SIZE + 5))
+        middle + (index * (small_font_size + 5))
       end
 
       def scene_dimensions(nodes)
@@ -621,7 +624,9 @@ module Sirena
 
       def boundary_heading(boundary)
         C4BoundaryMetrics.new(label: boundary.label,
-                              type: boundary_type_text(boundary))
+                              type: boundary_type_text(boundary),
+                              label_font_size: large_font_size,
+                              type_font_size: normal_font_size)
       end
 
       def boundary_type_text(boundary)
@@ -631,9 +636,10 @@ module Sirena
       end
 
       def boundary_labels(boundary, heading)
-        label_lines(boundary.label, heading.label_offset, 16, "bold") +
+        label_lines(boundary.label, heading.label_offset,
+                    large_font_size, weight: "bold", text_anchor: nil) +
           label_lines(bracket(boundary_type_text(boundary)),
-                      heading.type_offset, 14)
+                      heading.type_offset, normal_font_size)
       end
 
       def bracket(text)
@@ -662,7 +668,11 @@ module Sirena
       def shape_metrics(element)
         C4ShapeMetrics.new(
           label: element.label, technology: element.technology,
-          description: element.description, person: element.person?
+          description: element.description, person: element.person?,
+          font_sizes: {
+            label: large_font_size, body: normal_font_size,
+            stereotype: small_font_size
+          }
         )
       end
 
@@ -671,21 +681,25 @@ module Sirena
       def element_labels(element, metrics)
         name_lines(element, metrics) +
           label_lines(bracket(element.technology),
-                      metrics.technology_offset, 14, "normal", "italic") +
-          label_lines(element.description, metrics.description_offset, 14)
+                      metrics.technology_offset, normal_font_size,
+                      font_style: "italic") +
+          label_lines(element.description, metrics.description_offset,
+                      normal_font_size)
       end
 
       # Mermaid draws the name even when it is empty, which keeps the
       # description from standing in as the second text of the box.
       def name_lines(element, metrics)
-        lines = label_lines(element.label, metrics.label_offset, 16, "bold")
+        font_size = large_font_size
+        lines = label_lines(element.label, metrics.label_offset,
+                            font_size, weight: "bold", text_anchor: nil)
         return lines unless lines.empty?
 
         [{ text: "", width: 0, height: 0, offset: metrics.label_offset,
-           font_size: 16, font_weight: "bold", font_style: "normal" }]
+           font_size: font_size, font_weight: "bold", font_style: "normal" }]
       end
 
-      def label_lines(text, offset, size, weight = "normal", style = "normal")
+      def label_lines(text, offset, size, style = {})
         return [] if text.to_s.empty? || offset.nil?
 
         lines = C4Text.lines(text)
@@ -693,8 +707,16 @@ module Sirena
           { text: line, width: C4Text.width(line, size),
             height: C4Text.height(line, size),
             offset: offset + line_spread(index, size, lines.length),
-            font_size: size, font_weight: weight, font_style: style }
+            font_size: size, **label_line_style(style) }
         end
+      end
+
+      def label_line_style(style)
+        {
+          font_weight: style.fetch(:weight, "normal"),
+          font_style: style.fetch(:font_style, "normal"),
+          text_anchor: style.fetch(:text_anchor, "middle"),
+        }
       end
 
       # Centres a block of lines on its offset, one font size apart.
@@ -738,9 +760,29 @@ module Sirena
       end
 
       def relationship_text(text)
-        size = RELATIONSHIP_FONT_SIZE
+        size = small_font_size
         { text: text, width: C4Text.width(text, size),
           height: C4Text.height(text, size) }
+      end
+
+      def large_font_size
+        theme_font_size(:font_size_large, TITLE_FONT_SIZE)
+      end
+
+      def normal_font_size
+        theme_font_size(:font_size_normal, 14)
+      end
+
+      def small_font_size
+        theme_font_size(:font_size_small, SMALL_FONT_SIZE)
+      end
+
+      def theme_font_size(role, fallback)
+        value = theme.typography&.public_send(role)
+        size = value&.positive? ? value : fallback
+        size.to_i == size ? size.to_i : size
+      rescue NoMethodError
+        fallback
       end
 
       def calculate_boundary_dimensions(children)

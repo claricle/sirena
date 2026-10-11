@@ -24,11 +24,16 @@ module Sirena
       # @param technology [String, nil] drawn as "[technology]"
       # @param description [String, nil] drawn below the name
       # @param person [Boolean] reserves room for the person icon
-      def initialize(label:, technology: nil, description: nil, person: false)
+      def initialize(label:, technology: nil, description: nil, person: false,
+                     font_sizes: {})
         @label = label.to_s
         @technology = technology.to_s
         @description = description.to_s
         @person = person
+        @label_font_size = font_sizes.fetch(:label, LABEL_FONT_SIZE)
+        @body_font_size = font_sizes.fetch(:body, BODY_FONT_SIZE)
+        @stereotype_font_size =
+          font_sizes.fetch(:stereotype, STEREOTYPE_FONT_SIZE)
         measure
       end
 
@@ -36,7 +41,7 @@ module Sirena
 
       def measure
         @stereotype_offset = PADDING
-        offset = PADDING + STEREOTYPE_FONT_SIZE + 2 - 4
+        offset = PADDING + @stereotype_font_size + 2 - 4
         offset = place_image(offset)
         offset = place_label(offset)
         offset = place_technology(offset)
@@ -52,18 +57,18 @@ module Sirena
 
       def place_label(offset)
         @label_offset = offset + 8
-        @label_offset + C4Text.height(@label, LABEL_FONT_SIZE)
+        @label_offset + C4Text.height(@label, @label_font_size)
       end
 
       def place_technology(offset)
         return offset if @technology.empty?
 
         @technology_offset = offset + 5
-        @technology_offset + C4Text.height(bracketed, BODY_FONT_SIZE)
+        @technology_offset + C4Text.height(bracketed, @body_font_size)
       end
 
       def place_description(offset)
-        rect_width = C4Text.width(@label, LABEL_FONT_SIZE)
+        rect_width = C4Text.width(@label, @label_font_size)
         rect_height = offset
         unless @description.empty?
           rect_width = [rect_width, description_width].max
@@ -75,13 +80,13 @@ module Sirena
 
       def description_bottom(offset)
         @description_offset = offset + 20
-        text_height = C4Text.height(@description, BODY_FONT_SIZE)
+        text_height = C4Text.height(@description, @body_font_size)
         bottom = @description_offset + text_height
         bottom - (C4Text.lines(@description).length * 5)
       end
 
       def description_width
-        C4Text.width(@description, BODY_FONT_SIZE)
+        C4Text.width(@description, @body_font_size)
       end
 
       def bracketed
