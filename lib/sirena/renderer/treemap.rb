@@ -36,7 +36,7 @@ module Sirena
           t.content = label.text
           t.x = label.x
           t.y = label.y
-          t.fill = theme_color(:label_text) || "#333"
+          t.fill = label_fill("#333")
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
           t.font_size = number_string(label.font_size)
           t.font_weight = label.font_weight
@@ -103,10 +103,14 @@ module Sirena
       end
 
       def set_label_style(text, label)
-        text.fill = theme_color(:label_text) || label_fallback(label)
+        text.fill = label_fill(label_fallback(label))
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         text.font_size = number_string(label.font_size)
         text.font_weight = label.font_weight if label.font_weight
+      end
+
+      def label_fill(fallback)
+        theme ? theme_color(:label_text) : fallback
       end
 
       def label_fallback(label)
