@@ -75,6 +75,16 @@ RSpec.describe SurfaceManifest do
 
       expect(env).to include("BUNDLE_GEMFILE" => "/some/checkout/Gemfile")
     end
+
+    it "unsets the caller's absolute Bundler lockfile" do
+      previous = ENV.fetch("BUNDLE_LOCKFILE", nil)
+      ENV["BUNDLE_LOCKFILE"] = "/caller/Gemfile.lock"
+
+      expect(described_class.checkout_env("/some/checkout"))
+        .to include("BUNDLE_LOCKFILE" => nil)
+    ensure
+      ENV["BUNDLE_LOCKFILE"] = previous
+    end
   end
 
   describe ".scrub" do
@@ -165,6 +175,17 @@ RSpec.describe SurfaceManifest do
 
     it "is spread across the sorted corpus" do
       expect(first.map { |p| File.basename(File.dirname(p)) }).to eq(%w[a c e])
+    end
+  end
+
+  describe ".run_process" do
+    it "does not request a POSIX process group on Windows" do
+      allow(Gem).to receive(:win_platform?).and_return(true)
+
+      expect(Open3).to receive(:popen3)
+        .with(instance_of(Hash), "env", chdir: directory)
+
+      described_class.run_process(["env"], chdir: directory, timeout: 1)
     end
   end
 end

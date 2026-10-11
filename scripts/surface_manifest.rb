@@ -124,13 +124,16 @@ module SurfaceManifest
   # The child must see ONLY its own checkout's Gemfile: an inherited
   # BUNDLE_GEMFILE or RUBYOPT from `bundle exec` loads the caller's lib too.
   def checkout_env(root)
-    Bundler.unbundled_env.merge(
+    env = Bundler.unbundled_env
+    (ENV.keys - env.keys).each { |key| env[key] = nil }
+    env.merge(
       "BUNDLE_GEMFILE" => File.join(root, "Gemfile"),
     )
   end
 
   def run_process(argv, chdir:, timeout:, stdin_data: "")
-    options = { chdir: chdir, pgroup: true }
+    options = { chdir: chdir }
+    options[:pgroup] = true unless Gem.win_platform?
     Open3.popen3(checkout_env(chdir), *argv, **options) do |stdin, *pipes, wait|
       feed(stdin, stdin_data)
       collect(pipes, wait, timeout)
@@ -148,7 +151,7 @@ module SurfaceManifest
   def collect(pipes, wait, timeout)
     readers = pipes.map { |io| Thread.new { io.binmode.read } }
     timed_out = wait.join(timeout).nil?
-    Process.kill("KILL", -wait.pid) if timed_out
+    Process.kill("KILL", Gem.win_platform? ? wait.pid : -wait.pid) if timed_out
     stdout, stderr = readers.map(&:value)
     { stdout: stdout, stderr: stderr, timed_out: timed_out,
       status: timed_out ? nil : wait.value.exitstatus }
