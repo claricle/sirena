@@ -267,7 +267,8 @@ module Sirena
 
       def commit_label_style(graph)
         return :lone if graph[:orientation] == "LR" && graph[:commits].one?
-        return :linear if simple_three_commit_graph?(graph)
+        return :linear if vertical?(graph[:orientation]) ||
+          simple_three_commit_graph?(graph)
 
         :legacy
       end
