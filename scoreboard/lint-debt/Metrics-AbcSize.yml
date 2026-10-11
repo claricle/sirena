@@ -14,7 +14,7 @@ rows:
 - file: lib/sirena/layout/sequence.rb
   count: 2
 - file: lib/sirena/layout/state_diagram.rb
-  count: 4
+  count: 5
 - file: lib/sirena/notation/mermaid/ir_adapters/sequence.rb
   count: 1
 - file: lib/sirena/parser/builders/sequence.rb
@@ -78,6 +78,8 @@ rows:
 - file: spec/sirena/svg/registry_spec.rb
   count: 1
 - file: spec/support/er_tilde_timing.rb
+  count: 1
+- file: spec/support/layout_parity/gantt_recognizer.rb
   count: 1
 - file: spec/support/mermaid_diff_spec_support.rb
   count: 1

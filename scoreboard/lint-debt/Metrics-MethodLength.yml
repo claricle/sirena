@@ -9,6 +9,8 @@ rows:
   count: 14
 - file: lib/sirena/layout/flowchart/edge_router.rb
   count: 3
+- file: lib/sirena/layout/gantt.rb
+  count: 1
 - file: lib/sirena/layout/git_graph.rb
   count: 1
 - file: lib/sirena/layout/requirement.rb
@@ -16,7 +18,7 @@ rows:
 - file: lib/sirena/layout/sequence.rb
   count: 5
 - file: lib/sirena/layout/state_diagram.rb
-  count: 3
+  count: 4
 - file: lib/sirena/layout/xy_chart.rb
   count: 2
 - file: lib/sirena/notation/mermaid/git_graph_config.rb

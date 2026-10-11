@@ -61,6 +61,8 @@ rows:
   count: 6
 - file: spec/sirena/layout/flowchart_spec.rb
   count: 11
+- file: spec/sirena/layout/gantt_vertical_geometry_parity_spec.rb
+  count: 1
 - file: spec/sirena/layout/git_graph_empty_branch_parity_spec.rb
   count: 1
 - file: spec/sirena/layout/git_graph_palette_spec.rb
@@ -72,6 +74,8 @@ rows:
 - file: spec/sirena/layout/sequence_branches_spec.rb
   count: 1
 - file: spec/sirena/layout/sequence_creations_spec.rb
+  count: 2
+- file: spec/sirena/layout/state_diagram_box_geometry_parity_spec.rb
   count: 2
 - file: spec/sirena/layout/state_diagram_parity_burndown_spec.rb
   count: 1
