@@ -4,7 +4,7 @@ module SpecSupport
   module LayoutParity
     # Logical class nodes shared by mmdc references and Sirena renders.
     class ClassDiagramRecognizer
-      REFERENCE_NODE = /\AclassId-(.+)-\d+\z/
+      REFERENCE_NODE = /\A(?:my-svg-)?classId-(.+)-\d+\z/
       SIRENA_NODE = /\Aclass-(.+)\z/
 
       def container_kinds

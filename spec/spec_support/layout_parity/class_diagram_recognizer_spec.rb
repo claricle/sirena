@@ -62,6 +62,11 @@ RSpec.describe SpecSupport::LayoutParity::ClassDiagramRecognizer do
     expect([actual, recognizer.container_kinds]).to eq(expected)
   end
 
+  it "recognizes a reference id carrying the my-svg- diagram prefix" do
+    prefixed = ordinal_reference.sub('id="classId-order', 'id="my-svg-classId-order')
+    expect(recognized(prefixed)).to eq([ordinal_expected.first])
+  end
+
   it "recognizes the same logical nodes in a real reference and render" do
     path = "class_diagram/classdiagram_elk_v3_spec-04c6aafa.mmd"
     expect(recognized_pair(path)).to eq([real_expected] * 2)
