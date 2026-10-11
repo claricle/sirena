@@ -1,0 +1,218 @@
+---
+layout: default
+title: Adding a diagram type
+nav_order: 8
+permalink: /adding-a-diagram-type/
+---
+
+== Adding a diagram type
+
+Sirena has one generator for the complete Mermaid diagram-type skeleton. It
+creates the parser-to-renderer pipeline, a canonical contract fixture, focused
+specs, and the two registry edits needed to make the new type discoverable.
+This guide uses a trivial type named `demo`; replace that name with a
+`snake_case` type name.
+
+=== The pipeline
+
+[source,text]
+----
+source text
+  -> Notation::Mermaid.detect
+  -> Parser::<Type> (Grammar + Builder)
+  -> Diagram::<Type>
+  -> Notation::Mermaid::IRAdapters::<Type>
+  -> IR::Data
+  -> Layout::<Type>
+  -> Layout::<Type>::Scene
+  -> Renderer::<Type>
+  -> Svg::Document
+  -> SVG string
+----
+
+The Diagram is meaning without geometry. The Scene is final geometry. The
+Renderer copies Scene geometry and owns appearance. Every type has a Layout,
+even when its geometry is simple.
+
+=== Generate the skeleton
+
+Quote the task invocation: unquoted brackets are glob syntax in shells such
+as zsh.
+
+[source,shell]
+----
+bundle exec rake 'type:new[demo]'
+----
+
+The generator refuses an invalid or already registered name, a keyword
+claimed by an earlier detection row, an unstable registry insertion point, or
+any target it would overwrite. Validation happens before file writes.
+
+It prints the following manifest. The first eight paths are new defining
+files, the next five are focused specs, and the last two are existing
+registries updated in place.
+
+// tag::generated-files[]
+* `lib/sirena/parser/<type>.rb`
+* `lib/sirena/parser/grammars/<type>.rb`
+* `lib/sirena/parser/builders/<type>.rb`
+* `lib/sirena/diagram/<type>.rb`
+* `lib/sirena/notation/mermaid/ir_adapters/<type>.rb`
+* `lib/sirena/layout/<type>.rb`
+* `lib/sirena/renderer/<type>.rb`
+* `spec/fixtures/contract/<type>.mmd`
+* `spec/sirena/parser/<type>_spec.rb`
+* `spec/sirena/diagram/<type>_spec.rb`
+* `spec/sirena/notation/mermaid/ir_adapters/<type>_spec.rb`
+* `spec/sirena/layout/<type>_spec.rb`
+* `spec/sirena/renderer/<type>_spec.rb`
+* `lib/sirena/notation/mermaid.rb`
+* `docs/ir-type-map.md`
+// end::generated-files[]
+
+The files have these responsibilities:
+
+[cols="2,4"]
+|===
+|File |Responsibility
+
+|`parser/<type>.rb`
+|Wire the type's Grammar to its Builder.
+
+|`parser/grammars/<type>.rb`
+|Recognize source syntax and produce a raw parse tree.
+
+|`parser/builders/<type>.rb`
+|Turn that parse tree into the typed Diagram model.
+
+|`diagram/<type>.rb`
+|Represent what the diagram means, without geometry.
+
+|`notation/mermaid/ir_adapters/<type>.rb`
+|Translate the Mermaid-specific model into shared, notation-neutral IR.
+
+|`layout/<type>.rb`
+|Compute final geometry and define `Layout::<Type>::Scene` in the same file.
+
+|`renderer/<type>.rb`
+|Turn the final Scene into SVG objects, using the selected theme.
+
+|`spec/fixtures/contract/<type>.mmd`
+|Provide the canonical source used by the cross-type contract.
+
+|`notation/mermaid.rb`
+|Register detection metadata in `Notation::Mermaid::TYPES`.
+
+|`docs/ir-type-map.md`
+|Record the shared IR shape and adapter path; summary counts are regenerated.
+|===
+
+=== Verify the generated type
+
+The repository-wide contract uses the shared example named
+`a diagram type`, defined in `spec/support/diagram_type_examples.rb`. Once the
+generator adds the fixture and `TYPES` row, the contract discovers `demo`
+without another hand-edited list.
+
+[source,shell]
+----
+bundle exec rspec spec/contract_spec.rb -e demo
+bundle exec rspec \
+  spec/sirena/parser/demo_spec.rb \
+  spec/sirena/diagram/demo_spec.rb \
+  spec/sirena/notation/mermaid/ir_adapters/demo_spec.rb \
+  spec/sirena/layout/demo_spec.rb \
+  spec/sirena/renderer/demo_spec.rb
+----
+
+The shared contract verifies the canonical fixture, convention-based parser,
+model, layout and renderer lookup, model validity, well-formed XML, built-in
+themes, and header-only input. The generated focused specs pin the initial
+syntax, IR, Scene, and SVG behavior.
+
+Render the fixture through the public CLI when you want to inspect it:
+
+[source,shell]
+----
+bundle exec exe/sirena render spec/fixtures/contract/demo.mmd -o demo.svg
+----
+
+From here, change the generated Grammar, Builder, Diagram, adapter, Layout,
+and Renderer to implement the real type. Keep the IR map synchronized with the
+adapter and keep the contract fixture representative.
+
+=== Work one corpus type at a time
+
+The scoped corpus task is diagnostic and does not write the committed
+scoreboard. It prints the overall and evidence-valid rates, followed by every
+failing case with its path, pipeline stage, oracle verdict, and first error
+line.
+
+[source,shell]
+----
+bundle exec rake 'corpus[pie]'
+----
+
+Pass `valid` as the second task argument to show only failures that the
+committed oracle evidence calls valid Mermaid:
+
+[source,shell]
+----
+bundle exec rake 'corpus[pie,valid]'
+----
+
+`valid` is the only supported filter. There is no `--failing` flag and
+`failing` is not a task-argument filter: the unfiltered scoped command already
+prints every failure.
+
+When a fix turns a case green, refresh and commit the one corpus scoreboard:
+
+[source,shell]
+----
+bundle exec rake corpus
+bundle exec rake corpus:check
+----
+
+=== Fix a failing corpus case
+
+Use the stage in the scoped report to choose the first file to inspect.
+
+[cols="1,3,4"]
+|===
+|Stage |Meaning |First file to inspect
+
+|`detect`
+|No registered type matched the source.
+|`lib/sirena/notation/mermaid.rb` (`TYPES`)
+
+|`parse`
+|The message has a line and column: the Grammar rejected the source.
+|`lib/sirena/parser/grammars/<type>.rb`
+
+|`parse`
+|There is no source position: parsing reached model construction and failed.
+|`lib/sirena/parser/builders/<type>.rb`
+
+|`layout`
+|Geometry construction raised.
+|`lib/sirena/layout/<type>.rb`
+
+|`render`
+|SVG construction raised.
+|`lib/sirena/renderer/<type>.rb`
+
+|`timeout` or `unknown`
+|The case exceeded its budget or raised outside the layer taxonomy.
+|Reproduce the single case before choosing a layer.
+|===
+
+Reproduce one reported case with the public CLI to see its complete error:
+
+[source,shell]
+----
+bundle exec exe/sirena render spec/mermaid/<type>/<case>.mmd -o /dev/null
+----
+
+A successful fix removes the case from the relevant scoped failure list. A
+shared grammar edit can affect many types, so run the repository's required
+broader corpus check before shipping such a change.
