@@ -170,4 +170,19 @@ RSpec.describe Sirena::Layout::GitGraph do
        [50.0, 50.0], 90.0],
     )
   end
+
+  it "keeps lone-commit labels at Mermaid's empty-lane boundary" do
+    source = <<~MERMAID
+      gitGraph:
+        commit
+        branch test1 order: 3
+        branch test2 order: 2
+        branch test3 order: 1
+    MERMAID
+    lone_scene = layout.call(Sirena::Parser::GitGraph.new.parse(source))
+    commit = lone_scene.commits.fetch(0)
+
+    expect((lone_scene.branches.fetch(0).label.x - commit.x).round(3))
+      .to eq(-86.172)
+  end
 end

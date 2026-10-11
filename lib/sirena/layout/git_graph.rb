@@ -36,6 +36,7 @@ module Sirena
       PADDING = 40
       LABEL_HEADROOM = 1.2
       BRANCH_LABEL_INSET = 8.5
+      EMPTY_BRANCH_LABEL_CLEARANCE = 50
       BRANCH_LABEL_BASELINE_OFFSET = 10.5
       VERTICAL_BRANCH_LABEL_CLEARANCE = 40
 
@@ -368,15 +369,21 @@ module Sirena
 
       def branch_label_position(branch, commit, graph)
         width = measure_text(branch, font_size: branch_font_size)[:width]
-        return horizontal_branch_label_position(commit[:y], width) unless
+        return horizontal_branch_label_position(commit[:y], width, graph) unless
           vertical?(graph[:orientation])
 
         vertical_branch_label_position(commit[:x], width, graph)
       end
 
-      def horizontal_branch_label_position(lane, width)
-        [BRANCH_LABEL_INSET - width,
+      def horizontal_branch_label_position(lane, width, graph)
+        inset = BRANCH_LABEL_INSET
+        inset -= EMPTY_BRANCH_LABEL_CLEARANCE if lone_commit_with_empty_lanes?(graph)
+        [inset - width,
          lane - BRANCH_LABEL_BASELINE_OFFSET, "start"]
+      end
+
+      def lone_commit_with_empty_lanes?(graph)
+        graph[:commits].one? && graph[:branches].length > 1
       end
 
       def vertical_branch_label_position(lane, width, graph)
