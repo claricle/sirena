@@ -144,7 +144,7 @@ module SpecSupport
 
       def worst_for(rows, metric)
         row = rows.select { |candidate| candidate[:metrics][metric] }
-          .max_by { |candidate| candidate[:metrics][metric] }
+          .min_by { |candidate| evidence_order(candidate, metric) }
         return [nil, nil] unless row
 
         [row[:key], row[:metrics][metric]]
@@ -153,10 +153,22 @@ module SpecSupport
       def top_five(rows)
         rows.sort_by do |row|
           worst = row[:metrics].values.compact.max
-          [-worst, row[:index]]
+          evidence_order(row, worst)
         end.first(5).map do |row|
           row.slice(:key, :bbox_sirena, :bbox_reference)
         end
+      end
+
+      def evidence_order(row, metric_or_value)
+        metric = row[:metrics][metric_or_value] if metric_or_value.is_a?(Symbol)
+        metric ||= metric_or_value
+        [-evidence_value(metric), row.fetch(:key).map(&:to_s)]
+      end
+
+      def evidence_value(metric)
+        return metric unless metric.finite?
+
+        metric.round(CaseLedger::SCOREBOARD_DECIMAL_PLACES)
       end
     end
   end
