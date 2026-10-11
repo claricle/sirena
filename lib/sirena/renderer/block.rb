@@ -64,7 +64,7 @@ module Sirena
         Svg::Rect.new.tap do |rect|
           apply_node_geometry(rect, node)
           rect.fill = "none"
-          rect.stroke = theme_color(:border_color) || "#666"
+          rect.stroke = theme_color(:edge_color)
           rect.stroke_width = "2"
           rect.stroke_dasharray = "5,5"
         end
