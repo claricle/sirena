@@ -109,7 +109,7 @@ module Sirena
           branches, build_branch_info(branches)
         )
         commits = position_commits(
-          source_commits(graph), lane_assignments, orientation
+          visible_commits(source_commits(graph)), lane_assignments, orientation
         )
         graph_result(graph, commits, branches, lane_assignments, orientation)
       end
@@ -142,6 +142,16 @@ module Sirena
         children = graph.nodes.group_by(&:parent_id)
         graph.nodes.select { |node| node.role == "commit" }.map do |node|
           commit_attributes(node, children.fetch(node.id, []))
+        end
+      end
+
+      def visible_commits(commits)
+        latest = commits.each_with_object({}) do |commit, identities|
+          identities[commit[:id]] = commit[:ir_id] unless
+            commit[:is_cherry_pick]
+        end
+        commits.select do |commit|
+          commit[:is_cherry_pick] || latest[commit[:id]] == commit[:ir_id]
         end
       end
 
