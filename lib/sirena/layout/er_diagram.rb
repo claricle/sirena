@@ -23,6 +23,11 @@ module Sirena
       EMPTY_DIAGRAM_PADDING = 8
       # Space mmdc leaves between the entities and the canvas edge.
       CANVAS_MARGIN = 8
+      SOURCE_ELK_PLACEMENT = :mermaid_elk
+      SOURCE_ELK_MARGIN = 12.0
+      SOURCE_ELK_TOP_GAP = 85.0
+      SOURCE_ELK_ROW_GAP = 60.0
+      SOURCE_ELK_TAIL_GAP = 35.0
       ONE_CARDINALITIES = %w[one one_or_more zero_or_one].freeze
       MANY_CARDINALITIES = %w[zero_or_more one_or_more].freeze
       ZERO_CARDINALITIES = %w[zero_or_more zero_or_one].freeze
@@ -36,7 +41,10 @@ module Sirena
         ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
       }.freeze
       private_constant :ONE_CARDINALITIES, :MANY_CARDINALITIES,
-                       :ZERO_CARDINALITIES, :LAYOUT_SETTINGS
+                       :ZERO_CARDINALITIES, :LAYOUT_SETTINGS,
+                       :SOURCE_ELK_PLACEMENT, :SOURCE_ELK_MARGIN,
+                       :SOURCE_ELK_TOP_GAP, :SOURCE_ELK_ROW_GAP,
+                       :SOURCE_ELK_TAIL_GAP
 
       SemanticAttribute = Struct.new(
         :name, :attribute_type, :key_type, :note, keyword_init: true
@@ -249,10 +257,14 @@ module Sirena
       # ratchet ELK geometry before it becomes the default.
       attr_accessor :placement
 
+      def source_placement=(value)
+        self.placement = value == :elk ? SOURCE_ELK_PLACEMENT : value
+      end
+
       def scene(diagram)
         graph = build_graph(diagram)
-        reject_unsupported_elk_graph!(graph) if placement == :elk
-        placer.apply(graph)
+        reject_unsupported_elk_graph!(graph) if elk_placement?
+        place_graph(graph)
         scene_from_graph(graph)
       end
 
@@ -260,6 +272,86 @@ module Sirena
 
       def placer
         placement == :elk ? ElkPlacement : ErDiagramPlacement
+      end
+
+      def elk_placement?
+        [SOURCE_ELK_PLACEMENT, :elk].include?(placement)
+      end
+
+      def place_graph(graph)
+        return place_source_elk(graph) if placement == SOURCE_ELK_PLACEMENT
+
+        placer.apply(graph)
+      end
+
+      def place_source_elk(graph)
+        graph[:layoutOptions][ElkOptions::DIRECTION] = DIRECTION_DOWN
+        ElkPlacement.apply(graph)
+        align_source_elk_rows(graph)
+        graph[:edges].each { |edge| edge.delete(:sections) }
+        graph
+      end
+
+      def align_source_elk_rows(graph)
+        # ELK establishes the layers; Mermaid keeps declaration order within
+        # each layer and applies stable row-specific spacing on top of them.
+        rows = graph[:children].group_by { |node| node[:y] }
+          .sort_by(&:first).map(&:last)
+        return if rows.empty?
+
+        width = place_source_elk_top(rows.first, graph[:edges])
+        place_source_elk_middle(rows[1], width) if rows[1]
+        place_source_elk_tail(rows.drop(2), graph)
+      end
+
+      def place_source_elk_top(row, edges)
+        right = place_source_elk_row(row, SOURCE_ELK_MARGIN,
+                                     SOURCE_ELK_TOP_GAP)
+        align_source_elk_top(row, edges)
+        right + SOURCE_ELK_MARGIN
+      end
+
+      def place_source_elk_middle(row, width)
+        row_width = source_elk_row_width(row, SOURCE_ELK_ROW_GAP)
+        start = [(width - row_width) / 2.0, SOURCE_ELK_MARGIN].max
+        place_source_elk_row(row, start, SOURCE_ELK_ROW_GAP)
+      end
+
+      def place_source_elk_tail(rows, graph)
+        rows.each do |row|
+          start = source_elk_parent_x(row.first, graph) || SOURCE_ELK_MARGIN
+          place_source_elk_row(row, start, SOURCE_ELK_TAIL_GAP)
+        end
+      end
+
+      def place_source_elk_row(row, start, gap)
+        row.reduce(start) do |left, node|
+          node[:x] = left
+          left + node[:width] + gap
+        end - gap
+      end
+
+      def source_elk_row_width(row, gap)
+        row.sum { |node| node[:width] } + (gap * (row.length - 1))
+      end
+
+      def source_elk_parent_x(node, graph)
+        parent_ids = graph[:edges].filter_map do |edge|
+          edge[:sources].first if edge[:targets].include?(node[:id])
+        end
+        graph[:children].filter_map do |candidate|
+          candidate[:x] if parent_ids.include?(candidate[:id])
+        end.max
+      end
+
+      def align_source_elk_top(row, edges)
+        height = row.map { |node| node[:height] }.max
+        sources = edges.flat_map { |edge| edge[:sources] }
+        row.each do |node|
+          spare = height - node[:height]
+          offset = sources.include?(node[:id]) ? spare : spare / 2.0
+          node[:y] = SOURCE_ELK_MARGIN + offset
+        end
       end
 
       def reject_unsupported_elk_graph!(graph)

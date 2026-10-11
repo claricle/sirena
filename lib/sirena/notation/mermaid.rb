@@ -215,6 +215,12 @@ module Sirena
       EXTENSIONS = [".mmd"].freeze
       private_constant :EXTENSIONS
 
+      FRONTMATTER_LAYOUT_ENGINES = {
+        "dagre" => :grid,
+        "elk" => :elk,
+      }.freeze
+      private_constant :FRONTMATTER_LAYOUT_ENGINES
+
       # @return [Symbol]
       def id
         :mermaid
@@ -283,19 +289,21 @@ module Sirena
       # @raise [Engine::PipelineError] when the preamble is degenerate
       def parse(source, logger: nil)
         preamble = Source.split(source)
-        title = Source.title(preamble[:frontmatter])
+        frontmatter = parsed_frontmatter(preamble[:frontmatter])
+        title = frontmatter&.title
         type = detect_type(preamble[:body])
         logger&.debug("Detected diagram type: #{type}")
         reject_degenerate_preamble(type, preamble[:degenerate])
         diagram = parse_diagram(type, preamble, title, logger)
         diagram = IRAdapter.call(type, with_wrap(type, diagram, source))
-        parsed(type, diagram)
+        parsed(type, diagram, layout_engine(frontmatter))
       end
 
-      def parsed(type, diagram)
+      def parsed(type, diagram, layout_engine = nil)
         Parsed.new(type: type, diagram: diagram,
                    transform: layer_class(Layout, type, Layout::LayoutError),
-                   renderer: layer_class(Renderer, type, Renderer::RenderError))
+                   renderer: layer_class(Renderer, type, Renderer::RenderError),
+                   layout_engine: layout_engine)
       end
 
       # @return [Symbol] the first type whose pattern matches the body
@@ -309,6 +317,14 @@ module Sirena
       end
 
       private
+
+      def parsed_frontmatter(source)
+        Source::Frontmatter.new(source) if source
+      end
+
+      def layout_engine(frontmatter)
+        FRONTMATTER_LAYOUT_ENGINES[frontmatter&.config_layout]
+      end
 
       def matching_type(body)
         TYPES.each do |type, row|

@@ -113,8 +113,11 @@ module Sirena
       theme, today, layout_engine = render_settings(options)
       log "Starting render pipeline..."
       parsed = parse_source(resolve_notation(source, options), source)
+      source_layout = source_layout_engine(parsed, options)
+      layout_engine = checked_layout_engine(source_layout) if source_layout
       layout_result = transform_diagram(
-        parsed.diagram, parsed.transform, today, theme, layout_engine
+        parsed.diagram, parsed.transform, today, theme, layout_engine,
+        !source_layout.nil?
       )
       document = render_svg(layout_result, parsed.renderer, theme)
       serialize(document)
@@ -196,10 +199,10 @@ module Sirena
     # @param layout_engine [Symbol] :grid or :elk
     # @return [Layout::Scene, Layout::Legacy] a Scene, or a wrapped graph
     def transform_diagram(diagram, transform_class, today, theme,
-                          layout_engine = :grid)
+                          layout_engine = :grid, source_layout = false)
       log "Transforming diagram to graph..."
       layout = transform_class.new
-      choose_placement(layout, layout_engine)
+      choose_placement(layout, layout_engine, source_layout)
       result = layout.call(diagram, theme: theme, today: today)
       log "Transform complete"
       result
@@ -211,14 +214,23 @@ module Sirena
       raise PipelineError, "Unknown layout_engine: #{name.inspect}"
     end
 
-    def choose_placement(layout, layout_engine)
+    def source_layout_engine(parsed, options)
+      parsed.layout_engine unless options.key?(:layout_engine)
+    end
+
+    def choose_placement(layout, layout_engine, source_layout = false)
       return if layout_engine == :grid
 
       unless layout.respond_to?(:placement=)
         raise Layout::LayoutError,
               "layout_engine :elk is not available for #{layout.class}"
       end
-      layout.placement = layout_engine
+      setter = if source_layout && layout.respond_to?(:source_placement=)
+                 :source_placement=
+               else
+                 :placement=
+               end
+      layout.public_send(setter, layout_engine)
     end
 
     # Renders the layout result to an SVG document.
