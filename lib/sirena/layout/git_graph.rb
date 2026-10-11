@@ -276,12 +276,38 @@ module Sirena
       end
 
       def representative_branch_commits(graph)
-        return graph[:commits].to_h { |commit| [commit[:branch], commit] } if
-          vertical?(graph[:orientation])
+        representatives = positioned_branch_commits(graph)
+        graph[:branches].each_with_object(representatives) do |branch, result|
+          next if result.key?(branch[:name])
+
+          anchor = empty_branch_anchor(branch, graph)
+          result[branch[:name]] = anchor if anchor
+        end
+      end
+
+      def positioned_branch_commits(graph)
+        if vertical?(graph[:orientation])
+          return graph[:commits].to_h do |commit|
+            [commit[:branch], commit]
+          end
+        end
 
         graph[:commits].each_with_object({}) do |commit, representatives|
           representatives[commit[:branch]] ||= commit
         end
+      end
+
+      def empty_branch_anchor(branch, graph)
+        creation = graph[:commits].find do |commit|
+          commit[:id] == branch[:created_at_commit]
+        end
+        return unless creation
+
+        orientation = graph[:orientation]
+        time = vertical?(orientation) ? creation[:y] : creation[:x]
+        lane = branch[:lane] * LANE_SPACING
+        x_coordinate, y_coordinate = coordinates(time, lane, orientation)
+        { x: x_coordinate, y: y_coordinate }
       end
 
       def branch_label(branch, commit, orientation)
