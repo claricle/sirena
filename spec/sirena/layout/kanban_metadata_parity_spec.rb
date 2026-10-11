@@ -3,7 +3,7 @@
 require "spec_helper"
 require "rexml/document"
 
-RSpec.describe "Kanban metadata parity" do
+RSpec.describe Sirena::Layout::Kanban do
   def scene_for(case_id)
     source = File.read("spec/mermaid/kanban/#{case_id}.mmd")
     diagram = Sirena::Parser::Kanban.new.parse(source)
