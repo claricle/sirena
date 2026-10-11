@@ -147,14 +147,17 @@ module Sirena
 
           def walk
             @edge_right = right_edge
+            config = Walker::Config.new(
+              message_measure: ->(text) { label_text_width(text) },
+              message_font_size: label_font_size,
+              message_family: ("monospace" if compact?),
+              label_inset: (7 if compact?), row: row_height,
+              self_row: self_row_height
+            )
             Walker.new(lifelines: ids.zip(@centers).to_h, bounds: head_bounds,
                        measure: ->(text) { text_width(text) },
-                       message_measure: ->(text) { label_text_width(text) },
                        font_size: font_size,
-                       message_font_size: label_font_size,
-                       message_family: ("monospace" if compact?),
-                       label_inset: (7 if compact?), row: row_height,
-                       self_row: self_row_height,
+                       config: config,
                        start_y: @top + @head_height + first_row_gap)
               .run(@diagram.items, edge_right: @edge_right,
                                    appearance: @diagram.appearance)

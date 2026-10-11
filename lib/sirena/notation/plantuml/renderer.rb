@@ -220,15 +220,17 @@ module Sirena
 
         def member_note_shape(box)
           pointer = box.separators.first
-          left, top = box.x, box.y
-          right, bottom = left + box.width, top + box.height
+          left = box.x
+          top = box.y
+          right = left + box.width
+          bottom = top + box.height
           middle = top + (box.height / 2)
           fold = 10.0
           outline = [
             "M #{left} #{top}", "L #{left} #{middle - 4}",
             "L #{pointer.x1} #{pointer.y1}", "L #{left} #{middle + 4}",
             "L #{left} #{bottom}", "L #{right} #{bottom}",
-            "L #{right} #{top + fold}", "L #{right - fold} #{top}", "Z",
+            "L #{right} #{top + fold}", "L #{right - fold} #{top}", "Z"
           ].join(" ")
           Svg::Path.new(d: outline, fill: note_fill(box), stroke: node_stroke,
                         stroke_width: stroke_width)

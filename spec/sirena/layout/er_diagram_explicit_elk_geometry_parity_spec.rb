@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "ER frontmatter ELK geometry" do
+RSpec.describe Sirena::Layout::ErDiagram do
   let(:case_id) { "unknown/yari2-dc83acff.mmd" }
   let(:source) { File.read("spec/mermaid/#{case_id}") }
   let(:reference) do

@@ -14,7 +14,7 @@ RSpec.describe Sirena::Layout::ClassCellPlacement do
   it "flags a left-pointing relation as written in reverse" do
     flags = ["A <|-- B", "A --|> B"].map do |line|
       parse.call("classDiagram\n#{line}\n").relationships.first
-           .written_reversed
+        .written_reversed
     end
     expect(flags).to eq([true, nil])
   end

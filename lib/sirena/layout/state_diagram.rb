@@ -1080,8 +1080,8 @@ module Sirena
         width = child[:width] + layout.fetch(:width_padding)
         region.merge!(x: position, y: layout.fetch(:top), width: width,
                       height: layout.fetch(:height))
-        child.merge!(x: layout.fetch(:outer_padding),
-                     y: layout.fetch(:child_top))
+        child[:x] = layout.fetch(:outer_padding)
+        child[:y] = layout.fetch(:child_top)
         position + width + layout.fetch(:gap)
       end
 

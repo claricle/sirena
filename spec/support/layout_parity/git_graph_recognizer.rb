@@ -182,7 +182,8 @@ module SpecSupport
 
       def explicit_label_kind(text)
         return :commit_label if class_token?(text, "commit-label")
-        return :tag_label if class_token?(text, "tag-label")
+
+        :tag_label if class_token?(text, "tag-label")
       end
 
       def recognized_label_position?(kind, label, marker)

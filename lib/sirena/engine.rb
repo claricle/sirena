@@ -117,7 +117,7 @@ module Sirena
       layout_engine = checked_layout_engine(source_layout) if source_layout
       layout_result = transform_diagram(
         parsed.diagram, parsed.transform, today, theme, layout_engine,
-        !source_layout.nil?
+        source_layout: !source_layout.nil?
       )
       document = render_svg(layout_result, parsed.renderer, theme)
       serialize(document)
@@ -199,10 +199,10 @@ module Sirena
     # @param layout_engine [Symbol] :grid or :elk
     # @return [Layout::Scene, Layout::Legacy] a Scene, or a wrapped graph
     def transform_diagram(diagram, transform_class, today, theme,
-                          layout_engine = :grid, source_layout = false)
+                          layout_engine = :grid, source_layout: false)
       log "Transforming diagram to graph..."
       layout = transform_class.new
-      choose_placement(layout, layout_engine, source_layout)
+      choose_placement(layout, layout_engine, source_layout: source_layout)
       result = layout.call(diagram, theme: theme, today: today)
       log "Transform complete"
       result
@@ -218,7 +218,7 @@ module Sirena
       parsed.layout_engine unless options.key?(:layout_engine)
     end
 
-    def choose_placement(layout, layout_engine, source_layout = false)
+    def choose_placement(layout, layout_engine, source_layout: false)
       return if layout_engine == :grid
 
       unless layout.respond_to?(:placement=)

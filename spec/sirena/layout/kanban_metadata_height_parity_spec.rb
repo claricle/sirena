@@ -35,7 +35,7 @@ RSpec.describe Sirena::Layout::Kanban do
       next unless case_ids.include?(row.fetch("case"))
 
       row.dig("summary", "metrics").values_at(
-        "worst_e_c", "worst_e_w", "worst_e_h", "worst_e_a",
+        "worst_e_c", "worst_e_w", "worst_e_h", "worst_e_a"
       )
     end
 

@@ -5,7 +5,7 @@ require "nokogiri"
 require "spec_helper"
 require "sirena/notation/plantuml"
 
-RSpec.describe "PlantUML SequenceArrows compact layout" do
+RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   include_context "with an isolated notation registry"
 
   before do

@@ -24,7 +24,7 @@ RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
   end
 
   it "matches Mermaid's three-commit linear geometry in every direction" do
-    expect(results.keys).to contain_exactly(*case_ids)
+    expect(results.keys).to match_array(case_ids)
     results.each_value do |result|
       expect(result).not_to be_hard_failure
       expect(result.geometry.fetch(:worst_e_c)).to be <= 0.08

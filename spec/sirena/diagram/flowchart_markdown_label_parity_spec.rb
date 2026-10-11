@@ -40,7 +40,7 @@ RSpec.describe Sirena::Diagram::FlowchartLabelText do
 
     expect(described_class.lines(written))
       .to eq(["The dog in the hog.(1)", "NL"])
-    expect(described_class.display('`1o **bold**`')).to eq("1o bold")
+    expect(described_class.display("`1o **bold**`")).to eq("1o bold")
   end
 
   it "brings all three reference cases within the geometry thresholds" do

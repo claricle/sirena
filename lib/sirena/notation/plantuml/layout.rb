@@ -131,13 +131,14 @@ module Sirena
           fill = shared_member_note_fill(diagram)
           diagram.notes.each_with_index.map do |note, index|
             box = member_note_box(note, index, klass, class_box,
-                                  top, heights[index], fill)
+                                  top, fill)
             top += heights[index] + MEMBER_NOTE_STACK_GAP
             box
           end
         end
 
-        def member_note_box(note, index, klass, class_box, top, height, fill)
+        def member_note_box(note, index, klass, class_box, top, fill)
+          height = member_note_height(note)
           body_left = class_box.x + class_box.width + MEMBER_NOTE_BODY_GAP
           width = note.lines.map { |line| plantuml_note_width(line) }.max.to_f +
             21.0
