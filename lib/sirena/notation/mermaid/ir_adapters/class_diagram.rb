@@ -206,6 +206,7 @@ module Sirena
               ["diagram_identifier", diagram.id],
               ["layout_direction", diagram.direction],
               ["theme", diagram.theme],
+              ["font_family", diagram.font_family],
             ]
             [IR::Node.new(id: id, role: "diagram_settings"),
              *semantic_nodes(id, values, occupied)]
