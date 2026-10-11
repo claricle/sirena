@@ -98,7 +98,7 @@ module Sirena
         Svg::Path.new.tap do |path|
           path.d = message.loop_path
           path.fill = "none"
-          path.stroke = "#000000"
+          path.stroke = theme_color(:edge_stroke)
           path.stroke_width = "2"
           path.stroke_dasharray = "5,5" if message.line_style == "dotted"
         end
@@ -113,8 +113,8 @@ module Sirena
       def polygon_head(head)
         Svg::Polygon.new.tap do |polygon|
           polygon.points = head.points
-          polygon.fill = "#000000"
-          polygon.stroke = "#000000"
+          polygon.fill = theme_color(:edge_stroke)
+          polygon.stroke = theme_color(:edge_stroke)
         end
       end
 
@@ -127,7 +127,7 @@ module Sirena
           text.x = label.x
           text.y = label.y
           label_content(text, label)
-          text.fill = "#000000"
+          text.fill = theme_color(:label_text)
           text.font_family = "Arial, sans-serif"
           text.font_size = number_string(label.font_size)
           text.text_anchor = "middle"
@@ -166,8 +166,8 @@ module Sirena
           rect.y = participant.y
           rect.width = participant.width
           rect.height = participant.height
-          rect.fill = "#ffffff"
-          rect.stroke = "#000000"
+          rect.fill = theme_color(:node_fill)
+          rect.stroke = theme_color(:node_stroke)
           rect.stroke_width = "2"
           rect.rx = participant.corner_radius
           rect.ry = participant.corner_radius
@@ -182,7 +182,7 @@ module Sirena
           text.x = label.x
           text.y = label.y
           text.content = label.text
-          text.fill = "#000000"
+          text.fill = theme_color(:label_text)
           text.font_family = "Arial, sans-serif"
           text.font_size = number_string(label.font_size)
           text.text_anchor = "middle"
@@ -196,26 +196,29 @@ module Sirena
           circle.cy = participant.actor_head.y
           circle.r = participant.actor_head.radius
           circle.fill = "none"
-          circle.stroke = "#000000"
+          circle.stroke = theme_color(:node_stroke)
           circle.stroke_width = "2"
         end
         participant.actor_lines.each do |geometry|
-          group.children << svg_line(geometry, stroke_width: "2")
+          group.children << actor_line(geometry)
         end
         group.children << participant_label(participant.label) if
           participant.label
       end
 
-      def svg_line(geometry, stroke_width:, dash: nil)
-        Svg::Line.new.tap do |line|
-          line.x1 = geometry.x1
-          line.y1 = geometry.y1
-          line.x2 = geometry.x2
-          line.y2 = geometry.y2
-          line.stroke = "#000000"
-          line.stroke_width = stroke_width
-          line.stroke_dasharray = dash if dash
-        end
+      def actor_line(geometry)
+        svg_line(
+          geometry, stroke_width: "2", stroke: theme_color(:node_stroke)
+        )
+      end
+
+      def svg_line(geometry, stroke_width:, dash: nil,
+                   stroke: theme_color(:edge_stroke))
+        Svg::Line.new(
+          x1: geometry.x1, y1: geometry.y1,
+          x2: geometry.x2, y2: geometry.y2,
+          stroke: stroke, stroke_width: stroke_width, stroke_dasharray: dash
+        )
       end
 
       def number_string(value)
