@@ -344,10 +344,13 @@ RSpec.describe Sirena::Svg do
     it "uses the conformance gate named unrenderable examples" do
       task_source = example_task_source
       sources = unrenderable_example_source_lines
+      declaration = if sources.empty?
+                      "EXPECTED_UNRENDERABLE_SOURCES = [].freeze"
+                    else
+                      "EXPECTED_UNRENDERABLE_SOURCES = [\n#{sources}\n].freeze"
+                    end
 
-      expect(task_source).to include(
-        "EXPECTED_UNRENDERABLE_SOURCES = [\n#{sources}\n].freeze",
-      )
+      expect(task_source).to include(declaration)
     end
 
     # Both directions. Asking only "does each source have an SVG" leaves the
