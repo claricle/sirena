@@ -22,6 +22,7 @@ module Sirena
       DEFAULT_BLOCK_HEIGHT = 60
       DEFAULT_SPACING = 20
       DEFAULT_COMPOUND_PADDING = 8
+      COMPACT_TEXT_WIDTH_SCALE = 1.16
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -186,7 +187,7 @@ module Sirena
 
       def typed_node(block, positioned)
         geometry = positioned.fetch(block.id)
-        shape = value(block, "shape")
+        shape = arrow?(block) ? "arrow" : value(block, "shape")
         direction = value(block, "direction")
         Node.new(
           **node_attributes(block, geometry),
@@ -263,7 +264,7 @@ module Sirena
       def block_label(block, geometry)
         return [] unless block.label && !block.label.empty?
 
-        [Label.new(text: block.label,
+        [Label.new(text: block_label_text(block),
                    x: geometry[:x] + (geometry[:width] / 2),
                    y: geometry[:y] + (geometry[:height] / 2))]
       end
@@ -295,12 +296,14 @@ module Sirena
         row_heights = []
         col_widths = Array.new(columns, 0)
         span_column_width = span_column_width(blocks) if span_layout
+        uniform_grid = uniform_grid_dimensions(blocks, auto_layout)
 
         blocks.each do |block|
           block_width = block_span(block)
 
           # Handle space blocks
           if space?(block)
+            row_heights[current_row] = uniform_grid.fetch(:height) if uniform_grid
             current_col += block_width
             if current_col >= columns
               current_col = 0
@@ -310,9 +313,9 @@ module Sirena
           end
 
           # Calculate block dimensions
-          dims = calculate_block_dimensions(
-            block,
-            auto_layout: (auto_layout || span_layout) && !compound?(block),
+          dims = block_dimensions(
+            block, auto_layout: auto_layout, span_layout: span_layout,
+                   uniform_grid: uniform_grid
           )
 
           # Check if block fits in current row
@@ -322,11 +325,15 @@ module Sirena
           end
 
           # Position block
-          spacing = span_layout ? DEFAULT_COMPOUND_PADDING : DEFAULT_SPACING
+          spacing = compact_spacing(auto_layout, span_layout, uniform_grid)
           x = calculate_x_position(
             current_col, col_widths, spacing, span_column_width
           )
           y = calculate_y_position(current_row, row_heights, spacing)
+          if uniform_grid && special_shape?(block)
+            x += (uniform_grid.fetch(:width) - dims.fetch(:width)) / 2
+            y += (uniform_grid.fetch(:height) - dims.fetch(:height)) / 2
+          end
           width = spanned_width(
             dims[:width], block_width, spacing, span_column_width
           )
@@ -351,11 +358,15 @@ module Sirena
 
           # Update row height
           current_height = row_heights[current_row] || 0
-          row_heights[current_row] = [current_height, dims[:height]].max
+          occupied_height = uniform_grid&.fetch(:height) || dims[:height]
+          row_heights[current_row] = [current_height, occupied_height].max
 
           # Handle compound blocks
           if compound?(block) && !children(block).empty?
-            child_layout = layout_compound_children(block, x, y)
+            child_layout = layout_compound_children(
+              block, x, y, compact: !uniform_grid.nil?,
+                           parent_width: width
+            )
             positioned_blocks.merge!(child_layout)
           end
 
@@ -368,6 +379,67 @@ module Sirena
         end
 
         positioned_blocks
+      end
+
+      def block_dimensions(block, auto_layout:, span_layout:, uniform_grid:)
+        compact = (auto_layout || span_layout) && !compound?(block)
+        dimensions = calculate_block_dimensions(block, auto_layout: compact)
+        return dimensions unless uniform_grid
+        if special_shape?(block)
+          return calculate_block_dimensions(block, auto_layout: true)
+        end
+
+        {
+          width: uniform_grid.fetch(:width) * block_span(block) +
+            DEFAULT_COMPOUND_PADDING * (block_span(block) - 1),
+          height: uniform_grid.fetch(:height),
+        }
+      end
+
+      def compact_spacing(auto_layout, span_layout, uniform_grid)
+        return DEFAULT_COMPOUND_PADDING if auto_layout || span_layout ||
+          uniform_grid
+
+        DEFAULT_SPACING
+      end
+
+      def uniform_grid_dimensions(blocks, auto_layout)
+        return if auto_layout || blocks.none? { |block| compound?(block) }
+
+        dimensions = blocks.reject { |block| space?(block) }
+          .reject { |block| special_shape?(block) }
+          .map { |block| compact_dimensions(block) }
+        return if dimensions.empty?
+
+        {
+          width: dimensions.map { |item| item.fetch(:width) }.max,
+          height: dimensions.map { |item| item.fetch(:height) }.max,
+        }
+      end
+
+      def special_shape?(block)
+        arrow?(block) || value(block, "shape") == "circle"
+      end
+
+      def compact_dimensions(block)
+        label = block_label_text(block)
+        label_dims = measure_text(label, font_size: normal_font_size)
+        width = label_dims[:width] * COMPACT_TEXT_WIDTH_SCALE + 8
+        height = label_dims[:height] + 13
+        return { width: width, height: height } unless compound?(block)
+
+        compact_compound_dimensions(block, width, height)
+      end
+
+      def compact_compound_dimensions(block, width, height)
+        dimensions = children(block).map { |child| compact_dimensions(child) }
+        child_width = dimensions.map { |child| child.fetch(:width) }.max.to_f
+        child_height = dimensions.map { |child| child.fetch(:height) }.max.to_f
+        {
+          width: [width, child_width * dimensions.length +
+            DEFAULT_COMPOUND_PADDING * (dimensions.length + 1)].max,
+          height: [height, child_height + DEFAULT_COMPOUND_PADDING * 2].max,
+        }
       end
 
       def span_column_width(blocks)
@@ -384,13 +456,18 @@ module Sirena
         (column_width * span) + (spacing * (span - 1))
       end
 
-      def layout_compound_children(parent_block, parent_x, parent_y)
+      def layout_compound_children(parent_block, parent_x, parent_y,
+                                   compact: false, parent_width: nil)
         positioned = {}
         child_x = parent_x + DEFAULT_COMPOUND_PADDING
+        compact_width = if compact
+                          compact_child_width(parent_block, parent_width)
+                        end
 
         children(parent_block).each do |child|
           geometry = compound_child_geometry(child, parent_block, child_x,
-                                             compound_child_y(parent_y))
+                                             compound_child_y(parent_y),
+                                             compact_width: compact_width)
           positioned[child.id] = geometry
           positioned.merge!(nested_compound_children(child, geometry))
           child_x += geometry[:width] + DEFAULT_COMPOUND_PADDING
@@ -403,8 +480,18 @@ module Sirena
         parent_y + DEFAULT_COMPOUND_PADDING
       end
 
-      def compound_child_geometry(child, parent, child_x, child_y)
-        dimensions = calculate_block_dimensions(child, auto_layout: false)
+      def compact_child_width(parent_block, parent_width)
+        count = children(parent_block).length
+        (parent_width - DEFAULT_COMPOUND_PADDING * (count + 1)) / count
+      end
+
+      def compound_child_geometry(child, parent, child_x, child_y,
+                                  compact_width: nil)
+        dimensions = if compact_width
+                       compact_dimensions(child).merge(width: compact_width)
+                     else
+                       calculate_block_dimensions(child, auto_layout: false)
+                     end
         {
           block: child, x: child_x, y: child_y,
           width: dimensions[:width], height: dimensions[:height],
@@ -446,7 +533,15 @@ module Sirena
       end
 
       def block_label_text(block)
-        block.label || block.id
+        label = (block.label || block.id).gsub("&nbsp;", "\u00a0")
+        return label[1...-1] if quoted_label?(label)
+
+        label
+      end
+
+      def quoted_label?(label)
+        label.length >= 2 && %w[' "].include?(label[0]) &&
+          label[-1] == label[0]
       end
 
       def compound_dimensions(block, width, height)
@@ -471,23 +566,23 @@ module Sirena
 
       def calculate_x_position(col, col_widths, spacing = DEFAULT_SPACING,
                                column_width = nil)
-        return DEFAULT_SPACING if col.zero?
+        return spacing if col.zero?
 
         if column_width
-          return DEFAULT_SPACING + (col * (column_width + spacing))
+          return spacing + (col * (column_width + spacing))
         end
 
         col_widths[0...col].sum + (spacing * (col + 1))
       end
 
       def calculate_y_position(row, row_heights, spacing = DEFAULT_SPACING)
-        return DEFAULT_SPACING if row.zero?
+        return spacing if row.zero?
 
         # A skipped row (span wider than the column count, or filled by
         # "space" placeholders) leaves a nil row_heights entry and
         # contributes zero height; compact drops it rather than treating
         # it as a real row.
-        row_heights[0...row].compact.sum + DEFAULT_SPACING + (spacing * row)
+        row_heights[0...row].compact.sum + spacing + (spacing * row)
       end
 
       def calculate_connections(connections, blocks_layout, auto_layout:)
