@@ -66,12 +66,12 @@ module Sirena
 
       def connection_colour(connection, branch_colours)
         if connection.type == :cherry_pick
-          return theme_color(:edge_stroke) || "#999999"
+          return theme_color(:edge_stroke)
         end
 
         branch_colours[connection.from_branch] ||
           branch_colours[connection.to_branch] ||
-          theme_color(:edge_stroke) || "#666666"
+          theme_color(:edge_stroke)
       end
 
       def render_commits(scene, svg)
@@ -103,19 +103,19 @@ module Sirena
       end
 
       def highlight_fill
-        theme_color(:highlight) || "#fbbf24"
+        theme_color(:highlight)
       end
 
       def reverse_fill
-        theme_color(:background) || "#ffffff"
+        theme_color(:background)
       end
 
       def standard_commit_fill(commit, branch_colours)
-        branch_colours[commit.branch] || theme_color(:primary) || "#2563eb"
+        branch_colours[commit.branch] || theme_color(:primary)
       end
 
       def commit_stroke(commit, branch_colours)
-        branch_colours[commit.branch] || theme_color(:primary) || "#2563eb"
+        branch_colours[commit.branch] || theme_color(:primary)
       end
 
       def render_labels(scene, svg)
@@ -131,9 +131,9 @@ module Sirena
         Svg::Text.new.tap do |text|
           apply_label_geometry(text, geometry)
           text.fill = if geometry.kind == "tag"
-                        theme_color(:accent) || "#7c3aed"
+                        theme_color(:accent)
                       else
-                        theme_color(:label_text) || "#000000"
+                        theme_color(:label_text)
                       end
           text.font_weight = "bold" if geometry.kind == "tag"
         end
@@ -142,7 +142,7 @@ module Sirena
       def branch_label(geometry, colour)
         Svg::Text.new.tap do |text|
           apply_label_geometry(text, geometry)
-          text.fill = colour || theme_color(:primary) || "#2563eb"
+          text.fill = colour || theme_color(:primary)
           text.font_weight = "bold"
         end
       end
