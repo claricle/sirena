@@ -53443,103 +53443,103 @@
       "top5": [
         {
           "bbox_reference": [
-            411.5,
-            509.0,
-            411.5,
-            509.0
+            634.0,
+            266.0,
+            672.0,
+            286.0
           ],
           "bbox_sirena": [
-            535.647059,
-            110.0,
-            535.647059,
-            110.0
+            759.411765,
+            338.0,
+            796.705882,
+            358.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "15/01"
+            "Add to mermaid"
           ]
         },
         {
           "bbox_reference": [
-            112.5,
-            509.0,
-            112.5,
-            509.0
+            299.0,
+            338.0,
+            373.0,
+            358.0
           ],
           "bbox_sirena": [
+            423.764706,
+            410.0,
+            498.352941,
+            430.0
+          ],
+          "key": [
+            "task",
+            null,
+            "Add another diagram to demo page"
+          ]
+        },
+        {
+          "bbox_reference": [
+            75.0,
+            146.0,
+            112.0,
+            166.0
+          ],
+          "bbox_sirena": [
+            200.0,
+            218.0,
             237.294118,
-            110.0,
-            237.294118,
-            110.0
+            238.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "07/01"
+            "Completed task in the critical line"
           ]
         },
         {
           "bbox_reference": [
-            187.5,
-            509.0,
-            187.5,
-            509.0
+            560.0,
+            242.0,
+            634.0,
+            262.0
           ],
           "bbox_sirena": [
-            311.882353,
-            110.0,
-            311.882353,
-            110.0
+            684.823529,
+            314.0,
+            759.411765,
+            334.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "09/01"
+            "Create tests for renderer"
           ]
         },
         {
           "bbox_reference": [
-            261.5,
-            509.0,
-            261.5,
-            509.0
+            150.0,
+            170.0,
+            224.0,
+            190.0
           ],
           "bbox_sirena": [
-            386.470588,
-            110.0,
-            386.470588,
-            110.0
+            274.588235,
+            242.0,
+            349.176471,
+            262.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "11/01"
-          ]
-        },
-        {
-          "bbox_reference": [
-            336.5,
-            509.0,
-            336.5,
-            509.0
-          ],
-          "bbox_sirena": [
-            461.058824,
-            110.0,
-            461.058824,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "13/01"
+            "Implement parser and jison"
           ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.018576,
-      "worst_e_c": 0.586121,
+      "worst_e_c": 0.001089,
       "worst_e_h": 0.0,
       "worst_e_w": 0.018576,
       "worst_keys": {
@@ -53574,7 +53574,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.586121,
+        "worst_e_c": 0.001089,
         "worst_e_w": 0.018576,
         "worst_e_h": 0.0,
         "worst_e_a": 0.018576,
@@ -53592,16 +53592,35 @@
       "top5": [
         {
           "bbox_reference": [
-            516.0,
-            458.0,
-            591.0,
-            478.0
+            634.0,
+            266.0,
+            672.0,
+            286.0
           ],
           "bbox_sirena": [
-            641.313725,
-            960.0,
-            715.901961,
-            980.0
+            759.411765,
+            338.0,
+            796.705882,
+            358.0
+          ],
+          "key": [
+            "task",
+            null,
+            "Add to mermaid"
+          ]
+        },
+        {
+          "bbox_reference": [
+            299.0,
+            338.0,
+            373.0,
+            358.0
+          ],
+          "bbox_sirena": [
+            423.764706,
+            410.0,
+            498.352941,
+            430.0
           ],
           "key": [
             "task",
@@ -53611,84 +53630,65 @@
         },
         {
           "bbox_reference": [
-            411.5,
-            485.0,
-            411.5,
-            485.0
+            75.0,
+            146.0,
+            112.0,
+            166.0
           ],
           "bbox_sirena": [
-            535.647059,
-            110.0,
-            535.647059,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "15/01"
-          ]
-        },
-        {
-          "bbox_reference": [
-            112.5,
-            485.0,
-            112.5,
-            485.0
-          ],
-          "bbox_sirena": [
+            200.0,
+            218.0,
             237.294118,
-            110.0,
-            237.294118,
-            110.0
+            238.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "07/01"
+            "Completed task in the critical line"
           ]
         },
         {
           "bbox_reference": [
-            187.5,
-            485.0,
-            187.5,
-            485.0
+            560.0,
+            242.0,
+            634.0,
+            262.0
           ],
           "bbox_sirena": [
-            311.882353,
-            110.0,
-            311.882353,
-            110.0
+            684.823529,
+            314.0,
+            759.411765,
+            334.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "09/01"
+            "Create tests for renderer"
           ]
         },
         {
           "bbox_reference": [
-            261.5,
-            485.0,
-            261.5,
-            485.0
+            150.0,
+            170.0,
+            224.0,
+            190.0
           ],
           "bbox_sirena": [
-            386.470588,
-            110.0,
-            386.470588,
-            110.0
+            274.588235,
+            242.0,
+            349.176471,
+            262.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "11/01"
+            "Implement parser and jison"
           ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.018576,
-      "worst_e_c": 0.574552,
+      "worst_e_c": 0.001109,
       "worst_e_h": 0.0,
       "worst_e_w": 0.018576,
       "worst_keys": {
@@ -53699,9 +53699,9 @@
           "Add to mermaid"
         ],
         "e_c": [
-          "task",
+          "tick",
           null,
-          "Add another diagram to demo page"
+          "15/01"
         ],
         "e_h": [
           "task",
@@ -53723,7 +53723,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.574552,
+        "worst_e_c": 0.001109,
         "worst_e_w": 0.018576,
         "worst_e_h": 0.0,
         "worst_e_a": 0.018576,
@@ -53741,103 +53741,103 @@
       "top5": [
         {
           "bbox_reference": [
-            411.5,
-            509.0,
-            411.5,
-            509.0
+            634.0,
+            266.0,
+            672.0,
+            286.0
           ],
           "bbox_sirena": [
-            535.647059,
-            110.0,
-            535.647059,
-            110.0
+            759.411765,
+            338.0,
+            796.705882,
+            358.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "15/01"
+            "Add to mermaid"
           ]
         },
         {
           "bbox_reference": [
-            112.5,
-            509.0,
-            112.5,
-            509.0
+            299.0,
+            338.0,
+            373.0,
+            358.0
           ],
           "bbox_sirena": [
+            423.764706,
+            410.0,
+            498.352941,
+            430.0
+          ],
+          "key": [
+            "task",
+            null,
+            "Add another diagram to demo page"
+          ]
+        },
+        {
+          "bbox_reference": [
+            75.0,
+            146.0,
+            112.0,
+            166.0
+          ],
+          "bbox_sirena": [
+            200.0,
+            218.0,
             237.294118,
-            110.0,
-            237.294118,
-            110.0
+            238.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "07/01"
+            "Completed task in the critical line"
           ]
         },
         {
           "bbox_reference": [
-            187.5,
-            509.0,
-            187.5,
-            509.0
+            560.0,
+            242.0,
+            634.0,
+            262.0
           ],
           "bbox_sirena": [
-            311.882353,
-            110.0,
-            311.882353,
-            110.0
+            684.823529,
+            314.0,
+            759.411765,
+            334.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "09/01"
+            "Create tests for renderer"
           ]
         },
         {
           "bbox_reference": [
-            261.5,
-            509.0,
-            261.5,
-            509.0
+            150.0,
+            170.0,
+            224.0,
+            190.0
           ],
           "bbox_sirena": [
-            386.470588,
-            110.0,
-            386.470588,
-            110.0
+            274.588235,
+            242.0,
+            349.176471,
+            262.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "11/01"
-          ]
-        },
-        {
-          "bbox_reference": [
-            336.5,
-            509.0,
-            336.5,
-            509.0
-          ],
-          "bbox_sirena": [
-            461.058824,
-            110.0,
-            461.058824,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "13/01"
+            "Implement parser and jison"
           ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.018576,
-      "worst_e_c": 0.586121,
+      "worst_e_c": 0.001089,
       "worst_e_h": 0.0,
       "worst_e_w": 0.018576,
       "worst_keys": {
@@ -53872,7 +53872,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.586121,
+        "worst_e_c": 0.001089,
         "worst_e_w": 0.018576,
         "worst_e_h": 0.0,
         "worst_e_a": 0.018576,
@@ -53890,103 +53890,103 @@
       "top5": [
         {
           "bbox_reference": [
-            411.5,
-            509.0,
-            411.5,
-            509.0
+            634.0,
+            266.0,
+            672.0,
+            286.0
           ],
           "bbox_sirena": [
-            535.647059,
-            110.0,
-            535.647059,
-            110.0
+            759.411765,
+            338.0,
+            796.705882,
+            358.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "15/01"
+            "Add to mermaid"
           ]
         },
         {
           "bbox_reference": [
-            112.5,
-            509.0,
-            112.5,
-            509.0
+            299.0,
+            338.0,
+            373.0,
+            358.0
           ],
           "bbox_sirena": [
+            423.764706,
+            410.0,
+            498.352941,
+            430.0
+          ],
+          "key": [
+            "task",
+            null,
+            "Add another diagram to demo page"
+          ]
+        },
+        {
+          "bbox_reference": [
+            75.0,
+            146.0,
+            112.0,
+            166.0
+          ],
+          "bbox_sirena": [
+            200.0,
+            218.0,
             237.294118,
-            110.0,
-            237.294118,
-            110.0
+            238.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "07/01"
+            "Completed task in the critical line"
           ]
         },
         {
           "bbox_reference": [
-            187.5,
-            509.0,
-            187.5,
-            509.0
+            560.0,
+            242.0,
+            634.0,
+            262.0
           ],
           "bbox_sirena": [
-            311.882353,
-            110.0,
-            311.882353,
-            110.0
+            684.823529,
+            314.0,
+            759.411765,
+            334.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "09/01"
+            "Create tests for renderer"
           ]
         },
         {
           "bbox_reference": [
-            261.5,
-            509.0,
-            261.5,
-            509.0
+            150.0,
+            170.0,
+            224.0,
+            190.0
           ],
           "bbox_sirena": [
-            386.470588,
-            110.0,
-            386.470588,
-            110.0
+            274.588235,
+            242.0,
+            349.176471,
+            262.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "11/01"
-          ]
-        },
-        {
-          "bbox_reference": [
-            336.5,
-            509.0,
-            336.5,
-            509.0
-          ],
-          "bbox_sirena": [
-            461.058824,
-            110.0,
-            461.058824,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "13/01"
+            "Implement parser and jison"
           ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.018576,
-      "worst_e_c": 0.586121,
+      "worst_e_c": 0.001089,
       "worst_e_h": 0.0,
       "worst_e_w": 0.018576,
       "worst_keys": {
@@ -54021,7 +54021,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.586121,
+        "worst_e_c": 0.001089,
         "worst_e_w": 0.018576,
         "worst_e_h": 0.0,
         "worst_e_a": 0.018576,
@@ -54113,25 +54113,6 @@
       "top5": [
         {
           "bbox_reference": [
-            367.0,
-            122.0,
-            671.0,
-            142.0
-          ],
-          "bbox_sirena": [
-            491.64,
-            310.0,
-            795.96,
-            330.0
-          ],
-          "key": [
-            "task",
-            null,
-            "another task"
-          ]
-        },
-        {
-          "bbox_reference": [
             214.0,
             98.0,
             367.0,
@@ -54139,14 +54120,33 @@
           ],
           "bbox_sirena": [
             339.48,
-            270.0,
+            170.0,
             491.64,
-            290.0
+            190.0
           ],
           "key": [
             "task",
             null,
             "Task in sec"
+          ]
+        },
+        {
+          "bbox_reference": [
+            455.0,
+            74.0,
+            709.0,
+            94.0
+          ],
+          "bbox_sirena": [
+            580.4,
+            146.0,
+            834.0,
+            166.0
+          ],
+          "key": [
+            "task",
+            null,
+            "Another task"
           ]
         },
         {
@@ -54158,9 +54158,9 @@
           ],
           "bbox_sirena": [
             694.52,
-            110.0,
+            221.0,
             694.52,
-            110.0
+            221.0
           ],
           "key": [
             "tick",
@@ -54177,9 +54177,9 @@
           ],
           "bbox_sirena": [
             250.72,
-            110.0,
+            221.0,
             250.72,
-            110.0
+            221.0
           ],
           "key": [
             "tick",
@@ -54196,9 +54196,9 @@
           ],
           "bbox_sirena": [
             605.76,
-            110.0,
+            221.0,
             605.76,
-            110.0
+            221.0
           ],
           "key": [
             "tick",
@@ -54209,7 +54209,7 @@
       ],
       "worst_analog": null,
       "worst_e_a": 0.00549,
-      "worst_e_c": 0.199476,
+      "worst_e_c": 0.001527,
       "worst_e_h": 0.0,
       "worst_e_w": 0.00549,
       "worst_keys": {
@@ -54220,9 +54220,9 @@
           "Task in sec"
         ],
         "e_c": [
-          "task",
+          "tick",
           null,
-          "another task"
+          "2014-02-09"
         ],
         "e_h": [
           "task",
@@ -54244,7 +54244,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.199476,
+        "worst_e_c": 0.001527,
         "worst_e_w": 0.00549,
         "worst_e_h": 0.0,
         "worst_e_a": 0.00549,
@@ -54262,54 +54262,16 @@
       "top5": [
         {
           "bbox_reference": [
-            75.0,
-            122.0,
-            75.0,
-            142.0
-          ],
-          "bbox_sirena": [
-            200.003917,
-            310.0,
-            200.003917,
-            330.0
-          ],
-          "key": [
-            "task",
-            null,
-            "another task"
-          ]
-        },
-        {
-          "bbox_reference": [
-            75.0,
-            98.0,
-            75.0,
-            118.0
-          ],
-          "bbox_sirena": [
-            200.0,
-            270.0,
-            200.0,
-            290.0
-          ],
-          "key": [
-            "task",
-            null,
-            "Task in sec"
-          ]
-        },
-        {
-          "bbox_reference": [
-            471.5,
+            630.5,
             149.0,
-            471.5,
+            630.5,
             149.0
           ],
           "bbox_sirena": [
-            595.573533,
-            110.0,
-            595.573533,
-            110.0
+            754.527775,
+            221.0,
+            754.527775,
+            221.0
           ],
           "key": [
             "tick",
@@ -54319,16 +54281,16 @@
         },
         {
           "bbox_reference": [
-            630.5,
+            471.5,
             149.0,
-            630.5,
+            471.5,
             149.0
           ],
           "bbox_sirena": [
-            754.527775,
-            110.0,
-            754.527775,
-            110.0
+            595.573533,
+            221.0,
+            595.573533,
+            221.0
           ],
           "key": [
             "tick",
@@ -54345,9 +54307,47 @@
           ],
           "bbox_sirena": [
             436.619291,
-            110.0,
+            221.0,
             436.619291,
-            110.0
+            221.0
+          ],
+          "key": [
+            "tick",
+            null,
+            "01-01"
+          ]
+        },
+        {
+          "bbox_reference": [
+            153.5,
+            149.0,
+            153.5,
+            149.0
+          ],
+          "bbox_sirena": [
+            277.665049,
+            221.0,
+            277.665049,
+            221.0
+          ],
+          "key": [
+            "tick",
+            null,
+            "01-01"
+          ]
+        },
+        {
+          "bbox_reference": [
+            550.5,
+            149.0,
+            550.5,
+            149.0
+          ],
+          "bbox_sirena": [
+            675.050545,
+            221.0,
+            675.050545,
+            221.0
           ],
           "key": [
             "tick",
@@ -54358,16 +54358,16 @@
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 0.199475,
+      "worst_e_c": 0.001515,
       "worst_e_h": 0.0,
       "worst_e_w": null,
       "worst_keys": {
         "analog": null,
         "e_a": null,
         "e_c": [
-          "task",
+          "tick",
           null,
-          "another task"
+          "01-01"
         ],
         "e_h": [
           "task",
@@ -54385,7 +54385,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.199475,
+        "worst_e_c": 0.001515,
         "worst_e_w": null,
         "worst_e_h": 0.0,
         "worst_e_a": null,
@@ -54403,25 +54403,6 @@
       "top5": [
         {
           "bbox_reference": [
-            75.0,
-            50.0,
-            709.0,
-            70.0
-          ],
-          "bbox_sirena": [
-            200.0,
-            160.0,
-            834.0,
-            180.0
-          ],
-          "key": [
-            "task",
-            null,
-            "A task"
-          ]
-        },
-        {
-          "bbox_reference": [
             166.5,
             77.0,
             166.5,
@@ -54429,9 +54410,9 @@
           ],
           "bbox_sirena": [
             290.571429,
-            110.0,
+            149.0,
             290.571429,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
@@ -54448,9 +54429,9 @@
           ],
           "bbox_sirena": [
             607.571429,
-            110.0,
+            149.0,
             607.571429,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
@@ -54467,9 +54448,9 @@
           ],
           "bbox_sirena": [
             471.714286,
-            110.0,
+            149.0,
             471.714286,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
@@ -54486,20 +54467,39 @@
           ],
           "bbox_sirena": [
             788.714286,
-            110.0,
+            149.0,
             788.714286,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
             null,
             "2024-03-12"
           ]
+        },
+        {
+          "bbox_reference": [
+            211.5,
+            77.0,
+            211.5,
+            77.0
+          ],
+          "bbox_sirena": [
+            335.857143,
+            149.0,
+            335.857143,
+            149.0
+          ],
+          "key": [
+            "tick",
+            null,
+            "2024-03-02"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.078731,
+      "worst_e_c": 0.001462,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -54510,9 +54510,9 @@
           "A task"
         ],
         "e_c": [
-          "task",
+          "tick",
           null,
-          "A task"
+          "2024-03-01"
         ],
         "e_h": [
           "task",
@@ -54534,7 +54534,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.078731,
+        "worst_e_c": 0.001462,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -54552,25 +54552,6 @@
       "top5": [
         {
           "bbox_reference": [
-            75.0,
-            50.0,
-            709.0,
-            70.0
-          ],
-          "bbox_sirena": [
-            200.0,
-            160.0,
-            834.0,
-            180.0
-          ],
-          "key": [
-            "task",
-            null,
-            "A task"
-          ]
-        },
-        {
-          "bbox_reference": [
             166.5,
             77.0,
             166.5,
@@ -54578,9 +54559,9 @@
           ],
           "bbox_sirena": [
             290.571429,
-            110.0,
+            149.0,
             290.571429,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
@@ -54597,9 +54578,9 @@
           ],
           "bbox_sirena": [
             607.571429,
-            110.0,
+            149.0,
             607.571429,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
@@ -54616,9 +54597,9 @@
           ],
           "bbox_sirena": [
             471.714286,
-            110.0,
+            149.0,
             471.714286,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
@@ -54635,20 +54616,39 @@
           ],
           "bbox_sirena": [
             788.714286,
-            110.0,
+            149.0,
             788.714286,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
             null,
             "2024-03-12"
           ]
+        },
+        {
+          "bbox_reference": [
+            211.5,
+            77.0,
+            211.5,
+            77.0
+          ],
+          "bbox_sirena": [
+            335.857143,
+            149.0,
+            335.857143,
+            149.0
+          ],
+          "key": [
+            "tick",
+            null,
+            "2024-03-02"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.078731,
+      "worst_e_c": 0.001462,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -54659,9 +54659,9 @@
           "A task"
         ],
         "e_c": [
-          "task",
+          "tick",
           null,
-          "A task"
+          "2024-03-01"
         ],
         "e_h": [
           "task",
@@ -54683,7 +54683,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.078731,
+        "worst_e_c": 0.001462,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -54812,25 +54812,6 @@
       "top5": [
         {
           "bbox_reference": [
-            392.0,
-            50.0,
-            392.0,
-            70.0
-          ],
-          "bbox_sirena": [
-            600.0,
-            160.0,
-            600.0,
-            180.0
-          ],
-          "key": [
-            "task",
-            null,
-            "A task"
-          ]
-        },
-        {
-          "bbox_reference": [
             392.5,
             77.0,
             392.5,
@@ -54838,29 +54819,48 @@
           ],
           "bbox_sirena": [
             600.0,
-            110.0,
+            149.0,
             600.0,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
             null,
             "2014-01-01"
           ]
+        },
+        {
+          "bbox_reference": [
+            392.0,
+            50.0,
+            392.0,
+            70.0
+          ],
+          "bbox_sirena": [
+            600.0,
+            122.0,
+            600.0,
+            142.0
+          ],
+          "key": [
+            "task",
+            null,
+            "A task"
+          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": null,
-      "worst_e_c": 1.851534,
+      "worst_e_c": 0.018515,
       "worst_e_h": 0.0,
       "worst_e_w": null,
       "worst_keys": {
         "analog": null,
         "e_a": null,
         "e_c": [
-          "task",
+          "tick",
           null,
-          "A task"
+          "2014-01-01"
         ],
         "e_h": [
           "task",
@@ -54878,7 +54878,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 1.851534,
+        "worst_e_c": 0.018515,
         "worst_e_w": null,
         "worst_e_h": 0.0,
         "worst_e_a": null,
@@ -54970,25 +54970,6 @@
       "top5": [
         {
           "bbox_reference": [
-            75.0,
-            50.0,
-            709.0,
-            70.0
-          ],
-          "bbox_sirena": [
-            200.0,
-            160.0,
-            834.0,
-            180.0
-          ],
-          "key": [
-            "task",
-            null,
-            "Design jison grammar"
-          ]
-        },
-        {
-          "bbox_reference": [
             234.5,
             77.0,
             234.5,
@@ -54996,9 +54977,9 @@
           ],
           "bbox_sirena": [
             358.5,
-            110.0,
+            149.0,
             358.5,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
@@ -55015,9 +54996,9 @@
           ],
           "bbox_sirena": [
             675.5,
-            110.0,
+            149.0,
             675.5,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
@@ -55034,9 +55015,9 @@
           ],
           "bbox_sirena": [
             305.666667,
-            110.0,
+            149.0,
             305.666667,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
@@ -55053,20 +55034,39 @@
           ],
           "bbox_sirena": [
             622.666667,
-            110.0,
+            149.0,
             622.666667,
-            110.0
+            149.0
           ],
           "key": [
             "tick",
             null,
             "2014-01-03"
+          ]
+        },
+        {
+          "bbox_reference": [
+            128.5,
+            77.0,
+            128.5,
+            77.0
+          ],
+          "bbox_sirena": [
+            252.833333,
+            149.0,
+            252.833333,
+            149.0
+          ],
+          "key": [
+            "tick",
+            null,
+            "2014-01-01"
           ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.078731,
+      "worst_e_c": 0.001575,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
@@ -55077,9 +55077,9 @@
           "Design jison grammar"
         ],
         "e_c": [
-          "task",
+          "tick",
           null,
-          "Design jison grammar"
+          "2014-01-01"
         ],
         "e_h": [
           "task",
@@ -55101,7 +55101,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.078731,
+        "worst_e_c": 0.001575,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
@@ -55119,6 +55119,63 @@
       "top5": [
         {
           "bbox_reference": [
+            519.0,
+            50.0,
+            582.0,
+            70.0
+          ],
+          "bbox_sirena": [
+            643.8,
+            122.0,
+            707.2,
+            142.0
+          ],
+          "key": [
+            "task",
+            null,
+            "task A"
+          ]
+        },
+        {
+          "bbox_reference": [
+            519.0,
+            122.0,
+            582.0,
+            142.0
+          ],
+          "bbox_sirena": [
+            643.8,
+            194.0,
+            707.2,
+            214.0
+          ],
+          "key": [
+            "task",
+            null,
+            "task D"
+          ]
+        },
+        {
+          "bbox_reference": [
+            582.0,
+            74.0,
+            709.0,
+            94.0
+          ],
+          "bbox_sirena": [
+            707.2,
+            146.0,
+            834.0,
+            166.0
+          ],
+          "key": [
+            "task",
+            null,
+            "task B"
+          ]
+        },
+        {
+          "bbox_reference": [
             329.5,
             149.0,
             329.5,
@@ -55126,9 +55183,9 @@
           ],
           "bbox_sirena": [
             453.6,
-            110.0,
+            221.0,
             453.6,
-            110.0
+            221.0
           ],
           "key": [
             "tick",
@@ -55145,77 +55202,20 @@
           ],
           "bbox_sirena": [
             770.6,
-            110.0,
+            221.0,
             770.6,
-            110.0
+            221.0
           ],
           "key": [
             "tick",
             null,
             "2024-01-29"
           ]
-        },
-        {
-          "bbox_reference": [
-            202.5,
-            149.0,
-            202.5,
-            149.0
-          ],
-          "bbox_sirena": [
-            326.8,
-            110.0,
-            326.8,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "2024-01-22"
-          ]
-        },
-        {
-          "bbox_reference": [
-            519.5,
-            149.0,
-            519.5,
-            149.0
-          ],
-          "bbox_sirena": [
-            643.8,
-            110.0,
-            643.8,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "2024-01-27"
-          ]
-        },
-        {
-          "bbox_reference": [
-            75.5,
-            149.0,
-            75.5,
-            149.0
-          ],
-          "bbox_sirena": [
-            200.0,
-            110.0,
-            200.0,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "2024-01-20"
-          ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.006349,
-      "worst_e_c": 0.154169,
+      "worst_e_c": 0.001401,
       "worst_e_h": 0.0,
       "worst_e_w": 0.006349,
       "worst_keys": {
@@ -55250,7 +55250,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.154169,
+        "worst_e_c": 0.001401,
         "worst_e_w": 0.006349,
         "worst_e_h": 0.0,
         "worst_e_a": 0.006349,
@@ -98341,8 +98341,8 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            410.014,
-            100.0
+            392.765625,
+            90.0
           ],
           "key": [
             "state",
@@ -98360,8 +98360,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            131.734375,
+            90.0
           ],
           "key": [
             "state",
@@ -98371,16 +98371,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.051252,
-      "worst_e_c": 0.556879,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.223475,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.518628,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "assemblies"
+          "assemble"
         ],
         "e_c": [
           "state",
@@ -98407,10 +98407,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.556879,
-        "worst_e_w": 0.223475,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.051252,
+        "worst_e_c": 0.518628,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -98425,25 +98425,6 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            8.0,
-            48.09375,
-            48.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            50.0,
-            150.0,
-            100.0
-          ],
-          "key": [
-            "state",
-            null,
-            "id1"
-          ]
-        },
-        {
-          "bbox_reference": [
             98.09375,
             8.0,
             138.1875,
@@ -98452,21 +98433,40 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            400.0,
-            100.0
+            337.875,
+            90.0
           ],
           "key": [
             "state",
             null,
             "id2"
           ]
+        },
+        {
+          "bbox_reference": [
+            8.0,
+            8.0,
+            48.09375,
+            48.0
+          ],
+          "bbox_sirena": [
+            50.0,
+            50.0,
+            87.875,
+            90.0
+          ],
+          "key": [
+            "state",
+            null,
+            "id1"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.995323,
-      "worst_e_c": 1.39452,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.494154,
+      "worst_e_a": 0.055339,
+      "worst_e_c": 1.165962,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.055339,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -98499,10 +98499,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 1.39452,
-        "worst_e_w": 1.494154,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.995323,
+        "worst_e_c": 1.165962,
+        "worst_e_w": 0.055339,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.055339,
         "worst_analog": null
       }
     }
@@ -98525,8 +98525,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            87.875,
+            90.0
           ],
           "key": [
             "state",
@@ -98536,10 +98536,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.112211,
-      "worst_e_c": 0.571145,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.640264,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -98572,10 +98572,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.571145,
-        "worst_e_w": 1.640264,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.112211,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -98783,8 +98783,8 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            400.0,
-            100.0
+            344.046875,
+            90.0
           ],
           "key": [
             "state",
@@ -98802,32 +98802,13 @@
           "bbox_sirena": [
             300.0,
             250.0,
-            400.0,
-            300.0
+            355.421875,
+            290.0
           ],
           "key": [
             "state",
             null,
             "Crash"
-          ]
-        },
-        {
-          "bbox_reference": [
-            21.246094,
-            162.0,
-            86.355469,
-            202.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            250.0,
-            150.0,
-            300.0
-          ],
-          "key": [
-            "state",
-            null,
-            "Moving"
           ]
         },
         {
@@ -98851,6 +98832,25 @@
         },
         {
           "bbox_reference": [
+            21.246094,
+            162.0,
+            86.355469,
+            202.0
+          ],
+          "bbox_sirena": [
+            50.0,
+            250.0,
+            115.125,
+            290.0
+          ],
+          "key": [
+            "state",
+            null,
+            "Moving"
+          ]
+        },
+        {
+          "bbox_reference": [
             23.023438,
             8.0,
             37.023438,
@@ -98870,16 +98870,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.816247,
-      "worst_e_c": 0.796634,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.270309,
+      "worst_e_a": 0.000949,
+      "worst_e_c": 0.723446,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.000949,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "state",
+          "terminal-end",
           null,
-          "Still"
+          "[*]"
         ],
         "e_c": [
           "state",
@@ -98892,9 +98892,9 @@
           "Crash"
         ],
         "e_w": [
-          "state",
+          "terminal-end",
           null,
-          "Still"
+          "[*]"
         ]
       }
     },
@@ -98906,10 +98906,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.796634,
-        "worst_e_w": 1.270309,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.816247,
+        "worst_e_c": 0.723446,
+        "worst_e_w": 0.000949,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.000949,
         "worst_analog": null
       }
     }
@@ -98924,6 +98924,25 @@
       "top5": [
         {
           "bbox_reference": [
+            166.046875,
+            25.5,
+            231.15625,
+            65.5
+          ],
+          "bbox_sirena": [
+            50.0,
+            250.0,
+            115.125,
+            290.0
+          ],
+          "key": [
+            "state",
+            null,
+            "Moving"
+          ]
+        },
+        {
+          "bbox_reference": [
             72.0,
             8.0,
             116.046875,
@@ -98932,8 +98951,8 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            400.0,
-            100.0
+            344.046875,
+            90.0
           ],
           "key": [
             "state",
@@ -98951,32 +98970,13 @@
           "bbox_sirena": [
             300.0,
             250.0,
-            400.0,
-            300.0
+            355.421875,
+            290.0
           ],
           "key": [
             "state",
             null,
             "Crash"
-          ]
-        },
-        {
-          "bbox_reference": [
-            166.046875,
-            25.5,
-            231.15625,
-            65.5
-          ],
-          "bbox_sirena": [
-            50.0,
-            250.0,
-            150.0,
-            300.0
-          ],
-          "key": [
-            "state",
-            null,
-            "Moving"
           ]
         },
         {
@@ -99019,16 +99019,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.816247,
-      "worst_e_c": 0.590648,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.270309,
+      "worst_e_a": 0.000949,
+      "worst_e_c": 0.608433,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.000949,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "state",
+          "terminal-end",
           null,
-          "Still"
+          "[*]"
         ],
         "e_c": [
           "state",
@@ -99041,9 +99041,9 @@
           "Crash"
         ],
         "e_w": [
-          "state",
+          "terminal-end",
           null,
-          "Still"
+          "[*]"
         ]
       }
     },
@@ -99055,10 +99055,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.590648,
-        "worst_e_w": 1.270309,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.816247,
+        "worst_e_c": 0.608433,
+        "worst_e_w": 0.000949,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.000949,
         "worst_analog": null
       }
     }
@@ -99081,8 +99081,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            173.258,
-            100.0
+            160.328125,
+            90.0
           ],
           "key": [
             "state",
@@ -99092,10 +99092,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.106624,
-      "worst_e_c": 0.069458,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.11672,
+      "worst_e_a": 0.000425,
+      "worst_e_c": 0.0002,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.000425,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -99128,10 +99128,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.069458,
-        "worst_e_w": 0.11672,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.106624,
+        "worst_e_c": 0.0002,
+        "worst_e_w": 0.000425,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.000425,
         "worst_analog": null
       }
     }
@@ -99154,8 +99154,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            89.546875,
+            90.0
           ],
           "key": [
             "state",
@@ -99165,10 +99165,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.022916,
-      "worst_e_c": 0.544673,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.528645,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -99201,10 +99201,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.544673,
-        "worst_e_w": 1.528645,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.022916,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -99227,8 +99227,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            89.546875,
+            90.0
           ],
           "key": [
             "state",
@@ -99238,10 +99238,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.022916,
-      "worst_e_c": 0.544673,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.528645,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -99274,10 +99274,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.544673,
-        "worst_e_w": 1.528645,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.022916,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -99329,6 +99329,25 @@
       "top5": [
         {
           "bbox_reference": [
+            43.0,
+            123.0,
+            111.53125,
+            273.0
+          ],
+          "bbox_sirena": [
+            43.823313,
+            165.0,
+            118.067313,
+            297.0
+          ],
+          "key": [
+            "state",
+            null,
+            "State1----note"
+          ]
+        },
+        {
+          "bbox_reference": [
             46.3125,
             8.0,
             108.21875,
@@ -99337,61 +99356,42 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            111.890625,
+            90.0
           ],
           "key": [
             "state",
             null,
             "State1"
           ]
-        },
-        {
-          "bbox_reference": [
-            43.0,
-            123.0,
-            111.53125,
-            273.0
-          ],
-          "bbox_sirena": [
-            62.878,
-            175.0,
-            137.122,
-            307.0
-          ],
-          "key": [
-            "state",
-            null,
-            "State1----note"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.292277,
-      "worst_e_c": 0.060317,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.615346,
+      "worst_e_a": 0.231091,
+      "worst_e_c": 0.034497,
+      "worst_e_h": 0.12,
+      "worst_e_w": 0.08336,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_c": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_h": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_w": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ]
       }
     },
@@ -99403,10 +99403,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.060317,
-        "worst_e_w": 0.615346,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.292277,
+        "worst_e_c": 0.034497,
+        "worst_e_w": 0.08336,
+        "worst_e_h": 0.12,
+        "worst_e_a": 0.231091,
         "worst_analog": null
       }
     }
@@ -99421,6 +99421,25 @@
       "top5": [
         {
           "bbox_reference": [
+            43.0,
+            123.0,
+            111.53125,
+            273.0
+          ],
+          "bbox_sirena": [
+            43.823313,
+            165.0,
+            118.067313,
+            297.0
+          ],
+          "key": [
+            "state",
+            null,
+            "State1----note"
+          ]
+        },
+        {
+          "bbox_reference": [
             46.3125,
             8.0,
             108.21875,
@@ -99429,61 +99448,42 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            111.890625,
+            90.0
           ],
           "key": [
             "state",
             null,
             "State1"
           ]
-        },
-        {
-          "bbox_reference": [
-            43.0,
-            123.0,
-            111.53125,
-            273.0
-          ],
-          "bbox_sirena": [
-            62.878,
-            175.0,
-            137.122,
-            307.0
-          ],
-          "key": [
-            "state",
-            null,
-            "State1----note"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.292277,
-      "worst_e_c": 0.060317,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.615346,
+      "worst_e_a": 0.231091,
+      "worst_e_c": 0.034497,
+      "worst_e_h": 0.12,
+      "worst_e_w": 0.08336,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_c": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_h": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_w": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ]
       }
     },
@@ -99495,10 +99495,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.060317,
-        "worst_e_w": 0.615346,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.292277,
+        "worst_e_c": 0.034497,
+        "worst_e_w": 0.08336,
+        "worst_e_h": 0.12,
+        "worst_e_a": 0.231091,
         "worst_analog": null
       }
     }
@@ -99708,8 +99708,8 @@
           "bbox_sirena": [
             320.0,
             104.0,
-            470.488,
-            154.0
+            462.03125,
+            144.0
           ],
           "key": [
             "state",
@@ -99727,8 +99727,8 @@
           "bbox_sirena": [
             70.0,
             104.0,
-            171.474,
-            154.0
+            157.140625,
+            144.0
           ],
           "key": [
             "state",
@@ -99838,8 +99838,8 @@
           "bbox_sirena": [
             320.0,
             104.0,
-            470.488,
-            154.0
+            462.03125,
+            144.0
           ],
           "key": [
             "state",
@@ -99857,8 +99857,8 @@
           "bbox_sirena": [
             70.0,
             104.0,
-            171.474,
-            154.0
+            157.140625,
+            144.0
           ],
           "key": [
             "state",
@@ -99930,8 +99930,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            173.258,
-            100.0
+            160.328125,
+            90.0
           ],
           "key": [
             "state",
@@ -99941,10 +99941,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.106624,
-      "worst_e_c": 0.069458,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.11672,
+      "worst_e_a": 0.000425,
+      "worst_e_c": 0.0002,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.000425,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -99977,10 +99977,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.069458,
-        "worst_e_w": 0.11672,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.106624,
+        "worst_e_c": 0.0002,
+        "worst_e_w": 0.000425,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.000425,
         "worst_analog": null
       }
     }
@@ -100003,8 +100003,8 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            400.0,
-            100.0
+            344.046875,
+            90.0
           ],
           "key": [
             "state",
@@ -100022,32 +100022,13 @@
           "bbox_sirena": [
             300.0,
             250.0,
-            400.0,
-            300.0
+            355.421875,
+            290.0
           ],
           "key": [
             "state",
             null,
             "Crash"
-          ]
-        },
-        {
-          "bbox_reference": [
-            21.246094,
-            162.0,
-            86.355469,
-            202.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            250.0,
-            150.0,
-            300.0
-          ],
-          "key": [
-            "state",
-            null,
-            "Moving"
           ]
         },
         {
@@ -100071,6 +100052,25 @@
         },
         {
           "bbox_reference": [
+            21.246094,
+            162.0,
+            86.355469,
+            202.0
+          ],
+          "bbox_sirena": [
+            50.0,
+            250.0,
+            115.125,
+            290.0
+          ],
+          "key": [
+            "state",
+            null,
+            "Moving"
+          ]
+        },
+        {
+          "bbox_reference": [
             23.023438,
             8.0,
             37.023438,
@@ -100090,16 +100090,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.816247,
-      "worst_e_c": 0.796634,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.270309,
+      "worst_e_a": 0.000949,
+      "worst_e_c": 0.723446,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.000949,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "state",
+          "terminal-end",
           null,
-          "Still"
+          "[*]"
         ],
         "e_c": [
           "state",
@@ -100112,9 +100112,9 @@
           "Crash"
         ],
         "e_w": [
-          "state",
+          "terminal-end",
           null,
-          "Still"
+          "[*]"
         ]
       }
     },
@@ -100126,10 +100126,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.796634,
-        "worst_e_w": 1.270309,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.816247,
+        "worst_e_c": 0.723446,
+        "worst_e_w": 0.000949,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.000949,
         "worst_analog": null
       }
     }
@@ -100152,8 +100152,8 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            400.0,
-            100.0
+            344.046875,
+            90.0
           ],
           "key": [
             "state",
@@ -100171,32 +100171,13 @@
           "bbox_sirena": [
             300.0,
             250.0,
-            400.0,
-            300.0
+            355.421875,
+            290.0
           ],
           "key": [
             "state",
             null,
             "Crash"
-          ]
-        },
-        {
-          "bbox_reference": [
-            21.246094,
-            162.0,
-            86.355469,
-            202.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            250.0,
-            150.0,
-            300.0
-          ],
-          "key": [
-            "state",
-            null,
-            "Moving"
           ]
         },
         {
@@ -100220,6 +100201,25 @@
         },
         {
           "bbox_reference": [
+            21.246094,
+            162.0,
+            86.355469,
+            202.0
+          ],
+          "bbox_sirena": [
+            50.0,
+            250.0,
+            115.125,
+            290.0
+          ],
+          "key": [
+            "state",
+            null,
+            "Moving"
+          ]
+        },
+        {
+          "bbox_reference": [
             23.023438,
             8.0,
             37.023438,
@@ -100239,16 +100239,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.816247,
-      "worst_e_c": 0.796634,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.270309,
+      "worst_e_a": 0.000949,
+      "worst_e_c": 0.723446,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.000949,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "state",
+          "terminal-end",
           null,
-          "Still"
+          "[*]"
         ],
         "e_c": [
           "state",
@@ -100261,9 +100261,9 @@
           "Crash"
         ],
         "e_w": [
-          "state",
+          "terminal-end",
           null,
-          "Still"
+          "[*]"
         ]
       }
     },
@@ -100275,10 +100275,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.796634,
-        "worst_e_w": 1.270309,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.816247,
+        "worst_e_c": 0.723446,
+        "worst_e_w": 0.000949,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.000949,
         "worst_analog": null
       }
     }
@@ -100301,8 +100301,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            173.258,
-            100.0
+            160.328125,
+            90.0
           ],
           "key": [
             "state",
@@ -100312,10 +100312,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.106624,
-      "worst_e_c": 0.069458,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.11672,
+      "worst_e_a": 0.000425,
+      "worst_e_c": 0.0002,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.000425,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -100348,10 +100348,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.069458,
-        "worst_e_w": 0.11672,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.106624,
+        "worst_e_c": 0.0002,
+        "worst_e_w": 0.000425,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.000425,
         "worst_analog": null
       }
     }
@@ -100374,8 +100374,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            173.258,
-            100.0
+            160.328125,
+            90.0
           ],
           "key": [
             "state",
@@ -100385,10 +100385,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.106624,
-      "worst_e_c": 0.069458,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.11672,
+      "worst_e_a": 0.000425,
+      "worst_e_c": 0.0002,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.000425,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -100421,10 +100421,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.069458,
-        "worst_e_w": 0.11672,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.106624,
+        "worst_e_c": 0.0002,
+        "worst_e_w": 0.000425,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.000425,
         "worst_analog": null
       }
     }
@@ -100447,8 +100447,8 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            410.014,
-            100.0
+            392.765625,
+            90.0
           ],
           "key": [
             "state",
@@ -100466,8 +100466,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            131.734375,
+            90.0
           ],
           "key": [
             "state",
@@ -100477,10 +100477,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.071578,
-      "worst_e_c": 0.644542,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.339473,
+      "worst_e_a": 0.09481,
+      "worst_e_c": 0.603772,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.09481,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -100513,10 +100513,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.644542,
-        "worst_e_w": 0.339473,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.071578,
+        "worst_e_c": 0.603772,
+        "worst_e_w": 0.09481,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.09481,
         "worst_analog": null
       }
     }
@@ -100539,8 +100539,8 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            410.014,
-            100.0
+            392.765625,
+            90.0
           ],
           "key": [
             "state",
@@ -100558,8 +100558,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            131.734375,
+            90.0
           ],
           "key": [
             "state",
@@ -100569,16 +100569,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.051252,
-      "worst_e_c": 0.556879,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.223475,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.518628,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "assemblies"
+          "assemble"
         ],
         "e_c": [
           "state",
@@ -100605,10 +100605,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.556879,
-        "worst_e_w": 0.223475,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.051252,
+        "worst_e_c": 0.518628,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -100623,25 +100623,6 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            8.0,
-            48.09375,
-            48.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            50.0,
-            150.0,
-            100.0
-          ],
-          "key": [
-            "state",
-            null,
-            "id1"
-          ]
-        },
-        {
-          "bbox_reference": [
             98.09375,
             8.0,
             138.1875,
@@ -100650,21 +100631,40 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            400.0,
-            100.0
+            337.875,
+            90.0
           ],
           "key": [
             "state",
             null,
             "id2"
           ]
+        },
+        {
+          "bbox_reference": [
+            8.0,
+            8.0,
+            48.09375,
+            48.0
+          ],
+          "bbox_sirena": [
+            50.0,
+            50.0,
+            87.875,
+            90.0
+          ],
+          "key": [
+            "state",
+            null,
+            "id1"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.995323,
-      "worst_e_c": 1.39452,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.494154,
+      "worst_e_a": 0.055339,
+      "worst_e_c": 1.165962,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.055339,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -100697,10 +100697,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 1.39452,
-        "worst_e_w": 1.494154,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.995323,
+        "worst_e_c": 1.165962,
+        "worst_e_w": 0.055339,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.055339,
         "worst_analog": null
       }
     }
@@ -100723,8 +100723,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            87.875,
+            90.0
           ],
           "key": [
             "state",
@@ -100734,10 +100734,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.112211,
-      "worst_e_c": 0.571145,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.640264,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -100770,10 +100770,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.571145,
-        "worst_e_w": 1.640264,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.112211,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -100788,25 +100788,6 @@
       "top5": [
         {
           "bbox_reference": [
-            8.0,
-            8.0,
-            48.09375,
-            48.0
-          ],
-          "bbox_sirena": [
-            50.0,
-            50.0,
-            150.0,
-            100.0
-          ],
-          "key": [
-            "state",
-            null,
-            "id1"
-          ]
-        },
-        {
-          "bbox_reference": [
             98.09375,
             8.0,
             138.1875,
@@ -100815,21 +100796,40 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            400.0,
-            100.0
+            337.875,
+            90.0
           ],
           "key": [
             "state",
             null,
             "id2"
           ]
+        },
+        {
+          "bbox_reference": [
+            8.0,
+            8.0,
+            48.09375,
+            48.0
+          ],
+          "bbox_sirena": [
+            50.0,
+            50.0,
+            87.875,
+            90.0
+          ],
+          "key": [
+            "state",
+            null,
+            "id1"
+          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.995323,
-      "worst_e_c": 1.39452,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.494154,
+      "worst_e_a": 0.055339,
+      "worst_e_c": 1.165962,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.055339,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -100862,10 +100862,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 1.39452,
-        "worst_e_w": 1.494154,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.995323,
+        "worst_e_c": 1.165962,
+        "worst_e_w": 0.055339,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.055339,
         "worst_analog": null
       }
     }
@@ -100963,8 +100963,8 @@
           "bbox_sirena": [
             320.0,
             104.0,
-            470.488,
-            154.0
+            462.03125,
+            144.0
           ],
           "key": [
             "state",
@@ -100982,8 +100982,8 @@
           "bbox_sirena": [
             70.0,
             104.0,
-            171.474,
-            154.0
+            157.140625,
+            144.0
           ],
           "key": [
             "state",
@@ -101047,6 +101047,25 @@
       "top5": [
         {
           "bbox_reference": [
+            43.0,
+            123.0,
+            111.53125,
+            273.0
+          ],
+          "bbox_sirena": [
+            43.823313,
+            165.0,
+            118.067313,
+            297.0
+          ],
+          "key": [
+            "state",
+            null,
+            "State1----note"
+          ]
+        },
+        {
+          "bbox_reference": [
             46.3125,
             8.0,
             108.21875,
@@ -101055,61 +101074,42 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            111.890625,
+            90.0
           ],
           "key": [
             "state",
             null,
             "State1"
           ]
-        },
-        {
-          "bbox_reference": [
-            43.0,
-            123.0,
-            111.53125,
-            273.0
-          ],
-          "bbox_sirena": [
-            62.878,
-            175.0,
-            137.122,
-            307.0
-          ],
-          "key": [
-            "state",
-            null,
-            "State1----note"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.292277,
-      "worst_e_c": 0.060317,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.615346,
+      "worst_e_a": 0.231091,
+      "worst_e_c": 0.034497,
+      "worst_e_h": 0.12,
+      "worst_e_w": 0.08336,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_c": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_h": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_w": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ]
       }
     },
@@ -101121,10 +101121,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.060317,
-        "worst_e_w": 0.615346,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.292277,
+        "worst_e_c": 0.034497,
+        "worst_e_w": 0.08336,
+        "worst_e_h": 0.12,
+        "worst_e_a": 0.231091,
         "worst_analog": null
       }
     }
@@ -101147,8 +101147,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            89.546875,
+            90.0
           ],
           "key": [
             "state",
@@ -101158,10 +101158,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.022916,
-      "worst_e_c": 0.544673,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.528645,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -101194,10 +101194,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.544673,
-        "worst_e_w": 1.528645,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.022916,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -101220,8 +101220,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            89.546875,
+            90.0
           ],
           "key": [
             "state",
@@ -101231,10 +101231,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.022916,
-      "worst_e_c": 0.544673,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.528645,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -101267,10 +101267,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.544673,
-        "worst_e_w": 1.528645,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.022916,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -101285,6 +101285,25 @@
       "top5": [
         {
           "bbox_reference": [
+            43.0,
+            123.0,
+            111.53125,
+            273.0
+          ],
+          "bbox_sirena": [
+            43.823313,
+            165.0,
+            118.067313,
+            297.0
+          ],
+          "key": [
+            "state",
+            null,
+            "State1----note"
+          ]
+        },
+        {
+          "bbox_reference": [
             46.3125,
             8.0,
             108.21875,
@@ -101293,61 +101312,42 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            111.890625,
+            90.0
           ],
           "key": [
             "state",
             null,
             "State1"
           ]
-        },
-        {
-          "bbox_reference": [
-            43.0,
-            123.0,
-            111.53125,
-            273.0
-          ],
-          "bbox_sirena": [
-            62.878,
-            175.0,
-            137.122,
-            307.0
-          ],
-          "key": [
-            "state",
-            null,
-            "State1----note"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.292277,
-      "worst_e_c": 0.060317,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.615346,
+      "worst_e_a": 0.231091,
+      "worst_e_c": 0.034497,
+      "worst_e_h": 0.12,
+      "worst_e_w": 0.08336,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_c": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_h": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_w": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ]
       }
     },
@@ -101359,10 +101359,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.060317,
-        "worst_e_w": 0.615346,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.292277,
+        "worst_e_c": 0.034497,
+        "worst_e_w": 0.08336,
+        "worst_e_h": 0.12,
+        "worst_e_a": 0.231091,
         "worst_analog": null
       }
     }
@@ -101385,8 +101385,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            89.546875,
+            90.0
           ],
           "key": [
             "state",
@@ -101396,10 +101396,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.022916,
-      "worst_e_c": 0.544673,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.528645,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -101432,10 +101432,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.544673,
-        "worst_e_w": 1.528645,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.022916,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -101496,8 +101496,8 @@
           "bbox_sirena": [
             320.0,
             104.0,
-            470.488,
-            154.0
+            462.03125,
+            144.0
           ],
           "key": [
             "state",
@@ -101515,8 +101515,8 @@
           "bbox_sirena": [
             70.0,
             104.0,
-            171.474,
-            154.0
+            157.140625,
+            144.0
           ],
           "key": [
             "state",
@@ -101580,6 +101580,25 @@
       "top5": [
         {
           "bbox_reference": [
+            43.0,
+            123.0,
+            110.328125,
+            273.0
+          ],
+          "bbox_sirena": [
+            43.823313,
+            165.0,
+            118.067313,
+            297.0
+          ],
+          "key": [
+            "state",
+            null,
+            "State1----note"
+          ]
+        },
+        {
+          "bbox_reference": [
             48.664063,
             8.0,
             104.664063,
@@ -101588,56 +101607,37 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            111.890625,
+            90.0
           ],
           "key": [
             "state",
             null,
             "State1"
           ]
-        },
-        {
-          "bbox_reference": [
-            43.0,
-            123.0,
-            110.328125,
-            273.0
-          ],
-          "bbox_sirena": [
-            62.878,
-            175.0,
-            137.122,
-            307.0
-          ],
-          "key": [
-            "state",
-            null,
-            "State1----note"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.428571,
-      "worst_e_c": 0.062483,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.785714,
+      "worst_e_a": 0.25309,
+      "worst_e_c": 0.035262,
+      "worst_e_h": 0.12,
+      "worst_e_w": 0.10519,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_c": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_h": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_w": [
           "state",
@@ -101654,10 +101654,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.062483,
-        "worst_e_w": 0.785714,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.428571,
+        "worst_e_c": 0.035262,
+        "worst_e_w": 0.10519,
+        "worst_e_h": 0.12,
+        "worst_e_a": 0.25309,
         "worst_analog": null
       }
     }
@@ -101672,6 +101672,25 @@
       "top5": [
         {
           "bbox_reference": [
+            43.0,
+            123.0,
+            111.53125,
+            273.0
+          ],
+          "bbox_sirena": [
+            43.823313,
+            165.0,
+            118.067313,
+            297.0
+          ],
+          "key": [
+            "state",
+            null,
+            "State1----note"
+          ]
+        },
+        {
+          "bbox_reference": [
             46.3125,
             8.0,
             108.21875,
@@ -101680,61 +101699,42 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            111.890625,
+            90.0
           ],
           "key": [
             "state",
             null,
             "State1"
           ]
-        },
-        {
-          "bbox_reference": [
-            43.0,
-            123.0,
-            111.53125,
-            273.0
-          ],
-          "bbox_sirena": [
-            62.878,
-            175.0,
-            137.122,
-            307.0
-          ],
-          "key": [
-            "state",
-            null,
-            "State1----note"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.292277,
-      "worst_e_c": 0.060317,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.615346,
+      "worst_e_a": 0.231091,
+      "worst_e_c": 0.034497,
+      "worst_e_h": 0.12,
+      "worst_e_w": 0.08336,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_c": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_h": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_w": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ]
       }
     },
@@ -101746,10 +101746,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.060317,
-        "worst_e_w": 0.615346,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.292277,
+        "worst_e_c": 0.034497,
+        "worst_e_w": 0.08336,
+        "worst_e_h": 0.12,
+        "worst_e_a": 0.231091,
         "worst_analog": null
       }
     }
@@ -101810,8 +101810,8 @@
           "bbox_sirena": [
             320.0,
             104.0,
-            470.488,
-            154.0
+            462.03125,
+            144.0
           ],
           "key": [
             "state",
@@ -101829,8 +101829,8 @@
           "bbox_sirena": [
             70.0,
             104.0,
-            171.474,
-            154.0
+            157.140625,
+            144.0
           ],
           "key": [
             "state",
@@ -102089,8 +102089,8 @@
           "bbox_sirena": [
             320.0,
             104.0,
-            470.488,
-            154.0
+            462.03125,
+            144.0
           ],
           "key": [
             "state",
@@ -102108,8 +102108,8 @@
           "bbox_sirena": [
             70.0,
             104.0,
-            171.474,
-            154.0
+            157.140625,
+            144.0
           ],
           "key": [
             "state",
@@ -102322,6 +102322,25 @@
       "top5": [
         {
           "bbox_reference": [
+            43.0,
+            123.0,
+            110.328125,
+            273.0
+          ],
+          "bbox_sirena": [
+            43.823313,
+            165.0,
+            118.067313,
+            297.0
+          ],
+          "key": [
+            "state",
+            null,
+            "State1----note"
+          ]
+        },
+        {
+          "bbox_reference": [
             48.664063,
             8.0,
             104.664063,
@@ -102330,56 +102349,37 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            111.890625,
+            90.0
           ],
           "key": [
             "state",
             null,
             "State1"
           ]
-        },
-        {
-          "bbox_reference": [
-            43.0,
-            123.0,
-            110.328125,
-            273.0
-          ],
-          "bbox_sirena": [
-            62.878,
-            175.0,
-            137.122,
-            307.0
-          ],
-          "key": [
-            "state",
-            null,
-            "State1----note"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.428571,
-      "worst_e_c": 0.062483,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.785714,
+      "worst_e_a": 0.25309,
+      "worst_e_c": 0.035262,
+      "worst_e_h": 0.12,
+      "worst_e_w": 0.10519,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_c": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_h": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_w": [
           "state",
@@ -102396,10 +102396,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.062483,
-        "worst_e_w": 0.785714,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.428571,
+        "worst_e_c": 0.035262,
+        "worst_e_w": 0.10519,
+        "worst_e_h": 0.12,
+        "worst_e_a": 0.25309,
         "worst_analog": null
       }
     }
@@ -102422,8 +102422,8 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            417.042,
-            100.0
+            402.4375,
+            90.0
           ],
           "key": [
             "state",
@@ -102452,10 +102452,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.042571,
-      "worst_e_c": 1.810369,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.196787,
+      "worst_e_a": 0.047452,
+      "worst_e_c": 1.769157,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.047452,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -102488,10 +102488,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 1.810369,
-        "worst_e_w": 0.196787,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.042571,
+        "worst_e_c": 1.769157,
+        "worst_e_w": 0.047452,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.047452,
         "worst_analog": null
       }
     }
@@ -102506,6 +102506,25 @@
       "top5": [
         {
           "bbox_reference": [
+            43.0,
+            123.0,
+            111.53125,
+            273.0
+          ],
+          "bbox_sirena": [
+            43.823313,
+            165.0,
+            118.067313,
+            297.0
+          ],
+          "key": [
+            "state",
+            null,
+            "State1----note"
+          ]
+        },
+        {
+          "bbox_reference": [
             46.3125,
             8.0,
             108.21875,
@@ -102514,61 +102533,42 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            111.890625,
+            90.0
           ],
           "key": [
             "state",
             null,
             "State1"
           ]
-        },
-        {
-          "bbox_reference": [
-            43.0,
-            123.0,
-            111.53125,
-            273.0
-          ],
-          "bbox_sirena": [
-            62.878,
-            175.0,
-            137.122,
-            307.0
-          ],
-          "key": [
-            "state",
-            null,
-            "State1----note"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.292277,
-      "worst_e_c": 0.060317,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.615346,
+      "worst_e_a": 0.231091,
+      "worst_e_c": 0.034497,
+      "worst_e_h": 0.12,
+      "worst_e_w": 0.08336,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_c": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_h": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_w": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ]
       }
     },
@@ -102580,10 +102580,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.060317,
-        "worst_e_w": 0.615346,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.292277,
+        "worst_e_c": 0.034497,
+        "worst_e_w": 0.08336,
+        "worst_e_h": 0.12,
+        "worst_e_a": 0.231091,
         "worst_analog": null
       }
     }
@@ -102606,8 +102606,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            89.546875,
+            90.0
           ],
           "key": [
             "state",
@@ -102617,10 +102617,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.022916,
-      "worst_e_c": 0.544673,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.528645,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -102653,10 +102653,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.544673,
-        "worst_e_w": 1.528645,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.022916,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -102679,8 +102679,8 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            89.546875,
+            90.0
           ],
           "key": [
             "state",
@@ -102690,10 +102690,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.022916,
-      "worst_e_c": 0.544673,
-      "worst_e_h": 0.25,
-      "worst_e_w": 1.528645,
+      "worst_e_a": 0.0,
+      "worst_e_c": 0.0,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.0,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -102726,10 +102726,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.544673,
-        "worst_e_w": 1.528645,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.022916,
+        "worst_e_c": 0.0,
+        "worst_e_w": 0.0,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.0,
         "worst_analog": null
       }
     }
@@ -102781,6 +102781,25 @@
       "top5": [
         {
           "bbox_reference": [
+            43.0,
+            123.0,
+            111.53125,
+            273.0
+          ],
+          "bbox_sirena": [
+            43.823313,
+            165.0,
+            118.067313,
+            297.0
+          ],
+          "key": [
+            "state",
+            null,
+            "State1----note"
+          ]
+        },
+        {
+          "bbox_reference": [
             46.3125,
             8.0,
             108.21875,
@@ -102789,61 +102808,42 @@
           "bbox_sirena": [
             50.0,
             50.0,
-            150.0,
-            100.0
+            111.890625,
+            90.0
           ],
           "key": [
             "state",
             null,
             "State1"
           ]
-        },
-        {
-          "bbox_reference": [
-            43.0,
-            123.0,
-            111.53125,
-            273.0
-          ],
-          "bbox_sirena": [
-            62.878,
-            175.0,
-            137.122,
-            307.0
-          ],
-          "key": [
-            "state",
-            null,
-            "State1----note"
-          ]
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.292277,
-      "worst_e_c": 0.060317,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.615346,
+      "worst_e_a": 0.231091,
+      "worst_e_c": 0.034497,
+      "worst_e_h": 0.12,
+      "worst_e_w": 0.08336,
       "worst_keys": {
         "analog": null,
         "e_a": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_c": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_h": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ],
         "e_w": [
           "state",
           null,
-          "State1"
+          "State1----note"
         ]
       }
     },
@@ -102855,10 +102855,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.060317,
-        "worst_e_w": 0.615346,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.292277,
+        "worst_e_c": 0.034497,
+        "worst_e_w": 0.08336,
+        "worst_e_h": 0.12,
+        "worst_e_a": 0.231091,
         "worst_analog": null
       }
     }
@@ -102873,40 +102873,21 @@
       "top5": [
         {
           "bbox_reference": [
-            78.0,
-            95.5,
-            108.875,
-            135.5
+            8.0,
+            8.0,
+            482.53125,
+            223.0
           ],
           "bbox_sirena": [
-            90.0,
-            144.0,
-            190.0,
-            194.0
+            50.0,
+            50.0,
+            662.0,
+            224.0
           ],
           "key": [
-            "state",
-            "concurrent-region-1",
-            "s3"
-          ]
-        },
-        {
-          "bbox_reference": [
-            228.875,
-            95.5,
-            259.75,
-            135.5
-          ],
-          "bbox_sirena": [
-            340.0,
-            144.0,
-            440.0,
-            194.0
-          ],
-          "key": [
-            "state",
-            "concurrent-region-2",
-            "s4"
+            "composite",
+            null,
+            "s2"
           ]
         },
         {
@@ -102919,13 +102900,32 @@
           "bbox_sirena": [
             590.0,
             144.0,
-            690.0,
-            194.0
+            622.78125,
+            184.0
           ],
           "key": [
             "state",
             "concurrent-region-3",
             "55"
+          ]
+        },
+        {
+          "bbox_reference": [
+            344.75,
+            45.5,
+            447.53125,
+            185.5
+          ],
+          "bbox_sirena": [
+            570.0,
+            104.0,
+            642.0,
+            204.0
+          ],
+          "key": [
+            "composite",
+            "s2",
+            "concurrent-region-3"
           ]
         },
         {
@@ -102938,8 +102938,8 @@
           "bbox_sirena": [
             70.0,
             104.0,
-            210.0,
-            214.0
+            140.0,
+            204.0
           ],
           "key": [
             "composite",
@@ -102957,8 +102957,8 @@
           "bbox_sirena": [
             320.0,
             104.0,
-            460.0,
-            214.0
+            390.0,
+            204.0
           ],
           "key": [
             "composite",
@@ -102968,16 +102968,16 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 1.591093,
-      "worst_e_c": 0.3881,
-      "worst_e_h": 0.25,
-      "worst_e_w": 2.238866,
+      "worst_e_a": 0.593587,
+      "worst_e_c": 0.323199,
+      "worst_e_h": 0.285714,
+      "worst_e_w": 0.306072,
       "worst_keys": {
         "analog": null,
         "e_a": [
-          "state",
-          "concurrent-region-1",
-          "s3"
+          "composite",
+          null,
+          "s2"
         ],
         "e_c": [
           "state",
@@ -102985,14 +102985,14 @@
           "55"
         ],
         "e_h": [
-          "state",
-          "concurrent-region-1",
-          "s3"
+          "composite",
+          "s2",
+          "concurrent-region-1"
         ],
         "e_w": [
-          "state",
-          "concurrent-region-1",
-          "s3"
+          "composite",
+          "s2",
+          "concurrent-region-1"
         ]
       }
     },
@@ -103004,10 +103004,10 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.3881,
-        "worst_e_w": 2.238866,
-        "worst_e_h": 0.25,
-        "worst_e_a": 1.591093,
+        "worst_e_c": 0.323199,
+        "worst_e_w": 0.306072,
+        "worst_e_h": 0.285714,
+        "worst_e_a": 0.593587,
         "worst_analog": null
       }
     }
@@ -106840,103 +106840,103 @@
       "top5": [
         {
           "bbox_reference": [
-            411.5,
-            509.0,
-            411.5,
-            509.0
+            634.0,
+            266.0,
+            672.0,
+            286.0
           ],
           "bbox_sirena": [
-            535.647059,
-            110.0,
-            535.647059,
-            110.0
+            759.411765,
+            338.0,
+            796.705882,
+            358.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "15/01"
+            "Add to mermaid"
           ]
         },
         {
           "bbox_reference": [
-            112.5,
-            509.0,
-            112.5,
-            509.0
+            299.0,
+            338.0,
+            373.0,
+            358.0
           ],
           "bbox_sirena": [
+            423.764706,
+            410.0,
+            498.352941,
+            430.0
+          ],
+          "key": [
+            "task",
+            null,
+            "Add another diagram to demo page"
+          ]
+        },
+        {
+          "bbox_reference": [
+            75.0,
+            146.0,
+            112.0,
+            166.0
+          ],
+          "bbox_sirena": [
+            200.0,
+            218.0,
             237.294118,
-            110.0,
-            237.294118,
-            110.0
+            238.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "07/01"
+            "Completed task in the critical line"
           ]
         },
         {
           "bbox_reference": [
-            187.5,
-            509.0,
-            187.5,
-            509.0
+            560.0,
+            242.0,
+            634.0,
+            262.0
           ],
           "bbox_sirena": [
-            311.882353,
-            110.0,
-            311.882353,
-            110.0
+            684.823529,
+            314.0,
+            759.411765,
+            334.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "09/01"
+            "Create tests for renderer"
           ]
         },
         {
           "bbox_reference": [
-            261.5,
-            509.0,
-            261.5,
-            509.0
+            150.0,
+            170.0,
+            224.0,
+            190.0
           ],
           "bbox_sirena": [
-            386.470588,
-            110.0,
-            386.470588,
-            110.0
+            274.588235,
+            242.0,
+            349.176471,
+            262.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "11/01"
-          ]
-        },
-        {
-          "bbox_reference": [
-            336.5,
-            509.0,
-            336.5,
-            509.0
-          ],
-          "bbox_sirena": [
-            461.058824,
-            110.0,
-            461.058824,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "13/01"
+            "Implement parser and jison"
           ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.018576,
-      "worst_e_c": 0.586121,
+      "worst_e_c": 0.001089,
       "worst_e_h": 0.0,
       "worst_e_w": 0.018576,
       "worst_keys": {
@@ -106971,7 +106971,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.586121,
+        "worst_e_c": 0.001089,
         "worst_e_w": 0.018576,
         "worst_e_h": 0.0,
         "worst_e_a": 0.018576,
@@ -106989,16 +106989,35 @@
       "top5": [
         {
           "bbox_reference": [
-            516.0,
-            458.0,
-            591.0,
-            478.0
+            634.0,
+            266.0,
+            672.0,
+            286.0
           ],
           "bbox_sirena": [
-            641.313725,
-            960.0,
-            715.901961,
-            980.0
+            759.411765,
+            338.0,
+            796.705882,
+            358.0
+          ],
+          "key": [
+            "task",
+            null,
+            "Add to mermaid"
+          ]
+        },
+        {
+          "bbox_reference": [
+            299.0,
+            338.0,
+            373.0,
+            358.0
+          ],
+          "bbox_sirena": [
+            423.764706,
+            410.0,
+            498.352941,
+            430.0
           ],
           "key": [
             "task",
@@ -107008,84 +107027,65 @@
         },
         {
           "bbox_reference": [
-            411.5,
-            485.0,
-            411.5,
-            485.0
+            75.0,
+            146.0,
+            112.0,
+            166.0
           ],
           "bbox_sirena": [
-            535.647059,
-            110.0,
-            535.647059,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "15/01"
-          ]
-        },
-        {
-          "bbox_reference": [
-            112.5,
-            485.0,
-            112.5,
-            485.0
-          ],
-          "bbox_sirena": [
+            200.0,
+            218.0,
             237.294118,
-            110.0,
-            237.294118,
-            110.0
+            238.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "07/01"
+            "Completed task in the critical line"
           ]
         },
         {
           "bbox_reference": [
-            187.5,
-            485.0,
-            187.5,
-            485.0
+            560.0,
+            242.0,
+            634.0,
+            262.0
           ],
           "bbox_sirena": [
-            311.882353,
-            110.0,
-            311.882353,
-            110.0
+            684.823529,
+            314.0,
+            759.411765,
+            334.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "09/01"
+            "Create tests for renderer"
           ]
         },
         {
           "bbox_reference": [
-            261.5,
-            485.0,
-            261.5,
-            485.0
+            150.0,
+            170.0,
+            224.0,
+            190.0
           ],
           "bbox_sirena": [
-            386.470588,
-            110.0,
-            386.470588,
-            110.0
+            274.588235,
+            242.0,
+            349.176471,
+            262.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "11/01"
+            "Implement parser and jison"
           ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.018576,
-      "worst_e_c": 0.574552,
+      "worst_e_c": 0.001109,
       "worst_e_h": 0.0,
       "worst_e_w": 0.018576,
       "worst_keys": {
@@ -107096,9 +107096,9 @@
           "Add to mermaid"
         ],
         "e_c": [
-          "task",
+          "tick",
           null,
-          "Add another diagram to demo page"
+          "15/01"
         ],
         "e_h": [
           "task",
@@ -107120,7 +107120,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.574552,
+        "worst_e_c": 0.001109,
         "worst_e_w": 0.018576,
         "worst_e_h": 0.0,
         "worst_e_a": 0.018576,
@@ -107138,103 +107138,103 @@
       "top5": [
         {
           "bbox_reference": [
-            411.5,
-            509.0,
-            411.5,
-            509.0
+            634.0,
+            266.0,
+            672.0,
+            286.0
           ],
           "bbox_sirena": [
-            535.647059,
-            110.0,
-            535.647059,
-            110.0
+            759.411765,
+            338.0,
+            796.705882,
+            358.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "15/01"
+            "Add to mermaid"
           ]
         },
         {
           "bbox_reference": [
-            112.5,
-            509.0,
-            112.5,
-            509.0
+            299.0,
+            338.0,
+            373.0,
+            358.0
           ],
           "bbox_sirena": [
+            423.764706,
+            410.0,
+            498.352941,
+            430.0
+          ],
+          "key": [
+            "task",
+            null,
+            "Add another diagram to demo page"
+          ]
+        },
+        {
+          "bbox_reference": [
+            75.0,
+            146.0,
+            112.0,
+            166.0
+          ],
+          "bbox_sirena": [
+            200.0,
+            218.0,
             237.294118,
-            110.0,
-            237.294118,
-            110.0
+            238.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "07/01"
+            "Completed task in the critical line"
           ]
         },
         {
           "bbox_reference": [
-            187.5,
-            509.0,
-            187.5,
-            509.0
+            560.0,
+            242.0,
+            634.0,
+            262.0
           ],
           "bbox_sirena": [
-            311.882353,
-            110.0,
-            311.882353,
-            110.0
+            684.823529,
+            314.0,
+            759.411765,
+            334.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "09/01"
+            "Create tests for renderer"
           ]
         },
         {
           "bbox_reference": [
-            261.5,
-            509.0,
-            261.5,
-            509.0
+            150.0,
+            170.0,
+            224.0,
+            190.0
           ],
           "bbox_sirena": [
-            386.470588,
-            110.0,
-            386.470588,
-            110.0
+            274.588235,
+            242.0,
+            349.176471,
+            262.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "11/01"
-          ]
-        },
-        {
-          "bbox_reference": [
-            336.5,
-            509.0,
-            336.5,
-            509.0
-          ],
-          "bbox_sirena": [
-            461.058824,
-            110.0,
-            461.058824,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "13/01"
+            "Implement parser and jison"
           ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.018576,
-      "worst_e_c": 0.586121,
+      "worst_e_c": 0.001089,
       "worst_e_h": 0.0,
       "worst_e_w": 0.018576,
       "worst_keys": {
@@ -107269,7 +107269,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.586121,
+        "worst_e_c": 0.001089,
         "worst_e_w": 0.018576,
         "worst_e_h": 0.0,
         "worst_e_a": 0.018576,
@@ -107287,103 +107287,103 @@
       "top5": [
         {
           "bbox_reference": [
-            411.5,
-            509.0,
-            411.5,
-            509.0
+            634.0,
+            266.0,
+            672.0,
+            286.0
           ],
           "bbox_sirena": [
-            535.647059,
-            110.0,
-            535.647059,
-            110.0
+            759.411765,
+            338.0,
+            796.705882,
+            358.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "15/01"
+            "Add to mermaid"
           ]
         },
         {
           "bbox_reference": [
-            112.5,
-            509.0,
-            112.5,
-            509.0
+            299.0,
+            338.0,
+            373.0,
+            358.0
           ],
           "bbox_sirena": [
+            423.764706,
+            410.0,
+            498.352941,
+            430.0
+          ],
+          "key": [
+            "task",
+            null,
+            "Add another diagram to demo page"
+          ]
+        },
+        {
+          "bbox_reference": [
+            75.0,
+            146.0,
+            112.0,
+            166.0
+          ],
+          "bbox_sirena": [
+            200.0,
+            218.0,
             237.294118,
-            110.0,
-            237.294118,
-            110.0
+            238.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "07/01"
+            "Completed task in the critical line"
           ]
         },
         {
           "bbox_reference": [
-            187.5,
-            509.0,
-            187.5,
-            509.0
+            560.0,
+            242.0,
+            634.0,
+            262.0
           ],
           "bbox_sirena": [
-            311.882353,
-            110.0,
-            311.882353,
-            110.0
+            684.823529,
+            314.0,
+            759.411765,
+            334.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "09/01"
+            "Create tests for renderer"
           ]
         },
         {
           "bbox_reference": [
-            261.5,
-            509.0,
-            261.5,
-            509.0
+            150.0,
+            170.0,
+            224.0,
+            190.0
           ],
           "bbox_sirena": [
-            386.470588,
-            110.0,
-            386.470588,
-            110.0
+            274.588235,
+            242.0,
+            349.176471,
+            262.0
           ],
           "key": [
-            "tick",
+            "task",
             null,
-            "11/01"
-          ]
-        },
-        {
-          "bbox_reference": [
-            336.5,
-            509.0,
-            336.5,
-            509.0
-          ],
-          "bbox_sirena": [
-            461.058824,
-            110.0,
-            461.058824,
-            110.0
-          ],
-          "key": [
-            "tick",
-            null,
-            "13/01"
+            "Implement parser and jison"
           ]
         }
       ],
       "worst_analog": null,
       "worst_e_a": 0.018576,
-      "worst_e_c": 0.586121,
+      "worst_e_c": 0.001089,
       "worst_e_h": 0.0,
       "worst_e_w": 0.018576,
       "worst_keys": {
@@ -107418,7 +107418,7 @@
     "summary": {
       "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.586121,
+        "worst_e_c": 0.001089,
         "worst_e_w": 0.018576,
         "worst_e_h": 0.0,
         "worst_e_a": 0.018576,
@@ -108951,8 +108951,8 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            400.0,
-            100.0
+            361.890625,
+            90.0
           ],
           "key": [
             "state",
@@ -108981,10 +108981,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.428571,
+      "worst_e_a": 0.10519,
       "worst_e_c": 2.002528,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.785714,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.10519,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -109018,9 +109018,9 @@
       "hard_failure": false,
       "metrics": {
         "worst_e_c": 2.002528,
-        "worst_e_w": 0.785714,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.428571,
+        "worst_e_w": 0.10519,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.10519,
         "worst_analog": null
       }
     }
@@ -109062,8 +109062,8 @@
           "bbox_sirena": [
             300.0,
             50.0,
-            400.0,
-            100.0
+            361.890625,
+            90.0
           ],
           "key": [
             "state",
@@ -109092,10 +109092,10 @@
         }
       ],
       "worst_analog": null,
-      "worst_e_a": 0.428571,
+      "worst_e_a": 0.10519,
       "worst_e_c": 2.002528,
-      "worst_e_h": 0.25,
-      "worst_e_w": 0.785714,
+      "worst_e_h": 0.0,
+      "worst_e_w": 0.10519,
       "worst_keys": {
         "analog": null,
         "e_a": [
@@ -109129,9 +109129,9 @@
       "hard_failure": false,
       "metrics": {
         "worst_e_c": 2.002528,
-        "worst_e_w": 0.785714,
-        "worst_e_h": 0.25,
-        "worst_e_a": 0.428571,
+        "worst_e_w": 0.10519,
+        "worst_e_h": 0.0,
+        "worst_e_a": 0.10519,
         "worst_analog": null
       }
     }
