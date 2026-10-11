@@ -113,7 +113,8 @@ module Sirena
         Svg::Path.new(
           d: "M #{number(line.x1)} #{number(line.y1)} " \
              "L #{number(line.x2)} #{number(line.y2)}",
-          fill: "none", stroke: "#000000", marker_end: ARROW,
+          fill: "none", stroke: theme_color(:edge_stroke) || "#000000",
+          marker_end: ARROW,
           stroke_width: number(line.stroke_width),
           stroke_dasharray: ("5,5" if line.dashed)
         )
