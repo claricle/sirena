@@ -2,6 +2,7 @@
 
 require_relative "../elk_placement"
 require_relative "cluster_reach"
+require_relative "component_packing"
 require_relative "layer_spacing"
 require_relative "level_edges"
 require_relative "level_frame"
@@ -82,9 +83,15 @@ module Sirena
 
         def place_boxes(boxes, level_edges, frame)
           flat = flat_graph(boxes, level_edges)
-          place_flat(flat, frame)
+          place_flat(flat, frame, cluster_names(boxes))
           boxes.zip(flat[:children]) do |box, placed|
             box.merge!(x: placed[:x], y: placed[:y])
+          end
+        end
+
+        def cluster_names(boxes)
+          boxes.each_index.filter_map do |index|
+            "box-#{index}" if cluster?(boxes[index])
           end
         end
 
@@ -200,13 +207,14 @@ module Sirena
           label ? label[axis].to_i : 0
         end
 
-        def place_flat(flat, frame)
+        def place_flat(flat, frame, cluster_names)
           transposed = frame.sideways?
           transpose(flat) if transposed
           flat[:layoutOptions] = downward_options(frame)
           ElkPlacement.apply(flat)
           RowCentering.apply(flat)
           LayerSpacing.apply(flat, label_axis: transposed ? :width : :height)
+          ComponentPacking.apply(flat, cluster_names)
           transpose(flat) if transposed
           mirror(flat, frame.direction)
         end
