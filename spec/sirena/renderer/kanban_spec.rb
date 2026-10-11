@@ -51,7 +51,8 @@ end
 
 module KanbanRendererSpecHelpers
   def rendered_layout(...)
-    layout = KanbanSpecHelpers.layout_with(...)
+    graph = KanbanSpecHelpers.layout_with(...)
+    layout = Sirena::Layout::Kanban.from_graph(graph, theme: renderer.theme)
     renderer.render(layout).to_xml
   end
 
@@ -180,10 +181,18 @@ RSpec.describe Sirena::Renderer::Kanban do
 
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:renderer) { described_class.new(theme: theme) }
+  let(:layout) do
+    Sirena::Layout::Kanban.from_graph(graph, theme: theme)
+  end
 
   describe "#render" do
+    it "refuses positioned Hashes at the typed Scene boundary" do
+      expect { renderer.render(columns: [], cards: [], width: 0, height: 0) }
+        .to raise_error(NoMethodError)
+    end
+
     context "with a simple kanban board" do
-      let(:layout) do
+      let(:graph) do
         {
           columns: [
             {
@@ -233,7 +242,7 @@ RSpec.describe Sirena::Renderer::Kanban do
     end
 
     context "with multiple columns" do
-      let(:layout) do
+      let(:graph) do
         {
           columns: [
             {
@@ -300,7 +309,7 @@ RSpec.describe Sirena::Renderer::Kanban do
     end
 
     context "with card metadata" do
-      let(:layout) do
+      let(:graph) do
         {
           columns: [
             {
@@ -343,7 +352,7 @@ RSpec.describe Sirena::Renderer::Kanban do
     end
 
     context "with empty board" do
-      let(:layout) do
+      let(:graph) do
         {
           columns: [],
           cards: [],

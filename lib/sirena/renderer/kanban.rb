@@ -11,13 +11,9 @@ module Sirena
   module Renderer
     # Emits SVG from final, typed Kanban geometry.
     class Kanban < Base
-      # @param scene [Layout::Kanban::Scene, Hash] final geometry or released
-      #   positioned-Hash input
+      # @param scene [Layout::Kanban::Scene] final Kanban geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        unless scene.is_a?(Layout::Kanban::Scene)
-          scene = Layout::Kanban.from_graph(scene, theme: theme)
-        end
         svg = create_document(scene)
         scene.columns.each { |column| render_column(column, svg) }
         scene.cards.each { |card| render_card(card, svg) }
