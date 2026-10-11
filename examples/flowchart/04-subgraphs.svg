@@ -1,38 +1,38 @@
 <svg
- width="727.69"
- height="364.0"
- viewBox="0 0 727.69 364.0"
+ width="328.272"
+ height="278.0"
+ viewBox="0 0 328.272 278.0"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
  overflow="hidden"
 >
 <g id="edge-A_to_C">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 137.6 67.0 L 550.0 67.0"/>
-  <polygon fill="#000000" stroke="#000000" points="550.0,67.0 542.0,63.0 542.0,71.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 94.2 62.0 L 139.6 112.0"/>
+  <polygon fill="#000000" stroke="#000000" points="139.6,112.0 137.2,103.4 131.3,108.8"/>
 </g>
 <g id="edge-B_to_C">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 400.0 67.0 L 550.0 67.0"/>
-  <polygon fill="#000000" stroke="#000000" points="550.0,67.0 542.0,63.0 542.0,71.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 228.3 62.0 L 186.6 112.0"/>
+  <polygon fill="#000000" stroke="#000000" points="186.6,112.0 194.8,108.4 188.7,103.3"/>
 </g>
 <g id="edge-C_to_D">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 556.0 84.0 L 137.8 250.0"/>
-  <polygon fill="#000000" stroke="#000000" points="137.8,250.0 146.7,250.8 143.7,243.3"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 164.1 166.0 L 164.1 216.0"/>
+  <polygon fill="#000000" stroke="#000000" points="164.1,216.0 168.1,208.0 160.1,208.0"/>
 </g>
 <g id="node-A">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="87.582" height="34.0"/>
-  <text fill="#000000" x="93.791" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Web App</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="8.0" y="8.0" width="123.344" height="54.0"/>
+  <text fill="#000000" x="69.672" y="40.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Web App</text>
 </g>
 <g id="node-B">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="100.028" height="34.0"/>
-  <text fill="#000000" x="350.014" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Mobile App</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="181.344" y="8.0" width="138.928" height="54.0"/>
+  <text fill="#000000" x="250.808" y="40.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Mobile App</text>
 </g>
 <g id="node-C">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="50.0" width="97.69" height="34.0"/>
-  <text fill="#000000" x="598.845" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">API Server</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="97.608" y="112.0" width="133.05599999999998" height="54.0"/>
+  <text fill="#000000" x="164.136" y="144.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">API Server</text>
 </g>
 <g id="node-D">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="250.0" width="89.92" height="34.0"/>
-  <text fill="#000000" x="94.96000000000001" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Database</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="101.40799999999999" y="216.0" width="125.456" height="54.0"/>
+  <text fill="#000000" x="164.136" y="248.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Database</text>
 </g>
 </svg>

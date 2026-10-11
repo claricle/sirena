@@ -4,4 +4,4 @@ rows:
 - file: lib/sirena/layout/architecture.rb
   count: 1
 - file: lib/sirena/layout/flowchart.rb
-  count: 2
+  count: 1
