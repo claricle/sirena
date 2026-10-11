@@ -35,10 +35,13 @@ RSpec.describe Sirena::Renderer::UserJourney do
     expect(neutral_paints(partial_document).compact).to be_empty
   end
 
-  it "retains categorical fills with a scalar-empty partial theme" do
+  it "fills absent categorical palettes from the default theme" do
+    colors = Sirena::Theme::Registry.get(:default).colors
+    section = colors.user_journey_section_palette.first
+    actor = colors.user_journey_actor_palette.first
+
     expect(categorical_fills(partial_document)).to eq(
-      ["#191970", "#191970", "#fff", "#fff", "#FFF8DC", "#8FBC8F",
-       "#8FBC8F"],
+      [section, section, "#fff", "#fff", "#FFF8DC", actor, actor],
     )
   end
 

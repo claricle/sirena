@@ -68,13 +68,14 @@ RSpec.describe Sirena::Renderer::UserJourney do
     }
   end
   let(:expected_categorical) do
+    section = theme.colors.user_journey_section_palette.first
+    actor = theme.colors.user_journey_actor_palette.first
     [
-      "#191970", "#191970", "#fff", "#fff", "#FFF8DC", "#8FBC8F",
-      "#8FBC8F"
+      section, section, "#fff", "#fff", "#FFF8DC", actor, actor
     ]
   end
 
-  %i[default dark high_contrast].each do |theme_name|
+  %i[default light dark high_contrast].each do |theme_name|
     context "with the #{theme_name} theme" do
       let(:theme) { Sirena::Theme::Registry.get(theme_name) }
 
@@ -83,6 +84,50 @@ RSpec.describe Sirena::Renderer::UserJourney do
           roles: expected_roles, categorical: expected_categorical,
         )
       end
+    end
+  end
+
+  context "with every dark categorical colour" do
+    let(:theme) { Sirena::Theme::Registry.get(:dark) }
+    let(:actors) { 6.times.map { |index| "actor #{index}" } }
+    let(:palette_graph) do
+      children = 7.times.map do |index|
+        {
+          id: "task_#{index}", metadata: {
+            name: "task #{index}", score: 5,
+            actors: index.zero? ? actors : [],
+            section_name: "section #{index}"
+          }
+        }
+      end
+      { id: "journey", children: children, metadata: {} }
+    end
+    let(:palette_scene) do
+      Sirena::Layout::UserJourney.from_graph(palette_graph, theme: theme)
+    end
+
+    it "uses every dark section and actor palette entry in order" do
+      sections = palette_scene.sections.map { |section| section.box.fill }
+      tasks = palette_scene.tasks.map { |task| task.box.fill }
+      actor_fills = palette_scene.legend.map { |actor| actor.dot.colour }
+
+      expect([sections, tasks, actor_fills]).to eq(
+        [theme.colors.user_journey_section_palette,
+         theme.colors.user_journey_section_palette,
+         theme.colors.user_journey_actor_palette],
+      )
+    end
+
+    it "keeps every section fill legible under its white labels" do
+      pairs = palette_scene.sections.map do |section|
+        [section.box.fill, section.labels.first.fill]
+      end
+      pairs.concat(palette_scene.tasks.map do |task|
+        [task.box.fill, task.labels.first.fill]
+      end)
+
+      expect(pairs.map { |fill, label| contrast(fill, label) })
+        .to all(be >= 4.5)
     end
   end
 
@@ -100,5 +145,27 @@ RSpec.describe Sirena::Renderer::UserJourney do
     it "themes the flat mouth stroke" do
       expect(mouth_stroke).to eq(theme.colors.foreground_secondary)
     end
+  end
+
+  def contrast(left, right)
+    high, low = [luminance(left), luminance(right)].sort.reverse
+    (high + 0.05) / (low + 0.05)
+  end
+
+  def luminance(hex)
+    value = hex.delete_prefix("#")
+    if value.length == 3
+      value = value.chars.map { |character| character * 2 }.join
+    end
+    channels = value.scan(/../).map do |pair|
+      channel = pair.to_i(16) / 255.0
+      if channel <= 0.04045
+        channel / 12.92
+      else
+        ((channel + 0.055) / 1.055)**2.4
+      end
+    end
+    channels.zip([0.2126, 0.7152, 0.0722])
+      .sum { |channel, weight| channel * weight }
   end
 end
