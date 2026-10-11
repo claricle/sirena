@@ -286,19 +286,19 @@ module Sirena
         end
 
         def node_fill
-          theme_color(:node_fill) || "#ffffff"
+          theme_color(:node_fill)
         end
 
         def node_stroke
-          theme_color(:node_stroke) || "#333333"
+          theme_color(:node_stroke)
         end
 
         def edge_colour
-          theme_color(:edge_stroke) || "#333333"
+          theme_color(:edge_stroke)
         end
 
         def text_colour
-          theme_color(:label_text) || "#111111"
+          theme_color(:label_text)
         end
 
         def stroke_width
