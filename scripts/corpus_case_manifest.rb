@@ -5,6 +5,7 @@ require "json"
 require "fileutils"
 require "tempfile"
 require_relative "corpus_case_identity"
+require_relative "../lib/sirena/corpus_type_names"
 
 # Builds the old->new case-ID migration manifest from the committed corpus.
 #
@@ -13,6 +14,12 @@ require_relative "corpus_case_identity"
 # sits beside its .mmd source, which is everything CorpusCaseIdentity needs.
 # No mermaid-js checkout is involved. A case missing any of that is listed
 # under "unmapped" with the reason; no ID is invented for it.
+#
+# Several directories may hold one diagram type (class and class_diagram).
+# The new ID names the one canonical directory, so the "old" and "new" halves
+# of a pair can sit in different directories. Cases that were twins across
+# the merged directories become ordinary occurrence twins of one directory:
+# the occurrence is counted in sorted old-case order.
 #
 #   ruby scripts/corpus_case_manifest.rb           # rewrite the manifest
 #   ruby scripts/corpus_case_manifest.rb --check   # exit 1 if it is stale
@@ -26,6 +33,10 @@ module CorpusCaseManifest
   # The checkout the extractor last ran against; older metas stored the
   # path with it still attached.
   CHECKOUT_PREFIX = %r{\A.*?/mermaid-js(?=/)}
+  # Registry types whose canonical directory is not the registry key
+  # (`git_graph`): the fixtures already live in gitgraph/, and it is the
+  # Mermaid keyword.
+  CANONICAL_OVERRIDES = { git_graph: "gitgraph" }.freeze
 
   module_function
 
@@ -36,6 +47,19 @@ module CorpusCaseManifest
     { "version" => VERSION,
       "pairs" => manifest[:pairs].map { |p| p.transform_keys(&:to_s) },
       "unmapped" => unmapped.sort_by { |entry| entry["case"] } }
+  end
+
+  # The one directory a corpus directory merges into. A directory with no
+  # sibling for its registry type, or that the table does not name, stays.
+  def canonical_directory(directory)
+    type = Sirena::CorpusTypeNames.registry_type(directory)
+    siblings = type && Sirena::CorpusTypeNames.directories_for(type)
+    return directory if siblings.nil? || siblings.one?
+
+    canonical = CANONICAL_OVERRIDES.fetch(type) { type.to_s }
+    return canonical if siblings.include?(canonical)
+
+    raise Error, "no canonical directory among #{siblings.join(', ')}"
   end
 
   def render(manifest)
@@ -91,7 +115,7 @@ module CorpusCaseManifest
     path = upstream_path(meta)
     return [nil, "meta has no source_file"] if path.nil?
 
-    [{ case: old_case, type: old_case.split("/").first,
+    [{ case: old_case, type: canonical_directory(old_case.split("/").first),
        upstream_path: path, title: (meta["metadata"] || {})["test_name"],
        source: File.binread(mmd_path) }, nil]
   end

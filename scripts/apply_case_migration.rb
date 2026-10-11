@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "fileutils"
 require "json"
 require "open3"
 require "optparse"
@@ -15,15 +16,22 @@ require "yaml"
 #   ruby scripts/apply_case_migration.rb --apply
 #   ruby scripts/apply_case_migration.rb --verify
 #
-# The type directory never changes; only the file name does
-# (`pie/001_a_0.mmd` becomes `pie/<slug>-<hash8>.mmd`), so a reference is
-# rewritten by swapping the name wherever it appears: a full case key, a
-# `spec/mermaid/...` path, a `spec/fixtures_mermaid/<dir>/[correct/]...` path
-# or a bare name next to a separate type. Some old names occur in more than
+# A case's file name changes (`pie/001_a_0.mmd` becomes
+# `pie/<slug>-<hash8>.mmd`), and so does its directory when the manifest
+# merges duplicate directories into one canonical directory (`class/` into
+# `class_diagram/`). A reference is rewritten by swapping the name wherever
+# it appears: a full case key, a `spec/mermaid/...` path, a
+# `spec/fixtures_mermaid/<dir>/[correct/]...` path or a bare name next to a
+# separate type; the directory written just before such a name moves with it,
+# and so does any `mermaid/<dir>` or `fixtures_mermaid/<dir>` path and the
+# `"type"` of a merged case's .meta.json. Some old names occur in more than
 # one type; those are resolved by the directory written just before the name,
 # then by byte-identity with the case the line is about (Twins), and
 # otherwise listed as unresolved. Apply refuses to start while anything is
 # unresolved or a rename target is taken.
+#
+# This script and the specs of the case tooling are out of scope: they quote
+# directory and case names as test data.
 #
 # The scope is every file git knows about (tracked, or untracked and not
 # ignored) at run time, minus the manifest itself. A JSON, YAML or one-case-
@@ -56,13 +64,23 @@ module ApplyCaseMigration
   HINT_WINDOW = 80
   ORDERING_KEYS = %w[case reference].freeze
   REQUIRED_EXTENSIONS = %w[mmd meta.json].freeze
+  FIXTURES = "spec/fixtures_mermaid"
+  # Directory names a path carries after a corpus root.
+  CORPUS_ROOTS = %r{\A(?:#{Regexp.escape(CORPUS)}|#{Regexp.escape(FIXTURES)})/}
+  DIRECTORY_REFERENCE =
+    %r{(?<=\bmermaid/|fixtures_mermaid/)[a-z0-9_]+(?![\w-])}
+  CASE_META = %r{\A#{Regexp.escape(CORPUS)}/([a-z0-9_]+)/[^/]+\.meta\.json\z}
+  TOOLING = %r{\A(?:scripts/(?:apply_case_migration|corpus_case_\w+)\.rb|
+                  spec/scripts/(?:apply_case_migration|corpus_case_\w+)_spec\.rb)\z}x
 
-  # One old->new case: its type, and the old and new file stem.
+  # One old->new case: its old and new type directory, and the old and new
+  # file stem.
   class Pair
-    attr_reader :type, :old_base, :new_base
+    attr_reader :type, :new_type, :old_base, :new_base
 
-    def initialize(type:, old_base:, new_base:)
+    def initialize(type:, old_base:, new_base:, new_type: type)
       @type = type
+      @new_type = new_type
       @old_base = old_base
       @new_base = new_base
     end
@@ -72,7 +90,7 @@ module ApplyCaseMigration
     end
 
     def new_id
-      "#{type}/#{new_base}"
+      "#{new_type}/#{new_base}"
     end
   end
 
@@ -92,6 +110,12 @@ module ApplyCaseMigration
 
     def types
       pairs.map(&:type).uniq
+    end
+
+    # { old directory => canonical directory } for the directories that merge.
+    def directories
+      @directories ||= pairs.reject { |pair| pair.type == pair.new_type }
+        .to_h { |pair| [pair.type, pair.new_type] }
     end
 
     def candidates(base)
@@ -263,7 +287,9 @@ module ApplyCaseMigration
       text = File.read(File.join(root, MANIFEST))
       entries = JSON.parse(text).fetch("pairs")
       pairs = entries.map { |entry| pair(entry) }
-      %i[new_base old_base].each { |field| reject_twice(pairs, field) }
+      reject_twice(pairs, :old_base) { |pair| pair.type }
+      reject_twice(pairs, :new_base) { |pair| pair.new_type }
+      reject_split_directories(pairs)
       pairs
     rescue Errno::ENOENT, JSON::ParserError, KeyError => e
       raise ManifestError, "cannot read #{MANIFEST}: #{e.message}"
@@ -273,13 +299,16 @@ module ApplyCaseMigration
       old = OLD_PATTERN.match(entry["old"].to_s)
       new = NEW_PATTERN.match(entry["new"].to_s)
       raise ManifestError, "bad manifest entry #{entry.inspect}" unless
-        old && new && old[1] == new[1]
+        old && new
 
-      Pair.new(type: old[1], old_base: old[2], new_base: new[2])
+      Pair.new(type: old[1], new_type: new[1], old_base: old[2],
+               new_base: new[2])
     end
 
     def reject_twice(pairs, field)
-      groups = pairs.group_by { |pair| [pair.type, pair.public_send(field)] }
+      groups = pairs.group_by do |pair|
+        [yield(pair), pair.public_send(field)]
+      end
       clash = groups.select { |_, group| group.length > 1 }.keys
       return if clash.empty?
 
@@ -287,7 +316,25 @@ module ApplyCaseMigration
       raise ConflictError, "manifest lists #{field} twice: #{names}"
     end
 
-    private_class_method :pair, :reject_twice
+    # One old directory has one canonical directory, and a directory that
+    # is merged away is never also a target.
+    def reject_split_directories(pairs)
+      targets = pairs.group_by(&:type).transform_values do |group|
+        group.map(&:new_type).uniq
+      end
+      split = targets.select { |_, dirs| dirs.length > 1 }.keys
+      raise ConflictError, "directories moved two ways: #{split.join(', ')}" if
+        split.any?
+
+      merged = targets.reject { |type, dirs| dirs == [type] }.keys
+      kept = merged & pairs.map(&:new_type)
+      return if kept.empty?
+
+      raise ConflictError, "directories both merged away and a target: " \
+                           "#{kept.join(', ')}"
+    end
+
+    private_class_method :pair, :reject_twice, :reject_split_directories
   end
 
   # The files a run looks at, and whether git considers the tree clean.
@@ -308,7 +355,7 @@ module ApplyCaseMigration
       )
       raise Error, "git ls-files failed in #{root}" unless status.success?
 
-      out.split("\0").uniq.reject { |file| file == MANIFEST }
+      out.split("\0").uniq.reject { |file| file == MANIFEST || TOOLING.match?(file) }
         .select { |file| plain_file?(File.join(root, file)) }
     end
 
@@ -321,7 +368,8 @@ module ApplyCaseMigration
 
   # Rewrites the old names in one file's bytes. A name found in a path with
   # a directory before it is resolved by that directory; the last such case
-  # is the context a later bare name is matched against.
+  # is the context a later bare name is matched against. The directory of a
+  # moved case is rewritten with its name.
   class Rewriter
     attr_reader :unresolved
 
@@ -335,30 +383,82 @@ module ApplyCaseMigration
     def call(file, bytes)
       @file = file
       @bytes = bytes
-      @count = 0
+      @edits = {}
       @context = nil
-      text = bytes.gsub(TOKEN) { replacement(Regexp.last_match) }
-      return if @count.zero?
+      collect_names
+      collect_directories
+      collect_meta_type
+      return if @edits.empty?
 
-      ordered, ordering = Ordering.call(file, bytes, text)
-      { text: ordered, count: @count, ordering: ordering }
+      ordered, ordering = Ordering.call(file, bytes, apply_edits)
+      { text: ordered, count: @edits.length, ordering: ordering }
     end
 
     private
 
-    def replacement(match)
-      name = match[0]
-      return name unless @catalog.base?(name)
+    def collect_names
+      @bytes.to_enum(:scan, TOKEN).map { Regexp.last_match }.each do |match|
+        name = match[0]
+        next unless @catalog.base?(name)
 
-      pair = pair_for(name, match.begin(0))
-      return left_alone(name, match.begin(0)) unless pair
+        pair = pair_for(name, match.begin(0))
+        next left_alone(name, match.begin(0)) unless pair
 
-      @count += 1
-      pair.new_base
+        edit(match.begin(0), name.length, pair.new_base)
+        rename_directory(pair, match.begin(0))
+      end
+    end
+
+    def collect_directories
+      @bytes.scan(DIRECTORY_REFERENCE) do
+        directory = Regexp.last_match
+        target = @catalog.directories[directory[0]]
+        edit(directory.begin(0), directory[0].length, target) if target
+      end
+    end
+
+    # A merged case's .meta.json names its directory as its "type".
+    def collect_meta_type
+      target = @catalog.directories[CASE_META.match(@file)&.captures&.first]
+      return unless target
+
+      found = @bytes.match(/"type"\s*:\s*"([a-z0-9_]+)"/)
+      edit(found.begin(1), found[1].length, target) if found
+    end
+
+    def edit(start, length, replacement)
+      @edits[start] = [length, replacement]
+    end
+
+    def apply_edits
+      text = @bytes.dup
+      @edits.sort.reverse_each do |start, (length, replacement)|
+        text[start, length] = replacement
+      end
+      text
+    end
+
+    # Moves the directory written just before a case name along with it.
+    def rename_directory(pair, position)
+      return if pair.type == pair.new_type
+
+      hint = hint_before(position)
+      return unless hint && hint[1] == pair.type
+
+      edit(hint.begin(1) + window_start(position), pair.type.length,
+           pair.new_type)
+    end
+
+    def window_start(position)
+      [position - HINT_WINDOW, 0].max
+    end
+
+    def hint_before(position)
+      @bytes[window_start(position)...position].match(HINT)
     end
 
     def pair_for(name, position)
-      hint = @bytes[[position - HINT_WINDOW, 0].max...position][HINT, 1]
+      hint = hint_before(position)&.[](1)
       pair = @catalog.resolve(name, hint)
       @context = pair if pair && hint
       pair || @twins.pick(@catalog.candidates(name), @context)
@@ -368,7 +468,6 @@ module ApplyCaseMigration
       line = @bytes[0, position].count("\n") + 1
       @unresolved << "#{@file}:#{line} #{name} " \
                      "(used by several types, no directory given)"
-      name
     end
   end
 
@@ -417,7 +516,8 @@ module ApplyCaseMigration
   module Moves
     module_function
 
-    # [[from, to], ...] and the files whose owning case cannot be told.
+    # [[from, to], ...], the files whose owning case cannot be told, and the
+    # files left in a directory that is being merged away.
     def call(files, catalog)
       moves = []
       stranded = []
@@ -426,16 +526,34 @@ module ApplyCaseMigration
         next unless catalog.base?(stem)
 
         pair = catalog.resolve_in(stem, File.dirname(file).split("/"))
-        pair ? moves << [file, target(file, pair, rest)] : stranded << file
+        pair ? moves << [file, target(file, pair, rest, catalog)] : stranded << file
       end
-      [moves, stranded]
+      [moves, stranded, left_behind(files, moves, catalog)]
     end
 
-    def target(file, pair, rest)
-      File.join(File.dirname(file), [pair.new_base, rest].compact.join("."))
+    # The path with a merged directory right after a corpus root replaced.
+    def redirect(directory, catalog)
+      root = CORPUS_ROOTS.match(directory)&.to_s
+      return directory unless root
+
+      first, rest = directory.delete_prefix(root).split("/", 2)
+      target = catalog.directories.fetch(first, first)
+      File.join(root, [target, rest].compact.join("/"))
     end
 
-    private_class_method :target
+    def target(file, pair, rest, catalog)
+      File.join(redirect(File.dirname(file), catalog),
+                [pair.new_base, rest].compact.join("."))
+    end
+
+    def left_behind(files, moves, catalog)
+      moved = moves.map(&:first)
+      (files - moved).select do |file|
+        redirect(File.dirname(file), catalog) != File.dirname(file)
+      end
+    end
+
+    private_class_method :target, :left_behind
   end
 
   # Renames that would overwrite something.
@@ -469,7 +587,15 @@ module ApplyCaseMigration
       catalog = Catalog.new(Manifest.pairs(root))
       files = Tree.files(root)
       references(root, files, catalog) + names(files, catalog) +
-        cases(root, catalog)
+        directories(files, catalog) + cases(root, catalog)
+    end
+
+    def directories(files, catalog)
+      files.filter_map do |file|
+        next unless Moves.redirect(File.dirname(file), catalog) != File.dirname(file)
+
+        "#{file}: still in a directory that was merged away"
+      end
     end
 
     def references(root, files, catalog)
@@ -516,7 +642,8 @@ module ApplyCaseMigration
        "#{ids.length}; extra: #{(on_disk - ids).first(3)}"]
     end
 
-    private_class_method :references, :old_names, :names, :cases,
+    private_class_method :references, :old_names, :names, :directories,
+                         :cases,
                          :absent_files, :count_problems
   end
 
@@ -527,7 +654,17 @@ module ApplyCaseMigration
     def call(root, plan)
       plan.rewrites.each { |file, entry| replace(root, file, entry[:text]) }
       plan.moves.each do |from, to|
+        FileUtils.mkdir_p(File.dirname(File.join(root, to)))
         File.rename(File.join(root, from), File.join(root, to))
+      end
+      remove_emptied(root, plan.moves.map { |from, _| File.dirname(from) })
+    end
+
+    # A merged-away directory must not linger as an empty type directory.
+    def remove_emptied(root, directories)
+      directories.uniq.sort_by { |dir| -dir.length }.each do |dir|
+        full = File.join(root, dir)
+        Dir.rmdir(full) if Dir.empty?(full)
       end
     end
 
@@ -543,7 +680,7 @@ module ApplyCaseMigration
       end
     end
 
-    private_class_method :replace
+    private_class_method :replace, :remove_emptied
   end
 
   # Text of a plan for people.
@@ -662,9 +799,9 @@ module ApplyCaseMigration
 
   def build_plan(root, catalog, files)
     scan = Scan.new(root, catalog).run(files)
-    moves, stranded = Moves.call(files, catalog)
+    moves, stranded, left = Moves.call(files, catalog)
     Plan.new(moves: moves, rewrites: scan.rewrites,
-             unresolved: scan.unresolved + untyped(stranded),
+             unresolved: scan.unresolved + untyped(stranded) + unmoved(left),
              conflicts: Conflicts.call(root, moves), manual: scan.manual)
   end
 
@@ -701,6 +838,10 @@ module ApplyCaseMigration
     files.map { |file| "#{file} (named by several types, no type directory)" }
   end
 
+  def unmoved(files)
+    files.map { |file| "#{file} (in a directory being merged, not a manifest case)" }
+  end
+
   def refuse(plan)
     unless plan.conflicts.empty?
       raise ConflictError, "#{plan.conflicts.length} conflicts, first: " \
@@ -712,7 +853,8 @@ module ApplyCaseMigration
           "#{plan.unresolved.length} unresolved references; nothing written"
   end
 
-  private_class_method :build_plan, :require_cases_on_disk, :untyped, :refuse
+  private_class_method :build_plan, :require_cases_on_disk, :untyped, :unmoved,
+                       :refuse
 end
 
 exit(ApplyCaseMigration.run(ARGV)) if $PROGRAM_NAME == __FILE__
