@@ -91,8 +91,9 @@ module DocMermaidSpec
       "Diagram declaration #1" => [:placeholder, PARSE],
       "Title #1" => [:sirena_gap, PARSE],
       "Field definitions #1" => [:fragment, DETECT],
-      "TCP header structure #1" => [:sirena_gap, PARSE],
       "Include title for context #1.1" => [:placeholder, PARSE],
+      "Organize fields logically #1.2" => [:mermaid_rejects, PARSE],
+      "Use standard bit numbering #1.2" => [:mermaid_rejects, PARSE],
     },
     "docs/_diagram_types/pie-chart.adoc" => {
       "Case-insensitive syntax #1" => [:mermaid_rejects, PARSE],

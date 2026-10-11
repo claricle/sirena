@@ -3,7 +3,6 @@
 require "spec_helper"
 
 RSpec.describe Sirena do
-  fixture_dir = "spec/mermaid/class_diagram"
   invalid_cases = {
     "a whitespace-only explicit label" => %w[
       classdiagram_spec-7f7323f5.mmd
@@ -30,7 +29,7 @@ RSpec.describe Sirena do
   invalid_cases.each do |category, fixtures|
     fixtures.each do |fixture|
       it "rejects #{category} in #{fixture}" do
-        source = File.read(File.join(fixture_dir, fixture))
+        source = File.read(File.join("spec/mermaid/class_diagram", fixture))
 
         expect { described_class.render(source) }
           .to raise_error(Sirena::Parser::ParseError)
@@ -47,5 +46,10 @@ RSpec.describe Sirena do
     MERMAID
 
     expect(described_class.render(source)).to include("<svg")
+  end
+
+  it "falls back to the id for an empty quoted label" do
+    expect(described_class.render("classDiagram\n  class A[\"\"]\n"))
+      .to include(">A</text>")
   end
 end

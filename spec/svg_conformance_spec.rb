@@ -49,7 +49,7 @@ CONFORMANCE_RENDERABLE_FILE = File.join(
 # emptied or truncated list would make the subset check pass against nothing.
 # Same population `scripts/corpus_sweep.rb` counts by the same criterion.
 #
-# Dropped from 898 to 894, for three reasons.
+# Dropped from 898 to 877 for two groups of oracle-backed correctness fixes.
 #
 # kanban/knbn_6_real_root_in_wrong_place-7a57fb5a ("real root in wrong
 # place") used to "render" by dropping its first two items. Real mermaid
@@ -76,7 +76,12 @@ CONFORMANCE_RENDERABLE_FILE = File.join(
 # either (main silently mis-split it into a 2-node tree that happened to
 # still look SVG-shaped). Backlogged, not fixed here -- fixing it means
 # multi-line node grammar support, out of scope for this bucket.
-CONFORMANCE_RENDERED_FLOOR = 894
+#
+# Seventeen more cases used to render only because C4 and Class accepted
+# malformed declarations and GitGraph accepted operations Mermaid rejects.
+# Every case is pinned `invalid` in scoreboard/corpus.json. Rejecting them is
+# therefore a compatibility gain, not a loss of oracle-valid coverage.
+CONFORMANCE_RENDERED_FLOOR = 877
 
 # The example sources Sirena cannot parse yet, so they have no checked-in
 # SVG. Named rather than counted: a NEW source falling out of the checked-in

@@ -3,7 +3,6 @@
 require "spec_helper"
 
 RSpec.describe Sirena do
-  fixture_dir = "spec/mermaid/gitgraph"
   {
     "should_fail_cherry_picking_of_merge_commits_if_t-c9fa8ebb.mmd" =>
       /parent/i,
@@ -25,11 +24,37 @@ RSpec.describe Sirena do
       /commit id/i,
   }.each do |fixture, message|
     it "rejects pinned-invalid #{fixture}" do
-      source = File.read(File.join(fixture_dir, fixture))
+      source = File.read(File.join("spec/mermaid/gitgraph", fixture))
 
       expect { described_class.render(source) }
         .to raise_error(Sirena::Parser::ParseError, message)
     end
+  end
+
+  {
+    "gitgraph_spec-076af5a8.mmd" =>
+      %w[1-abcdefg 2-abcdefg commit-3 commit-4],
+    "gitgraph_spec-215c1704.mmd" =>
+      %w[1-abcdefg 2-abcdefg commit-3 commit-4],
+    "should_handle_cases_when_merge_is_a_noop-9267428e.mmd" =>
+      %w[commit-1 commit-2 commit-3 commit-4],
+  }.each do |fixture, expected_ids|
+    it "draws the oracle-valid ancestor merge in #{fixture}" do
+      source = File.read(File.join("spec/mermaid/gitgraph", fixture))
+      diagram = Sirena::Parser::GitGraph.new.parse(source)
+
+      expect(diagram.commits.map(&:id)).to eq(expected_ids)
+    end
+  end
+
+  it "keeps the later duplicate in " \
+     "should_log_a_warning_when_two_commits_have_the_s-8c8c51d0.mmd" do
+    fixture = "should_log_a_warning_when_two_commits_have_the_s-8c8c51d0.mmd"
+    source = File.read(File.join("spec/mermaid/gitgraph", fixture))
+    diagram = Sirena::Parser::GitGraph.new.parse(source)
+    scene = Sirena::Layout::GitGraph.new.call(diagram)
+
+    expect(scene.commits.map(&:id).count("working on MDR")).to eq(1)
   end
 
   it "records both parents on a merge commit" do

@@ -31,6 +31,15 @@ load TASKS_RAKE_FILE unless defined?(ExampleTasks)
 # itself, but is grouped here rather than split into a second module for
 # one method.
 module ExampleTasksSpecHelpers
+  SYNTHETIC_UNRENDERABLE_SOURCE = "gantt/synthetic-unrenderable.mmd"
+
+  def use_synthetic_unrenderable_source
+    stub_const(
+      "EXPECTED_UNRENDERABLE_SOURCES",
+      [SYNTHETIC_UNRENDERABLE_SOURCE].freeze,
+    )
+  end
+
   def silently
     result = nil
     capture { result = yield }
@@ -795,10 +804,14 @@ RSpec.describe ExampleTasks, :aggregate_failures do
   # `.prune_known_unrenderable_svgs`'s job, exercised in its own describe
   # block below.
   describe ".handle_failed_svgs" do
-    let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
+    let(:expected_source) do
+      ExampleTasksSpecHelpers::SYNTHETIC_UNRENDERABLE_SOURCE
+    end
     # Derived, not typed out: naming the source by position and its SVG by
     # hand let a reorder of the constant pair the two up wrongly.
     let(:expected_svg) { expected_source.sub(/\.mmd\z/, ".svg") }
+
+    before { use_synthetic_unrenderable_source }
 
     it "reports, but does not delete, the stale SVG of a source that is " \
        "expected not to render" do
@@ -867,8 +880,12 @@ RSpec.describe ExampleTasks, :aggregate_failures do
   # human runs this with no concurrent :generate to race, so it is the only
   # place a stale known-unrenderable SVG is actually removed.
   describe ".known_unrenderable_svgs and .prune_known_unrenderable_svgs" do
-    let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
+    let(:expected_source) do
+      ExampleTasksSpecHelpers::SYNTHETIC_UNRENDERABLE_SOURCE
+    end
     let(:expected_svg) { expected_source.sub(/\.mmd\z/, ".svg") }
+
+    before { use_synthetic_unrenderable_source }
 
     it "finds the stale SVG beside a source that never renders" do
       svg = write(expected_svg)
@@ -974,7 +991,8 @@ RSpec.describe ExampleTasks, :aggregate_failures do
     # handle_failed_svgs as a failed render in the first place.
     it "never treats a write failure on an allowlisted source as an " \
        "expected render failure" do
-      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      use_synthetic_unrenderable_source
+      source_path = ExampleTasksSpecHelpers::SYNTHETIC_UNRENDERABLE_SOURCE
       svg_path = source_path.sub(/\.mmd\z/, ".svg")
       write(source_path, source)
       svg = write(svg_path, "<svg>previous good output</svg>")
@@ -991,7 +1009,8 @@ RSpec.describe ExampleTasks, :aggregate_failures do
     # as a genuine render failure, and deleted the still-good SVG below.
     it "propagates a metadata error instead of treating it as a render " \
        "failure" do
-      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      use_synthetic_unrenderable_source
+      source_path = ExampleTasksSpecHelpers::SYNTHETIC_UNRENDERABLE_SOURCE
       svg_path = source_path.sub(/\.mmd\z/, ".svg")
       write(source_path, source)
       svg = write(svg_path, "<svg>previous good output</svg>")
@@ -1525,7 +1544,8 @@ RSpec.describe ExampleTasks, :aggregate_failures do
     # documented one.
     it "does not report success when an expected-unrenderable source has " \
        "malformed metadata" do
-      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      use_synthetic_unrenderable_source
+      source_path = ExampleTasksSpecHelpers::SYNTHETIC_UNRENDERABLE_SOURCE
       write(source_path, "gantt\n  title Broken\n")
       write(source_path.sub(/\.mmd\z/, ".yml"), "theme: [\n")
 
@@ -1542,7 +1562,8 @@ RSpec.describe ExampleTasks, :aggregate_failures do
     # second layer.
     it "does not report success when an expected-unrenderable source names " \
        "a theme that will not load" do
-      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      use_synthetic_unrenderable_source
+      source_path = ExampleTasksSpecHelpers::SYNTHETIC_UNRENDERABLE_SOURCE
       broken_theme = File.join(examples_dir, "broken-theme.yml")
       File.write(broken_theme, "colors: [\n")
 
@@ -1566,7 +1587,8 @@ RSpec.describe ExampleTasks, :aggregate_failures do
     # `known_unrenderable` into `failure_count` cannot pass silently.
     it "counts a real render failure on an expected-unrenderable source as " \
        "known, not failed" do
-      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      use_synthetic_unrenderable_source
+      source_path = ExampleTasksSpecHelpers::SYNTHETIC_UNRENDERABLE_SOURCE
       write(source_path, "flowchart TD\n  A --> \n")
 
       output = capture { described_class.validate_examples(examples_dir) }
@@ -1579,7 +1601,8 @@ RSpec.describe ExampleTasks, :aggregate_failures do
     # fail validation loudly, or an EXPECTED_UNRENDERABLE_SOURCES entry rots
     # into a permanent excuse nobody revisits once Sirena actually fixes it.
     it "raises when an expected-unrenderable source unexpectedly renders" do
-      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      use_synthetic_unrenderable_source
+      source_path = ExampleTasksSpecHelpers::SYNTHETIC_UNRENDERABLE_SOURCE
       write(source_path, "gantt\n  title Broken\n")
       allow(Sirena::Engine).to receive(:new)
         .and_return(instance_double(Sirena::Engine, render: "<svg/>"))

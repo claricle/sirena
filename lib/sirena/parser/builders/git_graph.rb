@@ -243,7 +243,7 @@ module Sirena
           end
 
           def validate_commit_id!(commit_id, options)
-            return if options[:is_cherry_pick]
+            return unless options[:is_merge]
             return unless @commits.any? { |item| item[:id] == commit_id }
 
             raise Parser::ParseError, "Commit id #{commit_id} already exists."
@@ -259,7 +259,7 @@ module Sirena
 
             source_tip = branch_tip(branch_name)
             current_tip = branch_tip(@current_branch)
-            return if source_tip && !ancestor?(source_tip, current_tip)
+            return if source_tip && source_tip != current_tip
 
             raise Parser::ParseError,
                   "Branch #{branch_name} has no new commits to merge."
@@ -281,15 +281,6 @@ module Sirena
                   "a valid parent."
           end
 
-          def ancestor?(candidate, descendant)
-            return false unless candidate && descendant
-            return true if candidate == descendant
-
-            commit = @commits.reverse.find { |item| item[:id] == descendant }
-            commit && commit[:parent_ids].any? do |parent|
-              ancestor?(candidate, parent)
-            end
-          end
         end
 
         def self.build(statements, main_branch_name: "main")

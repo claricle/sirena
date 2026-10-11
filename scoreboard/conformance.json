@@ -120,14 +120,6 @@
     "status": "conformant"
   },
   {
-    "case": "c4/diagram_orchestration_spec-de6f44eb.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/mermaidapi_spec-eb6da39c.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "c4/should_allow_default_in_the_parameters-e6593b36.mmd",
     "status": "conformant"
   },
@@ -160,55 +152,7 @@
     "status": "conformant"
   },
   {
-    "case": "c4/should_parse_a_link-37f0b697.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_a_link-47ff4c4c.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_a_link-c5af83ba.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_a_link-f27631de.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "c4/should_parse_a_link-fe18b512.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_a_sprite-48520888.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_a_sprite-5edd570a.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_a_sprite-ac91af94.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_a_sprite-f6920fba.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_tags-5de50e83.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_tags-616e2fc3.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_tags-810b5561.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "c4/should_parse_tags-96bbad18.mmd",
     "status": "conformant"
   },
   {
@@ -612,10 +556,6 @@
     "status": "conformant"
   },
   {
-    "case": "class_diagram/classdiagram_spec-7f7323f5.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "class_diagram/classdiagram_spec-7fe746b8.mmd",
     "status": "conformant"
   },
@@ -836,10 +776,6 @@
     "status": "conformant"
   },
   {
-    "case": "class_diagram/classdiagram_spec-d7130dfa.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "class_diagram/classdiagram_spec-d8065ef7.mmd",
     "status": "conformant"
   },
@@ -873,10 +809,6 @@
   },
   {
     "case": "class_diagram/classdiagram_spec-e4a0a3de.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "class_diagram/classdiagram_spec-e67f67a1.mmd",
     "status": "conformant"
   },
   {
@@ -920,10 +852,6 @@
     "status": "conformant"
   },
   {
-    "case": "class_diagram/classdiagram_spec-f8d72790.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "class_diagram/classdiagram_spec-f9b0f05a.mmd",
     "status": "conformant"
   },
@@ -948,31 +876,11 @@
     "status": "conformant"
   },
   {
-    "case": "class_diagram/classdiagram_styles_spec-945bb347.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "class_diagram/classdiagram_styles_spec-a7127f80.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "class_diagram/classdiagram_styles_spec-ae8c150c.mmd",
     "status": "conformant"
   },
   {
-    "case": "class_diagram/classdiagram_styles_spec-bf7e8658.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "class_diagram/classdiagram_styles_spec-cb18d995.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "class_diagram/classdiagram_styles_spec-cb235322.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "class_diagram/classdiagram_styles_spec-e2427a19.mmd",
     "status": "conformant"
   },
   {
@@ -1140,19 +1048,7 @@
     "status": "conformant"
   },
   {
-    "case": "class_diagram/should_be_possible_to_apply_a_css_class_to_a_cla-95c9521c.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "class_diagram/should_be_possible_to_apply_a_css_class_to_a_cla-a593c027.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "class_diagram/should_be_possible_to_apply_a_cssclass_to_a_clas-97fdecbd.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "class_diagram/should_be_possible_to_apply_a_cssclass_to_a_comm-3ba4969f.mmd",
     "status": "conformant"
   },
   {
@@ -1161,10 +1057,6 @@
   },
   {
     "case": "class_diagram/should_be_possible_to_define_and_assign_a_class-2a55e80f.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "class_diagram/should_be_possible_to_define_and_assign_a_class-74f55631.mmd",
     "status": "conformant"
   },
   {
@@ -1480,14 +1372,6 @@
     "status": "conformant"
   },
   {
-    "case": "class_diagram/should_parse_classes_with_different_text_labels-3b6eef91.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "class_diagram/should_parse_classes_with_different_text_labels-ef4861fc.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "class_diagram/should_parse_diagram_with_direction-ba994d6a.mmd",
     "status": "conformant"
   },
@@ -1505,10 +1389,6 @@
   },
   {
     "case": "class_diagram/should_parse_two_classes_with_text_labels_and_cs-df074ec4.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "class_diagram/should_properly_assign_multiple_classes_and_styl-b6145455.mmd",
     "status": "conformant"
   },
   {
@@ -2992,14 +2872,6 @@
     "status": "conformant"
   },
   {
-    "case": "gitgraph/should_fail_cherry_picking_of_merge_commits_if_t-c9fa8ebb.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "gitgraph/should_fail_cherry_picking_of_merge_commits_when-9f5b53c4.mmd",
-    "status": "conformant"
-  },
-  {
     "case": "gitgraph/should_generate_an_array_of_known_branches-24cef136.mmd",
     "status": "conformant"
   },
@@ -3181,34 +3053,6 @@
   },
   {
     "case": "gitgraph/should_throw_error_when_try_to_branch_existing_b-2132fd92.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "gitgraph/should_throw_error_when_try_to_checkout_unknown-3e3b849e.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "gitgraph/should_throw_error_when_trying_to_merge_branch_t-950f4997.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "gitgraph/should_throw_error_when_trying_to_merge_branch_w-93bba635.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "gitgraph/should_throw_error_when_trying_to_merge_branches-fde8e313.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "gitgraph/should_throw_error_when_trying_to_merge_unknown-36f2e03b.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "gitgraph/should_throw_error_when_trying_to_merge_when_cur-4bb16d06.mmd",
-    "status": "conformant"
-  },
-  {
-    "case": "gitgraph/should_throw_error_when_using_existing_id_as_mer-5ee3b619.mmd",
     "status": "conformant"
   },
   {

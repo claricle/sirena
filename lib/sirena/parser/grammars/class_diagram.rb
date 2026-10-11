@@ -174,18 +174,12 @@ module Sirena
         #     `class C1["a\"b"]`; mmdc rejects that with
         #     "Expecting 'SQE', got 'ALPHA'".
         #
-        # A visible character is required after any leading horizontal
-        # whitespace. Mermaid rejects both an empty label and one containing
-        # only spaces, while preserving the whitespace around a real label.
-        # Defined here rather than by changing quoted_string, which 15
-        # grammars share.
+        # The builder distinguishes `""`, which falls back to the class id,
+        # from a whitespace-only body, which Mermaid rejects. Defined here
+        # rather than by changing quoted_string, which 15 grammars share.
         rule(:label_string) do
           str('"') >>
-            (
-              match[' \t'].repeat >>
-                match('[^" \t\r\n]').present? >>
-                (str('"').absent? >> any).repeat
-            ).as(:string) >>
+            (str('"').absent? >> any).repeat.as(:string) >>
             str('"')
         end
 

@@ -38,7 +38,7 @@ RSpec.describe Sirena::Layout::Gantt do
 
     it "draws a diamond without a task bar" do
       expect([task.bar, task.milestone_points]).to eq(
-        [nil, "600.0,132 612.0,120 624.0,132 612.0,144"],
+        [nil, "600,132 612,120 624,132 612,144"],
       )
     end
   end

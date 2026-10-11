@@ -10,6 +10,8 @@ RSpec.describe Sirena::Parser::GitGraph do
         gitGraph
           commit
           branch side
+          commit
+          checkout main
           merge side #{option}
       MERMAID
 
