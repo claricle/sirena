@@ -16,7 +16,7 @@ module Sirena
         rule(keyword: simple(:_kw), statements: subtree(:stmts)) do
           {
             type: :treemap,
-            statements: Array(stmts).compact,
+            statements: Array(stmts).grep(Hash),
           }
         end
 
