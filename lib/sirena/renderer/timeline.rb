@@ -120,7 +120,7 @@ module Sirena
       end
 
       def number(value)
-        value.to_i == value ? value.to_i.to_s : value.round(4).to_s
+        value.to_i == value ? value.to_i.to_s : value.to_s
       end
     end
   end

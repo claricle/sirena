@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
+require_relative "timeline_rounding"
 
 module Sirena
   module Layout
@@ -19,6 +20,13 @@ module Sirena
         self.x2 += delta_x
         self.y1 += delta_y
         self.y2 += delta_y
+        settle
+      end
+
+      # Rounds the end points to the published precision.
+      def settle
+        self.x1, self.x2, self.y1, self.y2 =
+          [x1, x2, y1, y2].map { |value| TimelineRounding.tidy(value) }
       end
     end
   end

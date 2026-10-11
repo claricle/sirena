@@ -26,7 +26,8 @@ RSpec.describe Sirena::Layout::TimelineCard, "#place" do
 
   it "publishes the rule along the card's bottom edge" do
     expect([card.rule.x1, card.rule.x2, card.rule.y1])
-      .to eq([card.x, card.x + card.width, card.y + card.height])
+      .to eq([card.x, (card.x + card.width).round(4),
+              (card.y + card.height).round(4)])
   end
 
   it "publishes the text anchor at the card's horizontal centre" do
@@ -55,10 +56,8 @@ RSpec.describe Sirena::Layout::TimelineCard, "#place" do
   it "draws later lines at the published baselines" do
     tspans = REXML::XPath.match(doc, "//tspan")
 
-    expect(tspans).not_to be_empty
-
     expect(tspans.filter_map { |run| run.attributes["y"]&.to_f })
-      .to eq(scene.cards.flat_map(&:next_baselines))
+      .to eq(scene.cards.flat_map(&:next_baselines)).and(satisfy(&:any?))
   end
 
   it "steps published baselines 17.6 apart" do

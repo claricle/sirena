@@ -2,6 +2,7 @@
 
 require "lutaml/model"
 require_relative "timeline_line"
+require_relative "timeline_rounding"
 
 module Sirena
   module Layout
@@ -43,6 +44,7 @@ module Sirena
 
       # Publishes the canvas geometry the renderer draws from.
       def place
+        settle
         self.outline = outline_path
         self.rule = rule_line
         place_text
@@ -62,19 +64,31 @@ module Sirena
 
       private
 
+      def settle
+        %i[x y width height text_width].each do |name|
+          public_send(:"#{name}=", tidy(public_send(name)))
+        end
+        connector&.settle
+      end
+
       def place_text
-        self.text_x = x + (width / 2)
-        self.text_y = y + TEXT_TOP + FIRST_BASELINE
+        self.text_x = tidy(x + (width / 2))
+        self.text_y = tidy(y + TEXT_TOP + FIRST_BASELINE)
         self.next_baselines = baselines_after_first
       end
 
       def baselines_after_first
-        (1...lines.length).map { |index| text_y + (index * LINE_PITCH) }
+        (1...lines.length).map { |i| tidy(text_y + (i * LINE_PITCH)) }
+      end
+
+      def tidy(value)
+        TimelineRounding.tidy(value)
       end
 
       def rule_line
-        bottom_y = y + height
-        TimelineLine.new(x1: x, y1: bottom_y, x2: x + width, y2: bottom_y)
+        bottom_y = tidy(y + height)
+        TimelineLine.new(x1: x, y1: bottom_y, x2: tidy(x + width),
+                         y2: bottom_y)
       end
 
       def outline_path
@@ -89,7 +103,8 @@ module Sirena
       end
 
       def path_number(value)
-        value.to_i == value ? value.to_i.to_s : value.round(4).to_s
+        tidied = tidy(value)
+        tidied.to_i == tidied ? tidied.to_i.to_s : tidied.to_s
       end
     end
   end
