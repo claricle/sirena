@@ -3,22 +3,25 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Renderer::Pie, "#render" do
-  subject(:renderer) { described_class.new }
+  subject(:renderer) { described_class.new(theme: theme) }
 
   let(:graph) do
     { slices: [{ label: "A", percentage: 100.0, angle: 360.0 }] }
   end
+  let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:fill) do
     renderer.render(graph).children.grep(Sirena::Svg::Path).first.fill
   end
 
-  it "falls back to the palette when the theme names no slice colour" do
-    expect(fill).to eq(described_class::DEFAULT_COLORS.first)
+  it "paints the first slice from the theme's pie palette" do
+    expect(fill).to eq(theme.colors.palette(:pie, 0))
   end
 
-  it "paints the first slice from the default palette without a theme" do
-    renderer.theme = nil
+  it "uses a caller-defined pie palette" do
+    renderer.theme = Sirena::Theme.new(
+      colors: { pie_palette: ["#123456"] },
+    )
 
-    expect(fill).to eq(described_class::DEFAULT_COLORS.first)
+    expect(fill).to eq("#123456")
   end
 end
