@@ -11,6 +11,7 @@
 require "fileutils"
 require "json"
 require_relative "corpus_case_identity"
+require_relative "corpus_refresh"
 
 MERMAID_JS_ROOT = "/Users/mulgogi/src/external/mermaid-js"
 SIRENA_ROOT = File.expand_path("..", __dir__)
@@ -88,17 +89,23 @@ class MermaidTestExtractor
   NAMINGS = %i[ordinal stable].freeze
 
   def initialize(root: MERMAID_JS_ROOT, output_dir: OUTPUT_DIR,
-                 naming: :ordinal)
-    unless NAMINGS.include?(naming)
-      raise ArgumentError, "naming must be one of #{NAMINGS.inspect}"
-    end
-
+                 naming: :ordinal, commit_sha: nil, accept_changes: false)
+    validate_options!(naming, commit_sha)
     @root = root
     @output_dir = output_dir
     @naming = naming
+    @commit_sha = commit_sha
+    @accept_changes = accept_changes
     @test_cases = []
     @stats = Hash.new(0)
     @file_stats = Hash.new(0)
+  end
+
+  def validate_options!(naming, commit_sha)
+    CorpusRefresh.validate_sha!(commit_sha)
+    return if NAMINGS.include?(naming)
+
+    raise ArgumentError, "naming must be one of #{NAMINGS.inspect}"
   end
 
   def extract_all
@@ -522,11 +529,15 @@ class MermaidTestExtractor
     puts "=" * 80
 
     assign_stable_ids
-    FileUtils.mkdir_p(@output_dir)
+    CorpusRefresh.replace(@output_dir, accept_changes: @accept_changes) do |s|
+      write_cases(s)
+    end
+  end
 
+  def write_cases(dir)
     @test_cases.group_by(&:diagram_type).each do |type, cases|
-      FileUtils.mkdir_p("#{@output_dir}/#{type}")
-      cases.each_with_index { |test_case, idx| save_case(test_case, idx) }
+      FileUtils.mkdir_p("#{dir}/#{type}")
+      cases.each_with_index { |test_case, idx| save_case(dir, test_case, idx) }
       puts "  ✓ #{type}: #{cases.length} test cases"
     end
   end
@@ -538,17 +549,17 @@ class MermaidTestExtractor
     @test_cases.zip(ids) { |test_case, id| test_case.stable_id = id }
   end
 
-  def save_case(test_case, idx)
-    filename = case_basename(test_case, idx)
+  def save_case(dir, test_case, idx)
+    filename = case_basename(dir, test_case, idx)
     File.write("#{filename}.mmd", test_case.source)
     File.write("#{filename}.meta.json",
                JSON.pretty_generate(meta_for(test_case)))
   end
 
-  def case_basename(test_case, idx)
-    return "#{@output_dir}/#{test_case.stable_id}" if @naming == :stable
+  def case_basename(dir, test_case, idx)
+    return "#{dir}/#{test_case.stable_id}" if @naming == :stable
 
-    "#{@output_dir}/#{test_case.diagram_type}/#{format('%03d', idx + 1)}_" \
+    "#{dir}/#{test_case.diagram_type}/#{format('%03d', idx + 1)}_" \
       "#{test_case.to_mmd_filename.delete_suffix('.mmd')}"
   end
 
@@ -561,6 +572,7 @@ class MermaidTestExtractor
       metadata: test_case.metadata,
     }
     meta[:case_id] = test_case.stable_id if @naming == :stable
+    meta[:upstream_sha] = @commit_sha if @commit_sha
     meta
   end
 
@@ -593,7 +605,21 @@ class MermaidTestExtractor
 end
 
 if $PROGRAM_NAME == __FILE__
-  naming = ARGV.delete("--stable-ids") ? :stable : :ordinal
-  MermaidTestExtractor.new(naming: naming).extract_all
+  require "optparse"
+  options = { root: MERMAID_JS_ROOT, naming: :ordinal, accept_changes: false }
+  OptionParser.new do |o|
+    o.on("--root PATH", "mermaid-js checkout") { |v| options[:root] = v }
+    o.on("--sha SHA", "checkout commit sha") { |v| options[:commit_sha] = v }
+    o.on("--stable-ids") { options[:naming] = :stable }
+    o.on("--accept-changes", "allow counts/provenance to differ") do
+      options[:accept_changes] = true
+    end
+  end.parse!
+  abort "--sha is required" unless options[:commit_sha]
+  begin
+    MermaidTestExtractor.new(**options).extract_all
+  rescue CorpusRefresh::Error, CorpusCaseIdentity::Error => e
+    abort "#{e.class}: #{e.message}"
+  end
 end
 # rubocop:enable Style/OneClassPerFile
