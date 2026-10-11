@@ -19,8 +19,10 @@ module Sirena
       end
 
       def call
+        @nodes, zero_nodes = @nodes.partition { |node| node[:value].positive? }
         index = 0
         index = place_row(index) while index < @nodes.size
+        place_zero_nodes(zero_nodes)
       end
 
       private
@@ -93,6 +95,12 @@ module Sirena
           node.merge!(x0: x0, x1: x1, y0: y0)
           y0 += node[:value] * scale
           node[:y1] = y0
+        end
+      end
+
+      def place_zero_nodes(nodes)
+        nodes.each do |node|
+          node.merge!(x0: @x0, y0: @y0, x1: @x0, y1: @y1)
         end
       end
     end

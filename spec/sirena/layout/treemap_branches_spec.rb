@@ -43,10 +43,11 @@ RSpec.describe Sirena::Layout::Treemap do
       .to eq([1000.0, 400.0, [], "No allocation", 500.0])
   end
 
-  it "filters nonpositive descendants without dropping positive siblings" do
+  it "retains zero descendants while filtering negative siblings" do
     children = positive_children
     expect([children.map { |cell| cell.label.text },
-            children.fetch(0).value_label.text]).to eq([["Positive"], "3"])
+            children.fetch(0).value_label.text])
+      .to eq([%w[Positive Zero], "3"])
   end
 
   it "accepts legacy string styles and formats decimal leaves" do
