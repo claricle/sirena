@@ -156,12 +156,8 @@ RSpec.describe Sirena::Parser::Quadrant do
   # coverage-collecting `spec:unit` run: see .simplecov and
   # tasks/coverage.rake.
   describe "fixture files", :corpus do
-    rejected = "should_be_able_to_handle_constructor_as_a_classn-" \
-               "0901aef7.mmd"
-    fixtures = File.expand_path("../../mermaid/quadrant", __dir__)
-
-    Dir.glob(File.join(fixtures, "*.mmd")).each do |fixture_file|
-      next if File.basename(fixture_file) == rejected
+    Dir.glob(File.expand_path("../../mermaid/quadrant/*.mmd", __dir__)).each do |fixture_file|
+      next if File.basename(fixture_file) == "should_be_able_to_handle_constructor_as_a_classn-0901aef7.mmd"
 
       it "parses #{File.basename(fixture_file)}" do
         source = File.read(fixture_file)
@@ -171,7 +167,8 @@ RSpec.describe Sirena::Parser::Quadrant do
     end
 
     it "refuses the oracle-rejected fixture with a fill class style" do
-      source = File.read(File.join(fixtures, rejected))
+      filename = "should_be_able_to_handle_constructor_as_a_classn-0901aef7.mmd"
+      source = File.read(File.expand_path("../../mermaid/quadrant/#{filename}", __dir__))
 
       expect { parser.parse(source) }
         .to raise_error(Sirena::Parser::ParseError, /fill is not/)

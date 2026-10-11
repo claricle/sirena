@@ -35,11 +35,9 @@ RSpec.describe Sirena::Parser::Error, :aggregate_failures do
   # coverage-collecting `spec:unit` run: see .simplecov and
   # tasks/coverage.rake.
   describe "fixture files", :corpus do
-    oracle_rejected = %w[errordiagram_spec-34805ce6.mmd]
-
     Dir.glob("spec/mermaid/error/*.mmd").each do |fixture_file|
       name = File.basename(fixture_file)
-      next if oracle_rejected.include?(name)
+      next if name == "errordiagram_spec-34805ce6.mmd"
 
       it "parses #{name}" do
         source = File.read(fixture_file)
@@ -49,7 +47,7 @@ RSpec.describe Sirena::Parser::Error, :aggregate_failures do
     end
 
     it "refuses the oracle-rejected fixture errordiagram_spec-34805ce6" do
-      source = File.read("spec/mermaid/error/#{oracle_rejected.first}")
+      source = File.read("spec/mermaid/error/errordiagram_spec-34805ce6.mmd")
 
       expect { parser.parse(source) }
         .to raise_error(Sirena::Parser::ParseError)
