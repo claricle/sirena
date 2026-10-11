@@ -52,6 +52,17 @@ module DirectedPlacementGraphs
     [be_within(1.0).of(8), be_within(1.0).of(8),
      be_within(0.01).of(25), be_within(0.01).of(25)]
   end
+
+  def disconnected_cluster_boxes
+    boxes = [node("a"), node("b"), subgraph("s", [node("c"), node("d")])]
+    found = placed(level_graph("DOWN", boxes, [%w[a b], %w[c d]]))
+    %w[a b s].map { |id| member(found, id) }
+  end
+
+  def center_of(box, axis)
+    size = axis == :x ? :width : :height
+    box[axis] + (box[size] / 2.0)
+  end
 end
 
 RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
@@ -109,6 +120,13 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
                     .fetch(:children), "inner")
 
     expect(box_margins(held)).to match(compact_padding)
+  end
+
+  it "packs a disconnected cluster left of a straight linked component" do
+    a, b, cluster = disconnected_cluster_boxes
+
+    expect([a[:x], center_of(a, :y), gap(cluster, a, :x)])
+      .to eq([b[:x], center_of(cluster, :y), 50.0])
   end
 
   describe "a subgraph laid out as a graph of its own" do
