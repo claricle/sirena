@@ -27,6 +27,7 @@ module Sirena
         "both" => %i[source target].freeze,
       }.freeze
       FLUSH_HEADS = %w[cross open stick_top stick_bottom].freeze
+      SHAPED_PARTICIPANTS = %w[boundary control entity].freeze
       private_constant :LAYOUT_SCENE
 
       # @param diagram [Layout::Sequence::Scene, Hash] final geometry or graph
@@ -152,12 +153,30 @@ module Sirena
         group = Svg::Group.new.tap do |item|
           item.id = "participant-#{participant.id}"
         end
-        if participant.actor_type == "actor"
+        if SHAPED_PARTICIPANTS.include?(participant.shape_type)
+          draw_shaped_participant(participant, group)
+        elsif participant.actor_type == "actor"
           draw_actor(participant, group)
         else
           draw_participant_box(participant, group)
         end
         svg << group
+      end
+
+      def draw_shaped_participant(participant, group)
+        group.children << Svg::Circle.new.tap do |circle|
+          circle.cx = participant.shape_circle.x
+          circle.cy = participant.shape_circle.y
+          circle.r = participant.shape_circle.radius
+          circle.fill = theme_color(:node_fill)
+          circle.stroke = theme_color(:node_stroke)
+          circle.stroke_width = "2"
+        end
+        participant.shape_lines.each do |geometry|
+          group.children << actor_line(geometry)
+        end
+        group.children << participant_label(participant.label) if
+          participant.label
       end
 
       def draw_participant_box(participant, group)
