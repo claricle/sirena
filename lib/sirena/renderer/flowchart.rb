@@ -2,7 +2,6 @@
 
 require_relative "base"
 require_relative "../layout/flowchart"
-require_relative "line_break_text"
 
 module Sirena
   module Renderer
@@ -12,12 +11,9 @@ module Sirena
       LINK_DOTTED_DASHES = "2"
       CIRCLE_HEAD_STROKE = "1"
       CROSS_HEAD_STROKE = "2"
-      # How far below the middle of a line its baseline sits, in ems.
-      MIDDLE_BASELINE_EMS = 0.35
 
       private_constant :LINK_THICK_MULTIPLE, :LINK_DOTTED_DASHES,
-                       :CIRCLE_HEAD_STROKE, :CROSS_HEAD_STROKE,
-                       :MIDDLE_BASELINE_EMS
+                       :CIRCLE_HEAD_STROKE, :CROSS_HEAD_STROKE
 
       # @param scene [Layout::Flowchart::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
@@ -75,37 +71,28 @@ module Sirena
           text.x = label.x
           text.y = label.y
           text.content = label.text
-          apply_flowchart_text_style(text)
+          apply_flowchart_text_style(text, label)
           text.text_anchor = "middle"
           text.dominant_baseline = "middle"
         end
       end
 
-      # A label of several lines is one <text> of <tspan>s, centred on the
-      # node. Each line but the last ends in a space so the label still reads
-      # as one sentence. The baselines are set here, not asked of
-      # `dominant-baseline`, which would move the first line only.
       def fill_node_lines(text, label)
-        lines = label.text.to_s.split("\n", -1)
-        return text.content = label.text if lines.one?
+        return text.content = label.text if label.lines.empty?
 
-        stack_lines(text, label, lines)
-      end
-
-      def stack_lines(text, label, lines)
-        pitch = label.height / lines.size
         text.dominant_baseline = nil
-        text.y = first_baseline(label, lines.size, pitch, text.font_size)
-        LineBreakText.fill_lines(text, sentence_lines(lines), pitch: pitch)
+        text.y = label.line_ys.first
+        text.tspans = label.lines.each_with_index.map do |line, row|
+          line_run(line, label, row)
+        end
       end
 
-      def sentence_lines(lines)
-        lines[0...-1].map { |line| "#{line} " } << lines.last
-      end
-
-      def first_baseline(label, count, pitch, font_size)
-        top = label.y - (pitch * (count - 1) / 2.0)
-        top + (MIDDLE_BASELINE_EMS * font_size.to_f)
+      def line_run(line, label, row)
+        Svg::Tspan.new.tap do |run|
+          run.x = label.x
+          run.y = label.line_ys.fetch(row) if row.positive?
+          run.content = line
+        end
       end
 
       def apply_theme_to_cluster(element)
@@ -184,7 +171,7 @@ module Sirena
         Svg::Text.new.tap do |text|
           text.x = label.x
           text.y = label.y
-          apply_flowchart_text_style(text)
+          apply_flowchart_text_style(text, label)
           text.text_anchor = "middle"
           text.dominant_baseline = "middle"
           fill_node_lines(text, label)
@@ -287,7 +274,7 @@ module Sirena
       def edge_label(label)
         Svg::Text.new.tap do |text|
           assign_edge_label_geometry(text, label)
-          apply_flowchart_text_style(text)
+          apply_flowchart_text_style(text, label)
           text.text_anchor = "middle"
         end
       end
@@ -298,9 +285,9 @@ module Sirena
         text.content = label.text
       end
 
-      def apply_flowchart_text_style(text)
+      def apply_flowchart_text_style(text, label)
         apply_theme_to_text(text)
-        text.font_size = Layout::Flowchart.font_size(theme).to_s
+        text.font_size = label.font_size.to_s
       end
     end
   end

@@ -15,6 +15,7 @@ module Sirena
       # label alike, at 16px; a theme overrides it with flowchart_font_size.
       DEFAULT_FONT_SIZE = 16.0
       NODE_LINE_HEIGHT = 1.5
+      MIDDLE_BASELINE_EMS = 0.35
 
       # The size every flowchart text is measured and drawn at. A theme
       # value that is not a positive finite number falls back to the
@@ -90,6 +91,9 @@ module Sirena
         attribute :height, :float
         attribute :x, :float
         attribute :y, :float
+        attribute :font_size, :float
+        attribute :lines, :string, collection: true, default: -> { [] }
+        attribute :line_ys, :float, collection: true, default: -> { [] }
       end
 
       class Line < Lutaml::Model::Serializable
@@ -322,12 +326,40 @@ module Sirena
 
       def typed_node_labels(node, x_pos, y_pos, width, height, cluster)
         (node[:labels] || []).first(1).map do |label|
+          label_y = y_pos + (height / 2.0)
+          label_y = y_pos + CLUSTER_TITLE_BASELINE if cluster
           Label.new(
             text: label[:text], width: label[:width], height: label[:height],
             x: cluster ? x_pos + (width.to_i / 2) : x_pos + (width / 2.0),
-            y: cluster ? y_pos + CLUSTER_TITLE_BASELINE : y_pos + (height / 2.0)
+            y: label_y, **label_geometry(label, label_y)
           )
         end
+      end
+
+      def label_geometry(label, y_pos)
+        lines = label[:text].to_s.split("\n", -1)
+        drawn_lines = lines.one? ? [] : sentence_lines(lines)
+        font_size = layout_font_size
+        {
+          font_size: font_size,
+          lines: drawn_lines,
+          line_ys: line_baselines(
+            y_pos, label[:height], drawn_lines, font_size
+          ),
+        }
+      end
+
+      def sentence_lines(lines)
+        lines[0...-1].map { |line| "#{line} " } << lines.last
+      end
+
+      def line_baselines(y_pos, height, lines, font_size)
+        return [] if lines.empty?
+
+        pitch = height / lines.size
+        first = y_pos - (pitch * (lines.size - 1) / 2.0) +
+          (MIDDLE_BASELINE_EMS * font_size)
+        lines.each_index.map { |row| first + (row * pitch) }
       end
 
       def polygon_points(kind, x_pos, y_pos, width, height)
@@ -389,7 +421,7 @@ module Sirena
           x, y = edge_label_anchor(source, target, bends, route)
           Label.new(
             text: label[:text], width: label[:width], height: label[:height],
-            x: x, y: y
+            x: x, y: y, **label_geometry(label, y)
           )
         end
       end
