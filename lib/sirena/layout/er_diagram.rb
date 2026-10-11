@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "elk_placement"
 require_relative "grid"
 require_relative "er_diagram_entity_size"
 require_relative "er_diagram_placement"
@@ -244,13 +245,35 @@ module Sirena
         Marker.new(lines: crows_foot(self.point(point), self.point(opposite)))
       end
 
+      # :grid (the default) or :elk. The explicit switch lets Foundation 14
+      # ratchet ELK geometry before it becomes the default.
+      attr_accessor :placement
+
       def scene(diagram)
         graph = build_graph(diagram)
-        ErDiagramPlacement.apply(graph)
+        reject_unsupported_elk_graph!(graph) if placement == :elk
+        placer.apply(graph)
         scene_from_graph(graph)
       end
 
       private
+
+      def placer
+        placement == :elk ? ElkPlacement : ErDiagramPlacement
+      end
+
+      def reject_unsupported_elk_graph!(graph)
+        ids = graph[:children].map { |entity| entity[:id] }
+        return if graph[:edges].all? { |edge| relation_ends_placed?(edge, ids) }
+
+        raise LayoutError,
+              "elkrb ER layout does not support a relationship to a " \
+              "missing entity"
+      end
+
+      def relation_ends_placed?(edge, ids)
+        ids.include?(edge[:sources].first) && ids.include?(edge[:targets].first)
+      end
 
       def build_graph(diagram)
         diagram = semantic_diagram(ir_graph(diagram))
