@@ -71,12 +71,16 @@ module Sirena
           return if boxes.empty?
 
           level_edges = @level_edges.at(container)
+          place_boxes(boxes, level_edges, frame)
+          ClusterReach.apply(boxes, level_edges, sideways: frame.sideways?)
+        end
+
+        def place_boxes(boxes, level_edges, frame)
           flat = flat_graph(boxes, level_edges)
           place_flat(flat, frame)
           boxes.zip(flat[:children]) do |box, placed|
             box.merge!(x: placed[:x], y: placed[:y])
           end
-          ClusterReach.apply(boxes, level_edges, sideways: frame.sideways?)
         end
 
         # Boxes go to elkrb under their position, because a model may repeat

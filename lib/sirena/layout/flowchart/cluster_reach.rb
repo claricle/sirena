@@ -45,7 +45,7 @@ module Sirena
           return unless cluster && other && !cluster.equal?(other)
           return unless cluster.dig(:metadata, :cluster) == true
 
-          wanted[cluster] << other[@position] + (other[@size] / 2.0)
+          wanted[cluster] << (other[@position] + (other[@size] / 2.0))
         end
 
         def stretch(cluster, centres)
