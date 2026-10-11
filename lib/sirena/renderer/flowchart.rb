@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../layout/flowchart"
+require_relative "line_break_text"
 
 module Sirena
   module Renderer
@@ -11,9 +12,12 @@ module Sirena
       LINK_DOTTED_DASHES = "2"
       CIRCLE_HEAD_STROKE = "1"
       CROSS_HEAD_STROKE = "2"
+      # How far below the middle of a line its baseline sits, in ems.
+      MIDDLE_BASELINE_EMS = 0.35
 
       private_constant :LINK_THICK_MULTIPLE, :LINK_DOTTED_DASHES,
-                       :CIRCLE_HEAD_STROKE, :CROSS_HEAD_STROKE
+                       :CIRCLE_HEAD_STROKE, :CROSS_HEAD_STROKE,
+                       :MIDDLE_BASELINE_EMS
 
       # @param scene [Layout::Flowchart::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
@@ -75,6 +79,26 @@ module Sirena
           text.text_anchor = "middle"
           text.dominant_baseline = "middle"
         end
+      end
+
+      # A label of several lines is one <text> of <tspan>s, centred on the
+      # node. Each line but the last ends in a space so the label still reads
+      # as one sentence. The baselines are set here, not asked of
+      # `dominant-baseline`, which would move the first line only.
+      def fill_node_lines(text, label)
+        lines = label.text.to_s.split("\n", -1)
+        return text.content = label.text if lines.one?
+
+        pitch = label.height / lines.size
+        text.dominant_baseline = nil
+        text.y = first_baseline(label, lines.size, pitch, text.font_size)
+        spaced = lines[0...-1].map { |line| "#{line} " } << lines.last
+        LineBreakText.fill_lines(text, spaced, pitch: pitch)
+      end
+
+      def first_baseline(label, count, pitch, font_size)
+        top = label.y - (pitch * (count - 1) / 2.0)
+        top + (MIDDLE_BASELINE_EMS * font_size.to_f)
       end
 
       def apply_theme_to_cluster(element)
@@ -153,10 +177,10 @@ module Sirena
         Svg::Text.new.tap do |text|
           text.x = label.x
           text.y = label.y
-          text.content = label.text
           apply_flowchart_text_style(text)
           text.text_anchor = "middle"
           text.dominant_baseline = "middle"
+          fill_node_lines(text, label)
         end
       end
 

@@ -4,7 +4,9 @@ RSpec.describe Sirena::Layout::Flowchart, "#to_graph" do
   let(:builder) { FlowchartSceneBuilder }
   let(:line_height) { 16.0 * 1.5 }
   let(:text_width) do
-    Sirena::TextMeasurement.measure("Laptop", font_size: 16.0)[:width]
+    Sirena::TextMeasurement.measure_in(
+      :trebuchet, "Laptop", font_size: 16.0
+    )[:width]
   end
 
   it "pads a box 30 either side and 15 above and below a 1.5 line" do
@@ -39,6 +41,27 @@ RSpec.describe Sirena::Layout::Flowchart, "#to_graph" do
       expect(builder.lone_node(shape, "Laptop")).to have_attributes(
         width: be_within(0.01).of(text_width + extra_width),
         height: be_within(0.01).of(line_height + extra_height),
+      )
+    end
+  end
+
+  # Reference 130 (`a{{A <br> end}}`) draws a hexagon 74.54 wide and 63
+  # high round a 26.39 x 48 label; reference 129, one line, is 54.76 wide.
+  describe "a label of two lines" do
+    let(:two_lines) { "A <br> end" }
+
+    it "is as tall as two lines and as wide as the longer" do
+      node = builder.lone_node("rect", two_lines)
+
+      expect(node).to have_attributes(
+        width: be_within(0.05).of(26.39 + 60),
+        height: 2 * line_height + 30,
+      )
+    end
+
+    it "widens a hexagon the way mmdc does" do
+      expect(builder.lone_node("hexagon", two_lines)).to have_attributes(
+        width: be_within(0.5).of(74.54), height: 63.0,
       )
     end
   end

@@ -436,9 +436,9 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     end
   end
 
-  # The renderer draws a node label as ONE <text>, and SVG collapses the
-  # newline in it to a space, so the box must fit the whole string. The quote
-  # marks around the label are not drawn, so they are not measured.
+  # A newline in a node label is a line break, as `<br>` is: the box is as
+  # wide as the longest line and as tall as all of them. The quote marks
+  # around the label are not drawn, so they are not measured.
   describe "a node label containing a newline" do
     let(:source) do
       "flowchart LR\n  " \
@@ -449,8 +449,16 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
       transform.to_graph(model).children.first.labels.first
     end
 
-    it "is sized for the whole string drawn on one line" do
-      expect(label.width).to be_within(0.1).of(333.5)
+    it "is as wide as its longest line" do
+      longest = "plain two is much longer than the first"
+      width = Sirena::TextMeasurement
+        .measure_in(:trebuchet, longest, font_size: 16.0)[:width]
+
+      expect(label.width).to be_within(0.01).of(width)
+    end
+
+    it "is as tall as two lines" do
+      expect(label.height).to eq(48.0)
     end
   end
 

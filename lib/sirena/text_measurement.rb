@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "text_measurement/arial_advances"
+require_relative "text_measurement/trebuchet_advances"
 
 module Sirena
   # Estimates text dimensions for layout, in pure Ruby: no font file is read
@@ -46,6 +47,13 @@ module Sirena
       0xFDFA => 1250, 0xFDFB => 1050, 0xFDFC => 1250, 0xFDFD => 6500
     }.freeze
 
+    # The faces a caller can ask for. A codepoint a face lacks falls back to
+    # the default one.
+    FACE_TABLES = {
+      arial: ArialAdvances::TABLE,
+      trebuchet: TrebuchetAdvances::TABLE,
+    }.freeze
+
     ZERO_WIDTH = /[\p{Mn}\p{Me}\p{Cf}\p{Cc}]/
     EMOJI = /\p{Extended_Pictographic}/
 
@@ -66,26 +74,40 @@ module Sirena
     def self.measure(text, font_size:, width: nil, height: nil,
                      monospace: false)
       {
-        width: width || calculate_width(text, font_size, monospace),
+        width: width || calculate_width(text, font_size, monospace, :arial),
         height: height || calculate_height(font_size),
       }
     end
 
+    # Measures text in a face other than the default, with the default
+    # standing in for a codepoint the face lacks.
+    #
+    # @param text [String] the text to measure, as one line
+    # @param font_size [Numeric] the font size in points
+    # @param face [Symbol] :arial or :trebuchet
+    # @return [Hash] hash with :width and :height keys
+    def self.measure_in(face, text, font_size:)
+      {
+        width: calculate_width(text, font_size, false, face),
+        height: calculate_height(font_size),
+      }
+    end
+
     # @return [Float] the width of the text drawn as one line
-    def self.calculate_width(text, font_size, monospace)
+    def self.calculate_width(text, font_size, monospace, face)
       total = normalize(text).scan(CLUSTER).sum do |cluster|
-        cluster.length == 2 ? EMOJI_ADVANCE : advance(cluster, monospace)
+        cluster.length == 2 ? EMOJI_ADVANCE : advance(cluster, monospace, face)
       end
       total * font_size / 1000.0
     end
 
     # @return [Integer] the advance of one character in per-mille em
-    def self.advance(char, monospace)
+    def self.advance(char, monospace, face)
       return whitespace_advance(monospace) if char.match?(SVG_WHITESPACE)
       return 0 if char.match?(ZERO_WIDTH)
 
       code = char.ord
-      table = ArialAdvances::TABLE[code]
+      table = FACE_TABLES.fetch(face)[code] || ArialAdvances::TABLE[code]
       return table_advance(table, monospace) if table
 
       OUTLIERS.fetch(code) { fallback_advance(char, monospace) }

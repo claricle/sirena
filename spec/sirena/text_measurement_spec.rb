@@ -163,6 +163,27 @@ RSpec.describe Sirena::TextMeasurement do
     end
   end
 
+  describe "face" do
+    it "measures in Trebuchet MS when asked" do
+      width = described_class.measure_in(:trebuchet, "A", font_size: 16)
+
+      expect(width[:width]).to be_within(0.001).of(9.44)
+    end
+
+    it "measures in Arial by default" do
+      expect(described_class.measure("A", font_size: 16)[:width])
+        .to be_within(0.001).of(10.672)
+    end
+
+    it "measures a codepoint the face lacks in Arial" do
+      trebuchet = described_class.measure_in(:trebuchet, "Н", font_size: 16)
+
+      arial = described_class.measure("Н", font_size: 16)
+
+      expect(trebuchet[:width]).to eq(arial[:width])
+    end
+  end
+
   describe "monospace" do
     it "measures table characters and unknown ones at 0.6 em" do
       expect(width("Wi中", monospace: true)).to be_within(0.001).of(180.0)

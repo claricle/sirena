@@ -179,15 +179,19 @@ module Sirena
         def place_flat(flat, frame)
           transposed = frame.sideways?
           transpose(flat) if transposed
-          flat[:layoutOptions] = @options.merge(
-            Base::ElkOptions::DIRECTION => ElkPlacement::DOWN,
-            Base::ElkOptions::LAYER_SPACING => frame.rank_spacing,
-          )
+          flat[:layoutOptions] = downward_options(frame)
           ElkPlacement.apply(flat)
           RowCentering.apply(flat)
           LayerSpacing.apply(flat, label_axis: transposed ? :width : :height)
           transpose(flat) if transposed
           mirror(flat, frame.direction)
+        end
+
+        def downward_options(frame)
+          @options.merge(
+            Base::ElkOptions::DIRECTION => ElkPlacement::DOWN,
+            Base::ElkOptions::LAYER_SPACING => frame.rank_spacing,
+          )
         end
 
         # Swaps the axes of every box. Before the layout it turns the boxes
