@@ -24,7 +24,7 @@ module Sirena
       MARGIN_BOTTOM = 50
       ROW_HEIGHT = 40
       SECTION_HEIGHT = 30
-      TASK_BAR_HEIGHT = 24
+      TASK_BAR_HEIGHT = 20
       TIMELINE_WIDTH = 800
       TIMELINE_HEIGHT = 40
       TITLE_Y = 40
