@@ -4,7 +4,7 @@ Status (reconciled 2026-10-10): **complete.** The current corpus scoreboard
 records all 37 oracle-valid cases in `unknown/` as passing. Its other 48 rows
 are classified, not unresolved: 44 extraction artifacts and four
 oracle-invalid sources. In `unknown/`, the only detection-stage failures are
-those artifacts and the oracle-invalid `unknown/055`. Across the corpus, 20
+those artifacts and the oracle-invalid `unknown/xss3-6f4762ef`. Across the corpus, 20
 oracle-invalid rows fail detection and no oracle-valid case does.
 
 The implementation also carries the required evidence. `Source.split` removes
@@ -12,8 +12,8 @@ frontmatter, directives and comments before `Notation::Mermaid.detect_type`
 runs, with the preamble behavior covered in `source_spec.rb`,
 `engine_preamble_spec.rb` and the directive/comment cases in `engine_spec.rb`.
 The pattern changes that moved scoreboard rows are locked to corpus cases:
-bare `gantt` and `pie` use `gantt/023`, `gantt/025` and `pie/025`, and
-`flowchart-elk` uses `unknown/012`, alongside negative boundary examples. The
+bare `gantt` and `pie` use `gantt/diagram_orchestration_spec-22111909`, `gantt/mermaidapi_spec-76c6390a` and `pie/pie_test-4d578df7`, and
+`flowchart-elk` uses `unknown/flow_elk-951c7b80`, alongside negative boundary examples. The
 additional direction-glyph boundary has direct mmdc-parity examples because no
 corpus row exercised it. Detection order, including the short `info` and
 `error` prefixes, remains explicit in `Notation::Mermaid::TYPES` rather than

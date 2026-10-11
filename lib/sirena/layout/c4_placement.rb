@@ -14,7 +14,7 @@ module Sirena
     # what the page edge and the nested extents leave behind.
     class C4Placement
       # screen.availWidth in the headless Chrome mermaid-cli draws with.
-      # Read off the reference render of c4/007, where a 552 wide box
+      # Read off the reference render of c4/c4-8ab0b1ef, where a 552 wide box
       # wraps and a 216 wide one does not.
       AVAILABLE_WIDTH = 800
       MARGIN_X = 50

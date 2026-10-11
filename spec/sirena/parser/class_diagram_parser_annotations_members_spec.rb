@@ -269,11 +269,33 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
 
   # Each of these was a failing valid class case before this change.
   describe "the corpus cases this change cleared" do
-    %w[003 009 015 021 033 035 065 076 077 092 093 099 100 102 103 105 106
-       111 112 129 130 132 133 160 166].each do |number|
-      it "parses class case #{number}" do
-        path = Dir[File.expand_path("../../mermaid/class_diagram/#{number}_*.mmd",
-                                    __dir__)].first
+    %w[
+      class_diagram/click_security_loose-3a5de316
+      class_diagram/yari-9370c2b9
+      class_diagram/yari-e1669991
+      class_diagram/yari-8c1963b6
+      class_diagram/classdiagram_spec-9c8af7e4
+      class_diagram/classdiagram_spec-bde28df9
+      class_diagram/class_spec-e35a838d
+      class_diagram/classdiagram_spec-83d6d7d0
+      class_diagram/classdiagram_spec-ddfcc6a0
+      class_diagram/classdiagram_spec-7ceae3ee
+      class_diagram/classdiagram_spec-a2994e3e
+      class_diagram/classdiagram_spec-f5d7e979
+      class_diagram/classdiagram_spec-9cfcbf0d
+      class_diagram/classdiagram_spec-0e632919
+      class_diagram/classdiagram_spec-ab0cc3b6
+      class_diagram/classdiagram_spec-a0280572
+      class_diagram/classdiagram_spec-9b7740f8
+      class_diagram/classdiagram_spec-898d7d99
+      class_diagram/classdiagram_spec-0fb101a2
+      class_diagram/classdiagram_spec-8ec26131
+      class_diagram/classdiagram_spec-36b2b0e0
+      class_diagram/classdiagram_spec-81622533
+      class_diagram/classdiagram_spec-b2e3a129
+    ].each do |id|
+      it "parses class case #{id}" do
+        path = File.expand_path("../../mermaid/#{id}.mmd", __dir__)
 
         expect { parser.parse(File.read(path)) }.not_to raise_error
       end

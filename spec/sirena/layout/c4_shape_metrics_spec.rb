@@ -10,7 +10,7 @@ RSpec.describe Sirena::Layout::C4ShapeMetrics do
   end
 
   # 216x60 is mmdc's minimum; 216x86 and 216x134 are the system and person
-  # boxes of c4/007 that hold a one line description.
+  # boxes of c4/c4-8ab0b1ef that hold a one line description.
   it "never goes below the 216x60 minimum" do
     expect(sized).to eq([216, 60])
   end

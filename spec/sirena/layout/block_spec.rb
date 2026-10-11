@@ -75,7 +75,7 @@ RSpec.describe Sirena::Layout::Block do
     end
 
     context "with a single column and widening spans" do
-      # spec/mermaid/block/013: columns 1, and every block's span except A
+      # spec/mermaid/block/a_node_with_a_square_shape_and_a_label-807b8b5c: columns 1, and every block's span except A
       # exceeds it, so every row from B onward is skipped before landing.
       let(:source) do
         path = "../../mermaid/block/" \

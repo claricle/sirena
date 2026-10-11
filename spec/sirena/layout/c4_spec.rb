@@ -123,7 +123,7 @@ RSpec.describe Sirena::Layout::C4 do
     )
   end
 
-  # 150 and 170 are the margins mmdc leaves around c4/007's content:
+  # 150 and 170 are the margins mmdc leaves around c4/c4-8ab0b1ef's content:
   # its widest box ends at 1336 in a 1486 wide view box, its lowest at
   # 2313 in a 2483 high one (the 170 holds the 60 for the title).
   it "sizes the canvas from the rightmost and lowest box" do

@@ -21,8 +21,7 @@ RSpec.describe SpecSupport::LayoutParity::QuadrantPointGeometry do
   end
 
   def styled_name
-    "004_parser_should_be_able_to_parse_the_whole_chart_with_" \
-      "point_styling_with_all_params_or_some_params_3"
+    "should_be_able_to_parse_the_whole_chart_with_poi-2c3e5a9c"
   end
 
   def comparison_values(name)

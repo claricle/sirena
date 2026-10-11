@@ -58,7 +58,7 @@ RSpec.describe Sirena::Layout::Architecture do
   end
 
   # Sizes and offsets below are measured from mmdc
-  # (spec/fixtures_mermaid/architecture/002).
+  # (spec/fixtures_mermaid/architecture/architecture_spec-2a3d0f20).
   it "draws every service as an 80x80 box whatever its label says" do
     node = nodes(scene_for(services: [service("a")]))["a"]
     expect([node.width, node.height]).to eq([80, 80])

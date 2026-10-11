@@ -73,7 +73,7 @@ TEMPLATE_PLACEHOLDER = /\$\{[^}]*\}/
 # Extracted from a cypress .html fixture without decoding: the file holds
 # `--&gt;` where the source had `-->`. Not mermaid.
 # Only the bracket entities. &amp;, &nbsp;, &quot; and numeric references are
-# all legal inside a mermaid label — block/004 uses &nbsp; deliberately and
+# all legal inside a mermaid label — block/block-b7a88657 uses &nbsp; deliberately and
 # mmdc renders it. Flagging those libelled a valid diagram.
 HTML_ENTITY = /&(?:lt|gt);/
 

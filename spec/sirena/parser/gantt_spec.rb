@@ -144,7 +144,7 @@ RSpec.describe Sirena::Parser::Gantt do
     # comma-separated list. Tags are stripped by keyword; what is left is
     # classified by POSITION — the id is always first when exactly three
     # value fields remain, regardless of what its text looks like
-    # (corpus gantt/005).
+    # (corpus gantt/click_security_loose-0d2cc455).
     it "parses a tag, an id, and explicit start and end dates in one task" do
       source = <<~GANTT
         gantt

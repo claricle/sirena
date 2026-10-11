@@ -51,18 +51,18 @@ CONFORMANCE_RENDERABLE_FILE = File.join(
 #
 # Dropped from 898 to 894, for three reasons.
 #
-# kanban/020 ("real root in wrong place") used to "render" by dropping its
+# kanban/knbn_6_real_root_in_wrong_place-7a57fb5a ("real root in wrong place") used to "render" by dropping its
 # first two items. Real mermaid rejects it ("Items without section
 # detected"), so Sirena raising ParseError now is a correctness win.
 #
-# mindmap/031 ("multiple roots are illegal") and mindmap/032 ("real root in
+# mindmap/5_multiple_roots_are_illegal-4fbe4e9a ("multiple roots are illegal") and mindmap/mmp_6_real_root_in_wrong_place-226e3b49 ("real root in
 # wrong place") used to "render" by silently dropping the true root and its
 # whole subtree when a second level-zero node appeared. Real mermaid rejects
 # both (`mermaid.parse` on 11.12.0 raises "There can be only one root."), so
 # Sirena now correctly raising ParseError for them is a correctness win, not
 # a coverage loss.
 #
-# mindmap/014 is different: it is `root(\n  The root\n)`, a single node
+# mindmap/mindmap_spec-de34c92b is different: it is `root(\n  The root\n)`, a single node
 # using round-shape syntax with its text on its own line. Real mermaid
 # parses that as ONE node (verified via mermaid's own db on 11.12.0: one
 # node, id "root", descr "The root", no children) -- Sirena should render

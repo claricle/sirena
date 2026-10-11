@@ -130,7 +130,7 @@ the rename, under this pin.
    regression.
 
    The rename also invalidates every ordinal case ID quoted elsewhere in
-   this plan — item 04's XSS case, item 06's treemap 007, item 14's
+   this plan — item 04's XSS case, item 06's treemap/treemap_spec-da322cba, item 14's
    class_diagram example. Updating those references is part of this
    step, not a follow-up.
 5. **Reproducible extraction.** Take the mermaid-js checkout path and

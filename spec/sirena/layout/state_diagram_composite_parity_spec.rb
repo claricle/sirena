@@ -7,36 +7,25 @@ RSpec.describe Sirena::Layout::StateDiagram do
 
   let(:source) do
     File.read(
-      "spec/mermaid/state_diagram/020_parser_should_handle_state_definitions_with_" \
-      "separation_of_id_19.mmd",
+      "spec/mermaid/state_diagram/should_handle_state_definitions_with_separation-cd10456b.mmd",
     )
   end
   let(:separation_cases) do
-    [
-      separation_case("state", 20, 19),
-      separation_case("state", 44, 43),
-      separation_case("state_diagram", 19, 18),
-      separation_case("state_diagram", 43, 42),
-      separation_case("state_diagram", 66, 65),
-      separation_case("state_diagram", 90, 89),
-    ]
+    %w[
+      state_diagram/should_handle_state_definitions_with_separation-cd10456b
+      state_diagram/should_handle_state_definitions_with_separation-a4e9be66
+      state_diagram/statediagram_v2_spec-2d12b6d7
+      state_diagram/statediagram_spec-f56a2ffc
+      state_diagram/statediagram_spec-ac7e4b11
+      state_diagram/statediagram_spec-128d4533
+    ].map { |id| "#{id}.mmd" }
   end
   let(:composite_note_cases) do
-    [
-      composite_note_case("state", 30, 29),
-      composite_note_case("state_diagram", 29, 28),
-      composite_note_case("state_diagram", 52, 51),
-    ]
-  end
-
-  def separation_case(directory, number, source_number)
-    "#{directory}/#{format('%03d', number)}_parser_should_handle_state_" \
-      "definitions_with_separation_of_id_#{source_number}.mmd"
-  end
-
-  def composite_note_case(directory, number, source_number)
-    "#{directory}/#{format('%03d', number)}_parser_should_handle_notes_for_" \
-      "composite_nested_states_#{source_number}.mmd"
+    %w[
+      state_diagram/should_handle_notes_for_composite_nested_states-0033e4b1
+      state_diagram/statediagram_v2_spec-13deff6f
+      state_diagram/statediagram_v2_spec-3249fd2d
+    ].map { |id| "#{id}.mmd" }
   end
 
   def hierarchy_evidence

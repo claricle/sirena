@@ -24,7 +24,7 @@ RSpec.describe Sirena::Layout::C4Placement do
     }
   end
 
-  # The numbers below are read off the mmdc render of c4/007.
+  # The numbers below are read off the mmdc render of c4/c4-8ab0b1ef.
   it "places the outer boundary where mmdc does" do
     expect([outer.x, outer.y, outer.height]).to eq([150, 122, 2191])
   end

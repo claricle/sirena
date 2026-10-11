@@ -321,11 +321,9 @@ RSpec.describe Sirena::Parser::UserJourney do
     describe "an accessibility directive from the corpus" do
       cases = {
         "journey_spec-1f8d17b6.mmd" => nil,
-        "004_parser_should_handle_an_accessibility_description_" \
-        "accdescr__3.mmd" =>
+        "journey_spec-a04efa66.mmd" =>
           "Adding journey diagram functionality to mermaid",
-        "005_parser_should_handle_an_accessibility_multiline_" \
-        "description_accdescr__4.mmd" =>
+        "journey_spec-0a9c71a3.mmd" =>
           "Adding journey diagram functionality to mermaid",
       }
 

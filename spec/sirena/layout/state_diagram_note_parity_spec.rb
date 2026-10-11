@@ -6,43 +6,28 @@ RSpec.describe Sirena::Layout::StateDiagram do
   include SpecSupport::LayoutParity::FigureHelpers
 
   let(:note_cases) do
-    [
-      multiline_note_case("state", 27, 26),
-      multiline_note_case("state", 51, 50),
-      multiline_note_case("state_diagram", 26, 25),
-      multiline_note_case("state_diagram", 49, 48),
-      multiline_note_case("state_diagram", 50, 49),
-      multiline_note_case("state_diagram", 73, 72),
-      multiline_note_case("state_diagram", 97, 96),
-    ]
+    %w[
+      state_diagram/should_handle_multiline_notes_with_different_lin-b6ac271b
+      state_diagram/should_handle_multiline_notes_with_different_lin-90d75e03
+      state_diagram/statediagram_v2_spec-6aad18a9
+      state_diagram/statediagram_v2_spec-9dfc4ef4
+      state_diagram/statediagram_spec-bdd17264
+      state_diagram/statediagram_spec-1acdbd7b
+      state_diagram/statediagram_spec-3fdaec54
+    ].map { |id| "#{id}.mmd" }
   end
   let(:control_cases) do
-    [
-      separation_case("state", 20, 19),
-      composite_note_case("state", 30, 29),
-      separation_case("state", 44, 43),
-      separation_case("state_diagram", 19, 18),
-      composite_note_case("state_diagram", 29, 28),
-      separation_case("state_diagram", 43, 42),
-      composite_note_case("state_diagram", 52, 51),
-      separation_case("state_diagram", 66, 65),
-      separation_case("state_diagram", 90, 89),
-    ]
-  end
-
-  def multiline_note_case(directory, number, source_number)
-    "#{directory}/#{format('%03d', number)}_parser_should_handle_multiline_" \
-      "notes_with_different_line_breaks_#{source_number}.mmd"
-  end
-
-  def separation_case(directory, number, source_number)
-    "#{directory}/#{format('%03d', number)}_parser_should_handle_state_" \
-      "definitions_with_separation_of_id_#{source_number}.mmd"
-  end
-
-  def composite_note_case(directory, number, source_number)
-    "#{directory}/#{format('%03d', number)}_parser_should_handle_notes_for_" \
-      "composite_nested_states_#{source_number}.mmd"
+    %w[
+      state_diagram/should_handle_state_definitions_with_separation-cd10456b
+      state_diagram/should_handle_notes_for_composite_nested_states-0033e4b1
+      state_diagram/should_handle_state_definitions_with_separation-a4e9be66
+      state_diagram/statediagram_v2_spec-2d12b6d7
+      state_diagram/statediagram_v2_spec-13deff6f
+      state_diagram/statediagram_spec-f56a2ffc
+      state_diagram/statediagram_v2_spec-3249fd2d
+      state_diagram/statediagram_spec-ac7e4b11
+      state_diagram/statediagram_spec-128d4533
+    ].map { |id| "#{id}.mmd" }
   end
 
   def source
