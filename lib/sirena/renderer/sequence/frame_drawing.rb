@@ -137,16 +137,25 @@ module Sirena
             text.x = horizontal
             text.y = vertical
             text.content = content
-            text.fill = theme_color(:label_text)
-            text.font_family = theme_typography(:font_family) ||
-              "Arial, sans-serif"
-            text.font_size = number_string(shape.font_size)
+            style_frame_text(text, shape)
             text.text_anchor = "middle"
           end
         end
 
+        def style_frame_text(text, shape)
+          text.fill = theme_color(:label_text)
+          text.font_family = frame_font_family
+          text.font_size = number_string(shape.font_size)
+        end
+
         def frame_stroke
           default_theme_paint(:edge_stroke, FRAME_STROKE)
+        end
+
+        def frame_font_family
+          return "Arial, sans-serif" if theme.equal?(Theme::Registry.get(:default))
+
+          theme_typography(:font_family) || "Arial, sans-serif"
         end
 
         def default_theme_paint(role, original)

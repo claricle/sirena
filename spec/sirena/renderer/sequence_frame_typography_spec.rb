@@ -63,15 +63,15 @@ RSpec.describe Sirena::Renderer::Sequence do
   let(:default_render_evidence) do
     xml = Sirena::Engine.new.render(source)
     digest = Digest::SHA256.hexdigest(xml)
-    family = 'font-family="Arial, Helvetica, sans-serif"'
+    family = 'font-family="Arial, sans-serif"'
     [digest, xml.scan(family).size]
   end
 
   it "renders registered-default family ownership" do
-    expected = "b85f095b7ebf8caf205340f39ae8a057" \
-               "c65c4756002aba1a5151d144f15416c0"
+    expected = "5ef1d427f974b2fc33e0cb4cb231e72e" \
+               "9d8077d2faa9ea04e4906a6fc2acedc0"
 
-    expect(default_render_evidence).to eq([expected, 4])
+    expect(default_render_evidence).to eq([expected, 8])
   end
 
   it "publishes only the default measured size in typed shapes" do
