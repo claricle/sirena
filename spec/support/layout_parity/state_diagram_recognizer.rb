@@ -16,8 +16,9 @@ module SpecSupport
       def elements(extractor, doc)
         groups = doc.xpath("//g[@id]")
         region_keys = reference_region_keys(groups)
+        root_prefix = svg_root_prefix(doc)
         groups.filter_map do |group|
-          kind, key, identity = identify(group, region_keys)
+          kind, key, identity = identify(group, region_keys, root_prefix)
           next unless kind
 
           box = extractor.bbox(group)
@@ -30,10 +31,15 @@ module SpecSupport
 
       private
 
-      def identify(group, region_keys)
-        id = group["id"]
-        terminal(id) || reference_state(group, region_keys) ||
+      def identify(group, region_keys, root_prefix)
+        id = group["id"].delete_prefix(root_prefix)
+        terminal(id) || reference_state(group, id, region_keys) ||
           sirena_state(group)
+      end
+
+      def svg_root_prefix(doc)
+        id = doc.root&.[]("id").to_s
+        id.empty? ? "" : "#{id}-"
       end
 
       def terminal(id)
@@ -41,14 +47,14 @@ module SpecSupport
         [:"terminal-#{role}", "[*]", :id] if role
       end
 
-      def reference_state(group, region_keys)
+      def reference_state(group, id, region_keys)
         classes = group["class"].to_s.split
         if classes.include?("statediagram-cluster")
-          key = region_keys.fetch(group["id"], group["id"])
+          key = region_keys.fetch(group["id"], id)
           return [:composite, key, :id]
         end
 
-        key = group["id"][REFERENCE_STATE, 1]
+        key = id[REFERENCE_STATE, 1]
         [:state, key, :id] if key && classes.include?("node")
       end
 

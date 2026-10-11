@@ -23,7 +23,8 @@ RSpec.describe MermaidReferenceGenerator do
        spec/fixtures_mermaid/er_diagram/er_case.svg
        spec/fixtures_mermaid/flowchart/flowchart_case.svg
        spec/fixtures_mermaid/gantt/gantt_case.svg
-       spec/fixtures_mermaid/gitgraph/git_case.svg]
+       spec/fixtures_mermaid/gitgraph/git_case.svg
+       spec/fixtures_mermaid/state_diagram/state_case.svg]
   end
 
   before do
@@ -102,6 +103,7 @@ RSpec.describe MermaidReferenceGenerator do
     seed_case("unknown/flowchart_case.mmd", "flowchart\nbody\n")
     seed_case("gantt/gantt_case.mmd", "gantt\nbody\n")
     seed_case("git/git_case.mmd", "git_graph\nbody\n")
+    seed_case("state/state_case.mmd", "state_diagram\nbody\n")
     seed_case("pie/ignored.mmd", "pie\nbody\n")
   end
 
