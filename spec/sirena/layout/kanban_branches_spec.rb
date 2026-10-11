@@ -48,7 +48,7 @@ RSpec.describe Sirena::Layout::Kanban do
       it "spaces them horizontally and bounds the board" do
         two_empty_columns
 
-        expect(board_geometry).to eq([485.0, 115.0, [40.0, 245.0], []])
+        expect(board_geometry).to eq([485.0, 130.0, [40.0, 245.0], []])
       end
     end
 
@@ -59,10 +59,10 @@ RSpec.describe Sirena::Layout::Kanban do
          item.badge, item.badge_label]
       end
 
-      it "uses only header and padding height" do
+      it "reserves content height beneath the header" do
         single_todo_column
 
-        expect(column_geometry).to eq([200.0, 35.0, 25.0, nil, nil])
+        expect(column_geometry).to eq([200.0, 50.0, 25.0, nil, nil])
       end
     end
 

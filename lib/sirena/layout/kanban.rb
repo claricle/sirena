@@ -13,6 +13,7 @@ module Sirena
       CARD_VERTICAL_SPACING = 5
       COLUMN_WIDTH = 200
       COLUMN_HEADER_HEIGHT = 25
+      EMPTY_COLUMN_CONTENT_HEIGHT = 25
       COLUMN_PADDING = 10
       CARD_HORIZONTAL_INSET = 7.5
       CARD_HEIGHT = 44
@@ -333,7 +334,7 @@ module Sirena
       end
 
       def calculate_column_height(cards, header_height, data)
-        return header_height + COLUMN_PADDING if cards.empty?
+        return header_height + EMPTY_COLUMN_CONTENT_HEIGHT if cards.empty?
 
         card_height = cards.sum do |card|
           calculate_card_height(card.label, metadata_for(data, card))
