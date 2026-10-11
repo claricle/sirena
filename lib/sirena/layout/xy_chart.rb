@@ -309,7 +309,7 @@ module Sirena
 
       def bar(graph, point, width)
         height = graph[:plot_height] - point[:y]
-        height += BAR_BASELINE_OFFSET if height.positive?
+        height += BAR_BASELINE_OFFSET
         Bar.new(x: graph[:plot_x] + point[:x] - (width / 2),
                 y: graph[:plot_y] + point[:y], width: width,
                 height: height)
