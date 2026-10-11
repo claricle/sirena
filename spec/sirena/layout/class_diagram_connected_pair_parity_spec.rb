@@ -115,11 +115,12 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       end
     end
 
+    # Pinned mmdc 11.12.0 puts B straight under A (both cx 25.8), C beside A.
     it "layers an extra child by relation instead of keeping the lane" do
       candidate = graph.call
       candidate[:children] << { id: "C", width: 100, height: 80, metadata: {} }
       expect(placed_coordinates(candidate))
-        .to eq([[8.0, 8.0], [83.0, 138.0], [158.0, 8.0]])
+        .to eq([[8.0, 8.0], [8.0, 138.0], [158.0, 8.0]])
     end
   end
 end
