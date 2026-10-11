@@ -8,7 +8,7 @@ RSpec.describe Sirena::Layout::Architecture, "#call junction circle" do
       architecture-beta
         service a(server)[A]
         junction j
-        a R--L j
+        a:R -- L:j
     MERMAID
   end
   let(:scene) do

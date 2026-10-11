@@ -39,7 +39,15 @@ RSpec.describe Sirena::Parser::Info, :aggregate_failures do
   # coverage-collecting `spec:unit` run: see .simplecov and
   # tasks/coverage.rake.
   describe "fixture files", :corpus do
+    oracle_rejected = %w[
+      info_spec-9a1bf395.mmd
+      should_throw_because_of_unsupported_info_grammar-04542f46.mmd
+      should_throw_because_of_unsupported_info_grammar-951f438a.mmd
+    ]
+
     Dir.glob("spec/mermaid/info/*.mmd").each do |fixture_file|
+      next if oracle_rejected.include?(File.basename(fixture_file))
+
       it "parses #{File.basename(fixture_file)}" do
         source = File.read(fixture_file)
 

@@ -105,25 +105,14 @@ RSpec.describe CiLaneTimings, :aggregate_failures do
         ],
       }
     end
-
-    it "accepts complete evidence when every observed sample is in budget" do
-      expect(described_class.budget_problems(within_budget)).to eq([])
-    end
-
-    it "reports every required cache state that was not measured" do
-      samples = within_budget.merge(
+    let(:missing_evidence_samples) do
+      within_budget.merge(
         "fast" => [{ job: unit_name, cache: :warm, seconds: 480 }],
         "full" => [],
       )
-
-      expect(described_class.budget_problems(samples)).to contain_exactly(
-        "fast: no cold sample",
-        "full: no cache-independent sample",
-      )
     end
-
-    it "rejects every sample at or above a lane's strict budget" do
-      samples = within_budget.merge(
+    let(:over_budget_samples) do
+      within_budget.merge(
         "fast" => within_budget.fetch("fast") + [
           { job: "lint", cache: :restore_key, seconds: 600 },
         ],
@@ -131,12 +120,31 @@ RSpec.describe CiLaneTimings, :aggregate_failures do
           { job: "fresh-resolution", cache: :none, seconds: 1_860 },
         ],
       )
-
-      expect(described_class.budget_problems(samples)).to contain_exactly(
+    end
+    let(:over_budget_problems) do
+      [
         "fast: lint restore_key sample is 10.0 min (budget < 10 min)",
         "full: fresh-resolution none sample is 31.0 min " \
         "(budget < 30 min)",
+      ]
+    end
+
+    it "accepts complete evidence when every observed sample is in budget" do
+      expect(described_class.budget_problems(within_budget)).to eq([])
+    end
+
+    it "reports every required cache state that was not measured" do
+      problems = described_class.budget_problems(missing_evidence_samples)
+
+      expect(problems).to contain_exactly(
+        "fast: no cold sample",
+        "full: no cache-independent sample",
       )
+    end
+
+    it "rejects every sample at or above a lane's strict budget" do
+      expect(described_class.budget_problems(over_budget_samples))
+        .to eq(over_budget_problems)
     end
   end
 end

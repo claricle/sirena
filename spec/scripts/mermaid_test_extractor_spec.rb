@@ -102,6 +102,9 @@ RSpec.describe MermaidTestExtractor do
 
   let(:base) { [tests_a, tests_b, tests_c] }
   let(:base_ids) { extract_ids(base) }
+  let(:invalid_naming_options) do
+    { root: "/tmp/mermaid-js", commit_sha: upstream_sha, naming: :random }
+  end
   let(:titles) { base.map(&:first) }
 
   it "extracts one stable id per seeded upstream test" do
@@ -162,7 +165,8 @@ RSpec.describe MermaidTestExtractor do
   end
 
   it "adds no case_id to the meta under ordinal naming" do
-    expect(extracted_meta([tests_a], naming: :ordinal)).not_to include("case_id")
+    expect(extracted_meta([tests_a], naming: :ordinal))
+      .not_to include("case_id")
   end
 
   it "writes stable identity and upstream provenance by default" do
@@ -184,11 +188,7 @@ RSpec.describe MermaidTestExtractor do
   end
 
   it "rejects an unknown naming" do
-    expect do
-      described_class.new(
-        root: "/tmp/mermaid-js", commit_sha: upstream_sha, naming: :random,
-      )
-    end
+    expect { described_class.new(**invalid_naming_options) }
       .to raise_error(ArgumentError, /naming must be one of/)
   end
 end

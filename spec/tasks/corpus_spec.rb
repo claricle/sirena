@@ -90,7 +90,7 @@ RSpec.describe Sirena::Corpus, :aggregate_failures do
   end
 
   describe ".render_case" do
-    let(:passing_case) { "pie/theme_spec-a9670f7e.mmd" }
+    let(:passing_case) { "pie/pie-c6f9f28a.mmd" }
     let(:detection_failure_case) do
       "architecture/architecture_spec-05842252.mmd"
     end

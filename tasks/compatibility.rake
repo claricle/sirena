@@ -128,10 +128,10 @@ module Sirena
       [
         type_page_marker(label, "BEGIN"),
         "* Oracle-valid corpus coverage: `#{passing}/#{valid.size} passing " \
-          "(#{rate(passing, valid.size)})`.",
+        "(#{rate(passing, valid.size)})`.",
         "* Outside the compatibility denominator: #{outside}.",
         "* Generated from `scoreboard/corpus.json` by " \
-          "`bundle exec rake docs:compatibility`.",
+        "`bundle exec rake docs:compatibility`.",
         type_page_marker(label, "END"),
       ].join("\n")
     end
@@ -140,29 +140,35 @@ module Sirena
       by_verdict = cases.reject { |row| row["verdict"] == "valid" }
         .group_by { |row| row["verdict"] }
       summaries = VERDICT_ORDER.filter_map do |verdict|
-        rows = by_verdict[verdict]
-        next unless rows
-
-        passing = rows.count { |row| row["pass"] }
-        "#{passing}/#{rows.size} `#{verdict}` cases currently render"
+        verdict_summary(verdict, by_verdict[verdict])
       end
       summaries.empty? ? "no other verdict cases" : summaries.join("; ")
     end
 
-    def plantuml_region(scoreboard_path = PLANTUML_SCOREBOARD_PATH)
-      rows = JSON.parse(File.read(scoreboard_path))
-      counts = %w[class sequence].map do |type|
-        row = rows.find { |candidate| candidate["type"] == type }
-        raise "no PlantUML #{type} scoreboard row" unless row
+    def verdict_summary(verdict, rows)
+      return unless rows
 
-        "#{type} #{row.fetch('passing')}/#{row.fetch('oracle_valid')}"
-      end
+      passing = rows.count { |row| row["pass"] }
+      "#{passing}/#{rows.size} `#{verdict}` cases currently render"
+    end
+
+    def plantuml_region(scoreboard_path = PLANTUML_SCOREBOARD_PATH)
+      counts = plantuml_counts(JSON.parse(File.read(scoreboard_path)))
       claim = "**Syntax Compatibility:** Sirena renders PlantUML class and " \
               "sequence diagrams when started with `--require " \
               "sirena/notation/plantuml` (`scoreboard/plantuml.json`: " \
               "#{counts.join(', ')} oracle-valid cases). Other PlantUML " \
               "diagram types are not supported."
       [PLANTUML_BEGIN_MARKER, claim, PLANTUML_END_MARKER].join("\n")
+    end
+
+    def plantuml_counts(rows)
+      %w[class sequence].map do |type|
+        row = rows.find { |candidate| candidate["type"] == type }
+        raise "no PlantUML #{type} scoreboard row" unless row
+
+        "#{type} #{row.fetch('passing')}/#{row.fetch('oracle_valid')}"
+      end
     end
 
     def splice(text, new_region)

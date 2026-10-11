@@ -759,6 +759,11 @@ RSpec.describe CorpusOracle do
 
   describe "the committed verdict files" do
     let(:verdicts_path) { File.join(corpus_root, "corpus-verdicts.yml") }
+    let(:accepted_er_row) do
+      regenerated_verdicts(described_class.load_rows).find do |candidate|
+        candidate["case"] == "er_diagram/erdiagram_spec-d8eaebdd.mmd"
+      end
+    end
 
     it "reproduce corpus-verdicts.yml from classify and the oracle rows" do
       rows = regenerated_verdicts(described_class.load_rows)
@@ -767,16 +772,10 @@ RSpec.describe CorpusOracle do
     end
 
     it "reproduces the pinned acceptance that replaces stale ER evidence" do
-      rows = regenerated_verdicts(described_class.load_rows)
-      row = rows.find do |candidate|
-        candidate["case"] == "er_diagram/erdiagram_spec-d8eaebdd.mmd"
-      end
-
-      expect(row).to include(
+      expect(accepted_er_row).to include(
         "verdict" => "valid",
         "evidence" => /mmdc 11\.12\.0 renders it/,
       )
-      expect(rows.to_yaml).to eq(File.read(verdicts_path))
     end
 
     it "leave no case without a verdict" do
