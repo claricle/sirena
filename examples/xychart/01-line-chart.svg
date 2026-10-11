@@ -7,38 +7,38 @@
  xmlns="http://www.w3.org/2000/svg"
 >
 <text fill="#000000" x="350.0" y="30.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="bold">Monthly Sales Performance</text>
-<line stroke="#e5e7eb" stroke-width="1" x1="82.0" y1="51.0" x2="700.0" y2="51.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="82.0" y1="132.0" x2="700.0" y2="132.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="82.0" y1="214.0" x2="700.0" y2="214.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="82.0" y1="295.0" x2="700.0" y2="295.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="82.0" y1="377.0" x2="700.0" y2="377.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="133.0" y1="51.0" x2="133.0" y2="459.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="236.0" y1="51.0" x2="236.0" y2="459.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="339.0" y1="51.0" x2="339.0" y2="459.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="442.0" y1="51.0" x2="442.0" y2="459.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="545.0" y1="51.0" x2="545.0" y2="459.0" stroke-dasharray="3,3"/>
-<line stroke="#e5e7eb" stroke-width="1" x1="648.0" y1="51.0" x2="648.0" y2="459.0" stroke-dasharray="3,3"/>
-<line stroke="#000000" stroke-width="2" x1="82.0" y1="459.0" x2="700.0" y2="459.0"/>
-<line stroke="#000000" stroke-width="2" x1="82.0" y1="51.0" x2="82.0" y2="459.0"/>
-<polyline fill="none" stroke="#2563eb" stroke-width="2" points="133.0,275.4 236.0,246.84 339.0,181.56 442.0,153.0 545.0,124.44 648.0,91.80000000000001"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="133.0" cy="275.4" r="4.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="236.0" cy="246.84" r="4.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="339.0" cy="181.56" r="4.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="442.0" cy="153.0" r="4.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="545.0" cy="124.44" r="4.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="648.0" cy="91.80000000000001" r="4.0"/>
-<text fill="#000000" x="133.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Jan</text>
-<text fill="#000000" x="236.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Feb</text>
-<text fill="#000000" x="339.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Mar</text>
-<text fill="#000000" x="442.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Apr</text>
-<text fill="#000000" x="545.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">May</text>
-<text fill="#000000" x="648.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Jun</text>
+<line stroke="#e5e7eb" stroke-width="1" x1="82.71875190734863" y1="51.0" x2="700.0" y2="51.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="82.71875190734863" y1="132.0" x2="700.0" y2="132.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="82.71875190734863" y1="214.0" x2="700.0" y2="214.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="82.71875190734863" y1="295.0" x2="700.0" y2="295.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="82.71875190734863" y1="377.0" x2="700.0" y2="377.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="99.71875190734863" y1="51.0" x2="99.71875190734863" y2="459.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="216.3750015258789" y1="51.0" x2="216.3750015258789" y2="459.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="333.03125114440917" y1="51.0" x2="333.03125114440917" y2="459.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="449.6875007629394" y1="51.0" x2="449.6875007629394" y2="459.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="566.3437503814697" y1="51.0" x2="566.3437503814697" y2="459.0" stroke-dasharray="3,3"/>
+<line stroke="#e5e7eb" stroke-width="1" x1="683.0" y1="51.0" x2="683.0" y2="459.0" stroke-dasharray="3,3"/>
+<line stroke="#000000" stroke-width="2" x1="82.71875190734863" y1="459.0" x2="700.0" y2="459.0"/>
+<line stroke="#000000" stroke-width="2" x1="82.71875190734863" y1="51.0" x2="82.71875190734863" y2="459.0"/>
+<polyline fill="none" stroke="#2563eb" stroke-width="2" points="99.71875190734863,275.4 216.3750015258789,246.84 333.03125114440917,181.56 449.6875007629394,153.0 566.3437503814697,124.44 683.0,91.80000000000001"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="99.71875190734863" cy="275.4" r="4.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="216.3750015258789" cy="246.84" r="4.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="333.03125114440917" cy="181.56" r="4.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="449.6875007629394" cy="153.0" r="4.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="566.3437503814697" cy="124.44" r="4.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="2" cx="683.0" cy="91.80000000000001" r="4.0"/>
+<text fill="#000000" x="99.71875190734863" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Jan</text>
+<text fill="#000000" x="216.3750015258789" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Feb</text>
+<text fill="#000000" x="333.03125114440917" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Mar</text>
+<text fill="#000000" x="449.6875007629394" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Apr</text>
+<text fill="#000000" x="566.3437503814697" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">May</text>
+<text fill="#000000" x="683.0" y="479.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Jun</text>
 <text transform="rotate(-90, 20, 255)" fill="#000000" x="20.0" y="255.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Sales ($1000)</text>
-<text fill="#000000" x="72.0" y="55.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">100.0</text>
-<text fill="#000000" x="72.0" y="136.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">80.0</text>
-<text fill="#000000" x="72.0" y="218.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">60.0</text>
-<text fill="#000000" x="72.0" y="299.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">40.0</text>
-<text fill="#000000" x="72.0" y="381.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">20.0</text>
+<text fill="#000000" x="72.71875190734863" y="55.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">100.0</text>
+<text fill="#000000" x="72.71875190734863" y="136.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">80.0</text>
+<text fill="#000000" x="72.71875190734863" y="218.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">60.0</text>
+<text fill="#000000" x="72.71875190734863" y="299.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">40.0</text>
+<text fill="#000000" x="72.71875190734863" y="381.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="12.0">20.0</text>
 <rect fill="#2563eb" stroke="none" x="550.0" y="52.0" width="15.0" height="15.0"/>
 <text fill="#000000" x="570.0" y="64.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Line</text>
 </svg>
