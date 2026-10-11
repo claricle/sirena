@@ -26,6 +26,7 @@ module Sirena
       SECTION_HEIGHT = 30
       TASK_BAR_HEIGHT = 20
       TIMELINE_WIDTH = 800
+      PLOT_WIDTH = 634
       TIMELINE_HEIGHT = 40
       TITLE_Y = 40
       TIMELINE_PADDING_DAYS = 1
@@ -296,16 +297,23 @@ module Sirena
       # by a day each side; mermaid's axis spans only the tasks, so ticks
       # are chosen from the unpadded range.
       def tick_positions(timeline, interval)
-        days = timeline[:total_days]
+        start, stop, origin, days, width = tick_axis(timeline)
         return [] if days <= 0
 
-        start = timeline[:start_date]
-        origin = start
-        pad = TIMELINE_PADDING_DAYS * DAY_SECONDS
-        stop = origin + (days * DAY_SECONDS) - pad
-        GanttTicks.times(origin + pad, stop, interval).map do |tick|
-          [tick, (tick - origin) / (days * DAY_SECONDS)]
+        GanttTicks.times(start, stop, interval).map do |tick|
+          fraction = (tick - origin) / (days * DAY_SECONDS)
+          [tick, fraction * width / TIMELINE_WIDTH]
         end
+      end
+
+      def tick_axis(timeline)
+        origin, days, width = task_axis(timeline)
+        return [origin, origin + (days * DAY_SECONDS), origin, days, width] if
+          days < timeline[:total_days]
+
+        pad = TIMELINE_PADDING_DAYS * DAY_SECONDS
+        [origin + pad, origin + (days * DAY_SECONDS) - pad,
+         origin, days, width]
       end
 
       def date_label(date, position, format)
@@ -744,9 +752,9 @@ module Sirena
       def calculate_x_position(date, timeline)
         return 0 unless date
 
-        days_from_start = (date - timeline[:start_date]) / DAY_SECONDS
-        # The timeline is 800 pixels wide.
-        (days_from_start.to_f / timeline[:total_days]) * 800
+        origin, days, width = task_axis(timeline)
+        days_from_start = (date - origin) / DAY_SECONDS
+        (days_from_start.to_f / days) * width
       end
 
       def task_width(task, timeline)
@@ -754,11 +762,25 @@ module Sirena
         end_time = task.render_end || task.calculated_end
         return 20 unless start_time && end_time
 
+        _origin, days, width = task_axis(timeline)
         duration_days = (end_time - start_time) / DAY_SECONDS
         return 0 if duration_days <= 0
 
-        width = (duration_days.to_f / timeline[:total_days]) * 800
-        width < 1 ? 0 : width
+        task_width = (duration_days.to_f / days) * width
+        task_width < 1 ? 0 : task_width
+      end
+
+      def task_axis(timeline)
+        padding = TIMELINE_PADDING_DAYS * 2
+        task_days = timeline[:total_days] - padding
+        return padded_task_axis(timeline) unless task_days.positive?
+
+        origin = timeline[:start_date] + (TIMELINE_PADDING_DAYS * DAY_SECONDS)
+        [origin, task_days, PLOT_WIDTH]
+      end
+
+      def padded_task_axis(timeline)
+        [timeline[:start_date], timeline[:total_days], TIMELINE_WIDTH]
       end
 
       def total_task_count(diagram)
