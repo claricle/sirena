@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::C4 do
+RSpec.describe Sirena::Renderer::C4, :aggregate_failures do
   subject(:renderer) { described_class.new }
 
   def scene_for(path)

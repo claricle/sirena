@@ -119,7 +119,7 @@ module ArchitectureEdgeRouterSpecHelpers
   end
 end
 
-RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter do
+RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter, :aggregate_failures do
   let(:router) { described_class.new }
 
   describe "#route" do

@@ -49,7 +49,7 @@ module SequenceSpecHelpers
   end
 end
 
-RSpec.describe Sirena::Renderer::Sequence do
+RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
   describe "head style" do
     # Counting polygons alone let a cross — which is drawn with lines —
     # be added to a "headless" arrow without failing anything.

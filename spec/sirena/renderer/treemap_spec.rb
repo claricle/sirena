@@ -4,7 +4,7 @@ require "spec_helper"
 require "sirena/renderer/treemap"
 require "sirena/diagram/treemap"
 
-RSpec.describe Sirena::Renderer::Treemap do
+RSpec.describe Sirena::Renderer::Treemap, :aggregate_failures do
   let(:diagram) { Sirena::Diagram::Treemap.new }
   let(:transform) { Sirena::Layout::Treemap.new }
   let(:renderer) { described_class.new }
