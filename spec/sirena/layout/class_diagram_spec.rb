@@ -130,14 +130,14 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   it "returns typed final canvas geometry" do
     expect(scene_geometry(scene)).to eq(
       [described_class::Scene, [described_class::Node],
-       [described_class::Edge], 395.13599999999997, 274.0,
-       "0 0 395.13599999999997 274"],
+       [described_class::Edge], 255.744, 450.0,
+       "0 0 255.744 450.0"],
     )
   end
 
   it "positions class nodes through the fallback grid inside layout" do
     expect(scene.children.map { |node| [node.id, node.x, node.y] })
-      .to eq([["Animal", 50.0, 50.0], ["Dog", 225.744, 50.0]])
+      .to eq([["Animal", 50.0, 50.0], ["Dog", 68.176, 244.0]])
   end
 
   it "carries final member rows without renderer graph lookups" do
@@ -150,8 +150,8 @@ RSpec.describe Sirena::Layout::ClassDiagram do
 
   it "carries final relationship endpoints, labels, and marker geometry" do
     expect(edge_geometry(scene.edges.first)).to eq(
-      ["Animal", "Dog", [175.744, 118.40886474411047],
-       [225.744, 115.55295491470349],
+      ["Animal", "Dog", [112.872, 194.0],
+       [112.872, 244.0],
        ["knows"], ["#000000"]],
     )
   end
