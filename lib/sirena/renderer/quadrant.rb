@@ -43,22 +43,16 @@ module Sirena
       def quadrants_group(scene)
         group("quadrants").tap do |quadrants|
           scene.quadrants.each do |quadrant|
-            quadrants << quadrant_group(quadrant, scene.quadrant_labels)
+            quadrants << quadrant_group(quadrant)
           end
         end
       end
 
-      def quadrant_group(quadrant, labels)
+      def quadrant_group(quadrant)
         group("quadrant").tap do |cell|
           cell << quadrant_rect(quadrant)
-          label = labels.find { |item| centred_in?(item, quadrant) }
-          cell << text_element(label) if label
+          cell << text_element(quadrant.label) if quadrant.label
         end
-      end
-
-      def centred_in?(label, quadrant)
-        (label.x - (quadrant.x + (quadrant.width / 2.0))).abs < 0.001 &&
-          label.y.between?(quadrant.y, quadrant.y + quadrant.height)
       end
 
       def quadrant_rect(quadrant)
