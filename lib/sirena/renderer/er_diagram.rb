@@ -74,7 +74,7 @@ module Sirena
 
       def apply_entity_styles(rect, styles, attributed)
         rect.fill = box_property(styles, "fill", attributed) ||
-          theme_color(:node_fill) || "#f9f9f9"
+          theme_color(:node_fill)
         rect.stroke = entity_stroke(styles, attributed)
         rect.stroke_width =
           box_property(styles, "stroke-width", attributed) || "2"
@@ -82,7 +82,7 @@ module Sirena
 
       def entity_stroke(styles, attributed)
         box_property(styles, "stroke", attributed) ||
-          theme_color(:node_stroke) || "#333333"
+          theme_color(:node_stroke)
       end
 
       def emit_entity_content(node, group, styles)
@@ -104,7 +104,7 @@ module Sirena
           x: label.x,
           y: label.y,
           content: label.text,
-          fill: styles["color"] || theme_color(:label_text) || "#000000",
+          fill: styles["color"] || theme_color(:label_text),
           font_family: "Arial, sans-serif",
           font_size: font_size_value(label.font_size),
           text_anchor: "middle",
@@ -128,7 +128,7 @@ module Sirena
           x: attribute.x,
           y: attribute.y,
           content: attribute.text,
-          fill: styles["color"] || theme_color(:label_text) || "#000000",
+          fill: styles["color"] || theme_color(:label_text),
           font_family: "monospace",
           font_size: font_size_value(attribute.font_size),
         )
@@ -606,7 +606,7 @@ module Sirena
       end
 
       def relationship_stroke(shape, relationship_type)
-        shape.stroke = theme_color(:edge_stroke) || "#333333"
+        shape.stroke = theme_color(:edge_stroke)
         shape.stroke_width = "2"
         if relationship_type == "non-identifying"
           shape.stroke_dasharray = "5,5"
@@ -626,7 +626,7 @@ module Sirena
           line.y1 = geometry.y1
           line.x2 = geometry.x2
           line.y2 = geometry.y2
-          line.stroke = theme_color(:edge_stroke) || "#333333"
+          line.stroke = theme_color(:edge_stroke)
           line.stroke_width = "2"
         end
       end
@@ -637,7 +637,7 @@ module Sirena
           circle.cy = geometry.cy
           circle.r = geometry.radius
           circle.fill = "none"
-          circle.stroke = theme_color(:edge_stroke) || "#333333"
+          circle.stroke = theme_color(:edge_stroke)
           circle.stroke_width = "2"
         end
       end
@@ -647,7 +647,7 @@ module Sirena
           x: label.x,
           y: label.y,
           content: label.text,
-          fill: theme_color(:label_text) || "#000000",
+          fill: theme_color(:label_text),
           font_family: "Arial, sans-serif",
           font_size: font_size_value(label.font_size),
           text_anchor: "middle",
