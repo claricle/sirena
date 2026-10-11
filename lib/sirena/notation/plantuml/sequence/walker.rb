@@ -41,6 +41,9 @@ module Sirena
           PLACERS = { Message => :message, Activation => :activation,
                       Destroy => :destroy, Fragment => :fragment,
                       Ref => :ref, PageBreak => :page_break }.freeze
+          Config = Struct.new(:message_measure, :message_font_size,
+                              :message_family, :label_inset, :row, :self_row,
+                              keyword_init: true)
 
           attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
                       :right, :y, :page_breaks
@@ -51,19 +54,17 @@ module Sirena
           # @param bounds [Array<Float>] left and right edge of the heads
           # @param start_y [Float] where the first row goes
           def initialize(lifelines:, measure:, font_size:, bounds:, start_y:,
-                         message_measure: measure,
-                         message_font_size: font_size, message_family: nil,
-                         label_inset: nil, row: ROW, self_row: ROW * 1.5)
+                         config: Config.new)
             @ids = lifelines.keys
             @centers = lifelines.values
             @measure = measure
             @font_size = font_size
-            @message_measure = message_measure
-            @message_font_size = message_font_size
-            @message_family = message_family
-            @label_inset = label_inset
-            @row = row
-            @self_row = self_row
+            @message_measure = config.message_measure || measure
+            @message_font_size = config.message_font_size || font_size
+            @message_family = config.message_family
+            @label_inset = config.label_inset
+            @row = config.row || ROW
+            @self_row = config.self_row || ROW * 1.5
             @bounds = bounds
             @y = start_y
             start_empty
@@ -381,7 +382,7 @@ module Sirena
             PlantUML::Scene::Text.new(
               content: content, x: at_x, y: at_y, role: role, anchor: anchor,
               size: (@message_font_size if message && @message_family),
-              family: (@message_family if message),
+              family: (@message_family if message)
             )
           end
 

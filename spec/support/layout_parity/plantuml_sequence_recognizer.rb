@@ -51,8 +51,10 @@ module SpecSupport
           text = participant_texts(root, label).min_by { |node| node["y"].to_f }
           shape = text&.previous_element
           box = extractor.bbox(shape) if shape&.name == "rect"
-          Element.new(kind: :participant, key: label, bbox: box,
-                      label: label, identity: :label) if box
+          if box
+            Element.new(kind: :participant, key: label, bbox: box,
+                        label: label, identity: :label)
+          end
         end
       end
 

@@ -171,7 +171,6 @@ module Sirena
                   geometry.rotation_center_y]
         "rotate(#{values.join(' ')})"
       end
-
     end
   end
 end

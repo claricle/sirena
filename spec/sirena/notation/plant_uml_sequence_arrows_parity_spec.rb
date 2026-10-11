@@ -5,7 +5,7 @@ require "sirena/notation/plantuml"
 
 Sirena::Notation.send(:entries).delete(:plantuml)
 
-RSpec.describe "PlantUML SequenceArrows parity" do
+RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   include_context "with an isolated notation registry"
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
@@ -53,7 +53,7 @@ RSpec.describe "PlantUML SequenceArrows parity" do
   it "reads PlantUML's doubled-quote message labels without their delimiters" do
     expect([
              message_label('""  -\\\\ \\"quoted\\"  ""'),
-             message_label('  unquoted \\"content\\"  ')
+             message_label('  unquoted \\"content\\"  '),
            ]).to eq(['-\\ \\"quoted\\"', 'unquoted \\"content\\"'])
   end
 

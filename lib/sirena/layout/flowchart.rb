@@ -923,7 +923,7 @@ module Sirena
           metadata: {
             arrow_type: edge.role,
             minimum_rank_span: edge.minimum_rank_span,
-          },
+          }
         }
       end
 

@@ -21,7 +21,7 @@ module Sirena
         end
         if minimum_rank_span && !minimum_rank_span.positive?
           errors << validation_error(
-            "minimum_rank_span must be a positive integer"
+            "minimum_rank_span must be a positive integer",
           )
         end
         errors

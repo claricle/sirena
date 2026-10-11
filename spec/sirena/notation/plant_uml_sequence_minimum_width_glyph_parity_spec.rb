@@ -78,8 +78,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     PLANTUML
 
     expect([digest(ordinary), digest(teoz)]).to eq([
-      "49c4f351162c17532b8b9b6378b6f40ec45fb400feb3d3febaee27ccaeb75530",
-      "55db1383aedfb8fd7917bc0bdf1a1020d92e639565159881b6b039519c19504c",
-    ])
+                                                     "49c4f351162c17532b8b9b6378b6f40ec45fb400feb3d3febaee27ccaeb75530",
+                                                     "55db1383aedfb8fd7917bc0bdf1a1020d92e639565159881b6b039519c19504c",
+                                                   ])
   end
 end

@@ -38,7 +38,7 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
       sirena_svg: Sirena.render(source(name), notation: :plantuml),
       reproduce: __FILE__,
       recognizer: SpecSupport::LayoutParity::PlantumlClassRecognizer.new,
-      spatial_kinds: [:class],
+      spatial_kinds: [:class]
     )
   end
 
@@ -103,7 +103,7 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
   end
 
   it "uses each pinned member-note stack's shared fill" do
-    evidence = member_note_cases.to_h do |name, fills|
+    evidence = member_note_cases.to_h do |name, _fills|
       [name, note_fills(name)]
     end
 
