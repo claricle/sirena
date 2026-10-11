@@ -105,23 +105,27 @@ module Sirena
       def build_graph(diagram)
         graph = ir_graph(diagram)
         orientation = graph_orientation(graph)
+        main_branch = graph_main_branch(graph)
         branches = source_branches(graph)
         lane_assignments = assign_lanes(
-          branches, build_branch_info(branches)
+          branches, build_branch_info(branches, main_branch), main_branch
         )
         commits = position_commits(
-          visible_commits(source_commits(graph)), lane_assignments, orientation
+          visible_commits(source_commits(graph)), lane_assignments, orientation,
+          main_branch
         )
-        graph_result(graph, commits, branches, lane_assignments, orientation)
+        graph_result(
+          graph, commits, branches, lane_assignments, orientation, main_branch
+        )
       end
 
       private
 
-      def graph_result(graph, commits, branches, lanes, orientation)
+      def graph_result(graph, commits, branches, lanes, orientation, main_branch)
         width, height = extents(commits, lanes, orientation)
         {
           commits: commits,
-          branches: build_branch_metadata(branches, lanes),
+          branches: build_branch_metadata(branches, lanes, main_branch),
           connections: build_connections(commits, graph.edges),
           orientation: orientation,
           width: width,
@@ -137,6 +141,10 @@ module Sirena
 
       def graph_orientation(graph)
         graph.nodes.find { |node| node.role == "orientation" }&.label || "LR"
+      end
+
+      def graph_main_branch(graph)
+        graph.nodes.find { |node| node.role == "main_branch" }&.label || "main"
       end
 
       def source_commits(graph)
@@ -522,17 +530,17 @@ module Sirena
       #
       # @param branches [Array<Hash>] ordered branch semantics
       # @return [Hash] branch info with parent relationships
-      def build_branch_info(branches)
-        info = { "main" => branch_info({}, 0) }
-        branches.each do |branch|
-          info[branch[:name]] = branch_info(branch, info.size)
+      def build_branch_info(branches, main_branch)
+        info = { main_branch => branch_info({}, 0, main_branch) }
+        branches.reject { |branch| branch[:name] == main_branch }.each do |branch|
+          info[branch[:name]] = branch_info(branch, info.size, main_branch)
         end
         info
       end
 
-      def branch_info(branch, default_order)
+      def branch_info(branch, default_order, main_branch)
         {
-          parent: branch.empty? ? nil : branch[:parent_branch] || "main",
+          parent: branch.empty? ? nil : branch[:parent_branch] || main_branch,
           order: branch[:order] || default_order,
           created_at: branch[:created_at_commit],
         }
@@ -545,16 +553,17 @@ module Sirena
       # @param branches [Array<Hash>] ordered branch semantics
       # @param branch_info [Hash] branch information
       # @return [Hash<String, Integer>] branch name to lane number
-      def assign_lanes(branches, branch_info)
+      def assign_lanes(branches, branch_info, main_branch)
         ordered_branches(branches, branch_info).each_with_index
-          .with_object("main" => 0) do |pair, lanes|
+          .with_object(main_branch => 0) do |pair, lanes|
           branch, index = pair
           lanes[branch[:name]] = index + 1
         end
       end
 
       def ordered_branches(branches, branch_info)
-        branches.reject { |branch| branch[:name] == "main" }.sort_by do |branch|
+        main_branch = branch_info.keys.first
+        branches.reject { |branch| branch[:name] == main_branch }.sort_by do |branch|
           [branch_info[branch[:name]][:order] || 999, branch[:name]]
         end
       end
@@ -565,16 +574,18 @@ module Sirena
       # @param lane_assignments [Hash] branch to lane mapping
       # @param orientation [String] "LR", "TB" or "BT"
       # @return [Array<Hash>] positioned commits
-      def position_commits(commits, lane_assignments, orientation)
+      def position_commits(commits, lane_assignments, orientation, main_branch)
         commits.each_with_index.map do |commit, index|
           positioned_commit(
-            commit, index, commits.size, lane_assignments, orientation
+            commit, index, commits.size, lane_assignments, orientation,
+            main_branch
           )
         end
       end
 
-      def positioned_commit(commit, index, count, lane_assignments, orientation)
-        branch = commit[:branch_name] || "main"
+      def positioned_commit(commit, index, count, lane_assignments, orientation,
+                            main_branch)
+        branch = commit[:branch_name] || main_branch
         lane = lane_assignments[branch] || 0
         commit.merge(positioned_commit_attributes(
                        commit, [index, count], [branch, lane], orientation
@@ -668,13 +679,13 @@ module Sirena
       # @param branches [Array<Hash>] ordered branch semantics
       # @param lane_assignments [Hash] lane assignments
       # @return [Array<Hash>] branch metadata
-      def build_branch_metadata(branches, lane_assignments)
+      def build_branch_metadata(branches, lane_assignments, main_branch)
         main = {
-          name: "main",
-          lane: lane_assignments["main"] || 0,
+          name: main_branch,
+          lane: lane_assignments[main_branch] || 0,
           color: branch_color(0),
         }
-        branches.reject { |branch| branch[:name] == "main" }
+        branches.reject { |branch| branch[:name] == main_branch }
           .each_with_index.with_object([main]) do |pair, metadata|
           branch, index = pair
           metadata << branch_metadata(branch, index, lane_assignments)

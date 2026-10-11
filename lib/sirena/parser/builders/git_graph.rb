@@ -54,9 +54,11 @@ module Sirena
             captured_text(captured).strip.split("\n").map(&:strip).join("\n")
           end
 
-          def initialize
-            @current_branch = "main"
-            @branches = { "main" => { order: 0, created_at: nil } }
+          def initialize(main_branch_name = "main")
+            @current_branch = main_branch_name
+            @branches = {
+              main_branch_name => { order: 0, created_at: nil },
+            }
             @commits = []
             @commit_counter = 0
           end
@@ -82,6 +84,7 @@ module Sirena
             {
               acc_title: acc_title,
               acc_description: acc_description,
+              main_branch_name: branches.first.first,
               commits: commits,
               branches: branches.map { |name, info| branch_entry(name, info) },
             }
@@ -229,9 +232,13 @@ module Sirena
           end
         end
 
+        def self.build(statements, main_branch_name: "main")
+          State.new(main_branch_name).process(statements).to_h
+        end
+
         # Statement handlers
         rule(statements: subtree(:stmts)) do
-          State.new.process(stmts).to_h
+          GitGraph.build(stmts)
         end
       end
     end

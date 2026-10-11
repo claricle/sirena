@@ -33,9 +33,19 @@ module Sirena
               id: root_id, role: "version_history",
               accessibility_title: diagram.acc_title,
               accessibility_description: diagram.acc_description,
-              nodes: [orientation_node(diagram, occupied)] + nodes,
+              nodes: graph_semantics(diagram, occupied) + nodes,
               edges: edges
             }
+          end
+
+          def graph_semantics(diagram, occupied)
+            [
+              orientation_node(diagram, occupied),
+              IR::Node.new(
+                id: reserve_id("main_branch", occupied),
+                label: diagram.main_branch_name, role: "main_branch"
+              ),
+            ]
           end
 
           def orientation_node(diagram, occupied)
@@ -161,7 +171,8 @@ module Sirena
             occupied << candidate
             candidate
           end
-          private_class_method :graph_attributes, :orientation_node,
+          private_class_method :graph_attributes, :graph_semantics,
+                               :orientation_node,
                                :commit_nodes, :commit_semantics,
                                :field_values, :tag_values, :parent_values,
                                :action_values,

@@ -32,6 +32,7 @@ module Sirena
 
       # "LR" (default), "TB" or "BT": the direction time runs in.
       attribute :orientation, :string, default: -> { "LR" }
+      attribute :main_branch_name, :string, default: -> { "main" }
       attribute :acc_title, :string
       attribute :acc_description, :string
       attribute :commits, Commit, collection: true, default: -> { [] }
