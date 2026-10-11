@@ -25,6 +25,8 @@ module Sirena
       TITLE_EXTRA = 70
       TIMELINE_Y = 200
       TEXT_SIZE = 14
+      DOT_RADIUS = 7
+      CENTRAL_BASELINE_EMS = 0.35
       NO_SECTION_FILL = "#CCC"
       SECTION_FILLS = %w[
         #191970 #8B008B #4B0082 #2F4F4F #800000 #8B4513 #00008B
@@ -169,7 +171,8 @@ module Sirena
 
       def actor_dot(name, index, x_position, y_position)
         UserJourney::Dot.new(
-          x: x_position, y: y_position, name: name, index: index,
+          x: x_position, y: y_position, radius: DOT_RADIUS,
+          name: name, index: index,
           colour: ACTOR_COLOURS[index % ACTOR_COLOURS.length]
         )
       end
@@ -242,11 +245,17 @@ module Sirena
       end
 
       def centered_label(text, centre, shift, fill)
+        font_size = journey_normal_font_size
         UserJourney::Label.new(
-          text: text, x: centre[0], y: centre[1] + shift,
-          font_size: journey_normal_font_size,
+          text: text, x: centre[0],
+          y: central_baseline_y(centre[1] + shift, font_size),
+          font_size: font_size,
           text_anchor: "middle", fill: fill
         )
+      end
+
+      def central_baseline_y(y_coord, font_size)
+        (y_coord + (font_size * CENTRAL_BASELINE_EMS)).round(4)
       end
 
       def line_shift(offset, count)

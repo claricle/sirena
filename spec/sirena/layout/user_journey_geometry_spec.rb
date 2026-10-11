@@ -40,7 +40,7 @@ RSpec.describe Sirena::Layout::UserJourneyGeometry do
 
   it "centres a band label on the band" do
     expect(scene.sections.first.labels.map { |l| [l.x, l.y] })
-      .to eq([[325.0, 75.0]])
+      .to eq([[325.0, 79.9]])
   end
 
   it "hangs task boxes at y=110, 150 wide and 50 high" do
@@ -139,7 +139,7 @@ RSpec.describe Sirena::Layout::UserJourneyGeometry do
     let(:sections) { [["S", [["a<br/>b<br>c", 3, []]]]] }
 
     it "spreads the lines 14px apart around the box centre" do
-      expect(scene.tasks.first.labels.map(&:y)).to eq([121.0, 135.0, 149.0])
+      expect(scene.tasks.first.labels.map(&:y)).to eq([125.9, 139.9, 153.9])
     end
   end
 

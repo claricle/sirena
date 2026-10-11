@@ -23,8 +23,7 @@ RSpec.describe Sirena::Layout::Radar do
 
   it "centres every axis label on its anchor like mermaid" do
     labels = four_axis_scene.axes.map(&:label)
-    expect([labels.map(&:text_anchor), labels.map(&:dominant_baseline)])
-      .to eq([%w[middle] * 4, %w[middle] * 4])
+    expect(labels.map(&:text_anchor)).to eq(%w[middle] * 4)
   end
 
   it "defaults absent measurements to zero and honors a hidden legend" do

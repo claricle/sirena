@@ -57,12 +57,12 @@ RSpec.describe Sirena::Layout::Radar do
         actual = [[speed.id, speed.angle, speed.line.x1, speed.line.y1,
                    speed.line.x2.round(4), speed.line.y2,
                    speed.label.x.round(4), speed.label.y,
-                   speed.label.text_anchor, speed.label.dominant_baseline],
+                   speed.label.text_anchor],
                   [quality.id, quality.angle, quality.line.x2.round(4),
                    quality.line.y2, quality.label.x.round(4), quality.label.y]]
         expected = [["speed", -90.0, 350.0, 350.0, 350.0, 50.0, 350.0,
-                     35.0, "middle", "middle"],
-                    ["quality", 90.0, 350.0, 650.0, 350.0, 665.0]]
+                     39.9, "middle"],
+                    ["quality", 90.0, 350.0, 650.0, 350.0, 669.9]]
 
         [actual, expected]
       end
@@ -118,7 +118,7 @@ RSpec.describe Sirena::Layout::Radar do
 
       it "stores label and legend geometry in the scene" do
         expect(themed_geometry).to eq(
-          [16.0, 618.5, 93.5, 628.5, 87.5, 14.0],
+          [16.0, 618.5, 93.5, 628.5, 98.7, 14.0],
         )
       end
     end

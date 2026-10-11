@@ -22,7 +22,7 @@ RSpec.describe Sirena::Layout::Radar, "#call" do
   it "puts the first legend swatch at three quarters of the frame" do
     label = scene.legend.first.label
 
-    expect([label.x, label.y]).to eq([628.5, 87.5])
+    expect([label.x, label.y]).to eq([628.5, 97.1])
   end
 
   it "records a polygon graticule" do

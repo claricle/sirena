@@ -15,6 +15,7 @@ module Sirena
       LEGEND_INSET = (DEFAULT_RADIUS + PADDING) * 0.75
       GRID_CIRCLES = 5
       MAX_TICKS = 32
+      BASELINE_SHIFTS = { "middle" => 0.35, "hanging" => 0.8 }.freeze
 
       class Circle < Lutaml::Model::Serializable
         attribute :x, :float
@@ -40,7 +41,6 @@ module Sirena
         attribute :y, :float
         attribute :font_size, :float
         attribute :text_anchor, :string
-        attribute :dominant_baseline, :string
         attribute :font_weight, :string
         attribute :class_name, :string
       end
@@ -58,6 +58,7 @@ module Sirena
         attribute :normalized, :float
         attribute :x, :float
         attribute :y, :float
+        attribute :radius, :float
       end
 
       class Curve < Lutaml::Model::Serializable
@@ -154,11 +155,11 @@ module Sirena
       def title_label(graph)
         return unless graph[:title]
 
+        font_size = font_size(:font_size_large, 16)
         Label.new(
-          text: graph[:title], x: graph.fetch(:center_x), y: 0,
-          font_size: font_size(:font_size_large, 16),
-          text_anchor: "middle", dominant_baseline: "hanging",
-          class_name: "radarTitle"
+          text: graph[:title], x: graph.fetch(:center_x),
+          y: final_label_y(0, font_size, "hanging"), font_size: font_size,
+          text_anchor: "middle", class_name: "radarTitle"
         )
       end
 
@@ -200,12 +201,13 @@ module Sirena
       end
 
       def axis_label(axis, center_x, center_y)
+        font_size = font_size(:font_size_normal, 12)
+        y_coord = center_y + axis[:label_y]
         Label.new(
           text: axis[:label], x: center_x + axis[:label_x],
-          y: center_y + axis[:label_y],
-          font_size: font_size(:font_size_normal, 12),
-          text_anchor: "middle", dominant_baseline: "middle",
-          class_name: "radarAxisLabel"
+          y: final_label_y(y_coord, font_size, "middle"),
+          font_size: font_size,
+          text_anchor: "middle", class_name: "radarAxisLabel"
         )
       end
 
@@ -230,7 +232,7 @@ module Sirena
         Point.new(
           axis_id: point[:axis_id], value: point[:value],
           normalized: point[:normalized], x: center_x + point[:x],
-          y: center_y + point[:y]
+          y: center_y + point[:y], radius: 3
         )
       end
 
@@ -278,11 +280,17 @@ module Sirena
       end
 
       def legend_label(curve, x_pos, y_pos)
+        font_size = font_size(:font_size_small, 12)
         Label.new(
-          text: curve.label, x: x_pos, y: y_pos, text_anchor: "start",
-          font_size: font_size(:font_size_small, 12),
-          dominant_baseline: "hanging", class_name: "radarLegendText"
+          text: curve.label, x: x_pos,
+          y: final_label_y(y_pos, font_size, "hanging"),
+          text_anchor: "start", font_size: font_size,
+          class_name: "radarLegendText"
         )
+      end
+
+      def final_label_y(y_coord, size, baseline)
+        (y_coord + (size * BASELINE_SHIFTS.fetch(baseline))).round(4)
       end
 
       def font_size(name, fallback)

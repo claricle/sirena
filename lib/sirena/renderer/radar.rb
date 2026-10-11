@@ -117,7 +117,7 @@ module Sirena
         Svg::Circle.new.tap do |circle|
           circle.cx = point.x
           circle.cy = point.y
-          circle.r = 3
+          circle.r = point.radius
           circle.fill = color
           circle.stroke = theme_color(:background)
           circle.stroke_width = "1"
@@ -141,9 +141,6 @@ module Sirena
           text.x = label.x
           text.y = label.y
           text.text_anchor = label.text_anchor
-          if label.dominant_baseline
-            text.dominant_baseline = label.dominant_baseline
-          end
           text.fill = theme_color(:label_text)
           text.font_size = number_string(label.font_size)
           text.font_family =
