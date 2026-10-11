@@ -100,6 +100,10 @@ module Sirena
         top = node.y + 5
         right = node.x + node.width
         bottom = node.y + node.height
+        fallback_service_commands(node, top, right, bottom)
+      end
+
+      def fallback_service_commands(node, top, right, bottom)
         "M #{node.x} #{bottom} V #{top} Q #{node.x} #{node.y} " \
           "#{node.x + 5} #{node.y} H #{right - 5} Q #{right} #{node.y} " \
           "#{right} #{top} V #{bottom} H #{node.x} Z"
