@@ -113,14 +113,21 @@ module Sirena
       theme, today, layout_engine = render_settings(options)
       log "Starting render pipeline..."
       parsed = parse_source(resolve_notation(source, options), source)
-      source_layout = source_layout_engine(parsed, options)
-      layout_engine = checked_layout_engine(source_layout) if source_layout
       layout_result = transform_diagram(
-        parsed.diagram, parsed.transform, today, theme, layout_engine,
-        source_layout: !source_layout.nil?
+        parsed.diagram, parsed.transform, today, theme,
+        **placement_options(parsed, options, layout_engine)
       )
-      document = render_svg(layout_result, parsed.renderer, theme)
-      serialize(document)
+      serialize(render_svg(layout_result, parsed.renderer, theme))
+    end
+
+    def placement_options(parsed, options, layout_engine)
+      source_layout = source_layout_engine(parsed, options)
+      if source_layout.nil?
+        return { layout_engine: layout_engine, source_layout: false }
+      end
+
+      { layout_engine: checked_layout_engine(source_layout),
+        source_layout: true }
     end
 
     def render_settings(options)
@@ -196,13 +203,13 @@ module Sirena
     # @param transform_class [Class] layout class
     # @param today [Date, nil] reference date, or nil for the real date
     # @param theme [Theme] theme the layout may size text with
-    # @param layout_engine [Symbol] :grid or :elk
+    # @param placement [Hash] `:layout_engine` (:grid or :elk, default :grid)
+    #   and `:source_layout` (true when the source chose the engine)
     # @return [Layout::Scene, Layout::Legacy] a Scene, or a wrapped graph
-    def transform_diagram(diagram, transform_class, today, theme,
-                          layout_engine = :grid, source_layout: false)
+    def transform_diagram(diagram, transform_class, today, theme, **placement)
       log "Transforming diagram to graph..."
       layout = transform_class.new
-      choose_placement(layout, layout_engine, source_layout: source_layout)
+      choose_placement(layout, **placement)
       result = layout.call(diagram, theme: theme, today: today)
       log "Transform complete"
       result
@@ -218,19 +225,22 @@ module Sirena
       parsed.layout_engine unless options.key?(:layout_engine)
     end
 
-    def choose_placement(layout, layout_engine, source_layout: false)
+    def choose_placement(layout, layout_engine: :grid, source_layout: false)
       return if layout_engine == :grid
 
       unless layout.respond_to?(:placement=)
         raise Layout::LayoutError,
               "layout_engine :elk is not available for #{layout.class}"
       end
-      setter = if source_layout && layout.respond_to?(:source_placement=)
-                 :source_placement=
-               else
-                 :placement=
-               end
-      layout.public_send(setter, layout_engine)
+      layout.public_send(placement_setter(layout, source_layout), layout_engine)
+    end
+
+    def placement_setter(layout, source_layout)
+      if source_layout && layout.respond_to?(:source_placement=)
+        :source_placement=
+      else
+        :placement=
+      end
     end
 
     # Renders the layout result to an SVG document.

@@ -883,7 +883,7 @@ module Sirena
           nodes = [edge_data[:target], *edge_data[:group]]
           targets = declare_group(diagram, nodes, parent, context)
           record_edge_id(edge_data, context)
-          connect_groups(diagram, sources, targets, token, label, rank_span)
+          connect_groups(diagram, sources, targets, [token, label, rank_span])
           targets
         end
         private :process_edge
@@ -894,11 +894,9 @@ module Sirena
         private :record_edge_id
 
         # `A & B --> C & D` links every source to every target.
-        def connect_groups(diagram, sources, targets, token, label, rank_span)
+        def connect_groups(diagram, sources, targets, link)
           sources.product(targets).each do |source, target|
-            diagram.edges << create_edge(
-              source[:node_id], target, token, label, rank_span
-            )
+            diagram.edges << create_edge(source[:node_id], target, *link)
           end
         end
         private :connect_groups

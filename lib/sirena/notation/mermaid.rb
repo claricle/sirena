@@ -290,13 +290,12 @@ module Sirena
       def parse(source, logger: nil)
         preamble = Source.split(source)
         frontmatter = parsed_frontmatter(preamble[:frontmatter])
-        title = frontmatter&.title
         type = detect_type(preamble[:body])
         logger&.debug("Detected diagram type: #{type}")
         reject_degenerate_preamble(type, preamble[:degenerate])
-        diagram = parse_diagram(type, preamble, title, logger)
-        diagram = IRAdapter.call(type, with_wrap(type, diagram, source))
-        parsed(type, diagram, layout_engine(frontmatter))
+        diagram = parse_diagram(type, preamble, frontmatter&.title, logger)
+        parsed(type, IRAdapter.call(type, with_wrap(type, diagram, source)),
+               layout_engine(frontmatter))
       end
 
       def parsed(type, diagram, layout_engine = nil)

@@ -1042,29 +1042,36 @@ module Sirena
         regions.each do |region|
           position = place_concurrent_region(region, position)
         end
-        padding = MMDC_CONCURRENT_REGION_LAYOUT.fetch(:outer_padding)
-        bottom = MMDC_CONCURRENT_REGION_LAYOUT.fetch(:top) +
-          MMDC_CONCURRENT_REGION_LAYOUT.fetch(:height) +
-          MMDC_CONCURRENT_REGION_LAYOUT.fetch(:top)
-        composite.merge!(x: Grid::MARGIN, y: Grid::MARGIN,
-                         width: position - MMDC_CONCURRENT_REGION_LAYOUT
-                           .fetch(:gap) + padding,
-                         height: bottom)
+        composite.merge!(concurrent_composite_box(position))
+      end
+
+      def concurrent_composite_box(position)
+        layout = MMDC_CONCURRENT_REGION_LAYOUT
+        padding = layout.fetch(:outer_padding)
+        bottom = layout.fetch(:top) + layout.fetch(:height) +
+          layout.fetch(:top)
+        { x: Grid::MARGIN, y: Grid::MARGIN,
+          width: position - layout.fetch(:gap) + padding, height: bottom }
       end
 
       def concurrent_region_topology(graph)
-        return [] unless plain_nested_graph?(graph)
-        return [] unless Array(graph[:edges]).empty?
+        composite = concurrent_composite(graph)
+        return [] unless composite
 
-        children = Array(graph[:children])
-        return [] unless children.one?
-
-        composite = children.first
         regions = Array(composite[:children])
-        return [] unless composite.dig(:metadata, :cluster) &&
-          regions.length > 1 && regions.all? { |region| concurrent_region?(region) }
+        return [] unless regions.length > 1 &&
+          regions.all? { |region| concurrent_region?(region) }
 
         [composite, regions]
+      end
+
+      def concurrent_composite(graph)
+        return unless plain_nested_graph?(graph)
+        return unless Array(graph[:edges]).empty?
+
+        children = Array(graph[:children])
+        children.first if children.one? &&
+          children.first.dig(:metadata, :cluster)
       end
 
       def concurrent_region?(region)
@@ -1080,9 +1087,13 @@ module Sirena
         width = child[:width] + layout.fetch(:width_padding)
         region.merge!(x: position, y: layout.fetch(:top), width: width,
                       height: layout.fetch(:height))
+        place_concurrent_child(child, layout)
+        position + width + layout.fetch(:gap)
+      end
+
+      def place_concurrent_child(child, layout)
         child[:x] = layout.fetch(:outer_padding)
         child[:y] = layout.fetch(:child_top)
-        position + width + layout.fetch(:gap)
       end
 
       def plain_nested_composite(graph)
