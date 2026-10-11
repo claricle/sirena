@@ -154,14 +154,22 @@ module Sirena
       end
 
       def apply_label_geometry(text, geometry)
+        apply_label_transform(text, geometry)
+        apply_label_typography(text, geometry)
+        text.content = geometry.text
+      end
+
+      def apply_label_transform(text, geometry)
         text.x = geometry.x
         text.y = geometry.y
         text.class_name = "commit-label" if geometry.rotation
         text.transform = label_transform(geometry)
+      end
+
+      def apply_label_typography(text, geometry)
         text.text_anchor = geometry.text_anchor
         text.font_size = geometry.font_size.to_s
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-        text.content = geometry.text
       end
 
       def label_transform(geometry)
