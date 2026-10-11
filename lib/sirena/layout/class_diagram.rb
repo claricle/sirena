@@ -18,6 +18,8 @@ module Sirena
       DEFAULT_NAME_FONT_SIZE = 16
       DEFAULT_SMALL_FONT_SIZE = 12
       MIN_CLASS_WIDTH = 120
+      EMPTY_CLASS_HORIZONTAL_PADDING = 24
+      EMPTY_CLASS_HEIGHT = 84
       LINE_HEIGHT = 20
       RENDER_LINE_HEIGHT = 18
       COMPARTMENT_PADDING = 10
@@ -392,11 +394,16 @@ module Sirena
       end
 
       def transform_entities(diagram)
-        diagram.entities.map { |entity| transform_entity(entity) }
+        compact_empty = diagram.entities.one?
+        diagram.entities.map do |entity|
+          transform_entity(entity, compact_empty: compact_empty)
+        end
       end
 
-      def transform_entity(entity)
-        dimensions = calculate_entity_dimensions(entity)
+      def transform_entity(entity, compact_empty: false)
+        dimensions = calculate_entity_dimensions(
+          entity, compact_empty: compact_empty
+        )
         {
           id: entity.id, width: dimensions[:width],
           height: dimensions[:height], labels: entity_labels(entity),
@@ -434,14 +441,18 @@ module Sirena
         }
       end
 
-      def calculate_entity_dimensions(entity)
+      def calculate_entity_dimensions(entity, compact_empty: false)
         {
-          width: entity_width(entity),
-          height: entity_height(entity),
+          width: entity_width(entity, compact_empty: compact_empty),
+          height: entity_height(entity, compact_empty: compact_empty),
         }
       end
 
-      def entity_width(entity)
+      def entity_width(entity, compact_empty: false)
+        if compact_empty && empty_plain_entity?(entity)
+          return name_block_width(entity) + EMPTY_CLASS_HORIZONTAL_PADDING
+        end
+
         widths = [MIN_CLASS_WIDTH, name_block_width(entity)]
         widths.concat(member_widths(entity.attributes))
         widths.concat(member_widths(entity.class_methods))
@@ -452,7 +463,11 @@ module Sirena
         items.map { |item| member_width(item.display_text) }
       end
 
-      def entity_height(entity)
+      def entity_height(entity, compact_empty: false)
+        if compact_empty && empty_plain_entity?(entity)
+          return EMPTY_CLASS_HEIGHT
+        end
+
         lines = entity.attributes.length + entity.class_methods.length
         lines += entity.stereotype ? 2 : 1
         separators = present_compartments(entity) * 2
@@ -462,6 +477,11 @@ module Sirena
       def present_compartments(entity)
         [entity.attributes, entity.class_methods]
           .count { |items| !items.empty? }
+      end
+
+      def empty_plain_entity?(entity)
+        entity.stereotype.nil? && entity.attributes.empty? &&
+          entity.class_methods.empty?
       end
 
       def member_width(text)

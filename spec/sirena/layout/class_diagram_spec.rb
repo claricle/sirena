@@ -236,7 +236,7 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       name = "InternationalOrderProcessor"
       node = layout.call(parsed("classDiagram\nclass #{name}\n")).children.first
 
-      expect(node.width).to be_within(0.01).of(measured(name, 16) + 20)
+      expect(node.width).to be_within(0.01).of(measured(name, 16) + 24)
     end
 
     it "sizes a stereotype on its own small-font line" do
