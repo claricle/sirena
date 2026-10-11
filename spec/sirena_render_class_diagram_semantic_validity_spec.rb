@@ -37,15 +37,17 @@ RSpec.describe Sirena do
     end
   end
 
-  it "renders nonblank labels with complete cssClass assignments" do
-    source = <<~MERMAID
+  def complete_css_class_source
+    <<~MERMAID
       classDiagram
         class First[" Visible label "]
         class Second
         cssClass "First,Second" highlighted
     MERMAID
+  end
 
-    expect(described_class.render(source)).to include("<svg")
+  it "renders nonblank labels with complete cssClass assignments" do
+    expect(described_class.render(complete_css_class_source)).to include("<svg")
   end
 
   it "falls back to the id for an empty quoted label" do

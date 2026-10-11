@@ -3,6 +3,32 @@
 require "spec_helper"
 
 RSpec.describe Sirena do
+  def parse_git_graph(source)
+    Sirena::Parser::GitGraph.new.parse(source)
+  end
+
+  def merge_commit_source
+    <<~MERMAID
+      gitGraph
+        commit id: "ZERO"
+        branch feature
+        commit id: "B"
+        checkout main
+        merge feature id: "M"
+    MERMAID
+  end
+
+  def feature_branch_source
+    <<~MERMAID
+      gitGraph
+        commit id: "MAIN"
+        branch develop
+        commit id: "DEV"
+        checkout main
+        branch feature
+    MERMAID
+  end
+
   {
     "should_fail_cherry_picking_of_merge_commits_if_t-c9fa8ebb.mmd" =>
       /parent/i,
@@ -58,30 +84,12 @@ RSpec.describe Sirena do
   end
 
   it "records both parents on a merge commit" do
-    source = <<~MERMAID
-      gitGraph
-        commit id: "ZERO"
-        branch feature
-        commit id: "B"
-        checkout main
-        merge feature id: "M"
-    MERMAID
-
-    diagram = Sirena::Parser::GitGraph.new.parse(source)
+    diagram = parse_git_graph(merge_commit_source)
     expect(diagram.commits.last.parent_ids).to eq(%w[ZERO B])
   end
 
   it "creates a branch from the checked-out branch tip" do
-    source = <<~MERMAID
-      gitGraph
-        commit id: "MAIN"
-        branch develop
-        commit id: "DEV"
-        checkout main
-        branch feature
-    MERMAID
-
-    diagram = Sirena::Parser::GitGraph.new.parse(source)
+    diagram = parse_git_graph(feature_branch_source)
     feature = diagram.branches.find { |branch| branch.name == "feature" }
     expect(feature.created_at_commit).to eq("MAIN")
   end

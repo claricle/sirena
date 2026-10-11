@@ -39,24 +39,28 @@ RSpec.describe Sirena::Layout::StateDiagram do
     )
   end
 
+  def within_thresholds?(row)
+    return false if row.dig("summary", "hard_failure")
+
+    center, width, height, area = geometry_metrics(row)
+    center <= 0.08 && [width, height, area].all? { |value| value <= 0.15 }
+  end
+
+  def exact_geometry_evidence(rows)
+    hard_failures = rows.map { |row| row.dig("summary", "hard_failure") }.uniq
+    [hard_failures, rows.map { |row| geometry_metrics(row) }]
+  end
+
   it "places connected state chains within the geometry thresholds" do
     rows = parity_rows(connected_cases)
 
-    expect(rows.map { |row| row.dig("summary", "hard_failure") }.uniq)
-      .to eq([false])
-    expect(rows.map { |row| geometry_metrics(row) }).to all(
-      satisfy do |center, width, height, area|
-        center <= 0.08 && [width, height, area].all? { |value| value <= 0.15 }
-      end,
-    )
+    expect(rows).to all(satisfy { |row| within_thresholds?(row) })
   end
 
   it "matches plain nested-composite geometry in every duplicate row" do
     rows = parity_rows(nested_cases)
 
-    expect(rows.map { |row| row.dig("summary", "hard_failure") }.uniq)
-      .to eq([false])
-    expect(rows.map { |row| geometry_metrics(row) })
-      .to eq(Array.new(nested_cases.length) { [0.0, 0.0, 0.0, 0.0] })
+    expected_metrics = Array.new(nested_cases.length) { [0.0, 0.0, 0.0, 0.0] }
+    expect(exact_geometry_evidence(rows)).to eq([[false], expected_metrics])
   end
 end

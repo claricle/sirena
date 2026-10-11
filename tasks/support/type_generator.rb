@@ -203,14 +203,16 @@ module Sirena
       snapshots = files.keys.to_h do |relative|
         [relative, snapshot(relative)]
       end
-      files.each do |relative, content|
-        absolute = File.join(@root, relative)
-        FileUtils.mkdir_p(File.dirname(absolute))
-        File.write(absolute, content)
-      end
+      files.each { |relative, content| write_file(relative, content) }
     rescue SystemCallError, IOError => e
       restore_files(snapshots)
       raise Error, "could not write scaffold: #{e.message}"
+    end
+
+    def write_file(relative, content)
+      absolute = File.join(@root, relative)
+      FileUtils.mkdir_p(File.dirname(absolute))
+      File.write(absolute, content)
     end
 
     def snapshot(relative)
