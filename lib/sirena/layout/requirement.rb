@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "elk_placement"
 require_relative "../diagram/requirement"
 require_relative "../notation/mermaid/ir_adapters/requirement"
 
@@ -122,6 +123,10 @@ module Sirena
         attribute :edges, Edge, collection: true, default: -> { [] }
       end
 
+      # :grid (the default) or :elk. The explicit switch lets Foundation 14
+      # ratchet ELK geometry before it becomes the default.
+      attr_accessor :placement
+
       # Converts a requirement diagram to a positioned layout structure.
       #
       # @param diagram [Diagram::Requirement] the requirement diagram to
@@ -129,12 +134,100 @@ module Sirena
       # @return [Hash] positioned layout hash
       def build_graph(diagram)
         diagram = semantic_diagram(ir_graph(diagram))
+        return elk_graph_result(diagram) if placement == :elk
+
         nodes_layout = calculate_node_positions(diagram)
         relationships_layout = calculate_relationships(diagram, nodes_layout)
         graph_result(nodes_layout, relationships_layout)
       end
 
       private
+
+      def elk_graph_result(diagram)
+        graph = elk_input(diagram)
+        return graph_result(empty_node_positions, []) if graph[:children].empty?
+
+        ElkPlacement.apply(graph)
+        nodes = elk_node_positions(graph[:children])
+        relationships = calculate_relationships(diagram, nodes)
+        relationships = apply_elk_routes(relationships, graph[:edges])
+        graph_result(nodes, relationships)
+      end
+
+      def elk_input(diagram)
+        nodes = diagram_nodes(diagram).map { |node| size_node(node) }
+        {
+          children: nodes.map { |node| node.merge(id: node[:name]) },
+          edges: elk_edges(diagram, nodes),
+          layoutOptions: elk_layout_options,
+        }
+      end
+
+      def elk_edges(diagram, nodes)
+        names = nodes.map { |node| node[:name] }
+        diagram.relationships.each_with_index.filter_map do |rel, index|
+          next unless names.include?(rel.source)
+          next unless names.include?(rel.target)
+
+          {
+            id: "relationship_#{index}",
+            sources: [rel.source], targets: [rel.target]
+          }
+        end
+      end
+
+      def elk_layout_options
+        {
+          ElkOptions::ALGORITHM => ALGORITHM_LAYERED,
+          ElkOptions::DIRECTION => DIRECTION_DOWN,
+          ElkOptions::NODE_NODE_SPACING => NODE_SEPARATION,
+          ElkOptions::LAYER_SPACING => RANK_SEPARATION,
+        }
+      end
+
+      def elk_node_positions(children)
+        positioned = { requirements: {}, elements: {} }
+        shifted = children.map { |node| shift_elk_node(node) }
+        shifted.each { |node| store_positioned_node(positioned, node) }
+        positioned.merge(elk_canvas(shifted))
+      end
+
+      def shift_elk_node(node)
+        node.merge(x: node[:x] + CANVAS_MARGIN, y: node[:y] + CANVAS_MARGIN)
+      end
+
+      def store_positioned_node(positioned, node)
+        bucket = node[:requirement] ? :requirements : :elements
+        positioned[bucket][node[:name]] = node
+      end
+
+      def elk_canvas(nodes)
+        {
+          width: nodes.map { |node| node[:x] + node[:width] }.max +
+            CANVAS_MARGIN,
+          height: nodes.map { |node| node[:y] + node[:height] }.max +
+            CANVAS_MARGIN,
+        }
+      end
+
+      def apply_elk_routes(relationships, edges)
+        routes = edges.group_by { |edge| route_key(edge) }
+        relationships.map do |relationship|
+          apply_elk_route(relationship, routes)
+        end
+      end
+
+      def route_key(edge)
+        [edge[:sources]&.first, edge[:targets]&.first]
+      end
+
+      def apply_elk_route(relationship, routes)
+        key = [relationship[:source], relationship[:target]]
+        section = routes[key]&.shift&.dig(:sections, 0)
+        return relationship unless section
+
+        relationship.merge(section: section)
+      end
 
       def graph_result(nodes_layout, relationships_layout)
         {
@@ -364,11 +457,54 @@ module Sirena
       end
 
       def typed_relationship(relationship, index)
+        return typed_routed_relationship(relationship, index) if
+          relationship[:section]
+
         points = relationship_points(relationship)
         start_point, end_point = points
         bends = relationship_bends(start_point, end_point)
         decoration = relationship_label(relationship, start_point, end_point)
         relationship_edge(relationship, index, points, bends, decoration)
+      end
+
+      def typed_routed_relationship(relationship, index)
+        section = routed_section(relationship[:section])
+        decoration = relationship_label(
+          relationship, section.start_point, section.end_point
+        )
+        routed_relationship_edge(relationship, index, section, decoration)
+      end
+
+      def routed_relationship_edge(relationship, index, section, decoration)
+        label, background = decoration
+        Edge.new(
+          id: "relationship_#{index}", source: relationship[:source],
+          target: relationship[:target], sections: [section],
+          labels: [label].compact, label_background: background,
+          path: routed_path(section)
+        )
+      end
+
+      def routed_section(section)
+        Section.new(
+          start_point: routed_point(section[:startPoint]),
+          end_point: routed_point(section[:endPoint]),
+          bend_points: Array(section[:bendPoints]).map do |point|
+            routed_point(point)
+          end,
+        )
+      end
+
+      def routed_point(point)
+        Point.new(x: point[:x] + CANVAS_MARGIN,
+                  y: point[:y] + CANVAS_MARGIN)
+      end
+
+      def routed_path(section)
+        points = [section.start_point, *section.bend_points, section.end_point]
+        head, *tail = points
+        ["M #{head.x} #{head.y}",
+         *tail.map { |point| "L #{point.x} #{point.y}" }].join(" ")
       end
 
       def relationship_points(relationship)

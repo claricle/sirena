@@ -6,8 +6,8 @@ require "sirena"
 # layout edit stands behind it. Specs build instances and register them
 # inside an isolated registry.
 module FakeNotation
-  # What a fake notation's transform hands the renderer: a Hash, which
-  # Engine#layout_graph passes through untouched.
+  # What a fake notation's transform hands the renderer: a Hash, passed
+  # through by Engine without interpretation.
   class Layout
     def call(diagram, **)
       diagram

@@ -36,7 +36,9 @@ module Sirena
 
       EXTRA_COLORS.each { |name| attribute name, :string }
 
-      PALETTES = %i[flow xy timeline_fill timeline_text timeline_rule].freeze
+      PALETTES = %i[
+        flow pie radar xy timeline_fill timeline_text timeline_rule
+      ].freeze
 
       PALETTES.each do |name|
         attribute :"#{name}_palette", :string, collection: true

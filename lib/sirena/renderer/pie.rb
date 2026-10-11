@@ -20,13 +20,6 @@ module Sirena
     #   renderer = Pie.new
     #   svg = renderer.render(pie_diagram)
     class Pie < Base
-      # Default color palette for slices
-      DEFAULT_COLORS = [
-        "#4472C4", "#ED7D31", "#A5A5A5", "#FFC000",
-        "#5B9BD5", "#70AD47", "#264478", "#9E480E",
-        "#636363", "#997300", "#255E91", "#43682B"
-      ].freeze
-
       # Renders a pie chart diagram to SVG.
       #
       # @param graph [Hash] the pie chart graph structure from transform
@@ -119,14 +112,7 @@ module Sirena
       end
 
       def get_slice_color(index)
-        # Use theme colors if available, otherwise use default palette
-        if theme && theme.colors
-          # Try to get pie-specific colors from theme
-          color_key = :"pie_slice_#{index}"
-          theme_color(color_key) || DEFAULT_COLORS[index % DEFAULT_COLORS.length]
-        else
-          DEFAULT_COLORS[index % DEFAULT_COLORS.length]
-        end
+        theme.colors.palette(:pie, index)
       end
     end
   end

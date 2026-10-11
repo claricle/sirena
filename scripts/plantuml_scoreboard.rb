@@ -16,6 +16,9 @@ module PlantumlScoreboard
   SCOREBOARD_PATH = File.join(ROOT, "scoreboard/plantuml.json")
   CASE_TIMEOUT = 10
   MEASURED = %w[cases oracle_valid passing pass_rate status].freeze
+  VERDICTS = %w[valid rejected].freeze
+
+  class VerdictError < StandardError; end
 
   module_function
 
@@ -30,8 +33,41 @@ module PlantumlScoreboard
   end
 
   def verdicts
-    YAML.load_file(VERDICTS_PATH).fetch("verdicts")
-      .to_h { |record| [record.fetch("id"), record.fetch("verdict")] }
+    records = YAML.load_file(VERDICTS_PATH).fetch("verdicts")
+    verdict_map(records, corpus_case_ids)
+  end
+
+  def corpus_case_ids
+    Dir.glob(File.join(CORPUS_ROOT, "*", "*.puml")).map do |path|
+      type = File.basename(File.dirname(path))
+      "#{type}/#{File.basename(path, '.puml')}"
+    end.sort
+  end
+
+  def verdict_map(records, case_ids)
+    ids = records.map { |record| record.fetch("id") }
+    problems = identity_problems(ids, case_ids) + state_problems(records)
+    raise VerdictError, problems.join("; ") unless problems.empty?
+
+    records.to_h { |record| [record.fetch("id"), record.fetch("verdict")] }
+  end
+
+  def identity_problems(ids, case_ids)
+    duplicates = ids.tally.select { |_id, count| count > 1 }.keys
+    [problem("duplicate", duplicates),
+     problem("missing", case_ids - ids),
+     problem("extra", ids.uniq - case_ids)].compact
+  end
+
+  def state_problems(records)
+    unknown = records.filter_map do |record|
+      record.fetch("id") unless VERDICTS.include?(record.fetch("verdict"))
+    end
+    [problem("unknown", unknown)].compact
+  end
+
+  def problem(kind, ids)
+    "#{kind} verdict IDs: #{ids.sort.join(', ')}" unless ids.empty?
   end
 
   def renders?(source)

@@ -52,7 +52,7 @@ rows:
 - file: spec/sirena/exhaustion_errors_spec.rb
   count: 3
 - file: spec/sirena/layout/base_call_spec.rb
-  count: 4
+  count: 2
 - file: spec/sirena/layout/er_diagram_spec.rb
   count: 6
 - file: spec/sirena/layout/flowchart_spec.rb

@@ -1,5 +1,0 @@
----
-cop: Style/SafeNavigation
-rows:
-- file: lib/sirena/renderer/pie.rb
-  count: 1

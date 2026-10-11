@@ -233,10 +233,10 @@ RSpec.describe Sirena::Layout::StateDiagram, :aggregate_failures do
       expect(elk).not_to eq(grid)
     end
 
-    it "retains the explicit ELK error for an unsupported direction" do
+    it "lets Engine select ELK for an acyclic RIGHT diagram" do
       source = engine_source.sub("direction TB", "direction LR")
-      expect { Sirena::Engine.new.render(source, layout_engine: :elk) }
-        .to raise_error(Sirena::Layout::LayoutError, /direction RIGHT/)
+      elk = Sirena::Engine.new.render(source, layout_engine: :elk)
+      expect(elk).not_to eq(Sirena::Engine.new.render(source))
     end
 
     # A REGRESSION GUARD for pre-existing transform behaviour. The branch

@@ -23,10 +23,15 @@ RSpec.describe Sirena::Layout::C4 do
     [engine.render(source, layout_engine: :elk), engine.render(source)]
   end
 
-  def expect_right_error(level)
-    graph = layout.build_graph(diagram(level: level, elements: [element("a")]))
-    expect { layout.send(:placer).apply(graph) }
-      .to raise_error(Sirena::Layout::LayoutError, /direction RIGHT/)
+  def right_positions(level)
+    relation = Sirena::Diagram::C4Relationship.new(
+      from_id: "a", to_id: "b", label: "uses",
+    )
+    input = diagram(level: level, elements: [element("a"), element("b")],
+                    relationships: [relation])
+    graph = layout.build_graph(input)
+    layout.send(:placer).apply(graph)
+    graph[:children].map { |node| node[:x] }
   end
 
   def element(id, type: "System", boundary_id: nil)
@@ -145,9 +150,10 @@ RSpec.describe Sirena::Layout::C4 do
     expect(scenes).to all(satisfy { |elk, grid| elk != grid })
   end
 
-  it "retains explicit RIGHT errors for Component and Code" do
+  it "lays out Component and Code from left to right with ELK" do
     layout.placement = :elk
-    %w[Component Code].each { |level| expect_right_error(level) }
+    positions = %w[Component Code].map { |level| right_positions(level) }
+    expect(positions).to all(satisfy { |left, right| left < right })
   end
 
   it "lays out direct graph IR byte-identically to the private diagram" do

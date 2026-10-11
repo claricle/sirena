@@ -8,7 +8,9 @@ RSpec.describe Sirena::Theme::Completion do
 
   let(:default) { Sirena::Theme::Registry.get(:default) }
   let(:default_firsts) do
-    %i[flow xy timeline_fill].map { |name| default.colors.palette(name, 0) }
+    %i[flow pie radar xy timeline_fill].map do |name|
+      default.colors.palette(name, 0)
+    end
   end
   let(:partial) do
     Sirena::Theme.new(name: "mine", colors: { background: "#101010" })
@@ -48,7 +50,7 @@ RSpec.describe Sirena::Theme::Completion do
       fills.include?(colour)
     end
 
-    expect(drawn).to eq([true, true, true])
+    expect(drawn).to eq([true, true, true, true, true])
   end
 
   it "uses the default theme when there is none" do

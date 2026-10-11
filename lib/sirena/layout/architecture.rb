@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "elk_placement"
 require_relative "../diagram/architecture"
 require_relative "../notation/mermaid/ir_adapters/architecture"
 require_relative "../renderer/architecture_edge_router"
@@ -98,6 +99,14 @@ module Sirena
         attribute :children, Node, collection: true, default: -> { [] }
         attribute :edges, Edge, collection: true, default: -> { [] }
       end
+
+      ElkPositions = Data.define(:services, :junctions, :groups)
+      private_constant :ElkPositions
+
+      # :grid (the byte-compatible default) or :elk. The explicit switch
+      # lets the parity ratchet measure real elkrb output before it becomes
+      # the default.
+      attr_accessor :placement
 
       # Converts an architecture diagram to a positioned layout structure
       #
@@ -251,13 +260,268 @@ module Sirena
       end
 
       def scene(diagram)
+        return elk_scene(diagram) if placement == :elk
+
         graph = build_graph(diagram)
         routed = route_edges(graph)
+        positioned_scene(graph, routed)
+      end
+
+      def positioned_scene(graph, routed)
         width, height = scene_dimensions(graph, routed)
         Scene.new(
           width: width, height: height, view_box: "0 0 #{width} #{height}",
           children: typed_nodes(graph), edges: typed_edges(routed)
         )
+      end
+
+      def elk_scene(source)
+        diagram = semantic_diagram(ir_graph(source))
+        elk_graph = build_elk_graph(diagram)
+        ElkPlacement.apply(elk_graph)
+        graph = positioned_elk_graph(diagram, elk_graph)
+        routed = elk_routed_edges(diagram, elk_graph, graph)
+        positioned_scene(graph, routed)
+      end
+
+      def elk_routed_edges(diagram, elk_graph, graph)
+        return routed_elk_edges(elk_graph) if diagram.groups.empty?
+
+        route_edges(graph)
+      end
+
+      def build_elk_graph(diagram)
+        {
+          id: diagram.id || "architecture",
+          children: elk_children(diagram),
+          edges: elk_root_edges(diagram),
+          layoutOptions: elk_layout_options,
+        }
+      end
+
+      def elk_root_edges(diagram)
+        return [] unless diagram.groups.empty?
+
+        ids = diagram.services.map(&:id) + diagram.junctions.map(&:id)
+        elk_edges(diagram.edges, ids.to_h { |id| [id, true] })
+      end
+
+      def elk_layout_options
+        {
+          ElkOptions::ALGORITHM => ALGORITHM_LAYERED,
+          ElkOptions::DIRECTION => DIRECTION_DOWN,
+          ElkOptions::NODE_NODE_SPACING => DEFAULT_SPACING,
+          ElkOptions::LAYER_SPACING => DEFAULT_SPACING,
+        }
+      end
+
+      def elk_children(diagram, parent_id = nil)
+        groups = elk_children_for(diagram.groups, :parent_id, parent_id)
+        services = elk_children_for(diagram.services, :group_id, parent_id)
+        junctions = elk_children_for(diagram.junctions, :group_id, parent_id)
+        groups.map { |group| elk_group_node(group, diagram) } +
+          elk_service_nodes(services) + elk_junction_nodes(junctions)
+      end
+
+      def elk_children_for(records, association, parent_id)
+        records.select do |record|
+          record.public_send(association) == parent_id
+        end
+      end
+
+      def elk_group_node(group, diagram)
+        {
+          id: group.id, width: EMPTY_GROUP_SIZE, height: EMPTY_GROUP_SIZE,
+          children: elk_children(diagram, group.id), edges: [],
+          metadata: { kind: :group, model: group }
+        }
+      end
+
+      def elk_service_nodes(services)
+        services.map do |service|
+          dimensions = calculate_service_dimensions(service)
+          { id: service.id, **dimensions,
+            metadata: { kind: :service, model: service } }
+        end
+      end
+
+      def elk_junction_nodes(junctions)
+        junctions.map do |junction|
+          { id: junction.id, width: DEFAULT_JUNCTION_SIZE,
+            height: DEFAULT_JUNCTION_SIZE,
+            metadata: { kind: :junction, model: junction } }
+        end
+      end
+
+      def elk_edges(edges, node_ids)
+        edges.filter_map.with_index do |edge, index|
+          next unless node_ids[edge.from_id] && node_ids[edge.to_id]
+
+          { id: "edge_#{index}", sources: [edge.from_id],
+            targets: [edge.to_id], metadata: { edge: edge } }
+        end
+      end
+
+      def positioned_elk_graph(diagram, elk_graph)
+        positions = ElkPositions.new(
+          services: {}, junctions: {}, groups: {},
+        )
+        collect_elk_positions(elk_graph.fetch(:children), positions)
+        normalize_elk_group_bounds!(diagram, positions)
+        positioned_elk_result(diagram, positions)
+      end
+
+      def positioned_elk_result(diagram, positions)
+        {
+          services: positions.services, junctions: positions.junctions,
+          groups: positions.groups,
+          edges: position_edges(diagram, positioned_elk_nodes(positions)),
+          width: calculate_total_width(*positions.to_h.values),
+          height: calculate_total_height(*positions.to_h.values)
+        }
+      end
+
+      def positioned_elk_nodes(positions)
+        positions.services.merge(positions.junctions)
+      end
+
+      def collect_elk_positions(nodes, positions, parent_x = 0, parent_y = 0)
+        nodes.each do |node|
+          x_coord = parent_x + node.fetch(:x)
+          y_coord = parent_y + node.fetch(:y)
+          collect_elk_node(node, x_coord, y_coord, positions)
+          collect_elk_positions(
+            Array(node[:children]), positions, x_coord, y_coord
+          )
+        end
+      end
+
+      def collect_elk_node(node, x_coord, y_coord, positions)
+        metadata = node.fetch(:metadata)
+        model = metadata.fetch(:model)
+        target = {
+          service: positions.services,
+          junction: positions.junctions,
+          group: positions.groups,
+        }
+          .fetch(metadata.fetch(:kind))
+        target[model.id] = positioned_elk_node(node, x_coord, y_coord, model)
+      end
+
+      def positioned_elk_node(node, x_coord, y_coord, model)
+        kind = node.dig(:metadata, :kind)
+        height = node.fetch(:height)
+        if kind == :group && Array(node[:children]).any?
+          height += GROUP_LABEL_ALLOWANCE
+        end
+        {
+          kind => model, x: x_coord, y: y_coord,
+          width: node.fetch(:width), height: node.fetch(:height),
+          group_id: model.respond_to?(:group_id) ? model.group_id || :root : nil
+        }.merge(height: height)
+      end
+
+      def normalize_elk_group_bounds!(diagram, positions)
+        deepest_groups_first(diagram.groups).each do |group|
+          normalize_elk_group!(diagram, group, positions)
+        end
+        pack_elk_siblings!(diagram, nil, positions)
+      end
+
+      def normalize_elk_group!(diagram, group, positions)
+        pack_elk_siblings!(diagram, group.id, positions)
+        bounds = positions.groups.fetch(group.id)
+        members = elk_direct_members(diagram, group.id, positions)
+        return if members.empty?
+
+        resize_elk_group!(bounds, members)
+      end
+
+      def resize_elk_group!(bounds, members)
+        width = elk_group_span(bounds, members, :x, :width)
+        height = elk_group_height(bounds, members)
+        bounds[:width] = [bounds[:width], width].max
+        bounds[:height] = [bounds[:height], height].max
+      end
+
+      def elk_direct_members(diagram, parent_id, positions)
+        group_id = parent_id || :root
+        elk_member_nodes(positions, group_id) +
+          elk_child_groups(diagram, parent_id, positions.groups)
+      end
+
+      def elk_member_nodes(positions, group_id)
+        [positions.services, positions.junctions].flat_map do |nodes|
+          nodes.values.select { |node| node[:group_id] == group_id }
+        end
+      end
+
+      def elk_child_groups(diagram, parent_id, groups)
+        diagram.groups.filter_map do |child|
+          groups[child.id] if child.parent_id == parent_id
+        end
+      end
+
+      def pack_elk_siblings!(diagram, parent_id, positions)
+        siblings = elk_direct_members(diagram, parent_id, positions)
+          .sort_by { |node| node[:x] }
+        cursor = nil
+        siblings.each do |node|
+          shift = cursor ? [cursor - node[:x], 0].max : 0
+          shift_elk_component!(diagram, node, shift, positions)
+          cursor = node[:x] + node[:width] + DEFAULT_SPACING
+        end
+      end
+
+      def shift_elk_component!(diagram, node, shift, positions)
+        return if shift.zero?
+
+        if node[:group]
+          shift_elk_group!(diagram, node, shift, positions)
+        else
+          node[:x] += shift
+        end
+      end
+
+      def shift_elk_group!(diagram, node, shift, positions)
+        ids = descendant_group_ids(diagram, node[:group].id)
+        positions.groups.slice(*ids).each_value do |group|
+          group[:x] += shift
+        end
+        positioned_elk_nodes(positions).each_value do |member|
+          shift_elk_member!(member, ids, shift)
+        end
+      end
+
+      def shift_elk_member!(member, group_ids, shift)
+        member[:x] += shift if group_ids.include?(member[:group_id])
+      end
+
+      def elk_group_span(group, members, start, size)
+        members.map { |member| member[start] + member[size] }.max - group[start]
+      end
+
+      def elk_group_height(group, members)
+        bottoms = members.map do |member|
+          allowance = member[:service] ? SERVICE_LABEL_OFFSET : 0
+          member[:y] + member[:height] + allowance
+        end
+        bottoms.max - group[:y]
+      end
+
+      def routed_elk_edges(elk_graph)
+        elk_graph.fetch(:edges).filter_map do |edge|
+          section = Array(edge[:sections]).first
+          next unless section
+
+          { edge: edge.dig(:metadata, :edge),
+            points: elk_section_points(section) }
+        end
+      end
+
+      def elk_section_points(section)
+        [section.fetch(:startPoint), *Array(section[:bendPoints]),
+         section.fetch(:endPoint)]
       end
 
       def typed_nodes(graph)

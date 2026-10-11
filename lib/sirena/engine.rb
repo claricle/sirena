@@ -113,9 +113,10 @@ module Sirena
       theme, today, layout_engine = render_settings(options)
       log "Starting render pipeline..."
       parsed = parse_source(resolve_notation(source, options), source)
-      graph = transform_diagram(parsed.diagram, parsed.transform, today, theme,
-                                layout_engine)
-      document = render_svg(layout_graph(graph), parsed.renderer, theme)
+      layout_result = transform_diagram(
+        parsed.diagram, parsed.transform, today, theme, layout_engine
+      )
+      document = render_svg(layout_result, parsed.renderer, theme)
       serialize(document)
     end
 
@@ -220,38 +221,19 @@ module Sirena
       layout.placement = layout_engine
     end
 
-    # Computes layout for the layout result.
+    # Renders the layout result to an SVG document.
     #
-    # Only a legacy graph goes through Layout::Grid, which is temporary;
-    # see its header. A Scene is already positioned and Grid must not
-    # touch it. Unwrap before Grid, and hand the renderer the graph.
-    #
-    # @param result [Layout::Scene, Layout::Legacy] layout result
-    # @return [Layout::Scene, Hash] what the renderer takes
-    def layout_graph(result)
-      log "Computing layout..."
-      unless result.is_a?(Layout::Legacy)
-        log "Layout complete"
-        return result
-      end
-
-      graph = Layout::Grid.apply(result.payload)
-
-      log "Layout complete (using fallback positioning)"
-      graph
-    end
-
-    # Renders graph to SVG document.
-    #
-    # @param graph [Layout::Scene, Hash] laid-out graph, as #layout_graph
-    #   returns it -- a Scene for a converted layout, a Hash otherwise
+    # @param layout_result [Object] output produced by the notation's layout
+    #   transform
     # @param renderer_class [Class] renderer class
     # @param theme [Theme] theme to use for rendering
     # @return [Svg::Document] SVG document
-    def render_svg(graph, renderer_class, theme)
+    def render_svg(layout_result, renderer_class, theme)
+      log "Computing layout..."
+      log "Layout complete"
       log "Rendering to SVG..."
       renderer = renderer_class.new(theme: theme)
-      svg = renderer.render(graph)
+      svg = renderer.render(layout_result)
       log "SVG render complete"
       svg
     end

@@ -13,11 +13,6 @@ module Sirena
   module Renderer
     # Emits SVG from final, typed radar-chart geometry.
     class Radar < Base
-      DEFAULT_COLORS = %w[
-        #2563eb #7c3aed #db2777 #ea580c #ca8a04
-        #16a34a #0891b2 #4f46e5 #c026d3 #dc2626
-      ].freeze
-
       # @param scene [Layout::Radar::Scene, Hash] final geometry or released
       #   positioned-Hash input
       # @return [Svg::Document] rendered SVG document
@@ -160,7 +155,7 @@ module Sirena
       end
 
       def curve_color(index)
-        DEFAULT_COLORS[index % DEFAULT_COLORS.length]
+        theme.colors.palette(:radar, index)
       end
 
       def number_string(value)
