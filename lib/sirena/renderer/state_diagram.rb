@@ -77,7 +77,7 @@ module Sirena
         group.children << Svg::Path.new.tap do |path|
           path.d = calculate_transition_path(source, target, edge)
           path.fill = "none"
-          path.stroke = "#000000"
+          path.stroke = theme_color(:edge_stroke)
           path.stroke_width = "2"
           path.marker_end = "url(#arrowhead)"
         end
@@ -94,7 +94,7 @@ module Sirena
           text.x = label.x
           text.y = label.y
           text.content = label.text
-          text.fill = "#000000"
+          text.fill = theme_color(:label_text)
           text.font_family = "Arial, sans-serif"
           text.font_size = formatted_number(label.font_size)
           text.text_anchor = "middle"
@@ -244,10 +244,14 @@ module Sirena
           rect.height = height
           rect.rx = 10
           rect.ry = 10
-          rect.fill = "#ffffff"
-          rect.stroke = "#000000"
+          apply_normal_state_style(rect)
           rect.stroke_width = "2"
         end
+      end
+
+      def apply_normal_state_style(rect)
+        rect.fill = theme_color(:node_fill)
+        rect.stroke = theme_color(:node_stroke)
       end
 
       def start_state_shape(state)
@@ -255,7 +259,7 @@ module Sirena
           circle.cx = state.center_x
           circle.cy = state.center_y
           circle.r = state.radius
-          circle.fill = "#000000"
+          circle.fill = theme_color(:node_stroke)
           circle.stroke = "none"
         end
       end
@@ -264,7 +268,7 @@ module Sirena
         Svg::Group.new.tap do |group|
           group.children << state_circle(state, state.radius, "none", "2")
           group.children << state_circle(
-            state, state.inner_radius, "#000000", nil
+            state, state.inner_radius, theme_color(:node_stroke), nil
           )
         end
       end
@@ -272,8 +276,8 @@ module Sirena
       def choice_state_shape(state)
         Svg::Polygon.new.tap do |polygon|
           polygon.points = state.shape_points
-          polygon.fill = "#ffffff"
-          polygon.stroke = "#000000"
+          polygon.fill = theme_color(:node_fill)
+          polygon.stroke = theme_color(:node_stroke)
           polygon.stroke_width = "2"
         end
       end
@@ -284,7 +288,7 @@ module Sirena
           rect.y = state.shape_y
           rect.width = state.width
           rect.height = state.shape_height
-          rect.fill = "#000000"
+          rect.fill = theme_color(:node_stroke)
           rect.stroke = "none"
         end
       end
@@ -295,7 +299,7 @@ module Sirena
           circle.cy = state.center_y
           circle.r = radius
           circle.fill = fill
-          circle.stroke = fill == "none" ? "#000000" : "none"
+          circle.stroke = fill == "none" ? theme_color(:node_stroke) : "none"
           circle.stroke_width = stroke_width
         end
       end
@@ -305,7 +309,7 @@ module Sirena
           text.x = label.x
           text.y = label.y
           text.content = label.text
-          text.fill = "#000000"
+          text.fill = theme_color(:label_text)
           text.font_family = "Arial, sans-serif"
           text.font_size = formatted_number(label.font_size)
           text.text_anchor = "middle"
