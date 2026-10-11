@@ -17,7 +17,7 @@ RSpec.describe Sirena::Renderer::Architecture do
   let(:expected_builtin_paints) do
     paint = {
       group_fill: "#f0f0f0", group_stroke: "#999",
-      group_label: "#333", neutral_text: ["#666"],
+      group_label: "#333", neutral_text: ["#666"]
     }
     %w[default light dark high_contrast].to_h { |name| [name, paint] }
   end
@@ -26,7 +26,7 @@ RSpec.describe Sirena::Renderer::Architecture do
       name: "custom",
       colors: Sirena::Theme::ColorPalette.new(
         group_background: "#123456", architecture_group_border: "#654321",
-        architecture_group_label: "#fedcba", edge_color: "#abcdef",
+        architecture_group_label: "#fedcba", edge_color: "#abcdef"
       ),
     )
   end
@@ -52,14 +52,14 @@ RSpec.describe Sirena::Renderer::Architecture do
     expect(paints(render_with(custom_theme)))
       .to eq(
         group_fill: "#123456", group_stroke: "#654321",
-        group_label: "#fedcba", neutral_text: ["#abcdef"],
+        group_label: "#fedcba", neutral_text: ["#abcdef"]
       )
   end
 
   it "does not inject neutral paint into a scalar-empty partial theme" do
     expect(paints(render_with(partial_theme))).to eq(
       group_fill: nil, group_stroke: nil,
-      group_label: nil, neutral_text: [nil],
+      group_label: nil, neutral_text: [nil]
     )
   end
 

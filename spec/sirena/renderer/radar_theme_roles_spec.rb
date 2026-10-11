@@ -102,13 +102,12 @@ RSpec.describe Sirena::Renderer::Radar do
     theme = Sirena::Theme.new(
       colors: {
         radar_grid_line: "#123456", radar_axis_line: "#abcdef",
-        radar_palette: ["#654321"],
+        radar_palette: ["#654321"]
       },
     )
 
-    expect(paints(document(theme)).first(2)).to eq([
-      ["#123456"], ["#abcdef"]
-    ])
+    expect(paints(document(theme)).first(2))
+      .to eq([["#123456"], ["#abcdef"]])
   end
 
   def document_for(input, theme)
