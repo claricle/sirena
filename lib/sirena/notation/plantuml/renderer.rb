@@ -195,21 +195,43 @@ module Sirena
         def render_box(box, document)
           group = Svg::Group.new(id: box_id(box))
           group << box_rectangle(box)
-          box.separators.each { |separator| group << separator_line(separator) }
+          unless box.kind == "member_note"
+            box.separators.each do |separator|
+              group << separator_line(separator)
+            end
+          end
           box.texts.each { |text| group << text_element(text) }
           document << group
         end
 
         def box_id(box)
-          box.kind == "note" ? box.id : "class-#{box.id}"
+          box.kind.end_with?("note") ? box.id : "class-#{box.id}"
         end
 
         def box_rectangle(box)
+          return member_note_shape(box) if box.kind == "member_note"
+
           Svg::Rect.new.tap do |rectangle|
             apply_box_geometry(rectangle, box)
             apply_box_style(rectangle)
             rectangle.fill = note_fill(box) if box.kind == "note"
           end
+        end
+
+        def member_note_shape(box)
+          pointer = box.separators.first
+          left, top = box.x, box.y
+          right, bottom = left + box.width, top + box.height
+          middle = top + (box.height / 2)
+          fold = 10.0
+          outline = [
+            "M #{left} #{top}", "L #{left} #{middle - 4}",
+            "L #{pointer.x1} #{pointer.y1}", "L #{left} #{middle + 4}",
+            "L #{left} #{bottom}", "L #{right} #{bottom}",
+            "L #{right} #{top + fold}", "L #{right - fold} #{top}", "Z",
+          ].join(" ")
+          Svg::Path.new(d: outline, fill: note_fill(box), stroke: node_stroke,
+                        stroke_width: stroke_width)
         end
 
         def apply_box_geometry(rectangle, box)
@@ -270,13 +292,17 @@ module Sirena
         end
 
         def font_family(role)
-          return "monospace" if role.start_with?("member")
+          sans_members = %w[member_prefix member_note]
+          if role.start_with?("member") && !sans_members.include?(role)
+            return "monospace"
+          end
 
           theme_typography(:font_family) || "Arial, sans-serif"
         end
 
         def font_size(role)
           normal = theme_typography(:font_size_normal) || 14
+          return (normal.to_f * (13.0 / 14.0)).to_s if role == "member_note"
           return (normal.to_f * 0.85).to_s if role == "kind"
 
           small_roles = %w[multiplicity relation_label]

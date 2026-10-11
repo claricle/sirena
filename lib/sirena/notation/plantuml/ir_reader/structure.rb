@@ -62,6 +62,8 @@ module Sirena
               kind: node.role.to_sym, name: node.label,
               visibility: index.detail(node, "visibility")&.to_sym,
               type: index.detail(node, "type"),
+              type_position: index.detail(node, "type_position")&.to_sym ||
+                :suffix,
               parameters: index.detail(node, "parameters"),
               modifiers: index.details(node, "modifier").map(&:to_sym).freeze
             )
