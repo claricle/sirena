@@ -17,10 +17,10 @@ RSpec.describe Sirena::Layout::ClassCellPlacement do
       .to eq([["A", 50, 50], ["B", 400.0, 50]])
   end
 
-  it "starts the next row one gap below the tallest box of the previous" do
+  it "puts four unrelated classes in one dagre rank, 50 apart" do
     children = [box("A", 100, 80), box("B", 100, 300),
                 box("C", 100, 80), box("D", 100, 80)]
-    expect(placed(children).last).to eq(["D", 50, 400.0])
+    expect(placed(children).last).to eq(["D", 458.0, 8.0])
   end
 
   it "leaves a diagram with a namespace on Grid's cells" do
