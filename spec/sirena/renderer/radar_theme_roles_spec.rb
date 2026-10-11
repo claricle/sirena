@@ -4,6 +4,10 @@ require "spec_helper"
 require "digest"
 
 RSpec.describe Sirena::Renderer::Radar do
+  let(:dark_palette) do
+    %w[#3794ff #858585 #4ec9b0 #f48771 #dcdcaa #89d185 #9cdcfe
+       #969696 #fbbf24 #d4d4d4]
+  end
   let(:source) do
     <<~MERMAID
       radar-beta
@@ -16,7 +20,7 @@ RSpec.describe Sirena::Renderer::Radar do
      ["#2563eb", "#2563eb"]]
   end
   let(:dark_paints) do
-    [["#1e1e1e"], ["#d4d4d4"], ["#2563eb", "#2563eb"]]
+    [["#1e1e1e"], ["#d4d4d4"], ["#3794ff", "#3794ff"]]
   end
   let(:partial_paints) do
     [[nil], [nil], ["#123456", "#123456"]]
@@ -57,13 +61,30 @@ RSpec.describe Sirena::Renderer::Radar do
     expect(signature).to eq(default_signature)
   end
 
-  it "uses dark background and label roles without changing the palette" do
+  it "uses dark background, label roles, and categorical palette" do
     expect(paints(document(:dark))).to eq(dark_paints)
+  end
+
+  it "consumes every dark curve colour in order" do
+    curves = 10.times.map do |index|
+      "  curve c#{index}{#{index + 1}, #{index + 2}, #{index + 3}}"
+    end
+    palette_source = (["radar-beta", "  axis A, B, C"] + curves).join("\n")
+    paths = REXML::XPath.match(document_for(palette_source, :dark), "//path")
+      .select { |path| path.attributes["class"]&.start_with?("radarCurve-") }
+
+    expect(paths.map { |path| [path.attributes["fill"],
+                              path.attributes["stroke"]] })
+      .to eq(dark_palette.map { |color| [color, color] })
   end
 
   it "leaves unset scalar roles unpainted while retaining a supplied palette" do
     theme = Sirena::Theme.new(colors: { radar_palette: ["#123456"] })
 
     expect(paints(document(theme))).to eq(partial_paints)
+  end
+
+  def document_for(input, theme)
+    REXML::Document.new(Sirena::Engine.new(theme: theme).render(input))
   end
 end
