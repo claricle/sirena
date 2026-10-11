@@ -105,7 +105,7 @@ module Sirena
 
       def tree_node(partition, context, depth)
         value = partition_value(context, partition)
-        return unless value.positive?
+        return if value.negative?
 
         kids = context.fetch(:children).fetch(partition.id, [])
         {
