@@ -888,9 +888,14 @@ module Sirena
 
         # Shape definitions (15+ shapes)
         # Rectangle: [label]
+        # A bare `)` is still a round-node closer in Mermaid's text lexer,
+        # even while a rectangular label is open. Quoting shields it, so
+        # `A[hello ) world]` is invalid but `A["hello ) world"]` renders.
         rule(:shape_rectangle) do
           lbracket.as(:open) >>
-            (rbracket.absent? >> any).repeat.as(:label) >>
+            (
+              quoted_label | ((rbracket | rparen).absent? >> any)
+            ).repeat.as(:label) >>
             rbracket.as(:close)
         end
 
