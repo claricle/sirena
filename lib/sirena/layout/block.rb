@@ -81,17 +81,21 @@ module Sirena
         items = block_items(document)
         @children_by_parent = items.group_by(&:parent_id)
         top_level = @children_by_parent.fetch(nil, [])
-        columns = column_count(document)
-        blocks_layout = calculate_column_layout(top_level, columns)
-        graph(document, top_level, columns, blocks_layout)
+        columns, auto_layout = columns_for(document, top_level)
+        blocks_layout = calculate_column_layout(
+          top_level, columns, auto_layout: auto_layout
+        )
+        graph(document, top_level, columns, blocks_layout, auto_layout)
       end
 
       private
 
-      def graph(document, source_items, columns, blocks)
+      def graph(document, source_items, columns, blocks, auto_layout)
         {
           blocks: blocks,
-          connections: calculate_connections(document.connections, blocks),
+          connections: calculate_connections(
+            document.connections, blocks, auto_layout: auto_layout
+          ),
           source_items: source_items,
           columns: columns,
           width: calculate_total_width(blocks),
@@ -111,7 +115,20 @@ module Sirena
 
       def column_count(document)
         settings = document.items.find { |item| item.role == "layout_settings" }
-        value(settings, "column_count").to_i
+        value(settings, "column_count")&.to_i
+      end
+
+      def columns_for(document, blocks)
+        count = column_count(document)
+        [count || auto_column_count(blocks), count.nil?]
+      end
+
+      def auto_column_count(blocks)
+        [blocks.sum { |block| block_span(block) }, 1].max
+      end
+
+      def block_span(block)
+        [value(block, "column_span").to_i, 1].max
       end
 
       def value(item, dimension)
@@ -261,7 +278,7 @@ module Sirena
         )
       end
 
-      def calculate_column_layout(blocks, columns)
+      def calculate_column_layout(blocks, columns, auto_layout:)
         positioned_blocks = {}
 
         current_row = 0
@@ -270,9 +287,11 @@ module Sirena
         col_widths = Array.new(columns, 0)
 
         blocks.each do |block|
+          block_width = block_span(block)
+
           # Handle space blocks
           if space?(block)
-            current_col += 1
+            current_col += block_width
             if current_col >= columns
               current_col = 0
               current_row += 1
@@ -281,8 +300,9 @@ module Sirena
           end
 
           # Calculate block dimensions
-          dims = calculate_block_dimensions(block)
-          block_width = value(block, "column_span").to_i
+          dims = calculate_block_dimensions(
+            block, auto_layout: auto_layout && !compound?(block)
+          )
 
           # Check if block fits in current row
           if current_col + block_width > columns
@@ -353,7 +373,7 @@ module Sirena
       end
 
       def compound_child_geometry(child, parent, child_x, child_y)
-        dimensions = calculate_block_dimensions(child)
+        dimensions = calculate_block_dimensions(child, auto_layout: false)
         {
           block: child, x: child_x, y: child_y,
           width: dimensions[:width], height: dimensions[:height],
@@ -367,7 +387,7 @@ module Sirena
         layout_compound_children(child, geometry[:x], geometry[:y])
       end
 
-      def calculate_block_dimensions(block)
+      def calculate_block_dimensions(block, auto_layout:)
         if arrow?(block)
           return {
             width: DEFAULT_BLOCK_WIDTH / 2,
@@ -375,14 +395,18 @@ module Sirena
           }
         end
 
-        label = block.label || block.id
+        label = block_label_text(block)
         label_dims = measure_text(label, font_size: normal_font_size)
+        width = label_dims[:width] + (auto_layout ? 8 : 40)
+        height = label_dims[:height] + (auto_layout ? 13 : 30)
+        unless auto_layout
+          width = [width, DEFAULT_BLOCK_WIDTH].max
+          height = [height, DEFAULT_BLOCK_HEIGHT].max
+        end
 
-        # Add padding
-        width = [label_dims[:width] + 40, DEFAULT_BLOCK_WIDTH].max
-        height = [label_dims[:height] + 30, DEFAULT_BLOCK_HEIGHT].max
-
-        return compound_dimensions(block, width, height) if compound?(block)
+        if compound?(block)
+          return compound_dimensions(block, width, height)
+        end
 
         {
           width: width,
@@ -390,9 +414,13 @@ module Sirena
         }
       end
 
+      def block_label_text(block)
+        block.label || block.id
+      end
+
       def compound_dimensions(block, width, height)
         dimensions = children(block).map do |child|
-          calculate_block_dimensions(child)
+          calculate_block_dimensions(child, auto_layout: false)
         end
         {
           width: [width, compound_width(dimensions)].max,
@@ -426,23 +454,45 @@ module Sirena
         row_heights[0...row].compact.sum + (DEFAULT_SPACING * (row + 1))
       end
 
-      def calculate_connections(connections, blocks_layout)
+      def calculate_connections(connections, blocks_layout, auto_layout:)
         connections.filter_map do |connection|
           from_block = blocks_layout[connection.source_id]
           to_block = blocks_layout[connection.target_id]
 
           next unless from_block && to_block
 
+          points = connection_points(from_block, to_block, auto_layout)
           {
             from: connection.source_id,
             to: connection.target_id,
-            from_x: from_block[:x] + (from_block[:width] / 2),
-            from_y: from_block[:y] + from_block[:height],
-            to_x: to_block[:x] + (to_block[:width] / 2),
-            to_y: to_block[:y],
-            connection_type: connection.role,
+            from_x: points[0], from_y: points[1],
+            to_x: points[2], to_y: points[3],
+            connection_type: connection.role
           }
         end
+      end
+
+      def connection_points(from_block, to_block, auto_layout)
+        if auto_layout && same_row?(from_block, to_block)
+          return [
+            from_block[:x] + from_block[:width],
+            from_block[:y] + (from_block[:height] / 2),
+            to_block[:x],
+            to_block[:y] + (to_block[:height] / 2),
+          ]
+        end
+
+        [
+          from_block[:x] + (from_block[:width] / 2),
+          from_block[:y] + from_block[:height],
+          to_block[:x] + (to_block[:width] / 2),
+          to_block[:y],
+        ]
+      end
+
+      def same_row?(from_block, to_block)
+        from_block.key?(:row) && to_block.key?(:row) &&
+          from_block[:row] == to_block[:row]
       end
 
       def calculate_total_width(blocks_layout)

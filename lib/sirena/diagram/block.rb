@@ -62,7 +62,7 @@ module Sirena
 
     # Represents a Mermaid block diagram
     class Block < Base
-      attribute :columns, :integer, default: -> { 1 }
+      attribute :columns, :integer
       attribute :blocks, BlockNode, collection: true, default: -> { [] }
       attribute :connections,
                 BlockConnection,
