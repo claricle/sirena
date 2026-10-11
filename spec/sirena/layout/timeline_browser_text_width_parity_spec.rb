@@ -6,6 +6,11 @@ RSpec.describe Sirena::Layout::Timeline do
   let(:case_id) do
     "timeline/should_handle_a_section_and_task_and_its_events-1afb897a.mmd"
   end
+  let(:result) { parity_result }
+  let(:geometry) { result.geometry }
+  let(:metrics) do
+    geometry.values_at(:worst_e_c, :worst_e_w, :worst_e_h, :worst_e_a)
+  end
 
   def parity_result
     runner = SpecSupport::LayoutParity::CohortRunner.new
@@ -22,11 +27,6 @@ RSpec.describe Sirena::Layout::Timeline do
   end
 
   it "matches every recognized element within subpixel precision" do
-    result = parity_result
-    geometry = result.geometry
-    metrics = geometry.values_at(:worst_e_c, :worst_e_w,
-                                 :worst_e_h, :worst_e_a)
-
     expect([geometry.fetch(:matched), result.invariants, metrics]).to match(
       [7, [], Array.new(4) { be <= 0.0000001 }],
     )

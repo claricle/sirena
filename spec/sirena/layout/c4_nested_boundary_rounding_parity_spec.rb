@@ -14,11 +14,13 @@ RSpec.describe Sirena::Layout::C4 do
     items.flat_map { |item| [item, *flatten(item.children)] }
   end
 
-  it "matches the pinned nested description and boundary widths" do
-    widths = %w[SystemB SystemD SystemG b2 b3].to_h do |id|
+  let(:widths) do
+    %w[SystemB SystemD SystemG b2 b3].to_h do |id|
       [id, nodes.fetch(id).width]
     end
+  end
 
+  it "matches the pinned nested description and boundary widths" do
     expect(widths).to eq(
       "SystemB" => 398.0, "SystemD" => 338.0, "SystemG" => 338.0,
       "b2" => 498.0, "b3" => 438.0

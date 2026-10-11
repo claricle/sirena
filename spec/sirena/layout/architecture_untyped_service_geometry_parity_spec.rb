@@ -3,30 +3,47 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::Architecture do
-  let(:layout) { described_class.new }
-  let(:renderer) { Sirena::Renderer::Architecture.new }
-
-  it "uses Mermaid's notched fallback without changing icon service bounds" do
-    fallback = service_node("architecture-beta\n  service db\n")
-    icon = service_node(
-      "architecture-beta\n  service db(database)[Database]\n",
+  let(:fallback) { service_node("architecture-beta\n  service db\n") }
+  let(:icon) do
+    service_node("architecture-beta\n  service db(database)[Database]\n")
+  end
+  let(:simple) do
+    parity_result(
+      "architecture/should_handle_a_simple_radar_definition-0a5b3a96.mmd",
     )
-
-    expect([fallback.icon, fallback.width, fallback.height])
-      .to eq([nil, 90, 85])
-    expect([icon.icon, icon.width, icon.height])
-      .to eq(["database", 80, 80])
-    expect(renderer.render(scene_for(fallback)).to_xml)
-      .to include("<path", 'stroke-dasharray="8"')
-    expect(renderer.render(scene_for(icon)).to_xml).to include("<rect")
+  end
+  let(:alongside_group) do
+    parity_result("architecture/xss_spec-3828c690.mmd")
   end
 
-  it "matches both pinned no-icon services without structural loss" do
-    simple, alongside_group = parity_results
+  it "uses Mermaid's bounds for a notched fallback service" do
+    expect([fallback.icon, fallback.width, fallback.height])
+      .to eq([nil, 90, 85])
+  end
 
+  it "does not change icon service bounds" do
+    expect([icon.icon, icon.width, icon.height])
+      .to eq(["database", 80, 80])
+  end
+
+  it "renders a notched fallback service as a dashed path" do
+    expect(Sirena::Renderer::Architecture.new.render(scene_for(fallback)).to_xml)
+      .to include("<path", 'stroke-dasharray="8"')
+  end
+
+  it "renders an icon service as a rectangle" do
+    rendered = Sirena::Renderer::Architecture.new.render(scene_for(icon)).to_xml
+
+    expect(rendered).to include("<rect")
+  end
+
+  it "matches the simple pinned no-icon service without structural loss" do
     expect([simple.hard_failure?, simple.geometry.fetch(:matched),
             *geometry_metrics(simple)])
       .to match([false, 1, 0.0, 0.0, 0.0, 0.0])
+  end
+
+  it "matches the grouped pinned no-icon service without structural loss" do
     expect([alongside_group.hard_failure?,
             alongside_group.geometry.fetch(:matched),
             *geometry_metrics(alongside_group)])
@@ -36,7 +53,9 @@ RSpec.describe Sirena::Layout::Architecture do
 
   def service_node(source)
     diagram = Sirena::Notation::Mermaid.parse(source).diagram
-    layout.call(diagram).children.find { |node| node.kind == "service" }
+    described_class.new.call(diagram).children.find do |node|
+      node.kind == "service"
+    end
   end
 
   def scene_for(node)
@@ -44,13 +63,6 @@ RSpec.describe Sirena::Layout::Architecture do
       width: 200, height: 200, view_box: "0 0 200 200",
       children: [node], edges: []
     )
-  end
-
-  def parity_results
-    %w[
-      architecture/should_handle_a_simple_radar_definition-0a5b3a96.mmd
-      architecture/xss_spec-3828c690.mmd
-    ].map { |case_id| parity_result(case_id) }
   end
 
   def parity_result(case_id)
