@@ -4,6 +4,6 @@ architecture-beta
     service db(database)[Database]
     service cache(disk)[Cache]
 
-    frontend L--R backend
-    backend L--R db
-    backend T--B cache
+    frontend:L -- R:backend
+    backend:L -- R:db
+    backend:T -- B:cache
