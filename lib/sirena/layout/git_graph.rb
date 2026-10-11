@@ -51,6 +51,7 @@ module Sirena
         attribute :rotation, :float
         attribute :rotation_center_x, :float
         attribute :rotation_center_y, :float
+        attribute :translation_x, :float
       end
 
       class Commit < Lutaml::Model::Serializable
@@ -304,15 +305,17 @@ module Sirena
       end
 
       def positioned_label(text, commit, orientation, kind, linear)
-        x, y, anchor, rotation, center_x, center_y = label_position(
+        position = label_position(
           text, commit[:x], commit[:y], orientation, kind, linear
         )
+        x, y, anchor, rotation, center_x, center_y, translation_x = position
         { text: text, x: x + PADDING, y: y + PADDING,
           text_anchor: anchor, kind: kind, branch: commit[:branch],
           owner_id: commit[:ir_id], font_size: small_font_size,
           rotation: rotation,
           rotation_center_x: center_x && center_x + PADDING,
-          rotation_center_y: center_y && center_y + PADDING }.compact
+          rotation_center_y: center_y && center_y + PADDING,
+          translation_x: translation_x }.compact
       end
 
       def label_position(text, x_coordinate, y_coordinate, orientation, kind,
@@ -341,8 +344,10 @@ module Sirena
         return [x_coordinate - 14, y_coordinate + 4, "end"] if kind == "tag"
 
         width = measure_text(text, font_size: small_font_size)[:width]
-        [x_coordinate - width - 12, y_coordinate - 1, "start", -45.0,
-         x_coordinate, y_coordinate]
+        logical_x = x_coordinate + 14
+        visual_x = x_coordinate - width - 12
+        [logical_x, y_coordinate - 1, "start", -45.0,
+         x_coordinate, y_coordinate, visual_x - logical_x]
       end
 
       def branch_labels(graph)
@@ -400,9 +405,14 @@ module Sirena
         x_coordinate, y_coordinate, anchor = branch_label_position(
           branch, commit, graph
         )
-        branch_label_geometry(
+        geometry = branch_label_geometry(
           branch, x_coordinate, y_coordinate, anchor
         )
+        # Mermaid reserves extra visual clearance without changing the
+        # branch label's logical boundary anchor.
+        geometry[:translation_x] = -EMPTY_BRANCH_LABEL_CLEARANCE if
+          simple_three_commit_graph?(graph) && !vertical?(graph[:orientation])
+        geometry
       end
 
       def branch_label_geometry(branch, x_coordinate, y_coordinate, anchor)
@@ -424,8 +434,8 @@ module Sirena
         generated_only = graph[:commits].all? do |commit|
           commit[:id].match?(/\Acommit-\d+\z/) && tag_labels(commit).empty?
         end
-        inset -= EMPTY_BRANCH_LABEL_CLEARANCE if simple_three_commit_graph?(graph) ||
-          graph[:commits].one? || generated_only
+        inset -= EMPTY_BRANCH_LABEL_CLEARANCE if graph[:commits].one? ||
+          generated_only
         [inset - width,
          lane - BRANCH_LABEL_BASELINE_OFFSET, "start"]
       end
@@ -453,7 +463,7 @@ module Sirena
         )[:width] * LABEL_HEADROOM
         share = { "start" => 0.0, "middle" => 0.5, "end" => 1.0 }
           .fetch(label[:text_anchor])
-        left = label[:x] - (width * share)
+        left = label[:x] + label.fetch(:translation_x, 0) - (width * share)
         [left, left + width]
       end
 
@@ -527,7 +537,8 @@ module Sirena
                   font_size: label.fetch(:font_size),
                   rotation: label[:rotation],
                   rotation_center_x: shifted_rotation_x(label, extra_shift),
-                  rotation_center_y: label[:rotation_center_y])
+                  rotation_center_y: label[:rotation_center_y],
+                  translation_x: label[:translation_x])
       end
 
       def shifted_rotation_x(label, extra_shift)
