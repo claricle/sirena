@@ -4,31 +4,27 @@ require "date"
 require_relative "../error"
 require_relative "../error/layout_error"
 require_relative "scene"
-require_relative "legacy"
 
 module Sirena
   module Layout
     # Abstract base class for diagram transformers.
     #
-    # Transformers convert typed diagram models into generic graph structures
-    # suitable for layout computation by elkrb. Each diagram type has its own
-    # transformer that maps diagram-specific elements to graph nodes and edges.
+    # Transformers convert typed diagram models into final Scene geometry.
+    # Each diagram type has its own transformer that maps diagram-specific
+    # elements to nodes, edges, and other render-ready shapes.
     #
     # The transformer is also responsible for calculating node dimensions
     # using TextMeasurement and setting appropriate layout options.
     #
     # @example Define a custom transformer
     #   class Flowchart < Layout::Base
-    #     def build_graph(diagram)
-    #       graph = create_graph
-    #       # Add nodes and edges based on diagram structure
-    #       graph
+    #     def scene(diagram)
+    #       Scene.new(...)
     #     end
     #   end
     #
-    # @abstract Subclass and implement #scene (converted) or #build_graph
-    #   (not yet converted). Do not override #call or #to_graph — #call
-    #   runs the validity guard; #to_graph unwraps its legacy result.
+    # @abstract Subclass and implement #scene. Do not override #call or
+    #   #to_graph -- both run the validity guard and apply call context.
     class Base
       # The date a transform treats as "today".
       #
@@ -108,11 +104,9 @@ module Sirena
 
       # Lays out a diagram: the one entry point, for every type.
       #
-      # Runs the validity guard exactly once, then returns a
-      # Layout::Scene when the subclass defines #scene. A subclass that
-      # still defines only #build_graph gets its Hash wrapped in
-      # Layout::Legacy, so the Engine can run Grid on it and on nothing
-      # else. Never override #call: the guard stops running for that type.
+      # Runs the validity guard exactly once, applies per-call context, and
+      # returns the subclass's final Scene. Never override #call: the guard
+      # stops running for that type.
       #
       # @param diagram [Diagram::Base] the diagram model to convert
       # @param theme [Sirena::Theme, nil] theme the renderer will use
@@ -121,41 +115,32 @@ module Sirena
       #   was set). Passing today: here never outlives this call -- reuse
       #   the instance for a second #call and it reverts to whatever
       #   #today= pinned, or the real date if nothing did.
-      # @return [Layout::Scene, Layout::Legacy]
+      # @return [Layout::Scene]
       # @raise [LayoutError] if the diagram fails its own #valid? check
       def call(diagram, theme: nil, today: nil)
         today_before_call = @today
         validate_diagram!(diagram)
         apply_context(theme, today)
-        layout_result(diagram)
+        scene(diagram)
       ensure
         @today = today_before_call if today
       end
 
-      # The graph a #build_graph layout builds, unwrapped. Kept for the
-      # layout specs that inspect the Hash directly.
-      #
-      # @param diagram [Diagram::Base] the diagram model to convert
-      # @return [Hash, Layout::Scene] elkrb graph hash, or the Scene a
-      #   converted layout builds
-      # @raise [LayoutError] if the diagram fails its own #valid? check
-      def to_graph(diagram)
-        result = call(diagram)
-        result.is_a?(Legacy) ? result.payload : result
-      end
+      # Compatibility name retained while callers migrate to #call.
+      alias_method :to_graph, :call
 
-      # Converts a valid diagram model to an elkrb graph structure.
+      # Converts a valid diagram model to final Scene geometry.
       #
       # This method should be overridden by subclasses to implement
-      # diagram-specific graph conversion logic. By the time it runs,
-      # #call has already confirmed `diagram.valid?`.
+      # diagram-specific layout logic. By the time it runs, #call has
+      # already confirmed `diagram.valid?`.
       #
       # @param diagram [Diagram::Base] the diagram model to convert
-      # @return [Hash] elkrb graph hash with nodes and edges
+      # @return [Layout::Scene] render-ready scene geometry
       # @raise [NotImplementedError] if not implemented by subclass
-      def build_graph(diagram)
+      def scene(diagram)
         raise NotImplementedError,
-              "#{self.class} must implement #build_graph(diagram)"
+              "#{self.class} must implement #scene(diagram)"
       end
 
       private
@@ -169,35 +154,11 @@ module Sirena
         @today = today if today
       end
 
-      def layout_result(diagram)
-        return scene(diagram) if converted?
-
-        Legacy.new(build_graph(diagram))
-      end
-
-      # True only when #scene is defined between this layout's own class
-      # and Layout::Base (inclusive), not merely inherited from
-      # Object/Kernel/BasicObject. Do not simplify to `respond_to?(:scene,
-      # true)` or `owner <= Base` -- both misclassify a legacy
-      # (#build_graph-only) layout as converted (Kernel monkeypatch /
-      # mixin-provided #scene respectively).
-      #
-      # A legacy (#build_graph-only) layout has no #scene at all, so
-      # `method(:scene)` itself raises NameError -- an empty rescue lets
-      # that fall through to nil, which #call's `if converted?` guard
-      # treats the same as false.
-      def converted?
-        ancestry = self.class.ancestors
-        ancestry[0..ancestry.index(Base)].include?(method(:scene).owner)
-      rescue NameError
-        # returns nil, the guard at #call treats it same as false
-      end
-
       protected
 
       # The defaulting readers #today and #theme (defined above; #theme
       # sizes text for D10) are also what #call injected. Private so a
-      # layout's own #scene or #build_graph can read them without exposing
+      # layout's own #scene can read them without exposing
       # them on the public interface. Their writers stay public.
       private :today, :theme
 
