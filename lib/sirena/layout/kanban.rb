@@ -21,6 +21,12 @@ module Sirena
       CARD_FONT_SIZE = 16
       EXTRA_LINE_HEIGHT = 24
       CANVAS_PADDING = 40
+      PRIORITY_COLORS = {
+        "Very High" => "red",
+        "High" => "orange",
+        "Low" => "blue",
+        "Very Low" => "lightblue",
+      }.freeze
 
       METADATA_KEYS = {
         "assignee" => :assigned,
@@ -51,6 +57,14 @@ module Sirena
         attribute :wrap_width, :float
       end
 
+      class Accent < Lutaml::Model::Serializable
+        attribute :x1, :float
+        attribute :y1, :float
+        attribute :x2, :float
+        attribute :y2, :float
+        attribute :color, :string
+      end
+
       class Column < Lutaml::Model::Serializable
         attribute :id, :string
         attribute :background, Box
@@ -66,6 +80,7 @@ module Sirena
         attribute :background, Box
         attribute :label, Label
         attribute :metadata, Label, collection: true, default: -> { [] }
+        attribute :accent, Accent
       end
 
       class Scene < Layout::Scene
@@ -199,7 +214,20 @@ module Sirena
             position, card[:width], card[:height], radius: 6, style: "card"
           ),
           label: card_label(card, position),
-          metadata: metadata_labels(card, position)
+          metadata: metadata_labels(card, position),
+          accent: priority_accent(card, position),
+        )
+      end
+
+      def priority_accent(card, position)
+        color = PRIORITY_COLORS[priority_value(card)]
+        return unless color
+
+        Accent.new(
+          x1: position[0] + 2, y1: position[1] + 2,
+          x2: position[0] + 2,
+          y2: position[1] + card[:height] - 2,
+          color: color,
         )
       end
 
@@ -222,12 +250,37 @@ module Sirena
       end
 
       def metadata_labels(card, position)
-        return [] unless card[:has_metadata]
+        metadata = display_metadata(card)
+        return [] if metadata.empty?
 
+        labels = peer_metadata_labels(metadata, card, position)
+        remaining = metadata.reject { |key, _| %i[ticket assigned].include?(key) }
         start_y = metadata_start_y(card[:text], position[1])
-        card[:metadata].each_with_index.flat_map do |(key, value), index|
+        labels + remaining.each_with_index.flat_map do |(key, value), index|
           metadata_label_pair(key, value, position[0], start_y, index)
         end
+      end
+
+      def peer_metadata_labels(metadata, card, position)
+        y_position = position[1] + card[:height] - 10
+        labels = []
+        labels << label(metadata[:ticket].to_s,
+                        [position[0] + 10, y_position],
+                        font_size(:font_size_small, 10), "metadata_value") if
+          metadata[:ticket]
+        labels << label(metadata[:assigned].to_s,
+                        [position[0] + card[:width] - 10, y_position],
+                        font_size(:font_size_small, 10), "metadata_value",
+                        anchor: "end") if metadata[:assigned]
+        labels
+      end
+
+      def display_metadata(card)
+        (card[:metadata] || {}).reject { |key, _| key == :priority }
+      end
+
+      def priority_value(card)
+        card[:priority] || (card[:metadata] || {})[:priority]
       end
 
       def metadata_start_y(text, y_position)
@@ -313,12 +366,14 @@ module Sirena
 
       def positioned_card(card, column_data, y_position, data)
         metadata = metadata_for(data, card)
+        priority = metadata.delete(:priority)
         {
           id: card.id, text: card.label, column_id: column_data[:id],
           x: column_data[:x] + CARD_HORIZONTAL_INSET, y: y_position,
           width: COLUMN_WIDTH - (CARD_HORIZONTAL_INSET * 2),
           height: calculate_card_height(card.label, metadata),
-          metadata: metadata, has_metadata: !metadata.empty?
+          metadata: metadata, priority: priority,
+          has_metadata: !metadata.empty?
         }
       end
 
@@ -337,7 +392,10 @@ module Sirena
         return header_height + EMPTY_COLUMN_CONTENT_HEIGHT if cards.empty?
 
         card_height = cards.sum do |card|
-          calculate_card_height(card.label, metadata_for(data, card))
+          calculate_card_height(
+            card.label,
+            metadata_for(data, card).reject { |key, _| key == :priority },
+          )
         end
         spacing = (cards.size - 1) * CARD_VERTICAL_SPACING
         header_height + card_height + spacing + COLUMN_PADDING
@@ -345,7 +403,7 @@ module Sirena
 
       def calculate_card_height(text, metadata)
         height = CARD_HEIGHT
-        height += metadata.size * line_height unless metadata.empty?
+        height += line_height unless metadata.empty?
         height + ((rendered_lines(text).length - 1) * EXTRA_LINE_HEIGHT)
       end
 
