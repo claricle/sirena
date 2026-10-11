@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena"
 
-RSpec.describe "User Journey blank bodies" do
+RSpec.describe Sirena, ".render with blank User Journey bodies" do
   it "renders blank, whitespace-only, and comment-only bodies" do
     sources = [
       "journey\n\n",
@@ -12,7 +12,7 @@ RSpec.describe "User Journey blank bodies" do
     ]
 
     sources.each do |source|
-      expect(Sirena.render(source)).to start_with("<svg")
+      expect(described_class.render(source)).to start_with("<svg")
     end
   end
 end

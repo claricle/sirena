@@ -3,8 +3,8 @@
 require "spec_helper"
 require "sirena"
 
-RSpec.describe "Treemap blank bodies" do
+RSpec.describe Sirena, ".render with blank Treemap bodies" do
   it "renders a blank body" do
-    expect(Sirena.render("treemap-beta\n\n")).to start_with("<svg")
+    expect(described_class.render("treemap-beta\n\n")).to start_with("<svg")
   end
 end
