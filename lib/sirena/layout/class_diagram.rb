@@ -17,8 +17,8 @@ module Sirena
     class ClassDiagram < Base
       DEFAULT_NAME_FONT_SIZE = 16
       DEFAULT_SMALL_FONT_SIZE = 12
-      MIN_CLASS_WIDTH = 120
-      EMPTY_CLASS_HORIZONTAL_PADDING = 24
+      HEADER_PADDING = 24
+      BOLD_NAME_RATIO = 1.05
       EMPTY_CLASS_HEIGHT = 84
       LINE_HEIGHT = 20
       RENDER_LINE_HEIGHT = 18
@@ -443,24 +443,39 @@ module Sirena
 
       def calculate_entity_dimensions(entity, compact_empty: false)
         {
-          width: entity_width(entity, compact_empty: compact_empty),
+          width: entity_width(entity),
           height: entity_height(entity, compact_empty: compact_empty),
         }
       end
 
-      def entity_width(entity, compact_empty: false)
-        if compact_empty && empty_plain_entity?(entity)
-          return name_block_width(entity) + EMPTY_CLASS_HORIZONTAL_PADDING
-        end
+      # mmdc sizes a class box from Trebuchet MS 16px labels: the widest
+      # header line plus 24, widened to hold the widest member plus half
+      # the header line plus 24.
+      def entity_width(entity)
+        header = header_width(entity)
+        members = member_widths(entity.attributes + entity.class_methods)
+        return header + HEADER_PADDING if members.empty?
 
-        widths = [MIN_CLASS_WIDTH, name_block_width(entity)]
-        widths.concat(member_widths(entity.attributes))
-        widths.concat(member_widths(entity.class_methods))
-        widths.max + (COMPARTMENT_PADDING * 2)
+        [header + HEADER_PADDING,
+         members.max + (header / 2) + HEADER_PADDING].max
+      end
+
+      def header_width(entity)
+        widths = [name_width(entity.name)]
+        widths << mmdc_text_width("«#{entity.stereotype}»") if entity.stereotype
+        widths.max
+      end
+
+      def name_width(name)
+        mmdc_text_width(name) * BOLD_NAME_RATIO
       end
 
       def member_widths(items)
-        items.map { |item| member_width(item.display_text) }
+        items.map { |item| mmdc_text_width(item.display_text) }
+      end
+
+      def mmdc_text_width(text)
+        TextMeasurement.measure_in(:trebuchet, text, font_size: 16)[:width]
       end
 
       def entity_height(entity, compact_empty: false)
@@ -482,10 +497,6 @@ module Sirena
       def empty_plain_entity?(entity)
         entity.stereotype.nil? && entity.attributes.empty? &&
           entity.class_methods.empty?
-      end
-
-      def member_width(text)
-        measure_text(text, font_size: small_font_size, monospace: true)[:width]
       end
 
       def name_block_width(entity)
