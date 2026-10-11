@@ -36,6 +36,11 @@ RSpec.describe Sirena::Renderer::Quadrant do
         expect(paint_summary.slice(:circles, :text_fills))
           .to eq(expected_semantic_paint(theme.colors))
       end
+
+      it "uses the named quadrant palette" do
+        expect(paint_summary.fetch(:quadrant_fills))
+          .to eq(theme.colors.quadrant_palette)
+      end
     end
   end
 
@@ -60,7 +65,7 @@ RSpec.describe Sirena::Renderer::Quadrant do
 
     it "retains categorical quadrant fills and the diagram border" do
       expect(paint_summary.slice(:quadrant_fills, :border_strokes)).to eq(
-        quadrant_fills: described_class::QUADRANT_COLORS.values,
+        quadrant_fills: %w[#ECECFF #f1f1ff #f6f6ff #fbfbff],
         border_strokes: [described_class::BORDER_COLOR],
       )
     end

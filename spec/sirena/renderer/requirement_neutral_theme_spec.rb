@@ -53,6 +53,17 @@ RSpec.describe Sirena::Renderer::Requirement do
         .map { |head| head.attributes["fill"] },
     }
   end
+  let(:risk_paints) do
+    requirement = "//*[@id='requirement-r']"
+    [
+      REXML::XPath.first(document, "#{requirement}/rect")
+        .attributes["stroke"],
+      REXML::XPath.first(document, "#{requirement}/g/rect")
+        .attributes["fill"],
+      REXML::XPath.match(document, "#{requirement}/text")
+        .map { |text| text.attributes["fill"] }.compact.last,
+    ]
+  end
 
   it "preserves the exact default render" do
     expect(Digest::SHA256.hexdigest(xml))
@@ -68,6 +79,11 @@ RSpec.describe Sirena::Renderer::Requirement do
         expected = [*Array.new(3, colors.node_fill),
                     Array.new(2, colors.edge_color), [colors.edge_color]]
         expect(neutral_paint.values).to eq(expected)
+      end
+
+      it "uses the named risk palette" do
+        expect(risk_paints)
+          .to eq(Array.new(3, theme.colors.requirement_risk_palette.first))
       end
     end
   end
@@ -102,7 +118,7 @@ RSpec.describe Sirena::Renderer::Requirement do
     end
 
     it "retains the diagram-specific risk palette" do
-      expect(xml).to include(described_class::RISK_COLORS.fetch("high"))
+      expect(risk_paints).to eq(Array.new(3, "#ff6b6b"))
     end
   end
 end

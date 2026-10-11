@@ -7,11 +7,8 @@ module Sirena
   module Renderer
     # Emits SVG from final, typed requirement geometry.
     class Requirement < Base
-      RISK_COLORS = {
-        "high" => "#ff6b6b",
-        "medium" => "#ffd93d",
-        "low" => "#6bcf7f",
-      }.freeze
+      RISK_LEVELS = %w[high medium low].freeze
+      private_constant :RISK_LEVELS
 
       REQUIREMENT_TYPE_LABELS = Layout::Requirement::REQUIREMENT_TYPE_LABELS
 
@@ -192,7 +189,14 @@ module Sirena
       def risk_color(risk)
         return unless risk
 
-        RISK_COLORS[risk.downcase] || theme_color(:border_color) || "#666"
+        index = RISK_LEVELS.index(risk.downcase)
+        return theme_color(:border_color) || "#666" unless index
+
+        colors = theme&.colors
+        palette = colors&.requirement_risk_palette
+        colors = Theme::Registry.get(:default).colors if palette.nil? ||
+          palette.empty?
+        colors.palette(:requirement_risk, index)
       end
     end
   end

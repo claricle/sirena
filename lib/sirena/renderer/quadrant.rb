@@ -13,10 +13,6 @@ module Sirena
   module Renderer
     # Emits SVG from final, typed quadrant-chart geometry.
     class Quadrant < Base
-      # mmdc's default-theme quadrant fills and text colour.
-      QUADRANT_COLORS = {
-        1 => "#ECECFF", 2 => "#f1f1ff", 3 => "#f6f6ff", 4 => "#fbfbff"
-      }.freeze
       BORDER_COLOR = "#c7c7f1"
 
       # @param scene [Layout::Quadrant::Scene] final chart geometry
@@ -170,7 +166,11 @@ module Sirena
       end
 
       def quadrant_color(number)
-        theme_color(:"quadrant_#{number}") || QUADRANT_COLORS[number]
+        colors = theme&.colors
+        palette = colors&.quadrant_palette
+        colors = Theme::Registry.get(:default).colors if palette.nil? ||
+          palette.empty?
+        colors.palette(:quadrant, number - 1)
       end
 
       def point_color(number)

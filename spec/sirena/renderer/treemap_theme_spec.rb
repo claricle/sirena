@@ -22,6 +22,11 @@ RSpec.describe Sirena::Renderer::Treemap do
       it "uses label text for every text role" do
         expect(text_attribute("fill").uniq).to eq([theme.colors.label_text])
       end
+
+      it "uses the named depth palette" do
+        expect(cell_fills(scene.cells))
+          .to eq(theme.colors.treemap_palette.first(2))
+      end
     end
   end
 
@@ -44,12 +49,29 @@ RSpec.describe Sirena::Renderer::Treemap do
     end
   end
 
+  it "keeps an explicit class fill ahead of the dark depth palette" do
+    themed_diagram = Sirena::Parser::Treemap.new.parse(<<~MERMAID)
+      treemap
+      "Section"
+        "Leaf": 5:::important
+      classDef important fill:#f96,stroke:#333;
+    MERMAID
+    dark = Sirena::Theme::Registry.get(:dark)
+    themed_scene = Sirena::Layout::Treemap.new.call(themed_diagram, theme: dark)
+
+    expect(themed_scene.cells.first.children.first.fill).to eq("#f96")
+  end
+
   def texts
     REXML::XPath.match(REXML::Document.new(document.to_xml), "//text")
   end
 
   def text_attribute(name)
     texts.map { |text| text.attributes[name] }
+  end
+
+  def cell_fills(cells)
+    cells.flat_map { |cell| [cell.fill, *cell_fills(cell.children)] }
   end
 
   def source

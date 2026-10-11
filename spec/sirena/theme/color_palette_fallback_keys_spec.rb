@@ -49,8 +49,19 @@ RSpec.describe Sirena::Theme::ColorPalette do
 
   describe "categorical palettes" do
     let(:sizes) do
-      { flow: 8, git_graph: 10, pie: 12, radar: 10, xy: 10, timeline_fill: 12,
-        timeline_text: 12, timeline_rule: 12 }
+      {
+        flow: 8, git_graph: 10, mindmap: 6, pie: 12, quadrant: 4,
+        radar: 10, requirement_risk: 3, timeline_fill: 12,
+        timeline_text: 12, timeline_rule: 12, treemap: 4, xy: 10
+      }
+    end
+    let(:new_dark_palettes) do
+      {
+        mindmap: %w[#3794ff #858585 #4ec9b0 #f48771 #89d185 #9cdcfe],
+        treemap: %w[#2d2d30 #3e3e42 #404040 #505050],
+        quadrant: %w[#2d2d30 #3e3e42 #404040 #505050],
+        requirement_risk: %w[#f48771 #dcdcaa #89d185]
+      }
     end
 
     it "has every palette at its full length in every builtin theme" do
@@ -72,7 +83,14 @@ RSpec.describe Sirena::Theme::ColorPalette do
       expect(sizes.keys).to all(satisfy do |name|
         palettes[:dark][name] != palettes[:default][name]
       end)
-      expect(palettes.values_at(:default, :light, :high_contrast).uniq.size)
+      expect(palettes[:dark].slice(*new_dark_palettes.keys))
+        .to eq(new_dark_palettes)
+
+      shared_names = sizes.keys - [:mindmap]
+      shared = palettes.values_at(:default, :light, :high_contrast).map do |set|
+        set.slice(*shared_names)
+      end
+      expect(shared.uniq.size)
         .to eq(1)
     end
 
