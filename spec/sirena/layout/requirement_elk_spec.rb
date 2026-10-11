@@ -21,7 +21,9 @@ RSpec.describe Sirena::Layout::Requirement do
     MERMAID
   end
   let(:diagram) { Sirena::Parser::Requirement.new.parse(source) }
-  let(:layout) { described_class.new.tap { |instance| instance.placement = :elk } }
+  let(:layout) do
+    described_class.new.tap { |instance| instance.placement = :elk }
+  end
   let(:scene) { layout.call(diagram) }
 
   it "renders Requirement through the explicit ELK engine" do
@@ -41,6 +43,8 @@ RSpec.describe Sirena::Layout::Requirement do
   it "keeps the default Requirement rendering byte-identical" do
     digest = Digest::SHA256.hexdigest(Sirena.render(source))
 
-    expect(digest).to eq("cabcc7179b32df880a9c5e63e7102ed0bd3f0c9c9ade8b1795a79fc49afead96")
+    expected = "cabcc7179b32df880a9c5e63e7102ed0" \
+               "bd3f0c9c9ade8b1795a79fc49afead96"
+    expect(digest).to eq(expected)
   end
 end

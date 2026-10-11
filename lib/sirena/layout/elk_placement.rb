@@ -80,15 +80,23 @@ module Sirena
       def layout_input(graph, transpose: false)
         input = graph.dup
         transpose_dimensions(input, graph) if transpose
-        if graph[:children]
-          input[:children] = graph[:children].map do |child|
-            layout_input(child, transpose: transpose)
-          end
-        end
-        if graph[:edges]
-          input[:edges] = graph[:edges].reject { |edge| self_loop?(edge) }
-        end
+        copy_input_children(input, graph, transpose)
+        copy_input_edges(input, graph)
         input
+      end
+
+      def copy_input_children(input, graph, transpose)
+        return unless graph[:children]
+
+        input[:children] = graph[:children].map do |child|
+          layout_input(child, transpose: transpose)
+        end
+      end
+
+      def copy_input_edges(input, graph)
+        return unless graph[:edges]
+
+        input[:edges] = graph[:edges].reject { |edge| self_loop?(edge) }
       end
 
       def transpose_dimensions(input, graph)
@@ -134,8 +142,16 @@ module Sirena
         return placed.height if children.empty?
 
         bottom = children.map { |child| child.y + child.height }.max
-        return placed.height if placed.height && placed.height >= bottom
+        return placed.height if extent_covers?(placed.height, bottom)
 
+        reverse_origin(children, bottom)
+      end
+
+      def extent_covers?(extent, bottom)
+        extent && extent >= bottom
+      end
+
+      def reverse_origin(children, bottom)
         children.map(&:y).min + bottom
       end
 

@@ -165,13 +165,13 @@ module Sirena
 
       def elk_edges(diagram, nodes)
         names = nodes.map { |node| node[:name] }
-        diagram.relationships.each_with_index.filter_map do |relationship, index|
-          next unless names.include?(relationship.source) &&
-            names.include?(relationship.target)
+        diagram.relationships.each_with_index.filter_map do |rel, index|
+          next unless names.include?(rel.source)
+          next unless names.include?(rel.target)
 
           {
             id: "relationship_#{index}",
-            sources: [relationship.source], targets: [relationship.target]
+            sources: [rel.source], targets: [rel.target]
           }
         end
       end
@@ -211,14 +211,22 @@ module Sirena
       end
 
       def apply_elk_routes(relationships, edges)
-        routes = edges.group_by do |edge|
-          [edge[:sources]&.first, edge[:targets]&.first]
-        end
+        routes = edges.group_by { |edge| route_key(edge) }
         relationships.map do |relationship|
-          edge = routes[[relationship[:source], relationship[:target]]]&.shift
-          section = edge&.dig(:sections, 0)
-          section ? relationship.merge(section: section) : relationship
+          apply_elk_route(relationship, routes)
         end
+      end
+
+      def route_key(edge)
+        [edge[:sources]&.first, edge[:targets]&.first]
+      end
+
+      def apply_elk_route(relationship, routes)
+        key = [relationship[:source], relationship[:target]]
+        section = routes[key]&.shift&.dig(:sections, 0)
+        return relationship unless section
+
+        relationship.merge(section: section)
       end
 
       def graph_result(nodes_layout, relationships_layout)
@@ -461,9 +469,13 @@ module Sirena
 
       def typed_routed_relationship(relationship, index)
         section = routed_section(relationship[:section])
-        start_point = section.start_point
-        end_point = section.end_point
-        decoration = relationship_label(relationship, start_point, end_point)
+        decoration = relationship_label(
+          relationship, section.start_point, section.end_point
+        )
+        routed_relationship_edge(relationship, index, section, decoration)
+      end
+
+      def routed_relationship_edge(relationship, index, section, decoration)
         label, background = decoration
         Edge.new(
           id: "relationship_#{index}", source: relationship[:source],

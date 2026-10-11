@@ -23,18 +23,38 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   let(:scene) { layout.call(diagram) }
 
   def elk_geometry
-    nodes = scene.children.to_h { |node| [node.id, node] }
-    edge = scene.edges.fetch(0)
-    section = edge.sections.fetch(0)
-    [nodes.fetch("Dog").y < nodes.fetch("Animal").y,
-     [edge.source, edge.target], section.start_point.y < section.end_point.y,
-     edge.sections.size]
+    [dog_above_animal?, edge_endpoints, route_descends?, elk_edge.sections.size]
+  end
+
+  def dog_above_animal?
+    elk_node("Dog").y < elk_node("Animal").y
+  end
+
+  def elk_node(id)
+    scene.children.find { |node| node.id == id }
+  end
+
+  def elk_edge
+    scene.edges.fetch(0)
+  end
+
+  def edge_endpoints
+    [elk_edge.source, elk_edge.target]
+  end
+
+  def route_descends?
+    section = elk_edge.sections.fetch(0)
+    section.start_point.y < section.end_point.y
   end
 
   it "renders Class Diagram through the explicit ELK engine" do
-    allow(Sirena::Layout::ElkPlacement).to receive(:apply).and_call_original
     svg = Sirena.render(source, layout_engine: :elk)
     expect(svg).to include("<svg", "owns")
+  end
+
+  it "routes the explicit engine through ELK placement" do
+    allow(Sirena::Layout::ElkPlacement).to receive(:apply).and_call_original
+    Sirena.render(source, layout_engine: :elk)
     expect(Sirena::Layout::ElkPlacement).to have_received(:apply).once
   end
 
@@ -44,13 +64,15 @@ RSpec.describe Sirena::Layout::ClassDiagram do
 
   it "keeps default Class Diagram rendering byte-identical" do
     digest = Digest::SHA256.hexdigest(Sirena.render(source))
-    expect(digest).to eq("977bb42878889e5ab42d6c380c5580511eb4721ce9730bd54fcb989c22664b6f")
+    expected = "977bb42878889e5ab42d6c380c5580511" \
+               "eb4721ce9730bd54fcb989c22664b6f"
+    expect(digest).to eq(expected)
   end
 
-  it "raises instead of falling back for a non-downward direction" do
+  it "renders a non-downward direction through explicit ELK" do
     directed = source.sub("classDiagram", "classDiagram LR")
-    expect { Sirena.render(directed, layout_engine: :elk) }
-      .to raise_error(Sirena::Layout::LayoutError, /direction RIGHT/)
+    svg = Sirena.render(directed, layout_engine: :elk)
+    expect(svg).to include('id="class-Animal"', 'id="class-Dog"')
   end
 
   it "raises instead of flattening a namespace" do

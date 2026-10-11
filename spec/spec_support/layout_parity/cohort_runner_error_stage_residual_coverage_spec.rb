@@ -51,8 +51,16 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
   end
 
   def seed_case
+    seed_directories
+    seed_files
+  end
+
+  def seed_directories
     FileUtils.mkdir_p(File.join(paths.fetch(:corpus), "flowchart"))
     FileUtils.mkdir_p(File.join(paths.fetch(:references), "flowchart"))
+  end
+
+  def seed_files
     File.write(paths.fetch(:scoreboard), JSON.generate([scoreboard_row]))
     File.write(corpus_path, "flowchart LR\nA")
     File.write(reference_path, '<svg viewBox="0 0 1 1"/>')

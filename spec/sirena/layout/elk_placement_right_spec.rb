@@ -112,7 +112,9 @@ RSpec.describe Sirena::Layout::ElkPlacement do
   end
 
   it "keeps reversed compound nodes in the positive root frame" do
-    graphs = %w[BT RL].map { |value| described_class.apply(nested_graph(value)) }
+    graphs = %w[BT RL].map do |value|
+      described_class.apply(nested_graph(value))
+    end
     origins = graphs.map { |graph| graph[:children].first.values_at(:x, :y) }
     expect(origins.flatten).to all(be >= 0)
   end
