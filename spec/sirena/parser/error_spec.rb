@@ -16,13 +16,9 @@ RSpec.describe Sirena::Parser::Error, :aggregate_failures do
       expect(diagram.message).to be_nil
     end
 
-    it "parses error diagram with message" do
-      source = "Error Diagrams"
-
-      diagram = parser.parse(source)
-
-      expect(diagram).to be_a(Sirena::Diagram::Error)
-      expect(diagram.message).to eq("Diagrams")
+    it "refuses a message after the keyword, as Mermaid does" do
+      expect { parser.parse("Error Diagrams") }
+        .to raise_error(Sirena::Parser::ParseError)
     end
 
     it "validates diagram structure" do
@@ -39,12 +35,24 @@ RSpec.describe Sirena::Parser::Error, :aggregate_failures do
   # coverage-collecting `spec:unit` run: see .simplecov and
   # tasks/coverage.rake.
   describe "fixture files", :corpus do
+    oracle_rejected = %w[errordiagram_spec-34805ce6.mmd]
+
     Dir.glob("spec/mermaid/error/*.mmd").each do |fixture_file|
-      it "parses #{File.basename(fixture_file)}" do
+      name = File.basename(fixture_file)
+      next if oracle_rejected.include?(name)
+
+      it "parses #{name}" do
         source = File.read(fixture_file)
 
         expect { parser.parse(source) }.not_to raise_error
       end
+    end
+
+    it "refuses the oracle-rejected fixture errordiagram_spec-34805ce6" do
+      source = File.read("spec/mermaid/error/#{oracle_rejected.first}")
+
+      expect { parser.parse(source) }
+        .to raise_error(Sirena::Parser::ParseError)
     end
   end
 end
