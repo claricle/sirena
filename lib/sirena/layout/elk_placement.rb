@@ -96,7 +96,10 @@ module Sirena
       def copy_input_edges(input, graph)
         return unless graph[:edges]
 
-        input[:edges] = graph[:edges].reject { |edge| self_loop?(edge) }
+        links = Hash.new { |hash, node| hash[node] = [] }
+        input[:edges] = graph[:edges].reject do |edge|
+          closes_cycle?(edge, links)
+        end
       end
 
       def transpose_dimensions(input, graph)
@@ -106,9 +109,30 @@ module Sirena
         input[:height] = graph[:width]
       end
 
-      def self_loop?(edge)
+      def closes_cycle?(edge, links)
         source = edge[:sources]&.first
-        source && source == edge[:targets]&.first
+        target = edge[:targets]&.first
+        return false unless source && target
+        return true if source == target || reachable?(target, source, links)
+
+        links[source] << target
+        false
+      end
+
+      # elkrb 1.0.2 only breaks root-level cycles. Keep its private input
+      # acyclic so nested cycles cannot recurse indefinitely during placement.
+      def reachable?(start, target, links)
+        pending = [start]
+        visited = {}
+        until pending.empty?
+          node = pending.pop
+          return true if node == target
+          next if visited[node]
+
+          visited[node] = true
+          pending.concat(links[node])
+        end
+        false
       end
 
       def copy_layout(graph, placed)
