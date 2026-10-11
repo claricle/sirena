@@ -23,12 +23,17 @@ module Sirena
       TIMELINE_HEIGHT = Layout::Gantt::TIMELINE_HEIGHT
       TITLE_Y = Layout::Gantt::TITLE_Y
 
-      TASK_COLORS = {
-        done: "#5CB85C",
-        active: "#5BC0DE",
-        critical: "#D9534F",
-        default: "#428BCA",
+      TASK_COLOR_ROLES = {
+        done: :success,
+        active: :info,
+        critical: :error,
+        default: :primary,
       }.freeze
+      TASK_COLORS = begin
+        colors = Theme::Registry.get(:default).colors
+        TASK_COLOR_ROLES.transform_values { |role| colors.public_send(role) }
+          .freeze
+      end
 
       # @param scene [Layout::Gantt::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
@@ -51,8 +56,8 @@ module Sirena
       def timeline_background(geometry)
         Svg::Rect.new.tap do |rect|
           apply_rect_geometry(rect, geometry)
-          rect.fill = theme_color(:node_fill) || "#f5f5f5"
-          rect.stroke = theme_color(:node_stroke) || "#cccccc"
+          rect.fill = theme_color(:node_fill)
+          rect.stroke = theme_color(:node_stroke)
           rect.stroke_width = "1"
         end
       end
@@ -72,7 +77,7 @@ module Sirena
       end
 
       def apply_grid_line_style(line)
-        line.stroke = theme_color(:node_stroke) || "#e0e0e0"
+        line.stroke = theme_color(:node_stroke)
         line.stroke_width = "1"
         line.stroke_dasharray = "2,2"
       end
@@ -86,14 +91,14 @@ module Sirena
       def section_background(geometry)
         Svg::Rect.new.tap do |rect|
           apply_rect_geometry(rect, geometry)
-          rect.fill = theme_color(:section_bg) || "#f0f0f0"
+          rect.fill = theme_color(:section_bg)
           rect.stroke = "none"
         end
       end
 
       def render_task(task, svg)
         svg << text_element(task.label)
-        colour = TASK_COLORS.fetch(task.status.to_sym)
+        colour = theme_color(TASK_COLOR_ROLES.fetch(task.status.to_sym))
         render_task_shape(task, svg, colour)
       end
 
@@ -115,7 +120,7 @@ module Sirena
         Svg::Rect.new.tap do |rect|
           apply_rect_geometry(rect, geometry)
           rect.fill = colour
-          rect.stroke = theme_color(:node_stroke) || "#ffffff"
+          rect.stroke = theme_color(:node_stroke)
           rect.stroke_width = "1"
           rect.rx = geometry.corner_radius
           rect.ry = geometry.corner_radius
@@ -126,7 +131,7 @@ module Sirena
         Svg::Polygon.new.tap do |polygon|
           polygon.points = points
           polygon.fill = colour
-          polygon.stroke = theme_color(:node_stroke) || "#ffffff"
+          polygon.stroke = theme_color(:node_stroke)
           polygon.stroke_width = "2"
         end
       end
@@ -154,7 +159,7 @@ module Sirena
       end
 
       def apply_text_style(text, geometry, fill)
-        text.fill = fill || theme_color(:label_text) || "#000000"
+        text.fill = fill || theme_color(:label_text)
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         text.font_size = geometry.font_size.to_s
         text.font_weight = geometry.font_weight
