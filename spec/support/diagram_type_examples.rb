@@ -78,9 +78,16 @@ RSpec.shared_examples "a diagram type" do |type, gaps = {}|
     expect(svgs).to include(satisfy { |svg| svg != default })
   end
 
-  it "renders header-only input without raising" do
-    pending(gaps[:empty_input]) if gaps[:empty_input]
+  if type == :c4
+    it "rejects canonical header-only input like the oracle" do
+      expect { Sirena::Engine.new.render(header_only) }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  else
+    it "renders header-only input without raising" do
+      pending(gaps[:empty_input]) if gaps[:empty_input]
 
-    expect { Sirena::Engine.new.render(header_only) }.not_to raise_error
+      expect { Sirena::Engine.new.render(header_only) }.not_to raise_error
+    end
   end
 end
