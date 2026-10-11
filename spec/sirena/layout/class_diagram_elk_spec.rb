@@ -64,8 +64,8 @@ RSpec.describe Sirena::Layout::ClassDiagram do
 
   it "keeps default Class Diagram rendering byte-identical" do
     digest = Digest::SHA256.hexdigest(Sirena.render(source))
-    expected = "977bb42878889e5ab42d6c380c5580511" \
-               "eb4721ce9730bd54fcb989c22664b6f"
+    expected = "1cf7fda77f85fd3dfd3cd717b5de5b0f" \
+               "938772dd1ce3000b707e7a7c3eaf56b2"
     expect(digest).to eq(expected)
   end
 

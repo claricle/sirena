@@ -10,6 +10,17 @@ module ClassDiagramLayoutSpecHelpers
     )[:width]
   end
 
+  def trebuchet_width(text, size)
+    Sirena::TextMeasurement.measure_in(
+      :trebuchet, text, font_size: size
+    )[:width]
+  end
+
+  def bold_trebuchet_width(text, size)
+    table = Sirena::Layout::ClassNameAdvances::TABLE
+    text.each_char.sum { |char| table.fetch(char) * size / 1000.0 }
+  end
+
   def parsed(source)
     Sirena::Parser::ClassDiagram.new.parse(source)
   end
@@ -119,25 +130,28 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   it "returns typed final canvas geometry" do
     expect(scene_geometry(scene)).to eq(
       [described_class::Scene, [described_class::Node],
-       [described_class::Edge], 520.0, 214.0, "0 0 520 214"],
+       [described_class::Edge], 395.13599999999997, 274.0,
+       "0 0 395.13599999999997 274"],
     )
   end
 
   it "positions class nodes through the fallback grid inside layout" do
     expect(scene.children.map { |node| [node.id, node.x, node.y] })
-      .to eq([["Animal", 50.0, 50.0], ["Dog", 300.0, 50.0]])
+      .to eq([["Animal", 50.0, 50.0], ["Dog", 225.744, 50.0]])
   end
 
   it "carries final member rows without renderer graph lookups" do
     expect(member_rows(scene.children.first)).to eq(
       [["#int age"], ["+breathe()"],
-       [[50.0, 83.0, 190.0, 83.0], [50.0, 116.0, 190.0, 116.0]]],
+       [[50.0, 83.0, 175.744, 83.0],
+        [50.0, 116.0, 175.744, 116.0]]],
     )
   end
 
   it "carries final relationship endpoints, labels, and marker geometry" do
     expect(edge_geometry(scene.edges.first)).to eq(
-      ["Animal", "Dog", [190.0, 22.0], [300.0, 151.0],
+      ["Animal", "Dog", [175.744, 118.40886474411047],
+       [225.744, 115.55295491470349],
        ["knows"], ["#000000"]],
     )
   end
@@ -202,7 +216,9 @@ RSpec.describe Sirena::Layout::ClassDiagram do
     it "uses high-contrast sizes for measurement and emitted labels" do
       theme = Sirena::Theme::Registry.get(:high_contrast)
       node = layout.call(parsed(stereotype_source), theme: theme).children.first
-      expected = measured("<<InternationalOrderProcessor>>", 14) + 20
+      scaled_size = 16 * 14 / 12.0
+      expected = trebuchet_width("«InternationalOrderProcessor»",
+                                 scaled_size) + 24
 
       expect([node.width, node.name.font_size, node.stereotype.font_size])
         .to match([be_within(0.01).of(expected), 18.0, 14.0])
@@ -216,8 +232,9 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       "a method return type" => "+#{'i' * 40}() : String",
       "a typed attribute" => "+String #{'i' * 40}",
     }.each do |label, row|
-      it "sizes #{label} from the monospace text drawn" do
-        expected = measured(row, 12, monospace: true) + 20
+      it "sizes #{label} from the mmdc Trebuchet row" do
+        header = bold_trebuchet_width("N", 16)
+        expected = trebuchet_width(row, 16) + (header / 2) + 24
 
         expect(member_width(layout, row))
           .to be_within(0.01).of(expected)
@@ -236,7 +253,8 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       name = "InternationalOrderProcessor"
       node = layout.call(parsed("classDiagram\nclass #{name}\n")).children.first
 
-      expect(node.width).to be_within(0.01).of(measured(name, 16) + 24)
+      expect(node.width)
+        .to be_within(0.01).of(bold_trebuchet_width(name, 16) + 24)
     end
 
     it "sizes a stereotype on its own small-font line" do
@@ -244,8 +262,9 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       source = "classDiagram\nclass N <<#{stereotype}>>\n"
       node = layout.call(parsed(source)).children.first
 
-      expect(node.width)
-        .to be_within(0.01).of(measured("<<#{stereotype}>>", 12) + 20)
+      expect(node.width).to be_within(0.01).of(
+        trebuchet_width("«#{stereotype}»", 16) + 24,
+      )
     end
   end
 end
