@@ -69465,87 +69465,11 @@
   {
     "case": "gitgraph/should_log_a_warning_when_two_commits_have_the_s-8c8c51d0.mmd",
     "geometry": {
-      "ambiguous": 14,
+      "ambiguous": 13,
       "matched": 36,
       "reference_elements": 36,
-      "sirena_elements": 40,
+      "sirena_elements": 36,
       "top5": [
-        {
-          "bbox_reference": [
-            550.0,
-            78.0,
-            570.0,
-            98.0
-          ],
-          "bbox_sirena": [
-            663.276,
-            300.0,
-            683.276,
-            320.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-12"
-          ]
-        },
-        {
-          "bbox_reference": [
-            350.0,
-            -12.0,
-            370.0,
-            8.0
-          ],
-          "bbox_sirena": [
-            463.276,
-            210.0,
-            483.276,
-            230.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-8"
-          ]
-        },
-        {
-          "bbox_reference": [
-            400.0,
-            168.0,
-            420.0,
-            188.0
-          ],
-          "bbox_sirena": [
-            513.276,
-            30.0,
-            533.276,
-            50.0
-          ],
-          "key": [
-            "commit",
-            null,
-            "commit-9"
-          ]
-        },
-        {
-          "bbox_reference": [
-            361.218876,
-            247.988416,
-            361.218876,
-            247.988416
-          ],
-          "bbox_sirena": [
-            373.276,
-            240.0,
-            373.276,
-            240.0
-          ],
-          "key": [
-            "commit_label",
-            null,
-            "working on MDR"
-          ]
-        },
         {
           "bbox_reference": [
             170.483023,
@@ -69554,9 +69478,9 @@
             196.50298
           ],
           "bbox_sirena": [
-            423.276,
+            373.276,
             150.0,
-            423.276,
+            373.276,
             150.0
           ],
           "key": [
@@ -69564,18 +69488,93 @@
             null,
             "minor design changes for MDR"
           ]
+        },
+        {
+          "bbox_reference": [
+            44.001862,
+            84.266602,
+            44.001862,
+            84.266602
+          ],
+          "bbox_sirena": [
+            223.276,
+            60.0,
+            223.276,
+            60.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "design freeze from here"
+          ]
+        },
+        {
+          "bbox_reference": [
+            296.63807,
+            81.774144,
+            296.63807,
+            81.774144
+          ],
+          "bbox_sirena": [
+            473.276,
+            60.0,
+            473.276,
+            60.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "new feature for v1.1…"
+          ]
+        },
+        {
+          "bbox_reference": [
+            501.419061,
+            167.253856,
+            501.419061,
+            167.253856
+          ],
+          "bbox_sirena": [
+            673.276,
+            150.0,
+            673.276,
+            150.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "bugfix without MDR"
+          ]
+        },
+        {
+          "bbox_reference": [
+            3.354668,
+            75.423796,
+            3.354668,
+            75.423796
+          ],
+          "bbox_sirena": [
+            173.276,
+            60.0,
+            173.276,
+            60.0
+          ],
+          "key": [
+            "commit_label",
+            null,
+            "work on first release"
+          ]
         }
       ],
-      "worst_analog": "Infinity",
+      "worst_analog": 0.0,
       "worst_e_a": 0.0,
-      "worst_e_c": 0.218046,
+      "worst_e_c": 0.113994,
       "worst_e_h": 0.0,
       "worst_e_w": 0.0,
       "worst_keys": {
         "analog": [
-          "git_graph",
-          "measurement_error",
-          "marker counts differ"
+          "commit-1",
+          "radius"
         ],
         "e_a": [
           "commit",
@@ -69583,9 +69582,9 @@
           "commit-1"
         ],
         "e_c": [
-          "commit",
+          "commit_label",
           null,
-          "commit-12"
+          "minor design changes for MDR"
         ],
         "e_h": [
           "commit",
@@ -69599,54 +69598,19 @@
         ]
       }
     },
-    "invariants": [
-      {
-        "actual": 14,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 13,
-        "normalized": {
-          "count": 1,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "commit",
-          null,
-          null
-        ]
-      },
-      {
-        "actual": 4,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 1,
-        "normalized": {
-          "count": 3,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "commit_label",
-          null,
-          "working on MDR"
-        ]
-      }
-    ],
+    "invariants": [],
     "reference": "spec/fixtures_mermaid/gitgraph/should_log_a_warning_when_two_commits_have_the_s-8c8c51d0.svg",
     "reproduce": "bundle exec rake 'corpus[gitgraph,valid]'",
     "sirena_status": "rendered",
     "type": "git_graph",
     "summary": {
-      "hard_failure": true,
+      "hard_failure": false,
       "metrics": {
-        "worst_e_c": 0.218046,
+        "worst_e_c": 0.113994,
         "worst_e_w": 0.0,
         "worst_e_h": 0.0,
         "worst_e_a": 0.0,
-        "worst_analog": "Infinity"
+        "worst_analog": 0.0
       }
     }
   },
@@ -70185,7 +70149,7 @@
       "ambiguous": 4,
       "matched": 7,
       "reference_elements": 11,
-      "sirena_elements": 13,
+      "sirena_elements": 11,
       "top5": [
         {
           "bbox_reference": [
@@ -70366,23 +70330,6 @@
           "commit_label",
           null,
           "A"
-        ]
-      },
-      {
-        "actual": 2,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 2,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "commit_label",
-          null,
-          "\"\""
         ]
       },
       {
@@ -70851,7 +70798,7 @@
       "ambiguous": 9,
       "matched": 20,
       "reference_elements": 24,
-      "sirena_elements": 34,
+      "sirena_elements": 28,
       "top5": [
         {
           "bbox_reference": [
@@ -71015,23 +70962,6 @@
           "commit_label",
           null,
           "M"
-        ]
-      },
-      {
-        "actual": 6,
-        "bbox_reference": null,
-        "bbox_sirena": null,
-        "expected": 0,
-        "normalized": {
-          "count": 6,
-          "difference": "extra",
-          "match_by": "label"
-        },
-        "rule": "element-presence",
-        "subject_keys": [
-          "tag_label",
-          null,
-          "\"\""
         ]
       }
     ],
