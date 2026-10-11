@@ -163,10 +163,13 @@ module SpecSupport
         marker = nearest_element(entry[:box], markers) if entry
         return unless marker
 
-        kind = sirena_label_kind(entry[:box], marker.bbox, markers, orientation,
-                                 text["font-weight"] == "bold",
-                                 text["text-anchor"])
-        return unless recognized_label_position?(kind, entry[:box], marker)
+        explicit_kind = explicit_label_kind(text)
+        kind = explicit_kind ||
+          sirena_label_kind(entry[:box], marker.bbox, markers, orientation,
+                            text["font-weight"] == "bold",
+                            text["text-anchor"])
+        return unless explicit_kind ||
+          recognized_label_position?(kind, entry[:box], marker)
 
         logical_sirena_label(kind, entry)
       end
@@ -175,6 +178,11 @@ module SpecSupport
         return if generated_commit_label?(kind, entry[:label])
 
         logical_element(kind, entry[:label], entry[:box])
+      end
+
+      def explicit_label_kind(text)
+        return :commit_label if class_token?(text, "commit-label")
+        return :tag_label if class_token?(text, "tag-label")
       end
 
       def recognized_label_position?(kind, label, marker)

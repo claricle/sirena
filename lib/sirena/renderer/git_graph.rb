@@ -156,11 +156,22 @@ module Sirena
       def apply_label_geometry(text, geometry)
         text.x = geometry.x
         text.y = geometry.y
+        text.class_name = "commit-label" if geometry.rotation
+        text.transform = label_rotation(geometry)
         text.text_anchor = geometry.text_anchor
         text.font_size = geometry.font_size.to_s
         text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
         text.content = geometry.text
       end
+
+      def label_rotation(geometry)
+        return unless geometry.rotation
+
+        values = [geometry.rotation, geometry.rotation_center_x,
+                  geometry.rotation_center_y]
+        "rotate(#{values.join(' ')})"
+      end
+
     end
   end
 end
