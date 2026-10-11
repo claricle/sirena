@@ -134,6 +134,8 @@ module ApplyCaseMigrationMergeRepo
     "class_diagram/002_c_1" => "classDiagram\n  C --> D\n",
   }.freeze
 
+  MERGED_DIRECTORIES = { "git" => "gitgraph", "class" => "class_diagram" }.freeze
+
   def build_merge_repo(extra_files: {})
     git("init", "-q")
     write_merge_manifest
@@ -145,21 +147,35 @@ module ApplyCaseMigrationMergeRepo
     commit_all("seed")
   end
 
+  # The generator no longer merges directories, so the corpus is built in the
+  # canonical directories and the old directory is put back on each pair.
   def write_merge_manifest
     pairs = Dir.mktmpdir("merge-corpus") do |dir|
       write_merge_corpus(dir)
       CorpusCaseManifest.build(corpus_dir: dir)["pairs"]
     end
+    pairs.each { |pair| pair["old"] = old_case_for(pair["old"]) }
     put("config/corpus_case_migration.json",
-        "#{JSON.pretty_generate('version' => 1, 'pairs' => pairs)}\n")
+        "#{JSON.pretty_generate("version" => 1, "pairs" => pairs)}\n")
   end
 
   def write_merge_corpus(dir)
     CASES.each do |id, source|
-      FileUtils.mkdir_p(File.join(dir, File.dirname(id)))
-      File.write(File.join(dir, "#{id}.mmd"), source)
-      File.write(File.join(dir, "#{id}.meta.json"), meta_for(id))
+      canonical = canonical_case(id)
+      FileUtils.mkdir_p(File.join(dir, File.dirname(canonical)))
+      File.write(File.join(dir, "#{canonical}.mmd"), source)
+      File.write(File.join(dir, "#{canonical}.meta.json"), meta_for(canonical))
     end
+  end
+
+  def canonical_case(id)
+    directory, stem = id.split("/")
+    "#{MERGED_DIRECTORIES.fetch(directory, directory)}/#{stem}"
+  end
+
+  def old_case_for(canonical_mmd)
+    id = CASES.keys.find { canonical_case(_1) == canonical_mmd.delete_suffix(".mmd") }
+    "#{id}.mmd"
   end
 
   def meta_for(id)
