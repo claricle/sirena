@@ -43,7 +43,7 @@ colors:
   xy_axis_line: "#000000"
   xy_grid_line: "#e5e7eb"
 
-  # Categorical palettes: same in every theme, indexed modulo length.
+  # Categorical palettes are indexed modulo length.
   flow_palette:
     - "#4472C4"
     - "#ED7D31"
@@ -54,16 +54,16 @@ colors:
     - "#C00000"
     - "#7030A0"
   git_graph_palette:
-    - "#2563eb"
-    - "#7c3aed"
-    - "#db2777"
-    - "#ea580c"
-    - "#ca8a04"
-    - "#16a34a"
-    - "#0891b2"
-    - "#4f46e5"
-    - "#c026d3"
-    - "#dc2626"
+    - "#3794ff"
+    - "#858585"
+    - "#4ec9b0"
+    - "#f48771"
+    - "#dcdcaa"
+    - "#89d185"
+    - "#9cdcfe"
+    - "#969696"
+    - "#fbbf24"
+    - "#d4d4d4"
   pie_palette:
     - "#4472C4"
     - "#ED7D31"
