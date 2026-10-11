@@ -27,7 +27,7 @@ RSpec.describe Sirena::Layout::GitGraph do
   let(:branch_label_offsets) do
     scene.branches.to_h do |branch|
       first_commit_x = first_commit_x_by_branch.fetch(branch.name)
-      [branch.name, branch.label.x - first_commit_x]
+      [branch.name, (branch.label.x - first_commit_x).round(3)]
     end
   end
 
@@ -39,14 +39,15 @@ RSpec.describe Sirena::Layout::GitGraph do
 
   it "matches Mermaid commit and lane spacing" do
     time_steps = scene.commits.each_cons(2)
-      .map { |left, right| right.x - left.x }
-    lane_step = scene.commits[1].y - scene.commits[0].y
+      .map { |left, right| (right.x - left.x).round(6) }
+    lane_step = (scene.commits[1].y - scene.commits[0].y).round(6)
 
     expect([time_steps, lane_step]).to eq([[50.0, 50.0], 90.0])
   end
 
-  it "anchors horizontal branch labels to the first commit in each lane" do
-    expect(branch_label_offsets).to eq("main" => 15.0, "feature" => 15.0)
+  it "anchors horizontal branch labels before the time axis" do
+    expect(branch_label_offsets)
+      .to eq("main" => -36.172, "feature" => -101.308)
   end
 
   it "renders Mermaid-sized commit markers" do

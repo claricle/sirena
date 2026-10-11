@@ -47,7 +47,7 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphRecognizer do
     %w[main hotfix develop featureB featureA release]
   end
 
-  def vertical_lane_keys(orientation)
+  def candidate_lane_keys(orientation)
     source = <<~MERMAID
       gitGraph #{orientation}:
        commit
@@ -99,9 +99,9 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphRecognizer do
     expect(dimensions).to all(eq([0.0, 0.0]))
   end
 
-  it "recognizes vertical candidate lanes from marker-associated labels" do
-    lanes = %w[TB BT].map { |orientation| vertical_lane_keys(orientation) }
+  it "recognizes boundary-anchored candidate lanes in every direction" do
+    lanes = %w[LR TB BT].map { |orientation| candidate_lane_keys(orientation) }
 
-    expect(lanes).to eq([%w[main x], %w[main x]])
+    expect(lanes).to eq([%w[main x], %w[main x], %w[main x]])
   end
 end

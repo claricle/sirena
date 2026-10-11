@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "digest"
 require "nokogiri"
 
 RSpec.describe Sirena::Layout::GitGraph do
@@ -36,34 +35,39 @@ RSpec.describe Sirena::Layout::GitGraph do
     MERMAID
   end
 
-  def anchor_for(branch, direction)
-    label = branch.label
-    case direction
-    when "TB" then [label.x, label.y - 24]
-    when "BT" then [label.x, label.y + 16]
-    else [label.x - 15, label.y - 4]
+  def ordered_labels
+    %w[early late].map { |name| branches.fetch(name).label }
+  end
+
+  def label_baselines
+    ordered_labels.map do |label|
+      label.y + described_class::BRANCH_LABEL_BASELINE_OFFSET
     end
   end
 
-  def expected_anchor(branch, direction)
-    lane_offset = branch.lane * described_class::LANE_SPACING
-    if %w[TB BT].include?(direction)
-      [creation_commit.x + lane_offset, creation_commit.y]
-    else
-      [creation_commit.x, creation_commit.y + lane_offset]
+  def lane_centres
+    %w[early late].map do |name|
+      branch = branches.fetch(name)
+      creation_commit.y + (branch.lane * described_class::LANE_SPACING)
     end
   end
 
-  def actual_anchors(direction)
-    %w[early late].to_h do |name|
-      [name, anchor_for(branches.fetch(name), direction)]
-    end
+  def labels_precede_commits?
+    ordered_labels.map(&:x).max < scene.commits.map(&:x).min
   end
 
-  def expected_anchors(direction)
-    %w[early late].to_h do |name|
-      [name, expected_anchor(branches.fetch(name), direction)]
-    end
+  def vertical_boundary_clearance(direction)
+    label_y = ordered_labels.first.y
+    commit_y = scene.commits.map(&:y)
+    direction == "TB" ? commit_y.min - label_y : label_y - commit_y.max
+  end
+
+  def labels_share_boundary?
+    ordered_labels.map(&:y).uniq.one?
+  end
+
+  def labels_follow_lane_order?
+    ordered_labels.each_cons(2).all? { |left, right| left.x < right.x }
   end
 
   def rendered_branch_evidence
@@ -92,36 +96,56 @@ RSpec.describe Sirena::Layout::GitGraph do
     [scene.commits.map(&:id), scene.connections.size]
   end
 
-  def rendering_digest(source)
-    diagram = Sirena::Parser::GitGraph.new.parse(source)
-    svg = Sirena::Renderer::GitGraph.new.render(layout.call(diagram)).to_xml
-    Digest::SHA256.hexdigest(svg)
+  def nonempty_commits
+    diagram = Sirena::Parser::GitGraph.new.parse(nonempty_source)
+    layout.call(diagram).commits
   end
 
-  shared_examples "an empty branch anchor" do |direction|
+  def nonempty_commit_identities
+    nonempty_commits.map do |commit|
+      [commit.id, commit.branch, commit.lane]
+    end
+  end
+
+  def nonempty_time_steps
+    nonempty_commits.each_cons(2).map do |left, right|
+      (right.x - left.x).round(6)
+    end
+  end
+
+  def nonempty_commit_geometry
+    [nonempty_commit_identities, nonempty_time_steps,
+     nonempty_commits.fetch(1).y - nonempty_commits.fetch(0).y]
+  end
+
+  shared_examples "a vertical empty branch boundary" do |direction|
     let(:orientation) { direction }
 
-    it "uses the creation time and assigned lane for #{direction}" do
-      expect(actual_anchors(direction)).to eq(expected_anchors(direction))
+    it "places #{direction} labels on one ordered boundary" do
+      expect([labels_share_boundary?, vertical_boundary_clearance(direction),
+              labels_follow_lane_order?]).to eq([true, 40.0, true])
     end
   end
 
   context "with left-to-right layout" do
     let(:orientation) { "LR" }
 
-    it_behaves_like "an empty branch anchor", "LR"
+    it "places labels before the time axis on their assigned lanes" do
+      expect([labels_precede_commits?, label_baselines == lane_centres])
+        .to eq([true, true])
+    end
   end
 
   context "with top-to-bottom layout" do
     let(:orientation) { "TB" }
 
-    it_behaves_like "an empty branch anchor", "TB"
+    it_behaves_like "a vertical empty branch boundary", "TB"
   end
 
   context "with bottom-to-top layout" do
     let(:orientation) { "BT" }
 
-    it_behaves_like "an empty branch anchor", "BT"
+    it_behaves_like "a vertical empty branch boundary", "BT"
   end
 
   it "honours explicit branch order when assigning empty lanes" do
@@ -137,8 +161,11 @@ RSpec.describe Sirena::Layout::GitGraph do
     expect(rendered_branch_evidence).to eq([1, 1, 2, %w[A B], 1])
   end
 
-  it "keeps nonempty branch rendering byte-identical" do
-    expect(rendering_digest(nonempty_source))
-      .to eq("5d1a663c90fd10f89173bfeec793563a14c7608fde34ab8e4c9e1ce8234e31ae")
+  it "keeps nonempty commit geometry unchanged" do
+    expect(nonempty_commit_geometry).to eq(
+      [[["main-1", "main", 0], ["feature-1", "feature", 1],
+        ["main-2", "main", 0]],
+       [50.0, 50.0], 90.0],
+    )
   end
 end

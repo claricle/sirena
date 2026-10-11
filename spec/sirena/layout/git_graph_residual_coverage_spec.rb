@@ -26,13 +26,13 @@ RSpec.describe Sirena::Layout::GitGraph do
     [commit.labels, branch_label.text_anchor, branch_label.font_size]
   end
 
-  def default_small_font_size
-    Sirena::Theme::Registry.get(:default).typography.font_size_small
+  def default_large_font_size
+    Sirena::Theme::Registry.get(:default).typography.font_size_large
   end
 
   it "uses horizontal defaults without labeling generated commit ids" do
     expect(horizontal_default_evidence)
-      .to eq([[], "start", default_small_font_size])
+      .to eq([[], "start", default_large_font_size])
   end
 
   it "ignores connections with missing positioned endpoints" do

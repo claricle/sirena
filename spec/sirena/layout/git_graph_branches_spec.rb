@@ -27,15 +27,15 @@ RSpec.describe Sirena::Layout::GitGraph do
     commit = scene.commits.fetch(0)
     labels = commit.labels.to_h { |label| [label.kind, label] }
     [labels.values_at("tag", "id").map(&:text_anchor),
-     labels_on_opposite_sides?(labels, commit), branch_below?(scene, commit)]
+     labels_on_opposite_sides?(labels, commit), branch_above?(scene, commit)]
   end
 
   def labels_on_opposite_sides?(labels, commit)
     labels["tag"].x < commit.x && labels["id"].x > commit.x
   end
 
-  def branch_below?(scene, commit)
-    scene.branches.fetch(0).label.y > commit.y
+  def branch_above?(scene, commit)
+    scene.branches.fetch(0).label.y < commit.y
   end
 
   it "returns a finite empty graph with unlabeled main-branch metadata" do
