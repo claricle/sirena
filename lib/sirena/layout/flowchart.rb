@@ -457,7 +457,7 @@ module Sirena
       end
 
       def edge_path(route, bends)
-        sx, sy, tx, ty = route
+        sx, sy, tx, ty = route.map { |coordinate| coordinate.round(2) }
         return "M #{sx} #{sy} L #{tx} #{ty}" if bends.empty?
 
         (["M #{sx} #{sy}"] + bends.map do |point|
