@@ -69,7 +69,7 @@ module Sirena
 
         def add_data_entry(diagram, stmt)
           label = extract_text(stmt[:label])
-          value = extract_numeric_value(stmt[:value])
+          value = slice_value(stmt[:value])
 
           slice = Diagram::PieSlice.new.tap do |s|
             s.label = label
@@ -89,6 +89,15 @@ module Sirena
 
         def extract_numeric_value(value)
           value.to_s.to_f
+        end
+
+        # Mermaid's pie db refuses a negative slice value.
+        def slice_value(raw)
+          value = extract_numeric_value(raw)
+          return value unless value.negative?
+
+          raise Parser::ParseError,
+                "Negative values are not allowed in pie charts."
         end
       end
     end
