@@ -61,25 +61,19 @@ RSpec.describe Sirena::Theme::ColorPalette do
       expect(drawn).to all(eq(sizes))
     end
 
-    it "gives dark its own git graph palette and retains the other palettes" do
+    it "gives dark its own palettes while retaining the other builtins" do
       palettes = builtin_themes.to_h do |theme|
         values = sizes.keys.to_h do |name|
           [name, theme.colors.public_send(:"#{name}_palette")]
         end
         [theme.name.to_sym, values]
       end
-      shared_names = sizes.keys - [:git_graph]
 
-      shared = palettes.values.map { |values| values.slice(*shared_names) }
-      expect(shared.uniq.size).to eq(1)
-      expect(palettes[:dark][:git_graph]).to eq(
-        %w[#3794ff #858585 #4ec9b0 #f48771 #dcdcaa #89d185 #9cdcfe
-           #969696 #fbbf24 #d4d4d4]
-      )
-      expect(palettes[:dark][:git_graph])
-        .not_to eq(palettes[:default][:git_graph])
-      expect(palettes.values_at(:default, :light, :high_contrast)
-        .map { |values| values[:git_graph] }.uniq.size).to eq(1)
+      expect(sizes.keys).to all(satisfy do |name|
+        palettes[:dark][name] != palettes[:default][name]
+      end)
+      expect(palettes.values_at(:default, :light, :high_contrast).uniq.size)
+        .to eq(1)
     end
 
     it "wraps an index past the end of a palette" do
