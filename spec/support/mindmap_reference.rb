@@ -11,7 +11,7 @@ module MindmapReference
   module_function
 
   def document(name)
-    path = Dir[File.join(DIRECTORY, "#{name}_*.svg")].first
+    path = Dir[File.join(DIRECTORY, "#{name}.svg")].first
     Nokogiri::XML(File.read(path)).tap(&:remove_namespaces!)
   end
 

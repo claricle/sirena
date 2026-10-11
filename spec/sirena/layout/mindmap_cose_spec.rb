@@ -47,11 +47,11 @@ RSpec.describe Sirena::Layout::MindmapCose do
   include MindmapCoseReferenceHelpers
 
   {
-    "016" => "a root with two children",
-    "028" => "a root with two children of equal width",
-    "030" => "a three-level chain",
-    "017" => "a root with a nested branch",
-    "009" => "ten nodes over three levels",
+    "mindmap_spec-dad0b477" => "a root with two children",
+    "mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5" => "a root with two children of equal width",
+    "mmp_4_should_handle_a_deeper_hierarchical_mindma-6bcd32ea" => "a three-level chain",
+    "mindmap_spec-785e4e84" => "a root with a nested branch",
+    "mindmap_spec-7104af54" => "ten nodes over three levels",
   }.each do |name, description|
     it "puts #{description} where mmdc does (#{name})" do
       nodes, placed = reference_layout(name)
@@ -76,8 +76,8 @@ RSpec.describe Sirena::Layout::MindmapCose do
     end
   end
 
-  it "places the root's children left and right of it on its row (028)" do
-    nodes, placed = reference_layout("028")
+  it "places the root's children left and right of it on its row (mmp_2 hierarchical)" do
+    nodes, placed = reference_layout("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5")
     root, first, second = nodes.map { |node| placed.fetch(node[:id]) }
 
     expect([first[1] - root[1], second[1] - root[1],

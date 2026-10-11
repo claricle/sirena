@@ -16,7 +16,8 @@ RSpec.describe Sirena::Layout::Flowchart, "#to_graph" do
     )
   end
 
-  # Reference 001: node D "Laptop" is 109.265625 x 54, its label 49.27 x 24.
+  # configuration_spec-67574f4a: node D "Laptop" is 109.265625 x 54, its
+  # label 49.27 x 24.
   it "sizes a box like mmdc's 16px reference" do
     expect(builder.lone_node("rect", "Laptop")).to have_attributes(
       width: be_within(1.0).of(109.27), height: 54.0,
@@ -45,8 +46,9 @@ RSpec.describe Sirena::Layout::Flowchart, "#to_graph" do
     end
   end
 
-  # Reference 130 (`a{{A <br> end}}`) draws a hexagon 74.54 wide and 63
-  # high round a 26.39 x 48 label; reference 129, one line, is 54.76 wide.
+  # flow_singlenode_spec-65a3eaeb (`a{{A <br> end}}`) draws a hexagon 74.54
+  # wide and 63 high round a 26.39 x 48 label; flow_singlenode_spec-9bf7d40e,
+  # one line, is 54.76 wide.
   describe "a label of two lines" do
     let(:two_lines) { "A <br> end" }
 
@@ -73,9 +75,10 @@ RSpec.describe Sirena::Layout::Flowchart, "#to_graph" do
       .to all(be_within(0.01).of(text_width + 15))
   end
 
-  # Reference 132 (`a(((A)))`) draws an outer circle of r 17.21875 round a
-  # 9.4375 label: a diameter 25 wider than the label. Reference 134, a label
-  # 26.39 wide, draws r 25.6953125, which is 25 wider again.
+  # flow_singlenode_spec-7ed9c175 (`a(((A)))`) draws an outer circle of r
+  # 17.21875 round a 9.4375 label: a diameter 25 wider than the label.
+  # flow_singlenode_spec-baebbc26, a label 26.39 wide, draws r 25.6953125,
+  # which is 25 wider again.
   it "makes a double circle a square 25 wider than its label" do
     node = builder.lone_node("double_circle", "Laptop")
 

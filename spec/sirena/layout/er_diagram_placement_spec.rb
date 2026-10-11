@@ -78,15 +78,15 @@ module ErPlacementCases
   }.freeze
 
   # Corpus sources that have no committed reference SVG; centres and canvas
-  # are from `mmdc -i spec/mermaid/er/<name>.mmd`.
+  # are from `mmdc -i spec/mermaid/er_diagram/<name>.mmd`.
   UNREFERENCED = {
-    "001_rendering_erdiagram_spec_er_0" => {
+    "erdiagram_spec-4fb39e72" => {
       centres: { "PRODUCT" => [71.664, 50.0], "ORDER-ITEM" => [71.664, 235.0],
                  "1.5" => [315.695, 50.0], "u" => [555.695, 50.0],
                  "1" => [795.695, 50.0] },
       canvas: [853.695, 285.0],
     },
-    "057_parser_should_handle_complex_diagram_with_special_entity_names_56" => {
+    "should_handle_complex_diagram_with_special_entit-af26ddf3" => {
       centres: { "CUSTOMER" => [83.164, 50.0], "1" => [83.164, 257.125],
                  "u" => [83.164, 486.375], "2.5" => [341.992, 50.0],
                  "ORDER" => [341.992, 257.125] },
@@ -94,11 +94,15 @@ module ErPlacementCases
     },
   }.freeze
 
-  # Corpus case numbers that have a reference SVG in fixtures_mermaid/er.
-  CORPUS = %w[002 003 058].freeze
+  # Corpus case ids that have a reference SVG in fixtures_mermaid/er_diagram.
+  CORPUS = %w[
+    yari2-9471fb3f
+    er-f17280c6
+    should_handle_attributes_with_numbers_in_names_b-9966ce0b
+  ].freeze
 
-  def corpus_path(number, directory, extension)
-    Dir["spec/#{directory}/er/#{number}_*.#{extension}"].fetch(0)
+  def corpus_path(id, directory, extension)
+    "spec/#{directory}/er_diagram/#{id}.#{extension}"
   end
 
   def scene_for(source)
@@ -151,10 +155,10 @@ RSpec.describe Sirena::Layout::ErDiagramPlacement do
     end
   end
 
-  ErPlacementCases::CORPUS.each do |number|
-    it "places corpus case #{number} where mmdc does" do
-      svg = File.read(corpus_path(number, "fixtures_mermaid", "svg"))
-      source = File.read(corpus_path(number, "mermaid", "mmd"))
+  ErPlacementCases::CORPUS.each do |id|
+    it "places corpus case #{id} where mmdc does" do
+      svg = File.read(corpus_path(id, "fixtures_mermaid", "svg"))
+      source = File.read(corpus_path(id, "mermaid", "mmd"))
 
       expect_scene_to_match(
         scene_for(source), reference_centres(svg), reference_canvas(svg)
@@ -163,8 +167,8 @@ RSpec.describe Sirena::Layout::ErDiagramPlacement do
   end
 
   ErPlacementCases::UNREFERENCED.each do |name, mmdc|
-    it "places corpus case #{name[0, 3]} where mmdc does, unreferenced" do
-      source = File.read("spec/mermaid/er/#{name}.mmd")
+    it "places corpus case #{name} where mmdc does, unreferenced" do
+      source = File.read("spec/mermaid/er_diagram/#{name}.mmd")
 
       expect_scene_to_match(scene_for(source), mmdc[:centres], mmdc[:canvas])
     end
