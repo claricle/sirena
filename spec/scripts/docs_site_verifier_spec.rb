@@ -164,6 +164,18 @@ module DocsSiteVerifierSpecHelpers
       "Flowchart examples"
   end
 
+  def write_flowchart_pages_without_examples(docs_dir, site_dir)
+    write_source(docs_dir, "flowchart")
+    write_page(site_dir, "diagram_types/flowchart/index.html", page_html)
+    write_page(site_dir, "_diagram_types/flowchart/index.html", page_html)
+  end
+
+  def flowchart_failures_without_examples(tmp)
+    docs_dir, site_dir = build_valid_site(tmp)
+    write_flowchart_pages_without_examples(docs_dir, site_dir)
+    verifier_for(docs_dir, site_dir).failures
+  end
+
   def asset_failure(asset, page, resolved_path)
     "asset: #{asset} (referenced by #{page}) does not resolve to " \
       "#{resolved_path}"
@@ -203,12 +215,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
   it "reports a Flowchart page that omits its generated examples" do
     Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_source(docs_dir, "flowchart")
-      write_page(site_dir, "diagram_types/flowchart/index.html", page_html)
-      write_page(site_dir, "_diagram_types/flowchart/index.html", page_html)
-
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+      expect(flowchart_failures_without_examples(tmp)).to contain_exactly(
         generated_examples_failure,
       )
     end

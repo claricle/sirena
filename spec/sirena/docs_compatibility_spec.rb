@@ -10,6 +10,11 @@ load File.expand_path("../../tasks/compatibility.rake", __dir__)
 RSpec.describe Sirena::DocsCompatibility do
   let(:board) { described_class }
   let(:corpus_root) { File.expand_path("../mermaid", __dir__) }
+  let(:scoreboard_path) do
+    path = File.join(Dir.mktmpdir, "scoreboard.json")
+    File.write(path, JSON.generate(scoreboard_rows))
+    path
+  end
   let(:rows) do
     [
       { case: "class/1.mmd", verdict: "valid", pass: true },
@@ -31,19 +36,23 @@ RSpec.describe Sirena::DocsCompatibility do
     end
   end
 
-  it "reports non-valid verdicts outside the compatibility denominator" do
-    path = File.join(Dir.mktmpdir, "corpus.json")
-    data = [
-      { case: "pie/1.mmd", verdict: "valid", pass: true },
-      { case: "pie/2.mmd", verdict: "valid", pass: false },
-      { case: "pie/3.mmd", verdict: "invalid", pass: true },
-    ]
-    File.write(path, JSON.generate(data))
+  context "with non-valid corpus verdicts" do
+    subject(:type_page_region) do
+      board.type_page_region("Pie Chart", scoreboard_path)
+    end
 
-    region = board.type_page_region("Pie Chart", path)
+    let(:scoreboard_rows) do
+      [
+        { case: "pie/1.mmd", verdict: "valid", pass: true },
+        { case: "pie/2.mmd", verdict: "valid", pass: false },
+        { case: "pie/3.mmd", verdict: "invalid", pass: true },
+      ]
+    end
 
-    expect(region).to include("1/2 passing (50.0%)")
-    expect(region).to include("1/1 `invalid` cases currently render")
+    it "reports them outside the compatibility denominator" do
+      expect(type_page_region).to include("1/2 passing (50.0%)")
+        .and include("1/1 `invalid` cases currently render")
+    end
   end
 
   it "keeps the PlantUML claim equal to its scoreboard's generated region" do
@@ -51,16 +60,18 @@ RSpec.describe Sirena::DocsCompatibility do
       .to include(board.plantuml_region)
   end
 
-  it "generates PlantUML pass counts from measured rows" do
-    path = File.join(Dir.mktmpdir, "plantuml.json")
-    data = [
-      { type: "class", oracle_valid: 4, passing: 3 },
-      { type: "sequence", oracle_valid: 7, passing: 5 },
-    ]
-    File.write(path, JSON.generate(data))
+  context "with measured PlantUML rows" do
+    let(:scoreboard_rows) do
+      [
+        { type: "class", oracle_valid: 4, passing: 3 },
+        { type: "sequence", oracle_valid: 7, passing: 5 },
+      ]
+    end
 
-    expect(board.plantuml_region(path))
-      .to include("class 3/4, sequence 5/7 oracle-valid cases")
+    it "generates PlantUML pass counts" do
+      expect(board.plantuml_region(scoreboard_path))
+        .to include("class 3/4, sequence 5/7 oracle-valid cases")
+    end
   end
 
   it "counts only oracle-valid cases, summing a type's directories" do
