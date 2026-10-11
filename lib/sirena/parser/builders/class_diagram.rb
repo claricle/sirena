@@ -216,6 +216,10 @@ module Sirena
           return unless stmt[:text_label].is_a?(Hash)
 
           label = extract_text(stmt[:text_label][:string])
+          if !label.empty? && label.strip.empty?
+            raise Parser::ParseError, "Class label cannot contain only spaces."
+          end
+
           label unless label.empty?
         end
 

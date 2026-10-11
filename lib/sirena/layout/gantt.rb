@@ -770,6 +770,8 @@ module Sirena
         return 0 unless date
 
         origin, days, width = task_axis(timeline)
+        return 0 if days.zero?
+
         days_from_start = (date - origin) / DAY_SECONDS
         (days_from_start.to_f / days) * width
       end

@@ -73,7 +73,8 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapters::GitGraph do
 
   def expected_actions
     [[
-      ["A", "C", "parent"], ["C", "M", "merge"],
+      ["A", "B", "parent"], ["A", "C", "parent"],
+      ["C", "M", "merge"], ["B", "M", "merge"],
       ["M", "B", "cherry_pick"]
     ],
      a_hash_including("merge_commit" => ["true"],

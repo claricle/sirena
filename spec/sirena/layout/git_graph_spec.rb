@@ -36,7 +36,7 @@ RSpec.describe Sirena::Layout::GitGraph do
     [%w[A B C M B], ["start", "work", nil, nil, nil],
      %w[NORMAL HIGHLIGHT REVERSE NORMAL NORMAL],
      ["v1", nil, nil, "merged", "picked"],
-     [[], [], ["A"], ["C"], ["M"]]]
+     [[], ["A"], ["A"], %w[C B], ["M"]]]
   end
 
   def action_summary
@@ -51,7 +51,8 @@ RSpec.describe Sirena::Layout::GitGraph do
 
   def expected_actions
     [[true, "feature"], [true, "A"],
-     [["A", "C", :normal], ["C", "M", :merge],
+     [["A", "B", :normal], ["A", "C", :normal],
+      ["C", "M", :merge], ["B", "M", :merge],
       ["M", "B", :cherry_pick]]]
   end
 

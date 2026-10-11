@@ -21,18 +21,19 @@ RSpec.describe Sirena do
       end
     end
 
-    {
-      "$link" => '$link="https://github.com/mermaidjs"',
-      "$sprite" => '$sprite="users"',
-      "$tags" => '$tags="tag1,tag2"',
-    }.each do |name, attribute|
-      %w[Person Person_Ext].each do |type|
-        it "rejects #{type} with #{name} in the required label position" do
-          source = "C4Context\n#{type}(customerA, #{attribute})\n"
+    [
+      ["Person", "$link", '$link="https://github.com/mermaidjs"'],
+      ["Person_Ext", "$link", '$link="https://github.com/mermaidjs"'],
+      ["Person", "$sprite", '$sprite="users"'],
+      ["Person_Ext", "$sprite", '$sprite="users"'],
+      ["Person", "$tags", '$tags="tag1,tag2"'],
+      ["Person_Ext", "$tags", '$tags="tag1,tag2"'],
+    ].each do |type, name, attribute|
+      it "rejects #{type} with #{name} in the required label position" do
+        source = "C4Context\n#{type}(customerA, #{attribute})\n"
 
-          expect { described_class.render(source) }
-            .to raise_error(Sirena::Parser::ParseError)
-        end
+        expect { described_class.render(source) }
+          .to raise_error(Sirena::Parser::ParseError)
       end
     end
   end

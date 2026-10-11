@@ -223,11 +223,14 @@ RSpec.describe Sirena::TypeGenerator do
   end
 
   describe "filesystem failures" do
-    let!(:before_files) { written_paths(root) }
-    let!(:before_table) { File.binread(table_path) }
-    let!(:before_map) { File.binread(ir_map_path) }
+    let(:before_snapshot) do
+      [written_paths(root), File.binread(table_path), File.binread(ir_map_path)]
+    end
 
-    before { fail_write(15, Errno::ENOSPC.new) }
+    before do
+      before_snapshot
+      fail_write(15, Errno::ENOSPC.new)
+    end
 
     it "reports a generator error instead of a raw filesystem exception" do
       expect { generate(TypeGeneratorSpecHelpers::UNIT_NAME) }
@@ -238,7 +241,7 @@ RSpec.describe Sirena::TypeGenerator do
       suppress_refusal { generate(TypeGeneratorSpecHelpers::UNIT_NAME) }
 
       expect(tree_snapshot(root, table_path, ir_map_path))
-        .to eq([before_files, before_table, before_map])
+        .to eq(before_snapshot)
     end
 
     it "can retry cleanly after the transient failure" do
