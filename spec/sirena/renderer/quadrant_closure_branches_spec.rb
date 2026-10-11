@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::Quadrant, "#render" do
+RSpec.describe Sirena::Renderer::Quadrant do
   subject(:renderer) { described_class.new }
 
   let(:source) do
@@ -26,7 +26,7 @@ RSpec.describe Sirena::Renderer::Quadrant, "#render" do
     expect(quadrant_fills).to include(*default_fills)
   end
 
-  it "paints quadrants from the default palette when the theme has no colours" do
+  it "uses the default quadrant palette for a theme without colours" do
     renderer.theme = Sirena::Theme.new(name: "bare")
 
     expect(quadrant_fills).to include(*default_fills)

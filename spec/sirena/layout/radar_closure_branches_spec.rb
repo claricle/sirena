@@ -9,13 +9,16 @@ RSpec.describe Sirena::Layout::Radar do
   let(:diagram) { Sirena::Parser::Radar.new.parse(source) }
 
   describe "#call" do
-    it "reads a measurement that is absent from the data as zero" do
-      data = Sirena::Notation::Mermaid::IRAdapters::Radar.call(diagram)
-      missing = data.dimensions[1].id
-      data.values = data.values.reject do |entry|
-        entry.role == "measurement" && entry.dimension_id == missing
+    let(:data) do
+      Sirena::Notation::Mermaid::IRAdapters::Radar.call(diagram).tap do |ir|
+        missing = ir.dimensions[1].id
+        ir.values = ir.values.reject do |entry|
+          entry.role == "measurement" && entry.dimension_id == missing
+        end
       end
+    end
 
+    it "reads a measurement that is absent from the data as zero" do
       expect(layout.call(data).curves.first.points.map(&:value))
         .to eq([1.0, 0.0, 3.0])
     end

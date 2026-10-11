@@ -121,15 +121,17 @@ RSpec.describe Sirena::Layout::Sequence do
   end
 
   describe Sirena::Layout::Sequence::MessageRows do
-    it "wraps a message to an unplaced participant at one actor box wide" do
-      text = "word " * 12
+    let(:text) { "word " * 12 }
+    let(:rows) do
       edge = { sources: ["A"], targets: ["Z"],
                metadata: { message_source: text } }
-      rows = described_class.new([edge], { "A" => { center_x: 0 } },
-                                 font_size: 16, wrap: true)
-      narrow = Sirena::Layout::Sequence::TextWrap.lines(
-        text, described_class::MIN_LIMIT, 16
-      )
+      described_class.new([edge], { "A" => { center_x: 0 } },
+                          font_size: 16, wrap: true)
+    end
+
+    it "wraps a message to an unplaced participant at one actor box wide" do
+      narrow = Sirena::Layout::Sequence::TextWrap
+        .lines(text, described_class::MIN_LIMIT, 16)
 
       expect(rows.lines(0)).to eq(narrow)
     end
@@ -158,7 +160,7 @@ RSpec.describe Sirena::Layout::Sequence do
       expect(layout.box_shapes(positions, {}, 200)).to eq([])
     end
 
-    it "spans every participant for a frame whose message names an unplaced one" do
+    it "spans all participants when a frame names an unplaced one" do
       layout = described_class.new(frames: [frame], spans: [%w[A Z]],
                                    ids: %w[A B])
       shape = layout.frame_shapes(positions, ->(_index) { 100 }).first
@@ -181,22 +183,22 @@ RSpec.describe Sirena::Layout::Sequence do
     end
 
     it "keeps the note that does, beside one that does not" do
-      expect(placement.call([note_entry(["Z"]), note_entry(["A"])]).notes.length).to eq(1)
+      notes = placement.call([note_entry(["Z"]), note_entry(["A"])]).notes
+
+      expect(notes.length).to eq(1)
     end
 
-    it "gives a wrapped note over a participant without a box edge the minimum width" do
-      rows = Sirena::Layout::Sequence::MessageRows.new(
-        [], positions, font_size: 16, wrap: true
-      )
-      placed = described_class.new([note_entry(["B"])], positions,
-                                   font_size: 16, rows: rows)
-      note = placed.notes.first
+    it "gives a wrapped note on an edgeless participant the minimum width" do
+      rows = Sirena::Layout::Sequence::MessageRows
+        .new([], positions, font_size: 16, wrap: true)
+      note = described_class.new([note_entry(["B"])], positions,
+                                 font_size: 16, rows: rows).notes.first
 
       expect(note.width).to eq(Sirena::Layout::Sequence::NoteBox::MIN_WIDTH)
     end
 
     it "does not stack a later message's slot above an earlier-listed note" do
-      entries = [note_entry(["A"], message_index: 2), note_entry(["A"], message_index: 0)]
+      entries = [2, 0].map { |index| note_entry(["A"], message_index: index) }
       lone = placement.call([note_entry(["A"], message_index: 0)]).notes.first
       second = placement.call(entries).notes.last
 

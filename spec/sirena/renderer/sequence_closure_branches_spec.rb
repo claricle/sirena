@@ -49,7 +49,9 @@ RSpec.describe Sirena::Renderer::Sequence do
     end
 
     it "draws the whole title as a single line" do
-      expect(group.children.grep(Sirena::Svg::Text).flat_map(&:content)).to eq(%w[loop [go]])
+      texts = group.children.grep(Sirena::Svg::Text).flat_map(&:content)
+
+      expect(texts).to eq(%w[loop [go]])
     end
   end
 
