@@ -27,6 +27,19 @@ module Sirena
           }
         end
 
+        rule(
+          bit_start: simple(:bit_start),
+          label: subtree(:label),
+        ) do
+          bit = bit_start.to_s.to_i
+          {
+            type: :field,
+            bit_start: bit,
+            bit_end: bit,
+            label: label.is_a?(Array) ? "" : label.to_s,
+          }
+        end
+
         # Transform title
         rule(title: simple(:title)) do
           { type: :title, title: title.to_s }
@@ -41,6 +54,7 @@ module Sirena
 
           # A body of only comments and blank lines parses to one string,
           # not an Array of statements.
+          expected_start = 0
           Array(statements).each do |stmt|
             next unless stmt.is_a?(Hash)
 
@@ -48,7 +62,16 @@ module Sirena
             when :title
               result[:title] = stmt[:title]
             else
+              if stmt[:bit_end] < stmt[:bit_start]
+                raise Parser::ParseError,
+                      "Packet field end must be greater than or equal to start."
+              end
+              unless stmt[:bit_start] == expected_start
+                raise Parser::ParseError,
+                      "Packet fields must start from #{expected_start}."
+              end
               result[:fields] << stmt
+              expected_start = stmt[:bit_end] + 1
             end
           end
 
