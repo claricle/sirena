@@ -103,9 +103,12 @@ RSpec.describe Sirena::Layout::Mindmap do
       .to eq("one\ntwo")
   end
 
-  describe "canvas and edges for a two-child mindmap (mmdc mmp_2 hierarchical)" do
-    let(:scene) { scene_for(reference_source("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5")) }
-    let(:reference_box) { MindmapReference.view_box("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5") }
+  describe "canvas and edges for a two-child mindmap (mmdc mmp_2)" do
+    let(:case_id) do
+      "mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5"
+    end
+    let(:scene) { scene_for(reference_source(case_id)) }
+    let(:reference_box) { MindmapReference.view_box(case_id) }
 
     it "frames the node boxes with 10 on every side" do
       expect(canvas_margins(scene)).to eq([10.0, 10.0, 10.0, 10.0])
@@ -113,7 +116,8 @@ RSpec.describe Sirena::Layout::Mindmap do
 
     it "places the first child right and the second left, as mmdc does" do
       root, first, second = scene.children
-      reference = MindmapReference.nodes("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5").map { |node| node[:centre][0] }
+      nodes = MindmapReference.nodes(case_id)
+      reference = nodes.map { |node| node[:centre][0] }
 
       expect([first.center_x > root.center_x, second.center_x < root.center_x])
         .to eq([reference[1] > reference[0], reference[2] < reference[0]])
@@ -128,13 +132,13 @@ RSpec.describe Sirena::Layout::Mindmap do
     end
 
     it "starts and ends each edge 15 from the node centres" do
-      inset = be_within(0.01).of(reference_inset("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5"))
+      inset = be_within(0.01).of(reference_inset(case_id))
 
       expect(edge_end_distances(scene)).to match([inset, inset])
     end
 
     it "bends each edge through its midpoint as mmdc's curve does" do
-      reference = path_fractions(MindmapReference.edge_paths("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5").first)
+      reference = path_fractions(MindmapReference.edge_paths(case_id).first)
 
       expect(path_fractions(scene_path_points(scene)))
         .to match(reference.map { |value| be_within(1e-3).of(value) })

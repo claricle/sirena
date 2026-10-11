@@ -197,8 +197,7 @@ module Sirena
         dx, dy = self_loop_overflow(flat)
         page = shift_page(flat, dx, dy)
         edges = typed_edges(page)
-        width = [calculate_width(page), route_reach(edges, :x)].max
-        height = [calculate_height(page), route_reach(edges, :y)].max
+        width, height = canvas_size(page, edges)
 
         Scene.new(
           id: graph[:id] || "flowchart",
@@ -210,8 +209,14 @@ module Sirena
         )
       end
 
-      # How far a routed edge reaches along :x or :y, plus the page margin,
-      # so a route that detours round a box stays on the page.
+      # [width, height] of the boxes and of every routed edge, so a route
+      # that detours round a box stays on the page.
+      def canvas_size(page, edges)
+        [[calculate_width(page), route_reach(edges, :x)].max,
+         [calculate_height(page), route_reach(edges, :y)].max]
+      end
+
+      # How far a routed edge reaches along :x or :y, plus the page margin.
       def route_reach(edges, axis)
         points = edges.flat_map do |edge|
           edge.sections.flat_map do |section|

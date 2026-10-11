@@ -31,15 +31,30 @@ RSpec.describe Sirena::Diagram::FlowchartLabelText do
     end
 
     # mmdc stacks a `<br>` label at 24px a line, centred on the node.
-    it "draws a node label's lines 24px apart, centred on the node" do
-      svg = Sirena.render("graph TD;a{{A <br> end}};")
-      doc = Nokogiri::XML(svg).remove_namespaces!
-      first = doc.at_xpath("//text")["y"].to_f
-      second = doc.xpath("//text/tspan").last["y"].to_f
-      rows = doc.at_xpath("//polygon")["points"].split.map { |pair| pair.split(",").last.to_f }
+    context "with a two-line node label" do
+      let(:doc) do
+        svg = Sirena.render("graph TD;a{{A <br> end}};")
+        Nokogiri::XML(svg).remove_namespaces!
+      end
+      let(:baselines) do
+        [doc.at_xpath("//text")["y"].to_f,
+         doc.xpath("//text/tspan").last["y"].to_f]
+      end
+      let(:rows) do
+        doc.at_xpath("//polygon")["points"].split.map do |pair|
+          pair.split(",").last.to_f
+        end
+      end
 
-      expect(second - first).to eq(24.0)
-      expect(((first + second) / 2) - (0.35 * 16)).to be_within(0.01).of(rows.minmax.sum / 2)
+      it "draws the lines 24px apart" do
+        expect(baselines.last - baselines.first).to eq(24.0)
+      end
+
+      it "centres the lines on the node" do
+        middle = (baselines.sum / 2) - (0.35 * 16)
+
+        expect(middle).to be_within(0.01).of(rows.minmax.sum / 2)
+      end
     end
 
     it "draws an edge label without markup" do

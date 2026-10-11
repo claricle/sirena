@@ -16,11 +16,9 @@ RSpec.describe Sirena::Layout::Flowchart::ClusterReach do
 
   it "stretches a subgraph down the page to the boxes with an edge into it" do
     box = cluster(100.0, 110.0, 30.0)
-    above = plain("a", 0.0)
-    below = plain("b", 300.0)
-    edges = [[nil, "a", "B"], [nil, "b", "B"]]
 
-    described_class.apply([above, box, below], edges, sideways: true)
+    described_class.apply([plain("a", 0.0), box, plain("b", 300.0)],
+                          [[nil, "a", "B"], [nil, "b", "B"]], sideways: true)
 
     expect([box[:y], box[:y] + box[:height]])
       .to eq([25.0 - reach, 325.0 + reach])

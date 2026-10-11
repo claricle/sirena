@@ -237,7 +237,8 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
       expect(edge.sections.first.end_point).to be_a(described_class::Point)
     end
 
-    # mmdc leaves 8px round the diagram (configuration_spec-67574f4a: node A at y 8).
+    # mmdc leaves 8px round the diagram (configuration_spec-67574f4a:
+    # node A at y 8).
     it "places nodes in final canvas coordinates" do
       node = transform.to_graph(diagram).children.first
 
@@ -306,7 +307,7 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
 
     # mmdc draws an edge label at the node text size, so neither
     # font_size_small nor font_size_normal moves it.
-    context "with an edge label and a theme whose small and normal sizes differ" do
+    context "with an edge label and differing small and normal sizes" do
       let(:diagram) do
         Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
           d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
@@ -397,7 +398,8 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     # registry, so the fallback itself can resolve to nil -- a transform
     # built directly with no theme injected sees exactly this. The renderer
     # already tolerates a nil theme via safe navigation
-    # (renderer/base.rb#theme_typography); layout_font_size must match that, not dereference theme directly.
+    # (renderer/base.rb#theme_typography); layout_font_size must match that,
+    # not dereference theme directly.
     context "with no theme registered at all" do
       it "still measures node and edge-label text instead of raising" do
         Sirena::Theme::Registry.clear

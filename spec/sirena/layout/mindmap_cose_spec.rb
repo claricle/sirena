@@ -5,6 +5,9 @@ require "spec_helper"
 require "sirena/layout/mindmap_cose"
 
 module MindmapCoseReferenceHelpers
+  TWO_CHILDREN_OF_EQUAL_WIDTH =
+    "mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5"
+
   # Lays out a reference case with the box sizes read from its mmdc SVG, so
   # a difference in a centre is the layout's, not the text measurement's.
   def reference_layout(name)
@@ -12,6 +15,10 @@ module MindmapCoseReferenceHelpers
     sizes = nodes.map { |node| [node[:id], *node[:size]] }
     placed = described_class.call(sizes, MindmapReference.edges(name))
     [nodes, placed]
+  end
+
+  def equal_width_layout
+    reference_layout(TWO_CHILDREN_OF_EQUAL_WIDTH)
   end
 
   def offsets_from_first(centres)
@@ -48,8 +55,10 @@ RSpec.describe Sirena::Layout::MindmapCose do
 
   {
     "mindmap_spec-dad0b477" => "a root with two children",
-    "mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5" => "a root with two children of equal width",
-    "mmp_4_should_handle_a_deeper_hierarchical_mindma-6bcd32ea" => "a three-level chain",
+    MindmapCoseReferenceHelpers::TWO_CHILDREN_OF_EQUAL_WIDTH =>
+      "a root with two children of equal width",
+    "mmp_4_should_handle_a_deeper_hierarchical_mindma-6bcd32ea" =>
+      "a three-level chain",
     "mindmap_spec-785e4e84" => "a root with a nested branch",
     "mindmap_spec-7104af54" => "ten nodes over three levels",
   }.each do |name, description|
@@ -76,8 +85,8 @@ RSpec.describe Sirena::Layout::MindmapCose do
     end
   end
 
-  it "places the root's children left and right of it on its row (mmp_2 hierarchical)" do
-    nodes, placed = reference_layout("mmp_2_should_handle_a_hierarchical_mindmap_defin-ad3719b5")
+  it "places the root's children left and right of it on its row (mmp_2)" do
+    nodes, placed = equal_width_layout
     root, first, second = nodes.map { |node| placed.fetch(node[:id]) }
 
     expect([first[1] - root[1], second[1] - root[1],
