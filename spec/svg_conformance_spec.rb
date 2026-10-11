@@ -82,9 +82,7 @@ CONFORMANCE_RENDERED_FLOOR = 894
 # SVG. Named rather than counted: a NEW source falling out of the checked-in
 # set is a regression, and a glob over whatever happens to exist cannot see
 # one.
-CONFORMANCE_UNRENDERABLE_EXAMPLES = [
-  "packet/01-basic-packet.beta.mmd",
-].freeze
+CONFORMANCE_UNRENDERABLE_EXAMPLES = [].freeze
 
 # Same guard corpus_sweep.rb uses. A case that hangs is a corpus problem, not
 # a conformance one, and it must not hang the suite.

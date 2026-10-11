@@ -6,9 +6,13 @@
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
+<line fill="none" stroke="#2563eb" stroke-width="2" x1="57.532" y1="40.0" x2="107.532" y2="130.0"/>
 <line fill="none" stroke="#7c3aed" stroke-width="2" x1="107.532" y1="130.0" x2="157.53199999999998" y2="130.0"/>
 <path fill="none" stroke="#2563eb" stroke-width="2" d="M 57.532 40 L 207.53199999999998 40" stroke-dasharray="5,3"/>
+<path fill="none" stroke="#7c3aed" stroke-width="2" d="M 157.53199999999998 130 C 182.53199999999998 130, 182.53199999999998 40, 207.53199999999998 40" stroke-dasharray="5,3"/>
+<line fill="none" stroke="#2563eb" stroke-width="2" x1="207.53199999999998" y1="40.0" x2="257.532" y2="220.0"/>
 <path fill="none" stroke="#2563eb" stroke-width="2" d="M 207.53199999999998 40 L 307.532 40" stroke-dasharray="5,3"/>
+<path fill="none" stroke="#db2777" stroke-width="2" d="M 257.532 220 C 282.532 220, 282.532 40, 307.532 40" stroke-dasharray="5,3"/>
 <circle fill="#2563eb" stroke="#2563eb" stroke-width="2" cx="57.532" cy="40.0" r="10.0"/>
 <circle fill="#7c3aed" stroke="#7c3aed" stroke-width="2" cx="107.532" cy="130.0" r="10.0"/>
 <circle fill="#7c3aed" stroke="#7c3aed" stroke-width="2" cx="157.53199999999998" cy="130.0" r="10.0"/>

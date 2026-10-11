@@ -8,34 +8,34 @@
 >
 <text fill="#000000" x="600.0" y="40.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="bold">Project Schedule</text>
 <rect fill="#ffffff" stroke="#000000" stroke-width="1" x="200.0" y="80.0" width="800.0" height="40.0"/>
-<text fill="#000000" x="250.05263157894737" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-07</text>
-<text fill="#000000" x="308.4473684210526" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-14</text>
-<text fill="#000000" x="366.8421052631579" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-21</text>
-<text fill="#000000" x="425.2368421052631" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-28</text>
-<text fill="#000000" x="483.63157894736844" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-04</text>
-<text fill="#000000" x="542.0263157894738" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-11</text>
-<text fill="#000000" x="600.421052631579" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-18</text>
-<text fill="#000000" x="658.8157894736842" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-25</text>
-<text fill="#000000" x="717.2105263157895" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-03-03</text>
-<text fill="#000000" x="775.6052631578948" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-03-10</text>
-<text fill="#000000" x="834.0" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-03-17</text>
-<line stroke="#000000" stroke-width="1" x1="250.05263157894737" y1="120.0" x2="250.05263157894737" y2="168.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="308.4473684210526" y1="120.0" x2="308.4473684210526" y2="168.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="366.8421052631579" y1="120.0" x2="366.8421052631579" y2="168.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="425.2368421052631" y1="120.0" x2="425.2368421052631" y2="168.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="483.63157894736844" y1="120.0" x2="483.63157894736844" y2="168.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="542.0263157894738" y1="120.0" x2="542.0263157894738" y2="168.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="600.421052631579" y1="120.0" x2="600.421052631579" y2="168.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="658.8157894736842" y1="120.0" x2="658.8157894736842" y2="168.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="717.2105263157895" y1="120.0" x2="717.2105263157895" y2="168.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="775.6052631578948" y1="120.0" x2="775.6052631578948" y2="168.0" stroke-dasharray="2,2"/>
-<line stroke="#000000" stroke-width="1" x1="834.0" y1="120.0" x2="834.0" y2="168.0" stroke-dasharray="2,2"/>
+<text fill="#000000" x="250.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-07</text>
+<text fill="#000000" x="308.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-14</text>
+<text fill="#000000" x="367.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-21</text>
+<text fill="#000000" x="425.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-01-28</text>
+<text fill="#000000" x="484.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-04</text>
+<text fill="#000000" x="542.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-11</text>
+<text fill="#000000" x="600.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-18</text>
+<text fill="#000000" x="659.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-02-25</text>
+<text fill="#000000" x="717.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-03-03</text>
+<text fill="#000000" x="776.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-03-10</text>
+<text fill="#000000" x="834.5" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2024-03-17</text>
+<line stroke="#000000" stroke-width="1" x1="250.5" y1="120.0" x2="250.5" y2="168.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="308.5" y1="120.0" x2="308.5" y2="168.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="367.5" y1="120.0" x2="367.5" y2="168.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="425.5" y1="120.0" x2="425.5" y2="168.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="484.5" y1="120.0" x2="484.5" y2="168.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="542.5" y1="120.0" x2="542.5" y2="168.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="600.5" y1="120.0" x2="600.5" y2="168.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="659.5" y1="120.0" x2="659.5" y2="168.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="717.5" y1="120.0" x2="717.5" y2="168.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="776.5" y1="120.0" x2="776.5" y2="168.0" stroke-dasharray="2,2"/>
+<line stroke="#000000" stroke-width="1" x1="834.5" y1="120.0" x2="834.5" y2="168.0" stroke-dasharray="2,2"/>
 <rect fill="#f0f0f0" stroke="none" x="0.0" y="120.0" width="1050.0" height="48.0"/>
 <text fill="#000000" x="10.0" y="148.9" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Phase 1</text>
 <text fill="#000000" x="10.0" y="136.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Task 1</text>
-<rect fill="#007bff" stroke="#000000" stroke-width="1" x="200.0" y="122.0" width="250.26315789473685" height="20.0" rx="3.0" ry="3.0"/>
-<text fill="#ffffff" x="325.13157894736844" y="136.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">task_0_0</text>
+<rect fill="#007bff" stroke="#000000" stroke-width="1" x="200.0" y="122.0" width="250.0" height="20.0" rx="3.0" ry="3.0"/>
+<text fill="#ffffff" x="325.0" y="136.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">task_0_0</text>
 <text fill="#000000" x="10.0" y="160.2" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Task 2</text>
-<rect fill="#007bff" stroke="#000000" stroke-width="1" x="458.60526315789474" y="146.0" width="375.39473684210526" height="20.0" rx="3.0" ry="3.0"/>
-<text fill="#ffffff" x="646.3026315789474" y="160.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">task_0_1</text>
+<rect fill="#007bff" stroke="#000000" stroke-width="1" x="459.0" y="146.0" width="375.0" height="20.0" rx="3.0" ry="3.0"/>
+<text fill="#ffffff" x="646.0" y="160.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">task_0_1</text>
 </svg>

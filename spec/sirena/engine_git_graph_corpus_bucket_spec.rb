@@ -679,7 +679,8 @@ RSpec.describe Sirena::Engine do
       "a tab" => "\t"
     }
     two_branches = "gitGraph\n commit\n branch \"my branch\"\n " \
-                   "branch dev\n %s\n"
+                   "checkout \"my branch\"\n commit\n checkout main\n " \
+                   "branch dev\n checkout dev\n commit\n checkout main\n %s\n"
 
     {
       "branch" => "gitGraph\n commit\n %s\n",
