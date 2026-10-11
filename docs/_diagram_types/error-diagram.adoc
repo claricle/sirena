@@ -23,14 +23,11 @@ The simplest form displays just an error indicator:
 error
 ----
 
-=== Error with message
+=== No message text
 
-You can include an error message after the keyword:
-
-[source,mermaid]
-----
-Error Diagrams
-----
+Mermaid detects an error diagram only when the whole source is the
+keyword. Text after it, as in `Error Diagrams`, is not an error diagram
+there, and Sirena refuses it the same way.
 
 The keyword can be lowercase or capitalized:
 
@@ -71,14 +68,14 @@ Error diagrams use fixed error colors but integrate with theme typography:
 
 The error diagram parser (`Sirena::Parser::Error`) uses Parslet grammar to handle:
 
-* Basic `error` or `Error` keyword
-* Optional error message text after the keyword
+* The `error` or `Error` keyword, alone on its line
 
 === Model
 
 The error diagram model (`Sirena::Diagram::Error`) contains:
 
-* `message`: Optional error message string
+* `message`: Optional error message string (never set from Mermaid
+  source, which cannot carry one)
 
 === Renderer
 
@@ -100,14 +97,6 @@ error
 
 Renders "Error" in an error box with icon.
 
-=== Error with message
-
-[source,mermaid]
-----
-Error Diagrams
-----
-
-Renders "Diagrams" as the error message.
 
 == Use cases
 

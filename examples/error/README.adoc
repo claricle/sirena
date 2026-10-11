@@ -16,14 +16,16 @@ Error diagrams display error messages and alerts in a standardized format within
 
 [source,mermaid]
 ----
-error Error Message
+error
 ----
+
+The source is the keyword alone; Mermaid accepts no message text after it.
 
 == Examples
 
 === 01: Basic Error
 
-Demonstrates basic error message display.
+Demonstrates the basic error diagram, from the lowercase keyword.
 
 **File**: link:01-basic-error.mmd[01-basic-error.mmd]
 
@@ -36,7 +38,7 @@ image::01-basic-error.svg[]
 
 === 02: Error Display
 
-Showcases detailed error with context.
+Shows the same error diagram from the capitalized keyword.
 
 **File**: link:02-error-display.mmd[02-error-display.mmd]
 
@@ -53,13 +55,10 @@ image::02-error-display.svg[]
 |===
 | Feature | Example
 
-| Error messages
-| 01, 02
+| Lowercase `error` keyword
+| 01
 
-| Title display
-| 01, 02
-
-| Error details
+| Capitalized `Error` keyword
 | 02
 |===
 
