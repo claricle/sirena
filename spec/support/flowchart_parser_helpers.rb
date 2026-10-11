@@ -24,16 +24,25 @@ module FlowchartParserHelpers
   # The corpus cases that exercise `&` grouping. Callable from a describe
   # body as well as from an example, so the spec can both generate one
   # example per case and assert the bucket is not empty.
-  AMP_BUCKET = %r{
-    \A\d+_parser_should_(
-      handle_basic_shape_data_statements_with_|
-      be_possible_to_use_syntax_to_add_labels_on_multi
-    )
-  }x
+  AMP_BUCKET = %w[
+    flow_node_data_spec-b671d90d
+    flow_node_data_spec-81a45067
+    flow_node_data_spec-f80854cb
+    flow_node_data_spec-930a0e8f
+    flow_node_data_spec-dcd14ebd
+    flow_node_data_spec-738054ca
+    flow_node_data_spec-65204278
+    flow_node_data_spec-8d537ea3
+    flow_node_data_spec-eaf9026c
+    flow_node_data_spec-42630695
+    flow_node_data_spec-fea71e9f
+    flow_node_data_spec-2cd7940f
+    flow_node_data_spec-8dedd493
+    flow_node_data_spec-6e31de6c
+  ].freeze
 
   def self.amp_bucket_paths(dir)
-    Dir[File.join(dir, "*.mmd")]
-      .select { |f| File.basename(f).match?(AMP_BUCKET) }
+    AMP_BUCKET.map { |id| File.join(dir, "#{id}.mmd") }
   end
 
   def amp_bucket_paths(dir)

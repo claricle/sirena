@@ -270,29 +270,31 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
   # Each of these was a failing valid class case before this change.
   describe "the corpus cases this change cleared" do
     %w[
-      class_diagram/click_security_loose-3a5de316
-      class_diagram/yari-9370c2b9
-      class_diagram/yari-e1669991
-      class_diagram/yari-8c1963b6
-      class_diagram/classdiagram_spec-9c8af7e4
-      class_diagram/classdiagram_spec-bde28df9
-      class_diagram/class_spec-e35a838d
-      class_diagram/classdiagram_spec-83d6d7d0
-      class_diagram/classdiagram_spec-ddfcc6a0
-      class_diagram/classdiagram_spec-7ceae3ee
-      class_diagram/classdiagram_spec-a2994e3e
-      class_diagram/classdiagram_spec-f5d7e979
-      class_diagram/classdiagram_spec-9cfcbf0d
-      class_diagram/classdiagram_spec-0e632919
-      class_diagram/classdiagram_spec-ab0cc3b6
-      class_diagram/classdiagram_spec-a0280572
-      class_diagram/classdiagram_spec-9b7740f8
-      class_diagram/classdiagram_spec-898d7d99
-      class_diagram/classdiagram_spec-0fb101a2
-      class_diagram/classdiagram_spec-8ec26131
-      class_diagram/classdiagram_spec-36b2b0e0
-      class_diagram/classdiagram_spec-81622533
-      class_diagram/classdiagram_spec-b2e3a129
+      class_diagram/classdiagram_elk_v3_spec-c57d14a6
+      class_diagram/classdiagram_handdrawn_v3_spec-872bc713
+      class_diagram/classdiagram_v2_spec-64857e52
+      class_diagram/classdiagram_v3_spec-99de384d
+      class_diagram/yari-3e69d3e6
+      class_diagram/yari-ee2e41a0
+      class_diagram/should_handle_parsing_of_separators-0e01f6c1
+      class_diagram/should_handle_a_mix_of_members_defined_in_and_ou-543a9200
+      class_diagram/should_handle_member_and_method_definitions-33e71d97
+      class_diagram/should_handle_class_annotations_in_brackets-3a72ef42
+      class_diagram/should_handle_class_annotations_in_brackets_with-ca73d020
+      class_diagram/should_handle_simple_return_types-c059da2c
+      class_diagram/should_handle_return_types_as_array-a126f77c
+      class_diagram/should_handle_abstract_methods-d9ff8aa4
+      class_diagram/should_handle_static_methods-ee0be48d
+      class_diagram/should_handle_generic_return_types-5f2ca893
+      class_diagram/should_handle_generic_types_in_members_in_class-d04aac61
+      class_diagram/should_handle_generic_class_with_brackets-f8114c2f
+      class_diagram/should_handle_generic_class_with_brackets_and_a-034af121
+      class_diagram/should_handle_class_annotations_in_brackets-aa43c5da
+      class_diagram/should_handle_class_annotations_in_brackets_with-826cd7f4
+      class_diagram/should_handle_abstract_methods-33310d77
+      class_diagram/should_handle_static_methods-e10f9642
+      class_diagram/should_handle_namespace_with_generic_types-b0517fc5
+      class_diagram/should_parse_a_class_with_a_text_label_members_a-6a93a4c0
     ].each do |id|
       it "parses class case #{id}" do
         path = File.expand_path("../../mermaid/#{id}.mmd", __dir__)

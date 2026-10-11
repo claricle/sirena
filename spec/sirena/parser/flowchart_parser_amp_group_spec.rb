@@ -74,7 +74,9 @@ RSpec.describe Sirena::Parser::Flowchart do
     # anything if the corpus moves or the filename pattern drifts, and a
     # silently empty loop leaves the suite green with no coverage at all.
     it "finds the corpus bucket it claims to cover" do
-      expect(amp_bucket_paths(corpus_dir).size).to eq(14)
+      paths = amp_bucket_paths(corpus_dir)
+
+      expect([paths.size, paths.all? { File.file?(_1) }]).to eq([14, true])
     end
 
     # Every one of these 14 raises ParseError against origin/main and renders
