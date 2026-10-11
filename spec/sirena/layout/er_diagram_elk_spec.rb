@@ -22,8 +22,12 @@ RSpec.describe Sirena::Layout::ErDiagram do
   end
 
   def overlap?(first, second)
-    first.x < second.x + second.width && second.x < first.x + first.width &&
-      first.y < second.y + second.height && second.y < first.y + first.height
+    spans_overlap?(first.x, first.width, second.x, second.width) &&
+      spans_overlap?(first.y, first.height, second.y, second.height)
+  end
+
+  def spans_overlap?(start, size, other_start, other_size)
+    start < other_start + other_size && other_start < start + size
   end
 
   it "renders ER through the explicit ELK engine" do
@@ -60,7 +64,7 @@ RSpec.describe Sirena::Layout::ErDiagram do
   it "keeps default ER rendering byte-identical" do
     digest = Digest::SHA256.hexdigest(Sirena.render(source))
     expected = "5c1365669f3791ebed256448acd1496b" \
-                 "68e069fba82fce26fa553b6e343d267a"
+               "68e069fba82fce26fa553b6e343d267a"
     expect(digest).to eq(expected)
   end
 

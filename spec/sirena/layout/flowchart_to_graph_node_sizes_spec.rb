@@ -57,7 +57,7 @@ RSpec.describe Sirena::Layout::Flowchart, "#to_graph" do
 
       expect(node).to have_attributes(
         width: be_within(0.05).of(26.39 + 60),
-        height: 2 * line_height + 30,
+        height: (2 * line_height) + 30,
       )
     end
 

@@ -199,12 +199,18 @@ RSpec.describe Sirena::Renderer::Flowchart do
         .to eq(["one ", "two"])
     end
 
-    it "steps down one line and centres the pair on the node" do
-      centre = box.first + (box.last / 2)
+    it "steps down one line" do
       first = group[/<text[^>]*\sy="([\d.]+)"/, 1].to_f
 
       expect(baselines.first - first).to be_within(0.01).of(24.0)
-      expect((first + baselines.first) / 2 - 5.6).to be_within(0.01).of(centre)
+    end
+
+    it "centres the pair on the node" do
+      centre = box.first + (box.last / 2)
+      first = group[/<text[^>]*\sy="([\d.]+)"/, 1].to_f
+
+      expect(((first + baselines.first) / 2) - 5.6)
+        .to be_within(0.01).of(centre)
     end
   end
 end
