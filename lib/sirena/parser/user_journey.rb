@@ -182,6 +182,8 @@ module Sirena
       end
 
       def consume_line(line, diagram, current_section)
+        return current_section unless line.is_a?(Hash)
+
         return record_title(line, diagram, current_section) if line[:title]
         return start_section(line, diagram, current_section) if line[:section]
         return current_section unless line[:task]
