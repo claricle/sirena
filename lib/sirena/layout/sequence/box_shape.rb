@@ -12,6 +12,8 @@ module Sirena
         attribute :y, :float
         attribute :width, :float
         attribute :height, :float
+        attribute :font_size, :float
+        attribute :font_family, :string
         attribute :color, :string
         attribute :title, :string
         attribute :title_x, :float

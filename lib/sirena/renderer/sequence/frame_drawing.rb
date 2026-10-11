@@ -11,7 +11,6 @@ module Sirena
         TAB_FILL = "#eaeaea"
         DEFAULT_BOX_FILL = "none"
         DEFAULT_RECT_FILL = "#cccccc"
-        FRAME_FONT_SIZE = "16"
 
         private
 
@@ -34,7 +33,7 @@ module Sirena
         end
 
         def box_title(box)
-          frame_text(box.title, box.title_x, box.title_y)
+          frame_text(box.title, box.title_x, box.title_y, box)
         end
 
         def draw_frames(scene, svg)
@@ -89,7 +88,7 @@ module Sirena
 
         def frame_tab(frame)
           tab = [frame_tab_polygon(frame),
-                 frame_text(frame.kind, frame.kind_x, frame.kind_y)]
+                 frame_text(frame.kind, frame.kind_x, frame.kind_y, frame)]
           return tab unless frame.title
 
           tab.concat(title_texts(frame))
@@ -98,7 +97,7 @@ module Sirena
         def title_texts(frame)
           lines = frame.title_lines.empty? ? [frame.title] : frame.title_lines
           lines.zip(frame.title_ys).map do |line, y|
-            frame_text(line, frame.title_x, y)
+            frame_text(line, frame.title_x, y, frame)
           end
         end
 
@@ -113,7 +112,7 @@ module Sirena
         def frame_dividers(frame)
           frame.dividers.flat_map do |divider|
             [divider_line(divider),
-             frame_text(divider.text, divider.text_x, divider.text_y)]
+             frame_text(divider.text, divider.text_x, divider.text_y, frame)]
           end
         end
 
@@ -133,14 +132,14 @@ module Sirena
           line.stroke_dasharray = "3,3"
         end
 
-        def frame_text(content, horizontal, vertical)
+        def frame_text(content, horizontal, vertical, typography)
           Svg::Text.new.tap do |text|
             text.x = horizontal
             text.y = vertical
             text.content = content
             text.fill = theme_color(:label_text)
-            text.font_family = "Arial, sans-serif"
-            text.font_size = FRAME_FONT_SIZE
+            text.font_family = typography.font_family
+            text.font_size = number_string(typography.font_size)
             text.text_anchor = "middle"
           end
         end
