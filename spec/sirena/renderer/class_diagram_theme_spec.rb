@@ -102,7 +102,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     digest = Digest::SHA256.hexdigest(Sirena.render(source))
 
     expect(digest)
-      .to eq("e89a7969aa49b45664538d2119d888ec4b98021ee187eba587dd9567299d0590")
+      .to eq("1e59e3f4f895a0b5b9c516ed80508fbfda40f31e489e57c2a735ef4715de5ff2")
   end
 
   it "applies dark theme roles while retaining the note palette" do

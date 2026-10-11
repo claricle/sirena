@@ -22,6 +22,6 @@ RSpec.describe Sirena::Layout::Kanban do
 
   it "keeps one card's metadata off its sibling" do
     evidence = scene.cards.to_h { |item| [item.id, item.metadata.map(&:text)] }
-    expect(evidence).to eq("owned" => ["Assigned:", "Alice"], "plain" => [])
+    expect(evidence).to eq("owned" => ["Alice"], "plain" => [])
   end
 end

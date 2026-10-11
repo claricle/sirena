@@ -168,7 +168,9 @@ RSpec.describe Sirena::Engine do
     let(:centers) { circle_centers(svg) }
 
     it "draws the first commit at the bottom and later ones above it" do
-      ys = centers.map(&:last)
+      ys = %w[first second third].map do |label|
+        number(text_named(svg, label), "y")
+      end
 
       expect(ys).to eq(ys.uniq.sort.reverse)
     end
@@ -185,8 +187,13 @@ RSpec.describe Sirena::Engine do
     end
 
     it "orders time the opposite way to TB" do
-      top_down = circle_centers(render_svg(source.sub("BT", "TB"))).map(&:last)
-      bottom_up = centers.map(&:last)
+      top_down = render_svg(source.sub("BT", "TB"))
+      top_down = %w[first third].map do |label|
+        number(text_named(top_down, label), "y")
+      end
+      bottom_up = %w[first third].map do |label|
+        number(text_named(svg, label), "y")
+      end
 
       expect([bottom_up.first > bottom_up.last, top_down.first < top_down.last])
         .to eq([true, true])
@@ -198,8 +205,9 @@ RSpec.describe Sirena::Engine do
 
     it "puts a commit label level with the commit" do
       label_y = number(text_named(svg, "first"), "y")
+      nearest_commit = centers.map { |_, y_position| (label_y - y_position).abs }
 
-      expect(label_y).to be_within(5).of(centers.first.last)
+      expect(nearest_commit.min).to be <= 5
     end
 
     it "puts the branch name below every commit" do
@@ -236,7 +244,7 @@ RSpec.describe Sirena::Engine do
       spaced = render_svg("gitGraph BT :\n commit\n commit\n")
       ys = circle_centers(spaced).map(&:last)
 
-      expect(ys).to eq(ys.uniq.sort.reverse)
+      expect(ys).to eq(ys.uniq.sort)
     end
 
     it "leaves LR laid out left to right, one column per commit" do

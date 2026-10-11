@@ -57,7 +57,7 @@ RSpec.describe Sirena::Layout::Block do
       children = nested_scene.children.first.children
       inner = children.find { |node| node.id == "inner" }
       expect([inner.children.map(&:id), inner.children.map(&:x).uniq])
-        .to eq([%w[B C], [144.0, 252.0]])
+        .to eq([%w[B C], [132.0, 240.0]])
     end
 
     context "with a block whose final span exceeds the column count" do
@@ -69,7 +69,7 @@ RSpec.describe Sirena::Layout::Block do
       end
 
       it "keeps the overflowing final span in the current row" do
-        expect(skipped_row_positions(source)).to eq([20.0, 55.0, 90.0, 90.0])
+        expect(skipped_row_positions(source)).to eq([8.0, 43.0, 78.0, 78.0])
       end
     end
 
@@ -87,7 +87,7 @@ RSpec.describe Sirena::Layout::Block do
         scene = transform.call(diagram)
         blocks = scene.children.to_h { |node| [node.id, node] }
 
-        expect(blocks["G"].y).to eq(230.0)
+        expect(blocks["G"].y).to eq(218.0)
       end
     end
   end

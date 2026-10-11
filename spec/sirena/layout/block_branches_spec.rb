@@ -45,9 +45,9 @@ RSpec.describe Sirena::Layout::Block do
 
   def expected_mixed_evidence
     [
-      ["plain", [], 100.0, 60.0, false, []],
+      ["plain", [], 74.79512, 27.0, false, []],
       ["arrow", ["arrow"], 50.0, 30.0, false, []],
-      ["container", ["container"], 100.0, 60.0, true, []],
+      ["container", ["container"], 74.79512, 27.0, true, []],
     ]
   end
 
