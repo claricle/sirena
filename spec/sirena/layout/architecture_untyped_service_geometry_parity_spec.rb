@@ -2,8 +2,8 @@
 
 require "spec_helper"
 
-RSpec.describe "Architecture untyped service geometry" do
-  let(:layout) { Sirena::Layout::Architecture.new }
+RSpec.describe Sirena::Layout::Architecture do
+  let(:layout) { described_class.new }
   let(:renderer) { Sirena::Renderer::Architecture.new }
 
   it "uses Mermaid's notched fallback without changing icon service bounds" do
@@ -42,7 +42,7 @@ RSpec.describe "Architecture untyped service geometry" do
   def scene_for(node)
     Sirena::Layout::Architecture::Scene.new(
       width: 200, height: 200, view_box: "0 0 200 200",
-      children: [node], edges: [],
+      children: [node], edges: []
     )
   end
 
@@ -63,7 +63,7 @@ RSpec.describe "Architecture untyped service geometry" do
       sirena_svg: Sirena.render(File.read("spec/mermaid/#{case_id}")),
       reproduce: __FILE__,
       recognizer: SpecSupport::LayoutParity::ArchitectureRecognizer.new,
-      spatial_kinds: policy.spatial_kinds,
+      spatial_kinds: policy.spatial_kinds
     )
   end
 

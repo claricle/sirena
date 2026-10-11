@@ -21,7 +21,7 @@ RSpec.describe Sirena::Layout::C4 do
 
     expect(widths).to eq(
       "SystemB" => 398.0, "SystemD" => 338.0, "SystemG" => 338.0,
-      "b2" => 498.0, "b3" => 438.0,
+      "b2" => 498.0, "b3" => 438.0
     )
   end
 end

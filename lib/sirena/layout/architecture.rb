@@ -594,7 +594,7 @@ module Sirena
 
         {
           x: info[:x], y: info[:y] - 5,
-          width: FALLBACK_SERVICE_WIDTH, height: FALLBACK_SERVICE_HEIGHT,
+          width: FALLBACK_SERVICE_WIDTH, height: FALLBACK_SERVICE_HEIGHT
         }
       end
 

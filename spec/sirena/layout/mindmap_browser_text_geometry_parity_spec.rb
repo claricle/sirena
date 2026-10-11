@@ -44,7 +44,7 @@ RSpec.describe Sirena::Layout::Mindmap do
 
   it "measures ordinary Mindmap labels in Mermaid's Trebuchet face" do
     scene = described_class.new.call(
-      Sirena::Parser::Mindmap.new.parse("mindmap\n  root((the root))\n")
+      Sirena::Parser::Mindmap.new.parse("mindmap\n  root((the root))\n"),
     )
 
     expect(scene.children.first)

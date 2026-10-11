@@ -56,7 +56,7 @@ module Sirena
       BROWSER_WIDTH_SCALE = 64.0
       # Per-mille pair adjustments for width-setting Requirement labels.
       TREBUCHET_KERNING = {
-        "Re" => -38, "Te" => -119, "Ty" => -113, "Ve" => -86,
+        "Re" => -38, "Te" => -119, "Ty" => -113, "Ve" => -86
       }.freeze
       # Font size by [role, row index]; every other row uses 11.
       FIXED_FONT_SIZES = { ["element", 1] => 14, ["header", 0] => 12 }.freeze
