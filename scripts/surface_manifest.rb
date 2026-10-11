@@ -132,12 +132,16 @@ module SurfaceManifest
   end
 
   def run_process(argv, chdir:, timeout:, stdin_data: "")
-    options = { chdir: chdir }
-    options[:pgroup] = true unless Gem.win_platform?
-    Open3.popen3(checkout_env(chdir), *argv, **options) do |stdin, *pipes, wait|
+    Open3.popen3(
+      checkout_env(chdir), *argv, **process_options(chdir)
+    ) do |stdin, *pipes, wait|
       feed(stdin, stdin_data)
       collect(pipes, wait, timeout)
     end
+  end
+
+  def process_options(chdir)
+    Gem.win_platform? ? { chdir: chdir } : { chdir: chdir, pgroup: true }
   end
 
   def feed(stdin, data)
@@ -151,15 +155,19 @@ module SurfaceManifest
   def collect(pipes, wait, timeout)
     readers = pipes.map { |io| Thread.new { io.binmode.read } }
     timed_out = wait.join(timeout).nil?
-    Process.kill("KILL", Gem.win_platform? ? wait.pid : -wait.pid) if timed_out
+    Process.kill("KILL", kill_target(wait.pid)) if timed_out
     stdout, stderr = readers.map(&:value)
     { stdout: stdout, stderr: stderr, timed_out: timed_out,
       status: timed_out ? nil : wait.value.exitstatus }
   end
 
+  def kill_target(pid)
+    Gem.win_platform? ? pid : -pid
+  end
+
   def scrub(text, root)
     clean = text.dup.force_encoding(Encoding::UTF_8).scrub
-    clean.gsub(root, ROOT_MARK).gsub(ADDRESS, "0xADDR")
+    clean.gsub("\r\n", "\n").gsub(root, ROOT_MARK).gsub(ADDRESS, "0xADDR")
   end
 
   def api_results(root, cases, launcher: LAUNCHER, timeout: API_TIMEOUT)
