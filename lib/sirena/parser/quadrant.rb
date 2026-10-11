@@ -33,6 +33,34 @@ module Sirena
     class Quadrant < Base
       grammar Grammars::Quadrant
       builder Builders::Quadrant
+
+      CLASS_STYLE_KEYS = %w[radius color stroke-color stroke-width].freeze
+      private_constant :CLASS_STYLE_KEYS
+
+      # @raise [ParseError] when a classDef uses a style Mermaid rejects
+      def parse(source)
+        tree = parse_with_grammar(Grammars::Quadrant.new, source)
+        validate_class_styles(tree)
+        Builders::Quadrant.new.apply(tree)
+      end
+
+      private
+
+      def validate_class_styles(tree)
+        [tree].flatten.each do |item|
+          next unless item.is_a?(Hash) && item.key?(:class_style)
+
+          class_style_keys(item[:class_style]).each do |key|
+            next if CLASS_STYLE_KEYS.include?(key)
+
+            raise ParseError, "style named #{key} is not supported."
+          end
+        end
+      end
+
+      def class_style_keys(style)
+        style.to_s.split(",").map { |part| part.strip.split(/\s*:\s*/).first }
+      end
     end
   end
 end
