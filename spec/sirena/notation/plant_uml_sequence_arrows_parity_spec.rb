@@ -4,10 +4,12 @@ require "spec_helper"
 require "sirena/notation/plantuml"
 
 RSpec.describe "PlantUML SequenceArrows parity" do
-  CASES = %w[
-    java.nonreg.simple.SequenceArrows_0001_Test--d918f796209f
-    java.nonreg.simple.SequenceArrows_0002_Test--ae1299794d0b
-  ].freeze
+  let(:case_ids) do
+    %w[
+      java.nonreg.simple.SequenceArrows_0001_Test--d918f796209f
+      java.nonreg.simple.SequenceArrows_0002_Test--ae1299794d0b
+    ]
+  end
 
   def root
     File.expand_path("../../plantuml", __dir__)
@@ -50,7 +52,7 @@ RSpec.describe "PlantUML SequenceArrows parity" do
   end
 
   it "recognizes four participants and 124 arrows in each pinned reference" do
-    counts = CASES.map do |id|
+    counts = case_ids.map do |id|
       figure = SpecSupport::LayoutParity::SvgFigureExtractor
         .new(recognizer).extract(reference(id))
       figure.elements.map(&:kind).tally
@@ -60,7 +62,7 @@ RSpec.describe "PlantUML SequenceArrows parity" do
   end
 
   it "matches every participant and arrow by semantic presence" do
-    rows = CASES.map do |id|
+    rows = case_ids.map do |id|
       SpecSupport::LayoutParity::CaseLedger.build([result(id)]).first
     end
 
