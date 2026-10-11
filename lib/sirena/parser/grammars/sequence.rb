@@ -544,8 +544,30 @@ module Sirena
         # plain `message_actor_char` branch since it is the more specific
         # case and Parslet alternation is first-match.
         rule(:message_actor_name) do
-          message_actor_lead >>
-            (char_ref | message_actor_continuation | message_actor_char).repeat
+          message_actor_lead >> message_actor_run.repeat >>
+            message_actor_slash_fusion.maybe
+        end
+
+        rule(:message_actor_run) do
+          char_ref | message_actor_continuation |
+            (match["/\\\\"].absent? >> message_actor_char)
+        end
+
+        # Mermaid tests for a `/` or `\` arrow (`\|-`, `\\-`, ...) only
+        # where its name token ends or begins a run, which for these
+        # characters means the FIRST one in the name. A first one that
+        # opens no arrow joins the name and its flat tail, so a later
+        # spelling is name text: `Alice \\|- John: m` has no arrow and is
+        # rejected (oracle: sequencediagram_spec-97601112).
+        rule(:message_actor_slash_fusion) do
+          reversed_arrow.absent? >> match["/\\\\"] >>
+            (char_ref | message_actor_continuation |
+              (message_actor_fused_stop.absent? >> match["^+<>()-"])).repeat
+        end
+
+        rule(:message_actor_fused_stop) do
+          colon | comma | semicolon | str("%%") | str("@{") | lparen |
+            rparen | newline
         end
 
         # The decoration is parsed and discarded, not modeled — Sirena
