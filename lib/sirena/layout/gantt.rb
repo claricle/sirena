@@ -412,7 +412,7 @@ module Sirena
       end
 
       def milestone?(task)
-        task[:milestone] || task[:width] < 10
+        task[:milestone]
       end
 
       def milestone_points(x_coordinate, y_coordinate)
@@ -752,12 +752,13 @@ module Sirena
       def task_width(task, timeline)
         start_time = task.calculated_start
         end_time = task.render_end || task.calculated_end
-        return 20 unless start_time && end_time # Minimum width for milestones
+        return 20 unless start_time && end_time
 
         duration_days = (end_time - start_time) / DAY_SECONDS
-        return 10 if duration_days <= 0 # Milestone or zero duration
+        return 0 if duration_days <= 0
 
-        (duration_days.to_f / timeline[:total_days]) * 800
+        width = (duration_days.to_f / timeline[:total_days]) * 800
+        width < 1 ? 0 : width
       end
 
       def total_task_count(diagram)
