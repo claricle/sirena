@@ -99,6 +99,7 @@ module Sirena
       def service_label(node)
         positioned_text(node.labels.first).tap do |text|
           text.fill = theme_color(:label_text)
+          text.font_family = label_font_family
           text.dominant_baseline = "middle"
         end
       end
@@ -107,9 +108,13 @@ module Sirena
         Svg::Text.new(
           x: label.x, y: label.y, content: label.text,
           font_size: number_string(label.font_size),
-          font_family: label.font_family, font_weight: label.font_weight,
+          font_weight: label.font_weight,
           text_anchor: label.text_anchor
         )
+      end
+
+      def label_font_family
+        theme_typography(:font_family) || "Arial, Helvetica, sans-serif"
       end
 
       def render_junction(node, svg)

@@ -28,7 +28,8 @@ module ArchitectureThemeTypographySpecHelpers
 
   def scene_typography(scene)
     scene_labels(scene).map do |label|
-      [label.font_size, label.font_family, label.font_weight, label.text_anchor]
+      [label.font_size, label.font_weight, label.text_anchor,
+       label.respond_to?(:font_family)]
     end
   end
 
@@ -63,15 +64,15 @@ module ArchitectureThemeTypographySpecHelpers
   end
 
   def default_expected
-    [[[14, nil, "bold", nil],
-      [12, "Arial, Helvetica, sans-serif", nil, "middle"],
-      [10, nil, nil, "middle"]], DEFAULT_DIGEST]
+    [[[14, "bold", nil, false],
+      [12, nil, "middle", false],
+      [10, nil, "middle", false]], DEFAULT_DIGEST]
   end
 
   def high_contrast_expected
-    scene = [[16.8, nil, "bold", nil],
-             [96.0 / 7, "Arial, Helvetica, sans-serif", nil, "middle"],
-             [35.0 / 3, nil, nil, "middle"]]
+    scene = [[16.8, "bold", nil, false],
+             [96.0 / 7, nil, "middle", false],
+             [35.0 / 3, nil, "middle", false]]
     svg = [["16.8", nil, "bold", nil],
            [(96.0 / 7).to_s, "Arial, Helvetica, sans-serif", nil, "middle"],
            [(35.0 / 3).to_s, nil, nil, "middle"]]
@@ -87,12 +88,23 @@ module ArchitectureThemeTypographySpecHelpers
   end
 
   def custom_expected
-    [[[21, nil, "700", nil],
-      [18, "Example Sans", nil, "middle"],
-      [15, nil, nil, "middle"]],
+    [[[21, "700", nil, false],
+      [18, nil, "middle", false],
+      [15, nil, "middle", false]],
      [["21", nil, "700", nil],
       ["18", "Example Sans", nil, "middle"],
       ["15", nil, nil, "middle"]]]
+  end
+
+  def empty_theme
+    Sirena::Theme.new(typography: Sirena::Theme::Typography.new)
+  end
+
+  def empty_expected
+    [default_expected.first,
+     [["14", nil, "bold", nil],
+      ["12", "Arial, Helvetica, sans-serif", nil, "middle"],
+      ["10", nil, nil, "middle"]]]
   end
 
   def mutation_result
@@ -106,16 +118,15 @@ module ArchitectureThemeTypographySpecHelpers
   def mutate(labels)
     labels.zip([31, 32, 33]).each { |label, size| label.font_size = size }
     labels[0].font_weight = "900"
-    labels[1].font_family = "Mutated Sans"
     labels[2].text_anchor = "end"
   end
 
   def mutation_expected
-    [[14, nil, "bold", nil],
-     [12, "Arial, Helvetica, sans-serif", nil, "middle"],
-     [10, nil, nil, "middle"],
+    [[14, "bold", nil, false],
+     [12, nil, "middle", false],
+     [10, nil, "middle", false],
      [["31", nil, "900", nil],
-      ["32", "Mutated Sans", nil, "middle"],
+      ["32", "Arial, Helvetica, sans-serif", nil, "middle"],
       ["33", nil, nil, "end"]]]
   end
 end
@@ -135,6 +146,11 @@ RSpec.describe Sirena::Layout::Architecture do
   it "derives custom Scene and SVG values from typography roles" do
     expect(helpers.typography(helpers.custom_theme))
       .to eq(helpers.custom_expected)
+  end
+
+  it "keeps family out of Scene and falls back for empty typography" do
+    expect(helpers.typography(helpers.empty_theme))
+      .to eq(helpers.empty_expected)
   end
 
   it "serializes mutated Scene typography without renderer inference" do
