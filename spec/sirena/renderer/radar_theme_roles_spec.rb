@@ -20,10 +20,11 @@ RSpec.describe Sirena::Renderer::Radar do
      ["#2563eb", "#2563eb"]]
   end
   let(:dark_paints) do
-    [["#1e1e1e"], ["#d4d4d4"], ["#3794ff", "#3794ff"]]
+    [["#e5e7eb"], ["#9ca3af"], ["#1e1e1e"], ["#d4d4d4"],
+     ["#3794ff", "#3794ff"]]
   end
   let(:partial_paints) do
-    [[nil], [nil], ["#123456", "#123456"]]
+    [[nil], [nil], [nil], [nil], ["#123456", "#123456"]]
   end
 
   def document(theme = nil)
@@ -35,6 +36,16 @@ RSpec.describe Sirena::Renderer::Radar do
     REXML::XPath.match(document, "//circle[@stroke-width='1']")
       .reject { |circle| circle.attributes["class"] == "radarGraticule" }
       .map { |circle| circle.attributes["stroke"] }
+  end
+
+  def grid_strokes(document)
+    REXML::XPath.match(document, "//*[@class='radarGraticule']")
+      .map { |shape| shape.attributes["stroke"] }
+  end
+
+  def axis_strokes(document)
+    REXML::XPath.match(document, "//line[@class='radarAxisLine']")
+      .map { |line| line.attributes["stroke"] }
   end
 
   def label_fills(document)
@@ -49,7 +60,8 @@ RSpec.describe Sirena::Renderer::Radar do
   end
 
   def paints(document)
-    [point_strokes(document).uniq, label_fills(document).uniq,
+    [grid_strokes(document).uniq, axis_strokes(document).uniq,
+     point_strokes(document).uniq, label_fills(document).uniq,
      curve_paints(document)]
   end
 
@@ -84,6 +96,19 @@ RSpec.describe Sirena::Renderer::Radar do
     theme = Sirena::Theme.new(colors: { radar_palette: ["#123456"] })
 
     expect(paints(document(theme))).to eq(partial_paints)
+  end
+
+  it "uses custom graticule and axis roles" do
+    theme = Sirena::Theme.new(
+      colors: {
+        radar_grid_line: "#123456", radar_axis_line: "#abcdef",
+        radar_palette: ["#654321"],
+      },
+    )
+
+    expect(paints(document(theme)).first(2)).to eq([
+      ["#123456"], ["#abcdef"]
+    ])
   end
 
   def document_for(input, theme)

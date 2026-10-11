@@ -189,8 +189,8 @@ module Sirena
       # after this class's own `styles` array when compiling. A declaration
       # naming `stroke:currentcolor` this way ends up LAST among same-key
       # entries even when a later, unrelated `stroke:red` chunk follows it
-      # in source — `classDef a stroke:currentcolor,stroke:#0000ff`
-      # resolves to `currentcolor`, not `#0000ff`, because the replay
+      # in source — `classDef a stroke:currentcolor,stroke:blue`
+      # resolves to `currentcolor`, not `blue`, because the replay
       # lands after both.
       #
       # `textStyles` is applied after this class's own styles, so a replayed
@@ -211,10 +211,10 @@ module Sirena
       # Measured with mmdc on an erDiagram entity carrying an attribute
       # block, one class assigned:
       #
-      #   stroke:currentcolor,stroke:#0000ff  ->  currentcolor
-      #   fill:currentcolor,fill:#0000ff      ->  #0000ff
-      #   stroke:#00ff00,stroke:#0000ff       ->  #0000ff
-      #   fill:#00ff00,fill:#0000ff           ->  #0000ff
+      #   stroke:currentcolor,stroke:blue  ->  currentcolor
+      #   fill:currentcolor,fill:blue      ->  blue
+      #   stroke:green,stroke:blue         ->  blue
+      #   fill:green,fill:blue             ->  blue
       #
       # Row one is why the replay exists. Row two is why lowercase `fill`
       # is exempt: replaying it reverses that row to `currentcolor`.

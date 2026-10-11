@@ -5,22 +5,17 @@ require "spec_helper"
 RSpec.describe Sirena::Theme::ColorPalette do
   include ThemeFallbacks
 
-  # One key, several fallback colours in other renderers: each needs its own
-  # role first. Kanban and the XY chart already use card_text, xy_axis_line
-  # and xy_grid_line instead.
-  let(:awaiting_roles) { %i[axis_line border_color grid_line text text_color] }
-  let(:asked_for) { theme_keys_asked - awaiting_roles }
-
-  let(:carried) do
-    %i[border edge_color field_background field_border field_text
-       group_background highlight node_bg node_text note_fill section_bg
-       title_text]
-  end
+  let(:asked_for) { theme_keys_asked }
 
   # Keys whose last fallback was deleted from lib/: the colour it drew.
   let(:pinned) do
-    { border: "#d1d5db", field_background: "#efefef",
+    { architecture_group_border: "#999", architecture_group_label: "#333",
+      border: "#d1d5db", field_background: "#efefef",
       field_border: "#000000", field_text: "#000000", node_text: "#FFFFFF",
+      quadrant_grid_line: "#c7c7f1", radar_axis_line: "#9ca3af",
+      radar_grid_line: "#e5e7eb", requirement_box_border: "#333",
+      requirement_detail_text: "#666", requirement_element_border: "#00796b",
+      requirement_text: "#000", requirement_unknown_risk_border: "#666",
       title_text: "#000000", card_text: "#1f2937", xy_axis_line: "#000000",
       xy_grid_line: "#e5e7eb" }
   end
@@ -32,15 +27,11 @@ RSpec.describe Sirena::Theme::ColorPalette do
     expect(unset).to be_empty
   end
 
-  it "carries each key with a remaining fallback at that fallback's colour" do
-    still_fallen_back = carried & theme_fallbacks.keys
-    drawn = builtin_themes.map do |theme|
-      still_fallen_back.map { |key| [theme.colors.public_send(key)] }
-    end
-    expect(drawn.uniq).to eq([still_fallen_back.map { |k| theme_fallbacks[k] }])
+  it "has no runtime hardcoded paint fallbacks" do
+    expect(theme_fallbacks).to be_empty
   end
 
-  it "carries each key whose fallback was deleted at the colour it drew" do
+  it "carries renderer paint roles at the colours they already drew" do
     drawn = builtin_themes.map do |theme|
       pinned.keys.to_h { |key| [key, theme.colors.public_send(key)] }
     end

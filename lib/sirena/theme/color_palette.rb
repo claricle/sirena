@@ -29,9 +29,13 @@ module Sirena
       attribute :disabled_fill, :string
 
       EXTRA_COLORS = %i[
-        border edge_color field_background field_border field_text
-        group_background highlight node_bg node_text note_fill section_bg
-        title_text card_text xy_axis_line xy_grid_line
+        architecture_group_border architecture_group_label border edge_color
+        field_background field_border field_text group_background highlight
+        node_bg node_text note_fill quadrant_grid_line radar_axis_line
+        radar_grid_line requirement_box_border requirement_detail_text
+        requirement_element_border requirement_text
+        requirement_unknown_risk_border section_bg title_text card_text
+        xy_axis_line xy_grid_line
       ].freeze
 
       EXTRA_COLORS.each { |name| attribute name, :string }

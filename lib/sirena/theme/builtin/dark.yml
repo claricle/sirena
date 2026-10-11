@@ -27,6 +27,8 @@ colors:
   disabled_fill: "#404040"
 
   # Colours renderers drew from a hardcoded fallback; same in every theme.
+  architecture_group_border: "#999"
+  architecture_group_label: "#333"
   border: "#d1d5db"
   edge_color: "#666"
   field_background: "#efefef"
@@ -37,6 +39,14 @@ colors:
   node_bg: "#E3F2FD"
   node_text: "#FFFFFF"
   note_fill: "#fefecd"
+  quadrant_grid_line: "#c7c7f1"
+  radar_axis_line: "#9ca3af"
+  radar_grid_line: "#e5e7eb"
+  requirement_box_border: "#333"
+  requirement_detail_text: "#666"
+  requirement_element_border: "#00796b"
+  requirement_text: "#000"
+  requirement_unknown_risk_border: "#666"
   section_bg: "#f0f0f0"
   title_text: "#000000"
   card_text: "#1f2937"

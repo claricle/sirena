@@ -41,6 +41,11 @@ RSpec.describe Sirena::Renderer::Quadrant do
         expect(paint_summary.fetch(:quadrant_fills))
           .to eq(theme.colors.quadrant_palette)
       end
+
+      it "uses the quadrant grid role for every border line" do
+        expect(paint_summary.fetch(:border_strokes))
+          .to eq([theme.colors.quadrant_grid_line])
+      end
     end
   end
 
@@ -63,10 +68,10 @@ RSpec.describe Sirena::Renderer::Quadrant do
       )
     end
 
-    it "retains categorical quadrant fills and the diagram border" do
+    it "retains categorical fills and leaves the absent grid role unpainted" do
       expect(paint_summary.slice(:quadrant_fills, :border_strokes)).to eq(
         quadrant_fills: %w[#ECECFF #f1f1ff #f6f6ff #fbfbff],
-        border_strokes: [described_class::BORDER_COLOR],
+        border_strokes: [nil],
       )
     end
 
@@ -74,6 +79,20 @@ RSpec.describe Sirena::Renderer::Quadrant do
       scene.points.first.color = "#123456"
 
       expect(paint_summary.fetch(:circles).first.first).to eq("#123456")
+    end
+  end
+
+  context "with a custom quadrant grid role" do
+    let(:theme) do
+      Sirena::Theme.new(
+        colors: Sirena::Theme::ColorPalette.new(
+          quadrant_grid_line: "#123456",
+        ),
+      )
+    end
+
+    it "uses the supplied border paint" do
+      expect(paint_summary.fetch(:border_strokes)).to eq(["#123456"])
     end
   end
 

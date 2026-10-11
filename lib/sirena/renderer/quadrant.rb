@@ -13,8 +13,6 @@ module Sirena
   module Renderer
     # Emits SVG from final, typed quadrant-chart geometry.
     class Quadrant < Base
-      BORDER_COLOR = "#c7c7f1"
-
       # @param scene [Layout::Quadrant::Scene] final chart geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
@@ -78,7 +76,7 @@ module Sirena
       end
 
       def apply_border_style(element, width)
-        element.stroke = theme_color(:grid_line) || BORDER_COLOR
+        element.stroke = theme_color(:quadrant_grid_line)
         element.stroke_width = number_string(width)
       end
 
