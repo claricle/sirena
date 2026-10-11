@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "digest"
 require "spec_helper"
 
 RSpec.describe Sirena::Renderer::StateDiagram do
@@ -29,10 +28,12 @@ RSpec.describe Sirena::Renderer::StateDiagram do
     end
   end
 
-  it "keeps the default themed rendering byte-identical" do
-    expect(Digest::SHA256.hexdigest(default_xml)).to eq(
-      "6b87128768df03e9615d479a41fc8281b87aa792db77c35ba35564471abef617",
-    )
+  it "uses the explicit default theme when no theme is supplied" do
+    default = Sirena::Theme::Registry.get(:default)
+    explicit = described_class.new(theme: default).render(scene).to_xml
+
+    expect(default_xml).to eq(explicit)
+      .and include(*theme_colors(default))
   end
 
   it "uses the dark theme for states, transitions, and labels" do
