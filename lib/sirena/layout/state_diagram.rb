@@ -25,6 +25,9 @@ module Sirena
       MMDC_COMPOSITE_BOTTOM_PADDING = 37.5
       MMDC_NOTE_WIDTH = 230.0
       MMDC_NOTE_HEIGHT = 78.0
+      MMDC_MULTILINE_NOTE_FONT_SIZE = 16.0
+      MMDC_MULTILINE_NOTE_PADDING = 30.0
+      MMDC_MULTILINE_NOTE_LINE_HEIGHT = 24.0
       MMDC_DISCONNECTED_PAIR_INSET = 8.0
       MMDC_DISCONNECTED_PAIR_GAP = 50.0
       MMDC_CONCURRENT_REGION_LAYOUT = {
@@ -71,7 +74,10 @@ module Sirena
                        :MMDC_COMPOSITE_FIRST_STATE_Y,
                        :MMDC_COMPOSITE_SECOND_STATE_Y,
                        :MMDC_COMPOSITE_BOTTOM_PADDING, :MMDC_NOTE_WIDTH,
-                       :MMDC_NOTE_HEIGHT, :MMDC_DISCONNECTED_PAIR_INSET,
+                       :MMDC_NOTE_HEIGHT, :MMDC_MULTILINE_NOTE_FONT_SIZE,
+                       :MMDC_MULTILINE_NOTE_PADDING,
+                       :MMDC_MULTILINE_NOTE_LINE_HEIGHT,
+                       :MMDC_DISCONNECTED_PAIR_INSET,
                        :MMDC_DISCONNECTED_PAIR_GAP,
                        :MMDC_CONCURRENT_REGION_LAYOUT
 
@@ -831,7 +837,8 @@ module Sirena
         when "start", "end" then calculate_terminal_dimensions
         when "choice" then calculate_choice_dimensions(label_dims)
         when "fork", "join" then calculate_fork_join_dimensions
-        when "note" then calculate_note_dimensions(label_dims, descriptions)
+        when "note"
+          calculate_note_dimensions(state, label_dims, descriptions)
         else calculate_normal_state_dimensions(state, label_dims, descriptions)
         end
       end
@@ -923,7 +930,11 @@ module Sirena
         { width: [width, 100].max, height: [height, 50].max }
       end
 
-      def calculate_note_dimensions(label_dims, descriptions)
+      def calculate_note_dimensions(state, label_dims, descriptions)
+        if mmdc_multiline_note?(state, descriptions)
+          return mmdc_multiline_note_dimensions(state_texts(state))
+        end
+
         dimensions = descriptions.map do |description|
           measure_text(description, font_size: small_font_size)
         end
@@ -931,6 +942,28 @@ module Sirena
           width: normal_state_width(label_dims, dimensions),
           height: normal_state_height(label_dims, dimensions),
         }
+      end
+
+      def mmdc_multiline_note?(state, descriptions)
+        state.target_id && descriptions.any? &&
+          normal_font_size == DEFAULT_FONT_SIZE &&
+          small_font_size == DEFAULT_SMALL_FONT_SIZE
+      end
+
+      def mmdc_multiline_note_dimensions(lines)
+        width = lines.map { |line| mmdc_multiline_note_text_width(line) }.max
+        {
+          width: width + MMDC_MULTILINE_NOTE_PADDING,
+          height: (lines.length * MMDC_MULTILINE_NOTE_LINE_HEIGHT) +
+            MMDC_MULTILINE_NOTE_PADDING,
+        }
+      end
+
+      def mmdc_multiline_note_text_width(text)
+        measured = TextMeasurement.measure_in(
+          :trebuchet, text, font_size: MMDC_MULTILINE_NOTE_FONT_SIZE
+        )[:width]
+        ((measured * 32).round + 1) / 32.0
       end
 
       def normal_state_width(label_dims, descriptions)
