@@ -677,7 +677,7 @@ module Sirena
         when "choice" then calculate_choice_dimensions(label_dims)
         when "fork", "join" then calculate_fork_join_dimensions
         when "note" then calculate_note_dimensions(label_dims, descriptions)
-        else calculate_normal_state_dimensions(label_dims, descriptions)
+        else calculate_normal_state_dimensions(state, label_dims, descriptions)
         end
       end
 
@@ -752,7 +752,14 @@ module Sirena
         }
       end
 
-      def calculate_normal_state_dimensions(label_dims, descriptions)
+      def calculate_normal_state_dimensions(state, label_dims, descriptions)
+        if descriptions.empty? && state.children.empty?
+          return {
+            width: mmdc_state_text_width(state_texts(state).first || state.id),
+            height: MMDC_STATE_HEIGHT,
+          }
+        end
+
         dimensions = descriptions.map do |description|
           measure_text(description, font_size: small_font_size)
         end
@@ -903,6 +910,10 @@ module Sirena
 
       def mmdc_state_width(state)
         text = state.dig(:labels, 0, :text).to_s
+        mmdc_state_text_width(text)
+      end
+
+      def mmdc_state_text_width(text)
         measured = TextMeasurement.measure_in(
           :trebuchet, text, font_size: MMDC_STATE_FONT_SIZE
         )[:width]
