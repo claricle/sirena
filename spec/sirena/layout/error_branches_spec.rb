@@ -5,7 +5,7 @@ require "sirena/layout/error"
 
 RSpec.describe Sirena::Layout::Error do
   def theme_with_size(size)
-    typography = Struct.new(:font_size_base).new(size)
+    typography = Struct.new(:font_size_large).new(size)
     instance_double(Sirena::Theme, typography: typography)
   end
 
