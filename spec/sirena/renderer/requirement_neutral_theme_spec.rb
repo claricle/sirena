@@ -46,7 +46,7 @@ RSpec.describe Sirena::Renderer::Requirement do
         .filter_map { |text| text.attributes["fill"] }.last,
     ]
   end
-  let(:specific_role_paint) do
+  def specific_role_paint
     plain = "//*[@id='requirement-plain']"
     element = "//*[@id='element-e']"
     ordinary_texts = [
@@ -134,7 +134,7 @@ RSpec.describe Sirena::Renderer::Requirement do
           requirement_box_border: "#111111",
           requirement_element_border: "#222222",
           requirement_text: "#333333", requirement_detail_text: "#444444",
-          requirement_unknown_risk_border: "#555555",
+          requirement_unknown_risk_border: "#555555"
         ),
       )
     end
@@ -148,7 +148,7 @@ RSpec.describe Sirena::Renderer::Requirement do
     it "uses the custom requirement-specific roles" do
       expect(specific_role_paint).to eq(
         requirement_border: "#111111", element_border: "#222222",
-        ordinary_text: ["#333333"], detail_text: "#444444",
+        ordinary_text: ["#333333"], detail_text: "#444444"
       )
       expect(described_class.new(theme: theme).send(:risk_color, "unknown"))
         .to eq("#555555")
@@ -175,7 +175,7 @@ RSpec.describe Sirena::Renderer::Requirement do
     it "leaves absent requirement-specific roles unpainted" do
       expect(specific_role_paint).to eq(
         requirement_border: nil, element_border: nil,
-        ordinary_text: [nil], detail_text: nil,
+        ordinary_text: [nil], detail_text: nil
       )
       expect(described_class.new(theme: theme).send(:risk_color, "unknown"))
         .to be_nil
