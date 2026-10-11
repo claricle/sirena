@@ -98,7 +98,7 @@ RSpec.describe Sirena::Renderer::Kanban do
     end
 
     it "uses theme colors and typography where the theme defines them" do
-      cards << card(metadata: { assigned: "Alice" }, has_metadata: true)
+      cards << card(metadata: { story_points: 5 }, has_metadata: true)
 
       expect(themed_xml).to include(
         'fill="#101010"', 'fill="#202020"', 'fill="#303030"',
