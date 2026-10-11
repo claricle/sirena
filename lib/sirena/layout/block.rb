@@ -390,10 +390,7 @@ module Sirena
       def block_dimensions(block, auto_layout:, span_layout:, uniform_grid:,
                            width_font_size:)
         compact = (auto_layout || span_layout) && !compound?(block)
-        width_font_size = normal_font_size if special_shape?(block)
-        dimensions = calculate_block_dimensions(
-          block, auto_layout: compact, width_font_size: width_font_size
-        )
+        dimensions = scaled_dimensions(block, compact, width_font_size)
         return dimensions unless uniform_grid
         return calculate_block_dimensions(block, auto_layout: true) if
           special_shape?(block)
@@ -402,6 +399,13 @@ module Sirena
           width: uniform_grid_width(block, uniform_grid),
           height: uniform_grid.fetch(:height),
         }
+      end
+
+      # Special shapes keep the normal font size for their width.
+      def scaled_dimensions(block, compact, width_font_size)
+        font = special_shape?(block) ? normal_font_size : width_font_size
+        calculate_block_dimensions(block, auto_layout: compact,
+                                          width_font_size: font)
       end
 
       def uniform_grid_width(block, uniform_grid)
@@ -540,6 +544,14 @@ module Sirena
         layout_compound_children(child, geometry[:x], geometry[:y])
       end
 
+      # A compact block's width comes from its label at the compact font size.
+      def label_width(label, label_dims, auto_layout, width_font_size)
+        return label_dims[:width] unless
+          auto_layout && width_font_size != normal_font_size
+
+        measure_text(label, font_size: width_font_size)[:width]
+      end
+
       def calculate_block_dimensions(block, auto_layout:,
                                      width_font_size: normal_font_size)
         if arrow?(block)
@@ -551,12 +563,8 @@ module Sirena
 
         label = block_label_text(block)
         label_dims = measure_text(label, font_size: normal_font_size)
-        label_width = if auto_layout && width_font_size != normal_font_size
-                        measure_text(label, font_size: width_font_size)[:width]
-                      else
-                        label_dims[:width]
-                      end
-        width = label_width + (auto_layout ? 8 : 40)
+        width = label_width(label, label_dims, auto_layout, width_font_size)
+        width += auto_layout ? 8 : 40
         height = label_dims[:height] + (auto_layout ? 13 : 30)
         unless auto_layout
           width = [width, DEFAULT_BLOCK_WIDTH].max

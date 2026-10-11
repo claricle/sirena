@@ -34,12 +34,14 @@ RSpec.describe Sirena::Layout::Block do
     end
 
     let(:source) { "block-beta\n  a\n  b\n  a --- b\n" }
+    # Same source as corpus block_spec-e104ba37, whose pinned reference box
+    # is 16.921875 wide (see block_compact_text_width_parity_spec.rb).
     let(:expected_geometry) do
       [
-        67.568, 55.0,
-        [["a", 8.0, 8.0, 15.784, 27.0],
-         ["b", 31.784, 8.0, 15.784, 27.0]],
-        [23.784, 21.5, 31.784, 21.5]
+        69.792, 55.0,
+        [["a", 8.0, 8.0, 16.896, 27.0],
+         ["b", 32.896, 8.0, 16.896, 27.0]],
+        [24.896, 21.5, 32.896, 21.5]
       ]
     end
 
@@ -54,7 +56,7 @@ RSpec.describe Sirena::Layout::Block do
        node.width.round(3), node.height]
     end
 
-    it { is_expected.to eq([43.784, 55.0, 8.0, 8.0, 15.784, 27.0]) }
+    it { is_expected.to eq([44.896, 55.0, 8.0, 8.0, 16.896, 27.0]) }
   end
 
   context "with an empty auto layout" do
