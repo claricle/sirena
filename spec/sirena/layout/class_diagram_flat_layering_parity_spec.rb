@@ -23,6 +23,14 @@ RSpec.describe Sirena::Layout::ClassCellPlacement do
     end
   end
 
+  context "with a right-pointing inheritance pair (Class1 --|> Class02)" do
+    let(:fixture) { "classdiagram_spec-8d773562" }
+
+    it "keeps the first-written class on top, as mmdc does" do
+      expect(boxes.fetch("Class1").last).to be < boxes.fetch("Class02").last
+    end
+  end
+
   context "with classes that have no relations" do
     let(:fixture) { "classdiagram_elk_v3_spec-29977982" }
 

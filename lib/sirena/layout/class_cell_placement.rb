@@ -45,8 +45,7 @@ module Sirena
 
         edge = Array(graph[:edges]).first
         terminals = edge_terminals(edge)
-        terminals.reverse! if inheritance?(edge)
-        map_pair(children, terminals) if terminals
+        map_pair(children, terminals, inheritance?(edge)) if terminals
       end
 
       def self.inheritance?(edge)
@@ -58,10 +57,14 @@ module Sirena
           ordinary_pair?(children) && Array(graph[:edges]).one?
       end
 
-      def self.map_pair(children, terminals)
+      # mmdc ranks a relation as written, first class on top. The builder
+      # swaps `<|--` ends, so for inheritance the earlier-mentioned class is
+      # the written first one; other pairs keep the edge direction.
+      def self.map_pair(children, terminals, mention_order)
         children_by_id = children.to_h { |child| [child[:id], child] }
         return unless children_by_id.size == 2
         return unless terminals.all? { |id| children_by_id.key?(id) }
+        return children if mention_order
 
         terminals.map { |id| children_by_id.fetch(id) }
       end
