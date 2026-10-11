@@ -50,6 +50,6 @@ RSpec.describe Sirena::Layout::XyChart do
     bar = scene.series.fetch(0).bars.fetch(0)
     expect([bar.width, bar.y, bar.height,
             scene.lines.count { |line| line.kind == "grid" }])
-      .to eq([20.0, 459.0, 0.0, 5])
+      .to eq([20.0, 459.0, 8.0, 5])
   end
 end
