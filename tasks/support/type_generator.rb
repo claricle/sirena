@@ -58,12 +58,11 @@ module Sirena
     # @return [Array<String>] paths written, relative to the root
     def call
       validate
-      row_source = types_source_with_row
-      map_source = map_source_with_row
-      paths = write_files(DEFINING_FILES.merge(SPEC_FILES))
-      File.write(File.join(@root, TYPES_FILE), row_source)
-      File.write(File.join(@root, IR_MAP_FILE), map_source)
-      paths + [TYPES_FILE, IR_MAP_FILE]
+      files = rendered_files(DEFINING_FILES.merge(SPEC_FILES))
+      files[TYPES_FILE] = types_source_with_row
+      files[IR_MAP_FILE] = map_source_with_row
+      write_files(files)
+      files.keys
     end
 
     private
@@ -73,7 +72,7 @@ module Sirena
     end
 
     def klass
-      @type.split("_").map(&:capitalize).join
+      ruby_name(@type)
     end
 
     def keyword
@@ -100,8 +99,26 @@ module Sirena
       raise Error, "type already registered: #{@type}" if
         @types.key?(@type.to_sym)
 
+      reject_handler_collision
       reject_existing_files
       reject_shadowing_row
+    end
+
+    # A registry key and its Ruby handler name are different namespaces.
+    # `xy_chart` is a new key and keyword, but it camelises to the XyChart
+    # constant already serving `xychart`; loading its generated files would
+    # reopen those five existing layer classes and replace their contracts.
+    def reject_handler_collision
+      owner, = @types.find do |name, row|
+        (row[:name] || ruby_name(name)) == klass
+      end
+      return unless owner
+
+      raise Error, "handler #{klass} is already used by type #{owner}"
+    end
+
+    def ruby_name(name)
+      name.to_s.split("_").map(&:capitalize).join
     end
 
     def targets(files)
@@ -173,16 +190,43 @@ module Sirena
     end
 
     # Renders everything first, so a template error leaves nothing behind.
-    def write_files(files)
-      rendered = files.to_h do |template, pattern|
+    def rendered_files(files)
+      files.to_h do |template, pattern|
         [format(pattern, @type), render(template)]
       end
-      rendered.each do |relative, content|
+    end
+
+    # Writes the scaffold as one logical change. A filesystem error after an
+    # earlier write must not strand a partial type that the next invocation
+    # then refuses to overwrite.
+    def write_files(files)
+      snapshots = files.keys.to_h do |relative|
+        [relative, snapshot(relative)]
+      end
+      files.each do |relative, content|
         absolute = File.join(@root, relative)
         FileUtils.mkdir_p(File.dirname(absolute))
         File.write(absolute, content)
       end
-      rendered.keys
+    rescue SystemCallError, IOError => e
+      restore_files(snapshots)
+      raise Error, "could not write scaffold: #{e.message}"
+    end
+
+    def snapshot(relative)
+      absolute = File.join(@root, relative)
+      File.file?(absolute) ? File.binread(absolute) : nil
+    end
+
+    def restore_files(snapshots)
+      snapshots.each do |relative, content|
+        absolute = File.join(@root, relative)
+        if content
+          File.binwrite(absolute, content)
+        elsif File.file?(absolute)
+          File.delete(absolute)
+        end
+      end
     end
   end
 end
