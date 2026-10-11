@@ -13,11 +13,12 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   let(:case_ids) do
-    %w[
-      resources.vega.nonreg.group2679.group_header_legacy_flat--5bcc726e80b1
-      resources.vega.nonreg.group2679.group_header_nested--af2e98871d2d
-      resources.vega.nonreg.group2679.group_header_nested_overrides_flat--29dfa779f376
-    ]
+    prefix = "resources.vega.nonreg.group2679."
+    [
+      "group_header_legacy_flat--5bcc726e80b1",
+      "group_header_nested--af2e98871d2d",
+      "group_header_nested_overrides_flat--29dfa779f376",
+    ].map { |suffix| "#{prefix}#{suffix}" }
   end
   let(:expected_metrics) do
     {
@@ -26,7 +27,24 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       case_ids[2] => [0.017647, 0.058283, 0.0, 0.058283],
     }
   end
-  let(:root) { File.expand_path("../../plantuml", __dir__) }
+  let(:root) { File.expand_path("../../../../plantuml", __dir__) }
+  let(:boxed_participant_dimensions) do
+    source = <<~PLANTUML
+      @startuml
+      box "Team"
+      participant A
+      end box
+      A -> A : hi
+      @enduml
+    PLANTUML
+    document = Nokogiri::XML(
+      Sirena.render(source, notation: :plantuml),
+    ).remove_namespaces!
+    rectangle = document.at_xpath(
+      '//g[starts-with(@id,"participant-A-")]/rect',
+    )
+    %w[width height].map { |attribute| rectangle[attribute].to_f }
+  end
   let(:parity_evidence) do
     recognizer = SpecSupport::LayoutParity::PlantumlSequenceRecognizer.new
     case_ids.to_h do |id|
@@ -49,27 +67,14 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "matches ordinary group-header participant geometry" do
-    expected = expected_metrics.transform_values { |metrics| [false, 3, metrics] }
+    expected = expected_metrics.transform_values do |metrics|
+      [false, 3, metrics]
+    end
 
     expect(parity_evidence).to eq(expected)
   end
 
   it "keeps the established boxed-participant dimensions" do
-    source = <<~PLANTUML
-      @startuml
-      box "Team"
-      participant A
-      end box
-      A -> A : hi
-      @enduml
-    PLANTUML
-    document = Nokogiri::XML(Sirena.render(source, notation: :plantuml))
-      .remove_namespaces!
-    rectangle = document.at_xpath(
-      '//g[starts-with(@id,"participant-A-")]/rect',
-    )
-
-    expect(%w[width height].map { |attribute| rectangle[attribute].to_f })
-      .to eq([80.0, 36.0])
+    expect(boxed_participant_dimensions).to eq([80.0, 36.0])
   end
 end
