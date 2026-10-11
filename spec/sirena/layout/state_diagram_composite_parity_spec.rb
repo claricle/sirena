@@ -21,13 +21,6 @@ RSpec.describe Sirena::Layout::StateDiagram do
       state_diagram/statediagram_spec-128d4533
     ].map { |id| "#{id}.mmd" }
   end
-  let(:composite_note_cases) do
-    %w[
-      state_diagram/should_handle_notes_for_composite_nested_states-0033e4b1
-      state_diagram/statediagram_v2_spec-13deff6f
-      state_diagram/statediagram_v2_spec-3249fd2d
-    ].map { |id| "#{id}.mmd" }
-  end
 
   def hierarchy_evidence
     diagram = Sirena::Parser::StateDiagram.new.parse(source)
@@ -50,10 +43,11 @@ RSpec.describe Sirena::Layout::StateDiagram do
   end
 
   def parity_rows
-    cases = separation_cases + composite_note_cases
     runner = SpecSupport::LayoutParity::CohortRunner.new
     results = runner.candidate_cases.filter_map do |candidate|
-      runner.send(:compare, candidate) if cases.include?(candidate.case_id)
+      if separation_cases.include?(candidate.case_id)
+        runner.send(:compare, candidate)
+      end
     end
     SpecSupport::LayoutParity::CaseLedger.build(results)
   end
@@ -62,7 +56,7 @@ RSpec.describe Sirena::Layout::StateDiagram do
     path = File.join(SpecSupport::LayoutParity::CohortRunner::ROOT,
                      "scoreboard/layout-parity.json")
     JSON.parse(File.read(path)).select do |row|
-      (separation_cases + composite_note_cases).include?(row.fetch("case"))
+      separation_cases.include?(row.fetch("case"))
     end
   end
 

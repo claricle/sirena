@@ -808,8 +808,15 @@ module Sirena
 
       def attached_note_coordinates(note, target)
         x_position = target[:x] + ((target[:width] - note[:width]) / 2.0)
-        y_position = target[:y] + target[:height] + 75
+        y_position = target[:y] + subtree_height(target) + 75
         [x_position, y_position]
+      end
+
+      def subtree_height(state)
+        child_extent = Array(state[:children]).map do |child|
+          child[:y].to_f + subtree_height(child)
+        end.max || 0
+        [state[:height].to_f, child_extent].max
       end
     end
   end

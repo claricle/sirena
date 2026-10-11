@@ -101,8 +101,9 @@ RSpec.describe Sirena::Parser::Builders::StateDiagram do
 
     it "keeps aliased composite children under their parent",
        :aggregate_failures do
-      expect(ids(diagram.states)).to eq(%w[Outer Hash H1 H2 Odd Blank])
+      expect(ids(diagram.states)).to eq(%w[Outer Hash Odd Blank])
       expect(ids(diagram.find_state("Outer").children)).to eq(%w[I1 I2 I3])
+      expect(ids(diagram.find_state("Hash").children)).to eq(%w[H1 H2])
     end
 
     it "ignores composite data that is neither a hash nor an array" do

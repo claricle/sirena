@@ -6,6 +6,12 @@ module StateDiagramSpecHelpers
   def corpus(name)
     parser.parse(File.read(File.expand_path("../../mermaid/#{name}", __dir__)))
   end
+
+  def concurrent_state_ids(diagram)
+    regions = diagram.find_state("s2").children
+    [diagram.states.map(&:id),
+     regions.map { |region| region.children.map(&:id) }]
+  end
 end
 
 RSpec.describe Sirena::Parser::StateDiagram do
@@ -197,8 +203,9 @@ RSpec.describe Sirena::Parser::StateDiagram do
         expect(diagram.find_state("NotShooting").label)
           .to eq("Not Shooting State")
         expect(diagram.transitions.map(&:to_id)).to include("NotShooting")
-        expect(diagram.states.map(&:id))
-          .to eq(%w[start_1 NotShooting Idle Configuring])
+        expect([diagram.states.map(&:id),
+                diagram.find_state("NotShooting").children.map(&:id)])
+          .to eq([%w[start_1 NotShooting], %w[Idle Configuring start_2]])
       end
 
       # mmdc refuses the reverse order: `state Idle as "Idle mode"` is a
@@ -487,7 +494,8 @@ RSpec.describe Sirena::Parser::StateDiagram do
           "state_diagram/statediagram_v2_spec-c351b77a.mmd",
         )
 
-        expect(diagram.states.map(&:id)).to eq(%w[s2 s3 s4 55])
+        expect(concurrent_state_ids(diagram))
+          .to eq([%w[s2], [%w[s3], %w[s4], %w[55]]])
       end
 
       # mmdc lexes `note` and `style` wherever a statement or a transition

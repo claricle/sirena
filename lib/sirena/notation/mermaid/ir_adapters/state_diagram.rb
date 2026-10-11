@@ -40,7 +40,7 @@ module Sirena
           end
 
           def state_entries(states, parent = nil)
-            Array(states).flat_map do |state|
+            Array(states).reject(&:declaration_only).flat_map do |state|
               [[state, parent], *state_entries(state.children, state)]
             end
           end
