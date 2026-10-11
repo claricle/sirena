@@ -19,6 +19,8 @@ rows:
   count: 1
 - file: spec/sirena/exhaustion_errors_spec.rb
   count: 1
+- file: spec/sirena/notation/mermaid/git_graph_main_branch_config_spec.rb
+  count: 1
 - file: spec/sirena/parser/class_diagram_parser_annotations_members_spec.rb
   count: 1
 - file: spec/sirena/parser/class_diagram_parser_names_headers_spec.rb
@@ -38,6 +40,8 @@ rows:
 - file: spec/sirena/svg/tiny_properties_spec.rb
   count: 1
 - file: spec/sirena/tasks/examples_spec.rb
+  count: 1
+- file: spec/spec_support/layout_parity/git_graph_cherry_pick_recognizer_spec.rb
   count: 1
 - file: spec/svg_conformance_spec.rb
   count: 1
