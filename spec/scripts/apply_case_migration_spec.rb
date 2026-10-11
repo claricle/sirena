@@ -16,7 +16,9 @@ RSpec.describe ApplyCaseMigration do
 
   before { build_repo }
 
-  after { FileUtils.remove_entry(root) }
+  # Git may finish background maintenance while teardown is walking `.git`,
+  # making its transient lock disappear between discovery and removal.
+  after { FileUtils.remove_entry(root, true) }
 
   shared_examples "a refusal that writes nothing" do |error|
     it "raises #{error}" do
