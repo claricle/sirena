@@ -95,9 +95,6 @@ module DocMermaidSpec
       "Organize fields logically #1.2" => [:mermaid_rejects, PARSE],
       "Use standard bit numbering #1.2" => [:mermaid_rejects, PARSE],
     },
-    "docs/_diagram_types/pie-chart.adoc" => {
-      "Case-insensitive syntax #1" => [:mermaid_rejects, PARSE],
-    },
     "docs/_diagram_types/quadrant-chart.adoc" => {
       "Coordinates #1" => [:mermaid_rejects, PARSE],
     },
