@@ -43,7 +43,7 @@ module Sirena
       def group_boundary(node)
         Svg::Rect.new.tap do |rect|
           apply_box(rect, node)
-          rect.fill = theme_color(:group_background) || "#f0f0f0"
+          rect.fill = theme_color(:group_background)
           rect.fill_opacity = "0.3"
           rect.stroke = theme_color(:border_color) || "#999"
           rect.stroke_width = "2"
@@ -94,7 +94,7 @@ module Sirena
           text.font_size = size.to_s
           text.text_anchor = "middle" if node.kind == "service"
           text.dominant_baseline = "middle" if node.kind == "service"
-          text.fill = theme_color(:text_color) || "#666"
+          text.fill = theme_color(:edge_color)
         end
       end
 
@@ -157,7 +157,7 @@ module Sirena
           text.content = label.text
           text.font_size = "10"
           text.text_anchor = "middle"
-          text.fill = theme_color(:text_color) || "#666"
+          text.fill = theme_color(:edge_color)
         end
       end
 
