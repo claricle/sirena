@@ -27,7 +27,7 @@ module Sirena
         def box_outline(box)
           bounds_rect(box).tap do |rect|
             rect.fill = box.color || DEFAULT_BOX_FILL
-            rect.stroke = "#000000"
+            rect.stroke = theme_color(:node_stroke)
             rect.stroke_opacity = "0.5"
             rect.class_name = "box"
           end
@@ -64,13 +64,15 @@ module Sirena
         end
 
         def rect_fill(frame)
-          frame.color.to_s.empty? ? DEFAULT_RECT_FILL : frame.color
+          return frame.color unless frame.color.to_s.empty?
+
+          default_theme_paint(:disabled_fill, DEFAULT_RECT_FILL)
         end
 
         def frame_outline(frame)
           bounds_rect(frame).tap do |rect|
             rect.fill = "none"
-            rect.stroke = FRAME_STROKE
+            rect.stroke = frame_stroke
             rect.stroke_width = "2"
             rect.class_name = "frame-outline"
           end
@@ -103,8 +105,8 @@ module Sirena
         def frame_tab_polygon(frame)
           Svg::Polygon.new.tap do |polygon|
             polygon.points = frame.tab_points
-            polygon.fill = TAB_FILL
-            polygon.stroke = FRAME_STROKE
+            polygon.fill = default_theme_paint(:surface_variant, TAB_FILL)
+            polygon.stroke = frame_stroke
           end
         end
 
@@ -126,7 +128,7 @@ module Sirena
         end
 
         def style_divider(line)
-          line.stroke = FRAME_STROKE
+          line.stroke = frame_stroke
           line.stroke_width = "2"
           line.stroke_dasharray = "3,3"
         end
@@ -136,11 +138,21 @@ module Sirena
             text.x = horizontal
             text.y = vertical
             text.content = content
-            text.fill = "#000000"
+            text.fill = theme_color(:label_text)
             text.font_family = "Arial, sans-serif"
             text.font_size = FRAME_FONT_SIZE
             text.text_anchor = "middle"
           end
+        end
+
+        def frame_stroke
+          default_theme_paint(:edge_stroke, FRAME_STROKE)
+        end
+
+        def default_theme_paint(role, original)
+          return original if theme.equal?(Theme::Registry.get(:default))
+
+          theme_color(role)
         end
       end
     end
