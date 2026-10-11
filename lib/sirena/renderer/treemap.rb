@@ -80,12 +80,9 @@ module Sirena
       end
 
       def add_section_total(group, cell)
-        return unless cell.total_label
+        return unless cell.total_label&.text
 
-        total = SectionTotal.new(cell).text
-        return unless total
-
-        group << label_element(cell.total_label, content: total)
+        group << label_element(cell.total_label)
       end
 
       def label_element(label, content: label.text)
