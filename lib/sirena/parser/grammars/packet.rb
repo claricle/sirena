@@ -23,8 +23,7 @@ module Sirena
 
         rule(:bit_range) do
           bit_number.as(:bit_start) >>
-            str("-") >>
-            bit_number.as(:bit_end)
+            (str("-") >> bit_number.as(:bit_end)).maybe
         end
 
         rule(:field_label) do
