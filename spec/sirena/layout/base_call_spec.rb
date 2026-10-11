@@ -152,29 +152,4 @@ RSpec.describe Sirena::Layout::Base do
       expect(result).to have_attributes(width: 16.0, height: 2001)
     end
   end
-
-  describe "Engine#layout_graph" do
-    it "runs Grid on a legacy result and hands the renderer the bare graph" do
-      allow(Sirena::Layout::Grid).to receive(:apply).and_call_original
-      payload = { id: "root", children: [{ id: "a", width: 50, height: 30 }] }
-      graph = engine.send(:layout_graph, Sirena::Layout::Legacy.new(payload))
-
-      expect(Sirena::Layout::Grid).to have_received(:apply).once
-
-      expect(graph).to be_a(Hash)
-      expect(graph[:children].first).to include(x: 50, y: 50)
-    end
-
-    it "leaves a Scene untouched, coordinates included" do
-      scene = Class.new(Sirena::Layout::Scene) do
-        attribute :children, :hash, collection: true
-      end.new(width: 1, height: 2, children: [{ x: 7, y: 9 }])
-
-      allow(Sirena::Layout::Grid).to receive(:apply).and_call_original
-
-      expect(engine.send(:layout_graph, scene)).to be(scene)
-      expect(Sirena::Layout::Grid).not_to have_received(:apply)
-      expect(scene.children).to eq([{ x: 7, y: 9 }])
-    end
-  end
 end

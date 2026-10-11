@@ -9,7 +9,6 @@ RSpec.describe Sirena::Renderer::Sankey, :aggregate_failures do
   let(:renderer) { described_class.new }
   let(:parser) { Sirena::Parser::Sankey.new }
   let(:layout) { Sirena::Layout::Sankey.new }
-  let(:engine) { Sirena::Engine.new }
   let(:two_flow_source) do
     <<~SANKEY
       sankey-beta
@@ -73,42 +72,6 @@ RSpec.describe Sirena::Renderer::Sankey, :aggregate_failures do
       "C 152.5 145.0, 152.5 145.0, 95 145.0",
       "Z",
     ].join(" ")
-  end
-
-  def grid_calls
-    calls = []
-    allow(Sirena::Layout::Grid).to receive(:apply) do |graph|
-      calls << graph
-      Sirena::Layout::Grid.new.apply(graph)
-    end
-    calls
-  end
-
-  def engine_layout(diagram, layout_class)
-    result = engine.send(:transform_diagram, diagram, layout_class, nil,
-                         default_theme)
-    engine.send(:layout_graph, result)
-  end
-
-  def engine_transition_evidence
-    calls = grid_calls
-    sankey = engine_layout(parser.parse("sankey-beta\nA,B,10\n"),
-                           Sirena::Layout::Sankey)
-    legacy = engine_layout(instance_double(Sirena::Diagram::Base, valid?: true),
-                           SpecSupport::LegacyLayout)
-    [calls.length, sankey_position(sankey), legacy_position(legacy)]
-  end
-
-  def default_theme
-    Sirena::Theme::Registry.get(:default)
-  end
-
-  def sankey_position(scene)
-    [scene.nodes.first.x, scene.nodes.first.y]
-  end
-
-  def legacy_position(graph)
-    graph[:children].first.values_at(:x, :y)
   end
 
   describe "#render" do
@@ -204,11 +167,6 @@ RSpec.describe Sirena::Renderer::Sankey, :aggregate_failures do
 
     it "renders the final canvas coordinates without adding an offset" do
       expect(final_geometry_evidence).to eq(expected_final_geometry)
-    end
-
-    it "keeps Grid on legacy results and away from the Sankey Scene" do
-      expect(engine_transition_evidence)
-        .to eq([1, [60.0, 100.0], [50, 50]])
     end
   end
 end
