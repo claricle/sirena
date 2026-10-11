@@ -78,12 +78,12 @@ module Sirena
       # @return [Hash] positioned layout hash
       def build_graph(diagram)
         document = ir_document(diagram)
-        items = block_items(document)
-        @children_by_parent = items.group_by(&:parent_id)
-        top_level = @children_by_parent.fetch(nil, [])
+        top_level = top_level_blocks(document)
         columns, auto_layout = columns_for(document, top_level)
+        span_layout = span_layout?(top_level)
         blocks_layout = calculate_column_layout(
-          top_level, columns, auto_layout: auto_layout
+          top_level, columns, auto_layout: auto_layout,
+                              span_layout: span_layout
         )
         graph(document, top_level, columns, blocks_layout, auto_layout)
       end
@@ -113,6 +113,11 @@ module Sirena
         document.items.reject { |item| item.role == "layout_settings" }
       end
 
+      def top_level_blocks(document)
+        @children_by_parent = block_items(document).group_by(&:parent_id)
+        @children_by_parent.fetch(nil, [])
+      end
+
       def column_count(document)
         settings = document.items.find { |item| item.role == "layout_settings" }
         value(settings, "column_count")&.to_i
@@ -129,6 +134,10 @@ module Sirena
 
       def block_span(block)
         [value(block, "column_span").to_i, 1].max
+      end
+
+      def span_layout?(blocks)
+        blocks.any? { |block| block_span(block) > 1 }
       end
 
       def value(item, dimension)
@@ -278,13 +287,14 @@ module Sirena
         )
       end
 
-      def calculate_column_layout(blocks, columns, auto_layout:)
+      def calculate_column_layout(blocks, columns, auto_layout:, span_layout:)
         positioned_blocks = {}
 
         current_row = 0
         current_col = 0
         row_heights = []
         col_widths = Array.new(columns, 0)
+        span_column_width = span_column_width(blocks) if span_layout
 
         blocks.each do |block|
           block_width = block_span(block)
@@ -301,24 +311,31 @@ module Sirena
 
           # Calculate block dimensions
           dims = calculate_block_dimensions(
-            block, auto_layout: auto_layout && !compound?(block)
+            block,
+            auto_layout: (auto_layout || span_layout) && !compound?(block),
           )
 
           # Check if block fits in current row
-          if current_col + block_width > columns
+          if !span_layout && current_col + block_width > columns
             current_col = 0
             current_row += 1
           end
 
           # Position block
-          x = calculate_x_position(current_col, col_widths)
-          y = calculate_y_position(current_row, row_heights)
+          spacing = span_layout ? DEFAULT_COMPOUND_PADDING : DEFAULT_SPACING
+          x = calculate_x_position(
+            current_col, col_widths, spacing, span_column_width
+          )
+          y = calculate_y_position(current_row, row_heights, spacing)
+          width = spanned_width(
+            dims[:width], block_width, spacing, span_column_width
+          )
 
           positioned_blocks[block.id] = {
             block: block,
             x: x,
             y: y,
-            width: dims[:width] * block_width,
+            width: width,
             height: dims[:height],
             row: current_row,
             col: current_col,
@@ -351,6 +368,20 @@ module Sirena
         end
 
         positioned_blocks
+      end
+
+      def span_column_width(blocks)
+        blocks.reject { |block| space?(block) }.map do |block|
+          calculate_block_dimensions(
+            block, auto_layout: !compound?(block)
+          )[:width]
+        end.max
+      end
+
+      def spanned_width(width, span, spacing, column_width)
+        return width * span unless column_width
+
+        (column_width * span) + (spacing * (span - 1))
       end
 
       def layout_compound_children(parent_block, parent_x, parent_y)
@@ -438,20 +469,25 @@ module Sirena
           (DEFAULT_COMPOUND_PADDING * 2)
       end
 
-      def calculate_x_position(col, col_widths)
+      def calculate_x_position(col, col_widths, spacing = DEFAULT_SPACING,
+                               column_width = nil)
         return DEFAULT_SPACING if col.zero?
 
-        col_widths[0...col].sum + (DEFAULT_SPACING * (col + 1))
+        if column_width
+          return DEFAULT_SPACING + (col * (column_width + spacing))
+        end
+
+        col_widths[0...col].sum + (spacing * (col + 1))
       end
 
-      def calculate_y_position(row, row_heights)
+      def calculate_y_position(row, row_heights, spacing = DEFAULT_SPACING)
         return DEFAULT_SPACING if row.zero?
 
         # A skipped row (span wider than the column count, or filled by
         # "space" placeholders) leaves a nil row_heights entry and
         # contributes zero height; compact drops it rather than treating
         # it as a real row.
-        row_heights[0...row].compact.sum + (DEFAULT_SPACING * (row + 1))
+        row_heights[0...row].compact.sum + DEFAULT_SPACING + (spacing * row)
       end
 
       def calculate_connections(connections, blocks_layout, auto_layout:)

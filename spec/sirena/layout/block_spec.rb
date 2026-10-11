@@ -60,36 +60,34 @@ RSpec.describe Sirena::Layout::Block do
         .to eq([%w[B C], [144.0, 252.0]])
     end
 
-    context "with a block whose span never fits the column count" do
+    context "with a block whose final span exceeds the column count" do
       # spec/mermaid/block/block_spec-e162d2fc.mmd: columns 2,
-      # and every block after "fit" is wider than 2 columns, so each one
-      # skips a row before it lands (see the comment in calculate_y_position).
+      # and the final two-column block remains beside the preceding block.
       let(:source) do
         path = "../../mermaid/block/block_spec-e162d2fc.mmd"
         File.read(File.expand_path(path, __dir__))
       end
 
-      it "treats a skipped row as contributing zero height rather than nil" do
-        expect(skipped_row_positions(source)).to eq([20, 120, 200, 280])
+      it "keeps the overflowing final span in the current row" do
+        expect(skipped_row_positions(source)).to eq([20.0, 55.0, 90.0, 90.0])
       end
     end
 
     context "with a single column and widening spans" do
       # spec/mermaid/block/a_node_with_a_square_shape_and_a_label-807b8b5c:
-      # columns 1, and every block's span except A
-      # exceeds it, so every row from B onward is skipped before landing.
+      # columns 1, with spans widening symmetrically from A through D.
       let(:source) do
         path = "../../mermaid/block/" \
                "a_node_with_a_square_shape_and_a_label-807b8b5c.mmd"
         File.read(File.expand_path(path, __dir__))
       end
 
-      it "positions the last block without raising on the skipped rows" do
+      it "positions the last block on the compact seventh row" do
         diagram = parser.parse(source)
         scene = transform.call(diagram)
         blocks = scene.children.to_h { |node| [node.id, node] }
 
-        expect(blocks["G"].y).to eq(600)
+        expect(blocks["G"].y).to eq(230.0)
       end
     end
   end
