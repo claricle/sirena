@@ -211,6 +211,12 @@ module SvgConformanceCheckedInExampleHelpers
 end
 
 RSpec.describe Sirena::Svg do
+  def expected_unrenderable_declaration(sources)
+    return "EXPECTED_UNRENDERABLE_SOURCES = [].freeze" if sources.empty?
+
+    "EXPECTED_UNRENDERABLE_SOURCES = [\n#{sources}\n].freeze"
+  end
+
   include SvgConformanceSpecHelpers
 
   describe "conformance of the checked-in example SVGs" do
@@ -344,11 +350,7 @@ RSpec.describe Sirena::Svg do
     it "uses the conformance gate named unrenderable examples" do
       task_source = example_task_source
       sources = unrenderable_example_source_lines
-      declaration = if sources.empty?
-                      "EXPECTED_UNRENDERABLE_SOURCES = [].freeze"
-                    else
-                      "EXPECTED_UNRENDERABLE_SOURCES = [\n#{sources}\n].freeze"
-                    end
+      declaration = expected_unrenderable_declaration(sources)
 
       expect(task_source).to include(declaration)
     end

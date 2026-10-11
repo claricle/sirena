@@ -306,12 +306,16 @@
   {
     "case": "c4/diagram_orchestration_spec-de6f44eb.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/mermaidapi_spec-eb6da39c.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_allow_default_in_the_parameters-e6593b36.mmd",
@@ -356,22 +360,30 @@
   {
     "case": "c4/should_parse_a_link-37f0b697.mmd",
     "verdict": "artifact",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_a_link-47ff4c4c.mmd",
     "verdict": "artifact",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_a_link-c5af83ba.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_a_link-f27631de.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_a_link-fe18b512.mmd",
@@ -381,42 +393,58 @@
   {
     "case": "c4/should_parse_a_sprite-48520888.mmd",
     "verdict": "artifact",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_a_sprite-5edd570a.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_a_sprite-ac91af94.mmd",
     "verdict": "artifact",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_a_sprite-f6920fba.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_tags-5de50e83.mmd",
     "verdict": "artifact",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_tags-616e2fc3.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_tags-810b5561.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_tags-96bbad18.mmd",
     "verdict": "artifact",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "c4/should_parse_tags-f59519b6.mmd",
@@ -1208,7 +1236,9 @@
   {
     "case": "class_diagram/classdiagram_spec-7f7323f5.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/classdiagram_spec-7fe746b8.mmd",
@@ -1747,7 +1777,9 @@
   {
     "case": "class_diagram/classdiagram_spec-d7130dfa.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/classdiagram_spec-d7d7c49d.mmd",
@@ -1860,7 +1892,9 @@
   {
     "case": "class_diagram/classdiagram_spec-e67f67a1.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/classdiagram_spec-e6ecea55.mmd",
@@ -1992,7 +2026,9 @@
   {
     "case": "class_diagram/classdiagram_spec-f8d72790.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/classdiagram_spec-f9b0f05a.mmd",
@@ -2041,12 +2077,16 @@
   {
     "case": "class_diagram/classdiagram_styles_spec-945bb347.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/classdiagram_styles_spec-a7127f80.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/classdiagram_styles_spec-ae8c150c.mmd",
@@ -2056,7 +2096,9 @@
   {
     "case": "class_diagram/classdiagram_styles_spec-bf7e8658.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/classdiagram_styles_spec-cb18d995.mmd",
@@ -2066,12 +2108,16 @@
   {
     "case": "class_diagram/classdiagram_styles_spec-cb235322.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/classdiagram_styles_spec-e2427a19.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/classdiagram_styles_spec-e4d4f586.mmd",
@@ -2309,7 +2355,9 @@
   {
     "case": "class_diagram/should_be_possible_to_apply_a_css_class_to_a_cla-95c9521c.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/should_be_possible_to_apply_a_css_class_to_a_cla-a593c027.mmd",
@@ -2319,12 +2367,16 @@
   {
     "case": "class_diagram/should_be_possible_to_apply_a_cssclass_to_a_clas-97fdecbd.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/should_be_possible_to_apply_a_cssclass_to_a_comm-3ba4969f.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/should_be_possible_to_apply_a_style_to_an_indivi-5597dbc5.mmd",
@@ -2339,7 +2391,9 @@
   {
     "case": "class_diagram/should_be_possible_to_define_and_assign_a_class-74f55631.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/should_handle_a_comment_inside_brackets-4231bac0.mmd",
@@ -2790,12 +2844,16 @@
   {
     "case": "class_diagram/should_parse_classes_with_different_text_labels-3b6eef91.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/should_parse_classes_with_different_text_labels-ef4861fc.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/should_parse_diagram_with_direction-ba994d6a.mmd",
@@ -2846,7 +2904,9 @@
   {
     "case": "class_diagram/should_properly_assign_multiple_classes_and_styl-b6145455.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/should_properly_assign_styles_from_a_class_defin-5f10c4d3.mmd",
@@ -6745,12 +6805,16 @@
   {
     "case": "gitgraph/should_fail_cherry_picking_of_merge_commits_if_t-c9fa8ebb.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "gitgraph/should_fail_cherry_picking_of_merge_commits_when-9f5b53c4.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "gitgraph/should_generate_an_array_of_known_branches-24cef136.mmd",
@@ -6992,37 +7056,51 @@
   {
     "case": "gitgraph/should_throw_error_when_try_to_checkout_unknown-3e3b849e.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "gitgraph/should_throw_error_when_trying_to_merge_branch_t-950f4997.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "gitgraph/should_throw_error_when_trying_to_merge_branch_w-93bba635.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "gitgraph/should_throw_error_when_trying_to_merge_branches-fde8e313.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "gitgraph/should_throw_error_when_trying_to_merge_unknown-36f2e03b.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "gitgraph/should_throw_error_when_trying_to_merge_when_cur-4bb16d06.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "gitgraph/should_throw_error_when_using_existing_id_as_mer-5ee3b619.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "gitgraph/showcase_base-29660eec.mmd",

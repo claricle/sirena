@@ -52,10 +52,7 @@ module Sirena
 
         # Transform the entire diagram
         rule(statements: subtree(:statements)) do
-          result = {
-            title: nil,
-            fields: [],
-          }
+          result = { title: nil, fields: [] }
 
           # A body of only comments and blank lines parses to one string,
           # not an Array of statements.

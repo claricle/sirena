@@ -257,20 +257,19 @@ module Sirena
               raise Parser::ParseError, "Cannot merge a branch into itself."
             end
 
-            source_tip = branch_tip(branch_name)
-            current_tip = branch_tip(@current_branch)
-            return if source_tip && source_tip != current_tip
+            tips = branch_tips(branch_name, @current_branch)
+            return if tips.first && tips.uniq.length == 2
 
             raise Parser::ParseError,
                   "Branch #{branch_name} has no new commits to merge."
           end
 
+          def branch_tips(*names)
+            names.map { |name| branch_tip(name) }
+          end
+
           def validate_cherry_pick!(options)
-            target = @commits.find { |item| item[:id] == options[:id] }
-            unless target
-              raise Parser::ParseError,
-                    "Unknown cherry-pick commit: #{options[:id]}."
-            end
+            target = cherry_pick_target!(options[:id])
 
             parent = options[:cherry_pick_parent]
             valid_parent = parent && target[:parent_ids].include?(parent)
@@ -279,6 +278,12 @@ module Sirena
             raise Parser::ParseError,
                   "Cherry-picking merge commit #{target[:id]} requires " \
                   "a valid parent."
+          end
+
+          def cherry_pick_target!(commit_id)
+            @commits.find { |item| item[:id] == commit_id } ||
+              raise(Parser::ParseError,
+                    "Unknown cherry-pick commit: #{commit_id}.")
           end
         end
 

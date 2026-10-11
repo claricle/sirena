@@ -315,32 +315,35 @@ module Sirena
       end
 
       def connected_state_chain(graph)
-        return if placement == :elk
+        nodes = connected_chain_nodes(graph)
+        return if nodes.empty?
 
-        direction = graph.dig(:layoutOptions, ElkOptions::DIRECTION)
-        return unless [DIRECTION_DOWN, DIRECTION_RIGHT].include?(direction)
-
-        nodes = Array(graph[:children])
-        return if nodes.empty? || nodes.any? do |node|
-          Array(node[:children]).any? ||
-            !CHAIN_STATE_TYPES.include?(node.dig(:metadata, :shape_type))
-        end
-
-        start = nodes.select do |node|
-          node.dig(:metadata, :shape_type) == "start"
-        end
-        finish = nodes.select do |node|
-          node.dig(:metadata, :shape_type) == "end"
-        end
-        states = nodes.select do |node|
-          node.dig(:metadata, :shape_type) == "normal"
-        end
+        start, finish, states = chain_nodes_by_type(nodes)
         return unless start.one? && finish.length <= 1 && states.any?
 
         ordered = ordered_chain_states(graph, start.first, states)
         return unless ordered.length == states.length
 
         [start.first, ordered, finish.first]
+      end
+
+      def connected_chain_nodes(graph)
+        direction = graph.dig(:layoutOptions, ElkOptions::DIRECTION)
+        return [] if placement == :elk
+        return [] unless [DIRECTION_DOWN, DIRECTION_RIGHT].include?(direction)
+
+        nodes = Array(graph[:children])
+        nodes.any? && nodes.all? { |node| chain_state?(node) } ? nodes : []
+      end
+
+      def chain_state?(node)
+        Array(node[:children]).empty? &&
+          CHAIN_STATE_TYPES.include?(node.dig(:metadata, :shape_type))
+      end
+
+      def chain_nodes_by_type(nodes)
+        grouped = nodes.group_by { |node| node.dig(:metadata, :shape_type) }
+        %w[start end normal].map { |type| grouped.fetch(type, []) }
       end
 
       def ordered_chain_states(graph, start, states)
@@ -366,34 +369,47 @@ module Sirena
 
       def place_vertical_state_chain(start, states, finish)
         center = states.map { |state| state[:width] }.max / 2.0
-        start[:x] = center - (start[:width] / 2.0)
-        start[:y] = 0.0
-        position = 72.0
-        states.each do |state|
-          state[:x] = center - (state[:width] / 2.0)
-          state[:y] = position
-          position += state[:height] + 50.0
-        end
+        position_chain_start(start, center - (start[:width] / 2.0), 0.0)
+        position = position_vertical_states(states, center)
         return unless finish
 
         finish.merge!(x: center - (finish[:width] / 2.0),
                       y: position - 8.0)
       end
 
+      def position_vertical_states(states, center)
+        position = 72.0
+        states.each do |state|
+          state[:x] = center - (state[:width] / 2.0)
+          state[:y] = position
+          position += state[:height] + 50.0
+        end
+        position
+      end
+
       def place_horizontal_state_chain(start, states, finish)
         center = states.map { |state| state[:height] }.max / 2.0
-        start[:x] = 0.0
-        start[:y] = center - (start[:height] / 2.0)
+        position_chain_start(start, 0.0, center - (start[:height] / 2.0))
+        position = position_horizontal_states(states, center)
+        return unless finish
+
+        finish.merge!(x: position - 8.0,
+                      y: center - (finish[:height] / 2.0))
+      end
+
+      def position_horizontal_states(states, center)
         position = 72.0
         states.each do |state|
           state[:x] = position
           state[:y] = center - (state[:height] / 2.0)
           position += state[:width] + 50.0
         end
-        return unless finish
+        position
+      end
 
-        finish.merge!(x: position - 8.0,
-                      y: center - (finish[:height] / 2.0))
+      def position_chain_start(start, x_position, y_position)
+        start[:x] = x_position
+        start[:y] = y_position
       end
 
       # Converts a state diagram to a graph structure.
@@ -976,20 +992,20 @@ module Sirena
       end
 
       def plain_nested_composite(graph)
-        return if placement == :elk
-        return unless normal_font_size == DEFAULT_FONT_SIZE &&
-          small_font_size == DEFAULT_SMALL_FONT_SIZE
-        return unless graph.dig(:layoutOptions, ElkOptions::DIRECTION) ==
-          DIRECTION_DOWN
+        return unless plain_nested_graph?(graph)
 
         children = Array(graph[:children])
         return unless children.one?
 
         composite = children.first
-        return unless composite.dig(:metadata, :cluster)
-        return unless nested_note_nodes(graph, composite).any?
+        composite if composite.dig(:metadata, :cluster) &&
+          nested_note_nodes(graph, composite).any?
+      end
 
-        composite
+      def plain_nested_graph?(graph)
+        placement != :elk && normal_font_size == DEFAULT_FONT_SIZE &&
+          small_font_size == DEFAULT_SMALL_FONT_SIZE &&
+          graph.dig(:layoutOptions, ElkOptions::DIRECTION) == DIRECTION_DOWN
       end
 
       def nested_note_topology(graph)

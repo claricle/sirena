@@ -10,18 +10,23 @@ RSpec.describe Sirena::Layout::Sequence do
     described_class.new.call(diagram)
   end
 
-  it "matches participant widths for the Wonderland corpus duplicates" do
-    fixtures = %w[
+  def participant_geometry(fixture)
+    scene_for(fixture).participants.map do |participant|
+      [participant.x, participant.width]
+    end
+  end
+
+  def wonderland_cases
+    %w[
       sequencediagram_spec-ab7b0e29.mmd
       sequencediagram_spec-491a3b83.mmd
     ]
+  end
 
-    evidence = fixtures.map do |fixture|
-      scene = scene_for(fixture)
-      scene.participants.map { |participant| [participant.x, participant.width] }
-    end
-
-    expect(evidence).to eq(Array.new(2, [[50.0, 156.0], [293.0, 150.0]]))
+  it "matches participant widths for the Wonderland corpus duplicates" do
+    evidence = wonderland_cases.map { |fixture| participant_geometry(fixture) }
+    expected = [[50.0, 156.0], [293.0, 150.0]]
+    expect(evidence).to eq(Array.new(2, expected))
   end
 
   it "matches actor gaps for the create and destroy corpus case" do
