@@ -54,10 +54,29 @@ module SpecSupport
           next unless entry[:box]
 
           group = groups.find do |items|
-            same_center?(items.first[:box], entry[:box])
+            same_marker?(items, entry)
           end
           group ? group << entry : groups << [entry]
         end
+      end
+
+      def same_marker?(items, entry)
+        same_center?(items.first[:box], entry[:box]) ||
+          cherry_pick_component?(items, entry)
+      end
+
+      def cherry_pick_component?(items, entry)
+        return false unless class_token?(entry[:node], "commit-cherry-pick")
+
+        items.any? do |item|
+          class_token?(item[:node], "commit-cherry-pick") &&
+            overlapping?(item[:box], entry[:box])
+        end
+      end
+
+      def overlapping?(left, right)
+        left.min_x <= right.max_x && right.min_x <= left.max_x &&
+          left.min_y <= right.max_y && right.min_y <= left.max_y
       end
 
       def same_center?(left, right)
