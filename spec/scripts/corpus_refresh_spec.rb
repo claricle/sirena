@@ -195,7 +195,9 @@ RSpec.describe CorpusRefresh do
   end
 
   it "rejects a commit sha that is not 40 hex characters" do
-    expect { MermaidTestExtractor.new(commit_sha: "main") }
+    expect do
+      MermaidTestExtractor.new(root: "/tmp/mermaid-js", commit_sha: "main")
+    end
       .to raise_error(CorpusRefresh::Error, /40 hex/)
   end
 
