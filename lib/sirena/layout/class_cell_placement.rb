@@ -26,8 +26,14 @@ module Sirena
       def self.connected_pair(graph, children)
         return unless connected_pair_candidate?(graph, children)
 
-        terminals = edge_terminals(Array(graph[:edges]).first)
+        edge = Array(graph[:edges]).first
+        terminals = edge_terminals(edge)
+        terminals.reverse! if inheritance?(edge)
         map_pair(children, terminals) if terminals
+      end
+
+      def self.inheritance?(edge)
+        edge.dig(:metadata, :relationship_type) == "inheritance"
       end
 
       def self.connected_pair_candidate?(graph, children)
@@ -109,7 +115,8 @@ module Sirena
       end
 
       private_class_method :connected_pair, :connected_pair_candidate?,
-                           :map_pair, :ordinary_pair?, :edge_terminals,
+                           :inheritance?, :map_pair, :ordinary_pair?,
+                           :edge_terminals,
                            :pack_connected_pair, :target_y, :centered_x, :pack,
                            :columns, :place, :offsets, :cell, :nested?
     end
