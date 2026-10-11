@@ -32,22 +32,6 @@ module Sirena
         def down(grow) = [top - grow, bottom + grow]
       end
 
-      class Rect < Lutaml::Model::Serializable
-        attribute :number, :integer
-        attribute :x, :float
-        attribute :y, :float
-        attribute :width, :float
-        attribute :height, :float
-      end
-
-      class Line < Lutaml::Model::Serializable
-        attribute :x1, :float
-        attribute :y1, :float
-        attribute :x2, :float
-        attribute :y2, :float
-        attribute :stroke_width, :float
-      end
-
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
         attribute :x, :float
@@ -58,6 +42,23 @@ module Sirena
         attribute :style, :string
         attribute :rotation, :float
         attribute :baseline, :string
+      end
+
+      class Rect < Lutaml::Model::Serializable
+        attribute :number, :integer
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+        attribute :label, Label
+      end
+
+      class Line < Lutaml::Model::Serializable
+        attribute :x1, :float
+        attribute :y1, :float
+        attribute :x2, :float
+        attribute :y2, :float
+        attribute :stroke_width, :float
       end
 
       class Point < Lutaml::Model::Serializable
@@ -108,12 +109,13 @@ module Sirena
 
       def scene_data(graph)
         space = graph[:space]
+        labels = quadrant_labels_by_number(graph[:quadrants], graph[:points])
         {
           title: title_label(graph[:title]),
-          quadrants: typed_quadrants(graph[:quadrants]),
+          quadrants: typed_quadrants(graph[:quadrants], labels),
           axes: border_lines(space),
           axis_labels: axis_labels(graph[:axes], space),
-          quadrant_labels: quadrant_labels(graph[:quadrants], graph[:points]),
+          quadrant_labels: labels.values,
           points: typed_points(graph[:points]),
         }
       end
@@ -192,9 +194,10 @@ module Sirena
               "title", anchor: "middle", baseline: "hanging")
       end
 
-      def typed_quadrants(quadrants)
+      def typed_quadrants(quadrants, labels)
         quadrants.values.map do |quadrant|
-          Rect.new(number: quadrant[:number], **quadrant[:bounds])
+          number = quadrant[:number]
+          Rect.new(number: number, label: labels[number], **quadrant[:bounds])
         end
       end
 
@@ -273,10 +276,11 @@ module Sirena
               rotation: rotation)
       end
 
-      def quadrant_labels(quadrants, points)
+      def quadrant_labels_by_number(quadrants, points)
         labelled = quadrants.values.select { |quadrant| quadrant[:label] }
-        labelled.map do |quadrant|
-          points.empty? ? centred_label(quadrant) : top_label(quadrant)
+        labelled.to_h do |quadrant|
+          label = points.empty? ? centred_label(quadrant) : top_label(quadrant)
+          [quadrant[:number], label]
         end
       end
 
