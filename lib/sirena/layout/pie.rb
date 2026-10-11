@@ -56,12 +56,19 @@ module Sirena
         attribute :label, Label
       end
 
+      class Ring < Lutaml::Model::Serializable
+        attribute :cx, :float
+        attribute :cy, :float
+        attribute :radius, :float
+      end
+
       class Scene < Layout::Scene
         attribute :id, :string
         attribute :view_box, :string
         attribute :acc_title, :string
         attribute :acc_description, :string
         attribute :title, Label
+        attribute :ring, Ring
         attribute :slices, Slice, collection: true, default: -> { [] }
         attribute :legend, PieLegendEntry, collection: true,
                                            default: -> { [] }
@@ -119,9 +126,14 @@ module Sirena
         Scene.new(
           id: graph[:id] || "pie", width: width, height: HEIGHT,
           view_box: "0 0 #{width} #{HEIGHT}",
-          title: title_label(graph[:title]), slices: typed_slices(graph),
+          title: title_label(graph[:title]), ring: outer_ring,
+          slices: typed_slices(graph),
           legend: legend, **accessibility(graph)
         )
+      end
+
+      def outer_ring
+        Ring.new(cx: CENTER_X, cy: CENTER_Y, radius: OUTER_RADIUS)
       end
 
       def accessibility(graph)

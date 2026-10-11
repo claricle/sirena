@@ -4,9 +4,14 @@ require "spec_helper"
 require "sirena/renderer/pie"
 
 RSpec.describe Sirena::Renderer::Pie do
-  subject(:svg) { described_class.new.render(graph) }
+  subject(:svg) { described_class.new.render(scene) }
 
   let(:graph) { { slices: [] } }
+  let(:scene) { Sirena::Layout::Pie.from_graph(graph) }
+
+  it "rejects a bare positioned Hash" do
+    expect { described_class.new.render(graph) }.to raise_error(NoMethodError)
+  end
 
   it "uses the compact canvas and draws only the ring for an empty pie" do
     expect([svg.width, svg.height, svg.view_box, svg.children.map(&:class)])
@@ -33,6 +38,14 @@ RSpec.describe Sirena::Renderer::Pie do
     expect(rendered_labels).to eq(["75%", "25%", "Large", "Small"])
   end
 
+  it "copies the ring and legend swatch geometry from the Scene" do
+    graph[:slices] = slices
+    scene.ring.cx = 17
+    scene.legend.first.width = 9
+
+    expect([svg.children.first.cx, legend_rect.width]).to eq([17.0, 9.0])
+  end
+
   def rendered_arcs
     paths = svg.children.grep(Sirena::Svg::Path)
     [paths.map(&:d), rendered_labels]
@@ -47,6 +60,10 @@ RSpec.describe Sirena::Renderer::Pie do
 
   def rendered_labels
     svg.children.grep(Sirena::Svg::Text).map { |label| text(label) }
+  end
+
+  def legend_rect
+    svg.children.grep(Sirena::Svg::Rect).first
   end
 
   def slices

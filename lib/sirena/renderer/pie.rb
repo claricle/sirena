@@ -22,12 +22,11 @@ module Sirena
     class Pie < Base
       # Renders a pie chart diagram to SVG.
       #
-      # @param graph [Hash] the pie chart graph structure from transform
+      # @param scene [Layout::Pie::Scene] final pie geometry
       # @return [Svg::Document] the rendered SVG document
-      def render(graph)
-        scene = typed_scene(graph)
+      def render(scene)
         svg = create_document(scene)
-        svg << outer_circle
+        svg << outer_circle(scene.ring)
         svg << typed_label(scene.title) if scene.title
         scene.slices.each { |slice| add_slice(svg, slice) }
         scene.legend.each { |entry| add_legend_entry(svg, entry) }
@@ -36,10 +35,10 @@ module Sirena
 
       protected
 
-      def outer_circle
+      def outer_circle(ring)
         Svg::Circle.new(
-          cx: Layout::Pie::CENTER_X, cy: Layout::Pie::CENTER_Y,
-          r: Layout::Pie::OUTER_RADIUS, fill: "none", stroke_width: "2",
+          cx: ring.cx, cy: ring.cy, r: ring.radius,
+          fill: "none", stroke_width: "2",
           stroke: theme_color(:label_text)
         )
       end
@@ -47,12 +46,6 @@ module Sirena
       def add_slice(svg, slice)
         svg << typed_slice(slice)
         svg << typed_label(slice.label)
-      end
-
-      def typed_scene(graph)
-        return graph if graph.is_a?(Layout::Pie::Scene)
-
-        Layout::Pie.from_graph(graph, theme: theme)
       end
 
       def typed_slice(slice)
@@ -67,7 +60,8 @@ module Sirena
 
       def add_legend_entry(svg, entry)
         color = get_slice_color(entry.color_index)
-        svg << Svg::Rect.new(x: entry.x, y: entry.y, width: 18, height: 18,
+        svg << Svg::Rect.new(x: entry.x, y: entry.y,
+                             width: entry.width, height: entry.height,
                              fill: color, stroke: color)
         svg << legend_text(entry)
       end

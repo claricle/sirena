@@ -13,6 +13,14 @@ RSpec.describe Sirena::Layout::Pie do
       .to eq([described_class::Scene, "pie", 450.0, 450.0, []])
   end
 
+  it "publishes the outer ring and legend swatch dimensions" do
+    diagram.slices = [slice("ash", 100)]
+
+    expect([scene.ring.cx, scene.ring.cy, scene.ring.radius,
+            scene.legend.first.width, scene.legend.first.height])
+      .to eq([225.0, 225.0, 186.0, 18.0, 18.0])
+  end
+
   it "transforms populated slices and their proportions" do
     populate_diagram
     expect(populated_geometry).to match(expected_geometry)

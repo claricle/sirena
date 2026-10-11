@@ -40,6 +40,7 @@ module Sirena
 
       def entry(text, index, row_y)
         PieLegendEntry.new(text: text, color_index: index, x: LEFT, y: row_y,
+                           width: SWATCH, height: SWATCH,
                            font_size: @font_size,
                            text_x: LEFT + TEXT_OFFSET_X,
                            text_y: row_y + TEXT_BASELINE)
