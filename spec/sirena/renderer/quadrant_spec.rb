@@ -8,7 +8,57 @@ require "sirena/parser/quadrant"
 RSpec.describe Sirena::Renderer::Quadrant, :aggregate_failures do
   let(:renderer) { described_class.new }
 
+  def final_label(text, x_position: 10, y_position: 10)
+    Sirena::Layout::Quadrant::Label.new(
+      text: text, x: x_position, y: y_position, font_size: 14,
+      text_anchor: "middle", baseline: "middle"
+    )
+  end
+
+  def single_quadrant_scene
+    coordinates = { x_position: 25, y_position: 25 }
+    legacy_label = final_label("Legacy inference", **coordinates)
+    quadrant = Sirena::Layout::Quadrant::Rect.new(
+      number: 1, x: 0, y: 0, width: 50, height: 50,
+      label: final_label("Attached", x_position: 7, y_position: 9)
+    )
+    Sirena::Layout::Quadrant::Scene.new(
+      width: 100, height: 100, quadrants: [quadrant],
+      quadrant_labels: [legacy_label]
+    )
+  end
+
+  def sparse_quadrant_scene
+    source = <<~QUADRANT
+      quadrantChart
+        quadrant-1 First
+        quadrant-3 Third
+    QUADRANT
+    diagram = Sirena::Parser::Quadrant.new.parse(source)
+    Sirena::Layout::Quadrant.new.call(diagram)
+  end
+
   describe "#render" do
+    it "rejects a bare positioned Hash" do
+      expect { renderer.render(width: 100, height: 100) }
+        .to raise_error(NoMethodError)
+    end
+
+    it "renders only the final label attached to each Scene quadrant" do
+      xml = renderer.render(single_quadrant_scene).to_xml
+
+      expect(xml).to include(">Attached</text>")
+      expect(xml).not_to include("Legacy inference")
+    end
+
+    it "receives each label already associated by Layout" do
+      labels = sparse_quadrant_scene.quadrants.map do |quadrant|
+        quadrant.label&.text
+      end
+
+      expect(labels).to eq(["First", nil, "Third", nil])
+    end
+
     it "renders a simple quadrant chart to SVG" do
       source = <<~QUADRANT
         quadrantChart
