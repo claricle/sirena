@@ -30,7 +30,7 @@ module Sirena
             settings = settings_item(diagram.columns, occupied)
             IR::Prepositioned.new(
               id: root_id, label: diagram.title, role: "column_grid",
-              items: [settings] + block_items(entries, ids),
+              items: [settings, *block_items(entries, ids)].compact,
               connections: connections(
                 diagram.connections, entries, ids, occupied
               )
@@ -52,6 +52,8 @@ module Sirena
           end
 
           def settings_item(columns, occupied)
+            return if columns.nil?
+
             IR::PrepositionedItem.new(
               id: reserve_id("layout_settings", occupied),
               role: "layout_settings",

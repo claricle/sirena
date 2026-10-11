@@ -11,12 +11,13 @@ RSpec.describe Sirena::Layout::Block do
     subject(:column_contract) do
       diagram = parser.parse("block-beta\n  a\n")
       document = Sirena::Notation::Mermaid::IRAdapters::Block.call(diagram)
-      value = document.items.first.placements.first.value.value
-      equivalent = layout.build_graph(document) == layout.build_graph(diagram)
-      [Sirena::Diagram::Block.new.columns, diagram.columns, value, equivalent]
+      settings = document.items.find { |item| item.role == "layout_settings" }
+      equivalent = layout.call(document).to_json == layout.call(diagram).to_json
+      [Sirena::Diagram::Block.new.columns, diagram.columns,
+       settings, document.valid?, equivalent]
     end
 
-    it { is_expected.to eq([nil, nil, nil, true]) }
+    it { is_expected.to eq([nil, nil, nil, true, true]) }
   end
 
   context "with two auto-layout leaves and an edge" do
