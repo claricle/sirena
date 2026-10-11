@@ -19,15 +19,17 @@ RSpec.describe Sirena::Layout::StateDiagram do
   let(:parser) { Sirena::Parser::StateDiagram.new }
   let(:layout) { described_class.new }
 
-  it "matches the pinned multiline attached-note dimensions" do
-    dimensions = case_ids.to_h do |case_id|
+  let(:dimensions) do
+    case_ids.to_h do |case_id|
       source = File.read("spec/mermaid/state_diagram/#{case_id}.mmd")
       scene = layout.scene(parser.parse(source))
       note = scene.children.find { |node| node.id == "State1----note" }
 
       [case_id, [note.width, note.height]]
     end
+  end
 
+  it "matches the pinned multiline attached-note dimensions" do
     expect(dimensions.values.uniq).to eq([[68.53125, 150.0]])
   end
 end

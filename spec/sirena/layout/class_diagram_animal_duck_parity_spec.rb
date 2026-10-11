@@ -12,17 +12,27 @@ RSpec.describe Sirena::Layout::ClassDiagram do
     ]
   end
 
-  it "matches the Animal/Duck alias placement in every corpus copy",
-     :aggregate_failures do
+  let(:results) do
     runner = SpecSupport::LayoutParity::CohortRunner.new
     candidates = runner.candidate_cases.select do |candidate|
       case_ids.include?(candidate.case_id)
     end
-    results = candidates.map { |candidate| runner.send(:compare, candidate) }
+    candidates.map { |candidate| runner.send(:compare, candidate) }
+  end
 
+  it "compares the Animal/Duck alias case in every corpus copy" do
     expect(results.map(&:case_id)).to match_array(case_ids)
+  end
+
+  it "has no hard failure in any corpus copy of the Animal/Duck case" do
     results.each do |result|
       expect(result).not_to be_hard_failure, result.case_id
+    end
+  end
+
+  it "matches the Animal/Duck alias placement in every corpus copy",
+     :aggregate_failures do
+    results.each do |result|
       expect(result.geometry.fetch(:worst_e_c)).to be <= 0.08, result.case_id
       expect(result.geometry.fetch(:worst_e_w)).to be <= 0.15, result.case_id
       expect(result.geometry.fetch(:worst_e_h)).to be <= 0.15, result.case_id
