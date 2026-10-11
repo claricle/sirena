@@ -5,21 +5,19 @@ require "spec_helper"
 RSpec.describe Sirena::Renderer::StateDiagram do
   subject(:renderer) { described_class.new }
 
-  let(:released_hook_arities) do
-    {
-      calculate_width: 1, calculate_height: 1, render_states: 2,
-      render_state: 2, create_state_shape: 2, create_normal_state: 4,
-      create_start_state: 4, create_end_state: 4,
-      create_choice_state: 4, create_fork_join_state: 4,
-      create_state_label: 3, render_transitions: 2,
-      render_transition: 3, find_state: 2,
-      calculate_transition_path: 3, create_path_with_bends: 5,
-      create_transition_label: 3
-    }
+  let(:removed_geometry_hooks) do
+    %i[
+      create_state_shape create_normal_state create_start_state
+      create_end_state create_choice_state
+      create_fork_join_state create_state_label calculate_transition_path
+      create_path_with_bends create_transition_label typed_state
+      typed_transition compatibility_state compatibility_shape_values
+    ]
   end
 
   def xml_for(graph)
-    renderer.render(graph).to_xml
+    scene = Sirena::Layout::StateDiagram.from_graph(graph)
+    renderer.render(scene).to_xml
   end
 
   describe "canvas size" do
@@ -58,6 +56,13 @@ RSpec.describe Sirena::Renderer::StateDiagram do
     let(:label_attrs) do
       'text-anchor="middle" font-family="Arial, sans-serif"'
     end
+    let(:stacked_state_fragments) do
+      [
+        'points="250.0,0.0 300.0,25.0 250.0,50.0 200.0,25.0"',
+        %(y="19.9" #{label_attrs} font-size="14">B<),
+        %(y="39.2" #{label_attrs} font-size="12">b2<),
+      ]
+    end
 
     it "renders a geometry-less state as a default 100x50 rounded rect " \
        "with no label" do
@@ -67,9 +72,10 @@ RSpec.describe Sirena::Renderer::StateDiagram do
     it "prefers metadata shape_type and stacks two labels at 14 and 12 point",
        :aggregate_failures do
       xml = xml_for(graph)
-      expect(xml).to include('points="250,0 300,25 250,50 200,25"')
-      expect(xml).to include(%(y="19.9" #{label_attrs} font-size="14">B<))
-      expect(xml).to include(%(y="39.2" #{label_attrs} font-size="12">b2<))
+      matches = stacked_state_fragments.all? do |fragment|
+        xml.include?(fragment)
+      end
+      expect(matches).to be(true)
     end
 
     it "falls back to state_type for a start circle" do
@@ -128,21 +134,10 @@ RSpec.describe Sirena::Renderer::StateDiagram do
     end
   end
 
-  describe "released compatibility hooks" do
-    it "keeps each protected method's name and arity" do
-      actual_arities = released_hook_arities.to_h do |name, _arity|
-        [name, described_class.instance_method(name).arity]
-      end
-
-      expect(actual_arities).to eq(released_hook_arities)
-    end
-
-    it "delegates bend-path geometry to the layout helper" do
-      path = renderer.send(
-        :create_path_with_bends, 1, 2, 7, 8, [{ x: 3, y: 4 }]
-      )
-
-      expect(path).to eq("M 1 2 L 3 4 L 7 8")
+  describe "removed compatibility hooks" do
+    it "exposes no renderer-side Hash geometry entry point" do
+      expect(removed_geometry_hooks)
+        .to all(satisfy { |name| !renderer.respond_to?(name, true) })
     end
   end
 end
