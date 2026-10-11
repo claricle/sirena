@@ -9,11 +9,14 @@ RSpec.describe Sirena::Renderer::Kanban do
   let(:renderer) do
     described_class.new(theme: Sirena::Theme::Registry.get(:default))
   end
-  let(:layout) do
+  let(:graph) do
     {
       columns: [column], cards: cards,
       width: 200, height: 150
     }
+  end
+  let(:layout) do
+    Sirena::Layout::Kanban.from_graph(graph, theme: renderer.theme)
   end
   let(:column) do
     {
@@ -53,11 +56,15 @@ RSpec.describe Sirena::Renderer::Kanban do
   end
 
   def themed_xml
-    described_class.new(theme: custom_theme).render(layout).to_xml
+    selected = described_class.new(theme: custom_theme)
+    scene = Sirena::Layout::Kanban.from_graph(graph, theme: selected.theme)
+    selected.render(scene).to_xml
   end
 
   def fallback_xml
-    described_class.new(theme: Sirena::Theme.new).render(layout).to_xml
+    selected = described_class.new(theme: Sirena::Theme.new)
+    scene = Sirena::Layout::Kanban.from_graph(graph, theme: selected.theme)
+    selected.render(scene).to_xml
   end
 
   def document_geometry
