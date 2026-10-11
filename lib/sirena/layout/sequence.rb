@@ -185,7 +185,7 @@ module Sirena
 
       def frame_layout
         @frame_layout ||= FramePlacement.new(
-          typography: frame_typography,
+          font_size: text_font_size,
         )
       end
 
@@ -221,7 +221,7 @@ module Sirena
         FramePlacement.new(frames: metadata[:frames],
                            boxes: metadata[:boxes], spans: spans,
                            ids: graph[:children].map { |c| c[:id] },
-                           typography: frame_typography)
+                           font_size: text_font_size)
       end
 
       def build_scene(graph, positions, placement)
@@ -374,18 +374,6 @@ module Sirena
       def text_font_size
         value = theme&.typography&.sequence_font_size
         value&.positive? ? value : DEFAULT_FONT_SIZE
-      end
-
-      def frame_font_family
-        configured = theme&.typography&.font_family
-        default = FramePlacement::DEFAULT_FONT_FAMILY
-        return default if theme.equal?(Theme::Registry.get(:default))
-
-        configured.to_s.empty? ? default : configured
-      end
-
-      def frame_typography
-        { font_size: text_font_size, font_family: frame_font_family }
       end
 
       def calculate_lifeline_length(graph)
