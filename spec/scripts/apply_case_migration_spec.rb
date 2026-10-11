@@ -238,6 +238,11 @@ RSpec.describe ApplyCaseMigration do
       expect(cases).to eq(cases.sort)
     end
 
+    it "leaves the manifest as it was" do
+      expect(read("config/corpus_case_migration.json"))
+        .to include("pie/001_a_0.mmd")
+    end
+
     it "keeps the case count" do
       ids = Dir.glob("*/*.mmd", base: File.join(root, "spec/mermaid"))
       expect(ids.length).to eq(repo::PAIRS.length)
@@ -268,6 +273,26 @@ RSpec.describe ApplyCaseMigration do
 
     it_behaves_like "a refusal that writes nothing",
                     ApplyCaseMigration::ConflictError
+
+    it "names the manifest" do
+      expect { described_class.plan(root: root) }
+        .to raise_error(ApplyCaseMigration::ConflictError, /new_base twice/)
+    end
+  end
+
+  describe "an old case listed twice" do
+    before do
+      write_manifest(repo::PAIRS + [["pie/001_a_0.mmd", "pie/other-55555555"]])
+      commit_all("old twice")
+    end
+
+    it_behaves_like "a refusal that writes nothing",
+                    ApplyCaseMigration::ConflictError
+
+    it "names the manifest" do
+      expect { described_class.plan(root: root) }
+        .to raise_error(ApplyCaseMigration::ConflictError, /old_base twice/)
+    end
   end
 
   describe "two files renamed onto one target" do
