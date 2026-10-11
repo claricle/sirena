@@ -14,7 +14,7 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
                       service db(database)[Database]
                       service server(server)[Server]
 
-                      db L--R server
+                      db:L -- R:server
         MERMAID
       end
 
