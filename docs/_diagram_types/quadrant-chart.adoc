@@ -388,7 +388,11 @@ bundle exec rspec spec/sirena/parser/quadrant_spec.rb
 
 === Test Coverage
 
-* ✅ Coverage against the oracle-valid mermaid-js corpus cases: `--> against valid cases only: 9/9 = 100.0%` (`bundle exec ruby scripts/corpus_sweep.rb --failing quadrant`, BY VERDICT section). The remaining corpus case has an `unknown` verdict in `spec/mermaid/corpus-verdicts.yml`.
+// BEGIN GENERATED: rake docs:compatibility quadrant
+* Oracle-valid corpus coverage: `9/9 passing (100.0%)`.
+* Outside the compatibility denominator: 1/1 `invalid` cases currently render.
+* Generated from `scoreboard/corpus.json` by `bundle exec rake docs:compatibility`.
+// END GENERATED: rake docs:compatibility quadrant
 * ✅ Point coordinates validated (0-1 range)
 * ✅ Quadrant assignment correct for all points
 * ✅ Styling parameters extracted properly

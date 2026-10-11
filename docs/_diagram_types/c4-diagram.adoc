@@ -435,7 +435,11 @@ The C4 rendering pipeline:
 * Variable syntax (`${macroName}`) has limited support
 * Some test-specific constructs may not parse (sprites, links, tags)
 * Layout is a fallback grid, not the hierarchical ELK layout this page previously described
-* Coverage against the oracle-valid mermaid-js corpus cases: `--> against valid cases only: 11/11 = 100.0%` (`bundle exec ruby scripts/corpus_sweep.rb --failing c4`, BY VERDICT section). The same run reports 22 `artifact`-verdict cases (14 passing) and 14 `unknown`-verdict cases (3 passing), per `spec/mermaid/corpus-verdicts.yml`.
+// BEGIN GENERATED: rake docs:compatibility c4
+* Oracle-valid corpus coverage: `11/11 passing (100.0%)`.
+* Outside the compatibility denominator: 22/22 `artifact` cases currently render; 9/14 `invalid` cases currently render.
+* Generated from `scoreboard/corpus.json` by `bundle exec rake docs:compatibility`.
+// END GENERATED: rake docs:compatibility c4
 
 == Troubleshooting
 
