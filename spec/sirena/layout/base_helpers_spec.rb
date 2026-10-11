@@ -56,9 +56,9 @@ RSpec.describe Sirena::Layout::Base do
   end
 
   describe "helper contracts" do
-    it "reports the concrete class when build_graph is not implemented" do
-      expect { layout.build_graph(Object.new) }.to raise_error(
-        NotImplementedError, /must implement #build_graph\(diagram\)/
+    it "reports the concrete class when scene is not implemented" do
+      expect { layout.scene(Object.new) }.to raise_error(
+        NotImplementedError, /must implement #scene\(diagram\)/
       )
     end
 
