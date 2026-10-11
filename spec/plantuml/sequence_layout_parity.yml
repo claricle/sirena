@@ -1,0 +1,852 @@
+# Ratchet ledger: regenerate only after a measured improvement.
+# status: pass = e_c<=0.08 and e_w,e_h,e_a<=0.15; miss = over a bar;
+# hard-failure = missing/extra element or invariant broken;
+# comparison-error = Sirena SVG the extractor cannot read.
+rows:
+- case: java.nonreg.simple.SequenceArrows_0001_Test--d918f796209f
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: java.nonreg.simple.SequenceArrows_0002_Test--ae1299794d0b
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: java.nonreg.simple.TeozTimelineIssues_0002_Test--c35d69988621
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: java.nonreg.simple.TeozTimelineIssues_0003_Test--2dd4eecfa67b
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: java.nonreg.simple.TeozTimelineIssues_0004_Test--bea0f11e448b
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.svg-sprites.svgStyleFontWeightRoboto--a13609de5404
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.168643
+      worst_e_w: 0.382869
+      worst_e_h: 0.123486
+      worst_e_a: 0.382869
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.asciiverse.altpar_001--7ff458de0156
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.asciiverse.altpar_002--2a2a7bb5aacc
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.asciiverse.altpar_003--6893700e037a
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.asciiverse.altpar_004--2bd5234bfbfe
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.asciiverse.altpar_005--f0cf331472b7
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.asciiverse.altpar_007--e76e451484c6
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.asciiverse.altpar_008--e6d99fb6ac3c
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.asciiverse.basic_002--184d55bcfb9c
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.657717
+      worst_e_w: 1.566859
+      worst_e_h: 0.411765
+      worst_e_a: 1.566859
+      worst_analog:
+  matched: 6
+  status: miss
+- case: resources.vega.asciiverse.group_001--61e71ad8eca5
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.650933
+      worst_e_w: 2.778772
+      worst_e_h: 0.180781
+      worst_e_a: 2.200231
+      worst_analog:
+  matched: 6
+  status: miss
+- case: resources.vega.asciiverse.hello_001--18b03e1b811e
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.188973
+      worst_e_w: 0.988927
+      worst_e_h: 0.180781
+      worst_e_a: 0.684416
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.asciiverse.layout_001--fcaf69429c9c
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.asciiverse.layout_003--3d52db0edecd
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.852883
+      worst_e_w: 2.644544
+      worst_e_h: 0.180781
+      worst_e_a: 2.644544
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.asciiverse.leftmsg_002--ddc664f08110
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 1.100492
+      worst_e_w: 1.027169
+      worst_e_h: 0.538462
+      worst_e_a: 0.716804
+      worst_analog:
+  matched: 18
+  status: miss
+- case: resources.vega.asciiverse.leftmsg_003--990470abe6d9
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.136704
+      worst_e_w: 0.859367
+      worst_e_h: 0.411765
+      worst_e_a: 0.574693
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.asciiverse.nested_001--5bbc1c2fa32b
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.217038
+      worst_e_w: 1.06218
+      worst_e_h: 0.180781
+      worst_e_a: 0.746454
+      worst_analog:
+  matched: 10
+  status: miss
+- case: resources.vega.asciiverse.self_001--da4311bd2115
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.264963
+      worst_e_w: 0.988927
+      worst_e_h: 0.411765
+      worst_e_a: 0.684416
+      worst_analog:
+  matched: 5
+  status: miss
+- case: resources.vega.asciiverse.timeline_001--18d6381b866f
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.asciiverse.timeline_002--f985a9b8f0de
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.nonreg.group20505.min_width_center--0385427ea4be
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.321608
+      worst_e_w: 0.15252
+      worst_e_h: 0.83677
+      worst_e_a: 0.455566
+      worst_analog:
+  matched: 5
+  status: miss
+- case: resources.vega.nonreg.group20505.min_width_default--24072f84b995
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.321608
+      worst_e_w: 0.15252
+      worst_e_h: 0.83677
+      worst_e_a: 0.455566
+      worst_analog:
+  matched: 5
+  status: miss
+- case: resources.vega.nonreg.group20505.min_width_left--4f6a53784edf
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.321608
+      worst_e_w: 0.15252
+      worst_e_h: 0.83677
+      worst_e_a: 0.455566
+      worst_analog:
+  matched: 5
+  status: miss
+- case: resources.vega.nonreg.group20505.min_width_right--4f323bdad314
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.321608
+      worst_e_w: 0.15252
+      worst_e_h: 0.83677
+      worst_e_a: 0.455566
+      worst_analog:
+  matched: 5
+  status: miss
+- case: resources.vega.nonreg.group20505.min_width_skinparam--577feb6055fb
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.321608
+      worst_e_w: 0.15252
+      worst_e_h: 0.83677
+      worst_e_a: 0.455566
+      worst_analog:
+  matched: 5
+  status: miss
+- case: resources.vega.nonreg.group2679.group_header_legacy_flat--5bcc726e80b1
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.696656
+      worst_e_w: 2.627674
+      worst_e_h: 0.180781
+      worst_e_a: 2.072267
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.nonreg.group2679.group_header_nested--af2e98871d2d
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.696656
+      worst_e_w: 2.627674
+      worst_e_h: 0.180781
+      worst_e_a: 2.072267
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.nonreg.group2679.group_header_nested_overrides_flat--29dfa779f376
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.661371
+      worst_e_w: 2.627674
+      worst_e_h: 0.180781
+      worst_e_a: 2.072267
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.nonreg.group2679.reference_header_nested--a4a8af9cba7c
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.499975
+      worst_e_w: 2.627674
+      worst_e_h: 0.180781
+      worst_e_a: 2.072267
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.nonreg.group2729.bare_activate_before_any_message--920d4bcaa3e9
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.129717
+      worst_e_w: 0.937881
+      worst_e_h: 0.0
+      worst_e_a: 0.937881
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.nonreg.group2729.destroy_after_divider--559333843e38
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.151782
+      worst_e_w: 0.937881
+      worst_e_h: 0.0
+      worst_e_a: 0.937881
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.nonreg.group2729.message_before_activate_after_divider--62b7d8792525
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.093686
+      worst_e_w: 0.937881
+      worst_e_h: 0.0
+      worst_e_a: 0.937881
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.nonreg.group2788.activation--d783321e2c62
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.880362
+      worst_e_w: 2.778772
+      worst_e_h: 0.411765
+      worst_e_a: 2.633781
+      worst_analog:
+  matched: 9
+  status: miss
+- case: resources.vega.nonreg.group2788.alt_else--e1598e37241a
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.958596
+      worst_e_w: 2.778772
+      worst_e_h: 0.411765
+      worst_e_a: 2.633781
+      worst_analog:
+  matched: 9
+  status: miss
+- case: resources.vega.nonreg.group2788.cedeti_10_bufu072--cd27c406b434
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.63707
+      worst_e_w: 1.082876
+      worst_e_h: 0.180781
+      worst_e_a: 1.082876
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.nonreg.group2788.divider--3e3df0d464c3
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.888673
+      worst_e_w: 2.778772
+      worst_e_h: 0.411765
+      worst_e_a: 2.633781
+      worst_analog:
+  matched: 9
+  status: miss
+- case: resources.vega.nonreg.group2788.explicit_participants--ebbf246498ea
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.992596
+      worst_e_w: 2.778772
+      worst_e_h: 0.411765
+      worst_e_a: 2.633781
+      worst_analog:
+  matched: 7
+  status: miss
+- case: resources.vega.nonreg.group2788.lirasa_26_tazo607--2018ad068c81
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.349314
+      worst_e_w: 1.027169
+      worst_e_h: 0.180781
+      worst_e_a: 0.802339
+      worst_analog:
+  matched: 9
+  status: miss
+- case: resources.vega.nonreg.group2788.loop_long_label--d4b4359acf05
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.979391
+      worst_e_w: 2.778772
+      worst_e_h: 0.411765
+      worst_e_a: 2.251965
+      worst_analog:
+  matched: 5
+  status: miss
+- case: resources.vega.nonreg.group2788.note_left_leftmost--d086f0811a32
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.63707
+      worst_e_w: 1.082876
+      worst_e_h: 0.180781
+      worst_e_a: 1.082876
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.nonreg.group2788.ref_over--f0cb24bd16e0
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.67116
+      worst_e_w: 2.778772
+      worst_e_h: 0.411765
+      worst_e_a: 2.633781
+      worst_analog:
+  matched: 8
+  status: miss
+- case: resources.vega.nonreg.group2788.right_margin_matches_left_both_self--833298c44032
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.849539
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 7
+  status: miss
+- case: resources.vega.nonreg.group2788.x_outside_explicit_participant--6b4f8cacde95
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 1.029381
+      worst_e_w: 2.778772
+      worst_e_h: 0.411765
+      worst_e_a: 2.633781
+      worst_analog:
+  matched: 9
+  status: miss
+- case: resources.vega.nonreg.group2791.box_between_external_participants--7d1d5500d228
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.578426
+      worst_e_w: 2.989215
+      worst_e_h: 0.411765
+      worst_e_a: 2.989215
+      worst_analog:
+  matched: 7
+  status: miss
+- case: resources.vega.nonreg.group2791.box_forward_self_message_clears_next_participant--1a24d5f462c1
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.260446
+      worst_e_w: 2.778772
+      worst_e_h: 0.411765
+      worst_e_a: 2.200231
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.nonreg.group2791.box_reverse_self_message_clears_previous_participant--c797d0cd3eab
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.303013
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.nonreg.group2791.hnote_left_on_self_message--6ef262c9c97b
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.324012
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 2
+  status: miss
+- case: resources.vega.nonreg.group2791.nested_boxes_self_messages--ad11bf4b448a
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.769373
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 5
+  status: miss
+- case: resources.vega.nonreg.group2791.note_left_on_self_message--a4059b3b3ee9
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.175178
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 2
+  status: miss
+- case: resources.vega.nonreg.group2791.note_left_on_self_message_clears_previous_participant--459b540cd94b
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 3.082575
+      worst_e_w: 6.280439
+      worst_e_h: 0.411765
+      worst_e_a: 6.280439
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.nonreg.group2791.note_on_self_message_inside_group_at_box_edge--41e5a7ff94cb
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.106892
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 2
+  status: miss
+- case: resources.vega.nonreg.group2791.note_over_solo_box_participant--14a816e0bd6e
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.324012
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 2
+  status: miss
+- case: resources.vega.nonreg.group2791.note_right_on_self_message--1a2e8a0dbc73
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.324012
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 2
+  status: miss
+- case: resources.vega.nonreg.group2791.self_message_leftmost_of_multi--0742b0602928
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.242537
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.nonreg.group2791.self_message_leftmost_participant--9efe4ddda292
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.393188
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.nonreg.group2791.self_message_reverse_only--b0355d4c2434
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.175178
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 2
+  status: miss
+- case: resources.vega.nonreg.group2791.self_message_solo--9d48b2180ff0
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.232258
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.nonreg.group2791.standalone_note_left_of_box_participant--5dbc30d9717f
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.324012
+      worst_e_w: 2.681309
+      worst_e_h: 0.411765
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 2
+  status: miss
+- case: resources.vega.nonreg.group2834.nested_groups_and_notes--846af1d12917
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.nonreg.group2834.reported_case--b74549f2f6be
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.nonreg.group2883.mixed_same_and_different_participant_parallel_notes--f602d00329ee
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c:
+      worst_e_w:
+      worst_e_h:
+      worst_e_a:
+      worst_analog:
+  matched: 0
+  status: hard-failure
+- case: resources.vega.nonreg.note_across_group.message_after_group--f121a37a9290
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.541744
+      worst_e_w: 3.436262
+      worst_e_h: 0.180781
+      worst_e_a: 2.757058
+      worst_analog:
+  matched: 5
+  status: miss
+- case: resources.vega.nonreg.note_across_group.nested_group--9617d3aa3c9f
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.727761
+      worst_e_w: 3.436262
+      worst_e_h: 0.180781
+      worst_e_a: 2.757058
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.nonreg.note_across_group.participant_declared_after_group--fb338498bd7e
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.694705
+      worst_e_w: 3.436262
+      worst_e_h: 0.180781
+      worst_e_a: 2.757058
+      worst_analog:
+  matched: 5
+  status: miss
+- case: resources.vega.nonreg.note_across_group.reported--4965c575d64a
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.801004
+      worst_e_w: 3.436262
+      worst_e_h: 0.180781
+      worst_e_a: 2.757058
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.nonreg.note_across_group.two_notes_across--9edd3c67e417
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.801004
+      worst_e_w: 3.436262
+      worst_e_h: 0.180781
+      worst_e_a: 2.757058
+      worst_analog:
+  matched: 4
+  status: miss
+- case: resources.vega.nonreg.svg.SVG0001--7624adcaae49
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.242514
+      worst_e_w: 0.293298
+      worst_e_h: 0.0
+      worst_e_a: 0.293298
+      worst_analog:
+  matched: 10
+  status: miss
+- case: resources.vega.nonreg.svg.SVG0002--8f71f44c46ac
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.242514
+      worst_e_w: 0.277763
+      worst_e_h: 0.0
+      worst_e_a: 0.277763
+      worst_analog:
+  matched: 10
+  status: miss
+- case: resources.vega.nonreg.svg.SVG0003--1f8e5fb51e4d
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.096279
+      worst_e_w: 0.121144
+      worst_e_h: 0.180781
+      worst_e_a: 0.174718
+      worst_analog:
+  matched: 17
+  status: miss
+- case: resources.vega.nonreg.warnings.note_top_on_ref--1f75ab64bf5e
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 1.110721
+      worst_e_w: 2.627674
+      worst_e_h: 0.180781
+      worst_e_a: 2.072267
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.sequence.newpage--793d6e993975
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.507712
+      worst_e_w: 1.027169
+      worst_e_h: 0.180781
+      worst_e_a: 0.802339
+      worst_analog:
+  matched: 3
+  status: miss
+- case: resources.vega.svg.id.sequence_02--671c16bf124d
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.541109
+      worst_e_w: 2.681309
+      worst_e_h: 0.180781
+      worst_e_a: 2.11769
+      worst_analog:
+  matched: 6
+  status: miss
+- case: resources.vega.tikz.tikz-scale-nested-scale--2539f518bd84
+  summary:
+    hard_failure: true
+    metrics:
+      worst_e_c: 0.793005
+      worst_e_w: 1.027169
+      worst_e_h: 0.180781
+      worst_e_a: 0.716804
+      worst_analog:
+  matched: 4
+  status: hard-failure
