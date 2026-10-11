@@ -304,7 +304,7 @@ The pie chart implementation includes:
 
 // BEGIN GENERATED: rake docs:compatibility pie
 * Oracle-valid corpus coverage: `40/40 passing (100.0%)`.
-* Outside the compatibility denominator: 1/1 `artifact` cases currently render; 8/8 `invalid` cases currently render.
+* Outside the compatibility denominator: 1/1 `artifact` cases currently render; 0/8 `invalid` cases currently render.
 * Generated from `scoreboard/corpus.json` by `bundle exec rake docs:compatibility`.
 // END GENERATED: rake docs:compatibility pie
 * 13 RSpec examples in `spec/sirena/parser/pie_spec.rb`

@@ -24,12 +24,16 @@
   {
     "case": "architecture/architecture_spec-5d965f8d.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "architecture/architecture_spec-8afbb5a2.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "architecture/architecture_spec-a87e50a5.mmd",
@@ -41,7 +45,9 @@
   {
     "case": "architecture/architecture_spec-ae158359.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "architecture/architecture_spec-af907b7d.mmd",
@@ -3736,7 +3742,7 @@
   },
   {
     "case": "er_diagram/erdiagram_spec-d8eaebdd.mmd",
-    "verdict": "invalid",
+    "verdict": "valid",
     "pass": true
   },
   {
@@ -4242,7 +4248,9 @@
   {
     "case": "error/errordiagram_spec-34805ce6.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "error/errordiagram_spec-3a94a3a8.mmd",
@@ -5559,7 +5567,9 @@
   {
     "case": "flowchart/flow_text_spec-1e40cec6.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "flowchart/flow_text_spec-264a7bf1.mmd",
@@ -5645,7 +5655,9 @@
   {
     "case": "flowchart/flow_text_spec-6c2697c9.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "flowchart/flow_text_spec-6d7826b5.mmd",
@@ -5742,7 +5754,9 @@
   {
     "case": "flowchart/flow_text_spec-b7613af6.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "flowchart/flow_text_spec-bb0f15f6.mmd",
@@ -5759,7 +5773,9 @@
   {
     "case": "flowchart/flow_text_spec-cbaf90b9.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "flowchart/flow_text_spec-cea7dbde.mmd",
@@ -5830,7 +5846,9 @@
   {
     "case": "flowchart/flow_text_spec-e500bc56.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "flowchart/flow_text_spec-f0b898d1.mmd",
@@ -7180,7 +7198,9 @@
   {
     "case": "info/info_spec-9a1bf395.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "info/info_spec-e8bdfd49.mmd",
@@ -7230,12 +7250,16 @@
   {
     "case": "info/should_throw_because_of_unsupported_info_grammar-04542f46.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "info/should_throw_because_of_unsupported_info_grammar-951f438a.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "info/vertices-fcdfb3d4.mmd",
@@ -7466,27 +7490,37 @@
   {
     "case": "mindmap/config_spec-13ea20a0.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/config_spec-a8c9cb63.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/diagram_orchestration_spec-2a42239f.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/diagram_orchestration_spec-8382c44f.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/diagram_orchestration_spec-956735de.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/diagram_orchestration_spec-e4d24522.mmd",
@@ -7538,7 +7572,9 @@
   {
     "case": "mindmap/mindmap_spec-57ff3c5e.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/mindmap_spec-7104af54.mmd",
@@ -7757,7 +7793,9 @@
   {
     "case": "pie/darshan-af04f5f1.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "pie/diagram_orchestration_spec-bea79c10.mmd",
@@ -7787,7 +7825,9 @@
   {
     "case": "pie/pie_spec-8a2744c7.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "pie/pie_spec-8e291061.mmd",
@@ -7892,12 +7932,16 @@
   {
     "case": "pie/pie_test-993abc75.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "pie/pie_test-9ab8dc76.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "pie/pie_test-aa5adfc7.mmd",
@@ -7912,7 +7956,9 @@
   {
     "case": "pie/pie_test-c695eeb1.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "pie/pie_test-cc825265.mmd",
@@ -7962,12 +8008,16 @@
   {
     "case": "pie/should_handle_simple_pie_with_negative_decimal-4d099601.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "pie/should_handle_simple_pie_with_negative_slice_val-63fbc639.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "pie/should_handle_simple_pie_with_positive_decimal-c85e4e82.mmd",
@@ -7997,7 +8047,9 @@
   {
     "case": "pie/theme_spec-a9670f7e.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "quadrant/quadrant_chart-579fb996.mmd",
@@ -8027,7 +8079,9 @@
   {
     "case": "quadrant/should_be_able_to_handle_constructor_as_a_classn-0901aef7.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "quadrant/should_be_able_to_parse_the_whole_chart_with_poi-2c3e5a9c.mmd",
@@ -8445,7 +8499,9 @@
   {
     "case": "sankey/parses_csv_with_sankey_beta_syntax-ac5bf38a.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "sequence/diagram_orchestration_spec-493e7ad8.mmd",
@@ -8837,7 +8893,9 @@
   {
     "case": "sequence/sequencediagram_spec-97601112.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "sequence/sequencediagram_spec-98426ee3.mmd",
@@ -10839,7 +10897,9 @@
   {
     "case": "unknown/darshan-af04f5f1.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "unknown/flow_elk-951c7b80.mmd",

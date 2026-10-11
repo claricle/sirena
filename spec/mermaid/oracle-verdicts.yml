@@ -287,6 +287,16 @@ cases:
   cases:
   - er_diagram/erdiagram_spec-2f91223b.mmd
   - er_diagram/should_handle_complex_diagram_with_special_entit-af26ddf3.mmd
+- sha256: 3513d29dbbadc8f0322e84379c1b0821b9068ac92aa65ea8a77fe27f9bafb9ef
+  verdict: accepts
+  cases:
+  - er_diagram/erdiagram_spec-d8eaebdd.mmd
+  source_sha256: 3513d29dbbadc8f0322e84379c1b0821b9068ac92aa65ea8a77fe27f9bafb9ef
+  svg_sha256: f568c13604635a56a86d282e1a452a7c5b7c826047f719b69214e9017ca60190
+  toolchain:
+    mmdc: 11.12.0
+    mermaid: 11.16.1
+    chromium: 131.0.6778.204
 - sha256: 41b6fbea2acd668002cdb4503fe9c6d3dc8b290711919c3ab5344203f3d20a8f
   verdict: rejects
   reason: 'UnknownDiagramError: No diagram type detected matching given configuration

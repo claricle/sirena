@@ -81,7 +81,7 @@ CONFORMANCE_RENDERABLE_FILE = File.join(
 # malformed declarations and GitGraph accepted operations Mermaid rejects.
 # Every case is pinned `invalid` in scoreboard/corpus.json. Rejecting them is
 # therefore a compatibility gain, not a loss of oracle-valid coverage.
-CONFORMANCE_RENDERED_FLOOR = 877
+CONFORMANCE_RENDERED_FLOOR = 1206
 
 # The example sources Sirena cannot parse yet, so they have no checked-in
 # SVG. Named rather than counted: a NEW source falling out of the checked-in

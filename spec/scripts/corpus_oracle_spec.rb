@@ -766,6 +766,19 @@ RSpec.describe CorpusOracle do
       expect(rows.to_yaml).to eq(File.read(verdicts_path))
     end
 
+    it "reproduces the pinned acceptance that replaces stale ER evidence" do
+      rows = regenerated_verdicts(described_class.load_rows)
+      row = rows.find do |candidate|
+        candidate["case"] == "er_diagram/erdiagram_spec-d8eaebdd.mmd"
+      end
+
+      expect(row).to include(
+        "verdict" => "valid",
+        "evidence" => /mmdc 11\.12\.0 renders it/
+      )
+      expect(rows.to_yaml).to eq(File.read(verdicts_path))
+    end
+
     it "leave no case without a verdict" do
       verdicts = YAML.load_file(verdicts_path).map { |row| row["verdict"] }
 
