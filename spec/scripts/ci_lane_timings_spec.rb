@@ -36,9 +36,9 @@ RSpec.describe CiLaneTimings, :aggregate_failures do
 
   describe ".classify_log" do
     {
-      "an exact key hit" => ["Cache key: k\nCache hit for: k\nCache restored from key: k", :warm],
-      "a restore-key hit" => ["Cache key: k\nCache restored from key: k-old", :restore_key],
-      "a computed key and no restore" => ["Cache key: k\nCache not found", :cold],
+      "an exact key hit" => ["Cache key: k\nCache hit for: k\nCache restored successfully", :warm],
+      "a restore-key hit" => ["Cache key: k\nCache hit for restore-key: k-old", :restore_key],
+      "a computed key and no hit line" => ["Cache key: k", :cold],
       "no cache line" => ["bundler-cache: false", nil],
     }.each do |label, (log, expected)|
       it "reads #{label}" do

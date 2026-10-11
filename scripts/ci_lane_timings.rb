@@ -40,7 +40,7 @@ module CiLaneTimings
   # line at all, e.g. a job with bundler-cache off).
   def classify_log(text)
     if text.include?("Cache hit for:") then :warm
-    elsif text.include?("Cache restored from key:") then :restore_key
+    elsif text.include?("Cache hit for restore-key:") then :restore_key
     elsif text.include?("Cache key:") then :cold
     end
   end
@@ -86,6 +86,8 @@ if __FILE__ == $PROGRAM_NAME
   samples = { "fast" => [], "full" => [] }
   runs.each do |run|
     jobs = JSON.parse(gh.call("run", "view", run["databaseId"].to_s, "-R", repo, "--json", "jobs"))["jobs"]
+    next unless jobs.any? { |j| j["name"].include?("windows-latest, shard") } # sharded topology only
+
     caches = {}
     CiLaneTimings::LANES.each_key do |lane|
       job = CiLaneTimings.slowest(jobs, lane) or next
