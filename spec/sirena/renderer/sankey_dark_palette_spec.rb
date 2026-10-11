@@ -8,7 +8,7 @@ RSpec.describe Sirena::Renderer::Sankey do
     %w[#3794ff #4ec9b0 #f48771 #dcdcaa #89d185 #9cdcfe #fbbf24 #969696]
   end
   let(:source) do
-    flows = 8.times.map { |index| "source#{index},target#{index},1" }
+    flows = Array.new(8) { |index| "source#{index},target#{index},1" }
     (["sankey-beta"] + flows).join("\n")
   end
 

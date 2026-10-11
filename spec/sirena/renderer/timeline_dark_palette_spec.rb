@@ -29,7 +29,7 @@ RSpec.describe Sirena::Renderer::Timeline do
 
   it "uses each dark fill, text, and rule triple for its section" do
     expect(triples.each_slice(2).map(&:uniq))
-      .to eq(expected.map { |triple| [triple] })
+      .to eq(expected.zip)
   end
 
   it "keeps every text and rule pairing legible against its fill" do

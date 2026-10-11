@@ -66,15 +66,17 @@ RSpec.describe Sirena::Renderer::Radar do
   end
 
   it "consumes every dark curve colour in order" do
-    curves = 10.times.map do |index|
+    curves = Array.new(10) do |index|
       "  curve c#{index}{#{index + 1}, #{index + 2}, #{index + 3}}"
     end
     palette_source = (["radar-beta", "  axis A, B, C"] + curves).join("\n")
     paths = REXML::XPath.match(document_for(palette_source, :dark), "//path")
       .select { |path| path.attributes["class"]&.start_with?("radarCurve-") }
 
-    expect(paths.map { |path| [path.attributes["fill"],
-                              path.attributes["stroke"]] })
+    expect(paths.map do |path|
+      [path.attributes["fill"],
+       path.attributes["stroke"]]
+    end)
       .to eq(dark_palette.map { |color| [color, color] })
   end
 

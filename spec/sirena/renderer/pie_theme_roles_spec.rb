@@ -18,7 +18,7 @@ RSpec.describe Sirena::Renderer::Pie do
        #858585 #969696 #505050 #3e3e42 #404040]
   end
   let(:palette_source) do
-    slices = 12.times.map { |index| %(  "slice #{index}" : 1) }
+    slices = Array.new(12) { |index| %(  "slice #{index}" : 1) }
     (["pie title Palette"] + slices).join("\n")
   end
 
