@@ -6,6 +6,13 @@ require "spec_helper"
 require "sirena/notation/plantuml"
 
 RSpec.describe Sirena::Notation::PlantUML::Renderer do
+  include_context "with an isolated notation registry"
+
+  before do
+    Sirena::Notation.send(:entries).delete(:plantuml)
+    Sirena::Notation.register(Sirena::Notation::PlantUML)
+  end
+
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:document) do
     REXML::Document.new(
