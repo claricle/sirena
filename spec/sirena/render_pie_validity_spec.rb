@@ -16,6 +16,8 @@ RSpec.describe Sirena do
     end
 
     {
+      "a negative slice value" => "pie\n  \"dogs\" : -60.67\n",
+      "a negative decimal" => "pie\n  \"a\" : -0.5\n",
       "the \"pie chart\" header" => "pie chart\n  \"a\" : 1\n",
       "the \"Pie Chart\" header" => "Pie Chart\n  \"a\" : 1\n",
     }.each do |name, source|

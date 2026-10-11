@@ -128,9 +128,9 @@ RSpec.describe Sirena::Parser::Pie do
         MERMAID
       end
 
-      it "handles negative values" do
-        diagram = parser.parse(source)
-        expect(diagram.slices[1].value).to eq(-50.0)
+      it "refuses a negative slice value, as Mermaid does" do
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError, /Negative values/)
       end
     end
 
