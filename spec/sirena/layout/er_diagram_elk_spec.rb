@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "digest"
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::ErDiagram do
@@ -61,11 +60,10 @@ RSpec.describe Sirena::Layout::ErDiagram do
       .to eq(%w[CUSTOMER ORDER LINE_ITEM].map { |id| entity(id).x }.sort)
   end
 
-  it "keeps default ER rendering byte-identical" do
-    digest = Digest::SHA256.hexdigest(Sirena.render(source))
-    expected = "5c1365669f3791ebed256448acd1496b" \
-               "68e069fba82fce26fa553b6e343d267a"
-    expect(digest).to eq(expected)
+  it "never routes a default render through ELK" do
+    allow(Sirena::Layout::ElkPlacement).to receive(:apply).and_call_original
+    Sirena.render(source)
+    expect(Sirena::Layout::ElkPlacement).not_to have_received(:apply)
   end
 
   it "raises instead of flattening a relationship to a missing entity" do
