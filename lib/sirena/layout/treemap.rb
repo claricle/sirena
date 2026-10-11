@@ -209,10 +209,25 @@ module Sirena
       def total_label(cell, y_position)
         return if cell[:children].empty?
 
+        total = section_total(cell)
+        return unless total
+
         Label.new(
+          text: format_value(total),
           x: cell[:x] + cell[:width] - 5, y: y_position,
           font_size: 10, style: "value", text_anchor: "end"
         )
+      end
+
+      def section_total(cell)
+        values = cell[:children].filter_map { |child| cell_total(child) }
+        values.sum unless values.empty?
+      end
+
+      def cell_total(cell)
+        return section_total(cell) if cell[:children].any?
+
+        cell[:value]
       end
 
       def cell_fill_color(cell, class_defs)
