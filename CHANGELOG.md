@@ -21,11 +21,24 @@ number makes is in [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+### Added
+
+- Added a notation registry, API notation selection, and CLI `--notation` /
+  repeatable `--require` options for loading notation plugins.
+- Added bundled PlantUML class and sequence rendering, available by loading
+  `sirena/notation/plantuml`.
+- Added `today:` for reproducible date-sensitive rendering and
+  `layout_engine:` for selecting the supported layout placement.
+
 ### Changed
 
-#62 renamed most of the gem's parser, renderer, layout and diagram-model
-classes. Every rename below is a plain name change: nothing was removed
-except where a row says so.
+- Sirena now requires Ruby 3.2 or newer, elkrb `~> 1.0`, lutaml-model
+  `~> 0.8.0`, kramdown `~> 2.5` and plurimath-parslet `~> 3.0`.
+- `sirena batch` discovers every registered notation's extensions, continues
+  after individual file failures, and exits 1 when any input failed.
+- #62 renamed most of the gem's parser, renderer, layout and diagram-model
+  classes. Every rename below is a plain name change: nothing was removed
+  except where a row says so.
 
 - Diagram model classes (`Sirena::Diagram`):
 
@@ -91,6 +104,18 @@ except where a row says so.
   `Parser::Builders::Kanban::BoardBuilder`. `Parser::Transforms::XYChart`
   became `Parser::Builders::XyChart` (capitalization only, on top of the
   namespace rename).
+
+### Fixed
+
+- Render every Mermaid case recorded as valid by the pinned oracle in the
+  committed compatibility corpus.
+- Emit well-formed UTF-8 SVG for every committed rendered conformance case,
+  including escaped text and non-UTF-8 process locales.
+- Report invalid input, unknown CLI values, and source-triggered stack or heap
+  exhaustion through Sirena's error and exit-status contracts instead of
+  leaking raw VM failures or failing silently.
+- Honor theme typography, paint and palette roles across the supported
+  Mermaid diagrams, including partial custom themes completed from defaults.
 
 ## [0.1.0]
 
