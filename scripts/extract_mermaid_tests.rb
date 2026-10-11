@@ -10,6 +10,7 @@
 # rubocop:disable Style/OneClassPerFile
 require "fileutils"
 require "json"
+require_relative "corpus_case_identity"
 
 MERMAID_JS_ROOT = "/Users/mulgogi/src/external/mermaid-js"
 SIRENA_ROOT = File.expand_path("..", __dir__)
@@ -51,7 +52,8 @@ class TestCase
                 :source,
                 :source_file,
                 :line_number,
-                :metadata
+                :metadata,
+                :stable_id
 
   def initialize(name:, type:, source:, file:, line:, metadata: {})
     @name = name
@@ -62,21 +64,45 @@ class TestCase
     @metadata = metadata
   end
 
+  # The CorpusCaseIdentity record for this case. The title is the upstream
+  # test name when the extractor found one; the rest are identified by
+  # path and source alone.
+  def identity_record(root:)
+    { type: diagram_type.to_s,
+      upstream_path: source_file.sub(root, ""),
+      title: metadata[:test_name],
+      source: source }
+  end
+
   def to_mmd_filename
     safe_name = name.gsub(/[^a-zA-Z0-9_-]/, "_").downcase
     "#{safe_name}.mmd"
   end
 end
 
+# naming: :ordinal writes NNN_<name>.mmd, the layout the committed corpus
+# still uses. :stable writes <type>/<slug>-<hash8>.mmd from CorpusCaseIdentity.
+# Ordinal stays the default until the one-time rename lands; stable IDs are
+# computed in both modes, so a collision fails the run before any write.
 class MermaidTestExtractor
-  def initialize
+  NAMINGS = %i[ordinal stable].freeze
+
+  def initialize(root: MERMAID_JS_ROOT, output_dir: OUTPUT_DIR,
+                 naming: :ordinal)
+    unless NAMINGS.include?(naming)
+      raise ArgumentError, "naming must be one of #{NAMINGS.inspect}"
+    end
+
+    @root = root
+    @output_dir = output_dir
+    @naming = naming
     @test_cases = []
     @stats = Hash.new(0)
     @file_stats = Hash.new(0)
   end
 
   def extract_all
-    puts "Extracting Mermaid tests from #{MERMAID_JS_ROOT}"
+    puts "Extracting Mermaid tests from #{@root}"
     puts "=" * 80
     puts "Searching for #{DIAGRAM_TYPES.keys.length} diagram types"
     puts "=" * 80
@@ -97,7 +123,7 @@ class MermaidTestExtractor
 
   # 1. cypress/integration/other/configuration.spec.js - all diagram types
   def extract_cypress_configuration_tests
-    file = "#{MERMAID_JS_ROOT}/cypress/integration/other/configuration.spec.js"
+    file = "#{@root}/cypress/integration/other/configuration.spec.js"
     return unless File.exist?(file)
 
     puts "\n[1/7] Extracting from configuration.spec.js..."
@@ -132,7 +158,7 @@ class MermaidTestExtractor
   def extract_cypress_rendering_tests
     puts "\n[2/7] Extracting from cypress/integration/rendering/*.{js,ts}..."
 
-    rendering_glob = "#{MERMAID_JS_ROOT}/cypress/integration/rendering/" \
+    rendering_glob = "#{@root}/cypress/integration/rendering/" \
                      "*.{js,ts}"
     Dir.glob(rendering_glob).each do |file|
       content = File.read(file)
@@ -186,7 +212,7 @@ class MermaidTestExtractor
   def extract_cypress_platform_tests
     puts "\n[3/7] Extracting from cypress/platform/*.html..."
 
-    Dir.glob("#{MERMAID_JS_ROOT}/cypress/platform/**/*.html").each do |file|
+    Dir.glob("#{@root}/cypress/platform/**/*.html").each do |file|
       content = File.read(file)
       file_count = 0
 
@@ -243,7 +269,7 @@ class MermaidTestExtractor
   def extract_package_examples
     puts "\n[4/7] Extracting from packages/examples/src/examples/*.ts..."
 
-    example_glob = "#{MERMAID_JS_ROOT}/packages/examples/src/examples/*.ts"
+    example_glob = "#{@root}/packages/examples/src/examples/*.ts"
     Dir.glob(example_glob).each do |file|
       content = File.read(file)
       file_count = 0
@@ -295,7 +321,7 @@ class MermaidTestExtractor
     puts "\n[5/7] Extracting from packages/mermaid/src/diagrams/" \
          "**/*.{spec,test}.{ts,js}..."
 
-    diagram_glob = "#{MERMAID_JS_ROOT}/packages/mermaid/src/diagrams/" \
+    diagram_glob = "#{@root}/packages/mermaid/src/diagrams/" \
                    "**/*.{spec,test}.{ts,js}"
     Dir.glob(diagram_glob).each do |file|
       content = File.read(file)
@@ -366,7 +392,7 @@ class MermaidTestExtractor
     puts "\n[6/7] Extracting from packages/parser/tests/" \
          "*.{spec,test}.{ts,js}..."
 
-    parser_glob = "#{MERMAID_JS_ROOT}/packages/parser/tests/" \
+    parser_glob = "#{@root}/packages/parser/tests/" \
                   "**/*.{spec,test}.{ts,js}"
     Dir.glob(parser_glob).each do |file|
       content = File.read(file)
@@ -404,8 +430,8 @@ class MermaidTestExtractor
 
     # Check for any missed spec files
     additional_patterns = [
-      "#{MERMAID_JS_ROOT}/cypress/integration/**/*.spec.{js,ts}",
-      "#{MERMAID_JS_ROOT}/packages/mermaid/src/**/*.spec.{ts,js}",
+      "#{@root}/cypress/integration/**/*.spec.{js,ts}",
+      "#{@root}/packages/mermaid/src/**/*.spec.{ts,js}",
     ]
 
     additional_patterns.each do |pattern|
@@ -495,32 +521,47 @@ class MermaidTestExtractor
     puts "Organizing extracted tests..."
     puts "=" * 80
 
-    FileUtils.mkdir_p(OUTPUT_DIR)
+    assign_stable_ids
+    FileUtils.mkdir_p(@output_dir)
 
-    by_type = @test_cases.group_by(&:diagram_type)
-
-    by_type.each do |type, cases|
-      type_dir = "#{OUTPUT_DIR}/#{type}"
-      FileUtils.mkdir_p(type_dir)
-
-      cases.each_with_index do |test_case, idx|
-        filename = "#{type_dir}/#{format('%03d', idx + 1)}_" \
-                   "#{test_case.to_mmd_filename}"
-        File.write(filename, test_case.source)
-
-        # Write metadata
-        meta_file = filename.sub(".mmd", ".meta.json")
-        File.write(meta_file, JSON.pretty_generate({
-          name: test_case.name,
-          type: test_case.diagram_type,
-          source_file: test_case.source_file.sub(MERMAID_JS_ROOT, ""),
-          line_number: test_case.line_number,
-          metadata: test_case.metadata,
-        }))
-      end
-
+    @test_cases.group_by(&:diagram_type).each do |type, cases|
+      FileUtils.mkdir_p("#{@output_dir}/#{type}")
+      cases.each_with_index { |test_case, idx| save_case(test_case, idx) }
       puts "  ✓ #{type}: #{cases.length} test cases"
     end
+  end
+
+  # Raises CorpusCaseIdentity::CollisionError before anything is written.
+  def assign_stable_ids
+    records = @test_cases.map { |tc| tc.identity_record(root: @root) }
+    ids = CorpusCaseIdentity.assign_ids(records).map { |r| r[:id] }
+    @test_cases.zip(ids) { |test_case, id| test_case.stable_id = id }
+  end
+
+  def save_case(test_case, idx)
+    filename = case_basename(test_case, idx)
+    File.write("#{filename}.mmd", test_case.source)
+    File.write("#{filename}.meta.json",
+               JSON.pretty_generate(meta_for(test_case)))
+  end
+
+  def case_basename(test_case, idx)
+    return "#{@output_dir}/#{test_case.stable_id}" if @naming == :stable
+
+    "#{@output_dir}/#{test_case.diagram_type}/#{format('%03d', idx + 1)}_" \
+      "#{test_case.to_mmd_filename.delete_suffix('.mmd')}"
+  end
+
+  def meta_for(test_case)
+    meta = {
+      name: test_case.name,
+      type: test_case.diagram_type,
+      source_file: test_case.source_file.sub(@root, ""),
+      line_number: test_case.line_number,
+      metadata: test_case.metadata,
+    }
+    meta[:case_id] = test_case.stable_id if @naming == :stable
+    meta
   end
 
   def print_summary
@@ -533,7 +574,7 @@ class MermaidTestExtractor
     @stats.sort_by { |_, v| -v }.each do |type, count|
       puts "  #{sprintf('%-20s', type)}: #{sprintf('%4d', count)} tests"
     end
-    puts "\nOutput directory: #{OUTPUT_DIR}"
+    puts "\nOutput directory: #{@output_dir}"
 
     # Show diagram types with no tests
     missing = DIAGRAM_TYPES.keys - @stats.keys
@@ -551,7 +592,8 @@ class MermaidTestExtractor
   end
 end
 
-# Run extraction
-extractor = MermaidTestExtractor.new
-extractor.extract_all
+if $PROGRAM_NAME == __FILE__
+  naming = ARGV.delete("--stable-ids") ? :stable : :ordinal
+  MermaidTestExtractor.new(naming: naming).extract_all
+end
 # rubocop:enable Style/OneClassPerFile
