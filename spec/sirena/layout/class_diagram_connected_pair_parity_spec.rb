@@ -3,19 +3,19 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::ClassDiagram do
-  let(:case_path) do
-    File.expand_path(
+  let(:scene) do
+    case_path = File.expand_path(
       "../../mermaid/class_diagram/" \
       "classdiagram_elk_v3_spec-76ab7ba5.mmd",
       __dir__,
     )
+    source = File.read(case_path)
+    diagram = Sirena::Parser::ClassDiagram.new.parse(source)
+
+    described_class.new.call(diagram)
   end
-  let(:source) { File.read(case_path) }
-  let(:diagram) { Sirena::Parser::ClassDiagram.new.parse(source) }
-  let(:scene) { described_class.new.call(diagram) }
-  let(:nodes) { scene.children.to_h { |node| [node.id, node] } }
-  let(:source_node) { nodes.fetch("C1") }
-  let(:target_node) { nodes.fetch("C2") }
+  let(:source_node) { scene.children.find { |node| node.id == "C1" } }
+  let(:target_node) { scene.children.find { |node| node.id == "C2" } }
   let(:section) { scene.edges.fetch(0).sections.fetch(0) }
 
   it "places the connected pair in a centered vertical lane" do
@@ -35,6 +35,19 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   end
 
   describe Sirena::Layout::ClassCellPlacement, :aggregate_failures do
+    let(:graph) do
+      lambda do
+        {
+          children: [
+            { id: "A", width: 100, height: 80, metadata: {} },
+            { id: "B", width: 100, height: 80, metadata: {} },
+          ],
+          edges: [{ id: "edge", sources: ["A"], targets: ["B"] }],
+          layoutOptions: { "elk.direction" => "DOWN" },
+        }
+      end
+    end
+
     it "keeps caller-selected coordinates for a matching pair" do
       children = [
         { id: "A", width: 100, height: 80, metadata: {}, x: 7 },
@@ -69,16 +82,6 @@ RSpec.describe Sirena::Layout::ClassDiagram do
     end
 
     it "preserves grid placement outside the exact connected-pair shape" do
-      graph = lambda do
-        {
-          children: [
-            { id: "A", width: 100, height: 80, metadata: {} },
-            { id: "B", width: 100, height: 80, metadata: {} },
-          ],
-          edges: [{ id: "edge", sources: ["A"], targets: ["B"] }],
-          layoutOptions: { "elk.direction" => "DOWN" },
-        }
-      end
       packed = [[50, 50], [200.0, 50]]
       gridded = [[50, 50], [300, 50]]
       variants = {
