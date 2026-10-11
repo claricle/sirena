@@ -11,12 +11,8 @@ module Sirena
       CHART_SIZE = 500
       PADDING = 5
       AXIS_LABEL_PADDING = 5
-      AXIS_FONT_SIZE = 16
-      QUADRANT_FONT_SIZE = 16
       QUADRANT_TEXT_TOP_PADDING = 5
       TITLE_PADDING = 10
-      TITLE_FONT_SIZE = 20
-      POINT_FONT_SIZE = 12
       POINT_TEXT_PADDING = 5
       EXTERNAL_BORDER = 2
       INTERNAL_BORDER = 1
@@ -142,13 +138,13 @@ module Sirena
       def axis_room(axes, first, second)
         return 0 if axes.values_at(first, second).all?(&:empty?)
 
-        (2 * AXIS_LABEL_PADDING) + AXIS_FONT_SIZE
+        (2 * AXIS_LABEL_PADDING) + large_font_size
       end
 
       def title_space(data)
         return 0 if data.label.to_s.empty?
 
-        TITLE_FONT_SIZE + (2 * TITLE_PADDING)
+        title_font_size + (2 * TITLE_PADDING)
       end
 
       def points?(data)
@@ -192,7 +188,7 @@ module Sirena
       def title_label(title)
         return if title.to_s.empty?
 
-        label(title, [CHART_SIZE / 2.0, TITLE_PADDING], TITLE_FONT_SIZE,
+        label(title, [CHART_SIZE / 2.0, TITLE_PADDING], title_font_size,
               "title", anchor: "middle", baseline: "hanging")
       end
 
@@ -272,7 +268,7 @@ module Sirena
       end
 
       def axis_label(text, position, middle, rotation)
-        label(text, position, AXIS_FONT_SIZE, "axis",
+        label(text, position, large_font_size, "axis",
               anchor: middle ? "middle" : "start", baseline: "hanging",
               rotation: rotation)
       end
@@ -298,7 +294,7 @@ module Sirena
       def quadrant_label(quadrant, y_pos, baseline)
         bounds = quadrant[:bounds]
         label(quadrant[:label], [bounds[:x] + (bounds[:width] / 2.0), y_pos],
-              QUADRANT_FONT_SIZE, "quadrant",
+              large_font_size, "quadrant",
               anchor: "middle", baseline: baseline)
       end
 
@@ -318,8 +314,20 @@ module Sirena
       def point_label(point)
         label(
           point[:label], [point[:svg_x], point[:svg_y] + POINT_TEXT_PADDING],
-          POINT_FONT_SIZE, "point", anchor: "middle", baseline: "hanging"
+          small_font_size, "point", anchor: "middle", baseline: "hanging"
         )
+      end
+
+      def title_font_size
+        theme.typography&.font_size_title || 20
+      end
+
+      def large_font_size
+        theme.typography&.font_size_large || 16
+      end
+
+      def small_font_size
+        theme.typography&.font_size_small || 12
       end
 
       def label(text, position, size, style, **options)

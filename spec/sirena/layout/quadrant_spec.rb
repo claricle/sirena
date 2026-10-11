@@ -95,8 +95,8 @@ RSpec.describe Sirena::Layout::Quadrant do
         .to eq([["low", 31.0, 479.0, 0.0], ["high", 5.0, 121.0, -90.0]])
     end
 
-    it "centres each point label under its circle at mmdc's 12px size" do
-      expect(themed_point_geometry).to eq([147.0, 126.0, 12.0, 16.0])
+    it "centres each point label using the injected theme typography" do
+      expect(themed_point_geometry).to eq([148.5, 125.5, 14.0, 18.0])
     end
   end
 
