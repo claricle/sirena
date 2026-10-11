@@ -919,7 +919,11 @@ module Sirena
         target = source_ids.fetch(edge.target_id)
         {
           id: "#{source}_to_#{target}", sources: [source], targets: [target],
-          labels: edge_labels(edge), metadata: { arrow_type: edge.role }
+          labels: edge_labels(edge),
+          metadata: {
+            arrow_type: edge.role,
+            minimum_rank_span: edge.minimum_rank_span,
+          },
         }
       end
 

@@ -6,6 +6,7 @@ require_relative "component_packing"
 require_relative "layer_spacing"
 require_relative "level_edges"
 require_relative "level_frame"
+require_relative "minimum_rank_spacing"
 require_relative "row_centering"
 
 module Sirena
@@ -119,7 +120,8 @@ module Sirena
             next unless names[from] && names[to]
 
             { id: "edge-#{index}", sources: [names[from]],
-              targets: [names[to]], labels: edge[:labels] || [] }
+              targets: [names[to]], labels: edge[:labels] || [],
+              metadata: edge[:metadata] || {} }
           end
         end
 
@@ -230,6 +232,7 @@ module Sirena
           ElkPlacement.apply(flat)
           RowCentering.apply(flat)
           LayerSpacing.apply(flat, label_axis: transposed ? :width : :height)
+          MinimumRankSpacing.apply(flat, frame.rank_spacing)
           ComponentPacking.apply(flat, cluster_names)
           transpose(flat) if transposed
           mirror(flat, frame.direction)

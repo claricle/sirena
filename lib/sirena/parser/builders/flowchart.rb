@@ -360,15 +360,44 @@ module Sirena
         # `link_token` is the raw lexeme the grammar matched — `-->`,
         # `o--x`, `~~~`. `link_type` is what turns it into the edge's
         # arrow type; the two are not the same string.
-        def create_edge(source_id, target_data, link_token, label = nil)
+        def create_edge(source_id, target_data, link_token, label = nil,
+                        minimum_rank_span = nil)
           Diagram::FlowchartEdge.new.tap do |e|
             e.source_id = source_id
             e.target_id = target_data[:node_id]
             e.arrow_type = link_type(link_token)
+            e.minimum_rank_span = minimum_rank_span
             e.label = label
           end
         end
         private :create_edge
+
+        # Mermaid derives a labelled link's length from its closing half,
+        # not from the display token made by joining both halves. It removes
+        # the last character, removes a matching start marker on a double-ended
+        # link, then counts the remaining body beyond the ordinary first rank.
+        def minimum_rank_span(edge_data)
+          token = end_link_token(edge_data).strip
+          line = token[0...-1]
+          line = line[1..] if matching_end_markers?(token)
+          dots = line.count(".")
+          span = dots.positive? ? dots : line.length - 1
+          span if span > 1
+        end
+        private :minimum_rank_span
+
+        def end_link_token(edge_data)
+          return edge_data[:arrow][:token].to_s if edge_data[:arrow]
+
+          edge_data[:close].to_s
+        end
+        private :end_link_token
+
+        def matching_end_markers?(token)
+          LINK_MARKERS[token[0]] == LINK_MARKERS[token[-1]] &&
+            !LINK_MARKERS[token[0]].nil?
+        end
+        private :matching_end_markers?
 
         # Process a parse tree of [header, *statements]. The Context is local
         # to this call, so its ids and retained parse nodes cannot cross parses.
@@ -848,12 +877,13 @@ module Sirena
         def process_edge(diagram, edge_data, sources, parent, context)
           token = link_token(edge_data)
           label = edge_label(edge_data)
+          rank_span = minimum_rank_span(edge_data)
           return sources unless edge_data[:target]
 
           nodes = [edge_data[:target], *edge_data[:group]]
           targets = declare_group(diagram, nodes, parent, context)
           record_edge_id(edge_data, context)
-          connect_groups(diagram, sources, targets, token, label)
+          connect_groups(diagram, sources, targets, token, label, rank_span)
           targets
         end
         private :process_edge
@@ -864,9 +894,11 @@ module Sirena
         private :record_edge_id
 
         # `A & B --> C & D` links every source to every target.
-        def connect_groups(diagram, sources, targets, token, label)
+        def connect_groups(diagram, sources, targets, token, label, rank_span)
           sources.product(targets).each do |source, target|
-            diagram.edges << create_edge(source[:node_id], target, token, label)
+            diagram.edges << create_edge(
+              source[:node_id], target, token, label, rank_span
+            )
           end
         end
         private :connect_groups

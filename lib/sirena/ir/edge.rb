@@ -7,6 +7,7 @@ module Sirena
     class Edge < Item
       attribute :source_id, :string
       attribute :target_id, :string
+      attribute :minimum_rank_span, :integer
 
       private
 
@@ -17,6 +18,11 @@ module Sirena
         end
         if target_id.nil? || target_id.empty?
           errors << validation_error("target_id must be nonempty")
+        end
+        if minimum_rank_span && !minimum_rank_span.positive?
+          errors << validation_error(
+            "minimum_rank_span must be a positive integer"
+          )
         end
         errors
       end
