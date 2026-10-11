@@ -52,6 +52,7 @@ module Sirena
       CLUSTER_TITLE_BASELINE = 20
       EDGE_LABEL_LIFT = 5.0
       SUBSTITUTE_FONT_HEADROOM = 1.2
+      ICON_ADVANCE_EMS = 1.3
 
       SELF_LOOP_DEPTH = 0.45
       SELF_LOOP_HALF_SPAN = 0.175
@@ -943,11 +944,24 @@ module Sirena
 
       def calculate_dimensions(label, shape)
         lines = Diagram::FlowchartLabelText.lines(label)
-        widest = lines.map { |line| line_width(line) }.max
+        widest = line_widths(label, lines).max
         line_height = layout_font_size * NODE_LINE_HEIGHT * lines.size
 
         node_box(widest, line_height, shape)
           .merge(label_width: widest, label_height: line_height)
+      end
+
+      def line_widths(label, lines)
+        source_lines = label.to_s.split(Diagram::FlowchartLabelText::LINE_BREAK,
+                                        -1)
+        lines.zip(source_lines).map do |line, source|
+          line_width(line) + icon_advance(source)
+        end
+      end
+
+      def icon_advance(source)
+        count = source.to_s.scan(Diagram::FlowchartLabelText::ICON).length
+        count * layout_font_size * ICON_ADVANCE_EMS
       end
 
       def line_width(line)
