@@ -3,12 +3,14 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::Flowchart do
-  CASES = %w[
-    click_security_loose-0efe7d83
-    click_security_loose-16f3fdaa
-    click_security_loose-1d618623
-    click_security_loose-5f02fd1e
-  ].freeze
+  let(:case_ids) do
+    %w[
+      click_security_loose-0efe7d83
+      click_security_loose-16f3fdaa
+      click_security_loose-1d618623
+      click_security_loose-5f02fd1e
+    ]
+  end
 
   def source_for(name)
     File.read("spec/mermaid/flowchart/#{name}.mmd")
@@ -24,7 +26,7 @@ RSpec.describe Sirena::Layout::Flowchart do
 
   def parity_rows
     runner = SpecSupport::LayoutParity::CohortRunner.new
-    selected = CASES.map { |name| "flowchart/#{name}.mmd" }
+    selected = case_ids.map { |name| "flowchart/#{name}.mmd" }
     results = runner.comparison_cases.filter_map do |candidate|
       runner.send(:compare, candidate) if selected.include?(candidate.case_id)
     end
@@ -32,7 +34,7 @@ RSpec.describe Sirena::Layout::Flowchart do
   end
 
   it "carries each long link's minimum rank span through typed IR" do
-    spans = CASES.flat_map do |name|
+    spans = case_ids.flat_map do |name|
       ir_for(source_for(name)).edges.map(&:minimum_rank_span)
     end
 
@@ -66,7 +68,7 @@ RSpec.describe Sirena::Layout::Flowchart do
   end
 
   it "places every click-security target one extra rank below its source" do
-    geometry = CASES.map do |name|
+    geometry = case_ids.map do |name|
       scene = described_class.new.call(diagram_for(source_for(name)))
       scene.children.map { |node| [node.y, node.height] }
     end
