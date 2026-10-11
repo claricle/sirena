@@ -16,6 +16,7 @@ module Sirena
     # layoutOptions, so both are handled here.
     class ElkPlacement
       DOWN = "DOWN"
+      RIGHT = "RIGHT"
 
       # @param graph [Hash] the graph to position in place
       # @return [Hash] the same graph
@@ -26,9 +27,7 @@ module Sirena
 
       def apply(graph)
         options = graph[:layoutOptions] || {}
-        require_downward(options)
-        placed = Elkrb.layout(layout_input(graph), spacing(options))
-        copy_layout(graph, placed)
+        place(graph, options)
         graph
       rescue Elkrb::Error => e
         raise LayoutError, "elkrb layout failed: #{e.message}"
@@ -36,12 +35,24 @@ module Sirena
 
       private
 
-      def require_downward(options)
+      def place(graph, options)
         direction = options[Base::ElkOptions::DIRECTION] || DOWN
-        return if direction == DOWN
+        return place_down(graph, options) if direction == DOWN
+        return place_right(graph, options) if direction == RIGHT
 
         raise LayoutError,
               "elkrb layered cannot lay out direction #{direction}"
+      end
+
+      def place_down(graph, options)
+        placed = Elkrb.layout(layout_input(graph), spacing(options))
+        copy_layout(graph, placed)
+      end
+
+      def place_right(graph, options)
+        placed = Elkrb.layout(layout_input(graph, transpose: true),
+                              spacing(options))
+        copy_right_layout(graph, placed)
       end
 
       def spacing(options)
@@ -51,17 +62,25 @@ module Sirena
         }.compact
       end
 
-      def layout_input(graph)
+      def layout_input(graph, transpose: false)
         input = graph.dup
+        transpose_dimensions(input, graph) if transpose
         if graph[:children]
           input[:children] = graph[:children].map do |child|
-            layout_input(child)
+            layout_input(child, transpose: transpose)
           end
         end
         if graph[:edges]
           input[:edges] = graph[:edges].reject { |edge| self_loop?(edge) }
         end
         input
+      end
+
+      def transpose_dimensions(input, graph)
+        return unless graph.key?(:width) && graph.key?(:height)
+
+        input[:width] = graph[:height]
+        input[:height] = graph[:width]
       end
 
       def self_loop?(edge)
@@ -74,6 +93,11 @@ module Sirena
         copy_sections(graph[:edges] || [], placed.edges || [])
       end
 
+      def copy_right_layout(graph, placed)
+        copy_right_positions(graph[:children] || [], placed.children || [])
+        copy_sections(graph[:edges] || [], placed.edges || [], transpose: true)
+      end
+
       # elkrb keeps child order, so the two trees are walked in step.
       def copy_positions(children, placed)
         children.zip(placed).each do |child, result|
@@ -83,33 +107,46 @@ module Sirena
         end
       end
 
-      def copy_sections(edges, placed)
-        placed_by_id = placed.group_by(&:id)
-        edges.each do |edge|
-          copy_edge_sections(edge, placed_by_id[edge[:id]]&.shift)
+      def copy_right_positions(children, placed)
+        children.zip(placed).each do |child, result|
+          child.merge!(x: result.y, y: result.x,
+                       width: result.height, height: result.width)
+          copy_right_layout(child, result)
         end
       end
 
-      def copy_edge_sections(edge, result)
+      def copy_sections(edges, placed, transpose: false)
+        placed_by_id = placed.group_by(&:id)
+        edges.each do |edge|
+          copy_edge_sections(edge, placed_by_id[edge[:id]]&.shift,
+                             transpose: transpose)
+        end
+      end
+
+      def copy_edge_sections(edge, result, transpose: false)
         return unless result
 
         sections = result.sections
         return if sections.nil? || sections.empty?
 
-        edge[:sections] = sections.map { |section| section_hash(section) }
+        edge[:sections] = sections.map do |section|
+          section_hash(section, transpose: transpose)
+        end
       end
 
-      def section_hash(section)
+      def section_hash(section, transpose: false)
         {
-          startPoint: point_hash(section.start_point),
-          endPoint: point_hash(section.end_point),
+          startPoint: point_hash(section.start_point, transpose: transpose),
+          endPoint: point_hash(section.end_point, transpose: transpose),
           bendPoints: (section.bend_points || []).map do |point|
-            point_hash(point)
+            point_hash(point, transpose: transpose)
           end,
         }
       end
 
-      def point_hash(point)
+      def point_hash(point, transpose: false)
+        return { x: point.y, y: point.x } if transpose
+
         { x: point.x, y: point.y }
       end
     end

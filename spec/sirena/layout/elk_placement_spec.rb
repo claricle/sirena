@@ -69,10 +69,10 @@ RSpec.describe Sirena::Layout::ElkPlacement do
       expect([ids.uniq.size, routed]).to eq([1, true])
     end
 
-    it "refuses a direction elkrb cannot lay out" do
-      graph = graph_for("flowchart LR\n A-->B\n")
+    it "refuses an unsupported direction" do
+      graph = graph_for("flowchart RL\n A-->B\n")
       expect { described_class.apply(graph) }
-        .to raise_error(Sirena::Layout::LayoutError, /direction RIGHT/)
+        .to raise_error(Sirena::Layout::LayoutError, /direction LEFT/)
     end
 
     it "does not fall back to Grid when elkrb raises" do
