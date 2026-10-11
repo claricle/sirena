@@ -107,17 +107,19 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       "dangling edge" => [lambda { |value|
         value[:edges].first[:targets] = ["C"]
       }, packed],
-      "extra child" => [lambda { |value|
-        value[:children] << {
-          id: "C", width: 100, height: 80, metadata: {}
-        }
-      }, [[50, 50], [200.0, 50], [350.0, 50]]],
     }.each do |shape, (mutate, expected)|
       it "preserves grid placement for #{shape}" do
         candidate = graph.call
         mutate.call(candidate)
         expect(placed_coordinates(candidate)).to eq(expected)
       end
+    end
+
+    it "layers an extra child by relation instead of keeping the lane" do
+      candidate = graph.call
+      candidate[:children] << { id: "C", width: 100, height: 80, metadata: {} }
+      expect(placed_coordinates(candidate))
+        .to eq([[8.0, 8.0], [83.0, 138.0], [158.0, 8.0]])
     end
   end
 end
