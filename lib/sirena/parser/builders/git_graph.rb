@@ -280,7 +280,6 @@ module Sirena
                   "Cherry-picking merge commit #{target[:id]} requires " \
                   "a valid parent."
           end
-
         end
 
         def self.build(statements, main_branch_name: "main")

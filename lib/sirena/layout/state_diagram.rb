@@ -14,6 +14,7 @@ module Sirena
       DEFAULT_SMALL_FONT_SIZE = 12.0
       TERMINAL_RADIUS = 7.0
       TERMINAL_TYPES = %w[start end].freeze
+      CHAIN_STATE_TYPES = %w[start end normal].freeze
       MMDC_STATE_FONT_SIZE = 16.0
       MMDC_STATE_HEIGHT = 40.0
       MMDC_STATE_PADDING = 16.0
@@ -55,6 +56,7 @@ module Sirena
       }.freeze
       private_constant :STATE_TYPES, :DIRECTIONS, :LAYOUT_SETTINGS,
                        :TERMINAL_RADIUS, :TERMINAL_TYPES,
+                       :CHAIN_STATE_TYPES,
                        :MMDC_STATE_FONT_SIZE, :MMDC_STATE_HEIGHT,
                        :MMDC_STATE_PADDING, :MMDC_COMPOSITE_SIDE_PADDING,
                        :MMDC_COMPOSITE_START_Y,
@@ -321,7 +323,7 @@ module Sirena
         nodes = Array(graph[:children])
         return if nodes.empty? || nodes.any? do |node|
           Array(node[:children]).any? ||
-            !%w[start end normal].include?(node.dig(:metadata, :shape_type))
+            !CHAIN_STATE_TYPES.include?(node.dig(:metadata, :shape_type))
         end
 
         start = nodes.select do |node|
@@ -364,10 +366,12 @@ module Sirena
 
       def place_vertical_state_chain(start, states, finish)
         center = states.map { |state| state[:width] }.max / 2.0
-        start.merge!(x: center - (start[:width] / 2.0), y: 0.0)
+        start[:x] = center - (start[:width] / 2.0)
+        start[:y] = 0.0
         position = 72.0
         states.each do |state|
-          state.merge!(x: center - (state[:width] / 2.0), y: position)
+          state[:x] = center - (state[:width] / 2.0)
+          state[:y] = position
           position += state[:height] + 50.0
         end
         return unless finish
@@ -378,10 +382,12 @@ module Sirena
 
       def place_horizontal_state_chain(start, states, finish)
         center = states.map { |state| state[:height] }.max / 2.0
-        start.merge!(x: 0.0, y: center - (start[:height] / 2.0))
+        start[:x] = 0.0
+        start[:y] = center - (start[:height] / 2.0)
         position = 72.0
         states.each do |state|
-          state.merge!(x: position, y: center - (state[:height] / 2.0))
+          state[:x] = position
+          state[:y] = center - (state[:height] / 2.0)
           position += state[:width] + 50.0
         end
         return unless finish
