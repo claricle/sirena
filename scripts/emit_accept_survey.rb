@@ -33,18 +33,27 @@ module EmitAcceptSurvey
 
   def probe(type)
     handlers = Sirena::DiagramRegistry.get(type)
-    diagram = handlers[:parser].new.parse(File.read(example_path(type)))
-    ir = Sirena::Notation::Mermaid::IRAdapter.call(type, diagram)
+    diagram_ir = source_ir(type, handlers)
     layout = handlers[:transform].new
-    scene = layout.call(ir)
+    scene = layout.call(diagram_ir)
+    probe_result(type, handlers, diagram_ir, layout, scene)
+  end
+
+  def source_ir(type, handlers)
+    source = File.read(example_path(type))
+    diagram = handlers[:parser].new.parse(source)
+    Sirena::Notation::Mermaid::IRAdapter.call(type, diagram)
+  end
+
+  def probe_result(type, handlers, diagram_ir, layout, scene)
     {
       type: type,
       transform: handlers[:transform].name,
-      ir: ir.class.name.split("::").last.downcase.to_sym,
+      ir: diagram_ir.class.name.split("::").last.downcase.to_sym,
       scene: scene.class.name,
       collections: scene_collections(scene),
       direct: elkrb_result(scene),
-      handoff: handoff_result(layout, ir),
+      handoff: handoff_result(layout, diagram_ir),
     }
   end
 
@@ -75,8 +84,8 @@ module EmitAcceptSurvey
     { status: status, detail: "#{e.class}: #{first_line(e)}" }
   end
 
-  def handoff_result(layout, ir)
-    graph = layout.send(:build_graph, ir)
+  def handoff_result(layout, diagram_ir)
+    graph = layout.send(:build_graph, diagram_ir)
     keys = graph.keys.join(",")
     result = elkrb_result(graph)
     result.merge(shape: "Hash{#{keys}}")
@@ -98,33 +107,43 @@ module EmitAcceptSurvey
 
   def verify_row(row)
     type = row[:type]
+    verify_ir(type, row)
+    verify_scene(type, row)
+    verify_status(type, "direct elkrb", row.dig(:direct, :status),
+                  expected_direct_status(type))
+    verify_status(type, "pre-layout elkrb", row.dig(:handoff, :status),
+                  expected_handoff_status(type))
+  end
+
+  def verify_ir(type, row)
     expected_ir = ir_kind(type)
-    raise "#{type}: expected #{expected_ir} IR" unless row[:ir] == expected_ir
+    return if row[:ir] == expected_ir
 
+    raise "#{type}: expected #{expected_ir} IR"
+  end
+
+  def verify_scene(type, row)
     expected_scene = "#{row[:transform]}::Scene"
-    unless row[:scene] == expected_scene
-      raise "#{type}: expected #{expected_scene}, got #{row[:scene]}"
-    end
+    return if row[:scene] == expected_scene
 
-    expected_direct = if DIRECT_NODE_FAILURE.include?(type)
-                        :missing_ports
-                      else
-                        :missing_children
-                      end
-    unless row.dig(:direct, :status) == expected_direct
-      raise "#{type}: direct elkrb contract changed"
-    end
+    raise "#{type}: expected #{expected_scene}, got #{row[:scene]}"
+  end
 
-    expected_handoff = if HANDOFF_ACCEPTED.include?(type)
-                         :accepted
-                       elsif NO_HANDOFF.include?(type)
-                         :no_handoff
-                       else
-                         :missing_children
-                       end
-    return if row.dig(:handoff, :status) == expected_handoff
+  def verify_status(type, label, actual, expected)
+    return if actual == expected
 
-    raise "#{type}: pre-layout elkrb contract changed"
+    raise "#{type}: #{label} contract changed"
+  end
+
+  def expected_direct_status(type)
+    DIRECT_NODE_FAILURE.include?(type) ? :missing_ports : :missing_children
+  end
+
+  def expected_handoff_status(type)
+    return :accepted if HANDOFF_ACCEPTED.include?(type)
+    return :no_handoff if NO_HANDOFF.include?(type)
+
+    :missing_children
   end
 
   def ir_kind(type)
@@ -147,13 +166,13 @@ module EmitAcceptSurvey
       handoff_elkrb
     ]
       .join("\t")
-    results.each do |row|
-      puts [
-        row[:type], row[:transform], row[:ir], row[:scene],
-        row[:collections], row.dig(:direct, :detail),
-        row.dig(:handoff, :shape), row.dig(:handoff, :detail)
-      ].join("\t")
-    end
+    results.each { |row| puts printable_row(row).join("\t") }
+  end
+
+  def printable_row(row)
+    row.values_at(:type, :transform, :ir, :scene, :collections) +
+      [row.dig(:direct, :detail), row.dig(:handoff, :shape),
+       row.dig(:handoff, :detail)]
   end
 end
 
