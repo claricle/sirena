@@ -11,7 +11,9 @@ RSpec.describe Sirena::Layout::GitGraph do
       gitGraph #{orientation}:
         commit id: "A"
         branch late order: 2
+        checkout main
         branch early order: 1
+        checkout main
         commit id: "B"
     MERMAID
   end
