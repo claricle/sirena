@@ -260,10 +260,18 @@ module Sirena
 
       def place_disconnected_normal_pair(graph)
         states = Array(graph[:children])
-        return if placement == :elk || states.length != 2
-        return unless Array(graph[:edges]).empty?
-        return unless states.all? { |state| disconnected_normal?(state) }
+        return unless disconnected_normal_pair?(graph, states)
 
+        pack_disconnected_normal_pair(states)
+      end
+
+      def disconnected_normal_pair?(graph, states)
+        placement != :elk && states.length == 2 &&
+          Array(graph[:edges]).empty? &&
+          states.all? { |state| disconnected_normal?(state) }
+      end
+
+      def pack_disconnected_normal_pair(states)
         x_position = MMDC_DISCONNECTED_PAIR_INSET
         states.each do |state|
           state[:x] = x_position

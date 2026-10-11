@@ -136,7 +136,9 @@ module Sirena
         end
 
         def cluster_padding(cluster, contents, top_level)
-          return external_cluster_padding(top_level) if @level_edges.external?(cluster[:id])
+          if @level_edges.external?(cluster[:id])
+            return external_cluster_padding(top_level)
+          end
           return [CLUSTER_SIDE, CLUSTER_VERTICAL] unless top_level
 
           top_level_independent_padding(contents)

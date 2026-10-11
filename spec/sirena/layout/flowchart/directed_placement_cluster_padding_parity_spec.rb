@@ -41,11 +41,14 @@ module FlowchartClusterPaddingGraphs
 
   def margins(box)
     inner = box.fetch(:children)
-    left = inner.map { |child| child[:x] }.min
-    top = inner.map { |child| child[:y] }.min
-    right = inner.map { |child| child[:x] + child[:width] }.max
-    bottom = inner.map { |child| child[:y] + child[:height] }.max
-    [left, box[:width] - right, top, box[:height] - bottom]
+    axis_margins(box, inner, :x, :width) +
+      axis_margins(box, inner, :y, :height)
+  end
+
+  def axis_margins(box, children, axis, size)
+    near_edge = children.map { |child| child[axis] }.min
+    far_edge = children.map { |child| child[axis] + child[size] }.max
+    [near_edge, box[size] - far_edge]
   end
 end
 

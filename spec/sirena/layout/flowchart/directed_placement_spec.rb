@@ -53,6 +53,11 @@ module DirectedPlacementGraphs
      be_within(0.01).of(25), be_within(0.01).of(25)]
   end
 
+  def external_padding
+    [be_within(1.0).of(35), be_within(1.0).of(35),
+     be_within(0.01).of(25), be_within(0.01).of(25)]
+  end
+
   def disconnected_cluster_boxes
     boxes = [node("a"), node("b"), subgraph("s", [node("c"), node("d")])]
     found = placed(level_graph("DOWN", boxes, [%w[a b], %w[c d]]))
@@ -105,15 +110,12 @@ RSpec.describe Sirena::Layout::Flowchart::DirectedPlacement do
     expect(builder.cluster_margins(source).first(2)).to all(be >= 37.5)
   end
 
-  it "uses the reference side padding when an edge crosses the cluster boundary" do
+  it "pads a boundary-crossed cluster like the reference" do
     boxes = [node("x"), subgraph("s", [node("a"), node("b")])]
     graph = level_graph("DOWN", boxes, [%w[x a], %w[a b]])
     cluster = member(placed(graph), "s")
 
-    expect(box_margins(cluster)).to match(
-      [be_within(1.0).of(35), be_within(1.0).of(35),
-       be_within(0.01).of(25), be_within(0.01).of(25)],
-    )
+    expect(box_margins(cluster)).to match(external_padding)
   end
 
   it "keeps compact padding around a leaf cluster nested inside another" do

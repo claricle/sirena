@@ -24,16 +24,22 @@ module Sirena
       end
 
       def self.connected_pair(graph, children)
-        return unless graph.dig(:layoutOptions, "elk.direction") == "DOWN"
-        return unless ordinary_pair?(children)
+        return unless connected_pair_candidate?(graph, children)
 
-        edge = Array(graph[:edges]).first if Array(graph[:edges]).one?
-        terminals = edge_terminals(edge)
-        child_ids = children.map { _1[:id] }
-        return unless terminals && child_ids.uniq.size == 2
-        return unless terminals.all? { |id| child_ids.include?(id) }
+        terminals = edge_terminals(Array(graph[:edges]).first)
+        map_pair(children, terminals) if terminals
+      end
 
+      def self.connected_pair_candidate?(graph, children)
+        graph.dig(:layoutOptions, "elk.direction") == "DOWN" &&
+          ordinary_pair?(children) && Array(graph[:edges]).one?
+      end
+
+      def self.map_pair(children, terminals)
         children_by_id = children.to_h { |child| [child[:id], child] }
+        return unless children_by_id.size == 2
+        return unless terminals.all? { |id| children_by_id.key?(id) }
+
         terminals.map { |id| children_by_id.fetch(id) }
       end
 
@@ -58,8 +64,12 @@ module Sirena
         place(source, centered_x(source, width), Grid::MARGIN)
         place(
           target, centered_x(target, width),
-          source[:y].to_f + source[:height].to_f + CELL_GAP
+          target_y(source)
         )
+      end
+
+      def self.target_y(source)
+        source[:y].to_f + source[:height].to_f + CELL_GAP
       end
 
       def self.centered_x(child, width)
@@ -98,9 +108,10 @@ module Sirena
         boxes.map { |box| box[axis].to_f }.max.to_f + CELL_GAP
       end
 
-      private_class_method :connected_pair, :ordinary_pair?, :edge_terminals,
-                           :pack_connected_pair, :centered_x, :pack, :columns,
-                           :place, :offsets, :cell, :nested?
+      private_class_method :connected_pair, :connected_pair_candidate?,
+                           :map_pair, :ordinary_pair?, :edge_terminals,
+                           :pack_connected_pair, :target_y, :centered_x, :pack,
+                           :columns, :place, :offsets, :cell, :nested?
     end
   end
 end
