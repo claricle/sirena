@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "elk_placement"
 require_relative "class_cell_placement"
+require_relative "class_namespace_placement"
 require_relative "class_name_advances"
 require_relative "class_note_nodes"
 require_relative "class_diagram_notes"
@@ -170,7 +171,7 @@ module Sirena
       private
 
       def placer
-        placement == :elk ? ElkPlacement : ClassCellPlacement
+        placement == :elk ? ElkPlacement : ClassNamespacePlacement
       end
 
       def reject_unsupported_elk_graph!(graph)
