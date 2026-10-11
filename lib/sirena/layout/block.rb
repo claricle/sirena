@@ -425,7 +425,7 @@ module Sirena
 
       def maximum_dimensions(dimensions)
         %i[width height].to_h do |key|
-          [key, dimensions.map { |item| item.fetch(key) }.max]
+          [key, dimensions.map { |item| item.fetch(key) }.max.to_f]
         end
       end
 
