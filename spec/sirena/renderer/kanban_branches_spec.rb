@@ -44,7 +44,7 @@ RSpec.describe Sirena::Renderer::Kanban do
 
   def default_theme_colours
     ['fill="#ffffff"', 'stroke="#d1d5db"', 'fill="#007bff"',
-     'fill="#1f2937"']
+     'fill="#000000"']
   end
 
   def metadata_texts
