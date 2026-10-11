@@ -75,7 +75,7 @@ module Sirena
       def dot_circle(dot)
         Svg::Circle.new(
           cx: dot.x, cy: dot.y, r: 7, class_name: "actor-#{dot.index}",
-          fill: dot.colour, stroke: "#000"
+          fill: dot.colour, stroke: theme_color(:node_stroke) || "#000"
         )
       end
 
@@ -91,7 +91,8 @@ module Sirena
         Svg::Rect.new(
           x: box.x, y: box.y, width: box.width, height: box.height,
           rx: box.corner_radius, ry: box.corner_radius,
-          class_name: class_name, fill: box.fill, stroke: GREY
+          class_name: class_name, fill: box.fill,
+          stroke: secondary_paint
         )
       end
 
@@ -122,7 +123,9 @@ module Sirena
         center_x = task.face.center_x
         Svg::Line.new(
           x1: center_x, x2: center_x, y1: task.box.y, y2: task.line_end,
-          class_name: "task-line", stroke: GREY, stroke_width: "1px",
+          class_name: "task-line",
+          stroke: secondary_paint,
+          stroke_width: "1px",
           stroke_dasharray: "4 2"
         )
       end
@@ -136,7 +139,8 @@ module Sirena
       def face_circle(face)
         Svg::Circle.new(
           cx: face.center_x, cy: face.center_y, r: face.radius,
-          class_name: "face", fill: "#FFF8DC", stroke: "#999",
+          class_name: "face", fill: "#FFF8DC",
+          stroke: theme_color(:node_stroke) || "#999",
           stroke_width: "2"
         )
       end
@@ -150,7 +154,9 @@ module Sirena
 
       def eye(point)
         Svg::Circle.new(
-          cx: point.x, cy: point.y, r: 1.5, fill: GREY, stroke: GREY,
+          cx: point.x, cy: point.y, r: 1.5,
+          fill: theme_color(:foreground) || GREY,
+          stroke: secondary_paint,
           stroke_width: "2"
         )
       end
@@ -159,14 +165,17 @@ module Sirena
         return flat_mouth(mouth.line) unless mouth.path
 
         Svg::Path.new(
-          d: mouth.path, class_name: "mouth", fill: "#000", stroke: GREY,
+          d: mouth.path, class_name: "mouth",
+          fill: theme_color(:foreground) || "#000",
+          stroke: secondary_paint
         )
       end
 
       def flat_mouth(line)
         Svg::Line.new(
           x1: line.x1, x2: line.x2, y1: line.y1, y2: line.y2,
-          class_name: "mouth", stroke: GREY, stroke_width: "1px"
+          class_name: "mouth", stroke: secondary_paint,
+          stroke_width: "1px"
         )
       end
 
@@ -178,7 +187,7 @@ module Sirena
       def timeline_line(source)
         Svg::Line.new(
           x1: source.x1, y1: source.y1, x2: source.x2, y2: source.y2,
-          stroke: "black", stroke_width: "4"
+          stroke: theme_color(:edge_stroke) || "black", stroke_width: "4"
         )
       end
 
@@ -186,8 +195,13 @@ module Sirena
         value.to_i == value ? value.to_i.to_s : value.to_s
       end
 
+      def secondary_paint
+        color = theme_color(:foreground_secondary)
+        color == "#666666" ? GREY : color || GREY
+      end
+
       def timeline_head(path_data)
-        Svg::Path.new(d: path_data, fill: "black")
+        Svg::Path.new(d: path_data, fill: theme_color(:edge_stroke) || "black")
       end
     end
   end
