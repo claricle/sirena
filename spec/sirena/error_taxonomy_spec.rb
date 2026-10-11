@@ -70,7 +70,8 @@ RSpec.describe Sirena::Engine do
        "itself fails" do
       # Real input does reach the renderer stage, but nothing in lib/
       # currently raises RenderError from it -- so this is stubbed, the same
-      # way the "no layer of its own" example below stubs Layout::Grid.
+      # way the "no layer of its own" example below stubs
+      # Layout::ElkPlacement.
       broken_renderer = instance_double(Sirena::Renderer::Flowchart)
       stub_renderer_failure(broken_renderer)
 
@@ -87,7 +88,7 @@ RSpec.describe Sirena::Engine do
   describe "#render wraps only a failure with no layer of its own" do
     it "wraps it in PipelineError with the class and message, " \
        "and no backtrace" do
-      allow(Sirena::Layout::Grid).to receive(:apply)
+      allow(Sirena::Layout::ElkPlacement).to receive(:apply)
         .and_raise(RuntimeError, "boom")
 
       expect { engine.render("graph TD\nA-->B\n") }.to raise_error do |error|
