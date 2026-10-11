@@ -78,4 +78,15 @@ RSpec.describe Sirena::Layout::GitGraph do
 
     expect(labels(result, "tag")).to eq([])
   end
+
+  it "keeps the empty root lane after an initial branch declaration" do
+    result = scene(<<~MERMAID)
+      branch new
+      commit
+      commit
+    MERMAID
+
+    expect(result.branches.map { |branch| [branch.name, branch.label&.text] })
+      .to eq([["main", "main"], ["new", "new"]])
+  end
 end
