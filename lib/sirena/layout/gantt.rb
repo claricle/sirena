@@ -22,7 +22,7 @@ module Sirena
       MARGIN_TOP = 80
       MARGIN_RIGHT = 50
       MARGIN_BOTTOM = 50
-      ROW_HEIGHT = 40
+      ROW_HEIGHT = 24
       SECTION_HEIGHT = 30
       TASK_BAR_HEIGHT = 20
       TIMELINE_WIDTH = 800
@@ -256,8 +256,7 @@ module Sirena
       end
 
       def scene_height(sections)
-        total_rows = sections.sum { |section| section[:tasks].length + 1 }
-        MARGIN_TOP + TIMELINE_HEIGHT + (total_rows * ROW_HEIGHT) + MARGIN_BOTTOM
+        task_extent(task_row_count(sections)) + MARGIN_BOTTOM
       end
 
       def title_geometry(title)
@@ -276,20 +275,22 @@ module Sirena
 
       def timeline_geometry(graph)
         timeline = graph[:timeline]
+        rows = task_row_count(graph[:sections])
         Timeline.new(
           background: Rect.new(x: MARGIN_LEFT, y: MARGIN_TOP,
                                width: TIMELINE_WIDTH, height: TIMELINE_HEIGHT,
                                kind: "timeline"),
           labels: date_labels(timeline, graph[:axis_format],
-                              graph[:tick_interval]),
+                              graph[:tick_interval], task_extent(rows) + 5),
           grid_lines: timeline_grid_lines(timeline, graph[:sections],
                                           graph[:tick_interval]),
         )
       end
 
-      def date_labels(timeline, format, interval = nil)
+      def date_labels(timeline, format, interval = nil,
+                      y_position = MARGIN_TOP + TIMELINE_HEIGHT + 5)
         tick_positions(timeline, interval).map do |tick, position|
-          date_label(tick, position, format)
+          date_label(tick, position, format, y_position)
         end
       end
 
@@ -316,17 +317,17 @@ module Sirena
          origin, days, width]
       end
 
-      def date_label(date, position, format)
+      def date_label(date, position, format, y_position)
         Label.new(
           text: format_date(date, format),
           x: MARGIN_LEFT + (position * TIMELINE_WIDTH),
-          y: MARGIN_TOP + TIMELINE_HEIGHT - 10,
+          y: y_position,
           text_anchor: "middle", font_size: small_font_size
         )
       end
 
       def timeline_grid_lines(timeline, sections, interval)
-        rows = sections.sum { |section| section[:tasks].length + 1 }
+        rows = task_row_count(sections)
         tick_positions(timeline, interval).map do |_tick, position|
           timeline_grid_line(position, rows)
         end
@@ -335,41 +336,53 @@ module Sirena
       def timeline_grid_line(position, rows)
         x = MARGIN_LEFT + (position * TIMELINE_WIDTH)
         y = MARGIN_TOP + TIMELINE_HEIGHT
-        Line.new(x1: x, y1: y, x2: x, y2: y + (rows * ROW_HEIGHT))
+        Line.new(x1: x, y1: y, x2: x, y2: task_extent(rows))
       end
 
       def section_geometry(sections)
         next_y = MARGIN_TOP + TIMELINE_HEIGHT
         sections.map do |section|
           result = typed_section(section, next_y)
-          next_y += SECTION_HEIGHT + (section[:tasks].length * ROW_HEIGHT)
+          next_y += section_height(section)
           result
         end
       end
 
-      def typed_section(section, header_y)
-        task_y = header_y + SECTION_HEIGHT
+      def typed_section(section, section_y)
         Section.new(
-          background: section_background(header_y),
-          label: section_label(section[:name], header_y),
-          tasks: typed_tasks(section[:tasks], task_y),
+          background: section_background(section_y, section_height(section)),
+          label: section_label(section[:name], section_y,
+                               section_height(section)),
+          tasks: typed_tasks(section[:tasks], section_y),
         )
       end
 
-      def section_background(header_y)
+      def section_background(section_y, height)
         Rect.new(
-          x: 0, y: header_y,
+          x: 0, y: section_y,
           width: MARGIN_LEFT + TIMELINE_WIDTH + MARGIN_RIGHT,
-          height: SECTION_HEIGHT, kind: "section"
+          height: height, kind: "section"
         )
       end
 
-      def section_label(name, header_y)
+      def section_label(name, section_y, height)
         Label.new(
-          text: name, x: 10, y: header_y + (SECTION_HEIGHT / 2),
+          text: name, x: 10, y: section_y + (height / 2),
           font_size: normal_font_size, font_weight: "bold",
           dominant_baseline: "middle"
         )
+      end
+
+      def task_row_count(sections)
+        sections.sum { |section| section[:tasks].length }
+      end
+
+      def section_height(section)
+        section[:tasks].length * ROW_HEIGHT
+      end
+
+      def task_extent(rows)
+        MARGIN_TOP + TIMELINE_HEIGHT + (rows * ROW_HEIGHT)
       end
 
       def typed_tasks(tasks, first_y)
