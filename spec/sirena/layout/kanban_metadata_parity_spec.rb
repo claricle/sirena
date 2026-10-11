@@ -3,7 +3,7 @@
 require "spec_helper"
 require "rexml/document"
 
-RSpec.describe Sirena::Layout::Kanban do
+RSpec.describe Sirena::Layout::Kanban, :aggregate_failures do
   def scene_for(case_id)
     source = File.read("spec/mermaid/kanban/#{case_id}.mmd")
     diagram = Sirena::Parser::Kanban.new.parse(source)
