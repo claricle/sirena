@@ -182,10 +182,12 @@ RSpec.describe SurfaceManifest do
     it "does not request a POSIX process group on Windows" do
       allow(Gem).to receive(:win_platform?).and_return(true)
 
-      expect(Open3).to receive(:popen3)
-        .with(instance_of(Hash), "env", chdir: directory)
+      allow(Open3).to receive(:popen3)
 
       described_class.run_process(["env"], chdir: directory, timeout: 1)
+
+      expect(Open3).to have_received(:popen3)
+        .with(instance_of(Hash), "env", chdir: directory)
     end
   end
 end
