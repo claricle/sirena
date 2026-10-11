@@ -35,13 +35,14 @@ module Sirena
 
       private
 
-      def scene_from_graph(graph)
+      def scene_from_graph(graph, positioned: false)
         nodes = graph[:children] || []
         legend = UserJourneyLegend.new(graph_actor_names(nodes))
         left = legend.left_margin
-        frame = frame_size(left, nodes.length, legend.rows.length, graph)
+        boxes = task_boxes(nodes, left, positioned)
+        frame = frame_size(left, boxes, legend.rows.length, graph)
         UserJourney::Scene.new(
-          **scene_header(graph, frame), **scene_body(nodes, legend),
+          **scene_header(graph, frame), **scene_body(nodes, boxes, legend),
         )
       end
 
@@ -56,14 +57,14 @@ module Sirena
         }
       end
 
-      def scene_body(nodes, legend)
+      def scene_body(nodes, boxes, legend)
         left = legend.left_margin
         runs = section_runs(nodes)
         {
           legend: legend_actors(legend),
-          sections: section_bands(runs, left),
-          tasks: typed_tasks(nodes, runs, left, legend),
-          arrows: [timeline(left, scene_width(left, nodes.length))],
+          sections: section_bands(runs, boxes),
+          tasks: typed_tasks(nodes, boxes, runs, legend),
+          arrows: [timeline(left, scene_width(left, boxes))],
         }
       end
 
@@ -71,18 +72,58 @@ module Sirena
         nodes.flat_map { |node| Array(node.dig(:metadata, :actors)) }
       end
 
-      def frame_size(left, count, actors, graph)
-        width = scene_width(left, count)
-        stop_y = [actors * LEGEND_ROW_HEIGHT, count.zero? ? 0 : LINE_END].max
+      def frame_size(left, boxes, actors, graph)
+        width = scene_width(left, boxes)
+        stop_y = content_stop_y(boxes, actors)
         title = graph.dig(:metadata, :title).to_s.empty? ? 0 : TITLE_EXTRA
         height = stop_y + 20 + title
         { width: width, height: height, left: left,
           view_box: "0 -25 #{width} #{height}" }
       end
 
-      def scene_width(left, count)
-        stop_x = count.zero? ? left : left + ((count - 1) * TASK_PITCH) + 100
-        left + stop_x + DIAGRAM_MARGIN
+      def content_stop_y(boxes, actors)
+        task_bottom = boxes.map { |box| box[:y] + box[:height] }.max || 0
+        [actors * LEGEND_ROW_HEIGHT,
+         boxes.empty? ? 0 : LINE_END, task_bottom].max
+      end
+
+      def scene_width(left, boxes)
+        return (left * 2) + DIAGRAM_MARGIN if boxes.empty?
+
+        right = boxes.map { |box| box[:x] + box[:width] }.max
+        left + right + (DIAGRAM_MARGIN / 2)
+      end
+
+      def task_boxes(nodes, left, positioned)
+        return default_task_boxes(nodes, left) unless positioned
+        return [] if nodes.empty?
+
+        origin = placement_origin(nodes)
+        nodes.map do |node|
+          positioned_task_box(node, left, origin)
+        end
+      end
+
+      def placement_origin(nodes)
+        [nodes.map { |node| node.fetch(:x) }.min,
+         nodes.map { |node| node.fetch(:y) }.min]
+      end
+
+      def positioned_task_box(node, left, origin)
+        {
+          x: left + node.fetch(:x) - origin[0],
+          y: TASK_Y + node.fetch(:y) - origin[1],
+          width: node.fetch(:width), height: node.fetch(:height)
+        }
+      end
+
+      def default_task_boxes(nodes, left)
+        nodes.each_index.map do |position|
+          {
+            x: left + (position * TASK_PITCH), y: TASK_Y,
+            width: TASK_WIDTH, height: TASK_BOX_HEIGHT
+          }
+        end
       end
 
       def title_label(title, left)
@@ -156,13 +197,18 @@ module Sirena
           fill: SECTION_FILLS[number % SECTION_FILLS.length] }
       end
 
-      def section_bands(runs, left)
+      def section_bands(runs, boxes)
         runs.reject { |_, name, _| name.empty? }.map do |indexes, name, number|
           style = run_style(number)
-          x_position = left + (indexes.first * TASK_PITCH)
-          width = (TASK_PITCH * indexes.length) - 50
-          section_band(name, [x_position, width], style)
+          section_band(name, run_span(indexes, boxes), style)
         end
+      end
+
+      def run_span(indexes, boxes)
+        selected = indexes.map { |index| boxes.fetch(index) }
+        left = selected.map { |box| box[:x] }.min
+        right = selected.map { |box| box[:x] + box[:width] }.max
+        [left, right - left]
       end
 
       def section_band(name, span, style)
@@ -180,17 +226,17 @@ module Sirena
       end
 
       # One label per <br>-separated line, spread around the box centre.
-      def centered_labels(text, span, vertical)
+      def centered_labels(text, span, vertical, height: TASK_BOX_HEIGHT)
         lines = text.to_s.split(%r{<br\s*/?>}i, -1)
-        centre = box_centre(span, vertical[0])
+        centre = box_centre(span, vertical[0], height)
         lines.each_with_index.map do |line, offset|
           shift = line_shift(offset, lines.length)
           centered_label(line, centre, shift, vertical[1])
         end
       end
 
-      def box_centre(span, top)
-        [span[0] + (span[1] / 2.0), top + (TASK_BOX_HEIGHT / 2.0)]
+      def box_centre(span, top, height)
+        [span[0] + (span[1] / 2.0), top + (height / 2.0)]
       end
 
       def centered_label(text, centre, shift, fill)
@@ -204,34 +250,36 @@ module Sirena
         (offset * TEXT_SIZE) - (TEXT_SIZE * (count - 1) / 2.0)
       end
 
-      def typed_tasks(nodes, runs, left, legend)
+      def typed_tasks(nodes, boxes, runs, legend)
         indexes = legend.rows.to_h { |name, index, *| [name, index] }
         runs.flat_map do |run_indexes, _, number|
           style = run_style(number)
           run_indexes.map do |position|
-            typed_task(nodes[position], left + (position * TASK_PITCH),
-                       style, indexes)
+            typed_task(nodes[position], boxes.fetch(position), style, indexes)
           end
         end
       end
 
-      def typed_task(node, x_position, style, indexes)
+      def typed_task(node, geometry, style, indexes)
         metadata = node[:metadata] || {}
         facts = task_facts(metadata)
         UserJourney::Task.new(
           id: node[:id], number: style[:type], line_end: LINE_END,
-          dots: task_dots(metadata[:actors], x_position, indexes),
-          **task_frame(metadata, [x_position, TASK_WIDTH], style, facts),
+          dots: task_dots(metadata[:actors], geometry, indexes),
+          **task_frame(metadata, geometry, style, facts),
           **facts
         )
       end
 
-      def task_frame(metadata, span, style, facts)
-        box = band_box(span, TASK_Y, style[:fill])
+      def task_frame(metadata, geometry, style, facts)
+        box = UserJourney::Box.new(
+          **geometry, corner_radius: 3, fill: style[:fill],
+        )
+        span = [box.x, box.width]
         {
           box: box, face: task_face(box, facts[:score]),
           labels: centered_labels(metadata[:name], span,
-                                  [TASK_Y, style[:colour]])
+                                  [box.y, style[:colour]], height: box.height)
         }
       end
 
@@ -243,10 +291,10 @@ module Sirena
         }
       end
 
-      def task_dots(actors, x_position, indexes)
+      def task_dots(actors, geometry, indexes)
         Array(actors).each_with_index.map do |name, offset|
-          actor_dot(name, indexes.fetch(name), x_position + 14 + (offset * 10),
-                    TASK_Y)
+          x_position = geometry[:x] + 14 + (offset * 10)
+          actor_dot(name, indexes.fetch(name), x_position, geometry[:y])
         end
       end
     end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "elk_placement"
 require_relative "user_journey_geometry"
 require_relative "../diagram/user_journey"
 require_relative "../notation/mermaid/ir_adapters/user_journey"
@@ -145,6 +146,10 @@ module Sirena
         layout.send(:scene_from_graph, graph)
       end
 
+      # :grid (the default journey geometry) or :elk. The explicit ELK path
+      # is selected by Engine while the default stays byte-compatible.
+      attr_accessor :placement
+
       # Converts a user journey to a graph structure.
       #
       # @param diagram [Diagram::UserJourney, IR::Graph] source journey graph
@@ -173,7 +178,9 @@ module Sirena
       end
 
       def scene(diagram)
-        scene_from_graph(build_graph(diagram))
+        graph = build_graph(diagram)
+        ElkPlacement.apply(graph) if placement == :elk
+        scene_from_graph(graph, positioned: placement == :elk)
       end
 
       def ir_graph(diagram)
