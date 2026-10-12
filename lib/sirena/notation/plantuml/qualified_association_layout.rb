@@ -8,10 +8,23 @@ module Sirena
       # links. Ordinary two-dash links advance down a rank; each extra dash
       # advances one more rank.
       class QualifiedAssociationLayout
-        HORIZONTAL_GAP = 100.0
-        VERTICAL_GAP = 100.0
-        COMPONENT_GAP = 60.0
-        private_constant :HORIZONTAL_GAP, :VERTICAL_GAP, :COMPONENT_GAP
+        RADIAL_HORIZONTAL_GAP = 80.0
+        FAN_HORIZONTAL_GAP = 35.0
+        MIXED_HORIZONTAL_GAP = 70.0
+        COMPACT_HORIZONTAL_GAP = 130.0
+        STANDARD_VERTICAL_GAP = 100.0
+        MIXED_NEAR_VERTICAL_GAP = 60.0
+        MIXED_LONG_VERTICAL_GAP = 80.0
+        COMPACT_VERTICAL_GAP = 120.0
+        COMPONENT_GAP = 25.0
+        FAN_PARENT_ALLOWANCE = 35.0
+        private_constant :RADIAL_HORIZONTAL_GAP, :FAN_HORIZONTAL_GAP,
+                         :MIXED_HORIZONTAL_GAP, :COMPACT_HORIZONTAL_GAP,
+                         :STANDARD_VERTICAL_GAP,
+                         :MIXED_NEAR_VERTICAL_GAP,
+                         :MIXED_LONG_VERTICAL_GAP,
+                         :COMPACT_VERTICAL_GAP, :COMPONENT_GAP,
+                         :FAN_PARENT_ALLOWANCE
 
         def self.for(diagram)
           return unless isolated_class_graph?(diagram)
@@ -41,7 +54,25 @@ module Sirena
 
         def initialize(diagram)
           @names = diagram.classes.map(&:name)
+          @classes = diagram.classes
           @relations = diagram.relations
+          @directives = diagram.directives
+        end
+
+        # Fan-out parents span the compact row occupied by their targets.
+        # This is the node constraint dot applies before it places ranks.
+        def constrained_sizes(sizes)
+          constrained = sizes.transform_values(&:dup)
+          fan_relations.each do |parent, outgoing|
+            children = outgoing.map(&:right)
+            child_width = children.sum { |name| constrained.fetch(name).first }
+            row_width = child_width +
+              (FAN_HORIZONTAL_GAP * (children.size - 1))
+            parent_size = constrained.fetch(parent)
+            parent_size[0] = [parent_size.first,
+                              row_width + FAN_PARENT_ALLOWANCE].max
+          end
+          constrained
         end
 
         # @param sizes [Hash{String => Array(Float, Float)}]
@@ -60,7 +91,15 @@ module Sirena
 
         private
 
-        attr_reader :names, :relations
+        attr_reader :names, :classes, :relations, :directives
+
+        def fan_relations
+          relations.group_by(&:left).select do |_parent, outgoing|
+            outgoing.size > 2 && outgoing.all? do |relation|
+              relation.direction.nil? && relation.length > 1
+            end
+          end
+        end
 
         def components
           unseen = names.dup
@@ -160,24 +199,36 @@ module Sirena
 
         def place_component(component, logical, sizes, origin)
           columns = axis_layout(component, logical, sizes,
-                                axis: 0, gap: HORIZONTAL_GAP,
+                                axis: 0,
                                 origin: origin.first)
           rows = axis_layout(component, logical, sizes,
-                             axis: 1, gap: VERTICAL_GAP,
+                             axis: 1,
                              origin: origin.last)
           corners = component.to_h do |name|
             [name, [centred(name, logical, sizes, columns, 0),
                     centred(name, logical, sizes, rows, 1)]]
           end
-          [corners, axis_extent(columns, origin.first)]
+          width = axis_extent(columns, origin.first)
+          corners, width = span_fan_parent(component, corners, width)
+          [corners, width]
+        end
+
+        def span_fan_parent(component, corners, width)
+          return [corners, width] unless fan_component?(component)
+
+          inset = FAN_PARENT_ALLOWANCE / 2
+          shifted = corners.transform_values { |left, top| [left + inset, top] }
+          [shifted, width + FAN_PARENT_ALLOWANCE]
         end
 
         def axis_layout(component, logical, sizes, options)
           axis = options.fetch(:axis)
           data = { component: component, logical: logical, sizes: sizes }
           layout = { cursor: options.fetch(:origin) }
-          axis_coordinates(data, axis).each do |coordinate|
-            place_axis(layout, data, coordinate, options)
+          coordinates = axis_coordinates(data, axis)
+          coordinates.each do |coordinate|
+            gap = axis_gap(component, axis, coordinate, coordinates, logical)
+            place_axis(layout, data, coordinate, axis, gap)
           end
           layout
         end
@@ -188,18 +239,77 @@ module Sirena
           end.uniq.sort
         end
 
-        def place_axis(layout, data, coordinate, options)
-          axis = options.fetch(:axis)
+        def place_axis(layout, data, coordinate, axis, gap)
           span = axis_span(data.fetch(:component), data.fetch(:logical),
                            data.fetch(:sizes), axis, coordinate)
           layout[coordinate] = [layout.fetch(:cursor), span]
-          layout[:cursor] += span + options.fetch(:gap)
+          layout[:cursor] += span + gap
+        end
+
+        def axis_gap(component, axis, coordinate, coordinates, logical)
+          return 0.0 if coordinate == coordinates.last
+          return horizontal_gap(component) if axis.zero?
+
+          vertical_gap(component, coordinate, coordinates, logical)
+        end
+
+        def horizontal_gap(component)
+          return COMPACT_HORIZONTAL_GAP if compact?
+          return MIXED_HORIZONTAL_GAP if mixed_kind?
+          return FAN_HORIZONTAL_GAP if fan_component?(component)
+
+          RADIAL_HORIZONTAL_GAP
+        end
+
+        def vertical_gap(component, coordinate, coordinates, logical)
+          return COMPACT_VERTICAL_GAP if compact?
+          return STANDARD_VERTICAL_GAP unless mixed_kind?
+
+          first = coordinates.first
+          return MIXED_LONG_VERTICAL_GAP if coordinate == first &&
+            long_qualified_source?(component, logical)
+
+          MIXED_NEAR_VERTICAL_GAP
+        end
+
+        def fan_component?(component)
+          fan_relations.keys.any? { |parent| component.include?(parent) }
+        end
+
+        def compact?
+          directives.include?("hide empty members")
+        end
+
+        def mixed_kind?
+          classes.any? { |klass| klass.kind != :class }
+        end
+
+        def long_qualified_source?(component, logical)
+          top = component.min_by { |name| logical.fetch(name).last }
+          relations.any? do |relation|
+            relation.left == top && relation.length > 2 &&
+              self.class.send(:qualifier?, relation)
+          end
         end
 
         def axis_span(component, logical, sizes, axis, coordinate)
-          component.filter_map do |name|
+          names = component.select do |name|
+            logical.fetch(name)[axis] == coordinate
+          end
+          names.delete(fan_parent(component)) if fan_parent_in_column?(
+            component, names, axis
+          )
+          names.filter_map do |name|
             sizes.fetch(name)[axis] if logical.fetch(name)[axis] == coordinate
           end.max
+        end
+
+        def fan_parent_in_column?(component, names, axis)
+          axis.zero? && names.size > 1 && fan_parent(component)
+        end
+
+        def fan_parent(component)
+          fan_relations.keys.find { |name| component.include?(name) }
         end
 
         def centred(name, logical, sizes, layout, axis)
@@ -208,7 +318,7 @@ module Sirena
         end
 
         def axis_extent(layout, origin)
-          layout.fetch(:cursor) - origin - HORIZONTAL_GAP
+          layout.fetch(:cursor) - origin
         end
       end
     end
