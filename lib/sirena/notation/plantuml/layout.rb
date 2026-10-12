@@ -60,6 +60,9 @@ module Sirena
         EMPTY_MEMBER_COMPARTMENT = 14.0
         EMPTY_CLASS_WIDTH_EXTRA = 8.0
         EMPTY_CLASS_MIN_WIDTH = 41.5
+        HIDE_CIRCLE_BASE_HEIGHT = 42.48828125
+        HIDE_CIRCLE_TITLE_ALLOWANCE = 6.0
+        HIDE_CIRCLE_MEMBER_ALLOWANCE = 12.0
         ARROW_LENGTH = 9.0
         ARROW_HALF_WIDTH = 4.0
         ARROW_NOTCH = 5.0
@@ -94,7 +97,9 @@ module Sirena
                          :SELF_RELATION_CONTROL_OFFSET,
                          :SELF_RELATION_LABEL_GAP,
                          :EMPTY_MEMBER_COMPARTMENT, :EMPTY_CLASS_WIDTH_EXTRA,
-                         :EMPTY_CLASS_MIN_WIDTH
+                         :EMPTY_CLASS_MIN_WIDTH, :HIDE_CIRCLE_BASE_HEIGHT,
+                         :HIDE_CIRCLE_TITLE_ALLOWANCE,
+                         :HIDE_CIRCLE_MEMBER_ALLOWANCE
 
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
@@ -523,6 +528,7 @@ module Sirena
 
         def complete_box_specification(record, klass, diagram, details)
           record = compact_empty_box(record, details[:member_rows], diagram)
+          record = smetana_hide_circle_box(record, klass, diagram, details)
           adjust_plain_empty_width(record, klass, diagram, details[:names])
           record = multiline_title_box(record, klass, details)
           record = isolated_standard_box(record, klass, diagram, details)
@@ -548,6 +554,28 @@ module Sirena
 
         def compact_empty_item?(item, diagram)
           compact_empty_members?(diagram) && item[:member_rows]&.empty?
+        end
+
+        def smetana_hide_circle_box(record, klass, diagram, details)
+          return record unless smetana_hide_circle_class?(klass, diagram)
+
+          title_widths = standard_row_widths(
+            details[:names], font_size, HIDE_CIRCLE_TITLE_ALLOWANCE
+          )
+          member_widths = standard_row_widths(
+            details[:member_rows], font_size, HIDE_CIRCLE_MEMBER_ALLOWANCE
+          )
+          record.merge(
+            width: [*title_widths, *member_widths].max,
+            height: HIDE_CIRCLE_BASE_HEIGHT +
+              (details[:member_rows].size * MEMBER_NOTE_ROW_HEIGHT),
+          )
+        end
+
+        def smetana_hide_circle_class?(klass, diagram)
+          RankChain.engine(diagram) == :smetana && plain_class?(klass) &&
+            klass.package.nil? &&
+            diagram.directives.any? { |line| line.match?(/\Ahide circle\z/i) }
         end
 
         def adjust_plain_empty_width(specification, klass, diagram, names)
