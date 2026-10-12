@@ -6,6 +6,7 @@ require_relative "klass"
 require_relative "member"
 require_relative "note"
 require_relative "package"
+require_relative "portion_visibility"
 require_relative "style_reader"
 require_relative "relation"
 require_relative "unsupported_construct_error"
@@ -190,10 +191,11 @@ module Sirena
         private
 
         def build_classes
+          visibility = PortionVisibility.new(@directives)
           @kinds.map do |name, kind|
             body = @bodies.fetch(name).dup.freeze
-            Klass.new(name: name, kind: kind, body: body,
-                      **@extras.fetch(name, {}))
+            visibility.apply(Klass.new(name: name, kind: kind, body: body,
+                                       **@extras.fetch(name, {})))
           end
         end
 
