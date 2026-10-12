@@ -8,6 +8,8 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 
 # Reads the rendered geometry of a PlantUML class diagram.
 module PlantumlJunctionChainHelpers
+  BOX_ATTRIBUTES = %w[x y width height].freeze
+
   def render(body)
     Sirena.render("@startuml\n!pragma layout smetana\n#{body}\n@enduml\n",
                   notation: :plantuml)
@@ -19,7 +21,7 @@ module PlantumlJunctionChainHelpers
       next [group.attributes["id"], nil] unless rect
 
       [group.attributes["id"],
-       %w[x y width height].map { |name| rect.attributes[name].to_f }]
+       BOX_ATTRIBUTES.map { |name| rect.attributes[name].to_f }]
     end.compact
   end
 

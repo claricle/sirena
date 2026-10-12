@@ -20,9 +20,11 @@ module Sirena
         GAPS = { smetana: { rank: 36.0, node: 18.0 },
                  dot: { rank: 60.0, node: 35.0 } }.freeze
         JUNCTION_SIZE = [16.0, 24.0].freeze
+        REVERSED_DIRECTIONS = %i[up left].freeze
         SMETANA = /\A!pragma[ \t]+layout[ \t]+smetana\z/i
         LEFT_TO_RIGHT = "left to right direction"
-        private_constant :GAPS, :JUNCTION_SIZE, :SMETANA, :LEFT_TO_RIGHT
+        private_constant :GAPS, :JUNCTION_SIZE, :REVERSED_DIRECTIONS,
+                         :SMETANA, :LEFT_TO_RIGHT
 
         # @return [RankChain, nil]
         def self.for(diagram)
@@ -70,7 +72,7 @@ module Sirena
         # one; PlantUML keeps that relation's classes in written order.
         def self.chain_axis(diagram, relations, owners)
           axes = relations.each_with_index.map do |relation, index|
-            reversed = %i[up left].include?(relation.direction)
+            reversed = REVERSED_DIRECTIONS.include?(relation.direction)
             return if reversed && !owners.key?(index)
 
             relation_axis(relation, diagram)
@@ -179,13 +181,14 @@ module Sirena
           size = slot_size(slot, sizes)
           corner = corner_at(
             frame[:cursor] + ((frame[:span] - size[along]) / 2),
-            frame[:middle] - (size[across] / 2)
+            frame[:middle] - (size[across] / 2),
           )
           places, junctions = out
           return places[slot[1]] = corner if slot[0] == :class
 
           junctions[slot[1]] = [*corner, *size]
           places[slot[2]] = owner_corner(corner, sizes.fetch(slot[2]), frame)
+          places
         end
 
         def corner_at(along_position, across_position)
