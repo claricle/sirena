@@ -34,6 +34,14 @@ module Sirena
           stack_space(depth, SIDE)
         end
 
+        def self.relation_layout?(diagram)
+          package_ids = diagram.packages.map(&:id)
+          diagram.relations.one? do |relation|
+            package_ids.include?(relation.left) ||
+              package_ids.include?(relation.right)
+          end
+        end
+
         def self.stack_space(depth, base)
           depth.times.sum { |level| base + (level * NESTING_STEP) }
         end
@@ -81,8 +89,18 @@ module Sirena
         end
 
         def frame_padding(package)
+          return default_padding unless nested_relation_layout?
+
           increment = descendant_depth(package) * NESTING_STEP
           [SIDE + increment, NESTED_OPEN + increment, CLOSE + increment]
+        end
+
+        def default_padding
+          [SIDE, OPEN - 6.0, CLOSE - 4.0]
+        end
+
+        def nested_relation_layout?
+          self.class.relation_layout?(@diagram)
         end
 
         def descendant_depth(package)
