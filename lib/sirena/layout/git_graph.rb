@@ -349,15 +349,11 @@ module Sirena
 
       def label_position(text, commit, orientation, kind, style)
         x_coordinate, y_coordinate = commit.values_at(:x, :y)
-        if style == :lone
-          return lone_label_position(
-            text, x_coordinate, y_coordinate, kind
-          )
-        end
+        return lone_label_position(text, x_coordinate, y_coordinate, kind) if
+          style == :lone
         if style == :linear && kind == "id"
-          return linear_label_position(
-            text, x_coordinate, y_coordinate, orientation
-          )
+          return linear_label_position(text, x_coordinate, y_coordinate,
+                                       orientation)
         end
 
         legacy_label_position(x_coordinate, y_coordinate, orientation, kind)
@@ -378,12 +374,17 @@ module Sirena
       end
 
       def lone_id_label_position(width, x_coordinate, y_coordinate)
+        offset_x, offset_y = lone_id_label_offsets(width)
+        [x_coordinate - (width / 2.0) + offset_x,
+         y_coordinate + 25 + offset_y, "start", -45.0,
+         x_coordinate - COMMIT_RADIUS, y_coordinate]
+      end
+
+      def lone_id_label_offsets(width)
         shift_x = -7.5 - (((width + 10) / 25.0) * 9.5)
         shift_y = 10 + ((width / 25.0) * 8.5)
         diagonal = Math.sqrt(2)
-        [x_coordinate - (width / 2.0) + ((shift_x - shift_y) / diagonal),
-         y_coordinate + 25 + ((shift_x + shift_y) / diagonal), "start", -45.0,
-         x_coordinate - COMMIT_RADIUS, y_coordinate]
+        [(shift_x - shift_y) / diagonal, (shift_x + shift_y) / diagonal]
       end
 
       def linear_label_position(text, x_coordinate, y_coordinate, orientation)
@@ -493,11 +494,16 @@ module Sirena
       end
 
       def ordinary_explicit_id_graph?(graph)
-        !vertical?(graph[:orientation]) && graph[:commits].size > 1 &&
-          !generated_commits_only?(graph) && graph[:commits].all? do |commit|
-            commit[:message].nil? && commit[:tags].empty? &&
-              commit[:type] == "NORMAL" && !commit[:is_cherry_pick]
-          end
+        return false if vertical?(graph[:orientation])
+        return false if graph[:commits].size <= 1
+        return false if generated_commits_only?(graph)
+
+        graph[:commits].all? { |commit| ordinary_explicit_id_commit?(commit) }
+      end
+
+      def ordinary_explicit_id_commit?(commit)
+        commit[:message].nil? && commit[:tags].empty? &&
+          commit[:type] == "NORMAL" && !commit[:is_cherry_pick]
       end
 
       def branch_label_geometry(branch, x_coordinate, y_coordinate, anchor)
