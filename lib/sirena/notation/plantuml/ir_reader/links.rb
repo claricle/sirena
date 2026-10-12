@@ -47,7 +47,8 @@ module Sirena
               left: name_of(edge.source_id, index),
               right: name_of(edge.target_id, index),
               arrow: arrow(edge, node, index),
-              ends: ends(node, index), label: edge.label
+              ends: ends(node, index), label: edge.label,
+              layout_only: flagged?(node, "layout_only", index)
             )
           end
 

@@ -28,6 +28,8 @@ module Sirena
         # participant, at the start of a sequence-diagram line.
         GLOBAL_COMMAND =
           /\A(?:caption|footer|header|legend|mainframe|title)[ \t]/i
+        SMETANA = /\A!pragma[ \t]+layout[ \t]+smetana\z/i
+        private_constant :SMETANA
 
         def initialize
           @kinds, @bodies, @explicit, @extras, @captions =
@@ -64,8 +66,8 @@ module Sirena
           @directives << text
         end
 
-        # `hide $tag` removes every class carrying the tag, whether the
-        # class is declared before or after the line.
+        # `hide $tag` affects every class carrying the tag, whether the class
+        # is declared before or after the line.
         def hide_tag(tag, number, text)
           @hidden_tags << [tag, number, text]
         end
@@ -202,9 +204,20 @@ module Sirena
         def visible(classes)
           hidden = classes.select { |klass| hidden?(klass) }.map(&:name)
           refuse_attachments_to(hidden)
+          return smetana_visible(classes, hidden) if smetana?
+
           kept = classes.reject { |klass| hidden.include?(klass.name) }
           gone = hidden + unoccupied_ids(kept)
           assemble(kept, @relations.reject { |rel| touches?(rel, gone) })
+        end
+
+        def smetana_visible(classes, hidden)
+          gone = unoccupied_ids(classes)
+          relations = @relations.reject { |relation| touches?(relation, gone) }
+            .map do |relation|
+              touches?(relation, hidden) ? relation.as_layout_only : relation
+            end
+          assemble(classes, relations)
         end
 
         def assemble(classes, relations)
@@ -293,6 +306,10 @@ module Sirena
 
         def hidden?(klass)
           @hidden_tags.any? { |tag, *| klass.tags.include?(tag) }
+        end
+
+        def smetana?
+          @directives.any? { |line| line.match?(SMETANA) }
         end
 
         def touches?(relation, names)

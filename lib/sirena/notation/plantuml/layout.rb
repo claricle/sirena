@@ -615,6 +615,8 @@ module Sirena
           context = { by_name: by_name, owners: owners, nodes: nodes,
                       engine: engine }
           diagram.relations.each_with_index.flat_map do |relation, index|
+            next [] if relation.layout_only?
+
             relation_scenes(relation, index, context)
           end
         end
