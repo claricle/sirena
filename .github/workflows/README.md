@@ -1,21 +1,11 @@
 # CI lanes
 
-`ci.yml` holds two stable lane checks. Ordinary pull requests use a deliberately
-small path: one Ubuntu checkout and Ruby setup runs the workflow-pin check,
-full RuboCop plus the lint-debt ratchet, and every changed `*_spec.rb` file.
-The complete suite remains on merge-queue, `main` push, nightly, and manual
-runs, so cross-platform evidence is retained without putting runner setup for
-every OS/Ruby cell on the pull-request merge path.
+`ci.yml` holds two lanes. Both must pass before merge.
 
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
-| Fast | `fast-lane` | PR: `pr-fast` (pins, lint/debt, changed specs). Other events: `unit` full Ruby/OS matrix, `pins`, `oracle-toolchain`, and `lint` | < 10 min |
-| Full | `full-lane` | PR: deferred successfully. Other events: `docs-build`, `links`, `conformance`, `fresh-resolution`, and `plantuml-toolchain` | < 30 min |
-
-The aggregators explicitly allow only the jobs intentionally skipped for the
-current event. An unexpected skip, failure, or cancellation still makes the
-stable lane check red. Deleted specs are excluded from the PR file list;
-renamed, copied, modified, and added specs run with their repository paths.
+| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.2/3.3/3.4 stable and 4.0 experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
+| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `conformance` (`rake conformance:check`), `fresh-resolution` (no lockfile, `bundle exec rake`), `plantuml-toolchain` (pinned PlantUML jar + Java 21 + Graphviz, `spec/plantuml/toolchain_probe_spec.rb`) | < 30 min |
 
 Reserved, not yet wired: snippet spec (16), parity (14). Corpus (02b) runs
 inside `unit` (`bundle exec rake` includes `corpus:check`). The scoreboard guard (02b)

@@ -1,5 +1,4 @@
-# The two stable lane checks. README.md explains the fast PR path and the
-# complete post-merge/merge-queue path.
+# The two required lanes. README.md in this directory says how to add a gate.
 #
 # Required checks (repository setting, not expressible in YAML): `fast-lane`
 # and `full-lane`. Their names never change.
@@ -24,42 +23,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # ---- pull requests: one setup, changed specs + quick static checks -----
-  pr-fast:
-    name: pr-fast
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
-        with:
-          fetch-depth: 0
-      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
-        with:
-          ruby-version: '3.3'
-          bundler-cache: true
-      - name: Check workflow pins
-        run: ruby scripts/check_workflow_pins.rb
-      - name: Lint
-        run: bundle exec rubocop
-      - name: Check lint debt
-        run: bundle exec rake lint:debt:check
-      - name: Run changed specs
-        shell: bash
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          mapfile -d '' specs < <(
-            git diff --name-only --diff-filter=ACMR -z \
-              "$BASE_SHA...HEAD" -- ':(glob)spec/**/*_spec.rb'
-          )
-          if (( ${#specs[@]} == 0 )); then
-            echo "No changed specs"
-            exit 0
-          fi
-          printf 'Running %s changed spec file(s)\n' "${#specs[@]}"
-          bundle exec rspec "${specs[@]}"
-
   # ---- fast lane: unit suite, budget < 10 min ---------------------------
   unit:
     # Everything generic-rake ran before: `bundle exec rake` (spec, benchmark,
@@ -71,7 +34,6 @@ jobs:
       unit (ruby ${{ matrix.ruby }}, ${{ matrix.os }}${{
       matrix.os == 'windows-latest' && format(', shard {0}', matrix.shard)
       || '' }})
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     continue-on-error: ${{ matrix.experimental }}
@@ -113,7 +75,6 @@ jobs:
 
   pins:
     name: pins
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -125,7 +86,6 @@ jobs:
 
   oracle-toolchain:
     name: oracle-toolchain
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -149,7 +109,6 @@ jobs:
     # Its own job, not a step inside the unit matrix. Lint answers in under a
     # minute and should not wait on the full Ruby/OS matrix.
     name: lint
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -169,7 +128,7 @@ jobs:
   fast-lane:
     name: fast-lane
     if: ${{ always() }}
-    needs: [pr-fast, unit, pins, oracle-toolchain, lint]
+    needs: [unit, pins, oracle-toolchain, lint]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -180,14 +139,9 @@ jobs:
       - run: ruby scripts/lane_verdict.rb
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
-          ALLOWED_SKIPS: >-
-            ${{ github.event_name == 'pull_request'
-            && 'unit,pins,oracle-toolchain,lint'
-            || 'pr-fast' }}
 
   # ---- full lane: docs and links, budget < 30 min -----------------------
   docs-build:
-    if: ${{ github.event_name != 'pull_request' }}
     permissions:
       contents: read
       pages: write
@@ -197,13 +151,11 @@ jobs:
       skip_deploy: true
 
   links:
-    if: ${{ github.event_name != 'pull_request' }}
     uses: ./.github/workflows/links.yml
 
   conformance:
     # Not in the default rake task, so the unit matrix does not cover it.
     name: conformance
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -220,7 +172,6 @@ jobs:
     # admits. bundler-cache stays off: a cache keyed on an old resolution
     # would hide the upstream break this job exists to catch.
     name: fresh-resolution
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -235,7 +186,6 @@ jobs:
     # Pinned PlantUML jar (spec/plantuml/pin.json), Java and Graphviz for the
     # oracle and comparison specs. The spec fails here if any is missing.
     name: plantuml-toolchain
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -271,10 +221,6 @@ jobs:
       - run: ruby scripts/lane_verdict.rb
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
-          ALLOWED_SKIPS: >-
-            ${{ github.event_name == 'pull_request'
-            && 'docs-build,links,conformance,fresh-resolution,plantuml-toolchain'
-            || '' }}
 
   # ---- downstream notification (not a gate) ------------------------------
   # Preserve generic-rake's `tests-passed` notification after a green matrix.
