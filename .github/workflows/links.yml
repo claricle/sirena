@@ -59,6 +59,14 @@ jobs:
           ls -la _site/
         working-directory: docs
 
+      - name: Start seeded status server
+        run: |
+          ruby scripts/lychee_seed_status_server.rb 49173 \
+            > "$RUNNER_TEMP/lychee-seed-server.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/lychee-seed-server.pid"
+          curl --silent --show-error --retry 10 --retry-connrefused \
+            --retry-delay 1 http://127.0.0.1:49173/ready --output /dev/null
+
       - name: Seed broken relative link
         id: seed_relative
         continue-on-error: true
@@ -133,6 +141,13 @@ jobs:
           test "$STATUS_429_OUTCOME" = failure
           grep -Eq '(^|[^0-9])403([^0-9]|$)' link-seed-403.md
           grep -Eq '(^|[^0-9])429([^0-9]|$)' link-seed-429.md
+
+      - name: Stop seeded status server
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/lychee-seed-server.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/lychee-seed-server.pid")" || true
+          fi
 
       - name: Link Checker
         uses: lycheeverse/lychee-action@2b973e86fc7b1f6b36a93795fe2c9c6ae1118621  # v1

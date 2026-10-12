@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "socket"
 require "yaml"
+require_relative "../../scripts/lychee_seed_status_server"
 
 module LinksWorkflow
   ROOT = File.expand_path("../..", __dir__)
@@ -12,8 +14,8 @@ module LinksWorkflow
   SEEDS = {
     "broken-fragment.html" => "broken-fragment.html#missing-anchor",
     "broken-relative-link.html" => "./this-page-does-not-exist.html",
-    "seeded-403.html" => "https://httpbin.org/status/403",
-    "seeded-429.html" => "https://httpbin.org/status/429",
+    "seeded-403.html" => "http://127.0.0.1:49173/status/403",
+    "seeded-429.html" => "http://127.0.0.1:49173/status/429",
   }.freeze
 
   OUTCOMES = {
@@ -69,6 +71,35 @@ module LinksWorkflow
     step("Assert seeded failures")["run"].include?(pattern)
   end
 
+  def self.status_server_step_facts
+    start = step("Start seeded status server")
+    stop = step("Stop seeded status server")
+    [
+      start["run"].include?("ruby scripts/lychee_seed_status_server.rb 49173"),
+      start["run"].include?("http://127.0.0.1:49173/ready"),
+      stop["if"],
+      stop["run"].include?("lychee-seed-server.pid"),
+    ]
+  end
+
+  def self.status_server_responses
+    server = LycheeSeedStatusServer::Server.new(0)
+    thread = Thread.new { server.run }
+    %w[/ready /status/403 /status/429 /unknown].map do |path|
+      status_response(server.port, path)
+    end
+  ensure
+    server&.close
+    thread&.join
+  end
+
+  def self.status_response(port, path)
+    Socket.tcp("127.0.0.1", port) do |socket|
+      socket.write("GET #{path} HTTP/1.1\r\nHost: localhost\r\n\r\n")
+      socket.gets.split[1].to_i
+    end
+  end
+
   def self.ordinary_check_facts
     ordinary = step("Link Checker")
     [
@@ -98,6 +129,15 @@ RSpec.describe LinksWorkflow do
 
   it "configures every seed as an expected failure" do
     expect(described_class.seed_failures_enabled?).to be(true)
+  end
+
+  it "starts and always stops the loopback status server" do
+    expect(described_class.status_server_step_facts)
+      .to eq([true, true, "always()", true])
+  end
+
+  it "serves exact local statuses for both HTTP failure classes" do
+    expect(described_class.status_server_responses).to eq([204, 403, 429, 404])
   end
 
   it "asserts every seeded outcome even after expected failures" do
