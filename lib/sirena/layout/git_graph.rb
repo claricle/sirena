@@ -277,6 +277,7 @@ module Sirena
       def commit_label_style(graph)
         return :lone if graph[:orientation] == "LR" && graph[:commits].one?
         return :generated_diagonal if compact_generated_semantic_graph?(graph)
+        return :tagged_vertical if all_tagged_vertical_graph?(graph)
         return :linear if vertical?(graph[:orientation]) ||
           simple_three_commit_graph?(graph)
 
@@ -320,6 +321,13 @@ module Sirena
           !commit[:is_cherry_pick]
       end
 
+      def all_tagged_vertical_graph?(graph)
+        vertical?(graph[:orientation]) && graph[:branches].one? &&
+          graph[:commits].size > 1 && graph[:commits].all? do |commit|
+            Array(commit[:tags]).any? { |tag| !tag.empty? }
+          end
+      end
+
       def tag_labels(commit)
         tags = Array(commit[:tags])
         return tags.reject(&:empty?) unless tags.empty?
@@ -360,9 +368,13 @@ module Sirena
         x_coordinate, y_coordinate = commit.values_at(:x, :y)
         return lone_label_position(text, x_coordinate, y_coordinate, kind) if
           style == :lone
-        if style == :linear && kind == "id"
+        if %i[linear tagged_vertical].include?(style) && kind == "id"
+          font_size = style == :tagged_vertical ? MERMAID_LABEL_FONT_SIZE : nil
           return linear_label_position(text, x_coordinate, y_coordinate,
-                                       orientation)
+                                       orientation, font_size)
+        end
+        if style == :tagged_vertical && kind == "tag"
+          return tagged_vertical_label_position(x_coordinate, y_coordinate)
         end
         if style == :generated_diagonal && kind == "id"
           width = mermaid_label_width(text)
@@ -419,8 +431,11 @@ module Sirena
         [(shift_x - shift_y) / diagonal, (shift_x + shift_y) / diagonal]
       end
 
-      def linear_label_position(text, x_coordinate, y_coordinate, orientation)
-        return vertical_label_position(text, x_coordinate, y_coordinate) if
+      def linear_label_position(text, x_coordinate, y_coordinate, orientation,
+                                font_size = nil)
+        return vertical_label_position(
+          text, x_coordinate, y_coordinate, font_size
+        ) if
           vertical?(orientation)
 
         width = measure_text(text, font_size: small_font_size)[:width]
@@ -449,12 +464,20 @@ module Sirena
         [x_coordinate + 14, y_coordinate + 4, "start"]
       end
 
-      def vertical_label_position(text, x_coordinate, y_coordinate)
-        width = measure_text(text, font_size: small_font_size)[:width]
+      def vertical_label_position(text, x_coordinate, y_coordinate,
+                                  font_size = nil)
+        width = measure_text(
+          text, font_size: font_size || small_font_size
+        )[:width]
         logical_x = x_coordinate + 14
         visual_x = x_coordinate - width - 12
         [logical_x, y_coordinate - 1, "start", -45.0,
          x_coordinate, y_coordinate, visual_x - logical_x]
+      end
+
+      def tagged_vertical_label_position(x_coordinate, y_coordinate)
+        [x_coordinate + 19, y_coordinate + 7, "start", 45.0,
+         x_coordinate + 14, y_coordinate + 4]
       end
 
       def branch_labels(graph)
