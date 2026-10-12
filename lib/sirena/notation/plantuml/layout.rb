@@ -63,6 +63,9 @@ module Sirena
         HIDE_CIRCLE_BASE_HEIGHT = 42.48828125
         HIDE_CIRCLE_TITLE_ALLOWANCE = 6.0
         HIDE_CIRCLE_MEMBER_ALLOWANCE = 12.0
+        ISOLATED_KIND_COLUMN_GAP = 35.0
+        ISOLATED_KIND_ROW_GAP = 60.0
+        ISOLATED_KIND_MEMBER_ALLOWANCE = 26.0
         ARROW_LENGTH = 9.0
         ARROW_HALF_WIDTH = 4.0
         ARROW_NOTCH = 5.0
@@ -99,7 +102,10 @@ module Sirena
                          :EMPTY_MEMBER_COMPARTMENT, :EMPTY_CLASS_WIDTH_EXTRA,
                          :EMPTY_CLASS_MIN_WIDTH, :HIDE_CIRCLE_BASE_HEIGHT,
                          :HIDE_CIRCLE_TITLE_ALLOWANCE,
-                         :HIDE_CIRCLE_MEMBER_ALLOWANCE
+                         :HIDE_CIRCLE_MEMBER_ALLOWANCE,
+                         :ISOLATED_KIND_COLUMN_GAP,
+                         :ISOLATED_KIND_ROW_GAP,
+                         :ISOLATED_KIND_MEMBER_ALLOWANCE
 
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
@@ -118,10 +124,67 @@ module Sirena
 
         def standard_scene(diagram)
           specifications = box_specifications(diagram)
+          isolated_kinds = isolated_class_kind_scene(diagram, specifications)
+          return isolated_kinds if isolated_kinds
+
           qualified = qualified_scene(diagram, specifications)
           return qualified if qualified
 
           standard_box_scene(diagram, specifications)
+        end
+
+        def isolated_class_kind_scene(diagram, specifications)
+          return unless isolated_class_kind_family?(diagram)
+
+          rows = specifications.each_slice(2).to_a
+          boxes = isolated_class_kind_boxes(rows)
+          width, height = chain_dimensions(boxes)
+          Scene.new(width: width, height: height, boxes: boxes,
+                    relations: [], frames: [])
+        end
+
+        def isolated_class_kind_family?(diagram)
+          diagram.classes.size > 1 && diagram.notes.empty? &&
+            standalone_diagram?(diagram) &&
+            diagram.classes.any? { |klass| klass.kind != :class }
+        end
+
+        def isolated_class_kind_boxes(rows)
+          widths = isolated_class_kind_column_widths(rows)
+          tops = isolated_class_kind_row_tops(rows)
+          rows.each_with_index.flat_map do |row, row_index|
+            isolated_class_kind_row(row, widths, tops.fetch(row_index))
+          end
+        end
+
+        def isolated_class_kind_column_widths(rows)
+          columns = rows.map(&:size).max
+          Array.new(columns) do |column|
+            rows.filter_map { |row| row[column]&.fetch(:width) }.max
+          end
+        end
+
+        def isolated_class_kind_row_tops(rows)
+          heights = rows.map { |row| row.map { |item| item[:height] }.max }
+          heights.each_with_object([MARGIN]) do |height, tops|
+            tops << tops.last + height + ISOLATED_KIND_ROW_GAP
+          end
+        end
+
+        def isolated_class_kind_row(row, widths, top)
+          lefts = isolated_class_kind_column_lefts(widths)
+          height = row.map { |item| item[:height] }.max
+          row.each_with_index.map do |item, column|
+            left = lefts.fetch(column) + ((widths.fetch(column) - item[:width]) / 2)
+            y = top + ((height - item[:height]) / 2)
+            build_box(item, left, y, item[:width])
+          end
+        end
+
+        def isolated_class_kind_column_lefts(widths)
+          widths.each_with_object([MARGIN]) do |width, lefts|
+            lefts << lefts.last + width + ISOLATED_KIND_COLUMN_GAP
+          end
         end
 
         def standard_box_scene(diagram, specifications)
@@ -532,9 +595,30 @@ module Sirena
           adjust_plain_empty_width(record, klass, diagram, details[:names])
           record = multiline_title_box(record, klass, details)
           record = isolated_standard_box(record, klass, diagram, details)
+          record = isolated_class_kind_box(record, diagram, details)
           record.merge(name_rows: details[:names].size,
                        floating_generic: details[:generic],
                        **box_context(klass, diagram))
+        end
+
+        def isolated_class_kind_box(record, diagram, details)
+          return record unless isolated_class_kind_family?(diagram)
+
+          widths = standard_title_widths(details[:names]) +
+            isolated_class_kind_member_widths(details[:member_rows])
+          record.merge(
+            title_rows: details[:names], width: widths.max,
+            height: MEMBER_NOTE_CLASS_HEIGHT +
+              (details[:member_rows].size * MEMBER_NOTE_ROW_HEIGHT)
+          )
+        end
+
+        def isolated_class_kind_member_widths(rows)
+          rows.map do |row|
+            visible = row.sub(/\A[+\-#~]/, "")
+            standard_text_width(visible, font_size) +
+              ISOLATED_KIND_MEMBER_ALLOWANCE
+          end
         end
 
         def compact_empty_box(record, member_rows, diagram)
