@@ -31,17 +31,33 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
   end
 
   def signature
-    b, a, c, d = boxes.values_at("B", "A", "C", "D")
-    dimensions = boxes.transform_values { |box| rounded(box.last(2)) }
-    horizontal = [gap(b, a, 0), gap(c, d, 0)]
-    vertical = c[1] - [edge(b, 1), edge(a, 1)].max
-    row_centers = [span_center(b, a), span_center(c, d)]
-    alignments = [center(a, 1) - center(b, 1),
-                  center(d, 1) - center(c, 1),
-                  row_centers.last - row_centers.first]
     { order: groups.map { |group| group["id"].delete_prefix("class-") },
-      dimensions: dimensions, gaps: rounded([*horizontal, vertical]),
-      alignments: rounded(alignments) }
+      dimensions: boxes.transform_values { |box| rounded(box.last(2)) },
+      gaps: rounded(gaps), alignments: rounded(alignments) }
+  end
+
+  def expected
+    { order: %w[B A C D],
+      dimensions: { "B" => [121.3477, 56.4883],
+                    "A" => [41.6592, 32.0],
+                    "C" => [41.6865, 32.0],
+                    "D" => [42.4863, 32.0] },
+      gaps: [35.0, 35.0, 60.0], alignments: [0.0, 0.0, 0.0] }
+  end
+
+  def gaps
+    b, a, c, d = boxes.values_at("B", "A", "C", "D")
+    [gap(b, a, 0), gap(c, d, 0), c[1] - [edge(b, 1), edge(a, 1)].max]
+  end
+
+  def alignments
+    b, a, c, d = boxes.values_at("B", "A", "C", "D")
+    [row_offset(a, b), row_offset(d, c),
+     span_center(c, d) - span_center(b, a)]
+  end
+
+  def row_offset(box, reference)
+    center(box, 1) - center(reference, 1)
   end
 
   def gap(first, second, axis)
@@ -65,15 +81,6 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
   end
 
   it "packs re-shown members ahead of hidden-member classes" do
-    expected = {
-      order: %w[B A C D],
-      dimensions: { "B" => [121.3477, 56.4883],
-                    "A" => [41.6592, 32.0],
-                    "C" => [41.6865, 32.0],
-                    "D" => [42.4863, 32.0] },
-      gaps: [35.0, 35.0, 60.0], alignments: [0.0, 0.0, 0.0]
-    }
-
     expect(signature).to eq(expected)
   end
 end

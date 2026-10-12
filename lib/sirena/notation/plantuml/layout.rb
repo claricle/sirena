@@ -219,7 +219,7 @@ module Sirena
         def isolated_class_kind_row_tops(rows)
           heights = rows.map { |row| row.map { |item| item[:height] }.max }
           heights.each_with_object([MARGIN]) do |height, tops|
-            tops << tops.last + height + ISOLATED_KIND_ROW_GAP
+            tops << (tops.last + height + ISOLATED_KIND_ROW_GAP)
           end
         end
 
@@ -227,15 +227,21 @@ module Sirena
           lefts = isolated_class_kind_column_lefts(widths)
           height = row.map { |item| item[:height] }.max
           row.each_with_index.map do |item, column|
-            left = lefts.fetch(column) + ((widths.fetch(column) - item[:width]) / 2)
-            y = top + ((height - item[:height]) / 2)
-            build_box(item, left, y, item[:width])
+            origin = isolated_class_kind_origin(item, lefts.fetch(column),
+                                                widths.fetch(column),
+                                                [top, height])
+            build_box(item, *origin, item[:width])
           end
+        end
+
+        def isolated_class_kind_origin(item, left, cell_width, (top, height))
+          [left + ((cell_width - item[:width]) / 2),
+           top + ((height - item[:height]) / 2)]
         end
 
         def isolated_class_kind_column_lefts(widths)
           widths.each_with_object([MARGIN]) do |width, lefts|
-            lefts << lefts.last + width + ISOLATED_KIND_COLUMN_GAP
+            lefts << (lefts.last + width + ISOLATED_KIND_COLUMN_GAP)
           end
         end
 
@@ -646,12 +652,16 @@ module Sirena
           record = smetana_hide_circle_box(record, klass, diagram, details)
           adjust_plain_empty_width(record, klass, diagram, details[:names])
           record = multiline_title_box(record, klass, details)
-          record = isolated_standard_box(record, klass, diagram, details)
-          record = isolated_class_kind_box(record, diagram, details)
-          record = hide_members_grid_box(record, diagram, details)
+          record = isolated_box_sizes(record, klass, diagram, details)
           record.merge(name_rows: details[:names].size,
                        floating_generic: details[:generic],
                        **box_context(klass, diagram))
+        end
+
+        def isolated_box_sizes(record, klass, diagram, details)
+          record = isolated_standard_box(record, klass, diagram, details)
+          record = isolated_class_kind_box(record, diagram, details)
+          hide_members_grid_box(record, diagram, details)
         end
 
         def hide_members_grid_box(record, diagram, details)
@@ -713,17 +723,20 @@ module Sirena
         def smetana_hide_circle_box(record, klass, diagram, details)
           return record unless smetana_hide_circle_class?(klass, diagram)
 
-          title_widths = standard_row_widths(
-            details[:names], font_size, HIDE_CIRCLE_TITLE_ALLOWANCE
-          )
-          member_widths = standard_row_widths(
-            details[:member_rows], font_size, HIDE_CIRCLE_MEMBER_ALLOWANCE
-          )
           record.merge(
-            width: [*title_widths, *member_widths].max,
+            width: hide_circle_box_width(details),
             height: HIDE_CIRCLE_BASE_HEIGHT +
               (details[:member_rows].size * MEMBER_NOTE_ROW_HEIGHT),
           )
+        end
+
+        def hide_circle_box_width(details)
+          [
+            *standard_row_widths(details[:names], font_size,
+                                 HIDE_CIRCLE_TITLE_ALLOWANCE),
+            *standard_row_widths(details[:member_rows], font_size,
+                                 HIDE_CIRCLE_MEMBER_ALLOWANCE),
+          ].max
         end
 
         def smetana_hide_circle_class?(klass, diagram)
@@ -771,12 +784,16 @@ module Sirena
         end
 
         def heterogeneous_smetana_empty_classes?(diagram)
-          return false unless RankChain.engine(diagram) == :smetana
-          return false if compact_empty_members?(diagram)
-          return false if diagram.directives.any? { |line| hide_or_show?(line) }
+          return false unless plain_smetana_diagram?(diagram)
 
           names = simple_empty_class_names(diagram)
           names && names.map(&:length).uniq.size > 1
+        end
+
+        def plain_smetana_diagram?(diagram)
+          RankChain.engine(diagram) == :smetana &&
+            !compact_empty_members?(diagram) &&
+            diagram.directives.none? { |line| hide_or_show?(line) }
         end
 
         def simple_empty_class_names(diagram)
@@ -993,7 +1010,8 @@ module Sirena
 
         def intrinsic_box_widths?(diagram)
           body = diagram.classes.any? { |klass| klass.body.any? }
-          diagram.notes.any? || body || heterogeneous_smetana_empty_classes?(diagram) ||
+          diagram.notes.any? || body ||
+            heterogeneous_smetana_empty_classes?(diagram) ||
             diagram.directives.any? { |line| hide_or_show?(line) }
         end
 

@@ -259,18 +259,29 @@ module Sirena
               message_font_size: label_font_size,
               message_family: ("monospace" if compact?),
               label_inset: (7 if compact?), bounds: head_bounds,
-              activation_edges: compact_timeline? || two_party_activation_timeline?,
+              activation_edges: activation_edges?,
               **walker_cadence
             )
           end
 
+          def activation_edges?
+            compact_timeline? || two_party_activation_timeline?
+          end
+
           def walker_cadence
+            row_cadence.merge(gap_cadence)
+          end
+
+          def row_cadence
             { row: row_height, self_row: self_row_height,
               unlabelled_row: timeline_value(COMPACT_UNLABELLED_ROW),
               following_unlabelled_row: classic_following_unlabelled_row,
               fragment_row: fragment_row_height,
-              group_fragment_row: timeline_value(COMPACT_GROUP_ROW),
-              branch_gap: branch_gap,
+              group_fragment_row: timeline_value(COMPACT_GROUP_ROW) }
+          end
+
+          def gap_cadence
+            { branch_gap: branch_gap,
               fragment_close_gap: fragment_close_gap,
               group_close_gap: group_close_gap,
               divider_row: divider_row_height,
@@ -600,13 +611,16 @@ module Sirena
             need = RefShape.width_for(ref.label)
             return widen_over(gaps, between, low, need) if between.empty?
 
-            padding = if nested_in_fragment?(ref)
-                        FragmentShape::BASE_PAD
-                      else
-                        RefShape::SIDE_PAD
-                      end
-            share = (need - (2 * padding)) / between.size
+            spread_ref(gaps, ref, between, need)
+          end
+
+          def spread_ref(gaps, ref, between, need)
+            share = (need - (2 * ref_side_pad(ref))) / between.size
             between.each { |index| raise_gap(gaps, index, share) }
+          end
+
+          def ref_side_pad(ref)
+            nested_in_fragment?(ref) ? FragmentShape::BASE_PAD : RefShape::SIDE_PAD
           end
 
           def widen_over(gaps, between, index, need)
