@@ -90,14 +90,17 @@ module Sirena
           qualified = qualified_scene(diagram, specifications)
           return qualified if qualified
 
+          standard_box_scene(diagram, specifications)
+        end
+
+        def standard_box_scene(diagram, specifications)
           box_width = widest_box(specifications)
           chain = RankChain.for(diagram)
           return chain_scene(diagram, chain, specifications) if chain
 
-          intrinsic_widths = intrinsic_box_widths?(diagram)
           boxes = position_boxes(rows_by_package(specifications, diagram),
                                  box_width, stable_centers?(diagram),
-                                 intrinsic_widths)
+                                 intrinsic_box_widths?(diagram))
 
           build_scene(diagram, boxes, box_width)
         end
@@ -577,7 +580,8 @@ module Sirena
         end
 
         def intrinsic_box_widths?(diagram)
-          diagram.notes.any? || diagram.classes.any? { |klass| klass.body.any? } ||
+          body = diagram.classes.any? { |klass| klass.body.any? }
+          diagram.notes.any? || body ||
             diagram.directives.any? { |line| line.match?(/\A(?:hide|show)\b/i) }
         end
 
@@ -600,9 +604,15 @@ module Sirena
         def position_row(row, top, box_width, placement)
           row.each_with_index.filter_map do |item, column|
             x = box_left(item, column, placement)
-            width = placement[:intrinsic_widths] ? item&.fetch(:width) : box_width
+            width = positioned_box_width(item, box_width, placement)
             build_box(item, x, top, width) if item
           end
+        end
+
+        def positioned_box_width(item, box_width, placement)
+          return box_width unless placement[:intrinsic_widths]
+
+          item&.fetch(:width)
         end
 
         def box_footprint(box_width, stable_centers)

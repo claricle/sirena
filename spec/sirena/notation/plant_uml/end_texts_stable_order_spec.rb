@@ -23,27 +23,34 @@ RSpec.describe Sirena::Notation::PlantUML::EndTexts do
     entries.map { |entry| entry.values_at(:side, :kind, :pieces) }
   end
 
+  def dot_identities
+    [
+      [:left, :multiplicity, ["tail"]],
+      [:left, :role, ["tail role"]],
+      [:right, :multiplicity, ["head"]],
+      [:right, :role, ["head role"]],
+    ]
+  end
+
+  def smetana_identities
+    [
+      [:right, :multiplicity, ["head"]],
+      [:left, :role, ["tail role"]],
+      [:right, :role, ["head role"]],
+      [:left, :qualifier, ["key"]],
+    ]
+  end
+
   it "preserves dot end-text order when sort keys are equal" do
     entries = described_class.new(relation, :dot).entries
 
-    expect(identities(entries)).to eq(
-      [[:left, :multiplicity, ["tail"]],
-       [:left, :role, ["tail role"]],
-       [:right, :multiplicity, ["head"]],
-       [:right, :role, ["head role"]]],
-    )
+    expect(identities(entries)).to eq(dot_identities)
   end
 
   it "moves qualifiers last without reordering ordinary smetana texts" do
-    entries = described_class.new(
-      relation(left_multiplicity: "[key]"), :smetana
-    ).entries
+    relation = relation(left_multiplicity: "[key]")
+    entries = described_class.new(relation, :smetana).entries
 
-    expect(identities(entries)).to eq(
-      [[:right, :multiplicity, ["head"]],
-       [:left, :role, ["tail role"]],
-       [:right, :role, ["head role"]],
-       [:left, :qualifier, ["key"]]],
-    )
+    expect(identities(entries)).to eq(smetana_identities)
   end
 end
