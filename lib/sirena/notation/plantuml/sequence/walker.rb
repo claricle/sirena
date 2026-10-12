@@ -47,7 +47,8 @@ module Sirena
           Config = Struct.new(:message_measure, :message_font_size,
                               :message_family, :label_inset, :row, :self_row,
                               :fragment_row, :divider_row, :deactivation_gap,
-                              :bare_deactivation_gap, :bounds, keyword_init: true)
+                              :bare_deactivation_gap, :bounds,
+                              keyword_init: true)
 
           attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
                       :right, :y, :page_breaks
@@ -87,33 +88,53 @@ module Sirena
           private
 
           def apply_config(config)
-            @message_measure = config.message_measure || @measure
-            @message_font_size = config.message_font_size || @font_size
+            apply_message_config(config)
+            apply_cadence_config(config)
+            @bounds = config.bounds
+          end
+
+          def apply_message_config(config)
+            @message_measure = config_value(config, :message_measure, @measure)
+            @message_font_size = config_value(config, :message_font_size,
+                                              @font_size)
             @message_family = config.message_family
             @label_inset = config.label_inset
-            @row = config.row || ROW
-            @self_row = config.self_row || (ROW * 1.5)
-            @fragment_row = config.fragment_row || TAB_HEIGHT
-            @divider_row = config.divider_row || ROW
-            @deactivation_gap = config.deactivation_gap || 0.0
-            @bare_deactivation_gap = config.bare_deactivation_gap || 0.0
-            @bounds = config.bounds
+          end
+
+          def apply_cadence_config(config)
+            @row = config_value(config, :row, ROW)
+            @self_row = config_value(config, :self_row, ROW * 1.5)
+            @fragment_row = config_value(config, :fragment_row, TAB_HEIGHT)
+            @divider_row = config_value(config, :divider_row, ROW)
+            @deactivation_gap = config_value(config, :deactivation_gap, 0.0)
+            @bare_deactivation_gap = config_value(
+              config, :bare_deactivation_gap, 0.0
+            )
+          end
+
+          def config_value(config, member, default)
+            config[member] || default
           end
 
           def walk_items(items)
             previous = nil
             items.each_with_index do |item, index|
-              @following_activations = items.drop(index + 1).take_while do |candidate|
-                candidate.is_a?(Activation)
-              end
-              @next_non_activation = items.drop(index + 1).find do |candidate|
-                !candidate.is_a?(Activation)
-              end
-              @mark_y = nil unless anchoring?(item)
-              @headroom = headroom(items, index)
+              prepare_item(items, index, item)
               visit(item, previous)
               previous = item unless item.is_a?(Activation)
             end
+          end
+
+          def prepare_item(items, index, item)
+            following = items.drop(index + 1)
+            @following_activations = following.take_while do |candidate|
+              candidate.is_a?(Activation)
+            end
+            @next_non_activation = following.find do |candidate|
+              !candidate.is_a?(Activation)
+            end
+            @mark_y = nil unless anchoring?(item)
+            @headroom = headroom(items, index)
           end
 
           def start_empty
@@ -193,13 +214,16 @@ module Sirena
           def message(message)
             adjust_self_run(message)
             start_row(message)
-            @message_activations = @following_activations.select(&:on?)
-              .map(&:participant)
+            @message_activations = active_participants
             from, to = ends_of(message)
             draw(message, from, to) unless message.style.hidden
             touch(*extent(message, from, to))
             @y += message.self_message? ? @self_row : @row
             @previous_self_message = message.self_message? && !message.parallel?
+          end
+
+          def active_participants
+            @following_activations.select(&:on?).map(&:participant)
           end
 
           def adjust_self_run(message)
@@ -263,18 +287,24 @@ module Sirena
           # Where an end of a message lands: a lifeline, or an edge, which a
           # ring drawn there pulls inwards.
           def place_of(place, message)
-            unless place.is_a?(Edge)
-              at = centre(place)
-              return at unless activated_end?(place, message)
-
-              other = place == message.to ? message.from : message.to
-              inward = centre(other) < at ? -1 : 1
-              return at + (inward * ACTIVATION_END_INSET)
-            end
+            return participant_place(place, message) unless place.is_a?(Edge)
 
             inward = place.left? ? 1 : -1
             ring = message.edge_end.circle ? Edge::RING_INSET : 0.0
             edge_x(place, message) + (inward * ring)
+          end
+
+          def participant_place(place, message)
+            at = centre(place)
+            return at unless activated_end?(place, message)
+
+            at + activation_end_inset(place, message, at)
+          end
+
+          def activation_end_inset(place, message, at)
+            other = place == message.to ? message.from : message.to
+            direction = centre(other) < at ? -1 : 1
+            direction * ACTIVATION_END_INSET
           end
 
           def activated_end?(place, message)

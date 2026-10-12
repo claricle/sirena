@@ -235,13 +235,17 @@ module Sirena
               message_measure: ->(text) { label_text_width(text) },
               message_font_size: label_font_size,
               message_family: ("monospace" if compact?),
-              label_inset: (7 if compact?), row: row_height,
-              self_row: self_row_height, fragment_row: fragment_row_height,
+              label_inset: (7 if compact?), bounds: head_bounds,
+              **walker_cadence
+            )
+          end
+
+          def walker_cadence
+            { row: row_height, self_row: self_row_height,
+              fragment_row: fragment_row_height,
               divider_row: divider_row_height,
               deactivation_gap: deactivation_gap,
-              bare_deactivation_gap: bare_deactivation_gap,
-              bounds: head_bounds
-            )
+              bare_deactivation_gap: bare_deactivation_gap }
           end
 
           # Where `->]` messages end: past every head, and far enough from
@@ -367,7 +371,11 @@ module Sirena
           end
 
           def padded_label_width(participant, padding)
-            return measure_text(participant.label, font_size: head_font_size)[:width] + (2 * padding) if compact?
+            if compact?
+              width = measure_text(participant.label,
+                                   font_size: head_font_size)[:width]
+              return width + (2 * padding)
+            end
 
             label = TextAdvances.width(participant.label,
                                        font_size: head_font_size,
@@ -385,7 +393,8 @@ module Sirena
           def head_box_dimensions
             return [0.0, INTRINSIC_HEAD_PADDING] if intrinsic_head_width?
 
-            [minimum_head_width, compact? ? head_padding : INTRINSIC_HEAD_PADDING]
+            padding = compact? ? head_padding : INTRINSIC_HEAD_PADDING
+            [minimum_head_width, padding]
           end
 
           # Without a requested minimum, a classic head is as wide as its
@@ -511,7 +520,8 @@ module Sirena
             case note.side
             when :left then raise_gap(gaps, low - 1, need + 12)
             when :right then raise_gap(gaps, high, need + 12)
-            else widen_over(gaps, (low...high).to_a, low, need) unless low == high
+            else
+              widen_over(gaps, (low...high).to_a, low, need) unless low == high
             end
           end
 
@@ -575,13 +585,17 @@ module Sirena
           def message_room(message, self_message)
             room = label_width(message) + (2 * head_padding)
             unless compact?
-              return label_width(message) + (2 * INTRINSIC_HEAD_PADDING) if self_message
-
-              return room
+              return classic_message_room(message, room, self_message)
             end
             return room unless self_message
 
             [SELF_WIDTH, 7 + label_width(message)].max + head_padding
+          end
+
+          def classic_message_room(message, ordinary, self_message)
+            return ordinary unless self_message
+
+            label_width(message) + (2 * INTRINSIC_HEAD_PADDING)
           end
 
           def indexes(message)
