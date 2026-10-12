@@ -39,6 +39,7 @@ module Sirena
         MEMBER_NOTE_LINE_HEIGHT = 15.310546875
         MEMBER_NOTE_STACK_GAP = 10.0
         MEMBER_NOTE_BODY_GAP = 35.0
+        CLASS_NOTE_GAP = 35.0
         MEMBER_NOTE_CLASS_HEIGHT = 48.0
         MEMBER_NOTE_SIDE_PADDING = 6.0
         STANDARD_MEMBER_SIDE_ALLOWANCE = 20.0
@@ -72,6 +73,7 @@ module Sirena
                          :MEMBER_NOTE_LINE_HEIGHT, :MEMBER_NOTE_STACK_GAP,
                          :MEMBER_NOTE_BODY_GAP, :MEMBER_NOTE_CLASS_HEIGHT,
                          :MEMBER_NOTE_SIDE_PADDING,
+                         :CLASS_NOTE_GAP,
                          :STANDARD_MEMBER_SIDE_ALLOWANCE,
                          :STANDARD_STEREOTYPE_ROW_HEIGHT,
                          :STANDARD_TITLE_SIDE_ALLOWANCE,
@@ -83,6 +85,8 @@ module Sirena
           diagram = IRReader.call(graph)
           body = if member_note_family?(diagram)
                    member_note_scene(diagram)
+                 elsif class_note_pair_family?(diagram)
+                   class_note_pair_scene(diagram)
                  else
                    standard_scene(diagram)
                  end
@@ -189,6 +193,33 @@ module Sirena
           plain_class?(klass) && member_notes?(diagram.notes, klass)
         end
 
+        def class_note_pair_family?(diagram)
+          classes = diagram.classes
+          notes = diagram.notes
+          class_note_pair_counts?(classes, notes) &&
+            standalone_diagram?(diagram) &&
+            classes.all? { |klass| class_note_class?(klass) } &&
+            paired_class_notes?(classes, notes)
+        end
+
+        def class_note_pair_counts?(classes, notes)
+          classes.size > 1 && notes.size == classes.size
+        end
+
+        def paired_class_notes?(classes, notes)
+          return false unless class_level_right_notes?(notes)
+
+          notes.map(&:target).sort == classes.map(&:name).sort
+        end
+
+        def class_note_class?(klass)
+          plain_class?(klass) && klass.body.empty?
+        end
+
+        def class_level_right_notes?(notes)
+          notes.all? { |note| note.member.nil? && note.side == :right }
+        end
+
         def standalone_diagram?(diagram)
           diagram.relations.empty? && diagram.junctions.empty? &&
             diagram.packages.empty?
@@ -212,9 +243,74 @@ module Sirena
           class_box = member_note_class_box(klass)
           notes = member_note_boxes(diagram, klass, class_box)
           boxes = [class_box, *notes]
+          boxes_only_scene(boxes)
+        end
+
+        def class_note_pair_scene(diagram)
+          specifications = diagram.classes.to_h do |klass|
+            [klass.name, box_specification(klass, diagram)]
+          end
+          notes = indexed_class_notes(diagram.notes)
+          boxes = place_class_note_pairs(diagram.classes, specifications,
+                                         notes)
+          boxes_only_scene(boxes)
+        end
+
+        def boxes_only_scene(boxes)
           Scene.new(width: far_edge(boxes) { |box| box.x + box.width },
                     height: far_edge(boxes) { |box| box.y + box.height },
                     boxes: boxes, relations: [], frames: [])
+        end
+
+        def indexed_class_notes(notes)
+          notes.each_with_index.to_h do |note, index|
+            [note.target, [note, index]]
+          end
+        end
+
+        def place_class_note_pairs(classes, specifications, notes)
+          cursor = MARGIN
+          classes.flat_map do |klass|
+            item = specifications.fetch(klass.name)
+            class_box = build_box(item, cursor, MARGIN, item[:width])
+            note, index = notes.fetch(klass.name)
+            note_box = class_level_note_box(note, index, class_box)
+            cursor = note_box.x + note_box.width + CLASS_NOTE_GAP
+            [class_box, note_box]
+          end
+        end
+
+        def class_level_note_box(note, index, class_box)
+          geometry = class_level_note_geometry(note, class_box)
+          Scene::Box.new(
+            id: "note-#{index}", **geometry,
+            texts: member_note_texts(note, geometry[:x], geometry[:y]),
+            separators: [class_level_note_pointer(class_box, geometry)],
+            kind: "member_note", fill: note.color
+          )
+        end
+
+        def class_level_note_geometry(note, class_box)
+          height = member_note_height(note)
+          {
+            x: class_box.x + class_box.width + CLASS_NOTE_GAP,
+            y: class_box.y + ((class_box.height - height) / 2),
+            width: class_level_note_width(note), height: height
+          }
+        end
+
+        def class_level_note_pointer(class_box, geometry)
+          segment(class_box.x + class_box.width,
+                  class_box.y + (class_box.height / 2),
+                  geometry[:x], geometry[:y] + (geometry[:height] / 2))
+        end
+
+        def class_level_note_width(note)
+          size = font_size * (13.0 / 14.0)
+          widths = note.lines.map do |line|
+            Sequence::TextAdvances.width(line, font_size: size)
+          end
+          widths.max.to_f + 21.0
         end
 
         def far_edge(boxes, &)
