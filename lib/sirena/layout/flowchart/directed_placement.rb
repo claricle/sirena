@@ -84,13 +84,15 @@ module Sirena
           return if boxes.empty?
 
           level_edges = @level_edges.at(container)
-          place_boxes(boxes, level_edges, frame)
+          place_boxes(boxes, level_edges, frame, nested: !container.nil?)
           ClusterReach.apply(boxes, level_edges, sideways: frame.sideways?)
         end
 
-        def place_boxes(boxes, level_edges, frame)
+        def place_boxes(boxes, level_edges, frame, nested:)
           flat = flat_graph(boxes, level_edges)
-          place_flat(flat, frame, cluster_names(boxes))
+          clusters = cluster_names(boxes)
+          leading = nested ? linked_component_clusters(boxes) : []
+          place_flat(flat, frame, clusters, leading)
           boxes.zip(flat[:children]) do |box, placed|
             box.merge!(x: placed[:x], y: placed[:y])
           end
@@ -99,6 +101,12 @@ module Sirena
         def cluster_names(boxes)
           boxes.each_index.filter_map do |index|
             "box-#{index}" if cluster?(boxes[index])
+          end
+        end
+
+        def linked_component_clusters(boxes)
+          boxes.each_index.filter_map do |index|
+            "box-#{index}" if split_linked_cluster?(boxes[index])
           end
         end
 
@@ -168,6 +176,9 @@ module Sirena
         end
 
         def cluster_padding(cluster, contents, top_level)
+          if split_linked_cluster?(cluster) && !top_level
+            return [EXTERNAL_CLUSTER_SIDE, Base::DEFAULT_NODE_SPACING]
+          end
           if @level_edges.external?(cluster[:id])
             return external_cluster_padding(top_level)
           end
@@ -184,11 +195,58 @@ module Sirena
         def top_level_independent_padding(contents)
           nested = contents.select { |box| cluster?(box) }
           return [INDEPENDENT_CLUSTER_PADDING] * 2 if nested.empty?
+          if nested.any? { |box| split_linked_cluster?(box) }
+            return [INDEPENDENT_CLUSTER_PADDING, EXTERNAL_CLUSTER_SIDE]
+          end
           if nested.all? { |box| (box[:children] || []).one? }
             return [INDEPENDENT_CLUSTER_PADDING, CLUSTER_VERTICAL]
           end
 
           [CLUSTER_SIDE, CLUSTER_VERTICAL]
+        end
+
+        # Mermaid retains declaration order when a nested subgraph combines
+        # multiple linked components (for example, repeated subgraph ids).
+        # Isolated nodes are excluded: ordinary disconnected clusters keep
+        # the established compact frame and component packing.
+        def split_linked_cluster?(cluster)
+          return false unless cluster?(cluster)
+
+          children = cluster[:children] || []
+          edges = @level_edges.at(cluster[:id])
+          linked = edges.flat_map { |_, from, to| [from, to] }.compact.uniq
+          ids = children.map { |child| child[:id] }
+          return false unless ids.size >= 4 && (ids - linked).empty?
+
+          connected_components(ids, edges).size > 1
+        end
+
+        def connected_components(ids, edges)
+          links = ids.to_h { |id| [id, []] }
+          edges.each do |_, from, to|
+            next unless links.key?(from) && links.key?(to)
+
+            links[from] << to
+            links[to] << from
+          end
+          ids.each_with_object([]) do |id, components|
+            next if components.flatten.include?(id)
+
+            components << connected_ids(id, links)
+          end
+        end
+
+        def connected_ids(first, links)
+          found = []
+          pending = [first]
+          until pending.empty?
+            id = pending.shift
+            next if found.include?(id)
+
+            found << id
+            pending.concat(links.fetch(id))
+          end
+          found
         end
 
         # A subgraph with its own `direction`, or with no edge crossing its
@@ -255,16 +313,43 @@ module Sirena
           label ? label[axis].to_i : 0
         end
 
-        def place_flat(flat, frame, cluster_names)
+        def place_flat(flat, frame, cluster_names, leading_clusters)
           transposed = frame.sideways?
           transpose(flat) if transposed
+          children = flat[:children]
+          order_leading_clusters(flat, leading_clusters)
           flat[:layoutOptions] = downward_options(frame)
           ElkPlacement.apply(flat)
           apply_label_geometry(flat, transposed)
           MinimumRankSpacing.apply(flat, frame.rank_spacing)
           ComponentPacking.apply(flat, cluster_names)
+          align_leading_clusters(flat, leading_clusters, transposed)
+          flat[:children] = children
           transpose(flat) if transposed
           mirror(flat, frame.direction)
+        end
+
+        def order_leading_clusters(flat, leading_clusters)
+          return if leading_clusters.empty?
+
+          ordinary, leading = flat[:children].partition do |box|
+            !leading_clusters.include?(box[:id])
+          end
+          flat[:children] = ordinary + leading
+        end
+
+        def align_leading_clusters(flat, leading_clusters, transposed)
+          return if leading_clusters.empty?
+
+          ordinary, leading = flat[:children].partition do |box|
+            !leading_clusters.include?(box[:id])
+          end
+          anchor = ordinary.last
+          return unless anchor
+
+          axis, size = transposed ? %i[y height] : %i[x width]
+          centre = anchor[axis] + (anchor[size] / 2.0)
+          leading.each { |box| box[axis] = centre - (box[size] / 2.0) }
         end
 
         def apply_label_geometry(flat, transposed)
