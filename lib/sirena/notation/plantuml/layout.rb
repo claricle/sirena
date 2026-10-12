@@ -551,9 +551,12 @@ module Sirena
         end
 
         def adjust_plain_empty_width(specification, klass, diagram, names)
-          return unless plain_empty_class?(klass, diagram, names)
-
-          specification[:width] = plain_empty_class_width(names.first)
+          if plain_empty_class?(klass, diagram, names)
+            specification[:width] = plain_empty_class_width(names.first)
+          elsif heterogeneous_smetana_empty_class?(klass, diagram, names)
+            specification[:width] = standard_title_widths(names).max
+            specification[:height] = MEMBER_NOTE_CLASS_HEIGHT
+          end
         end
 
         def plain_empty_class?(klass, diagram, names)
@@ -578,6 +581,33 @@ module Sirena
             rows.first
           end
           names.map(&:length).uniq.one?
+        end
+
+        def heterogeneous_smetana_empty_class?(klass, diagram, names)
+          simple_empty_class?(klass, names) &&
+            heterogeneous_smetana_empty_classes?(diagram)
+        end
+
+        def heterogeneous_smetana_empty_classes?(diagram)
+          return false unless RankChain.engine(diagram) == :smetana
+          return false if compact_empty_members?(diagram)
+          return false if diagram.directives.any? { |line| hide_or_show?(line) }
+
+          names = simple_empty_class_names(diagram)
+          names && names.map(&:length).uniq.size > 1
+        end
+
+        def simple_empty_class_names(diagram)
+          diagram.classes.map do |candidate|
+            rows = name_rows(candidate)
+            return unless simple_empty_class?(candidate, rows)
+
+            rows.first
+          end
+        end
+
+        def hide_or_show?(line)
+          line.match?(/\A(?:hide|show)\b/i)
         end
 
         def plain_empty_class_width(name)
@@ -781,8 +811,8 @@ module Sirena
 
         def intrinsic_box_widths?(diagram)
           body = diagram.classes.any? { |klass| klass.body.any? }
-          diagram.notes.any? || body ||
-            diagram.directives.any? { |line| line.match?(/\A(?:hide|show)\b/i) }
+          diagram.notes.any? || body || heterogeneous_smetana_empty_classes?(diagram) ||
+            diagram.directives.any? { |line| hide_or_show?(line) }
         end
 
         def position_boxes(rows, box_width, stable_centers, intrinsic_widths)
