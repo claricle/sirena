@@ -70,9 +70,9 @@ RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
     explicit = labels.values_at("one", "two", "three")
 
     expect([
-      explicit.map { |label| [label.rotation, label.text_anchor] }.uniq,
-      labels.fetch("commit-4").rotation,
-    ]).to eq([[[-45.0, "start"]], nil])
+             explicit.map { |label| [label.rotation, label.text_anchor] }.uniq,
+             labels.fetch("commit-4").rotation,
+           ]).to eq([[[-45.0, "start"]], nil])
   end
 
   it "keeps explicit-ID lane clearance with tags and marker types" do

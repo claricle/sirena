@@ -590,8 +590,10 @@ module Sirena
           diagram.relations.each_with_index.flat_map do |relation, index|
             ends = [relation.left, relation.right].map { |n| by_name.fetch(n) }
             junctions = owners[index]
-            next [relation_scene(relation, "relation-#{index}",
-                                 relation_endpoints(*ends))] if junctions.empty?
+            if junctions.empty?
+              next [relation_scene(relation, "relation-#{index}",
+                                   relation_endpoints(*ends))]
+            end
 
             junction = junction_box(nodes[index], ends)
             junction_scenes(relation, index, [ends, junction],
@@ -617,7 +619,7 @@ module Sirena
         # relation when the grid placed the classes.
         def junction_box(node, ends)
           node ||= [*midpoint(*relation_endpoints(*ends).values_at(:left,
-                                                                    :right)),
+                                                                   :right)),
                     0.0, 0.0]
           x, y, width, height = node
           Scene::Box.new(id: "junction", x: x, y: y, width: width,
@@ -645,10 +647,10 @@ module Sirena
           markers = relation.markers
           [relation_scene(relation, "relation-#{index}-from",
                           relation_endpoints(from, junction), sides: %i[left],
-                          markers: { left: markers[swap ? :right : :left] }),
+                                                              markers: { left: markers[swap ? :right : :left] }),
            relation_scene(relation, "relation-#{index}-to",
                           relation_endpoints(junction, to), sides: %i[right],
-                          markers: { right: markers[swap ? :left : :right] }),
+                                                            markers: { right: markers[swap ? :left : :right] }),
            *owners.map { |entry| owner_link(junction, *entry) }]
         end
 
@@ -778,7 +780,7 @@ module Sirena
           formatted_points(
             [tip, marker_side(base, direction, ARROW_HALF_WIDTH),
              shift(tip, *direction, -ARROW_NOTCH),
-             marker_side(base, direction, -ARROW_HALF_WIDTH)]
+             marker_side(base, direction, -ARROW_HALF_WIDTH)],
           )
         end
 
