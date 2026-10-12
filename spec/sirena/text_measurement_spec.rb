@@ -111,6 +111,7 @@ RSpec.describe Sirena::TextMeasurement do
       "U+FDFC" => ["﷼", 125.0],
       "U+FDFD" => ["﷽", 650.0],
       "an emoji" => ["😀", 150.0],
+      "a pinned pictograph" => ["♭", 150.0],
       "a nonspacing mark (Mn)" => ["́", 0.0],
       "an enclosing mark (Me)" => ["⃝", 0.0],
       "a format character (Cf)" => ["‍", 0.0],

@@ -56,6 +56,10 @@ module Sirena
 
     ZERO_WIDTH = /[\p{Mn}\p{Me}\p{Cf}\p{Cc}]/
     EMOJI = /\p{Extended_Pictographic}/
+    # Ruby 4 moved to Unicode 17, where U+266D no longer matches
+    # Extended_Pictographic. Keep the measured width independent of the
+    # Unicode tables bundled with the running Ruby.
+    PINNED_PICTOGRAPHS = [0x266D].freeze
 
     # A pictographic character plus U+FE0F asks for the emoji glyph, even for
     # one the table has as text (U+00A9 is 0.737 em as text, 1.0 em as emoji
@@ -123,7 +127,8 @@ module Sirena
     end
 
     def self.fallback_advance(char, monospace)
-      return EMOJI_ADVANCE if char.match?(EMOJI)
+      return EMOJI_ADVANCE if PINNED_PICTOGRAPHS.include?(char.ord) ||
+                              char.match?(EMOJI)
 
       monospace ? MONOSPACE_ADVANCE : DEFAULT_ADVANCE
     end
