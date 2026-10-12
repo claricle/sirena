@@ -61,6 +61,7 @@ module Sirena
           COMPACT_GROUP_CLOSE = 32.0
           COMPACT_SELF_ROW = 42.1328
           CLASSIC_FIRST_ROW_GAP = 32.3105
+          CLASSIC_UNLABELLED_FIRST_ROW_GAP = 17.3105
           CLASSIC_ROW = 29.3105
           CLASSIC_SELF_ROW = 42.3105
           CLASSIC_SELF_CLEARANCE = 50.0
@@ -110,7 +111,8 @@ module Sirena
                            :COMPACT_GROUP_FIRST_ROW_GAP, :COMPACT_ROW,
                            :COMPACT_UNLABELLED_ROW, :COMPACT_GROUP_ROW,
                            :COMPACT_GROUP_CLOSE, :COMPACT_SELF_ROW,
-                           :CLASSIC_FIRST_ROW_GAP, :CLASSIC_ROW,
+                           :CLASSIC_FIRST_ROW_GAP,
+                           :CLASSIC_UNLABELLED_FIRST_ROW_GAP, :CLASSIC_ROW,
                            :CLASSIC_SELF_ROW, :CLASSIC_SELF_CLEARANCE,
                            :CLASSIC_FRAGMENT_ROW,
                            :CLASSIC_DIVIDER_ROW, :CLASSIC_DEACTIVATION_GAP,
@@ -1177,8 +1179,16 @@ module Sirena
             if compact_timeline?
               return COMPACT_GROUP_FIRST_ROW_GAP
             end
+            if classic_unlabelled_first_message?
+              return CLASSIC_UNLABELLED_FIRST_ROW_GAP
+            end
 
             compact? ? COMPACT_FIRST_ROW_GAP : CLASSIC_FIRST_ROW_GAP
+          end
+
+          def classic_unlabelled_first_message?
+            first = @diagram.items.first
+            !compact? && first.is_a?(Message) && first.label.to_s.empty?
           end
 
           def row_height
