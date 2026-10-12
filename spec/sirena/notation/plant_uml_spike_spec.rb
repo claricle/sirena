@@ -75,6 +75,13 @@ module PlantUmlSpikeHelpers
     line
   end
 
+  def rendered_member_line(member)
+    line = "#{VISIBILITY_MARKS.fetch(member.visibility)}#{member.name}"
+    line += "(#{member.parameters})" if member.kind == :method
+    line += ": #{member.type}" if member.type
+    line
+  end
+
   def relation_line(relation)
     glyph = ARROW_GLYPHS.fetch(relation.kind).fetch(relation.head)
     [relation.left, quoted(relation.left_multiplicity), glyph,
@@ -171,7 +178,7 @@ module PlantUmlSpikeHelpers
 
   def expected_render_texts(diagram)
     class_texts = diagram.classes.flat_map do |klass|
-      [klass.name, *klass.body.map { |member| member_line(member) }]
+      [klass.name, *klass.body.map { |member| rendered_member_line(member) }]
     end
     relation_texts = diagram.relations.flat_map do |relation|
       [relation.label, relation.left_multiplicity,

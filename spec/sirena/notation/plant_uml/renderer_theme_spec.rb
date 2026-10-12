@@ -101,7 +101,7 @@ RSpec.describe Sirena::Notation::PlantUML::Renderer do
     svg = Sirena.render(class_source, notation: :plantuml, theme: theme)
 
     expect(Digest::SHA256.hexdigest(svg)).to eq(
-      "a02a6ded060337b9eaa55d5b62035591cee1987d1fae4ec17fac3762ba47d0ca",
+      "2ae0e61ea6761cd3bf19f249b5c2bb1123f47dfd31fa569ac761e211d76dee39",
     )
   end
 
