@@ -33,6 +33,8 @@ module Sirena
           LINE_LEADING = 1.1776
           SELF_WIDTH = 36.0
           SELF_HEIGHT = 20.0
+          LOOP_HEIGHT = 13.0
+          private_constant :LOOP_HEIGHT
           TAB_HEIGHT = 20.0
           CROSS_HALF = 9.0
           TOP_OFFSET = 20.0
@@ -217,7 +219,7 @@ module Sirena
           def start_row(message)
             @y += @headroom
             @y += [label_lines(message).size - 1, 0].max * line_step
-            @self_drop = message.self_message? ? SELF_HEIGHT : 0.0
+            @self_drop = message.self_message? ? self_height : 0.0
             @last_y = @mark_y = @y
           end
 
@@ -331,7 +333,7 @@ module Sirena
           def self_arrow(message, centre)
             side = loops_left?(message) ? -1 : 1
             far = centre + (side * SELF_WIDTH)
-            bottom = @y + SELF_HEIGHT
+            bottom = @y + self_height
             tail, start = ArrowMarks.for(message.style.tail, centre, @y, side)
             head, stop = ArrowMarks.for(message.style.head, centre, bottom,
                                         side)
@@ -349,6 +351,10 @@ module Sirena
             centre = far - (side * SELF_WIDTH)
             [centre + (side * @label_inset), @y - 18.0659,
              side.positive? ? "start" : "end"]
+          end
+
+          def self_height
+            @label_inset ? SELF_HEIGHT : LOOP_HEIGHT
           end
 
           def arrow_record(message, geometry)
