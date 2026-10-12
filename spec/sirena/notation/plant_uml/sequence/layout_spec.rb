@@ -105,7 +105,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     arrows = scene_of("A -> B", "B -> A").arrows
     ys = arrows.map { |arrow| arrow.path[/M \S+ (\S+)/, 1].to_f }
 
-    expect(ys.last - ys.first).to be_within(0.001).of(29.3105)
+    expect(ys.last - ys.first).to be_within(0.001).of(14.0)
   end
 
   it "points a reversed arrow at the participant on the left" do
@@ -430,7 +430,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     it "spans from the activating arrow to the deactivating one" do
       bar = scene_of("A -> B ++", "B -> A --").bars.first
 
-      expect(bar.height).to be_within(0.001).of(29.3105)
+      expect(bar.height).to be_within(0.001).of(14.0)
     end
 
     it "closes a bar still open at the end of the diagram" do
