@@ -15,23 +15,22 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     document = Nokogiri::XML(Sirena.render(source, notation: :plantuml))
     document.remove_namespaces!
     document.xpath("//g[starts-with(@id, 'class-')]").to_h do |group|
-      [group["id"].delete_prefix("class-"), group.at_xpath("./rect")["width"].to_f]
+      id = group["id"].delete_prefix("class-")
+      [id, group.at_xpath("./rect")["width"].to_f]
     end
   end
 
-  it "keeps member-bearing classes at their intrinsic widths" do
-    widths = class_widths(<<~PLANTUML)
+  def member_classes
+    <<~PLANTUML
       class Short
       class Detailed {
         + aMuchLongerMember: String
       }
     PLANTUML
-
-    expect(widths.fetch("Short")).to be < widths.fetch("Detailed")
   end
 
-  it "keeps intrinsic widths when a rank chain places the classes" do
-    widths = class_widths(<<~PLANTUML)
+  def linked_member_classes
+    <<~PLANTUML
       !pragma layout smetana
       class Short {
         + id: int
@@ -41,17 +40,31 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
       }
       Short -- Detailed
     PLANTUML
-
-    expect(widths.fetch("Short")).to be < widths.fetch("Detailed")
   end
 
-  it "does not widen a class to the width of its attached note" do
-    widths = class_widths(<<~PLANTUML)
+  def noted_class
+    <<~PLANTUML
       class Short
       note right of Short
         a note that is much wider than the class title
       end note
     PLANTUML
+  end
+
+  it "keeps member-bearing classes at their intrinsic widths" do
+    widths = class_widths(member_classes)
+
+    expect(widths.fetch("Short")).to be < widths.fetch("Detailed")
+  end
+
+  it "keeps intrinsic widths when a rank chain places the classes" do
+    widths = class_widths(linked_member_classes)
+
+    expect(widths.fetch("Short")).to be < widths.fetch("Detailed")
+  end
+
+  it "does not widen a class to the width of its attached note" do
+    widths = class_widths(noted_class)
 
     expect(widths.fetch("Short")).to eq(68.0)
   end
