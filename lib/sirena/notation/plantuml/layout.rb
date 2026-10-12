@@ -68,6 +68,18 @@ module Sirena
         ISOLATED_KIND_MEMBER_ALLOWANCE = 26.0
         HIDDEN_MEMBER_EMPTY_HEIGHT = 32.0
         RESHOWN_MEMBER_BASE_HEIGHT = 40.0
+        QUALIFIED_GENERIC_FONT_SIZE = 12.0
+        QUALIFIED_GENERIC_GAP = 7.0
+        QUALIFIED_BOX_HEIGHT = 48.0
+        QUALIFIED_GENERIC_HEIGHT = 51.0
+        QUALIFIED_QUALIFIER_ALLOWANCE = 40.0
+        COMPACT_QUALIFIER_ALLOWANCE = 20.0
+        QUALIFIED_STEEP_ARROW_OFFSET = 37.0
+        QUALIFIED_LONG_CURVE_OFFSET = 210.0
+        QUALIFIED_FLAT_CURVE_OFFSET = 30.0
+        QUALIFIED_FAN_LANE_ALLOWANCE = 4.0
+        QUALIFIED_DOUBLE_END_HALF_WIDTH = 10.0
+        QUALIFIED_INHERITANCE_HALF_WIDTH = 6.0
         ARROW_LENGTH = 9.0
         ARROW_HALF_WIDTH = 4.0
         ARROW_NOTCH = 5.0
@@ -109,7 +121,18 @@ module Sirena
                          :ISOLATED_KIND_ROW_GAP,
                          :ISOLATED_KIND_MEMBER_ALLOWANCE,
                          :HIDDEN_MEMBER_EMPTY_HEIGHT,
-                         :RESHOWN_MEMBER_BASE_HEIGHT
+                         :RESHOWN_MEMBER_BASE_HEIGHT,
+                         :QUALIFIED_GENERIC_FONT_SIZE,
+                         :QUALIFIED_GENERIC_GAP, :QUALIFIED_BOX_HEIGHT,
+                         :QUALIFIED_GENERIC_HEIGHT,
+                         :QUALIFIED_QUALIFIER_ALLOWANCE,
+                         :COMPACT_QUALIFIER_ALLOWANCE,
+                         :QUALIFIED_STEEP_ARROW_OFFSET,
+                         :QUALIFIED_LONG_CURVE_OFFSET,
+                         :QUALIFIED_FLAT_CURVE_OFFSET,
+                         :QUALIFIED_FAN_LANE_ALLOWANCE,
+                         :QUALIFIED_DOUBLE_END_HALF_WIDTH,
+                         :QUALIFIED_INHERITANCE_HALF_WIDTH
 
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
@@ -272,13 +295,22 @@ module Sirena
         end
 
         def qualified_association_scene(diagram, qualified, specifications)
-          sizes = qualified_sizes(specifications)
+          sizes = qualified.constrained_sizes(qualified_sizes(specifications))
+          specifications = resized_specifications(specifications, sizes)
           corners = qualified.place(sizes, [MARGIN, MARGIN])
           boxes = chain_boxes(specifications, corners, sizes)
           width, height = chain_dimensions(boxes)
+          @qualified_layout_active = true
           @qualified_route_middle = qualified_route_middle(boxes)
           Scene.new(width: width, height: height, boxes: boxes, frames: [],
                     relations: scene_relations(diagram, boxes))
+        end
+
+        def resized_specifications(specifications, sizes)
+          specifications.map do |item|
+            width, height = sizes.fetch(item[:id])
+            item.merge(width: width, height: height)
+          end
         end
 
         def qualified_sizes(specifications)
@@ -661,7 +693,65 @@ module Sirena
         def isolated_box_sizes(record, klass, diagram, details)
           record = isolated_standard_box(record, klass, diagram, details)
           record = isolated_class_kind_box(record, diagram, details)
-          hide_members_grid_box(record, diagram, details)
+          record = hide_members_grid_box(record, diagram, details)
+          qualified_association_box(record, klass, diagram, details)
+        end
+
+        def qualified_association_box(record, klass, diagram, details)
+          return record unless QualifiedAssociationLayout.for(diagram)
+
+          widths = standard_title_widths(details[:names])
+          widths << qualified_generic_width(widths.max, details[:generic])
+          widths << qualified_incident_width(klass, diagram)
+          record.merge(title_rows: details[:names], width: widths.compact.max,
+                       height: qualified_box_height(diagram, details[:generic]))
+        end
+
+        def qualified_generic_width(title_width, generic)
+          return unless generic
+
+          title_width + standard_text_width(generic,
+                                            QUALIFIED_GENERIC_FONT_SIZE) +
+            QUALIFIED_GENERIC_GAP
+        end
+
+        def qualified_incident_width(klass, diagram)
+          qualifiers = diagram.relations.filter_map do |relation|
+            next unless relation.direction.nil?
+            next unless [relation.left, relation.right].include?(klass.name)
+
+            qualified_text_at(relation, klass.name)
+          end
+          text = qualifiers.compact.max_by(&:length)
+          return unless text
+
+          allowance = if qualified_compact?(diagram)
+                        COMPACT_QUALIFIER_ALLOWANCE
+                      else
+                        QUALIFIED_QUALIFIER_ALLOWANCE
+                      end
+          standard_text_width(text, font_size) + allowance
+        end
+
+        def qualified_text_at(relation, name)
+          content = if relation.left == name
+                      relation.left_multiplicity
+                    else
+                      relation.right_multiplicity
+                    end
+          return unless content&.start_with?("[")
+
+          content.delete_prefix("[").delete_suffix("]").split("\\n").max_by(&:length)
+        end
+
+        def qualified_box_height(diagram, generic)
+          return HIDDEN_MEMBER_EMPTY_HEIGHT if qualified_compact?(diagram)
+
+          generic ? QUALIFIED_GENERIC_HEIGHT : QUALIFIED_BOX_HEIGHT
+        end
+
+        def qualified_compact?(diagram)
+          diagram.directives.include?("hide empty members")
         end
 
         def hide_members_grid_box(record, diagram, details)
@@ -1317,11 +1407,79 @@ module Sirena
                     else
                       endpoints
                     end
-          control = qualified_label_control(relation, ordered)
+          if fan_qualifier_relation?(relation)
+            return fan_qualifier_path(relation, ordered)
+          end
+          if long_qualified_vertical?(relation, ordered)
+            return long_qualified_vertical_path(ordered)
+          end
+
+          control = qualified_label_control(relation, ordered) ||
+            qualified_lane_control(relation, ordered)
           return relation_path(ordered) unless control
 
           "M #{point(ordered[:left])} Q #{point(control)} " \
             "#{point(ordered[:right])}"
+        end
+
+        def fan_qualifier_relation?(relation)
+          multiplicities = [relation.left_multiplicity,
+                            relation.right_multiplicity].compact
+          relation.direction.nil? && relation.length == 2 &&
+            multiplicities.one? && multiplicities.first.start_with?("[")
+        end
+
+        def fan_qualifier_path(relation, endpoints)
+          first, last = endpoints.values_at(:left, :right)
+          qualifier = [relation.left_multiplicity,
+                       relation.right_multiplicity].compact.first
+            .delete_prefix("[").delete_suffix("]")
+          width = standard_text_width(qualifier, font_size) +
+            QUALIFIED_FAN_LANE_ALLOWANCE
+          middle = midpoint(first, last)
+          vertical = (last[1] - first[1]) / 3
+          left = [middle[0] - (width / 2), first[1] + vertical]
+          right = [middle[0] + (width / 2), last[1] - vertical]
+          "M #{point(first)} L #{point(left)} L #{point(right)} " \
+            "L #{point(last)}"
+        end
+
+        def long_qualified_vertical?(relation, endpoints)
+          qualifier_relation?(relation) && relation.length > 2 &&
+            steep?(*endpoints.values_at(:left, :right))
+        end
+
+        def long_qualified_vertical_path(endpoints)
+          first, last = endpoints.values_at(:left, :right)
+          vertical = (last[1] - first[1]) / 3
+          outgoing = [first[0] - QUALIFIED_LONG_CURVE_OFFSET,
+                      first[1] + vertical]
+          incoming = [last[0] + QUALIFIED_LONG_CURVE_OFFSET,
+                      last[1] - vertical]
+          "M #{point(first)} C #{point(outgoing)} #{point(incoming)} " \
+            "#{point(last)}"
+        end
+
+        def qualified_lane_control(relation, endpoints)
+          return unless single_qualifier_with_other_end?(relation)
+
+          left, right = endpoints.values_at(:left, :right)
+          return if steep?(left, right)
+
+          middle = midpoint(left, right)
+          outward = if middle[1] < @qualified_route_middle
+                      -QUALIFIED_FLAT_CURVE_OFFSET
+                    else
+                      QUALIFIED_FLAT_CURVE_OFFSET
+                    end
+          [middle[0], middle[1] + outward]
+        end
+
+        def single_qualifier_with_other_end?(relation)
+          multiplicities = [relation.left_multiplicity,
+                            relation.right_multiplicity].compact
+          multiplicities.one? { |text| text.start_with?("[") } &&
+            multiplicities.size > 1
         end
 
         def reversed_qualified?(relation)
@@ -1350,10 +1508,15 @@ module Sirena
         def qualified_marker_half_width(relation, endpoints)
           qualifiers = [relation.left_multiplicity,
                         relation.right_multiplicity]
-          return unless qualifiers.all? { |text| text&.start_with?("[") }
+          if qualifiers.all? { |text| text&.start_with?("[") }
+            return QUALIFIED_DOUBLE_END_HALF_WIDTH
+          end
+
+          return unless @qualified_layout_active && qualifiers.compact.empty?
+          return unless relation.markers.value?(:implementation)
 
           left, right = endpoints.values_at(:left, :right)
-          9.0 unless steep?(left, right)
+          QUALIFIED_INHERITANCE_HALF_WIDTH if steep?(left, right)
         end
 
         def label_arrow?(relation)
@@ -1378,7 +1541,10 @@ module Sirena
           direction = direction.map(&:-@) if relation.label.end_with?("<")
           centre = qualified_label_control(relation, endpoints) ||
             midpoint(left, right)
-          centre = shift(centre, 1.0, 0.0, 25.0) if steep?(left, right)
+          if steep?(left, right)
+            centre = shift(centre, 1.0, 0.0,
+                           QUALIFIED_STEEP_ARROW_OFFSET)
+          end
           [centre, direction]
         end
 

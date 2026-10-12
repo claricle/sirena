@@ -9,6 +9,8 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 RSpec.describe Sirena::Notation::PlantUML::Layout do
   include_context "with an isolated notation registry"
 
+  let(:geometry_bars) { [0.08, 0.15, 0.15, 0.15] }
+
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
   def case_result(id)
@@ -42,11 +44,17 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     "resources.vega.nonreg.simple.QualifiedAssoc002--d57fb49a9920" => 11,
     "resources.vega.svg.interactive.SVG0006_Svek--70f5757ed2ca" => 11,
   }.each do |id, matched|
-    it "recognizes every pinned element in #{id}" do
+    it "matches every pinned element and geometry bar in #{id}" do
       result = case_result(id)
+      metrics = result.geometry.values_at(
+        :worst_e_c, :worst_e_w, :worst_e_h, :worst_e_a
+      )
+      within_bars = metrics.zip(geometry_bars).all? do |value, bar|
+        value <= bar
+      end
 
-      expect([result.hard_failure?, result.geometry[:matched]])
-        .to eq([false, matched])
+      expect([result.hard_failure?, result.geometry[:matched], within_bars])
+        .to eq([false, matched, true])
     end
   end
 
@@ -63,6 +71,6 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     id = "resources.vega.nonreg.simple.QualifiedAssoc001--8c3b78057dc3"
 
     expect(box_signature(render_case(id), "HashMap"))
-      .to eq([%w[HashMap K,V], 46.0])
+      .to eq([%w[HashMap K,V], 51.0])
   end
 end
