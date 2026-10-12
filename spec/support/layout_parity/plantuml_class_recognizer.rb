@@ -31,22 +31,43 @@ module SpecSupport
       private
 
       def class_groups(extractor, doc)
-        doc.xpath("//g").filter_map do |group|
-          name = class_name(group)
-          next unless name
+        groups = doc.xpath("//g").select do |group|
+          reference_class?(group) || sirena_class?(group)
+        end
+        title_counts = reference_title_counts(groups)
 
+        groups.filter_map do |group|
           box = extractor.bbox(group)
           next unless box
 
-          ClassGroup.new(node: group, name: name, bbox: box,
+          ClassGroup.new(node: group, name: class_name(group, title_counts),
+                         bbox: box,
                          reference_id: group["id"])
         end
       end
 
-      def class_name(group)
-        return group["data-qualified-name"] if reference_class?(group)
+      def class_name(group, title_counts)
+        return reference_name(group, title_counts) if reference_class?(group)
 
-        group["id"].to_s.delete_prefix(SIRENA_CLASS) if sirena_class?(group)
+        group["id"].to_s.delete_prefix(SIRENA_CLASS)
+      end
+
+      def reference_title_counts(groups)
+        groups.filter_map do |group|
+          content_rows_for(group).first if reference_class?(group)
+        end.tally
+      end
+
+      def reference_name(group, title_counts)
+        qualified = group["data-qualified-name"]
+        title = content_rows_for(group).first
+        sanitized = title.to_s.tr("$", ".")
+        return qualified unless title_counts.fetch(title, 0) == 1
+        return qualified if title == qualified
+        return title if qualified == sanitized
+        return title if qualified.end_with?(".#{sanitized}")
+
+        qualified
       end
 
       def reference_class?(group)
@@ -76,10 +97,14 @@ module SpecSupport
       end
 
       def content_rows(group)
-        rows = group.node.xpath(".//text").map do |text|
+        content_rows_for(group.node)
+      end
+
+      def content_rows_for(node)
+        rows = node.xpath(".//text").map do |text|
           normalize(text.text)
         end.reject(&:empty?)
-        rows = reference_rows(group.node, rows) if reference_class?(group.node)
+        rows = reference_rows(node, rows) if reference_class?(node)
 
         rows.reject { |row| stereotype?(row) }
       end

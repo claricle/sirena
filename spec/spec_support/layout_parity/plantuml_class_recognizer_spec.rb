@@ -127,6 +127,47 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlClassRecognizer do
     SVG
   end
 
+  def qualified_identity_svg(producer)
+    if producer == :reference
+      return <<~SVG
+        <svg viewBox="0 0 100 100">
+          <g class="entity" data-qualified-name="pkg.World" id="world">
+            <rect width="20" height="20"/><text>World</text>
+          </g>
+          <g class="entity" data-qualified-name="dummy.2" id="dummy">
+            <rect x="60" width="20" height="20"/><text>dummy$2</text>
+          </g>
+          <g class="link" data-entity-1="world" data-entity-2="dummy">
+            <path d="M 20 10 L 60 10"/>
+          </g>
+        </svg>
+      SVG
+    end
+
+    <<~SVG
+      <svg viewBox="0 0 100 100">
+        <g id="class-World"><rect width="20" height="20"/><text>World</text></g>
+        <g id="class-dummy$2">
+          <rect x="60" width="20" height="20"/><text>dummy$2</text>
+        </g>
+        <g id="relation-0"><path d="M 20 10 L 60 10"/></g>
+      </svg>
+    SVG
+  end
+
+  def duplicate_titles_svg
+    <<~SVG
+      <svg viewBox="0 0 100 100">
+        <g class="entity" data-qualified-name="left.User">
+          <rect width="20" height="20"/><text>User</text>
+        </g>
+        <g class="entity" data-qualified-name="right.User">
+          <rect x="60" width="20" height="20"/><text>User</text>
+        </g>
+      </svg>
+    SVG
+  end
+
   it "keeps relation ownership aligned across producer member spacing" do
     name = "16-full-example"
     render = Sirena.render(source(name), notation: :plantuml)
@@ -164,5 +205,16 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlClassRecognizer do
   it "resolves relation endpoints after producer transforms" do
     expect(keys(translated_relation_svg(:reference)))
       .to eq(keys(translated_relation_svg(:sirena)))
+  end
+
+  it "matches package-qualified and dollar-sanitized producer identities" do
+    expect(keys(qualified_identity_svg(:reference)))
+      .to eq(keys(qualified_identity_svg(:sirena)))
+  end
+
+  it "retains qualified identities when visible titles are ambiguous" do
+    class_keys = keys(duplicate_titles_svg).select { |key| key.first == :class }
+
+    expect(class_keys.map(&:last)).to contain_exactly("left.User", "right.User")
   end
 end
