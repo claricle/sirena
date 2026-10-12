@@ -12,6 +12,13 @@ module Sirena
   module Renderer
     # Emits SVG from final, typed Git-graph geometry.
     class GitGraph < Base
+      CHERRY_PICK_SATELLITE_RADIUS = 2.75
+      CHERRY_PICK_SATELLITE_X_OFFSETS = [-3, 3].freeze
+      CHERRY_PICK_SATELLITE_Y_OFFSET = 2
+      private_constant :CHERRY_PICK_SATELLITE_RADIUS,
+                       :CHERRY_PICK_SATELLITE_X_OFFSETS,
+                       :CHERRY_PICK_SATELLITE_Y_OFFSET
+
       # @param scene [Layout::GitGraph::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
@@ -79,7 +86,9 @@ module Sirena
           [branch.name, branch.color]
         end
         commits_in_paint_order(scene).each do |commit|
-          svg << commit_circle(commit, branch_colours)
+          commit_elements(commit, branch_colours).each do |element|
+            svg << element
+          end
         end
       end
 
@@ -97,6 +106,26 @@ module Sirena
           circle.fill = commit_fill(commit, branch_colours)
           circle.stroke = commit_stroke(commit, branch_colours)
           circle.stroke_width = "2"
+        end
+      end
+
+      def commit_elements(commit, branch_colours)
+        base = commit_circle(commit, branch_colours)
+        return [base] unless commit.is_cherry_pick
+
+        base.class_name = "commit-cherry-pick"
+        [base, *cherry_pick_satellites(commit)]
+      end
+
+      def cherry_pick_satellites(commit)
+        CHERRY_PICK_SATELLITE_X_OFFSETS.map do |offset|
+          Svg::Circle.new(
+            cx: commit.x + offset,
+            cy: commit.y + CHERRY_PICK_SATELLITE_Y_OFFSET,
+            r: CHERRY_PICK_SATELLITE_RADIUS,
+            fill: "#fff",
+            class_name: "commit-cherry-pick",
+          )
         end
       end
 
