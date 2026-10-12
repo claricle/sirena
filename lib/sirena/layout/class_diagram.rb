@@ -201,9 +201,34 @@ module Sirena
       end
 
       def grouped_entities(diagram, graph)
+        namespaces = ClassDiagramNamespaces.call(graph)
         namespace_layout.nest(
-          transform_entities(diagram), ClassDiagramNamespaces.call(graph)
+          transform_entities(diagram), namespaces,
+          hierarchical: hierarchical_namespaces?(diagram, namespaces)
         )
+      end
+
+      def hierarchical_namespaces?(diagram, namespaces)
+        owners = namespace_owners(namespaces)
+        diagram.relationships.any? do |relationship|
+          hierarchical_relationship?(relationship, owners)
+        end
+      end
+
+      def namespace_owners(namespaces)
+        namespaces.each_with_object({}) do |namespace, index|
+          namespace.class_ids.each { |id| index[id] = namespace.name }
+        end
+      end
+
+      def hierarchical_relationship?(relationship, owners)
+        from = owners[relationship.from_id]
+        to = owners[relationship.to_id]
+        from && to && from != to && prefix_related?(from, to)
+      end
+
+      def prefix_related?(first, second)
+        first.start_with?("#{second}.") || second.start_with?("#{first}.")
       end
 
       def namespace_layout

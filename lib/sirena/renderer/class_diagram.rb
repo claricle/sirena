@@ -121,7 +121,8 @@ module Sirena
       end
 
       def render_scene_namespace(box, svg)
-        group = Svg::Group.new.tap { |item| item.id = "namespace-#{box.title}" }
+        id = box.id.delete_prefix("namespace:")
+        group = Svg::Group.new.tap { |item| item.id = "namespace-#{id}" }
         group.children << scene_namespace_rect(box)
         group.children << scene_namespace_title(box)
         svg << group

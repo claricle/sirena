@@ -23,9 +23,24 @@ module Sirena
           Base::ElkOptions::NODE_NODE_SPACING => ClassCellPlacement::DAGRE_GAP,
         )
         ranked = graph.merge(edges: ClassCellPlacement.written_edges(graph))
+        inherit_nested_direction(
+          ranked[:children], ranked.dig(:layoutOptions, Base::ElkOptions::DIRECTION)
+        )
         Flowchart::DirectedPlacement.apply(ranked)
         center_vertical_siblings(ranked[:children])
         graph.merge!(ranked.except(:edges))
+      end
+
+      def inherit_nested_direction(children, direction)
+        Array(children).each do |child|
+          nested_children = Array(child[:children])
+          if nested?(child)
+            child[:metadata] = (child[:metadata] || {}).merge(
+              direction: direction,
+            )
+          end
+          inherit_nested_direction(nested_children, direction)
+        end
       end
 
       def center_vertical_siblings(children)
@@ -50,7 +65,7 @@ module Sirena
         end
       end
       private_class_method :center_vertical_siblings, :center_column,
-                           :directed, :nested?
+                           :directed, :inherit_nested_direction, :nested?
     end
   end
 end
