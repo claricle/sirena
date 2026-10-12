@@ -3,6 +3,27 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
+  let(:explicit_scene) do
+    scene_for(<<~MERMAID)
+      gitGraph
+        commit id: "one"
+        branch feature
+        commit id: "two"
+        checkout main
+        commit id: "three"
+        checkout feature
+        merge main
+    MERMAID
+  end
+  let(:tagged_scene_source) do
+    <<~MERMAID
+      gitGraph
+        commit id: "one" tag: "v1"
+        commit id: "two" type: REVERSE
+        commit id: "three" type: HIGHLIGHT
+    MERMAID
+  end
+
   def case_ids
     %w[
       gitgraph/gitgraph_spec-215c1704.mmd
@@ -48,42 +69,30 @@ RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
     end
   end
 
+  def explicit_label_evidence(scene)
+    labels = scene.commits.flat_map(&:labels)
+      .select { |label| label.kind == "id" }
+      .to_h { |label| [label.text, label] }
+    explicit = labels.values_at("one", "two", "three")
+    [explicit.map { |label| [label.rotation, label.text_anchor] }.uniq,
+     labels.fetch("commit-4").rotation]
+  end
+
+  def branch_translations(source)
+    scene_for(source).branches.map { |branch| branch.label.translation_x }
+  end
+
   it "matches Mermaid's diagonal commit labels across multi-commit graphs" do
     expect(parity_evidence)
       .to match([case_ids.sort, false, (be <= 0.08), (be <= 0.000000000001)])
   end
 
   it "rotates explicit IDs outside the specialized linear graph shape" do
-    scene = scene_for(<<~MERMAID)
-      gitGraph
-        commit id: "one"
-        branch feature
-        commit id: "two"
-        checkout main
-        commit id: "three"
-        checkout feature
-        merge main
-    MERMAID
-
-    labels = scene.commits.flat_map(&:labels).select { |label| label.kind == "id" }
-      .to_h { |label| [label.text, label] }
-    explicit = labels.values_at("one", "two", "three")
-
-    expect([
-             explicit.map { |label| [label.rotation, label.text_anchor] }.uniq,
-             labels.fetch("commit-4").rotation,
-           ]).to eq([[[-45.0, "start"]], nil])
+    expect(explicit_label_evidence(explicit_scene))
+      .to eq([[[-45.0, "start"]], nil])
   end
 
   it "keeps explicit-ID lane clearance with tags and marker types" do
-    scene = scene_for(<<~MERMAID)
-      gitGraph
-        commit id: "one" tag: "v1"
-        commit id: "two" type: REVERSE
-        commit id: "three" type: HIGHLIGHT
-    MERMAID
-
-    translations = scene.branches.map { |branch| branch.label.translation_x }
-    expect(translations).to eq([-47.0])
+    expect(branch_translations(tagged_scene_source)).to eq([-47.0])
   end
 end

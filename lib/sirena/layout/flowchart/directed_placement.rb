@@ -195,12 +195,15 @@ module Sirena
         def top_level_independent_padding(contents)
           nested = contents.select { |box| cluster?(box) }
           return [INDEPENDENT_CLUSTER_PADDING] * 2 if nested.empty?
-          if nested.any? { |box| split_linked_cluster?(box) }
-            return [INDEPENDENT_CLUSTER_PADDING, EXTERNAL_CLUSTER_SIDE]
-          end
-          if nested.all? { |box| (box[:children] || []).one? }
-            return [INDEPENDENT_CLUSTER_PADDING, CLUSTER_VERTICAL]
-          end
+
+          nested_cluster_padding(nested)
+        end
+
+        def nested_cluster_padding(nested)
+          return [INDEPENDENT_CLUSTER_PADDING, EXTERNAL_CLUSTER_SIDE] if
+            nested.any? { |box| split_linked_cluster?(box) }
+          return [INDEPENDENT_CLUSTER_PADDING, CLUSTER_VERTICAL] if
+            nested.all? { |box| (box[:children] || []).one? }
 
           [CLUSTER_SIDE, CLUSTER_VERTICAL]
         end
@@ -214,26 +217,36 @@ module Sirena
 
           children = cluster[:children] || []
           edges = @level_edges.at(cluster[:id])
-          linked = edges.flat_map { |_, from, to| [from, to] }.compact.uniq
+          linked = linked_ids(edges)
           ids = children.map { |child| child[:id] }
-          return false unless ids.size >= 4 && (ids - linked).empty?
+          return false unless fully_linked_cluster?(ids, linked)
 
           connected_components(ids, edges).size > 1
         end
 
+        def linked_ids(edges)
+          edges.flat_map { |_, from, to| [from, to] }.compact.uniq
+        end
+
+        def fully_linked_cluster?(ids, linked)
+          ids.size >= 4 && (ids - linked).empty?
+        end
+
         def connected_components(ids, edges)
           links = ids.to_h { |id| [id, []] }
-          edges.each do |_, from, to|
-            next unless links.key?(from) && links.key?(to)
-
-            links[from] << to
-            links[to] << from
-          end
+          edges.each { |_, from, to| connect(links, from, to) }
           ids.each_with_object([]) do |id, components|
             next if components.flatten.include?(id)
 
             components << connected_ids(id, links)
           end
+        end
+
+        def connect(links, from, to)
+          return unless links.key?(from) && links.key?(to)
+
+          links[from] << to
+          links[to] << from
         end
 
         def connected_ids(first, links)
@@ -318,15 +331,19 @@ module Sirena
           transpose(flat) if transposed
           children = flat[:children]
           order_leading_clusters(flat, leading_clusters)
+          layout_flat(flat, frame, cluster_names, transposed)
+          align_leading_clusters(flat, leading_clusters, transposed)
+          flat[:children] = children
+          transpose(flat) if transposed
+          mirror(flat, frame.direction)
+        end
+
+        def layout_flat(flat, frame, cluster_names, transposed)
           flat[:layoutOptions] = downward_options(frame)
           ElkPlacement.apply(flat)
           apply_label_geometry(flat, transposed)
           MinimumRankSpacing.apply(flat, frame.rank_spacing)
           ComponentPacking.apply(flat, cluster_names)
-          align_leading_clusters(flat, leading_clusters, transposed)
-          flat[:children] = children
-          transpose(flat) if transposed
-          mirror(flat, frame.direction)
         end
 
         def order_leading_clusters(flat, leading_clusters)
@@ -341,15 +358,23 @@ module Sirena
         def align_leading_clusters(flat, leading_clusters, transposed)
           return if leading_clusters.empty?
 
-          ordinary, leading = flat[:children].partition do |box|
-            !leading_clusters.include?(box[:id])
-          end
+          ordinary, leading = partition_leading(flat, leading_clusters)
           anchor = ordinary.last
           return unless anchor
 
           axis, size = transposed ? %i[y height] : %i[x width]
+          align_to(leading, anchor, axis, size)
+        end
+
+        def partition_leading(flat, leading_clusters)
+          flat[:children].partition do |box|
+            !leading_clusters.include?(box[:id])
+          end
+        end
+
+        def align_to(boxes, anchor, axis, size)
           centre = anchor[axis] + (anchor[size] / 2.0)
-          leading.each { |box| box[axis] = centre - (box[size] / 2.0) }
+          boxes.each { |box| box[axis] = centre - (box[size] / 2.0) }
         end
 
         def apply_label_geometry(flat, transposed)

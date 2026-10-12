@@ -35,12 +35,10 @@ module Sirena
           joined = joins(rows)
           return aligned(rows, joined) if joined
 
-          chains = chains(rows)
-          return chained(rows, chains) if chains
+          chained_rows = chains(rows)
+          return chained(rows, chained_rows) if chained_rows
 
-          widest = rows.values.map { |row| span(row) }.max
-          rows.each_value { |row| centre(row, widest) }
-          @flat
+          centre_rows(rows)
         end
 
         private
@@ -71,11 +69,23 @@ module Sirena
         # with a label, or an edge within one row.
         def chains(rows)
           ranks = rank_of(rows)
-          ends = (@flat[:edges] || []).map { |edge| chain_ends(edge, ranks) }
-          return if ends.empty? || ends.any?(&:nil?)
+          ends = chain_endpoints(ranks)
+          return unless chainable?(ends)
 
-          order = @flat[:children].sort_by { |box| [box[:x], box[:y]] }
-          EdgeChains.new(ranks, ends, order.map { |box| box[:id] })
+          EdgeChains.new(ranks, ends, ordered_ids)
+        end
+
+        def chain_endpoints(ranks)
+          (@flat[:edges] || []).map { |edge| chain_ends(edge, ranks) }
+        end
+
+        def chainable?(ends)
+          !ends.empty? && ends.none?(&:nil?)
+        end
+
+        def ordered_ids
+          @flat[:children].sort_by { |box| [box[:x], box[:y]] }
+            .map { |box| box[:id] }
         end
 
         # [upper, lower, turned] for an edge that can be chained.
@@ -115,13 +125,28 @@ module Sirena
         end
 
         def chained(rows, chains)
-          widths = @flat[:children].to_h { |box| [box[:id], box[:width]] }
-          chains.dummies.each { |dummy| widths[dummy] = 0.0 }
+          widths = chain_widths(chains)
           centres = BrandesKoepf.positions(chains.layers, widths,
                                            chains.links, chains.dummies)
+          place_chained_rows(rows, chains, centres)
+        end
+
+        def chain_widths(chains)
+          widths = @flat[:children].to_h { |box| [box[:id], box[:width]] }
+          chains.dummies.each { |dummy| widths[dummy] = 0.0 }
+          widths
+        end
+
+        def place_chained_rows(rows, chains, centres)
           tops = rows.keys.sort
           @flat[:children].each { |box| box[:y] = tops[chains.ranks[box[:id]]] }
           place(@flat[:children], centres)
+          @flat
+        end
+
+        def centre_rows(rows)
+          widest = rows.values.map { |row| span(row) }.max
+          rows.each_value { |row| centre(row, widest) }
           @flat
         end
 

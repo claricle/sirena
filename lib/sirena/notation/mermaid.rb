@@ -295,9 +295,14 @@ module Sirena
         type = detect_type(preamble[:body])
         logger&.debug("Detected diagram type: #{type}")
         reject_degenerate_preamble(type, preamble[:degenerate])
-        diagram = parse_diagram(type, preamble, frontmatter&.title, logger)
-        parsed(type, IRAdapter.call(type, with_wrap(type, diagram, source)),
+        diagram = adapted_diagram(type, preamble, frontmatter, source, logger)
+        parsed(type, diagram,
                layout_engine(frontmatter, preamble[:body]))
+      end
+
+      def adapted_diagram(type, preamble, frontmatter, source, logger)
+        diagram = parse_diagram(type, preamble, frontmatter&.title, logger)
+        IRAdapter.call(type, with_wrap(type, diagram, source))
       end
 
       def parsed(type, diagram, layout_engine = nil)

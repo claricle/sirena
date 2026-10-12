@@ -31,7 +31,9 @@ module Sirena
 
         def sink
           @ranks.keys.sort_by { |id| -@ranks[id] }.each do |id|
-            below = @ends.filter_map { |upper, lower, _| @ranks[lower] if upper == id }
+            below = @ends.filter_map do |upper, lower, _|
+              @ranks[lower] if upper == id
+            end
             @ranks[id] = below.min - 1 if sinkable?(id, below)
           end
         end
@@ -46,7 +48,7 @@ module Sirena
         def stacked(order)
           layers = Array.new((@ranks.values.max * 2) + 1) { [] }
           order.each { |id| layers[@ranks[id] * 2] << id }
-          chain_order.each { |k| chain(k, layers) }
+          chain_order.each { |edge_index| chain(edge_index, layers) }
           layers
         end
 
@@ -55,17 +57,21 @@ module Sirena
           @ends.each_index.sort_by { |k| [@ends[k].last ? 1 : 0, k] }
         end
 
-        def chain(k, layers)
-          upper, lower, = @ends[k]
+        def chain(edge_index, layers)
+          upper, lower, = @ends[edge_index]
           crossed = ((@ranks[upper] * 2) + 1).upto((@ranks[lower] * 2) - 1)
           last = crossed.reduce(upper) do |above, layer|
-            dummy = [:chain, k, layer]
-            layers[layer] << dummy
-            @dummies << dummy
-            @links << [above, dummy]
-            dummy
+            append_dummy(edge_index, layer, above, layers)
           end
           @links << [last, lower]
+        end
+
+        def append_dummy(edge_index, layer, above, layers)
+          dummy = [:chain, edge_index, layer]
+          layers[layer] << dummy
+          @dummies << dummy
+          @links << [above, dummy]
+          dummy
         end
 
         # One downward pass of dagre's barycenter ordering: a node goes
@@ -85,11 +91,19 @@ module Sirena
             above[id].empty?
           end
           sorted = free.sort_by do |id, place|
-            [above[id].sum { |upper| index[upper] }.fdiv(above[id].size), place]
+            [barycenter(above[id], index), place]
           end
           sorted = sorted.map(&:first)
-          fixed.each { |id, place| sorted.insert([place, sorted.size].min, id) }
+          insert_fixed(sorted, fixed)
           sorted
+        end
+
+        def barycenter(upper_ids, index)
+          upper_ids.sum { |upper| index[upper] }.fdiv(upper_ids.size)
+        end
+
+        def insert_fixed(sorted, fixed)
+          fixed.each { |id, place| sorted.insert([place, sorted.size].min, id) }
         end
       end
     end

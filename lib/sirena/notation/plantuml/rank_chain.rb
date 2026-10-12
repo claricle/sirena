@@ -36,34 +36,61 @@ module Sirena
           return unless axis
 
           names = [relations.first.left, *relations.map(&:right)]
-          return unless diagram.classes.map(&:name).sort ==
-                        (names + owners.values).sort
+          return unless exact_classes?(diagram, names, owners)
 
           new(names, owners, axis, layout_of(diagram))
         end
 
+        def self.exact_classes?(diagram, names, owners)
+          diagram.classes.map(&:name).sort == (names + owners.values).sort
+        end
+
         def self.chain?(diagram, relations)
-          diagram.packages.empty? && diagram.notes.empty? &&
-            relations.any? && relations.none?(&:label) &&
-            relations.each_cons(2).all? { |a, b| a.right == b.left } &&
-            [relations.first.left, *relations.map(&:right)].uniq.size ==
-              relations.size + 1
+          plain_diagram?(diagram) && unlabelled_relations?(relations) &&
+            linked_chain?(relations) && unique_chain?(relations)
+        end
+
+        def self.plain_diagram?(diagram)
+          diagram.packages.empty? && diagram.notes.empty?
+        end
+
+        def self.unlabelled_relations?(relations)
+          relations.any? && relations.none?(&:label)
+        end
+
+        def self.linked_chain?(relations)
+          relations.each_cons(2).all? do |first, second|
+            first.right == second.left
+          end
+        end
+
+        def self.unique_chain?(relations)
+          [relations.first.left, *relations.map(&:right)].uniq.size ==
+            relations.size + 1
         end
 
         # The owner of each junction keyed by its relation's index, or nil
         # when a relation carries two or an owner is also on the chain.
         def self.junction_owners(diagram, relations)
-          owners = diagram.junctions.to_h do |junction|
-            pair = [junction.from, junction.to].sort
-            [relations.index { |r| [r.left, r.right].sort == pair },
-             junction.owner]
-          end
+          owners = owners_by_relation(diagram.junctions, relations)
           names = relations.flat_map { |r| [r.left, r.right] }
-          return if owners.size < diagram.junctions.size ||
-                    owners.values.uniq.size < owners.size ||
-                    owners.values.intersect?(names)
+          return unless valid_owners?(owners, diagram.junctions, names)
 
           owners
+        end
+
+        def self.owners_by_relation(junctions, relations)
+          junctions.to_h do |junction|
+            pair = [junction.from, junction.to].sort
+            index = relations.index { |r| [r.left, r.right].sort == pair }
+            [index, junction.owner]
+          end
+        end
+
+        def self.valid_owners?(owners, junctions, names)
+          owners.size == junctions.size &&
+            owners.values.uniq.size == owners.size &&
+            !owners.values.intersect?(names)
         end
 
         # :vertical or :horizontal when every relation steps the same way.
@@ -106,7 +133,10 @@ module Sirena
 
         private_class_method :chain?, :junction_owners, :chain_axis,
                              :relation_axis, :texts_fit?, :left_to_right?,
-                             :layout_of
+                             :layout_of, :exact_classes?, :plain_diagram?,
+                             :unlabelled_relations?, :linked_chain?,
+                             :unique_chain?, :owners_by_relation,
+                             :valid_owners?
 
         attr_reader :names, :owners, :axis
 
@@ -134,7 +164,10 @@ module Sirena
           slots = chain_slots
           breadth = slots.map { |slot| slot_size(slot, sizes)[across] }.max
           frame = { middle: origin[across] + (breadth / 2), breadth: breadth }
-          cursor = origin[along]
+          place_slots(slots, sizes, frame, origin[along])
+        end
+
+        def place_slots(slots, sizes, frame, cursor)
           slots.each_with_object([{}, {}]) do |slot, out|
             span = along_span(slot, sizes)
             place_slot(slot, sizes, frame.merge(cursor: cursor, span: span),
@@ -179,16 +212,20 @@ module Sirena
 
         def place_slot(slot, sizes, frame, out)
           size = slot_size(slot, sizes)
-          corner = corner_at(
-            frame[:cursor] + ((frame[:span] - size[along]) / 2),
-            frame[:middle] - (size[across] / 2),
-          )
+          corner = slot_corner(size, frame)
           places, junctions = out
           return places[slot[1]] = corner if slot[0] == :class
 
           junctions[slot[1]] = [*corner, *size]
           places[slot[2]] = owner_corner(corner, sizes.fetch(slot[2]), frame)
           places
+        end
+
+        def slot_corner(size, frame)
+          corner_at(
+            frame[:cursor] + ((frame[:span] - size[along]) / 2),
+            frame[:middle] - (size[across] / 2),
+          )
         end
 
         def corner_at(along_position, across_position)
@@ -203,12 +240,18 @@ module Sirena
         # a ranked chain, else one rank past the chain.
         def owner_corner(junction, owner, frame)
           centre = junction[along] + (JUNCTION_SIZE[along] / 2)
-          offset = if ranked
-                     junction[across] + JUNCTION_SIZE[across] + gaps[:node]
-                   else
-                     frame[:middle] + (frame[:breadth] / 2) + gaps[:rank]
-                   end
+          offset = owner_offset(junction, frame)
           corner_at(centre - (owner[along] / 2), offset)
+        end
+
+        def owner_offset(junction, frame)
+          return ranked_owner_offset(junction) if ranked
+
+          frame[:middle] + (frame[:breadth] / 2) + gaps[:rank]
+        end
+
+        def ranked_owner_offset(junction)
+          junction[across] + JUNCTION_SIZE[across] + gaps[:node]
         end
       end
     end

@@ -28,6 +28,16 @@ module PlantUmlSequenceSceneHelpers
   def arrow_ys(scene)
     scene.arrows.map { |arrow| arrow.path[/M \S+ (\S+)/, 1].to_f }
   end
+
+  def edge_ring_inset(scene)
+    ring = scene.arrows.first.marks.find { |mark| mark.kind == "circle" }
+    scene.width - ring.cx
+  end
+
+  def message_span(scene)
+    points = scene.arrows.first.path.scan(/-?\d+\.?\d*/).map(&:to_f)
+    points[2] - points[0]
+  end
 end
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
@@ -232,13 +242,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     it "pulls the end of a ->o] message 8 inside the edge" do
       plain_scene = scene_of("A ->] : hi")
       ring_scene = scene_of("A ->o] : hi")
-      plain = ends_of(plain_scene).first.last
-      ring = ring_scene.arrows.first.marks.find do |mark|
-        mark.kind == "circle"
-      end
-
-      expect(ring_scene.width - ring.cx)
-        .to eq((plain_scene.width - plain) + 8.0)
+      expect(edge_ring_inset(ring_scene))
+        .to eq((plain_scene.width - ends_of(plain_scene).first.last) + 8.0)
     end
 
     it "pulls the start of a [o-> message 8 inside the edge" do
@@ -843,11 +848,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
     it "lengthens the run of a ? message to fit the number" do
       runs = [scene_of("autonumber", "?-> A : hi"), scene_of("?-> A : hi")]
-      spans = runs.map do |scene|
-        points = scene.arrows.first.path.scan(/-?\d+\.?\d*/).map(&:to_f)
-        points[2] - points[0]
-      end
-
+      spans = runs.map { |scene| message_span(scene) }
       expect(spans.first).to be > spans.last
     end
 

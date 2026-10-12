@@ -72,9 +72,13 @@ module SpecSupport
       def legacy_actor_bbox(extractor, text)
         ellipse = text&.next_element
         path = ellipse&.next_element
-        return unless ellipse&.name == "ellipse" && path&.name == "path"
+        return unless actor_shape?(ellipse, path)
 
         Bbox.union([ellipse, path].filter_map { |node| extractor.bbox(node) })
+      end
+
+      def actor_shape?(ellipse, path)
+        ellipse&.name == "ellipse" && path&.name == "path"
       end
 
       def sirena_participants(extractor, doc)
@@ -104,18 +108,26 @@ module SpecSupport
       end
 
       def messages(extractor, doc)
-        groups = doc.xpath("//g").select do |group|
-          message?(group) && !embedded_picture_element?(group)
-        end
+        groups = message_groups(doc)
         return legacy_reference_messages(extractor, doc) if groups.empty?
 
         groups.each_with_index.filter_map do |group, index|
-          box = extractor.bbox(group)
-          next unless box
-
-          Element.new(kind: :message, key: index + 1, bbox: box,
-                      label: normalize(group.xpath(".//text").map(&:text)))
+          recognized_message(extractor, group, index)
         end
+      end
+
+      def message_groups(doc)
+        doc.xpath("//g").select do |group|
+          message?(group) && !embedded_picture_element?(group)
+        end
+      end
+
+      def recognized_message(extractor, group, index)
+        box = extractor.bbox(group)
+        return unless box
+
+        Element.new(kind: :message, key: index + 1, bbox: box,
+                    label: normalize(group.xpath(".//text").map(&:text)))
       end
 
       # The same Teoz output leaves each arrow's primitives and label as a
@@ -135,8 +147,7 @@ module SpecSupport
         return unless node.name == "text"
 
         run = preceding_run(children, index)
-        return unless run.any? { |item| horizontal_line?(item) }
-        return if fragment_separator?(run, node)
+        return unless legacy_message_run?(run, node)
 
         boxes = [*run, node].filter_map { |item| extractor.bbox(item) }
         box = Bbox.union(boxes)
@@ -144,6 +155,11 @@ module SpecSupport
 
         Element.new(kind: :message, key: index, bbox: box,
                     label: normalize([node.text]), identity: :label)
+      end
+
+      def legacy_message_run?(run, node)
+        run.any? { |item| horizontal_line?(item) } &&
+          !fragment_separator?(run, node)
       end
 
       def legacy_root(doc)
@@ -178,7 +194,11 @@ module SpecSupport
 
         separator = run.first
         horizontal_line?(separator) && dashed?(separator) &&
-          node["font-size"] == "11" && node["font-weight"] == "700" &&
+          fragment_label?(node)
+      end
+
+      def fragment_label?(node)
+        node["font-size"] == "11" && node["font-weight"] == "700" &&
           node.text.start_with?("[") && node.text.end_with?("]")
       end
 

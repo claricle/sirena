@@ -31,9 +31,39 @@ module PlantumlJunctionChainHelpers
       path = REXML::XPath.first(g, "path")
       next unless path && g.attributes["id"].match?(/\A(relation|junction)-/)
 
-      numbers = path.attributes["d"].scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
-      [g.attributes["id"], [numbers.first(2), numbers.last(2)]]
+      [g.attributes["id"], line_ends(path)]
     end.to_h
+  end
+
+  def line_ends(path)
+    numbers = path.attributes["d"].scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
+    [numbers.first(2), numbers.last(2)]
+  end
+
+  def horizontal_relation_evidence(svg)
+    a, b, c = boxes(svg).values_at("class-A", "class-B", "class-C")
+    [horizontal_placement(a, b, c), [a[1], 52.0, junction_x(lines(svg))]]
+  end
+
+  def horizontal_placement(first, second, association)
+    [second[1], second[0] - (first[0] + first[2]),
+     association[0] + (association[2] / 2)]
+  end
+
+  def junction_x(segments)
+    (segments["relation-0-from"].last[0] +
+      segments["relation-0-to"].first[0]) / 2
+  end
+
+  def arrowhead_dimensions(svg)
+    points = polygon_points(svg)
+    xs, ys = points.transpose
+    [points.size, xs.max - xs.min, ys.max - ys.min]
+  end
+
+  def polygon_points(svg)
+    REXML::XPath.first(REXML::Document.new(svg), "//polygon")
+      .attributes["points"].split.map { |pair| pair.split(",").map(&:to_f) }
   end
 
   def marker_owners(svg)
@@ -113,13 +143,9 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
 
   it "lays a left-worded relation across one rank in written order" do
     svg = render("class A\nclass B\nclass C\nA -left-> B\n(A, B) . C")
-    a, b, c = boxes(svg).values_at("class-A", "class-B", "class-C")
-    junction = (lines(svg)["relation-0-from"].last[0] +
-                lines(svg)["relation-0-to"].first[0]) / 2
-
+    actual, expected = horizontal_relation_evidence(svg)
     # Two node gaps of 18 either side of the 16-wide junction node.
-    expect([b[1], b[0] - (a[0] + a[2]), c[0] + (c[2] / 2)])
-      .to eq([a[1], 52.0, junction])
+    expect(actual).to eq(expected)
   end
 
   it "draws an up-worded arrowhead on the leg leaving the first class" do
@@ -143,12 +169,7 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
 
   it "draws PlantUML's notched arrowhead, nine long and eight wide" do
     svg = render("class A\nclass B\nA --> B")
-    points = REXML::XPath.first(REXML::Document.new(svg), "//polygon")
-      .attributes["points"].split.map { |pair| pair.split(",").map(&:to_f) }
-    xs, ys = points.transpose
-
-    expect([points.size, xs.max - xs.min, ys.max - ys.min])
-      .to eq([4, 8.0, 9.0])
+    expect(arrowhead_dimensions(svg)).to eq([4, 8.0, 9.0])
   end
 
   it "meets the legs at the relation's middle when the grid places them" do

@@ -3,6 +3,26 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
+  let(:vertical_scene) do
+    scene_for(<<~MERMAID)
+      gitGraph TB:
+        commit id: "one"
+        branch short
+        commit id: "two"
+        branch a_much_longer_branch
+        commit id: "three"
+    MERMAID
+  end
+  let(:mixed_order_scene) do
+    scene_for(<<~MERMAID)
+      gitGraph
+        commit
+        branch test1 order: 1
+        branch test2
+        branch test3
+    MERMAID
+  end
+
   def case_ids
     %w[
       gitgraph/gitgraph_spec-076af5a8.mmd
@@ -49,38 +69,27 @@ RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
     end
   end
 
+  def vertical_gaps(scene)
+    centers = scene.commits.group_by(&:lane)
+      .sort.map { |_lane, commits| commits.first.x }
+    centers.each_cons(2).map { |left, right| right - left }
+  end
+
   it "matches Mermaid's measured vertical lanes and mixed branch order" do
     expect(parity_evidence)
       .to match([case_ids.sort, false, (be <= 0.08), (be <= 0.000000000001)])
   end
 
   it "adds prior-label width to each following vertical lane" do
-    scene = scene_for(<<~MERMAID)
-      gitGraph TB:
-        commit id: "one"
-        branch short
-        commit id: "two"
-        branch a_much_longer_branch
-        commit id: "three"
-    MERMAID
-
-    centers = scene.commits.group_by(&:lane)
-      .sort.map { |_lane, commits| commits.first.x }
-    gaps = centers.each_cons(2).map { |left, right| right - left }
-
+    gaps = vertical_gaps(vertical_scene)
     expect(gaps.fetch(1)).to be > gaps.fetch(0)
   end
 
   it "places implicit branches before explicitly ordered branches" do
-    scene = scene_for(<<~MERMAID)
-      gitGraph
-        commit
-        branch test1 order: 1
-        branch test2
-        branch test3
-    MERMAID
-
-    lanes = scene.branches.to_h { |branch| [branch.name, branch.lane] }
-    expect(lanes).to include("test2" => 1, "test3" => 2, "test1" => 3)
+    lanes = mixed_order_scene.branches.to_h do |branch|
+      [branch.name, branch.lane]
+    end
+    expect(lanes)
+      .to include("test2" => 1, "test3" => 2, "test1" => 3)
   end
 end

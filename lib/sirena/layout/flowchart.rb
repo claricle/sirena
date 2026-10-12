@@ -932,17 +932,26 @@ module Sirena
       def compact_collision_nodes(children)
         children.each do |child|
           compact_collision_nodes(child[:children]) if child[:children]
-          next unless child.dig(:metadata, :subgraph_collision)
-
-          label = child[:labels].first
-          extra_width, extra_height = COLLISION_NODE_PADDING
-          compact_width = label[:width] + extra_width
-          compact_height = label[:height] + extra_height
-          child[:x] += (child[:width] - compact_width) / 2.0
-          child[:y] += (child[:height] - compact_height) / 2.0
-          child[:width] = compact_width
-          child[:height] = compact_height
+          compact_collision_node(child) if
+            child.dig(:metadata, :subgraph_collision)
         end
+      end
+
+      def compact_collision_node(child)
+        width, height = compact_collision_dimensions(child[:labels].first)
+        center_compact_collision(child, width, height)
+      end
+
+      def center_compact_collision(child, width, height)
+        child[:x] += (child[:width] - width) / 2.0
+        child[:y] += (child[:height] - height) / 2.0
+        child[:width] = width
+        child[:height] = height
+      end
+
+      def compact_collision_dimensions(label)
+        extra_width, extra_height = COLLISION_NODE_PADDING
+        [label[:width] + extra_width, label[:height] + extra_height]
       end
 
       def transform_edges(graph)
