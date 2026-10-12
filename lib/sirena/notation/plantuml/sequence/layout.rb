@@ -259,7 +259,7 @@ module Sirena
               message_font_size: label_font_size,
               message_family: ("monospace" if compact?),
               label_inset: (7 if compact?), bounds: head_bounds,
-              activation_edges: compact_timeline?,
+              activation_edges: compact_timeline? || two_party_activation_timeline?,
               **walker_cadence
             )
           end
@@ -664,9 +664,16 @@ module Sirena
             unless compact?
               return classic_message_room(message, room, self_message)
             end
-            return room unless self_message
+            return room + activation_bar_clearance unless self_message
 
             [SELF_WIDTH, 7 + label_width(message)].max + head_padding
+          end
+
+          def activation_bar_clearance
+            return 0 unless two_party_activation_timeline?
+            return 0 unless @diagram.items.first.is_a?(Activation)
+
+            BarTracker::WIDTH - 2.0
           end
 
           def classic_message_room(message, ordinary, self_message)
@@ -1257,6 +1264,11 @@ module Sirena
             compact? && group_fragment? && @diagram.messages.all? do |message|
               message.label.to_s.empty?
             end
+          end
+
+          def two_party_activation_timeline?
+            compact? && @diagram.participants.size == 2 &&
+              @diagram.items.none?(Fragment) && @diagram.items.any?(Activation)
           end
 
           def divider_row_height
