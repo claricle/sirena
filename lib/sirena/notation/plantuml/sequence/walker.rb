@@ -180,7 +180,20 @@ module Sirena
             offset = row_offset(item)
             begin_row(item, offset) if offset
             place(item, previous)
-            @y = [@y, @resume].max if @resume && !opens_block?(item)
+            resume_after_parallel(item) if @resume && !opens_block?(item)
+          end
+
+          def resume_after_parallel(item)
+            if parallel_side_note?(item)
+              @y = @resume
+            else
+              @y = [@y, @resume].max
+            end
+          end
+
+          def parallel_side_note?(item)
+            item.is_a?(Note) && !item.targets.empty? &&
+              %i[left right].include?(item.side)
           end
 
           # How far below its top edge an item's first line sits; nil for an
