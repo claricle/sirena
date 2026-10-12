@@ -80,13 +80,22 @@ module Sirena
             [item[:id], [box_width, item[:height]]]
           end
           corners, nodes = chain.place(sizes, [MARGIN, MARGIN])
-          boxes = specifications.map do |item|
-            build_box(item, *corners.fetch(item[:id]), box_width)
-          end
-          Scene.new(width: far_edge(boxes) { |box| box.x + box.width },
-                    height: far_edge(boxes) { |box| box.y + box.height },
+          boxes = chain_boxes(specifications, corners, box_width)
+          width, height = chain_dimensions(boxes)
+          Scene.new(width: width, height: height,
                     boxes: boxes, frames: [],
                     relations: scene_relations(diagram, boxes, nodes))
+        end
+
+        def chain_dimensions(boxes)
+          [far_edge(boxes) { |box| box.x + box.width },
+           far_edge(boxes) { |box| box.y + box.height }]
+        end
+
+        def chain_boxes(specifications, corners, box_width)
+          specifications.map do |item|
+            build_box(item, *corners.fetch(item[:id]), box_width)
+          end
         end
 
         def member_note_family?(diagram)
@@ -588,17 +597,22 @@ module Sirena
           by_name = boxes.to_h { |box| [box.id.delete_prefix("package-"), box] }
           owners = junction_owners(diagram)
           diagram.relations.each_with_index.flat_map do |relation, index|
-            ends = [relation.left, relation.right].map { |n| by_name.fetch(n) }
-            junctions = owners[index]
-            if junctions.empty?
-              next [relation_scene(relation, "relation-#{index}",
-                                   relation_endpoints(*ends))]
-            end
-
-            junction = junction_box(nodes[index], ends)
-            junction_scenes(relation, index, [ends, junction],
-                            junctions.map { |entry| [*entry, by_name] })
+            relation_scenes(relation, index, by_name, owners, nodes)
           end
+        end
+
+        def relation_scenes(relation, index, by_name, owners, nodes)
+          names = [relation.left, relation.right]
+          ends = names.map { |name| by_name.fetch(name) }
+          junctions = owners[index]
+          if junctions.empty?
+            return [relation_scene(relation, "relation-#{index}",
+                                   relation_endpoints(*ends))]
+          end
+
+          junction = junction_box(nodes[index], ends)
+          entries = junctions.map { |entry| [*entry, by_name] }
+          junction_scenes(relation, index, [ends, junction], entries)
         end
 
         # The association classes, with their numbers, grouped by the index
@@ -606,13 +620,17 @@ module Sirena
         def junction_owners(diagram)
           owners = Hash.new { |hash, index| hash[index] = [] }
           diagram.junctions.each_with_index do |junction, number|
-            pair = [junction.from, junction.to].sort
-            index = diagram.relations.index do |relation|
-              [relation.left, relation.right].sort == pair
-            end
+            index = junction_relation_index(diagram.relations, junction)
             owners[index] << [junction, number]
           end
           owners
+        end
+
+        def junction_relation_index(relations, junction)
+          pair = [junction.from, junction.to].sort
+          relations.index do |relation|
+            [relation.left, relation.right].sort == pair
+          end
         end
 
         # The junction node, or a zero-size one at the middle of the
@@ -645,13 +663,24 @@ module Sirena
           (from, to), junction = boxes
           swap = %i[up left].include?(relation.direction)
           markers = relation.markers
-          [relation_scene(relation, "relation-#{index}-from",
-                          relation_endpoints(from, junction), sides: %i[left],
-                                                              markers: { left: markers[swap ? :right : :left] }),
-           relation_scene(relation, "relation-#{index}-to",
-                          relation_endpoints(junction, to), sides: %i[right],
-                                                            markers: { right: markers[swap ? :left : :right] }),
+          [relation_scene(
+            relation, "relation-#{index}-from",
+            relation_endpoints(from, junction),
+            sides: %i[left],
+            markers: junction_markers(markers, swap, :left)
+          ),
+           relation_scene(
+             relation, "relation-#{index}-to",
+             relation_endpoints(junction, to),
+             sides: %i[right],
+             markers: junction_markers(markers, swap, :right)
+           ),
            *owners.map { |entry| owner_link(junction, *entry) }]
+        end
+
+        def junction_markers(markers, swap, side)
+          opposite = side == :left ? :right : :left
+          { side => markers[swap ? opposite : side] }
         end
 
         def owner_link(junction, owner, number, by_name)

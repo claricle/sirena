@@ -117,12 +117,8 @@ module Sirena
       # @return [Hash] layout data with commits, branches, and connections
       def build_graph(diagram)
         graph = ir_graph(diagram)
-        orientation = graph_orientation(graph)
-        main_branch = graph_main_branch(graph)
-        branches = source_branches(graph)
-        lane_assignments = assign_lanes(
-          branches, build_branch_info(branches, main_branch), main_branch
-        )
+        orientation, main_branch, branches, lane_assignments =
+          graph_context(graph)
         lane_positions = lane_positions(lane_assignments, orientation)
         commits = position_commits(
           visible_commits(source_commits(graph)), lane_assignments, orientation,
@@ -134,20 +130,28 @@ module Sirena
         )
       end
 
+      def graph_context(graph)
+        orientation = graph_orientation(graph)
+        main_branch = graph_main_branch(graph)
+        branches = source_branches(graph)
+        lanes = assign_lanes(
+          branches, build_branch_info(branches, main_branch), main_branch
+        )
+        [orientation, main_branch, branches, lanes]
+      end
+
       private
 
       def graph_result(graph, commits, branches, lanes, lane_positions, context)
         orientation, main_branch = context
-        width, height = extents(commits, lanes, lane_positions, orientation)
+        dimensions = extents(commits, lanes, lane_positions, orientation)
         {
           commits: commits,
           branches: build_branch_metadata(branches, lanes, main_branch),
           connections: build_connections(commits, graph.edges),
           lane_positions: lane_positions,
           orientation: orientation,
-          width: width,
-          height: height,
-        }
+        }.merge(width: dimensions.first, height: dimensions.last)
       end
 
       def ir_graph(diagram)
@@ -278,10 +282,13 @@ module Sirena
         return :lone if graph[:orientation] == "LR" && graph[:commits].one?
         return :generated_diagonal if compact_generated_semantic_graph?(graph)
         return :tagged_vertical if all_tagged_vertical_graph?(graph)
-        return :linear if vertical?(graph[:orientation]) ||
-          simple_three_commit_graph?(graph)
+        return :linear if linear_label_graph?(graph)
 
         :legacy
+      end
+
+      def linear_label_graph?(graph)
+        vertical?(graph[:orientation]) || simple_three_commit_graph?(graph)
       end
 
       def labels_for_commit(commit, orientation, style)
@@ -369,27 +376,45 @@ module Sirena
         return lone_label_position(text, x_coordinate, y_coordinate, kind) if
           style == :lone
 
-        if %i[linear tagged_vertical].include?(style) && kind == "id"
-          font_size = style == :tagged_vertical ? MERMAID_LABEL_FONT_SIZE : nil
-          return linear_label_position(text, x_coordinate, y_coordinate,
-                                       orientation, font_size)
-        end
-        if style == :tagged_vertical && kind == "tag"
-          return tagged_vertical_label_position(x_coordinate, y_coordinate)
-        end
+        specialized_label_position(
+          text, [commit, orientation, kind, style],
+          [x_coordinate, y_coordinate]
+        ) || legacy_label_position(
+          text, x_coordinate, y_coordinate, orientation, kind
+        )
+      end
 
-        if style == :generated_diagonal && kind == "id"
-          width = mermaid_label_width(text)
-          return diagonal_id_label_position(
-            width, x_coordinate, y_coordinate
+      def specialized_label_position(text, context, coordinates)
+        commit, orientation, kind, style = context
+        if kind == "id"
+          return styled_id_label_position(
+            text, commit, orientation, style, coordinates
           )
         end
-        if style == :legacy && kind == "id" && generated_commit_id?(commit)
-          return [x_coordinate, y_coordinate + 20, "middle"]
+        if style == :tagged_vertical && kind == "tag"
+          tagged_vertical_label_position(*coordinates)
         end
+      end
 
-        legacy_label_position(
-          text, x_coordinate, y_coordinate, orientation, kind
+      def styled_id_label_position(text, commit, orientation, style,
+                                   coordinates)
+        x_coordinate, y_coordinate = coordinates
+        if %i[linear tagged_vertical].include?(style)
+          styled_linear_position(text, orientation, style, coordinates)
+        elsif style == :generated_diagonal
+          diagonal_id_label_position(
+            mermaid_label_width(text), x_coordinate, y_coordinate
+          )
+        elsif style == :legacy && generated_commit_id?(commit)
+          [x_coordinate, y_coordinate + 20, "middle"]
+        end
+      end
+
+      def styled_linear_position(text, orientation, style, coordinates)
+        x_coordinate, y_coordinate = coordinates
+        font_size = MERMAID_LABEL_FONT_SIZE if style == :tagged_vertical
+        linear_label_position(
+          text, x_coordinate, y_coordinate, orientation, font_size
         )
       end
 
@@ -398,11 +423,18 @@ module Sirena
       end
 
       def compact_generated_semantic_graph?(graph)
+        compact_generated_graph?(graph) && tagged_merge?(graph[:commits])
+      end
+
+      def compact_generated_graph?(graph)
         graph[:orientation] == "LR" && graph[:commits].size <= 3 &&
-          graph[:commits].all? { |commit| generated_commit_id?(commit) } &&
-          graph[:commits].any? do |commit|
-            commit[:is_merge] && tag_labels(commit).any?
-          end
+          graph[:commits].all? { |commit| generated_commit_id?(commit) }
+      end
+
+      def tagged_merge?(commits)
+        commits.any? do |commit|
+          commit[:is_merge] && tag_labels(commit).any?
+        end
       end
 
       def lone_label_position(text, x_coordinate, y_coordinate, kind)
@@ -452,13 +484,16 @@ module Sirena
             x_coordinate, y_coordinate, kind
           )
         end
-        if kind == "tag"
-          width = mermaid_label_width(text)
-          return [x_coordinate - (width / 2.0), y_coordinate - 15, "start"]
-        end
+        return horizontal_tag_position(text, x_coordinate, y_coordinate) if
+          kind == "tag"
 
         width = mermaid_label_width(text)
         diagonal_id_label_position(width, x_coordinate, y_coordinate)
+      end
+
+      def horizontal_tag_position(text, x_coordinate, y_coordinate)
+        width = mermaid_label_width(text)
+        [x_coordinate - (width / 2.0), y_coordinate - 15, "start"]
       end
 
       def legacy_vertical_label_position(x_coordinate, y_coordinate, kind)
@@ -518,6 +553,10 @@ module Sirena
         end
         return empty_root_anchor(branch, graph) unless creation
 
+        branch_anchor(branch, graph, creation)
+      end
+
+      def branch_anchor(branch, graph, creation)
         orientation = graph[:orientation]
         time = vertical?(orientation) ? creation[:y] : creation[:x]
         lane = graph[:lane_positions].fetch(branch[:lane])
@@ -564,12 +603,15 @@ module Sirena
       end
 
       def explicit_id_graph?(graph)
-        return false if vertical?(graph[:orientation])
-        return false if graph[:commits].size <= 1
-        return false if generated_commits_only?(graph)
+        return false unless horizontal_explicit_id_candidate?(graph)
 
         graph[:commits].any? { |commit| !generated_commit_id?(commit) } &&
           graph[:commits].none? { |commit| commit[:is_cherry_pick] }
+      end
+
+      def horizontal_explicit_id_candidate?(graph)
+        !vertical?(graph[:orientation]) && graph[:commits].size > 1 &&
+          !generated_commits_only?(graph)
       end
 
       def branch_label_geometry(branch, x_coordinate, y_coordinate, anchor)
@@ -771,7 +813,8 @@ module Sirena
       # @return [Hash] branch info with parent relationships
       def build_branch_info(branches, main_branch)
         info = { main_branch => branch_info({}, 0, main_branch) }
-        branches.reject { |branch| branch[:name] == main_branch }.each do |branch|
+        branches.reject { |branch| branch[:name] == main_branch }
+          .each do |branch|
           info[branch[:name]] = branch_info(branch, info.size, main_branch)
         end
         info
@@ -809,19 +852,26 @@ module Sirena
       end
 
       def lane_positions(assignments, orientation)
-        return assignments.values.to_h { |lane| [lane, lane * LANE_SPACING] } unless
+        return horizontal_lane_positions(assignments) unless
           vertical?(orientation)
 
         ordered = assignments.sort_by { |_branch, lane| lane }
-        ordered.each_with_index.with_object({}) do |((_branch, lane), index), positions|
-          positions[lane] = if index.zero?
-                              0.0
-                            else
-                              previous_branch, previous_lane = ordered.fetch(index - 1)
-                              positions.fetch(previous_lane) + VERTICAL_LANE_GAP +
-                                (vertical_lane_label_width(previous_branch) / 2.0)
-                            end
+        ordered.each_with_index.with_object({}) do |pair, out|
+          (_branch, lane), index = pair
+          out[lane] = next_lane_position(ordered, index, out)
         end
+      end
+
+      def horizontal_lane_positions(assignments)
+        assignments.values.to_h { |lane| [lane, lane * LANE_SPACING] }
+      end
+
+      def next_lane_position(ordered, index, positions)
+        return 0.0 if index.zero?
+
+        previous_branch, previous_lane = ordered.fetch(index - 1)
+        positions.fetch(previous_lane) + VERTICAL_LANE_GAP +
+          (vertical_lane_label_width(previous_branch) / 2.0)
       end
 
       def vertical_lane_label_width(branch)
@@ -852,15 +902,18 @@ module Sirena
         index, count = sequence
         branch = commit[:branch_name] || main_branch
         lane = lane_assignments[branch] || 0
-        commit.merge(positioned_commit_attributes(
-                       commit, [index, count], [branch, lane], orientation,
-                       lane_positions
-                     )).slice(
-                       :ir_id, :id, :x, :y, :branch, :lane, :message,
-                       :type, :tag, :tags,
-                       :parent_ids, :is_merge, :merge_branch, :is_cherry_pick,
-                       :cherry_pick_parent
-                     )
+        attributes = positioned_commit_attributes(
+          commit, [index, count], [branch, lane], orientation, lane_positions
+        )
+        visible_commit_attributes(commit.merge(attributes))
+      end
+
+      def visible_commit_attributes(commit)
+        commit.slice(
+          :ir_id, :id, :x, :y, :branch, :lane, :message, :type, :tag, :tags,
+          :parent_ids, :is_merge, :merge_branch, :is_cherry_pick,
+          :cherry_pick_parent
+        )
       end
 
       def positioned_commit_attributes(commit, sequence, branch_lane,

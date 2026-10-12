@@ -16,6 +16,19 @@ RSpec.describe Sirena::Layout::Flowchart do
   let(:centres) do
     nodes.transform_values { |node| node.x + (node.width / 2.0) }
   end
+  let(:expected_positions) do
+    {
+      "a_a" => [be_within(1).of(206.36), be_within(1).of(8)],
+      "b_b" => [be_within(1).of(60.63), be_within(1).of(216)],
+      "c" => [be_within(1).of(206.36), be_within(1).of(112)],
+      "d_d" => [be_within(1).of(206.36), be_within(1).of(216)],
+      "c_c" => [be_within(1).of(206.86), be_within(1).of(320)],
+    }
+  end
+
+  def positions
+    nodes.transform_values { |node| [centres[node.id], node.y] }
+  end
 
   it "puts b_b on the row above c_c, beside d_d" do
     expect(nodes.fetch("b_b").y).to eq(nodes.fetch("d_d").y)
@@ -27,13 +40,6 @@ RSpec.describe Sirena::Layout::Flowchart do
   end
 
   it "places every node where mmdc does" do
-    expect(nodes.transform_values { |node| [centres[node.id], node.y] })
-      .to match(
-        "a_a" => [be_within(1).of(206.36), be_within(1).of(8)],
-        "b_b" => [be_within(1).of(60.63), be_within(1).of(216)],
-        "c" => [be_within(1).of(206.36), be_within(1).of(112)],
-        "d_d" => [be_within(1).of(206.36), be_within(1).of(216)],
-        "c_c" => [be_within(1).of(206.86), be_within(1).of(320)],
-      )
+    expect(positions).to match(expected_positions)
   end
 end

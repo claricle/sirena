@@ -11,12 +11,16 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapters::Flowchart do
   def collision_semantics(source)
     diagram = Sirena::Parser::Flowchart.new.parse(source)
     graph = described_class.call(diagram)
-    node = graph.nodes.find do |candidate|
-      candidate.role == "flow_node" && candidate.id == "B"
-    end
+    node = collision_node(graph)
     graph.nodes.select { |candidate| candidate.parent_id == node.id }
       .select { |candidate| candidate.role == "subgraph_collision" }
       .map(&:label)
+  end
+
+  def collision_node(graph)
+    graph.nodes.find do |candidate|
+      candidate.role == "flow_node" && candidate.id == "B"
+    end
   end
 
   it "preserves an empty-subgraph collision as node semantics" do

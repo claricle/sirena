@@ -13,27 +13,33 @@ RSpec.describe Sirena::Layout::Flowchart do
     MERMAID
   end
 
-  it "uses direct 35px ELK placement for the flowchart-elk header" do
-    directed_calls = 0
-    spacing = nil
+  def observe_directed_calls
+    calls = 0
     allow(Sirena::Layout::Flowchart::DirectedPlacement).to receive(:apply)
       .and_wrap_original do |original, *arguments, **keywords|
-        directed_calls += 1
+        calls += 1
         original.call(*arguments, **keywords)
       end
+    -> { calls }
+  end
+
+  def observe_elk_spacing
+    spacing = nil
     allow(Sirena::Layout::ElkPlacement).to receive(:apply)
       .and_wrap_original do |original, graph|
         options = graph.fetch(:layoutOptions)
-        spacing = [
-          options.fetch(Sirena::Layout::Base::ElkOptions::NODE_NODE_SPACING),
-          options.fetch(Sirena::Layout::Base::ElkOptions::LAYER_SPACING),
-        ]
+        spacing = [options.fetch(Sirena::Layout::Base::ElkOptions::NODE_NODE_SPACING),
+                   options.fetch(Sirena::Layout::Base::ElkOptions::LAYER_SPACING)]
         original.call(graph)
       end
+    -> { spacing }
+  end
 
+  it "uses direct 35px ELK placement for the flowchart-elk header" do
+    directed_calls = observe_directed_calls
+    spacing = observe_elk_spacing
     Sirena.render("flowchart-elk\n#{body}")
-
-    expect([directed_calls, spacing]).to eq([0, [35, 35]])
+    expect([directed_calls.call, spacing.call]).to eq([0, [35, 35]])
   end
 
   it "keeps ordinary flowcharts on dagre-compatible placement" do
@@ -49,13 +55,8 @@ RSpec.describe Sirena::Layout::Flowchart do
   end
 
   def directed_placement_calls(source, **options)
-    calls = 0
-    allow(Sirena::Layout::Flowchart::DirectedPlacement).to receive(:apply)
-      .and_wrap_original do |original, *arguments, **keywords|
-        calls += 1
-        original.call(*arguments, **keywords)
-      end
+    calls = observe_directed_calls
     Sirena.render(source, **options)
-    calls
+    calls.call
   end
 end

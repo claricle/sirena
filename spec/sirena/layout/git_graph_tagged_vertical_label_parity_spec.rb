@@ -3,6 +3,21 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
+  let(:fully_tagged) do
+    scene_for(<<~MERMAID)
+      gitGraph TB:
+        commit id: "one" tag: "v1"
+        commit id: "two" tag: "v2"
+    MERMAID
+  end
+  let(:partially_tagged) do
+    scene_for(<<~MERMAID)
+      gitGraph TB:
+        commit id: "one" tag: "v1"
+        commit id: "two"
+    MERMAID
+  end
+
   def case_ids
     %w[
       gitgraph/gitgraph_spec-a80be08a.mmd
@@ -26,28 +41,22 @@ RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
   it "matches Mermaid's fully tagged single-lane vertical labels" do
     errors = results.values.map { |result| result.geometry.fetch(:worst_e_c) }
 
-    expect([results.keys.sort, results.values.any?(&:hard_failure?), errors.max])
+    failed = results.values.any?(&:hard_failure?)
+    evidence = [results.keys.sort, failed, errors.max]
+    expect(evidence)
       .to match([case_ids.sort, false, (be <= 0.08)])
   end
 
-  it "rotates tags only for the fully tagged single-lane vertical mode" do
-    fully_tagged = scene_for(<<~MERMAID)
-      gitGraph TB:
-        commit id: "one" tag: "v1"
-        commit id: "two" tag: "v2"
-    MERMAID
-    partially_tagged = scene_for(<<~MERMAID)
-      gitGraph TB:
-        commit id: "one" tag: "v1"
-        commit id: "two"
-    MERMAID
-
+  def tag_rotation_evidence(fully_tagged, partially_tagged)
     rotations = fully_tagged.commits.flat_map(&:labels)
       .select { |label| label.kind == "tag" }.map(&:rotation)
     partial = partially_tagged.commits.flat_map(&:labels)
       .find { |label| label.kind == "tag" }
+    [rotations, partial.rotation, partial.text_anchor]
+  end
 
-    expect([rotations, partial.rotation, partial.text_anchor])
+  it "rotates tags only for the fully tagged single-lane vertical mode" do
+    expect(tag_rotation_evidence(fully_tagged, partially_tagged))
       .to eq([[45.0, 45.0], nil, "end"])
   end
 end

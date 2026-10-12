@@ -32,16 +32,21 @@ module Sirena
           def entity_nodes(diagram, boxes, box_ids, node_ids, occupied)
             holders = node_holders(boxes, box_ids)
             collisions = node_subgraph_collision_ids(diagram)
-            flow_nodes = diagram.nodes.flat_map do |node|
+            flow_nodes(diagram, node_ids, holders, collisions, occupied) +
+              group_nodes(boxes, box_ids, occupied)
+          end
+
+          def flow_nodes(diagram, node_ids, holders, collisions, occupied)
+            diagram.nodes.flat_map do |node|
               flow_node(
                 node, node_ids.fetch(node), holders[node.id], occupied,
                 subgraph_collision: collisions.include?(node.id)
               )
             end
-            groups = boxes.flat_map do |box|
-              group_node(box, box_ids, occupied)
-            end
-            flow_nodes + groups
+          end
+
+          def group_nodes(boxes, box_ids, occupied)
+            boxes.flat_map { |box| group_node(box, box_ids, occupied) }
           end
 
           def flow_node(node, id, parent_id, occupied,

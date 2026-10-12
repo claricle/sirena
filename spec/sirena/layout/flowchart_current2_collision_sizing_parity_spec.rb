@@ -14,6 +14,15 @@ RSpec.describe Sirena::Layout::Flowchart do
     scene.children.flat_map(&:children).find { |child| child.id == id }
   end
 
+  def ordinary_collision_evidence
+    collision = node(scene_for(collision_source), "B")
+    ordinary_source = collision_source.sub(/\n    subgraph B.*\z/m, "")
+    ordinary = node(scene_for(ordinary_source), "B")
+    centers_match = collision.center_x == ordinary.center_x &&
+      collision.center_y == ordinary.center_y
+    [[ordinary.width, ordinary.height], centers_match]
+  end
+
   it "uses Mermaid's compact box for the current2 node/subgraph collision" do
     collision = node(scene_for(collision_source), "B")
 
@@ -22,13 +31,8 @@ RSpec.describe Sirena::Layout::Flowchart do
   end
 
   it "preserves ordinary node padding when no empty subgraph reuses the id" do
-    collision = node(scene_for(collision_source), "B")
-    ordinary_source = collision_source.sub(/\n    subgraph B.*\z/m, "")
-    ordinary = node(scene_for(ordinary_source), "B")
-
-    expect([ordinary.width, ordinary.height])
-      .to match([be_within(0.02).of(69.0625), 54.0])
-    expect([collision.center_x, collision.center_y])
-      .to eq([ordinary.center_x, ordinary.center_y])
+    expect(ordinary_collision_evidence).to match(
+      [[be_within(0.02).of(69.0625), 54.0], true],
+    )
   end
 end
