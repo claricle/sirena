@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "brandes_koepf"
+require_relative "layer_spacing"
 
 module Sirena
   module Layout
@@ -11,15 +12,19 @@ module Sirena
       #
       # A level whose edges all join neighbouring layers is placed the way
       # dagre does it, with Brandes-Koepf alignment over the layers elkrb
-      # chose.
+      # chose. An edge's label is as wide as its stand-in there.
       class RowCentering
         # @param flat [Hash] a level whose boxes elkrb has placed
-        def self.apply(flat)
-          new(flat).apply
+        # @param label_axis [Symbol, nil] a label's size along the flow,
+        #   :height, or :width for a turned level, as for LayerSpacing.
+        #   Without it a level with a labelled edge is only centred.
+        def self.apply(flat, label_axis: nil)
+          new(flat, label_axis).apply
         end
 
-        def initialize(flat)
+        def initialize(flat, label_axis)
           @flat = flat
+          @label_axis = label_axis
         end
 
         def apply
@@ -49,7 +54,7 @@ module Sirena
         end
 
         def joined_ends(edge, ranks)
-          return unless edge[:labels].to_a.empty?
+          return unless @label_axis || edge[:labels].to_a.empty?
 
           ends = edge_ends(edge)
           ends.reverse! if ranks[ends.first] > ranks[ends.last]
@@ -83,8 +88,21 @@ module Sirena
 
         def node_widths(ordered, dummies)
           widths = ordered.flatten.to_h { |box| [box[:id], box[:width]] }
-          dummies.each { |dummy| widths[dummy] = 0.0 }
+          dummies.each { |dummy| widths[dummy] = standin_width(dummy) }
           widths
+        end
+
+        # The stand-in for the kth edge spans its widest label across the
+        # flow: the label's width, or its line box on a turned level.
+        def standin_width(dummy)
+          labels = @flat[:edges][dummy.last][:labels].to_a
+          labels.map { |label| across(label) }.max.to_f
+        end
+
+        def across(label)
+          return label[:width].to_f if @label_axis == :height
+
+          label[:height].to_f * LayerSpacing::LINE_HEIGHT
         end
 
         # Rows alternate with a layer of edge stand-ins, as in dagre. Each

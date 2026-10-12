@@ -51,6 +51,9 @@ module Sirena
       ROUNDED_CORNER = 5.0
       CLUSTER_TITLE_BASELINE = 20
       EDGE_LABEL_LIFT = 5.0
+      # mmdc breaks an edge label wider than this at spaces, and the label
+      # box takes this width. One word wider than it stays on its line.
+      EDGE_LABEL_WRAP_WIDTH = 200.0
       SUBSTITUTE_FONT_HEADROOM = 1.2
       ICON_ADVANCE_EMS = 1.3
 
@@ -935,15 +938,31 @@ module Sirena
         return [] if edge.label.nil? || edge.label.empty?
 
         text = display_text(edge.label)
-        label_dims = measure_text(text, font_size: layout_font_size)
+        line = measure_text(text, font_size: layout_font_size)
+        lines = wrapped_lines(text)
+        width = lines > 1 ? EDGE_LABEL_WRAP_WIDTH : line[:width]
 
-        [
-          {
-            text: text,
-            width: label_dims[:width],
-            height: label_dims[:height],
-          },
-        ]
+        [{ text: text, width: width, height: line[:height] * lines }]
+      end
+
+      # How many lines mmdc breaks an edge label into: each takes as many
+      # words as fit in the wrap width, counting the space after a word,
+      # which mmdc keeps on its line.
+      def wrapped_lines(text)
+        lines = [[]]
+        text.split.join(" ").scan(/\S+ ?/).each do |word|
+          lines << [] unless fits_edge_label?(lines.last, word)
+          lines.last << word
+        end
+        lines.size
+      end
+
+      def fits_edge_label?(line_words, word)
+        return true if line_words.empty?
+
+        line = "#{line_words.join}#{word}"
+        measure_text(line, font_size: layout_font_size)[:width] <=
+          EDGE_LABEL_WRAP_WIDTH
       end
 
       def calculate_dimensions(label, shape)
