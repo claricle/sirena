@@ -40,21 +40,21 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.050648
-      worst_e_w: 0.0851
+      worst_e_c: 0.00583
+      worst_e_w: 0.049406
       worst_e_h: 0.084899
-      worst_e_a: 0.18577
+      worst_e_a: 0.146765
       worst_analog:
   matched: 5
-  status: miss
+  status: pass
 - case: java.nonreg.simple.TeozTimelineIssues_0004_Test--bea0f11e448b
   summary:
     hard_failure: false
     metrics:
       worst_e_c: 0.057048
-      worst_e_w: 0.147716
+      worst_e_w: 0.08534
       worst_e_h: 0.084899
-      worst_e_a: 0.254195
+      worst_e_a: 0.186033
       worst_analog:
   matched: 6
   status: miss
@@ -227,7 +227,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.071334
+      worst_e_c: 0.05093
       worst_e_w: 0.062446
       worst_e_h: 0.0
       worst_e_a: 0.062446
@@ -359,13 +359,13 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.128394
-      worst_e_w: 0.313979
+      worst_e_c: 0.067633
+      worst_e_w: 0.044078
       worst_e_h: 0.0
-      worst_e_a: 0.313979
+      worst_e_a: 0.044078
       worst_analog:
   matched: 3
-  status: miss
+  status: pass
 - case: resources.vega.nonreg.group2729.bare_activate_before_any_message--920d4bcaa3e9
   summary:
     hard_failure: false
@@ -414,7 +414,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.058611
+      worst_e_c: 0.050807
       worst_e_w: 0.142857
       worst_e_h: 0.0
       worst_e_a: 0.142857
@@ -458,18 +458,18 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.139309
+      worst_e_c: 0.002402
       worst_e_w: 0.032769
       worst_e_h: 0.0
       worst_e_a: 0.032769
       worst_analog:
   matched: 9
-  status: miss
+  status: pass
 - case: resources.vega.nonreg.group2788.loop_long_label--d4b4359acf05
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.022914
+      worst_e_c: 0.016203
       worst_e_w: 0.142857
       worst_e_h: 0.0
       worst_e_a: 0.142857
@@ -491,7 +491,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.040458
+      worst_e_c: 0.032021
       worst_e_w: 0.142857
       worst_e_h: 0.0
       worst_e_a: 0.142857
@@ -722,7 +722,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.009677
+      worst_e_c: 0.006766
       worst_e_w: 0.035033
       worst_e_h: 0.0
       worst_e_a: 0.035033
@@ -744,7 +744,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.009179
+      worst_e_c: 0.005396
       worst_e_w: 0.035031
       worst_e_h: 0.0
       worst_e_a: 0.035031
@@ -810,13 +810,13 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.134781
-      worst_e_w: 0.222469
+      worst_e_c: 0.010705
+      worst_e_w: 0.040259
       worst_e_h: 0.0
-      worst_e_a: 0.222469
+      worst_e_a: 0.040259
       worst_analog:
   matched: 3
-  status: miss
+  status: pass
 - case: resources.vega.sequence.newpage--793d6e993975
   summary:
     hard_failure: false
@@ -832,13 +832,13 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.096836
+      worst_e_c: 0.006478
       worst_e_w: 0.025222
       worst_e_h: 0.0
       worst_e_a: 0.025222
       worst_analog:
   matched: 6
-  status: miss
+  status: pass
 - case: resources.vega.tikz.tikz-scale-nested-scale--2539f518bd84
   summary:
     hard_failure: false
