@@ -575,8 +575,17 @@ module Sirena
           # A ref wider than the lifelines it names pushes them apart.
           def widen_ref(gaps, ref)
             low, high = ref.targets.map { |id| ids.index(id) }.minmax
-            need = RefShape.width_for(ref.label, method(:text_width))
-            widen_over(gaps, (low...high).to_a, low, need)
+            between = (low...high).to_a
+            need = RefShape.width_for(ref.label)
+            return widen_over(gaps, between, low, need) if between.empty?
+
+            padding = if nested_in_fragment?(ref)
+                        FragmentShape::BASE_PAD
+                      else
+                        RefShape::SIDE_PAD
+                      end
+            share = (need - (2 * padding)) / between.size
+            between.each { |index| raise_gap(gaps, index, share) }
           end
 
           def widen_over(gaps, between, index, need)
@@ -648,14 +657,14 @@ module Sirena
             [room, CLASSIC_SELF_CLEARANCE].max
           end
 
-          def nested_in_fragment?(message)
+          def nested_in_fragment?(item)
             depth = 0
-            @diagram.items.each do |item|
-              return depth.positive? if item.equal?(message)
-              next unless item.is_a?(Fragment)
+            @diagram.items.each do |candidate|
+              return depth.positive? if candidate.equal?(item)
+              next unless candidate.is_a?(Fragment)
 
-              depth += 1 if item.phase == :open
-              depth -= 1 if item.phase == :close
+              depth += 1 if candidate.phase == :open
+              depth -= 1 if candidate.phase == :close
             end
             false
           end
