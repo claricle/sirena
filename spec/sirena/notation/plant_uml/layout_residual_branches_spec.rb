@@ -28,7 +28,7 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     [
       ["<<entity>>", "kind"],
       ["Box<T>", "class_name"],
-      ["+compute() : int", "member_abstract"],
+      ["+compute(): int", "member_abstract"],
     ]
   end
 
