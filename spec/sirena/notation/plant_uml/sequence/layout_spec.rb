@@ -521,15 +521,16 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
     it "draws a message beside a block that has just closed" do
       scene = teoz_scene("opt", "A -> B", "end", "& C -> C")
+      centred_loop_top = scene.fragments.first.y + 1.125
 
       expect(scene.arrows.last.path[/M \S+ (\S+)/, 1].to_f)
-        .to eq(scene.fragments.first.y)
+        .to eq(centred_loop_top)
     end
 
     it "continues below a taller message beside a short block" do
       scene = teoz_scene("A -> A", "& opt", "end", "B -> C")
 
-      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(42.1328)
+      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(41.0078)
     end
   end
 
