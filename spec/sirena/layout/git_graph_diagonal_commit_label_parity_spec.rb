@@ -66,8 +66,13 @@ RSpec.describe Sirena::Layout::GitGraph, :aggregate_failures do
     MERMAID
 
     labels = scene.commits.flat_map(&:labels).select { |label| label.kind == "id" }
-    expect(labels.map { |label| [label.rotation, label.text_anchor] }.uniq)
-      .to eq([[-45.0, "start"]])
+      .to_h { |label| [label.text, label] }
+    explicit = labels.values_at("one", "two", "three")
+
+    expect([
+      explicit.map { |label| [label.rotation, label.text_anchor] }.uniq,
+      labels.fetch("commit-4").rotation,
+    ]).to eq([[[-45.0, "start"]], nil])
   end
 
   it "keeps explicit-ID lane clearance with tags and marker types" do
