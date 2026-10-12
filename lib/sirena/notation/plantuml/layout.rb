@@ -8,6 +8,7 @@ require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "rank_chain"
 require_relative "scene"
+require_relative "sequence/text_advances"
 
 module Sirena
   module Notation
@@ -45,6 +46,7 @@ module Sirena
         # measured class box; both values are pinned by the group2712 family.
         EMPTY_MEMBER_COMPARTMENT = 14.0
         EMPTY_CLASS_WIDTH_EXTRA = 8.0
+        EMPTY_CLASS_MIN_WIDTH = 41.5
         ARROW_LENGTH = 9.0
         ARROW_HALF_WIDTH = 4.0
         ARROW_NOTCH = 5.0
@@ -66,7 +68,8 @@ module Sirena
                          :MEMBER_NOTE_LINE_HEIGHT, :MEMBER_NOTE_STACK_GAP,
                          :MEMBER_NOTE_BODY_GAP, :MEMBER_NOTE_CLASS_HEIGHT,
                          :MEMBER_NOTE_SIDE_PADDING,
-                         :EMPTY_MEMBER_COMPARTMENT, :EMPTY_CLASS_WIDTH_EXTRA
+                         :EMPTY_MEMBER_COMPARTMENT, :EMPTY_CLASS_WIDTH_EXTRA,
+                         :EMPTY_CLASS_MIN_WIDTH
 
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
@@ -345,6 +348,7 @@ module Sirena
           record = box_record(klass.name, header_rows(klass) + names,
                               member_rows)
           record = compact_empty_box(record, member_rows, diagram)
+          adjust_plain_empty_width(record, klass, diagram, names)
           record.merge(name_rows: names.size, **box_context(klass, diagram))
         end
 
@@ -365,6 +369,43 @@ module Sirena
 
         def compact_empty_item?(item, diagram)
           compact_empty_members?(diagram) && item[:member_rows]&.empty?
+        end
+
+        def adjust_plain_empty_width(specification, klass, diagram, names)
+          return unless plain_empty_class?(klass, diagram, names)
+
+          specification[:width] = plain_empty_class_width(names.first)
+        end
+
+        def plain_empty_class?(klass, diagram, names)
+          return false unless simple_empty_class?(klass, names)
+          return false unless uniform_empty_class_lengths?(diagram)
+
+          diagram.directives.none? do |line|
+            line.match?(/\Ahide[ \t]+(?:circle|empty[ \t]+members)\z/i)
+          end
+        end
+
+        def simple_empty_class?(klass, names)
+          plain_class?(klass) && klass.body.empty? && klass.package.nil? &&
+            names.one?
+        end
+
+        def uniform_empty_class_lengths?(diagram)
+          names = diagram.classes.map do |candidate|
+            rows = name_rows(candidate)
+            return false unless simple_empty_class?(candidate, rows)
+
+            rows.first
+          end
+          names.map(&:length).uniq.one?
+        end
+
+        def plain_empty_class_width(name)
+          title_width = Sequence::TextAdvances.width(name,
+                                                     font_size: font_size)
+          [((title_width * 2).round / 2.0) + 32.0,
+           EMPTY_CLASS_MIN_WIDTH].max
         end
 
         def box_context(klass, diagram)
