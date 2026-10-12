@@ -242,7 +242,7 @@ module Sirena
         def isolated_class_kind_row_tops(rows)
           heights = rows.map { |row| row.map { |item| item[:height] }.max }
           heights.each_with_object([MARGIN]) do |height, tops|
-            tops << tops.last + height + ISOLATED_KIND_ROW_GAP
+            tops << (tops.last + height + ISOLATED_KIND_ROW_GAP)
           end
         end
 
@@ -250,15 +250,24 @@ module Sirena
           lefts = isolated_class_kind_column_lefts(widths)
           height = row.map { |item| item[:height] }.max
           row.each_with_index.map do |item, column|
-            left = lefts.fetch(column) + ((widths.fetch(column) - item[:width]) / 2)
-            y = top + ((height - item[:height]) / 2)
-            build_box(item, left, y, item[:width])
+            positioned_isolated_class_box(item, lefts.fetch(column),
+                                          widths.fetch(column), top, height)
           end
+        end
+
+        def positioned_isolated_class_box(item, left, width, top, height)
+          x = centred_at(left, width, item[:width])
+          y = centred_at(top, height, item[:height])
+          build_box(item, x, y, item[:width])
+        end
+
+        def centred_at(origin, available, occupied)
+          origin + ((available - occupied) / 2)
         end
 
         def isolated_class_kind_column_lefts(widths)
           widths.each_with_object([MARGIN]) do |width, lefts|
-            lefts << lefts.last + width + ISOLATED_KIND_COLUMN_GAP
+            lefts << (lefts.last + width + ISOLATED_KIND_COLUMN_GAP)
           end
         end
 
@@ -674,27 +683,40 @@ module Sirena
         end
 
         def complete_box_specification(record, klass, diagram, details)
-          record = compact_empty_box(record, details[:member_rows], diagram)
-          record = smetana_hide_circle_box(record, klass, diagram, details)
-          adjust_plain_empty_width(record, klass, diagram, details[:names])
-          record = multiline_title_box(record, klass, details)
-          record = isolated_standard_box(record, klass, diagram, details)
-          record = isolated_class_kind_box(record, diagram, details)
-          record = hide_members_grid_box(record, diagram, details)
-          record = qualified_association_box(record, klass, diagram, details)
+          record = standard_box_adjustments(record, klass, diagram, details)
+          record = isolated_box_adjustments(record, klass, diagram, details)
           record.merge(name_rows: details[:names].size,
                        floating_generic: details[:generic],
                        **box_context(klass, diagram))
         end
 
+        def standard_box_adjustments(record, klass, diagram, details)
+          record = compact_empty_box(record, details[:member_rows], diagram)
+          record = smetana_hide_circle_box(record, klass, diagram, details)
+          adjust_plain_empty_width(record, klass, diagram, details[:names])
+          multiline_title_box(record, klass, details)
+        end
+
+        def isolated_box_adjustments(record, klass, diagram, details)
+          record = isolated_standard_box(record, klass, diagram, details)
+          record = isolated_class_kind_box(record, diagram, details)
+          record = hide_members_grid_box(record, diagram, details)
+          qualified_association_box(record, klass, diagram, details)
+        end
+
         def qualified_association_box(record, klass, diagram, details)
           return record unless QualifiedAssociationLayout.for(diagram)
 
-          widths = standard_title_widths(details[:names])
-          widths << qualified_generic_width(widths.max, details[:generic])
-          widths << qualified_incident_width(klass, diagram)
-          record.merge(title_rows: details[:names], width: widths.compact.max,
+          widths = qualified_box_widths(klass, diagram, details)
+          record.merge(title_rows: details[:names], width: widths.max,
                        height: qualified_box_height(diagram, details[:generic]))
+        end
+
+        def qualified_box_widths(klass, diagram, details)
+          widths = standard_title_widths(details[:names])
+          additions = [qualified_generic_width(widths.max, details[:generic]),
+                       qualified_incident_width(klass, diagram)]
+          [*widths, *additions].compact
         end
 
         def qualified_generic_width(title_width, generic)
@@ -706,21 +728,25 @@ module Sirena
         end
 
         def qualified_incident_width(klass, diagram)
-          qualifiers = diagram.relations.filter_map do |relation|
+          text = incident_qualifiers(klass, diagram).max_by(&:length)
+          return unless text
+
+          standard_text_width(text, font_size) + qualifier_allowance(diagram)
+        end
+
+        def incident_qualifiers(klass, diagram)
+          diagram.relations.filter_map do |relation|
             next unless relation.direction.nil?
             next unless [relation.left, relation.right].include?(klass.name)
 
             qualified_text_at(relation, klass.name)
           end
-          text = qualifiers.compact.max_by(&:length)
-          return unless text
+        end
 
-          allowance = if qualified_compact?(diagram)
-                        COMPACT_QUALIFIER_ALLOWANCE
-                      else
-                        QUALIFIED_QUALIFIER_ALLOWANCE
-                      end
-          standard_text_width(text, font_size) + allowance
+        def qualifier_allowance(diagram)
+          return COMPACT_QUALIFIER_ALLOWANCE if qualified_compact?(diagram)
+
+          QUALIFIED_QUALIFIER_ALLOWANCE
         end
 
         def qualified_text_at(relation, name)
@@ -731,7 +757,8 @@ module Sirena
                     end
           return unless content&.start_with?("[")
 
-          content.delete_prefix("[").delete_suffix("]").split("\\n").max_by(&:length)
+          content.delete_prefix("[").delete_suffix("]")
+            .split("\\n").max_by(&:length)
         end
 
         def qualified_box_height(diagram, generic)
@@ -803,17 +830,24 @@ module Sirena
         def smetana_hide_circle_box(record, klass, diagram, details)
           return record unless smetana_hide_circle_class?(klass, diagram)
 
+          widths = smetana_hide_circle_widths(details)
+          record.merge(width: widths.max,
+                       height: smetana_hide_circle_height(details))
+        end
+
+        def smetana_hide_circle_widths(details)
           title_widths = standard_row_widths(
             details[:names], font_size, HIDE_CIRCLE_TITLE_ALLOWANCE
           )
           member_widths = standard_row_widths(
             details[:member_rows], font_size, HIDE_CIRCLE_MEMBER_ALLOWANCE
           )
-          record.merge(
-            width: [*title_widths, *member_widths].max,
-            height: HIDE_CIRCLE_BASE_HEIGHT +
-              (details[:member_rows].size * MEMBER_NOTE_ROW_HEIGHT),
-          )
+          [*title_widths, *member_widths]
+        end
+
+        def smetana_hide_circle_height(details)
+          HIDE_CIRCLE_BASE_HEIGHT +
+            (details[:member_rows].size * MEMBER_NOTE_ROW_HEIGHT)
         end
 
         def smetana_hide_circle_class?(klass, diagram)
@@ -861,12 +895,16 @@ module Sirena
         end
 
         def heterogeneous_smetana_empty_classes?(diagram)
-          return false unless RankChain.engine(diagram) == :smetana
-          return false if compact_empty_members?(diagram)
-          return false if diagram.directives.any? { |line| hide_or_show?(line) }
+          return false unless heterogeneous_empty_class_candidate?(diagram)
 
           names = simple_empty_class_names(diagram)
           names && names.map(&:length).uniq.size > 1
+        end
+
+        def heterogeneous_empty_class_candidate?(diagram)
+          RankChain.engine(diagram) == :smetana &&
+            !compact_empty_members?(diagram) &&
+            diagram.directives.none? { |line| hide_or_show?(line) }
         end
 
         def simple_empty_class_names(diagram)
@@ -1083,7 +1121,8 @@ module Sirena
 
         def intrinsic_box_widths?(diagram)
           body = diagram.classes.any? { |klass| klass.body.any? }
-          diagram.notes.any? || body || heterogeneous_smetana_empty_classes?(diagram) ||
+          diagram.notes.any? || body ||
+            heterogeneous_smetana_empty_classes?(diagram) ||
             diagram.directives.any? { |line| hide_or_show?(line) }
         end
 
@@ -1383,18 +1422,9 @@ module Sirena
         end
 
         def relation_path_for(relation, endpoints)
-          ordered = if reversed_qualified?(relation)
-                      endpoints.merge(left: endpoints[:right],
-                                      right: endpoints[:left])
-                    else
-                      endpoints
-                    end
-          if fan_qualifier_relation?(relation)
-            return fan_qualifier_path(relation, ordered)
-          end
-          if long_qualified_vertical?(relation, ordered)
-            return long_qualified_vertical_path(ordered)
-          end
+          ordered = ordered_qualified_endpoints(relation, endpoints)
+          special = special_qualified_path(relation, ordered)
+          return special if special
 
           control = qualified_label_control(relation, ordered) ||
             qualified_lane_control(relation, ordered)
@@ -1402,6 +1432,21 @@ module Sirena
 
           "M #{point(ordered[:left])} Q #{point(control)} " \
             "#{point(ordered[:right])}"
+        end
+
+        def ordered_qualified_endpoints(relation, endpoints)
+          return endpoints unless reversed_qualified?(relation)
+
+          endpoints.merge(left: endpoints[:right], right: endpoints[:left])
+        end
+
+        def special_qualified_path(relation, endpoints)
+          if fan_qualifier_relation?(relation)
+            return fan_qualifier_path(relation, endpoints)
+          end
+
+          long_qualified_vertical_path(endpoints) if
+            long_qualified_vertical?(relation, endpoints)
         end
 
         def fan_qualifier_relation?(relation)
@@ -1413,17 +1458,27 @@ module Sirena
 
         def fan_qualifier_path(relation, endpoints)
           first, last = endpoints.values_at(:left, :right)
-          qualifier = [relation.left_multiplicity,
-                       relation.right_multiplicity].compact.first
-            .delete_prefix("[").delete_suffix("]")
-          width = standard_text_width(qualifier, font_size) +
+          width = standard_text_width(fan_qualifier(relation), font_size) +
             QUALIFIED_FAN_LANE_ALLOWANCE
-          middle = midpoint(first, last)
-          vertical = (last[1] - first[1]) / 3
-          left = [middle[0] - (width / 2), first[1] + vertical]
-          right = [middle[0] + (width / 2), last[1] - vertical]
+          left, right = fan_lane_points(first, last, width)
           "M #{point(first)} L #{point(left)} L #{point(right)} " \
             "L #{point(last)}"
+        end
+
+        def fan_qualifier(relation)
+          [relation.left_multiplicity, relation.right_multiplicity]
+            .compact.first.delete_prefix("[").delete_suffix("]")
+        end
+
+        def fan_lane_points(first, last, width)
+          middle_x = midpoint(first, last).first
+          vertical = (last[1] - first[1]) / 3
+          [fan_lane_point(middle_x, first[1], -(width / 2), vertical),
+           fan_lane_point(middle_x, last[1], width / 2, -vertical)]
+        end
+
+        def fan_lane_point(horizontal, vertical, delta_x, delta_y)
+          [horizontal + delta_x, vertical + delta_y]
         end
 
         def long_qualified_vertical?(relation, endpoints)
@@ -1434,12 +1489,14 @@ module Sirena
         def long_qualified_vertical_path(endpoints)
           first, last = endpoints.values_at(:left, :right)
           vertical = (last[1] - first[1]) / 3
-          outgoing = [first[0] - QUALIFIED_LONG_CURVE_OFFSET,
-                      first[1] + vertical]
-          incoming = [last[0] + QUALIFIED_LONG_CURVE_OFFSET,
-                      last[1] - vertical]
+          outgoing = offset_point(first, -QUALIFIED_LONG_CURVE_OFFSET, vertical)
+          incoming = offset_point(last, QUALIFIED_LONG_CURVE_OFFSET, -vertical)
           "M #{point(first)} C #{point(outgoing)} #{point(incoming)} " \
             "#{point(last)}"
+        end
+
+        def offset_point(point, delta_x, delta_y)
+          [point[0] + delta_x, point[1] + delta_y]
         end
 
         def qualified_lane_control(relation, endpoints)
@@ -1490,15 +1547,22 @@ module Sirena
         def qualified_marker_half_width(relation, endpoints)
           qualifiers = [relation.left_multiplicity,
                         relation.right_multiplicity]
-          if qualifiers.all? { |text| text&.start_with?("[") }
+          if double_qualifier?(qualifiers)
             return QUALIFIED_DOUBLE_END_HALF_WIDTH
           end
+          return unless qualified_implementation?(relation, qualifiers)
 
-          return unless @qualified_layout_active && qualifiers.compact.empty?
-          return unless relation.markers.value?(:implementation)
+          values = endpoints.values_at(:left, :right)
+          QUALIFIED_INHERITANCE_HALF_WIDTH if steep?(*values)
+        end
 
-          left, right = endpoints.values_at(:left, :right)
-          QUALIFIED_INHERITANCE_HALF_WIDTH if steep?(left, right)
+        def double_qualifier?(qualifiers)
+          qualifiers.all? { |text| text&.start_with?("[") }
+        end
+
+        def qualified_implementation?(relation, qualifiers)
+          @qualified_layout_active && qualifiers.compact.empty? &&
+            relation.markers.value?(:implementation)
         end
 
         def label_arrow?(relation)

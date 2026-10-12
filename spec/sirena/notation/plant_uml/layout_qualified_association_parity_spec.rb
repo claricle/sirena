@@ -39,22 +39,24 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     [rows, height]
   end
 
+  def parity_signature(id)
+    result = case_result(id)
+    metrics = result.geometry.values_at(
+      :worst_e_c, :worst_e_w, :worst_e_h, :worst_e_a
+    )
+    within_bars = metrics.zip(geometry_bars).all? do |value, bar|
+      value <= bar
+    end
+    [result.hard_failure?, result.geometry[:matched], within_bars]
+  end
+
   {
     "resources.vega.nonreg.simple.QualifiedAssoc001--8c3b78057dc3" => 25,
     "resources.vega.nonreg.simple.QualifiedAssoc002--d57fb49a9920" => 11,
     "resources.vega.svg.interactive.SVG0006_Svek--70f5757ed2ca" => 11,
   }.each do |id, matched|
     it "matches every pinned element and geometry bar in #{id}" do
-      result = case_result(id)
-      metrics = result.geometry.values_at(
-        :worst_e_c, :worst_e_w, :worst_e_h, :worst_e_a
-      )
-      within_bars = metrics.zip(geometry_bars).all? do |value, bar|
-        value <= bar
-      end
-
-      expect([result.hard_failure?, result.geometry[:matched], within_bars])
-        .to eq([false, matched, true])
+      expect(parity_signature(id)).to eq([false, matched, true])
     end
   end
 
