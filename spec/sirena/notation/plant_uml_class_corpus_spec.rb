@@ -67,6 +67,36 @@ module PlantUmlCorpusHelpers
   def wrap(body)
     "@startuml\n#{body}\n@enduml\n"
   end
+
+  def nested_package_geometry(source)
+    scene = plantuml_scene(source)
+    items = scene_items(scene)
+    ids = %w[Nested Target package-outer package-middle package-inner]
+    extents = ids.map { |id| extent(items.fetch(id)) }
+    [*extents, scene.relations.first.path]
+  end
+
+  def plantuml_scene(source)
+    graph = Sirena::Notation::PlantUML.parse(wrap(source)).diagram
+    Sirena::Notation::PlantUML::Layout.new.call(graph)
+  end
+
+  def scene_items(scene)
+    (scene.boxes + scene.frames).to_h { |item| [item.id, item] }
+  end
+
+  def extent(item)
+    [item.x, item.y, item.width, item.height]
+  end
+
+  def expected_nested_package_geometry
+    [[78.0, 135.0, 79.126953125, 48.0],
+     [191.087890625, 279.0, 76.078125, 48.0],
+     [6.0, 6.0, 231.126953125, 249.0],
+     [38.0, 57.0, 159.126953125, 166.0],
+     [62.0, 100.0, 111.126953125, 99.0],
+     "M 229.127 255.0 L 229.127 279.0"]
+  end
 end
 
 RSpec.describe Sirena::Notation::PlantUML do
@@ -716,6 +746,18 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect { parse_corpus("package p {\nclass A\n}\nclass p") }
         .to raise_error(described_class::UnsupportedConstructError,
                         /named like a package/)
+    end
+  end
+
+  describe "a relation from a nested package" do
+    let(:source) do
+      ["package outer {", "package middle {", "package inner {",
+       "class Nested", "}", "}", "}", "outer --> Target"].join("\n")
+    end
+
+    it "sizes the nested frames before aligning the outside target" do
+      expect(nested_package_geometry(source))
+        .to eq(expected_nested_package_geometry)
     end
   end
 

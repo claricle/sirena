@@ -14,9 +14,30 @@ module Sirena
         OPEN = 40.0
         CLOSE = 16.0
         SIDE = 16.0
+        NESTING_STEP = 8.0
+        NESTED_OPEN = 35.0
+        RELATION_INSET = 8.0
         TAB_HEIGHT = 22.0
         ICON_WIDTH = 14.0
-        private_constant :TAB_HEIGHT, :ICON_WIDTH
+        private_constant :NESTING_STEP, :NESTED_OPEN, :RELATION_INSET,
+                         :TAB_HEIGHT, :ICON_WIDTH
+
+        def self.stack_open(depth)
+          stack_space(depth, NESTED_OPEN)
+        end
+
+        def self.stack_close(depth)
+          stack_space(depth, CLOSE)
+        end
+
+        def self.stack_side(depth)
+          stack_space(depth, SIDE)
+        end
+
+        def self.stack_space(depth, base)
+          depth.times.sum { |level| base + (level * NESTING_STEP) }
+        end
+        private_class_method :stack_space
 
         # @param diagram [Diagram]
         # @param measure [#call] text width in drawing units
@@ -42,16 +63,56 @@ module Sirena
         # the frames of the packages inside it.
         def bounds_of(package)
           @bounds[package.id] ||= begin
-            left, top, right, bottom = edges(own_edges(package) +
-              inner_edges(package))
+            left, top, right, bottom = edges(
+              package, own_edges(package) + inner_edges(package)
+            )
+            left, right = relation_edges(package, left, right)
             [left, top, right - left, bottom - top]
           end
         end
 
-        def edges(rectangles)
+        def edges(package, rectangles)
           lefts, tops, rights, bottoms = rectangles.transpose
-          [lefts.min - SIDE, tops.min - OPEN + 6.0,
-           rights.max + SIDE, bottoms.max + 12.0]
+          side, above, below = frame_padding(package)
+          [lefts.min - side,
+           tops.min - above,
+           rights.max + side,
+           bottoms.max + below]
+        end
+
+        def frame_padding(package)
+          increment = descendant_depth(package) * NESTING_STEP
+          [SIDE + increment, NESTED_OPEN + increment, CLOSE + increment]
+        end
+
+        def descendant_depth(package)
+          children = @diagram.packages.select do |item|
+            item.parent == package.id
+          end
+          return 0 if children.empty?
+
+          1 + children.map { |child| descendant_depth(child) }.max
+        end
+
+        def relation_edges(package, left, right)
+          targets = @diagram.relations.filter_map do |relation|
+            external_target(package, relation)
+          end
+          targets.each do |target|
+            centre = target.x + (target.width / 2)
+            left = [left, centre - RELATION_INSET].min
+            right = [right, centre + RELATION_INSET].max
+          end
+          [left, right]
+        end
+
+        def external_target(package, relation)
+          name = if relation.left == package.id
+                   relation.right
+                 elsif relation.right == package.id
+                   relation.left
+                 end
+          @boxes.find { |box| box.id == name } if name
         end
 
         def own_edges(package)
