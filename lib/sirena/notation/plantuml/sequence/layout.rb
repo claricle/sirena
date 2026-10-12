@@ -62,6 +62,7 @@ module Sirena
           COMPACT_SELF_ROW = 42.1328
           CLASSIC_FIRST_ROW_GAP = 32.3105
           CLASSIC_UNLABELLED_FIRST_ROW_GAP = 17.3105
+          CLASSIC_FOLLOWING_UNLABELLED_ROW = 14.0
           CLASSIC_ROW = 29.3105
           CLASSIC_SELF_ROW = 42.3105
           CLASSIC_SELF_CLEARANCE = 50.0
@@ -112,7 +113,8 @@ module Sirena
                            :COMPACT_UNLABELLED_ROW, :COMPACT_GROUP_ROW,
                            :COMPACT_GROUP_CLOSE, :COMPACT_SELF_ROW,
                            :CLASSIC_FIRST_ROW_GAP,
-                           :CLASSIC_UNLABELLED_FIRST_ROW_GAP, :CLASSIC_ROW,
+                           :CLASSIC_UNLABELLED_FIRST_ROW_GAP,
+                           :CLASSIC_FOLLOWING_UNLABELLED_ROW, :CLASSIC_ROW,
                            :CLASSIC_SELF_ROW, :CLASSIC_SELF_CLEARANCE,
                            :CLASSIC_FRAGMENT_ROW,
                            :CLASSIC_DIVIDER_ROW, :CLASSIC_DEACTIVATION_GAP,
@@ -258,12 +260,17 @@ module Sirena
           def walker_cadence
             { row: row_height, self_row: self_row_height,
               unlabelled_row: timeline_value(COMPACT_UNLABELLED_ROW),
+              following_unlabelled_row: classic_following_unlabelled_row,
               fragment_row: fragment_row_height,
               group_fragment_row: timeline_value(COMPACT_GROUP_ROW),
               group_close_gap: timeline_value(COMPACT_GROUP_CLOSE),
               divider_row: divider_row_height,
               deactivation_gap: deactivation_gap,
               bare_deactivation_gap: bare_deactivation_gap }
+          end
+
+          def classic_following_unlabelled_row
+            CLASSIC_FOLLOWING_UNLABELLED_ROW unless compact?
           end
 
           # Where `->]` messages end: past every head, and far enough from

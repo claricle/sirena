@@ -47,7 +47,8 @@ module Sirena
                       Ref => :ref, PageBreak => :page_break }.freeze
           Config = Struct.new(:message_measure, :message_font_size,
                               :message_family, :label_inset, :row, :self_row,
-                              :unlabelled_row, :fragment_row, :divider_row,
+                              :unlabelled_row, :following_unlabelled_row,
+                              :fragment_row, :divider_row,
                               :group_fragment_row, :group_close_gap,
                               :activation_edges,
                               :deactivation_gap, :bare_deactivation_gap,
@@ -120,6 +121,7 @@ module Sirena
 
           def apply_fragment_cadence(config)
             @unlabelled_row = config.unlabelled_row
+            @following_unlabelled_row = config.following_unlabelled_row
             @fragment_row = config_value(config, :fragment_row, TAB_HEIGHT)
             @group_fragment_row = config.group_fragment_row
             @group_close_gap = config.group_close_gap
@@ -250,11 +252,24 @@ module Sirena
 
           def message_row(message)
             return @self_row if message.self_message?
+            if following_unlabelled_row?
+              return @following_unlabelled_row
+            end
             if @unlabelled_row && message.label.to_s.empty?
               return @unlabelled_row
             end
 
             @row
+          end
+
+          def following_unlabelled_row?
+            @following_unlabelled_row && following_unlabelled_message?
+          end
+
+          def following_unlabelled_message?
+            @next_non_activation.is_a?(Message) &&
+              !@next_non_activation.self_message? &&
+              @next_non_activation.label.to_s.empty?
           end
 
           def active_participants
