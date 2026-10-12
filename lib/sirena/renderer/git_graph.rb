@@ -162,8 +162,14 @@ module Sirena
       def apply_label_transform(text, geometry)
         text.x = geometry.x
         text.y = geometry.y
-        text.class_name = "commit-label" if geometry.rotation
+        text.class_name = label_class(geometry)
         text.transform = label_transform(geometry)
+      end
+
+      def label_class(geometry)
+        return "tag-label" if geometry.kind == "tag"
+
+        "commit-label" if geometry.rotation
       end
 
       def apply_label_typography(text, geometry)

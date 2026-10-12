@@ -21,6 +21,9 @@ module Sirena
       DEFAULT_SMALL_FONT_SIZE = 12
       HEADER_PADDING = 24
       MMDC_FONT_SIZE = 16
+      # Courier New's advance: 1229 of 2048 units, the same for every glyph.
+      COURIER_ADVANCE = 1229 / 2048.0
+      COURIER_FAMILIES = ["courier", "courier new"].freeze
       EMPTY_CLASS_HEIGHT = 84
       STEREOTYPE_HEIGHT = 24
       MEMBER_HEIGHT = 24
@@ -62,7 +65,7 @@ module Sirena
       )
       SemanticDiagram = Struct.new(
         :id, :title, :direction, :theme, :entities, :relationships,
-        keyword_init: true
+        :font_family, keyword_init: true
       )
       private_constant :SemanticAttribute, :SemanticMethod, :SemanticEntity,
                        :SemanticRelationship, :SemanticDiagram
@@ -188,6 +191,7 @@ module Sirena
       def build_graph(source)
         graph = ir_graph(source)
         diagram = semantic_diagram(graph)
+        @courier = courier?(diagram.font_family)
         {
           id: diagram.id || "class_diagram",
           children: grouped_entities(diagram, graph) + note_nodes(graph),
@@ -250,7 +254,8 @@ module Sirena
         fields = semantic_fields(children[settings&.id])
         {
           id: fields["diagram_identifier"], title: graph.label,
-          direction: fields["layout_direction"], theme: fields["theme"]
+          direction: fields["layout_direction"], theme: fields["theme"],
+          font_family: fields["font_family"]
         }
       end
 
@@ -477,6 +482,8 @@ module Sirena
       end
 
       def bold_advance(char)
+        return COURIER_ADVANCE * name_font_size if @courier
+
         per_mille = ClassNameAdvances::TABLE[char]
         return per_mille * name_font_size / 1000.0 if per_mille
 
@@ -490,7 +497,17 @@ module Sirena
 
       def mmdc_text_width(text)
         shown = Diagram::GenericText.display(text)
+        return COURIER_ADVANCE * scaled_mmdc_font_size * shown.length if
+          @courier
+
         trebuchet_width(shown, scaled_mmdc_font_size)
+      end
+
+      # Courier and Courier New, the monospaced faces mmdc resolves `courier`
+      # to; anything else keeps the Trebuchet MS widths.
+      def courier?(font_family)
+        first = font_family.to_s.split(",").first.to_s
+        COURIER_FAMILIES.include?(first.delete("'\"").strip.downcase)
       end
 
       def scaled_mmdc_font_size

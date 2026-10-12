@@ -91,9 +91,17 @@ RSpec.describe Sirena::Renderer::GitGraph do
     expect(paint_summary).to eq(expected_summary)
   end
 
+  it "publishes the tag label's semantic class" do
+    tag = svg.children.grep(Sirena::Svg::Text).find do |text|
+      Array(text.content).join == "v1"
+    end
+
+    expect(tag.class_name).to eq("tag-label")
+  end
+
   it "preserves the default SVG bytes" do
     expect(Digest::SHA256.hexdigest(svg.to_xml))
-      .to eq("7330e440c404949dd0d81893548894c2fd525a02e135394fd51085f8ddcafecb")
+      .to eq("4fb1c3041b03dc8ccede0c9de57c2bc351bc37f7e19d1bcc42e049baa2fe0a31")
   end
 
   %i[light dark high_contrast].each do |theme_name|

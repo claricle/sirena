@@ -24,7 +24,24 @@ module Sirena
         )
         ranked = graph.merge(edges: ClassCellPlacement.written_edges(graph))
         Flowchart::DirectedPlacement.apply(ranked)
+        center_vertical_siblings(ranked[:children])
         graph.merge!(ranked.except(:edges))
+      end
+
+      def center_vertical_siblings(children)
+        Array(children).each do |child|
+          center_vertical_siblings(child[:children])
+        end
+        Array(children).group_by { |child| child[:x] }.each_value do |column|
+          center_column(column)
+        end
+      end
+
+      def center_column(column)
+        return unless column.map { |child| child[:y] }.uniq.size > 1
+
+        width = column.map { |child| child[:width] }.max
+        column.each { |child| child[:x] += (width - child[:width]) / 2.0 }
       end
 
       def nested?(graph)
@@ -32,7 +49,8 @@ module Sirena
           child[:children] || child[:id].to_s.start_with?("namespace:")
         end
       end
-      private_class_method :directed, :nested?
+      private_class_method :center_vertical_siblings, :center_column,
+                           :directed, :nested?
     end
   end
 end

@@ -359,6 +359,9 @@ module Sirena
       attribute :namespaces, ClassNamespace, collection: true,
                                              default: -> { [] }
 
+      # Diagram-wide font from a Mermaid init `fontFamily`, e.g. "courier"
+      attribute :font_family, :string
+
       # Returns the diagram type identifier.
       #
       # @return [Symbol] :class_diagram

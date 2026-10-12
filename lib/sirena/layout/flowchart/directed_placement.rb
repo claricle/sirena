@@ -115,13 +115,39 @@ module Sirena
           end
         end
 
+        # dagre re-adds an edge that ends on a subgraph after the others,
+        # so crossing reduction sees it last.
         def flat_edges(level_edges, names)
-          level_edges.each_with_index.filter_map do |(edge, from, to), index|
+          dagre_edge_order(level_edges).filter_map do |(edge, from, to), index|
             next unless names[from] && names[to]
 
             { id: "edge-#{index}", sources: [names[from]],
               targets: [names[to]], labels: edge[:labels] || [],
               metadata: edge[:metadata] || {} }
+          end
+        end
+
+        def dagre_edge_order(level_edges)
+          level_edges.each_with_index.sort_by do |(edge, *), index|
+            [subgraph_edge?(edge) ? 1 : 0, index]
+          end
+        end
+
+        def subgraph_edge?(edge)
+          [edge[:sources]&.first, edge[:targets]&.first].any? do |id|
+            cluster_id?(id)
+          end
+        end
+
+        def cluster_id?(id)
+          @cluster_ids ||= collect_clusters(@graph[:children] || [])
+          @cluster_ids.include?(id)
+        end
+
+        def collect_clusters(boxes)
+          boxes.flat_map do |box|
+            [*(box[:id] if cluster?(box)),
+             *collect_clusters(box[:children] || [])]
           end
         end
 

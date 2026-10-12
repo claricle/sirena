@@ -69,9 +69,8 @@ module GitGraphBucketHelpers
   def label_edges(svg)
     REXML::XPath.match(svg, "//text").map do |t|
       width = label_width(t)
-      share = ANCHOR_SHARE.fetch(t.attributes["text-anchor"])
-      left = number(t, "x") - (width * share)
-      [t.text, left, left + width]
+      left, right = transformed_x_bounds(t, width)
+      [t.text, left, right]
     end
   end
 
@@ -86,8 +85,21 @@ module GitGraphBucketHelpers
   end
 
   def left_edge(text, width)
+    transformed_x_bounds(text, width).first
+  end
+
+  def transformed_x_bounds(text, width)
+    y = number(text, "y")
+    matrix = SpecSupport::LayoutParity::Matrix.parse(text["transform"])
+    text_x_endpoints(text, width).map do |endpoint|
+      matrix.apply(endpoint, y).first
+    end.minmax
+  end
+
+  def text_x_endpoints(text, width)
+    share = ANCHOR_SHARE.fetch(text.attributes["text-anchor"])
     x = number(text, "x")
-    text.attributes["text-anchor"] == "end" ? x - width : x
+    [x - (width * share), x + (width * (1 - share))]
   end
 
   def text_named(svg, content)

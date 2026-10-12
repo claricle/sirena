@@ -30,6 +30,7 @@ module Sirena
           INTRINSIC_HEAD_HEIGHT = 30.4883
           MIN_GAP = 30.0
           BOX_PADDING = 8.0
+          BOX_TITLE_PADDING = 3.0
           BOX_TITLE_HEIGHT = 26.0
           MIN_WIDTH_PADDING = 14.0
           HEAD_LEADING = 1.1776
@@ -78,7 +79,8 @@ module Sirena
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
                            :INTRINSIC_HEAD_PADDING, :INTRINSIC_HEAD_HEIGHT,
-                           :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT,
+                           :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_PADDING,
+                           :BOX_TITLE_HEIGHT,
                            :MIN_WIDTH_PADDING, :HEAD_LEADING, :EDGE_GAP,
                            :EDGE_MARGIN,
                            :PAGE_BREAK_INSET, :BANNER_LEFT, :BANNER_TOP,
@@ -100,7 +102,7 @@ module Sirena
 
           # @param graph [IR::Graph] from {IRAdapter}
           def scene(graph)
-            @diagram = pictured(IRReader.call(graph))
+            @diagram = order_boxed_member(pictured(IRReader.call(graph)))
             measure_heads
             place_origin
             @flow = walk
@@ -146,6 +148,61 @@ module Sirena
             @widths = @diagram.participants.map { |p| head_width(p) }
             @centers = centers(@widths)
             @head_height = head_height
+          end
+
+          # An explicit box declaration moves a participant that an earlier
+          # message created implicitly behind the unboxed peer created with it.
+          def order_boxed_member(diagram)
+            from, to = boxed_member_move(diagram)
+            return diagram unless from
+
+            moved = diagram.participants.dup
+            moved.insert(to, moved.delete_at(from))
+            diagram_with_participants(diagram, moved.freeze)
+          end
+
+          # Indexes of the sole boxed member and of the unboxed peer it
+          # follows, when the member was declared before that peer.
+          def boxed_member_move(diagram)
+            member = sole_boxed_member(diagram)
+            peer = member && outside_peer(diagram, member)
+            return unless peer
+
+            from = participant_index(diagram, member)
+            to = participant_index(diagram, peer)
+            [from, to] if from && to && from < to
+          end
+
+          def sole_boxed_member(diagram)
+            box = diagram.boxes.first if diagram.boxes.one?
+            box.members.first if box&.members&.one?
+          end
+
+          def outside_peer(diagram, member)
+            peer = first_message_peer(diagram, member)
+            peer unless peer == member
+          end
+
+          def participant_index(diagram, id)
+            diagram.participants.index { |participant| participant.id == id }
+          end
+
+          def first_message_peer(diagram, member)
+            message = diagram.messages.find do |item|
+              item.from == member || item.to == member
+            end
+            return unless message
+
+            message.from == member ? message.to : message.from
+          end
+
+          def diagram_with_participants(diagram, participants)
+            Diagram.new(
+              participants: participants, items: diagram.items,
+              boxes: diagram.boxes, appearance: diagram.appearance,
+              footbox: diagram.footbox?, warnings: diagram.warnings,
+              title: diagram.title, chrome: diagram.chrome, teoz: diagram.teoz?
+            )
           end
 
           def walk
@@ -250,7 +307,7 @@ module Sirena
           def head_height
             return GLYPH_HEAD_HEIGHT + head_growth if glyph_participants?
 
-            height = if intrinsic_group_heads?
+            height = if intrinsic_plain_heads?
                        INTRINSIC_HEAD_HEIGHT
                      elsif plain_participants?
                        plain_head_height
@@ -287,17 +344,25 @@ module Sirena
             end
 
             minimum, padding = head_box_dimensions
-            label_width = measure_text(
-              participant.label, font_size: head_font_size
-            )[:width]
-            [minimum, label_width + (2 * padding),
-             boxed_title_width(participant), requested_width].max
+            widths = [minimum, padded_label_width(participant, padding),
+                      requested_width]
+            widths << boxed_title_width(participant) unless boxed_plain_heads?
+            widths.max
+          end
+
+          def padded_label_width(participant, padding)
+            label = measure_text(participant.label, font_size: head_font_size)
+            label[:width] + (2 * padding)
           end
 
           def head_box_dimensions
-            return [0.0, INTRINSIC_HEAD_PADDING] if intrinsic_group_heads?
+            return [0.0, INTRINSIC_HEAD_PADDING] if intrinsic_plain_heads?
 
             [minimum_head_width, head_padding]
+          end
+
+          def intrinsic_plain_heads?
+            intrinsic_group_heads? || boxed_plain_heads?
           end
 
           def intrinsic_group_heads?
@@ -305,6 +370,13 @@ module Sirena
 
             @diagram.min_head_width.nil? && @diagram.boxes.empty? &&
               plain_participants? && group_fragment?
+          end
+
+          def boxed_plain_heads?
+            return false if compact?
+
+            @diagram.min_head_width.nil? && @diagram.boxes.any? &&
+              plain_participants?
           end
 
           def group_fragment?
@@ -895,9 +967,24 @@ module Sirena
           end
 
           def frame_edges(box, widths)
+            left, right = member_edges(box, widths)
+            return [left, right] unless boxed_plain_heads?
+
+            widen_to_title(box, left, right)
+          end
+
+          def member_edges(box, widths)
             first, last = member_indexes(box).minmax
             [@centers[first] - (widths[first] / 2) - BOX_PADDING,
              @centers[last] + (widths[last] / 2) + BOX_PADDING]
+          end
+
+          def widen_to_title(box, left, right)
+            shortfall = title_width(box) + (2 * BOX_TITLE_PADDING) -
+              (right - left)
+            return [left, right] unless shortfall.positive?
+
+            [left - (shortfall / 2), right + (shortfall / 2)]
           end
 
           def lifelines

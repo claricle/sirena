@@ -7,6 +7,7 @@ require_relative "../error/pipeline_error"
 require_relative "parsed"
 require_relative "mermaid/ir_adapter"
 require_relative "mermaid/git_graph_config"
+require_relative "mermaid/class_diagram_config"
 
 module Sirena
   module Notation
@@ -345,9 +346,17 @@ module Sirena
         logger&.debug("Retrieved handlers for #{type}")
         logger&.debug("Parsing diagram...")
         diagram = parse_body(type, preamble)
+        apply_class_font(type, diagram, preamble)
         logger&.debug("Parse complete: #{diagram.class.name}")
         diagram.title = title if title && diagram.title.nil?
         diagram
+      end
+
+      def apply_class_font(type, diagram, preamble)
+        return unless type == :class_diagram
+
+        diagram.font_family =
+          ClassDiagramConfig.font_family(preamble[:directives])
       end
 
       def parse_body(type, preamble)
