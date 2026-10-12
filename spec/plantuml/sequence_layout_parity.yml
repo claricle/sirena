@@ -843,7 +843,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.576747
+      worst_e_c: 0.208233
       worst_e_w: 0.025222
       worst_e_h: 0.0
       worst_e_a: 0.025222
