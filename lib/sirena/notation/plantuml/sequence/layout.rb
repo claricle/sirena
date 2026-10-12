@@ -527,7 +527,12 @@ module Sirena
             return false unless item.is_a?(Note)
             return true unless item.attached?
 
-            !compact? && !previous.is_a?(Fragment)
+            !compact? && !outside_gap_anchor?(previous)
+          end
+
+          def outside_gap_anchor?(previous)
+            previous.is_a?(Fragment) ||
+              (previous.is_a?(Message) && previous.self_message?)
           end
 
           # Room beside a note so it does not cover a neighbour's lifeline.
