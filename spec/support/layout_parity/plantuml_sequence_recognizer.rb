@@ -29,6 +29,7 @@ module SpecSupport
 
       def reference_participants(extractor, doc)
         found = doc.xpath("//g").filter_map do |group|
+          next if embedded_picture_element?(group)
           next unless classes(group).include?(REFERENCE_HEAD)
 
           participant(extractor, group, group["data-qualified-name"])
@@ -78,6 +79,8 @@ module SpecSupport
 
       def sirena_participants(extractor, doc)
         heads = doc.xpath("//g").filter_map do |group|
+          next if embedded_picture_element?(group)
+
           found = SIRENA_PARTICIPANT.match(group["id"].to_s)
           [group, found[:name], found[:top].to_f] if found
         end
@@ -101,7 +104,9 @@ module SpecSupport
       end
 
       def messages(extractor, doc)
-        groups = doc.xpath("//g").select { |group| message?(group) }
+        groups = doc.xpath("//g").select do |group|
+          message?(group) && !embedded_picture_element?(group)
+        end
         return legacy_reference_messages(extractor, doc) if groups.empty?
 
         groups.each_with_index.filter_map do |group, index|
@@ -188,6 +193,12 @@ module SpecSupport
 
       def classes(group)
         group["class"].to_s.split
+      end
+
+      def embedded_picture_element?(group)
+        group.ancestors("g").any? do |ancestor|
+          ancestor["id"].to_s.start_with?("note-")
+        end
       end
 
       def normalize(texts)
