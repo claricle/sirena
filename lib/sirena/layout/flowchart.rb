@@ -39,6 +39,9 @@ module Sirena
         "trapezoid_alt" => [60.0, 15.0],
       }.freeze
       BOX_PADDING = [60.0, 30.0].freeze
+      # An inferred node whose id is later reused by an empty subgraph keeps
+      # the node in mmdc, but receives its smaller collision-placeholder box.
+      COLLISION_NODE_PADDING = [32.0, 16.0].freeze
       # A hexagon grows wider with each line under the first: 45 for one
       # line, 48.15 for two in mmdc's output, so 0.118 a pixel of height.
       HEXAGON_WIDTH_PER_HEIGHT = 0.118
@@ -200,6 +203,7 @@ module Sirena
       def scene(diagram)
         graph = build_graph(ir_graph(diagram))
         DirectedPlacement.apply(graph, center_edge_labels: true)
+        compact_collision_nodes(graph[:children])
         scene_from_graph(graph)
       end
 
@@ -885,6 +889,7 @@ module Sirena
       def transform_node(node, semantics)
         shape = semantic_value(semantics, "shape") || "rect"
         dims = calculate_dimensions(node.label, shape)
+        collision = semantic_value(semantics, "subgraph_collision") == "true"
 
         {
           id: semantic_value(semantics, "source_identifier") || node.id,
@@ -900,8 +905,25 @@ module Sirena
           metadata: {
             shape: shape,
             classes: semantic_value(semantics, "style_reference"),
+            subgraph_collision: collision,
           },
         }
+      end
+
+      def compact_collision_nodes(children)
+        children.each do |child|
+          compact_collision_nodes(child[:children]) if child[:children]
+          next unless child.dig(:metadata, :subgraph_collision)
+
+          label = child[:labels].first
+          extra_width, extra_height = COLLISION_NODE_PADDING
+          compact_width = label[:width] + extra_width
+          compact_height = label[:height] + extra_height
+          child[:x] += (child[:width] - compact_width) / 2.0
+          child[:y] += (child[:height] - compact_height) / 2.0
+          child[:width] = compact_width
+          child[:height] = compact_height
+        end
       end
 
       def transform_edges(graph)
