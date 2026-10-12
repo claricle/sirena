@@ -37,11 +37,11 @@ module SpecSupport
         title_counts = reference_title_counts(groups)
 
         groups.filter_map do |group|
+          name = interactive_identity(class_name(group, title_counts))
           box = extractor.bbox(group)
           next unless box
 
-          ClassGroup.new(node: group, name: class_name(group, title_counts),
-                         bbox: box,
+          ClassGroup.new(node: group, name: name, bbox: box,
                          reference_id: group["id"])
         end
       end
@@ -68,6 +68,12 @@ module SpecSupport
         return title if qualified.end_with?(".#{sanitized}")
 
         qualified
+      end
+
+      def interactive_identity(name)
+        return name unless name && (!name.ascii_only? || name.include?("\\"))
+
+        name.gsub(/[^A-Za-z0-9 ._-]/, ".")
       end
 
       def reference_class?(group)
@@ -224,7 +230,7 @@ module SpecSupport
       end
 
       def normalize(text)
-        text.to_s.gsub(/\s+/, " ").strip
+        text.to_s.gsub(/\s+/, " ").strip.sub(/\A\u00A0+(?=[^\u00A0])/, "")
       end
     end
   end
