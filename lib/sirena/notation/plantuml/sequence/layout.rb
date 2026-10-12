@@ -362,7 +362,15 @@ module Sirena
           end
 
           def intrinsic_plain_heads?
-            intrinsic_group_heads? || boxed_plain_heads?
+            intrinsic_group_heads? || boxed_plain_heads? ||
+              ordinary_plain_heads?
+          end
+
+          def ordinary_plain_heads?
+            return false if compact?
+
+            @diagram.min_head_width.nil? && @diagram.boxes.empty? &&
+              plain_participants? && !group_fragment?
           end
 
           def intrinsic_group_heads?
