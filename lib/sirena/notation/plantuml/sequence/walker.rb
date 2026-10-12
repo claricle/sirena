@@ -286,7 +286,13 @@ module Sirena
             end
             return 0.0 unless following.is_a?(Note) && following.attached?
 
-            [NoteGeometry.height(following, @font_size) - NOTE_ABOVE, 0.0].max
+            attached_note_headroom(following)
+          end
+
+          def attached_note_headroom(note)
+            height = NoteGeometry.height(note, @font_size)
+            clearance = note.picture ? height / 2 : height
+            [clearance - NOTE_ABOVE, 0.0].max
           end
 
           def start_row(message)
@@ -569,6 +575,9 @@ module Sirena
 
           def note_top(note, on_block, height)
             return @closed[:top] + 5 if on_block
+            if note.attached? && note.picture
+              return @last_y - (height / 2) + 10
+            end
 
             note.attached? ? @last_y - height + 10 : @y - 20
           end

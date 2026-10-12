@@ -1188,7 +1188,16 @@ module Sirena
 
           def classic_unlabelled_first_message?
             first = @diagram.items.first
-            !compact? && first.is_a?(Message) && first.label.to_s.empty?
+            !compact? && first.is_a?(Message) && first.label.to_s.empty? &&
+              !first_message_carries_picture?
+          end
+
+          def first_message_carries_picture?
+            following = @diagram.items.drop(1).find do |item|
+              !item.is_a?(Activation)
+            end
+            following.is_a?(Note) && following.attached? &&
+              !following.picture.nil?
           end
 
           def row_height
