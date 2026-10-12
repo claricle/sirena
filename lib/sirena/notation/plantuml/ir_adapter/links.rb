@@ -50,6 +50,7 @@ module Sirena
               "dashed" => ("true" if relation.dashed?),
               "plain" => ("true" if relation.plain?),
               "direction" => relation.direction&.to_s,
+              "length" => (relation.length.to_s unless relation.length == 2),
             }.compact
           end
 

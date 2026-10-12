@@ -3,6 +3,7 @@
 require_relative "../../layout/base"
 require_relative "caption_layout"
 require_relative "class_name"
+require_relative "end_texts"
 require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "rank_chain"
@@ -23,6 +24,13 @@ module Sirena
         MARKER_LENGTH = 12.0
         MARKER_HALF_WIDTH = 7.0
         LABEL_OFFSET = 10.0
+        LABEL_GAP = 2.0
+        END_TEXT_ACROSS = 3.0
+        END_TEXT_ALONG = 1.0
+        TEXT_DESCENT = 0.25
+        # The renderer draws end texts and relation labels at this share of
+        # the body font size.
+        SMALL_TEXT_SCALE = 0.9
         NESTING_RADIUS = 8.0
         MEMBER_NOTE_TEXT_SCALE = 1.15
         MEMBER_NOTE_ROW_HEIGHT = 16.48828125
@@ -34,13 +42,19 @@ module Sirena
         ARROW_LENGTH = 9.0
         ARROW_HALF_WIDTH = 4.0
         ARROW_NOTCH = 5.0
+        DIAMOND_LENGTH = 12.0
+        DIAMOND_HALF_WIDTH = 4.0
         ARROW_MARKERS = %i[association dependency].freeze
         FILLED_MARKERS = %i[association dependency composition].freeze
         private_constant :MARGIN, :COLUMN_GAP, :ROW_GAP,
                          :ANNOTATED_RELATION_SLOT_WIDTH, :BOX_PADDING,
                          :ROW_HEIGHT, :MARKER_LENGTH, :MARKER_HALF_WIDTH,
-                         :LABEL_OFFSET, :FILLED_MARKERS, :NESTING_RADIUS,
+                         :LABEL_OFFSET, :LABEL_GAP, :FILLED_MARKERS,
+                         :NESTING_RADIUS,
+                         :END_TEXT_ACROSS, :END_TEXT_ALONG, :TEXT_DESCENT,
+                         :SMALL_TEXT_SCALE,
                          :ARROW_LENGTH, :ARROW_HALF_WIDTH, :ARROW_NOTCH,
+                         :DIAMOND_LENGTH, :DIAMOND_HALF_WIDTH,
                          :ARROW_MARKERS,
                          :MEMBER_NOTE_TEXT_SCALE, :MEMBER_NOTE_ROW_HEIGHT,
                          :MEMBER_NOTE_LINE_HEIGHT, :MEMBER_NOTE_STACK_GAP,
@@ -79,7 +93,8 @@ module Sirena
           sizes = specifications.to_h do |item|
             [item[:id], [box_width, item[:height]]]
           end
-          corners, nodes = chain.place(sizes, [MARGIN, MARGIN])
+          corners, nodes = chain.place(sizes, [MARGIN, MARGIN],
+                                       label_widths(diagram))
           boxes = chain_boxes(specifications, corners, box_width)
           width, height = chain_dimensions(boxes)
           Scene.new(width: width, height: height,
@@ -596,23 +611,42 @@ module Sirena
         def build_relations(diagram, boxes, nodes)
           by_name = boxes.to_h { |box| [box.id.delete_prefix("package-"), box] }
           owners = junction_owners(diagram)
+          engine = RankChain.engine(diagram)
+          context = { by_name: by_name, owners: owners, nodes: nodes,
+                      engine: engine }
           diagram.relations.each_with_index.flat_map do |relation, index|
-            relation_scenes(relation, index, by_name, owners, nodes)
+            relation_scenes(relation, index, context)
           end
         end
 
-        def relation_scenes(relation, index, by_name, owners, nodes)
-          names = [relation.left, relation.right]
-          ends = names.map { |name| by_name.fetch(name) }
-          junctions = owners[index]
+        def relation_scenes(relation, index, context)
+          by_name = context.fetch(:by_name)
+          ends = relation_ends(relation, by_name)
+          end_texts = EndTexts.new(relation, context.fetch(:engine))
+          junctions = context.fetch(:owners)[index]
           if junctions.empty?
-            return [relation_scene(relation, "relation-#{index}",
-                                   relation_endpoints(*ends))]
+            return plain_relation_scene(relation, index, ends, end_texts)
           end
 
-          junction = junction_box(nodes[index], ends)
+          junction_relation_scenes(relation, index,
+                                   [ends, end_texts, junctions], context)
+        end
+
+        def relation_ends(relation, by_name)
+          [relation.left, relation.right].map { |name| by_name.fetch(name) }
+        end
+
+        def plain_relation_scene(relation, index, ends, end_texts)
+          [relation_scene(relation, "relation-#{index}",
+                          relation_endpoints(*ends), end_texts)]
+        end
+
+        def junction_relation_scenes(relation, index, details, context)
+          ends, end_texts, junctions = details
+          by_name = context.fetch(:by_name)
+          junction = junction_box(context.fetch(:nodes)[index], ends)
           entries = junctions.map { |entry| [*entry, by_name] }
-          junction_scenes(relation, index, [ends, junction], entries)
+          junction_scenes(relation, index, [ends, junction, end_texts], entries)
         end
 
         # The association classes, with their numbers, grouped by the index
@@ -645,9 +679,10 @@ module Sirena
                          kind: "junction")
         end
 
-        def relation_scene(relation, id, endpoints, sides: %i[left right],
-                           markers: relation.markers)
-          texts = relation_texts(relation, endpoints, sides)
+        def relation_scene(relation, id, endpoints, end_texts, style = {})
+          sides = style.fetch(:sides, %i[left right])
+          markers = style.fetch(:markers, relation.markers)
+          texts = relation_texts(relation, endpoints, end_texts, sides)
           Scene::Relation.new(id: id, dashed: relation.dashed?,
                               path: relation_path(endpoints), texts: texts,
                               markers: marker_scenes(markers.slice(*sides),
@@ -660,20 +695,18 @@ module Sirena
         # `up` or `left` word moves each end's marker to the other leg, as
         # the pinned references draw it.
         def junction_scenes(relation, index, boxes, owners)
-          (from, to), junction = boxes
+          (from, to), junction, end_texts = boxes
           swap = %i[up left].include?(relation.direction)
           markers = relation.markers
           [relation_scene(
             relation, "relation-#{index}-from",
-            relation_endpoints(from, junction),
-            sides: %i[left],
-            markers: junction_markers(markers, swap, :left)
+            relation_endpoints(from, junction), end_texts,
+            sides: %i[left], markers: junction_markers(markers, swap, :left)
           ),
            relation_scene(
              relation, "relation-#{index}-to",
-             relation_endpoints(junction, to),
-             sides: %i[right],
-             markers: junction_markers(markers, swap, :right)
+             relation_endpoints(junction, to), end_texts,
+             sides: %i[right], markers: junction_markers(markers, swap, :right)
            ),
            *owners.map { |entry| owner_link(junction, *entry) }]
         end
@@ -793,14 +826,23 @@ module Sirena
         def marker_points(tip, other, shape)
           direction = unit_vector(other, tip)
           return arrow_points(tip, direction) if shape == :arrow
+          return diamond_points(tip, direction) if shape == :diamond
 
           base = shift(tip, *direction, -MARKER_LENGTH)
-          left = marker_side(base, direction, MARKER_HALF_WIDTH)
-          right = marker_side(base, direction, -MARKER_HALF_WIDTH)
-          points = [tip, left]
-          points << diamond_back(tip, direction) if shape == :diamond
-          points << right
-          formatted_points(points)
+          formatted_points(
+            [tip, marker_side(base, direction, MARKER_HALF_WIDTH),
+             marker_side(base, direction, -MARKER_HALF_WIDTH)],
+          )
+        end
+
+        # PlantUML's aggregation and composition diamond.
+        def diamond_points(tip, direction)
+          middle = shift(tip, *direction, -(DIAMOND_LENGTH / 2))
+          formatted_points(
+            [tip, marker_side(middle, direction, DIAMOND_HALF_WIDTH),
+             shift(tip, *direction, -DIAMOND_LENGTH),
+             marker_side(middle, direction, -DIAMOND_HALF_WIDTH)],
+          )
         end
 
         # PlantUML's open arrowhead: two wings joined through a notch.
@@ -815,10 +857,6 @@ module Sirena
 
         def marker_side(base, direction, distance)
           shift(base, -direction[1], direction[0], distance)
-        end
-
-        def diamond_back(tip, direction)
-          shift(tip, *direction, -(MARKER_LENGTH * 2))
         end
 
         def formatted_points(points)
@@ -842,40 +880,128 @@ module Sirena
 
         # The label rides with the left end, so a relation split into legs
         # still shows it once.
-        def relation_texts(relation, endpoints, sides)
-          left = endpoints.fetch(:left)
-          right = endpoints.fetch(:right)
-          direction = unit_vector(left, right)
-          texts = { right: [multiplicity(end_text(relation, :right), right,
-                                         direction, -1)] }
-          texts[:left] = [relation_label(relation.label, left, right),
-                          multiplicity(end_text(relation, :left), left,
-                                       direction, 1)]
-          texts.values_at(*sides).flatten.compact
+        def relation_texts(relation, endpoints, end_texts, sides)
+          first, second = end_texts.sides
+          direction = unit_vector(*endpoints.values_at(first, second))
+          label = relation_text_label(relation, endpoints, sides)
+          texts = positioned_end_texts(end_texts.entries, endpoints,
+                                       direction, first, sides)
+          [label, *texts].compact
         end
 
-        def end_text(relation, side)
-          parts = [relation.public_send(:"#{side}_multiplicity"),
-                   relation.public_send(:"#{side}_role")].compact
-          parts.join(" ") unless parts.empty?
+        def relation_text_label(relation, endpoints, sides)
+          return unless sides.include?(:left)
+
+          relation_label(relation.label,
+                         *endpoints.values_at(:left, :right))
         end
 
+        def positioned_end_texts(entries, endpoints, direction, first, sides)
+          selected = entries.select { |entry| sides.include?(entry[:side]) }
+          selected.flat_map do |entry|
+            inward = entry[:side] == first ? 1 : -1
+            endpoint = endpoints.fetch(entry[:side])
+            end_text(entry, endpoint, direction, inward)
+          end
+        end
+
+        # Above the middle of a flat line; beside a steep one, centred on
+        # its middle, as PlantUML draws a label in its own rank.
         def relation_label(content, left, right)
           return unless content
 
-          horizontal = (left[0] + right[0]) / 2
-          vertical = ((left[1] + right[1]) / 2) - LABEL_OFFSET
-          scene_text(
-            content, horizontal, vertical, "relation_label", "middle"
-          )
+          horizontal, middle = midpoint(left, right)
+          if steep?(left, right)
+            return steep_relation_label(content, horizontal, middle)
+          end
+
+          scene_text(content, horizontal, middle - LABEL_OFFSET,
+                     "relation_label", "middle")
         end
 
-        def multiplicity(content, endpoint, vector, direction)
-          return unless content
+        def steep?(left, right)
+          horizontal, vertical = vector_between(left, right)
+          vertical.abs > horizontal.abs
+        end
 
-          along = shift(endpoint, *vector, 18.0 * direction)
-          offset = shift(along, -vector[1], vector[0], -LABEL_OFFSET)
-          scene_text(content, offset[0], offset[1], "multiplicity", "middle")
+        def steep_relation_label(content, horizontal, middle)
+          size = font_size * SMALL_TEXT_SCALE
+          baseline = middle + (size * (1 - TEXT_DESCENT) / 2)
+          scene_text(content, horizontal + LABEL_GAP, baseline,
+                     "relation_label", "start")
+        end
+
+        # A multiplicity sits on the right of the line as it runs from the
+        # link's first class to its second, and a role on its left. Each
+        # text hugs its end, as PlantUML draws it: beside a steep line it
+        # grows away from the line and into the gap along it, beside a flat
+        # one into the gap and away from the line. `inward` is 1 at the
+        # first end and -1 at the second.
+        def end_text(entry, endpoint, direction, inward)
+          point, sideways, upright = end_text_position(entry, endpoint,
+                                                       direction, inward)
+          anchor = sideways[0].positive? ? "start" : "end"
+          end_text_run(entry[:pieces], hug(point, upright[1]), anchor)
+        end
+
+        def end_text_position(entry, endpoint, direction, inward)
+          normal, along = end_text_vectors(entry, direction, inward)
+          point = shift(shift(endpoint, *along, END_TEXT_ALONG),
+                        *normal, END_TEXT_ACROSS)
+          sideways, upright = if direction[1].abs >= direction[0].abs
+                                [normal, along]
+                              else
+                                [along, normal]
+                              end
+          [point, sideways, upright]
+        end
+
+        def end_text_vectors(entry, direction, inward)
+          side = entry[:kind] == :role ? -1 : 1
+          normal = [-direction[1] * side, direction[0] * side]
+          along = direction.map { |component| component * inward }
+          [normal, along]
+        end
+
+        # The baseline that puts the text just below `point`, or just above.
+        def hug(point, downward)
+          size = font_size * SMALL_TEXT_SCALE
+          drop = downward.positive? ? size : -(size * TEXT_DESCENT)
+          [point[0], point[1] + drop]
+        end
+
+        # A numbered item's `1.` and its text are drawn side by side, one
+        # space apart, as one run.
+        def end_text_run(pieces, point, anchor)
+          if pieces.one?
+            return [scene_text(pieces.first, *point, "multiplicity", anchor)]
+          end
+
+          numbered_end_text_run(pieces, point, anchor)
+        end
+
+        def numbered_end_text_run(pieces, point, anchor)
+          width = end_text_width(pieces.join(" "))
+          start = point[0] - anchor_offset(anchor, width)
+          offset = end_text_width("#{pieces.first} ")
+          baseline = point[1]
+          [scene_text(pieces.first, start, baseline, "multiplicity", "start"),
+           scene_text(pieces.last, start + offset, baseline, "multiplicity",
+                      "start")]
+        end
+
+        def anchor_offset(anchor, width)
+          { "end" => width, "middle" => width / 2 }.fetch(anchor, 0)
+        end
+
+        def end_text_width(content)
+          measure_text(content, font_size: font_size * SMALL_TEXT_SCALE)[:width]
+        end
+
+        def label_widths(diagram)
+          diagram.relations.each_with_index.filter_map do |relation, index|
+            [index, end_text_width(relation.label)] if relation.label
+          end.to_h
         end
 
         def scene_text(content, horizontal, vertical, role, anchor)

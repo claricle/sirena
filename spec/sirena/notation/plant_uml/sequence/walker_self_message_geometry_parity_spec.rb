@@ -6,18 +6,27 @@ require "sirena/notation/plantuml/sequence"
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Walker do
   let(:sequence) { Sirena::Notation::PlantUML::Sequence }
 
-  def loop_height(leftward:)
-    style = sequence::ArrowStyle.new(
+  def arrow_style(leftward)
+    sequence::ArrowStyle.new(
       head: sequence::ArrowEnd.new(glyph: :filled), leftward: leftward,
     )
-    message = sequence::Message.new(
-      from: "A", to: "A", label: "call", style: style,
+  end
+
+  def self_message(leftward)
+    sequence::Message.new(
+      from: "A", to: "A", label: "call", style: arrow_style(leftward),
     )
-    walker = described_class.new(
+  end
+
+  def walker
+    described_class.new(
       lifelines: { "A" => 50.0 }, measure: ->(text) { text.length * 7.0 },
       font_size: 14.0, start_y: 100.0
     )
-    coordinates = walker.run([message]).arrows.first.path
+  end
+
+  def loop_height(leftward:)
+    coordinates = walker.run([self_message(leftward)]).arrows.first.path
       .scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
 
     coordinates[5] - coordinates[1]

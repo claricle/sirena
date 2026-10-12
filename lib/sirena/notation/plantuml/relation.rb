@@ -12,16 +12,17 @@ module Sirena
       # :composition or :nesting, and nil when `head` is :both; `markers`
       # then maps each side to its kind. `dashed` is true for a dotted
       # body. `direction` is the glyph's :up, :down, :left or :right word,
-      # or nil. The
+      # or nil. `length` counts the body's dashes and dots. The
       # multiplicities, roles and the label are the quoted, `/"role"` and
       # `: text` parts, or nil.
       class Relation
         attr_reader :left, :right, :kind, :head, :markers,
                     :left_multiplicity, :right_multiplicity, :label,
-                    :left_role, :right_role, :direction
+                    :left_role, :right_role, :direction, :length
 
         # @param arrow [Hash] holds `:kind`, `:head`, `:markers`, `:dashed`
-        #   and `:plain`, and optionally `:direction`
+        #   and `:plain`, and optionally `:direction` and `:length` (2 when
+        #   absent, the body of `--`)
         # @param ends [Hash] holds `:left`, `:right`, `:left_role` and
         #   `:right_role`, each a String or nil
         #
@@ -33,6 +34,7 @@ module Sirena
           @kind, @head, @markers, @dashed, @plain =
             arrow.fetch_values(:kind, :head, :markers, :dashed, :plain)
           @direction = arrow[:direction]
+          @length = arrow.fetch(:length, 2)
           @left_multiplicity, @right_multiplicity, @left_role, @right_role =
             ends.fetch_values(:left, :right, :left_role, :right_role)
           @label = label
