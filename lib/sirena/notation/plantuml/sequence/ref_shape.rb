@@ -2,6 +2,7 @@
 
 require_relative "fragment_shape"
 require_relative "scene"
+require_relative "text_advances"
 
 module Sirena
   module Notation
@@ -12,12 +13,13 @@ module Sirena
         class RefShape
           SIDE_PAD = 14.0
           TEXT_PAD = 9.0
+          LABEL_SIZE = 12.0
           HEIGHT = 44.0
           LABEL_BASELINE = 34.0
 
           # @param span [Array<Float>] centres of the outermost lifelines
-          def self.width_for(label, measure)
-            measure.call(label) + (2 * TEXT_PAD)
+          def self.width_for(label)
+            TextAdvances.width(label, font_size: LABEL_SIZE) + (2 * TEXT_PAD)
           end
 
           attr_reader :x, :width
@@ -42,7 +44,7 @@ module Sirena
 
           def width_over(span)
             [span.last - span.first + (2 * SIDE_PAD),
-             self.class.width_for(@ref.label, @measure)].max
+             self.class.width_for(@ref.label)].max
           end
 
           def tab_width
