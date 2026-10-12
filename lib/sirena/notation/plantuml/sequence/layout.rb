@@ -62,6 +62,7 @@ module Sirena
           COMPACT_BRANCH_GAP = 28.0
           COMPACT_FRAGMENT_CLOSE = 10.0
           COMPACT_SELF_ROW = 42.1328
+          COMPACT_SELF_CLEARANCE = 53.0
           CLASSIC_FIRST_ROW_GAP = 32.3105
           CLASSIC_UNLABELLED_FIRST_ROW_GAP = 17.3105
           CLASSIC_FOLLOWING_UNLABELLED_ROW = 14.0
@@ -118,6 +119,7 @@ module Sirena
                            :COMPACT_UNLABELLED_ROW, :COMPACT_GROUP_ROW,
                            :COMPACT_GROUP_CLOSE, :COMPACT_BRANCH_GAP,
                            :COMPACT_FRAGMENT_CLOSE, :COMPACT_SELF_ROW,
+                           :COMPACT_SELF_CLEARANCE,
                            :CLASSIC_FIRST_ROW_GAP,
                            :CLASSIC_UNLABELLED_FIRST_ROW_GAP,
                            :CLASSIC_FOLLOWING_UNLABELLED_ROW, :CLASSIC_ROW,
@@ -680,7 +682,8 @@ module Sirena
             end
             return room + activation_bar_clearance unless self_message
 
-            [SELF_WIDTH, 7 + label_width(message)].max + head_padding
+            label_room = [SELF_WIDTH, 7 + sans_label_width(message)].max
+            [COMPACT_SELF_CLEARANCE, label_room + head_padding].max
           end
 
           def activation_bar_clearance
@@ -713,6 +716,18 @@ module Sirena
 
           def indexes(message)
             [ids.index(message.from), ids.index(message.to)]
+          end
+
+          def sans_label_width(message)
+            return 0.0 unless message.label
+
+            wrap = MessageWrap.new(@diagram.appearance.max_message,
+                                   method(:sans_width))
+            wrap.width(message.label) + numbering.extra(message)
+          end
+
+          def sans_width(text)
+            TextAdvances.width(text, font_size: message_font_size)
           end
 
           def label_width(message)
