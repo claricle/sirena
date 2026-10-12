@@ -256,8 +256,9 @@ module Sirena
           transpose(flat) if transposed
           flat[:layoutOptions] = downward_options(frame)
           ElkPlacement.apply(flat)
-          RowCentering.apply(flat)
-          LayerSpacing.apply(flat, label_axis: transposed ? :width : :height)
+          label_axis = transposed ? :width : :height
+          RowCentering.apply(flat, label_axis: label_axis)
+          LayerSpacing.apply(flat, label_axis: label_axis)
           MinimumRankSpacing.apply(flat, frame.rank_spacing)
           ComponentPacking.apply(flat, cluster_names)
           transpose(flat) if transposed
