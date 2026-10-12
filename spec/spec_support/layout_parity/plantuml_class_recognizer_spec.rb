@@ -58,6 +58,75 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlClassRecognizer do
     SVG
   end
 
+  def stereotype_svg(producer)
+    identity = if producer == :reference
+                 'class="entity" data-qualified-name="Access"'
+               else
+                 'id="class-Access"'
+               end
+    stereotype = producer == :reference ? "«Entity»" : "&lt;&lt;Entity&gt;&gt;"
+    <<~SVG
+      <svg viewBox="0 0 100 100">
+        <g #{identity}>
+          <rect width="80" height="40"/>
+          <text>#{stereotype}</text><text>Access</text>
+        </g>
+      </svg>
+    SVG
+  end
+
+  def class_note_svg(producer)
+    note = if producer == :reference
+             <<~NOTE
+               <g class="entity" data-qualified-name="GMN2">
+                 <path d="M 20 0 L 80 0 L 80 20 L 20 20 Z"/>
+                 <text>yellow class note</text>
+               </g>
+             NOTE
+           else
+             ""
+           end
+    identity = if producer == :reference
+                 'class="entity" data-qualified-name="C"'
+               else
+                 'id="class-C"'
+               end
+    <<~SVG
+      <svg viewBox="0 0 100 100">
+        <g #{identity}><rect width="10" height="10"/><text>C</text></g>
+        #{note}
+      </svg>
+    SVG
+  end
+
+  def translated_relation_svg(producer)
+    if producer == :reference
+      return <<~SVG
+        <svg viewBox="0 0 100 200">
+          <g class="entity" data-qualified-name="Sally" id="sally">
+            <rect y="100" width="10" height="10"/><text>Sally</text>
+          </g>
+          <g class="entity" data-qualified-name="Bob" id="bob">
+            <rect y="150" width="10" height="10"/><text>Bob</text>
+          </g>
+          <g class="link" data-entity-1="sally" data-entity-2="bob">
+            <path d="M 5 110 L 5 150"/>
+          </g>
+        </svg>
+      SVG
+    end
+
+    <<~SVG
+      <svg viewBox="0 0 100 200">
+        <g transform="translate(0 100)">
+          <g id="class-Sally"><rect width="10" height="10"/><text>Sally</text></g>
+          <g id="class-Bob"><rect y="50" width="10" height="10"/><text>Bob</text></g>
+          <g id="relation-0"><path d="M 5 10 L 5 50"/></g>
+        </g>
+      </svg>
+    SVG
+  end
+
   it "keeps relation ownership aligned across producer member spacing" do
     name = "16-full-example"
     render = Sirena.render(source(name), notation: :plantuml)
@@ -80,5 +149,20 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlClassRecognizer do
     relation = extract(one_unresolved_end_svg, recognizer).elements.last
 
     expect(relation.key).to eq(["A", "unresolved-endpoint", 0])
+  end
+
+  it "normalizes stereotype decorations from both producers" do
+    expect(keys(stereotype_svg(:reference)))
+      .to eq(keys(stereotype_svg(:sirena)))
+  end
+
+  it "does not classify PlantUML note groups as classes" do
+    expect(keys(class_note_svg(:reference)))
+      .to eq(keys(class_note_svg(:sirena)))
+  end
+
+  it "resolves relation endpoints after producer transforms" do
+    expect(keys(translated_relation_svg(:reference)))
+      .to eq(keys(translated_relation_svg(:sirena)))
   end
 end
