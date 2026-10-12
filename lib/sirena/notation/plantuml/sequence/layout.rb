@@ -63,6 +63,7 @@ module Sirena
           CLASSIC_FIRST_ROW_GAP = 32.3105
           CLASSIC_ROW = 29.3105
           CLASSIC_SELF_ROW = 42.3105
+          CLASSIC_SELF_CLEARANCE = 50.0
           CLASSIC_FRAGMENT_ROW = 24.3105
           CLASSIC_DIVIDER_ROW = 42.3105
           CLASSIC_DEACTIVATION_GAP = 31.0
@@ -110,7 +111,8 @@ module Sirena
                            :COMPACT_UNLABELLED_ROW, :COMPACT_GROUP_ROW,
                            :COMPACT_GROUP_CLOSE, :COMPACT_SELF_ROW,
                            :CLASSIC_FIRST_ROW_GAP, :CLASSIC_ROW,
-                           :CLASSIC_SELF_ROW, :CLASSIC_FRAGMENT_ROW,
+                           :CLASSIC_SELF_ROW, :CLASSIC_SELF_CLEARANCE,
+                           :CLASSIC_FRAGMENT_ROW,
                            :CLASSIC_DIVIDER_ROW, :CLASSIC_DEACTIVATION_GAP,
                            :CLASSIC_BARE_DEACTIVATION_GAP,
                            :MIN_WIDTH_GLYPH_MARGIN, :MIN_WIDTH_GLYPH_GAP,
@@ -631,7 +633,22 @@ module Sirena
           def classic_message_room(message, ordinary, self_message)
             return ordinary unless self_message
 
-            label_width(message) + (2 * INTRINSIC_HEAD_PADDING)
+            room = label_width(message) + (2 * INTRINSIC_HEAD_PADDING)
+            return room unless nested_in_fragment?(message)
+
+            [room, CLASSIC_SELF_CLEARANCE].max
+          end
+
+          def nested_in_fragment?(message)
+            depth = 0
+            @diagram.items.each do |item|
+              return depth.positive? if item.equal?(message)
+              next unless item.is_a?(Fragment)
+
+              depth += 1 if item.phase == :open
+              depth -= 1 if item.phase == :close
+            end
+            false
           end
 
           def indexes(message)
