@@ -128,13 +128,13 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.119027
+      worst_e_c: 0.067196
       worst_e_w: 0.142857
       worst_e_h: 0.000359
       worst_e_a: 0.143165
       worst_analog:
   matched: 6
-  status: miss
+  status: pass
 - case: resources.vega.asciiverse.altpar_008--e6d99fb6ac3c
   summary:
     hard_failure: false
@@ -843,10 +843,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.208233
+      worst_e_c: 0.075561
       worst_e_w: 0.025222
       worst_e_h: 0.0
       worst_e_a: 0.025222
       worst_analog:
   matched: 4
-  status: miss
+  status: pass
