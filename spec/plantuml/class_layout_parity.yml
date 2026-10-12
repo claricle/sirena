@@ -28,10 +28,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 1.026557
-      worst_e_w: 2.600645
+      worst_e_c: 0.789541
+      worst_e_w: 0.237401
       worst_e_h: 0.4375
-      worst_e_a: 1.504797
+      worst_e_a: 0.469497
       worst_analog:
   matched: 8
   status: miss
@@ -83,10 +83,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.409452
-      worst_e_w: 3.605808
+      worst_e_c: 0.146497
+      worst_e_w: 0.004474
       worst_e_h: 0.041667
-      worst_e_a: 3.80606
+      worst_e_a: 0.043815
       worst_analog:
   matched: 4
   status: miss
@@ -193,10 +193,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.196399
-      worst_e_w: 1.071033
+      worst_e_c: 0.128123
+      worst_e_w: 0.383363
       worst_e_h: 0.254735
-      worst_e_a: 0.650574
+      worst_e_a: 0.102514
       worst_analog:
   matched: 9
   status: miss
@@ -369,10 +369,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.624757
+      worst_e_c: 0.53372
       worst_e_w: 2.115895
       worst_e_h: 0.416667
-      worst_e_a: 2.123939
+      worst_e_a: 1.199455
       worst_analog:
   matched: 6
   status: miss
