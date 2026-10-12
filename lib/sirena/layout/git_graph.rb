@@ -40,6 +40,7 @@ module Sirena
       BRANCH_LABEL_BASELINE_OFFSET = 10.5
       VERTICAL_BRANCH_LABEL_CLEARANCE = 40
       EXPLICIT_ID_BRANCH_LABEL_CLEARANCE = 47
+      CHERRY_PICK_BRANCH_LABEL_CLEARANCE = 28
       MERMAID_LABEL_FONT_SIZE = 10
       MERMAID_LABEL_WIDTH_SCALE = 0.86
 
@@ -356,7 +357,9 @@ module Sirena
                                        orientation)
         end
 
-        legacy_label_position(x_coordinate, y_coordinate, orientation, kind)
+        legacy_label_position(
+          text, x_coordinate, y_coordinate, orientation, kind
+        )
       end
 
       def lone_label_position(text, x_coordinate, y_coordinate, kind)
@@ -395,13 +398,17 @@ module Sirena
         [x_coordinate - (width / 2.0), y_coordinate + 24, "start"]
       end
 
-      def legacy_label_position(x_coordinate, y_coordinate, orientation, kind)
+      def legacy_label_position(text, x_coordinate, y_coordinate, orientation,
+                                kind)
         if vertical?(orientation)
           return legacy_vertical_label_position(
             x_coordinate, y_coordinate, kind
           )
         end
-        return [x_coordinate, y_coordinate - 15, "middle"] if kind == "tag"
+        if kind == "tag"
+          width = mermaid_label_width(text)
+          return [x_coordinate - (width / 2.0), y_coordinate - 15, "start"]
+        end
 
         [x_coordinate, y_coordinate + 20, "middle"]
       end
@@ -483,9 +490,14 @@ module Sirena
 
       def branch_label_translation(graph)
         return EMPTY_BRANCH_LABEL_CLEARANCE if translated_branch_label?(graph)
+        return CHERRY_PICK_BRANCH_LABEL_CLEARANCE if cherry_pick_graph?(graph)
 
-        EXPLICIT_ID_BRANCH_LABEL_CLEARANCE if
-          ordinary_explicit_id_graph?(graph)
+        EXPLICIT_ID_BRANCH_LABEL_CLEARANCE if ordinary_explicit_id_graph?(graph)
+      end
+
+      def cherry_pick_graph?(graph)
+        !vertical?(graph[:orientation]) &&
+          graph[:commits].any? { |commit| commit[:is_cherry_pick] }
       end
 
       def translated_branch_label?(graph)

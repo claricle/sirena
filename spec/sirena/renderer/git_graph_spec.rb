@@ -36,6 +36,29 @@ RSpec.describe Sirena::Renderer::GitGraph do
         cherry-pick id: "c2"
     MERMAID
   end
+  let(:cherry_scene) { scene_for(cherry_source) }
+  let(:cherry_pick) { cherry_scene.commits.find(&:is_cherry_pick) }
+
+  def cherry_pick_circle_geometry
+    renderer.render(cherry_scene).children.grep(Sirena::Svg::Circle).last(3)
+      .map { |circle| [circle.cx, circle.cy, circle.r, circle.fill] }
+  end
+
+  def expected_cherry_pick_circle_geometry
+    [
+      cherry_pick_center_geometry,
+      cherry_pick_satellite_geometry(-3),
+      cherry_pick_satellite_geometry(3),
+    ]
+  end
+
+  def cherry_pick_center_geometry
+    [cherry_pick.x, cherry_pick.y, 10.0, "#2563eb"]
+  end
+
+  def cherry_pick_satellite_geometry(x_offset)
+    [cherry_pick.x + x_offset, cherry_pick.y + 2, 2.75, "#fff"]
+  end
 
   def scene_types
     [
@@ -108,6 +131,11 @@ RSpec.describe Sirena::Renderer::GitGraph do
     paths = renderer.render(scene_for(cherry_source))
       .children.grep(Sirena::Svg::Path)
     expect(paths.map(&:stroke_dasharray)).to include("2,4")
+  end
+
+  it "renders Mermaid's two white cherry-pick satellites" do
+    expect(cherry_pick_circle_geometry)
+      .to eq(expected_cherry_pick_circle_geometry)
   end
 
   it "uses the base document contract for its Scene canvas" do
