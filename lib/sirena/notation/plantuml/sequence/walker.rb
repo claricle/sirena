@@ -48,7 +48,8 @@ module Sirena
           Config = Struct.new(:message_measure, :message_font_size,
                               :message_family, :label_inset, :row, :self_row,
                               :unlabelled_row, :following_unlabelled_row,
-                              :fragment_row, :divider_row,
+                              :fragment_row, :branch_gap,
+                              :fragment_close_gap, :divider_row,
                               :group_fragment_row, :group_close_gap,
                               :activation_edges,
                               :deactivation_gap, :bare_deactivation_gap,
@@ -123,6 +124,9 @@ module Sirena
             @unlabelled_row = config.unlabelled_row
             @following_unlabelled_row = config.following_unlabelled_row
             @fragment_row = config_value(config, :fragment_row, TAB_HEIGHT)
+            @branch_gap = config_value(config, :branch_gap, 28.0)
+            @fragment_close_gap = config_value(config, :fragment_close_gap,
+                                               10.0)
             @group_fragment_row = config.group_fragment_row
             @group_close_gap = config.group_close_gap
           end
@@ -681,7 +685,7 @@ module Sirena
 
           def branch(item)
             @blocks.last[:branches] << [@y - 10, item.label.to_s]
-            @y += 28
+            @y += @branch_gap
           end
 
           def close_block
@@ -695,7 +699,7 @@ module Sirena
           def close_gap(block)
             return @group_close_gap if group_close_gap?(block)
 
-            10
+            @fragment_close_gap
           end
 
           def group_close_gap?(block)

@@ -59,6 +59,8 @@ module Sirena
           COMPACT_UNLABELLED_ROW = 14.0
           COMPACT_GROUP_ROW = 13.3105
           COMPACT_GROUP_CLOSE = 32.0
+          COMPACT_BRANCH_GAP = 28.0
+          COMPACT_FRAGMENT_CLOSE = 10.0
           COMPACT_SELF_ROW = 42.1328
           CLASSIC_FIRST_ROW_GAP = 32.3105
           CLASSIC_UNLABELLED_FIRST_ROW_GAP = 17.3105
@@ -67,6 +69,9 @@ module Sirena
           CLASSIC_SELF_ROW = 42.3105
           CLASSIC_SELF_CLEARANCE = 50.0
           CLASSIC_FRAGMENT_ROW = 24.3105
+          CLASSIC_BRANCH_GAP = 2.0
+          CLASSIC_FRAGMENT_CLOSE = 7.0
+          CLASSIC_GROUP_CLOSE = 10.0
           CLASSIC_DIVIDER_ROW = 42.3105
           CLASSIC_DEACTIVATION_GAP = 31.0
           CLASSIC_BARE_DEACTIVATION_GAP = 1.0
@@ -111,12 +116,14 @@ module Sirena
                            :COMPACT_FIRST_ROW_GAP,
                            :COMPACT_GROUP_FIRST_ROW_GAP, :COMPACT_ROW,
                            :COMPACT_UNLABELLED_ROW, :COMPACT_GROUP_ROW,
-                           :COMPACT_GROUP_CLOSE, :COMPACT_SELF_ROW,
+                           :COMPACT_GROUP_CLOSE, :COMPACT_BRANCH_GAP,
+                           :COMPACT_FRAGMENT_CLOSE, :COMPACT_SELF_ROW,
                            :CLASSIC_FIRST_ROW_GAP,
                            :CLASSIC_UNLABELLED_FIRST_ROW_GAP,
                            :CLASSIC_FOLLOWING_UNLABELLED_ROW, :CLASSIC_ROW,
                            :CLASSIC_SELF_ROW, :CLASSIC_SELF_CLEARANCE,
-                           :CLASSIC_FRAGMENT_ROW,
+                           :CLASSIC_FRAGMENT_ROW, :CLASSIC_BRANCH_GAP,
+                           :CLASSIC_FRAGMENT_CLOSE, :CLASSIC_GROUP_CLOSE,
                            :CLASSIC_DIVIDER_ROW, :CLASSIC_DEACTIVATION_GAP,
                            :CLASSIC_BARE_DEACTIVATION_GAP,
                            :MIN_WIDTH_GLYPH_MARGIN, :MIN_WIDTH_GLYPH_GAP,
@@ -263,7 +270,9 @@ module Sirena
               following_unlabelled_row: classic_following_unlabelled_row,
               fragment_row: fragment_row_height,
               group_fragment_row: timeline_value(COMPACT_GROUP_ROW),
-              group_close_gap: timeline_value(COMPACT_GROUP_CLOSE),
+              branch_gap: branch_gap,
+              fragment_close_gap: fragment_close_gap,
+              group_close_gap: group_close_gap,
               divider_row: divider_row_height,
               deactivation_gap: deactivation_gap,
               bare_deactivation_gap: bare_deactivation_gap }
@@ -271,6 +280,18 @@ module Sirena
 
           def classic_following_unlabelled_row
             CLASSIC_FOLLOWING_UNLABELLED_ROW unless compact?
+          end
+
+          def branch_gap
+            compact? ? COMPACT_BRANCH_GAP : CLASSIC_BRANCH_GAP
+          end
+
+          def fragment_close_gap
+            compact? ? COMPACT_FRAGMENT_CLOSE : CLASSIC_FRAGMENT_CLOSE
+          end
+
+          def group_close_gap
+            compact? ? COMPACT_GROUP_CLOSE : CLASSIC_GROUP_CLOSE
           end
 
           # Where `->]` messages end: past every head, and far enough from
