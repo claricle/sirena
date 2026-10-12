@@ -21,6 +21,10 @@ module Sirena
             @open = Hash.new { |hash, id| hash[id] = [] }
           end
 
+          def depth(id)
+            @open[id].size
+          end
+
           # @param at [Float] the y where the bar starts or ends
           def apply(activation, at)
             id = activation.participant
@@ -33,6 +37,11 @@ module Sirena
             @open.each do |id, tops|
               emit(id, *tops.pop, bottom) until tops.empty?
             end
+          end
+
+          def destroy(id, bottom)
+            tops = @open[id]
+            emit(id, *tops.pop, bottom) until tops.empty?
           end
 
           private

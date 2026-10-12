@@ -131,35 +131,78 @@ module SpecSupport
       end
 
       # The same Teoz output leaves each arrow's primitives and label as a
-      # direct run of siblings. A horizontal line distinguishes a message run
-      # from participant labels and other unwrapped text.
+      # direct run of siblings. Each non-dashed horizontal line is one
+      # message, including an unlabelled one; its preceding arrowhead and all
+      # immediately following text pieces form the same producer element.
       def legacy_reference_messages(extractor, doc)
         root = legacy_root(doc)
         return [] unless root
 
         children = root.element_children
+        labelled = labelled_messages(extractor, children)
+        return labelled unless labelled.empty?
+
+        unlabelled_messages(extractor, children)
+      end
+
+      def labelled_messages(extractor, children)
         children.each_with_index.filter_map do |node, index|
-          legacy_message(extractor, children, node, index)
+          labelled_message(extractor, children, node, index)
         end
       end
 
-      def legacy_message(extractor, children, node, index)
+      def labelled_message(extractor, children, node, index)
         return unless node.name == "text"
 
-        run = preceding_run(children, index)
-        return unless legacy_message_run?(run, node)
+        prefix = preceding_run(children, index)
+        return unless legacy_message_run?(prefix, node)
 
-        boxes = [*run, node].filter_map { |item| extractor.bbox(item) }
+        texts = joined_label(children, node, index)
+        labelled_message_element(extractor, prefix, texts, index)
+      end
+
+      def labelled_message_element(extractor, prefix, texts, index)
+        geometry = texts.one? ? [*prefix, *texts] : prefix
+        boxes = geometry.filter_map { |item| extractor.bbox(item) }
         box = Bbox.union(boxes)
         return unless box
 
+        label = normalize(texts.map(&:text))
         Element.new(kind: :message, key: index, bbox: box,
-                    label: normalize([node.text]), identity: :label)
+                    label: label, identity: :label)
       end
 
-      def legacy_message_run?(run, node)
-        run.any? { |item| horizontal_line?(item) } &&
-          !fragment_separator?(run, node)
+      def joined_label(children, node, index)
+        return [node] unless autonumber_piece?(node)
+
+        [node, *children.drop(index + 1).take_while do |sibling|
+          sibling.name == "text"
+        end]
+      end
+
+      def autonumber_piece?(node)
+        node["font-weight"] == "700" && node.text.match?(/\A\d+\z/)
+      end
+
+      def unlabelled_messages(extractor, children)
+        message_lines(children).each_with_index.filter_map do |line, index|
+          unlabelled_message(extractor, children, line, index)
+        end
+      end
+
+      def unlabelled_message(extractor, children, line, index)
+        run = unlabelled_message_run(children, line)
+        boxes = run.filter_map { |item| extractor.bbox(item) }
+        box = Bbox.union(boxes)
+        return unless box
+
+        Element.new(kind: :message, key: index + 1, bbox: box, label: "")
+      end
+
+      def message_lines(children)
+        children.select do |node|
+          horizontal_line?(node) && !dashed?(node)
+        end
       end
 
       def legacy_root(doc)
@@ -179,14 +222,24 @@ module SpecSupport
         end
       end
 
+      def horizontal_line?(node)
+        node.name == "line" && node["y1"] == node["y2"]
+      end
+
       def preceding_run(children, index)
         children[0...index].reverse_each.take_while do |node|
           node.name != "text"
         end.reverse
       end
 
-      def horizontal_line?(node)
-        node.name == "line" && node["y1"] == node["y2"]
+      def legacy_message_run?(run, node)
+        run.any? { |item| horizontal_line?(item) } &&
+          !fragment_header?(run, node)
+      end
+
+      def fragment_header?(run, node)
+        fragment_separator?(run, node) ||
+          (node["font-weight"] == "700" && run.last&.name == "rect")
       end
 
       def fragment_separator?(run, node)
@@ -200,6 +253,12 @@ module SpecSupport
       def fragment_label?(node)
         node["font-size"] == "11" && node["font-weight"] == "700" &&
           node.text.start_with?("[") && node.text.end_with?("]")
+      end
+
+      def unlabelled_message_run(children, line)
+        index = children.index(line)
+        arrowhead = children[index - 1]
+        [arrowhead, line].compact
       end
 
       def dashed?(line)

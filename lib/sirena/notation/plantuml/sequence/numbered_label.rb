@@ -13,8 +13,10 @@ module Sirena
           GAP = 4.0
 
           # @param measure [#call] text width in pixels
-          def initialize(measure)
+          def initialize(measure, size: nil, family: nil)
             @measure = measure
+            @size = size
+            @family = family
           end
 
           # @return [Float] the width the number adds to the label
@@ -44,7 +46,8 @@ module Sirena
           def piece(content, at_x, at_y, role, weight = nil)
             PlantUML::Scene::Text.new(content: content, x: at_x, y: at_y,
                                       role: role, anchor: "start",
-                                      weight: weight)
+                                      weight: weight, size: @size,
+                                      family: @family)
           end
         end
       end

@@ -46,8 +46,11 @@ module Sirena
                       Ref => :ref, PageBreak => :page_break }.freeze
           Config = Struct.new(:message_measure, :message_font_size,
                               :message_family, :label_inset, :row, :self_row,
-                              :fragment_row, :divider_row, :deactivation_gap,
-                              :bare_deactivation_gap, :bounds,
+                              :unlabelled_row, :fragment_row, :divider_row,
+                              :group_fragment_row, :group_close_gap,
+                              :activation_edges,
+                              :deactivation_gap, :bare_deactivation_gap,
+                              :bounds,
                               keyword_init: true)
 
           attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
@@ -99,17 +102,25 @@ module Sirena
                                               @font_size)
             @message_family = config.message_family
             @label_inset = config.label_inset
+            @activation_edges = config.activation_edges
           end
 
           def apply_cadence_config(config)
             @row = config_value(config, :row, ROW)
             @self_row = config_value(config, :self_row, ROW * 1.5)
-            @fragment_row = config_value(config, :fragment_row, TAB_HEIGHT)
+            apply_fragment_cadence(config)
             @divider_row = config_value(config, :divider_row, ROW)
             @deactivation_gap = config_value(config, :deactivation_gap, 0.0)
             @bare_deactivation_gap = config_value(
               config, :bare_deactivation_gap, 0.0
             )
+          end
+
+          def apply_fragment_cadence(config)
+            @unlabelled_row = config.unlabelled_row
+            @fragment_row = config_value(config, :fragment_row, TAB_HEIGHT)
+            @group_fragment_row = config.group_fragment_row
+            @group_close_gap = config.group_close_gap
           end
 
           def config_value(config, member, default)
@@ -218,8 +229,17 @@ module Sirena
             from, to = ends_of(message)
             draw(message, from, to) unless message.style.hidden
             touch(*extent(message, from, to))
-            @y += message.self_message? ? @self_row : @row
+            @y += message_row(message)
             @previous_self_message = message.self_message? && !message.parallel?
+          end
+
+          def message_row(message)
+            return @self_row if message.self_message?
+            if @unlabelled_row && message.label.to_s.empty?
+              return @unlabelled_row
+            end
+
+            @row
           end
 
           def active_participants
@@ -296,9 +316,35 @@ module Sirena
 
           def participant_place(place, message)
             at = centre(place)
+            if @activation_edges
+              return compact_activation_place(place, message, at)
+            end
             return at unless activated_end?(place, message)
 
             at + activation_end_inset(place, message, at)
+          end
+
+          def compact_activation_place(place, message, at)
+            depth = compact_activation_depth(place)
+            return at if depth.zero?
+
+            other = place == message.to ? message.from : message.to
+            toward = activation_direction(other, at)
+            at + ((depth - 1) * (BarTracker::WIDTH / 2)) +
+              (toward * (BarTracker::WIDTH / 2))
+          end
+
+          def activation_direction(other, at)
+            return other.left? ? -1 : 1 if other.is_a?(Edge)
+
+            centre(other) < at ? -1 : 1
+          end
+
+          def compact_activation_depth(place)
+            opening = @following_activations.count do |activation|
+              activation.participant == place && activation.on?
+            end
+            @tracker.depth(place) + opening
           end
 
           def activation_end_inset(place, message, at)
@@ -337,6 +383,7 @@ module Sirena
           def destroy(item)
             middle = @mark_y ? @mark_y + @self_drop : @y - 20
             x = centre(item.participant)
+            @tracker.destroy(item.participant, middle) if @activation_edges
             touch(x - CROSS_HALF, x + CROSS_HALF)
             [-CROSS_HALF, CROSS_HALF].each do |slant|
               @crosses << cross_stroke(x, middle, slant)
@@ -433,7 +480,14 @@ module Sirena
           end
 
           def numbered_texts(message, geometry)
-            NumberedLabel.new(@message_measure).texts(message, *geometry)
+            NumberedLabel.new(@message_measure,
+                              size: compact_message_size,
+                              family: @message_family)
+              .texts(message, *geometry)
+          end
+
+          def compact_message_size
+            @message_font_size if @message_family
           end
 
           def stacked_texts(message, at_x, at_y, anchor)
@@ -554,7 +608,17 @@ module Sirena
                          top: @y - 20, low: Float::INFINITY,
                          high: -Float::INFINITY, branches: [], depth: 0,
                          resume: @resume, tab: tab_size }
-            @y += @fragment_row + tab_size.height_growth
+            @y += fragment_row(item) + tab_size.height_growth
+          end
+
+          def fragment_row(item)
+            return @group_fragment_row if group?(item) && @group_fragment_row
+
+            @fragment_row
+          end
+
+          def group?(fragment)
+            fragment.keyword == "group"
           end
 
           def tab_size
@@ -569,9 +633,19 @@ module Sirena
           def close_block
             block = @blocks.pop
             bottom = @y - 20
-            @y = [@y + 10, block[:resume]].compact.max
+            @y = [@y + close_gap(block), block[:resume]].compact.max
             @row_line = block[:top]
             emit_fragment(block, bottom)
+          end
+
+          def close_gap(block)
+            return @group_close_gap if group_close_gap?(block)
+
+            10
+          end
+
+          def group_close_gap?(block)
+            block[:keyword] == "group" && @group_close_gap
           end
 
           def emit_fragment(block, bottom)
