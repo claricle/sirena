@@ -45,6 +45,14 @@ module Sirena
         STANDARD_MEMBER_SIDE_ALLOWANCE = 20.0
         STANDARD_STEREOTYPE_ROW_HEIGHT = 8.62109375
         STANDARD_TITLE_SIDE_ALLOWANCE = 32.0
+        MULTILINE_TITLE_ROW_HEIGHT = 16.48828125
+        MULTILINE_TITLE_VERTICAL_ALLOWANCE = 26.0
+        MULTILINE_TITLE_BASELINE = 18.53515625
+        MULTILINE_TITLE_SIDE_ALLOWANCE = 36.0
+        SELF_RELATION_START_RATIO = 0.37
+        SELF_RELATION_END_RATIO = 0.635
+        SELF_RELATION_CONTROL_OFFSET = 70.0
+        SELF_RELATION_LABEL_GAP = 6.0
         # PlantUML removes the otherwise empty member compartment below a
         # one-line title when `hide empty members` is active. Its Smetana
         # boxes also keep four more pixels of side padding than our ordinary
@@ -77,6 +85,14 @@ module Sirena
                          :STANDARD_MEMBER_SIDE_ALLOWANCE,
                          :STANDARD_STEREOTYPE_ROW_HEIGHT,
                          :STANDARD_TITLE_SIDE_ALLOWANCE,
+                         :MULTILINE_TITLE_ROW_HEIGHT,
+                         :MULTILINE_TITLE_VERTICAL_ALLOWANCE,
+                         :MULTILINE_TITLE_BASELINE,
+                         :MULTILINE_TITLE_SIDE_ALLOWANCE,
+                         :SELF_RELATION_START_RATIO,
+                         :SELF_RELATION_END_RATIO,
+                         :SELF_RELATION_CONTROL_OFFSET,
+                         :SELF_RELATION_LABEL_GAP,
                          :EMPTY_MEMBER_COMPARTMENT, :EMPTY_CLASS_WIDTH_EXTRA,
                          :EMPTY_CLASS_MIN_WIDTH
 
@@ -508,6 +524,7 @@ module Sirena
         def complete_box_specification(record, klass, diagram, details)
           record = compact_empty_box(record, details[:member_rows], diagram)
           adjust_plain_empty_width(record, klass, diagram, details[:names])
+          record = multiline_title_box(record, klass, details)
           record = isolated_standard_box(record, klass, diagram, details)
           record.merge(name_rows: details[:names].size,
                        floating_generic: details[:generic],
@@ -568,6 +585,28 @@ module Sirena
                                                      font_size: font_size)
           [((title_width * 2).round / 2.0) + 32.0,
            EMPTY_CLASS_MIN_WIDTH].max
+        end
+
+        def multiline_title_box(record, klass, details)
+          return record unless multiline_title_box?(record, klass, details)
+
+          rows = record.fetch(:title_rows).size
+          height = MULTILINE_TITLE_VERTICAL_ALLOWANCE +
+            (rows * MULTILINE_TITLE_ROW_HEIGHT)
+          width = multiline_title_width(record.fetch(:title_rows))
+          record.merge(width: width, height: height, compact_title_rows: true)
+        end
+
+        def multiline_title_box?(record, klass, details)
+          details[:member_rows].empty? && record.fetch(:title_rows).size > 1 &&
+            header_rows(klass).empty?
+        end
+
+        def multiline_title_width(rows)
+          widths = rows.map do |row|
+            measure_text(row, font_size: font_size)[:width]
+          end
+          widths.max.to_f + MULTILINE_TITLE_SIDE_ALLOWANCE
         end
 
         def isolated_standard_box(record, klass, diagram, details)
@@ -875,7 +914,7 @@ module Sirena
         end
 
         def title_texts(item, horizontal, vertical, width)
-          cursor = vertical + BOX_PADDING + font_size
+          cursor = title_text_cursor(item, vertical)
           texts, cursor = title_text_rows(item, horizontal, width, cursor)
           texts << floating_generic_text(item, horizontal, vertical, width)
           [texts.compact, cursor]
@@ -885,10 +924,22 @@ module Sirena
           texts = item[:title_rows].each_with_index.map do |content, index|
             text = scene_text(content, horizontal + (width / 2), cursor,
                               title_role(item, index), "middle")
-            cursor += ROW_HEIGHT
+            cursor += title_row_height(item)
             text
           end
           [texts, cursor]
+        end
+
+        def title_text_cursor(item, vertical)
+          if item[:compact_title_rows]
+            return vertical + MULTILINE_TITLE_BASELINE
+          end
+
+          vertical + BOX_PADDING + font_size
+        end
+
+        def title_row_height(item)
+          item[:compact_title_rows] ? MULTILINE_TITLE_ROW_HEIGHT : ROW_HEIGHT
         end
 
         def floating_generic_text(item, horizontal, vertical, width)
@@ -1148,9 +1199,12 @@ module Sirena
         end
 
         def self_relation_endpoints(box)
-          endpoints = { left: right_edge_point(box, 0.35) }
-          endpoints[:right] = right_edge_point(box, 0.7)
-          endpoints[:control] = right_edge_point(box, 0.5, offset: 54.0)
+          endpoints = { left: right_edge_point(box,
+                                               SELF_RELATION_START_RATIO) }
+          endpoints[:right] = right_edge_point(box, SELF_RELATION_END_RATIO)
+          endpoints[:control] = right_edge_point(
+            box, 0.5, offset: SELF_RELATION_CONTROL_OFFSET
+          )
           endpoints
         end
 
@@ -1200,7 +1254,8 @@ module Sirena
         def marker_scenes(markers, endpoints, half_width: nil)
           markers.compact.map do |side, kind|
             tip = endpoints.fetch(side)
-            other = endpoints.fetch(side == :left ? :right : :left)
+            opposite = side == :left ? :right : :left
+            other = endpoints[:control] || endpoints.fetch(opposite)
             marker_scene(kind, tip, other, half_width: half_width)
           end
         end
@@ -1308,8 +1363,7 @@ module Sirena
         def relation_text_label(relation, endpoints, sides)
           return unless sides.include?(:left)
 
-          relation_label(visible_relation_label(relation.label),
-                         *endpoints.values_at(:left, :right))
+          relation_label(visible_relation_label(relation.label), endpoints)
         end
 
         def visible_relation_label(label)
@@ -1327,9 +1381,12 @@ module Sirena
 
         # Above the middle of a flat line; beside a steep one, centred on
         # its middle, as PlantUML draws a label in its own rank.
-        def relation_label(content, left, right)
+        def relation_label(content, endpoints)
           return unless content
 
+          return self_relation_label(content, endpoints) if endpoints[:control]
+
+          left, right = endpoints.values_at(:left, :right)
           horizontal, middle = midpoint(left, right)
           if steep?(left, right)
             return steep_relation_label(content, horizontal, middle)
@@ -1337,6 +1394,26 @@ module Sirena
 
           scene_text(content, horizontal, middle - LABEL_OFFSET,
                      "relation_label", "middle")
+        end
+
+        def self_relation_label(content, endpoints)
+          horizontal = self_relation_label_horizontal(endpoints)
+          baseline = self_relation_label_baseline(endpoints)
+          scene_text(content, horizontal, baseline,
+                     "relation_label", "start")
+        end
+
+        def self_relation_label_horizontal(endpoints)
+          left, right, control = endpoints.values_at(:left, :right, :control)
+          curve_right = (left[0] + (2 * control[0]) + right[0]) / 4
+          curve_right + SELF_RELATION_LABEL_GAP
+        end
+
+        def self_relation_label_baseline(endpoints)
+          left, right = endpoints.values_at(:left, :right)
+          vertical = midpoint(left, right).last
+          size = font_size * SMALL_TEXT_SCALE
+          vertical + (size * (1 - TEXT_DESCENT) / 2)
         end
 
         def steep?(left, right)
