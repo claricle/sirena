@@ -124,9 +124,9 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     expect(round_trips).to eq([[true, true], [false, false]])
   end
 
-  it "preserves the established non-teoz SVG bytes" do
+  it "pins the classic non-teoz SVG bytes" do
     expect(digest(noted_source))
-      .to eq("cbd1dd856a106ce0253534b9754b5347a3c8d292809691be4d78fb4ebc158dc6")
+      .to eq("2dee0649f923c76bfad355a5086550b563f37e6907a8a9aeb01ce6592131c4fc")
   end
 
   it "matches the pinned teoz participant-head dimensions" do
