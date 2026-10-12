@@ -55,7 +55,8 @@ module Sirena
             markers = markers(edge)
             { kind: edge.role&.to_sym, head: head(markers), markers: markers,
               dashed: flagged?(node, "dashed", index),
-              plain: flagged?(node, "plain", index) }
+              plain: flagged?(node, "plain", index),
+              direction: detail(node, "direction", index)&.to_sym }
           end
 
           def markers(edge)

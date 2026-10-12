@@ -9,6 +9,7 @@ module SpecSupport
       REFERENCE_RELATION = "link"
       SIRENA_CLASS = "class-"
       SIRENA_RELATION = "relation-"
+      SIRENA_JUNCTION = "junction-"
       UNRESOLVED_ENDPOINT = "unresolved-endpoint"
       ENDPOINT_TOLERANCE = 6.0
       VISIBILITY = {
@@ -94,7 +95,7 @@ module SpecSupport
       def relation_elements(extractor, doc, groups)
         ordinals = Hash.new(0)
         relation_groups(doc).filter_map do |group|
-          endpoints = endpoints_for(group, groups) || unresolved(group)
+          endpoints = endpoints_for(group, groups)
           ordinal = ordinals[endpoints]
           ordinals[endpoints] += 1
           relation_element(extractor, group, endpoints, ordinal)
@@ -104,7 +105,7 @@ module SpecSupport
       def relation_groups(doc)
         doc.xpath("//g").select do |group|
           classes(group).include?(REFERENCE_RELATION) ||
-            group["id"].to_s.start_with?(SIRENA_RELATION)
+            group["id"].to_s.start_with?(SIRENA_RELATION, SIRENA_JUNCTION)
         end
       end
 
@@ -116,27 +117,21 @@ module SpecSupport
         end
       end
 
-      def unresolved(group)
-        [UNRESOLVED_ENDPOINT, group["id"]]
-      end
-
       def reference_endpoints(group, groups)
         names = groups.to_h { |entry| [entry.reference_id, entry.name] }
-        endpoints = %w[data-entity-1 data-entity-2].map do |attribute|
-          names[group[attribute]]
+        %w[data-entity-1 data-entity-2].map do |attribute|
+          names.fetch(group[attribute], UNRESOLVED_ENDPOINT)
         end
-        endpoints if endpoints.all?
       end
 
       def sirena_endpoints(group, groups)
         path = group.at_xpath(".//path[@d]")
         points = PathPoints.new(path&.[]("d")).points
-        return unless points.any?
+        return [UNRESOLVED_ENDPOINT] * 2 if points.empty?
 
-        endpoints = [points.first, points.last].map do |point|
-          nearest_class(point, groups)
+        [points.first, points.last].map do |point|
+          nearest_class(point, groups) || UNRESOLVED_ENDPOINT
         end
-        endpoints if endpoints.all?
       end
 
       def nearest_class(point, groups)

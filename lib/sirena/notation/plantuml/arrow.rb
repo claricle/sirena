@@ -7,8 +7,9 @@ module Sirena
       #
       # A glyph is an optional marker, a body of dashes or dots (a dot makes
       # the line dashed) that may carry a direction word between two runs,
-      # and an optional marker. Direction words only steer PlantUML's own
-      # layout, so they are accepted and dropped.
+      # and an optional marker. The direction word is kept as `:up`, `:down`,
+      # `:left` or `:right` for the layout; a one-character body such as
+      # `->` or `.>` lays out like `:right`.
       module Arrow
         extend self
 
@@ -27,12 +28,15 @@ module Sirena
         KINDS = { "|" => :extension, "o" => :aggregation,
                   "*" => :composition, "+" => :nesting }.freeze
         PLAIN_HEADS = %w[< >].freeze
+        DIRECTIONS = { "u" => :up, "d" => :down, "l" => :left,
+                       "r" => :right }.freeze
         private_constant :LEFT_MARKER, :RIGHT_MARKER, :RIGHT_IN_LINE, :BODY,
-                         :GLYPH, :PLAIN, :KINDS, :PLAIN_HEADS
+                         :GLYPH, :PLAIN, :KINDS, :PLAIN_HEADS, :DIRECTIONS
 
         # @return [Hash, nil] `:markers` (side to kind, left first), `:dashed`,
         #   `:kind` and `:head` (:left, :right, or :both with a nil kind when
-        #   both ends carry a marker) and `:plain` (a bare association
+        #   both ends carry a marker), `:direction` (nil without a word)
+        #   and `:plain` (a bare association
         #   arrow, which a sequence diagram also has); nil for `<->`, which
         #   a sequence diagram also has and which is not drawn here
         def parse(glyph)
@@ -44,10 +48,18 @@ module Sirena
           markers = { left: left, right: right }.compact
             .transform_values { |marker| kind_of(marker, dashed) }
           { markers: markers, dashed: dashed, head: head_of(markers),
-            kind: single_kind(markers, dashed), plain: PLAIN.match?(glyph) }
+            kind: single_kind(markers, dashed), plain: PLAIN.match?(glyph),
+            direction: direction_of(body) }
         end
 
         private
+
+        def direction_of(body)
+          word = body[/[a-z]+/]
+          return DIRECTIONS[word[0]] if word
+
+          :right if body.size == 1
+        end
 
         def single_kind(markers, dashed)
           return line_kind(dashed) if markers.empty?

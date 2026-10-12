@@ -62,4 +62,20 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlClassRecognizer do
     relation = extract(unresolved_svg, recognizer).elements.last
     expect(relation.key).to include("unresolved-endpoint")
   end
+
+  it "keys only the end of a link that reaches no class as unresolved" do
+    svg = <<~SVG
+      <svg viewBox="0 0 100 100">
+        <g class="entity" data-qualified-name="A" id="ent1">
+          <rect width="10" height="10"/>
+        </g>
+        <g class="link" data-entity-1="ent1" data-entity-2="ent9" id="lnk2">
+          <path d="M 5 10 L 5 40"/>
+        </g>
+      </svg>
+    SVG
+    relation = extract(svg, recognizer).elements.last
+
+    expect(relation.key).to eq(["A", "unresolved-endpoint", 0])
+  end
 end

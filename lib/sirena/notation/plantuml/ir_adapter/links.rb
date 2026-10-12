@@ -49,6 +49,7 @@ module Sirena
               "right_role" => relation.right_role,
               "dashed" => ("true" if relation.dashed?),
               "plain" => ("true" if relation.plain?),
+              "direction" => relation.direction&.to_s,
             }.compact
           end
 
