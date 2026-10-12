@@ -356,9 +356,15 @@ module Sirena
           end
 
           def head_box_dimensions
-            return [0.0, INTRINSIC_HEAD_PADDING] if intrinsic_plain_heads?
+            return [0.0, INTRINSIC_HEAD_PADDING] if intrinsic_head_width?
 
             [minimum_head_width, head_padding]
+          end
+
+          # Without a requested minimum, a classic head is as wide as its
+          # label whatever other kinds of participant share the row.
+          def intrinsic_head_width?
+            !compact? && @diagram.min_head_width.nil?
           end
 
           def intrinsic_plain_heads?
