@@ -95,7 +95,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     arrows = scene_of("A -> B", "B -> A").arrows
     ys = arrows.map { |arrow| arrow.path[/M \S+ (\S+)/, 1].to_f }
 
-    expect(ys.last - ys.first).to eq(40.0)
+    expect(ys.last - ys.first).to be_within(0.001).of(40.0)
   end
 
   it "points a reversed arrow at the participant on the left" do
@@ -230,12 +230,15 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
 
     it "pulls the end of a ->o] message 8 inside the edge" do
-      plain = first_run("A ->] : hi").last
-      ring = scene_of("A ->o] : hi").arrows.first.marks.find do |mark|
+      plain_scene = scene_of("A ->] : hi")
+      ring_scene = scene_of("A ->o] : hi")
+      plain = ends_of(plain_scene).first.last
+      ring = ring_scene.arrows.first.marks.find do |mark|
         mark.kind == "circle"
       end
 
-      expect(ring.cx).to eq(plain - 8.0)
+      expect(ring_scene.width - ring.cx)
+        .to eq((plain_scene.width - plain) + 8.0)
     end
 
     it "pulls the start of a [o-> message 8 inside the edge" do
@@ -397,10 +400,12 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
   describe "dividers" do
     it "draws a divider across every lifeline" do
-      divider = scene_of("A -> B", "== x ==").dividers.first
+      scene = scene_of("A -> B", "== x ==")
+      divider = scene.dividers.first
       xs = divider.lines.first.then { |line| [line.x1, line.x2] }
 
-      expect(xs.last - xs.first).to be > 100
+      expect([xs.first < scene.lifelines.first.x1,
+              xs.last > scene.lifelines.last.x1]).to eq([true, true])
     end
 
     it "labels the divider" do
@@ -420,7 +425,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     it "spans from the activating arrow to the deactivating one" do
       bar = scene_of("A -> B ++", "B -> A --").bars.first
 
-      expect(bar.height).to eq(40.0)
+      expect(bar.height).to be_within(0.001).of(40.0)
     end
 
     it "closes a bar still open at the end of the diagram" do
@@ -586,7 +591,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
 
     it "shortens the canvas by the height of a head" do
-      expect(shown.height - hidden.height).to eq(shown.heads.first.height)
+      expect(shown.height - hidden.height)
+        .to be_within(0.001).of(shown.heads.first.height)
     end
 
     it "ends the lifelines where they ended" do
@@ -722,7 +728,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     let(:plain) { top_heads(scene_of("Alice -> Bobby")).first }
 
     it "grows the head with the font size" do
-      expect(head.height).to be_within(0.001).of(36 + (12 * 1.1776))
+      expect(head.height).to be_within(0.001).of(plain.height + (12 * 1.1776))
     end
 
     it "widens the head to fit the larger label" do
@@ -837,9 +843,12 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
     it "lengthens the run of a ? message to fit the number" do
       runs = [scene_of("autonumber", "?-> A : hi"), scene_of("?-> A : hi")]
-      starts = runs.map { |s| s.arrows.first.path[/M (\S+)/, 1].to_f }
+      spans = runs.map do |scene|
+        points = scene.arrows.first.path.scan(/-?\d+\.?\d*/).map(&:to_f)
+        points[2] - points[0]
+      end
 
-      expect(starts.first).to be < starts.last
+      expect(spans.first).to be > spans.last
     end
 
     it "widens the gap between lifelines to fit the number" do

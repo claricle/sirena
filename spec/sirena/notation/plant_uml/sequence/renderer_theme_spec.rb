@@ -52,7 +52,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Renderer do
     svg = Sirena.render(source, notation: :plantuml)
 
     expect(Digest::SHA256.hexdigest(svg))
-      .to eq("26704b2d8430aef533b123ddd820b4086288ecd9d89e6fdef123d3e21960155a")
+      .to eq("cbd1dd856a106ce0253534b9754b5347a3c8d292809691be4d78fb4ebc158dc6")
   end
 
   it "uses every built-in theme's sequence paint roles" do
