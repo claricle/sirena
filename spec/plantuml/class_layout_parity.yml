@@ -160,13 +160,13 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.933579
-      worst_e_w: 0.177431
-      worst_e_h: 3.69145
-      worst_e_a: 0.786846
+      worst_e_c: 0.000268
+      worst_e_w: 1.0e-06
+      worst_e_h: 0.042545
+      worst_e_a: 0.040808
       worst_analog:
   matched: 5
-  status: miss
+  status: pass
 - case: resources.vega.nonreg.group2903.left_to_right--8310bfc61aae
   summary:
     hard_failure: false
