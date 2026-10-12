@@ -5,6 +5,7 @@ require_relative "caption_layout"
 require_relative "class_name"
 require_relative "ir_reader"
 require_relative "package_frames"
+require_relative "rank_chain"
 require_relative "scene"
 
 module Sirena
@@ -30,11 +31,17 @@ module Sirena
         MEMBER_NOTE_BODY_GAP = 35.0
         MEMBER_NOTE_CLASS_HEIGHT = 48.0
         MEMBER_NOTE_SIDE_PADDING = 6.0
+        ARROW_LENGTH = 9.0
+        ARROW_HALF_WIDTH = 4.0
+        ARROW_NOTCH = 5.0
+        ARROW_MARKERS = %i[association dependency].freeze
         FILLED_MARKERS = %i[association dependency composition].freeze
         private_constant :MARGIN, :COLUMN_GAP, :ROW_GAP,
                          :ANNOTATED_RELATION_SLOT_WIDTH, :BOX_PADDING,
                          :ROW_HEIGHT, :MARKER_LENGTH, :MARKER_HALF_WIDTH,
                          :LABEL_OFFSET, :FILLED_MARKERS, :NESTING_RADIUS,
+                         :ARROW_LENGTH, :ARROW_HALF_WIDTH, :ARROW_NOTCH,
+                         :ARROW_MARKERS,
                          :MEMBER_NOTE_TEXT_SCALE, :MEMBER_NOTE_ROW_HEIGHT,
                          :MEMBER_NOTE_LINE_HEIGHT, :MEMBER_NOTE_STACK_GAP,
                          :MEMBER_NOTE_BODY_GAP, :MEMBER_NOTE_CLASS_HEIGHT,
@@ -59,10 +66,27 @@ module Sirena
           end
           specifications += note_specifications(diagram.notes)
           box_width = widest_box(specifications)
+          chain = RankChain.for(diagram)
+          return chain_scene(diagram, chain, specifications, box_width) if chain
+
           boxes = position_boxes(rows_by_package(specifications, diagram),
                                  box_width, stable_centers?(diagram))
 
           build_scene(diagram, boxes, box_width)
+        end
+
+        def chain_scene(diagram, chain, specifications, box_width)
+          sizes = specifications.to_h do |item|
+            [item[:id], [box_width, item[:height]]]
+          end
+          corners, nodes = chain.place(sizes, [MARGIN, MARGIN])
+          boxes = specifications.map do |item|
+            build_box(item, *corners.fetch(item[:id]), box_width)
+          end
+          Scene.new(width: far_edge(boxes) { |box| box.x + box.width },
+                    height: far_edge(boxes) { |box| box.y + box.height },
+                    boxes: boxes, frames: [],
+                    relations: scene_relations(diagram, boxes, nodes))
         end
 
         def member_note_family?(diagram)
@@ -270,9 +294,10 @@ module Sirena
           PackageFrames.new(diagram, method(:measured_width)).call(boxes)
         end
 
-        def scene_relations(diagram, boxes)
-          build_relations(diagram.relations, boxes) +
-            build_junctions(diagram, boxes) +
+        # `nodes` holds each junction node as `[x, y, width, height]` by the
+        # index of its relation; without one the legs meet at the middle.
+        def scene_relations(diagram, boxes, nodes = {})
+          build_relations(diagram, boxes, nodes) +
             build_note_links(diagram.notes, boxes)
         end
 
@@ -559,45 +584,78 @@ module Sirena
           end
         end
 
-        def build_relations(relations, boxes)
+        def build_relations(diagram, boxes, nodes)
           by_name = boxes.to_h { |box| [box.id.delete_prefix("package-"), box] }
-          relations.each_with_index.map do |relation, index|
-            build_relation(relation, index, by_name)
+          owners = junction_owners(diagram)
+          diagram.relations.each_with_index.flat_map do |relation, index|
+            ends = [relation.left, relation.right].map { |n| by_name.fetch(n) }
+            junctions = owners[index]
+            next [relation_scene(relation, "relation-#{index}",
+                                 relation_endpoints(*ends))] if junctions.empty?
+
+            junction = junction_box(nodes[index], ends)
+            junction_scenes(relation, index, [ends, junction],
+                            junctions.map { |entry| [*entry, by_name] })
           end
         end
 
-        def build_relation(relation, index, by_name)
-          left_box = by_name.fetch(relation.left)
-          right_box = by_name.fetch(relation.right)
-          endpoints = relation_endpoints(left_box, right_box)
-
-          relation_scene(relation, index, endpoints)
+        # The association classes, with their numbers, grouped by the index
+        # of the first relation joining their pair, written either way round.
+        def junction_owners(diagram)
+          owners = Hash.new { |hash, index| hash[index] = [] }
+          diagram.junctions.each_with_index do |junction, number|
+            pair = [junction.from, junction.to].sort
+            index = diagram.relations.index do |relation|
+              [relation.left, relation.right].sort == pair
+            end
+            owners[index] << [junction, number]
+          end
+          owners
         end
 
-        def relation_scene(relation, index, endpoints)
-          texts = relation_texts(relation, endpoints)
-          Scene::Relation.new(id: "relation-#{index}", dashed: relation.dashed?,
+        # The junction node, or a zero-size one at the middle of the
+        # relation when the grid placed the classes.
+        def junction_box(node, ends)
+          node ||= [*midpoint(*relation_endpoints(*ends).values_at(:left,
+                                                                    :right)),
+                    0.0, 0.0]
+          x, y, width, height = node
+          Scene::Box.new(id: "junction", x: x, y: y, width: width,
+                         height: height, texts: [], separators: [],
+                         kind: "junction")
+        end
+
+        def relation_scene(relation, id, endpoints, sides: %i[left right],
+                           markers: relation.markers)
+          texts = relation_texts(relation, endpoints, sides)
+          Scene::Relation.new(id: id, dashed: relation.dashed?,
                               path: relation_path(endpoints), texts: texts,
-                              markers: marker_scenes(relation, endpoints))
+                              markers: marker_scenes(markers.slice(*sides),
+                                                     endpoints))
         end
 
-        # A dashed line from the association class to the middle of the
-        # relation it hangs on.
-        def build_junctions(diagram, boxes)
-          by_name = boxes.to_h { |box| [box.id, box] }
-          diagram.junctions.each_with_index.map do |junction, index|
-            junction_scene(junction, index, by_name)
-          end
+        # PlantUML turns a relation carrying an association class into two
+        # legs meeting at a junction node, each keeping its own end's text,
+        # plus a dashed link from that node to each association class. An
+        # `up` or `left` word moves each end's marker to the other leg, as
+        # the pinned references draw it.
+        def junction_scenes(relation, index, boxes, owners)
+          (from, to), junction = boxes
+          swap = %i[up left].include?(relation.direction)
+          markers = relation.markers
+          [relation_scene(relation, "relation-#{index}-from",
+                          relation_endpoints(from, junction), sides: %i[left],
+                          markers: { left: markers[swap ? :right : :left] }),
+           relation_scene(relation, "relation-#{index}-to",
+                          relation_endpoints(junction, to), sides: %i[right],
+                          markers: { right: markers[swap ? :left : :right] }),
+           *owners.map { |entry| owner_link(junction, *entry) }]
         end
 
-        def junction_scene(junction, index, by_name)
-          ends = [junction.from, junction.to].map { |n| by_name.fetch(n) }
-          middle = midpoint(*relation_endpoints(*ends).values_at(:left, :right))
-          owner = by_name.fetch(junction.owner)
-          edge = boundary_toward(owner, middle)
-          Scene::Relation.new(id: "junction-#{index}", dashed: true,
-                              path: "M #{point(edge)} L #{point(middle)}",
-                              texts: [], markers: [])
+        def owner_link(junction, owner, number, by_name)
+          edge = relation_endpoints(junction, by_name.fetch(owner.owner))
+          Scene::Relation.new(id: "junction-#{number}", dashed: true,
+                              path: relation_path(edge), texts: [], markers: [])
         end
 
         def midpoint(first, second)
@@ -663,8 +721,8 @@ module Sirena
           "M #{point(left)} Q #{point(control)} #{point(right)}"
         end
 
-        def marker_scenes(relation, endpoints)
-          relation.markers.map do |side, kind|
+        def marker_scenes(markers, endpoints)
+          markers.compact.map do |side, kind|
             tip = endpoints.fetch(side)
             other = endpoints.fetch(side == :left ? :right : :left)
             marker_scene(kind, tip, other)
@@ -696,12 +754,15 @@ module Sirena
 
         def marker_shape(relation_kind)
           return :diamond if %i[aggregation composition].include?(relation_kind)
+          return :arrow if ARROW_MARKERS.include?(relation_kind)
 
           :triangle
         end
 
         def marker_points(tip, other, shape)
           direction = unit_vector(other, tip)
+          return arrow_points(tip, direction) if shape == :arrow
+
           base = shift(tip, *direction, -MARKER_LENGTH)
           left = marker_side(base, direction, MARKER_HALF_WIDTH)
           right = marker_side(base, direction, -MARKER_HALF_WIDTH)
@@ -709,6 +770,16 @@ module Sirena
           points << diamond_back(tip, direction) if shape == :diamond
           points << right
           formatted_points(points)
+        end
+
+        # PlantUML's open arrowhead: two wings joined through a notch.
+        def arrow_points(tip, direction)
+          base = shift(tip, *direction, -ARROW_LENGTH)
+          formatted_points(
+            [tip, marker_side(base, direction, ARROW_HALF_WIDTH),
+             shift(tip, *direction, -ARROW_NOTCH),
+             marker_side(base, direction, -ARROW_HALF_WIDTH)]
+          )
         end
 
         def marker_side(base, direction, distance)
@@ -738,15 +809,18 @@ module Sirena
            origin[1] + (direction_vertical * distance)]
         end
 
-        def relation_texts(relation, endpoints)
+        # The label rides with the left end, so a relation split into legs
+        # still shows it once.
+        def relation_texts(relation, endpoints, sides)
           left = endpoints.fetch(:left)
           right = endpoints.fetch(:right)
           direction = unit_vector(left, right)
-
-          [relation_label(relation.label, left, right),
-           multiplicity(end_text(relation, :left), left, direction, 1),
-           multiplicity(end_text(relation, :right), right, direction, -1)]
-            .compact
+          texts = { right: [multiplicity(end_text(relation, :right), right,
+                                         direction, -1)] }
+          texts[:left] = [relation_label(relation.label, left, right),
+                          multiplicity(end_text(relation, :left), left,
+                                       direction, 1)]
+          texts.values_at(*sides).flatten.compact
         end
 
         def end_text(relation, side)
