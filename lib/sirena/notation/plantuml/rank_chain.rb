@@ -42,6 +42,9 @@ module Sirena
 
         # @return [RankChain, nil]
         def self.for(diagram)
+          fork = layout_only_fork(diagram)
+          return fork if fork
+
           relations = diagram.relations
           chains = chains_of(diagram, relations)
           return unless chains
@@ -56,6 +59,36 @@ module Sirena
           return unless exact_classes?(diagram, all_names(chains), owners)
 
           new(chains, owners, axis, layout_of(diagram))
+        end
+
+        def self.layout_only_fork(diagram)
+          relations = diagram.relations
+          return unless forkable?(diagram, relations)
+
+          root, leaves = fork_ends(relations)
+          return unless root
+          return unless exact_classes?(diagram, [root, *leaves], {})
+
+          layout = layout_of(diagram)
+          axis = chain_axis(diagram, relations, {})
+          return unless axis == layout.fetch(:rank_axis)
+
+          Fork.new(root, leaves, axis, layout.fetch(:engine))
+        end
+
+        def self.forkable?(diagram, relations)
+          engine(diagram) == :smetana && diagram.packages.empty? &&
+            diagram.notes.empty? && diagram.junctions.empty? &&
+            relations.size > 1 && relations.any?(&:layout_only?)
+        end
+
+        def self.fork_ends(relations)
+          lefts = relations.map(&:left)
+          rights = relations.map(&:right)
+          return [lefts.first, rights] if lefts.uniq.one? && rights.uniq == rights
+          return [rights.first, lefts] if rights.uniq.one? && lefts.uniq == lefts
+
+          [nil, nil]
         end
 
         def self.exact_classes?(diagram, names, owners)
@@ -160,7 +193,61 @@ module Sirena
                              :junction_owners, :chain_axis, :relation_axis,
                              :left_to_right?, :layout_of, :exact_classes?,
                              :owners_by_relation, :valid_owners?, :chainable?,
-                             :unique_names?, :all_names
+                             :unique_names?, :all_names, :layout_only_fork,
+                             :forkable?, :fork_ends
+
+        # A one-rank Smetana fork whose hidden edge still constrains the
+        # visible nodes. The shared root is centred over (or beside) every
+        # leaf, using the pinned engine's rank and node gaps.
+        class Fork
+          def initialize(root, leaves, axis, engine)
+            @root = root
+            @leaves = leaves
+            @axis = axis
+            @gaps = GAPS.fetch(engine)
+          end
+
+          def place(sizes, origin, _label_widths = {})
+            corners = if @axis == :vertical
+                        vertical_corners(sizes, origin)
+                      else
+                        horizontal_corners(sizes, origin)
+                      end
+            [corners, {}]
+          end
+
+          private
+
+          def vertical_corners(sizes, origin)
+            root_width, root_height = sizes.fetch(@root)
+            widths = @leaves.map { |name| sizes.fetch(name).first }
+            breadth = widths.sum + (@gaps[:node] * (widths.size - 1))
+            left = origin.first + ([root_width, breadth].max - breadth) / 2
+            top = origin.last + root_height + @gaps[:rank]
+            leaves = distribute(@leaves, widths, left, top)
+            leaves.merge(@root => [origin.first +
+              ([breadth - root_width, 0].max / 2), origin.last])
+          end
+
+          def horizontal_corners(sizes, origin)
+            root_width, root_height = sizes.fetch(@root)
+            heights = @leaves.map { |name| sizes.fetch(name).last }
+            breadth = heights.sum + (@gaps[:node] * (heights.size - 1))
+            left = origin.first + root_width + @gaps[:rank]
+            top = origin.last + ([root_height, breadth].max - breadth) / 2
+            leaves = distribute(@leaves, heights, top, left, reverse: true)
+            leaves.merge(@root => [origin.first, origin.last +
+              ([breadth - root_height, 0].max / 2)])
+          end
+
+          def distribute(names, spans, cursor, fixed, reverse: false)
+            names.each_with_index.to_h do |name, index|
+              corner = reverse ? [fixed, cursor] : [cursor, fixed]
+              cursor += spans.fetch(index) + @gaps[:node]
+              [name, corner]
+            end
+          end
+        end
 
         attr_reader :chains, :owners, :axis
 

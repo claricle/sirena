@@ -28,7 +28,8 @@ module Sirena
         #
         # Those two travel as hashes because the scoreboard counts a parameter
         # list past five as lint debt.
-        def initialize(left:, right:, arrow:, ends:, label:)
+        def initialize(left:, right:, arrow:, ends:, label:,
+                       layout_only: false)
           @left = left
           @right = right
           @kind, @head, @markers, @dashed, @plain =
@@ -38,6 +39,7 @@ module Sirena
           @left_multiplicity, @right_multiplicity, @left_role, @right_role =
             ends.fetch_values(:left, :right, :left_role, :right_role)
           @label = label
+          @layout_only = layout_only
           freeze
         end
 
@@ -49,6 +51,30 @@ module Sirena
         # diagram also has.
         def plain?
           @plain
+        end
+
+        # True when PlantUML keeps this edge as a layout constraint but does
+        # not draw it, such as a relation touching a hidden Smetana class.
+        def layout_only?
+          @layout_only
+        end
+
+        def as_layout_only
+          self.class.new(left: left, right: right, arrow: arrow_attributes,
+                         ends: end_attributes, label: label,
+                         layout_only: true)
+        end
+
+        private
+
+        def arrow_attributes
+          { kind: kind, head: head, markers: markers, dashed: dashed?,
+            plain: plain?, direction: direction, length: length }
+        end
+
+        def end_attributes
+          { left: left_multiplicity, right: right_multiplicity,
+            left_role: left_role, right_role: right_role }
         end
       end
     end
