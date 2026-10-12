@@ -146,10 +146,16 @@ module SpecSupport
       def transformed_path_points(path)
         return [] unless path
 
-        matrix = path.ancestors.reverse_each.reduce(Matrix.identity) do |ctm, node|
-          ctm * Matrix.parse(node["transform"])
-        end * Matrix.parse(path["transform"])
+        matrix = path_matrix(path)
         PathPoints.new(path["d"]).points.map { |point| matrix.apply(*point) }
+      end
+
+      def path_matrix(path)
+        nodes = path.ancestors.reverse_each
+        ancestors = nodes.reduce(Matrix.identity) do |ctm, node|
+          ctm * Matrix.parse(node["transform"])
+        end
+        ancestors * Matrix.parse(path["transform"])
       end
 
       def nearest_class(point, groups)

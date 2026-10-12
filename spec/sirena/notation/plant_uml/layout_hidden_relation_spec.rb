@@ -24,19 +24,17 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     PLANTUML
   end
 
-  it "carries the hidden relation through the IR as layout-only" do
+  let(:restored_facts) do
     diagram = Sirena::Notation::PlantUML::Parser.new.parse(source)
     graph = Sirena::Notation::PlantUML::IRAdapter.call(diagram)
     restored = Sirena::Notation::PlantUML::IRReader.call(graph)
     facts = restored.relations.map do |relation|
       [[relation.left, relation.right], relation.layout_only?]
     end
-
-    expect([restored.classes.map(&:name), facts])
-      .to eq([%w[A B C], [[%w[A B], true], [%w[A C], false]]])
+    [restored.classes.map(&:name), facts]
   end
 
-  it "places both leaves below their shared root but draws only one edge" do
+  let(:layout_facts) do
     document = REXML::Document.new(Sirena.render(source, notation: :plantuml))
     dimensions = %w[x y width height]
     boxes = %w[A B C].to_h do |name|
@@ -46,13 +44,21 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     ax, ay, aw, ah = boxes.fetch("A")
     bx, by, = boxes.fetch("B")
     cx, cy, cw, = boxes.fetch("C")
-    relation_ids = REXML::XPath.match(document, "//g[starts-with(@id, 'relation-')]")
+    path = "//g[starts-with(@id, 'relation-')]"
+    relation_ids = REXML::XPath.match(document, path)
       .map { |group| group.attributes["id"] }
+    leaves_center = (bx + cx + cw) / 2
+    [by == cy, ay + ah < by, ax + (aw / 2) == leaves_center,
+     relation_ids]
+  end
 
-    expect([by, cy, ay + ah < by, ax + (aw / 2),
-            (bx + cx + cw) / 2, relation_ids])
-      .to eq([by, by, true, (bx + cx + cw) / 2,
-              (bx + cx + cw) / 2, ["relation-1"]])
+  it "carries the hidden relation through the IR as layout-only" do
+    expect(restored_facts)
+      .to eq([%w[A B C], [[%w[A B], true], [%w[A C], false]]])
+  end
+
+  it "places both leaves below their shared root but draws only one edge" do
+    expect(layout_facts).to eq([true, true, true, ["relation-1"]])
   end
 
   it "keeps the ordinary dot hide behavior" do
