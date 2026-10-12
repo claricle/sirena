@@ -128,7 +128,7 @@ module Sirena
 
     def self.fallback_advance(char, monospace)
       return EMOJI_ADVANCE if PINNED_PICTOGRAPHS.include?(char.ord) ||
-                              char.match?(EMOJI)
+        char.match?(EMOJI)
 
       monospace ? MONOSPACE_ADVANCE : DEFAULT_ADVANCE
     end

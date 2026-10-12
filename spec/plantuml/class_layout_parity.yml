@@ -312,26 +312,26 @@ rows:
   status: pass
 - case: resources.vega.nonreg.simple.QualifiedAssoc001--8c3b78057dc3
   summary:
-    hard_failure: true
+    hard_failure: false
     metrics:
-      worst_e_c: 0.893212
-      worst_e_w: 2.084307
+      worst_e_c: 0.263594
+      worst_e_w: 1.128568
       worst_e_h: 0.098039
-      worst_e_a: 2.218407
+      worst_e_a: 1.017547
       worst_analog:
-  matched: 17
-  status: hard-failure
+  matched: 25
+  status: miss
 - case: resources.vega.nonreg.simple.QualifiedAssoc002--d57fb49a9920
   summary:
-    hard_failure: true
+    hard_failure: false
     metrics:
-      worst_e_c: 0.771811
-      worst_e_w: 6.500063
-      worst_e_h: 0.780549
-      worst_e_a: 33.176482
+      worst_e_c: 0.182311
+      worst_e_w: 0.932885
+      worst_e_h: 0.568627
+      worst_e_a: 1.842817
       worst_analog:
-  matched: 7
-  status: hard-failure
+  matched: 11
+  status: miss
 - case: resources.vega.svg.interactive.SVG0004_Svek--d500aa856a7e
   summary:
     hard_failure: false
@@ -345,15 +345,15 @@ rows:
   status: miss
 - case: resources.vega.svg.interactive.SVG0006_Svek--70f5757ed2ca
   summary:
-    hard_failure: true
+    hard_failure: false
     metrics:
-      worst_e_c: 0.283405
+      worst_e_c: 0.224957
       worst_e_w: 0.445672
       worst_e_h: 0.4375
       worst_e_a: 0.614381
       worst_analog:
-  matched: 8
-  status: hard-failure
+  matched: 11
+  status: miss
 - case: resources.vega.xmi.clazz.XMI0002_class--9616cd0e75d4
   summary:
     hard_failure: false
