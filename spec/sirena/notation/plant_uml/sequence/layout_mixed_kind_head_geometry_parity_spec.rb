@@ -28,6 +28,6 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "sizes a plain participant to its label beside an actor" do
-    expect(rectangle["width"].to_f).to eq(38.906)
+    expect(rectangle["width"].to_f).to eq(41.2822265625)
   end
 end

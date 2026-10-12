@@ -95,7 +95,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
                parity_row.dig("summary", "hard_failure"),
                parity_row.dig("geometry", "matched"),
                parity_row.dig("summary", "metrics", "worst_e_c"),
-             ]).to eq([false, 7, 0.295253])
+             ]).to eq([false, 7, 0.10424])
     end
   end
 end

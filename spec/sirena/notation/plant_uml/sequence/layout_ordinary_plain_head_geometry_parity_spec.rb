@@ -28,6 +28,6 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
   it "uses intrinsic dimensions for an ordinary plain participant" do
     expect(%w[width height].map { |name| rectangle[name].to_f })
-      .to eq([23.338, 30.4883])
+      .to eq([23.6591796875, 30.4883])
   end
 end

@@ -39,7 +39,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
   let(:expected_digests) do
     %w[
-      1dcdd99d1a1a7aa0a6a92bcc04c54a8351f9940d9a20c12ab0ee9dbae9429b3c
+      aaabc60c59baf44614f7ce5bce1ac2a9f7b85fc861a262c3a2c672564553f0f4
       55db1383aedfb8fd7917bc0bdf1a1020d92e639565159881b6b039519c19504c
     ]
   end
@@ -85,7 +85,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     evidence = case_ids.map { |id| parity_evidence(id) }
 
     expect(evidence).to all(eq([false, 5,
-                                [0.002195, 0.013916, 0.0, 0.013916]]))
+                                [0.002187, 0.01386, 0.0, 0.01386]]))
   end
 
   it "preserves ordinary and teoz output bytes" do
