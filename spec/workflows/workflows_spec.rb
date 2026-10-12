@@ -227,6 +227,27 @@ RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/De
       end
     end
 
+    it "permits only explicitly allowed skipped children" do
+      needs = result("pr-fast", "success").merge(result("unit", "skipped"))
+
+      expect(described_class.failures(needs, allowed_skips: ["unit"]))
+        .to eq([])
+    end
+
+    it "rejects a skipped child that was not explicitly allowed" do
+      needs = result("pr-fast", "success").merge(result("unit", "skipped"))
+
+      expect(described_class.failures(needs, allowed_skips: ["pins"]))
+        .to eq(['unit: "skipped"'])
+    end
+
+    it "does not allow a failed child even when its name is allowed to skip" do
+      needs = result("unit", "failure")
+
+      expect(described_class.failures(needs, allowed_skips: ["unit"]))
+        .to eq(['unit: "failure"'])
+    end
+
     it "is red when there is nothing to judge" do
       expect(described_class.failures({})).not_to be_empty
     end
@@ -237,9 +258,58 @@ RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/De
       ci.fetch("jobs")
     end
 
+    def pr_fast_job
+      jobs.fetch("pr-fast")
+    end
+
+    def changed_spec_step
+      named_step(pr_fast_job, "Run changed specs")
+    end
+
+    def aggregator_env(name)
+      jobs.fetch(name).fetch("steps").filter_map { |step| step["env"] }
+        .reduce({}, :merge)
+    end
+
     it "runs every stable Ruby on every OS and keeps Ruby 4 experimental" do
       expect(jobs.fetch("unit").dig("strategy", "matrix"))
         .to eq(expected_unit_matrix)
+    end
+
+    it "uses one Ubuntu setup for pull requests" do
+      expect(pr_fast_job.values_at("if", "runs-on"))
+        .to eq(["${{ github.event_name == 'pull_request' }}", "ubuntu-latest"])
+    end
+
+    it "runs pins and both lint checks in that setup" do
+      commands = pr_fast_job.fetch("steps").filter_map { |step| step["run"] }
+
+      expect(commands).to include("ruby scripts/check_workflow_pins.rb",
+                                  "bundle exec rubocop",
+                                  "bundle exec rake lint:debt:check")
+    end
+
+    it "runs exactly the added, copied, renamed, or modified specs" do
+      expect(changed_spec_step.fetch("run"))
+        .to include("--diff-filter=ACMR", "spec/**/*_spec.rb",
+                    'bundle exec rspec "${specs[@]}"')
+    end
+
+    it "diffs changed specs from the pull request base" do
+      expect(changed_spec_step.dig("env", "BASE_SHA"))
+        .to eq("${{ github.event.pull_request.base.sha }}")
+    end
+
+    it "defers expensive jobs from pull requests" do
+      expensive = %w[unit pins oracle-toolchain lint docs-build links
+                     conformance fresh-resolution plantuml-toolchain]
+
+      expect(expensive.map { |name| jobs.fetch(name).fetch("if") }.uniq)
+        .to eq(["${{ github.event_name != 'pull_request' }}"])
+    end
+
+    it "hangs the pull request job off the stable fast-lane check" do
+      expect(jobs.fetch("fast-lane").fetch("needs")).to include("pr-fast")
     end
 
     it "selects leptris FFI only for Ruby 3.2 on Windows" do
@@ -286,10 +356,14 @@ RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/De
 
     it "feeds each aggregator the whole needs context" do
       aggregators.each do |name|
-        steps = jobs.fetch(name)["steps"]
-        env = steps.filter_map { |s| s["env"] }.reduce({}, :merge)
-        expect(env["NEEDS_JSON"]).to eq("${{ toJSON(needs) }}")
+        expect(aggregator_env(name)["NEEDS_JSON"])
+          .to eq("${{ toJSON(needs) }}")
       end
+    end
+
+    it "gives each aggregator an event-specific skip allowlist" do
+      expect(aggregators.map { |name| aggregator_env(name) })
+        .to all(include("ALLOWED_SKIPS"))
     end
 
     it "wires lint into the fast lane, with parity and a standalone corpus " \

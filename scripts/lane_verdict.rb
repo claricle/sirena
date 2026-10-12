@@ -9,16 +9,23 @@ module LaneVerdict
   module_function
 
   # Returns "job: result" for every child that is not a success.
-  def failures(needs)
+  def failures(needs, allowed_skips: [])
     return ["no child jobs to judge"] if needs.empty?
 
-    failed = needs.reject { |_, job| job["result"] == "success" }
+    failed = needs.reject do |name, job|
+      result = job["result"]
+      result == "success" ||
+        (result == "skipped" && allowed_skips.include?(name))
+    end
     failed.map { |name, job| "#{name}: #{job['result'].inspect}" }
   end
 end
 
 if __FILE__ == $PROGRAM_NAME
-  bad = LaneVerdict.failures(JSON.parse(ENV.fetch("NEEDS_JSON")))
+  allowed_skips = ENV.fetch("ALLOWED_SKIPS", "").split(",").reject(&:empty?)
+  bad = LaneVerdict.failures(
+    JSON.parse(ENV.fetch("NEEDS_JSON")), allowed_skips: allowed_skips
+  )
   bad.each { |line| warn "lane red -- #{line}" }
   puts "lane green" if bad.empty?
   exit(bad.empty? ? 0 : 1)
