@@ -220,7 +220,8 @@ module Sirena
         "dagre" => :grid,
         "elk" => :elk,
       }.freeze
-      private_constant :FRONTMATTER_LAYOUT_ENGINES
+      FLOWCHART_ELK_HEADER = /\A\s*flowchart-elk(?:[\s<>^]|\z)/
+      private_constant :FRONTMATTER_LAYOUT_ENGINES, :FLOWCHART_ELK_HEADER
 
       # @return [Symbol]
       def id
@@ -296,7 +297,7 @@ module Sirena
         reject_degenerate_preamble(type, preamble[:degenerate])
         diagram = parse_diagram(type, preamble, frontmatter&.title, logger)
         parsed(type, IRAdapter.call(type, with_wrap(type, diagram, source)),
-               layout_engine(frontmatter))
+               layout_engine(frontmatter, preamble[:body]))
       end
 
       def parsed(type, diagram, layout_engine = nil)
@@ -322,7 +323,9 @@ module Sirena
         Source::Frontmatter.new(source) if source
       end
 
-      def layout_engine(frontmatter)
+      def layout_engine(frontmatter, body)
+        return :elk if body.match?(FLOWCHART_ELK_HEADER)
+
         FRONTMATTER_LAYOUT_ENGINES[frontmatter&.config_layout]
       end
 
