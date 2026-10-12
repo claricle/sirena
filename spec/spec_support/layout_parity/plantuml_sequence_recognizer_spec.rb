@@ -37,6 +37,21 @@ module PlantumlSequenceSvgs
       </g>
     </svg>
   SVG
+  LEGACY_TEOZ_ACTOR = <<~SVG
+    <svg viewBox="0 0 100 100">
+      <g>
+        <g><title>Mallory</title>
+          <rect x="34" y="70" width="8" height="20" fill-opacity="0"/>
+          <line x1="38" y1="70" x2="38" y2="90"
+            style="stroke-dasharray:5,5"/>
+        </g>
+        <text x="10" y="84">Mallory</text>
+        <ellipse cx="38" cy="18" rx="8" ry="8"/>
+        <path d="M 38 26 L 38 53 M 25 34 L 51 34
+          M 38 53 L 25 68 M 38 53 L 51 68"/>
+      </g>
+    </svg>
+  SVG
 end
 
 RSpec.describe SpecSupport::LayoutParity::PlantumlSequenceRecognizer do
@@ -77,5 +92,11 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlSequenceRecognizer do
   it "does not recognize a legacy Teoz fragment separator as a message" do
     labels = elements(PlantumlSequenceSvgs::LEGACY_TEOZ).map(&:label)
     expect(labels).to eq(["response"])
+  end
+
+  it "recognizes a legacy Teoz actor from its ellipse and path glyph" do
+    actor = elements(PlantumlSequenceSvgs::LEGACY_TEOZ_ACTOR).first
+    expect([actor.label, actor.bbox.width, actor.bbox.height])
+      .to eq(["Mallory", 26.0, 58.0])
   end
 end

@@ -63,7 +63,17 @@ module SpecSupport
       def legacy_head_bbox(extractor, root, label)
         text = participant_texts(root, label).min_by { |node| node["y"].to_f }
         shape = text&.previous_element
-        extractor.bbox(shape) if shape&.name == "rect"
+        return extractor.bbox(shape) if shape&.name == "rect"
+
+        legacy_actor_bbox(extractor, text)
+      end
+
+      def legacy_actor_bbox(extractor, text)
+        ellipse = text&.next_element
+        path = ellipse&.next_element
+        return unless ellipse&.name == "ellipse" && path&.name == "path"
+
+        Bbox.union([ellipse, path].filter_map { |node| extractor.bbox(node) })
       end
 
       def sirena_participants(extractor, doc)
@@ -144,8 +154,7 @@ module SpecSupport
 
       def participant_texts(root, label)
         root.xpath("./text").select do |text|
-          normalize([text.text]) == normalize([label]) &&
-            text.previous_element&.name == "rect"
+          normalize([text.text]) == normalize([label])
         end
       end
 
