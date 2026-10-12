@@ -6,24 +6,24 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.07612
-      worst_e_w: 0.015782
-      worst_e_h: 0.185528
-      worst_e_a: 0.143182
+      worst_e_c: 0.0
+      worst_e_w: 0.0
+      worst_e_h: 0.0
+      worst_e_a: 0.0
       worst_analog:
   matched: 2
-  status: miss
+  status: pass
 - case: resources.vega.migration.HideShow001_Test--9be85612e170
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.165982
-      worst_e_w: 0.383299
-      worst_e_h: 0.200966
-      worst_e_a: 0.151823
+      worst_e_c: 0.0
+      worst_e_w: 0.0
+      worst_e_h: 0.0
+      worst_e_a: 0.0
       worst_analog:
   matched: 2
-  status: miss
+  status: pass
 - case: resources.vega.migration.HideShow004_Test--16625d433c68
   summary:
     hard_failure: false
@@ -83,13 +83,13 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.146497
+      worst_e_c: 0.003655
       worst_e_w: 0.004474
       worst_e_h: 0.041667
       worst_e_a: 0.043815
       worst_analog:
   matched: 4
-  status: miss
+  status: pass
 - case: resources.vega.nonreg.group2814.field_and_method_note--dad15be25c38
   summary:
     hard_failure: false
