@@ -45,6 +45,10 @@ module Sirena
           fork = layout_only_fork(diagram)
           return fork if fork
 
+          chain_for(diagram)
+        end
+
+        def self.chain_for(diagram)
           relations = diagram.relations
           chains = chains_of(diagram, relations)
           return unless chains
@@ -53,9 +57,7 @@ module Sirena
           return unless owners
 
           axis = chain_axis(diagram, relations, owners)
-          return unless axis
-          return unless shape_fits?(chains, owners, axis, diagram)
-
+          return unless axis && shape_fits?(chains, owners, axis, diagram)
           return unless exact_classes?(diagram, all_names(chains), owners)
 
           new(chains, owners, axis, layout_of(diagram))
@@ -77,18 +79,26 @@ module Sirena
         end
 
         def self.forkable?(diagram, relations)
-          engine(diagram) == :smetana && diagram.packages.empty? &&
-            diagram.notes.empty? && diagram.junctions.empty? &&
+          engine(diagram) == :smetana && fork_shape?(diagram) &&
             relations.size > 1 && relations.any?(&:layout_only?)
+        end
+
+        def self.fork_shape?(diagram)
+          diagram.packages.empty? && diagram.notes.empty? &&
+            diagram.junctions.empty?
         end
 
         def self.fork_ends(relations)
           lefts = relations.map(&:left)
           rights = relations.map(&:right)
-          return [lefts.first, rights] if lefts.uniq.one? && rights.uniq == rights
-          return [rights.first, lefts] if rights.uniq.one? && lefts.uniq == lefts
+          return [lefts.first, rights] if unique_fork?(lefts, rights)
+          return [rights.first, lefts] if unique_fork?(rights, lefts)
 
           [nil, nil]
+        end
+
+        def self.unique_fork?(roots, leaves)
+          roots.uniq.one? && leaves.uniq == leaves
         end
 
         def self.exact_classes?(diagram, names, owners)
@@ -193,8 +203,9 @@ module Sirena
                              :junction_owners, :chain_axis, :relation_axis,
                              :left_to_right?, :layout_of, :exact_classes?,
                              :owners_by_relation, :valid_owners?, :chainable?,
-                             :unique_names?, :all_names, :layout_only_fork,
-                             :forkable?, :fork_ends
+                             :unique_names?, :all_names, :chain_for,
+                             :layout_only_fork, :forkable?, :fork_shape?,
+                             :fork_ends, :unique_fork?
 
         # A one-rank Smetana fork whose hidden edge still constrains the
         # visible nodes. The shared root is centred over (or beside) every
@@ -208,36 +219,57 @@ module Sirena
           end
 
           def place(sizes, origin, _label_widths = {})
-            corners = if @axis == :vertical
-                        vertical_corners(sizes, origin)
-                      else
-                        horizontal_corners(sizes, origin)
-                      end
-            [corners, {}]
+            [corners(sizes, origin), {}]
           end
 
           private
 
-          def vertical_corners(sizes, origin)
-            root_width, root_height = sizes.fetch(@root)
-            widths = @leaves.map { |name| sizes.fetch(name).first }
-            breadth = widths.sum + (@gaps[:node] * (widths.size - 1))
-            left = origin.first + ([root_width, breadth].max - breadth) / 2
-            top = origin.last + root_height + @gaps[:rank]
-            leaves = distribute(@leaves, widths, left, top)
-            leaves.merge(@root => [origin.first +
-              ([breadth - root_width, 0].max / 2), origin.last])
+          def corners(sizes, origin)
+            root_size = sizes.fetch(@root)
+            spans = @leaves.map { |name| sizes.fetch(name).fetch(across_index) }
+            breadth = total_breadth(spans)
+            leaf_corners(spans, root_size, breadth, origin)
+              .merge(@root => root_corner(root_size, breadth, origin))
           end
 
-          def horizontal_corners(sizes, origin)
-            root_width, root_height = sizes.fetch(@root)
-            heights = @leaves.map { |name| sizes.fetch(name).last }
-            breadth = heights.sum + (@gaps[:node] * (heights.size - 1))
-            left = origin.first + root_width + @gaps[:rank]
-            top = origin.last + ([root_height, breadth].max - breadth) / 2
-            leaves = distribute(@leaves, heights, top, left, reverse: true)
-            leaves.merge(@root => [origin.first, origin.last +
-              ([breadth - root_height, 0].max / 2)])
+          def total_breadth(spans)
+            spans.sum + (@gaps[:node] * (spans.size - 1))
+          end
+
+          def leaf_corners(spans, root_size, breadth, origin)
+            cursor = leaf_cursor(root_size, breadth, origin)
+            fixed = leaf_rank(root_size, origin)
+            distribute(@leaves, spans, cursor, fixed, reverse: horizontal?)
+          end
+
+          def leaf_cursor(root_size, breadth, origin)
+            root_breadth = root_size.fetch(across_index)
+            available = [root_breadth, breadth].max - breadth
+            origin.fetch(across_index) + (available / 2)
+          end
+
+          def leaf_rank(root_size, origin)
+            origin.fetch(along_index) + root_size.fetch(along_index) +
+              @gaps[:rank]
+          end
+
+          def root_corner(root_size, breadth, origin)
+            corner = origin.dup
+            extra = [breadth - root_size.fetch(across_index), 0].max
+            corner[across_index] += extra / 2
+            corner
+          end
+
+          def across_index
+            horizontal? ? 1 : 0
+          end
+
+          def along_index
+            1 - across_index
+          end
+
+          def horizontal?
+            @axis == :horizontal
           end
 
           def distribute(names, spans, cursor, fixed, reverse: false)

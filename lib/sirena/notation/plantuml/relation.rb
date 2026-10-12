@@ -28,20 +28,29 @@ module Sirena
         #
         # Those two travel as hashes because the scoreboard counts a parameter
         # list past five as lint debt.
-        def initialize(left:, right:, arrow:, ends:, label:,
-                       layout_only: false)
+        def initialize(left:, right:, arrow:, ends:, **options)
           @left = left
           @right = right
+          assign_arrow(arrow)
+          assign_ends(ends)
+          @label = options.fetch(:label)
+          @layout_only = options.fetch(:layout_only, false)
+          freeze
+        end
+
+        def assign_arrow(arrow)
           @kind, @head, @markers, @dashed, @plain =
             arrow.fetch_values(:kind, :head, :markers, :dashed, :plain)
           @direction = arrow[:direction]
           @length = arrow.fetch(:length, 2)
+        end
+
+        def assign_ends(ends)
           @left_multiplicity, @right_multiplicity, @left_role, @right_role =
             ends.fetch_values(:left, :right, :left_role, :right_role)
-          @label = label
-          @layout_only = layout_only
-          freeze
         end
+
+        private :assign_arrow, :assign_ends
 
         def dashed?
           @dashed

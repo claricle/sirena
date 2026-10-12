@@ -202,13 +202,17 @@ module Sirena
         end
 
         def visible(classes)
-          hidden = classes.select { |klass| hidden?(klass) }.map(&:name)
+          hidden = hidden_names(classes)
           refuse_attachments_to(hidden)
           return smetana_visible(classes, hidden) if smetana?
 
           kept = classes.reject { |klass| hidden.include?(klass.name) }
           gone = hidden + unoccupied_ids(kept)
           assemble(kept, @relations.reject { |rel| touches?(rel, gone) })
+        end
+
+        def hidden_names(classes)
+          classes.select { |klass| hidden?(klass) }.map(&:name)
         end
 
         def smetana_visible(classes, hidden)

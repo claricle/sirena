@@ -47,10 +47,15 @@ module Sirena
               "right_multiplicity" => relation.right_multiplicity,
               "left_role" => relation.left_role,
               "right_role" => relation.right_role,
+              "direction" => relation.direction&.to_s,
+            }.merge(relation_flags(relation)).compact
+          end
+
+          def relation_flags(relation)
+            {
               "dashed" => ("true" if relation.dashed?),
               "plain" => ("true" if relation.plain?),
               "layout_only" => ("true" if relation.layout_only?),
-              "direction" => relation.direction&.to_s,
               "length" => (relation.length.to_s unless relation.length == 2),
             }.compact
           end
