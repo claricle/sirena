@@ -6,7 +6,8 @@ module Sirena
       # Lines that restyle or steer a diagram without adding to its model:
       # which layout engine PlantUML uses, what it hides, its skin
       # parameters, its layout direction. The parser records them in the
-      # Diagram's `directives`; nothing in this notation applies them yet.
+      # Diagram's `directives`; {PortionVisibility} applies the hide and
+      # show lines that remove members or stereotype labels.
       module Directives
         extend self
 
