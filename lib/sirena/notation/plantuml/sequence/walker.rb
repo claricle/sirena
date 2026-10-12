@@ -33,6 +33,7 @@ module Sirena
           LINE_LEADING = 1.1776
           SELF_WIDTH = 36.0
           SELF_HEIGHT = 20.0
+          COMPACT_FRAGMENT_SELF_HEIGHT = 17.75
           LOOP_HEIGHT = 13.0
           private_constant :LOOP_HEIGHT
           TAB_HEIGHT = 20.0
@@ -79,6 +80,7 @@ module Sirena
           def run(items, edge_right: nil, appearance: Appearance.new)
             @edge_right = edge_right
             @appearance = appearance
+            @fragmented = items.any? { |item| item.is_a?(Fragment) }
             walk_items(items)
             @tracker.finish(@y - 20)
             self
@@ -439,11 +441,12 @@ module Sirena
           def self_arrow(message, centre)
             side = loops_left?(message) ? -1 : 1
             far = centre + (side * SELF_WIDTH)
-            bottom = @y + self_height
-            tail, start = ArrowMarks.for(message.style.tail, centre, @y, side)
+            top = self_top
+            bottom = top + self_height
+            tail, start = ArrowMarks.for(message.style.tail, centre, top, side)
             head, stop = ArrowMarks.for(message.style.head, centre, bottom,
                                         side)
-            { path: "M #{start} #{@y} L #{far} #{@y} L #{far} #{bottom} " \
+            { path: "M #{start} #{top} L #{far} #{top} L #{far} #{bottom} " \
                     "L #{stop} #{bottom}",
               marks: tail + head, label: loop_label(far, side) }
           end
@@ -460,7 +463,16 @@ module Sirena
           end
 
           def self_height
-            @label_inset ? SELF_HEIGHT : LOOP_HEIGHT
+            return LOOP_HEIGHT unless @label_inset
+            return COMPACT_FRAGMENT_SELF_HEIGHT if @fragmented
+
+            SELF_HEIGHT
+          end
+
+          def self_top
+            return @y unless @label_inset && @fragmented
+
+            @y + ((SELF_HEIGHT - self_height) / 2)
           end
 
           def arrow_record(message, geometry)
