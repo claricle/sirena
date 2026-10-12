@@ -10,6 +10,8 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 
 module PlantUmlSequenceCorpus
   DIR = File.expand_path("../../../plantuml/sequence", __dir__)
+  ALPHA_HEADS = "//g[starts-with(@id, 'participant-transparent_keyword-') or " \
+                "contains(@id, '_with_zero_alpha-')]/rect"
 
   # The 12-hex suffix of every case of spec/plantuml/sequence the slice
   # renders today. A case joins this list when it renders; it never leaves it.
@@ -246,9 +248,9 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
 
   it "draws no fill for the transparent heads of the alpha case" do
     svg = Sirena.render(source_of("1f8e5fb51e4d"), notation: :plantuml)
-    heads = matches(svg, "//rect[@height='36.0'][@fill='none']")
+    heads = matches(svg, PlantUmlSequenceCorpus::ALPHA_HEADS)
 
-    expect(heads.size).to eq(8)
+    expect(heads.map { |head| head.attributes["fill"] }).to eq(["none"] * 8)
   end
 
   it "keeps the opacity of the translucent heads of the alpha case" do
