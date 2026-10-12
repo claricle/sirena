@@ -22,11 +22,20 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     scene.arrows.map { |arrow| arrow.path[/M \S+ (\S+)/, 1].to_f }
   end
 
-  it "sizes classic heads to the PlantUML label advance plus fourteen" do
-    heads = scene_of("participant A", "participant B", "A -> B")
-      .heads.first(2)
+  def plain_head_widths
+    scene_of("participant A", "participant B", "A -> B")
+      .heads.first(2).map(&:width)
+  end
 
-    expect(heads.map(&:width)).to contain_exactly(
+  def divider_cadence_scene
+    scene_of('participant "App" as App', 'actor "OEM" as OEM',
+             "== Process A ==", "App -> OEM: Inform OEM", "activate OEM",
+             "deactivate OEM", "== Process B ==",
+             "App -> OEM: Inform OEM again", "activate OEM", "deactivate OEM")
+  end
+
+  it "sizes classic heads to the PlantUML label advance plus fourteen" do
+    expect(plain_head_widths).to contain_exactly(
       be_within(0.0001).of(23.6592),
       be_within(0.0001).of(22.0527),
     )
@@ -54,13 +63,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "keeps divider and deactivation clearance on PlantUML's cadence" do
-    scene = scene_of('participant "App" as App', 'actor "OEM" as OEM',
-                     "== Process A ==", "App -> OEM: Inform OEM",
-                     "activate OEM", "deactivate OEM", "== Process B ==",
-                     "App -> OEM: Inform OEM again", "activate OEM",
-                     "deactivate OEM")
-
-    expect(arrow_ys(scene)).to eq([171.1093, 273.7303])
+    expect(arrow_ys(divider_cadence_scene)).to eq([171.1093, 273.7303])
   end
 
   it "ends a classic message before the activation bar" do
