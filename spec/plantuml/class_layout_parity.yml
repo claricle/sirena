@@ -314,24 +314,24 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.263594
-      worst_e_w: 1.128568
-      worst_e_h: 0.098039
-      worst_e_a: 1.017547
+      worst_e_c: 0.039985
+      worst_e_w: 0.062244
+      worst_e_h: 0.081765
+      worst_e_a: 0.133124
       worst_analog:
   matched: 25
-  status: miss
+  status: pass
 - case: resources.vega.nonreg.simple.QualifiedAssoc002--d57fb49a9920
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.182311
-      worst_e_w: 0.932885
-      worst_e_h: 0.568627
-      worst_e_a: 1.842817
+      worst_e_c: 0.017787
+      worst_e_w: 0.030988
+      worst_e_h: 0.058824
+      worst_e_a: 0.062509
       worst_analog:
   matched: 11
-  status: miss
+  status: pass
 - case: resources.vega.svg.interactive.SVG0004_Svek--d500aa856a7e
   summary:
     hard_failure: false
@@ -347,13 +347,13 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.224957
-      worst_e_w: 0.445672
-      worst_e_h: 0.4375
-      worst_e_a: 0.614381
+      worst_e_c: 0.039856
+      worst_e_w: 0.112077
+      worst_e_h: 0.05512
+      worst_e_a: 0.132095
       worst_analog:
   matched: 11
-  status: miss
+  status: pass
 - case: resources.vega.xmi.clazz.XMI0002_class--9616cd0e75d4
   summary:
     hard_failure: false
