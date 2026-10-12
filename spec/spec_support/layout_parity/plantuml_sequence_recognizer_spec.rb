@@ -52,6 +52,27 @@ module PlantumlSequenceSvgs
       </g>
     </svg>
   SVG
+  SIRENA_WITH_EMBEDDED_NOTE = <<~SVG
+    <svg viewBox="0 0 200 200">
+      <g id="participant-Alice-5.0">
+        <rect x="5" y="5" width="40" height="20"/><text>Alice</text>
+      </g>
+      <g id="message-1">
+        <path d="M 25 60 L 90 60"/><text>outer</text>
+      </g>
+      <g id="note-1">
+        <rect x="100" y="20" width="90" height="120"/>
+        <g transform="translate(110 30) scale(0.5)">
+          <g id="participant-Inner-5.0">
+            <rect x="5" y="5" width="40" height="20"/><text>Inner</text>
+          </g>
+          <g id="message-1">
+            <path d="M 25 60 L 90 60"/><text>inner</text>
+          </g>
+        </g>
+      </g>
+    </svg>
+  SVG
 end
 
 RSpec.describe SpecSupport::LayoutParity::PlantumlSequenceRecognizer do
@@ -98,5 +119,11 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlSequenceRecognizer do
     actor = elements(PlantumlSequenceSvgs::LEGACY_TEOZ_ACTOR).first
     expect([actor.label, actor.bbox.width, actor.bbox.height])
       .to eq(["Mallory", 26.0, 58.0])
+  end
+
+  it "treats a diagram embedded in a note as an opaque picture" do
+    labels = elements(PlantumlSequenceSvgs::SIRENA_WITH_EMBEDDED_NOTE)
+      .map(&:label)
+    expect(labels).to eq(["Alice", "outer"])
   end
 end
