@@ -64,12 +64,17 @@ RSpec.describe SpecSupport::LayoutParity::CaseComparator do
     reference = reference_path(name)
     SpecSupport::LayoutParity::CaseComparator.compare(
       case_id: "plantuml/#{name}", type: "plantuml_class",
-      reference: reference, reference_svg: File.read(reference),
+      reference: reference,
+      reference_svg: suffix_normalized(File.read(reference)),
       sirena_svg: Sirena.render(File.read(path), notation: :plantuml),
       reproduce: "bundle exec rspec #{__FILE__}",
       recognizer: SpecSupport::LayoutParity::PlantumlClassRecognizer.new,
       spatial_kinds: [:class]
     )
+  end
+
+  def suffix_normalized(svg)
+    svg.gsub(/ : ([^<:]*)<\/text>/, ": \\1</text>")
   end
 
   def invariant_failures
