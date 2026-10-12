@@ -121,6 +121,7 @@ module SpecSupport
 
         run = preceding_run(children, index)
         return unless run.any? { |item| horizontal_line?(item) }
+        return if fragment_separator?(run, node)
 
         boxes = [*run, node].filter_map { |item| extractor.bbox(item) }
         box = Bbox.union(boxes)
@@ -156,6 +157,15 @@ module SpecSupport
 
       def horizontal_line?(node)
         node.name == "line" && node["y1"] == node["y2"]
+      end
+
+      def fragment_separator?(run, node)
+        return false unless run.one?
+
+        separator = run.first
+        horizontal_line?(separator) && dashed?(separator) &&
+          node["font-size"] == "11" && node["font-weight"] == "700" &&
+          node.text.start_with?("[") && node.text.end_with?("]")
       end
 
       def dashed?(line)
