@@ -12,17 +12,17 @@
 <circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="240.0"/>
 <circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="300.0"/>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="350.0" y2="50.0"/>
-<text class="radarAxisLabel" fill="#000000" x="350.0" y="39.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">A</text>
+<text class="radarAxisLabel" fill="#000000" x="350.0" y="35.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">A</text>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="609.8076211353316" y2="200.00000000000003"/>
-<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="197.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">B</text>
+<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="192.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">B</text>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="609.8076211353316" y2="500.0"/>
-<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="512.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">C</text>
+<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="507.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">C</text>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="350.0" y2="650.0"/>
-<text class="radarAxisLabel" fill="#000000" x="350.0" y="669.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">D</text>
+<text class="radarAxisLabel" fill="#000000" x="350.0" y="665.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">D</text>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="90.1923788646684" y2="500.0"/>
-<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="512.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">E</text>
+<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="507.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">E</text>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="90.1923788646684" y2="199.99999999999997"/>
-<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="197.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">F</text>
+<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="192.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">F</text>
 <path class="radarCurve-0" fill="#2563eb" fill-opacity="0.3" stroke="#2563eb" stroke-width="2" d="M350.0,97.36842105263159 C436.0099966811177,98.7105263157895 563.5892127438885,146.15789473684214 596.1335358124195,207.8947368421053 C628.6778588809505,269.63157894736844 583.2798956088819,390.7368421052631 541.4371945207706,460.52631578947364 C499.5944934326593,530.3157894736842 417.4132406419571,617.078947368421 350.0,618.421052631579 C282.5867593580429,619.7631578947369 189.05601574932354,539.5526315789474 144.88872015631716,468.42105263157896 C100.72142456331079,397.2894736842105 55.32346129124232,263.07894736842104 90.1923788646684,199.99999999999997 C125.06129643809447,136.9210526315789 263.9900033188823,96.02631578947368 350.0,97.36842105263159 Z"/>
 <circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="350.0" cy="97.36842105263159" r="3.0"/>
 <circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="596.1335358124195" cy="207.8947368421053" r="3.0"/>
@@ -38,7 +38,7 @@
 <circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="103.86646418758056" cy="492.1052631578947" r="3.0"/>
 <circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="158.56280547922935" cy="239.4736842105263" r="3.0"/>
 <circle fill="#2563eb" stroke="none" cx="618.5" cy="93.5" r="6.0"/>
-<text class="radarLegendText" fill="#000000" x="628.5" y="97.1" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">TeamA</text>
+<text class="radarLegendText" fill="#000000" x="628.5" y="87.5" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">TeamA</text>
 <circle fill="#7c3aed" stroke="none" cx="618.5" cy="113.5" r="6.0"/>
-<text class="radarLegendText" fill="#000000" x="628.5" y="117.1" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">TeamB</text>
+<text class="radarLegendText" fill="#000000" x="628.5" y="107.5" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">TeamB</text>
 </svg>

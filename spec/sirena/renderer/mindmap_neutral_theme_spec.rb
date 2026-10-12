@@ -27,7 +27,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
 
   it "preserves the exact default render" do
     expect(Digest::SHA256.hexdigest(xml))
-      .to eq("b1be8c64eb8573032c4270ed7285f03fccbc6ff674dc4ecd4c6d236f55883fad")
+      .to eq("4fb371d18b73ed2d5a268983cc5d807c10461251d241882c00866e72ded80a40")
   end
 
   %i[default light dark high_contrast].each do |theme_name|

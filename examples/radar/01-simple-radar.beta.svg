@@ -12,17 +12,17 @@
 <circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="240.0"/>
 <circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="300.0"/>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="350.0" y2="50.0"/>
-<text class="radarAxisLabel" fill="#000000" x="350.0" y="39.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Frontend</text>
+<text class="radarAxisLabel" fill="#000000" x="350.0" y="35.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Frontend</text>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="609.8076211353316" y2="200.00000000000003"/>
-<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="197.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Backend</text>
+<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="192.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Backend</text>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="609.8076211353316" y2="500.0"/>
-<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="512.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Database</text>
+<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="507.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Database</text>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="350.0" y2="650.0"/>
-<text class="radarAxisLabel" fill="#000000" x="350.0" y="669.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">DevOps</text>
+<text class="radarAxisLabel" fill="#000000" x="350.0" y="665.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">DevOps</text>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="90.1923788646684" y2="500.0"/>
-<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="512.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Testing</text>
+<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="507.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Testing</text>
 <line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="90.1923788646684" y2="199.99999999999997"/>
-<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="197.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Documentation</text>
+<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="192.5" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Documentation</text>
 <path class="radarCurve-0" fill="#2563eb" fill-opacity="0.3" stroke="#2563eb" stroke-width="2" d="M350.0,81.57894736842104 C415.088646137062,78.89473684210526 513.2685787555715,161.78947368421055 555.1112798436828,231.57894736842107 C596.9539809317941,301.36842105263156 631.0024533858456,434.3947368421052 596.1335358124195,492.1052631578947 C561.2646182389934,549.8157894736842 429.0362131664325,573.7368421052632 350.0,571.0526315789474 C270.9637868335675,568.3684210526316 161.4343633970409,531.3421052631579 131.21463483340497,476.31578947368416 C100.99490626976903,421.28947368421046 135.04337872382038,314.4736842105263 172.23689080214155,247.36842105263156 C209.4304028804627,180.26315789473682 284.911353862938,84.26315789473682 350.0,81.57894736842104 Z"/>
 <circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="350.0" cy="81.57894736842104" r="3.0"/>
 <circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="555.1112798436828" cy="231.57894736842107" r="3.0"/>
@@ -38,8 +38,8 @@
 <circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="90.1923788646684" cy="500.0" r="3.0"/>
 <circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="117.54054951049278" cy="215.7894736842105" r="3.0"/>
 <circle fill="#2563eb" stroke="none" cx="618.5" cy="93.5" r="6.0"/>
-<text class="radarLegendText" fill="#000000" x="628.5" y="97.1" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">Current State</text>
+<text class="radarLegendText" fill="#000000" x="628.5" y="87.5" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">Current State</text>
 <circle fill="#7c3aed" stroke="none" cx="618.5" cy="113.5" r="6.0"/>
-<text class="radarLegendText" fill="#000000" x="628.5" y="117.1" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">Target State</text>
-<text class="radarTitle" fill="#000000" x="350.0" y="12.8" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16">Technology Stack Assessment</text>
+<text class="radarLegendText" fill="#000000" x="628.5" y="107.5" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">Target State</text>
+<text class="radarTitle" fill="#000000" x="350.0" y="0.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16">Technology Stack Assessment</text>
 </svg>

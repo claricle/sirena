@@ -771,10 +771,10 @@ RSpec.describe CorpusOracle do
       expect(rows.to_yaml).to eq(File.read(verdicts_path))
     end
 
-    it "reproduces the pinned acceptance that replaces stale ER evidence" do
+    it "reproduces the ER reference-backed acceptance" do
       expect(accepted_er_row).to include(
         "verdict" => "valid",
-        "evidence" => /mmdc 11\.12\.0 renders it/,
+        "evidence" => "mmdc rendered it",
       )
     end
 

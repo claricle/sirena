@@ -16,7 +16,7 @@ RSpec.describe Sirena::Renderer::Radar do
     MERMAID
   end
   let(:default_signature) do
-    ["54bcc35d8cfc250b8353cabf8d71e37a5cfa73ed69b47901f5b6139e4307c4d7",
+    ["8a46d49aafbe91b43fa6c7819f22f13fc99fd4ef60a837672bb4aca67c06cac3",
      ["#2563eb", "#2563eb"]]
   end
   let(:dark_paints) do
