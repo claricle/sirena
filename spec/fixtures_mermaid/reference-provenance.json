@@ -884,6 +884,30 @@
       "output_sha256": "96b4aaf32375af18a7882e7b40172e36f07691588e6b55f7a79ed2ac8795708d"
     },
     {
+      "reference": "spec/fixtures_mermaid/er_diagram/erdiagram_spec-d8eaebdd.svg",
+      "cases": [
+        "er_diagram/erdiagram_spec-d8eaebdd.mmd"
+      ],
+      "source_sha256": "3513d29dbbadc8f0322e84379c1b0821b9068ac92aa65ea8a77fe27f9bafb9ef",
+      "upstream_sha": null,
+      "upstream_sha_status": "unknown: corpus metadata has no upstream commit SHA",
+      "upstream_source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+      "upstream_line_number": 0,
+      "generated_on": "2026-10-12",
+      "command": [
+        "node_modules/.bin/mmdc",
+        "--configFile",
+        "config/mermaid-oracle.json",
+        "--cssFile",
+        "config/mermaid-oracle.css",
+        "-i",
+        "spec/mermaid/er_diagram/erdiagram_spec-d8eaebdd.mmd",
+        "-o",
+        "spec/fixtures_mermaid/er_diagram/erdiagram_spec-d8eaebdd.svg"
+      ],
+      "output_sha256": "813a9bfe3ca817eedd1588afb8cbe5c02c4966c5182f9e9952f0a15b03ec1e89"
+    },
+    {
       "reference": "spec/fixtures_mermaid/er_diagram/should_handle_complex_diagram_with_special_entit-af26ddf3.svg",
       "cases": [
         "er_diagram/should_handle_complex_diagram_with_special_entit-af26ddf3.mmd"
