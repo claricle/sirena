@@ -700,11 +700,16 @@ module Sirena
         def qualified_association_box(record, klass, diagram, details)
           return record unless QualifiedAssociationLayout.for(diagram)
 
+          record.merge(title_rows: details[:names],
+                       width: qualified_box_width(klass, diagram, details),
+                       height: qualified_box_height(diagram, details[:generic]))
+        end
+
+        def qualified_box_width(klass, diagram, details)
           widths = standard_title_widths(details[:names])
           widths << qualified_generic_width(widths.max, details[:generic])
           widths << qualified_incident_width(klass, diagram)
-          record.merge(title_rows: details[:names], width: widths.compact.max,
-                       height: qualified_box_height(diagram, details[:generic]))
+          widths.compact.max
         end
 
         def qualified_generic_width(title_width, generic)
@@ -716,21 +721,27 @@ module Sirena
         end
 
         def qualified_incident_width(klass, diagram)
-          qualifiers = diagram.relations.filter_map do |relation|
+          text = incident_qualifiers(klass, diagram).max_by(&:length)
+          return unless text
+
+          standard_text_width(text, font_size) + qualifier_allowance(diagram)
+        end
+
+        def incident_qualifiers(klass, diagram)
+          diagram.relations.filter_map do |relation|
             next unless relation.direction.nil?
             next unless [relation.left, relation.right].include?(klass.name)
 
             qualified_text_at(relation, klass.name)
           end
-          text = qualifiers.compact.max_by(&:length)
-          return unless text
+        end
 
-          allowance = if qualified_compact?(diagram)
-                        COMPACT_QUALIFIER_ALLOWANCE
-                      else
-                        QUALIFIED_QUALIFIER_ALLOWANCE
-                      end
-          standard_text_width(text, font_size) + allowance
+        def qualifier_allowance(diagram)
+          if qualified_compact?(diagram)
+            COMPACT_QUALIFIER_ALLOWANCE
+          else
+            QUALIFIED_QUALIFIER_ALLOWANCE
+          end
         end
 
         def qualified_text_at(relation, name)
@@ -741,7 +752,8 @@ module Sirena
                     end
           return unless content&.start_with?("[")
 
-          content.delete_prefix("[").delete_suffix("]").split("\\n").max_by(&:length)
+          content.delete_prefix("[").delete_suffix("]")
+            .split("\\n").max_by(&:length)
         end
 
         def qualified_box_height(diagram, generic)
@@ -1407,13 +1419,19 @@ module Sirena
                     else
                       endpoints
                     end
-          if fan_qualifier_relation?(relation)
-            return fan_qualifier_path(relation, ordered)
-          end
-          if long_qualified_vertical?(relation, ordered)
-            return long_qualified_vertical_path(ordered)
-          end
+          qualified_special_path(relation, ordered) ||
+            controlled_relation_path(relation, ordered)
+        end
 
+        def qualified_special_path(relation, ordered)
+          if fan_qualifier_relation?(relation)
+            fan_qualifier_path(relation, ordered)
+          elsif long_qualified_vertical?(relation, ordered)
+            long_qualified_vertical_path(ordered)
+          end
+        end
+
+        def controlled_relation_path(relation, ordered)
           control = qualified_label_control(relation, ordered) ||
             qualified_lane_control(relation, ordered)
           return relation_path(ordered) unless control
@@ -1431,17 +1449,23 @@ module Sirena
 
         def fan_qualifier_path(relation, endpoints)
           first, last = endpoints.values_at(:left, :right)
-          qualifier = [relation.left_multiplicity,
-                       relation.right_multiplicity].compact.first
-            .delete_prefix("[").delete_suffix("]")
-          width = standard_text_width(qualifier, font_size) +
+          width = standard_text_width(fan_qualifier_text(relation), font_size) +
             QUALIFIED_FAN_LANE_ALLOWANCE
-          middle = midpoint(first, last)
-          vertical = (last[1] - first[1]) / 3
-          left = [middle[0] - (width / 2), first[1] + vertical]
-          right = [middle[0] + (width / 2), last[1] - vertical]
+          left, right = fan_lane_points(first, last, width)
           "M #{point(first)} L #{point(left)} L #{point(right)} " \
             "L #{point(last)}"
+        end
+
+        def fan_qualifier_text(relation)
+          [relation.left_multiplicity, relation.right_multiplicity]
+            .compact.first.delete_prefix("[").delete_suffix("]")
+        end
+
+        def fan_lane_points(first, last, width)
+          centre = midpoint(first, last).first
+          rise = (last[1] - first[1]) / 3
+          [offset_point([centre, first[1]], -(width / 2), rise),
+           offset_point([centre, last[1]], width / 2, -rise)]
         end
 
         def long_qualified_vertical?(relation, endpoints)
@@ -1452,12 +1476,14 @@ module Sirena
         def long_qualified_vertical_path(endpoints)
           first, last = endpoints.values_at(:left, :right)
           vertical = (last[1] - first[1]) / 3
-          outgoing = [first[0] - QUALIFIED_LONG_CURVE_OFFSET,
-                      first[1] + vertical]
-          incoming = [last[0] + QUALIFIED_LONG_CURVE_OFFSET,
-                      last[1] - vertical]
+          outgoing = offset_point(first, -QUALIFIED_LONG_CURVE_OFFSET, vertical)
+          incoming = offset_point(last, QUALIFIED_LONG_CURVE_OFFSET, -vertical)
           "M #{point(first)} C #{point(outgoing)} #{point(incoming)} " \
             "#{point(last)}"
+        end
+
+        def offset_point(origin, delta_x, delta_y)
+          [origin[0] + delta_x, origin[1] + delta_y]
         end
 
         def qualified_lane_control(relation, endpoints)
@@ -1509,9 +1535,13 @@ module Sirena
           qualifiers = [relation.left_multiplicity,
                         relation.right_multiplicity]
           if qualifiers.all? { |text| text&.start_with?("[") }
-            return QUALIFIED_DOUBLE_END_HALF_WIDTH
+            QUALIFIED_DOUBLE_END_HALF_WIDTH
+          else
+            inheritance_marker_half_width(relation, endpoints, qualifiers)
           end
+        end
 
+        def inheritance_marker_half_width(relation, endpoints, qualifiers)
           return unless @qualified_layout_active && qualifiers.compact.empty?
           return unless relation.markers.value?(:implementation)
 

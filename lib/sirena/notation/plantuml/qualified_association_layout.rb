@@ -64,15 +64,17 @@ module Sirena
         def constrained_sizes(sizes)
           constrained = sizes.transform_values(&:dup)
           fan_relations.each do |parent, outgoing|
-            children = outgoing.map(&:right)
-            child_width = children.sum { |name| constrained.fetch(name).first }
-            row_width = child_width +
-              (FAN_HORIZONTAL_GAP * (children.size - 1))
-            parent_size = constrained.fetch(parent)
-            parent_size[0] = [parent_size.first,
-                              row_width + FAN_PARENT_ALLOWANCE].max
+            widen_fan_parent(constrained, parent, outgoing.map(&:right))
           end
           constrained
+        end
+
+        def widen_fan_parent(constrained, parent, children)
+          child_width = children.sum { |name| constrained.fetch(name).first }
+          row_width = child_width + (FAN_HORIZONTAL_GAP * (children.size - 1))
+          parent_size = constrained.fetch(parent)
+          parent_size[0] = [parent_size.first,
+                            row_width + FAN_PARENT_ALLOWANCE].max
         end
 
         # @param sizes [Hash{String => Array(Float, Float)}]
@@ -204,13 +206,17 @@ module Sirena
           rows = axis_layout(component, logical, sizes,
                              axis: 1,
                              origin: origin.last)
-          corners = component.to_h do |name|
+          corners = component_corners(component, logical, sizes,
+                                      [columns, rows])
+          extent = axis_extent(columns, origin.first)
+          span_fan_parent(component, corners, extent)
+        end
+
+        def component_corners(component, logical, sizes, (columns, rows))
+          component.to_h do |name|
             [name, [centred(name, logical, sizes, columns, 0),
                     centred(name, logical, sizes, rows, 1)]]
           end
-          width = axis_extent(columns, origin.first)
-          corners, width = span_fan_parent(component, corners, width)
-          [corners, width]
         end
 
         def span_fan_parent(component, corners, width)
