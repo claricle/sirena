@@ -14,12 +14,15 @@ module Sirena
           SIDE_PAD = 14.0
           TEXT_PAD = 9.0
           LABEL_SIZE = 12.0
+          MIN_WIDTH = 63.916
+          TAB_WIDTH = 63.0
           HEIGHT = 44.0
           LABEL_BASELINE = 34.0
 
           # @param span [Array<Float>] centres of the outermost lifelines
           def self.width_for(label)
-            TextAdvances.width(label, font_size: LABEL_SIZE) + (2 * TEXT_PAD)
+            label_width = TextAdvances.width(label, font_size: LABEL_SIZE)
+            [label_width + (2 * TEXT_PAD), MIN_WIDTH].max
           end
 
           attr_reader :x, :width
@@ -48,7 +51,7 @@ module Sirena
           end
 
           def tab_width
-            @measure.call("ref") + (2 * FragmentShape::TAB_PAD)
+            TAB_WIDTH
           end
 
           def texts
