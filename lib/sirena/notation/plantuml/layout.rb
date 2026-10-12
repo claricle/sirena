@@ -39,6 +39,12 @@ module Sirena
         MEMBER_NOTE_BODY_GAP = 35.0
         MEMBER_NOTE_CLASS_HEIGHT = 48.0
         MEMBER_NOTE_SIDE_PADDING = 6.0
+        # PlantUML removes the otherwise empty member compartment below a
+        # one-line title when `hide empty members` is active. Its Smetana
+        # boxes also keep four more pixels of side padding than our ordinary
+        # measured class box; both values are pinned by the group2712 family.
+        EMPTY_MEMBER_COMPARTMENT = 14.0
+        EMPTY_CLASS_WIDTH_EXTRA = 8.0
         ARROW_LENGTH = 9.0
         ARROW_HALF_WIDTH = 4.0
         ARROW_NOTCH = 5.0
@@ -59,7 +65,8 @@ module Sirena
                          :MEMBER_NOTE_TEXT_SCALE, :MEMBER_NOTE_ROW_HEIGHT,
                          :MEMBER_NOTE_LINE_HEIGHT, :MEMBER_NOTE_STACK_GAP,
                          :MEMBER_NOTE_BODY_GAP, :MEMBER_NOTE_CLASS_HEIGHT,
-                         :MEMBER_NOTE_SIDE_PADDING
+                         :MEMBER_NOTE_SIDE_PADDING,
+                         :EMPTY_MEMBER_COMPARTMENT, :EMPTY_CLASS_WIDTH_EXTRA
 
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
@@ -81,7 +88,7 @@ module Sirena
           specifications += note_specifications(diagram.notes)
           box_width = widest_box(specifications)
           chain = RankChain.for(diagram)
-          return chain_scene(diagram, chain, specifications, box_width) if chain
+          return chain_scene(diagram, chain, specifications) if chain
 
           boxes = position_boxes(rows_by_package(specifications, diagram),
                                  box_width, stable_centers?(diagram))
@@ -89,17 +96,23 @@ module Sirena
           build_scene(diagram, boxes, box_width)
         end
 
-        def chain_scene(diagram, chain, specifications, box_width)
-          sizes = specifications.to_h do |item|
-            [item[:id], [box_width, item[:height]]]
-          end
+        def chain_scene(diagram, chain, specifications)
+          sizes = chain_sizes(specifications, diagram)
           corners, nodes = chain.place(sizes, [MARGIN, MARGIN],
                                        label_widths(diagram))
-          boxes = chain_boxes(specifications, corners, box_width)
+          boxes = chain_boxes(specifications, corners, sizes)
           width, height = chain_dimensions(boxes)
           Scene.new(width: width, height: height,
                     boxes: boxes, frames: [],
                     relations: scene_relations(diagram, boxes, nodes))
+        end
+
+        def chain_sizes(specifications, diagram)
+          widest = widest_box(specifications)
+          specifications.to_h do |item|
+            width = compact_empty_item?(item, diagram) ? item[:width] : widest
+            [item[:id], [width, item[:height]]]
+          end
         end
 
         def chain_dimensions(boxes)
@@ -107,9 +120,10 @@ module Sirena
            far_edge(boxes) { |box| box.y + box.height }]
         end
 
-        def chain_boxes(specifications, corners, box_width)
+        def chain_boxes(specifications, corners, sizes)
           specifications.map do |item|
-            build_box(item, *corners.fetch(item[:id]), box_width)
+            left, top = corners.fetch(item[:id])
+            build_box(item, left, top, sizes.fetch(item[:id]).first)
           end
         end
 
@@ -328,8 +342,29 @@ module Sirena
         def box_specification(klass, diagram)
           member_rows = klass.body.map { |member| member_text(member) }
           names = name_rows(klass)
-          box_record(klass.name, header_rows(klass) + names, member_rows)
-            .merge(name_rows: names.size, **box_context(klass, diagram))
+          record = box_record(klass.name, header_rows(klass) + names,
+                              member_rows)
+          record = compact_empty_box(record, member_rows, diagram)
+          record.merge(name_rows: names.size, **box_context(klass, diagram))
+        end
+
+        def compact_empty_box(record, member_rows, diagram)
+          return record unless member_rows.empty?
+          return record unless compact_empty_members?(diagram)
+
+          record.merge(
+            height: record[:height] - EMPTY_MEMBER_COMPARTMENT,
+            width: record[:width] + EMPTY_CLASS_WIDTH_EXTRA,
+          )
+        end
+
+        def compact_empty_members?(diagram)
+          RankChain.engine(diagram) == :smetana &&
+            diagram.directives.include?("hide empty members")
+        end
+
+        def compact_empty_item?(item, diagram)
+          compact_empty_members?(diagram) && item[:member_rows]&.empty?
         end
 
         def box_context(klass, diagram)
