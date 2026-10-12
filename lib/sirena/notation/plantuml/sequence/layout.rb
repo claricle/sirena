@@ -49,10 +49,15 @@ module Sirena
           COMPACT_MARGIN = 10.0
           COMPACT_HEAD_PADDING = 7.0
           COMPACT_MIN_GAP = 20.0
+          COMPACT_TIMELINE_GAP = 10.0
           COMPACT_HEAD_HEIGHT = 30.4883
           COMPACT_HEAD_LABEL_INSET = 9.9531
           COMPACT_FIRST_ROW_GAP = 30.1328
+          COMPACT_GROUP_FIRST_ROW_GAP = 33.0
           COMPACT_ROW = 29.1328
+          COMPACT_UNLABELLED_ROW = 14.0
+          COMPACT_GROUP_ROW = 13.3105
+          COMPACT_GROUP_CLOSE = 32.0
           COMPACT_SELF_ROW = 42.1328
           CLASSIC_FIRST_ROW_GAP = 32.3105
           CLASSIC_ROW = 29.3105
@@ -96,9 +101,12 @@ module Sirena
                            :MONOSPACE_ADVANCE, :GLYPH_HEAD_HEIGHT,
                            :GLYPH_BOX_HEIGHT, :COMPACT_MARGIN,
                            :COMPACT_HEAD_PADDING, :COMPACT_MIN_GAP,
+                           :COMPACT_TIMELINE_GAP,
                            :COMPACT_HEAD_HEIGHT, :COMPACT_HEAD_LABEL_INSET,
-                           :COMPACT_FIRST_ROW_GAP, :COMPACT_ROW,
-                           :COMPACT_SELF_ROW,
+                           :COMPACT_FIRST_ROW_GAP,
+                           :COMPACT_GROUP_FIRST_ROW_GAP, :COMPACT_ROW,
+                           :COMPACT_UNLABELLED_ROW, :COMPACT_GROUP_ROW,
+                           :COMPACT_GROUP_CLOSE, :COMPACT_SELF_ROW,
                            :CLASSIC_FIRST_ROW_GAP, :CLASSIC_ROW,
                            :CLASSIC_SELF_ROW, :CLASSIC_FRAGMENT_ROW,
                            :CLASSIC_DIVIDER_ROW, :CLASSIC_DEACTIVATION_GAP,
@@ -236,13 +244,17 @@ module Sirena
               message_font_size: label_font_size,
               message_family: ("monospace" if compact?),
               label_inset: (7 if compact?), bounds: head_bounds,
+              activation_edges: compact_timeline?,
               **walker_cadence
             )
           end
 
           def walker_cadence
             { row: row_height, self_row: self_row_height,
+              unlabelled_row: timeline_value(COMPACT_UNLABELLED_ROW),
               fragment_row: fragment_row_height,
+              group_fragment_row: timeline_value(COMPACT_GROUP_ROW),
+              group_close_gap: timeline_value(COMPACT_GROUP_CLOSE),
               divider_row: divider_row_height,
               deactivation_gap: deactivation_gap,
               bare_deactivation_gap: bare_deactivation_gap }
@@ -371,16 +383,18 @@ module Sirena
           end
 
           def padded_label_width(participant, padding)
-            if compact?
-              width = measure_text(participant.label,
-                                   font_size: head_font_size)[:width]
-              return width + (2 * padding)
+            participant_label_width(participant) + (2 * padding)
+          end
+
+          def participant_label_width(participant)
+            if compact? && !compact_timeline?
+              return measure_text(participant.label,
+                                  font_size: head_font_size)[:width]
             end
 
-            label = TextAdvances.width(participant.label,
-                                       font_size: head_font_size,
-                                       bold: bold_heads?)
-            label + (2 * padding)
+            TextAdvances.width(participant.label,
+                               font_size: head_font_size,
+                               bold: bold_heads?)
           end
 
           # PlantUML draws a head label bold from weight 700 up.
@@ -510,7 +524,10 @@ module Sirena
 
           # A note that is not attached to the fragment before it.
           def free_note?(item, previous)
-            item.is_a?(Note) && !(item.attached? && previous.is_a?(Fragment))
+            return false unless item.is_a?(Note)
+            return true unless item.attached?
+
+            !compact? && !previous.is_a?(Fragment)
           end
 
           # Room beside a note so it does not cover a neighbour's lifeline.
@@ -1104,6 +1121,7 @@ module Sirena
 
           def minimum_gap
             return MIN_WIDTH_GLYPH_GAP if minimum_width_mixed_glyphs?
+            return COMPACT_TIMELINE_GAP if compact_timeline?
 
             compact? ? COMPACT_MIN_GAP : MIN_GAP
           end
@@ -1120,6 +1138,9 @@ module Sirena
             if minimum_width_mixed_glyphs?
               return MIN_WIDTH_GLYPH_FIRST_ROW_GAP
             end
+            if compact_timeline?
+              return COMPACT_GROUP_FIRST_ROW_GAP
+            end
 
             compact? ? COMPACT_FIRST_ROW_GAP : CLASSIC_FIRST_ROW_GAP
           end
@@ -1134,6 +1155,16 @@ module Sirena
 
           def fragment_row_height
             compact? ? Walker::TAB_HEIGHT : CLASSIC_FRAGMENT_ROW
+          end
+
+          def timeline_value(value)
+            value if compact_timeline?
+          end
+
+          def compact_timeline?
+            compact? && group_fragment? && @diagram.messages.all? do |message|
+              message.label.to_s.empty?
+            end
           end
 
           def divider_row_height

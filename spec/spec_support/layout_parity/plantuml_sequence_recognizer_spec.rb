@@ -33,8 +33,25 @@ module PlantumlSequenceSvgs
         <text x="10" y="32" font-size="11" font-weight="700">[fallback]</text>
         <polygon points="180,55 170,50 170,60"/>
         <line x1="20" y1="55" x2="180" y2="55"/>
+        <text x="70" y="48" font-size="13" font-weight="700">1</text>
         <text x="80" y="48" font-size="13">response</text>
       </g>
+    </svg>
+  SVG
+  LEGACY_TEOZ_UNLABELLED = <<~SVG
+    <svg viewBox="0 0 200 100">
+      <g>
+        <polygon points="180,55 170,50 170,60"/>
+        <line x1="20" y1="55" x2="180" y2="55"/>
+        <polygon points="180,75 170,70 170,80"/>
+        <line x1="20" y1="75" x2="180" y2="75"/>
+      </g>
+    </svg>
+  SVG
+  SIRENA_UNLABELLED = <<~SVG
+    <svg viewBox="0 0 200 100">
+      <g id="message-1"><path d="M 20 55 L 180 55"/></g>
+      <g id="message-2"><path d="M 20 75 L 180 75"/></g>
     </svg>
   SVG
   LEGACY_TEOZ_ACTOR = <<~SVG
@@ -112,7 +129,13 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlSequenceRecognizer do
 
   it "does not recognize a legacy Teoz fragment separator as a message" do
     labels = elements(PlantumlSequenceSvgs::LEGACY_TEOZ).map(&:label)
-    expect(labels).to eq(["response"])
+    expect(labels).to eq(["1 response"])
+  end
+
+  it "recognizes unlabelled Teoz messages on both producers" do
+    reference = elements(PlantumlSequenceSvgs::LEGACY_TEOZ_UNLABELLED)
+    sirena = elements(PlantumlSequenceSvgs::SIRENA_UNLABELLED)
+    expect(reference.map(&:label)).to eq(sirena.map(&:label)).and eq(["", ""])
   end
 
   it "recognizes a legacy Teoz actor from its ellipse and path glyph" do
