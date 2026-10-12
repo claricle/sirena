@@ -9,7 +9,8 @@ module Sirena
       # the line dashed) that may carry a direction word between two runs,
       # and an optional marker. The direction word is kept as `:up`, `:down`,
       # `:left` or `:right` for the layout; a one-character body such as
-      # `->` or `.>` lays out like `:right`.
+      # `->` or `.>` lays out like `:right`. The body's length, its dashes
+      # and dots, sets how many ranks the relation spans.
       module Arrow
         extend self
 
@@ -35,24 +36,33 @@ module Sirena
 
         # @return [Hash, nil] `:markers` (side to kind, left first), `:dashed`,
         #   `:kind` and `:head` (:left, :right, or :both with a nil kind when
-        #   both ends carry a marker), `:direction` (nil without a word)
-        #   and `:plain` (a bare association
+        #   both ends carry a marker), `:direction` (nil without a word),
+        #   `:length` (the body's dashes and dots) and `:plain` (a bare
+        #   association
         #   arrow, which a sequence diagram also has); nil for `<->`, which
         #   a sequence diagram also has and which is not drawn here
         def parse(glyph)
           match = GLYPH.match(glyph)
           left, body, right = match.captures
-          return if [left, right].all? { |end_| PLAIN_HEADS.include?(end_) }
+          return if plain_heads?(left, right)
 
+          details(glyph, left, body, right)
+        end
+
+        private
+
+        def plain_heads?(left, right)
+          [left, right].all? { |end_| PLAIN_HEADS.include?(end_) }
+        end
+
+        def details(glyph, left, body, right)
           dashed = body.include?(".")
           markers = { left: left, right: right }.compact
             .transform_values { |marker| kind_of(marker, dashed) }
           { markers: markers, dashed: dashed, head: head_of(markers),
             kind: single_kind(markers, dashed), plain: PLAIN.match?(glyph),
-            direction: direction_of(body) }
+            direction: direction_of(body), length: body.count("-.") }
         end
-
-        private
 
         def direction_of(body)
           word = body[/[a-z]+/]
