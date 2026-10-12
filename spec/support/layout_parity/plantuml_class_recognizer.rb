@@ -51,7 +51,12 @@ module SpecSupport
 
       def reference_class?(group)
         classes(group).include?(REFERENCE_CLASS) &&
-          group.key?("data-qualified-name")
+          group.key?("data-qualified-name") && !reference_note_group?(group)
+      end
+
+      def reference_note_group?(group)
+        group["data-qualified-name"].to_s.match?(/\AGMN\d+\z/) &&
+          group.at_xpath("./rect").nil?
       end
 
       def sirena_class?(group)
@@ -74,9 +79,13 @@ module SpecSupport
         rows = group.node.xpath(".//text").map do |text|
           normalize(text.text)
         end.reject(&:empty?)
-        return reference_rows(group.node, rows) if reference_class?(group.node)
+        rows = reference_rows(group.node, rows) if reference_class?(group.node)
 
-        rows.grep_v(/\A<<.+>>\z/)
+        rows.reject { |row| stereotype?(row) }
+      end
+
+      def stereotype?(row)
+        row.match?(/\A(?:<<.+>>|«.+»)\z/)
       end
 
       def reference_rows(group, rows)
@@ -126,12 +135,21 @@ module SpecSupport
 
       def sirena_endpoints(group, groups)
         path = group.at_xpath(".//path[@d]")
-        points = PathPoints.new(path&.[]("d")).points
+        points = transformed_path_points(path)
         return [UNRESOLVED_ENDPOINT] * 2 if points.empty?
 
         [points.first, points.last].map do |point|
           nearest_class(point, groups) || UNRESOLVED_ENDPOINT
         end
+      end
+
+      def transformed_path_points(path)
+        return [] unless path
+
+        matrix = path.ancestors.reverse_each.reduce(Matrix.identity) do |ctm, node|
+          ctm * Matrix.parse(node["transform"])
+        end * Matrix.parse(path["transform"])
+        PathPoints.new(path["d"]).points.map { |point| matrix.apply(*point) }
       end
 
       def nearest_class(point, groups)
