@@ -44,16 +44,28 @@ module Sirena
         #   :right), `:kind` (:multiplicity or :role) and `:pieces`, the
         #   Strings drawn side by side
         def entries
-          ORDERS.fetch(@engine).filter_map do |position, kind|
+          entries = ORDERS.fetch(@engine).filter_map do |position, kind|
             side = position == :first ? sides.first : sides.last
             content = @relation.public_send(:"#{side}_#{kind}")
-            { side: side, kind: kind, pieces: pieces(content) } if content
+            entry(side, kind, content) if content
           end
+          entries.sort_by { |entry| entry[:kind] == :qualifier ? 1 : 0 }
         end
 
         private
 
-        def pieces(content)
+        def entry(side, kind, content)
+          qualifier = content.start_with?("[") && content.end_with?("]")
+          content = content[1...-1] if qualifier
+          lines = content.split("\\n")
+          { side: side, kind: (qualifier ? :qualifier : kind),
+            pieces: pieces(lines), multiline: lines.size > 1 }
+        end
+
+        def pieces(lines)
+          return lines if lines.size > 1
+
+          content = lines.first
           marker = content[NUMBERED_ITEM]
           marker ? [NUMBER, content.delete_prefix(marker)] : [content]
         end
