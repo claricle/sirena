@@ -43,6 +43,9 @@ module Sirena
       CHERRY_PICK_BRANCH_LABEL_CLEARANCE = 28
       MERMAID_LABEL_FONT_SIZE = 10
       MERMAID_LABEL_WIDTH_SCALE = 0.86
+      VERTICAL_LANE_LABEL_RATIO = 0.85
+      VERTICAL_LANE_LABEL_HEADROOM = 12.5
+      VERTICAL_LANE_GAP = 85
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -120,23 +123,27 @@ module Sirena
         lane_assignments = assign_lanes(
           branches, build_branch_info(branches, main_branch), main_branch
         )
+        lane_positions = lane_positions(lane_assignments, orientation)
         commits = position_commits(
           visible_commits(source_commits(graph)), lane_assignments, orientation,
-          main_branch
+          main_branch, lane_positions
         )
         graph_result(
-          graph, commits, branches, lane_assignments, orientation, main_branch
+          graph, commits, branches, lane_assignments, lane_positions,
+          orientation, main_branch
         )
       end
 
       private
 
-      def graph_result(graph, commits, branches, lanes, orientation, main_branch)
-        width, height = extents(commits, lanes, orientation)
+      def graph_result(graph, commits, branches, lanes, lane_positions,
+                       orientation, main_branch)
+        width, height = extents(commits, lanes, lane_positions, orientation)
         {
           commits: commits,
           branches: build_branch_metadata(branches, lanes, main_branch),
           connections: build_connections(commits, graph.edges),
+          lane_positions: lane_positions,
           orientation: orientation,
           width: width,
           height: height,
@@ -269,6 +276,7 @@ module Sirena
 
       def commit_label_style(graph)
         return :lone if graph[:orientation] == "LR" && graph[:commits].one?
+        return :generated_diagonal if compact_generated_semantic_graph?(graph)
         return :linear if vertical?(graph[:orientation]) ||
           simple_three_commit_graph?(graph)
 
@@ -356,10 +364,31 @@ module Sirena
           return linear_label_position(text, x_coordinate, y_coordinate,
                                        orientation)
         end
+        if style == :generated_diagonal && kind == "id"
+          width = mermaid_label_width(text)
+          return diagonal_id_label_position(
+            width, x_coordinate, y_coordinate
+          )
+        end
+        if style == :legacy && kind == "id" && generated_commit_id?(commit)
+          return [x_coordinate, y_coordinate + 20, "middle"]
+        end
 
         legacy_label_position(
           text, x_coordinate, y_coordinate, orientation, kind
         )
+      end
+
+      def generated_commit_id?(commit)
+        commit[:id].match?(/\Acommit[-_]\d+\z/)
+      end
+
+      def compact_generated_semantic_graph?(graph)
+        graph[:orientation] == "LR" && graph[:commits].size <= 3 &&
+          graph[:commits].all? { |commit| generated_commit_id?(commit) } &&
+          graph[:commits].any? do |commit|
+            commit[:is_merge] && tag_labels(commit).any?
+          end
       end
 
       def lone_label_position(text, x_coordinate, y_coordinate, kind)
@@ -465,7 +494,7 @@ module Sirena
 
         orientation = graph[:orientation]
         time = vertical?(orientation) ? creation[:y] : creation[:x]
-        lane = branch[:lane] * LANE_SPACING
+        lane = graph[:lane_positions].fetch(branch[:lane])
         x_coordinate, y_coordinate = coordinates(time, lane, orientation)
         { x: x_coordinate, y: y_coordinate }
       end
@@ -493,7 +522,9 @@ module Sirena
         return EMPTY_BRANCH_LABEL_CLEARANCE if translated_branch_label?(graph)
         return CHERRY_PICK_BRANCH_LABEL_CLEARANCE if cherry_pick_graph?(graph)
 
-        EXPLICIT_ID_BRANCH_LABEL_CLEARANCE if explicit_id_graph?(graph)
+        if explicit_id_graph?(graph) || compact_generated_semantic_graph?(graph)
+          EXPLICIT_ID_BRANCH_LABEL_CLEARANCE
+        end
       end
 
       def cherry_pick_graph?(graph)
@@ -511,11 +542,8 @@ module Sirena
         return false if graph[:commits].size <= 1
         return false if generated_commits_only?(graph)
 
-        graph[:commits].all? { |commit| explicit_id_commit?(commit) }
-      end
-
-      def explicit_id_commit?(commit)
-        !commit[:id].start_with?("commit_") && !commit[:is_cherry_pick]
+        graph[:commits].any? { |commit| !generated_commit_id?(commit) } &&
+          graph[:commits].none? { |commit| commit[:is_cherry_pick] }
       end
 
       def branch_label_geometry(branch, x_coordinate, y_coordinate, anchor)
@@ -748,9 +776,33 @@ module Sirena
 
       def ordered_branches(branches, branch_info)
         main_branch = branch_info.keys.first
-        branches.reject { |branch| branch[:name] == main_branch }.sort_by do |branch|
-          [branch_info[branch[:name]][:order] || 999, branch[:name]]
+        branches.reject { |branch| branch[:name] == main_branch }
+          .each_with_index.sort_by do |(branch, index)|
+          [branch[:order] ? 1 : 0, branch[:order] || index, branch[:name]]
+        end.map(&:first)
+      end
+
+      def lane_positions(assignments, orientation)
+        return assignments.values.to_h { |lane| [lane, lane * LANE_SPACING] } unless
+          vertical?(orientation)
+
+        ordered = assignments.sort_by { |_branch, lane| lane }
+        ordered.each_with_index.with_object({}) do |((branch, lane), index), positions|
+          positions[lane] = if index.zero?
+                              0.0
+                            else
+                              previous_branch, previous_lane = ordered.fetch(index - 1)
+                              positions.fetch(previous_lane) + VERTICAL_LANE_GAP +
+                                (vertical_lane_label_width(previous_branch) / 2.0)
+                            end
         end
+      end
+
+      def vertical_lane_label_width(branch)
+        measured = measure_text(branch, font_size: branch_font_size)[:width]
+        substitute = (measured * VERTICAL_LANE_LABEL_RATIO) +
+          VERTICAL_LANE_LABEL_HEADROOM
+        [measured, substitute].max
       end
 
       # Positions commits with X and Y coordinates.
@@ -759,21 +811,23 @@ module Sirena
       # @param lane_assignments [Hash] branch to lane mapping
       # @param orientation [String] "LR", "TB" or "BT"
       # @return [Array<Hash>] positioned commits
-      def position_commits(commits, lane_assignments, orientation, main_branch)
+      def position_commits(commits, lane_assignments, orientation, main_branch,
+                           lane_positions)
         commits.each_with_index.map do |commit, index|
           positioned_commit(
             commit, index, commits.size, lane_assignments, orientation,
-            main_branch
+            main_branch, lane_positions
           )
         end
       end
 
       def positioned_commit(commit, index, count, lane_assignments, orientation,
-                            main_branch)
+                            main_branch, lane_positions)
         branch = commit[:branch_name] || main_branch
         lane = lane_assignments[branch] || 0
         commit.merge(positioned_commit_attributes(
-                       commit, [index, count], [branch, lane], orientation
+                       commit, [index, count], [branch, lane], orientation,
+                       lane_positions
                      )).slice(
                        :ir_id, :id, :x, :y, :branch, :lane, :message,
                        :type, :tag, :tags,
@@ -783,10 +837,12 @@ module Sirena
       end
 
       def positioned_commit_attributes(commit, sequence, branch_lane,
-                                       orientation)
+                                       orientation, lane_positions)
         index, count = sequence
         branch, lane = branch_lane
-        x, y = commit_coordinates(index, count, lane, orientation)
+        x, y = commit_coordinates(
+          index, count, lane, orientation, lane_positions
+        )
         {
           id: commit[:id] || "commit_#{index}", x: x, y: y,
           branch: branch, lane: lane,
@@ -801,16 +857,17 @@ module Sirena
         }
       end
 
-      def commit_coordinates(index, count, lane, orientation)
+      def commit_coordinates(index, count, lane, orientation, lane_positions)
         time = time_position(index, count, orientation)
-        lane_position = lane * LANE_SPACING
+        lane_position = lane_positions.fetch(lane)
         coordinates(time, lane_position, orientation)
       end
 
       # Width and height: the time axis is horizontal for `LR` only.
-      def extents(positioned_commits, lane_assignments, orientation)
+      def extents(positioned_commits, lane_assignments, lane_positions,
+                  orientation)
         time_span = calculate_time_span(positioned_commits.size)
-        lane_span = calculate_lane_span(lane_assignments)
+        lane_span = calculate_lane_span(lane_assignments, lane_positions)
         vertical?(orientation) ? [lane_span, time_span] : [time_span, lane_span]
       end
 
@@ -910,11 +967,14 @@ module Sirena
       #
       # @param lane_assignments [Hash] lane assignments
       # @return [Numeric] extent in pixels
-      def calculate_lane_span(lane_assignments)
+      def calculate_lane_span(lane_assignments, lane_positions = nil)
         return COMMIT_RADIUS * 2 if lane_assignments.empty?
 
+        lane_positions ||= lane_assignments.values.to_h do |lane|
+          [lane, lane * LANE_SPACING]
+        end
         max_lane = lane_assignments.values.max
-        (max_lane * LANE_SPACING) + (COMMIT_RADIUS * 2)
+        lane_positions.fetch(max_lane) + (COMMIT_RADIUS * 2)
       end
     end
   end
