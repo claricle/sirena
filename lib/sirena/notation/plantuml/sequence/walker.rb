@@ -626,7 +626,9 @@ module Sirena
           def note_picture(note, left, top)
             return unless note.picture
 
-            Scene::Picture.new(x: left, y: top, scale: note.picture.scale,
+            inset = NoteGeometry.picture_inset(note.picture)
+            Scene::Picture.new(x: left - inset, y: top - inset,
+                               scale: note.picture.scale,
                                scene: note.picture.scene)
           end
 
