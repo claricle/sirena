@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "brandes_koepf"
+require_relative "edge_chains"
 require_relative "layer_spacing"
 
 module Sirena
@@ -12,7 +13,9 @@ module Sirena
       #
       # A level whose edges all join neighbouring layers is placed the way
       # dagre does it, with Brandes-Koepf alignment over the layers elkrb
-      # chose. An edge's label is as wide as its stand-in there.
+      # chose. An edge's label is as wide as its stand-in there. A level
+      # with an unlabelled edge that skips a row or points back up is laid
+      # over dagre's layering of it instead, from EdgeChains.
       class RowCentering
         # @param flat [Hash] a level whose boxes elkrb has placed
         # @param label_axis [Symbol, nil] a label's size along the flow,
@@ -31,6 +34,9 @@ module Sirena
           rows = @flat[:children].group_by { |box| box[:y] }
           joined = joins(rows)
           return aligned(rows, joined) if joined
+
+          chains = chains(rows)
+          return chained(rows, chains) if chains
 
           widest = rows.values.map { |row| span(row) }.max
           rows.each_value { |row| centre(row, widest) }
@@ -61,6 +67,28 @@ module Sirena
           ends if adjacent?(ends, ranks)
         end
 
+        # The level's dagre layering, or nil when it has no edge, an edge
+        # with a label, or an edge within one row.
+        def chains(rows)
+          ranks = rank_of(rows)
+          ends = (@flat[:edges] || []).map { |edge| chain_ends(edge, ranks) }
+          return if ends.empty? || ends.any?(&:nil?)
+
+          order = @flat[:children].sort_by { |box| [box[:x], box[:y]] }
+          EdgeChains.new(ranks, ends, order.map { |box| box[:id] })
+        end
+
+        # [upper, lower, turned] for an edge that can be chained.
+        def chain_ends(edge, ranks)
+          return unless edge[:labels].to_a.empty?
+
+          upper, lower = edge_ends(edge)
+          return if ranks[upper] == ranks[lower]
+
+          turned = ranks[upper] > ranks[lower]
+          turned ? [lower, upper, true] : [upper, lower, false]
+        end
+
         def edge_ends(edge)
           [edge[:sources].first, edge[:targets].first]
         end
@@ -83,6 +111,17 @@ module Sirena
           widths = node_widths(ordered, dummies)
           centres = BrandesKoepf.positions(layers, widths, links, dummies)
           place(ordered.flatten, centres)
+          @flat
+        end
+
+        def chained(rows, chains)
+          widths = @flat[:children].to_h { |box| [box[:id], box[:width]] }
+          chains.dummies.each { |dummy| widths[dummy] = 0.0 }
+          centres = BrandesKoepf.positions(chains.layers, widths,
+                                           chains.links, chains.dummies)
+          tops = rows.keys.sort
+          @flat[:children].each { |box| box[:y] = tops[chains.ranks[box[:id]]] }
+          place(@flat[:children], centres)
           @flat
         end
 
