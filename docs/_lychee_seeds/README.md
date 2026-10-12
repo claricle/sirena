@@ -7,10 +7,11 @@ the published documentation.
 
 The link workflow checks each fixture independently, requires every check to
 fail, and verifies that the two HTTP fixtures report their intended status.
-That last assertion prevents a DNS or connection failure from impersonating
-the 403/429 proof.
+A loopback-only Ruby server provides those responses, so public status-service
+availability cannot turn the proof into a DNS, connection, or transient-503
+result.
 
 - `broken-relative-link.html` points to an absent relative page.
 - `broken-fragment.html` points to an absent fragment on itself.
-- `seeded-403.html` points to an endpoint that responds with HTTP 403.
-- `seeded-429.html` points to an endpoint that responds with HTTP 429.
+- `seeded-403.html` points to the loopback endpoint that responds with HTTP 403.
+- `seeded-429.html` points to the loopback endpoint that responds with HTTP 429.
