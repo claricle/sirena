@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "flowchart/directed_placement"
 require_relative "flowchart/edge_router"
+require_relative "elk_placement"
 require_relative "../diagram/flowchart"
 require_relative "../diagram/flowchart_label_text"
 require_relative "../notation/mermaid/ir_adapters/flowchart"
@@ -59,6 +60,9 @@ module Sirena
       EDGE_LABEL_WRAP_WIDTH = 200.0
       SUBSTITUTE_FONT_HEADROOM = 1.2
       ICON_ADVANCE_EMS = 1.3
+      SOURCE_ELK_PLACEMENT = :mermaid_elk
+      SOURCE_ELK_SPACING = 35
+      private_constant :SOURCE_ELK_PLACEMENT, :SOURCE_ELK_SPACING
 
       SELF_LOOP_DEPTH = 0.45
       SELF_LOOP_HALF_SPAN = 0.175
@@ -196,18 +200,33 @@ module Sirena
         layout.send(:scene_from_graph, graph)
       end
 
-      # Engine#choose_placement sets this for layout_engine: :elk. Every
-      # flowchart is placed by elkrb now, so the value is not read.
+      # Engine#choose_placement sets this for layout_engine: :elk. Explicit
+      # callers retain the dagre-compatible orchestration below.
       attr_accessor :placement
+
+      def source_placement=(value)
+        self.placement = value == :elk ? SOURCE_ELK_PLACEMENT : value
+      end
 
       def scene(diagram)
         graph = build_graph(ir_graph(diagram))
-        DirectedPlacement.apply(graph, center_edge_labels: true)
+        place_graph(graph)
         compact_collision_nodes(graph[:children])
         scene_from_graph(graph)
       end
 
       private
+
+      def place_graph(graph)
+        unless placement == SOURCE_ELK_PLACEMENT
+          return DirectedPlacement.apply(graph, center_edge_labels: true)
+        end
+
+        graph[:layoutOptions][ElkOptions::NODE_NODE_SPACING] =
+          SOURCE_ELK_SPACING
+        graph[:layoutOptions][ElkOptions::LAYER_SPACING] = SOURCE_ELK_SPACING
+        ElkPlacement.apply(graph)
+      end
 
       def ir_graph(diagram)
         return diagram if diagram.is_a?(IR::Graph)
