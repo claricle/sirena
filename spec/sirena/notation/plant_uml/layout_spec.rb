@@ -10,6 +10,28 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
+  let(:expected_content) do
+    {
+      "resources.vega.migration.HideShow004_Test--16625d433c68" => [
+        ["B", "B", "~run(): boolean"],
+      ],
+      "resources.vega.nonreg.group2903.reported_case--fd42e1abb616" => [
+        ["Respuesta", "Respuesta", "fecha: Date"],
+        ["Opcion", "Opcion", "texto: String"],
+        ["Voto", "Voto", "getOpcion(): Opcion"],
+      ],
+    }
+  end
+  let(:missing_content) do
+    expected_content.to_h do |id, target_keys|
+      [id, missing_content_keys(id) & target_keys]
+    end
+  end
+
+  it "matches pinned suffix-typed member text without a pre-colon space" do
+    expect(missing_content).to eq(expected_content.transform_values { [] })
+  end
+
   def parity_result(id)
     source = File.join("spec/plantuml/class", "#{id}.puml")
     reference = File.join("spec/plantuml/references/class", "#{id}.svg")
@@ -29,23 +51,5 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
       key.last if key.first == :class_content &&
         failure.dig(:normalized, :difference) == :missing
     end
-  end
-
-  it "matches pinned suffix-typed member text without a pre-colon space" do
-    expected = {
-      "resources.vega.migration.HideShow004_Test--16625d433c68" => [
-        ["B", "B", "~run(): boolean"],
-      ],
-      "resources.vega.nonreg.group2903.reported_case--fd42e1abb616" => [
-        ["Respuesta", "Respuesta", "fecha: Date"],
-        ["Opcion", "Opcion", "texto: String"],
-        ["Voto", "Voto", "getOpcion(): Opcion"],
-      ],
-    }
-
-    missing = expected.to_h do |id, target_keys|
-      [id, missing_content_keys(id) & target_keys]
-    end
-    expect(missing).to eq(expected.transform_values { [] })
   end
 end

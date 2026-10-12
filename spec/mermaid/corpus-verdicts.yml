@@ -1956,7 +1956,7 @@
   evidence: literal \n escape
 - case: er_diagram/erdiagram_spec-d8eaebdd.mmd
   verdict: valid
-  evidence: mmdc 11.12.0 renders it (oracle-verdicts.yml)
+  evidence: mmdc rendered it
 - case: er_diagram/erdiagram_spec-d921f55c.mmd
   verdict: artifact
   evidence: literal \n escape

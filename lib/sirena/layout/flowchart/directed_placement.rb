@@ -36,8 +36,12 @@ module Sirena
 
         # @param graph [Hash] the graph to position in place
         # @return [Hash] the same graph
-        def self.apply(graph)
-          new.apply(graph)
+        def self.apply(graph, center_edge_labels: false)
+          new(center_edge_labels).apply(graph)
+        end
+
+        def initialize(center_edge_labels)
+          @center_edge_labels = center_edge_labels
         end
 
         def apply(graph)
@@ -256,13 +260,18 @@ module Sirena
           transpose(flat) if transposed
           flat[:layoutOptions] = downward_options(frame)
           ElkPlacement.apply(flat)
-          label_axis = transposed ? :width : :height
-          RowCentering.apply(flat, label_axis: label_axis)
-          LayerSpacing.apply(flat, label_axis: label_axis)
+          apply_label_geometry(flat, transposed)
           MinimumRankSpacing.apply(flat, frame.rank_spacing)
           ComponentPacking.apply(flat, cluster_names)
           transpose(flat) if transposed
           mirror(flat, frame.direction)
+        end
+
+        def apply_label_geometry(flat, transposed)
+          axis = transposed ? :width : :height
+          label_axis = axis if @center_edge_labels
+          RowCentering.apply(flat, label_axis: label_axis)
+          LayerSpacing.apply(flat, label_axis: axis)
         end
 
         def downward_options(frame)

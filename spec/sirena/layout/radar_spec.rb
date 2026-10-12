@@ -165,6 +165,35 @@ RSpec.describe Sirena::Layout::Radar do
     it { is_expected.to eq(graph) }
   end
 
+  context "with label anchors" do
+    subject(:baseline_rows) do
+      regular = described_class.new.call(baseline_diagram)
+      contrast = described_class.new.call(
+        baseline_diagram,
+        theme: Sirena::Theme::Registry.get(:high_contrast),
+      )
+      [label_y(regular), label_y(contrast)]
+    end
+
+    let(:baseline_diagram) do
+      Sirena::Parser::Radar.new.parse(<<~MERMAID)
+        radar-beta
+          title Baselines
+          axis A, B, C
+          curve first{1, 2, 3}
+          curve second{3, 2, 1}
+      MERMAID
+    end
+    let(:expected_rows) { [0.0, 35.0, 507.5, 507.5, 87.5, 107.5] }
+
+    it { is_expected.to eq([expected_rows, expected_rows]) }
+
+    def label_y(scene)
+      [scene.title.y, *scene.axes.map { |axis| axis.label.y },
+       *scene.legend.map { |entry| entry.label.y }]
+    end
+  end
+
   def graph_for_range(min, max)
     radar = Sirena::Diagram::Radar.new
     radar.axes = [Sirena::Diagram::RadarAxis.new("axis")]

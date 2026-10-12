@@ -199,7 +199,7 @@ module Sirena
 
       def scene(diagram)
         graph = build_graph(ir_graph(diagram))
-        DirectedPlacement.apply(graph)
+        DirectedPlacement.apply(graph, center_edge_labels: true)
         scene_from_graph(graph)
       end
 
