@@ -31,8 +31,12 @@ module Sirena
 
           def entity_nodes(diagram, boxes, box_ids, node_ids, occupied)
             holders = node_holders(boxes, box_ids)
+            collisions = node_subgraph_collision_ids(diagram)
             flow_nodes = diagram.nodes.flat_map do |node|
-              flow_node(node, node_ids.fetch(node), holders[node.id], occupied)
+              flow_node(
+                node, node_ids.fetch(node), holders[node.id], occupied,
+                subgraph_collision: collisions.include?(node.id)
+              )
             end
             groups = boxes.flat_map do |box|
               group_node(box, box_ids, occupied)
@@ -40,7 +44,8 @@ module Sirena
             flow_nodes + groups
           end
 
-          def flow_node(node, id, parent_id, occupied)
+          def flow_node(node, id, parent_id, occupied,
+                        subgraph_collision: false)
             entity = IR::Node.new(
               id: id, label: node.label, role: "flow_node",
               parent_id: parent_id
@@ -48,6 +53,7 @@ module Sirena
             semantics = [["source_identifier", node.id],
                          ["shape", node.shape],
                          ["style_reference", node.classes]]
+            semantics << ["subgraph_collision", "true"] if subgraph_collision
             [entity, *semantic_nodes(id, semantics, occupied)]
           end
 
@@ -136,6 +142,15 @@ module Sirena
             (diagram.subgraphs || []).select(&:drawable?)
           end
 
+          def node_subgraph_collision_ids(diagram)
+            node_ids = diagram.nodes.map(&:id)
+            (diagram.subgraphs || []).filter_map do |subgraph|
+              next if subgraph.drawable?
+
+              subgraph.id if node_ids.include?(subgraph.id)
+            end
+          end
+
           def node_holders(boxes, box_ids)
             boxes.each_with_object({}) do |box, holders|
               box_id = box_ids.fetch(box)
@@ -177,7 +192,8 @@ module Sirena
                                :edge_nodes, :edge_node, :marker_properties,
                                :settings_nodes, :semantic_nodes,
                                :graph_attributes, :accessibility,
-                               :drawable_boxes, :node_holders, :identity_map,
+                               :drawable_boxes, :node_subgraph_collision_ids,
+                               :node_holders, :identity_map,
                                :source_index, :first_source_index, :reserve_id
         end
       end
