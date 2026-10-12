@@ -14,6 +14,7 @@ require_relative "picture"
 require_relative "ref"
 require_relative "ref_shape"
 require_relative "scene"
+require_relative "text_advances"
 require_relative "walker"
 
 module Sirena
@@ -28,7 +29,7 @@ module Sirena
           MIN_HEAD_WIDTH = 80.0
           INTRINSIC_HEAD_PADDING = 7.0
           INTRINSIC_HEAD_HEIGHT = 30.4883
-          MIN_GAP = 30.0
+          MIN_GAP = 10.0
           BOX_PADDING = 8.0
           BOX_TITLE_PADDING = 3.0
           BOX_TITLE_HEIGHT = 26.0
@@ -53,6 +54,13 @@ module Sirena
           COMPACT_FIRST_ROW_GAP = 30.1328
           COMPACT_ROW = 29.1328
           COMPACT_SELF_ROW = 42.1328
+          CLASSIC_FIRST_ROW_GAP = 32.3105
+          CLASSIC_ROW = 29.3105
+          CLASSIC_SELF_ROW = 42.3105
+          CLASSIC_FRAGMENT_ROW = 24.3105
+          CLASSIC_DIVIDER_ROW = 42.3105
+          CLASSIC_DEACTIVATION_GAP = 31.0
+          CLASSIC_BARE_DEACTIVATION_GAP = 1.0
           MIN_WIDTH_GLYPH_MARGIN = 5.0
           MIN_WIDTH_GLYPH_GAP = 10.0
           MIN_WIDTH_GLYPH_FIRST_ROW_GAP = 31.3105
@@ -91,6 +99,10 @@ module Sirena
                            :COMPACT_HEAD_HEIGHT, :COMPACT_HEAD_LABEL_INSET,
                            :COMPACT_FIRST_ROW_GAP, :COMPACT_ROW,
                            :COMPACT_SELF_ROW,
+                           :CLASSIC_FIRST_ROW_GAP, :CLASSIC_ROW,
+                           :CLASSIC_SELF_ROW, :CLASSIC_FRAGMENT_ROW,
+                           :CLASSIC_DIVIDER_ROW, :CLASSIC_DEACTIVATION_GAP,
+                           :CLASSIC_BARE_DEACTIVATION_GAP,
                            :MIN_WIDTH_GLYPH_MARGIN, :MIN_WIDTH_GLYPH_GAP,
                            :MIN_WIDTH_GLYPH_FIRST_ROW_GAP,
                            :ACTOR_INTRINSIC_WIDTH, :STEREOTYPE_BOX_HEIGHT,
@@ -224,7 +236,11 @@ module Sirena
               message_font_size: label_font_size,
               message_family: ("monospace" if compact?),
               label_inset: (7 if compact?), row: row_height,
-              self_row: self_row_height, bounds: head_bounds
+              self_row: self_row_height, fragment_row: fragment_row_height,
+              divider_row: divider_row_height,
+              deactivation_gap: deactivation_gap,
+              bare_deactivation_gap: bare_deactivation_gap,
+              bounds: head_bounds
             )
           end
 
@@ -351,14 +367,25 @@ module Sirena
           end
 
           def padded_label_width(participant, padding)
-            label = measure_text(participant.label, font_size: head_font_size)
-            label[:width] + (2 * padding)
+            return measure_text(participant.label, font_size: head_font_size)[:width] + (2 * padding) if compact?
+
+            label = TextAdvances.width(participant.label,
+                                       font_size: head_font_size,
+                                       bold: bold_heads?)
+            label + (2 * padding)
+          end
+
+          # PlantUML draws a head label bold from weight 700 up.
+          def bold_heads?
+            weight = head_style.weight.to_s
+            weight == "bold" || weight.to_i >= 700 ||
+              head_style.style.to_s.casecmp?("bold")
           end
 
           def head_box_dimensions
             return [0.0, INTRINSIC_HEAD_PADDING] if intrinsic_head_width?
 
-            [minimum_head_width, head_padding]
+            [minimum_head_width, compact? ? head_padding : INTRINSIC_HEAD_PADDING]
           end
 
           # Without a requested minimum, a classic head is as wide as its
@@ -484,7 +511,7 @@ module Sirena
             case note.side
             when :left then raise_gap(gaps, low - 1, need + 12)
             when :right then raise_gap(gaps, high, need + 12)
-            else widen_over(gaps, (low...high).to_a, low, need)
+            else widen_over(gaps, (low...high).to_a, low, need) unless low == high
             end
           end
 
@@ -547,7 +574,11 @@ module Sirena
 
           def message_room(message, self_message)
             room = label_width(message) + (2 * head_padding)
-            return self_message ? room + SELF_WIDTH : room unless compact?
+            unless compact?
+              return label_width(message) + (2 * INTRINSIC_HEAD_PADDING) if self_message
+
+              return room
+            end
             return room unless self_message
 
             [SELF_WIDTH, 7 + label_width(message)].max + head_padding
@@ -1076,23 +1107,41 @@ module Sirena
               return MIN_WIDTH_GLYPH_FIRST_ROW_GAP
             end
 
-            compact? ? COMPACT_FIRST_ROW_GAP : Walker::ROW
+            compact? ? COMPACT_FIRST_ROW_GAP : CLASSIC_FIRST_ROW_GAP
           end
 
           def row_height
-            compact? ? COMPACT_ROW : Walker::ROW
+            compact? ? COMPACT_ROW : CLASSIC_ROW
           end
 
           def self_row_height
-            compact? ? COMPACT_SELF_ROW : Walker::ROW * 1.5
+            compact? ? COMPACT_SELF_ROW : CLASSIC_SELF_ROW
+          end
+
+          def fragment_row_height
+            compact? ? Walker::TAB_HEIGHT : CLASSIC_FRAGMENT_ROW
+          end
+
+          def divider_row_height
+            compact? ? Walker::ROW : CLASSIC_DIVIDER_ROW
+          end
+
+          def deactivation_gap
+            compact? ? 0.0 : CLASSIC_DEACTIVATION_GAP
+          end
+
+          def bare_deactivation_gap
+            compact? ? 0.0 : CLASSIC_BARE_DEACTIVATION_GAP
           end
 
           def label_font_size
-            compact? ? message_font_size : font_size
+            message_font_size
           end
 
           def label_text_width(string)
-            compact? ? message_text_width(string) : text_width(string)
+            return message_text_width(string) if compact?
+
+            TextAdvances.width(string, font_size: message_font_size)
           end
         end
       end

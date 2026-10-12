@@ -37,6 +37,7 @@ module Sirena
           private_constant :LOOP_HEIGHT
           TAB_HEIGHT = 20.0
           CROSS_HALF = 9.0
+          ACTIVATION_END_INSET = 7.0
           TOP_OFFSET = 20.0
           NOTE_ABOVE = 35.0
           LEFT_EDGE = 0.0
@@ -45,7 +46,8 @@ module Sirena
                       Ref => :ref, PageBreak => :page_break }.freeze
           Config = Struct.new(:message_measure, :message_font_size,
                               :message_family, :label_inset, :row, :self_row,
-                              :bounds, keyword_init: true)
+                              :fragment_row, :divider_row, :deactivation_gap,
+                              :bare_deactivation_gap, :bounds, keyword_init: true)
 
           attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
                       :right, :y, :page_breaks
@@ -91,12 +93,22 @@ module Sirena
             @label_inset = config.label_inset
             @row = config.row || ROW
             @self_row = config.self_row || (ROW * 1.5)
+            @fragment_row = config.fragment_row || TAB_HEIGHT
+            @divider_row = config.divider_row || ROW
+            @deactivation_gap = config.deactivation_gap || 0.0
+            @bare_deactivation_gap = config.bare_deactivation_gap || 0.0
             @bounds = config.bounds
           end
 
           def walk_items(items)
             previous = nil
             items.each_with_index do |item, index|
+              @following_activations = items.drop(index + 1).take_while do |candidate|
+                candidate.is_a?(Activation)
+              end
+              @next_non_activation = items.drop(index + 1).find do |candidate|
+                !candidate.is_a?(Activation)
+              end
               @mark_y = nil unless anchoring?(item)
               @headroom = headroom(items, index)
               visit(item, previous)
@@ -181,6 +193,8 @@ module Sirena
           def message(message)
             adjust_self_run(message)
             start_row(message)
+            @message_activations = @following_activations.select(&:on?)
+              .map(&:participant)
             from, to = ends_of(message)
             draw(message, from, to) unless message.style.hidden
             touch(*extent(message, from, to))
@@ -249,11 +263,23 @@ module Sirena
           # Where an end of a message lands: a lifeline, or an edge, which a
           # ring drawn there pulls inwards.
           def place_of(place, message)
-            return centre(place) unless place.is_a?(Edge)
+            unless place.is_a?(Edge)
+              at = centre(place)
+              return at unless activated_end?(place, message)
+
+              other = place == message.to ? message.from : message.to
+              inward = centre(other) < at ? -1 : 1
+              return at + (inward * ACTIVATION_END_INSET)
+            end
 
             inward = place.left? ? 1 : -1
             ring = message.edge_end.circle ? Edge::RING_INSET : 0.0
             edge_x(place, message) + (inward * ring)
+          end
+
+          def activated_end?(place, message)
+            !@label_inset && !message.self_message? &&
+              @message_activations.include?(place)
           end
 
           def edge_x(edge, message)
@@ -271,6 +297,9 @@ module Sirena
           # between the rows on either side of the line.
           def activation(item)
             @tracker.apply(item, @mark_y || (@y - 20))
+            return if item.on? || !@next_non_activation.is_a?(Divider)
+
+            @y += @mark_y ? @deactivation_gap : @bare_deactivation_gap
           end
 
           # The cross sits at the end of the arrow it follows, or else
@@ -495,7 +524,7 @@ module Sirena
                          top: @y - 20, low: Float::INFINITY,
                          high: -Float::INFINITY, branches: [], depth: 0,
                          resume: @resume, tab: tab_size }
-            @y += TAB_HEIGHT + tab_size.height_growth
+            @y += @fragment_row + tab_size.height_growth
           end
 
           def tab_size
@@ -533,7 +562,7 @@ module Sirena
             left, right = @bounds
             label = item.label.to_s
             @dividers << divider_record(label, left, right)
-            @y += ROW
+            @y += @divider_row
           end
 
           def divider_record(label, left, right)
