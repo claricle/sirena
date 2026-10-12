@@ -27,13 +27,6 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     )
   end
 
-  def within_bars?(result)
-    metrics = result.geometry.values_at(
-      :worst_e_c, :worst_e_w, :worst_e_h, :worst_e_a
-    )
-    metrics.zip(geometry_bars).all? { |value, bar| value <= bar }
-  end
-
   def render_case(id)
     path = "spec/plantuml/class/#{id}.puml"
     REXML::Document.new(Sirena.render(File.read(path), notation: :plantuml))
@@ -53,9 +46,15 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
   }.each do |id, matched|
     it "matches every pinned element and geometry bar in #{id}" do
       result = case_result(id)
+      metrics = result.geometry.values_at(
+        :worst_e_c, :worst_e_w, :worst_e_h, :worst_e_a
+      )
+      within_bars = metrics.zip(geometry_bars).all? do |value, bar|
+        value <= bar
+      end
 
-      expect([result.hard_failure?, result.geometry[:matched],
-              within_bars?(result)]).to eq([false, matched, true])
+      expect([result.hard_failure?, result.geometry[:matched], within_bars])
+        .to eq([false, matched, true])
     end
   end
 
