@@ -80,7 +80,7 @@ module Sirena
           def run(items, edge_right: nil, appearance: Appearance.new)
             @edge_right = edge_right
             @appearance = appearance
-            @fragmented = items.any? { |item| item.is_a?(Fragment) }
+            @fragmented = items.any?(Fragment)
             walk_items(items)
             @tracker.finish(@y - 20)
             self
@@ -184,11 +184,11 @@ module Sirena
           end
 
           def resume_after_parallel(item)
-            if parallel_side_note?(item)
-              @y = @resume
-            else
-              @y = [@y, @resume].max
-            end
+            @y = if parallel_side_note?(item)
+                   @resume
+                 else
+                   [@y, @resume].max
+                 end
           end
 
           def parallel_side_note?(item)
@@ -456,12 +456,17 @@ module Sirena
             far = centre + (side * SELF_WIDTH)
             top = self_top
             bottom = top + self_height
+            marks, start, stop = self_marks(message, centre, top, bottom, side)
+            { path: "M #{start} #{top} L #{far} #{top} L #{far} #{bottom} " \
+                    "L #{stop} #{bottom}",
+              marks: marks, label: loop_label(far, side) }
+          end
+
+          def self_marks(message, centre, top, bottom, side)
             tail, start = ArrowMarks.for(message.style.tail, centre, top, side)
             head, stop = ArrowMarks.for(message.style.head, centre, bottom,
                                         side)
-            { path: "M #{start} #{top} L #{far} #{top} L #{far} #{bottom} " \
-                    "L #{stop} #{bottom}",
-              marks: tail + head, label: loop_label(far, side) }
+            [tail + head, start, stop]
           end
 
           def loop_label(far, side)
