@@ -30,6 +30,7 @@ module Sirena
           INTRINSIC_HEAD_PADDING = 7.0
           INTRINSIC_HEAD_HEIGHT = 30.4883
           MIN_GAP = 10.0
+          BOX_BOUNDARY_GAP = 35.0
           BOX_PADDING = 8.0
           BOX_TITLE_PADDING = 3.0
           BOX_TITLE_HEIGHT = 26.0
@@ -91,6 +92,7 @@ module Sirena
           }.freeze
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
+                           :BOX_BOUNDARY_GAP,
                            :INTRINSIC_HEAD_PADDING, :INTRINSIC_HEAD_HEIGHT,
                            :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_PADDING,
                            :BOX_TITLE_HEIGHT,
@@ -498,11 +500,23 @@ module Sirena
           # Distance between neighbouring centres: heads must not overlap and
           # every label must fit on the span it crosses.
           def required_gaps(widths)
-            gaps = widths.each_cons(2).map do |a, b|
-              ((a + b) / 2) + minimum_gap
+            gaps = widths.each_cons(2).with_index.map do |(a, b), index|
+              ((a + b) / 2) + participant_gap(index)
             end
             widen_for_items(gaps)
             gaps
+          end
+
+          def participant_gap(index)
+            return minimum_gap unless boxed_plain_heads?
+
+            left = participant_box(ids[index])
+            right = participant_box(ids[index + 1])
+            left == right ? minimum_gap : BOX_BOUNDARY_GAP
+          end
+
+          def participant_box(id)
+            @diagram.boxes.find { |box| box.members.include?(id) }
           end
 
           def widen_for_items(gaps)
