@@ -80,6 +80,9 @@ module Sirena
         QUALIFIED_FAN_LANE_ALLOWANCE = 4.0
         QUALIFIED_DOUBLE_END_HALF_WIDTH = 10.0
         QUALIFIED_INHERITANCE_HALF_WIDTH = 6.0
+        PACKAGE_CANVAS_MARGIN = 6.0
+        PACKAGE_OUTER_GAP = 24.0
+        PACKAGE_CANVAS_EDGE = 15.0
         ARROW_LENGTH = 9.0
         ARROW_HALF_WIDTH = 4.0
         ARROW_NOTCH = 5.0
@@ -132,7 +135,9 @@ module Sirena
                          :QUALIFIED_FLAT_CURVE_OFFSET,
                          :QUALIFIED_FAN_LANE_ALLOWANCE,
                          :QUALIFIED_DOUBLE_END_HALF_WIDTH,
-                         :QUALIFIED_INHERITANCE_HALF_WIDTH
+                         :QUALIFIED_INHERITANCE_HALF_WIDTH,
+                         :PACKAGE_CANVAS_MARGIN, :PACKAGE_OUTER_GAP,
+                         :PACKAGE_CANVAS_EDGE
 
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
@@ -275,7 +280,9 @@ module Sirena
 
           boxes = position_boxes(rows_by_package(specifications, diagram),
                                  box_width, stable_centers?(diagram),
-                                 intrinsic_box_widths?(diagram))
+                                 intrinsic_box_widths?(diagram), diagram)
+          boxes = align_package_relation_targets(diagram, boxes,
+                                                 specifications)
 
           build_scene(diagram, boxes, box_width)
         end
@@ -641,10 +648,27 @@ module Sirena
 
         def build_scene(diagram, boxes, box_width)
           frames = scene_frames(diagram, boxes)
-          Scene.new(width: canvas_width(boxes, box_width),
-                    height: scene_height(diagram, boxes), boxes: boxes,
+          width, height = scene_dimensions(diagram, boxes, frames, box_width)
+          Scene.new(width: width, height: height, boxes: boxes,
                     relations: scene_relations(diagram, boxes + frames),
                     frames: frames)
+        end
+
+        def scene_dimensions(diagram, boxes, frames, box_width)
+          unless package_endpoint_relation?(diagram)
+            return [canvas_width(boxes, box_width),
+                    scene_height(diagram, boxes)]
+          end
+
+          figures = boxes + frames
+          [package_extent(figures, :x, :width),
+           package_extent(figures, :y, :height)]
+        end
+
+        def package_extent(figures, origin, size)
+          figures.map do |item|
+            item.public_send(origin) + item.public_send(size)
+          end.max + PACKAGE_CANVAS_EDGE
         end
 
         def scene_height(diagram, boxes)
@@ -683,6 +707,7 @@ module Sirena
           record = compact_empty_box(record, details[:member_rows], diagram)
           record = smetana_hide_circle_box(record, klass, diagram, details)
           adjust_plain_empty_width(record, klass, diagram, details[:names])
+          record = package_relation_box(record, klass, diagram, details)
           record = multiline_title_box(record, klass, details)
           record = isolated_box_sizes(record, klass, diagram, details)
           record.merge(name_rows: details[:names].size,
@@ -695,6 +720,15 @@ module Sirena
           record = isolated_class_kind_box(record, diagram, details)
           record = hide_members_grid_box(record, diagram, details)
           qualified_association_box(record, klass, diagram, details)
+        end
+
+        def package_relation_box(record, klass, diagram, details)
+          return record unless package_endpoint_relation?(diagram)
+          return record unless plain_class?(klass) && klass.body.empty? &&
+            details[:names].one?
+
+          record.merge(width: standard_title_widths(details[:names]).max,
+                       height: MEMBER_NOTE_CLASS_HEIGHT)
         end
 
         def qualified_association_box(record, klass, diagram, details)
@@ -1086,8 +1120,17 @@ module Sirena
 
         def package_groups(specifications, diagram)
           by_package = specifications.group_by { |item| item[:package] }
-          ids = [nil, *diagram.packages.map(&:id)]
+          ids = package_group_ids(diagram)
           ids.filter_map { |id| by_package[id] }
+        end
+
+        def package_group_ids(diagram)
+          package_ids = diagram.packages.map(&:id)
+          source_package = diagram.relations.any? do |relation|
+            package_ids.include?(relation.left) &&
+              !package_ids.include?(relation.right)
+          end
+          source_package ? [*package_ids, nil] : [nil, *package_ids]
         end
 
         def pad(row, columns)
@@ -1111,26 +1154,34 @@ module Sirena
         end
 
         def intrinsic_box_widths?(diagram)
+          package_endpoint_relation?(diagram) || intrinsic_content?(diagram)
+        end
+
+        def intrinsic_content?(diagram)
           body = diagram.classes.any? { |klass| klass.body.any? }
           diagram.notes.any? || body ||
             heterogeneous_smetana_empty_classes?(diagram) ||
             diagram.directives.any? { |line| hide_or_show?(line) }
         end
 
-        def position_boxes(rows, box_width, stable_centers, intrinsic_widths)
-          tops = row_tops(rows)
+        def position_boxes(rows, box_width, stable_centers, intrinsic_widths,
+                           diagram)
+          tops = row_tops(rows, diagram)
           placement = box_placement(rows, box_width, stable_centers,
-                                    intrinsic_widths)
+                                    intrinsic_widths, diagram)
           rows.each_with_index.flat_map do |row, row_index|
             position_row(row, tops[row_index], box_width, placement)
           end
         end
 
-        def box_placement(rows, box_width, stable_centers, intrinsic_widths)
-          { left: left_margin(rows),
+        def box_placement(rows, box_width, stable_centers, intrinsic_widths,
+                          diagram)
+          { left: left_margin(rows, diagram),
             footprint: box_footprint(box_width, stable_centers),
             box_width: box_width,
-            intrinsic_widths: intrinsic_widths }
+            intrinsic_widths: intrinsic_widths,
+            left_align: intrinsic_widths &&
+              package_endpoint_relation?(diagram) }
         end
 
         def position_row(row, top, box_width, placement)
@@ -1156,6 +1207,8 @@ module Sirena
         def box_left(item, column, placement)
           slot = placement[:left] +
             (column * (placement[:footprint] + COLUMN_GAP))
+          return slot if placement[:left_align]
+
           width = if item && placement[:intrinsic_widths]
                     item.fetch(:width)
                   else
@@ -1165,18 +1218,21 @@ module Sirena
           slot + ((placement[:footprint] - width) / 2)
         end
 
-        def row_tops(rows)
+        def row_tops(rows, diagram)
           chains = rows.map { |row| row.compact.first[:chain] || [] }
-          first = [MARGIN + frame_space([], chains.first)]
-          row_steps(rows, chains).each_with_object(first) do |step, tops|
+          first = [top_margin(diagram) +
+            frame_space([], chains.first, diagram)]
+          steps = row_steps(rows, chains, diagram)
+          steps.each_with_object(first) do |step, tops|
             tops << (tops.last + step)
           end
         end
 
-        def row_steps(rows, chains)
+        def row_steps(rows, chains, diagram)
           row_heights(rows).each_with_index.map do |height, index|
-            space = frame_space(chains[index], chains[index + 1] || [])
-            height + ROW_GAP + space
+            below = chains[index + 1] || []
+            space = frame_space(chains[index], below, diagram)
+            height + row_gap(diagram, chains[index], below) + space
           end
         end
 
@@ -1186,11 +1242,34 @@ module Sirena
 
         # The room for the frames closed on leaving the packages `above` and
         # opened on entering the packages `below`, each given outermost first.
-        def frame_space(above, below)
+        def frame_space(above, below, diagram)
           shared = above.zip(below).take_while { |a, b| a == b }.size
+          closing = above.size - shared
+          opening = below.size - shared
+          if package_endpoint_relation?(diagram)
+            return nested_frame_space(closing, opening)
+          end
 
-          ((above.size - shared) * PackageFrames::CLOSE) +
-            ((below.size - shared) * PackageFrames::OPEN)
+          (closing * PackageFrames::CLOSE) +
+            (opening * PackageFrames::OPEN)
+        end
+
+        def nested_frame_space(closing, opening)
+          PackageFrames.stack_close(closing) +
+            PackageFrames.stack_open(opening)
+        end
+
+        def top_margin(diagram)
+          package_endpoint_relation?(diagram) ? PACKAGE_CANVAS_MARGIN : MARGIN
+        end
+
+        def row_gap(diagram, above, below)
+          crossing = above.empty? != below.empty?
+          if package_endpoint_relation?(diagram) && crossing
+            PACKAGE_OUTER_GAP
+          else
+            ROW_GAP
+          end
         end
 
         def column_count(items)
@@ -1198,11 +1277,90 @@ module Sirena
         end
 
         # Room on the left for the deepest stack of package frames.
-        def left_margin(rows)
+        def left_margin(rows, diagram)
           items = rows.flat_map(&:compact)
-          chains = items.map { |item| item[:chain] }
-          depth = chains.compact.map(&:size).max.to_i
+          depth = package_depth(items)
+          if package_endpoint_relation?(diagram)
+            return package_left_margin(depth)
+          end
+
           [MARGIN, (depth * PackageFrames::SIDE) + 8.0].max
+        end
+
+        def package_depth(items)
+          items.filter_map { |item| item[:chain]&.size }.max.to_i
+        end
+
+        def package_left_margin(depth)
+          PACKAGE_CANVAS_MARGIN + PackageFrames.stack_side(depth)
+        end
+
+        def package_endpoint_relation?(diagram)
+          package_ids = diagram.packages.map(&:id)
+          diagram.relations.one? do |relation|
+            package_ids.include?(relation.left) ||
+              package_ids.include?(relation.right)
+          end
+        end
+
+        def align_package_relation_targets(diagram, boxes, specifications)
+          by_name = boxes.to_h { |box| [box.id, box] }
+          specs = specifications.to_h { |item| [item[:id], item] }
+          replace_package_targets(diagram, by_name, specs)
+          boxes.map { |box| by_name.fetch(box.id) }
+        end
+
+        def replace_package_targets(diagram, by_name, specs)
+          diagram.relations.each do |relation|
+            replacement = aligned_package_target(diagram, by_name, specs,
+                                                 relation)
+            by_name[replacement.id] = replacement if replacement
+          end
+        end
+
+        def aligned_package_target(diagram, by_name, specs, relation)
+          return unless package_source?(diagram, relation)
+
+          target = by_name[relation.right]
+          descendants = package_descendant_boxes(diagram, by_name,
+                                                 relation.left)
+          return unless target && descendants.any?
+
+          build_aligned_package_target(diagram, specs, relation, target,
+                                       descendants)
+        end
+
+        def build_aligned_package_target(diagram, specs, relation, target,
+                                         descendants)
+          left = package_target_left(diagram, descendants, target, relation)
+          build_box(specs.fetch(target.id), left, target.y, target.width)
+        end
+
+        def package_source?(diagram, relation)
+          diagram.packages.any? { |item| item.id == relation.left }
+        end
+
+        def package_target_left(diagram, descendants, target, relation)
+          edge = descendants.map { |box| box.x + box.width }.max
+          depth = package_relation_depth(diagram, relation.left)
+          edge + PackageFrames.stack_side(depth) - (target.width / 2)
+        end
+
+        def package_descendant_boxes(diagram, by_name, package_id)
+          diagram.classes.filter_map do |klass|
+            chain = diagram.package_chain(klass.package)
+            next unless chain.include?(package_id)
+
+            by_name[klass.name]
+          end
+        end
+
+        def package_relation_depth(diagram, package_id)
+          diagram.classes.filter_map do |klass|
+            chain = diagram.package_chain(klass.package)
+            index = chain.index(package_id)
+            chain.size - index if index
+          end.max
         end
 
         def build_box(item, left, top, box_width)
@@ -1618,10 +1776,57 @@ module Sirena
         def relation_endpoints(left_box, right_box)
           return self_relation_endpoints(left_box) if left_box.equal?(right_box)
 
+          aligned = aligned_package_endpoints(left_box, right_box)
+          return aligned if aligned
+
           {
             left: boundary_point(left_box, right_box),
             right: boundary_point(right_box, left_box),
           }
+        end
+
+        def aligned_package_endpoints(left_box, right_box)
+          if package_frame?(left_box)
+            vertical_package_endpoints(left_box, right_box, :left)
+          elsif package_frame?(right_box)
+            vertical_package_endpoints(right_box, left_box, :right)
+          end
+        end
+
+        def package_frame?(box)
+          box.id.start_with?("package-")
+        end
+
+        def vertical_package_endpoints(frame, box, frame_side)
+          centre = box_centre(box)
+          return unless centre.first.between?(frame.x, frame.x + frame.width)
+
+          points = vertical_package_points(frame, box, centre.first)
+          return unless points
+
+          frame_point, box_point = points
+          return { left: frame_point, right: box_point } if frame_side == :left
+
+          { left: box_point, right: frame_point }
+        end
+
+        def vertical_package_points(frame, box, horizontal)
+          verticals = vertical_package_edges(frame, box)
+          verticals&.map { |vertical| [horizontal, vertical] }
+        end
+
+        def vertical_package_edges(frame, box)
+          return [bottom_of(frame), box.y] if below?(box, frame)
+
+          [frame.y, bottom_of(box)] if below?(frame, box)
+        end
+
+        def below?(box, other)
+          box.y >= bottom_of(other)
+        end
+
+        def bottom_of(box)
+          box.y + box.height
         end
 
         def self_relation_endpoints(box)
