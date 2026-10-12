@@ -1296,11 +1296,7 @@ module Sirena
         end
 
         def package_endpoint_relation?(diagram)
-          package_ids = diagram.packages.map(&:id)
-          diagram.relations.one? do |relation|
-            package_ids.include?(relation.left) ||
-              package_ids.include?(relation.right)
-          end
+          PackageFrames.relation_layout?(diagram)
         end
 
         def align_package_relation_targets(diagram, boxes, specifications)
