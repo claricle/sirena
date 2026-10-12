@@ -16,7 +16,7 @@ module Sirena
         MARGIN = 36.0
         COLUMN_GAP = 90.0
         ROW_GAP = 90.0
-        MIN_BOX_WIDTH = 160.0
+        ANNOTATED_RELATION_SLOT_WIDTH = 160.0
         BOX_PADDING = 12.0
         ROW_HEIGHT = 22.0
         MARKER_LENGTH = 12.0
@@ -31,13 +31,13 @@ module Sirena
         MEMBER_NOTE_CLASS_HEIGHT = 48.0
         MEMBER_NOTE_SIDE_PADDING = 6.0
         FILLED_MARKERS = %i[association dependency composition].freeze
-        private_constant :MARGIN, :COLUMN_GAP, :ROW_GAP, :MIN_BOX_WIDTH,
-                         :BOX_PADDING, :ROW_HEIGHT, :MARKER_LENGTH,
-                         :MARKER_HALF_WIDTH, :LABEL_OFFSET, :FILLED_MARKERS,
-                         :NESTING_RADIUS, :MEMBER_NOTE_TEXT_SCALE,
-                         :MEMBER_NOTE_ROW_HEIGHT, :MEMBER_NOTE_LINE_HEIGHT,
-                         :MEMBER_NOTE_STACK_GAP, :MEMBER_NOTE_BODY_GAP,
-                         :MEMBER_NOTE_CLASS_HEIGHT,
+        private_constant :MARGIN, :COLUMN_GAP, :ROW_GAP,
+                         :ANNOTATED_RELATION_SLOT_WIDTH, :BOX_PADDING,
+                         :ROW_HEIGHT, :MARKER_LENGTH, :MARKER_HALF_WIDTH,
+                         :LABEL_OFFSET, :FILLED_MARKERS, :NESTING_RADIUS,
+                         :MEMBER_NOTE_TEXT_SCALE, :MEMBER_NOTE_ROW_HEIGHT,
+                         :MEMBER_NOTE_LINE_HEIGHT, :MEMBER_NOTE_STACK_GAP,
+                         :MEMBER_NOTE_BODY_GAP, :MEMBER_NOTE_CLASS_HEIGHT,
                          :MEMBER_NOTE_SIDE_PADDING
 
         # @param graph [IR::Graph] from {IRAdapter}
@@ -60,7 +60,7 @@ module Sirena
           specifications += note_specifications(diagram.notes)
           box_width = widest_box(specifications)
           boxes = position_boxes(rows_by_package(specifications, diagram),
-                                 box_width)
+                                 box_width, stable_centers?(diagram))
 
           build_scene(diagram, boxes, box_width)
         end
@@ -311,7 +311,7 @@ module Sirena
 
         def measured_box_width(rows)
           measured = rows.map { |text| measured_width(text) }
-          [MIN_BOX_WIDTH, measured.max.to_f + (BOX_PADDING * 2)].max
+          measured.max.to_f + (BOX_PADDING * 2)
         end
 
         def box_height(rows, member_rows)
@@ -376,15 +376,56 @@ module Sirena
           row + Array.new(columns - row.size)
         end
 
-        def position_boxes(rows, box_width)
-          tops = row_tops(rows)
-          left = left_margin(rows)
-          rows.each_with_index.flat_map do |row, row_index|
-            row.each_with_index.filter_map do |item, column|
-              x = left + (column * (box_width + COLUMN_GAP))
-              build_box(item, x, tops[row_index], box_width) if item
-            end
+        def stable_centers?(diagram)
+          horizontal = diagram.directives.include?("left to right direction")
+          diagram.relations.any? do |relation|
+            qualifiers = [relation.left_multiplicity,
+                          relation.right_multiplicity]
+            # PlantUML reserves relation-label lanes for qualifiers and for
+            # fully annotated horizontal ends independently of class chrome.
+            qualifiers.any? { |text| text&.start_with?("[") } ||
+              (horizontal && annotated_ends?(relation))
           end
+        end
+
+        def annotated_ends?(relation)
+          [relation.left_role, relation.right_role].compact.size == 2
+        end
+
+        def position_boxes(rows, box_width, stable_centers)
+          tops = row_tops(rows)
+          placement = box_placement(rows, box_width, stable_centers)
+          rows.each_with_index.flat_map do |row, row_index|
+            position_row(row, tops[row_index], box_width, placement)
+          end
+        end
+
+        def box_placement(rows, box_width, stable_centers)
+          { left: left_margin(rows),
+            footprint: box_footprint(box_width, stable_centers),
+            box_width: box_width,
+            anchor: rows.flatten.compact.first }
+        end
+
+        def position_row(row, top, box_width, placement)
+          row.each_with_index.filter_map do |item, column|
+            x = box_left(item, column, placement)
+            build_box(item, x, top, box_width) if item
+          end
+        end
+
+        def box_footprint(box_width, stable_centers)
+          return box_width unless stable_centers
+
+          [ANNOTATED_RELATION_SLOT_WIDTH, box_width].max
+        end
+
+        def box_left(item, column, placement)
+          slot = placement[:left] +
+            (column * (placement[:footprint] + COLUMN_GAP))
+          return slot if item.equal?(placement[:anchor])
+
+          slot + ((placement[:footprint] - placement[:box_width]) / 2)
         end
 
         def row_tops(rows)
@@ -750,14 +791,13 @@ module Sirena
           coordinates.map { |number| number.round(3) }.join(separator)
         end
 
-        def canvas_width(boxes, box_width)
-          (boxes.map(&:x).min * 2) + (column_count(boxes) * box_width) +
-            ((column_count(boxes) - 1) * COLUMN_GAP)
+        def canvas_width(boxes, _box_width)
+          boxes.map { |box| box.x + box.width }.max + boxes.map(&:x).min
         end
 
         def widest_box(specifications)
           widths = specifications.map { |item| item[:width] }
-          [MIN_BOX_WIDTH, *widths].max
+          widths.max
         end
 
         def box_rows(boxes)
