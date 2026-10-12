@@ -41,6 +41,9 @@ module Sirena
         MEMBER_NOTE_BODY_GAP = 35.0
         MEMBER_NOTE_CLASS_HEIGHT = 48.0
         MEMBER_NOTE_SIDE_PADDING = 6.0
+        STANDARD_MEMBER_SIDE_ALLOWANCE = 20.0
+        STANDARD_STEREOTYPE_ROW_HEIGHT = 8.62109375
+        STANDARD_TITLE_SIDE_ALLOWANCE = 32.0
         # PlantUML removes the otherwise empty member compartment below a
         # one-line title when `hide empty members` is active. Its Smetana
         # boxes also keep four more pixels of side padding than our ordinary
@@ -69,6 +72,9 @@ module Sirena
                          :MEMBER_NOTE_LINE_HEIGHT, :MEMBER_NOTE_STACK_GAP,
                          :MEMBER_NOTE_BODY_GAP, :MEMBER_NOTE_CLASS_HEIGHT,
                          :MEMBER_NOTE_SIDE_PADDING,
+                         :STANDARD_MEMBER_SIDE_ALLOWANCE,
+                         :STANDARD_STEREOTYPE_ROW_HEIGHT,
+                         :STANDARD_TITLE_SIDE_ALLOWANCE,
                          :EMPTY_MEMBER_COMPARTMENT, :EMPTY_CLASS_WIDTH_EXTRA,
                          :EMPTY_CLASS_MIN_WIDTH
 
@@ -406,6 +412,7 @@ module Sirena
         def complete_box_specification(record, klass, diagram, details)
           record = compact_empty_box(record, details[:member_rows], diagram)
           adjust_plain_empty_width(record, klass, diagram, details[:names])
+          record = isolated_standard_box(record, klass, diagram, details)
           record.merge(name_rows: details[:names].size,
                        floating_generic: details[:generic],
                        **box_context(klass, diagram))
@@ -465,6 +472,64 @@ module Sirena
                                                      font_size: font_size)
           [((title_width * 2).round / 2.0) + 32.0,
            EMPTY_CLASS_MIN_WIDTH].max
+        end
+
+        def isolated_standard_box(record, klass, diagram, details)
+          return record unless isolated_standard_box?(klass, diagram, details)
+
+          record.merge(
+            width: isolated_standard_width(klass, details),
+            height: isolated_standard_height(klass, details[:member_rows]),
+          )
+        end
+
+        def isolated_standard_box?(klass, diagram, details)
+          lone_standard_class?(klass, diagram) &&
+            (details[:member_rows].any? || klass.stereotypes.any?)
+        end
+
+        def lone_standard_class?(klass, diagram)
+          diagram.classes.one? && diagram.notes.empty? &&
+            standalone_diagram?(diagram) && klass.kind == :class &&
+            klass.generics.nil?
+        end
+
+        def isolated_standard_width(klass, details)
+          [standard_title_widths(details[:names]),
+           standard_header_widths(klass),
+           standard_member_widths(details[:member_rows])].flatten.max
+        end
+
+        def standard_title_widths(rows)
+          standard_row_widths(rows, font_size,
+                              STANDARD_TITLE_SIDE_ALLOWANCE)
+        end
+
+        def standard_header_widths(klass)
+          rows = header_rows(klass).map do |row|
+            row.gsub(/<<([^<>]+)>>/, '«\1»')
+          end
+          standard_row_widths(rows, font_size * (12.0 / 14.0),
+                              STANDARD_TITLE_SIDE_ALLOWANCE)
+        end
+
+        def standard_member_widths(rows)
+          standard_row_widths(rows, font_size,
+                              STANDARD_MEMBER_SIDE_ALLOWANCE)
+        end
+
+        def standard_row_widths(rows, size, allowance)
+          rows.map { |row| standard_text_width(row, size) + allowance }
+        end
+
+        def standard_text_width(text, size)
+          Sequence::TextAdvances.width(text, font_size: size)
+        end
+
+        def isolated_standard_height(klass, member_rows)
+          MEMBER_NOTE_CLASS_HEIGHT +
+            (member_rows.size * MEMBER_NOTE_ROW_HEIGHT) +
+            (header_rows(klass).size * STANDARD_STEREOTYPE_ROW_HEIGHT)
         end
 
         def box_context(klass, diagram)
