@@ -13,10 +13,11 @@ module Sirena
           OFFSET = 6.0
           OVER_MARGIN = 10.0
           BLOCK_GAP = 5.0
+          PICTURE_CHROME = 15.0
 
           # Width the text needs, without regard to the participants.
           def natural_width(note, measure)
-            return note.picture.width + (2 * PAD) if note.picture
+            return picture_width(note.picture) + (2 * PAD) if note.picture
 
             note.lines.map { |line| measure.call(line) }.max + (2 * PAD)
           end
@@ -26,9 +27,22 @@ module Sirena
           end
 
           def height(note, font_size)
-            return note.picture.height + 14 if note.picture
+            return picture_height(note.picture) + 14 if note.picture
 
             (note.lines.size * line_height(font_size)) + 14
+          end
+
+          def picture_inset(picture)
+            nested = picture.scene.notes.any?(&:picture)
+            nested ? PICTURE_CHROME * picture.scale : 0.0
+          end
+
+          def picture_width(picture)
+            picture.width - (2 * picture_inset(picture))
+          end
+
+          def picture_height(picture)
+            picture.height - (2 * picture_inset(picture))
           end
 
           # @return [Array<Integer>] first and last participant index the
