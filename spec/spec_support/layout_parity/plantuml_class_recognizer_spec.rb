@@ -28,16 +28,10 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlClassRecognizer do
     extract(svg, recognizer).keys.sort_by(&:inspect)
   end
 
-  def content_keys(svg)
-    keys(svg).select { |key| key.first == :class_content }
-  end
+  def suffix_spaced_keys(svg)
+    keys(svg).map do |key|
+      next key unless key.first == :class_content
 
-  def structural_keys(svg)
-    keys(svg).reject { |key| key.first == :class_content }
-  end
-
-  def suffix_spaced(keys)
-    keys.map do |key|
       key[0..1] + [key.last.map { |row| row.sub(/ : ([^:]*)\z/, ": \\1") }]
     end
   end
@@ -55,8 +49,7 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlClassRecognizer do
     name = "16-full-example"
     render = Sirena.render(source(name), notation: :plantuml)
 
-    expect(structural_keys(render)).to eq(structural_keys(reference(name)))
-    expect(content_keys(render)).to eq(suffix_spaced(content_keys(reference(name))))
+    expect(keys(render)).to eq(suffix_spaced_keys(reference(name)))
   end
 
   it "resolves mixed arrow-side endpoints without reversing their owners" do
