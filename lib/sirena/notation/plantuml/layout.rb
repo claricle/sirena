@@ -94,8 +94,10 @@ module Sirena
           chain = RankChain.for(diagram)
           return chain_scene(diagram, chain, specifications) if chain
 
+          intrinsic_widths = intrinsic_box_widths?(diagram)
           boxes = position_boxes(rows_by_package(specifications, diagram),
-                                 box_width, stable_centers?(diagram))
+                                 box_width, stable_centers?(diagram),
+                                 intrinsic_widths)
 
           build_scene(diagram, boxes, box_width)
         end
@@ -147,8 +149,13 @@ module Sirena
 
         def chain_sizes(specifications, diagram)
           widest = widest_box(specifications)
+          intrinsic_widths = intrinsic_box_widths?(diagram)
           specifications.to_h do |item|
-            width = compact_empty_item?(item, diagram) ? item[:width] : widest
+            width = if compact_empty_item?(item, diagram) || intrinsic_widths
+                      item[:width]
+                    else
+                      widest
+                    end
             [item[:id], [width, item[:height]]]
           end
         end
@@ -569,25 +576,32 @@ module Sirena
           [relation.left_role, relation.right_role].compact.size == 2
         end
 
-        def position_boxes(rows, box_width, stable_centers)
+        def intrinsic_box_widths?(diagram)
+          diagram.notes.any? || diagram.classes.any? { |klass| klass.body.any? } ||
+            diagram.directives.any? { |line| line.match?(/\A(?:hide|show)\b/i) }
+        end
+
+        def position_boxes(rows, box_width, stable_centers, intrinsic_widths)
           tops = row_tops(rows)
-          placement = box_placement(rows, box_width, stable_centers)
+          placement = box_placement(rows, box_width, stable_centers,
+                                    intrinsic_widths)
           rows.each_with_index.flat_map do |row, row_index|
             position_row(row, tops[row_index], box_width, placement)
           end
         end
 
-        def box_placement(rows, box_width, stable_centers)
+        def box_placement(rows, box_width, stable_centers, intrinsic_widths)
           { left: left_margin(rows),
             footprint: box_footprint(box_width, stable_centers),
             box_width: box_width,
-            anchor: rows.flatten.compact.first }
+            intrinsic_widths: intrinsic_widths }
         end
 
         def position_row(row, top, box_width, placement)
           row.each_with_index.filter_map do |item, column|
             x = box_left(item, column, placement)
-            build_box(item, x, top, box_width) if item
+            width = placement[:intrinsic_widths] ? item&.fetch(:width) : box_width
+            build_box(item, x, top, width) if item
           end
         end
 
@@ -600,9 +614,13 @@ module Sirena
         def box_left(item, column, placement)
           slot = placement[:left] +
             (column * (placement[:footprint] + COLUMN_GAP))
-          return slot if item.equal?(placement[:anchor])
+          width = if item && placement[:intrinsic_widths]
+                    item.fetch(:width)
+                  else
+                    placement[:box_width]
+                  end
 
-          slot + ((placement[:footprint] - placement[:box_width]) / 2)
+          slot + ((placement[:footprint] - width) / 2)
         end
 
         def row_tops(rows)
