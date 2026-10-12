@@ -6,6 +6,7 @@ require_relative "class_name"
 require_relative "end_texts"
 require_relative "ir_reader"
 require_relative "package_frames"
+require_relative "qualified_association_layout"
 require_relative "rank_chain"
 require_relative "scene"
 require_relative "sequence/text_advances"
@@ -85,10 +86,10 @@ module Sirena
         private
 
         def standard_scene(diagram)
-          specifications = diagram.classes.map do |klass|
-            box_specification(klass, diagram)
-          end
-          specifications += note_specifications(diagram.notes)
+          specifications = box_specifications(diagram)
+          qualified = qualified_scene(diagram, specifications)
+          return qualified if qualified
+
           box_width = widest_box(specifications)
           chain = RankChain.for(diagram)
           return chain_scene(diagram, chain, specifications) if chain
@@ -97,6 +98,40 @@ module Sirena
                                  box_width, stable_centers?(diagram))
 
           build_scene(diagram, boxes, box_width)
+        end
+
+        def box_specifications(diagram)
+          classes = diagram.classes.map do |klass|
+            box_specification(klass, diagram)
+          end
+          classes + note_specifications(diagram.notes)
+        end
+
+        def qualified_scene(diagram, specifications)
+          qualified = QualifiedAssociationLayout.for(diagram)
+          if qualified
+            qualified_association_scene(diagram, qualified, specifications)
+          end
+        end
+
+        def qualified_association_scene(diagram, qualified, specifications)
+          sizes = qualified_sizes(specifications)
+          corners = qualified.place(sizes, [MARGIN, MARGIN])
+          boxes = chain_boxes(specifications, corners, sizes)
+          width, height = chain_dimensions(boxes)
+          @qualified_route_middle = qualified_route_middle(boxes)
+          Scene.new(width: width, height: height, boxes: boxes, frames: [],
+                    relations: scene_relations(diagram, boxes))
+        end
+
+        def qualified_sizes(specifications)
+          specifications.to_h do |item|
+            [item[:id], [item[:width], item[:height]]]
+          end
+        end
+
+        def qualified_route_middle(boxes)
+          boxes.sum { |box| box.y + (box.height / 2) } / boxes.size
         end
 
         def chain_scene(diagram, chain, specifications)
@@ -344,12 +379,26 @@ module Sirena
 
         def box_specification(klass, diagram)
           member_rows = klass.body.map { |member| member_text(member) }
-          names = name_rows(klass)
+          names, generic = qualified_box_names(klass, diagram)
           record = box_record(klass.name, header_rows(klass) + names,
                               member_rows)
-          record = compact_empty_box(record, member_rows, diagram)
-          adjust_plain_empty_width(record, klass, diagram, names)
-          record.merge(name_rows: names.size, **box_context(klass, diagram))
+          details = { member_rows: member_rows, names: names, generic: generic }
+          complete_box_specification(record, klass, diagram, details)
+        end
+
+        def qualified_box_names(klass, diagram)
+          qualified = !QualifiedAssociationLayout.for(diagram).nil?
+          names = name_rows(klass, separate_generics: qualified)
+          generic = klass.generics if qualified
+          [generic ? names[0...-1] : names, generic]
+        end
+
+        def complete_box_specification(record, klass, diagram, details)
+          record = compact_empty_box(record, details[:member_rows], diagram)
+          adjust_plain_empty_width(record, klass, diagram, details[:names])
+          record.merge(name_rows: details[:names].size,
+                       floating_generic: details[:generic],
+                       **box_context(klass, diagram))
         end
 
         def compact_empty_box(record, member_rows, diagram)
@@ -450,8 +499,11 @@ module Sirena
           [*kind, *(tags.join(" ") unless tags.empty?)]
         end
 
-        def name_rows(klass)
+        def name_rows(klass, separate_generics: false)
           *first, last = ClassName.lines(klass.name)
+          return [*first, last, klass.generics] if separate_generics &&
+            klass.generics
+
           [*first, (klass.generics ? "#{last}<#{klass.generics}>" : last)]
         end
 
@@ -635,15 +687,28 @@ module Sirena
 
         def title_texts(item, horizontal, vertical, width)
           cursor = vertical + BOX_PADDING + font_size
+          texts, cursor = title_text_rows(item, horizontal, width, cursor)
+          texts << floating_generic_text(item, horizontal, vertical, width)
+          [texts.compact, cursor]
+        end
+
+        def title_text_rows(item, horizontal, width, cursor)
           texts = item[:title_rows].each_with_index.map do |content, index|
-            role = title_role(item, index)
-            text = scene_text(
-              content, horizontal + (width / 2), cursor, role, "middle"
-            )
+            text = scene_text(content, horizontal + (width / 2), cursor,
+                              title_role(item, index), "middle")
             cursor += ROW_HEIGHT
             text
           end
           [texts, cursor]
+        end
+
+        def floating_generic_text(item, horizontal, vertical, width)
+          generic = item[:floating_generic]
+          return unless generic
+
+          scaled_width = measured_width(generic) * 0.85
+          scene_text(generic, horizontal + width - scaled_width + 4.0,
+                     vertical + (font_size * 0.9), "kind", "start")
         end
 
         def title_role(item, index)
@@ -761,10 +826,90 @@ module Sirena
           sides = style.fetch(:sides, %i[left right])
           markers = style.fetch(:markers, relation.markers)
           texts = relation_texts(relation, endpoints, end_texts, sides)
-          Scene::Relation.new(id: id, dashed: relation.dashed?,
-                              path: relation_path(endpoints), texts: texts,
-                              markers: marker_scenes(markers.slice(*sides),
-                                                     endpoints))
+          drawn_markers = relation_markers(relation, markers, sides, endpoints)
+          Scene::Relation.new(id: id, dashed: relation.dashed?, texts: texts,
+                              path: relation_path_for(relation, endpoints),
+                              markers: drawn_markers)
+        end
+
+        def relation_markers(relation, markers, sides, endpoints)
+          half_width = qualified_marker_half_width(relation, endpoints)
+          drawn_markers = marker_scenes(markers.slice(*sides), endpoints,
+                                        half_width: half_width)
+          drawn_markers << label_arrow_scene(relation, endpoints)
+          drawn_markers.compact
+        end
+
+        def relation_path_for(relation, endpoints)
+          ordered = if reversed_qualified?(relation)
+                      endpoints.merge(left: endpoints[:right],
+                                      right: endpoints[:left])
+                    else
+                      endpoints
+                    end
+          control = qualified_label_control(relation, ordered)
+          return relation_path(ordered) unless control
+
+          "M #{point(ordered[:left])} Q #{point(control)} " \
+            "#{point(ordered[:right])}"
+        end
+
+        def reversed_qualified?(relation)
+          qualifiers = [relation.left_multiplicity,
+                        relation.right_multiplicity]
+          qualifiers.compact.any? { |text| text.start_with?("[") } &&
+            %i[up left].include?(relation.direction)
+        end
+
+        def qualified_label_control(relation, endpoints)
+          return unless qualifier_relation?(relation) && label_arrow?(relation)
+
+          left, right = endpoints.values_at(:left, :right)
+          return if steep?(left, right)
+
+          middle = midpoint(left, right)
+          outward = middle[1] < @qualified_route_middle ? -30.0 : 30.0
+          [middle[0], middle[1] + outward]
+        end
+
+        def qualifier_relation?(relation)
+          [relation.left_multiplicity, relation.right_multiplicity]
+            .compact.any? { |text| text.start_with?("[") }
+        end
+
+        def qualified_marker_half_width(relation, endpoints)
+          qualifiers = [relation.left_multiplicity,
+                        relation.right_multiplicity]
+          return unless qualifiers.all? { |text| text&.start_with?("[") }
+
+          left, right = endpoints.values_at(:left, :right)
+          9.0 unless steep?(left, right)
+        end
+
+        def label_arrow?(relation)
+          relation.label&.match?(/[ \t]+[<>]\z/)
+        end
+
+        def label_arrow_scene(relation, endpoints)
+          return unless qualifier_relation?(relation) && label_arrow?(relation)
+
+          centre, direction = label_arrow_geometry(relation, endpoints)
+          tip = shift(centre, *direction, 5.0)
+          base = shift(centre, *direction, -4.0)
+          points = [tip, marker_side(base, direction, 3.0),
+                    marker_side(base, direction, -3.0)]
+          Scene::Marker.new(shape: "polygon", filled: true,
+                            points: formatted_points(points))
+        end
+
+        def label_arrow_geometry(relation, endpoints)
+          left, right = endpoints.values_at(:left, :right)
+          direction = unit_vector(left, right)
+          direction = direction.map(&:-@) if relation.label.end_with?("<")
+          centre = qualified_label_control(relation, endpoints) ||
+            midpoint(left, right)
+          centre = shift(centre, 1.0, 0.0, 25.0) if steep?(left, right)
+          [centre, direction]
         end
 
         # PlantUML turns a relation carrying an association class into two
@@ -863,20 +1008,21 @@ module Sirena
           "M #{point(left)} Q #{point(control)} #{point(right)}"
         end
 
-        def marker_scenes(markers, endpoints)
+        def marker_scenes(markers, endpoints, half_width: nil)
           markers.compact.map do |side, kind|
             tip = endpoints.fetch(side)
             other = endpoints.fetch(side == :left ? :right : :left)
-            marker_scene(kind, tip, other)
+            marker_scene(kind, tip, other, half_width: half_width)
           end
         end
 
-        def marker_scene(kind, tip, other)
+        def marker_scene(kind, tip, other, half_width: nil)
           return nesting_scene(tip, other) if kind == :nesting
 
           Scene::Marker.new(
             shape: "polygon", filled: FILLED_MARKERS.include?(kind),
-            points: marker_points(tip, other, marker_shape(kind))
+            points: marker_points(tip, other, marker_shape(kind),
+                                  half_width: half_width)
           )
         end
 
@@ -901,35 +1047,38 @@ module Sirena
           :triangle
         end
 
-        def marker_points(tip, other, shape)
+        def marker_points(tip, other, shape, half_width: nil)
           direction = unit_vector(other, tip)
-          return arrow_points(tip, direction) if shape == :arrow
-          return diamond_points(tip, direction) if shape == :diamond
+          return arrow_points(tip, direction, half_width) if shape == :arrow
+          return diamond_points(tip, direction, half_width) if shape == :diamond
 
           base = shift(tip, *direction, -MARKER_LENGTH)
+          half_width ||= MARKER_HALF_WIDTH
           formatted_points(
-            [tip, marker_side(base, direction, MARKER_HALF_WIDTH),
-             marker_side(base, direction, -MARKER_HALF_WIDTH)],
+            [tip, marker_side(base, direction, half_width),
+             marker_side(base, direction, -half_width)],
           )
         end
 
         # PlantUML's aggregation and composition diamond.
-        def diamond_points(tip, direction)
+        def diamond_points(tip, direction, half_width = nil)
           middle = shift(tip, *direction, -(DIAMOND_LENGTH / 2))
+          half_width ||= DIAMOND_HALF_WIDTH
           formatted_points(
-            [tip, marker_side(middle, direction, DIAMOND_HALF_WIDTH),
+            [tip, marker_side(middle, direction, half_width),
              shift(tip, *direction, -DIAMOND_LENGTH),
-             marker_side(middle, direction, -DIAMOND_HALF_WIDTH)],
+             marker_side(middle, direction, -half_width)],
           )
         end
 
         # PlantUML's open arrowhead: two wings joined through a notch.
-        def arrow_points(tip, direction)
+        def arrow_points(tip, direction, half_width = nil)
           base = shift(tip, *direction, -ARROW_LENGTH)
+          half_width ||= ARROW_HALF_WIDTH
           formatted_points(
-            [tip, marker_side(base, direction, ARROW_HALF_WIDTH),
+            [tip, marker_side(base, direction, half_width),
              shift(tip, *direction, -ARROW_NOTCH),
-             marker_side(base, direction, -ARROW_HALF_WIDTH)],
+             marker_side(base, direction, -half_width)],
           )
         end
 
@@ -970,8 +1119,12 @@ module Sirena
         def relation_text_label(relation, endpoints, sides)
           return unless sides.include?(:left)
 
-          relation_label(relation.label,
+          relation_label(visible_relation_label(relation.label),
                          *endpoints.values_at(:left, :right))
+        end
+
+        def visible_relation_label(label)
+          label&.sub(/[ \t]+[<>]\z/, "")
         end
 
         def positioned_end_texts(entries, endpoints, direction, first, sides)
@@ -1019,6 +1172,11 @@ module Sirena
           point, sideways, upright = end_text_position(entry, endpoint,
                                                        direction, inward)
           anchor = sideways[0].positive? ? "start" : "end"
+          if entry[:multiline]
+            return multiline_end_text_run(entry[:pieces],
+                                          hug(point, upright[1]), anchor)
+          end
+
           end_text_run(entry[:pieces], hug(point, upright[1]), anchor)
         end
 
@@ -1037,6 +1195,7 @@ module Sirena
         def end_text_vectors(entry, direction, inward)
           side = entry[:kind] == :role ? -1 : 1
           normal = [-direction[1] * side, direction[0] * side]
+          inward *= -1 if entry[:kind] == :qualifier
           along = direction.map { |component| component * inward }
           [normal, along]
         end
@@ -1056,6 +1215,15 @@ module Sirena
           end
 
           numbered_end_text_run(pieces, point, anchor)
+        end
+
+        def multiline_end_text_run(lines, point, anchor)
+          line_height = font_size * SMALL_TEXT_SCALE * 1.215
+          top = point[1] - (line_height * (lines.size - 1))
+          lines.each_with_index.map do |line, index|
+            scene_text(line, point[0], top + (index * line_height),
+                       "multiplicity", anchor)
+          end
         end
 
         def numbered_end_text_run(pieces, point, anchor)
@@ -1078,7 +1246,8 @@ module Sirena
 
         def label_widths(diagram)
           diagram.relations.each_with_index.filter_map do |relation, index|
-            [index, end_text_width(relation.label)] if relation.label
+            label = visible_relation_label(relation.label)
+            [index, end_text_width(label)] if label
           end.to_h
         end
 
