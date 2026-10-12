@@ -49,7 +49,10 @@ module Sirena
             content = @relation.public_send(:"#{side}_#{kind}")
             entry(side, kind, content) if content
           end
-          entries.sort_by { |entry| entry[:kind] == :qualifier ? 1 : 0 }
+          ordinary, qualifiers = entries.partition do |entry|
+            entry[:kind] != :qualifier
+          end
+          ordinary + qualifiers
         end
 
         private
