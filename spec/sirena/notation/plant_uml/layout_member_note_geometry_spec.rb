@@ -94,7 +94,7 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     scene = described_class.new.call(graph)
     rows = scene.boxes.first.texts.map(&:content)
 
-    expect(rows).to eq(["C", "int before", "after : int"])
+    expect(rows).to eq(["C", "int before", "after: int"])
   end
 
   it "matches the pinned class geometry without presence failures" do

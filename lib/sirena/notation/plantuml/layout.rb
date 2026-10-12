@@ -345,7 +345,7 @@ module Sirena
           content = if type && member.type_position == :prefix
                       "#{type} #{name}"
                     else
-                      "#{name}#{" : #{type}" if type}"
+                      "#{name}#{": #{type}" if type}"
                     end
           "#{visibility_mark(member.visibility)}#{content}"
         end
