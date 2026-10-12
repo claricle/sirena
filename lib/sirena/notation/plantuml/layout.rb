@@ -66,6 +66,8 @@ module Sirena
         ISOLATED_KIND_COLUMN_GAP = 35.0
         ISOLATED_KIND_ROW_GAP = 60.0
         ISOLATED_KIND_MEMBER_ALLOWANCE = 26.0
+        HIDDEN_MEMBER_EMPTY_HEIGHT = 32.0
+        RESHOWN_MEMBER_BASE_HEIGHT = 40.0
         ARROW_LENGTH = 9.0
         ARROW_HALF_WIDTH = 4.0
         ARROW_NOTCH = 5.0
@@ -105,7 +107,9 @@ module Sirena
                          :HIDE_CIRCLE_MEMBER_ALLOWANCE,
                          :ISOLATED_KIND_COLUMN_GAP,
                          :ISOLATED_KIND_ROW_GAP,
-                         :ISOLATED_KIND_MEMBER_ALLOWANCE
+                         :ISOLATED_KIND_MEMBER_ALLOWANCE,
+                         :HIDDEN_MEMBER_EMPTY_HEIGHT,
+                         :RESHOWN_MEMBER_BASE_HEIGHT
 
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
@@ -124,6 +128,9 @@ module Sirena
 
         def standard_scene(diagram)
           specifications = box_specifications(diagram)
+          hidden_members = hide_members_grid_scene(diagram, specifications)
+          return hidden_members if hidden_members
+
           isolated_kinds = isolated_class_kind_scene(diagram, specifications)
           return isolated_kinds if isolated_kinds
 
@@ -131,6 +138,51 @@ module Sirena
           return qualified if qualified
 
           standard_box_scene(diagram, specifications)
+        end
+
+        def hide_members_grid_scene(diagram, specifications)
+          return unless hide_members_grid_family?(diagram)
+
+          visible, hidden = specifications.partition do |item|
+            item[:member_rows].any?
+          end
+          ordered = visible + hidden
+          rows = ordered.each_slice(2).to_a
+          boxes = hide_members_grid_boxes(rows)
+          width, height = chain_dimensions(boxes)
+          Scene.new(width: width, height: height, boxes: boxes,
+                    relations: [], frames: [])
+        end
+
+        def hide_members_grid_family?(diagram)
+          diagram.classes.size > 1 && diagram.notes.empty? &&
+            standalone_diagram?(diagram) &&
+            diagram.directives.include?("hide members") &&
+            diagram.classes.any? { |klass| klass.body.any? }
+        end
+
+        def hide_members_grid_boxes(rows)
+          row_widths = rows.map { |row| hide_members_row_width(row) }
+          widest = row_widths.max
+          tops = isolated_class_kind_row_tops(rows)
+          rows.each_with_index.flat_map do |row, index|
+            left = MARGIN + ((widest - row_widths.fetch(index)) / 2)
+            hide_members_grid_row(row, left, tops.fetch(index))
+          end
+        end
+
+        def hide_members_row_width(row)
+          row.sum { |item| item[:width] } +
+            (ISOLATED_KIND_COLUMN_GAP * (row.size - 1))
+        end
+
+        def hide_members_grid_row(row, left, top)
+          height = row.map { |item| item[:height] }.max
+          row.each_with_object([]) do |item, boxes|
+            y = top + ((height - item[:height]) / 2)
+            boxes << build_box(item, left, y, item[:width])
+            left += item[:width] + ISOLATED_KIND_COLUMN_GAP
+          end
         end
 
         def isolated_class_kind_scene(diagram, specifications)
@@ -596,9 +648,27 @@ module Sirena
           record = multiline_title_box(record, klass, details)
           record = isolated_standard_box(record, klass, diagram, details)
           record = isolated_class_kind_box(record, diagram, details)
+          record = hide_members_grid_box(record, diagram, details)
           record.merge(name_rows: details[:names].size,
                        floating_generic: details[:generic],
                        **box_context(klass, diagram))
+        end
+
+        def hide_members_grid_box(record, diagram, details)
+          return record unless hide_members_grid_family?(diagram)
+
+          members = details[:member_rows]
+          widths = standard_title_widths(details[:names]) +
+            isolated_class_kind_member_widths(members)
+          record.merge(width: widths.max,
+                       height: hide_members_box_height(members))
+        end
+
+        def hide_members_box_height(members)
+          return HIDDEN_MEMBER_EMPTY_HEIGHT if members.empty?
+
+          RESHOWN_MEMBER_BASE_HEIGHT +
+            (members.size * MEMBER_NOTE_ROW_HEIGHT)
         end
 
         def isolated_class_kind_box(record, diagram, details)
