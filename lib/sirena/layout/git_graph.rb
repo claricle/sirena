@@ -367,7 +367,7 @@ module Sirena
         return [x_coordinate - (width / 2.0), y_coordinate - 16, "middle"] if
           kind == "tag"
 
-        lone_id_label_position(width, x_coordinate, y_coordinate)
+        diagonal_id_label_position(width, x_coordinate, y_coordinate)
       end
 
       def mermaid_label_width(text)
@@ -376,14 +376,14 @@ module Sirena
         )[:width] * MERMAID_LABEL_WIDTH_SCALE
       end
 
-      def lone_id_label_position(width, x_coordinate, y_coordinate)
-        offset_x, offset_y = lone_id_label_offsets(width)
+      def diagonal_id_label_position(width, x_coordinate, y_coordinate)
+        offset_x, offset_y = diagonal_id_label_offsets(width)
         [x_coordinate - (width / 2.0) + offset_x,
          y_coordinate + 25 + offset_y, "start", -45.0,
          x_coordinate - COMMIT_RADIUS, y_coordinate]
       end
 
-      def lone_id_label_offsets(width)
+      def diagonal_id_label_offsets(width)
         shift_x = -7.5 - (((width + 10) / 25.0) * 9.5)
         shift_y = 10 + ((width / 25.0) * 8.5)
         diagonal = Math.sqrt(2)
@@ -410,7 +410,8 @@ module Sirena
           return [x_coordinate - (width / 2.0), y_coordinate - 15, "start"]
         end
 
-        [x_coordinate, y_coordinate + 20, "middle"]
+        width = mermaid_label_width(text)
+        diagonal_id_label_position(width, x_coordinate, y_coordinate)
       end
 
       def legacy_vertical_label_position(x_coordinate, y_coordinate, kind)
@@ -492,7 +493,7 @@ module Sirena
         return EMPTY_BRANCH_LABEL_CLEARANCE if translated_branch_label?(graph)
         return CHERRY_PICK_BRANCH_LABEL_CLEARANCE if cherry_pick_graph?(graph)
 
-        EXPLICIT_ID_BRANCH_LABEL_CLEARANCE if ordinary_explicit_id_graph?(graph)
+        EXPLICIT_ID_BRANCH_LABEL_CLEARANCE if explicit_id_graph?(graph)
       end
 
       def cherry_pick_graph?(graph)
@@ -505,17 +506,16 @@ module Sirena
           !vertical?(graph[:orientation]) && !generated_commits_only?(graph)
       end
 
-      def ordinary_explicit_id_graph?(graph)
+      def explicit_id_graph?(graph)
         return false if vertical?(graph[:orientation])
         return false if graph[:commits].size <= 1
         return false if generated_commits_only?(graph)
 
-        graph[:commits].all? { |commit| ordinary_explicit_id_commit?(commit) }
+        graph[:commits].all? { |commit| explicit_id_commit?(commit) }
       end
 
-      def ordinary_explicit_id_commit?(commit)
-        commit[:message].nil? && commit[:tags].empty? &&
-          commit[:type] == "NORMAL" && !commit[:is_cherry_pick]
+      def explicit_id_commit?(commit)
+        !commit[:id].start_with?("commit_") && !commit[:is_cherry_pick]
       end
 
       def branch_label_geometry(branch, x_coordinate, y_coordinate, anchor)
