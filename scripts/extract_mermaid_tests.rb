@@ -495,7 +495,7 @@ class MermaidTestExtractor
         .gsub('\\"', '"')
         .gsub("\\'", "'")
     end
-    parts.join("")
+    parts.join
   end
 
   def detect_diagram_type(source)

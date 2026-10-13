@@ -28,15 +28,19 @@ module Sirena
           private
 
           def explicit_lines(label)
-            decoded = label.gsub(/(\\+)n/) do
-              slashes = Regexp.last_match(1).size
-              ("\\" * (slashes / 2)) + (slashes.odd? ? "\n" : "n")
-            end
+            decoded = decode_line_breaks(label)
             decoded = decode_quote_escapes(decoded) if doubled_quotes?(label)
             if !decoded.include?("\n") && doubled_quotes?(decoded)
               decoded = decoded[2...-2].strip
             end
             decoded.empty? ? [""] : decoded.split(/\r\n|\r|\n/, -1)
+          end
+
+          def decode_line_breaks(label)
+            label.gsub(/(\\+)n/) do
+              slashes = Regexp.last_match(1).size
+              ("\\" * (slashes / 2)) + (slashes.odd? ? "\n" : "n")
+            end
           end
 
           def decode_quote_escapes(label)

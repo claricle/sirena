@@ -313,7 +313,7 @@ module MermaidDiffSpecSupport
     # without ever testing an escaped child.
     def escaping_child(pidfile)
       perl = %q(perl -e 'setpgrp(0,0); open(F, ">", $ARGV[0]) or die; ) +
-             %q(print F $$; close F; exec("/bin/sleep", "20.29")')
+        %q(print F $$; close F; exec("/bin/sleep", "20.29")')
       "#!/bin/sh\n#{perl} '#{pidfile}' &\n" \
         "while [ ! -s '#{pidfile}' ]; do sleep 0.01; done\n" \
         "sleep 0.1\n"
@@ -328,7 +328,7 @@ module MermaidDiffSpecSupport
     # bytes must survive even though the drain never reaches EOF.
     def escaping_child_with_output(pidfile, diagnostic)
       perl = %q(perl -e 'setpgrp(0,0); open(F, ">", $ARGV[0]) or die; ) +
-             %q(print F $$; close F; exec("/bin/sleep", "20.31")')
+        %q(print F $$; close F; exec("/bin/sleep", "20.31")')
       "#!/bin/sh\nprintf '%s' '#{diagnostic}'\n#{perl} '#{pidfile}' &\n" \
         "while [ ! -s '#{pidfile}' ]; do sleep 0.01; done\n" \
         "sleep 0.1\n"

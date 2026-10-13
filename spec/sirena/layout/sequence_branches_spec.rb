@@ -36,7 +36,7 @@ RSpec.describe Sirena::Layout::Sequence do
     actor = scene_for("sequenceDiagram\n  actor A\n").participants.first
     xs = actor.actor_lines.flat_map { |l| [l.x1, l.x2] }
     ys = actor.actor_lines.flat_map { |l| [l.y1, l.y2] } +
-         [actor.actor_head.y - actor.actor_head.radius]
+      [actor.actor_head.y - actor.actor_head.radius]
 
     expect([xs.max - xs.min, ys.max - ys.min, actor.actor_head.radius])
       .to eq([36, 65, 15])

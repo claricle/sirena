@@ -134,7 +134,7 @@ RSpec.describe Sirena::Parser::Base do
       it "renders #{name}'s array message as parslet would" do
         message = error_from(klass.new, source)
 
-        expect(message.lines("\n").last.chomp("\n")).to eq(expected)
+        expect(message.lines("\n").last.chomp).to eq(expected)
         expect(message).not_to match(/@\d+/)
       end
     end
@@ -199,7 +199,7 @@ RSpec.describe Sirena::Parser::Base do
     it "carries a tab through rather than counting it as one column" do
       message = error_from(Sirena::Parser::Flowchart.new,
                            "graph TD\n\tA[ok] qux\n")
-      quoted, caret = message.lines("\n")[1, 2].map { |l| l.chomp("\n") }
+      quoted, caret = message.lines("\n")[1, 2].map(&:chomp)
 
       expect(caret).to eq("\t      ^")
       expect(quoted[caret.index("^")]).to eq("q")
@@ -209,7 +209,7 @@ RSpec.describe Sirena::Parser::Base do
       message = error_from(Sirena::Parser::Flowchart.new,
                            "graph TD\nA[ok] qux\n")
 
-      expect(message.lines("\n")[2].chomp("\n")).to eq("      ^")
+      expect(message.lines("\n")[2].chomp).to eq("      ^")
     end
   end
 

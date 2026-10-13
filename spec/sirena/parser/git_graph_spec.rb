@@ -206,7 +206,7 @@ RSpec.describe Sirena::Parser::GitGraph do
         lengths = chunk_edges.flat_map do |edge|
           ((edge - 2)..(edge + 2)).to_a
         end +
-                  Array.new(20) { rng.rand(1..150_000) }
+          Array.new(20) { rng.rand(1..150_000) }
 
         mismatches = lengths.filter_map do |length|
           tail = Array.new(length) { broad_pool.sample(random: rng) }.join

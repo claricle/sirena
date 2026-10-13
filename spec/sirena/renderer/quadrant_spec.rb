@@ -106,7 +106,7 @@ RSpec.describe Sirena::Renderer::Quadrant, :aggregate_failures do
       xml = svg.to_xml
 
       # mmdc draws four opaque quadrant rectangles, one per g.quadrant
-      expect(xml.scan(/<g class="quadrant">/).length).to eq(4)
+      expect(xml.scan('<g class="quadrant">').length).to eq(4)
       expect(xml.scan(/<rect fill="#[0-9A-Fa-f]{6}"/).length).to eq(4)
       expect(xml).not_to include("opacity")
     end
@@ -184,7 +184,7 @@ RSpec.describe Sirena::Renderer::Quadrant, :aggregate_failures do
 
       # Should contain circle elements for points
       expect(xml).to include("<circle")
-      expect(xml.scan(/<circle/).length).to be >= 3
+      expect(xml.scan("<circle").length).to be >= 3
 
       # Should include point labels
       expect(xml).to include("Point A")
