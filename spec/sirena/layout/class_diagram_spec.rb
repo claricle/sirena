@@ -213,15 +213,26 @@ RSpec.describe Sirena::Layout::ClassDiagram do
               node.stereotype.y < node.name.y]).to eq([16.0, 12.0, true])
     end
 
-    it "uses high-contrast sizes for measurement and emitted labels" do
-      theme = Sirena::Theme::Registry.get(:high_contrast)
-      node = layout.call(parsed(stereotype_source), theme: theme).children.first
-      scaled_size = 16 * 14 / 12.0
-      expected = trebuchet_width("«InternationalOrderProcessor»",
-                                 scaled_size) + 24
+    context "with the high-contrast theme" do
+      let(:scene) do
+        theme = Sirena::Theme::Registry.get(:high_contrast)
+        layout.call(parsed(stereotype_source), theme: theme)
+      end
 
-      expect([node.width, node.name.font_size, node.stereotype.font_size])
-        .to match([be_within(0.01).of(expected), 18.0, 14.0])
+      it "uses high-contrast sizes for measurement" do
+        scaled_size = 16 * 14 / 12.0
+        expected = trebuchet_width("«InternationalOrderProcessor»",
+                                   scaled_size) + 24
+
+        expect(scene.children.first.width).to be_within(0.01).of(expected)
+      end
+
+      it "uses high-contrast sizes for emitted labels" do
+        node = scene.children.first
+
+        expect([node.name.font_size, node.stereotype.font_size])
+          .to eq([18.0, 14.0])
+      end
     end
   end
 
@@ -249,8 +260,9 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   end
 
   describe "name width" do
+    let(:name) { "InternationalOrderProcessor" }
+
     it "sizes a class for its large name" do
-      name = "InternationalOrderProcessor"
       node = layout.call(parsed("classDiagram\nclass #{name}\n")).children.first
 
       expect(node.width)
@@ -258,13 +270,11 @@ RSpec.describe Sirena::Layout::ClassDiagram do
     end
 
     it "sizes a stereotype on its own small-font line" do
-      stereotype = "InternationalOrderProcessor"
-      source = "classDiagram\nclass N <<#{stereotype}>>\n"
+      source = "classDiagram\nclass N <<#{name}>>\n"
       node = layout.call(parsed(source)).children.first
 
-      expect(node.width).to be_within(0.01).of(
-        trebuchet_width("«#{stereotype}»", 16) + 24,
-      )
+      expect(node.width)
+        .to be_within(0.01).of(trebuchet_width("«#{name}»", 16) + 24)
     end
   end
 end

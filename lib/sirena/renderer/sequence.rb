@@ -58,15 +58,11 @@ module Sirena
       end
 
       def render_graph(graph)
-        scene = LAYOUT_SCENE.new(width: calculate_width(graph) + 40,
-                                 height: calculate_height(graph) + 40)
+        scene = graph_canvas(graph)
         svg = create_document(scene)
         metadata = graph[:metadata] || {}
         positions = calculate_participant_positions(graph[:children])
-        render_lifelines(positions, metadata[:message_count] || 0, svg)
-        render_messages(graph, positions, svg) if graph[:edges]
-        render_participants(graph[:children], positions, svg)
-        render_graph_notes(metadata, positions, svg)
+        render_graph_contents(graph, metadata, positions, svg)
         svg
       end
 
@@ -83,14 +79,7 @@ module Sirena
 
       def draw_message(message, svg)
         group = Svg::Group.new.tap { |item| item.id = message.id }
-        group.children << message_path(message) if message.loop_path
-        if message.shaft
-          group.children << svg_line(
-            message.shaft, stroke_width: "2",
-                           dash: message.line_style == "dotted" ? "5,5" : nil
-          )
-        end
-        message.heads.each { |head| group.children.concat(head_elements(head)) }
+        draw_message_geometry(message, group)
         group.children << message_label(message.label) if message.label
         svg << group
       end
@@ -125,13 +114,9 @@ module Sirena
 
       def message_label(label)
         Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
+          position_label(text, label)
           label_content(text, label)
-          text.fill = theme_color(:label_text)
-          text.font_family = "Arial, sans-serif"
-          text.font_size = number_string(label.font_size)
-          text.text_anchor = "middle"
+          style_label(text, label)
         end
       end
 
@@ -141,11 +126,7 @@ module Sirena
         return text.content = label.text unless label.lines.length > 1
 
         text.tspans = label.lines.each_with_index.map do |line, row|
-          Svg::Tspan.new.tap do |run|
-            run.x = label.x
-            run.y = label.line_ys.fetch(row)
-            run.content = line
-          end
+          message_label_run(line, label.x, label.line_ys.fetch(row))
         end
       end
 
@@ -153,76 +134,35 @@ module Sirena
         group = Svg::Group.new.tap do |item|
           item.id = "participant-#{participant.id}"
         end
-        if SHAPED_PARTICIPANTS.include?(participant.shape_type)
-          draw_shaped_participant(participant, group)
-        elsif participant.actor_type == "actor"
-          draw_actor(participant, group)
-        else
-          draw_participant_box(participant, group)
-        end
+        draw_participant_shape(participant, group)
         svg << group
       end
 
       def draw_shaped_participant(participant, group)
-        group.children << Svg::Circle.new.tap do |circle|
-          circle.cx = participant.shape_circle.x
-          circle.cy = participant.shape_circle.y
-          circle.r = participant.shape_circle.radius
-          circle.fill = theme_color(:node_fill)
-          circle.stroke = theme_color(:node_stroke)
-          circle.stroke_width = "2"
-        end
-        participant.shape_lines.each do |geometry|
-          group.children << actor_line(geometry)
-        end
-        group.children << participant_label(participant.label) if
-          participant.label
+        group.children << participant_circle(participant.shape_circle,
+                                             theme_color(:node_fill))
+        draw_participant_lines(participant.shape_lines, group)
+        draw_participant_label(participant, group)
       end
 
       def draw_participant_box(participant, group)
-        group.children << Svg::Rect.new.tap do |rect|
-          rect.x = participant.x
-          rect.y = participant.y
-          rect.width = participant.width
-          rect.height = participant.height
-          rect.fill = theme_color(:node_fill)
-          rect.stroke = theme_color(:node_stroke)
-          rect.stroke_width = "2"
-          rect.rx = participant.corner_radius
-          rect.ry = participant.corner_radius
-        end
-        if participant.label
-          group.children << participant_label(participant.label)
-        end
+        group.children << participant_rectangle(participant)
+        draw_participant_label(participant, group)
       end
 
       def participant_label(label)
         Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
+          position_label(text, label)
           text.content = label.text
-          text.fill = theme_color(:label_text)
-          text.font_family = "Arial, sans-serif"
-          text.font_size = number_string(label.font_size)
-          text.text_anchor = "middle"
+          style_label(text, label)
           text.dominant_baseline = "middle"
         end
       end
 
       def draw_actor(participant, group)
-        group.children << Svg::Circle.new.tap do |circle|
-          circle.cx = participant.actor_head.x
-          circle.cy = participant.actor_head.y
-          circle.r = participant.actor_head.radius
-          circle.fill = "none"
-          circle.stroke = theme_color(:node_stroke)
-          circle.stroke_width = "2"
-        end
-        participant.actor_lines.each do |geometry|
-          group.children << actor_line(geometry)
-        end
-        group.children << participant_label(participant.label) if
-          participant.label
+        group.children << participant_circle(participant.actor_head, "none")
+        draw_participant_lines(participant.actor_lines, group)
+        draw_participant_label(participant, group)
       end
 
       def actor_line(geometry)
@@ -288,19 +228,21 @@ module Sirena
         draw_participant(geometry, svg) if geometry
       end
 
-      def render_participant_box(x, y, participant, group)
+      def render_participant_box(position_x, position_y, participant, group)
         geometry = sequence_layout.send(
-          :typed_participant_at, participant, x, y
+          :typed_participant_at, participant, position_x, position_y
         )
         draw_participant_box(geometry, group)
       end
 
-      def render_actor(x, y, participant, group)
+      def render_actor(position_x, position_y, participant, group)
         actor = (participant || {}).merge(
           metadata: ((participant || {})[:metadata] || {})
             .merge(actor_type: "actor"),
         )
-        geometry = sequence_layout.send(:typed_participant_at, actor, x, y)
+        geometry = sequence_layout.send(
+          :typed_participant_at, actor, position_x, position_y
+        )
         draw_actor(geometry, group)
       end
 
@@ -330,30 +272,26 @@ module Sirena
         draw_message(geometry, svg) if geometry
       end
 
-      def render_arrow(x1, y1, x2, y2, style, group)
+      def render_arrow(*arguments)
+        unless arguments.length == 6
+          raise ArgumentError,
+                "wrong number of arguments " \
+                "(given #{arguments.length}, expected 6)"
+        end
+
+        geometry = sequence_layout.send(:arrow_geometry, *arguments.first(5))
+        draw_arrow_geometry(geometry, arguments[-2], arguments.last)
+      end
+
+      def render_self_message(position_x, position_y, style, group)
         geometry = sequence_layout.send(
-          :arrow_geometry, x1, y1, x2, y2, style
+          :self_arrow_geometry, position_x, position_y, style
         )
         draw_arrow_geometry(geometry, style, group)
       end
 
-      def render_self_message(x, y, style, group)
-        geometry = sequence_layout.send(:self_arrow_geometry, x, y, style)
-        draw_arrow_geometry(geometry, style, group)
-      end
-
       def draw_arrow_geometry(geometry, style, group)
-        if geometry[:loop_path]
-          message = Layout::Sequence::Message.new(
-            loop_path: geometry[:loop_path], line_style: style[:line],
-          )
-          group.children << message_path(message)
-        elsif geometry[:shaft]
-          group.children << svg_line(
-            geometry[:shaft], stroke_width: "2",
-                              dash: style[:line] == "dotted" ? "5,5" : nil
-          )
-        end
+        draw_arrow_shaft(geometry, style, group)
         geometry[:heads].each do |head|
           group.children.concat(head_elements(head))
         end
@@ -385,8 +323,10 @@ module Sirena
         group.children << head_line(geometry)
       end
 
-      def render_filled_arrowhead(x1, _y1, x2, y2, group)
-        points = sequence_layout.send(:filled_head_points, x1, x2, y2)
+      def render_filled_arrowhead(start_x, _start_y, end_x, end_y, group)
+        points = sequence_layout.send(
+          :filled_head_points, start_x, end_x, end_y
+        )
         group.children << polygon_head(
           Layout::Sequence::Head.new(shape: "polygon", points: points),
         )
@@ -415,13 +355,15 @@ module Sirena
         )
       end
 
-      def render_cross(x, y, group)
-        head = sequence_layout.send(:cross_head, x, y)
+      def render_cross(position_x, position_y, group)
+        head = sequence_layout.send(:cross_head, position_x, position_y)
         group.children.concat(head_elements(head))
       end
 
-      def render_message_label(x1, x2, y, text, group)
-        label = sequence_layout.send(:compatibility_label, x1, x2, y, text)
+      def render_message_label(start_x, end_x, position_y, text, group)
+        label = sequence_layout.send(
+          :compatibility_label, start_x, end_x, position_y, text
+        )
         group.children << message_label(label)
       end
 
@@ -433,6 +375,115 @@ module Sirena
 
       def sequence_layout
         Layout::Sequence.new.tap { |layout| layout.theme = theme }
+      end
+
+      private
+
+      def graph_canvas(graph)
+        LAYOUT_SCENE.new(width: calculate_width(graph) + 40,
+                         height: calculate_height(graph) + 40)
+      end
+
+      def render_graph_contents(graph, metadata, positions, svg)
+        render_lifelines(positions, metadata[:message_count] || 0, svg)
+        render_messages(graph, positions, svg) if graph[:edges]
+        render_participants(graph[:children], positions, svg)
+        render_graph_notes(metadata, positions, svg)
+      end
+
+      def draw_message_geometry(message, group)
+        group.children << message_path(message) if message.loop_path
+        group.children << message_shaft(message.shaft, message.line_style) if
+          message.shaft
+        draw_message_heads(message.heads, group)
+      end
+
+      def draw_message_heads(heads, group)
+        heads.each { |head| group.children.concat(head_elements(head)) }
+      end
+
+      def message_shaft(geometry, line_style)
+        svg_line(geometry, stroke_width: "2",
+                           dash: line_style == "dotted" ? "5,5" : nil)
+      end
+
+      def position_label(text, label)
+        text.x = label.x
+        text.y = label.y
+      end
+
+      def style_label(text, label)
+        text.fill = theme_color(:label_text)
+        text.font_family = "Arial, sans-serif"
+        text.font_size = number_string(label.font_size)
+        text.text_anchor = "middle"
+      end
+
+      def message_label_run(line, position_x, position_y)
+        Svg::Tspan.new.tap do |run|
+          run.x = position_x
+          run.y = position_y
+          run.content = line
+        end
+      end
+
+      def draw_participant_shape(participant, group)
+        if SHAPED_PARTICIPANTS.include?(participant.shape_type)
+          draw_shaped_participant(participant, group)
+        elsif participant.actor_type == "actor"
+          draw_actor(participant, group)
+        else
+          draw_participant_box(participant, group)
+        end
+      end
+
+      def participant_circle(geometry, fill)
+        Svg::Circle.new.tap do |circle|
+          circle.cx = geometry.x
+          circle.cy = geometry.y
+          circle.r = geometry.radius
+          circle.fill = fill
+          circle.stroke = theme_color(:node_stroke)
+          circle.stroke_width = "2"
+        end
+      end
+
+      def draw_participant_lines(lines, group)
+        lines.each { |geometry| group.children << actor_line(geometry) }
+      end
+
+      def draw_participant_label(participant, group)
+        group.children << participant_label(participant.label) if
+          participant.label
+      end
+
+      def participant_rectangle(participant)
+        Svg::Rect.new.tap do |rect|
+          position_participant_rectangle(rect, participant)
+          rect.fill = theme_color(:node_fill)
+          rect.stroke = theme_color(:node_stroke)
+          rect.stroke_width = "2"
+          rect.rx = participant.corner_radius
+          rect.ry = participant.corner_radius
+        end
+      end
+
+      def position_participant_rectangle(rect, participant)
+        rect.x = participant.x
+        rect.y = participant.y
+        rect.width = participant.width
+        rect.height = participant.height
+      end
+
+      def draw_arrow_shaft(geometry, style, group)
+        if geometry[:loop_path]
+          message = Layout::Sequence::Message.new(
+            loop_path: geometry[:loop_path], line_style: style[:line],
+          )
+          group.children << message_path(message)
+        elsif geometry[:shaft]
+          group.children << message_shaft(geometry[:shaft], style[:line])
+        end
       end
     end
   end

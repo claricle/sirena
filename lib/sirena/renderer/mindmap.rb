@@ -76,20 +76,15 @@ module Sirena
       end
 
       def render_shape(node, group)
-        case node.shape
-        when "circle"
-          render_circle_node(node, group)
-        when "cloud"
-          render_cloud_node(node, group)
-        when "bang"
-          render_bang_node(node, group)
-        when "hexagon"
-          render_hexagon_node(node, group)
-        when "square"
-          render_square_node(node, group)
-        else
-          render_default_node(node, group)
-        end
+        shape_renderer = case node.shape
+                         when "circle" then :render_circle_node
+                         when "cloud" then :render_cloud_node
+                         when "bang" then :render_bang_node
+                         when "hexagon" then :render_hexagon_node
+                         when "square" then :render_square_node
+                         else :render_default_node
+                         end
+        send(shape_renderer, node, group)
       end
 
       # Renders a default rounded rectangle node.
@@ -101,20 +96,11 @@ module Sirena
       # @return [void]
       def render_default_node(node, group)
         color = level_color(node.level)
-        rect = Svg::Rect.new.tap do |r|
-          r.x = node.x
-          r.y = node.y
-          r.width = node.width
-          r.height = node.height
-          r.rx = 5
-          r.ry = 5
-          r.fill = lighten_color(color, 0.9)
-          r.stroke = color
-          r.stroke_width = "2"
-        end
-
+        rect = node_rectangle(node)
+        rect.rx = 5
+        rect.ry = 5
+        paint_node_shape(rect, color)
         group.add_child(rect)
-
         render_node_text(node, group)
       end
 
@@ -127,18 +113,13 @@ module Sirena
       # @return [void]
       def render_circle_node(node, group)
         color = level_color(node.level)
-
-        circle = Svg::Circle.new.tap do |c|
-          c.cx = node.center_x
-          c.cy = node.center_y
-          c.r = node.radius
-          c.fill = lighten_color(color, 0.9)
-          c.stroke = color
-          c.stroke_width = "2"
+        circle = Svg::Circle.new.tap do |shape|
+          shape.cx = node.center_x
+          shape.cy = node.center_y
+          shape.r = node.radius
         end
-
+        paint_node_shape(circle, color)
         group.add_child(circle)
-
         render_node_text(node, group)
       end
 
@@ -151,19 +132,9 @@ module Sirena
       # @return [void]
       def render_square_node(node, group)
         color = level_color(node.level)
-
-        rect = Svg::Rect.new.tap do |r|
-          r.x = node.x
-          r.y = node.y
-          r.width = node.width
-          r.height = node.height
-          r.fill = lighten_color(color, 0.9)
-          r.stroke = color
-          r.stroke_width = "2"
-        end
-
+        rect = node_rectangle(node)
+        paint_node_shape(rect, color)
         group.add_child(rect)
-
         render_node_text(node, group)
       end
 
@@ -229,16 +200,8 @@ module Sirena
         label = node.labels.first
         return unless label&.text
 
-        text = Svg::Text.new.tap do |t|
-          t.x = label.x
-          t.y = label.y
-          t.text_anchor = "middle"
-          t.fill = theme_color(:label_text)
-          t.font_size = (label.font_size || 12).to_s
-          t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-        end
+        text = node_label(label)
         fill_lines(text, label)
-
         group.add_child(text)
       end
 
@@ -279,21 +242,48 @@ module Sirena
       # @param factor [Float] lightening factor (0-1)
       # @return [String] lightened hex color
       def lighten_color(color, factor)
-        # Remove # if present
         color = color.sub(/^#/, "")
+        red = lighten_channel(color[0..1].to_i(16), factor)
+        green = lighten_channel(color[2..3].to_i(16), factor)
+        blue = lighten_channel(color[4..5].to_i(16), factor)
+        format("#%<red>02x%<green>02x%<blue>02x",
+               red: red, green: green, blue: blue)
+      end
 
-        # Parse RGB
-        r = color[0..1].to_i(16)
-        g = color[2..3].to_i(16)
-        b = color[4..5].to_i(16)
+      private
 
-        # Lighten
-        r = (r + (255 - r) * factor).round
-        g = (g + (255 - g) * factor).round
-        b = (b + (255 - b) * factor).round
+      def node_rectangle(node)
+        Svg::Rect.new.tap do |rect|
+          rect.x = node.x
+          rect.y = node.y
+          rect.width = node.width
+          rect.height = node.height
+        end
+      end
 
-        # Return hex
-        format("#%<red>02x%<green>02x%<blue>02x", red: r, green: g, blue: b)
+      def paint_node_shape(shape, color)
+        shape.fill = lighten_color(color, 0.9)
+        shape.stroke = color
+        shape.stroke_width = "2"
+      end
+
+      def node_label(label)
+        Svg::Text.new.tap do |text|
+          text.x = label.x
+          text.y = label.y
+          text.text_anchor = "middle"
+          text.fill = theme_color(:label_text)
+          node_label_font(text, label)
+        end
+      end
+
+      def node_label_font(text, label)
+        text.font_size = (label.font_size || 12).to_s
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+      end
+
+      def lighten_channel(channel, factor)
+        (channel + ((255 - channel) * factor)).round
       end
     end
   end

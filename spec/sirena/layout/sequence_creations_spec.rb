@@ -33,6 +33,17 @@ RSpec.describe Sirena::Layout::Sequence, :aggregate_failures do
     scene.participants.find { |item| item.id == id }
   end
 
+  def participant_spread(from_scene)
+    %w[Bob Carl D].each_cons(2).map do |left, right|
+      participant(from_scene, right).x - participant(from_scene, left).x
+    end
+  end
+
+  def row_steps(messages)
+    ys = messages.map { |message| message.shaft.y1 }
+    ys.each_cons(2).map { |a, b| b - a }
+  end
+
   it "centres a created box on its creating message's line" do
     expect(participant(scene, "Carl").y)
       .to eq(scene.messages[1].shaft.y1 - half_box)
@@ -54,24 +65,15 @@ RSpec.describe Sirena::Layout::Sequence, :aggregate_failures do
   end
 
   it "seats a created participant half a box further out" do
-    spread = lambda do |from_scene|
-      %w[Bob Carl D].each_cons(2).map do |left, right|
-        participant(from_scene, right).x - participant(from_scene, left).x
-      end
-    end
-
-    expect(spread.call(scene_for(declared_source))).to eq([200, 200])
-    expect(spread.call(scene)).to eq([275, 275])
+    expect(participant_spread(scene_for(declared_source))).to eq([200, 200])
+    expect(participant_spread(scene)).to eq([275, 275])
   end
 
   it "drops the rows below a creating message by half a box" do
     declared = scene_for(declared_source).messages
-    ys = ->(messages) { messages.map { |message| message.shaft.y1 } }
 
-    expect(ys.call(scene.messages).each_cons(2).map { |a, b| b - a })
-      .to eq([44, 44 + half_box, 44 + half_box])
-    expect(ys.call(declared).each_cons(2).map { |a, b| b - a })
-      .to eq([44, 44, 44])
+    expect(row_steps(scene.messages)).to eq([44, 44 + half_box, 44 + half_box])
+    expect(row_steps(declared)).to eq([44, 44, 44])
   end
 
   it "stops the creating arrow at the box edge, not the lifeline" do

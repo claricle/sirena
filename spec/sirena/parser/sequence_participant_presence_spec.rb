@@ -37,15 +37,19 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
   end
 
   describe "@{ type }" do
-    it "reads the type from JSON and YAML-style payloads" do
-      diagram = parse(
-        "participant A@{\"type\":\"boundary\"}\n" \
-        "participant B@{ type: Database }\n" \
-        "participant C@{ 'type' : 'queue' } as See\nparticipant D",
-      )
+    context "when reads the type from JSON and YAML-style payloads" do
+      let(:diagram) do
+        parse(
+          "participant A@{\"type\":\"boundary\"}\n" \
+          "participant B@{ type: Database }\n" \
+          "participant C@{ 'type' : 'queue' } as See\nparticipant D",
+        )
+      end
 
-      expect(diagram.participants.map(&:shape_type))
-        .to eq(["boundary", "database", "queue", nil])
+      it "retains diagram.participants.map shape_type" do
+        expect(diagram.participants.map(&:shape_type))
+          .to eq(["boundary", "database", "queue", nil])
+      end
     end
 
     it "applies to a created participant too" do

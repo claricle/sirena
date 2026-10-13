@@ -43,14 +43,18 @@ RSpec.describe Sirena::Svg::Numbers do
     # `xml do` deletion is reverted (mutation-check.sh confirmed this). Keep
     # it; it is the only remaining check for Numbers.read's sentinel
     # behaviour now that no Svg class can hand it one via from_xml.
-    it "has nothing to read in the sentinel lutaml leaves on a declared " \
-       "but unmapped attribute" do
-      unset = Lutaml::Model::UninitializedClass.instance
+    context "with the sentinel lutaml leaves on an unmapped attribute" do
+      let(:unset) { Lutaml::Model::UninitializedClass.instance }
 
       # Lutaml::Model::UninitializedClass is an internal name; the non-String
       # to_s result is the boundary Sirena relies on and survives a rename.
-      expect(unset.to_s).not_to be_a(String)
-      expect(described_class.read(unset)).to be_nil
+      it "is not a String once converted" do
+        expect(unset.to_s).not_to be_a(String)
+      end
+
+      it "has nothing to read in the sentinel" do
+        expect(described_class.read(unset)).to be_nil
+      end
     end
   end
 

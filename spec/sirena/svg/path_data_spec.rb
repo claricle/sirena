@@ -18,14 +18,16 @@ RSpec.describe Sirena::Svg::Path, ".build_path_data" do
     end
   end
 
-  it "joins commands with single spaces, in the order given" do
-    commands = [
+  let(:commands) do
+    [
       { type: :move, x: 0, y: 0 },
       { type: :bezier, c1x: 1, c1y: 1, c2x: 2, c2y: 2, x: 3, y: 3 },
       { type: :line, x: 4, y: 4 },
       { type: :close },
     ]
+  end
 
+  it "joins commands with single spaces, in the order given" do
     expect(described_class.build_path_data(commands))
       .to eq("M 0 0 C 1 1 2 2 3 3 L 4 4 Z")
   end

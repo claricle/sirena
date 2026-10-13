@@ -51,24 +51,37 @@ RSpec.describe Sirena::Parser::Atoms::GreedyRun do
   end
 
   describe ".scan" do
-    it "scans an anchored pattern directly, joining chunks into one string" do
-      source = Parslet::Source.new("a" * 70_000)
-      anchored = Regexp.new('\A(?:[a-z])*', Regexp::MULTILINE)
+    context "when scans an anchored pattern directly, joining chunks into " \
+            "one string" do
+      let(:source) { Parslet::Source.new("a" * 70_000) }
+      let(:anchored) { Regexp.new('\A(?:[a-z])*', Regexp::MULTILINE) }
+      let(:matched) { described_class.scan(source, anchored) }
 
-      matched = described_class.scan(source, anchored)
+      before { matched }
 
-      expect(matched.length).to eq(70_000)
-      expect(source.chars_left).to eq(0)
+      it "retains matched.length" do
+        expect(matched.length).to eq(70_000)
+      end
+
+      it "retains source.chars_left" do
+        expect(source.chars_left).to eq(0)
+      end
     end
 
-    it "rewinds the source to just past the matched run" do
-      source = Parslet::Source.new("abc123")
-      anchored = Regexp.new('\A(?:[a-z])*', Regexp::MULTILINE)
+    context "when rewinds the source to just past the matched run" do
+      let(:source) { Parslet::Source.new("abc123") }
+      let(:anchored) { Regexp.new('\A(?:[a-z])*', Regexp::MULTILINE) }
+      let(:matched) { described_class.scan(source, anchored) }
 
-      matched = described_class.scan(source, anchored)
+      before { matched }
 
-      expect(matched).to eq("abc")
-      expect(source.consume(3).to_s).to eq("123")
+      it "retains matched" do
+        expect(matched).to eq("abc")
+      end
+
+      it "retains source.consume 3 .to_s" do
+        expect(source.consume(3).to_s).to eq("123")
+      end
     end
 
     # `\u00A0` gives `anchored` a fixed UTF-8 encoding. Matching it against
@@ -109,9 +122,14 @@ RSpec.describe Sirena::Parser::Atoms::GreedyRun do
     # `#to_s`, including atoms that did not themselves fail -- so this
     # needs to survive being called even when this atom's own match
     # succeeded.
-    it "renders without raising" do
-      expect { atom.to_s }.not_to raise_error
-      expect(atom.to_s).to include("a-z")
+    context "when renders without raising" do
+      it "renders without raising" do
+        expect { atom.to_s }.not_to raise_error
+      end
+
+      it "retains atom.to_s" do
+        expect(atom.to_s).to include("a-z")
+      end
     end
   end
 end

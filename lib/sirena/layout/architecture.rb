@@ -136,36 +136,20 @@ module Sirena
       # @return [Hash] positioned layout hash
       def build_graph(diagram)
         diagram = semantic_diagram(ir_graph(diagram))
-        # Build hierarchy
         hierarchy = build_hierarchy(diagram)
-
-        # Calculate positions
-        service_positions, junction_positions, group_bounds =
-          position_nodes(diagram, hierarchy)
-        edge_positions = position_edges(
-          diagram,
-          service_positions.merge(junction_positions),
-        )
-
-        {
-          services: service_positions,
-          junctions: junction_positions,
-          groups: group_bounds,
-          edges: edge_positions,
-          width: calculate_total_width(
-            service_positions,
-            junction_positions,
-            group_bounds,
-          ),
-          height: calculate_total_height(
-            service_positions,
-            junction_positions,
-            group_bounds,
-          ),
-        }
+        services, junctions, groups = position_nodes(diagram, hierarchy)
+        positioned_graph(diagram, services, junctions, groups)
       end
 
       private
+
+      def positioned_graph(diagram, services, junctions, groups)
+        edges = position_edges(diagram, services.merge(junctions))
+        { services: services, junctions: junctions, groups: groups,
+          edges: edges,
+          width: calculate_total_width(services, junctions, groups),
+          height: calculate_total_height(services, junctions, groups) }
+      end
 
       ENTITY_ROLES = %w[group service junction].freeze
       private_constant :ENTITY_ROLES
@@ -796,47 +780,30 @@ module Sirena
       end
 
       def build_hierarchy(diagram)
-        hierarchy = {
-          groups: {},
-          services_by_group: {},
-          junctions_by_group: {},
-        }
+        groups = hierarchy_groups(diagram.groups)
+        attach_hierarchy_groups(diagram.groups, groups)
+        { groups: groups,
+          services_by_group: grouped_nodes(diagram.services),
+          junctions_by_group: grouped_nodes(diagram.junctions) }
+      end
 
-        # Map groups
-        hierarchy[:groups] = diagram.groups.to_h do |group|
-          parent_id = group.parent_id || :root
-          [
-            group.id,
-            {
-              group: group,
-              parent_id: parent_id,
-              children: [],
-            },
-          ]
+      def hierarchy_groups(groups)
+        groups.to_h do |group|
+          [group.id, { group: group, parent_id: group.parent_id || :root,
+                       children: [] }]
         end
+      end
 
-        # Build parent-child relationships for groups
-        diagram.groups.each do |group|
-          if group.parent_id && hierarchy[:groups][group.parent_id]
-            hierarchy[:groups][group.parent_id][:children] << group.id
+      def attach_hierarchy_groups(groups, hierarchy)
+        groups.each do |group|
+          if group.parent_id && hierarchy[group.parent_id]
+            hierarchy[group.parent_id][:children] << group.id
           end
         end
+      end
 
-        # Map services to groups
-        diagram.services.each do |service|
-          group_id = service.group_id || :root
-          hierarchy[:services_by_group][group_id] ||= []
-          hierarchy[:services_by_group][group_id] << service
-        end
-
-        # Map junctions to groups
-        diagram.junctions.each do |junction|
-          group_id = junction.group_id || :root
-          hierarchy[:junctions_by_group][group_id] ||= []
-          hierarchy[:junctions_by_group][group_id] << junction
-        end
-
-        hierarchy
+      def grouped_nodes(nodes)
+        nodes.group_by { |node| node.group_id || :root }
       end
 
       # Edge sides imply a grid, as in mmdc: "a:R -- L:b" puts b to the right
@@ -1022,10 +989,14 @@ module Sirena
         cells = {}
         offset = 0
         each_placed_component(blocks, links) do |placed|
-          placed.each { |block, (col, row)| cells[block] = [offset + col, row] }
+          shift_component_cells(cells, placed, offset)
           offset += placed.values.map(&:first).max + 1
         end
         cells
+      end
+
+      def shift_component_cells(cells, placed, offset)
+        placed.each { |block, (col, row)| cells[block] = [offset + col, row] }
       end
 
       def block_starts(cells, extents, axis, edge)
@@ -1163,38 +1134,35 @@ module Sirena
 
       def position_services(diagram, hierarchy)
         positions = {}
-        current_x = DEFAULT_SPACING
         current_y = DEFAULT_SPACING
-
-        # Group services by their group
-        groups_to_layout = [:root] + diagram.groups.map(&:id)
-
-        groups_to_layout.each do |group_id|
+        row_groups(diagram).each do |group_id|
           services = hierarchy[:services_by_group][group_id] || []
           next if services.empty?
 
-          # Position services in this group
-          services.each do |service|
-            dims = calculate_service_dimensions(service)
-
-            positions[service.id] = {
-              service: service,
-              x: current_x,
-              y: current_y,
-              width: dims[:width],
-              height: dims[:height],
-              group_id: group_id,
-            }
-
-            current_x += dims[:width] + DEFAULT_SPACING
-          end
-
-          # Move to next row
-          current_x = DEFAULT_SPACING
+          position_service_row(services, group_id, current_y, positions)
           current_y += DEFAULT_SERVICE_HEIGHT + (DEFAULT_SPACING * 2)
         end
-
         positions
+      end
+
+      def row_groups(diagram)
+        [:root] + diagram.groups.map(&:id)
+      end
+
+      def position_service_row(services, group_id, origin_y, positions)
+        current_x = DEFAULT_SPACING
+        services.each do |service|
+          dims = calculate_service_dimensions(service)
+          positions[service.id] = positioned_service(
+            service, dims, group_id, current_x, origin_y
+          )
+          current_x += dims[:width] + DEFAULT_SPACING
+        end
+      end
+
+      def positioned_service(service, dims, group_id, origin_x, origin_y)
+        { service: service, x: origin_x, y: origin_y,
+          width: dims[:width], height: dims[:height], group_id: group_id }
       end
 
       # Junctions lay out on their own row-per-group grid, same shape as
@@ -1209,44 +1177,47 @@ module Sirena
       # was laid out under a different group entirely.
       def position_junctions(diagram, hierarchy, service_positions)
         positions = {}
-        current_x = DEFAULT_SPACING
         current_y = junction_fallback_floor(service_positions)
-
-        groups_to_layout = [:root] + diagram.groups.map(&:id)
-
-        groups_to_layout.each do |group_id|
+        row_groups(diagram).each do |group_id|
           junctions = hierarchy[:junctions_by_group][group_id] || []
           next if junctions.empty?
 
-          group_services = services_in_group(service_positions, group_id)
-          row_x, row_y = junction_row_origin(
-            group_services, current_x,
-            current_y
+          current_y = position_junction_group(
+            junctions, group_id, service_positions, current_y, positions
           )
-
-          junctions.each do |junction|
-            positions[junction.id] = {
-              junction: junction,
-              x: row_x,
-              y: row_y,
-              width: DEFAULT_JUNCTION_SIZE,
-              height: DEFAULT_JUNCTION_SIZE,
-              group_id: group_id,
-            }
-
-            row_x += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
-          end
-
-          if group_services.any?
-            current_y = next_junction_y(current_y, row_y)
-          else
-            # current_x is never reassigned elsewhere in this method, so
-            # re-setting it to its own initial value here was a no-op.
-            current_y += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
-          end
         end
-
         positions
+      end
+
+      def position_junction_group(
+        junctions, group_id, services, current_y, positions
+      )
+        group_services = services_in_group(services, group_id)
+        row_x, row_y = junction_row_origin(
+          group_services, DEFAULT_SPACING, current_y
+        )
+        position_junction_row(junctions, group_id, [row_x, row_y], positions)
+        if group_services.any?
+          next_junction_y(current_y, row_y)
+        else
+          current_y + (DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING)
+        end
+      end
+
+      def position_junction_row(junctions, group_id, origin, positions)
+        row_x, row_y = origin
+        junctions.each do |junction|
+          positions[junction.id] = positioned_junction(
+            junction, group_id, row_x, row_y
+          )
+          row_x += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
+        end
+      end
+
+      def positioned_junction(junction, group_id, origin_x, origin_y)
+        { junction: junction, x: origin_x, y: origin_y,
+          width: DEFAULT_JUNCTION_SIZE, height: DEFAULT_JUNCTION_SIZE,
+          group_id: group_id }
       end
 
       def services_in_group(service_positions, group_id)
@@ -1406,26 +1377,26 @@ module Sirena
       # to hand it the real anchor point and the real declared side.
       def position_edges(diagram, service_positions)
         diagram.edges.filter_map do |edge|
-          from = service_positions[edge.from_id]
-          to = service_positions[edge.to_id]
-
-          next unless from && to
-
-          from_side = valid_side(edge.from_position, "R")
-          to_side = valid_side(edge.to_position, "L")
-          from_point = calculate_connection_point(from, from_side)
-          to_point = calculate_connection_point(to, to_side)
-
-          {
-            edge: edge,
-            from_x: from_point[:x],
-            from_y: from_point[:y],
-            to_x: to_point[:x],
-            to_y: to_point[:y],
-            from_side: from_side,
-            to_side: to_side,
-          }
+          position_edge(edge, service_positions)
         end
+      end
+
+      def position_edge(edge, service_positions)
+        from = service_positions[edge.from_id]
+        to = service_positions[edge.to_id]
+        return unless from && to
+
+        positioned_edge(edge, from, to)
+      end
+
+      def positioned_edge(edge, from, to)
+        from_side = valid_side(edge.from_position, "R")
+        to_side = valid_side(edge.to_position, "L")
+        from_point = calculate_connection_point(from, from_side)
+        to_point = calculate_connection_point(to, to_side)
+        { edge: edge, from_x: from_point[:x], from_y: from_point[:y],
+          to_x: to_point[:x], to_y: to_point[:y],
+          from_side: from_side, to_side: to_side }
       end
 
       # The grammar's position token is match("[LRTB]").repeat(1) - one OR
@@ -1441,64 +1412,55 @@ module Sirena
 
       def calculate_connection_point(service_pos, position)
         case position
-        when "L"
-          {
-            x: service_pos[:x],
-            y: service_pos[:y] + (service_pos[:height] / 2),
-          }
-        when "R"
-          {
-            x: service_pos[:x] + service_pos[:width],
-            y: service_pos[:y] + (service_pos[:height] / 2),
-          }
-        when "T"
-          { x: service_pos[:x] + (service_pos[:width] / 2), y: service_pos[:y] }
-        when "B"
-          {
-            x: service_pos[:x] + (service_pos[:width] / 2),
-            y: service_pos[:y] + service_pos[:height],
-          }
-        else
-          # Default to right
-          {
-            x: service_pos[:x] + service_pos[:width],
-            y: service_pos[:y] + (service_pos[:height] / 2),
-          }
+        when "L" then left_connection_point(service_pos)
+        when "T" then top_connection_point(service_pos)
+        when "B" then bottom_connection_point(service_pos)
+        else right_connection_point(service_pos)
         end
       end
 
-      def calculate_total_width(
-        service_positions,
-        junction_positions,
-        group_bounds
-      )
-        max_service_x = service_positions.values.map do |service|
-          service[:x] + service[:width]
-        end.max || 0
-        max_junction_x = junction_positions.values.map do |junction|
-          junction[:x] + junction[:width]
-        end.max || 0
-        max_group_x = group_bounds.values.map { |g| g[:x] + g[:width] }.max || 0
+      def left_connection_point(service_pos)
+        { x: service_pos[:x], y: service_pos[:y] + (service_pos[:height] / 2) }
+      end
 
-        [max_service_x, max_junction_x, max_group_x].max + DEFAULT_SPACING
+      def top_connection_point(service_pos)
+        { x: service_pos[:x] + (service_pos[:width] / 2), y: service_pos[:y] }
+      end
+
+      def bottom_connection_point(service_pos)
+        { x: service_pos[:x] + (service_pos[:width] / 2),
+          y: service_pos[:y] + service_pos[:height] }
+      end
+
+      def right_connection_point(service_pos)
+        { x: service_pos[:x] + service_pos[:width],
+          y: service_pos[:y] + (service_pos[:height] / 2) }
+      end
+
+      def calculate_total_width(
+        service_positions, junction_positions, group_bounds
+      )
+        total_extent(
+          [service_positions, junction_positions, group_bounds], :x, :width
+        )
       end
 
       def calculate_total_height(
-        service_positions,
-        junction_positions,
-        group_bounds
+        service_positions, junction_positions, group_bounds
       )
-        max_service_y = service_positions.values.map do |service|
-          service[:y] + service[:height]
-        end.max || 0
-        max_junction_y = junction_positions.values.map do |junction|
-          junction[:y] + junction[:height]
-        end.max || 0
-        max_group_y = group_bounds.values.map do |group|
-          group[:y] + group[:height]
-        end.max || 0
+        total_extent(
+          [service_positions, junction_positions, group_bounds], :y, :height
+        )
+      end
 
-        [max_service_y, max_junction_y, max_group_y].max + DEFAULT_SPACING
+      def total_extent(collections, origin, size)
+        collections.map do |positions|
+          position_extent(positions, origin, size)
+        end.max + DEFAULT_SPACING
+      end
+
+      def position_extent(positions, origin, size)
+        positions.values.map { |node| node[origin] + node[size] }.max || 0
       end
 
       def normal_font_size

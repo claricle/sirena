@@ -57,12 +57,18 @@ RSpec.describe Sirena::Svg do
     # lib/sirena/svg that the broad glob could lose the one directory where a
     # remediation call would land and still clear any useful threshold. The
     # focused glob names that directory independently.
-    it "includes every SVG file in the broad lib/ glob" do
-      svg_files = Dir.glob(File.join(REMEDIATION_LIB_ROOT, "sirena", "svg",
-                                     "*.rb"))
+    context "with the focused svg glob" do
+      let(:svg_files) do
+        Dir.glob(File.join(REMEDIATION_LIB_ROOT, "sirena", "svg", "*.rb"))
+      end
 
-      expect(svg_files).not_to be_empty
-      expect(REMEDIATION_LIB_FILES).to include(*svg_files)
+      it "finds svg files" do
+        expect(svg_files).not_to be_empty
+      end
+
+      it "includes every SVG file in the broad lib/ glob" do
+        expect(REMEDIATION_LIB_FILES).to include(*svg_files)
+      end
     end
 
     it "never references svg_conform or its remediation engine at runtime" do

@@ -83,13 +83,16 @@ RSpec.describe Sirena::Layout::StateDiagram do
   end
 
   it "matches nested composite geometry in each duplicate corpus row" do
-    metrics = composite_geometry_rows.map do |row|
+    expect(composite_geometry_metrics)
+      .to eq(Array.new(3) { [0.0, 0.0, 0.0, 0.0] })
+  end
+
+  def composite_geometry_metrics
+    composite_geometry_rows.map do |row|
       row.dig("summary", "metrics").values_at(
         "worst_e_c", "worst_e_w", "worst_e_h", "worst_e_a"
       )
     end
-
-    expect(metrics).to eq(Array.new(3) { [0.0, 0.0, 0.0, 0.0] })
   end
 
   def concurrent_evidence

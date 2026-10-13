@@ -25,6 +25,11 @@ module SvgArrowheadSpecHelpers
     described_class.for(path(d: data, marker_end: marker, **attributes))
   end
 
+  # The end head of a straight line, with extra path attributes.
+  def end_head(**attributes)
+    end_arrows_for("M 0 0 L 10 0", **attributes).first
+  end
+
   def raw_points_of(arrowhead)
     arrowhead.polygons.first.points
   end
@@ -45,14 +50,21 @@ RSpec.describe Sirena::Svg::Arrowhead do
       expect(points_of(polygon).first).to eq([10.0, 0.0])
     end
 
-    it "points the head along the last segment" do
-      polygon = end_arrows_for("M 0 0 L 10 0").first
-      tip, left, right = points_of(polygon)
+    context "when the head points along the last segment" do
+      let(:corners) { points_of(end_head) }
+
+      it "puts the tip on the end" do
+        expect(corners.first).to eq([10.0, 0.0])
+      end
 
       # Both back corners sit one arrow-length behind the tip, on either side.
-      expect(tip).to eq([10.0, 0.0])
-      expect([left[0], right[0]]).to eq([6.0, 6.0])
-      expect([left[1], right[1]]).to eq([2.0, -2.0])
+      it "sits both back corners one arrow-length behind the tip" do
+        expect(corners.drop(1).map(&:first)).to eq([6.0, 6.0])
+      end
+
+      it "puts the back corners on either side of the line" do
+        expect(corners.drop(1).map(&:last)).to eq([2.0, -2.0])
+      end
     end
 
     it "scales with the stroke width of the line it ends" do
@@ -91,10 +103,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
     end
 
     it "paints the head at the stroke opacity of the line it ends" do
-      polygon = described_class.for(
-        path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)",
-             stroke_opacity: "0.5"),
-      ).first
+      polygon = end_head(stroke_opacity: "0.5")
 
       expect(polygon.to_xml)
         .to eq('<polygon fill="#000000" fill-opacity="0.5" ' \
@@ -102,9 +111,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
     end
 
     it "carries the whole-element opacity of the path it ends" do
-      polygon = described_class.for(
-        path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)", opacity: 0.4),
-      ).first
+      polygon = end_head(opacity: 0.4)
 
       expect(polygon.to_xml)
         .to eq('<polygon fill="#000000" fill-opacity="0.4" ' \
@@ -123,10 +130,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
     end
 
     it "omits empty opacity and transform attributes from the polygon" do
-      polygon = described_class.for(
-        path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)",
-             stroke_opacity: "", transform: ""),
-      ).first
+      polygon = end_head(stroke_opacity: "", transform: "")
 
       expect(polygon.to_xml)
         .to eq('<polygon fill="#000000" points="10.0,0.0 6.0,2.0 6.0,-2.0"/>')
@@ -277,16 +281,17 @@ RSpec.describe Sirena::Svg::Arrowhead do
   describe "#polygons" do
     # A Path is mutable, so nothing may remember an answer for data the
     # caller has since replaced.
+    let(:moving) { path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)") }
+    let(:arrowhead) { described_class.new(moving) }
+
     it "reads the path data again when it has changed underneath" do
-      moving = path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)")
-      arrowhead = described_class.new(moving)
+      before = raw_points_of(arrowhead)
+      moving.d = "M 0 0 L 20 0"
 
       # The new head in full, not merely a different one: "not what it was"
       # would pass for a head that moved to the wrong place.
-      expect(raw_points_of(arrowhead)).to eq("10.0,0.0 6.0,2.0 6.0,-2.0")
-      moving.d = "M 0 0 L 20 0"
-
-      expect(raw_points_of(arrowhead)).to eq("20.0,0.0 16.0,2.0 16.0,-2.0")
+      expect([before, raw_points_of(arrowhead)])
+        .to eq(["10.0,0.0 6.0,2.0 6.0,-2.0", "20.0,0.0 16.0,2.0 16.0,-2.0"])
     end
   end
 end

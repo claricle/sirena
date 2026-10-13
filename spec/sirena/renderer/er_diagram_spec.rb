@@ -49,7 +49,73 @@ module ErDiagramSpecHelpers
     [323.0, 220.0],
   ].freeze
 
+  PUBLIC_HOOK_CALLS = {
+    calculate_width: 1, calculate_height: 1,
+    render_relationships: 1, render_relationship: 1,
+    calculate_connection_point: 2,
+    render_relationship_line: 1, render_cardinality: 2,
+    render_relationship_label: 1, render_entities: 1, render_entity: 2,
+    render_entity_content: 2, render_attribute: 3
+  }.freeze
+
   module_function
+
+  def entity_groups(svg)
+    svg.children.select do |c|
+      c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("entity-")
+    end
+  end
+
+  def relationship_groups(svg)
+    svg.children.select do |c|
+      c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("rel-")
+    end
+  end
+
+  def entity_children(svg)
+    entity_groups(svg).flat_map(&:children)
+  end
+
+  def relationship_children(svg)
+    relationship_groups(svg).flat_map(&:children)
+  end
+
+  def entity_text_contents(svg)
+    entity_children(svg).grep(Sirena::Svg::Text)
+      .map { |text| svg_text_content(text) }
+  end
+
+  def entity_text_fills(svg, entity_id)
+    svg.children.find { |c| c.id == "entity-#{entity_id}" }
+      .children.grep(Sirena::Svg::Text).map(&:fill).uniq
+  end
+
+  def class_graph(defs:, classes: ["a"], attributes: [])
+    entity = entity_node("CAR", classes: classes, attributes: attributes)
+    { id: "er_diagram", children: [entity], edges: [], class_defs: defs }
+  end
+
+  def attributed_rect(renderer, defs)
+    car_rect(renderer, defs, attributes: [{ name: "make" }])
+  end
+
+  def car_rect(renderer, defs, **)
+    rect_for(renderer.render(class_graph(defs: defs, **)), "CAR")
+  end
+
+  def text_sizes(renderer, graph, theme)
+    scene = Sirena::Layout::ErDiagram.from_graph(graph, theme: theme)
+    texts = renderer.render(scene).children.flat_map(&:children)
+      .grep(Sirena::Svg::Text)
+    texts.to_h { |text| [svg_text_content(text), text.font_size] }
+  end
+
+  def color_graph
+    graph = class_graph(defs: { "a" => "color:blue" },
+                        attributes: [{ name: "make" }])
+    graph[:children] << entity_node("OTHER", attributes: [{ name: "x" }])
+    graph
+  end
 
   def entity_node(id, classes: [], attributes: [])
     {
@@ -259,6 +325,7 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
         ],
       }
     end
+    let(:svg) { renderer.render(graph) }
 
     it "renders graph to SVG document" do
       svg = renderer.render(graph)
@@ -293,15 +360,9 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
     end
 
     it "renders attributes with key type markers" do
-      svg = renderer.render(graph)
+      texts = ErDiagramSpecHelpers.entity_text_contents(svg)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("entity-")
-      end
-
-      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-
-      attr_texts = texts.map { |t| Array(t.content).join }.grep(/PK|FK/)
+      attr_texts = texts.grep(/PK|FK/)
       expect(attr_texts).not_to be_empty
       expect(attr_texts.any? { |t| t.include?("PK") }).to be true
     end
@@ -312,14 +373,7 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
     it "renders the attribute note text" do
       graph[:children].first[:metadata][:attributes].first[:note] = "NN"
 
-      svg = renderer.render(graph)
-
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("entity-")
-      end
-      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-
-      expect(texts.map { |t| svg_text_content(t) })
+      expect(ErDiagramSpecHelpers.entity_text_contents(svg))
         .to include(a_string_matching(/\bNN\b/))
     end
 
@@ -328,13 +382,7 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
     # mutation-check.sh's whole-file-revert cannot score it (a reverted file
     # has no note handling, so an absent note renders the same either way).
     it "omits the note segment when no note is present" do
-      svg = renderer.render(graph)
-
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("entity-")
-      end
-      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-      attr_line = texts.map { |t| svg_text_content(t) }
+      attr_line = ErDiagramSpecHelpers.entity_text_contents(svg)
         .find { |text| text.include?("id") }
 
       expect(attr_line).to eq("PK int id")
@@ -346,50 +394,28 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
     # whether or not the note feature exists at all).
     it "omits the note segment when the note is an empty string" do
       graph[:children].first[:metadata][:attributes].first[:note] = ""
-
-      svg = renderer.render(graph)
-
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("entity-")
-      end
-      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-      attr_line = texts.map { |t| svg_text_content(t) }
+      attr_line = ErDiagramSpecHelpers.entity_text_contents(svg)
         .find { |text| text.include?("id") }
 
       expect(attr_line).to eq("PK int id")
     end
 
     it "renders entity separators" do
-      svg = renderer.render(graph)
-
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("entity-")
-      end
-
-      lines = groups.flat_map(&:children).grep(Sirena::Svg::Line)
+      lines = ErDiagramSpecHelpers.entity_children(svg).grep(Sirena::Svg::Line)
 
       expect(lines).not_to be_empty
     end
 
     it "renders relationships" do
-      svg = renderer.render(graph)
-
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("rel-")
-      end
+      groups = ErDiagramSpecHelpers.relationship_groups(svg)
 
       expect(groups).not_to be_empty
       expect(groups.length).to eq(1)
     end
 
     it "renders relationship lines" do
-      svg = renderer.render(graph)
-
-      rel_groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("rel-")
-      end
-
-      lines = rel_groups.flat_map(&:children).grep(Sirena::Svg::Line)
+      lines = ErDiagramSpecHelpers.relationship_children(svg)
+        .grep(Sirena::Svg::Line)
 
       expect(lines).not_to be_empty
     end
@@ -406,29 +432,16 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
     end
 
     it "renders cardinality markers" do
-      svg = renderer.render(graph)
-
-      rel_groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("rel-")
-      end
-
       # Check for circles (zero marker) and lines (cardinality markers)
-      elements = rel_groups.flat_map(&:children)
-      has_cardinality = elements.any? do |e|
-        e.is_a?(Sirena::Svg::Circle) || e.is_a?(Sirena::Svg::Line)
-      end
+      elements = ErDiagramSpecHelpers.relationship_children(svg)
 
-      expect(has_cardinality).to be true
+      expect(elements.any?(Sirena::Svg::Circle) ||
+             elements.any?(Sirena::Svg::Line)).to be true
     end
 
     it "renders relationship labels" do
-      svg = renderer.render(graph)
-
-      rel_groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("rel-")
-      end
-
-      texts = rel_groups.flat_map(&:children).grep(Sirena::Svg::Text)
+      texts = ErDiagramSpecHelpers.relationship_children(svg)
+        .grep(Sirena::Svg::Text)
 
       label = texts.find { |text| Array(text.content).join == "places" }
       expect([Array(label.content).join, label.font_size])
@@ -438,12 +451,7 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
     it "emits every text role at its injected theme size" do
       theme = Sirena::Theme::Registry.get(:high_contrast)
       renderer.theme = theme
-      scene = Sirena::Layout::ErDiagram.from_graph(graph, theme: theme)
-      texts = renderer.render(scene).children.flat_map(&:children)
-        .grep(Sirena::Svg::Text)
-      sizes = texts.to_h do |text|
-        [ErDiagramSpecHelpers.svg_text_content(text), text.font_size]
-      end
+      sizes = ErDiagramSpecHelpers.text_sizes(renderer, graph, theme)
 
       expect(sizes.slice("CUSTOMER", "PK int id", "places"))
         .to eq("CUSTOMER" => "18", "PK int id" => "14", "places" => "14")
@@ -462,14 +470,7 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
     it "dispatches public Hash rendering through the released hooks" do
       calls = ErDiagramSpecHelpers.public_hook_calls(described_class, graph)
 
-      expect(calls).to eq(
-        calculate_width: 1, calculate_height: 1,
-        render_relationships: 1, render_relationship: 1,
-        calculate_connection_point: 2,
-        render_relationship_line: 1, render_cardinality: 2,
-        render_relationship_label: 1, render_entities: 1, render_entity: 2,
-        render_entity_content: 2, render_attribute: 3
-      )
+      expect(calls).to eq(ErDiagramSpecHelpers::PUBLIC_HOOK_CALLS)
     end
 
     it "dispatches typed Scene rendering through the released hooks" do
@@ -541,133 +542,93 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # A default-valued Hash answers `[]` to a lookup while holding no key
       # at all. Absent keys are an unknown shape, not an empty diagram, so
       # these keep the no-content defaults.
-      it "is not fooled by a Hash that defaults its lookups to empty" do
-        defaulted = -> { Hash.new { [] }.merge!(id: "er_diagram") }
-        neither = defaulted.call
-        children_only = defaulted.call.merge!(children: [])
-        edges_only = defaulted.call.merge!(edges: [])
+      { "neither collection key" => {}, "children only" => { children: [] },
+        "edges only" => { edges: [] } }.each do |shape, keys|
+        it "is not fooled by a Hash that defaults its lookups to empty " \
+           "(#{shape})" do
+          defaulted = Hash.new { [] }.merge!(id: "er_diagram").merge!(keys)
+          svg = renderer.render(defaulted)
 
-        sizes = [neither, children_only, edges_only].map do |graph|
-          svg = renderer.render(graph)
-          [svg.width, svg.height]
+          expect([svg.width, svg.height]).to eq([880, 680])
         end
-
-        expect(sizes).to eq([[880, 680], [880, 680], [880, 680]])
       end
     end
 
     describe "classDef styles" do
-      it "applies a class fill; an unclassed entity keeps the default (C1)" do
-        classed_graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"]),
-                     ErDiagramSpecHelpers.entity_node("OTHER")],
-          edges: [],
-          class_defs: { "a" => "fill:#f96" },
-        }
-        svg = renderer.render(classed_graph)
+      let(:helpers) { ErDiagramSpecHelpers }
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#f96")
-        other_rect = ErDiagramSpecHelpers.rect_for(svg, "OTHER")
-        expect(other_rect.fill).to eq("#ffffff")
+      it "applies a class fill (C1)" do
+        classed = helpers.class_graph(defs: { "a" => "fill:#f96" })
+
+        expect(helpers.rect_for(renderer.render(classed), "CAR").fill)
+          .to eq("#f96")
+      end
+
+      it "leaves an unclassed entity on the default fill (C1)" do
+        classed = helpers.class_graph(defs: { "a" => "fill:#f96" })
+        classed[:children] << helpers.entity_node("OTHER")
+
+        expect(helpers.rect_for(renderer.render(classed), "OTHER").fill)
+          .to eq("#ffffff")
       end
 
       # Resolves classes BY NAME, not by position in the class list — an
       # index-keyed implementation passes every OTHER example here and is
       # only killed by this one plus D1's PERSON-fill clause.
       it "merges two classes, later wins only on a conflict (C2)" do
-        classed_graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: %w[a b])],
-          edges: [],
-          class_defs: { "a" => "fill:#111,stroke:#0a0", "b" => "fill:#222" },
-        }
-        svg = renderer.render(classed_graph)
-        rect = ErDiagramSpecHelpers.rect_for(svg, "CAR")
+        defs = { "a" => "fill:#111,stroke:#0a0", "b" => "fill:#222" }
+        rect = helpers.car_rect(renderer, defs, classes: %w[a b])
 
         expect(rect.fill).to eq("#222")
         expect(rect.stroke).to eq("#0a0")
       end
 
-      it "applies color to this entity, and not another one (C3)" do
-        classed_graph = {
-          id: "er_diagram",
-          children: [
-            ErDiagramSpecHelpers.entity_node(
-              "CAR", classes: ["a"], attributes: [{ name: "make" }]
-            ),
-            ErDiagramSpecHelpers.entity_node(
-              "OTHER", attributes: [{ name: "x" }]
-            ),
-          ],
-          edges: [],
-          class_defs: { "a" => "color:blue" },
-        }
-        svg = renderer.render(classed_graph)
+      it "applies color to this entity (C3)" do
+        svg = renderer.render(helpers.color_graph)
 
-        car_texts = svg.children.find { |c| c.id == "entity-CAR" }
-          .children.grep(Sirena::Svg::Text)
-        other_texts = svg.children.find { |c| c.id == "entity-OTHER" }
-          .children.grep(Sirena::Svg::Text)
+        expect(helpers.entity_text_fills(svg, "CAR")).to eq(["blue"])
+      end
 
-        expect(car_texts.map(&:fill).uniq).to eq(["blue"])
-        expect(other_texts.map(&:fill).uniq).to eq(["#000000"])
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#ffffff")
+      it "does not apply color to another entity (C3)" do
+        svg = renderer.render(helpers.color_graph)
+
+        expect(helpers.entity_text_fills(svg, "OTHER")).to eq(["#000000"])
+      end
+
+      it "does not apply color to the entity box (C3)" do
+        svg = renderer.render(helpers.color_graph)
+
+        expect(helpers.rect_for(svg, "CAR").fill).to eq("#ffffff")
       end
 
       # Order (ghost, known) is load-bearing: an abort-on-first-unknown
       # implementation dies on "ghost" before reaching "known" and this
       # mutant survives if the order is ever reversed.
       it "ignores an undeclared class without aborting the rest (C4)" do
-        classed_graph = {
-          id: "er_diagram",
-          children: [
-            ErDiagramSpecHelpers.entity_node("CAR", classes: %w[ghost known]),
-          ],
-          edges: [],
-          class_defs: { "known" => "fill:#0f0" },
-        }
-        svg = renderer.render(classed_graph)
+        rect = helpers.car_rect(renderer, { "known" => "fill:#0f0" },
+                                classes: %w[ghost known])
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#0f0")
+        expect(rect.fill).to eq("#0f0")
       end
 
       it "applies stroke and stroke-width (C5)" do
-        classed_graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "stroke:#333,stroke-width:4px" },
-        }
-        svg = renderer.render(classed_graph)
-        rect = ErDiagramSpecHelpers.rect_for(svg, "CAR")
+        defs = { "a" => "stroke:#333,stroke-width:4px" }
+        rect = helpers.car_rect(renderer, defs)
 
         expect(rect.stroke).to eq("#333")
         expect(rect.stroke_width).to eq("4px")
       end
 
       it "resolves a property key with surrounding space (C6)" do
-        classed_graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => " fill : #f96" },
-        }
-        svg = renderer.render(classed_graph)
+        rect = helpers.car_rect(renderer, { "a" => " fill : #f96" })
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#f96")
+        expect(rect.fill).to eq("#f96")
       end
 
       it "resolves a spaced value, trimmed (C7)" do
-        classed_graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "fill: #f96" },
-        }
-        svg = renderer.render(classed_graph)
+        rect = helpers.car_rect(renderer, { "a" => "fill: #f96" })
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#f96")
+        expect(rect.fill).to eq("#f96")
       end
 
       # Both "foo" and "font-family:Arial,sans-serif" parse under mermaid.
@@ -680,29 +641,17 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # `next unless value` removed from parse_declaration, this example
       # raises NoMethodError; restored, it passes. Keep it.
       it "renders a colon-less style chunk instead of raising (C9)" do
-        no_colon_graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "foo" },
-        }
-        multi_value_graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "font-family:Arial,sans-serif" },
-        }
+        defs = { "a" => "foo" }
 
-        expect { renderer.render(no_colon_graph) }.not_to raise_error
-        expect { renderer.render(multi_value_graph) }.not_to raise_error
-        no_colon_rect = ErDiagramSpecHelpers.rect_for(
-          renderer.render(no_colon_graph), "CAR"
-        )
-        multi_value_rect = ErDiagramSpecHelpers.rect_for(
-          renderer.render(multi_value_graph), "CAR"
-        )
-        expect(no_colon_rect.fill).to eq("#ffffff")
-        expect(multi_value_rect.fill).to eq("#ffffff")
+        expect { helpers.car_rect(renderer, defs) }.not_to raise_error
+        expect(helpers.car_rect(renderer, defs).fill).to eq("#ffffff")
+      end
+
+      it "renders a multi-value style chunk instead of raising (C9)" do
+        defs = { "a" => "font-family:Arial,sans-serif" }
+
+        expect { helpers.car_rect(renderer, defs) }.not_to raise_error
+        expect(helpers.car_rect(renderer, defs).fill).to eq("#ffffff")
       end
 
       # Verified against mermaid's own bundle and a real browser: its
@@ -711,44 +660,24 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # `red` and Chrome computes red from mermaid's own output — the
       # `:blue` segment is dropped, never folded into the value.
       it "discards everything after the second colon in a value (C10)" do
-        classed_graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "fill:#f96:extra" },
-        }
-        svg = renderer.render(classed_graph)
+        rect = helpers.car_rect(renderer, { "a" => "fill:#f96:extra" })
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#f96")
+        expect(rect.fill).to eq("#f96")
       end
 
       # Verified against mermaid's own db: every entity's cssClasses opens
       # with the literal "default", assigned or not.
       it "applies the implicit default class even with no assignment (C11)" do
-        default_graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR")],
-          edges: [],
-          class_defs: { "default" => "fill:red" },
-        }
-        svg = renderer.render(default_graph)
+        rect = helpers.car_rect(renderer, { "default" => "fill:red" },
+                                classes: [])
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("red")
+        expect(rect.fill).to eq("red")
       end
 
       it "lets an explicit class override a conflicting default property " \
          "(C12)" do
-        graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: {
-            "default" => "fill:red,stroke:green",
-            "a" => "fill:blue",
-          },
-        }
-        svg = renderer.render(graph)
-        rect = ErDiagramSpecHelpers.rect_for(svg, "CAR")
+        defs = { "default" => "fill:red,stroke:green", "a" => "fill:blue" }
+        rect = helpers.car_rect(renderer, defs)
 
         expect(rect.fill).to eq("blue")
         expect(rect.stroke).to eq("green")
@@ -759,17 +688,10 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # "a" to the end and lets it win over the intervening "b".
       it "lets a later duplicate assignment win over an intervening class " \
          "(C13)" do
-        graph = {
-          id: "er_diagram",
-          children: [
-            ErDiagramSpecHelpers.entity_node("CAR", classes: %w[a b a]),
-          ],
-          edges: [],
-          class_defs: { "a" => "fill:red", "b" => "fill:blue" },
-        }
-        svg = renderer.render(graph)
+        defs = { "a" => "fill:red", "b" => "fill:blue" }
+        rect = helpers.car_rect(renderer, defs, classes: %w[a b a])
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("red")
+        expect(rect.fill).to eq("red")
       end
 
       # Verified against mermaid's own db and a real browser: mermaid stores
@@ -778,27 +700,16 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # names are case-insensitive. Sirena has no CSS engine and must fold
       # the case itself before looking a property up.
       it "matches a classDef property name regardless of case (C14)" do
-        graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "FILL:red" },
-        }
-        svg = renderer.render(graph)
+        rect = helpers.car_rect(renderer, { "a" => "FILL:red" })
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("red")
+        expect(rect.fill).to eq("red")
       end
 
       it "merges mixed-case property names from different classes (C15)" do
-        graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: %w[a b])],
-          edges: [],
-          class_defs: { "a" => "fill:green", "b" => "FILL:red" },
-        }
-        svg = renderer.render(graph)
+        defs = { "a" => "fill:green", "b" => "FILL:red" }
+        rect = helpers.car_rect(renderer, defs, classes: %w[a b])
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("red")
+        expect(rect.fill).to eq("red")
       end
 
       # Verified against mermaid's own bundle and a real browser: mermaid
@@ -810,15 +721,10 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # instead, giving green — this is the regression box_style fixes.
       it "resolves same-property mixed-case conflicts in source order, not " \
          "literal-last (C16)" do
-        graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "fill:red,FILL:blue,fill:green" },
-        }
-        svg = renderer.render(graph)
+        rect = helpers.car_rect(renderer,
+                                { "a" => "fill:red,FILL:blue,fill:green" })
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("blue")
+        expect(rect.fill).to eq("blue")
       end
 
       # Verified against mermaid's own bundle: isLabelStyle
@@ -830,22 +736,11 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # the wrong-element regression box_style (and the exact-case
       # `styles['color']` reads) fix.
       it "does not let an uppercase COLOR style the entity name (C17)" do
-        graph = {
-          id: "er_diagram",
-          children: [
-            ErDiagramSpecHelpers.entity_node(
-              "CAR", classes: ["a"], attributes: [{ name: "make" }]
-            ),
-          ],
-          edges: [],
-          class_defs: { "a" => "fill:currentColor,COLOR:red" },
-        }
+        defs = { "a" => "fill:currentColor,COLOR:red" }
+        graph = helpers.class_graph(defs: defs, attributes: [{ name: "make" }])
         svg = renderer.render(graph)
 
-        car_texts = svg.children.find { |c| c.id == "entity-CAR" }
-          .children.grep(Sirena::Svg::Text)
-
-        expect(car_texts.map(&:fill).uniq).to eq(["#000000"])
+        expect(helpers.entity_text_fills(svg, "CAR")).to eq(["#000000"])
       end
 
       # Verified by Codex against the installed mermaid 11.16.1 bundle and a
@@ -856,19 +751,10 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # entity resolves this to blue (C16); here it resolves to green,
       # because `FILL:blue` is invisible to this path.
       it "resolves fill by exact lowercase key on an attributed entity (C18)" do
-        graph = {
-          id: "er_diagram",
-          children: [
-            ErDiagramSpecHelpers.entity_node(
-              "CAR", classes: ["a"], attributes: [{ name: "make" }]
-            ),
-          ],
-          edges: [],
-          class_defs: { "a" => "fill:red,FILL:blue,fill:green" },
-        }
-        svg = renderer.render(graph)
+        defs = { "a" => "fill:red,FILL:blue,fill:green" }
+        rect = helpers.attributed_rect(renderer, defs)
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("green")
+        expect(rect.fill).to eq("green")
       end
 
       # Verified against mermaid's own db (ErDB#addClass): any chunk whose
@@ -884,15 +770,9 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # which is what this example pins.
       it "replays a colour-bearing chunk after a later same-property one " \
          "(C19)" do
-        graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "stroke:currentcolor,stroke:red" },
-        }
-        svg = renderer.render(graph)
+        rect = helpers.car_rect(renderer,
+                                { "a" => "stroke:currentcolor,stroke:red" })
 
-        rect = ErDiagramSpecHelpers.rect_for(svg, "CAR")
         expect(rect.stroke).to eq("currentcolor")
       end
 
@@ -908,30 +788,18 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # the key and silently changed `FILL` from currentcolor to blue;
       # nothing in the suite caught it.
       it "does not replay a colour-bearing FILL over a later one (C24)" do
-        graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "fill:currentcolor,fill:blue" },
-        }
-        svg = renderer.render(graph)
+        rect = helpers.car_rect(renderer,
+                                { "a" => "fill:currentcolor,fill:blue" })
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("blue")
+        expect(rect.fill).to eq("blue")
       end
 
       %w[FILL FiLl].each do |key|
         it "still replays a #{key} chunk, which mermaid does not rename " \
            "(C25 #{key})" do
-          graph = {
-            id: "er_diagram",
-            children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-            edges: [],
-            class_defs: { "a" => "#{key}:currentcolor,#{key}:blue" },
-          }
-          svg = renderer.render(graph)
+          defs = { "a" => "#{key}:currentcolor,#{key}:blue" }
 
-          rect = ErDiagramSpecHelpers.rect_for(svg, "CAR")
-          expect(rect.fill).to eq("currentcolor")
+          expect(helpers.car_rect(renderer, defs).fill).to eq("currentcolor")
         end
       end
 
@@ -943,22 +811,9 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # blue/8px.
       it "resolves stroke and stroke-width by exact lowercase key on an " \
          "attributed entity (C20)" do
-        graph = {
-          id: "er_diagram",
-          children: [
-            ErDiagramSpecHelpers.entity_node(
-              "CAR", classes: ["a"], attributes: [{ name: "make" }]
-            ),
-          ],
-          edges: [],
-          class_defs: {
-            "a" => "stroke:red,STROKE:blue,stroke:green," \
-                   "stroke-width:2px,STROKE-WIDTH:8px," \
-                   "stroke-width:4px",
-          },
-        }
-        svg = renderer.render(graph)
-        rect = ErDiagramSpecHelpers.rect_for(svg, "CAR")
+        strokes = "stroke:red,STROKE:blue,stroke:green,"
+        widths = "stroke-width:2px,STROKE-WIDTH:8px,stroke-width:4px"
+        rect = helpers.attributed_rect(renderer, { "a" => strokes + widths })
 
         expect(rect.stroke).to eq("green")
         expect(rect.stroke_width).to eq("4px")
@@ -971,15 +826,10 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # paint time, so it must substitute the concrete value now.
       it "resolves currentColor against an ambient COLOR override on a bare " \
          "entity (C21)" do
-        graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "fill:currentColor,COLOR:red" },
-        }
-        svg = renderer.render(graph)
+        rect = helpers.car_rect(renderer,
+                                { "a" => "fill:currentColor,COLOR:red" })
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("red")
+        expect(rect.fill).to eq("red")
       end
 
       # Ruby's default String#split drops a trailing empty field, so
@@ -988,15 +838,9 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # "red". Mermaid's own JS split keeps it, and the browser drops
       # the resulting empty CSS declaration, computing its default.
       it "lets a trailing empty value clear an earlier declaration (C22)" do
-        graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "fill:red,fill:" },
-        }
-        svg = renderer.render(graph)
+        rect = helpers.car_rect(renderer, { "a" => "fill:red,fill:" })
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("#ffffff")
+        expect(rect.fill).to eq("#ffffff")
       end
 
       # Verified against a real browser: Chrome rejects "bogus" as an
@@ -1005,15 +849,9 @@ RSpec.describe Sirena::Renderer::ErDiagram, :aggregate_failures do
       # not black from "bogus".
       it "keeps an earlier valid value when a later same-property one is " \
          "invalid CSS (C23)" do
-        graph = {
-          id: "er_diagram",
-          children: [ErDiagramSpecHelpers.entity_node("CAR", classes: ["a"])],
-          edges: [],
-          class_defs: { "a" => "fill:red,FILL:bogus" },
-        }
-        svg = renderer.render(graph)
+        rect = helpers.car_rect(renderer, { "a" => "fill:red,FILL:bogus" })
 
-        expect(ErDiagramSpecHelpers.rect_for(svg, "CAR").fill).to eq("red")
+        expect(rect.fill).to eq("red")
       end
     end
   end

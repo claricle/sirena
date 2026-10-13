@@ -41,6 +41,20 @@ RSpec.describe Sirena::Layout::GitGraph do
     [scene.width, scene.height, commit_geometry(scene), branch_geometry(scene)]
   end
 
+  def builtin_themes
+    %i[default dark].map { |name| Sirena::Theme::Registry.get(name) }
+  end
+
+  def branch_colours(theme)
+    diagram = Sirena::Parser::GitGraph.new.parse(branch_source)
+    described_class.new.call(diagram, theme: theme).branches.map(&:color)
+  end
+
+  def palette_colours(theme)
+    palette = theme.colors.git_graph_palette
+    Array.new(11) { |index| palette[index % palette.length] }
+  end
+
   def commit_geometry(scene)
     scene.commits.map do |commit|
       [commit.id, commit.branch, commit.lane, commit.x, commit.y]
@@ -62,19 +76,19 @@ RSpec.describe Sirena::Layout::GitGraph do
     expect(colours).to eq(Array.new(11) { |index| palette[index % 3] })
   end
 
-  it "takes distinct branch colours from default and dark theme palettes" do
-    diagram = Sirena::Parser::GitGraph.new.parse(branch_source)
-    themes = %i[default dark].map { |name| Sirena::Theme::Registry.get(name) }
-    colours = themes.map do |builtin|
-      described_class.new.call(diagram, theme: builtin).branches.map(&:color)
-    end
-    expected = themes.map do |builtin|
-      palette = builtin.colors.git_graph_palette
-      Array.new(11) { |index| palette[index % palette.length] }
+  context "with the default and dark theme palettes" do
+    it "takes each branch colour from its own theme palette" do
+      colours = builtin_themes.map { |builtin| branch_colours(builtin) }
+      expected = builtin_themes.map { |builtin| palette_colours(builtin) }
+
+      expect(colours).to eq(expected)
     end
 
-    expect(colours).to eq(expected)
-    expect(colours.last).not_to eq(colours.first)
+    it "takes distinct branch colours from the two palettes" do
+      colours = builtin_themes.map { |builtin| branch_colours(builtin) }
+
+      expect(colours.last).not_to eq(colours.first)
+    end
   end
 
   it "preserves graph geometry under a partial colour theme" do

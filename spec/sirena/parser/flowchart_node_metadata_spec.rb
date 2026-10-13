@@ -85,13 +85,23 @@ RSpec.describe Sirena::Parser::Flowchart do
         .to eq("padded")
     end
 
-    it "wins over the bracket form when a node carries both" do
-      source = "graph TD\nD[bracket]@{ shape: hexagon, " \
-               "label: \"meta\" }\n"
-      node = node_for(source)
+    context "when wins over the bracket form when a node carries both" do
+      let(:source) do
+        "graph TD\nD[bracket]@{ shape: hexagon, " \
+          "label: \"meta\" }\n"
+      end
 
-      expect(node.shape).to eq("hexagon")
-      expect(node.label).to eq("meta")
+      it "retains node.shape" do
+        node = node_for(source)
+
+        expect(node.shape).to eq("hexagon")
+      end
+
+      it "retains node.label" do
+        node = node_for(source)
+
+        expect(node.label).to eq("meta")
+      end
     end
 
     it "refuses an inline class written after the block" do
@@ -214,17 +224,13 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect([node.shape, node.label]).to eq(%w[rounded x])
     end
 
-    it "refuses commas in a multiline body" do
-      # Single line is a flow mapping and multiline is block YAML. Commas
-      # belong to the first and not the second, which is why the body is
-      # handed to YAML rather than picked apart by the grammar.
-      # The comma goes on the label line on purpose. Putting it after
-      # `shape: rect` passes for the wrong reason: `rect,` simply misses
-      # the shape table, so the spec stayed green with the wrapping gone.
-      source = "graph TD\nA@{\n  label: \"x\",\n  shape: rect\n}\n"
+    context "when refusing commas in a multiline body" do
+      let(:source) { "graph TD\nA@{\n  label: \"x\",\n  shape: rect\n}\n" }
 
-      expect { node_for(source) }
-        .to raise_error(Sirena::Parser::ParseError, /Malformed metadata/)
+      it "rejects the invalid source" do
+        expect { node_for(source) }
+          .to raise_error(Sirena::Parser::ParseError, /Malformed metadata/)
+      end
     end
 
     it "refuses a multiline body with no entries" do
@@ -559,11 +565,15 @@ RSpec.describe Sirena::Parser::Flowchart do
         .to raise_error(Sirena::Parser::ParseError, /Unusable label/)
     end
 
-    it "takes an explicit string tag over the implicit rules" do
-      # mmdc draws this as "1". Without the tag it is a number and refused.
-      expect(node_for("graph TD\nA@{ label: !!str 1 }\n").label).to eq("1")
-      expect { node_for("graph TD\nA@{ label: 1 }\n") }
-        .to raise_error(Sirena::Parser::ParseError)
+    context "when takes an explicit string tag over the implicit rules" do
+      it "retains node_for graph TD nA label str 1 n .label" do
+        expect(node_for("graph TD\nA@{ label: !!str 1 }\n").label).to eq("1")
+      end
+
+      it "rejects the invalid source" do
+        expect { node_for("graph TD\nA@{ label: 1 }\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
     end
 
     it "resolves a tag" do
@@ -571,14 +581,15 @@ RSpec.describe Sirena::Parser::Flowchart do
         .to eq("rounded")
     end
 
-    it "refuses a shape that came out of an anchored sequence" do
-      # An anchor holding a sequence is fine on its own. This one is
-      # refused because mermaid calls `.toLowerCase()` on the shape and a
-      # sequence has no such thing. mmdc rejects the source.
-      source = "graph TD\nA@{\n  shape: &a [x]\n  label: &b [*a, *a]\n}\n"
+    context "when refusing a shape that came out of an anchored sequence" do
+      let(:source) do
+        "graph TD\nA@{\n  shape: &a [x]\n  label: &b [*a, *a]\n}\n"
+      end
 
-      expect { node_for(source) }
-        .to raise_error(Sirena::Parser::ParseError, /Unusable shape/)
+      it "rejects the invalid source" do
+        expect { node_for(source) }
+          .to raise_error(Sirena::Parser::ParseError, /Unusable shape/)
+      end
     end
 
     it "takes the first element of a sequence label" do
@@ -949,23 +960,25 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(node_for(source).label).to eq("hi")
     end
 
-    it "still refuses a version the comment marker runs into" do
-      # js-yaml reads `1.3#note` as one unusable version and refuses the
-      # document. mmdc refuses it too, so levelling it would have drawn a
-      # diagram mermaid does not.
-      source = "graph TD\nA(keep)@{\n%YAML 1.3#note\n---\nlabel: hi\n}\n"
+    context "when still refuses a version the comment marker runs into" do
+      let(:source) do
+        "graph TD\nA(keep)@{\n%YAML 1.3#note\n---\nlabel: hi\n}\n"
+      end
 
-      expect { node_for(source) }
-        .to raise_error(Sirena::Parser::ParseError, /Malformed metadata/)
+      it "rejects the invalid source" do
+        expect { node_for(source) }
+          .to raise_error(Sirena::Parser::ParseError, /Malformed metadata/)
+      end
     end
 
-    it "levels a directive sitting behind a comment line" do
-      # A comment is allowed to sit ahead of the directive, and mmdc draws
-      # it. Stopping the scan at the first line that is not a directive
-      # left version 1.3 in place and libyaml refused the document.
-      source = "graph TD\nA(keep)@{\n# c\n%YAML 1.3\n---\nlabel: hi\n}\n"
+    context "when levels a directive sitting behind a comment line" do
+      let(:source) do
+        "graph TD\nA(keep)@{\n# c\n%YAML 1.3\n---\nlabel: hi\n}\n"
+      end
 
-      expect(node_for(source).label).to eq("hi")
+      it "retains node_for source .label" do
+        expect(node_for(source).label).to eq("hi")
+      end
     end
 
     it "levels a directive sitting behind a blank line" do
@@ -974,13 +987,12 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(node_for(source).label).to eq("hi")
     end
 
-    it "leaves a %YAML line inside a value alone" do
-      # A single-quoted value carries on at column 0, so this line is
-      # ordinary text. Levelling it renamed the node: mmdc draws
-      # "one %YAML 1.3 two".
-      source = "graph TD\nA(keep)@{\nlabel: 'one\n%YAML 1.3 two'\n}\n"
+    context "when leaves a %YAML line inside a value alone" do
+      let(:source) { "graph TD\nA(keep)@{\nlabel: 'one\n%YAML 1.3 two'\n}\n" }
 
-      expect(node_for(source).label).to eq("one %YAML 1.3 two")
+      it "retains node_for source .label" do
+        expect(node_for(source).label).to eq("one %YAML 1.3 two")
+      end
     end
 
     it "leaves one alone even after a directive it did level" do
@@ -1019,13 +1031,12 @@ RSpec.describe Sirena::Parser::Flowchart do
       end
     end
 
-    it "reads an alias after a bare carriage return" do
-      # Both parsers end a line here, so this one is a diagram rather than
-      # an error — and looking the alias up used to walk off the end of the
-      # body and raise NoMethodError.
-      source = "graph TD\nA(keep)@{\n  a: &s hi\r  label: *s\n}\n"
+    context "when reads an alias after a bare carriage return" do
+      let(:source) { "graph TD\nA(keep)@{\n  a: &s hi\r  label: *s\n}\n" }
 
-      expect(node_for(source).label).to eq("hi")
+      it "retains node_for source .label" do
+        expect(node_for(source).label).to eq("hi")
+      end
     end
   end
 
@@ -1083,15 +1094,17 @@ RSpec.describe Sirena::Parser::Flowchart do
   # The tree is walked recursively, so the body can nest deeper than the
   # stack goes. mermaid runs its browser stack out on the same source.
   describe "a body nested thousands deep" do
-    it "refuses it as a parse error, not a stack overflow" do
-      # SystemStackError is not a StandardError, so it went past every
-      # caller instead of being reported as bad metadata.
-      nesting = 5000
-      source = "graph TD\nA(keep)@{ label: " \
-               "#{'[' * nesting}x#{']' * nesting} }\n"
+    context "when refusing it as a parse error, not a stack overflow" do
+      let(:source) do
+        "graph TD\nA(keep)@{ label: " \
+          "#{'[' * nesting}x#{']' * nesting} }\n"
+      end
+      let(:nesting) { 5000 }
 
-      expect { node_for(source) }
-        .to raise_error(Sirena::Parser::ParseError, /nested too deeply/)
+      it "rejects the invalid source" do
+        expect { node_for(source) }
+          .to raise_error(Sirena::Parser::ParseError, /nested too deeply/)
+      end
     end
   end
 
@@ -1105,14 +1118,13 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(node_for(source).label).to eq("hi")
     end
 
-    it "refuses one at the start of a later line" do
-      # mermaid reads the key as `<BOM>label`, which it does not know, so
-      # mmdc draws the node with its old label. libyaml drops the mark and
-      # hands over `label`, so sirena drew `hi` — a different picture.
-      source = "graph TD\nA(keep)@{\n\uFEFFlabel: hi\n}\n"
+    context "when refusing one at the start of a later line" do
+      let(:source) { "graph TD\nA(keep)@{\n\uFEFFlabel: hi\n}\n" }
 
-      expect { node_for(source) }
-        .to raise_error(Sirena::Parser::ParseError, /byte-order mark/)
+      it "rejects the invalid source" do
+        expect { node_for(source) }
+          .to raise_error(Sirena::Parser::ParseError, /byte-order mark/)
+      end
     end
 
     it "leaves one in the middle of a value alone" do
@@ -1138,13 +1150,13 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(node_for(source).label).to eq("one<br/>two")
     end
 
-    it "does not end the block at a brace in an unquoted comment" do
-      # mmdc draws this: the comment goes before anything is lexed, so the
-      # `}` inside it never closes the block and `A@{` nl `}` is what is
-      # left. Stopping at that brace refused a source mermaid accepts.
-      source = "graph TD\nA@{ shape: rect\n%% a } brace\n}\n"
+    context "when does not end the block at a brace in an unquoted " \
+            "comment" do
+      let(:source) { "graph TD\nA@{ shape: rect\n%% a } brace\n}\n" }
 
-      expect(node_for(source).shape).to eq("rect")
+      it "retains node_for source .shape" do
+        expect(node_for(source).shape).to eq("rect")
+      end
     end
 
     it "refuses a block that is nothing but a comment line" do
@@ -1155,13 +1167,12 @@ RSpec.describe Sirena::Parser::Flowchart do
         .to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "takes a quote inside a comment line as comment text" do
-      # The quote that closes a run cannot be one mermaid has already
-      # deleted. mmdc draws `one<br/>two`; letting the quoted rule win
-      # first left the run open and lost a diagram mmdc renders.
-      source = %(graph TD\nA@{ label: "one\n%% has " quote\ntwo" }\n)
+    context "when takes a quote inside a comment line as comment text" do
+      let(:source) { %(graph TD\nA@{ label: "one\n%% has " quote\ntwo" }\n) }
 
-      expect(node_for(source).label).to eq("one<br/>two")
+      it "retains node_for source .label" do
+        expect(node_for(source).label).to eq("one<br/>two")
+      end
     end
 
     # The indent has to be the whitespace set mmdc uses, not Ruby's five
@@ -1199,13 +1210,12 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(node_for(source).label).to eq("one<br/>two")
     end
 
-    it "eats a no-break space after the line break" do
-      # mermaid's lexer rewrites `/\n\s*/` with JavaScript's `\s`, which
-      # takes the no-break space. Ruby's takes only the ASCII five, so the
-      # space stayed and mmdc renders `one<br/>two`.
-      source = %(graph TD\nA@{ label: "one\n\u00A0two" }\n)
+    context "when eats a no-break space after the line break" do
+      let(:source) { %(graph TD\nA@{ label: "one\n\u00A0two" }\n) }
 
-      expect(node_for(source).label).to eq("one<br/>two")
+      it "retains node_for source .label" do
+        expect(node_for(source).label).to eq("one<br/>two")
+      end
     end
 
     it "eats an ideographic space after the line break" do
@@ -1214,33 +1224,30 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(node_for(source).label).to eq("one<br/>two")
     end
 
-    it "eats a line separator mermaid would have eaten" do
-      # A bare line separator is refused, because libyaml ends a line on
-      # it and js-yaml does not. Right after a newline inside quotes
-      # mermaid deletes it first, so neither parser ever sees it.
-      source = %(graph TD\nA@{ label: "one\n\u2028two" }\n)
+    context "when eats a line separator mermaid would have eaten" do
+      let(:source) { %(graph TD\nA@{ label: "one\n\u2028two" }\n) }
 
-      expect(node_for(source).label).to eq("one<br/>two")
+      it "retains node_for source .label" do
+        expect(node_for(source).label).to eq("one<br/>two")
+      end
     end
 
-    it "eats a byte-order mark after the line break" do
-      # JavaScript counts the mark as whitespace, so mermaid deletes it
-      # here and mmdc renders `one<br/>two`. A mark elsewhere is refused,
-      # but this one never survives to be looked at.
-      source = %(graph TD\nA@{ label: "one\n\uFEFFtwo" }\n)
+    context "when eats a byte-order mark after the line break" do
+      let(:source) { %(graph TD\nA@{ label: "one\n\uFEFFtwo" }\n) }
 
-      expect(node_for(source).label).to eq("one<br/>two")
+      it "retains node_for source .label" do
+        expect(node_for(source).label).to eq("one<br/>two")
+      end
     end
 
-    it "still refuses a next-line character after the line break" do
-      # The next-line character is NOT in JavaScript's `\s`, so mermaid
-      # keeps it and libyaml still ends a line on it where js-yaml does
-      # not. Eating it here would have accepted a body we cannot read the
-      # way mermaid does.
-      source = %(graph TD\nA@{ label: "one\n\u0085two" }\n)
+    context "when still refuses a next-line character after the line " \
+            "break" do
+      let(:source) { %(graph TD\nA@{ label: "one\n\u0085two" }\n) }
 
-      expect { node_for(source) }
-        .to raise_error(Sirena::Parser::ParseError, /Unreadable line break/)
+      it "rejects the invalid source" do
+        expect { node_for(source) }
+          .to raise_error(Sirena::Parser::ParseError, /Unreadable line break/)
+      end
     end
 
     it "leaves a zero-width space alone" do

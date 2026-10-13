@@ -123,13 +123,23 @@ RSpec.describe Sirena::Svg do
       expect(text(y: 2.0, dy: 4.0).to_xml).to eq('<text y="6.0"></text>')
     end
 
-    it "combines dx and dy with a dominant-baseline shift" do
-      xml = text(x: 1.0, y: 2.0, dx: 3.0, dy: 4.0,
-                 font_size: "10", dominant_baseline: "middle").to_xml
+    context "with dx and dy and a dominant-baseline shift" do
+      let(:xml) do
+        text(x: 1.0, y: 2.0, dx: 3.0, dy: 4.0,
+             font_size: "10", dominant_baseline: "middle").to_xml
+      end
 
-      expect(xml).to eq('<text x="4.0" y="9.5" font-size="10"></text>')
-      expect(xml).not_to include(" dx=")
-      expect(xml).not_to include(" dy=")
+      it "combines the offsets with the baseline shift" do
+        expect(xml).to eq('<text x="4.0" y="9.5" font-size="10"></text>')
+      end
+
+      it "writes no dx attribute" do
+        expect(xml).not_to include(" dx=")
+      end
+
+      it "writes no dy attribute" do
+        expect(xml).not_to include(" dy=")
+      end
     end
 
     it "leaves x unchanged when a finite offset calculation overflows" do

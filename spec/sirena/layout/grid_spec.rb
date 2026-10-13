@@ -72,39 +72,55 @@ RSpec.describe Sirena::Layout::Grid do
   end
 
   describe "a cluster" do
-    it "takes a size big enough for its contents" do
-      box = apply({ children: [cluster("s", [node("a")])] })[:children].first
+    context "with one node inside" do
+      let(:box) do
+        apply({ children: [cluster("s", [node("a")])] })[:children].first
+      end
 
-      expect(box[:width]).to be > 100
-      expect(box[:height]).to be > 50
+      it "takes a width big enough for its contents" do
+        expect(box[:width]).to be > 100
+      end
+
+      it "takes a height big enough for its contents" do
+        expect(box[:height]).to be > 50
+      end
     end
 
     # The exact spot, not just "clear of the box". `>=` is satisfied by a
     # gap of nothing, so it passed with CELL_GAP set to zero and the two
     # drawn edge to edge.
-    it "widens the column it sits in, with a gap" do
-      wide = cluster("s", [node("a", width: 400)])
-      graph = { children: [wide, node("b")] }
-      placed = apply(graph)[:children]
-      box = placed.first
+    context "when it is wider than the column" do
+      let(:wide) { cluster("s", [node("a", width: 400)]) }
+      let(:placed) { apply({ children: [wide, node("b")] })[:children] }
 
       # Literal numbers. Written in terms of the constants, the expected
       # value moves with them and the gap goes untested all over again.
-      expect(box[:width]).to eq(440)
-      expect(placed.last[:x]).to eq(520)
+      it "widens the column it sits in" do
+        expect(placed.first[:width]).to eq(440)
+      end
+
+      it "leaves a gap before the next column" do
+        expect(placed.last[:x]).to eq(520)
+      end
     end
 
     # The vertical twin of the column example above, and the same reason
     # for literal numbers: with `row_height` reduced to the floor the box
     # keeps its height and the next row starts underneath it anyway, so
     # only an exact y reports the overlap.
-    it "makes the row it sits in taller, with a gap" do
-      tall = cluster("s", [node("a", height: 400)])
-      graph = { children: [tall, node("b"), node("c"), node("d")] }
-      placed = apply(graph)[:children]
+    context "when it is taller than the row" do
+      let(:tall) { cluster("s", [node("a", height: 400)]) }
+      let(:placed) do
+        apply({ children: [tall, node("b"), node("c"), node("d")] })[:children]
+      end
 
-      expect(placed.first[:height]).to eq(474)
-      expect(placed.last[:y]).to eq(554)
+      it "makes the row it sits in taller" do
+        expect(placed.first[:height]).to eq(474)
+      end
+
+      it "leaves a gap before the next row" do
+        expect(placed.last[:y]).to eq(554)
+      end
     end
 
     # The exact coordinates, because "smaller than the box" is also true
@@ -129,13 +145,20 @@ RSpec.describe Sirena::Layout::Grid do
 
     # From the TITLE, which is what the name claims. `> 0` is true of a
     # one-by-one box, so it never checked the title played any part.
-    it "sizes a box with nothing in it from its title" do
-      label = { text: "T", width: 10, height: 14 }
-      box = apply({ children: [cluster("s", [], label:)] }).dig(:children, 0)
-      padding = described_class::CLUSTER_PADDING
+    context "with nothing in it" do
+      let(:label) { { text: "T", width: 10, height: 14 } }
+      let(:box) do
+        apply({ children: [cluster("s", [], label:)] }).dig(:children, 0)
+      end
+      let(:padding) { described_class::CLUSTER_PADDING }
 
-      expect(box[:width]).to eq(label[:width] + (padding * 2))
-      expect(box[:height]).to eq(label[:height] + (padding * 3))
+      it "sizes the width from its title" do
+        expect(box[:width]).to eq(label[:width] + (padding * 2))
+      end
+
+      it "sizes the height from its title" do
+        expect(box[:height]).to eq(label[:height] + (padding * 3))
+      end
     end
 
     it "packs a nested cluster before sizing its parent" do

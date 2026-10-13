@@ -916,10 +916,7 @@ module Sirena
 
       def calculate_normal_state_dimensions(state, label_dims, descriptions)
         if descriptions.empty? && state.children.empty?
-          return {
-            width: mmdc_state_text_width(state_texts(state).first || state.id),
-            height: MMDC_STATE_HEIGHT,
-          }
+          return simple_state_dimensions(state)
         end
 
         dimensions = descriptions.map do |description|
@@ -928,6 +925,13 @@ module Sirena
         width = normal_state_width(label_dims, dimensions)
         height = normal_state_height(label_dims, dimensions)
         { width: [width, 100].max, height: [height, 50].max }
+      end
+
+      def simple_state_dimensions(state)
+        {
+          width: mmdc_state_text_width(state_texts(state).first || state.id),
+          height: MMDC_STATE_HEIGHT,
+        }
       end
 
       def calculate_note_dimensions(state, label_dims, descriptions)
@@ -1114,20 +1118,23 @@ module Sirena
       end
 
       def nested_note_topology(graph)
-        return if placement == :elk
-        return unless normal_font_size == DEFAULT_FONT_SIZE &&
-          small_font_size == DEFAULT_SMALL_FONT_SIZE
-        return unless graph.dig(:layoutOptions, ElkOptions::DIRECTION) ==
-          DIRECTION_DOWN
+        return unless plain_nested_graph?(graph)
 
-        root, composite, note = top_level_note_nodes(graph[:children])
-        return unless root && composite && note &&
-          connected?(graph, root, composite)
+        root, composite, note = connected_top_level_note_nodes(graph)
+        return unless root
 
         start, first, second = nested_note_nodes(graph, composite)
         return unless start && first && second
 
         [root, composite, note, start, first, second]
+      end
+
+      def connected_top_level_note_nodes(graph)
+        root, composite, note = top_level_note_nodes(graph[:children])
+        return [] unless root && composite && note &&
+          connected?(graph, root, composite)
+
+        [root, composite, note]
       end
 
       def top_level_note_nodes(children)
@@ -1138,11 +1145,15 @@ module Sirena
           node.dig(:metadata, :shape_type) == "start"
         end
         note = children.find do |node|
-          node.dig(:metadata, :note_target) == composite&.fetch(:id, nil) &&
-            node.dig(:metadata, :note_position) == "right" &&
-            two_line_note?(node)
+          right_composite_note?(node, composite)
         end
         [root, composite, note]
+      end
+
+      def right_composite_note?(node, composite)
+        node.dig(:metadata, :note_target) == composite&.fetch(:id, nil) &&
+          node.dig(:metadata, :note_position) == "right" &&
+          two_line_note?(node)
       end
 
       def two_line_note?(note)
@@ -1161,10 +1172,18 @@ module Sirena
           node.dig(:metadata, :shape_type) == "start"
         end
         states = children.reject { |node| node.equal?(start) }
-        return [] unless start && states.length == 2 && states.all? do |state|
+        return [] unless start && two_normal_states?(states)
+
+        nested_note_chain(graph, start, states)
+      end
+
+      def two_normal_states?(states)
+        states.length == 2 && states.all? do |state|
           state.dig(:metadata, :shape_type) == "normal"
         end
+      end
 
+      def nested_note_chain(graph, start, states)
         first = states.find { |state| connected?(graph, start, state) }
         second = (states - [first]).first
         return [] unless first && connected?(graph, first, second) &&

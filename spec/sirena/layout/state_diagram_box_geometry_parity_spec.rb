@@ -2,7 +2,15 @@
 
 require "spec_helper"
 
+module StateDiagramBoxGeometrySpecHelpers
+  def dimensions_of(scene)
+    scene.children.to_h { |state| [state.id, [state.width, state.height]] }
+  end
+end
+
 RSpec.describe Sirena::Layout::StateDiagram, :aggregate_failures do
+  include StateDiagramBoxGeometrySpecHelpers
+
   let(:parser) { Sirena::Parser::StateDiagram.new }
   let(:layout) { described_class.new }
 
@@ -19,11 +27,7 @@ RSpec.describe Sirena::Layout::StateDiagram, :aggregate_failures do
     let(:scene) { layout.to_graph(parser.parse(source)) }
 
     it "uses the pinned browser dimensions for ordinary one-line states" do
-      dimensions = scene.children.to_h do |state|
-        [state.id, [state.width, state.height]]
-      end
-
-      expect(dimensions).to eq(
+      expect(dimensions_of(scene)).to eq(
         "assemble" => [81.734375, 40.0],
         "assemblies" => [92.765625, 40.0],
       )
@@ -41,14 +45,12 @@ RSpec.describe Sirena::Layout::StateDiagram, :aggregate_failures do
       )
     end
     let(:scene) { layout.to_graph(parser.parse(source)) }
-    let(:composite) { scene.children.find { |state| state.id == "NotShooting" } }
+    let(:composite) do
+      scene.children.find { |state| state.id == "NotShooting" }
+    end
 
     it "preserves the composite, note, and terminal dimensions" do
-      dimensions = scene.children.to_h do |state|
-        [state.id, [state.width, state.height]]
-      end
-
-      expect(dimensions).to eq(
+      expect(dimensions_of(scene)).to eq(
         "start_1" => [30.0, 30.0],
         "NotShooting" => [238.734375, 343.0],
         "NotShooting----note" => [230.0, 78.0],

@@ -42,13 +42,20 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
     # Two levels passed with a parser capped at one. The chain, not just
     # the nodes: with `parent_id` never set the three boxes land flat at
     # the top level and every node id still reads the same.
-    it "nests three deep" do
-      source = "graph TD\nsubgraph a\nsubgraph b\nsubgraph c\n" \
-               "A-->B\nend\nend\nend\n"
+    context "when nests three deep" do
+      let(:source) do
+        "graph TD\nsubgraph a\nsubgraph b\nsubgraph c\n" \
+          "A-->B\nend\nend\nend\n"
+      end
 
-      expect(boxes(source).map { |box| [box.id, box.parent_id] })
-        .to eq([["a", nil], %w[b a], %w[c b]])
-      expect(node_ids(source)).to eq(%w[A B])
+      it "retains boxes source .map box box.id box.parent_id" do
+        expect(boxes(source).map { |box| [box.id, box.parent_id] })
+          .to eq([["a", nil], %w[b a], %w[c b]])
+      end
+
+      it "retains node_ids source" do
+        expect(node_ids(source)).to eq(%w[A B])
+      end
     end
 
     # `end` closes a box only as a whole word. Under a bare `str("end")`
@@ -252,15 +259,31 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
     # no node `b`, and the containment check already reads this chain as
     # `a` holding `b`. The model used to disagree with its own validation
     # and draw two sibling boxes plus a phantom node.
-    it "nests the box the chain names" do
-      source = "graph TD\nsubgraph a\nb\nend\nsubgraph b\nX\nend\n"
-      diagram = described_class.new.parse(source)
-      held = diagram.subgraphs.to_h { |box| [box.id, box] }
+    context "when nests the box the chain names" do
+      let(:source) { "graph TD\nsubgraph a\nb\nend\nsubgraph b\nX\nend\n" }
+      let(:diagram) { described_class.new.parse(source) }
 
-      expect(diagram.nodes.map(&:id)).to eq(%w[X])
-      expect(held["b"].parent_id).to eq("a")
-      expect(held["a"].child_ids).to eq(%w[b])
-      expect(held["a"].node_ids).to be_empty
+      it "retains diagram.nodes.map id" do
+        expect(diagram.nodes.map(&:id)).to eq(%w[X])
+      end
+
+      it "retains held b .parent_id" do
+        held = diagram.subgraphs.to_h { |box| [box.id, box] }
+
+        expect(held["b"].parent_id).to eq("a")
+      end
+
+      it "retains held a .child_ids" do
+        held = diagram.subgraphs.to_h { |box| [box.id, box] }
+
+        expect(held["a"].child_ids).to eq(%w[b])
+      end
+
+      it "retains held a .node_ids" do
+        held = diagram.subgraphs.to_h { |box| [box.id, box] }
+
+        expect(held["a"].node_ids).to be_empty
+      end
     end
   end
 
@@ -369,12 +392,15 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
       expect(node_ids("graph TD\nsubgraph s\nA\nend\tB-->C\n")).to eq(%w[A B C])
     end
 
-    it "may be separated by more than one space" do
-      # Consuming a single space left `end  %% note` accepted and
-      # `end  ; B --- C` refused, both the wrong way round.
-      expect(node_ids("graph TD\nsubgraph s\nA\nend  ; B --- C\n"))
-        .to eq(%w[A B C])
-      expect(parses?("graph TD\nsubgraph s\nA\nend  %% note\n")).to be(false)
+    context "when may be separated by more than one space" do
+      it "retains node_ids graph TD nsubgraph s nA nend B C n" do
+        expect(node_ids("graph TD\nsubgraph s\nA\nend  ; B --- C\n"))
+          .to eq(%w[A B C])
+      end
+
+      it "retains parses graph TD nsubgraph s nA nend note n" do
+        expect(parses?("graph TD\nsubgraph s\nA\nend  %% note\n")).to be(false)
+      end
     end
 
     it "still refuses a comment there" do
@@ -438,13 +464,15 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
 
     # mmdc renders both of these, so the keyword is refused where a node is
     # built, not everywhere the word appears.
-    it "still names a subgraph, given a title to disambiguate it" do
-      # mmdc draws `subgraph end [Title]` and refuses the bare form with an
-      # empty body or a nested subgraph inside it. We ask for the title in
-      # every case: that costs one form mermaid draws and never claims one
-      # it refuses.
-      expect(parses?("graph TD\nsubgraph end [Title]\nA\nend\n")).to be(true)
-      expect(parses?("graph TD\nsubgraph end\nend\n")).to be(false)
+    context "when still names a subgraph, given a title to disambiguate " \
+            "it" do
+      it "retains parses graph TD nsubgraph end Title nA nend n" do
+        expect(parses?("graph TD\nsubgraph end [Title]\nA\nend\n")).to be(true)
+      end
+
+      it "retains parses graph TD nsubgraph end nend n" do
+        expect(parses?("graph TD\nsubgraph end\nend\n")).to be(false)
+      end
     end
 
     # Refusing `end` in these positions is only right if an ordinary name
@@ -602,14 +630,18 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
     # two threads rendering at once handed out each other's ids. Each
     # parse now counts on a context it makes for itself, so parses
     # running side by side cannot see one another.
-    it "numbers every parse from zero, even side by side" do
-      source = "graph TD\nsubgraph one A\nX\nend\nsubgraph two B\nY\nend\n"
+    context "when numbers every parse from zero, even side by side" do
+      let(:source) do
+        "graph TD\nsubgraph one A\nX\nend\nsubgraph two B\nY\nend\n"
+      end
 
-      ids = Array.new(8) do
-        Thread.new { described_class.new.parse(source).subgraphs.map(&:id) }
-      end.map(&:value)
+      it "retains ids.uniq" do
+        ids = Array.new(8) do
+          Thread.new { described_class.new.parse(source).subgraphs.map(&:id) }
+        end.map(&:value)
 
-      expect(ids.uniq).to eq([%w[subGraph0 subGraph1]])
+        expect(ids.uniq).to eq([%w[subGraph0 subGraph1]])
+      end
     end
 
     # The bookkeeping used to sit on the thread behind a public reader,
@@ -680,13 +712,17 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
         .to eq("a One" => "subGraph1", "b Two" => "subGraph0")
     end
 
-    it "numbers three levels from the inside out" do
-      source = "graph TD\nsubgraph a One\nsubgraph b Two\nsubgraph c Three\n" \
-               "X\nend\nend\nend\n"
+    context "when numbers three levels from the inside out" do
+      let(:source) do
+        "graph TD\nsubgraph a One\nsubgraph b Two\nsubgraph c Three\n" \
+          "X\nend\nend\nend\n"
+      end
 
-      expect(ids_by_title(source)).to eq("a One" => "subGraph2",
-                                         "b Two" => "subGraph1",
-                                         "c Three" => "subGraph0")
+      it "retains ids_by_title source" do
+        expect(ids_by_title(source)).to eq("a One" => "subGraph2",
+                                           "b Two" => "subGraph1",
+                                           "c Three" => "subGraph0")
+      end
     end
 
     it "numbers siblings in the order they are written" do
@@ -763,14 +799,24 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
   # mmdc 11.12.0 draws no node for a subgraph's id in any of these
   # forms. Each one used to invent a leaf beside the box.
   describe "an id that names a subgraph" do
-    it "draws no node when an edge ends on it" do
-      source = "flowchart TD\nsubgraph one\nA\nend\n" \
-               "subgraph two\nB\nend\none --> two\n"
-      diagram = described_class.new.parse(source)
+    context "when draws no node when an edge ends on it" do
+      let(:source) do
+        "flowchart TD\nsubgraph one\nA\nend\n" \
+          "subgraph two\nB\nend\none --> two\n"
+      end
+      let(:diagram) { described_class.new.parse(source) }
 
-      expect(diagram.nodes.map(&:id)).to eq(%w[A B])
-      expect(diagram.edges.map(&:source_id)).to eq(%w[one])
-      expect(diagram.edges.map(&:target_id)).to eq(%w[two])
+      it "retains diagram.nodes.map id" do
+        expect(diagram.nodes.map(&:id)).to eq(%w[A B])
+      end
+
+      it "retains diagram.edges.map source_id" do
+        expect(diagram.edges.map(&:source_id)).to eq(%w[one])
+      end
+
+      it "retains diagram.edges.map target_id" do
+        expect(diagram.edges.map(&:target_id)).to eq(%w[two])
+      end
     end
 
     it "draws no node when the edge came first" do
@@ -779,23 +825,42 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
       expect(node_ids(source)).to eq(%w[B C])
     end
 
-    it "draws no node when the reference carries a shape" do
-      source = "flowchart TD\nsubgraph a\nb[Label]\nend\n" \
-               "subgraph b\nX\nend\n"
-      diagram = described_class.new.parse(source)
+    context "when draws no node when the reference carries a shape" do
+      let(:source) do
+        "flowchart TD\nsubgraph a\nb[Label]\nend\n" \
+          "subgraph b\nX\nend\n"
+      end
+      let(:diagram) { described_class.new.parse(source) }
 
-      expect(diagram.nodes.map(&:id)).to eq(%w[X])
-      expect(diagram.subgraphs.map(&:parent_id)).to eq([nil, "a"])
+      it "retains diagram.nodes.map id" do
+        expect(diagram.nodes.map(&:id)).to eq(%w[X])
+      end
+
+      it "retains diagram.subgraphs.map parent_id" do
+        expect(diagram.subgraphs.map(&:parent_id)).to eq([nil, "a"])
+      end
     end
 
-    it "leaves a box written inside another where it was written" do
-      source = "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
-               "subgraph c\nb\nend\n"
-      boxes = described_class.new.parse(source).subgraphs
-      held = boxes.to_h { |box| [box.id, box] }
+    context "when leaves a box written inside another where it was " \
+            "written" do
+      let(:source) do
+        "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
+          "subgraph c\nb\nend\n"
+      end
 
-      expect(held["b"].parent_id).to eq("a")
-      expect(held["c"].node_ids).to be_empty
+      it "retains held b .parent_id" do
+        boxes = described_class.new.parse(source).subgraphs
+        held = boxes.to_h { |box| [box.id, box] }
+
+        expect(held["b"].parent_id).to eq("a")
+      end
+
+      it "retains held c .node_ids" do
+        boxes = described_class.new.parse(source).subgraphs
+        held = boxes.to_h { |box| [box.id, box] }
+
+        expect(held["c"].node_ids).to be_empty
+      end
     end
   end
 
@@ -818,12 +883,17 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
     # A semicolon separates this statement from the next, the way it
     # separates every other one. mmdc 11.12.0 renders `direction LR;A`,
     # and ending on `line_end` refused it.
-    it "lets a semicolon follow it" do
-      source = "graph TD\nsubgraph s\ndirection LR;A\nB --> A\nend\n"
-      diagram = described_class.new.parse(source)
+    context "when lets a semicolon follow it" do
+      let(:source) { "graph TD\nsubgraph s\ndirection LR;A\nB --> A\nend\n" }
+      let(:diagram) { described_class.new.parse(source) }
 
-      expect(diagram.subgraphs.first.direction).to eq("LR")
-      expect(diagram.nodes.map(&:id)).to contain_exactly("A", "B")
+      it "retains diagram.subgraphs.first.direction" do
+        expect(diagram.subgraphs.first.direction).to eq("LR")
+      end
+
+      it "retains diagram.nodes.map id" do
+        expect(diagram.nodes.map(&:id)).to contain_exactly("A", "B")
+      end
     end
 
     # The header's aliases are header-only. mmdc 11.12.0 draws `graph <`,
@@ -839,12 +909,17 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
 
     # mmdc accepts a top-level one and ignores it: `flowchart TD` then
     # `direction LR` still stacks its nodes vertically.
-    it "is accepted and ignored at the top level" do
-      source = "flowchart TD\ndirection LR\nA --> B\n"
-      diagram = described_class.new.parse(source)
+    context "when is accepted and ignored at the top level" do
+      let(:source) { "flowchart TD\ndirection LR\nA --> B\n" }
+      let(:diagram) { described_class.new.parse(source) }
 
-      expect(diagram.nodes.map(&:id)).to eq(%w[A B])
-      expect(diagram.direction).to eq("TD")
+      it "retains diagram.nodes.map id" do
+        expect(diagram.nodes.map(&:id)).to eq(%w[A B])
+      end
+
+      it "retains diagram.direction" do
+        expect(diagram.direction).to eq("TD")
+      end
     end
   end
 

@@ -48,24 +48,40 @@ RSpec.describe Sirena::Parser::Flowchart do
   describe "the flowchart corpus cases behind the & bucket" do
     let(:corpus_dir) { File.join(__dir__, "../../mermaid/flowchart") }
 
-    it "gives every member of a three-node group its own label" do
-      source = File.read(File.join(corpus_dir,
-                                   "flow_node_data_spec-65204278.mmd"))
-      nodes = parse_flowchart(source, header: "").nodes
+    context "when gives every member of a three-node group its own label" do
+      let(:source) do
+        File.read(File.join(corpus_dir,
+                            "flow_node_data_spec-65204278.mmd"))
+      end
 
-      expect(nodes.map { |n| [n.id, n.label] })
-        .to eq([["n2", '"label for n2"'], ["n4", "label for n4"],
-                ["n5", "label for n5"]])
+      it "retains nodes.map n n.id n.label" do
+        nodes = parse_flowchart(source, header: "").nodes
+
+        expect(nodes.map { |n| [n.id, n.label] })
+          .to eq([["n2", '"label for n2"'], ["n4", "label for n4"],
+                  ["n5", "label for n5"]])
+      end
     end
 
-    it "links one source to every member of a three-node target group" do
-      source = File.read(File.join(corpus_dir,
-                                   "flow_node_data_spec-8d537ea3.mmd"))
-      diagram = parse_flowchart(source, header: "")
+    context "when links one source to every member of a three-node target " \
+            "group" do
+      let(:source) do
+        File.read(File.join(corpus_dir,
+                            "flow_node_data_spec-8d537ea3.mmd"))
+      end
 
-      expect(diagram.edges.map { |e| "#{e.source_id}>#{e.target_id}" })
-        .to eq(%w[A>B A>C A>E])
-      expect(diagram.nodes.map(&:id)).to eq(%w[A B C E D])
+      it "retains diagram.edges.map e e.source_id e.target_id" do
+        diagram = parse_flowchart(source, header: "")
+
+        expect(diagram.edges.map { |e| "#{e.source_id}>#{e.target_id}" })
+          .to eq(%w[A>B A>C A>E])
+      end
+
+      it "retains diagram.nodes.map id" do
+        diagram = parse_flowchart(source, header: "")
+
+        expect(diagram.nodes.map(&:id)).to eq(%w[A B C E D])
+      end
     end
 
     # A diagnostic, not coverage: the files exist on every branch, so this
