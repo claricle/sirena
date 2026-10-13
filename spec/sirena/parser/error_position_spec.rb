@@ -87,17 +87,22 @@ RSpec.describe Sirena::Parser::Base do
       expect(message).to start_with("Parse error at line 3, column 6:")
     end
 
-    it "reports the whole message consistently past a multibyte character" do
+    context "when reports the whole message consistently past a multibyte " \
+            "character" do
       # Parslet counts bytes, so "A[é]-->" reported column 9 for a 7
       # character line. Asserted on the full message: the heading and the
       # appended parslet text used to disagree, saying column 8 and char 9.
-      message = error_from(Sirena::Parser::Flowchart.new,
-                           "graph TD\nA[é]-->")
+      let(:message) do
+        error_from(Sirena::Parser::Flowchart.new,
+                   "graph TD\nA[é]-->")
+      end
 
-      expect(message).to eq(
-        "Parse error at line 2, column 8:\nA[é]-->\n       ^\n" \
-        "Premature end of input",
-      )
+      it "reports the complete message" do
+        expect(message).to eq(
+          "Parse error at line 2, column 8:\nA[é]-->\n       ^\n" \
+          "Premature end of input",
+        )
+      end
     end
   end
 
@@ -105,14 +110,18 @@ RSpec.describe Sirena::Parser::Base do
     # Parslet's message is an Array of String and Slice parts for this
     # class of failure, not a String. Interpolating it split the message
     # across lines and printed the slice's byte offset.
-    it "renders the message on one line, without a byte offset" do
-      message = error_from(Sirena::Parser::Flowchart.new,
-                           "graph TD\nA-->B\nxyzzy qux\n")
+    context "when renders the message on one line, without a byte offset" do
+      let(:message) do
+        error_from(Sirena::Parser::Flowchart.new,
+                   "graph TD\nA-->B\nxyzzy qux\n")
+      end
 
-      expect(message).to eq(
-        "Parse error at line 3, column 7:\nxyzzy qux\n      ^\n" \
-        'Expected ";", but got "q"',
-      )
+      it "reports the complete message" do
+        expect(message).to eq(
+          "Parse error at line 3, column 7:\nxyzzy qux\n      ^\n" \
+          'Expected ";", but got "q"',
+        )
+      end
     end
 
     # Sources chosen because each one makes parslet return an ARRAY message.
@@ -131,26 +140,35 @@ RSpec.describe Sirena::Parser::Base do
                          "architecture-beta\ngroup a x\n",
                          'Expected "\\n", but got "x"'],
     }.each do |name, (klass, source, expected)|
-      it "renders #{name}'s array message as parslet would" do
-        message = error_from(klass.new, source)
+      context "with #{name}'s array message" do
+        let(:message) { error_from(klass.new, source) }
 
-        expect(message.lines("\n").last.chomp).to eq(expected)
-        expect(message).not_to match(/@\d+/)
+        it "renders the final message as parslet would" do
+          expect(message.lines("\n").last.chomp).to eq(expected)
+        end
+
+        it "omits slice byte offsets" do
+          expect(message).not_to match(/@\d+/)
+        end
       end
     end
   end
 
   describe "a failure at end of input" do
-    it "says so and still draws the caret" do
+    context "when says so and still draws the caret" do
       # The failure sits one line past the source, so there is no line to
       # quote. The heading used to be emitted with nothing under it.
-      message = error_from(Sirena::Parser::Flowchart.new,
-                           "graph TD\nA-->B\nC-->\n")
+      let(:message) do
+        error_from(Sirena::Parser::Flowchart.new,
+                   "graph TD\nA-->B\nC-->\n")
+      end
 
-      expect(message).to eq(
-        "Parse error at line 4, column 1:\n(end of input)\n^\n" \
-        "Premature end of input",
-      )
+      it "reports the complete message" do
+        expect(message).to eq(
+          "Parse error at line 4, column 1:\n(end of input)\n^\n" \
+          "Premature end of input",
+        )
+      end
     end
   end
 
@@ -165,22 +183,27 @@ RSpec.describe Sirena::Parser::Base do
       Sirena::Parser::Block,
       Sirena::Parser::Requirement,
     ].each do |klass|
-      it "reports rather than raising NameError for #{klass}" do
-        parser = klass.new
-        allow(parser).to receive(:failure_position).and_raise("boom")
+      context "with #{klass} failing inside the position handler" do
+        let(:parser) { klass.new }
 
-        # The fallback has no heading, so it keeps parslet's own position
-        # rather than dropping it as the normal path does.
-        expect { parser.parse("!!!\n") }
-          .to raise_error(
-            Sirena::Parser::ParseError,
-            "Parse error: Premature end of input at line 1 char 1.",
-          )
+        before do
+          allow(parser).to receive(:failure_position).and_raise("boom")
+        end
 
-        # Asserted after the fact: a future edit that stops calling
-        # failure_position would otherwise pass without ever reaching the
-        # fallback this example exists to cover.
-        expect(parser).to have_received(:failure_position).once
+        # The fallback keeps parslet's own position without its heading.
+        it "reports rather than raising NameError" do
+          expect { parser.parse("!!!\n") }
+            .to raise_error(
+              Sirena::Parser::ParseError,
+              "Parse error: Premature end of input at line 1 char 1.",
+            )
+        end
+
+        it "reaches the fallback through the real position handler" do
+          error_from(parser, "!!!\n")
+
+          expect(parser).to have_received(:failure_position).once
+        end
       end
     end
   end
@@ -196,13 +219,22 @@ RSpec.describe Sirena::Parser::Base do
   # The message is printed, so the caret has to line up with the character
   # the column names once tabs are expanded.
   describe "the caret" do
-    it "carries a tab through rather than counting it as one column" do
-      message = error_from(Sirena::Parser::Flowchart.new,
-                           "graph TD\n\tA[ok] qux\n")
-      quoted, caret = message.lines("\n")[1, 2].map(&:chomp)
+    context "with a tab in the failing line" do
+      let(:message) do
+        error_from(Sirena::Parser::Flowchart.new, "graph TD\n\tA[ok] qux\n")
+      end
 
-      expect(caret).to eq("\t      ^")
-      expect(quoted[caret.index("^")]).to eq("q")
+      it "carries the tab through to the caret" do
+        _quoted, caret = message.lines("\n")[1, 2].map(&:chomp)
+
+        expect(caret).to eq("\t      ^")
+      end
+
+      it "points at the failing character" do
+        quoted, caret = message.lines("\n")[1, 2].map(&:chomp)
+
+        expect(quoted[caret.index("^")]).to eq("q")
+      end
     end
 
     it "still pads with spaces when the line has none" do
@@ -252,16 +284,23 @@ RSpec.describe Sirena::Parser::Base do
     # cause calls `Parslet::Cause#to_s`, which joins with no argument. It
     # took two rounds to see, because the ordinary path was already fixed
     # and nothing drove this one with a multi-part message.
-    it "reports the same fallback message with $, set" do
-      messages = [nil, "|"].map do |separator|
-        parser = Sirena::Parser::Flowchart.new
-        allow(parser).to receive(:failure_position).and_raise("boom")
-        $OUTPUT_FIELD_SEPARATOR = separator
-        error_from(parser, source)
+    context "with field separators on the fallback path" do
+      let(:messages) do
+        [nil, "|"].map do |separator|
+          parser = Sirena::Parser::Flowchart.new
+          allow(parser).to receive(:failure_position).and_raise("boom")
+          $OUTPUT_FIELD_SEPARATOR = separator
+          error_from(parser, source)
+        end
       end
 
-      expect(messages.first).to include('Expected ";", but got "q"')
-      expect(messages.last).to eq(messages.first)
+      it "retains the literal mismatch text" do
+        expect(messages.first).to include('Expected ";", but got "q"')
+      end
+
+      it "reports the same message with $, set" do
+        expect(messages.last).to eq(messages.first)
+      end
     end
   end
 
@@ -269,12 +308,17 @@ RSpec.describe Sirena::Parser::Base do
   # something else again. Quoting the third case the way a Slice is quoted
   # would print the symbol as a string literal.
   describe "a lookahead failure" do
-    it "names the atom without quoting it" do
-      message = error_from(Sirena::Parser::Flowchart.new,
-                           "graph TD\nstyle A fill:#f9f,,g")
+    let(:message) do
+      error_from(Sirena::Parser::Flowchart.new,
+                 "graph TD\nstyle A fill:#f9f,,g")
+    end
 
+    it "names the atom without quoting it" do
       expect(message)
         .to end_with("Input should not start with HASHED_COMMA_GAP")
+    end
+
+    it "reports the lookahead position" do
       expect(position_in(message)).to eq("line 2, column 18")
     end
   end

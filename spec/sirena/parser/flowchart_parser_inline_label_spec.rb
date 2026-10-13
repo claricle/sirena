@@ -147,9 +147,16 @@ RSpec.describe Sirena::Parser::Flowchart do
       "text of a dotted label" => "A -. #{'a' * 5_000} .-> B",
       "text of a thick label" => "A == #{'a' * 5_000} ==> B",
     }.each do |what, source|
-      it "parses a long run of #{what} within a fixed bound", :speed do
-        elapsed = wall_time { expect(edge_tuples(source).length).to eq(1) }
-        expect(elapsed).to be < 2
+      context "with a long run of #{what}", :speed do
+        let(:timed_edge_count) do
+          edge_count = nil
+          elapsed = wall_time { edge_count = edge_tuples(source).length }
+          [edge_count, elapsed]
+        end
+
+        it "parses one edge within the fixed bound" do
+          expect(timed_edge_count).to match([1, a_value < 2])
+        end
       end
     end
 
@@ -158,11 +165,21 @@ RSpec.describe Sirena::Parser::Flowchart do
       "dots of an unclosed dotted label" => "A -. a#{'.' * 20_000}",
       "equals of an unclosed thick label" => "A == a#{'=' * 20_000}",
     }.each do |what, source|
-      it "refuses a long run of #{what} at once", :speed do
-        elapsed = wall_time do
-          expect { edge_tuples(source) }.to raise_error(Sirena::Parser::ParseError)
+      context "with a long run of #{what}", :speed do
+        let(:timed_refusal) do
+          failure = nil
+          elapsed = wall_time do
+            edge_tuples(source)
+          rescue Sirena::Parser::ParseError => e
+            failure = e
+          end
+          [failure, elapsed]
         end
-        expect(elapsed).to be < 2
+
+        it "refuses the source within the fixed bound" do
+          expect(timed_refusal)
+            .to match([a_kind_of(Sirena::Parser::ParseError), a_value < 2])
+        end
       end
     end
   end

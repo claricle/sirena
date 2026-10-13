@@ -21,17 +21,33 @@ RSpec.describe Sirena::Layout::Gantt, :aggregate_failures do
     GANTT
   end
 
-  it "matches the pinned continuous task-row geometry" do
-    bars = scene.sections.flat_map(&:tasks).map(&:bar)
-    sections = scene.sections.map(&:background)
-    grid = scene.timeline.grid_lines
+  describe "the pinned continuous task-row geometry" do
+    it "places the task bars" do
+      bars = scene.sections.flat_map(&:tasks).map(&:bar)
 
-    expect(bars.map(&:y)).to eq([122.0, 146.0, 170.0])
-    expect(sections.map { |box| [box.y, box.height] })
-      .to eq([[120.0, 48.0], [168.0, 24.0]])
-    expect(grid.map { |line| [line.y1, line.y2] }.uniq)
-      .to eq([[120.0, 192.0]])
-    expect(scene.timeline.labels.map(&:y).uniq).to eq([197.0])
-    expect(scene.height).to eq(242.0)
+      expect(bars.map(&:y)).to eq([122.0, 146.0, 170.0])
+    end
+
+    it "places the section backgrounds" do
+      sections = scene.sections.map(&:background)
+
+      expect(sections.map { |box| [box.y, box.height] })
+        .to eq([[120.0, 48.0], [168.0, 24.0]])
+    end
+
+    it "runs the grid lines across every row" do
+      grid = scene.timeline.grid_lines
+
+      expect(grid.map { |line| [line.y1, line.y2] }.uniq)
+        .to eq([[120.0, 192.0]])
+    end
+
+    it "places the timeline labels" do
+      expect(scene.timeline.labels.map(&:y).uniq).to eq([197.0])
+    end
+
+    it "sets the scene height" do
+      expect(scene.height).to eq(242.0)
+    end
   end
 end

@@ -106,20 +106,30 @@ RSpec.describe Sirena::Parser::Flowchart do
       "classDef" => "classDef x fill:red#{' ' * 4_000}-a",
       "linkStyle" => "linkStyle 0 stroke:red#{' ' * 4_000}-a",
     }.each do |what, declaration|
-      it "parses a #{what} value's space run within a fixed bound" do
-        source = "graph TD\nA-->B\n#{declaration}\n"
-        elapsed = wall_time do
-          expect { node_ids.call(source) }.not_to raise_error
+      context "with a #{what} value's space run" do
+        let(:source) { "graph TD\nA-->B\n#{declaration}\n" }
+
+        it "parses the source within the fixed bound" do
+          elapsed = wall_time { node_ids.call(source) }
+
+          expect(elapsed).to be < 2
         end
-        expect(elapsed).to be < 2
       end
     end
 
-    it "still swallows the `;` after a space run then " \
-       "an ordinary run before `#`" do
-      source = "graph TD\nA\nstyle A fill:#{' ' * 4_000}#{'x' * 4_000}#f9f;B\n"
-      elapsed = wall_time { expect(node_ids.call(source)).to eq(%w[A]) }
-      expect(elapsed).to be < 2
+    context "with spaces and ordinary text before a hash" do
+      let(:source) do
+        "graph TD\nA\nstyle A fill:#{' ' * 4_000}#{'x' * 4_000}#f9f;B\n"
+      end
+      let(:timed_node_ids) do
+        ids = nil
+        elapsed = wall_time { ids = node_ids.call(source) }
+        [ids, elapsed]
+      end
+
+      it "swallows the semicolon within the fixed bound" do
+        expect(timed_node_ids).to match([%w[A], a_value < 2])
+      end
     end
   end
 

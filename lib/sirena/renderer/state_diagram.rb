@@ -39,9 +39,7 @@ module Sirena
       def state_group(state)
         group = Svg::Group.new.tap { |item| item.id = "state-#{state.id}" }
         group.children << final_state_shape(state)
-        state.labels.each do |label|
-          group.children << state_label(label)
-        end
+        append_state_labels(state, group)
         state.children.each do |child|
           render_state(child, group)
         end
@@ -54,29 +52,13 @@ module Sirena
 
       def render_transition(edge, svg)
         group = Svg::Group.new.tap { |item| item.id = "transition-#{edge.id}" }
-        group.children << Svg::Path.new.tap do |path|
-          path.d = edge.path
-          path.fill = "none"
-          path.stroke = theme_color(:edge_stroke)
-          path.stroke_width = "2"
-          path.marker_end = "url(#arrowhead)"
-        end
-        if edge.labels.any?
-          group.children << transition_label(edge.labels.first)
-        end
+        group.children << transition_path(edge)
+        append_transition_label(edge, group)
         svg << group
       end
 
       def transition_label(label)
-        Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
-          text.content = label.text
-          text.fill = theme_color(:label_text)
-          text.font_family = "Arial, sans-serif"
-          text.font_size = formatted_number(label.font_size)
-          text.text_anchor = "middle"
-        end
+        label_text(label)
       end
 
       private
@@ -172,17 +154,44 @@ module Sirena
         end
       end
 
+      def append_state_labels(state, group)
+        state.labels.each { |label| group.children << state_label(label) }
+      end
+
+      def append_transition_label(edge, group)
+        if edge.labels.any?
+          group.children << transition_label(edge.labels.first)
+        end
+      end
+
+      def transition_path(edge)
+        Svg::Path.new.tap do |path|
+          path.d = edge.path
+          path.fill = "none"
+          path.stroke = theme_color(:edge_stroke)
+          path.stroke_width = "2"
+          path.marker_end = "url(#arrowhead)"
+        end
+      end
+
       def state_label(label)
+        label_text(label).tap { |text| text.dominant_baseline = "middle" }
+      end
+
+      def label_text(label)
         Svg::Text.new.tap do |text|
           text.x = label.x
           text.y = label.y
           text.content = label.text
-          text.fill = theme_color(:label_text)
-          text.font_family = "Arial, sans-serif"
-          text.font_size = formatted_number(label.font_size)
-          text.text_anchor = "middle"
-          text.dominant_baseline = "middle"
+          apply_label_style(text, label)
         end
+      end
+
+      def apply_label_style(text, label)
+        text.fill = theme_color(:label_text)
+        text.font_family = "Arial, sans-serif"
+        text.font_size = formatted_number(label.font_size)
+        text.text_anchor = "middle"
       end
 
       def formatted_number(number)

@@ -125,18 +125,23 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(diagram.find_node("e1").classes).to eq(":::foo")
     end
 
-    it "keeps a shared node inside the subgraph that mentions the edge" do
-      source = <<~MERMAID
-        A --> e1
-        C e1@--> D
-        subgraph s
-          e1:::foo
-        end
-      MERMAID
+    context "when keeps a shared node inside the subgraph that mentions " \
+            "the edge" do
+      let(:source) do
+        <<~MERMAID
+          A --> e1
+          C e1@--> D
+          subgraph s
+            e1:::foo
+          end
+        MERMAID
+      end
 
-      diagram = parse_flowchart(source)
+      it "retains diagram.subgraphs.first.node_ids" do
+        diagram = parse_flowchart(source)
 
-      expect(diagram.subgraphs.first.node_ids).to eq(["e1"])
+        expect(diagram.subgraphs.first.node_ids).to eq(["e1"])
+      end
     end
   end
 
@@ -246,11 +251,16 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(edge_links("A &x@--> B")).to eq(%w[A>B])
     end
 
-    it "keeps a glued & in the captured id" do
-      expect(node_ids("A &x@--> B\nx@{ animate: true }"))
-        .to eq(%w[A B x])
-      expect(node_ids("A &x@--> B\n&x@{ animate: true }"))
-        .to eq(%w[A B])
+    context "when keeps a glued & in the captured id" do
+      it "retains node_ids A x B nx animate true" do
+        expect(node_ids("A &x@--> B\nx@{ animate: true }"))
+          .to eq(%w[A B x])
+      end
+
+      it "retains node_ids A x B n x animate true" do
+        expect(node_ids("A &x@--> B\n&x@{ animate: true }"))
+          .to eq(%w[A B])
+      end
     end
 
     it "refuses an id with a quote in it" do

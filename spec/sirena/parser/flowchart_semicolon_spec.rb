@@ -97,16 +97,19 @@ RSpec.describe Sirena::Parser::Flowchart do
       end
     end
 
-    it "still reads two declarations as one list" do
-      # Node ids alone cannot see this: they are the same whether the
-      # second declaration joined the list or was dropped. The captured
-      # properties are the tell — deleting the capture left this green.
-      source = "graph TD\nA-->B\nstyle A fill:#f9f;stroke:#333\n"
-      tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
-      props = Array(tree).find { |n| n.is_a?(Hash) && n.key?(:style_props) }
+    context "when still reads two declarations as one list" do
+      let(:source) { "graph TD\nA-->B\nstyle A fill:#f9f;stroke:#333\n" }
 
-      expect(node_ids(source)).to eq(%w[A B])
-      expect(props[:style_props].to_s.strip).to eq("fill:#f9f;stroke:#333")
+      it "retains node_ids source" do
+        expect(node_ids(source)).to eq(%w[A B])
+      end
+
+      it "retains props style_props .to_s.strip" do
+        tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
+        props = Array(tree).find { |n| n.is_a?(Hash) && n.key?(:style_props) }
+
+        expect(props[:style_props].to_s.strip).to eq("fill:#f9f;stroke:#333")
+      end
     end
   end
 
@@ -141,15 +144,13 @@ RSpec.describe Sirena::Parser::Flowchart do
       end
     end
 
-    it "does not reach back for a hash after the separator" do
-      # The `;` comes first, so it ends the statement and the hash never
-      # gets to swallow anything. mmdc draws A and a node `stroke:#333`;
-      # a node id here takes no colon, so we refuse instead of drawing a
-      # diagram one node short.
-      source = "graph TD\nA\nstyle A fill:red;stroke:#333\n"
+    context "when does not reach back for a hash after the separator" do
+      let(:source) { "graph TD\nA\nstyle A fill:red;stroke:#333\n" }
 
-      expect { described_class.new.parse(source) }
-        .to raise_error(Sirena::Parser::ParseError)
+      it "rejects the invalid source" do
+        expect { described_class.new.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
     end
 
     it "still ends at the newline" do
@@ -295,15 +296,13 @@ RSpec.describe Sirena::Parser::Flowchart do
         .to eq(%w[A B])
     end
 
-    it "refuses a second declaration it cannot spell as a node" do
-      # Without a hash the `;` always ends the statement, so `stroke:blue`
-      # has to stand as a node. mmdc draws exactly that. A node id here
-      # takes no colon, so we refuse the line — swallowing it drew A and B
-      # and silently lost the third node.
-      source = "graph TD\nA-->B\nstyle A fill:red;stroke:blue\n"
+    context "when refusing a second declaration it cannot spell as a node" do
+      let(:source) { "graph TD\nA-->B\nstyle A fill:red;stroke:blue\n" }
 
-      expect { described_class.new.parse(source) }
-        .to raise_error(Sirena::Parser::ParseError)
+      it "rejects the invalid source" do
+        expect { described_class.new.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
     end
   end
 
@@ -392,14 +391,13 @@ RSpec.describe Sirena::Parser::Flowchart do
   end
 
   describe "a declaration key outside ASCII" do
-    it "is not a declaration, and mermaid refuses the line" do
-      # This example asserted the opposite and was wrong. mmdc 11.12.0
-      # rejects `é: value`, so treating it as a continuation accepted a
-      # source the oracle refuses.
-      source = "graph TD\nA\nstyle A fill:red;é: value\n"
+    context "when is not a declaration, and mermaid refuses the line" do
+      let(:source) { "graph TD\nA\nstyle A fill:red;é: value\n" }
 
-      expect { described_class.new.parse(source) }
-        .to raise_error(Sirena::Parser::ParseError)
+      it "rejects the invalid source" do
+        expect { described_class.new.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
     end
   end
 
@@ -568,13 +566,11 @@ RSpec.describe Sirena::Parser::Flowchart do
       end
     end
 
-    it "still stops the name at the end of its line" do
-      # mermaid keeps reading: mmdc draws A alone here, having swallowed
-      # the whole `B --> C` edge into the callback name. Following it there
-      # would let a callback eat statements we can still draw, so we refuse
-      # instead. This asserts what we do, not what mermaid does.
-      expect(renders?("graph TD\nA\nclick A call cb\nB --> C\nD()\n"))
-        .to be(false)
+    context "when still stops the name at the end of its line" do
+      it "retains renders graph TD nA nclick A call cb nB C nD n" do
+        expect(renders?("graph TD\nA\nclick A call cb\nB --> C\nD()\n"))
+          .to be(false)
+      end
     end
 
     # Once `call` opens a callback the parens are compulsory. Falling back
@@ -670,13 +666,21 @@ RSpec.describe Sirena::Parser::Flowchart do
     # container to put a subgraph in and drawing loose nodes where
     # mermaid draws a cluster would have been a wrong picture. The model
     # has a container now, so the source goes all the way through.
-    it "draws the box and both nodes" do
-      source = "graph TD\nsubgraph s\nA\nend ;B\n"
-      diagram = described_class.new.parse(source)
+    context "when draws the box and both nodes" do
+      let(:source) { "graph TD\nsubgraph s\nA\nend ;B\n" }
+      let(:diagram) { described_class.new.parse(source) }
 
-      expect(diagram.nodes.map(&:id)).to contain_exactly("A", "B")
-      expect(diagram.subgraphs.map(&:id)).to eq(%w[s])
-      expect(diagram.subgraphs.first.node_ids).to eq(%w[A])
+      it "retains diagram.nodes.map id" do
+        expect(diagram.nodes.map(&:id)).to contain_exactly("A", "B")
+      end
+
+      it "retains diagram.subgraphs.map id" do
+        expect(diagram.subgraphs.map(&:id)).to eq(%w[s])
+      end
+
+      it "retains diagram.subgraphs.first.node_ids" do
+        expect(diagram.subgraphs.first.node_ids).to eq(%w[A])
+      end
     end
   end
 

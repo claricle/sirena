@@ -50,11 +50,18 @@ RSpec.describe Sirena::Parser::Flowchart do
         .to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "does not let a quote inside a comment line end the label" do
-      text = svg_text("flowchart LR\nb(\"a\n%% it\"s )\nc\") --> d")
+    context "with a quote inside a comment line" do
+      let(:text) do
+        svg_text("flowchart LR\nb(\"a\n%% it\"s )\nc\") --> d")
+      end
 
-      expect(text).to include("a").and include("c")
-      expect(text).not_to include('%% it"s )')
+      it "keeps the label on both sides of the comment" do
+        expect(text).to include("a").and include("c")
+      end
+
+      it "omits the comment text" do
+        expect(text).not_to include('%% it"s )')
+      end
     end
 
     it "leaves the other round labels of the diagram alone" do

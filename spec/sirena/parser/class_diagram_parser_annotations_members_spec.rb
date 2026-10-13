@@ -72,11 +72,16 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
       expect(diagram.entities.first.stereotype).to eq("interface")
     end
 
-    it "does not read an annotation followed by text as one" do
-      entity = parse_class("<<interface>> +m()")
+    context "with text after an annotation" do
+      let(:entity) { parse_class("<<interface>> +m()") }
 
-      expect(entity.stereotype).to be_nil
-      expect(entity.class_methods.map(&:name)).to eq(["<<interface>> +m"])
+      it "leaves the stereotype absent" do
+        expect(entity.stereotype).to be_nil
+      end
+
+      it "keeps the whole text as a method name" do
+        expect(entity.class_methods.map(&:name)).to eq(["<<interface>> +m"])
+      end
     end
 
     it "is not a member" do

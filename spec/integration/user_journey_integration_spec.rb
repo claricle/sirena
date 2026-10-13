@@ -5,78 +5,93 @@ require "sirena"
 
 RSpec.describe "UserJourney Integration", :aggregate_failures do
   describe "complete user journey pipeline" do
-    it "parses, transforms, and renders a simple user journey" do
-      source = <<~MERMAID
-        journey
-          title My Journey
-          section Shopping
-            Browse products: 5: Customer
-      MERMAID
+    let(:diagram) { Sirena::Parser::UserJourney.new.parse(source) }
 
-      parser = Sirena::Parser::UserJourney.new
-      diagram = parser.parse(source)
+    context "with a simple user journey" do
+      let(:source) do
+        <<~MERMAID
+          journey
+            title My Journey
+            section Shopping
+              Browse products: 5: Customer
+        MERMAID
+      end
 
-      expect(diagram).to be_a(Sirena::Diagram::UserJourney)
-      expect(diagram.valid?).to be true
-      expect(diagram.title).to eq("My Journey")
-      expect(diagram.sections.length).to eq(1)
+      it "parses a valid UserJourney" do
+        expect(diagram).to be_a(Sirena::Diagram::UserJourney)
+        expect(diagram.valid?).to be true
+      end
+
+      it "parses the title and section" do
+        expect(diagram.title).to eq("My Journey")
+        expect(diagram.sections.length).to eq(1)
+      end
     end
 
-    it "handles multiple sections and tasks" do
-      source = <<~MERMAID
-        journey
-          title Customer Experience
-          section Browse
-            View homepage: 5: Customer
-            Search products: 4: Customer
-          section Purchase
-            Add to cart: 3: Customer
-            Checkout: 2: Customer, Staff
-      MERMAID
+    context "with multiple sections and tasks" do
+      let(:source) do
+        <<~MERMAID
+          journey
+            title Customer Experience
+            section Browse
+              View homepage: 5: Customer
+              Search products: 4: Customer
+            section Purchase
+              Add to cart: 3: Customer
+              Checkout: 2: Customer, Staff
+        MERMAID
+      end
 
-      parser = Sirena::Parser::UserJourney.new
-      diagram = parser.parse(source)
+      it "parses both sections" do
+        expect(diagram.sections.length).to eq(2)
+      end
 
-      expect(diagram.sections.length).to eq(2)
-      expect(diagram.sections[0].name).to eq("Browse")
-      expect(diagram.sections[0].tasks.length).to eq(2)
-      expect(diagram.sections[1].name).to eq("Purchase")
-      expect(diagram.sections[1].tasks.length).to eq(2)
+      it "parses the Browse section's name and tasks" do
+        expect(diagram.sections[0].name).to eq("Browse")
+        expect(diagram.sections[0].tasks.length).to eq(2)
+      end
+
+      it "parses the Purchase section's name and tasks" do
+        expect(diagram.sections[1].name).to eq("Purchase")
+        expect(diagram.sections[1].tasks.length).to eq(2)
+      end
     end
 
-    it "handles tasks with multiple actors" do
-      source = <<~MERMAID
-        journey
-          section Service
-            Request support: 3: Customer, Support, Manager
-      MERMAID
+    context "with a task with multiple actors" do
+      let(:source) do
+        <<~MERMAID
+          journey
+            section Service
+              Request support: 3: Customer, Support, Manager
+        MERMAID
+      end
 
-      parser = Sirena::Parser::UserJourney.new
-      diagram = parser.parse(source)
+      it "parses every actor in order" do
+        task = diagram.sections.first.tasks.first
 
-      task = diagram.sections.first.tasks.first
-      expect(task.actors).to eq(%w[Customer Support Manager])
+        expect(task.actors).to eq(%w[Customer Support Manager])
+      end
     end
 
-    it "handles different score values" do
-      source = <<~MERMAID
-        journey
-          section Ratings
-            Low: 1: User
-            Medium: 3: User
-            High: 5: User
-      MERMAID
+    context "with different score values" do
+      let(:source) do
+        <<~MERMAID
+          journey
+            section Ratings
+              Low: 1: User
+              Medium: 3: User
+              High: 5: User
+        MERMAID
+      end
+      let(:tasks) { diagram.sections.first.tasks }
 
-      parser = Sirena::Parser::UserJourney.new
-      diagram = parser.parse(source)
+      it "parses each score" do
+        expect(tasks.map(&:score)).to eq([1, 3, 5])
+      end
 
-      tasks = diagram.sections.first.tasks
-      expect(tasks[0].score).to eq(1)
-      expect(tasks[0].score_color).to eq(:red)
-      expect(tasks[1].score).to eq(3)
-      expect(tasks[1].score_color).to eq(:yellow)
-      expect(tasks[2].score).to eq(5)
-      expect(tasks[2].score_color).to eq(:green)
+      it "colours each score" do
+        expect(tasks.map(&:score_color)).to eq(%i[red yellow green])
+      end
     end
   end
 
@@ -110,12 +125,9 @@ RSpec.describe "UserJourney Integration", :aggregate_failures do
       handlers = Sirena::DiagramRegistry.get(:user_journey)
 
       expect(handlers).not_to be_nil
-      expect(handlers[:parser])
-        .to eq(Sirena::Parser::UserJourney)
-      expect(handlers[:transform])
-        .to eq(Sirena::Layout::UserJourney)
-      expect(handlers[:renderer])
-        .to eq(Sirena::Renderer::UserJourney)
+      expect(handlers[:parser]).to eq(Sirena::Parser::UserJourney)
+      expect(handlers[:transform]).to eq(Sirena::Layout::UserJourney)
+      expect(handlers[:renderer]).to eq(Sirena::Renderer::UserJourney)
     end
   end
 end

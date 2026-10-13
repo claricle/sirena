@@ -101,22 +101,28 @@ RSpec.describe Sirena::Svg::Escaping do
         end
       end
 
-      it "returns pairs from element_attributes, never rendered markup" do
-        pairs = element.send(:element_attributes)
+      let(:pairs) { element.send(:element_attributes) }
+      let(:xml) { element.to_xml }
 
+      it "returns pairs from element_attributes, never rendered markup" do
         expect(pairs).to all(be_an(Array).and(have_attributes(size: 2)))
+      end
+
+      it "returns string attribute names from element_attributes" do
         expect(pairs.map(&:first)).to all(be_a(String))
       end
 
+      it "leaves no hostile value unescaped" do
+        expect(xml).not_to include(HOSTILE)
+      end
+
+      # No duplicate allowance any more. Rect used to list fill-opacity in
+      # writes_attributes while Element also emitted it, producing
+      # `fill-opacity="x" fill-opacity="x"` and the last 5 malformed corpus
+      # cases. Every class now emits each attribute exactly once.
       it "escapes every one of its string attribute values" do
-        xml = element.to_xml
-        # No duplicate allowance any more. Rect used to list fill-opacity in
-        # writes_attributes while Element also emitted it, producing
-        # `fill-opacity="x" fill-opacity="x"` and the last 5 malformed corpus
-        # cases. Every class now emits each attribute exactly once.
         expected = writers.size + COMMON_ATTRIBUTES.size
 
-        expect(xml).not_to include(HOSTILE)
         expect(xml.scan(ESCAPED).size).to eq(expected)
       end
     end
@@ -128,15 +134,21 @@ RSpec.describe Sirena::Svg::Escaping do
   describe "properties SVG Tiny 1.2 does not have" do
     TRANSLATED_AWAY.each do |klass, writers|
       writers.each do |writer, (attribute, sample, expected_lines)|
-        it "never emits #{attribute} from #{klass.name.split('::').last}" do
-          element = klass.new
-          TRANSLATED_AWAY_SETUP.fetch(klass).call(element)
-          element.public_send("#{writer}=", sample)
+        context "with #{attribute} on #{klass.name.split('::').last}" do
+          let(:xml) do
+            klass.new.tap do |element|
+              TRANSLATED_AWAY_SETUP.fetch(klass).call(element)
+              element.public_send("#{writer}=", sample)
+            end.to_xml
+          end
 
-          xml = element.to_xml
+          it "never emits #{attribute}" do
+            expect(xml).not_to include(attribute)
+          end
 
-          expect(xml).not_to include(attribute)
-          expect(xml.lines(chomp: true)).to eq(expected_lines)
+          it "emits only what the profile has" do
+            expect(xml.lines(chomp: true)).to eq(expected_lines)
+          end
         end
       end
     end
@@ -155,21 +167,25 @@ RSpec.describe Sirena::Svg::Escaping do
   # production and the corpus has no special-character attribute case, so
   # misrouting Document alone would leave the rest of this suite green.
   describe Sirena::Svg::Document do
-    it "escapes its root attributes" do
-      doc = described_class.new
-      doc.view_box = HOSTILE
-      doc.version = HOSTILE
-      doc.base_profile = HOSTILE
-      doc.xmlns = HOSTILE
+    let(:xml) do
+      described_class.new.tap do |doc|
+        doc.view_box = HOSTILE
+        doc.version = HOSTILE
+        doc.base_profile = HOSTILE
+        doc.xmlns = HOSTILE
+      end.to_xml
+    end
 
-      xml = doc.to_xml
-
-      # All four string-typed root attributes, not a sample: each is emitted
-      # on its own line, so asserting three of four would miss a dropped one.
-      # width and height are :float and coerce to 0.0, so they cannot carry
-      # markup — same as the numeric element attributes.
+    it "leaves no hostile root value unescaped" do
       expect(xml).not_to include(HOSTILE)
-      %w[viewBox version baseProfile xmlns].each do |name|
+    end
+
+    # All four string-typed root attributes, not a sample: each is emitted
+    # on its own line, so asserting three of four would miss a dropped one.
+    # width and height are :float and coerce to 0.0, so they cannot carry
+    # markup — same as the numeric element attributes.
+    %w[viewBox version baseProfile xmlns].each do |name|
+      it "escapes its #{name} root attribute" do
         expect(xml).to include(%(#{name}="#{ESCAPED}"))
       end
     end
@@ -179,15 +195,16 @@ RSpec.describe Sirena::Svg::Escaping do
     # reverted (mutation-check.sh confirmed this). Keep it; it becomes the
     # only check for an explicitly-set version/baseProfile now that
     # from_xml round-tripping is gone.
-    it "declares the SVG Tiny 1.2 profile by default, and honours a " \
-       "different one when set directly" do
-      defaults = described_class.new.to_xml
+    it "declares the SVG Tiny 1.2 profile by default" do
+      expect(described_class.new.to_xml)
+        .to include(%( version="1.2"\n baseProfile="tiny"))
+    end
 
+    it "honours a different profile when set directly" do
       other = described_class.new
       other.version = "1.1"
       other.base_profile = "full"
 
-      expect(defaults).to include(%( version="1.2"\n baseProfile="tiny"))
       expect(other.to_xml).to include(%( version="1.1"\n baseProfile="full"))
     end
   end
@@ -196,15 +213,19 @@ RSpec.describe Sirena::Svg::Escaping do
   # assigns edge ids straight onto it. A seeded raw interpolation here left the
   # entire suite green, so it needs its own case.
   describe Sirena::Svg::Group do
-    it "escapes the attributes on its opening tag" do
-      group = described_class.new
-      group.id = HOSTILE
-      group.class_name = HOSTILE
-      group.transform = HOSTILE
+    let(:xml) do
+      described_class.new.tap do |group|
+        group.id = HOSTILE
+        group.class_name = HOSTILE
+        group.transform = HOSTILE
+      end.to_xml
+    end
 
-      xml = group.to_xml
-
+    it "leaves no hostile attribute unescaped" do
       expect(xml).not_to include(HOSTILE)
+    end
+
+    it "escapes the attributes on its opening tag" do
       expect(xml.scan(ESCAPED).size).to eq(3)
     end
   end
@@ -220,12 +241,20 @@ RSpec.describe Sirena::Svg::Escaping do
       expect(text.to_xml).to eq("<text>&amp; &lt; &gt;</text>")
     end
 
-    it "neutralises a script payload" do
-      text = described_class.new
-      text.content = "Alice<img src=x onerror=alert(1)>"
+    context "with a script payload" do
+      let(:xml) do
+        text = described_class.new
+        text.content = "Alice<img src=x onerror=alert(1)>"
+        text.to_xml
+      end
 
-      expect(text.to_xml).to include("&lt;img src=x onerror=alert(1)&gt;")
-      expect(text.to_xml).not_to include("<img")
+      it "escapes the payload" do
+        expect(xml).to include("&lt;img src=x onerror=alert(1)&gt;")
+      end
+
+      it "leaves no raw tag" do
+        expect(xml).not_to include("<img")
+      end
     end
   end
 
@@ -235,13 +264,16 @@ RSpec.describe Sirena::Svg::Escaping do
   # escaping matrix above cannot cover them; these assert the exact output, and
   # removing either declaration fails here.
   describe "geometry that used to be dropped" do
-    it "serialises an Ellipse with all four of its radii and centres" do
-      ellipse = Sirena::Svg::Ellipse.new
-      ellipse.cx = 10.0
-      ellipse.cy = 20.0
-      ellipse.rx = 5.0
-      ellipse.ry = 6.0
+    let(:ellipse) do
+      Sirena::Svg::Ellipse.new.tap do |shape|
+        shape.cx = 10.0
+        shape.cy = 20.0
+        shape.rx = 5.0
+        shape.ry = 6.0
+      end
+    end
 
+    it "serialises an Ellipse with all four of its radii and centres" do
       expect(ellipse.to_xml)
         .to eq('<ellipse cx="10.0" cy="20.0" rx="5.0" ry="6.0"/>')
     end

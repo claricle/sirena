@@ -63,19 +63,36 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
     # A second declaration still merges its body into the same box. It
     # loses the parentage, not the contents. Order is asserted because
     # it is source order — mmdc 11.12.0 lists X before Y too.
-    it "gives it to the first of two declarations" do
-      source = "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
-               "subgraph c\nsubgraph b\nY\nend\nend\n"
-      all = described_class.new.parse(source).subgraphs
-      held = boxes(source)
+    context "when gives it to the first of two declarations" do
+      let(:source) do
+        "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
+          "subgraph c\nsubgraph b\nY\nend\nend\n"
+      end
 
-      expect(held["b"].parent_id).to eq("a")
-      expect(held["b"].node_ids).to eq(%w[X Y])
-      # Both declarations, not just the winner: while the loser also took
-      # the id, everything above stayed true and the theft went unseen.
-      expect(all.select { |box| box.id == "b" }.map(&:parent_id))
-        .to eq(["a", nil])
-      expect(held["c"].child_ids).to be_empty
+      it "retains held b .parent_id" do
+        held = boxes(source)
+
+        expect(held["b"].parent_id).to eq("a")
+      end
+
+      it "retains held b .node_ids" do
+        held = boxes(source)
+
+        expect(held["b"].node_ids).to eq(%w[X Y])
+      end
+
+      it "retains all.select box box.id b .map parent_id" do
+        all = described_class.new.parse(source).subgraphs
+
+        expect(all.select { |box| box.id == "b" }.map(&:parent_id))
+          .to eq(["a", nil])
+      end
+
+      it "retains held c .child_ids" do
+        held = boxes(source)
+
+        expect(held["c"].child_ids).to be_empty
+      end
     end
 
     # Declaring a box at the top level claims nothing, so a nested
@@ -83,20 +100,38 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
     # parent has to land on the box that HOLDS the contents, not on the
     # empty second object the redeclaration built — parenting that one
     # drew `a` and `b` side by side where mmdc nests them.
-    it "parents the box that holds the contents, not the redeclaration" do
-      source = "flowchart TD\nsubgraph b\nX\nend\n" \
-               "subgraph a\nsubgraph b\nY\nend\nend\n"
-      diagram = described_class.new.parse(source)
-      held = boxes(source)
-      drawn = diagram.subgraphs.select(&:drawable?)
+    context "when parents the box that holds the contents, not the " \
+            "redeclaration" do
+      let(:source) do
+        "flowchart TD\nsubgraph b\nX\nend\n" \
+          "subgraph a\nsubgraph b\nY\nend\nend\n"
+      end
+      let(:diagram) { described_class.new.parse(source) }
 
-      expect(held["b"].parent_id).to eq("a")
-      expect(held["b"].node_ids).to eq(%w[X Y])
-      expect(held["a"].child_ids).to eq(%w[b])
-      # The one that gets drawn is the one that got the parent. The
-      # empty duplicate is left unparented and filtered out.
-      expect(drawn.map { |box| [box.id, box.parent_id] })
-        .to contain_exactly(["b", "a"], ["a", nil])
+      it "retains held b .parent_id" do
+        held = boxes(source)
+
+        expect(held["b"].parent_id).to eq("a")
+      end
+
+      it "retains held b .node_ids" do
+        held = boxes(source)
+
+        expect(held["b"].node_ids).to eq(%w[X Y])
+      end
+
+      it "retains held a .child_ids" do
+        held = boxes(source)
+
+        expect(held["a"].child_ids).to eq(%w[b])
+      end
+
+      it "retains drawn.map box box.id box.parent_id" do
+        drawn = diagram.subgraphs.select(&:drawable?)
+
+        expect(drawn.map { |box| [box.id, box.parent_id] })
+          .to contain_exactly(["b", "a"], ["a", nil])
+      end
     end
 
     # The same shape with a reference after it, and one with two
@@ -129,18 +164,36 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
     # collection. Nothing draws it — `drawable_subgraphs` filters it
     # before the layout sees it — but a caller keying `subgraphs` by id
     # last-wins would pick up the wrong one. It predates this rule.
-    it "leaves the losing declaration as an undrawable duplicate" do
-      source = "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
-               "subgraph c\nsubgraph b\nY\nend\nend\n"
-      all = described_class.new.parse(source).subgraphs.select do |box|
-        box.id == "b"
+    context "when leaves the losing declaration as an undrawable " \
+            "duplicate" do
+      let(:source) do
+        "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
+          "subgraph c\nsubgraph b\nY\nend\nend\n"
       end
 
-      expect(all.size).to eq(2)
-      expect(all.map(&:drawable?)).to eq([true, false])
-      # The half that pins ownership: the loser took no parent, so it is
-      # not hanging off `c` and `c` is not holding it.
-      expect(all.last.parent_id).to be_nil
+      it "retains all.size" do
+        all = described_class.new.parse(source).subgraphs.select do |box|
+          box.id == "b"
+        end
+
+        expect(all.size).to eq(2)
+      end
+
+      it "retains all.map drawable" do
+        all = described_class.new.parse(source).subgraphs.select do |box|
+          box.id == "b"
+        end
+
+        expect(all.map(&:drawable?)).to eq([true, false])
+      end
+
+      it "retains all.last.parent_id" do
+        all = described_class.new.parse(source).subgraphs.select do |box|
+          box.id == "b"
+        end
+
+        expect(all.last.parent_id).to be_nil
+      end
     end
 
     # An id standing at the end of an arrow claims just as a bare one
@@ -180,44 +233,83 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
     # which is already spoken for, so that claim loses and closes
     # nothing. Measured on mmdc 11.12.0: clusters `c` and `b`, with `a`
     # drawn as a plain node inside `b`.
-    it "takes a source whose last claim loses" do
-      source = "flowchart TD\nsubgraph c\nb\nend\n" \
-               "subgraph b\na\nend\nsubgraph a\nb\nend\n"
-      diagram = described_class.new.parse(source)
-      held = diagram.subgraphs.each_with_object({}) do |box, acc|
-        acc[box.id] ||= box
+    context "when takes a source whose last claim loses" do
+      let(:source) do
+        "flowchart TD\nsubgraph c\nb\nend\n" \
+          "subgraph b\na\nend\nsubgraph a\nb\nend\n"
+      end
+      let(:diagram) { described_class.new.parse(source) }
+
+      it "retains held b .parent_id" do
+        held = diagram.subgraphs.each_with_object({}) do |box, acc|
+          acc[box.id] ||= box
+        end
+
+        expect(held["b"].parent_id).to eq("c")
       end
 
-      expect(held["b"].parent_id).to eq("c")
-      expect(held["b"].node_ids).to eq(%w[a])
-      expect(held["a"]).not_to be_drawable
-      # Not merely undrawable: mmdc draws `a` as a plain node in `b`,
-      # and it survives as one here because `b` holds its id.
-      expect(diagram.nodes.map(&:id)).to eq(%w[a])
+      it "retains held b .node_ids" do
+        held = diagram.subgraphs.each_with_object({}) do |box, acc|
+          acc[box.id] ||= box
+        end
+
+        expect(held["b"].node_ids).to eq(%w[a])
+      end
+
+      it "retains held a" do
+        held = diagram.subgraphs.each_with_object({}) do |box, acc|
+          acc[box.id] ||= box
+        end
+
+        expect(held["a"]).not_to be_drawable
+      end
+
+      it "retains diagram.nodes.map id" do
+        expect(diagram.nodes.map(&:id)).to eq(%w[a])
+      end
     end
 
     # The same loop with the losing claim written earlier.
-    it "takes it wherever the losing claim sits" do
-      source = "flowchart TD\nsubgraph c\nb\nend\n" \
-               "subgraph a\nb\nend\nsubgraph b\na\nend\n"
-      held = boxes(source)
+    context "when takes it wherever the losing claim sits" do
+      let(:source) do
+        "flowchart TD\nsubgraph c\nb\nend\n" \
+          "subgraph a\nb\nend\nsubgraph b\na\nend\n"
+      end
 
-      expect(held["b"].parent_id).to eq("c")
-      expect(held["b"].node_ids).to eq(%w[a])
-      expect(held["a"]).not_to be_drawable
+      it "retains held b .parent_id" do
+        held = boxes(source)
+
+        expect(held["b"].parent_id).to eq("c")
+      end
+
+      it "retains held b .node_ids" do
+        held = boxes(source)
+
+        expect(held["b"].node_ids).to eq(%w[a])
+      end
+
+      it "retains held a" do
+        held = boxes(source)
+
+        expect(held["a"]).not_to be_drawable
+      end
     end
 
     # Declarations claim exactly as references do, so a loop written by
     # nesting is caught by the same edge set. `named_ids` used to
     # collect these separately; nothing does now, so it needs its own
     # example. mmdc refuses this source too.
-    it "still refuses a loop closed by nested declarations" do
-      source = "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
-               "subgraph b\nsubgraph a\nY\nend\nend\n"
+    context "when still refuses a loop closed by nested declarations" do
+      let(:source) do
+        "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
+          "subgraph b\nsubgraph a\nY\nend\nend\n"
+      end
 
-      expect { described_class.new.parse(source) }
-        .to raise_error(Sirena::Parser::ParseError,
-                        /Setting b as parent of a would create a cycle/)
+      it "rejects the invalid source" do
+        expect { described_class.new.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError,
+                          /Setting b as parent of a would create a cycle/)
+      end
     end
 
     # And the guard still fires when the claims all WIN. Proving it in
@@ -230,24 +322,32 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
                         /Setting b as parent of a would create a cycle/)
     end
 
-    it "still refuses a ring of four" do
-      source = "flowchart TD\nsubgraph a\nb\nend\nsubgraph b\nc\nend\n" \
-               "subgraph c\nd\nend\nsubgraph d\na\nend\n"
+    context "when still refuses a ring of four" do
+      let(:source) do
+        "flowchart TD\nsubgraph a\nb\nend\nsubgraph b\nc\nend\n" \
+          "subgraph c\nd\nend\nsubgraph d\na\nend\n"
+      end
 
-      expect { described_class.new.parse(source) }
-        .to raise_error(Sirena::Parser::ParseError,
-                        /Setting d as parent of a would create a cycle/)
+      it "rejects the invalid source" do
+        expect { described_class.new.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError,
+                          /Setting d as parent of a would create a cycle/)
+      end
     end
 
     # A ring anywhere refuses the whole diagram, even with a perfectly
     # good box beside it. Measured: mmdc rejects this source too.
-    it "still refuses a ring beside a box that would have drawn" do
-      source = "flowchart TD\nsubgraph a\nb\nend\nsubgraph b\na\nend\n" \
-               "subgraph z\nQ\nend\n"
+    context "when still refuses a ring beside a box that would have drawn" do
+      let(:source) do
+        "flowchart TD\nsubgraph a\nb\nend\nsubgraph b\na\nend\n" \
+          "subgraph z\nQ\nend\n"
+      end
 
-      expect { described_class.new.parse(source) }
-        .to raise_error(Sirena::Parser::ParseError,
-                        /Setting b as parent of a would create a cycle/)
+      it "rejects the invalid source" do
+        expect { described_class.new.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError,
+                          /Setting b as parent of a would create a cycle/)
+      end
     end
   end
 
@@ -255,30 +355,64 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
     # `c` holds `b`, so `c` is worth drawing and the edge reaches it.
     # While the later declaration won, `c` was left empty and its own id
     # had to survive as a loose node instead.
-    it "reaches the box that claimed the reference" do
-      source = "flowchart TD\nsubgraph c\nb\nend\n" \
-               "subgraph a\nsubgraph b\nX\nend\nend\nc --> Z\n"
-      diagram = described_class.new.parse(source)
-      held = diagram.subgraphs.to_h { |box| [box.id, box] }
+    context "when reaches the box that claimed the reference" do
+      let(:source) do
+        "flowchart TD\nsubgraph c\nb\nend\n" \
+          "subgraph a\nsubgraph b\nX\nend\nend\nc --> Z\n"
+      end
+      let(:diagram) { described_class.new.parse(source) }
 
-      expect(held["c"].child_ids).to eq(%w[b])
-      expect(held["b"].node_ids).to eq(%w[X])
-      expect(diagram.nodes.map(&:id)).to eq(%w[X Z])
-      expect(diagram.edges.map { |e| [e.source_id, e.target_id] })
-        .to eq([%w[c Z]])
-      expect(diagram).to be_valid
+      it "retains held c .child_ids" do
+        held = diagram.subgraphs.to_h { |box| [box.id, box] }
+
+        expect(held["c"].child_ids).to eq(%w[b])
+      end
+
+      it "retains held b .node_ids" do
+        held = diagram.subgraphs.to_h { |box| [box.id, box] }
+
+        expect(held["b"].node_ids).to eq(%w[X])
+      end
+
+      it "retains diagram.nodes.map id" do
+        expect(diagram.nodes.map(&:id)).to eq(%w[X Z])
+      end
+
+      it "retains diagram.edges.map e e.source_id e.target_id" do
+        expect(diagram.edges.map { |e| [e.source_id, e.target_id] })
+          .to eq([%w[c Z]])
+      end
+
+      it "retains diagram" do
+        expect(diagram).to be_valid
+      end
     end
 
     # One level further out: `d` names `c`, `c` names `b`, and each
     # first claim holds all the way down.
-    it "keeps the whole chain when the reference is nested" do
-      source = "flowchart TD\nsubgraph d\nc\nend\nsubgraph c\nb\nend\n" \
-               "subgraph a\nsubgraph b\nX\nend\nend\nc --> Z\n"
-      held = boxes(source)
+    context "when keeps the whole chain when the reference is nested" do
+      let(:source) do
+        "flowchart TD\nsubgraph d\nc\nend\nsubgraph c\nb\nend\n" \
+          "subgraph a\nsubgraph b\nX\nend\nend\nc --> Z\n"
+      end
 
-      expect(held["c"].parent_id).to eq("d")
-      expect(held["b"].parent_id).to eq("c")
-      expect(held["a"]).not_to be_drawable
+      it "retains held c .parent_id" do
+        held = boxes(source)
+
+        expect(held["c"].parent_id).to eq("d")
+      end
+
+      it "retains held b .parent_id" do
+        held = boxes(source)
+
+        expect(held["b"].parent_id).to eq("c")
+      end
+
+      it "retains held a" do
+        held = boxes(source)
+
+        expect(held["a"]).not_to be_drawable
+      end
     end
   end
 end

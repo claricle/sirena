@@ -20,6 +20,15 @@ RSpec.describe Sirena::Layout::GitGraph do
   let(:orientation) { "LR" }
   let(:scene) { layout.call(Sirena::Parser::GitGraph.new.parse(branch_source)) }
   let(:branches) { scene.branches.to_h { |branch| [branch.name, branch] } }
+  let(:lone_source) do
+    <<~MERMAID
+      gitGraph:
+        commit
+        branch test1 order: 3
+        branch test2 order: 2
+        branch test3 order: 1
+    MERMAID
+  end
 
   def creation_commit
     scene.commits.find { |commit| commit.id == "A" }
@@ -172,14 +181,7 @@ RSpec.describe Sirena::Layout::GitGraph do
   end
 
   it "keeps lone-commit labels at Mermaid's empty-lane boundary" do
-    source = <<~MERMAID
-      gitGraph:
-        commit
-        branch test1 order: 3
-        branch test2 order: 2
-        branch test3 order: 1
-    MERMAID
-    lone_scene = layout.call(Sirena::Parser::GitGraph.new.parse(source))
+    lone_scene = layout.call(Sirena::Parser::GitGraph.new.parse(lone_source))
     commit = lone_scene.commits.fetch(0)
 
     expect((lone_scene.branches.fetch(0).label.x - commit.x).round(3))

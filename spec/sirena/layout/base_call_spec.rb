@@ -12,19 +12,19 @@ RSpec.describe Sirena::Layout::Base do
       end
     end.new
   end
-  let(:engine) { Sirena::Engine.new }
-  let(:date_layout_class) do
+  let(:theme) { Sirena::Theme::Registry.get(:high_contrast) }
+  let(:day) { Date.new(2001, 2, 3) }
+  let(:dates) do
     Class.new(described_class) do
       def scene(_diagram)
         Sirena::Layout::Scene.new(width: today.year, height: 0)
       end
-    end
+    end.new
   end
 
   describe "#call" do
     it "returns a Scene from a layout" do
-      expect(converted_layout.call(diagram, theme: Sirena::Theme::Registry.get(:high_contrast),
-                                            today: Date.new(2001, 2, 3)))
+      expect(converted_layout.call(diagram, theme: theme, today: day))
         .to have_attributes(width: 16.0, height: 2001)
     end
 
@@ -33,16 +33,15 @@ RSpec.describe Sirena::Layout::Base do
         .to raise_error(NotImplementedError, /implement #scene/)
     end
 
-    it "treats today: nil as the real date and a pinned date as different" do
-      dates = date_layout_class.new
-
+    it "treats today: nil as the real date" do
       expect(dates.call(diagram, today: nil).width).to eq(Date.today.year)
+    end
+
+    it "treats a pinned date as different from the real date" do
       expect(dates.call(diagram, today: Date.new(1999, 1, 1)).width).to eq(1999)
     end
 
     it "keeps a date pinned with today= when called with today: nil" do
-      dates = date_layout_class.new
-
       dates.today = Date.new(1999, 1, 1)
 
       expect(dates.call(diagram, today: nil).width).to eq(1999)
@@ -50,22 +49,18 @@ RSpec.describe Sirena::Layout::Base do
 
     it "does not leak a today: kwarg from one call into the next call " \
        "on the same instance" do
-      dates = date_layout_class.new
-
       dates.call(diagram, today: Date.new(1999, 1, 1))
 
       expect(dates.call(diagram, today: nil).width).to eq(Date.today.year)
     end
 
     it "does not clobber a today= pin when a call with today: raises " \
-       "on an invalid diagram" do
-      dates = date_layout_class.new
-      dates.today = Date.new(1999, 1, 1)
+       "on an invalid diagram", :aggregate_failures do
       invalid = instance_double(Sirena::Diagram::Base, valid?: false)
+      dates.today = Date.new(1999, 1, 1)
 
       expect { dates.call(invalid, today: Date.new(2020, 5, 5)) }
         .to raise_error(Sirena::Layout::LayoutError)
-
       expect(dates.call(diagram, today: nil).width).to eq(1999)
     end
 
@@ -96,11 +91,7 @@ RSpec.describe Sirena::Layout::Base do
 
   describe "#to_graph" do
     it "aliases #call with the same context keywords" do
-      result = converted_layout.to_graph(
-        diagram,
-        theme: Sirena::Theme::Registry.get(:high_contrast),
-        today: Date.new(2001, 2, 3),
-      )
+      result = converted_layout.to_graph(diagram, theme: theme, today: day)
 
       expect(result).to have_attributes(width: 16.0, height: 2001)
     end
@@ -109,9 +100,8 @@ RSpec.describe Sirena::Layout::Base do
   describe "Engine#transform_diagram" do
     it "passes the layout result through and hands the layout " \
        "the theme and date" do
-      theme = Sirena::Theme::Registry.get(:high_contrast)
-      result = engine.send(:transform_diagram, diagram, converted_layout.class,
-                           Date.new(2001, 2, 3), theme)
+      result = Sirena::Engine.new.send(:transform_diagram, diagram,
+                                       converted_layout.class, day, theme)
 
       expect(result).to have_attributes(width: 16.0, height: 2001)
     end

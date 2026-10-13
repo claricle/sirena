@@ -16,12 +16,12 @@ RSpec.describe Sirena::Parser::Flowchart do
   ]
 
   link_shapes.each do |shape, expected_type, links|
-    it "keeps #{shape} identical across lengths" do
-      aggregate_failures do
-        links.each do |link|
-          source = "flowchart TD\n  A#{link}B\n"
-          diagram = described_class.new.parse(source)
+    links.each do |link|
+      context "with #{shape} link #{link.inspect}" do
+        let(:source) { "flowchart TD\n  A#{link}B\n" }
+        let(:diagram) { described_class.new.parse(source) }
 
+        it "keeps the arrow type identical across lengths" do
           expect(diagram.edges.fetch(0).arrow_type)
             .to eq(expected_type), "source #{source.inspect}"
         end

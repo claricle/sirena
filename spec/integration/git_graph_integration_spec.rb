@@ -6,9 +6,9 @@ require "sirena/layout/git_graph"
 require "sirena/renderer/git_graph"
 
 RSpec.describe "Git Graph Integration", :aggregate_failures do
-  let(:parser) { Sirena::Parser::GitGraph.new }
-  let(:transform) { Sirena::Layout::GitGraph.new }
-  let(:renderer) { Sirena::Renderer::GitGraph.new }
+  let(:diagram) { Sirena::Parser::GitGraph.new.parse(source) }
+  let(:layout) { Sirena::Layout::GitGraph.new.to_graph(diagram) }
+  let(:svg) { Sirena::Renderer::GitGraph.new.render(layout) }
 
   def tagged?(commit)
     commit.labels.any? { |label| label.kind == "tag" }
@@ -24,38 +24,31 @@ RSpec.describe "Git Graph Integration", :aggregate_failures do
       MERMAID
     end
 
-    it "parses, transforms, and renders successfully" do
-      # Parse
-      diagram = parser.parse(source)
+    it "parses every commit" do
       expect(diagram).to be_a(Sirena::Diagram::GitGraph)
       expect(diagram.commits.length).to eq(3)
+    end
 
-      # Transform
-      layout = transform.to_graph(diagram)
+    it "transforms every commit onto at least one branch" do
       expect(layout.commits.length).to eq(3)
       expect(layout.branches.length).to be >= 1
+    end
 
-      # Render
-      svg = renderer.render(layout)
+    it "renders a sized SVG document" do
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.width).to be > 0
       expect(svg.height).to be > 0
     end
 
     it "positions commits sequentially" do
-      diagram = parser.parse(source)
-      layout = transform.to_graph(diagram)
-
       x_positions = layout.commits.map(&:x)
+
       expect(x_positions).to eq(x_positions.sort)
     end
 
     it "assigns all commits to the same lane" do
-      diagram = parser.parse(source)
-      layout = transform.to_graph(diagram)
-
       lanes = layout.commits.map(&:lane).uniq
-      # All commits should be on the same lane
+
       expect(lanes.length).to eq(1)
     end
   end
@@ -73,32 +66,26 @@ RSpec.describe "Git Graph Integration", :aggregate_failures do
       MERMAID
     end
 
-    it "parses, transforms, and renders successfully" do
-      diagram = parser.parse(source)
+    it "parses every commit and a branch" do
       expect(diagram.commits.length).to eq(3)
       expect(diagram.branches.length).to be >= 1
+    end
 
-      layout = transform.to_graph(diagram)
+    it "transforms every commit onto both branches" do
       expect(layout.commits.length).to eq(3)
       expect(layout.branches.length).to be >= 2
+    end
 
-      svg = renderer.render(layout)
+    it "renders an SVG document" do
       expect(svg).to be_a(Sirena::Svg::Document)
     end
 
     it "assigns different lanes to different branches" do
-      diagram = parser.parse(source)
-      layout = transform.to_graph(diagram)
+      lanes = %w[main develop].map do |name|
+        layout.commits.select { _1.branch == name }.map(&:lane).uniq
+      end
 
-      # Find commits on different branches
-      main_commits = layout.commits.select { _1.branch == "main" }
-      develop_commits = layout.commits.select { _1.branch == "develop" }
-
-      main_lanes = main_commits.map(&:lane).uniq
-      develop_lanes = develop_commits.map(&:lane).uniq
-
-      # Different branches should have different lanes
-      expect(main_lanes).not_to eq(develop_lanes)
+      expect(lanes.first).not_to eq(lanes.last)
     end
   end
 
@@ -116,17 +103,10 @@ RSpec.describe "Git Graph Integration", :aggregate_failures do
     end
 
     it "parses, transforms, and renders successfully" do
-      diagram = parser.parse(source)
-      layout = transform.to_graph(diagram)
-      svg = renderer.render(layout)
-
       expect(svg).to be_a(Sirena::Svg::Document)
     end
 
     it "creates merge connections" do
-      diagram = parser.parse(source)
-      layout = transform.to_graph(diagram)
-
       merge_connections = layout.connections.select do |connection|
         connection.type == :merge
       end
@@ -135,7 +115,6 @@ RSpec.describe "Git Graph Integration", :aggregate_failures do
     end
 
     it "marks merge commits" do
-      diagram = parser.parse(source)
       merge_commits = diagram.commits.select(&:is_merge)
 
       expect(merge_commits).not_to be_empty
@@ -153,17 +132,12 @@ RSpec.describe "Git Graph Integration", :aggregate_failures do
     end
 
     it "parses and preserves tags" do
-      diagram = parser.parse(source)
-
       tagged_commits = diagram.commits.select(&:tag)
       expect(tagged_commits.length).to eq(2)
       expect(tagged_commits.map(&:tag)).to include("v1.0.0", "v2.0.0")
     end
 
     it "includes tags in layout" do
-      diagram = parser.parse(source)
-      layout = transform.to_graph(diagram)
-
       tagged_commits = layout.commits.select { |commit| tagged?(commit) }
       expect(tagged_commits.length).to eq(2)
     end
@@ -180,16 +154,11 @@ RSpec.describe "Git Graph Integration", :aggregate_failures do
     end
 
     it "parses commit types" do
-      diagram = parser.parse(source)
-
       types = diagram.commits.map(&:type)
       expect(types).to include("NORMAL", "HIGHLIGHT", "REVERSE")
     end
 
     it "preserves commit types in layout" do
-      diagram = parser.parse(source)
-      layout = transform.to_graph(diagram)
-
       types = layout.commits.map(&:type)
       expect(types).to include("NORMAL", "HIGHLIGHT", "REVERSE")
     end
@@ -209,16 +178,11 @@ RSpec.describe "Git Graph Integration", :aggregate_failures do
     end
 
     it "parses cherry-pick operations" do
-      diagram = parser.parse(source)
-
       cherry_picked = diagram.commits.select(&:is_cherry_pick)
       expect(cherry_picked).not_to be_empty
     end
 
     it "creates cherry-pick connections" do
-      diagram = parser.parse(source)
-      layout = transform.to_graph(diagram)
-
       cherry_pick_connections = layout.connections.select do |connection|
         connection.type == :cherry_pick
       end
@@ -246,25 +210,23 @@ RSpec.describe "Git Graph Integration", :aggregate_failures do
       MERMAID
     end
 
-    it "handles complex branching and merging" do
-      diagram = parser.parse(source)
+    it "parses complex branching and merging" do
       expect(diagram.commits.length).to be >= 5
       expect(diagram.branches.length).to be >= 1
+    end
 
-      layout = transform.to_graph(diagram)
+    it "transforms the commits and connections" do
       expect(layout.commits.length).to be >= 5
       expect(layout.connections.length).to be >= 4
+    end
 
-      svg = renderer.render(layout)
+    it "renders a sized SVG document" do
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.width).to be > 0
       expect(svg.height).to be > 0
     end
 
     it "creates proper parent-child relationships" do
-      diagram = parser.parse(source)
-      layout = transform.to_graph(diagram)
-
       # Each commit except the first should have at least one parent
       commits_with_parents = layout.commits.select do |commit|
         commit.parent_ids.any?
@@ -274,9 +236,6 @@ RSpec.describe "Git Graph Integration", :aggregate_failures do
     end
 
     it "renders all branches with different colors" do
-      diagram = parser.parse(source)
-      layout = transform.to_graph(diagram)
-
       colors = layout.branches.map(&:color).uniq
       expect(colors.length).to eq(layout.branches.length)
     end

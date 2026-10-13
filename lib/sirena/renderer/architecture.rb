@@ -22,21 +22,34 @@ module Sirena
       # @return [Svg::Document] rendered SVG document
       def render(scene)
         svg = create_document(scene)
-        scene.children.select { |node| node.kind == "group" }
-          .each { |group| render_group(group, svg) }
+        render_groups(scene, svg)
         scene.edges.each { |edge| render_edge(edge, svg) }
-        scene.children.reject { |node| node.kind == "group" }
-          .each { |node| render_node(node, svg) }
+        render_nodes(scene, svg)
         svg
       end
 
       protected
 
+      def render_groups(scene, svg)
+        scene.children.select { |node| node.kind == "group" }
+          .each { |group| render_group(group, svg) }
+      end
+
+      def render_nodes(scene, svg)
+        scene.children.reject { |node| node.kind == "group" }
+          .each { |node| render_node(node, svg) }
+      end
+
+      def named_architecture_group(identifier)
+        Svg::Group.new.tap { |group| group.id = identifier }
+      end
+
       def render_group(node, svg)
-        group = Svg::Group.new.tap { |item| item.id = "group-#{node.id}" }
-        group.children << group_boundary(node)
-        group.children << group_label(node) unless node.labels.empty?
-        group.children << icon(node, 20) if node.icon
+        group = named_architecture_group("group-#{node.id}")
+        children = group.children
+        children << group_boundary(node)
+        children << group_label(node) unless node.labels.empty?
+        children << icon(node, 20) if node.icon
         svg << group
       end
 
@@ -68,10 +81,11 @@ module Sirena
       end
 
       def render_service(node, svg)
-        group = Svg::Group.new.tap { |item| item.id = "service-#{node.id}" }
-        group.children << service_box(node)
-        group.children << icon(node, 24) if node.icon
-        group.children << service_label(node) unless node.labels.empty?
+        group = named_architecture_group("service-#{node.id}")
+        children = group.children
+        children << service_box(node)
+        children << icon(node, 24) if node.icon
+        children << service_label(node) unless node.labels.empty?
         svg << group
       end
 
@@ -111,14 +125,24 @@ module Sirena
 
       def icon(node, size)
         Svg::Text.new.tap do |text|
-          text.x = node.icon_x
-          text.y = node.icon_y
+          position_icon(text, node)
           text.content = icon_glyph(node.icon)
           text.font_size = size.to_s
-          text.text_anchor = "middle" if node.kind == "service"
-          text.dominant_baseline = "middle" if node.kind == "service"
+          align_service_icon(text, node)
           text.fill = theme_color(:edge_color)
         end
+      end
+
+      def position_icon(text, node)
+        text.x = node.icon_x
+        text.y = node.icon_y
+      end
+
+      def align_service_icon(text, node)
+        return unless node.kind == "service"
+
+        text.text_anchor = "middle"
+        text.dominant_baseline = "middle"
       end
 
       def service_label(node)
@@ -143,22 +167,26 @@ module Sirena
       end
 
       def render_junction(node, svg)
-        group = Svg::Group.new.tap { |item| item.id = "junction-#{node.id}" }
-        group.children << Svg::Circle.new.tap do |circle|
+        group = named_architecture_group("junction-#{node.id}")
+        group.children << junction_circle(node)
+        svg << group
+      end
+
+      def junction_circle(node)
+        Svg::Circle.new.tap do |circle|
           circle.cx = node.center_x
           circle.cy = node.center_y
           circle.r = node.radius
           apply_theme_to_node(circle)
         end
-        svg << group
       end
 
       def render_edge(edge, svg)
-        group = Svg::Group.new.tap do |item|
-          item.id = "edge-#{edge.source}-#{edge.target}"
-        end
+        group = named_architecture_group("edge-#{edge.source}-#{edge.target}")
         group.children << edge_path(edge)
-        group.children << edge_label(edge.labels.first) unless edge.labels.empty?
+        unless edge.labels.empty?
+          group.children << edge_label(edge.labels.first)
+        end
         svg << group
       end
 
@@ -197,6 +225,8 @@ module Sirena
       def icon_glyph(icon_name)
         ICON_GLYPHS.fetch(icon_name.split(":").last, UNKNOWN_ICON_GLYPH)
       end
+      private :render_groups, :render_nodes, :named_architecture_group,
+              :position_icon, :align_service_icon, :junction_circle
     end
   end
 end

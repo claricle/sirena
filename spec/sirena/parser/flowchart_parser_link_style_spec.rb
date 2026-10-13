@@ -90,13 +90,22 @@ RSpec.describe Sirena::Parser::Flowchart do
       "A e1@--> B" => 1, "A e1@--> B\ne1@{animate: true}" => 1,
       "A & B --> C" => 2, "A-->B-->C" => 2
     }.each do |edges, count|
-      it "counts #{count} edges in #{edges.inspect}" do
-        styled = "graph TD\n#{edges}\nlinkStyle #{count - 1} stroke:red\n"
-        beyond = "graph TD\n#{edges}\nlinkStyle #{count} stroke:red\n"
+      context "with #{count} edges from #{edges.inspect}" do
+        let(:styled) do
+          "graph TD\n#{edges}\nlinkStyle #{count - 1} stroke:red\n"
+        end
+        let(:beyond) do
+          "graph TD\n#{edges}\nlinkStyle #{count} stroke:red\n"
+        end
 
-        expect(described_class.new.parse(styled).edges.size).to eq(count)
-        expect { described_class.new.parse(beyond) }
-          .to raise_error(Sirena::Parser::ParseError, /index #{count} /)
+        it "styles the final existing edge" do
+          expect(described_class.new.parse(styled).edges.size).to eq(count)
+        end
+
+        it "rejects an index beyond the final edge" do
+          expect { described_class.new.parse(beyond) }
+            .to raise_error(Sirena::Parser::ParseError, /index #{count} /)
+        end
       end
     end
 

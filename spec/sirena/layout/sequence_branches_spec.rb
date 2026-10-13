@@ -32,13 +32,26 @@ RSpec.describe Sirena::Layout::Sequence do
       .to eq([described_class::Circle, 4])
   end
 
-  it "draws the stick figure at the extent mmdc gives it" do
-    actor = scene_for("sequenceDiagram\n  actor A\n").participants.first
-    xs = actor.actor_lines.flat_map { |l| [l.x1, l.x2] }
-    ys = actor.actor_lines.flat_map { |l| [l.y1, l.y2] } +
-      [actor.actor_head.y - actor.actor_head.radius]
+  context "with the stick figure of an actor" do
+    let(:actor) do
+      scene_for("sequenceDiagram\n  actor A\n").participants.first
+    end
+    let(:xs) { actor.actor_lines.flat_map { |l| [l.x1, l.x2] } }
+    let(:ys) do
+      actor.actor_lines.flat_map { |l| [l.y1, l.y2] } +
+        [actor.actor_head.y - actor.actor_head.radius]
+    end
 
-    expect([xs.max - xs.min, ys.max - ys.min, actor.actor_head.radius])
-      .to eq([36, 65, 15])
+    it "draws it at the width mmdc gives it" do
+      expect(xs.max - xs.min).to eq(36)
+    end
+
+    it "draws it at the height mmdc gives it" do
+      expect(ys.max - ys.min).to eq(65)
+    end
+
+    it "draws its head at the radius mmdc gives it" do
+      expect(actor.actor_head.radius).to eq(15)
+    end
   end
 end

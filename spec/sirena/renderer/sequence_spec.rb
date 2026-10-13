@@ -382,7 +382,8 @@ RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
           calculate_participant_positions: 1, render_participants: 3,
           render_participant: 3, render_participant_box: 4, render_actor: 4,
           render_lifelines: 3, render_messages: 3, render_message: 4,
-          render_arrow: 6, render_filled_arrowhead: 5,
+          # Variadic arrow shim validates exactly six positional arguments.
+          render_arrow: -1, render_filled_arrowhead: 5,
           render_open_arrowhead: 5, render_cross: 3,
           render_message_label: 5, render_notes: 3
         }

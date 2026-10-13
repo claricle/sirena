@@ -5,62 +5,69 @@ require "rexml/document"
 
 RSpec.describe "Flowchart Integration", :aggregate_failures do
   describe "complete flowchart pipeline" do
-    let(:parser) { Sirena::Parser::Flowchart.new }
-    let(:transform) { Sirena::Layout::Flowchart.new }
-    let(:renderer) { Sirena::Renderer::Flowchart.new }
+    let(:diagram) { Sirena::Parser::Flowchart.new.parse(source) }
+    let(:scene) { Sirena::Layout::Flowchart.new.to_graph(diagram) }
+    let(:svg) { Sirena::Renderer::Flowchart.new.render(scene) }
 
-    it "parses, transforms, and renders a simple flowchart" do
-      source = "graph TD\nA[Start]-->B[End]"
+    context "with a simple flowchart" do
+      let(:source) { "graph TD\nA[Start]-->B[End]" }
 
-      # Parse
-      diagram = parser.parse(source)
-      expect(diagram).to be_a(Sirena::Diagram::Flowchart)
-      expect(diagram.valid?).to be true
+      it "parses a valid Flowchart" do
+        expect(diagram).to be_a(Sirena::Diagram::Flowchart)
+        expect(diagram.valid?).to be true
+      end
 
-      # Transform
-      scene = transform.to_graph(diagram)
-      expect(scene).to be_a(Sirena::Layout::Flowchart::Scene)
-      expect(scene.children.length).to eq(2)
-      expect(scene.edges.length).to eq(1)
+      it "transforms to a Scene with both nodes and the edge" do
+        expect(scene).to be_a(Sirena::Layout::Flowchart::Scene)
+        expect(scene.children.length).to eq(2)
+        expect(scene.edges.length).to eq(1)
+      end
 
-      svg = renderer.render(scene)
-      expect(svg).to be_a(Sirena::Svg::Document)
-      expect(svg.children).not_to be_empty
+      it "renders a non-empty SVG document" do
+        expect(svg).to be_a(Sirena::Svg::Document)
+        expect(svg.children).not_to be_empty
+      end
     end
 
-    it "handles multiple node shapes" do
-      source = <<~MERMAID
-        graph TD
-        A[Rectangle]
-        B(Rounded)
-        C{Rhombus}
-        A-->B-->C
-      MERMAID
+    context "with multiple node shapes" do
+      let(:source) do
+        <<~MERMAID
+          graph TD
+          A[Rectangle]
+          B(Rounded)
+          C{Rhombus}
+          A-->B-->C
+        MERMAID
+      end
 
-      diagram = parser.parse(source)
+      it "parses every node" do
+        expect(diagram.nodes.length).to eq(3)
+      end
 
-      expect(diagram.nodes.length).to eq(3)
-      expect(diagram.find_node("A").shape).to eq("rect")
-      expect(diagram.find_node("B").shape).to eq("rounded")
-      expect(diagram.find_node("C").shape).to eq("rhombus")
+      it "parses each node's shape" do
+        expect(diagram.find_node("A").shape).to eq("rect")
+        expect(diagram.find_node("B").shape).to eq("rounded")
+        expect(diagram.find_node("C").shape).to eq("rhombus")
+      end
 
-      scene = transform.to_graph(diagram)
-      svg = renderer.render(scene)
-
-      expect(svg).to be_a(Sirena::Svg::Document)
+      it "renders an SVG document" do
+        expect(svg).to be_a(Sirena::Svg::Document)
+      end
     end
 
-    it "handles different directions" do
-      source = "graph LR\nA-->A"
+    context "with a left-to-right self loop" do
+      let(:source) { "graph LR\nA-->A" }
 
-      diagram = parser.parse(source)
-      expect(diagram.direction).to eq("LR")
+      it "parses the direction" do
+        expect(diagram.direction).to eq("LR")
+      end
 
-      scene = transform.to_graph(diagram)
-      node = scene.children.first
-      bends = scene.edges.first.sections.first.bend_points
+      it "bends the loop to the right of the node" do
+        node = scene.children.first
+        bends = scene.edges.first.sections.first.bend_points
 
-      expect(bends.map(&:x)).to all(be > node.center_x)
+        expect(bends.map(&:x)).to all(be > node.center_x)
+      end
     end
   end
 
@@ -73,15 +80,9 @@ RSpec.describe "Flowchart Integration", :aggregate_failures do
       handlers = Sirena::DiagramRegistry.get(:flowchart)
 
       expect(handlers).not_to be_nil
-      expect(handlers[:parser]).to eq(
-        Sirena::Parser::Flowchart,
-      )
-      expect(handlers[:transform]).to eq(
-        Sirena::Layout::Flowchart,
-      )
-      expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::Flowchart,
-      )
+      expect(handlers[:parser]).to eq(Sirena::Parser::Flowchart)
+      expect(handlers[:transform]).to eq(Sirena::Layout::Flowchart)
+      expect(handlers[:renderer]).to eq(Sirena::Renderer::Flowchart)
     end
   end
 
@@ -104,7 +105,9 @@ RSpec.describe "Flowchart Integration", :aggregate_failures do
 
     # mmdc draws the same source 16px square (its 8px padding either side)
     # at viewBox `-8 -8 16 16`; sirena's viewBox origin is always 0 0.
-    empty_canvas_attributes = { "width" => "16.0", "height" => "16.0", "viewBox" => "0 0 16.0 16.0" }.freeze
+    empty_canvas_attributes = {
+      "width" => "16.0", "height" => "16.0", "viewBox" => "0 0 16.0 16.0"
+    }.freeze
 
     empty_sources.each do |description, source|
       context "with #{description}" do
@@ -136,7 +139,8 @@ RSpec.describe "Flowchart Integration", :aggregate_failures do
     it "still refuses a subgraph declared with no members" do
       source = "flowchart TD\nsubgraph s\nend\n"
 
-      expect { Sirena::Engine.new.render(source) }.to raise_error(Sirena::Layout::LayoutError)
+      expect { Sirena::Engine.new.render(source) }
+        .to raise_error(Sirena::Layout::LayoutError)
     end
   end
 end

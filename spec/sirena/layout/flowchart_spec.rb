@@ -16,17 +16,99 @@ module LayoutFlowchartSpecHelpers
     scene.edges.first.labels.first.width
   end
 
-  def label_width_for(flowchart_font_size)
-    themed_transform = described_class.new
-    themed_transform.theme = Sirena::Theme.new(
-      typography: Sirena::Theme::Typography.new(
-        flowchart_font_size: flowchart_font_size,
-      ),
-    )
-    diagram = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
+  def single_node_diagram
+    Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
       d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
     end
-    themed_transform.to_graph(diagram).children.first.labels.first.width
+  end
+
+  def labelled_edge_diagram
+    Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
+      d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
+      d.nodes << Sirena::Diagram::FlowchartNode.new(id: "B", label: "B")
+      d.edges << Sirena::Diagram::FlowchartEdge.new(
+        source_id: "A", target_id: "B", arrow_type: "arrow",
+        label: "edge label text"
+      )
+    end
+  end
+
+  def label_width_for(flowchart_font_size)
+    typography = Sirena::Theme::Typography.new(
+      flowchart_font_size: flowchart_font_size,
+    )
+    themed_transform = described_class.new
+    themed_transform.theme = Sirena::Theme.new(typography: typography)
+    themed_transform.to_graph(single_node_diagram)
+      .children.first.labels.first.width
+  end
+
+  def first_node_width(theme)
+    themed_transform = described_class.new
+    themed_transform.theme = theme
+    themed_transform.to_graph(diagram).children.first.width
+  end
+
+  def typography_with(small, normal)
+    Sirena::Theme::Typography.new(
+      font_size_small: small, font_size_normal: normal,
+    )
+  end
+
+  def render_with_font_size(value)
+    Sirena::Engine.new(
+      theme: { typography: { flowchart_font_size: value } },
+    ).render("flowchart TD\nA[Start]\nB[End]\nA --> B\n")
+  end
+
+  def measure_widths(scene)
+    scene.children.first.width
+    scene.edges.first.labels.first.width
+  end
+
+  def cluster_children(transform, source, id)
+    model = Sirena::Parser::Flowchart.new.parse(source)
+    cluster = transform.to_graph(model).children.find { |c| c.id == id }
+    cluster.children.map(&:id)
+  end
+
+  def repeated_id_model
+    Sirena::Diagram::Flowchart.new(direction: "TD").tap do |model|
+      model.nodes.push(
+        Sirena::Diagram::FlowchartNode.new(id: "same", label: "First"),
+        Sirena::Diagram::FlowchartNode.new(id: "same", label: "Second"),
+        Sirena::Diagram::FlowchartNode.new(id: "one", label: "One"),
+        Sirena::Diagram::FlowchartNode.new(id: "two", label: "Two"),
+      )
+      model.subgraphs.push(
+        Sirena::Diagram::FlowchartSubgraph.new(
+          id: "group", declared_title: "First group", node_ids: %w[one],
+        ),
+        Sirena::Diagram::FlowchartSubgraph.new(
+          id: "group", declared_title: "Second group", node_ids: %w[two],
+        ),
+      )
+    end
+  end
+
+  def box_members(children)
+    children.select(&:cluster).to_h do |box|
+      [box.labels.first.text,
+       box.children.map { |node| node.labels.first.text }]
+    end
+  end
+
+  def nested_coordinate_graph
+    {
+      id: "flowchart", edges: [],
+      children: [
+        { id: "shell", x: 10, y: 20, width: 100, height: 80,
+          children: [
+            { id: "A", x: 5, y: 7, width: 30, height: 20,
+              labels: [{ text: "A" }], metadata: { shape: "rect" } },
+          ] },
+      ]
+    }
   end
 
   def representative_ir_diagram
@@ -129,6 +211,9 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
   let(:transform) { described_class.new }
 
   describe "#to_graph" do
+    let(:scene) { transform.to_graph(diagram) }
+    let(:node_a) { scene.children.find { |node| node.id == "A" } }
+    let(:edge) { scene.edges.first }
     let(:diagram) do
       Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
         d.nodes << Sirena::Diagram::FlowchartNode.new(
@@ -150,29 +235,36 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     end
 
     it "converts the diagram to a typed scene" do
-      scene = transform.to_graph(diagram)
-
       expect(scene).to be_a(described_class::Scene)
       expect(scene.id).to eq("flowchart")
+    end
+
+    it "converts nodes and edges to typed scene members" do
       expect(scene.children).to all(be_a(described_class::Node))
       expect(scene.edges).to all(be_a(described_class::Edge))
+    end
+
+    it "gives the scene positive dimensions" do
       expect(scene.width).to be > 0
       expect(scene.height).to be > 0
     end
 
-    it "creates nodes with dimensions" do
-      scene = transform.to_graph(diagram)
-
+    it "creates one node per declared node" do
       expect(scene.children.length).to eq(2)
+    end
 
-      node_a = scene.children.find { |node| node.id == "A" }
+    it "gives a created node dimensions" do
       expect(node_a).not_to be_nil
       expect(node_a.width).to be > 0
       expect(node_a.height).to be > 0
+    end
+
+    it "gives a created node a label centred on it" do
+      label = node_a.labels.first
+
       expect(node_a.labels).to all(be_a(described_class::Label))
-      expect(node_a.labels.first.text).to eq("Start")
-      expect(node_a.labels.first.x).to eq(node_a.center_x)
-      expect(node_a.labels.first.y).to eq(node_a.center_y)
+      expect(label.text).to eq("Start")
+      expect([label.x, label.y]).to eq([node_a.center_x, node_a.center_y])
     end
 
     # `assemble` attaches nested clusters before member nodes, and the
@@ -182,57 +274,38 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     it "lists a nested cluster before the nodes beside it" do
       source = "flowchart TD\nsubgraph outer\nsubgraph inner\ni1\nend\n" \
                "n1\nn2\nn3\nend\n"
-      model = Sirena::Parser::Flowchart.new.parse(source)
 
-      outer = transform.to_graph(model).children
-        .find { |child| child.id == "outer" }
-
-      expect(outer.children.map(&:id))
+      expect(cluster_children(transform, source, "outer"))
         .to eq(%w[inner n1 n2 n3])
     end
 
     it "emits every node and subgraph when valid model ids repeat" do
-      model = Sirena::Diagram::Flowchart.new(direction: "TD")
-      model.nodes.push(
-        Sirena::Diagram::FlowchartNode.new(id: "same", label: "First"),
-        Sirena::Diagram::FlowchartNode.new(id: "same", label: "Second"),
-        Sirena::Diagram::FlowchartNode.new(id: "one", label: "One"),
-        Sirena::Diagram::FlowchartNode.new(id: "two", label: "Two"),
-      )
-      model.subgraphs.push(
-        Sirena::Diagram::FlowchartSubgraph.new(
-          id: "group", declared_title: "First group", node_ids: %w[one],
-        ),
-        Sirena::Diagram::FlowchartSubgraph.new(
-          id: "group", declared_title: "Second group", node_ids: %w[two],
-        ),
-      )
+      model = repeated_id_model
+      children = transform.to_graph(model).children
 
       expect(model).to be_valid
-
-      children = transform.to_graph(model).children
-      labels = children.map { |child| child.labels.first.text }
-      members = children.select(&:cluster)
-        .to_h do |box|
-          title = box.labels.first.text
-          held = box.children.map { |node| node.labels.first.text }
-          [title, held]
-        end
-
-      expect(labels).to eq(["First", "Second", "First group", "Second group"])
-      expect(members).to eq("First group" => %w[One],
-                            "Second group" => %w[Two])
+      expect(children.map { |child| child.labels.first.text })
+        .to eq(["First", "Second", "First group", "Second group"])
     end
 
-    it "creates edges with metadata" do
-      scene = transform.to_graph(diagram)
+    it "keeps each repeated subgraph's own members" do
+      children = transform.to_graph(repeated_id_model).children
 
+      expect(box_members(children)).to eq("First group" => %w[One],
+                                          "Second group" => %w[Two])
+    end
+
+    it "creates one edge per declared edge" do
       expect(scene.edges.length).to eq(1)
+    end
 
-      edge = scene.edges.first
+    it "carries the edge's endpoints and arrow type" do
       expect(edge.source).to eq("A")
       expect(edge.target).to eq("B")
       expect(edge.arrow_type).to eq("arrow")
+    end
+
+    it "gives the edge point-typed section ends" do
       expect(edge.sections.first.start_point).to be_a(described_class::Point)
       expect(edge.sections.first.end_point).to be_a(described_class::Point)
     end
@@ -249,7 +322,6 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     # configuration_spec-67574f4a: viewBox 437.8125 x 521.28125 round a node
     # ending at 429.8125 x 513.28125.
     it "ends the page 8px after the last node" do
-      scene = transform.to_graph(diagram)
       rights = scene.children.map { |node| node.x + node.width }
       bottoms = scene.children.map { |node| node.y + node.height }
 
@@ -258,18 +330,7 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     end
 
     it "flattens nested coordinates into the final canvas frame" do
-      graph = {
-        id: "flowchart", edges: [],
-        children: [
-          { id: "shell", x: 10, y: 20, width: 100, height: 80,
-            children: [
-              { id: "A", x: 5, y: 7, width: 30, height: 20,
-                labels: [{ text: "A" }], metadata: { shape: "rect" } },
-            ] },
-        ]
-      }
-
-      scene = described_class.from_graph(graph)
+      scene = described_class.from_graph(nested_coordinate_graph)
       node = scene.children.first.children.first
 
       expect(node).to have_attributes(x: 15.0, y: 27.0)
@@ -300,7 +361,8 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
         end
       end
 
-      it "measures a wider node under a theme with a larger flowchart_font_size" do
+      it "measures a wider node under a theme with a larger " \
+         "flowchart_font_size" do
         expect(node_width(:high_contrast)).to be > node_width(:default)
       end
     end
@@ -308,48 +370,30 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     # mmdc draws an edge label at the node text size, so neither
     # font_size_small nor font_size_normal moves it.
     context "with an edge label and differing small and normal sizes" do
-      let(:diagram) do
-        Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: "B", label: "B")
-          d.edges << Sirena::Diagram::FlowchartEdge.new(
-            source_id: "A", target_id: "B", arrow_type: "arrow",
-            label: "edge label text"
-          )
-        end
-      end
+      let(:diagram) { labelled_edge_diagram }
 
       it "sizes the edge label at flowchart_font_size alone" do
-        small_typography = Sirena::Theme::Typography.new(
-          font_size_small: 12.0, font_size_normal: 30.0,
-        )
-        normal_typography = Sirena::Theme::Typography.new(
-          font_size_small: 20.0, font_size_normal: 12.0,
-        )
-
-        expect(edge_label_width(small_typography))
-          .to eq(edge_label_width(normal_typography))
+        expect(edge_label_width(typography_with(12.0, 30.0)))
+          .to eq(edge_label_width(typography_with(20.0, 12.0)))
       end
     end
 
     # The renderer draws at 16.0 when the theme sets no flowchart_font_size,
     # so the layout's fallback has to be 16.0 too.
     context "with a theme that has no typography at all" do
-      it "measures node text at the SVG render-side default of 16.0" do
-        diagram = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
-        end
+      let(:diagram) { single_node_diagram }
 
-        no_typography = described_class.new
-        no_typography.theme = Sirena::Theme.new
-        explicit_sixteen = described_class.new
-        explicit_sixteen.theme = Sirena::Theme.new(
+      it "measures node text at the SVG render-side default of 16.0" do
+        explicit_sixteen = Sirena::Theme.new(
           typography: Sirena::Theme::Typography.new(flowchart_font_size: 16.0),
         )
 
+        expect(first_node_width(Sirena::Theme.new))
+          .to eq(first_node_width(explicit_sixteen))
+      end
+
+      it "falls back to a default font size of 16.0" do
         expect(described_class::DEFAULT_FONT_SIZE).to eq(16.0)
-        expect(no_typography.to_graph(diagram).children.first.width)
-          .to eq(explicit_sixteen.to_graph(diagram).children.first.width)
       end
     end
 
@@ -373,23 +417,11 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
       end
 
       it "does not reach a fuller render for a NaN value" do
-        source = "flowchart TD\nA[Start]\nB[End]\nA --> B\n"
-
-        expect do
-          Sirena::Engine.new(
-            theme: { typography: { flowchart_font_size: Float::NAN } },
-          ).render(source)
-        end.not_to raise_error
+        expect { render_with_font_size(Float::NAN) }.not_to raise_error
       end
 
       it "does not reach a fuller render for an Infinity value" do
-        source = "flowchart TD\nA[Start]\nB[End]\nA --> B\n"
-
-        expect do
-          Sirena::Engine.new(
-            theme: { typography: { flowchart_font_size: Float::INFINITY } },
-          ).render(source)
-        end.not_to raise_error
+        expect { render_with_font_size(Float::INFINITY) }.not_to raise_error
       end
     end
 
@@ -401,24 +433,15 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
     # (renderer/base.rb#theme_typography); layout_font_size must match that,
     # not dereference theme directly.
     context "with no theme registered at all" do
+      let(:diagram) { labelled_edge_diagram }
+
+      after { Sirena::Theme::Registry.load_builtin_themes }
+
       it "still measures node and edge-label text instead of raising" do
         Sirena::Theme::Registry.clear
-        diagram = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: "B", label: "B")
-          d.edges << Sirena::Diagram::FlowchartEdge.new(
-            source_id: "A", target_id: "B", arrow_type: "arrow",
-            label: "edge label text"
-          )
-        end
 
-        expect do
-          scene = transform.to_graph(diagram)
-          scene.children.first.width
-          scene.edges.first.labels.first.width
-        end.not_to raise_error
-      ensure
-        Sirena::Theme::Registry.load_builtin_themes
+        expect { measure_widths(transform.to_graph(diagram)) }
+          .not_to raise_error
       end
     end
   end

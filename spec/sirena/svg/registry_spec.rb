@@ -42,22 +42,32 @@ module SvgRegistrySources
   # corpus-verdicts.yml "valid" case, then one not marked "invalid", so a
   # type is never skipped for want of an oracle verdict.
   def find_source(type)
-    contract_path = File.join(fixtures_root, "contract", "#{type}.mmd")
-    return File.read(contract_path) if File.exist?(contract_path)
+    fixture_source(type) || corpus_source(type)
+  end
 
-    fixture_path = File.join(fixtures_root, type.to_s, "input.mmd")
-    return File.read(fixture_path) if File.exist?(fixture_path)
+  def fixture_source(type)
+    candidates = [File.join(fixtures_root, "contract", "#{type}.mmd"),
+                  File.join(fixtures_root, type.to_s, "input.mmd")]
+    path = candidates.find { |candidate| File.exist?(candidate) }
+    path && File.read(path)
+  end
 
+  def corpus_source(type)
     pattern = Sirena::Engine::DIAGRAM_TYPE_PATTERNS.fetch(type)
     candidates = corpus_cases.select do |_path, content|
       content.match?(pattern)
     end
-    verdict_of = ->(path) { verdicts[path.delete_prefix("#{corpus_root}/")] }
+    preferred_case(candidates)&.last
+  end
 
-    chosen = candidates.find { |path, _| verdict_of.call(path) == "valid" } ||
-      candidates.find { |path, _| verdict_of.call(path) != "invalid" } ||
+  def preferred_case(candidates)
+    candidates.find { |path, _| verdict_for(path) == "valid" } ||
+      candidates.find { |path, _| verdict_for(path) != "invalid" } ||
       candidates.first
-    chosen&.last
+  end
+
+  def verdict_for(path)
+    verdicts[path.delete_prefix("#{corpus_root}/")]
   end
 end
 

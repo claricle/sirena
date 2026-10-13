@@ -64,11 +64,16 @@ RSpec.describe Sirena::Svg::PathGeometry do
 
     # The one curve in the corpus. A Bezier leaves its end point along the
     # line from the second control point, so the chord would point wrong.
-    it "takes a curve heading from the control point next to the end" do
-      anchor = terminus("M 0 0 C 0 10, 10 20, 20 20")
+    context "with a curve" do
+      let(:anchor) { terminus("M 0 0 C 0 10, 10 20, 20 20") }
 
-      expect([anchor.x, anchor.y]).to eq([20.0, 20.0])
-      expect([anchor.dx.round(4), anchor.dy.round(4)]).to eq([1.0, 0.0])
+      it "ends the anchor on the curve's end point" do
+        expect([anchor.x, anchor.y]).to eq([20.0, 20.0])
+      end
+
+      it "takes the heading from the control point next to the end" do
+        expect([anchor.dx.round(4), anchor.dy.round(4)]).to eq([1.0, 0.0])
+      end
     end
 
     it "reflects a quadratic control point for smooth continuation" do
@@ -157,13 +162,18 @@ RSpec.describe Sirena::Svg::PathGeometry do
     # The heading as well as the point. A closing segment travels from the
     # last vertex back to the start, and that direction is what an arrowhead
     # there points along — asserting the position alone let any angle pass.
-    it "closes back to the start of the subpath, heading along the closing " \
-       "segment" do
-      anchor = terminus("M 0 0 L 10 0 L 10 10 Z")
-      diagonal = -10 / Math.hypot(10, 10)
+    context "with a closed triangle" do
+      let(:anchor) { terminus("M 0 0 L 10 0 L 10 10 Z") }
 
-      expect([anchor.x, anchor.y]).to eq([0.0, 0.0])
-      expect([anchor.dx, anchor.dy]).to eq([diagonal, diagonal])
+      it "closes back to the start of the subpath" do
+        expect([anchor.x, anchor.y]).to eq([0.0, 0.0])
+      end
+
+      it "heads along the closing segment" do
+        diagonal = -10 / Math.hypot(10, 10)
+
+        expect([anchor.dx, anchor.dy]).to eq([diagonal, diagonal])
+      end
     end
 
     it "has no anchor when the path only moves" do
@@ -373,13 +383,19 @@ RSpec.describe Sirena::Svg::PathGeometry do
   # match raise ArgumentError rather than simply fail to match, escaping the
   # documented "unrecognised byte is skipped" leniency -- reachable via
   # from_xml on a foreign document, which is not obligated to send valid d.
-  it "has no origin or terminus rather than raising on an invalid byte " \
-     "sequence" do
-    invalid = +"M 0 0 L \xFF\xFE 10 10"
-    invalid.force_encoding("UTF-8")
+  context "with an invalid byte sequence" do
+    let(:invalid) { (+"M 0 0 L \xFF\xFE 10 10").force_encoding("UTF-8") }
 
-    expect { described_class.new(invalid) }.not_to raise_error
-    expect(origin(invalid)).to be_nil
-    expect(terminus(invalid)).to be_nil
+    it "does not raise when parsing it" do
+      expect { described_class.new(invalid) }.not_to raise_error
+    end
+
+    it "has no origin" do
+      expect(origin(invalid)).to be_nil
+    end
+
+    it "has no terminus" do
+      expect(terminus(invalid)).to be_nil
+    end
   end
 end

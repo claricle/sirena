@@ -465,16 +465,23 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
       "_blank" => "RAR", "_parent" => "RAR", "_top" => "RAR",
       "swimlane-beta" => "AAR", "plain" => "AAA"
     }.each do |word, expected|
-      it "reads #{word} as #{expected} across subgraph, click and node" do
-        accepted = [
-          subgraph_name_parses?(
-            "graph TD\nsubgraph #{word} [Title]\nX --> Y\nend\n",
-          ),
-          parses?("graph TD\nA-->B\nclick #{word} \"https://example.com\"\n"),
-          parses?("graph TD\n#{word}-->Z\n"),
-        ]
+      context "when reading #{word} across subgraph, click and node" do
+        let(:accepted) do
+          [
+            subgraph_name_parses?(
+              "graph TD\nsubgraph #{word} [Title]\nX --> Y\nend\n",
+            ),
+            parses?(
+              "graph TD\nA-->B\nclick #{word} \"https://example.com\"\n",
+            ),
+            parses?("graph TD\n#{word}-->Z\n"),
+          ]
+        end
 
-        expect(accepted.map { |value| value ? "A" : "R" }.join).to eq(expected)
+        it "matches #{expected} across the id positions" do
+          expect(accepted.map { |value| value ? "A" : "R" }.join)
+            .to eq(expected)
+        end
       end
     end
   end
@@ -1116,20 +1123,15 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
       end
     end
 
-    it "reads the title behind a name that swallowed an end" do
-      # The discriminator for the table above. A bare `parses? == true`
-      # cannot tell "the name swallowed `end` and the title behind it
-      # was still read" from "the `end` closed the subgraph and what
-      # followed happened to parse anyway". The tree can: a title is
-      # captured only on the first reading, because on the second there
-      # is no header left to hang one on.
-      #
-      # The brackets are not part of the captured text. The cluster
-      # renderer draws this string as the box label, so the grammar
-      # captures `T` and not `[T]`.
-      source = "flowchart TD\nsubgraph A end [T]\nX-->Y\nend\n"
+    # Check the captured title: a successful parse cannot distinguish a
+    # swallowed `end` from a closing `end` followed by valid statements.
+    # The captured text contains `T`, without its surrounding brackets.
+    context "when reads the title behind a name that swallowed an end" do
+      let(:source) { "flowchart TD\nsubgraph A end [T]\nX-->Y\nend\n" }
 
-      expect(subgraph_title_of(source)).to eq("T")
+      it "retains subgraph_title_of source" do
+        expect(subgraph_title_of(source)).to eq("T")
+      end
     end
 
     # More than one space, both between two names and in front of a

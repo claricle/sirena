@@ -99,14 +99,158 @@ module FlowchartLinkSpecHelpers
   end
 
   def distance_to_segment(point, corner_a, corner_b)
-    px, py = point
-    ax, ay = corner_a
-    dx = corner_b[0] - ax
-    dy = corner_b[1] - ay
-    along = ((((px - ax) * dx) + ((py - ay) * dy)) /
-             ((dx * dx) + (dy * dy))).clamp(0.0, 1.0)
+    delta = vector(corner_a, corner_b)
+    along = segment_fraction(vector(corner_a, point), delta)
+    near = [corner_a[0] + (along * delta[0]), corner_a[1] + (along * delta[1])]
 
-    Math.hypot(px - (ax + (along * dx)), py - (ay + (along * dy)))
+    Math.hypot(*vector(near, point))
+  end
+
+  def vector(from, to)
+    [to[0] - from[0], to[1] - from[1]]
+  end
+
+  def segment_fraction(offset, delta)
+    (dot(offset, delta) / dot(delta, delta)).clamp(0.0, 1.0)
+  end
+
+  def dot(left, right)
+    (left[0] * right[0]) + (left[1] * right[1])
+  end
+
+  # The first edge group in the document, as a string.
+  def edge_body(xml)
+    xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
+  end
+
+  def edge_by_id(xml, id)
+    xml[%r{<g id="edge-#{id}".*?</g>}m]
+  end
+
+  def node(id, *box, **metadata)
+    x_pos, y_pos, width, height = box
+    shape = { id: id, x: x_pos, y: y_pos, width: width, height: height }
+    metadata.empty? ? shape : shape.merge(metadata: metadata)
+  end
+
+  def link_graph(arrow_type, nodes, **extra)
+    { children: nodes,
+      edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
+                metadata: { arrow_type: arrow_type } }.merge(extra)] }
+  end
+
+  def loop_graph(arrow_type, node_shape, **extra)
+    { children: [node_shape],
+      edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
+                metadata: { arrow_type: arrow_type } }] }.merge(extra)
+  end
+
+  def two_nodes(second)
+    [node("A", 0, 0, 40, 20), second]
+  end
+
+  def stacked_nodes
+    [node("A", 0, 0, 40, 20), node("B", 0, 0, 40, 20)]
+  end
+
+  # The anchor x of the loop label carrying `text`.
+  def label_tag(xml, text)
+    xml.scan(%r{<text\b[^>]*>[^<]*</text>})
+      .find { |tag| tag.include?(">#{text}<") }
+  end
+
+  def label_anchor_x(xml, text)
+    label_tag(xml, text)[/\bx="([^"]*)"/, 1].to_f
+  end
+
+  # Distance of the label's measured glyph box from the page edge, along
+  # the axis the loop was thrown on.
+  def label_margin(xml, text, axis)
+    tag = label_tag(xml, text)
+    x_pos = tag[/\bx="([^"]*)"/, 1].to_f
+    y_pos = tag[/\by="([^"]*)"/, 1].to_f
+    dims = Sirena::TextMeasurement.measure(
+      text, font_size: tag[/font-size="([^"]*)"/, 1].to_f
+    )
+
+    axis == :y ? y_pos - dims[:height] : x_pos - (dims[:width] / 2.0)
+  end
+
+  def loop_view_box(source, typography)
+    Sirena::Engine.new(theme: { typography: typography })
+      .render(source)[/viewBox="([^"]*)"/, 1]
+  end
+
+  def circle_geometry(group)
+    group.match(
+      /<circle[^>]*cx="([-\d.]+)"[^>]*cy="([-\d.]+)"[^>]*r="([\d.]+)"/,
+    ).captures.map(&:to_f)
+  end
+
+  def loop_corners(xml)
+    path_points(xml).select { |_x, y_pos| y_pos > node_bottom(xml) }
+  end
+
+  def loop_depth(xml)
+    path_points(xml).map(&:last).max - node_bottom(xml)
+  end
+
+  def arm_lengths(group)
+    arms = group.scan(
+      /<line[^>]*x1="([-\d.]+)"[ ]y1="([-\d.]+)"
+       [ ]x2="([-\d.]+)"[ ]y2="([-\d.]+)"/x,
+    ).map { |coords| coords.map(&:to_f) }
+    arms.map { |x1, y1, x2, y2| Math.hypot(x2 - x1, y2 - y1) }
+  end
+
+  def render_xml(arrow_type, nodes, **)
+    render_graph(link_graph(arrow_type, nodes, **)).to_xml
+  end
+
+  def edge_tips(xml)
+    edge_body(xml).scan(/<polygon[^>]*points="(-?[\d.]+),/)
+      .flatten.map(&:to_f)
+  end
+
+  def loop_label_xml(direction, label, **)
+    Sirena.render(
+      "flowchart #{direction}\nsubgraph s\nA[abcdefghij]\nend\n" \
+      "s -->|#{label}| s\n", **
+    )
+  end
+
+  def wide_circle_loop_graph
+    circle = node("A", 50, 50, 200, 40, shape: "circle")
+    loop_graph("arrow", circle, layoutOptions: { "elk.direction" => "RIGHT" })
+  end
+
+  # The smallest distance the loop's two corners reach along the flow.
+  def loop_reach(xml, out_x, out_y)
+    centre_x, centre_y = node_centre(xml)
+    path_points(xml)[1..2].map do |px, py|
+      ((px - centre_x) * out_x) + ((py - centre_y) * out_y)
+    end.min
+  end
+
+  def rounded_corner_gap(tip)
+    corner = [(tip[0] - 130).abs - 15, (tip[1] - 120).abs - 15]
+    Math.hypot(*corner.map { |part| [part, 0].max }) - 5
+  end
+
+  # How far a tip sits from a stadium's drawn outline.
+  def stadium_gap(xml, id, tip)
+    across, down, straight, half_h = stadium_offsets(xml, id, tip)
+    return down.abs - half_h if across <= straight
+
+    Math.hypot(across - straight, down) - half_h
+  end
+
+  def stadium_offsets(xml, id, tip)
+    x_pos, y_pos, width, height = node_rect(xml, id)
+    half_w = width / 2
+    half_h = height / 2
+    [(tip[0] - (x_pos + half_w)).abs, tip[1] - (y_pos + half_h),
+     [half_w - half_h, 0].max, half_h]
   end
 end
 
@@ -118,8 +262,11 @@ RSpec.describe Sirena::Renderer::Flowchart do
   # and a `url(#arrowhead)` that this document never defines, so `---`,
   # `--x`, `--o`, `o--o`, `===` and `-.-` rasterised identically.
   describe "what the renderer draws" do
-    it "draws nothing for an invisible link" do
+    it "draws no stroke for an invisible link" do
       expect(edge_path("~~~")).to include('stroke="none"')
+    end
+
+    it "draws no head shape for an invisible link" do
       expect(edge_group("~~~"))
         .not_to match(/<(?:polygon|line|circle)\b/)
     end
@@ -128,18 +275,24 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # the centres showed straight through a node the theme paints `none` —
     # but it is not a condition of what is asserted here. The same `d` is
     # drawn whatever the fill is, so the name promises only the clipping.
-    it "clips a visible path to the node outline at each end" do
-      xml = Sirena.render(
-        "flowchart LR\n  A --x B\n",
-        theme: { colors: { node_fill: "none", edge_stroke: "#000000" } },
-      )
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
-      points = group[/<path[^>]*d="([^"]*)"/, 1]
-        .scan(/(-?[\d.]+) (-?[\d.]+)/)
-        .map { |x, y| [x.to_f, y.to_f] }
+    context "with a transparent node fill" do
+      let(:xml) do
+        Sirena.render(
+          "flowchart LR\n  A --x B\n",
+          theme: { colors: { node_fill: "none", edge_stroke: "#000000" } },
+        )
+      end
+      let(:points) { path_points(xml) }
 
-      expect(points.first.first).to be_within(0.05).of(node_span(xml, "A").last)
-      expect(points.last.first).to be_within(0.05).of(node_span(xml, "B").first)
+      it "clips a visible path to the source node outline" do
+        expect(points.first.first)
+          .to be_within(0.05).of(node_span(xml, "A").last)
+      end
+
+      it "clips a visible path to the target node outline" do
+        expect(points.last.first)
+          .to be_within(0.05).of(node_span(xml, "B").first)
+      end
     end
 
     # A loop's corners are the coordinates that land on a long decimal:
@@ -151,14 +304,21 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # an LR loop's corners on whole tenths already, so the LR form passed
     # this whether or not anything rounded. TD is the only one of the two
     # that still bends off a tenth.
-    it "writes every path coordinate to one decimal" do
-      xml = Sirena.render("flowchart TD\n  A[abcdefghijk] --> A\n")
-      numbers = xml.scan(/ d="([^"]*)"/).flatten
-        .flat_map { |d| d.scan(/-?[\d.]+/) }
-      decimals = numbers.filter_map { |n| n.split(".")[1]&.length }
+    context "with a TD loop" do
+      let(:xml) { Sirena.render("flowchart TD\n  A[abcdefghijk] --> A\n") }
+      let(:numbers) do
+        xml.scan(/ d="([^"]*)"/).flatten.flat_map { |d| d.scan(/-?[\d.]+/) }
+      end
 
-      expect(numbers.size).to be >= 4
-      expect(decimals.max).to eq(1)
+      it "writes at least four path coordinates" do
+        expect(numbers.size).to be >= 4
+      end
+
+      it "writes every path coordinate to one decimal" do
+        decimals = numbers.filter_map { |n| n.split(".")[1]&.length }
+
+        expect(decimals.max).to eq(1)
+      end
     end
 
     # The line half: weight and pattern. Every type used to reach the
@@ -170,34 +330,46 @@ RSpec.describe Sirena::Renderer::Flowchart do
       "===" => ["3.0", nil],
       "-.-" => ["2.0", "2,2"],
     }.each do |link, (weight, dashes)|
-      it "draws #{link} with the right weight and pattern" do
-        path = edge_path(link)
+      it "draws #{link} with the right weight" do
+        expect(edge_path(link)[/stroke-width="([^"]*)"/, 1]).to eq(weight)
+      end
 
-        expect(path[/stroke-width="([^"]*)"/, 1]).to eq(weight)
-        expect(path[/stroke-dasharray="([^"]*)"/, 1]).to eq(dashes)
+      it "draws #{link} with the right pattern" do
+        expect(edge_path(link)[/stroke-dasharray="([^"]*)"/, 1]).to eq(dashes)
       end
     end
 
     # A theme that asks for something else gets it. high_contrast names a
     # 4.0 thick line and a "4,4" dot; multiplying its 3.0 line by mmdc's
     # 3.5 drew 10.5 and dotted it 2 whatever the theme said.
-    it "draws a thick link and a dotted one the way its own theme asks" do
+    it "draws a thick link the way its own theme asks" do
       thick = edge_group("===", theme: "high_contrast")
-      dotted = edge_group("-.-", theme: "high_contrast")
 
       expect(thick[/<path[^>]*stroke-width="([^"]*)"/, 1]).to eq("4.0")
+    end
+
+    it "draws a dotted link the way its own theme asks" do
+      dotted = edge_group("-.-", theme: "high_contrast")
+
       expect(dotted[/<path[^>]*stroke-dasharray="([^"]*)"/, 1]).to eq("4,4")
     end
 
     # Nothing fills a theme's gaps in. Then mmdc's own numbers stand: its
     # thick line is 3.5 times its normal one, and its normal one is 1.
-    it "falls back to mmdc's own line when the theme names none" do
-      theme = { colors: { node_fill: "#eeeeee" } }
-      thick = edge_group("===", theme: theme)
-      dotted = edge_group("-.-", theme: theme)
+    context "when the theme names no line" do
+      let(:theme) { { colors: { node_fill: "#eeeeee" } } }
 
-      expect(thick[/<path[^>]*stroke-width="([^"]*)"/, 1]).to eq("3.5")
-      expect(dotted[/<path[^>]*stroke-dasharray="([^"]*)"/, 1]).to eq("2")
+      it "falls back to mmdc's own thick line" do
+        thick = edge_group("===", theme: theme)
+
+        expect(thick[/<path[^>]*stroke-width="([^"]*)"/, 1]).to eq("3.5")
+      end
+
+      it "falls back to mmdc's own dotted line" do
+        dotted = edge_group("-.-", theme: theme)
+
+        expect(dotted[/<path[^>]*stroke-dasharray="([^"]*)"/, 1]).to eq("2")
+      end
     end
 
     # A theme can name its plain line and say nothing about a thick one.
@@ -223,11 +395,10 @@ RSpec.describe Sirena::Renderer::Flowchart do
     }.each do |link, (polygons, lines, circles)|
       it "draws #{link} with its own head" do
         group = edge_group(link)
+        counts = [group.scan("<polygon"), group.scan("<line"),
+                  group.scan("<circle")].map(&:size)
 
-        expect([group.scan("<polygon").size,
-                group.scan("<line").size,
-                group.scan("<circle").size])
-          .to eq([polygons, lines, circles])
+        expect(counts).to eq([polygons, lines, circles])
       end
     end
 
@@ -236,27 +407,33 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # rasterised identically. The tip belongs on the node's edge.
     it "puts the tip on the target's boundary, not inside it" do
       xml = Sirena.render("flowchart LR\n  A --> B\n")
-      left, = node_span(xml, "B")
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
-      tip = group[/<polygon[^>]*points="(-?[\d.]+),/, 1].to_f
+      tip = edge_body(xml)[/<polygon[^>]*points="(-?[\d.]+),/, 1].to_f
 
-      expect(tip).to be_within(0.5).of(left)
+      expect(tip).to be_within(0.5).of(node_span(xml, "B").first)
     end
 
     # mmdc centres the circle behind the reference point it puts on the
     # boundary. This keeps the head visible without making it touch.
-    it "leaves mmdc's gap between a circle head and the node" do
-      xml = Sirena.render("flowchart LR\n  A --o B\n")
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
-      cx = group[/<circle[^>]*cx="(-?[\d.]+)"/, 1].to_f
-      radius = group[/<circle[^>]*r="([\d.]+)"/, 1].to_f
-      stroke = group[/<circle[^>]*stroke-width="([\d.]+)"/, 1].to_f
-      edge = node_span(xml, "B").first
+    context "with a circle head" do
+      let(:xml) { Sirena.render("flowchart LR\n  A --o B\n") }
+      let(:group) { edge_body(xml) }
+      let(:cx) { group[/<circle[^>]*cx="(-?[\d.]+)"/, 1].to_f }
+      let(:radius) { group[/<circle[^>]*r="([\d.]+)"/, 1].to_f }
 
       # Pin the marker size so a resized head cannot hide a wrong reach.
-      expect(radius).to be_within(0.05).of(5.5)
-      expect(stroke).to eq(1.0)
-      expect(edge - (cx + radius)).to be_within(0.05).of(1.1)
+      it "draws the circle at mmdc's radius" do
+        expect(radius).to be_within(0.05).of(5.5)
+      end
+
+      it "strokes the circle one unit wide" do
+        expect(group[/<circle[^>]*stroke-width="([\d.]+)"/, 1].to_f).to eq(1.0)
+      end
+
+      it "leaves mmdc's gap between the circle head and the node" do
+        gap = node_span(xml, "B").first - (cx + radius)
+
+        expect(gap).to be_within(0.05).of(1.1)
+      end
     end
 
     # mmdc's circleEnd marker names no fill of its own and inherits the
@@ -268,19 +445,16 @@ RSpec.describe Sirena::Renderer::Flowchart do
 
     it "keeps a cross head clear of the node" do
       xml = Sirena.render("flowchart LR\n  A --x B\n")
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
-      arms = group.scan(/<line[^>]*x1="([-\d.]+)"[^>]*x2="([-\d.]+)"/)
+      arms = edge_body(xml).scan(/<line[^>]*x1="([-\d.]+)"[^>]*x2="([-\d.]+)"/)
         .flatten.map(&:to_f)
-      edge = node_span(xml, "B").first
 
       # mmdc's reference point leaves the nearest arm point 2.0 short.
-      expect(edge - arms.max).to be_within(0.05).of(2.0)
+      expect(node_span(xml, "B").first - arms.max).to be_within(0.05).of(2.0)
     end
 
     # Pin the width because placement alone cannot catch a thinner cross.
     it "strokes the cross head the width mermaid does" do
       group = edge_group("--x")
-
       widths = group.scan(/<line[^>]*stroke-width="([^"]*)"/).flatten
 
       # Counted as well as matched: `all` is happy with an empty list, so
@@ -292,47 +466,65 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # at markerWidth 8, so the triangle is 8 long and 4 either side of the
     # line. Reading the corners off a fixed angle instead drew it 3.1
     # wide, and nothing here would have noticed.
-    it "draws the arrow head mermaid's size" do
-      tip, left, right =
+    context "with an arrow head" do
+      let(:corners) do
         edge_group("-->")[/<polygon[^>]*points="([^"]*)"/, 1]
           .split.map { |pair| pair.split(",").map(&:to_f) }
+      end
 
-      expect(Math.hypot(*tip.zip(left).map { |a, b| a - b }))
-        .to be_within(0.05).of(Math.hypot(8.0, 4.0))
-      expect(Math.hypot(*left.zip(right).map { |a, b| a - b }))
-        .to be_within(0.05).of(8.0)
+      it "draws the head's side the length mermaid does" do
+        tip, left, = corners
+
+        expect(Math.hypot(*tip.zip(left).map { |a, b| a - b }))
+          .to be_within(0.05).of(Math.hypot(8.0, 4.0))
+      end
+
+      it "draws the head's base the width mermaid does" do
+        _tip, left, right = corners
+
+        expect(Math.hypot(*left.zip(right).map { |a, b| a - b }))
+          .to be_within(0.05).of(8.0)
+      end
     end
 
     # mmdc's crossEnd is `orient="auto"`, so the cross turns with the line
     # it ends. Drawn square to the screen it sat at the wrong angle on
     # every edge that is not axis-aligned.
-    it "turns the cross head with the line it ends" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
-                   { id: "B", x: 300, y: 300, width: 40, height: 20 }],
-        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "cross" } }],
-      }
-      xml = render_graph(graph).to_xml
-      arms = xml.scan(
-        /<line[^>]*x1="(-?[\d.]+)"[^>]*y1="(-?[\d.]+)"[^>]*
-         x2="(-?[\d.]+)"[^>]*y2="(-?[\d.]+)"/x,
-      ).map { |a| a.map(&:to_f) }
+    context "with a cross head on a diagonal edge" do
+      let(:xml) do
+        nodes = [node("A", 0, 0, 40, 20), node("B", 300, 300, 40, 20)]
+        render_graph(link_graph("cross", nodes)).to_xml
+      end
+      let(:arms) do
+        xml.scan(
+          /<line[^>]*x1="(-?[\d.]+)"[^>]*y1="(-?[\d.]+)"[^>]*
+           x2="(-?[\d.]+)"[^>]*y2="(-?[\d.]+)"/x,
+        ).map { |a| a.map(&:to_f) }
+      end
+
+      it "draws two arms" do
+        expect(arms.size).to eq(2)
+      end
 
       # A diagonal edge turns both arms square to the screen; a cross drawn
       # square to the screen leaves both diagonal.
-      expect(arms.size).to eq(2)
-      square = arms.map do |x1, y1, x2, y2|
-        (x2 - x1).abs < 0.05 || (y2 - y1).abs < 0.05
+      it "turns both arms square to the screen" do
+        square = arms.map do |x1, y1, x2, y2|
+          (x2 - x1).abs < 0.05 || (y2 - y1).abs < 0.05
+        end
+
+        expect(square).to all(be(true))
       end
-      expect(square)
-        .to all(be(true))
+
       # Every endpoint is written to one decimal, so the measured arm
       # carries up to 0.1 of quantisation on its own — it lands on 12.8
       # against a true 12.728. The window has to clear that before it can
       # mean anything, or rounding alone spends most of it.
-      expect(arms.map { |x1, y1, x2, y2| Math.hypot(x2 - x1, y2 - y1) })
-        .to all(be_within(0.2).of(2 * 4.5 * Math.sqrt(2)))
+      it "keeps each arm the length mermaid draws" do
+        lengths = arms.map { |x1, y1, x2, y2| Math.hypot(x2 - x1, y2 - y1) }
+
+        expect(lengths).to all(be_within(0.2).of(2 * 4.5 * Math.sqrt(2)))
+      end
     end
 
     # A node of no size has no outline for the head to land on. Dividing
@@ -349,40 +541,33 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # removed. It is here to say a zero-size circle still draws a head,
     # not to hold the guard up.
     %w[rhombus hexagon circle stadium].each do |shape|
-      it "draws no NaN aiming square at a #{shape} of no size" do
-        graph = {
-          children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
-                     { id: "B", x: 20, y: 200, width: 0, height: 0,
-                       metadata: { shape: shape } }],
-          edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                    metadata: { arrow_type: "arrow" } }],
-        }
-        xml = render_graph(graph).to_xml
+      context "when aiming square at a #{shape} of no size" do
+        let(:xml) do
+          second = node("B", 20, 200, 0, 0, shape: shape)
+          render_graph(link_graph("arrow", two_nodes(second))).to_xml
+        end
 
         # The edge group, not the document: a rhombus and a hexagon NODE
         # are drawn as polygons too, so asserting against the whole thing
         # passed whether or not a head was drawn at all.
-        expect(xml[%r{<g id="edge-A_to_B".*?</g>}m]).to include("<polygon")
-        expect(xml).not_to include("NaN")
+        it "draws a head" do
+          expect(edge_by_id(xml, "A_to_B")).to include("<polygon")
+        end
+
+        it "draws no NaN" do
+          expect(xml).not_to include("NaN")
+        end
       end
     end
 
     # A collapsed width still leaves a vertical outline for a square-on head.
     %w[rhombus hexagon stadium].each do |shape|
       it "lands on the end of a #{shape} with no width" do
-        graph = {
-          children: [{ id: "A", x: -20, y: 100, width: 40, height: 20 },
-                     { id: "B", x: 0, y: 0, width: 0, height: 20,
-                       metadata: { shape: shape } }],
-          edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                    metadata: { arrow_type: "arrow" } }],
-        }
-        xml = render_graph(graph).to_xml
-        group = xml[%r{<g id="edge-A_to_B".*?</g>}m]
-        tip = group[/<polygon[^>]*points="([^"]*)"/, 1]
-          .split.first.split(",").map(&:to_f)
+        second = node("B", 0, 0, 0, 20, shape: shape)
+        nodes = [node("A", -20, 100, 40, 20), second]
+        xml = render_graph(link_graph("arrow", nodes)).to_xml
 
-        expect(tip).to eq([0.0, 20.0])
+        expect(tip_of(xml, "A_to_B")).to eq([0.0, 20.0])
       end
     end
 
@@ -394,17 +579,18 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # no direction, and the polygon comes out as three copies of one point
     # — `20.0,10.0` three times, zero area. What this holds is that the
     # guard turns that into a degenerate polygon rather than NaN.
-    it "writes no NaN for nodes sitting on top of each other" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
-                   { id: "B", x: 0, y: 0, width: 40, height: 20 }],
-        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "arrow" } }],
-      }
-      xml = render_graph(graph).to_xml
+    context "when nodes sit on top of each other" do
+      let(:xml) do
+        render_graph(link_graph("arrow", stacked_nodes)).to_xml
+      end
 
-      expect(xml[%r{<g id="edge-A_to_B".*?</g>}m]).to include("<polygon")
-      expect(xml).not_to include("NaN")
+      it "draws a degenerate head polygon" do
+        expect(edge_by_id(xml, "A_to_B")).to include("<polygon")
+      end
+
+      it "writes no NaN" do
+        expect(xml).not_to include("NaN")
+      end
     end
 
     # A stadium no wider than it is tall is a capsule with a vertical spine:
@@ -414,36 +600,22 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # capsule and an ellipse of the same box coincide, so a square-on head
     # would pass this with the spine turned the wrong way.
     it "lands on the outline of a stadium narrower than it is tall" do
-      graph = {
-        children: [{ id: "A", x: 95, y: -100, width: 40, height: 20 },
-                   { id: "B", x: 200, y: -40, width: 30, height: 100,
-                     metadata: { shape: "stadium" } }],
-        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "arrow" } }],
-      }
-      xml = render_graph(graph).to_xml
-      tip_x, tip_y = xml[/<polygon[^>]*points="(-?[\d.]+),(-?[\d.]+)/]
-        .match(/(-?[\d.]+),(-?[\d.]+)/).captures.map(&:to_f)
+      nodes = [node("A", 95, -100, 40, 20),
+               node("B", 200, -40, 30, 100, shape: "stadium")]
+      tip_x, tip_y = tip_of(render_xml("arrow", nodes), "A_to_B")
 
       # Half the width is 15 and the spine runs 35 either side of the centre.
       spine_y = tip_y.clamp(10 - 35.0, 10 + 35.0)
-
-      expect(Math.hypot(tip_x - 215, tip_y - spine_y))
-        .to be_within(0.1).of(15.0)
+      expect(Math.hypot(tip_x - 215, tip_y - spine_y)).to be_within(0.1).of(15)
     end
 
     # mmdc caps a loop's depth at 48. The layout never builds a node big
     # enough, but a graph handed straight to the renderer can.
     it "caps a big node's loop depth the way mmdc does" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 200, height: 200 }],
-        edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
-                  metadata: { arrow_type: "arrow" } }],
-        layoutOptions: { "elk.direction" => "DOWN" },
-      }
+      graph = loop_graph("arrow", node("A", 0, 0, 200, 200),
+                         layoutOptions: { "elk.direction" => "DOWN" })
       xml = render_graph(graph).to_xml
-      corners = xml[/<path[^>]*d="([^"]*)"/, 1]
-        .scan(/(-?[\d.]+) (-?[\d.]+)/).map { |_x, y| y.to_f }
+      corners = path_points(xml).map(&:last)
 
       # 0.45 of 200 is 90; the cap stops it at 48 below the node's foot.
       expect(corners.max - 200).to be_within(0.05).of(48.0)
@@ -451,42 +623,41 @@ RSpec.describe Sirena::Renderer::Flowchart do
 
     # Two nodes at one position leave the head no direction to point in.
     # Backing it off its own reach must not divide by that nothing.
-    it "draws a circle head for nodes sitting on top of each other" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
-                   { id: "B", x: 0, y: 0, width: 40, height: 20 }],
-        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "circle" } }],
-      }
-      xml = render_graph(graph).to_xml
+    context "when a circle head has no direction" do
+      let(:xml) do
+        render_graph(link_graph("circle", stacked_nodes)).to_xml
+      end
 
-      expect(xml[%r{<g id="edge-A_to_B".*?</g>}m]).to include("<circle")
-      expect(xml).not_to include("NaN")
+      it "draws the circle head" do
+        expect(edge_by_id(xml, "A_to_B")).to include("<circle")
+      end
+
+      it "writes no NaN" do
+        expect(xml).not_to include("NaN")
+      end
     end
 
     # The cross is the third head, and the only one that turns its arms to
     # the line. With no direction to turn to it falls back to horizontal —
     # take that fallback out and the arms collapse to nothing, which is why
     # this measures their length rather than their presence.
-    it "draws a cross head for nodes sitting on top of each other" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
-                   { id: "B", x: 0, y: 0, width: 40, height: 20 }],
-        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "cross" } }],
-      }
-      xml = render_graph(graph).to_xml
-      arms = xml[%r{<g id="edge-A_to_B".*?</g>}m]
-        .scan(
-          /<line[^>]*x1="([-\d.]+)"[ ]y1="([-\d.]+)"
-           [ ]x2="([-\d.]+)"[ ]y2="([-\d.]+)"/x,
-        )
-        .map { |c| c.map(&:to_f) }
+    context "when a cross head has no direction" do
+      let(:xml) do
+        render_graph(link_graph("cross", stacked_nodes)).to_xml
+      end
+      let(:lengths) { arm_lengths(edge_by_id(xml, "A_to_B")) }
 
-      expect(arms.size).to eq(2)
-      expect(arms.map { |x1, y1, x2, y2| Math.hypot(x2 - x1, y2 - y1) })
-        .to all(be_within(0.2).of(2 * 4.5 * Math.sqrt(2)))
-      expect(xml).not_to include("NaN")
+      it "draws two arms" do
+        expect(lengths.size).to eq(2)
+      end
+
+      it "keeps each arm the length mermaid draws" do
+        expect(lengths).to all(be_within(0.2).of(2 * 4.5 * Math.sqrt(2)))
+      end
+
+      it "writes no NaN" do
+        expect(xml).not_to include("NaN")
+      end
     end
 
     # A node of no size loops back onto its own centre, so the label has
@@ -498,20 +669,29 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # The node sits away from the origin deliberately. At (0, 0) its
     # centre and a dropped or zeroed coordinate are the same point, so the
     # assertion could not tell them apart.
-    it "places a self link's label on a node of no size" do
-      graph = {
-        children: [{ id: "A", x: 30, y: 70, width: 0, height: 0 }],
-        edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
-                  labels: [{ text: "x" }],
-                  metadata: { arrow_type: "arrow" } }],
-      }
-      xml = render_graph(graph).to_xml
-      text = xml[%r{<g id="edge-A_to_A".*?</g>}m][/<text\b[^>]*>/].to_s
+    context "with a self link's label on a node of no size" do
+      let(:xml) do
+        graph = loop_graph("arrow", node("A", 30, 70, 0, 0))
+        graph[:edges].first[:labels] = [{ text: "x" }]
+        render_graph(graph).to_xml
+      end
+      let(:text) { edge_by_id(xml, "A_to_A")[/<text\b[^>]*>/].to_s }
 
-      expect(text).to start_with("<text")
-      expect(text[/\sx="(-?[\d.]+)"/, 1].to_f).to eq(30.0)
-      expect(text[/\sy="(-?[\d.]+)"/, 1].to_f).to eq(70.0)
-      expect(xml).not_to include("NaN")
+      it "draws the label" do
+        expect(text).to start_with("<text")
+      end
+
+      it "places the label on the node's x" do
+        expect(text[/\sx="(-?[\d.]+)"/, 1].to_f).to eq(30.0)
+      end
+
+      it "places the label on the node's y" do
+        expect(text[/\sy="(-?[\d.]+)"/, 1].to_f).to eq(70.0)
+      end
+
+      it "writes no NaN" do
+        expect(xml).not_to include("NaN")
+      end
     end
 
     # A hardcoded head left a white line with black heads on a dark theme.
@@ -519,13 +699,19 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # is a colour — matching on absence alone passed while a leaked empty
     # theme registry left the whole diagram unpainted.
     %w[default dark light high_contrast].each do |name|
-      it "draws the head in the #{name} theme's edge colour" do
-        xml = Sirena.render("flowchart TD\n  A --> B\n", theme: name)
-        group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
-        ink = group[/<path[^>]*stroke="([^"]*)"/, 1]
+      context "with the #{name} theme" do
+        let(:group) do
+          edge_body(Sirena.render("flowchart TD\n  A --> B\n", theme: name))
+        end
+        let(:ink) { group[/<path[^>]*stroke="([^"]*)"/, 1] }
 
-        expect(ink).to match(/\A#[0-9a-f]{6}\z/)
-        expect(group[/<polygon[^>]*fill="([^"]*)"/, 1]).to eq(ink)
+        it "draws the line in a colour" do
+          expect(ink).to match(/\A#[0-9a-f]{6}\z/)
+        end
+
+        it "draws the head in the theme's edge colour" do
+          expect(group[/<polygon[^>]*fill="([^"]*)"/, 1]).to eq(ink)
+        end
       end
     end
 
@@ -536,28 +722,38 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # edge's on all four. A theme that separates them is what tells the
     # two apart, and it draws the picture the sweep exists to refuse: a
     # red head on a blue line.
-    it "draws the head in the edge colour, not the node's" do
-      xml = Sirena.render(
-        "flowchart TD\n  A --> B\n",
-        theme: { colors: { node_stroke: "#ff0000", edge_stroke: "#0000ff" } },
-      )
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
+    context "with a theme that separates node and edge ink" do
+      let(:group) do
+        theme = { colors: { node_stroke: "#ff0000", edge_stroke: "#0000ff" } }
+        edge_body(Sirena.render("flowchart TD\n  A --> B\n", theme: theme))
+      end
 
-      expect(group[/<path[^>]*stroke="([^"]*)"/, 1]).to eq("#0000ff")
-      expect(group[/<polygon[^>]*fill="([^"]*)"/, 1]).to eq("#0000ff")
+      it "draws the line in the edge colour" do
+        expect(group[/<path[^>]*stroke="([^"]*)"/, 1]).to eq("#0000ff")
+      end
+
+      it "draws the head in the edge colour, not the node's" do
+        expect(group[/<polygon[^>]*fill="([^"]*)"/, 1]).to eq("#0000ff")
+      end
     end
 
     # Nothing fills a theme's gaps in, so a theme can name no edge colour
     # at all. Then the line has no stroke and is invisible, but the head
     # was a polygon with no fill, and SVG fills that black. The picture
     # was black arrowheads floating over nothing.
-    it "leaves the head unpainted when the theme paints no line" do
-      xml = Sirena.render("flowchart TD\n  A --> B\n",
-                          theme: { colors: { node_fill: "#eeeeee" } })
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
+    context "when the theme paints no line" do
+      let(:group) do
+        edge_body(Sirena.render("flowchart TD\n  A --> B\n",
+                                theme: { colors: { node_fill: "#eeeeee" } }))
+      end
 
-      expect(group).not_to match(/<path[^>]*stroke=/)
-      expect(group[/<polygon[^>]*fill="([^"]*)"/, 1]).to eq("none")
+      it "leaves the line unstroked" do
+        expect(group).not_to match(/<path[^>]*stroke=/)
+      end
+
+      it "leaves the head unpainted" do
+        expect(group[/<polygon[^>]*fill="([^"]*)"/, 1]).to eq("none")
+      end
     end
 
     # A cross is stroked and not filled, so leaving its stroke off really
@@ -565,31 +761,31 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # — so it needs its own `none` for the fill, or SVG paints it black.
     # Asserting only the stroke let that `none` be deleted unnoticed.
     %w[--x --o].each do |link|
-      it "leaves #{link}'s head unstroked when the theme paints no line" do
-        xml = Sirena.render("flowchart TD\n  A #{link} B\n",
-                            theme: { colors: { node_fill: "#eeeeee" } })
-        group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
+      context "with a #{link} head when the theme paints no line" do
+        let(:group) do
+          edge_body(Sirena.render("flowchart TD\n  A #{link} B\n",
+                                  theme: { colors: { node_fill: "#eeeeee" } }))
+        end
 
-        expect(group).to match(/<(line|circle)\b/)
-        expect(group).not_to match(/<(line|circle)[^>]*\bstroke=/)
+        it "draws the head" do
+          expect(group).to match(/<(line|circle)\b/)
+        end
+
+        it "leaves the head unstroked" do
+          expect(group).not_to match(/<(line|circle)[^>]*\bstroke=/)
+        end
       end
     end
 
     # Every halving in the renderer is a float one, so a hand-built node
     # with odd integer sides puts its label on the same centre its shape
     # and its edge use. Integer division put the text half a pixel off.
-    it "centres a label on an odd-sided node the way the shape is centred" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 41, height: 21,
-                     labels: [{ text: "A" }] }],
-        edges: [],
-      }
-      xml = render_graph(graph).to_xml
-      group = xml[%r{<g id="node-A".*?</g>}m]
-      x, y, width, height = group.match(
-        /<rect[^>]*x="(-?[\d.]+)"[^>]*y="(-?[\d.]+)"[^>]*
-         width="([\d.]+)"[^>]*height="([\d.]+)"/x,
-      ).captures.map(&:to_f)
+    context "with an odd-sided node" do
+      let(:group) do
+        odd = node("A", 0, 0, 41, 21).merge(labels: [{ text: "A" }])
+        xml = render_graph({ children: [odd], edges: [] }).to_xml
+        xml[%r{<g id="node-A".*?</g>}m]
+      end
 
       # The written `y` is the geometric centre PLUS the 0.35em `middle`
       # baseline shift Svg::Text folds in (Sirena::Svg::Text::BASELINE_SHIFTS)
@@ -597,9 +793,22 @@ RSpec.describe Sirena::Renderer::Flowchart do
       # 1.2 renderer has nothing to honour that property with, so the shift
       # in the coordinate itself is what puts the glyph where the geometric
       # centre says it belongs. 10.5 + 0.35 * 16px font-size = 16.1.
-      expect(group[/<text[^>]*x="(-?[\d.]+)"/, 1].to_f).to eq(20.5)
-      expect(group[/<text[^>]*y="(-?[\d.]+)"/, 1].to_f).to eq(16.1)
-      expect([x + (width / 2), y + (height / 2)]).to eq([20.5, 10.5])
+      it "centres the label's x on the shape" do
+        expect(group[/<text[^>]*x="(-?[\d.]+)"/, 1].to_f).to eq(20.5)
+      end
+
+      it "centres the label's y on the shape, plus the baseline shift" do
+        expect(group[/<text[^>]*y="(-?[\d.]+)"/, 1].to_f).to eq(16.1)
+      end
+
+      it "centres the shape itself" do
+        x_pos, y_pos, width, height = group.match(
+          /<rect[^>]*x="(-?[\d.]+)"[^>]*y="(-?[\d.]+)"[^>]*
+           width="([\d.]+)"[^>]*height="([\d.]+)"/x,
+        ).captures.map(&:to_f)
+
+        expect([x_pos + (width / 2), y_pos + (height / 2)]).to eq([20.5, 10.5])
+      end
     end
 
     # The circle's own half of that: it is filled, so an absent fill is
@@ -608,9 +817,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
     it "leaves a circle head unfilled when the theme paints no line" do
       xml = Sirena.render("flowchart TD\n  A --o B\n",
                           theme: { colors: { node_fill: "#eeeeee" } })
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
 
-      expect(group[/<circle[^>]*fill="([^"]*)"/, 1]).to eq("none")
+      expect(edge_body(xml)[/<circle[^>]*fill="([^"]*)"/, 1]).to eq("none")
     end
 
     # A path that bends arrives along its last segment, not along the span
@@ -622,59 +830,59 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # renders a non-self edge that carries one — the branch that follows a
     # bend was reached by no example that draws, and a `send` past it
     # leaves that arm empty rather than filling it.
-    it "points the head along the arriving segment, not the span" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
-                   { id: "B", x: 200, y: 200, width: 40, height: 20 }],
-        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  sections: [{ bendPoints: [{ x: 220, y: 0 }] }],
-                  metadata: { arrow_type: "arrow" } }],
-      }
-      xml = render_graph(graph).to_xml
-      group = xml[%r{<g id="edge-A_to_B".*?</g>}m].to_s
-      tip, *back = group[/<polygon[^>]*points="([^"]*)"/, 1]
-        .split.map { |pair| pair.split(",").map(&:to_f) }
+    context "with a bent edge" do
+      let(:head) do
+        nodes = [node("A", 0, 0, 40, 20), node("B", 200, 200, 40, 20)]
+        graph = link_graph("arrow", nodes,
+                           sections: [{ bendPoints: [{ x: 220, y: 0 }] }])
+        xml = render_graph(graph).to_xml
+        edge_by_id(xml, "A_to_B")[/<polygon[^>]*points="([^"]*)"/, 1]
+          .split.map { |pair| pair.split(",").map(&:to_f) }
+      end
 
       # The path leaves the bend at x 220 and drops straight onto B's top
       # edge. `tip.first` is the assertion that discriminates: aiming
       # along the span puts the tip at 210, and its y is 200 either way.
-      expect(tip).to eq([220.0, 200.0])
+      it "points the head along the arriving segment, not the span" do
+        expect(head.first).to eq([220.0, 200.0])
+      end
+
       # Square across the line it ends, so both back corners share a y
       # above the tip. Aimed along the span they sit at different ones.
-      expect(back.map(&:last).uniq).to eq([192.0])
+      it "keeps both back corners square across the arriving line" do
+        expect(head.drop(1).map(&:last).uniq).to eq([192.0])
+      end
     end
 
     # With no bend the head has only the OTHER node's centre to aim from.
-    it "falls back to the other node when there is no bend" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
-                   { id: "B", x: 200, y: 0, width: 40, height: 20 }],
-        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "arrow" } }],
-      }
-      xml = render_graph(graph).to_xml
-      group = xml[%r{<g id="edge-A_to_B".*?</g>}m].to_s
-      tip, *back = group[/<polygon[^>]*points="([^"]*)"/, 1]
-        .split.map { |pair| pair.split(",").map(&:to_f) }
+    context "with no bend" do
+      let(:head) do
+        xml = render_graph(
+          link_graph("arrow", two_nodes(node("B", 200, 0, 40, 20))),
+        ).to_xml
+        edge_by_id(xml, "A_to_B")[/<polygon[^>]*points="([^"]*)"/, 1]
+          .split.map { |pair| pair.split(",").map(&:to_f) }
+      end
 
       # A's centre is (20, 10), dead level with B's, so the tip lands on
       # the middle of B's left edge. Aiming from the origin instead pulls
       # it to y 9.1; aiming from B's own centre leaves no ray at all and
       # the polygon degenerates onto that centre.
-      expect(tip).to eq([200.0, 10.0])
-      expect(back.map(&:first).uniq).to eq([192.0])
+      it "falls back to the other node's centre to aim from" do
+        expect(head.first).to eq([200.0, 10.0])
+      end
+
+      it "keeps both back corners on the approach side" do
+        expect(head.drop(1).map(&:first).uniq).to eq([192.0])
+      end
     end
 
     it "puts a head at each end of a two-ended link" do
       xml = Sirena.render("flowchart LR\n  A <--> B\n")
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
-      tips = group.scan(/<polygon[^>]*points="(-?[\d.]+),/)
-        .flatten.map(&:to_f)
+      edges = [node_span(xml, "A").last, node_span(xml, "B").first]
 
-      expect(tips).to contain_exactly(
-        be_within(0.5).of(node_span(xml, "A").last),
-        be_within(0.5).of(node_span(xml, "B").first),
-      )
+      expect(edge_tips(xml))
+        .to match_array(edges.map { |edge| be_within(0.5).of(edge) })
     end
 
     # An ordinary label sits at the midpoint of the link, between the two
@@ -689,15 +897,22 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # every candidate anchor gives the same lifted y. Anchoring on
     # the source centre instead drops the label on top of A and leaves
     # that y untouched.
-    it "lifts an ordinary label clear of its own line" do
-      xml = Sirena.render("flowchart LR\n  A -->|hi| B\n")
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
-      line = group[/<path[^>]*d="M [-\d.]+ ([-\d.]+)/, 1].to_f
-      midpoint = (node_span(xml, "A").last + node_span(xml, "B").first) / 2
+    context "with an ordinary label" do
+      let(:xml) { Sirena.render("flowchart LR\n  A -->|hi| B\n") }
+      let(:group) { edge_body(xml) }
 
-      expect(group[/<text[^>]*y="([-\d.]+)"/, 1].to_f).to eq(line - 5)
-      expect(group[/<text[^>]*x="([-\d.]+)"/, 1].to_f)
-        .to be_within(0.05).of(midpoint)
+      it "lifts the label clear of its own line" do
+        line = group[/<path[^>]*d="M [-\d.]+ ([-\d.]+)/, 1].to_f
+
+        expect(group[/<text[^>]*y="([-\d.]+)"/, 1].to_f).to eq(line - 5)
+      end
+
+      it "centres the label between the two node edges" do
+        midpoint = (node_span(xml, "A").last + node_span(xml, "B").first) / 2
+
+        expect(group[/<text[^>]*x="([-\d.]+)"/, 1].to_f)
+          .to be_within(0.05).of(midpoint)
+      end
     end
   end
 
@@ -718,20 +933,42 @@ RSpec.describe Sirena::Renderer::Flowchart do
       expect(path_points(xml).map(&:last).max).to be > node_bottom(xml)
     end
 
-    it "gives the loop two corners, not one line out and back" do
-      xml = Sirena.render("flowchart TD\n  A --> A\n")
-      corners = path_points(xml).select { |_x, y| y > node_bottom(xml) }
+    context "with a TD loop" do
+      let(:xml) { Sirena.render("flowchart TD\n  A --> A\n") }
 
-      expect(corners.size).to eq(2)
-      expect(corners.map(&:first).uniq.size).to eq(2)
-    end
+      it "gives the loop two corners, not one line out and back" do
+        expect(loop_corners(xml).size).to eq(2)
+      end
 
-    it "starts and ends the loop on the node outline" do
-      xml = Sirena.render("flowchart TD\n  A --> A\n")
-      start_point, end_point = path_points(xml).values_at(0, -1)
+      it "puts the two corners at different x" do
+        expect(loop_corners(xml).map(&:first).uniq.size).to eq(2)
+      end
 
-      expect([start_point.last, end_point.last])
-        .to all(be_within(0.05).of(node_bottom(xml)))
+      it "starts and ends the loop on the node outline" do
+        start_point, end_point = path_points(xml).values_at(0, -1)
+
+        expect([start_point.last, end_point.last])
+          .to all(be_within(0.05).of(node_bottom(xml)))
+      end
+
+      it "puts the head where the loop meets the node, not inside it" do
+        expect(head_points(xml).first.last)
+          .to be_within(0.5).of(node_bottom(xml))
+      end
+
+      it "keeps the head's back corners below the node" do
+        expect(head_points(xml).drop(1).map(&:last).min)
+          .to be > node_bottom(xml)
+      end
+
+      # A bare node is 37 wide, so the ratio alone would reach 6.5 on each
+      # side and span about 13. Sirena pins the reach at 18 to avoid a spike.
+      it "keeps a narrow node's loop 18 either side of centre" do
+        centre_x, = node_centre(xml)
+
+        expect(loop_corners(xml).map { |cx, _y| (cx - centre_x).abs })
+          .to all(be_within(0.05).of(18.0))
+      end
     end
 
     # A loop thrown sideways spreads along y, so the spread has to be
@@ -760,11 +997,11 @@ RSpec.describe Sirena::Renderer::Flowchart do
       it "keeps a sideways loop on the flow-side face " \
          "at #{label_width} characters" do
         xml = Sirena.render("flowchart LR\n  A[#{'a' * label_width}] --> A\n")
-        x, _y, width, = node_rect(xml)
+        x_pos, _y, width, = node_rect(xml)
         start_point, end_point = path_points(xml).values_at(0, -1)
 
         expect([start_point.first, end_point.first])
-          .to all(be_within(0.1).of(x + width))
+          .to all(be_within(0.1).of(x_pos + width))
       end
     end
 
@@ -779,16 +1016,12 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # numbers are the ORIGINAL points plus that 10, not a copy of
     # rendered output: 30 and -10 become 40 and 0.
     it "keeps supplied bends for a self link" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 }],
-        edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
-                  sections: [{ bendPoints: [{ x: 80, y: 30 },
-                                            { x: 80, y: -10 }] }],
-                  metadata: { arrow_type: "arrow" } }],
-      }
-      xml = render_graph(graph).to_xml
+      bends = [{ x: 80, y: 30 }, { x: 80, y: -10 }]
+      graph = loop_graph("arrow", node("A", 0, 0, 40, 20))
+      graph[:edges].first[:sections] = [{ bendPoints: bends }]
 
-      expect(path_points(xml)[1..2]).to eq([[80.0, 40.0], [80.0, 0.0]])
+      expect(path_points(render_graph(graph).to_xml)[1..2])
+        .to eq([[80.0, 40.0], [80.0, 0.0]])
     end
 
     # The self-loop-overflow shift used to clear only the label's own
@@ -798,23 +1031,15 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # only as wide as the anchor still clips the glyphs — measured
     # against this exact input, Chrome's `getBBox()` put the BT label at
     # y=-11 and the RL label at x=-17.8 while their anchors sat at zero.
-    it "keeps a loop label's own text clear of the page edge, " \
-       "not just its anchor" do
-      { "BT" => :y, "RL" => :x }.each do |direction, axis|
+    { "BT" => :y, "RL" => :x }.each do |direction, axis|
+      it "keeps a #{direction} loop label's own text clear of the page " \
+         "edge, not just its anchor" do
         xml = Sirena.render(
           "flowchart #{direction}\nsubgraph s\nA[abcdefghij]\n" \
           "end\ns -->|again| s\n",
         )
-        tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
-          .find { |t| t.include?(">again<") }
-        x = tag[/\bx="([^"]*)"/, 1].to_f
-        y = tag[/\by="([^"]*)"/, 1].to_f
-        font_size = tag[/font-size="([^"]*)"/, 1].to_f
-        text = tag[/>([^<]*)</, 1]
-        dims = Sirena::TextMeasurement.measure(text, font_size: font_size)
 
-        margin = axis == :y ? y - dims[:height] : x - (dims[:width] / 2.0)
-        expect(margin).to be >= 0, "#{direction}: margin was #{margin}"
+        expect(label_margin(xml, "again", axis)).to be >= 0
       end
     end
 
@@ -834,41 +1059,37 @@ RSpec.describe Sirena::Renderer::Flowchart do
       xml = Sirena.render(
         "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|WWWWWWWW| s\n",
       )
-      tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
-        .find { |t| t.include?(">WWWWWWWW<") }
-      anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
-      real_half_width = 90.55 / 2.0
 
-      expect(anchor_x - real_half_width).to be >= 0
+      expect(label_anchor_x(xml, "WWWWWWWW") - (90.55 / 2.0)).to be >= 0
     end
 
     # mmdc draws every flowchart text at one size, 16px unless the theme's
     # flowchart_font_size says otherwise; the loop's room is sized at that
     # same size.
-    it "sizes a loop label's room at the font size it is drawn at" do
-      source = "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\n" \
-               "s -->|a much longer label| s\n"
-      view_box = lambda do |typography|
-        Sirena::Engine.new(theme: { typography: typography })
-          .render(source)[/viewBox="([^"]*)"/, 1]
+    context "with a label wider than its loop" do
+      let(:source) do
+        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\n" \
+          "s -->|a much longer label| s\n"
       end
 
-      expect([view_box.call({}), view_box.call({ flowchart_font_size: 20.0 })])
-        .to eq([view_box.call({ flowchart_font_size: 16.0 }),
-                view_box.call({ flowchart_font_size: 20.0,
-                                font_size_small: 12.0 })])
+      it "sizes the room at the flowchart size by default" do
+        expect(loop_view_box(source, {}))
+          .to eq(loop_view_box(source, { flowchart_font_size: 16.0 }))
+      end
+
+      it "sizes the room at the flowchart size, not the small size" do
+        expect(loop_view_box(source, { flowchart_font_size: 20.0 }))
+          .to eq(loop_view_box(source, { flowchart_font_size: 20.0,
+                                         font_size_small: 12.0 }))
+      end
     end
 
     it "draws a loop label at the flowchart size, not the small size" do
-      xml = Sirena.render(
-        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n",
-        theme: {
-          typography: { font_size_small: 12.0, font_size_normal: 14.0 },
-        },
-      )
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
+      typography = { font_size_small: 12.0, font_size_normal: 14.0 }
+      xml = loop_label_xml("RL", "again", theme: { typography: typography })
 
-      expect(group[/<text[^>]*font-size="([^"]*)"/, 1].to_f).to eq(16.0)
+      expect(edge_body(xml)[/<text[^>]*font-size="([^"]*)"/, 1].to_f)
+        .to eq(16.0)
     end
 
     # `calculate_width` used to total only node and cluster boxes, never
@@ -883,16 +1104,11 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # than recomputing it, is what makes this spec able to fail on the
     # code that clipped it.
     it "grows the page for a self loop's label reaching past the last box" do
-      xml = Sirena.render(
-        "flowchart LR\nsubgraph s\nA[abcdefghij]\nend\ns -->|#{'i' * 30}| s\n",
-      )
-      tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
-        .find { |t| t.include?(">#{'i' * 30}<") }
-      anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
-      real_half_width = 86.21875 / 2.0
+      xml = loop_label_xml("LR", "i" * 30)
       view_box_width = xml[/viewBox="0 0 ([\d.]+) /, 1].to_f
 
-      expect(view_box_width).to be >= anchor_x + real_half_width
+      expect(view_box_width)
+        .to be >= label_anchor_x(xml, "i" * 30) + (86.21875 / 2.0)
     end
 
     # The two specs above were measured only against ASCII, and the
@@ -912,16 +1128,10 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # table.
     it "shifts a self loop far enough to clear an ordinary CJK label, " \
        "not just ASCII" do
-      xml = Sirena.render(
-        "flowchart RL\nsubgraph s\nA[abcdefghij]\n" \
-        "end\ns -->|#{"\u{4E2D}" * 80}| s\n",
-      )
-      tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
-        .find { |t| t.include?(">#{"\u{4E2D}" * 80}<") }
-      anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
-      real_half_width = 986.40625 / 2.0
+      xml = loop_label_xml("RL", "\u{4E2D}" * 80)
 
-      expect(anchor_x - real_half_width).to be >= 0
+      expect(label_anchor_x(xml, "\u{4E2D}" * 80) - (986.40625 / 2.0))
+        .to be >= 0
     end
 
     # No character-count ratio bounds every script — see the OUTLIERS
@@ -934,40 +1144,26 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # contains by default), but it costs nothing and states the intent
     # explicitly for a renderer that follows the SVG spec's `visible`
     # default for a root element more literally than Chrome does.
-    it "declares overflow hidden on every flowchart document, " \
-       "not just ones with a self loop" do
+    it "declares overflow hidden on a flowchart document with a self loop" do
       with_loop = Sirena.render("flowchart RL\ns -->|x| s\n")
-      without_loop = Sirena.render("flowchart LR\nA-->B\n")
 
       expect(with_loop).to match(/<svg\b.*?overflow="hidden"/m)
+    end
+
+    it "declares overflow hidden on a flowchart document without a loop" do
+      without_loop = Sirena.render("flowchart LR\nA-->B\n")
+
       expect(without_loop).to match(/<svg\b.*?overflow="hidden"/m)
     end
 
     # A circle in a box wider than it is tall is drawn at the shorter side.
     it "starts a wide circle loop's depth at its drawn edge" do
-      graph = {
-        layoutOptions: { "elk.direction" => "RIGHT" },
-        children: [{ id: "A", x: 50, y: 50, width: 200, height: 40,
-                     metadata: { shape: "circle" } }],
-        edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
-                  metadata: { arrow_type: "arrow" } }],
-      }
-      xml = render_graph(graph).to_xml
-      circle = xml[%r{<g id="node-A".*?</g>}m][/<circle\b[^>]*>/]
-      cx = circle[/\scx="(-?[\d.]+)"/, 1].to_f
-      radius = circle[/\sr="([\d.]+)"/, 1].to_f
-      far_x = path_points(xml).map(&:first).max
+      xml = render_graph(wide_circle_loop_graph).to_xml
+      cx, _cy, radius = circle_geometry(xml[%r{<g id="node-A".*?</g>}m])
+      reach = path_points(xml).map(&:first).max - (cx + radius)
 
-      expect([radius, far_x - (cx + radius)])
+      expect([radius, reach])
         .to match([20.0, be_within(0.1).of(2 * 20.0 * 0.45)])
-    end
-
-    it "puts the head where the loop meets the node, not inside it" do
-      xml = Sirena.render("flowchart TD\n  A --> A\n")
-      tip, *back = head_points(xml)
-
-      expect(tip.last).to be_within(0.5).of(node_bottom(xml))
-      expect(back.map(&:last).min).to be > node_bottom(xml)
     end
 
     # The control for the loops above. A link between two DIFFERENT nodes
@@ -979,49 +1175,54 @@ RSpec.describe Sirena::Renderer::Flowchart do
       expect(path_points(xml).size).to eq(2)
     end
 
-    # A bare node is 37 wide, so the ratio alone would reach 6.5 on each
-    # side and span about 13. Sirena pins the reach at 18 to avoid a spike.
-    it "keeps a narrow node's loop 18 either side of centre" do
-      xml = Sirena.render("flowchart TD\n  A --> A\n")
-      centre_x, = node_centre(xml)
-      corners = path_points(xml).select { |_cx, y| y > node_bottom(xml) }
-
-      expect(corners.size).to eq(2)
-      expect(corners.map { |cx, _y| (cx - centre_x).abs })
-        .to all(be_within(0.05).of(18.0))
-    end
-
     # Both neighbours above sit on a clamp, so the ratio itself never shows
     # through them: doubling 0.175 leaves both of their answers unchanged.
     # This node is wide enough to clear 18 and narrow enough to stay under
     # 50, which is the only place the ratio is the answer.
-    it "spans 0.175 of the width where neither limit binds" do
-      xml = Sirena.render(
-        "flowchart TD\n  A --> A[a label of some length here]\n",
-      )
-      centre_x, = node_centre(xml)
-      width = node_rect(xml, "A")[2]
-      corners = path_points(xml).select { |_cx, y| y > node_bottom(xml) }
+    context "with a node where neither limit binds" do
+      let(:xml) do
+        Sirena.render(
+          "flowchart TD\n  A --> A[a label of some length here]\n",
+        )
+      end
+      let(:width) { node_rect(xml, "A")[2] }
 
-      expect(width * 0.175).to be_between(18.0, 50.0)
-      expect(corners.size).to eq(2)
-      expect(corners.map { |cx, _y| (cx - centre_x).abs })
-        .to all(be_within(0.05).of(width * 0.175))
+      it "sits the ratio between the two limits" do
+        expect(width * 0.175).to be_between(18.0, 50.0)
+      end
+
+      it "draws two corners" do
+        expect(loop_corners(xml).size).to eq(2)
+      end
+
+      it "spans 0.175 of the width" do
+        centre_x, = node_centre(xml)
+
+        expect(loop_corners(xml).map { |cx, _y| (cx - centre_x).abs })
+          .to all(be_within(0.05).of(width * 0.175))
+      end
     end
 
     # 405.9 wide here, so the ratio alone would reach 71 either side.
     # Sirena pins it at 50.
-    it "keeps a wide node's loop 50 either side of centre" do
-      xml = Sirena.render(
-        "flowchart TD\n  A --> A[a very long label indeed goes here now and " \
-        "then some more]\n",
-      )
-      centre_x, = node_centre(xml)
-      corners = path_points(xml).select { |_cx, y| y > node_bottom(xml) }
+    context "with a wide node" do
+      let(:xml) do
+        Sirena.render(
+          "flowchart TD\n  A --> A[a very long label indeed goes here now " \
+          "and then some more]\n",
+        )
+      end
 
-      expect(corners.size).to eq(2)
-      expect(corners.map { |cx, _y| (cx - centre_x).abs })
-        .to all(be_within(0.05).of(50.0))
+      it "draws two corners" do
+        expect(loop_corners(xml).size).to eq(2)
+      end
+
+      it "keeps the loop 50 either side of centre" do
+        centre_x, = node_centre(xml)
+
+        expect(loop_corners(xml).map { |cx, _y| (cx - centre_x).abs })
+          .to all(be_within(0.05).of(50.0))
+      end
     end
 
     # mmdc throws the loop the way the diagram flows: below for TD, right
@@ -1032,28 +1233,17 @@ RSpec.describe Sirena::Renderer::Flowchart do
       it "throws a #{direction} loop the way the diagram flows" do
         xml = Sirena.render("flowchart #{direction}\n  A --> A\n")
         _x, _y, width, height = node_rect(xml)
-        cx, cy = node_centre(xml)
-        corners = path_points(xml)[1..2]
+        limit = ((width / 2) * out_x.abs) + ((height / 2) * out_y.abs)
 
         # Every corner lies past the node edge, measured along the flow.
-        reach = corners.map do |px, py|
-          ((px - cx) * out_x) + ((py - cy) * out_y)
-        end
-
-        expect(reach.min)
-          .to be > ((width / 2) * out_x.abs) + ((height / 2) * out_y.abs)
+        expect(loop_reach(xml, out_x, out_y)).to be > limit
       end
     end
 
     # A graph handed straight to the renderer need not say which way it
     # flows. Then the loop hangs below, as it does for TD.
     it "hangs the loop below a graph that names no direction" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 }],
-        edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
-                  metadata: { arrow_type: "arrow" } }],
-      }
-      xml = render_graph(graph).to_xml
+      xml = render_graph(loop_graph("arrow", node("A", 0, 0, 40, 20))).to_xml
 
       expect(path_points(xml).map(&:last).max).to be > 20
     end
@@ -1063,9 +1253,9 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # node along with everything else.
     it "carries a self link's label clear of the node" do
       xml = Sirena.render("flowchart TD\n  A -->|again| A\n")
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
+      label_y = edge_body(xml)[/<text[^>]*y="(-?[\d.]+)"/, 1].to_f
 
-      expect(group[/<text[^>]*y="(-?[\d.]+)"/, 1].to_f).to be > node_bottom(xml)
+      expect(label_y).to be > node_bottom(xml)
     end
 
     # An ordinary label is lifted UP off its line. Doing that to a loop
@@ -1075,8 +1265,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     { "TD" => 1, "BT" => -1 }.each do |direction, outward|
       it "hangs a #{direction} loop's label past the loop, not back inside" do
         xml = Sirena.render("flowchart #{direction}\n  A -->|again| A\n")
-        group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
-        label = group[/<text[^>]*y="([-\d.]+)"/, 1].to_f
+        label = edge_body(xml)[/<text[^>]*y="([-\d.]+)"/, 1].to_f
         corner = path_points(xml).map(&:last).minmax[outward.positive? ? 1 : 0]
 
         expect((label - corner) * outward).to be_within(0.05).of(5.0)
@@ -1088,31 +1277,39 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # so it pins the height half. Asserting only the tall one would hold
     # just as well if the depth were read off the width outright, because
     # there the width IS the shorter side.
-    it "measures a loop's depth from a tall node's width" do
-      xml = Sirena.render("flowchart TD\n  A(x) --> A\n")
-      left, right = node_span(xml, "A")
-      width = right - left
-      height = node_bottom(xml) - node_top(xml)
-      depth = path_points(xml).map(&:last).max - node_bottom(xml)
+    context "with a tall node" do
+      let(:xml) { Sirena.render("flowchart TD\n  A(x) --> A\n") }
+      let(:width) { node_span(xml, "A").then { |left, right| right - left } }
+
+      it "is narrower than it is tall" do
+        expect(width).to be < (node_bottom(xml) - node_top(xml))
+      end
 
       # Every corner is written to one decimal, so the measured depth
       # carries up to 0.05 of quantisation on its own. The window has to
       # clear that and still discriminate: reading the depth off the HEIGHT
       # instead lands 7 away, seventy times the window.
-      expect(width).to be < height
-      expect(depth).to be_within(0.1).of(0.45 * width)
+      it "measures a loop's depth from the node's width" do
+        expect(loop_depth(xml)).to be_within(0.1).of(0.45 * width)
+      end
     end
 
-    it "measures a loop's depth from a wide node's height" do
-      xml = Sirena.render("flowchart TD\n  A --> A\n")
-      left, right = node_span(xml, "A")
-      bottom = node_bottom(xml)
-      height = bottom - node_top(xml)
-      depth = path_points(xml).map(&:last).max - bottom
+    context "with a wide node of ordinary height" do
+      let(:xml) { Sirena.render("flowchart TD\n  A --> A\n") }
+      let(:width) { node_span(xml, "A").then { |left, right| right - left } }
+      let(:height) { node_bottom(xml) - node_top(xml) }
 
-      expect(height).to be < (right - left)
-      expect(depth).to be_within(0.1).of(0.45 * height)
-      expect(depth).not_to be_within(0.1).of(0.45 * (right - left))
+      it "is wider than it is tall" do
+        expect(height).to be < width
+      end
+
+      it "measures a loop's depth from the node's height" do
+        expect(loop_depth(xml)).to be_within(0.1).of(0.45 * height)
+      end
+
+      it "does not measure the depth from the node's width" do
+        expect(loop_depth(xml)).not_to be_within(0.1).of(0.45 * width)
+      end
     end
   end
 
@@ -1163,20 +1360,9 @@ RSpec.describe Sirena::Renderer::Flowchart do
         xml = Sirena.render(
           "flowchart TD\n  A --> B\n  B --> C\n  C --> D([#{label}])\n",
         )
-        x, y, width, height = node_rect(xml, "D")
-        half_w = width / 2
-        half_h = height / 2
-        tip_x, tip_y = tip_of(xml, "C_to_D")
-        across = (tip_x - (x + half_w)).abs
-        down = tip_y - (y + half_h)
-        straight = [half_w - half_h, 0].max
-        gap = if across <= straight
-                down.abs - half_h
-              else
-                Math.hypot(across - straight, down) - half_h
-              end
 
-        expect(gap).to be_within(0.05).of(0)
+        expect(stadium_gap(xml, "D", tip_of(xml, "C_to_D")))
+          .to be_within(0.05).of(0)
       end
     end
 
@@ -1187,10 +1373,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # outline it is actually drawn as.
     it "lands on a double circle at its radius" do
       xml = Sirena.render("flowchart TD\n  A(((x))) --> A\n")
-      group = xml[%r{<g id="node-A".*?</g>}m]
-      cx, cy, r = group.match(
-        /<circle[^>]*cx="([-\d.]+)"[^>]*cy="([-\d.]+)"[^>]*r="([\d.]+)"/,
-      ).captures.map(&:to_f)
+      cx, cy, r = circle_geometry(xml[%r{<g id="node-A".*?</g>}m])
       tip_x, tip_y = tip_of(xml, "A_to_A")
 
       # The tip is written to one decimal, which alone can move it 0.07.
@@ -1200,28 +1383,16 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # mmdc rounds a `(x)` node with a 5 radius. Coming in at a slant on its
     # corner, the box answer is 2.07 out past that curve.
     it "lands on a rounded box's curved corner" do
-      graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
-                   { id: "B", x: 110, y: 100, width: 40, height: 40,
-                     metadata: { shape: "rounded" } }],
-        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "arrow" } }],
-      }
-      xml = render_graph(graph).to_xml
-      tip_x, tip_y = tip_of(xml, "A_to_B")
-      corner_x = (tip_x - 130).abs - 15
-      corner_y = (tip_y - 120).abs - 15
-      gap = Math.hypot([corner_x, 0].max, [corner_y, 0].max) - 5
+      second = node("B", 110, 100, 40, 40, shape: "rounded")
+      xml = render_xml("arrow", two_nodes(second))
 
-      expect(gap).to be_within(0.1).of(0)
+      expect(rounded_corner_gap(tip_of(xml, "A_to_B")))
+        .to be_within(0.1).of(0)
     end
 
     it "lands on a circle at its radius" do
       xml = Sirena.render("flowchart TD\n  A((x)) --> A\n")
-      group = xml[%r{<g id="node-A".*?</g>}m]
-      cx, cy, r = group.match(
-        /<circle[^>]*cx="([-\d.]+)"[^>]*cy="([-\d.]+)"[^>]*r="([\d.]+)"/,
-      ).captures.map(&:to_f)
+      cx, cy, r = circle_geometry(xml[%r{<g id="node-A".*?</g>}m])
       tip = tip_of(xml, "A_to_A")
 
       expect(Math.hypot(tip[0] - cx, tip[1] - cy)).to be_within(0.05).of(r)
