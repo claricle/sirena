@@ -1,8 +1,9 @@
 # 04 — XML correctness and the svg_conform gate
 
-Status (2026-10-10): **complete.** `scoreboard/conformance.json` contains
-1,275 per-case rows, all `conformant`, with no failing status. CI exercises the
-gate under the documented `:metanorma` profile.
+Status (reconciled 2026-10-13): **complete.** Every recorded case in
+`scoreboard/conformance.json` is `conformant`, with no failing status. Exact
+totals are derived from that ledger. CI exercises the gate under the documented
+`:metanorma` profile.
 
 Can start: after 01 (needs lutaml-model 0.8 in-bundle). **Completion
 after 02** — the per-case conformance rows and the scoreboard column
@@ -75,7 +76,8 @@ Completion evidence on `main`:
   ampersands, both quote classes, attribute-name injection, and forbidden XML
   code points.
 - `spec/svg_conformance_spec.rb` validates fixture, corpus-pass, and checked-in
-  example output. The scoreboard records 1,275/1,275 conformant rows.
+  example output. Every recorded scoreboard row is conformant; exact totals are derived from
+  the ledger.
 - `sirena.gemspec` now allowlists `lib`, `exe`, and top-level package metadata,
   so `examples/` SVGs are not shipped; the on-disk examples remain checked by
   the conformance spec.
