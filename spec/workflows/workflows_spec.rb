@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
+require "spec_helper"
 require "yaml"
 require "tmpdir"
 require "open3"
 require "rbconfig"
-require_relative "../../scripts/check_workflow_pins"
-require_relative "../../scripts/lane_verdict"
+require SpecSupport::RepositoryPaths.path("scripts/check_workflow_pins")
+require SpecSupport::RepositoryPaths.path("scripts/lane_verdict")
 
 # Builders for the workflow-shaped hashes the CI workflow specs feed to
 # scripts/.
@@ -161,7 +162,7 @@ end
 
 # The subject is a set of YAML files, not a class.
 RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/DescribeClass
-  let(:root) { File.expand_path("../..", __dir__) }
+  let(:root) { SpecSupport::RepositoryPaths::ROOT }
   let(:ci) { YAML.safe_load_file(File.join(root, ".github/workflows/ci.yml")) }
   let(:release) do
     YAML.safe_load_file(File.join(root, ".github/workflows/release.yml"))

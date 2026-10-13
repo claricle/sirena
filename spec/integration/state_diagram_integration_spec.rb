@@ -53,7 +53,7 @@ module StateDiagramOracleCases
   module_function
 
   def oracle_valid_cases
-    mermaid_dir = File.expand_path("../mermaid", __dir__)
+    mermaid_dir = SpecSupport::RepositoryPaths.path("spec/mermaid")
     verdicts = YAML.load_file(File.join(mermaid_dir, "corpus-verdicts.yml"))
       .to_h { |row| [row["case"], row["verdict"]] }
 
@@ -419,7 +419,7 @@ RSpec.describe "StateDiagram Integration", :aggregate_failures do
       expect(StateDiagramOracleCases.oracle_valid_cases.length).to eq(52)
     end
 
-    mermaid_root = "#{File.expand_path('../mermaid', __dir__)}/"
+    mermaid_root = "#{SpecSupport::RepositoryPaths.path('spec/mermaid')}/"
     StateDiagramOracleCases.oracle_valid_cases.each do |path|
       it "renders #{path.delete_prefix(mermaid_root)}" do
         svg = Sirena::Engine.new.render(File.read(path))

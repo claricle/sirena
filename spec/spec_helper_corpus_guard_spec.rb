@@ -15,7 +15,7 @@ require "tmpdir"
 # developer already generated. Record its prior state (present or absent)
 # and require it unchanged instead.
 RSpec.describe "spec_helper.rb corpus-tag coverage guard" do
-  let(:real_coverage_dir) { File.expand_path("../coverage", __dir__) }
+  let(:real_coverage_dir) { SpecSupport::RepositoryPaths.path("coverage") }
   let(:guard_run) do
     before = coverage_state
     result = Dir.mktmpdir("corpus-guard-spec-coverage") do |scratch_dir|

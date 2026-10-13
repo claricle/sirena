@@ -19,10 +19,10 @@ RSpec.describe "Reference SVG Fixtures" do
     "validates against reference fixture",
   ) do |diagram_type, baseline_ratio|
     let(:input_path) do
-      File.expand_path("fixtures/#{diagram_type}/input.mmd", __dir__)
+      SpecSupport::RepositoryPaths.path("spec/fixtures/#{diagram_type}/input.mmd")
     end
     let(:expected_path) do
-      File.expand_path("fixtures/#{diagram_type}/expected.svg", __dir__)
+      SpecSupport::RepositoryPaths.path("spec/fixtures/#{diagram_type}/expected.svg")
     end
     let(:actual_svg) { engine.render(File.read(input_path)) }
     let(:expected_svg) { File.read(expected_path) }
@@ -139,12 +139,12 @@ RSpec.describe "Reference SVG Fixtures" do
       user_journey xy_chart sankey
     ].each do |type|
       it "has the input fixture for #{type}" do
-        input = File.expand_path("fixtures/#{type}/input.mmd", __dir__)
+        input = SpecSupport::RepositoryPaths.path("spec/fixtures/#{type}/input.mmd")
         expect(File).to exist(input), "Missing input fixture for #{type}"
       end
 
       it "has the expected SVG fixture for #{type}" do
-        expected = File.expand_path("fixtures/#{type}/expected.svg", __dir__)
+        expected = SpecSupport::RepositoryPaths.path("spec/fixtures/#{type}/expected.svg")
         expect(File).to exist(expected), "Missing expected SVG for #{type}"
       end
     end
