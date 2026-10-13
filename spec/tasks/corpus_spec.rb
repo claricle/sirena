@@ -221,6 +221,14 @@ RSpec.describe Sirena::Corpus, :aggregate_failures do
   end
 
   describe ".rows_for_scoreboard" do
+    let(:failing_rows) do
+      described_class.rows_for_scoreboard(
+        { "a/1.mmd" => { pass: false, stage: "parse", exception_class: "X",
+                         message: "boom" } },
+        { "a/1.mmd" => "valid" },
+      )
+    end
+
     it "carries the verdict and pass on a passing case, without stage or " \
        "exception_class" do
       rows = described_class.rows_for_scoreboard(
@@ -232,15 +240,9 @@ RSpec.describe Sirena::Corpus, :aggregate_failures do
     end
 
     it "carries stage and exception_class on a failing case" do
-      rows = described_class.rows_for_scoreboard(
-        { "a/1.mmd" => { pass: false, stage: "parse", exception_class: "X",
-                         message: "boom" } },
-        { "a/1.mmd" => "valid" },
-      )
-
-      expect(rows).to eq([{ "case" => "a/1.mmd", "verdict" => "valid",
-                            "pass" => false, "stage" => "parse",
-                            "exception_class" => "X" }])
+      expect(failing_rows).to eq([{ "case" => "a/1.mmd", "verdict" => "valid",
+                                    "pass" => false, "stage" => "parse",
+                                    "exception_class" => "X" }])
     end
 
     it "defaults an unrecorded verdict to unknown rather than raising" do
@@ -261,14 +263,16 @@ RSpec.describe Sirena::Corpus, :aggregate_failures do
   end
 
   describe ".rate_over_valid" do
-    it "counts passes only among verdict == valid rows" do
-      rows = [
+    let(:rows) do
+      [
         { "verdict" => "valid", "pass" => true },
         { "verdict" => "valid", "pass" => false },
         { "verdict" => "invalid", "pass" => false },
         { "verdict" => "artifact", "pass" => true },
       ]
+    end
 
+    it "counts passes only among verdict == valid rows" do
       expect(described_class.rate_over_valid(rows)).to eq([1, 2])
     end
   end
@@ -406,6 +410,10 @@ RSpec.describe Sirena::Corpus, :aggregate_failures do
       ]
     end
 
+    def fresh_passes(*passes)
+      committed.zip(passes).map { |row, pass| row.merge("pass" => pass) }
+    end
+
     def regression_report
       "REGRESSED (passed in the committed scoreboard, fails now):\n  a\n"
     end
@@ -416,11 +424,7 @@ RSpec.describe Sirena::Corpus, :aggregate_failures do
     end
 
     it "exits non-zero and names only the case that regressed" do
-      fresh = [
-        { "case" => "a", "pass" => false },
-        { "case" => "b", "pass" => false },
-        { "case" => "c", "pass" => true },
-      ]
+      fresh = fresh_passes(false, false, true)
 
       expect { described_class.fail_on_drift!(committed, fresh) }
         .to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
@@ -429,11 +433,7 @@ RSpec.describe Sirena::Corpus, :aggregate_failures do
 
     it "exits non-zero and names only the case that improved without being " \
        "recorded" do
-      fresh = [
-        { "case" => "a", "pass" => true },
-        { "case" => "b", "pass" => true },
-        { "case" => "c", "pass" => true },
-      ]
+      fresh = fresh_passes(true, true, true)
 
       expect { described_class.fail_on_drift!(committed, fresh) }
         .to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }

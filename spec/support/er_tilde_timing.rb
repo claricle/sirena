@@ -90,14 +90,8 @@ module ErTildeTiming
     diagram = nil
     elapsed = cpu_time { diagram = parser.parse(source) }
 
-    attr = diagram.find_entity("ENTITY").attributes.first
-    # Outside-in pairing (first tilde with last, second with
-    # second-to-last, ...) means the result is NOT simply `<a0><a1>...` --
-    # assert on the invariant that stays true regardless of pairing order:
-    # every tilde became exactly one `<` or `>`, none survive.
-    expect(attr.attribute_type).not_to include("~")
-    expect(attr.attribute_type.count("<")).to eq(pair_count)
-    expect(attr.attribute_type.count(">")).to eq(pair_count)
+    parsed_type = diagram.find_entity("ENTITY").attributes.first.attribute_type
+    assert_tilde_pair_type(parsed_type, pair_count)
     elapsed
   end
 
@@ -135,5 +129,17 @@ module ErTildeTiming
   def many_tilde_attributes(count)
     attrs = Array.new(count) { |i| "    ~t#{i}~ attr#{i}" }.join("\n")
     "erDiagram\n  ENTITY {\n#{attrs}\n  }\n"
+  end
+
+  private
+
+  def assert_tilde_pair_type(type, pair_count)
+    # Outside-in pairing (first tilde with last, second with
+    # second-to-last, ...) means the result is NOT simply `<a0><a1>...` --
+    # assert on the invariant that stays true regardless of pairing order:
+    # every tilde became exactly one `<` or `>`, none survive.
+    expect(type).not_to include("~")
+    expect(type.count("<")).to eq(pair_count)
+    expect(type.count(">")).to eq(pair_count)
   end
 end

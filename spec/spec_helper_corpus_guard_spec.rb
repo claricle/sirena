@@ -15,29 +15,40 @@ require "tmpdir"
 # developer already generated. Record its prior state (present or absent)
 # and require it unchanged instead.
 RSpec.describe "spec_helper.rb corpus-tag coverage guard" do
-  it "raises when COVERAGE=true schedules a :corpus-tagged example " \
-     "instrumented, without touching this repo's real coverage report" do
-    real_coverage_dir = File.expand_path("../coverage", __dir__)
-    existed_before = File.exist?(real_coverage_dir)
-    entries_before = existed_before ? Dir.children(real_coverage_dir).sort : nil
-
-    Dir.mktmpdir("corpus-guard-spec-coverage") do |scratch_dir|
+  let(:real_coverage_dir) { SpecSupport::RepositoryPaths.path("coverage") }
+  let(:guard_run) do
+    before = coverage_state
+    result = Dir.mktmpdir("corpus-guard-spec-coverage") do |scratch_dir|
       env = { "COVERAGE" => "true", "SIMPLECOV_COVERAGE_DIR" => scratch_dir }
-      out, status = Open3.capture2e(
+      Open3.capture2e(
         env, "bundle", "exec", "rspec", "--tag", "corpus",
         "spec/sirena/parser/error_spec.rb"
       )
-
-      expect(status).not_to be_success
-      message = Regexp.new(
-        "COVERAGE=true scheduled \\d+ :corpus-tagged " \
-        "example\\(s\\) to run instrumented",
-      )
-      expect(out).to match(message)
     end
+    { result: result, before: before, after: coverage_state }
+  end
 
-    expect(File.exist?(real_coverage_dir)).to eq(existed_before)
-    entries_after = existed_before ? Dir.children(real_coverage_dir).sort : nil
-    expect(entries_after).to eq(entries_before)
+  let(:message) do
+    Regexp.new(
+      "COVERAGE=true scheduled \\d+ :corpus-tagged " \
+      "example\\(s\\) to run instrumented",
+    )
+  end
+
+  def coverage_state
+    exists = File.exist?(real_coverage_dir)
+    [exists, exists ? Dir.children(real_coverage_dir).sort : nil]
+  end
+
+  it "fails when COVERAGE=true schedules an instrumented corpus example" do
+    expect(guard_run[:result].last).not_to be_success
+  end
+
+  it "explains why instrumented corpus examples cannot run" do
+    expect(guard_run[:result].first).to match(message)
+  end
+
+  it "preserves the real coverage directory's presence and entries" do
+    expect(guard_run[:after]).to eq(guard_run[:before])
   end
 end

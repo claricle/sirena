@@ -1,11 +1,25 @@
 # 05 — Delete the boilerplate
 
-Status (2026-10-10): **Parts A and B complete; Part C remains open.** The
-declarative parser base, single positioned-error formatter, instance builder
-convention, and distinct journey `ScoreError` are all present and covered
+Status (reconciled 2026-10-13): **Parts A and B complete; Part C remains
+open.** The declarative parser base, single positioned-error formatter,
+instance builder convention, and distinct journey `ScoreError` are all present
+and covered
 across every registered type. `Renderer::Base#create_document` is now the sole
 Mermaid SVG document constructor: all 24 registered renderers use final Scene
 dimensions, and no renderer retains offset instance variables.
+
+The first three Part C criteria below have executed proof from `main`
+`a23c2d193` on 2026-10-13. Named palettes and builtin paint-role guarantees
+are implemented. The strict all-type OWN categorical-paint criterion and
+historical per-part corpus-gate evidence remain open; whole-SVG differences
+do not satisfy the former.
+
+Focused existing proof: `spec/sirena/theme/color_palette_fallback_keys_spec.rb`,
+`spec/sirena/layout/git_graph_palette_spec.rb`,
+`spec/sirena/renderer/git_graph_theme_spec.rb` and
+`spec/sirena/renderer/pie_theme_roles_spec.rb` passed 24 examples with zero
+failures (seed 52055). The read-only measurement is preserved in
+`/private/tmp/sirena-architecture05-evidence.json` and its companion log.
 
 **Goal:** parse errors that name the line, column and offending source
 for all 24 types; themes that actually work; about 1,500 fewer lines.
@@ -275,16 +289,22 @@ headings silently drop everything after the first block.
       nothing
 - [x] B — one `create_document` on `Renderer::Base`, no per-renderer copies
 - [x] B — no renderer sets `@offset_x` / `@offset_y`
-- [ ] C — `grep -rn "DEFAULT_COLORS\|FLOW_COLORS\|SECTION_COLORS" lib/sirena/`
+- [x] C — `grep -rn "DEFAULT_COLORS\|FLOW_COLORS\|SECTION_COLORS" lib/sirena/`
       returns nothing. **Search all of `lib/sirena/`, not just the renderers** —
       the sixth palette lives in `transform/git_graph.rb` and a renderer-only
       grep reports success with it still there
-- [ ] C — a git_graph rendered under `default` and under `dark` differs in its
+      Proof (2026-10-13, `main a23c2d193`): zero matches across `lib/sirena/`.
+- [x] C — a git_graph rendered under `default` and under `dark` differs in its
       BRANCH colours specifically. Measured before the change, the two documents
       differ while both keep `#7c3aed` and `#2563eb`, so a whole-document diff
       passes without the palette moving — a bare "output differs" check is a
       false-positive gate and does not prove this
-- [ ] C — `cat lib/sirena/renderer/*.rb | grep -o '#[0-9a-fA-F]\{6\}' | wc -l` returns **10 or fewer**, against a measured baseline of **269** (2026-09-01). Count OCCURRENCES, not lines: `grep -c` reports c4.rb at 11 where the part C baseline above says 25, so the two are not comparable and "near zero" cannot be judged from it
+      Proof (2026-10-13, `main a23c2d193`): actual rendered commit branch fills
+      were `[#2563eb, #7c3aed, #2563eb]` under default and
+      `[#3794ff, #858585, #3794ff]` under dark.
+- [x] C — `cat lib/sirena/renderer/*.rb | grep -o '#[0-9a-fA-F]\{6\}' | wc -l` returns **10 or fewer**, against a measured baseline of **269** (2026-09-01). Count OCCURRENCES, not lines: `grep -c` reports c4.rb at 11 where the part C baseline above says 25, so the two are not comparable and "near zero" cannot be judged from it
+      Proof (2026-10-13, `main a23c2d193`): nine six-digit hex occurrences,
+      counted with the criterion's exact file scope and occurrence predicate.
 - [ ] C — for EVERY registered type, not just git_graph: rendering under `default`
       and under `dark` differs in that type's OWN categorical palette colours
       specifically (the values step 1 moved into the theme), not merely

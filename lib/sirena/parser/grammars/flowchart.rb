@@ -504,11 +504,20 @@ module Sirena
         # it is not. `extra_guards` exclude characters a caller treats as
         # its own boundary, on top of `;` and a line's end.
         def declaration_run(*extra_guards)
-          ordinary_char = (extra_guards + [semicolon, newline, space])
-            .map(&:absent?).reduce(:>>) >> any
-          ordinary_char.repeat(1) | (space.repeat(1) >> (newline | eof).absent?)
+          guards = extra_guards + [semicolon, newline, space]
+          guarded_declaration_char(guards).repeat(1) | declaration_space
         end
         private :declaration_run
+
+        def guarded_declaration_char(guards)
+          guards.map(&:absent?).reduce(:>>) >> any
+        end
+        private :guarded_declaration_char
+
+        def declaration_space
+          space.repeat(1) >> (newline | eof).absent?
+        end
+        private :declaration_space
 
         # Same shape as `declaration_run`, but a run also stops at a bare
         # `#`: a space immediately before one, as in `stroke: #fff`, is
@@ -517,12 +526,14 @@ module Sirena
         # scan for.
         def hash_terminated_run(*extra_guards)
           guards = extra_guards + [hash_char, semicolon, newline, space]
-          ordinary_char = guards
-            .map(&:absent?).reduce(:>>) >> any
-          ordinary_char.repeat(1) |
-            (space.repeat(1) >> (hash_char | (newline | eof).absent?))
+          guarded_declaration_char(guards).repeat(1) | hash_terminated_space
         end
         private :hash_terminated_run
+
+        def hash_terminated_space
+          space.repeat(1) >> (hash_char | (newline | eof).absent?)
+        end
+        private :hash_terminated_space
 
         # Permissive: mermaid takes `style A red`, `style A fill:` and
         # `style A fill :red`, so `name:value` is not required. One
@@ -1178,28 +1189,62 @@ module Sirena
         # A whitespace run is consumed whole and checked once for what
         # follows it, so a long run costs one pass, not one per character.
         def inline_halves(open, close, forbidden)
-          blank = inline_comment_line | line_space | match["\r\n"]
-          closing = link_start.maybe >> close
-          # Avoid caching every failed per-character lookahead when the
-          # closing delimiter is absent altogether.
-          closing_ahead = dynamic do |source|
+          blank = inline_blank
+          closing = inline_closing(close)
+          closing_ahead = inline_closing_ahead(forbidden)
+          label = inline_label_body(closing, blank, forbidden)
+          inline_opening(open) >> blank.repeat >> closing_ahead >> label >>
+            blank.repeat >> closing.as(:close)
+        end
+        private :inline_halves
+
+        def inline_blank
+          inline_comment_line | line_space | match["\r\n"]
+        end
+        private :inline_blank
+
+        def inline_closing(close)
+          link_start.maybe >> close
+        end
+        private :inline_closing
+
+        def inline_opening(open)
+          (link_start.maybe >> open).as(:open)
+        end
+        private :inline_opening
+
+        # Avoid caching every failed per-character lookahead when the
+        # closing delimiter is absent altogether.
+        def inline_closing_ahead(forbidden)
+          dynamic do |source|
             if source.chars_until(forbidden.str) < source.chars_left
               str("")
             else
               forbidden
             end
           end
+        end
+        private :inline_closing_ahead
+
+        def inline_label_char(closing, blank, forbidden)
           char = closing.absent? >> blank.absent? >> str('"').absent? >>
             str("%%{").absent? >> any
-          char = forbidden.absent? >> char if forbidden
-          gap = blank.repeat(1) >> closing.absent?
-          text = char >> (char | gap).repeat
-          (link_start.maybe >> open).as(:open) >> blank.repeat >>
-            closing_ahead >>
-            ((quoted_label >> (char | gap).repeat) | text).as(:label) >>
-            blank.repeat >> closing.as(:close)
+          forbidden ? forbidden.absent? >> char : char
         end
-        private :inline_halves
+        private :inline_label_char
+
+        def inline_label_content(char, gap)
+          text = char >> (char | gap).repeat
+          (quoted_label >> (char | gap).repeat) | text
+        end
+        private :inline_label_content
+
+        def inline_label_body(closing, blank, forbidden)
+          char = inline_label_char(closing, blank, forbidden)
+          gap = blank.repeat(1) >> closing.absent?
+          inline_label_content(char, gap).as(:label)
+        end
+        private :inline_label_body
 
         # A quoted run is text whole, whatever it holds: `A -- "a--b" --> B`.
         # The transform drops the two quotes, as mermaid does. `%%{` still

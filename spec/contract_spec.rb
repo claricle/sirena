@@ -10,6 +10,30 @@ RSpec.describe Sirena::Notation::Mermaid do
   let(:types) { described_class::TYPES.keys }
   let(:fixture_dir) { SpecSupport::RepositoryPaths.path("spec/fixtures/contract") }
 
+  def models_spelling_type
+    diagram_files = Dir.glob(
+      SpecSupport::RepositoryPaths.path("lib/sirena/diagram/**/*.rb"),
+    )
+    diagram_files.select do |path|
+      File.readlines(path).any? { |line| line.match?(/^\s*def type$/) }
+    end
+  end
+
+  def overridden_guard_methods(type)
+    transform_class = Sirena::Layout.for(type).class
+    %i[call to_graph].filter_map do |method_name|
+      owner = transform_class.instance_method(method_name).owner
+      "#{method_name} owned by #{owner}" unless owner == Sirena::Layout::Base
+    end
+  end
+
+  def transforms_overriding_guard
+    types.filter_map do |type|
+      owners = overridden_guard_methods(type)
+      "#{type}: #{owners.join(', ')}" unless owners.empty?
+    end
+  end
+
   # An iteration over TYPES cannot notice a deleted row: the row's examples
   # just stop existing. The fixture basenames are the inventory kept outside
   # the table, so a row deleted from either side turns this red.
@@ -23,12 +47,7 @@ RSpec.describe Sirena::Notation::Mermaid do
   # `def type` was the pre-fix spelling on 5 models; grep is the same check
   # a reviewer would run by hand, kept here so it cannot silently reappear.
   it "has no diagram model still spelling the contract method `type`" do
-    diagram_files = Dir.glob(
-      SpecSupport::RepositoryPaths.path("lib/sirena/diagram/**/*.rb"),
-    )
-    offenders = diagram_files.select do |path|
-      File.readlines(path).any? { |line| line.match?(/^\s*def type$/) }
-    end
+    offenders = models_spelling_type
 
     expect(offenders)
       .to be_empty, "def type still present in: #{offenders.join(', ')}"
@@ -49,15 +68,7 @@ RSpec.describe Sirena::Notation::Mermaid do
   # question (which class actually defines the method that runs) instead
   # of the proxy question (does this source file contain a matching line).
   it "has no registered transform overriding the guarded entry point" do
-    guard_methods = %i[call to_graph]
-    offenders = types.filter_map do |type|
-      transform_class = Sirena::Layout.for(type).class
-      owners = guard_methods.filter_map do |method_name|
-        owner = transform_class.instance_method(method_name).owner
-        "#{method_name} owned by #{owner}" unless owner == Sirena::Layout::Base
-      end
-      "#{type}: #{owners.join(', ')}" unless owners.empty?
-    end
+    offenders = transforms_overriding_guard
     message = "guard entry point overridden for: #{offenders.join('; ')}"
 
     expect(offenders).to be_empty, message
@@ -91,18 +102,25 @@ RSpec.describe Sirena::Notation::Mermaid do
   # call `valid?` at all — this is the type that actually exercises the new
   # mechanism.
   describe "an invalid model driven through Engine" do
-    it "raises rather than silently producing SVG" do
-      invalid_diagram = Sirena::Diagram::Kanban.new.tap do |kanban|
+    let(:invalid_diagram) do
+      Sirena::Diagram::Kanban.new.tap do |kanban|
         kanban.columns = [Sirena::Diagram::KanbanColumn.new(id: nil,
                                                             title: nil)]
       end
-      stub_parser = Class.new do
-        define_method(:parse) { |_source| invalid_diagram }
-      end
+    end
+    let(:stub_parser) do
+      diagram = invalid_diagram
+      Class.new do
+        define_method(:parse) { |_source| diagram }
+      end.new
+    end
 
+    before do
       allow(Sirena::Parser).to receive(:for).with(:kanban)
-        .and_return(stub_parser.new)
+        .and_return(stub_parser)
+    end
 
+    it "raises rather than silently producing SVG" do
       expect { Sirena::Engine.new.render("kanban\n") }
         .to raise_error(Sirena::Layout::LayoutError, /Invalid diagram/)
     end
@@ -116,8 +134,11 @@ RSpec.describe Sirena::Notation::Mermaid do
   # Engine-level guarantee it backs now that Layout::Base#call runs the
   # guard for kanban too.
   describe "a valid, empty model driven through Engine" do
-    it "renders rather than raising" do
+    it "accepts the empty model as valid" do
       expect(Sirena::Diagram::Kanban.new.valid?).to be(true)
+    end
+
+    it "renders rather than raising" do
       expect(Sirena::Engine.new.render("kanban\n")).to include("<svg")
     end
   end

@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
+require "spec_helper"
 require "yaml"
 require "tmpdir"
 require "open3"
 require "rbconfig"
-require_relative "../../scripts/check_workflow_pins"
-require_relative "../../scripts/lane_verdict"
+require SpecSupport::RepositoryPaths.path("scripts/check_workflow_pins")
+require SpecSupport::RepositoryPaths.path("scripts/lane_verdict")
 
 # Builders for the workflow-shaped hashes the CI workflow specs feed to
 # scripts/.
@@ -121,10 +122,19 @@ module WorkflowHelpers
       "ruby" => %w[3.2 3.3 3.4],
       "experimental" => [false],
       "shard" => shards,
-      "exclude" => %w[ubuntu-latest macos-latest].product(shards.drop(1))
-        .map { |os, shard| { "os" => os, "shard" => shard } },
+      "exclude" => expected_unsharded_cells(shards.drop(1)),
       "include" => expected_ruby4_cells(shards),
     }
+  end
+
+  def expected_unsharded_cells(shards)
+    ubuntu = shards.map do |shard|
+      { "os" => "ubuntu-latest", "shard" => shard }
+    end
+    macos = %w[3.2 3.3].product(shards).map do |ruby, shard|
+      { "os" => "macos-latest", "ruby" => ruby, "shard" => shard }
+    end
+    ubuntu + macos
   end
 
   # Ruby 4.0 is experimental everywhere; only Windows is split into shards.
@@ -152,7 +162,7 @@ end
 
 # The subject is a set of YAML files, not a class.
 RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/DescribeClass
-  let(:root) { File.expand_path("../..", __dir__) }
+  let(:root) { SpecSupport::RepositoryPaths::ROOT }
   let(:ci) { YAML.safe_load_file(File.join(root, ".github/workflows/ci.yml")) }
   let(:release) do
     YAML.safe_load_file(File.join(root, ".github/workflows/release.yml"))
@@ -197,20 +207,31 @@ RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/De
         .to eq(["a"])
     end
 
-    it "exits non-zero from the script when a seeded workflow is unpinned" do
+    def write_seeded_workflow(dir)
+      scripts = File.join(dir, "scripts")
+      workflows = File.join(dir, ".github/workflows")
+      FileUtils.mkdir_p([scripts, workflows])
+      script = File.join(scripts, "check_workflow_pins.rb")
+      FileUtils.cp(File.join(root, "scripts/check_workflow_pins.rb"), script)
+      File.write(File.join(workflows, "x.yml"), unpinned_workflow_yaml)
+      script
+    end
+
+    def unpinned_workflow_yaml
+      "on: push\njobs:\n  j:\n    timeout-minutes: 1\n    " \
+        "steps:\n      - uses: actions/checkout@v4\n"
+    end
+
+    def seeded_workflow_result
       Dir.mktmpdir do |dir|
-        scripts = File.join(dir, "scripts")
-        workflows = File.join(dir, ".github/workflows")
-        FileUtils.mkdir_p([scripts, workflows])
-        script = File.join(scripts, "check_workflow_pins.rb")
-        FileUtils.cp(File.join(root, "scripts/check_workflow_pins.rb"), script)
-        workflow = "on: push\njobs:\n  j:\n    timeout-minutes: 1\n    " \
-                   "steps:\n      - uses: actions/checkout@v4\n"
-        File.write(File.join(workflows, "x.yml"), workflow)
-        _, err, status = Open3.capture3(RbConfig.ruby, script)
-        expect(status.exitstatus).to eq(1)
-        expect(err).to include("unpinned actions/checkout@v4")
+        Open3.capture3(RbConfig.ruby, write_seeded_workflow(dir))
       end
+    end
+
+    it "exits non-zero from the script when a seeded workflow is unpinned" do
+      _, err, status = seeded_workflow_result
+      expect(status.exitstatus).to eq(1)
+      expect(err).to include("unpinned actions/checkout@v4")
     end
   end
 
@@ -247,9 +268,11 @@ RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/De
         .to eq(leptris_selector)
     end
 
-    it "gives the rake step a shard only on Windows" do
+    it "shards Windows and macOS Ruby 3.4 without changing other cells" do
       expect(unit_rake_step(jobs).dig("env", "SIRENA_SPEC_SHARD"))
-        .to eq("${{ matrix.os == 'windows-latest' && matrix.shard || '' }}")
+        .to eq("${{ (matrix.os == 'windows-latest' || " \
+               "(matrix.os == 'macos-latest' && matrix.ruby == '3.4')) && " \
+               "matrix.shard || '' }}")
     end
 
     it "runs on pull requests, merge queue, push, dispatch and a nightly " \
@@ -259,8 +282,8 @@ RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/De
                                        "workflow_dispatch", "schedule")
     end
 
-    it "names both aggregators with stable job names, always() and a timeout" do
-      aggregators.each do |name|
+    %w[fast-lane full-lane].each do |name|
+      it "names #{name} with its stable name, always() and a timeout" do
         job = jobs.fetch(name)
         expect(job["name"]).to eq(name)
         expect(job["if"]).to include("always()")

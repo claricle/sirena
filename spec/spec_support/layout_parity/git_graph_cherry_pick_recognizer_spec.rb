@@ -28,14 +28,16 @@ RSpec.describe SpecSupport::LayoutParity::GitGraphRecognizer do
       .to eq([%w[commit-1 commit-2 commit-3]] * 2)
   end
 
-  it "keeps start-anchored branch labels out of tag identity" do
-    name = "should_generate_an_array_of_known_branches-24cef136"
-    source = corpus_source("gitgraph/#{name}.mmd")
-    reference = reference_svg("gitgraph/#{name}.svg")
-    sirena = Sirena.render(source)
+  context "with known branches" do
+    let(:name) { "should_generate_an_array_of_known_branches-24cef136" }
+    let(:source) { corpus_source("gitgraph/#{name}.mmd") }
+    let(:reference) { reference_svg("gitgraph/#{name}.svg") }
+    let(:sirena) { Sirena.render(source) }
 
-    expect([[keys(reference, :branch_label), keys(reference, :tag_label)],
-            [keys(sirena, :branch_label), keys(sirena, :tag_label)]])
-      .to eq([[%w[main b1 b2], []]] * 2)
+    it "keeps start-anchored branch labels out of tag identity" do
+      expect([[keys(reference, :branch_label), keys(reference, :tag_label)],
+              [keys(sirena, :branch_label), keys(sirena, :tag_label)]])
+        .to eq([[%w[main b1 b2], []]] * 2)
+    end
   end
 end

@@ -51,13 +51,13 @@ module Sirena
 
         rule(:quoted_string) do
           str('"') >> (
-            str("\\") >> any | str('"').absent? >> any
+            (str("\\") >> any) | (str('"').absent? >> any)
           ).repeat.as(:string) >> str('"')
         end
 
         rule(:single_quoted_string) do
           str("'") >> (
-            str("\\") >> any | str("'").absent? >> any
+            (str("\\") >> any) | (str("'").absent? >> any)
           ).repeat.as(:string) >> str("'")
         end
 
@@ -90,7 +90,7 @@ module Sirena
 
         # Line terminators
         rule(:line_end) do
-          semicolon.maybe >> space? >> (comment.maybe >> newline | eof)
+          semicolon.maybe >> space? >> ((comment.maybe >> newline) | eof)
         end
 
         # Alias for end-of-line (used by some grammars)

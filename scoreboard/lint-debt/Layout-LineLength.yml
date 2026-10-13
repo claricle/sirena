@@ -1,5 +1,0 @@
----
-cop: Layout/LineLength
-rows:
-- file: spec/sirena/renderer/architecture_edge_router_spec.rb
-  count: 14

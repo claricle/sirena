@@ -9,11 +9,11 @@ module SvgRegistrySources
   module_function
 
   def corpus_root
-    @corpus_root ||= File.expand_path("../../mermaid", __dir__)
+    @corpus_root ||= SpecSupport::RepositoryPaths.path("spec/mermaid")
   end
 
   def fixtures_root
-    @fixtures_root ||= File.expand_path("../../fixtures", __dir__)
+    @fixtures_root ||= SpecSupport::RepositoryPaths.path("spec/fixtures")
   end
 
   def verdicts

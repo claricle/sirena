@@ -1,5 +1,0 @@
----
-cop: Metrics/MethodLength
-rows:
-- file: lib/sirena/parser/grammars/flowchart.rb
-  count: 1

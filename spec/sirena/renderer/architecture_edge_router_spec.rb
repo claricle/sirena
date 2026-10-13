@@ -8,8 +8,8 @@ require "sirena/renderer/architecture_edge_router"
 module ArchitectureEdgeRouterSpecHelpers
   module_function
 
-  def box(x:, y:, width: 120, height: 80)
-    { x: x, y: y, width: width, height: height }
+  def box(left:, top:, width: 120, height: 80)
+    { x: left, y: top, width: width, height: height }
   end
 
   # Mirrors Architecture#calculate_connection_point, so specs can
@@ -17,11 +17,19 @@ module ArchitectureEdgeRouterSpecHelpers
   # point that happens not to sit on the box's face.
   def face_point(box, side)
     case side
-    when "L" then { x: box[:x], y: box[:y] + (box[:height] / 2) }
-    when "R" then { x: box[:x] + box[:width], y: box[:y] + (box[:height] / 2) }
-    when "T" then { x: box[:x] + (box[:width] / 2), y: box[:y] }
-    when "B" then { x: box[:x] + (box[:width] / 2), y: box[:y] + box[:height] }
+    when "L", "R" then horizontal_face_point(box, side)
+    when "T", "B" then vertical_face_point(box, side)
     end
+  end
+
+  def horizontal_face_point(box, side)
+    horizontal = side == "L" ? box[:x] : box[:x] + box[:width]
+    { x: horizontal, y: box[:y] + (box[:height] / 2) }
+  end
+
+  def vertical_face_point(box, side)
+    vertical = side == "T" ? box[:y] : box[:y] + box[:height]
+    { x: box[:x] + (box[:width] / 2), y: vertical }
   end
 
   def endpoint(box, side)
@@ -38,11 +46,13 @@ module ArchitectureEdgeRouterSpecHelpers
   # sabotaged, because it never reads that constant at all.
   def exit_direction(box, side)
     anchor = face_point(box, side)
-    centre = {
-      x: box[:x] + (box[:width] / 2.0),
-      y: box[:y] + (box[:height] / 2.0),
-    }
+    centre = box_centre(box)
     { x: anchor[:x] <=> centre[:x], y: anchor[:y] <=> centre[:y] }
+  end
+
+  def box_centre(box)
+    { x: box[:x] + (box[:width] / 2.0),
+      y: box[:y] + (box[:height] / 2.0) }
   end
 
   # Arriving at a face means moving the opposite way from leaving it.
@@ -53,14 +63,25 @@ module ArchitectureEdgeRouterSpecHelpers
 
   # General segment-vs-box interior test, independent of the router's own
   # implementation - a border touch does not count as a crossing.
-  def segment_crosses?(box, p1, p2)
-    (0..200).any? do |i|
-      t = i / 200.0
-      x = p1[:x] + ((p2[:x] - p1[:x]) * t)
-      y = p1[:y] + ((p2[:y] - p1[:y]) * t)
-      x > box[:x] && x < box[:x] + box[:width] &&
-        y > box[:y] && y < box[:y] + box[:height]
+  def segment_crosses?(box, start_point, end_point)
+    (0..200).any? do |step|
+      point = interpolate_segment(start_point, end_point, step / 200.0)
+      point_inside?(box, point)
     end
+  end
+
+  def interpolate_segment(start_point, end_point, progress)
+    { x: start_point[:x] + ((end_point[:x] - start_point[:x]) * progress),
+      y: start_point[:y] + ((end_point[:y] - start_point[:y]) * progress) }
+  end
+
+  def point_inside?(box, point)
+    inside_axis?(point[:x], box[:x], box[:width]) &&
+      inside_axis?(point[:y], box[:y], box[:height])
+  end
+
+  def inside_axis?(coordinate, origin, extent)
+    coordinate > origin && coordinate < origin + extent
   end
 
   def path_clear_of?(points, box)
@@ -70,7 +91,7 @@ module ArchitectureEdgeRouterSpecHelpers
   # A, B, C in a row. A->C would run straight through B if B weren't
   # excluded from "own endpoints" and included as an ordinary obstacle.
   def row
-    [box(x: 40, y: 40), box(x: 200, y: 40), box(x: 360, y: 40)]
+    [box(left: 40, top: 40), box(left: 200, top: 40), box(left: 360, top: 40)]
   end
 
   # Real geometry from spec/mermaid/architecture/architecture_spec-f1819a63:
@@ -83,26 +104,39 @@ module ArchitectureEdgeRouterSpecHelpers
   # consecutive collinear points (up to 7 in a row along one wall),
   # which makes it the natural case for pinning collapse_collinear too.
   def case_011_edge_route(router)
-    diagram = Sirena::Parser::Architecture.new.parse(
-      File.read(File.expand_path(
-                  "../../mermaid/architecture/" \
-                  "architecture_spec-f1819a63.mmd", __dir__
-                )),
+    scene = case_011_scene
+    nodes = case_011_nodes(scene)
+    from, to = case_011_endpoints(scene, nodes)
+    obstacles = nodes.except("edge", "firewall").values
+    [router.route(from: from, to: to, obstacles: obstacles), obstacles]
+  end
+
+  def case_011_scene
+    path = File.expand_path(
+      "../../mermaid/architecture/architecture_spec-f1819a63.mmd", __dir__
     )
-    scene = Sirena::Layout::Architecture.new.call(diagram)
-    nodes = scene.children.reject { |node| node.kind == "group" }
+    diagram = Sirena::Parser::Architecture.new.parse(File.read(path))
+    Sirena::Layout::Architecture.new.call(diagram)
+  end
+
+  def case_011_nodes(scene)
+    scene.children.reject { |node| node.kind == "group" }
       .to_h { |node| [node.id, node_box(node)] }
+  end
+
+  def case_011_endpoints(scene, nodes)
+    section = case_011_section(scene)
+    [{ point: point_hash(section.start_point),
+       box: nodes["edge"], side: "R" },
+     { point: point_hash(section.end_point),
+       box: nodes["firewall"], side: "L" }]
+  end
+
+  def case_011_section(scene)
     edge_entry = scene.edges.find do |edge|
       edge.source == "edge" && edge.target == "firewall"
     end
-    section = edge_entry.sections.first
-    from = { point: point_hash(section.start_point), box: nodes["edge"],
-             side: "R" }
-    to = { point: point_hash(section.end_point), box: nodes["firewall"],
-           side: "L" }
-    obstacles = nodes.except("edge", "firewall").values
-
-    [router.route(from: from, to: to, obstacles: obstacles), obstacles]
+    edge_entry.sections.first
   end
 
   def node_box(node)
@@ -118,84 +152,135 @@ module ArchitectureEdgeRouterSpecHelpers
   # interior - proves from/to boxes are clearance obstacles, not just
   # "every other box" (there is no third box here at all).
   def pair
-    [box(x: 40, y: 40), box(x: 200, y: 40)]
+    [box(left: 40, top: 40), box(left: 200, top: 40)]
+  end
+
+  def segment_direction(points)
+    { x: points[1][:x] <=> points[0][:x],
+      y: points[1][:y] <=> points[0][:y] }
+  end
+
+  def collinear?(before, at, after)
+    segment_direction([before, at]) == segment_direction([at, after])
+  end
+
+  def collinear_message(point)
+    "#{point} is collinear with its neighbours and " \
+      "should have been dropped"
+  end
+
+  # A straight fallback must still clear the obstacle; a broken direction
+  # constraint can otherwise degrade into a crossing without being noticed.
+  def face_observation(points, obstacle)
+    return path_clear_of?(points, obstacle) if points.length == 2
+
+    [segment_direction(points.first(2)), segment_direction(points.last(2))]
+  end
+
+  def expected_face_observation(points, source_box, target_box,
+                                source_side, target_side)
+    return true if points.length == 2
+
+    [exit_direction(source_box, source_side),
+     entry_direction(target_box, target_side)]
+  end
+
+  def interleaved_heap_observations(heap)
+    heap.push(10, :a)
+    heap.push(3, :b)
+    first = heap.pop
+    heap.push(1, :c)
+    heap.push(7, :d)
+    [first, heap.pop, heap.pop, heap.pop, heap.empty?]
   end
 end
 
 RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter, :aggregate_failures do
+  include ArchitectureEdgeRouterSpecHelpers
+
   let(:router) { described_class.new }
 
   describe "#route" do
     context "when nothing is in the way" do
+      let(:a) { box(left: 40, top: 40) }
+      let(:b) { box(left: 200, top: 40) }
+      let(:points) do
+        router.route(from: endpoint(a, "R"), to: endpoint(b, "L"),
+                     obstacles: [])
+      end
+
       it "returns the straight line, with no extra bends" do
-        a = ArchitectureEdgeRouterSpecHelpers.box(x: 40, y: 40)
-        b = ArchitectureEdgeRouterSpecHelpers.box(x: 200, y: 40)
-
-        points = router.route(from: ArchitectureEdgeRouterSpecHelpers.endpoint(a, "R"), to: ArchitectureEdgeRouterSpecHelpers.endpoint(b, "L"), obstacles: [])
-
-        expect(points).to eq([ArchitectureEdgeRouterSpecHelpers.face_point(a, "R"), ArchitectureEdgeRouterSpecHelpers.face_point(b, "L")])
+        expect(points).to eq([face_point(a, "R"), face_point(b, "L")])
       end
     end
 
     context "with a third-party obstacle in the way" do
-      it "never crosses the interior of the obstacle" do
-        a, b, c = ArchitectureEdgeRouterSpecHelpers.row
-        points = router.route(from: ArchitectureEdgeRouterSpecHelpers.endpoint(a, "R"), to: ArchitectureEdgeRouterSpecHelpers.endpoint(c, "L"), obstacles: [b])
+      let(:boxes) { row }
+      let(:points) do
+        a, b, c = boxes
+        router.route(from: endpoint(a, "R"), to: endpoint(c, "L"),
+                     obstacles: [b])
+      end
 
-        expect(ArchitectureEdgeRouterSpecHelpers.path_clear_of?(points, b)).to be(true)
+      it "never crosses the interior of the obstacle" do
+        expect(path_clear_of?(points, boxes[1])).to be(true)
       end
 
       it "still starts and ends at the exact anchors" do
-        a, b, c = ArchitectureEdgeRouterSpecHelpers.row
-        points = router.route(from: ArchitectureEdgeRouterSpecHelpers.endpoint(a, "R"), to: ArchitectureEdgeRouterSpecHelpers.endpoint(c, "L"), obstacles: [b])
-
-        expect(points.first).to eq(ArchitectureEdgeRouterSpecHelpers.face_point(a, "R"))
-        expect(points.last).to eq(ArchitectureEdgeRouterSpecHelpers.face_point(c, "L"))
+        expect(points.first).to eq(face_point(boxes[0], "R"))
+        expect(points.last).to eq(face_point(boxes[2], "L"))
       end
     end
 
     context "with case 011's on_prem obstacle set" do
-      it "routes the cross-group edge around every peer service" do
-        points, obstacles = ArchitectureEdgeRouterSpecHelpers.case_011_edge_route(router)
+      let(:route_result) { case_011_edge_route(router) }
+      let(:points) { route_result.first }
+      let(:obstacles) { route_result.last }
 
+      it "routes the cross-group edge around every peer service" do
         obstacles.each do |obstacle|
-          expect(ArchitectureEdgeRouterSpecHelpers.path_clear_of?(points, obstacle)).to be(true)
+          expect(path_clear_of?(points, obstacle)).to be(true)
         end
       end
 
       it "collapses runs of collinear points into a single bend" do
-        points, = ArchitectureEdgeRouterSpecHelpers.case_011_edge_route(router)
-
         points.each_cons(3) do |before, at, after|
-          same_direction = (at[:x] <=> before[:x]) == (after[:x] <=> at[:x]) &&
-            (at[:y] <=> before[:y]) == (after[:y] <=> at[:y])
-          expect(
-            same_direction,
-            "#{at} is collinear with its neighbours and " \
-            "should have been dropped",
-          ).to be(false)
+          expect(collinear?(before, at, after), collinear_message(at))
+            .to be(false)
         end
       end
     end
 
     context "with the B--T diagonal case (no third-party obstacle at all)" do
-      it "never crosses its own target's interior" do
-        a, b = ArchitectureEdgeRouterSpecHelpers.pair
-        points = router.route(from: ArchitectureEdgeRouterSpecHelpers.endpoint(a, "R"), to: ArchitectureEdgeRouterSpecHelpers.endpoint(b, "T"), obstacles: [])
+      let(:boxes) { pair }
+      let(:a) { boxes[0] }
+      let(:b) { boxes[1] }
+      let(:points) do
+        router.route(from: endpoint(a, "R"), to: endpoint(b, "T"),
+                     obstacles: [])
+      end
 
-        expect(ArchitectureEdgeRouterSpecHelpers.path_clear_of?(points, b)).to be(true)
+      it "never crosses its own target's interior" do
+        expect(path_clear_of?(points, b)).to be(true)
       end
 
       it "still starts and ends at the exact anchors" do
-        a, b = ArchitectureEdgeRouterSpecHelpers.pair
-        points = router.route(from: ArchitectureEdgeRouterSpecHelpers.endpoint(a, "R"), to: ArchitectureEdgeRouterSpecHelpers.endpoint(b, "T"), obstacles: [])
-
-        expect(points.first).to eq(ArchitectureEdgeRouterSpecHelpers.face_point(a, "R"))
-        expect(points.last).to eq(ArchitectureEdgeRouterSpecHelpers.face_point(b, "T"))
+        expect(points.first).to eq(face_point(a, "R"))
+        expect(points.last).to eq(face_point(b, "T"))
       end
     end
 
     context "with every declared exit and entry face" do
+      let(:a) { box(left: 40, top: 40, width: 60, height: 60) }
+      let(:b) { box(left: 300, top: 300, width: 60, height: 60) }
+      let(:obstacle) { box(left: 150, top: 150, width: 100, height: 100) }
+      let(:route_for_faces) do
+        lambda do |from_side, to_side|
+          router.route(from: endpoint(a, from_side), to: endpoint(b, to_side),
+                       obstacles: [obstacle])
+        end
+      end
+
       # Parameterized over every (from_side, to_side) pair: the first move
       # leaves in the outward normal of from_side, the last arrives in the
       # inward normal of to_side, whenever the path has more than 2 points
@@ -210,86 +295,33 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter, :aggregate_failures do
       %w[L R T B].each do |from_side|
         %w[L R T B].each do |to_side|
           it "leaves via #{from_side} and arrives via #{to_side} when bent" do
-            a = ArchitectureEdgeRouterSpecHelpers.box(
-              x: 40, y: 40, width: 60, height: 60,
+            points = route_for_faces.call(from_side, to_side)
+            expect(face_observation(points, obstacle)).to eq(
+              expected_face_observation(points, a, b, from_side, to_side),
             )
-            b = ArchitectureEdgeRouterSpecHelpers.box(
-              x: 300, y: 300, width: 60, height: 60,
-            )
-            obstacle = ArchitectureEdgeRouterSpecHelpers.box(
-              x: 150, y: 150, width: 100, height: 100,
-            )
-
-            points = router.route(
-              from: ArchitectureEdgeRouterSpecHelpers.endpoint(a, from_side),
-              to: ArchitectureEdgeRouterSpecHelpers.endpoint(b, to_side),
-              obstacles: [obstacle],
-            )
-
-            if points.length == 2
-              # A straight line's direction is fixed by geometry, not the
-              # declared faces, so it's not checked against exit_direction/
-              # entry_direction - but it still has to be SAFE. route's
-              # fallback returns the straight line regardless of whether it's
-              # actually clear, so a broken direction constraint that
-              # makes search_grid unable to satisfy it degrades straight
-              # into the obstacle this test placed in the way - don't skip
-              # this branch silently, it's the only check for that case.
-              expect(
-                ArchitectureEdgeRouterSpecHelpers.path_clear_of?(
-                  points,
-                  obstacle,
-                ),
-              ).to be(true)
-            else
-              actual_first = {
-                x: points[1][:x] <=> points[0][:x],
-                y: points[1][:y] <=> points[0][:y],
-              }
-              expect(actual_first).to eq(
-                ArchitectureEdgeRouterSpecHelpers.exit_direction(a, from_side),
-              )
-
-              actual_last = {
-                x: points[-1][:x] <=> points[-2][:x],
-                y: points[-1][:y] <=> points[-2][:y],
-              }
-              expect(actual_last).to eq(
-                ArchitectureEdgeRouterSpecHelpers.entry_direction(b, to_side),
-              )
-            end
           end
         end
       end
     end
 
     context "when no route exists at all" do
-      it "falls back to the straight line rather than raising" do
-        a = ArchitectureEdgeRouterSpecHelpers.box(
-          x: 60, y: 60, width: 80, height: 80,
-        )
-        b = ArchitectureEdgeRouterSpecHelpers.box(
-          x: 460, y: 460, width: 80, height: 80,
-        )
-        from = { point: { x: 100, y: 100 }, box: a, side: "R" }
-        to = { point: { x: 500, y: 500 }, box: b, side: "L" }
-        # A ring of obstacles fully surrounding to's point, leaving no free
-        # grid cell for the search to escape through.
-        ring = [
-          ArchitectureEdgeRouterSpecHelpers.box(
-            x: 400, y: 400, width: 20, height: 200,
-          ),
-          ArchitectureEdgeRouterSpecHelpers.box(
-            x: 600, y: 400, width: 20, height: 200,
-          ),
-          ArchitectureEdgeRouterSpecHelpers.box(
-            x: 400, y: 400, width: 220, height: 20,
-          ),
-          ArchitectureEdgeRouterSpecHelpers.box(
-            x: 400, y: 600, width: 220, height: 20,
-          ),
-        ]
+      let(:from) do
+        { point: { x: 100, y: 100 },
+          box: box(left: 60, top: 60, width: 80, height: 80), side: "R" }
+      end
+      let(:to) do
+        { point: { x: 500, y: 500 },
+          box: box(left: 460, top: 460, width: 80, height: 80), side: "L" }
+      end
+      # A ring fully surrounding to's point leaves no grid cell to escape.
+      let(:ring) do
+        [box(left: 400, top: 400, width: 20, height: 200),
+         box(left: 600, top: 400, width: 20, height: 200),
+         box(left: 400, top: 400, width: 220, height: 20),
+         box(left: 400, top: 600, width: 220, height: 20)]
+      end
 
+      it "falls back to the straight line rather than raising" do
         expect do
           points = router.route(from: from, to: to, obstacles: ring)
           expect(points).to eq([from[:point], to[:point]])
@@ -306,17 +338,11 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter, :aggregate_failures do
       # sends search_grid a start and goal at identical grid indices, which
       # its own `return nil if start == goal` guard exists to handle -
       # otherwise reconstruct would walk a state graph with no path to it.
-      it "falls back to the same point twice rather than raising" do
-        a = ArchitectureEdgeRouterSpecHelpers.box(x: 100, y: 100)
-        anchor = {
-          point: ArchitectureEdgeRouterSpecHelpers.face_point(a, "R"),
-          box: a,
-          side: "R",
-        }
-        blocker = ArchitectureEdgeRouterSpecHelpers.box(
-          x: 180, y: 100, width: 80, height: 80,
-        )
+      let(:a) { box(left: 100, top: 100) }
+      let(:anchor) { { point: face_point(a, "R"), box: a, side: "R" } }
+      let(:blocker) { box(left: 180, top: 100, width: 80, height: 80) }
 
+      it "falls back to the same point twice rather than raising" do
         expect do
           points = router.route(from: anchor, to: anchor, obstacles: [blocker])
           expect(points).to eq([anchor[:point], anchor[:point]])
@@ -337,29 +363,24 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter, :aggregate_failures do
     # not part of this class's public geometry API).
     let(:heap_class) { described_class.const_get(:MinHeap) }
 
-    it "pops entries in ascending cost order" do
-      costs = [37, 2, 15, 4, 26, 4, 100, 0, 8]
-      heap = heap_class.new
+    let(:heap) { heap_class.new }
+    let(:costs) { [37, 2, 15, 4, 26, 4, 100, 0, 8] }
+    let(:filled_heap) do
       costs.each_with_index { |cost, index| heap.push(cost, index) }
+      heap
+    end
 
+    it "pops entries in ascending cost order" do
       popped = []
-      popped << heap.pop.first until heap.empty?
+      popped << filled_heap.pop.first until filled_heap.empty?
 
       expect(popped).to eq(costs.sort)
     end
 
     it "keeps popping the minimum after interleaved pushes" do
-      heap = heap_class.new
-      heap.push(10, :a)
-      heap.push(3, :b)
-      expect(heap.pop).to eq([3, :b])
-
-      heap.push(1, :c)
-      heap.push(7, :d)
-      expect(heap.pop).to eq([1, :c])
-      expect(heap.pop).to eq([7, :d])
-      expect(heap.pop).to eq([10, :a])
-      expect(heap).to be_empty
+      expect(interleaved_heap_observations(heap)).to eq(
+        [[3, :b], [1, :c], [7, :d], [10, :a], true],
+      )
     end
   end
 end

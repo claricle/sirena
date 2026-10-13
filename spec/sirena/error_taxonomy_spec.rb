@@ -47,13 +47,12 @@ RSpec.describe Sirena::Engine do
     end
 
     it "carries no backtrace inside the ParseError message" do
-      # The raise_error block form, not a bare rescue: if render stops
+      # The typed raise_error matcher, not a bare rescue: if render stops
       # raising ParseError, `to raise_error` itself fails the example
       # instead of silently passing with the inner expectation never run.
       expect { engine.render("graph TD\nA-->") }
-        .to raise_error(Sirena::Parser::ParseError) do |e|
-          expect(e.message).not_to match(/\.rb:\d+:in /)
-        end
+        .to raise_error(Sirena::Parser::ParseError,
+                        satisfy { |message| !message.match?(/\.rb:\d+:in /) })
     end
 
     it "raises LayoutError, not PipelineError, when a diagram fails " \
@@ -91,10 +90,9 @@ RSpec.describe Sirena::Engine do
       allow(Sirena::Layout::ElkPlacement).to receive(:apply)
         .and_raise(RuntimeError, "boom")
 
-      expect { engine.render("graph TD\nA-->B\n") }.to raise_error do |error|
-        expect(error).to be_a(Sirena::Engine::PipelineError)
-        expect(error.message).to eq("Rendering failed: RuntimeError: boom")
-      end
+      expect { engine.render("graph TD\nA-->B\n") }
+        .to raise_error(Sirena::Engine::PipelineError,
+                        "Rendering failed: RuntimeError: boom")
     end
 
     # Cause-chaining (e.cause) is automatic Ruby behaviour for a `raise`

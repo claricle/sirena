@@ -1,5 +1,0 @@
----
-cop: Lint/AmbiguousOperatorPrecedence
-rows:
-- file: lib/sirena/parser/grammars/common.rb
-  count: 5

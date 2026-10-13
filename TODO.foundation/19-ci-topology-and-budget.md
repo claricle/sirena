@@ -1,13 +1,17 @@
 # 19 — CI topology, runtime budget, external pins
 
-Status (2026-10-10): **repository-side 19a core landed; 19a and 19b remain
-open.** Current `main` owns its workflow YAML, has stable `fast-lane` and
-`full-lane` aggregators, pins external actions, and documents the extension
-contract with a worked example. Still required for 19a closeout: the complete
-event/baseline seed matrix, recorded owner branch protection with strictness or
-merge queue, and removal of the transitive release workflow dependency (PR
-#222 is the in-flight repository-owned replacement). 19b still owns final gate
-consolidation and measured cold/warm lane timings.
+Status (reconciled 2026-10-13): **repository-side 19a core landed; 19a and
+19b remain open.** Current `main` owns its workflow YAML, has stable
+`fast-lane` and `full-lane` aggregators, pins external actions, and documents
+the extension contract with a worked example. PR #222 merged on 2026-10-09:
+`release.yml` now owns publishing directly, removing the transitive release
+workflow dependency. Still required for 19a closeout: the complete seeded
+event/baseline proof and recorded owner branch protection with strictness or a
+required merge queue. The read-only GitHub settings audit on 2026-10-13 found
+`main` unprotected, with no required checks or effective rulesets; the release
+bypass documented by item 17 is also unapplied. 19b still requires final gate
+consolidation, complete cold/warm lane timing evidence, and protection
+reverification.
 
 Split into two PRs, because six wave-1 items (01, 02, 08, 11, 15 and 19
 itself) all need to touch CI and only one of them can own the files.
@@ -173,10 +177,11 @@ conformance (04), and the fresh-resolution install (01).
 10. Re-verify that branch protection still names the aggregators, in
     case the topology moved during consolidation.
 
-## Measured lane timings (19b)
+## Historical lane timings (19b)
 
-Measured 2026-10-11 with `scripts/ci_lane_timings.rb claricle/sirena
-2026-10-10T13:00:00Z 200`, then filtered to `ci` runs on `main` that succeeded
+Measured 2026-10-11 (historical) with `scripts/ci_lane_timings.rb
+claricle/sirena 2026-10-10T13:00:00Z 200`, then filtered to `ci` runs on `main`
+that succeeded
 and use the sharded topology: 23 runs, ids 38068467558 through 38115384187
 (`push`, 2026-10-10 16:38Z to 2026-10-11 05:37Z). A lane's time is its slowest
 job, started to completed (queue time excluded), as the script defines it.
@@ -194,8 +199,14 @@ script covered including PR runs, logged a cold ruby/setup-ruby cache, so the
 fast lane has no cold sample. The full lane's slowest job installs without a
 bundler cache, so it has no cold/warm split; the other full-lane jobs ran
 0.5 to 1.5 minutes in run 38115384187. Cold timing needs a run after the cache
-key changes or is evicted. 19b's "cold and warm timings recorded" is therefore
-only half met: warm is recorded, cold is not.
+key changes or is evicted.
+
+This table does not establish the budgets for the current topology. The
+selector used for it omits the required `coverage` job now in the full lane,
+and maximum individual-job duration excludes aggregator runtime and does not
+measure the complete lane wall time. Historical warm samples cannot replace
+cold/warm evidence for both complete current lanes. Item 19b remains open;
+no pending timing-script change is counted as measured evidence.
 
 ## Done when
 

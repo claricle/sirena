@@ -87,7 +87,7 @@ RSpec.describe "Flowchart Integration", :aggregate_failures do
   end
 
   describe "an empty flowchart" do
-    corpus_dir = File.expand_path("../mermaid/flowchart", __dir__)
+    corpus_dir = SpecSupport::RepositoryPaths.path("spec/mermaid/flowchart")
 
     empty_sources = {
       "147 (declare a class)" =>
