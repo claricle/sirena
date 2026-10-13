@@ -3,91 +3,25 @@ cop: RSpec/ExampleLength
 rows:
 - file: spec/contract_spec.rb
   count: 3
-- file: spec/fixtures_spec.rb
-  count: 2
-- file: spec/scripts/apply_fixes_never_called_spec.rb
-  count: 1
-- file: spec/scripts/corpus_sweep_malformed_xml_spec.rb
-  count: 1
-- file: spec/scripts/docs_site_verifier_spec.rb
-  count: 57
-- file: spec/scripts/hardened_mmdc_spec.rb
-  count: 7
-- file: spec/sirena/cli_spec.rb
-  count: 2
-- file: spec/sirena/commands/batch_spec.rb
-  count: 4
 - file: spec/sirena/commands/render_spec.rb
   count: 2
 - file: spec/sirena/component_require_spec.rb
   count: 1
-- file: spec/sirena/determinism_spec.rb
-  count: 2
-- file: spec/sirena/diagram/architecture_spec.rb
-  count: 1
-- file: spec/sirena/engine_preamble_spec.rb
-  count: 4
-- file: spec/sirena/engine_spec.rb
-  count: 4
-- file: spec/sirena/error_report_spec.rb
-  count: 3
 - file: spec/sirena/error_taxonomy_spec.rb
   count: 1
-- file: spec/sirena/exhaustion_errors_spec.rb
-  count: 3
-- file: spec/sirena/markdown_text_spec.rb
-  count: 12
 - file: spec/sirena/notation/mermaid/git_graph_main_branch_config_spec.rb
   count: 1
-- file: spec/sirena/parser/er_diagram_spec.rb
-  count: 9
-- file: spec/sirena/parser/flowchart_node_metadata_spec.rb
-  count: 2
-- file: spec/sirena/parser/flowchart_parser_edge_id_spec.rb
-  count: 1
-- file: spec/sirena/parser/flowchart_semicolon_spec.rb
-  count: 1
-- file: spec/sirena/parser/flowchart_subgraph_ownership_spec.rb
-  count: 1
-- file: spec/sirena/parser/flowchart_subgraph_spec.rb
-  count: 2
-- file: spec/sirena/parser/gantt_spec.rb
-  count: 4
-- file: spec/sirena/parser/git_graph_spec.rb
-  count: 4
-- file: spec/sirena/parser/greedy_run_spec.rb
-  count: 1
-- file: spec/sirena/parser/kanban_spec.rb
-  count: 11
-- file: spec/sirena/parser/requirement_spec.rb
-  count: 2
-- file: spec/sirena/parser/state_diagram_spec.rb
-  count: 3
 - file: spec/sirena/renderer/architecture_edge_router_spec.rb
   count: 6
-- file: spec/sirena/source_spec.rb
-  count: 4
-- file: spec/sirena/tasks/examples_spec.rb
-  count: 19
-- file: spec/sirena/theme/color_palette_fallback_keys_spec.rb
-  count: 1
-- file: spec/sirena/theme/completion_spec.rb
-  count: 1
-- file: spec/sirena/theme_spec.rb
-  count: 3
 - file: spec/spec_helper_corpus_guard_spec.rb
   count: 1
 - file: spec/spec_support/layout_parity/git_graph_cherry_pick_recognizer_spec.rb
   count: 1
 - file: spec/spec_support/layout_parity/sequence_recognizer_spec.rb
   count: 1
-- file: spec/svg_conformance_spec.rb
-  count: 6
 - file: spec/tasks/benchmark_rake_spec.rb
   count: 4
 - file: spec/tasks/corpus_spec.rb
   count: 4
-- file: spec/tasks/coverage_rake_spec.rb
-  count: 19
 - file: spec/workflows/workflows_spec.rb
   count: 2

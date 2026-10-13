@@ -29,13 +29,20 @@ module Sirena
       version = Gem::Version.new(current)
       segments = version.segments
       case next_version
-      when "major" then [segments[0] + 1, 0, 0].join(".")
-      when "minor" then [segments[0], segments[1] + 1, 0].join(".")
-      when "patch" then [segments[0], segments[1], segments[2] + 1].join(".")
+      when "major", "minor", "patch" then bumped_version(next_version, segments)
       when /\A\d+\.\d+\.\d+\z/ then explicit_version(next_version, version)
       else invalid_bump!(next_version)
       end
     end
+
+    def bumped_version(bump, segments)
+      case bump
+      when "major" then [segments[0] + 1, 0, 0].join(".")
+      when "minor" then [segments[0], segments[1] + 1, 0].join(".")
+      when "patch" then [segments[0], segments[1], segments[2] + 1].join(".")
+      end
+    end
+    private_class_method :bumped_version
 
     def explicit_version(next_version, current)
       return next_version if Gem::Version.new(next_version) > current
@@ -75,13 +82,18 @@ module Sirena
       start = lines.index { |l| SECTION.match(l)&.[](:version) == version }
       return nil unless start
 
-      rest = lines[(start + 1)..]
-      stop = rest.index { |l| l.start_with?("## ") } || rest.size
       {
-        lines: rest.first(stop),
+        lines: following_section_lines(lines, start),
         dated: !SECTION.match(lines[start])[:date].nil?,
       }
     end
+
+    def following_section_lines(lines, start)
+      rest = lines[(start + 1)..]
+      stop = rest.index { |line| line.start_with?("## ") } || rest.size
+      rest.first(stop)
+    end
+    private_class_method :following_section_lines
 
     def entry?(lines)
       category = nil

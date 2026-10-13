@@ -62,26 +62,10 @@ module Sirena
       # @return [String] XML representation of the SVG document
       def to_xml
         parts = ["<svg"]
-        # Document does not inherit from Element, so it cannot reach
-        # Element#build_attributes. It uses the same renderer directly, one
-        # pair at a time so the newline join below still formats the document
-        # the way it always did.
-        [
-          ["width", width],
-          ["height", height],
-          ["viewBox", view_box],
-          ["version", version],
-          ["baseProfile", base_profile],
-          ["xmlns", xmlns],
-          ["overflow", overflow],
-        ].each do |name, value|
-          parts << Escaping.attribute(name, value) unless value.nil?
-        end
+        parts.concat(document_xml_attributes)
         parts << ">"
 
-        children.each do |child|
-          parts << child.to_xml if child.respond_to?(:to_xml)
-        end
+        append_xml_children(parts)
 
         parts << "</svg>"
         parts.join("\n")
@@ -91,6 +75,26 @@ module Sirena
       alias to_s to_xml
 
       private
+
+      def document_xml_attributes
+        document_attribute_pairs.each_with_object([]) do |(name, value), pairs|
+          pairs << Escaping.attribute(name, value) unless value.nil?
+        end
+      end
+
+      def document_attribute_pairs
+        [
+          ["width", width], ["height", height], ["viewBox", view_box],
+          ["version", version], ["baseProfile", base_profile],
+          ["xmlns", xmlns], ["overflow", overflow]
+        ]
+      end
+
+      def append_xml_children(parts)
+        children.each do |child|
+          parts << child.to_xml if child.respond_to?(:to_xml)
+        end
+      end
 
       def calculate_view_box(width, height)
         return nil unless width && height

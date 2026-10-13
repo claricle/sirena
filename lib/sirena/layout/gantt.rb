@@ -277,14 +277,18 @@ module Sirena
         timeline = graph[:timeline]
         rows = task_row_count(graph[:sections])
         Timeline.new(
-          background: Rect.new(x: MARGIN_LEFT, y: MARGIN_TOP,
-                               width: TIMELINE_WIDTH, height: TIMELINE_HEIGHT,
-                               kind: "timeline"),
+          background: timeline_background,
           labels: date_labels(timeline, graph[:axis_format],
                               graph[:tick_interval], task_extent(rows) + 5),
           grid_lines: timeline_grid_lines(timeline, graph[:sections],
                                           graph[:tick_interval]),
         )
+      end
+
+      def timeline_background
+        Rect.new(x: MARGIN_LEFT, y: MARGIN_TOP,
+                 width: TIMELINE_WIDTH, height: TIMELINE_HEIGHT,
+                 kind: "timeline")
       end
 
       def date_labels(timeline, format, interval = nil,

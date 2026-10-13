@@ -24,12 +24,6 @@ RSpec.describe "scripts/corpus_sweep.rb", :aggregate_failures, type: :task do
       row["case"].start_with?("info/") && row["verdict"] == "valid"
     end
   end
-  # `<img src=` opens a tag that never closes, the shape of the XSS corpus case.
-  let(:malformed_svg) do
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1">' \
-      "<text>Alice<img src=</text></svg>"
-  end
-
   # Returns [stdout, status]; stderr is not part of what is asserted.
   let(:sweep_info) do
     lambda do |prelude = nil|
@@ -44,6 +38,24 @@ RSpec.describe "scripts/corpus_sweep.rb", :aggregate_failures, type: :task do
   let(:valid_summary) do
     "against valid cases only: #{valid_info_cases}/#{valid_info_cases}"
   end
+  # `<img src=` opens a tag that never closes, the shape of the XSS corpus case.
+  let(:malformed_xml_output) do
+    Dir.mktmpdir do |dir|
+      prelude = File.join(dir, "seed_malformed.rb")
+      malformed_svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" ' \
+        'viewBox="0 0 1 1">' \
+        "<text>Alice<img src=</text></svg>"
+      File.write(prelude, <<~RUBY)
+        require 'bundler/setup'
+        $LOAD_PATH.unshift(#{File.join(CORPUS_SWEEP_ROOT, 'lib').inspect})
+        require 'sirena'
+        Sirena::Engine.prepend(Module.new { def render(*) = #{malformed_svg.inspect} })
+      RUBY
+
+      sweep_info.call(prelude).first
+    end
+  end
 
   it "has info cases to sweep" do
     expect(info_cases).to be_positive
@@ -57,19 +69,9 @@ RSpec.describe "scripts/corpus_sweep.rb", :aggregate_failures, type: :task do
   end
 
   it "reports a failure, not a pass, for SVG-shaped output that is not XML" do
-    Dir.mktmpdir do |dir|
-      prelude = File.join(dir, "seed_malformed.rb")
-      File.write(prelude, <<~RUBY)
-        require 'bundler/setup'
-        $LOAD_PATH.unshift(#{File.join(CORPUS_SWEEP_ROOT, 'lib').inspect})
-        require 'sirena'
-        Sirena::Engine.prepend(Module.new { def render(*) = #{malformed_svg.inspect} })
-      RUBY
+    out = malformed_xml_output
 
-      out, = sweep_info.call(prelude)
-
-      expect(out).to include("TOTAL: 0/#{info_cases}")
-      expect(out.scan(%r{^fail: info/}).size).to eq(info_cases)
-    end
+    expect(out).to include("TOTAL: 0/#{info_cases}")
+    expect(out.scan(%r{^fail: info/}).size).to eq(info_cases)
   end
 end

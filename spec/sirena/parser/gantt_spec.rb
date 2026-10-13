@@ -277,19 +277,36 @@ RSpec.describe Sirena::Parser::Gantt do
       end
     end
 
-    it "parses comma-separated tags followed by an after-dependency and a " \
-       "duration" do
-      source = <<~GANTT
-        gantt
-          section Tasks
-          Implement parser and jison          :crit, done, after des1, 2d
-      GANTT
+    describe "parses comma-separated tags followed by an " \
+             "after-dependency and a duration" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            section Tasks
+            Implement parser and jison          :crit, done, after des1, 2d
+        GANTT
+      end
 
-      task = parser.parse(source).sections.first.tasks.first
+      let(:task) do
+        parser.parse(source).sections.first.tasks.first
+      end
 
-      expect(task.tags).to eq(%w[crit done])
-      expect(task.after_task).to eq("des1")
-      expect(task.duration).to eq("2d")
+      before do
+        source
+        task
+      end
+
+      it "preserves property 1" do
+        expect(task.tags).to eq(%w[crit done])
+      end
+
+      it "preserves property 2" do
+        expect(task.after_task).to eq("des1")
+      end
+
+      it "preserves property 3" do
+        expect(task.duration).to eq("2d")
+      end
     end
 
     context "when parsing an after-dependency with trailing whitespace " \
@@ -349,20 +366,37 @@ RSpec.describe Sirena::Parser::Gantt do
     # counted — see the "counts an after-dependency..." example below) is
     # mermaid's "id, start, end/duration" shape. The id is always the first
     # of the three, even when its text happens to look like a date.
-    it "treats the first of three value fields as the id, even when it is " \
-       "date-shaped" do
-      source = <<~GANTT
-        gantt
-          dateFormat YYYY-MM-DD
-          section Tasks
-          A : 2024-01-01, 2024-02-01, 2024-02-03
-      GANTT
+    describe "treats the first of three value fields as the id, " \
+             "even when it is date-shaped" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            dateFormat YYYY-MM-DD
+            section Tasks
+            A : 2024-01-01, 2024-02-01, 2024-02-03
+        GANTT
+      end
 
-      task = parser.parse(source).sections.first.tasks.first
+      let(:task) do
+        parser.parse(source).sections.first.tasks.first
+      end
 
-      expect(task.id).to eq("2024-01-01")
-      expect(task.start_date).to eq("2024-02-01")
-      expect(task.end_date).to eq("2024-02-03")
+      before do
+        source
+        task
+      end
+
+      it "preserves property 1" do
+        expect(task.id).to eq("2024-01-01")
+      end
+
+      it "preserves property 2" do
+        expect(task.start_date).to eq("2024-02-01")
+      end
+
+      it "preserves property 3" do
+        expect(task.end_date).to eq("2024-02-03")
+      end
     end
 
     # An "after"/"until" dependency fills the same positional slot a bare
@@ -412,20 +446,37 @@ RSpec.describe Sirena::Parser::Gantt do
     # rule, a leftover field like that must still be treated as a date and
     # never re-trigger id-by-shape classification, or it silently
     # overwrites the real id.
-    it "keeps the positional id when trailing dates have no separator " \
-       "(compact dateFormat)" do
-      source = <<~GANTT
-        gantt
-          dateFormat YYYYMMDD
-          section Tasks
-          T: t, 20240101, 20240103
-      GANTT
+    describe "keeps the positional id when trailing dates have no separator " \
+             "(compact dateFormat)" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            dateFormat YYYYMMDD
+            section Tasks
+            T: t, 20240101, 20240103
+        GANTT
+      end
 
-      task = parser.parse(source).sections.first.tasks.first
+      let(:task) do
+        parser.parse(source).sections.first.tasks.first
+      end
 
-      expect(task.id).to eq("t")
-      expect(task.start_date).to eq("20240101")
-      expect(task.end_date).to eq("20240103")
+      before do
+        source
+        task
+      end
+
+      it "preserves property 1" do
+        expect(task.id).to eq("t")
+      end
+
+      it "preserves property 2" do
+        expect(task.start_date).to eq("20240101")
+      end
+
+      it "preserves property 3" do
+        expect(task.end_date).to eq("20240103")
+      end
     end
 
     # Outside the three-slot case there is no id field at all: with no
@@ -436,20 +487,37 @@ RSpec.describe Sirena::Parser::Gantt do
     # both fields as the task's dates, with mermaid auto-generating the id
     # (Codex High, gantt.rb:207 — this exact input used to produce
     # `id="20240103"` with both dates nil).
-    it "treats two leftover compact-date fields as start/end when no id is " \
-       "given" do
-      source = <<~GANTT
-        gantt
-          dateFormat YYYYMMDD
-          section Tasks
-          T: 20240101, 20240103
-      GANTT
+    describe "treats two leftover compact-date fields as start/end " \
+             "when no id is given" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            dateFormat YYYYMMDD
+            section Tasks
+            T: 20240101, 20240103
+        GANTT
+      end
 
-      task = parser.parse(source).sections.first.tasks.first
+      let(:task) do
+        parser.parse(source).sections.first.tasks.first
+      end
 
-      expect(task.id).to be_nil
-      expect(task.start_date).to eq("20240101")
-      expect(task.end_date).to eq("20240103")
+      before do
+        source
+        task
+      end
+
+      it "preserves property 1" do
+        expect(task.id).to be_nil
+      end
+
+      it "preserves property 2" do
+        expect(task.start_date).to eq("20240101")
+      end
+
+      it "preserves property 3" do
+        expect(task.end_date).to eq("20240103")
+      end
     end
   end
 

@@ -53,7 +53,8 @@ RSpec.describe Sirena::Parser::Sequence, :aggregate_failures do
     end
 
     it "applies to a created participant too" do
-      diagram = parse("participant A\ncreate participant B@{\"type\":\"entity\"}\n" \
+      diagram = parse("participant A\n" \
+                      "create participant B@{\"type\":\"entity\"}\n" \
                       "A->>B: m")
 
       expect(by_id(diagram, "B"))

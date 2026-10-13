@@ -24,16 +24,21 @@ module Sirena
           match = INIT.match(directive)
           return unless match
 
-          config = Psych.safe_load(
-            match[:payload], permitted_classes: [],
-                             permitted_symbols: [], aliases: false
-          )
+          config = directive_config(match[:payload])
           name = config.dig("gitGraph", "mainBranchName") if
             config.is_a?(Hash)
           name.to_s unless name.nil? || name.to_s.empty?
         rescue Psych::Exception
           nil
         end
+
+        def directive_config(payload)
+          Psych.safe_load(
+            payload, permitted_classes: [],
+                     permitted_symbols: [], aliases: false
+          )
+        end
+        private_class_method :directive_config
         private_class_method :branch_name
       end
     end

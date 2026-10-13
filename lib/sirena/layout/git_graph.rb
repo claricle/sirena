@@ -117,15 +117,13 @@ module Sirena
       # @return [Hash] layout data with commits, branches, and connections
       def build_graph(diagram)
         graph = ir_graph(diagram)
-        orientation, main_branch, branches, lane_assignments =
-          graph_context(graph)
-        lane_positions = lane_positions(lane_assignments, orientation)
-        commits = position_commits(
-          visible_commits(source_commits(graph)), lane_assignments, orientation,
-          main_branch, lane_positions
+        orientation, main_branch, branches, lane_assignments, lane_positions =
+          positioning_context(graph)
+        commits = position_graph_commits(
+          graph, lane_assignments, orientation, main_branch, lane_positions
         )
         graph_result(
-          graph, commits, branches, lane_assignments, lane_positions,
+          graph, commits, branches, [lane_assignments, lane_positions],
           [orientation, main_branch]
         )
       end
@@ -142,7 +140,22 @@ module Sirena
 
       private
 
-      def graph_result(graph, commits, branches, lanes, lane_positions, context)
+      def positioning_context(graph)
+        orientation, main_branch, branches, lanes = graph_context(graph)
+        [orientation, main_branch, branches, lanes,
+         lane_positions(lanes, orientation)]
+      end
+
+      def position_graph_commits(graph, lanes, orientation, main_branch,
+                                 lane_positions)
+        position_commits(
+          visible_commits(source_commits(graph)), lanes, orientation,
+          main_branch, lane_positions
+        )
+      end
+
+      def graph_result(graph, commits, branches, lane_layout, context)
+        lanes, lane_positions = lane_layout
         orientation, main_branch = context
         dimensions = extents(commits, lanes, lane_positions, orientation)
         {
@@ -891,15 +904,16 @@ module Sirena
                            lane_positions)
         commits.each_with_index.map do |commit, index|
           positioned_commit(
-            commit, [index, commits.size], lane_assignments, orientation,
-            main_branch, lane_positions
+            commit, [index, commits.size], lane_assignments,
+            [orientation, main_branch], lane_positions
           )
         end
       end
 
-      def positioned_commit(commit, sequence, lane_assignments, orientation,
-                            main_branch, lane_positions)
+      def positioned_commit(commit, sequence, lane_assignments, context,
+                            lane_positions)
         index, count = sequence
+        orientation, main_branch = context
         branch = commit[:branch_name] || main_branch
         lane = lane_assignments[branch] || 0
         attributes = positioned_commit_attributes(

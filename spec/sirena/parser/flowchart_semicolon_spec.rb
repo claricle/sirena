@@ -22,17 +22,57 @@ module FlowchartSemicolonSpecHelpers
 
   def capture(source, key)
     tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
-    found = nil
-    walk = lambda do |node|
-      case node
-      when Array then node.each { |child| walk.call(child) }
-      when Hash
-        found ||= node[key].to_s if node.key?(key)
-        node.each_value { |child| walk.call(child) }
-      end
+    captured_value(tree, key)
+  end
+
+  def captured_value(node, key)
+    case node
+    when Array then captured_child(node, key)
+    when Hash then captured_hash(node, key)
     end
-    walk.call(tree)
-    found
+  end
+
+  def captured_hash(node, key)
+    return node[key].to_s if node.key?(key)
+
+    captured_child(node.each_value, key)
+  end
+
+  def captured_child(children, key)
+    children.each do |child|
+      found = captured_value(child, key)
+      return found if found
+    end
+    nil
+  end
+
+  def glyph_scene(glyph)
+    diagram = described_class.new.parse("graph #{glyph}\nA-->A\n")
+    Sirena::Layout::Flowchart.new.to_graph(diagram)
+  end
+
+  def glyph_direction(glyph)
+    scene = glyph_scene(glyph)
+    node = scene.children.first
+    bends = scene.edges.first.sections.first.bend_points
+    centre = [node.center_x, node.center_y]
+    loop_direction(centre, bend_average(bends))
+  end
+
+  def bend_average(bends)
+    [bends.sum(&:x) / bends.length, bends.sum(&:y) / bends.length]
+  end
+
+  def horizontal_bend?(centre, average)
+    (average[0] - centre[0]).abs > (average[1] - centre[1]).abs
+  end
+
+  def loop_direction(centre, average)
+    if horizontal_bend?(centre, average)
+      average[0] < centre[0] ? "LEFT" : "RIGHT"
+    else
+      average[1] < centre[1] ? "UP" : "DOWN"
+    end
   end
 end
 
@@ -483,24 +523,7 @@ RSpec.describe Sirena::Parser::Flowchart do
 
     # The point of the words: this is the mapping the finding was about.
     it "carries a glyph through to the layout direction" do
-      layouts = %w[< > ^].to_h do |glyph|
-        diagram = described_class.new.parse("graph #{glyph}\nA-->A\n")
-        scene = Sirena::Layout::Flowchart.new.to_graph(diagram)
-        node = scene.children.first
-        bends = scene.edges.first.sections.first.bend_points
-        centre = [node.center_x, node.center_y]
-        average = [bends.sum(&:x) / bends.length,
-                   bends.sum(&:y) / bends.length]
-        direction = if (average[0] - centre[0]).abs >
-            (average[1] - centre[1]).abs
-                      average[0] < centre[0] ? "LEFT" : "RIGHT"
-                    else
-                      average[1] < centre[1] ? "UP" : "DOWN"
-                    end
-
-        [glyph, direction]
-      end
-
+      layouts = %w[< > ^].to_h { |glyph| [glyph, glyph_direction(glyph)] }
       expect(layouts).to eq("<" => "LEFT", ">" => "RIGHT", "^" => "UP")
     end
   end

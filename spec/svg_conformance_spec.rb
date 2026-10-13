@@ -14,7 +14,7 @@ require "yaml"
 # workflow ships them to a reader today), reference fixtures as the per-type
 # shape, and the 1,997-source mermaid corpus as the wide net (floor-guarded,
 # not counted -- see CONFORMANCE_RENDERABLE_FILE below).
-CONFORMANCE_ROOT = File.expand_path("..", __dir__)
+CONFORMANCE_ROOT = SpecSupport::RepositoryPaths::ROOT
 
 # Globbed directly, not asked of the gemspec: since D6 (sirena.gemspec's
 # `files` became a lib+exe allowlist), examples/ no longer ships inside the

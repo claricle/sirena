@@ -8,7 +8,7 @@ require "spec_helper"
 # apart from it. See TODO.architecture/01-safety-net.md Part A.
 RSpec.describe Sirena::Notation::Mermaid do
   let(:types) { described_class::TYPES.keys }
-  let(:fixture_dir) { File.join(__dir__, "fixtures", "contract") }
+  let(:fixture_dir) { SpecSupport::RepositoryPaths.path("spec/fixtures/contract") }
 
   # An iteration over TYPES cannot notice a deleted row: the row's examples
   # just stop existing. The fixture basenames are the inventory kept outside
@@ -24,7 +24,7 @@ RSpec.describe Sirena::Notation::Mermaid do
   # a reviewer would run by hand, kept here so it cannot silently reappear.
   it "has no diagram model still spelling the contract method `type`" do
     diagram_files = Dir.glob(
-      File.join(__dir__, "..", "lib", "sirena", "diagram", "**", "*.rb"),
+      SpecSupport::RepositoryPaths.path("lib/sirena/diagram/**/*.rb"),
     )
     offenders = diagram_files.select do |path|
       File.readlines(path).any? { |line| line.match?(/^\s*def type$/) }

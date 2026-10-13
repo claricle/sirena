@@ -45,11 +45,22 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(node_for(%(graph TD\nD@{ label: "for D" }\n)).label).to eq("for D")
     end
 
-    it "takes both, comma separated" do
-      node = node_for(%(graph TD\nD@{ shape: hexagon, label: "DD" }\n))
+    describe "takes both, comma separated" do
+      let(:node) do
+        node_for(%(graph TD\nD@{ shape: hexagon, label: "DD" }\n))
+      end
 
-      expect(node.shape).to eq("hexagon")
-      expect(node.label).to eq("DD")
+      before do
+        node
+      end
+
+      it "preserves property 1" do
+        expect(node.shape).to eq("hexagon")
+      end
+
+      it "preserves property 2" do
+        expect(node.label).to eq("DD")
+      end
     end
 
     # Whitespace around the braces is free-form in mermaid. The space after
@@ -396,14 +407,16 @@ RSpec.describe Sirena::Parser::Flowchart do
         end
       end
 
-      it "builds no object on the way to refusing it" do
-        source = "graph TD\nA@{\n  shape: rounded\n  " \
-                 "label: !ruby/object:Gem::Requirement\n    " \
-                 "requirements:\n    - x\n}\n"
-        before = ObjectSpace.each_object(Gem::Requirement).count
+      let(:tagged_object_source) do
+        "graph TD\nA@{\n  shape: rounded\n  " \
+          "label: !ruby/object:Gem::Requirement\n    " \
+          "requirements:\n    - x\n}\n"
+      end
 
-        expect { node_for(source) }.to raise_error(Sirena::Parser::ParseError)
-        expect(ObjectSpace.each_object(Gem::Requirement).count).to eq(before)
+      it "builds no object on the way to refusing it" do
+        expect { node_for(tagged_object_source) }
+          .to raise_error(Sirena::Parser::ParseError)
+          .and(not_change { ObjectSpace.each_object(Gem::Requirement).count })
       end
     end
 
@@ -422,16 +435,19 @@ RSpec.describe Sirena::Parser::Flowchart do
         Psych.domain_types.replace(registered)
       end
 
-      it "never calls a registered domain handler" do
-        called = 0
-        Psych.add_domain_type("yaml.org,2002", "omap") do |_t, v|
-          called += 1
-          v
-        end
+      let(:handler_calls) { [] }
 
+      before do
+        Psych.add_domain_type("yaml.org,2002", "omap") do |_tag, value|
+          handler_calls << value
+          value
+        end
+      end
+
+      it "never calls a registered domain handler" do
         expect { node_for("graph TD\nA@{ label: !!omap foo }\n") }
           .to raise_error(Sirena::Parser::ParseError, /Unsupported tag/)
-        expect(called).to eq(0)
+          .and(not_change { handler_calls.length })
       end
 
       it "refuses a ruby object tag" do
@@ -1344,11 +1360,22 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(node_for("graph TD\nA:::c\n").classes).to eq(":::c")
     end
 
-    it "still defaults a bare node to a rectangle" do
-      node = node_for("graph TD\nA\n")
+    describe "still defaults a bare node to a rectangle" do
+      let(:node) do
+        node_for("graph TD\nA\n")
+      end
 
-      expect(node.shape).to eq("rect")
-      expect(node.label).to eq("A")
+      before do
+        node
+      end
+
+      it "preserves property 1" do
+        expect(node.shape).to eq("rect")
+      end
+
+      it "preserves property 2" do
+        expect(node.label).to eq("A")
+      end
     end
   end
 

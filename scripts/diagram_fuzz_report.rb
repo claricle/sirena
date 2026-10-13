@@ -91,40 +91,44 @@ module DiagramFuzzReport
       seed = @seed || Random.new_seed
       puts "seed=#{seed} (shared across types; see file banner)"
 
-      # Each Runner#run is ONE mermaid_fuzz_runner.js launch that both
-      # proves its own harness and produces the real numbers -- see
-      # mermaid_fuzz.rb's Runner#run doc for why this is a single pass
-      # rather than a separate proof step per type. That is one browser
-      # launch PER TYPE (4 total here), not one for the whole report --
-      # merging all 4 types into a single Puppeteer page would need
-      # mermaid_fuzz_runner.js's payload to carry a getter/preflight per
-      # CASE rather than per batch, which is a real redesign, not
-      # something to fold into this PR.
-      results = TARGETS.map do |kwargs|
-        MermaidFuzz::Runner.new(**kwargs).run(seed: seed, count: @count)
-      end
-
-      unproven, proven = results.partition { |r| !r.proven }
-      unproven.each do |result|
-        warning = "#{result.label}: EXCLUDED from the table below"
-        warn "#{warning} -- its own harness is not proven trustworthy."
-      end
-
+      results = run_targets(seed)
+      unproven, proven = results.partition { |result| !result.proven }
+      warn_unproven(unproven)
       print_table(proven)
-
-      # Unproven is checked and reported FIRST and unconditionally: a
-      # broken detector must never be masked by, or confused with, a
-      # real divergence found elsewhere. An earlier version returned the
-      # same exit code (1) for both, which a caller reading only the
-      # exit status could not tell apart -- confirmed independently by
-      # three reviewers during this PR's own review.
-      exit(2) unless unproven.empty?
-
-      any_divergences = proven.any? { |r| !r.divergences.empty? }
-      exit(any_divergences ? 1 : 0)
+      finish_run(unproven, proven)
     end
 
     private
+
+    # Each Runner#run is ONE mermaid_fuzz_runner.js launch that both
+    # proves its own harness and produces the real numbers -- see
+    # mermaid_fuzz.rb's Runner#run doc for why this is a single pass
+    # rather than a separate proof step per type. That is one browser
+    # launch PER TYPE (4 total here), not one for the whole report --
+    # merging all 4 types into a single Puppeteer page would need
+    # mermaid_fuzz_runner.js's payload to carry a getter/preflight per
+    # CASE rather than per batch, which is a real redesign, not
+    # something to fold into this PR.
+    def run_targets(seed)
+      TARGETS.map do |kwargs|
+        MermaidFuzz::Runner.new(**kwargs).run(seed: seed, count: @count)
+      end
+    end
+
+    def warn_unproven(results)
+      results.each do |result|
+        warning = "#{result.label}: EXCLUDED from the table below"
+        warn "#{warning} -- its own harness is not proven trustworthy."
+      end
+    end
+
+    def finish_run(unproven, proven)
+      # A broken detector takes precedence over real divergences.
+      exit(2) unless unproven.empty?
+
+      any_divergences = proven.any? { |result| !result.divergences.empty? }
+      exit(any_divergences ? 1 : 0)
+    end
 
     def parse!(argv)
       OptionParser.new do |o|

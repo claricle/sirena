@@ -30,14 +30,14 @@ module Sirena
         # @param wrap [Boolean] the diagram's wrap setting
         # @param closers [Array<Integer>] messages a frame ends right after
         # @param creators [Array<Integer>] messages that create a participant
-        def initialize(edges, positions, font_size:, wrap: false,
-                       closers: [], creators: [])
+        def initialize(edges, positions, font_size:, wrap: false, **options)
+          check_options!(options)
           @edges = edges || []
           @positions = positions
           @font_size = font_size
           @wrap = wrap
-          @closers = closers
-          @creators = creators
+          @closers = options.fetch(:closers) { [] }
+          @creators = options.fetch(:creators) { [] }
         end
 
         # @return [Boolean] the diagram's wrap setting
@@ -83,6 +83,15 @@ module Sirena
         end
 
         private
+
+        def check_options!(options)
+          unknown = options.keys - %i[closers creators]
+          return if unknown.empty?
+
+          label = unknown.one? ? "keyword" : "keywords"
+          names = unknown.map(&:inspect).join(", ")
+          raise ArgumentError, "unknown #{label}: #{names}"
+        end
 
         def textless?(index)
           index && lines(index).all? { |line| line.strip.empty? }

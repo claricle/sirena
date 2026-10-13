@@ -281,7 +281,8 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
     end
   end
 
-  context "with a multiline accessibility description block spanning several lines" do
+  context "with a multiline accessibility description block " \
+          "spanning several lines" do
     # `(rbrace.absent? >> any).repeat.as(:acc_descr)` matches non-empty
     # content as one Slice, not an Array of per-line slices - this spec
     # exercises extract_text's String/else branch, not its Array branch.
@@ -316,14 +317,16 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
       MERMAID
     end
 
-    it "parses the empty block as an empty description, not the literal \"[]\"" do
+    it "parses the empty block as an empty description, " \
+       "not the literal \"[]\"" do
       result = parser.parse(input)
 
       expect(result.acc_descr).to eq("")
     end
   end
 
-  describe "Sirena::Parser::Builders::Architecture#extract_text's Array branch, called directly" do
+  describe "Sirena::Parser::Builders::Architecture#extract_text's " \
+           "Array branch, called directly" do
     # No grammar rule in this parser ever hands extract_text a multi-
     # element Array (see the comment above) - this calls the private
     # method directly to lock down the join behavior anyway.
@@ -400,7 +403,8 @@ RSpec.describe Sirena::Parser::Architecture, :aggregate_failures do
 
       it "retains result.junctions.map id" do
         expect(result.junctions.map(&:id))
-          .to eq(%w[mid 1Leftofmid 2Leftofmid 3Leftofmid 1RightOfMid 2RightOfMid 3RightOfMid])
+          .to eq(%w[mid 1Leftofmid 2Leftofmid 3Leftofmid
+                    1RightOfMid 2RightOfMid 3RightOfMid])
       end
     end
 

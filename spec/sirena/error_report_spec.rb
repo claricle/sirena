@@ -18,44 +18,41 @@ RSpec.describe Sirena::ErrorReport do
   end
 
   describe ".cause_diagnostics" do
+    let(:nested_error_chain) do
+      begin
+        begin
+          raise ArgumentError, "innermost"
+        rescue ArgumentError
+          raise TypeError, "middle"
+        end
+      rescue TypeError
+        raise "outermost"
+      end
+    rescue RuntimeError => e
+      e
+    end
+    let(:wrapped_argument_error) do
+      begin
+        raise ArgumentError, "the real fault"
+      rescue ArgumentError
+        raise "Rendering failed: the real fault"
+      end
+    rescue RuntimeError => e
+      e
+    end
+
     it "is empty for an error with no cause" do
       expect(described_class.cause_diagnostics(RuntimeError.new("lonely")))
         .to eq("")
     end
 
     it "names the cause class and message the wrapper dropped" do
-      error = begin
-        begin
-          raise ArgumentError, "the real fault"
-        rescue ArgumentError
-          raise "Rendering failed: the real fault"
-        end
-      rescue RuntimeError => e
-        e
-      end
-
-      report = described_class.cause_diagnostics(error)
-
+      report = described_class.cause_diagnostics(wrapped_argument_error)
       expect(report).to include("Caused by: ArgumentError: the real fault")
     end
 
     it "reports every cause in the chain, nearest first" do
-      error = begin
-        begin
-          begin
-            raise ArgumentError, "innermost"
-          rescue ArgumentError
-            raise TypeError, "middle"
-          end
-        rescue TypeError
-          raise "outermost"
-        end
-      rescue RuntimeError => e
-        e
-      end
-
-      report = described_class.cause_diagnostics(error)
-
+      report = described_class.cause_diagnostics(nested_error_chain)
       expect(report.scan(/^Caused by: (\w+)/).flatten)
         .to eq(%w[TypeError ArgumentError])
     end
@@ -89,20 +86,30 @@ RSpec.describe Sirena::ErrorReport do
     # The exhaustion path is the one this module exists for, and it is
     # exactly where a trace runs to six figures of frames. An uncapped
     # report would make `--verbose` useless on the failure that needed it.
-    it "caps a long cause backtrace and says how many frames it dropped" do
-      cause = ArgumentError.new("deep")
-      frames = Array.new(Sirena::ErrorReport::CAUSE_FRAME_LIMIT + 7) do |i|
-        "frame_#{i}"
+    describe "a cause backtrace beyond the frame limit" do
+      let(:report) do
+        cause = ArgumentError.new("deep")
+        frames = Array.new(described_class::CAUSE_FRAME_LIMIT + 7) do |index|
+          "frame_#{index}"
+        end
+        cause.set_backtrace(frames)
+        error = RuntimeError.new("wrapper")
+        allow(error).to receive(:cause).and_return(cause)
+        described_class.cause_diagnostics(error)
       end
-      cause.set_backtrace(frames)
-      error = RuntimeError.new("wrapper")
-      allow(error).to receive(:cause).and_return(cause)
 
-      report = described_class.cause_diagnostics(error)
+      it "keeps the first frame" do
+        expect(report).to include("frame_0")
+      end
 
-      expect(report).to include("frame_0")
-      expect(report).not_to include("frame_#{Sirena::ErrorReport::CAUSE_FRAME_LIMIT}")
-      expect(report).to end_with("... 7 more frames")
+      it "omits the frame immediately beyond the cap" do
+        expect(report)
+          .not_to include("frame_#{described_class::CAUSE_FRAME_LIMIT}")
+      end
+
+      it "reports the exact number of dropped frames" do
+        expect(report).to end_with("... 7 more frames")
+      end
     end
   end
 end

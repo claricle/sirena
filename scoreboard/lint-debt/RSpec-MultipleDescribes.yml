@@ -1,5 +1,0 @@
----
-cop: RSpec/MultipleDescribes
-rows:
-- file: spec/sirena/diagram/er_diagram_spec.rb
-  count: 1

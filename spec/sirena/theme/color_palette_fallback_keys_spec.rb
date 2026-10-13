@@ -47,6 +47,24 @@ RSpec.describe Sirena::Theme::ColorPalette do
         user_journey_actor: 6, user_journey_section: 7, xy: 10
       }
     end
+    let(:default_journey_palettes) do
+      {
+        user_journey_actor: %w[
+          #8FBC8F #7CFC00 #00FFFF #20B2AA #B0E0E6 #FFFFE0
+        ],
+        user_journey_section: %w[
+          #191970 #8B008B #4B0082 #2F4F4F #800000 #8B4513 #00008B
+        ],
+      }
+    end
+    let(:palettes) do
+      builtin_themes.to_h do |theme|
+        values = sizes.keys.to_h do |name|
+          [name, theme.colors.public_send(:"#{name}_palette")]
+        end
+        [theme.name.to_sym, values]
+      end
+    end
 
     def new_dark_palettes
       {
@@ -71,36 +89,32 @@ RSpec.describe Sirena::Theme::ColorPalette do
       expect(drawn).to all(eq(sizes))
     end
 
-    it "gives dark its own palettes while retaining the other builtins" do
-      palettes = builtin_themes.to_h do |theme|
-        values = sizes.keys.to_h do |name|
-          [name, theme.colors.public_send(:"#{name}_palette")]
-        end
-        [theme.name.to_sym, values]
+    def shared_builtin_palettes
+      shared_names = sizes.keys - [:mindmap]
+      palettes.values_at(:default, :light, :high_contrast).map do |set|
+        set.slice(*shared_names)
       end
+    end
 
+    it "gives dark a distinct value for every palette" do
       expect(sizes.keys).to all(satisfy do |name|
         palettes[:dark][name] != palettes[:default][name]
       end)
+    end
+
+    it "pins the new dark palettes" do
       expect(palettes[:dark].slice(*new_dark_palettes.keys))
         .to eq(new_dark_palettes)
-      expect(palettes[:default].slice(
-               :user_journey_actor, :user_journey_section
-             )).to eq(
-               user_journey_actor: %w[
-                 #8FBC8F #7CFC00 #00FFFF #20B2AA #B0E0E6 #FFFFE0
-               ],
-               user_journey_section: %w[
-                 #191970 #8B008B #4B0082 #2F4F4F #800000 #8B4513 #00008B
-               ],
-             )
+    end
 
-      shared_names = sizes.keys - [:mindmap]
-      shared = palettes.values_at(:default, :light, :high_contrast).map do |set|
-        set.slice(*shared_names)
-      end
-      expect(shared.uniq.size)
-        .to eq(1)
+    it "retains the default journey palettes" do
+      expect(palettes[:default].slice(:user_journey_actor,
+                                      :user_journey_section))
+        .to eq(default_journey_palettes)
+    end
+
+    it "shares all existing palettes except mindmap across the other themes" do
+      expect(shared_builtin_palettes.uniq.size).to eq(1)
     end
 
     it "wraps an index past the end of a palette" do
