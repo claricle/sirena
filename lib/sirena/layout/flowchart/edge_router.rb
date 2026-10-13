@@ -89,22 +89,26 @@ module Sirena
       # @return [Array(Array<Hash>, Array<Numeric>)] the points of the
       #   run, and the ends of the stretch the label sits on
       def route(source, target, bends = nil)
-        points = nil
-        unless exposed_cluster_overlap?(source, target)
-          points = coincident_loop(source, target)
-        end
-
-        points ||= trimmed_route(source, target)
-        source_neighbour = bends&.first || points[1]
-        target_neighbour = bends&.last || points[-2]
-        points[0] = clamp_cluster_corner(points[0], source_neighbour, source)
-        points[-1] = clamp_cluster_corner(points[-1], target_neighbour, target)
+        points = initial_route(source, target)
+        clamp_route(points, source, target, bends)
         label_points = points.length > 2 ? points.slice(1, 2) : points
-
         [points, self.class.ends_of(label_points)]
       end
 
       private
+
+      def initial_route(source, target)
+        points = coincident_loop(source, target) unless
+          exposed_cluster_overlap?(source, target)
+        points || trimmed_route(source, target)
+      end
+
+      def clamp_route(points, source, target, bends)
+        source_neighbour = bends&.first || points[1]
+        target_neighbour = bends&.last || points[-2]
+        points[0] = clamp_cluster_corner(points[0], source_neighbour, source)
+        points[-1] = clamp_cluster_corner(points[-1], target_neighbour, target)
+      end
 
       def cluster?(box)
         self.class.cluster?(box)
@@ -121,6 +125,11 @@ module Sirena
 
         outline = painted_cluster_outline(box)
         return point if outline.values_at(:rx, :ry).any?(&:zero?)
+
+        painted_cluster_contact(point, neighbour, outline, x_side, y_side)
+      end
+
+      def painted_cluster_contact(point, neighbour, outline, x_side, y_side)
         if x_side && y_side
           return rounded_corner(neighbour, outline, x_side, y_side)
         end
@@ -141,47 +150,66 @@ module Sirena
       end
 
       def painted_cluster_outline(box)
-        x = (box[:x] || 0).to_i.to_f
-        y = (box[:y] || 0).to_i.to_f
-        width = (box[:width] || 0).to_i.to_f
-        height = (box[:height] || 0).to_i.to_f
-        xs = [x, x + width]
-        ys = [y, y + height]
-        { xs: xs, ys: ys,
+        x, y, width, height = painted_cluster_dimensions(box)
+        { xs: [x, x + width], ys: [y, y + height],
           rx: [CLUSTER_CORNER, width / 2.0].min,
           ry: [CLUSTER_CORNER, height / 2.0].min }
       end
 
+      def painted_cluster_dimensions(box)
+        %i[x y width height].map { |key| (box[key] || 0).to_i.to_f }
+      end
+
       def clamp_cluster_side(point, outline, x_side, y_side)
-        xs, ys, rx, ry = outline.values_at(:xs, :ys, :rx, :ry)
         if x_side
-          point.merge(x: xs[x_side], y: point[:y].clamp(ys.first + ry,
-                                                        ys.last - ry))
+          clamp_vertical_side(point, outline, x_side)
         else
-          point.merge(x: point[:x].clamp(xs.first + rx, xs.last - rx),
-                      y: ys[y_side])
+          clamp_horizontal_side(point, outline, y_side)
         end
       end
 
+      def clamp_vertical_side(point, outline, side)
+        xs, ys, ry = outline.values_at(:xs, :ys, :ry)
+        point.merge(x: xs[side],
+                    y: point[:y].clamp(ys.first + ry, ys.last - ry))
+      end
+
+      def clamp_horizontal_side(point, outline, side)
+        xs, ys, rx = outline.values_at(:xs, :ys, :rx)
+        point.merge(x: point[:x].clamp(xs.first + rx, xs.last - rx),
+                    y: ys[side])
+      end
+
       def rounded_corner(neighbour, outline, x_side, y_side)
-        xs, ys, rx, ry = outline.values_at(:xs, :ys, :rx, :ry)
-        corner = { x: xs[x_side], y: ys[y_side] }
-        centre = { x: x_side.zero? ? xs.first + rx : xs.last - rx,
-                   y: y_side.zero? ? ys.first + ry : ys.last - ry }
+        corner = corner_point(outline, x_side, y_side)
+        centre = corner_centre(outline, x_side, y_side)
         direction = { x: corner[:x] - neighbour[:x],
                       y: corner[:y] - neighbour[:y] }
-        step = ellipse_entry(corner, centre, direction, rx, ry)
-        return corner unless step
+        step = ellipse_entry(
+          corner, centre, direction, outline[:rx], outline[:ry]
+        )
+        step ? corner_at_step(corner, direction, step) : corner
+      end
 
+      def corner_point(outline, x_side, y_side)
+        xs, ys = outline.values_at(:xs, :ys)
+        { x: xs[x_side], y: ys[y_side] }
+      end
+
+      def corner_centre(outline, x_side, y_side)
+        xs, ys, rx, ry = outline.values_at(:xs, :ys, :rx, :ry)
+        { x: x_side.zero? ? xs.first + rx : xs.last - rx,
+          y: y_side.zero? ? ys.first + ry : ys.last - ry }
+      end
+
+      def corner_at_step(corner, direction, step)
         corner.merge(x: (corner[:x] + (direction[:x] * step)).round(2),
                      y: (corner[:y] + (direction[:y] * step)).round(2))
       end
 
       def ellipse_entry(corner, centre, direction, radius_x, radius_y)
-        x = (corner[:x] - centre[:x]) / radius_x
-        y = (corner[:y] - centre[:y]) / radius_y
-        dx = direction[:x] / radius_x
-        dy = direction[:y] / radius_y
+        x, y = normalized_corner(corner, centre, radius_x, radius_y)
+        dx, dy = ellipse_direction(direction, radius_x, radius_y)
         a = (dx**2) + (dy**2)
         return nil if a.zero?
 
@@ -189,13 +217,26 @@ module Sirena
         smallest_quadratic_root(a, b)
       end
 
+      def normalized_corner(corner, centre, radius_x, radius_y)
+        [(corner[:x] - centre[:x]) / radius_x,
+         (corner[:y] - centre[:y]) / radius_y]
+      end
+
+      def ellipse_direction(direction, radius_x, radius_y)
+        [direction[:x] / radius_x, direction[:y] / radius_y]
+      end
+
       def smallest_quadratic_root(quad_coeff, linear_coeff)
         discriminant = (linear_coeff**2) - (4 * quad_coeff)
         return nil if discriminant.negative?
 
+        quadratic_roots(quad_coeff, linear_coeff, discriminant)
+          .select { |value| value >= 0 }.min
+      end
+
+      def quadratic_roots(quad_coeff, linear_coeff, discriminant)
         [(-linear_coeff - Math.sqrt(discriminant)) / (2 * quad_coeff),
          (-linear_coeff + Math.sqrt(discriminant)) / (2 * quad_coeff)]
-          .select { |value| value >= 0 }.min
       end
 
       # A straight run needs a direction. Self-edges and distinct boxes
@@ -206,16 +247,25 @@ module Sirena
         target_centre = FlowchartEdgeRouter.centre(target)
         return nil unless near?(source_centre, target_centre)
 
-        source_top, = vertical_outline(source, source_centre[:y])
-        _, target_bottom = vertical_outline(target, target_centre[:y])
-        start = { x: source_centre[:x], y: source_top }
-        finish = { x: target_centre[:x], y: target_bottom }
+        coincident_loop_points(source, target, source_centre, target_centre)
+      end
+
+      def coincident_loop_points(source, target, source_centre, target_centre)
+        start, finish = loop_endpoints(
+          source, target, source_centre, target_centre
+        )
         out = [right_of(source), right_of(target)].max + LOOP_REACH
         bend_y = finish[:y]
         bend_y += LOOP_REACH if near?(start, finish)
-
         rounded_points([start, { x: out, y: start[:y] },
                         { x: out, y: bend_y }, finish])
+      end
+
+      def loop_endpoints(source, target, source_centre, target_centre)
+        source_top, = vertical_outline(source, source_centre[:y])
+        _, target_bottom = vertical_outline(target, target_centre[:y])
+        [{ x: source_centre[:x], y: source_top },
+         { x: target_centre[:x], y: target_bottom }]
       end
 
       def near?(first, second)
@@ -250,27 +300,35 @@ module Sirena
         to = FlowchartEdgeRouter.centre(target)
         out = step_out(source, from, to)
         back = step_out(target, to, from)
+        trimmed_points(source, target, from, to, [out, back])
+      end
 
-        # One centre can sit inside the other box even when neither box
-        # contains the other. Detect that deep partial overlap from the
-        # rectangles themselves before the centre-based nesting fallback.
+      def trimmed_points(source, target, from, to, steps)
         if exposed_cluster_overlap?(source, target)
           return exterior_route(source, target, from, to)
         end
-
-        # A step past the other centre means that centre is inside this
-        # box. Use the opposite sides so the ordered route still points
-        # from source to target while touching both borders.
-        if out >= 1.0 - TOUCHING || back >= 1.0 - TOUCHING
+        if enclosing_steps?(steps)
           return enclosing_route(source, target, from, to)
         end
-
-        # Partially overlapping or touching boxes need an exterior route:
-        # their centre chord is visible through both cluster faces.
-        if out + back >= 1.0 - TOUCHING
+        if overlapping_steps?(steps)
           return exterior_route(source, target, from, to)
         end
 
+        clipped_route(source, target, from, to, steps)
+      end
+
+      def enclosing_steps?(steps)
+        out, back = steps
+        out >= 1.0 - TOUCHING || back >= 1.0 - TOUCHING
+      end
+
+      def overlapping_steps?(steps)
+        out, back = steps
+        out + back >= 1.0 - TOUCHING
+      end
+
+      def clipped_route(source, target, from, to, steps)
+        out, back = steps
         route = [along(from, to, out), along(to, from, back)]
         if route.first == route.last
           return exterior_route(source, target, from, to)
@@ -281,20 +339,34 @@ module Sirena
 
       def exposed_cluster_overlap?(source, target)
         return false unless cluster?(source) && cluster?(target)
+        if contains_box?(source, target) || contains_box?(target, source)
+          return false
+        end
 
-        nested = contains_box?(source, target) || contains_box?(target, source)
-        return false if nested
+        overlapping_x?(source, target) && overlapping_y?(source, target)
+      end
 
+      def overlapping_x?(source, target)
         (source[:x] || 0) <= right_of(target) &&
-          right_of(source) >= (target[:x] || 0) &&
-          (source[:y] || 0) <= bottom_of(target) &&
+          right_of(source) >= (target[:x] || 0)
+      end
+
+      def overlapping_y?(source, target)
+        (source[:y] || 0) <= bottom_of(target) &&
           bottom_of(source) >= (target[:y] || 0)
       end
 
       def contains_box?(outer, inner)
+        contains_x?(outer, inner) && contains_y?(outer, inner)
+      end
+
+      def contains_x?(outer, inner)
         (outer[:x] || 0) <= (inner[:x] || 0) &&
-          right_of(outer) >= right_of(inner) &&
-          (outer[:y] || 0) <= (inner[:y] || 0) &&
+          right_of(outer) >= right_of(inner)
+      end
+
+      def contains_y?(outer, inner)
+        (outer[:y] || 0) <= (inner[:y] || 0) &&
           bottom_of(outer) >= bottom_of(inner)
       end
 
@@ -315,14 +387,17 @@ module Sirena
       # projections can put that corner inside the other box, so only use a
       # candidate whose actual segments stay outside both open faces.
       def exterior_route(source, target, from, to)
+        candidates = exterior_candidates(source, target, from, to)
+        rounded = candidates.map { |points| rounded_points(points) }
+        clear = rounded.find { |route| clear_route?(route, source, target) }
+        clear || rounded.first
+      end
+
+      def exterior_candidates(source, target, from, to)
         bottom = bottom_exterior_route(source, target, from, to)
         right = right_exterior_route(source, target, from, to)
         sideways = (to[:x] - from[:x]).abs >= (to[:y] - from[:y]).abs
-        candidates = sideways ? [bottom, right] : [right, bottom]
-        rounded = candidates.map { |points| rounded_points(points) }
-
-        clear = rounded.find { |route| clear_route?(route, source, target) }
-        clear || rounded.first
+        sideways ? [bottom, right] : [right, bottom]
       end
 
       def rounded_points(points)
@@ -339,14 +414,36 @@ module Sirena
 
       def crosses_face?(box, from, to)
         if from[:x] == to[:x]
-          low, high = [from[:y], to[:y]].minmax
-          from[:x] > (box[:x] || 0) && from[:x] < right_of(box) &&
-            low < bottom_of(box) && high > (box[:y] || 0)
+          crosses_vertical_face?(box, from, to)
         else
-          low, high = [from[:x], to[:x]].minmax
-          from[:y] > (box[:y] || 0) && from[:y] < bottom_of(box) &&
-            low < right_of(box) && high > (box[:x] || 0)
+          crosses_horizontal_face?(box, from, to)
         end
+      end
+
+      def crosses_vertical_face?(box, from, to)
+        low, high = [from[:y], to[:y]].minmax
+        inside_x?(box, from[:x]) && overlaps_y_face?(box, low, high)
+      end
+
+      def crosses_horizontal_face?(box, from, to)
+        low, high = [from[:x], to[:x]].minmax
+        inside_y?(box, from[:y]) && overlaps_x_face?(box, low, high)
+      end
+
+      def inside_x?(box, coordinate)
+        coordinate > (box[:x] || 0) && coordinate < right_of(box)
+      end
+
+      def inside_y?(box, coordinate)
+        coordinate > (box[:y] || 0) && coordinate < bottom_of(box)
+      end
+
+      def overlaps_x_face?(box, low, high)
+        low < right_of(box) && high > (box[:x] || 0)
+      end
+
+      def overlaps_y_face?(box, low, high)
+        low < bottom_of(box) && high > (box[:y] || 0)
       end
 
       def bottom_exterior_route(source, target, from, to)
@@ -385,12 +482,20 @@ module Sirena
       def step_out(box, from, to)
         return 0.0 unless cluster?(box)
 
-        dx = to[:x] - from[:x]
-        dy = to[:y] - from[:y]
-        reach = []
-        reach << box_side(from[:x], dx, box, :x, :width) unless dx.zero?
-        reach << box_side(from[:y], dy, box, :y, :height) unless dy.zero?
+        reach = border_steps(box, from, to)
         reach.empty? ? 0.0 : reach.min.clamp(0.0, Float::INFINITY)
+      end
+
+      def border_steps(box, from, to)
+        [axis_step(box, from[:x], to[:x], :x, :width),
+         axis_step(box, from[:y], to[:y], :y, :height)].compact
+      end
+
+      def axis_step(box, origin, target, origin_key, size_key)
+        delta = target - origin
+        return if delta.zero?
+
+        box_side(origin, delta, box, origin_key, size_key)
       end
 
       def box_side(from, delta, box, origin_key, size_key)
@@ -413,8 +518,12 @@ module Sirena
       def along(from, to, step)
         return from if step.zero?
 
-        { x: (from[:x] + ((to[:x] - from[:x]) * step)).round(2),
-          y: (from[:y] + ((to[:y] - from[:y]) * step)).round(2) }
+        { x: along_coordinate(from, to, step, :x),
+          y: along_coordinate(from, to, step, :y) }
+      end
+
+      def along_coordinate(from, to, step, axis)
+        (from[axis] + ((to[axis] - from[axis]) * step)).round(2)
       end
     end
   end
