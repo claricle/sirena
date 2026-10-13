@@ -1,5 +1,0 @@
----
-cop: Layout/ExtraSpacing
-rows:
-- file: tasks/generate_mermaid_fixtures.rake
-  count: 4
