@@ -1,7 +1,0 @@
----
-cop: Style/RedundantArgument
-rows:
-- file: scripts/extract_mermaid_tests.rb
-  count: 1
-- file: spec/sirena/parser/error_position_spec.rb
-  count: 3

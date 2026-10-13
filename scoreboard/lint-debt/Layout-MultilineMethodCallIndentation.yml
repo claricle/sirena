@@ -1,5 +1,0 @@
----
-cop: Layout/MultilineMethodCallIndentation
-rows:
-- file: tasks/generate_mermaid_fixtures.rake
-  count: 2

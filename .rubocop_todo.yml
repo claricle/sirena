@@ -14,10 +14,6 @@ Gemspec/RequiredRubyVersion:
 # Offense count: 8
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowForAlignment, AllowBeforeTrailingComments, ForceEqualSignAlignment.
-Layout/ExtraSpacing:
-  Exclude:
-    - 'tasks/generate_mermaid_fixtures.rake'
-
 # Offense count: 4
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: IndentationWidth.
@@ -40,19 +36,10 @@ Layout/LineLength:
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle, IndentationWidth.
 # SupportedStyles: aligned, indented, indented_relative_to_receiver
-Layout/MultilineMethodCallIndentation:
-  Exclude:
-    - 'lib/sirena/renderer/er_diagram.rb'
-    - 'lib/sirena/renderer/gantt.rb'
-    - 'tasks/generate_mermaid_fixtures.rake'
-
 # Offense count: 84
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle, IndentationWidth.
 # SupportedStyles: aligned, indented
-Layout/MultilineOperationIndentation:
-  Enabled: false
-
 # Offense count: 5
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowForAlignment, EnforcedStyleForExponentOperator, EnforcedStyleForRationalLiterals.
@@ -175,13 +162,6 @@ Style/MapIntoArray:
 # Offense count: 5
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: Methods.
-Style/RedundantArgument:
-  Exclude:
-    - 'lib/sirena/parser/builders/kanban.rb'
-    - 'lib/sirena/parser/builders/mindmap.rb'
-    - 'lib/sirena/renderer/requirement.rb'
-    - 'scripts/extract_mermaid_tests.rb'
-
 # Offense count: 16
 # This cop supports safe autocorrection (--autocorrect).
 Style/RedundantAssignment:
@@ -189,10 +169,6 @@ Style/RedundantAssignment:
 
 # Offense count: 13
 # This cop supports safe autocorrection (--autocorrect).
-Style/RedundantRegexpArgument:
-  Exclude:
-    - 'spec/sirena/renderer/quadrant_spec.rb'
-
 # Offense count: 7
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle.
