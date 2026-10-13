@@ -39,6 +39,12 @@ RSpec.describe Sirena::Renderer::Quadrant, :aggregate_failures do
   end
 
   describe "#render" do
+    let(:graph) do
+      diagram = Sirena::Parser::Quadrant.new.parse(source)
+      Sirena::Layout::Quadrant.new.to_graph(diagram)
+    end
+    let(:xml) { renderer.render(graph).to_xml }
+
     it "rejects a bare positioned Hash" do
       expect { renderer.render(width: 100, height: 100) }
         .to raise_error(NoMethodError)
@@ -59,181 +65,148 @@ RSpec.describe Sirena::Renderer::Quadrant, :aggregate_failures do
       expect(labels).to eq(["First", nil, "Third", nil])
     end
 
-    it "renders a simple quadrant chart to SVG" do
-      source = <<~QUADRANT
-        quadrantChart
-          title Product Analysis
-          x-axis Low Cost --> High Cost
-          y-axis Low Value --> High Value
-          quadrant-1 Invest
-          quadrant-2 Evaluate
-          quadrant-3 Divest
-          quadrant-4 Maintain
-          Product A: [0.3, 0.7]
-      QUADRANT
+    context "with a simple quadrant chart" do
+      let(:source) do
+        <<~QUADRANT
+          quadrantChart
+            title Product Analysis
+            x-axis Low Cost --> High Cost
+            y-axis Low Value --> High Value
+            quadrant-1 Invest
+            quadrant-2 Evaluate
+            quadrant-3 Divest
+            quadrant-4 Maintain
+            Product A: [0.3, 0.7]
+        QUADRANT
+      end
 
-      parser = Sirena::Parser::Quadrant.new
-      diagram = parser.parse(source)
+      it "renders to an SVG document" do
+        expect(renderer.render(graph)).to be_a(Sirena::Svg::Document)
+      end
 
-      transform = Sirena::Layout::Quadrant.new
-      graph = transform.to_graph(diagram)
-
-      svg = renderer.render(graph)
-
-      expect(svg).to be_a(Sirena::Svg::Document)
-      expect(svg.to_xml).to include("Product Analysis")
-      expect(svg.to_xml).to include("<svg")
+      it "renders the title and the svg element" do
+        expect(xml).to include("Product Analysis", "<svg")
+      end
     end
 
-    it "renders quadrant grid with colored backgrounds" do
-      source = <<~QUADRANT
-        quadrantChart
-          x-axis Left --> Right
-          y-axis Bottom --> Top
-          quadrant-1 Q1
-          quadrant-2 Q2
-          quadrant-3 Q3
-          quadrant-4 Q4
-      QUADRANT
-
-      parser = Sirena::Parser::Quadrant.new
-      diagram = parser.parse(source)
-
-      transform = Sirena::Layout::Quadrant.new
-      graph = transform.to_graph(diagram)
-
-      svg = renderer.render(graph)
-      xml = svg.to_xml
+    context "with quadrant grid backgrounds" do
+      let(:source) do
+        <<~QUADRANT
+          quadrantChart
+            x-axis Left --> Right
+            y-axis Bottom --> Top
+            quadrant-1 Q1
+            quadrant-2 Q2
+            quadrant-3 Q3
+            quadrant-4 Q4
+        QUADRANT
+      end
 
       # mmdc draws four opaque quadrant rectangles, one per g.quadrant
-      expect(xml.scan('<g class="quadrant">').length).to eq(4)
-      expect(xml.scan(/<rect fill="#[0-9A-Fa-f]{6}"/).length).to eq(4)
-      expect(xml).not_to include("opacity")
+      it "renders four quadrant groups" do
+        expect(xml.scan('<g class="quadrant">').length).to eq(4)
+      end
+
+      it "fills each quadrant with an opaque rectangle" do
+        expect(xml.scan(/<rect fill="#[0-9A-Fa-f]{6}"/).length).to eq(4)
+      end
+
+      it "uses no opacity" do
+        expect(xml).not_to include("opacity")
+      end
     end
 
-    it "renders axis lines and labels" do
-      source = <<~QUADRANT
-        quadrantChart
-          x-axis Low Cost --> High Cost
-          y-axis Low Value --> High Value
-      QUADRANT
+    context "with axes" do
+      let(:source) do
+        <<~QUADRANT
+          quadrantChart
+            x-axis Low Cost --> High Cost
+            y-axis Low Value --> High Value
+        QUADRANT
+      end
 
-      parser = Sirena::Parser::Quadrant.new
-      diagram = parser.parse(source)
+      it "renders axis lines" do
+        expect(xml).to include("<line")
+      end
 
-      transform = Sirena::Layout::Quadrant.new
-      graph = transform.to_graph(diagram)
-
-      svg = renderer.render(graph)
-      xml = svg.to_xml
-
-      # Should contain axis lines
-      expect(xml).to include("<line")
-
-      # Should contain axis labels
-      expect(xml).to include("Low Cost")
-      expect(xml).to include("High Cost")
-      expect(xml).to include("Low Value")
-      expect(xml).to include("High Value")
+      it "renders axis labels" do
+        expect(xml).to include("Low Cost", "High Cost",
+                               "Low Value", "High Value")
+      end
     end
 
-    it "renders quadrant labels" do
-      source = <<~QUADRANT
-        quadrantChart
-          x-axis Left --> Right
-          y-axis Bottom --> Top
-          quadrant-1 Invest
-          quadrant-2 Evaluate
-          quadrant-3 Divest
-          quadrant-4 Maintain
-      QUADRANT
+    context "with quadrant labels" do
+      let(:source) do
+        <<~QUADRANT
+          quadrantChart
+            x-axis Left --> Right
+            y-axis Bottom --> Top
+            quadrant-1 Invest
+            quadrant-2 Evaluate
+            quadrant-3 Divest
+            quadrant-4 Maintain
+        QUADRANT
+      end
 
-      parser = Sirena::Parser::Quadrant.new
-      diagram = parser.parse(source)
-
-      transform = Sirena::Layout::Quadrant.new
-      graph = transform.to_graph(diagram)
-
-      svg = renderer.render(graph)
-      xml = svg.to_xml
-
-      expect(xml).to include("Invest")
-      expect(xml).to include("Evaluate")
-      expect(xml).to include("Divest")
-      expect(xml).to include("Maintain")
+      it "renders quadrant labels" do
+        expect(xml).to include("Invest", "Evaluate", "Divest", "Maintain")
+      end
     end
 
-    it "renders data points as circles" do
-      source = <<~QUADRANT
-        quadrantChart
-          x-axis Left --> Right
-          y-axis Bottom --> Top
-          Point A: [0.3, 0.7]
-          Point B: [0.8, 0.4]
-          Point C: [0.5, 0.5]
-      QUADRANT
+    context "with data points" do
+      let(:source) do
+        <<~QUADRANT
+          quadrantChart
+            x-axis Left --> Right
+            y-axis Bottom --> Top
+            Point A: [0.3, 0.7]
+            Point B: [0.8, 0.4]
+            Point C: [0.5, 0.5]
+        QUADRANT
+      end
 
-      parser = Sirena::Parser::Quadrant.new
-      diagram = parser.parse(source)
+      it "renders circle elements for points" do
+        expect(xml).to include("<circle")
+        expect(xml.scan("<circle").length).to be >= 3
+      end
 
-      transform = Sirena::Layout::Quadrant.new
-      graph = transform.to_graph(diagram)
-
-      svg = renderer.render(graph)
-      xml = svg.to_xml
-
-      # Should contain circle elements for points
-      expect(xml).to include("<circle")
-      expect(xml.scan("<circle").length).to be >= 3
-
-      # Should include point labels
-      expect(xml).to include("Point A")
-      expect(xml).to include("Point B")
-      expect(xml).to include("Point C")
+      it "includes the point labels" do
+        expect(xml).to include("Point A", "Point B", "Point C")
+      end
     end
 
-    it "renders points with custom styling" do
-      source = <<~QUADRANT
-        quadrantChart
-          x-axis Left --> Right
-          y-axis Bottom --> Top
-          Product A: [0.5, 0.5] radius: 10, color: #ff0000
-      QUADRANT
+    context "with custom point styling" do
+      let(:source) do
+        <<~QUADRANT
+          quadrantChart
+            x-axis Left --> Right
+            y-axis Bottom --> Top
+            Product A: [0.5, 0.5] radius: 10, color: #ff0000
+        QUADRANT
+      end
 
-      parser = Sirena::Parser::Quadrant.new
-      diagram = parser.parse(source)
-
-      transform = Sirena::Layout::Quadrant.new
-      graph = transform.to_graph(diagram)
-
-      svg = renderer.render(graph)
-      xml = svg.to_xml
-
-      # Should contain styled circle
-      expect(xml).to include("<circle")
-      expect(xml).to include("r=\"10")
-      expect(xml).to include("#ff0000")
+      it "renders a styled circle" do
+        expect(xml).to include("<circle", "r=\"10", "#ff0000")
+      end
     end
 
-    it "calculates SVG coordinates correctly" do
-      source = <<~QUADRANT
-        quadrantChart
-          x-axis Left --> Right
-          y-axis Bottom --> Top
-          Center: [0.5, 0.5]
-      QUADRANT
+    context "with a centred point" do
+      let(:source) do
+        <<~QUADRANT
+          quadrantChart
+            x-axis Left --> Right
+            y-axis Bottom --> Top
+            Center: [0.5, 0.5]
+        QUADRANT
+      end
 
-      parser = Sirena::Parser::Quadrant.new
-      diagram = parser.parse(source)
+      it "calculates SVG coordinates correctly" do
+        point = graph.points.first
 
-      transform = Sirena::Layout::Quadrant.new
-      graph = transform.to_graph(diagram)
-
-      # Check that point coordinates are transformed
-      point = graph.points.first
-      expect(point.x).to be > 0
-      expect(point.y).to be > 0
-      expect([point.x, point.y]).to eq([263.0, 237.0])
+        expect(point.x).to be > 0
+        expect(point.y).to be > 0
+        expect([point.x, point.y]).to eq([263.0, 237.0])
+      end
     end
   end
 end

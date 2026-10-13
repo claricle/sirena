@@ -81,6 +81,13 @@ module Sirena
         "rhombus" => "rhombus", "hexagon" => "hexagon"
       }.freeze
 
+      BOUNDARY_SCALES = {
+        "rhombus" => :rhombus_scale, "circle" => :circle_scale,
+        "hexagon" => :hexagon_scale, "rounded" => :rounded_scale,
+        "stadium" => :stadium_scale
+      }.freeze
+      private_constant :BOUNDARY_SCALES
+
       EDGE_HEADS = {
         "arrow" => "arrow", "cross" => "cross", "circle" => "circle"
       }.freeze
@@ -249,16 +256,17 @@ module Sirena
         dx, dy = self_loop_overflow(flat)
         page = shift_page(flat, dx, dy)
         edges = typed_edges(page)
-        width, height = canvas_size(page, edges)
 
-        Scene.new(
-          id: graph[:id] || "flowchart",
-          width: width,
-          height: height,
-          view_box: "0 0 #{width} #{height}",
-          children: typed_children(graph[:children] || [], 0, 0, dx, dy),
-          edges: edges,
-        )
+        Scene.new(id: graph[:id] || "flowchart", **canvas_geometry(page, edges),
+                  children: typed_children(
+                    graph[:children] || [], 0, 0, dx, dy
+                  ),
+                  edges: edges)
+      end
+
+      def canvas_geometry(page, edges)
+        width, height = canvas_size(page, edges)
+        { width: width, height: height, view_box: "0 0 #{width} #{height}" }
       end
 
       # [width, height] of the boxes and of every routed edge, so a route
@@ -288,8 +296,7 @@ module Sirena
 
       def collect(children, delta_x, delta_y, clusters, nodes)
         children.each do |child|
-          placed = child.merge(x: (child[:x] || 0) + delta_x,
-                               y: (child[:y] || 0) + delta_y)
+          placed = shifted_box(child, delta_x, delta_y)
           unless child[:children]
             nodes << placed
             next
@@ -298,6 +305,11 @@ module Sirena
           clusters << placed.except(:children) if cluster?(child)
           collect(child[:children], placed[:x], placed[:y], clusters, nodes)
         end
+      end
+
+      def shifted_box(box, delta_x, delta_y)
+        box.merge(x: (box[:x] || 0) + delta_x,
+                  y: (box[:y] || 0) + delta_y)
       end
 
       def cluster?(child)
@@ -313,27 +325,27 @@ module Sirena
       end
 
       def shift_boxes(boxes, delta_x, delta_y)
-        (boxes || []).map do |box|
-          box.merge(x: (box[:x] || 0) + delta_x,
-                    y: (box[:y] || 0) + delta_y)
-        end
+        (boxes || []).map { |box| shifted_box(box, delta_x, delta_y) }
       end
 
       def shift_edges(edges, delta_x, delta_y)
-        (edges || []).map do |edge|
-          sections = edge[:sections]
-          next edge unless sections&.any?
+        (edges || []).map { |edge| shifted_edge(edge, delta_x, delta_y) }
+      end
 
-          edge.merge(sections: sections.map do |section|
-            bends = section[:bendPoints]
-            next section unless bends&.any?
+      def shifted_edge(edge, delta_x, delta_y)
+        sections = edge[:sections]
+        return edge unless sections&.any?
 
-            section.merge(bendPoints: bends.map do |point|
-              point.merge(x: (point[:x] || 0) + delta_x,
-                          y: (point[:y] || 0) + delta_y)
-            end)
-          end)
-        end
+        edge.merge(sections: sections.map do |section|
+          shifted_section(section, delta_x, delta_y)
+        end)
+      end
+
+      def shifted_section(section, delta_x, delta_y)
+        bends = section[:bendPoints]
+        return section unless bends&.any?
+
+        section.merge(bendPoints: shift_boxes(bends, delta_x, delta_y))
       end
 
       def typed_children(children, parent_x, parent_y, delta_x, delta_y)
@@ -345,43 +357,54 @@ module Sirena
       end
 
       def typed_node(node, x_pos, y_pos, delta_x, delta_y)
-        width = node[:width] || 100
-        height = node[:height] || 50
+        bounds = { x: x_pos, y: y_pos, width: node[:width] || 100,
+                   height: node[:height] || 50 }
+        Node.new(**typed_node_attributes(node, bounds),
+                 children: typed_children(
+                   node[:children] || [], x_pos - delta_x, y_pos - delta_y,
+                   delta_x, delta_y
+                 ))
+      end
+
+      def typed_node_attributes(node, bounds)
         is_cluster = cluster?(node)
         shape = node.dig(:metadata, :shape) || "rect"
         kind = is_cluster ? "cluster" : (NODE_OUTLINES[shape] || "rect")
-
-        Node.new(
-          id: node[:id], x: x_pos, y: y_pos, width: width, height: height,
-          labels: typed_node_labels(
-            node, x_pos, y_pos, width, height, is_cluster
-          ),
-          shape: shape, shape_kind: kind,
-          shape_points: polygon_points(kind, x_pos, y_pos, width, height),
-          shape_x: is_cluster ? x_pos.to_i : x_pos,
-          shape_y: is_cluster ? y_pos.to_i : y_pos,
-          shape_width: is_cluster ? width.to_i : width,
-          shape_height: is_cluster ? height.to_i : height,
-          center_x: x_pos + (width / 2.0), center_y: y_pos + (height / 2.0),
-          radius: [width, height].min / 2.0,
-          corner_radius: corner_radius(kind, width, height),
-          cluster: is_cluster,
-          container: node.key?(:children),
-          children: typed_children(node[:children] || [], x_pos - delta_x,
-                                   y_pos - delta_y, delta_x, delta_y)
-        )
+        { id: node[:id], **bounds, shape: shape, shape_kind: kind,
+          labels: typed_node_labels(node, bounds, is_cluster),
+          **shape_geometry(kind, bounds), **painted_box(bounds, is_cluster),
+          cluster: is_cluster, container: node.key?(:children) }
       end
 
-      def typed_node_labels(node, x_pos, y_pos, width, height, cluster)
+      def shape_geometry(kind, bounds)
+        x, y, width, height = bounds.values_at(:x, :y, :width, :height)
+        { shape_points: polygon_points(kind, x, y, width, height),
+          center_x: x + (width / 2.0), center_y: y + (height / 2.0),
+          radius: [width, height].min / 2.0,
+          corner_radius: corner_radius(kind, width, height) }
+      end
+
+      def painted_box(bounds, cluster)
+        drawn = cluster ? bounds.transform_values(&:to_i) : bounds
+        { shape_x: drawn[:x], shape_y: drawn[:y],
+          shape_width: drawn[:width], shape_height: drawn[:height] }
+      end
+
+      def typed_node_labels(node, bounds, cluster)
         (node[:labels] || []).first(1).map do |label|
-          label_y = y_pos + (cluster ? CLUSTER_TITLE_BASELINE : height / 2.0)
-          label_x = cluster ? x_pos + (width.to_i / 2) : x_pos + (width / 2.0)
+          x, y = node_label_anchor(bounds, cluster)
           Label.new(
             text: label[:text], width: label[:width], height: label[:height],
-            x: label_x, y: label_y,
-            **label_geometry(label, label_x, label_y, with_runs: !cluster)
+            x: x, y: y, **label_geometry(label, x, y, with_runs: !cluster)
           )
         end
+      end
+
+      def node_label_anchor(bounds, cluster)
+        x, y, width, height = bounds.values_at(:x, :y, :width, :height)
+        label_y = y + (cluster ? CLUSTER_TITLE_BASELINE : height / 2.0)
+        label_x = cluster ? x + (width.to_i / 2) : x + (width / 2.0)
+        [label_x, label_y]
       end
 
       def label_geometry(label, x_pos, y_pos, with_runs: false)
@@ -421,18 +444,33 @@ module Sirena
       def polygon_points(kind, x_pos, y_pos, width, height)
         case kind
         when "rhombus"
-          cx = x_pos + (width / 2.0)
-          cy = y_pos + (height / 2.0)
-          [[cx, y_pos], [x_pos + width, cy], [cx, y_pos + height], [x_pos, cy]]
-            .map { |px, py| "#{px},#{py}" }.join(" ")
+          format_polygon(rhombus_points(x_pos, y_pos, width, height))
         when "hexagon"
-          cy = y_pos + (height / 2.0)
-          quarter = width / 4.0
-          [[x_pos + quarter, y_pos], [x_pos + width - quarter, y_pos],
-           [x_pos + width, cy], [x_pos + width - quarter, y_pos + height],
-           [x_pos + quarter, y_pos + height], [x_pos, cy]]
-            .map { |px, py| "#{px},#{py}" }.join(" ")
+          format_polygon(hexagon_points(x_pos, y_pos, width, height))
         end
+      end
+
+      def format_polygon(points)
+        points.map { |x, y| "#{x},#{y}" }.join(" ")
+      end
+
+      def rhombus_points(x_pos, y_pos, width, height)
+        cx = x_pos + (width / 2.0)
+        cy = y_pos + (height / 2.0)
+        [[cx, y_pos], [x_pos + width, cy], [cx, y_pos + height], [x_pos, cy]]
+      end
+
+      def hexagon_points(x_pos, y_pos, width, height)
+        left, inner_left, inner_right, right = hexagon_xs(x_pos, width)
+        middle = y_pos + (height / 2.0)
+        bottom = y_pos + height
+        [[inner_left, y_pos], [inner_right, y_pos], [right, middle],
+         [inner_right, bottom], [inner_left, bottom], [left, middle]]
+      end
+
+      def hexagon_xs(x_pos, width)
+        quarter = width / 4.0
+        [x_pos, x_pos + quarter, x_pos + width - quarter, x_pos + width]
       end
 
       def corner_radius(kind, width, height)
@@ -444,22 +482,25 @@ module Sirena
       end
 
       def typed_edges(graph)
-        (graph[:edges] || []).filter_map do |edge|
-          source = find_endpoint(graph, edge[:sources]&.first)
-          target = find_endpoint(graph, edge[:targets]&.first)
-          next unless source && target
+        (graph[:edges] || []).filter_map { |edge| typed_edge(edge, graph) }
+      end
 
-          route, bends, label_route = edge_route(edge, graph, source, target)
-          type = edge.dig(:metadata, :arrow_type).to_s
-          Edge.new(
-            id: edge[:id], source: source[:id], target: target[:id],
-            sections: [typed_section(route, bends)],
-            labels: typed_edge_labels(edge, source, target, bends, label_route),
-            arrow_type: type,
-            path: edge_path(route, bends),
-            heads: typed_heads(route, bends, source, target, type)
-          )
-        end
+      def typed_edge(edge, graph)
+        source = find_endpoint(graph, edge[:sources]&.first)
+        target = find_endpoint(graph, edge[:targets]&.first)
+        return unless source && target
+
+        Edge.new(**typed_edge_attributes(edge, graph, source, target))
+      end
+
+      def typed_edge_attributes(edge, graph, source, target)
+        route, bends, label_route = edge_route(edge, graph, source, target)
+        type = edge.dig(:metadata, :arrow_type).to_s
+        { id: edge[:id], source: source[:id], target: target[:id],
+          sections: [typed_section(route, bends)],
+          labels: typed_edge_labels(edge, source, target, bends, label_route),
+          arrow_type: type, path: edge_path(route, bends),
+          heads: typed_heads(route, bends, source, target, type) }
       end
 
       def typed_section(route, bends)
@@ -512,19 +553,30 @@ module Sirena
       end
 
       def arrow_head(geometry)
+        Head.new(shape: "arrow", points: arrow_head_points(geometry))
+      end
+
+      def arrow_head_points(geometry)
+        tip_x, tip_y, along_x, along_y, back_x, back_y = arrow_back(geometry)
+        points = [[tip_x, tip_y],
+                  [back_x - (along_y * ARROW_HALF_WIDTH),
+                   back_y + (along_x * ARROW_HALF_WIDTH)],
+                  [back_x + (along_y * ARROW_HALF_WIDTH),
+                   back_y - (along_x * ARROW_HALF_WIDTH)]]
+        format_head_points(points)
+      end
+
+      def format_head_points(points)
+        points.map { |x, y| "#{x.round(1)},#{y.round(1)}" }.join(" ")
+      end
+
+      def arrow_back(geometry)
         tip_x, tip_y, from_x, from_y =
           geometry.values_at(:tip_x, :tip_y, :from_x, :from_y)
         along_x, along_y = unit_towards(tip_x, tip_y, from_x, from_y)
         back_x = tip_x + (along_x * ARROW_LENGTH)
         back_y = tip_y + (along_y * ARROW_LENGTH)
-        points = [
-          [tip_x, tip_y],
-          [back_x - (along_y * ARROW_HALF_WIDTH),
-           back_y + (along_x * ARROW_HALF_WIDTH)],
-          [back_x + (along_y * ARROW_HALF_WIDTH),
-           back_y - (along_x * ARROW_HALF_WIDTH)],
-        ].map { |x, y| "#{x.round(1)},#{y.round(1)}" }.join(" ")
-        Head.new(shape: "arrow", points: points)
+        [tip_x, tip_y, along_x, along_y, back_x, back_y]
       end
 
       def circle_head(geometry)
@@ -534,17 +586,31 @@ module Sirena
       end
 
       def cross_head(geometry)
-        tip_x, tip_y = backed_off(geometry, CROSS_HEAD_REACH)
-        from_x, from_y = geometry.values_at(:from_x, :from_y)
-        along_x, along_y = unit_towards(tip_x, tip_y, from_x, from_y)
-        along_x = 1.0 if along_x.zero? && along_y.zero?
-        arm_x = (along_x - along_y) * CROSS_HEAD_HALF
-        arm_y = (along_y + along_x) * CROSS_HEAD_HALF
+        tip_x, tip_y, arm_x, arm_y = cross_arms(geometry)
         lines = [[arm_x, arm_y], [arm_y, -arm_x]].map do |line_x, line_y|
-          Line.new(x1: (tip_x - line_x).round(1), y1: (tip_y - line_y).round(1),
-                   x2: (tip_x + line_x).round(1), y2: (tip_y + line_y).round(1))
+          cross_line(tip_x, tip_y, line_x, line_y)
         end
         Head.new(shape: "cross", lines: lines)
+      end
+
+      def cross_arms(geometry)
+        tip_x, tip_y = backed_off(geometry, CROSS_HEAD_REACH)
+        along_x, along_y = cross_direction(geometry, tip_x, tip_y)
+        arm_x = (along_x - along_y) * CROSS_HEAD_HALF
+        arm_y = (along_y + along_x) * CROSS_HEAD_HALF
+        [tip_x, tip_y, arm_x, arm_y]
+      end
+
+      def cross_direction(geometry, tip_x, tip_y)
+        from_x, from_y = geometry.values_at(:from_x, :from_y)
+        x, y = unit_towards(tip_x, tip_y, from_x, from_y)
+        x = 1.0 if x.zero? && y.zero?
+        [x, y]
+      end
+
+      def cross_line(tip_x, tip_y, line_x, line_y)
+        Line.new(x1: (tip_x - line_x).round(1), y1: (tip_y - line_y).round(1),
+                 x2: (tip_x + line_x).round(1), y2: (tip_y + line_y).round(1))
       end
 
       def backed_off(geometry, reach)
@@ -587,14 +653,32 @@ module Sirena
           node = self_loop_node(graph, edge)
           next bounds unless node
 
-          bends = edge_bends(edge, node, node, side)
-          label_x, label_y = loop_label_anchor(node, bends)
-          half_width, height = loop_label_extent(edge)
-          xs = bends.map { |point| point[:x] } +
-            [label_x - half_width, label_x + half_width]
-          ys = bends.map { |point| point[:y] } + [label_y - height, label_y]
-          merge_bounds(bounds, xs.min, xs.max, ys.min, ys.max)
+          extent = loop_edge_bounds(edge, node, side)
+          merge_bounds(
+            bounds, *extent.values_at(:min_x, :max_x, :min_y, :max_y)
+          )
         end
+      end
+
+      def loop_edge_bounds(edge, node, side)
+        bends = edge_bends(edge, node, node, side)
+        bounds = loop_label_bounds(edge, node, bends)
+        min_x, max_x = loop_axis_extent(bends, bounds, :x)
+        min_y, max_y = loop_axis_extent(bends, bounds, :y)
+        { min_x: min_x, max_x: max_x, min_y: min_y, max_y: max_y }
+      end
+
+      def loop_axis_extent(bends, bounds, axis)
+        values = bends.map { |point| point[axis] } +
+          bounds.values_at(:"min_#{axis}", :"max_#{axis}")
+        values.minmax
+      end
+
+      def loop_label_bounds(edge, node, bends)
+        x, y = loop_label_anchor(node, bends)
+        half_width, height = loop_label_extent(edge)
+        { min_x: x - half_width, max_x: x + half_width,
+          min_y: y - height, max_y: y }
       end
 
       def merge_bounds(bounds, min_x, max_x, min_y, max_y)
@@ -641,26 +725,42 @@ module Sirena
       def find_endpoint(graph, node_id)
         return unless node_id
 
-        (graph[:children] || []).find { |node| node[:id] == node_id } ||
-          (graph[:clusters] || []).find { |cluster| cluster[:id] == node_id }
+        find_node(graph[:children], node_id) ||
+          find_node(graph[:clusters], node_id)
+      end
+
+      def find_node(nodes, node_id)
+        (nodes || []).find { |node| node[:id] == node_id }
       end
 
       def edge_route(edge, graph, source, target)
         if source[:id] == target[:id]
-          bends = edge_bends(edge, source, target, self_loop_side(graph))
-          ends = clipped_ends(bends, source, target)
-          return [ends, bends, ends]
+          return self_edge_route(edge, graph, source, target)
         end
 
+        routed_edge(edge, source, target)
+      end
+
+      def self_edge_route(edge, graph, source, target)
+        bends = edge_bends(edge, source, target, self_loop_side(graph))
+        ends = clipped_ends(bends, source, target)
+        [ends, bends, ends]
+      end
+
+      def routed_edge(edge, source, target)
         elk_bends = edge.dig(:sections, 0, :bendPoints)
         points, label_route = edge_router.route(source, target, elk_bends)
         bends = points.length > 2 ? points[1...-1] : (elk_bends || [])
-        if points.length > 2 || cluster?(source) || cluster?(target)
+        if routed_endpoints?(points, source, target)
           return [FlowchartEdgeRouter.ends_of(points), bends, label_route]
         end
 
         route = clipped_ends(bends, source, target)
         [route, bends, route]
+      end
+
+      def routed_endpoints?(points, source, target)
+        points.length > 2 || cluster?(source) || cluster?(target)
       end
 
       def clipped_ends(bends, source, target)
@@ -698,22 +798,34 @@ module Sirena
       end
 
       def self_loop_bends(node, side)
-        cx, cy = node_centre(node)
-        width = node[:width] || 100
-        height = node[:height] || 50
         out_x, out_y = side
-        span_side = out_y.zero? ? height : width
-        half_span =
-          (span_side * SELF_LOOP_HALF_SPAN).clamp(SELF_LOOP_HALF_SPAN_LIMITS)
-        half_span = [half_span, span_side / 2.0].min
-        depth = [[width, height].min * SELF_LOOP_DEPTH, SELF_LOOP_MAX_DEPTH].min
-        edge_x, edge_y = node_boundary(node, cx + out_x, cy + out_y)
-        far_x = edge_x + (out_x * depth)
-        far_y = edge_y + (out_y * depth)
+        half_span = self_loop_half_span(node, out_y)
+        far_x, far_y = self_loop_outer_point(node, side)
         [{ x: far_x - (out_y.abs * half_span),
            y: far_y - (out_x.abs * half_span) },
          { x: far_x + (out_y.abs * half_span),
            y: far_y + (out_x.abs * half_span) }]
+      end
+
+      def self_loop_half_span(node, out_y)
+        span_side = out_y.zero? ? node[:height] || 50 : node[:width] || 100
+        half_span = (span_side * SELF_LOOP_HALF_SPAN)
+          .clamp(SELF_LOOP_HALF_SPAN_LIMITS)
+        [half_span, span_side / 2.0].min
+      end
+
+      def self_loop_outer_point(node, side)
+        cx, cy = node_centre(node)
+        out_x, out_y = side
+        edge_x, edge_y = node_boundary(node, cx + out_x, cy + out_y)
+        depth = self_loop_depth(node)
+        [edge_x + (out_x * depth), edge_y + (out_y * depth)]
+      end
+
+      def self_loop_depth(node)
+        width = node[:width] || 100
+        height = node[:height] || 50
+        [[width, height].min * SELF_LOOP_DEPTH, SELF_LOOP_MAX_DEPTH].min
       end
 
       def head_tip_geometry(route, bends, source, target, which)
@@ -750,14 +862,9 @@ module Sirena
       def boundary_scale(node, delta_x, delta_y)
         half_w = (node[:width] || 100) / 2.0
         half_h = (node[:height] || 50) / 2.0
-        case NODE_OUTLINES[node.dig(:metadata, :shape)]
-        when "rhombus" then rhombus_scale(half_w, half_h, delta_x, delta_y)
-        when "circle" then circle_scale(half_w, half_h, delta_x, delta_y)
-        when "hexagon" then hexagon_scale(half_w, half_h, delta_x, delta_y)
-        when "rounded" then rounded_scale(half_w, half_h, delta_x, delta_y)
-        when "stadium" then stadium_scale(half_w, half_h, delta_x, delta_y)
-        else box_scale(half_w, half_h, delta_x, delta_y)
-        end
+        shape = NODE_OUTLINES[node.dig(:metadata, :shape)]
+        scale_method = BOUNDARY_SCALES.fetch(shape, :box_scale)
+        send(scale_method, half_w, half_h, delta_x, delta_y)
       end
 
       def box_scale(half_w, half_h, delta_x, delta_y)
@@ -834,14 +941,20 @@ module Sirena
       end
 
       def loop_label_anchor(node, bends)
-        mid_x = (bends.first[:x] + bends.last[:x]) / 2.0
-        mid_y = (bends.first[:y] + bends.last[:y]) / 2.0
+        mid_x, mid_y = loop_label_midpoint(bends)
         cx, cy = node_centre(node)
-        span = Math.hypot(mid_x - cx, mid_y - cy)
+        dx = mid_x - cx
+        dy = mid_y - cy
+        span = Math.hypot(dx, dy)
         return [mid_x, mid_y] if span.zero?
 
-        [mid_x + (((mid_x - cx) / span) * EDGE_LABEL_LIFT),
-         mid_y + (((mid_y - cy) / span) * EDGE_LABEL_LIFT)]
+        [mid_x + ((dx / span) * EDGE_LABEL_LIFT),
+         mid_y + ((dy / span) * EDGE_LABEL_LIFT)]
+      end
+
+      def loop_label_midpoint(bends)
+        [(bends.first[:x] + bends.last[:x]) / 2.0,
+         (bends.first[:y] + bends.last[:y]) / 2.0]
       end
 
       # Subgraphs become compound children holding their members, which is
@@ -864,38 +977,39 @@ module Sirena
           [box, transform_subgraph(box, semantic_children[box.id])]
         end
         clusters_by_id = entries.to_h { |box, cluster| [box.id, cluster] }
+        attach_clusters(entries, clusters_by_id)
+        loose = unclustered_nodes(placed, semantic_children, clusters_by_id)
+        loose + root_clusters(entries, clusters_by_id)
+      end
 
-        # Clusters first, so every cluster lists its boxes before its
-        # nodes.
+      def root_clusters(entries, clusters_by_id)
+        entries.reject { |box, _| clusters_by_id[box.parent_id] }.map(&:last)
+      end
+
+      def attach_clusters(entries, clusters_by_id)
         entries.each do |box, cluster|
           clusters_by_id[box.parent_id]&.fetch(:children)&.push(cluster)
         end
+      end
 
-        loose = placed.each_with_object([]) do |node, top_level|
+      def unclustered_nodes(placed, semantic_children, clusters_by_id)
+        placed.each_with_object([]) do |node, top_level|
           transformed = transform_node(node, semantic_children[node.id])
           holder = clusters_by_id[node.parent_id]
           holder ? holder[:children] << transformed : top_level << transformed
         end
-
-        loose + entries.reject { |box, _| clusters_by_id[box.parent_id] }
-          .map(&:last)
       end
 
       def transform_subgraph(box, semantics)
+        { id: semantic_value(semantics, "source_identifier") || box.id,
+          width: 0, height: 0, children: [], labels: subgraph_labels(box),
+          metadata: { cluster: true, direction: own_direction(semantics) } }
+      end
+
+      def subgraph_labels(box)
         title = display_text(box.label)
         label = measure_text(title, font_size: layout_font_size)
-
-        {
-          id: semantic_value(semantics, "source_identifier") || box.id,
-          width: 0,
-          height: 0,
-          children: [],
-          labels: [
-            { text: title, width: label[:width], height: label[:height] },
-          ],
-          metadata: { cluster: true,
-                      direction: own_direction(semantics) },
-        }
+        [{ text: title, width: label[:width], height: label[:height] }]
       end
 
       # The ELK direction a subgraph's own `direction` asks for, nil if it
@@ -909,24 +1023,17 @@ module Sirena
         shape = semantic_value(semantics, "shape") || "rect"
         dims = calculate_dimensions(node.label, shape)
         collision = semantic_value(semantics, "subgraph_collision") == "true"
+        { id: semantic_value(semantics, "source_identifier") || node.id,
+          width: dims[:width], height: dims[:height],
+          labels: [transformed_node_label(node, dims)],
+          metadata: { shape: shape,
+                      classes: semantic_value(semantics, "style_reference"),
+                      subgraph_collision: collision } }
+      end
 
-        {
-          id: semantic_value(semantics, "source_identifier") || node.id,
-          width: dims[:width],
-          height: dims[:height],
-          labels: [
-            {
-              text: Diagram::FlowchartLabelText.lines(node.label).join("\n"),
-              width: dims[:label_width],
-              height: dims[:label_height],
-            },
-          ],
-          metadata: {
-            shape: shape,
-            classes: semantic_value(semantics, "style_reference"),
-            subgraph_collision: collision,
-          },
-        }
+      def transformed_node_label(node, dims)
+        { text: Diagram::FlowchartLabelText.lines(node.label).join("\n"),
+          width: dims[:label_width], height: dims[:label_height] }
       end
 
       def compact_collision_nodes(children)
@@ -1084,22 +1191,15 @@ module Sirena
         direction = direction_to_layout(
           semantic_value(children, "layout_direction"),
         )
+        build_elk_options(algorithm: ALGORITHM_LAYERED, direction: direction,
+                          **flowchart_spacing_options)
+      end
 
-        # Flowcharts use layered algorithm for hierarchical flow
-        # This ensures nodes are placed in distinct layers and edges flow
-        # in the specified direction with minimal crossings
-        build_elk_options(
-          algorithm: ALGORITHM_LAYERED,
-          direction: direction,
-          # Additional flowchart-specific options
-          ElkOptions::NODE_NODE_SPACING => 50,
-          ElkOptions::LAYER_SPACING => 50,
+      def flowchart_spacing_options
+        { ElkOptions::NODE_NODE_SPACING => 50, ElkOptions::LAYER_SPACING => 50,
           ElkOptions::EDGE_NODE_SPACING => 30,
           ElkOptions::EDGE_EDGE_SPACING => 20,
-          # SIMPLE node placement for predictable, straightforward layouts
-          # This is ideal for flowcharts where clarity is paramount
-          ElkOptions::NODE_PLACEMENT => "SIMPLE",
-        )
+          ElkOptions::NODE_PLACEMENT => "SIMPLE" }
       end
 
       def diagram_identifier(graph)
@@ -1114,16 +1214,10 @@ module Sirena
 
       def direction_to_layout(direction)
         case direction
-        when "TD", "TB"
-          DIRECTION_DOWN
-        when "LR"
-          DIRECTION_RIGHT
-        when "RL"
-          DIRECTION_LEFT
-        when "BT"
-          DIRECTION_UP
-        else
-          DIRECTION_DOWN # Default direction
+        when "LR" then DIRECTION_RIGHT
+        when "RL" then DIRECTION_LEFT
+        when "BT" then DIRECTION_UP
+        else DIRECTION_DOWN
         end
       end
     end

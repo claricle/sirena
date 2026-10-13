@@ -50,6 +50,7 @@ RSpec.describe Sirena::Renderer::Timeline do
       value = pair.to_i(16) / 255.0
       value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055)**2.4
     end
-    channels.zip([0.2126, 0.7152, 0.0722]).sum { |value, weight| value * weight }
+    channels.zip([0.2126, 0.7152, 0.0722])
+      .sum { |value, weight| value * weight }
   end
 end

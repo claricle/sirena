@@ -14,24 +14,35 @@ RSpec.describe Sirena::Renderer::C4, :aggregate_failures do
   let(:context_scene) { scene_for("examples/c4/01-context-diagram.mmd") }
   let(:context_xml) { renderer.render(context_scene).to_xml }
 
+  let(:colors) { Sirena::Theme::Registry.get(:default).colors }
+
   it "renders a typed Scene using its final canvas" do
     svg = renderer.render(context_scene)
     expect(context_scene).to be_a(Sirena::Layout::C4::Scene)
     expect(context_scene.children).to all(be_a(Sirena::Layout::C4::Node))
     expect([svg.width, svg.height, svg.view_box])
-      .to eq([context_scene.width, context_scene.height,
-              context_scene.view_box])
+      .to eq(context_scene.then { |s| [s.width, s.height, s.view_box] })
   end
 
-  it "renders people, systems, external palettes, labels, and relationships" do
-    colors = Sirena::Theme::Registry.get(:default).colors
-    expect(context_xml).to include('id="element-user"', "User",
-                                   "A system user", colors.primary)
-    expect(context_xml).to include('id="element-webapp"', "Main application",
-                                   colors.primary)
-    expect(context_xml).to include('id="element-email"', "Sends notifications",
-                                   colors.secondary)
-    expect(context_xml).to include('id="rel_0"', "Uses", "<polygon")
+  describe "people, systems, external palettes, labels, and relationships" do
+    it "renders the person with its primary palette" do
+      expect(context_xml).to include('id="element-user"', "User",
+                                     "A system user", colors.primary)
+    end
+
+    it "renders the system with its primary palette" do
+      expect(context_xml).to include('id="element-webapp"',
+                                     "Main application", colors.primary)
+    end
+
+    it "renders the external system with its secondary palette" do
+      expect(context_xml).to include('id="element-email"',
+                                     "Sends notifications", colors.secondary)
+    end
+
+    it "renders the relationship with its label and arrowhead" do
+      expect(context_xml).to include('id="rel_0"', "Uses", "<polygon")
+    end
   end
 
   it "renders the person head and body from typed points" do
@@ -41,34 +52,57 @@ RSpec.describe Sirena::Renderer::C4, :aggregate_failures do
     expect(context_xml).to include("<circle", "<ellipse")
   end
 
-  it "renders nested boundaries and their child containers" do
-    scene = scene_for("examples/c4/02-container-diagram.mmd")
-    xml = renderer.render(scene).to_xml
-    boundary = scene.children.find { |node| node.kind == "boundary" }
-    primary = Sirena::Theme::Registry.get(:default).colors.primary
-    expect(boundary.children).not_to be_empty
-    expect(xml).to include('id="boundary-ecommerce"', "E-commerce System")
-    expect(xml).to include('id="element-webapp"', primary)
-    expect(xml).to include('stroke-dasharray="10,5"')
+  describe "nested boundaries and their child containers" do
+    let(:scene) { scene_for("examples/c4/02-container-diagram.mmd") }
+    let(:xml) { renderer.render(scene).to_xml }
+
+    it "keeps children inside the boundary" do
+      boundary = scene.children.find { |node| node.kind == "boundary" }
+
+      expect(boundary.children).not_to be_empty
+    end
+
+    it "renders the boundary and its label" do
+      expect(xml).to include('id="boundary-ecommerce"', "E-commerce System")
+    end
+
+    it "renders the child container with the primary palette" do
+      expect(xml).to include('id="element-webapp"', colors.primary)
+    end
+
+    it "dashes the boundary outline" do
+      expect(xml).to include('stroke-dasharray="10,5"')
+    end
   end
 
-  it "renders bidirectional relationships with two arrowheads " \
-     "and both labels" do
-    source = <<~MERMAID
-      C4Context
-        System(a, "A")
-        System(b, "B")
-        BiRel(a, b, "Syncs", "HTTPS")
-    MERMAID
-    diagram = Sirena::Parser::C4.new.parse(source)
-    scene = Sirena::Layout::C4.new.call(diagram)
-    edge = scene.edges.first
-    xml = renderer.render(scene).to_xml
-    expect(edge.arrowheads.length).to eq(2)
-    expect(xml.scan("<polygon").size).to eq(2)
-    expect(xml).to include("Syncs", "[HTTPS]")
-    expect(xml).to include('font-size="12.0" font-style="normal">Syncs<',
-                           'font-size="12.0" font-style="italic">[HTTPS]<')
+  describe "bidirectional relationships" do
+    let(:scene) do
+      source = <<~MERMAID
+        C4Context
+          System(a, "A")
+          System(b, "B")
+          BiRel(a, b, "Syncs", "HTTPS")
+      MERMAID
+      Sirena::Layout::C4.new.call(Sirena::Parser::C4.new.parse(source))
+    end
+    let(:xml) { renderer.render(scene).to_xml }
+
+    it "puts two arrowheads on the edge" do
+      expect(scene.edges.first.arrowheads.length).to eq(2)
+    end
+
+    it "draws two arrowhead polygons" do
+      expect(xml.scan("<polygon").size).to eq(2)
+    end
+
+    it "shows both labels" do
+      expect(xml).to include("Syncs", "[HTTPS]")
+    end
+
+    it "styles the labels distinctly" do
+      expect(xml).to include('font-size="12.0" font-style="normal">Syncs<',
+                             'font-size="12.0" font-style="italic">[HTTPS]<')
+    end
   end
 
   it "uses semantic colors from the active theme" do

@@ -131,6 +131,10 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
       }
     end
     let(:scene) { Sirena::Layout::StateDiagram.from_graph(graph) }
+    let(:group_children) do
+      svg = renderer.render(scene)
+      svg.children.grep(Sirena::Svg::Group).flat_map(&:children)
+    end
 
     it "rejects a bare Hash at the renderer boundary" do
       expect { renderer.render(graph) }.to raise_error(
@@ -166,12 +170,7 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
 
     it "renders start state as filled circle" do
       graph[:children][0][:metadata][:state_type] = "start"
-
-      svg = renderer.render(scene)
-
-      groups = svg.children.grep(Sirena::Svg::Group)
-
-      circles = groups.flat_map(&:children).select do |c|
+      circles = group_children.select do |c|
         c.is_a?(Sirena::Svg::Circle) && c.fill == "#000000"
       end
 
@@ -180,48 +179,23 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
 
     it "renders end state as double circle" do
       graph[:children][0][:metadata][:state_type] = "end"
-
-      svg = renderer.render(scene)
-
-      # Find all groups including nested ones
-      all_circles = []
-      svg.children.each do |child|
-        next unless child.is_a?(Sirena::Svg::Group)
-
-        child.children.each do |gc|
-          if gc.is_a?(Sirena::Svg::Group)
-            all_circles.concat(
-              gc.children.grep(Sirena::Svg::Circle),
-            )
-          elsif gc.is_a?(Sirena::Svg::Circle)
-            all_circles << gc
-          end
-        end
+      # Find all circles, including those one group deeper
+      flat = group_children.flat_map do |c|
+        c.is_a?(Sirena::Svg::Group) ? c.children : [c]
       end
 
-      expect(all_circles.length).to be >= 2
+      expect(flat.grep(Sirena::Svg::Circle).length).to be >= 2
     end
 
     it "renders choice state as diamond" do
       graph[:children][0][:metadata][:state_type] = "choice"
 
-      svg = renderer.render(scene)
-
-      groups = svg.children.grep(Sirena::Svg::Group)
-
-      polygons = groups.flat_map(&:children).grep(Sirena::Svg::Polygon)
-
-      expect(polygons).not_to be_empty
+      expect(group_children.grep(Sirena::Svg::Polygon)).not_to be_empty
     end
 
     it "renders fork state as thick bar" do
       graph[:children][0][:metadata][:state_type] = "fork"
-
-      svg = renderer.render(scene)
-
-      groups = svg.children.grep(Sirena::Svg::Group)
-
-      rects = groups.flat_map(&:children).select do |c|
+      rects = group_children.select do |c|
         c.is_a?(Sirena::Svg::Rect) && c.fill == "#000000"
       end
 
@@ -229,59 +203,19 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
     end
 
     it "renders state labels as text elements" do
-      svg = renderer.render(scene)
-
-      groups = svg.children.grep(Sirena::Svg::Group)
-
-      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
+      texts = group_children.grep(Sirena::Svg::Text)
 
       expect(texts).not_to be_empty
       # `content` is `collection: true`, so read it through Array(...).
       expect(texts.map { |t| Array(t.content).join }).to include("Idle")
     end
 
-    it "keeps accumulated state text inside its rectangle" do
-      diagram = Sirena::Parser::StateDiagram.new.parse(<<~MERMAID)
-        stateDiagram-v2
-        state "ALIAS_ONE" as A
-        A : DESC_ONE
-        state "ALIAS_TWO" as A
-        A : DESC_TWO
-      MERMAID
-      rendered_graph = Sirena::Layout::StateDiagram.new
-        .to_graph(diagram)
-      svg = renderer.render(rendered_graph)
-      state_group = svg.children.find { |child| child.id == "state-A" }
-      rectangle = state_group.children.grep(Sirena::Svg::Rect).first
-      texts = state_group.children.grep(Sirena::Svg::Text)
-      labels = rendered_graph.children.first.labels
-
-      expect(texts.length).to eq(labels.length)
-      expect(texts.map { |t| Array(t.content).join }).to eq(labels.map(&:text))
-
-      text_bounds = texts.zip(labels).map do |text, label|
-        [text.y - (label.height / 2), text.y + (label.height / 2)]
-      end
-      expect(text_bounds.flatten.min).to be >= rectangle.y
-      expect(text_bounds.flatten.max).to be <= rectangle.y + rectangle.height
-    end
-
     it "renders transitions as paths" do
-      svg = renderer.render(scene)
-
-      groups = svg.children.grep(Sirena::Svg::Group)
-
-      paths = groups.flat_map(&:children).grep(Sirena::Svg::Path)
-
-      expect(paths).not_to be_empty
+      expect(group_children.grep(Sirena::Svg::Path)).not_to be_empty
     end
 
     it "renders transition labels" do
-      svg = renderer.render(scene)
-
-      groups = svg.children.grep(Sirena::Svg::Group)
-
-      texts = groups.flat_map(&:children).select do |c|
+      texts = group_children.select do |c|
         c.is_a?(Sirena::Svg::Text) && Array(c.content).join == "start"
       end
 
@@ -323,6 +257,51 @@ RSpec.describe Sirena::Renderer::StateDiagram, :aggregate_failures do
       svg = described_class.new(theme: theme).render(scene).to_xml
 
       expect(svg).to include('font-size="16"').and include('font-size="14"')
+    end
+  end
+
+  describe "accumulated state text" do
+    let(:rendered_graph) do
+      diagram = Sirena::Parser::StateDiagram.new.parse(<<~MERMAID)
+        stateDiagram-v2
+        state "ALIAS_ONE" as A
+        A : DESC_ONE
+        state "ALIAS_TWO" as A
+        A : DESC_TWO
+      MERMAID
+      Sirena::Layout::StateDiagram.new.to_graph(diagram)
+    end
+    let(:state_group) do
+      svg = renderer.render(rendered_graph)
+      svg.children.find { |child| child.id == "state-A" }
+    end
+    let(:texts) { state_group.children.grep(Sirena::Svg::Text) }
+    let(:labels) { rendered_graph.children.first.labels }
+
+    it "renders one text per label" do
+      expect(texts.length).to eq(labels.length)
+    end
+
+    it "renders the label text in order" do
+      expect(texts.map { |t| Array(t.content).join }).to eq(labels.map(&:text))
+    end
+
+    it "keeps accumulated state text below the top of its rectangle" do
+      rectangle = state_group.children.grep(Sirena::Svg::Rect).first
+      bounds = texts.zip(labels).flat_map do |text, label|
+        [text.y - (label.height / 2), text.y + (label.height / 2)]
+      end
+
+      expect(bounds.min).to be >= rectangle.y
+    end
+
+    it "keeps accumulated state text above the bottom of its rectangle" do
+      rectangle = state_group.children.grep(Sirena::Svg::Rect).first
+      bounds = texts.zip(labels).flat_map do |text, label|
+        [text.y - (label.height / 2), text.y + (label.height / 2)]
+      end
+
+      expect(bounds.max).to be <= rectangle.y + rectangle.height
     end
   end
 end

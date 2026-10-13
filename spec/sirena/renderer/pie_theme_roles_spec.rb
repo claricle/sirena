@@ -56,14 +56,12 @@ RSpec.describe Sirena::Renderer::Pie do
     end
 
     it "consumes every dark slice and legend colour in order" do
-      document = REXML::Document.new(
-        Sirena.render(palette_source, theme: :dark),
-      )
+      svg = Sirena.render(palette_source, theme: :dark)
+      document = REXML::Document.new(svg)
       slice_fills = REXML::XPath.match(document, "//path/@fill").map(&:value)
       legend_fills = REXML::XPath.match(document, "//rect/@fill").map(&:value)
 
-      expect([slice_fills, legend_fills])
-        .to eq([dark_palette, dark_palette])
+      expect([slice_fills, legend_fills]).to eq([dark_palette, dark_palette])
     end
   end
 

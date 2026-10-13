@@ -57,16 +57,15 @@ module DocsSiteVerifierSpecHelpers
   # A fully valid rendered page: theme stylesheet + layout marker + a
   # recognized Asciidoctor block marker. Every knob defaults to the
   # correct value so a test overriding exactly one produces exactly one
-  # failure.
+  # failure. `theme: nil` links no theme stylesheet at all.
   def page_html(
     theme: DEFAULT_THEME,
     baseurl: DEFAULT_BASEURL,
     marker: "paragraph",
     layout_marker: "main-content-wrap",
-    stylesheet: true,
     extra: {}
   )
-    stylesheet_tag = stylesheet ? stylesheet_tag(theme, baseurl) : ""
+    stylesheet_tag = theme ? stylesheet_tag(theme, baseurl) : ""
     script_tag = extra[:script] ? script_tag(extra[:script]) : ""
     link_tag = extra[:link] ? link_tag(extra[:link]) : ""
     anchor_tag = extra[:dangling_anchor] ? anchor_tag(baseurl) : ""
@@ -363,7 +362,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(
         site_dir, "diagram_types/mindmap/index.html",
         page_html(
-          stylesheet: false,
+          theme: nil,
           extra: {
             script: "#{DEFAULT_BASEURL}/assets/js/#{DEFAULT_THEME}.js",
           },
@@ -399,7 +398,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       write_page(site_dir, "pages/comparison/index.html",
-                 page_html(stylesheet: false))
+                 page_html(theme: nil))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         stylesheet_failure("pages/comparison/index.html"),
@@ -784,16 +783,17 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, "pages/other/index.html",
                  page_html(extra: { script: missing_script }))
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures.length).to eq(1)
-      # '_diagram_types/...' sorts before 'diagram_types/...' and
-      # 'pages/...' under Dir.glob's default sorted order.
-      expect(failures.first).to eq(
-        asset_failure(
-          missing_script,
-          INCLUDE_MINDMAP_PAGE,
-          "/assets/js/shared-missing.js",
-        ),
+      # One failure, not three; '_diagram_types/...' sorts before
+      # 'diagram_types/...' and 'pages/...' under Dir.glob's default sorted
+      # order, so that is the page it is attributed to.
+      expect(verifier_for(docs_dir, site_dir).failures).to eq(
+        [
+          asset_failure(
+            missing_script,
+            INCLUDE_MINDMAP_PAGE,
+            "/assets/js/shared-missing.js",
+          ),
+        ],
       )
     end
   end
@@ -944,17 +944,18 @@ RSpec.describe Sirena::DocsSiteVerifier do
       docs_dir, site_dir = build_valid_site(tmp)
       FileUtils.rm(File.join(site_dir, "assets/js/search-data.json"))
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'asset: search index "assets/js/search-data.json" missing',
-      )
-
       docs_dir2, site_dir2 = build_valid_site(
         File.join(tmp, "no-search"),
         config_overrides: { "search_enabled" => false },
       )
       FileUtils.rm(File.join(site_dir2, "assets/js/search-data.json"))
 
-      expect(verifier_for(docs_dir2, site_dir2).failures).to eq([])
+      reported = [verifier_for(docs_dir, site_dir).failures,
+                  verifier_for(docs_dir2, site_dir2).failures]
+
+      expect(reported)
+        .to eq([['asset: search index "assets/js/search-data.json" missing'],
+                []])
     end
   end
 
@@ -1514,16 +1515,24 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # "diagram_types", "permalink")` raises
   # "TypeError: no implicit conversion of String into Integer". The
   # contract of `failures` is an array of strings, never a raised error.
-  it "reports a config failure instead of raising when collections uses " \
-     "the array shorthand" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
+  context "when collections uses the array shorthand" do
+    let(:tmp) { Dir.mktmpdir }
+    let(:docs_dir) { File.join(tmp, "docs") }
+    let(:site_dir) { File.join(docs_dir, "_site") }
+
+    before do
+      build_valid_site(tmp)
       write_config(docs_dir, "collections" => ["diagram_types"])
+    end
 
+    after { FileUtils.remove_entry(tmp) }
+
+    it "does not raise" do
       expect { verifier_for(docs_dir, site_dir).failures }.not_to raise_error
+    end
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
+    it "reports a config failure" do
+      expect(verifier_for(docs_dir, site_dir).failures).to include(
         "config: collections.diagram_types.permalink is nil, " \
         'expected "/:collection/:path/"',
       )
@@ -1598,11 +1607,12 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # `{"permalink"=>"/:collection/:path/"}` makes plain
   # `YAML.safe_load_file` raise `Psych::AliasesNotEnabled`. A config Jekyll
   # itself builds successfully must not crash this verifier.
-  it "reads a real _config.yml that uses a YAML anchor/alias for collection " \
-     "options" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      config_yaml = <<~YAML
+  context "when _config.yml uses a YAML anchor/alias for collection options" do
+    let(:tmp) { Dir.mktmpdir }
+    let(:docs_dir) { File.join(tmp, "docs") }
+    let(:site_dir) { File.join(docs_dir, "_site") }
+    let(:config_yaml) do
+      <<~YAML
         defaults: &defaults
           permalink: "/:collection/:path/"
         theme: #{DEFAULT_THEME}
@@ -1614,9 +1624,20 @@ RSpec.describe Sirena::DocsSiteVerifier do
           diagram_types:
             <<: *defaults
       YAML
-      File.write(File.join(docs_dir, "_config.yml"), config_yaml)
+    end
 
+    before do
+      build_valid_site(tmp)
+      File.write(File.join(docs_dir, "_config.yml"), config_yaml)
+    end
+
+    after { FileUtils.remove_entry(tmp) }
+
+    it "does not raise" do
       expect { verifier_for(docs_dir, site_dir).failures }.not_to raise_error
+    end
+
+    it "reads it as a valid config" do
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
   end

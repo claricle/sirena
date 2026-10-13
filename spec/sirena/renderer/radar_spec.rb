@@ -109,9 +109,13 @@ RSpec.describe Sirena::Renderer::Radar do
         expect(svg).to be_a(Sirena::Svg::Document)
       end
 
-      it "sets proper document dimensions" do
+      it "sets the document width" do
         svg = renderer.render(layout)
         expect(svg.width).to eq(layout[:width])
+      end
+
+      it "sets the document height" do
+        svg = renderer.render(layout)
         expect(svg.height).to eq(layout[:height])
       end
 

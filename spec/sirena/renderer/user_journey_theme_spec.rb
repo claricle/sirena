@@ -112,25 +112,27 @@ RSpec.describe Sirena::Renderer::UserJourney do
       Sirena::Layout::UserJourney.from_graph(palette_graph, theme: theme)
     end
 
-    it "uses every dark section and actor palette entry in order" do
+    it "uses every dark section palette entry in order" do
       sections = palette_scene.sections.map { |section| section.box.fill }
+
+      expect(sections).to eq(theme.colors.user_journey_section_palette)
+    end
+
+    it "uses every dark section palette entry for the tasks in order" do
       tasks = palette_scene.tasks.map { |task| task.box.fill }
+
+      expect(tasks).to eq(theme.colors.user_journey_section_palette)
+    end
+
+    it "uses every dark actor palette entry in order" do
       actor_fills = palette_scene.legend.map { |actor| actor.dot.colour }
 
-      expect([sections, tasks, actor_fills]).to eq(
-        [theme.colors.user_journey_section_palette,
-         theme.colors.user_journey_section_palette,
-         theme.colors.user_journey_actor_palette],
-      )
+      expect(actor_fills).to eq(theme.colors.user_journey_actor_palette)
     end
 
     it "keeps every section fill legible under its white labels" do
-      pairs = palette_scene.sections.map do |section|
-        [section.box.fill, section.labels.first.fill]
-      end
-      pairs.concat(palette_scene.tasks.map do |task|
-        [task.box.fill, task.labels.first.fill]
-      end)
+      boxes = palette_scene.sections + palette_scene.tasks
+      pairs = boxes.map { |item| [item.box.fill, item.labels.first.fill] }
 
       expect(pairs.map { |fill, label| contrast(fill, label) })
         .to all(be >= 4.5)
@@ -159,19 +161,22 @@ RSpec.describe Sirena::Renderer::UserJourney do
   end
 
   def luminance(hex)
-    value = hex.delete_prefix("#")
-    if value.length == 3
-      value = value.chars.map { |character| character * 2 }.join
-    end
-    channels = value.scan(/../).map do |pair|
-      channel = pair.to_i(16) / 255.0
-      if channel <= 0.04045
-        channel / 12.92
-      else
-        ((channel + 0.055) / 1.055)**2.4
-      end
+    channels = hex_pairs(hex).map do |pair|
+      linear_channel(pair.to_i(16) / 255.0)
     end
     channels.zip([0.2126, 0.7152, 0.0722])
       .sum { |channel, weight| channel * weight }
+  end
+
+  def hex_pairs(hex)
+    value = hex.delete_prefix("#")
+    value = value.chars.map { |char| char * 2 }.join if value.length == 3
+    value.scan(/../)
+  end
+
+  def linear_channel(channel)
+    return channel / 12.92 if channel <= 0.04045
+
+    ((channel + 0.055) / 1.055)**2.4
   end
 end

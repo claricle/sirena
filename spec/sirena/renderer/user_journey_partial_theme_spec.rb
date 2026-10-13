@@ -40,9 +40,8 @@ RSpec.describe Sirena::Renderer::UserJourney do
     section = colors.user_journey_section_palette.first
     actor = colors.user_journey_actor_palette.first
 
-    expect(categorical_fills(partial_document)).to eq(
-      [section, section, "#fff", "#fff", "#FFF8DC", actor, actor],
-    )
+    expect(categorical_fills(partial_document))
+      .to eq([section, section, "#fff", "#fff", "#FFF8DC", actor, actor])
   end
 
   def neutral_paints(document)

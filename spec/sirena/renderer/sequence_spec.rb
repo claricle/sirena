@@ -73,26 +73,40 @@ RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
 
     it "draws an arrowhead at both ends of <<->>, one per end" do
       # A count alone would pass with two heads stacked at the same end.
-      tips = SequenceSpecHelpers.message_group("<<->>").scan(/<polygon[^>]*points="(\d+),/).flatten
+      group = SequenceSpecHelpers.message_group("<<->>")
+      tips = group.scan(/<polygon[^>]*points="(\d+),/).flatten
 
       expect(tips).to contain_exactly("125", "325")
     end
 
-    it "draws a stroked cross on -x, not a filled head" do
+    it "draws two strokes that cross on -x, not a filled head" do
       group = SequenceSpecHelpers.message_group("-x")
 
       # Two strokes that cross, and no polygon: mermaid's crosshead is
       # stroke-only (fill="none"), unlike every other head it draws.
       expect(group.scan("<polygon").size).to eq(0)
       expect(group.scan("<line").size).to eq(3)
+    end
 
-      # The two strokes straddle the tip rather than stopping at it, and
-      # the shaft runs its full length because a cross takes no inset.
-      shaft, *strokes = group.scan(/<line[^>]*>/)
+    it "runs the -x shaft its full length because a cross takes no inset" do
+      shaft = SequenceSpecHelpers.message_group("-x")[/<line[^>]*>/]
+
       expect(shaft).to include('x1="126.0"').and include('x2="325.0"')
-      expect(strokes.map { |l| l[/x1="[\d.]+" y1="[\d.]+" x2="[\d.]+" y2="[\d.]+"/] })
+    end
+
+    it "straddles the tip with the two -x strokes rather than stopping at it" do
+      coords = /x1="[\d.]+" y1="[\d.]+" x2="[\d.]+" y2="[\d.]+"/
+      strokes = SequenceSpecHelpers.message_group("-x").scan(/<line[^>]*>/)
+
+      expect(strokes.drop(1).map { |line| line[coords] })
         .to contain_exactly('x1="321.0" y1="115.0" x2="329.0" y2="123.0"',
                             'x1="321.0" y1="123.0" x2="329.0" y2="115.0"')
+    end
+
+    it "draws the -x strokes without fill and two pixels wide" do
+      group = SequenceSpecHelpers.message_group("-x")
+      strokes = group.scan(/<line[^>]*>/).drop(1)
+
       # Stroke-only is the point: mermaid's crosshead sets fill="none".
       expect(strokes).to all(include('stroke="#000000"'))
       expect(strokes).to all(include('stroke-width="2"'))
@@ -105,7 +119,8 @@ RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
       polygon = SequenceSpecHelpers.message_group("-)")[/<polygon[^>]*>/]
 
       expect(polygon).to include('fill="#000000"')
-      expect(polygon[/points="([^"]*)"/, 1]).to eq("325,119 317,115 320.2,119 317,123")
+      expect(polygon[/points="([^"]*)"/, 1])
+        .to eq("325,119 317,115 320.2,119 317,123")
     end
 
     it "draws one barb below the line on -|/" do
@@ -168,7 +183,9 @@ RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
       # back edge, so insetting the shaft left a gap between 317 and 320.2.
       headless = SequenceSpecHelpers.message_group("->")[/<line[^>]*>/]
 
-      expect(SequenceSpecHelpers.message_group("-)")[/<line[^>]*>/]).to eq(headless)
+      chevron = SequenceSpecHelpers.message_group("-)")[/<line[^>]*>/]
+
+      expect(chevron).to eq(headless)
     end
 
     it "runs the shaft full length under a stick head" do
@@ -179,7 +196,8 @@ RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
 
       expect(SequenceSpecHelpers.message_group("//-")[/<line[^>]*>/])
         .to include('x1="125.0"').and include('x2="325.0"')
-      expect(SequenceSpecHelpers.message_group("-//")[/<line[^>]*>/]).to eq(headless)
+      expect(SequenceSpecHelpers.message_group("-//")[/<line[^>]*>/])
+        .to eq(headless)
     end
 
     # Which way a head is rotated follows the direction from the shaft to
@@ -187,26 +205,27 @@ RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
     # end drew every right-to-left message as the mirror of mmdc's.
     describe "a right-to-left message" do
       it "flips the target barb of -|/ to the other side" do
-        expect(SequenceSpecHelpers.rtl_group("-|/")[/<polygon[^>]*points="([^"]*)"/, 1])
+        group = SequenceSpecHelpers.rtl_group("-|/")
+
+        expect(group[/<polygon[^>]*points="([^"]*)"/, 1])
           .to eq("125,119 133,115 133,119")
       end
 
       it "draws the source barb of /|- below, as left-to-right draws it" do
-        expect(SequenceSpecHelpers.rtl_group("/|-")[/<polygon[^>]*points="([^"]*)"/, 1])
+        group = SequenceSpecHelpers.rtl_group("/|-")
+
+        expect(group[/<polygon[^>]*points="([^"]*)"/, 1])
           .to eq("325,119 317,123 317,119")
       end
     end
 
     it "mirrors the chevron on a right-to-left message" do
-      rtl = <<~MERMAID
-        sequenceDiagram
-            participant A
-            participant B
-            B-)A: m
-      MERMAID
+      rtl = "sequenceDiagram\n    participant A\n    participant B\n    " \
+            "B-)A: m\n"
       polygon = SequenceSpecHelpers.message_group("-)", rtl)[/<polygon[^>]*>/]
 
-      expect(polygon[/points="([^"]*)"/, 1]).to eq("125,119 133,115 129.8,119 133,123")
+      expect(polygon[/points="([^"]*)"/, 1])
+        .to eq("125,119 133,115 129.8,119 133,123")
     end
   end
 
@@ -228,7 +247,8 @@ RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
     end
 
     it "draws <<-->> dashed with one head at each end" do
-      tips = SequenceSpecHelpers.message_group("<<-->>").scan(/<polygon[^>]*points="(\d+),/).flatten
+      group = SequenceSpecHelpers.message_group("<<-->>")
+      tips = group.scan(/<polygon[^>]*points="(\d+),/).flatten
 
       expect(SequenceSpecHelpers.dashed?("<<-->>")).to be(true)
       expect(tips).to contain_exactly("125", "325")
@@ -273,30 +293,40 @@ RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
     end
 
     it "dashes the loop for a dotted self-message" do
-      expect(SequenceSpecHelpers.self_group("-->")).to include("stroke-dasharray")
+      expect(SequenceSpecHelpers.self_group("-->"))
+        .to include("stroke-dasharray")
     end
   end
 
   describe "line inset" do
-    it "shortens the line at the source only when that end carries a head" do
-      expect(SequenceSpecHelpers.message_line("<<->>", "x1")).to be > SequenceSpecHelpers.message_line("->>", "x1")
-    end
-
-    it "does not shorten the line when there is no head" do
-      expect(SequenceSpecHelpers.message_line("->", "x2")).to be > SequenceSpecHelpers.message_line("->>", "x2")
-    end
-
-    it "insets towards the head on a right-to-left message" do
-      # Unsigned, this ran the shaft past its own head: B<<->>A started at
-      # 333 while the source head occupied 317 to 325.
-      rtl = <<~MERMAID
+    let(:rtl) do
+      <<~MERMAID
         sequenceDiagram
             participant A
             participant B
             B<<->>A: m
       MERMAID
+    end
 
+    it "shortens the line at the source only when that end carries a head" do
+      shortened = SequenceSpecHelpers.message_line("<<->>", "x1")
+
+      expect(shortened).to be > SequenceSpecHelpers.message_line("->>", "x1")
+    end
+
+    it "does not shorten the line when there is no head" do
+      bare = SequenceSpecHelpers.message_line("->", "x2")
+
+      expect(bare).to be > SequenceSpecHelpers.message_line("->>", "x2")
+    end
+
+    # Unsigned, this ran the shaft past its own head: B<<->>A started at
+    # 333 while the source head occupied 317 to 325.
+    it "insets the start towards the head on a right-to-left message" do
       expect(SequenceSpecHelpers.message_line("<<->>", "x1", rtl)).to eq(317.0)
+    end
+
+    it "insets the end towards the head on a right-to-left message" do
       expect(SequenceSpecHelpers.message_line("<<->>", "x2", rtl)).to eq(133.0)
     end
   end
@@ -310,7 +340,7 @@ RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
     # drawn in it, a diagram mmdc never renders at any size. Both must be
     # true: nothing drawn, AND a canvas that does not imply a phantom
     # participant pair.
-    it "draws nothing and does not size the canvas as though a participant were present" do
+    it "draws nothing and sizes no phantom participant pair" do
       xml = Sirena.render("sequenceDiagram")
 
       expect(xml).not_to match(/<rect|<line|<polygon|<text/)

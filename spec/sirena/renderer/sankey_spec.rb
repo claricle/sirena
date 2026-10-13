@@ -75,38 +75,49 @@ RSpec.describe Sirena::Renderer::Sankey, :aggregate_failures do
   end
 
   describe "#render" do
-    it "renders a simple sankey diagram" do
-      source = <<~SANKEY
-        sankey-beta
-        A,B,10
-        B,C,20
-      SANKEY
+    context "with a simple chain" do
+      let(:source) do
+        <<~SANKEY
+          sankey-beta
+          A,B,10
+          B,C,20
+        SANKEY
+      end
 
-      scene = scene_for(source)
-      svg = renderer.render(scene)
+      it "renders a simple sankey diagram" do
+        scene = scene_for(source)
+        svg = renderer.render(scene)
 
-      expect(scene).to be_a(Sirena::Layout::Sankey::Scene)
-      expect(svg).to be_a(Sirena::Svg::Document)
-      expect(svg.width).to be > 0
-      expect(svg.height).to be > 0
+        expect(scene).to be_a(Sirena::Layout::Sankey::Scene)
+        expect(svg).to be_a(Sirena::Svg::Document)
+      end
+
+      it "renders a document with positive dimensions" do
+        svg = renderer.render(scene_for(source))
+
+        expect(svg.width).to be > 0
+        expect(svg.height).to be > 0
+      end
     end
 
-    it "renders sankey with node labels" do
-      source = <<~SANKEY
-        sankey-beta
-        Source [Energy Source]
-        Process [Processing Plant]
-        Output [Useful Energy]
-        Source,Process,100
-        Process,Output,70
-      SANKEY
+    context "with node labels" do
+      let(:source) do
+        <<~SANKEY
+          sankey-beta
+          Source [Energy Source]
+          Process [Processing Plant]
+          Output [Useful Energy]
+          Source,Process,100
+          Process,Output,70
+        SANKEY
+      end
 
-      svg = renderer.render(scene_for(source))
+      it "renders sankey with node labels" do
+        svg = renderer.render(scene_for(source))
 
-      expect(svg).to be_a(Sirena::Svg::Document)
-      xml = svg.to_xml
-      expect(xml).to include("Energy Source")
-      expect(xml).to include("Processing Plant")
+        expect(svg).to be_a(Sirena::Svg::Document)
+        expect(svg.to_xml).to include("Energy Source", "Processing Plant")
+      end
     end
 
     it "renders flows with proper width" do
@@ -116,53 +127,68 @@ RSpec.describe Sirena::Renderer::Sankey, :aggregate_failures do
       expect(scene.flows[0].width).to be > scene.flows[1].width
     end
 
-    it "includes title in rendered output" do
-      source = <<~SANKEY
-        sankey-beta
-        A,B,10
-      SANKEY
+    context "with a title" do
+      let(:source) do
+        <<~SANKEY
+          sankey-beta
+          A,B,10
+        SANKEY
+      end
 
-      diagram = parser.parse(source)
-      diagram.title = "Energy Flow"
-      scene = layout.call(diagram)
-      svg = renderer.render(scene)
+      it "places the title in the final scene" do
+        diagram = parser.parse(source)
+        diagram.title = "Energy Flow"
+        scene = layout.call(diagram)
 
-      xml = svg.to_xml
-      expect(scene.title)
-        .to have_attributes(text: "Energy Flow", x: 200.0, y: 40.0)
-      expect(xml).to include("Energy Flow")
+        expect(scene.title)
+          .to have_attributes(text: "Energy Flow", x: 200.0, y: 40.0)
+      end
+
+      it "includes title in rendered output" do
+        diagram = parser.parse(source)
+        diagram.title = "Energy Flow"
+
+        expect(renderer.render(layout.call(diagram)).to_xml)
+          .to include("Energy Flow")
+      end
     end
 
-    it "renders multiple flows" do
-      source = <<~SANKEY
-        sankey-beta
-        A,B,10
-        B,C,7
-        B,D,3
-      SANKEY
+    context "with multiple flows" do
+      let(:source) do
+        <<~SANKEY
+          sankey-beta
+          A,B,10
+          B,C,7
+          B,D,3
+        SANKEY
+      end
 
-      scene = scene_for(source)
-      svg = renderer.render(scene)
+      it "renders multiple flows" do
+        scene = scene_for(source)
 
-      expect(svg).to be_a(Sirena::Svg::Document)
-      expect(scene.flows.length).to eq(3)
+        expect(renderer.render(scene)).to be_a(Sirena::Svg::Document)
+        expect(scene.flows.length).to eq(3)
+      end
     end
 
-    it "handles complex flow networks" do
-      source = <<~SANKEY
-        sankey-beta
-        A,B,10
-        A,C,5
-        B,D,8
-        C,D,3
-      SANKEY
+    context "with a complex flow network" do
+      let(:source) do
+        <<~SANKEY
+          sankey-beta
+          A,B,10
+          A,C,5
+          B,D,8
+          C,D,3
+        SANKEY
+      end
 
-      scene = scene_for(source)
-      svg = renderer.render(scene)
+      it "handles complex flow networks" do
+        scene = scene_for(source)
 
-      expect(svg).to be_a(Sirena::Svg::Document)
-      expect(scene.nodes.length).to eq(4)
-      expect(scene.flows.length).to eq(4)
+        expect(renderer.render(scene)).to be_a(Sirena::Svg::Document)
+        expect(scene.nodes.length).to eq(4)
+        expect(scene.flows.length).to eq(4)
+      end
     end
 
     it "renders the final canvas coordinates without adding an offset" do
