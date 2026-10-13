@@ -29,9 +29,6 @@ Layout/FirstHashElementIndentation:
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle, IndentationWidth.
 # SupportedStyles: aligned, indented
-Layout/LineEndStringConcatenationIndentation:
-  Enabled: false
-
 # Offense count: 217
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: Max, AllowHeredoc, AllowURI, AllowQualifiedName, URISchemes, AllowRBSInlineAnnotation, AllowCopDirectives, AllowedPatterns, SplitStrings.
@@ -122,12 +119,6 @@ Naming/PredicateMethod:
 
 # Offense count: 6
 # This cop supports unsafe autocorrection (--autocorrect-all).
-Performance/MapCompact:
-  Exclude:
-    - 'lib/sirena/layout/requirement.rb'
-    - 'tasks/benchmark.rake'
-    - 'spec/sirena/renderer/git_graph_spec.rb'
-
 # Offense count: 9
 # Configuration parameters: IgnoredMetadata.
 RSpec/DescribeClass:

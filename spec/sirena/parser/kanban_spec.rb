@@ -1210,7 +1210,7 @@ RSpec.describe Sirena::Parser::Kanban do
         # The corpus source verbatim: the same card id `docs` appears under
         # both columns, which is the shape this case exists to cover.
         "kanban\n  id1[Todo]\n    docs[Create Documentation]\n  " \
-        "id2\n    docs[Create Blog about the new diagram]\n"
+          "id2\n    docs[Create Blog about the new diagram]\n"
       end
 
       it "accepts both forms on one board", :aggregate_failures do
