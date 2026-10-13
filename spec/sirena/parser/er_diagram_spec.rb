@@ -2,12 +2,83 @@
 
 require "spec_helper"
 
+module ErTildeChunkSpecHelpers
+  def single_line_tilde_type
+    "erDiagram\nRENTAL {\n  ~timestamp with time zone~ rental_date\n}\n"
+  end
+
+  def multiline_tilde_type
+    "erDiagram\nRENTAL {\n  ~timestamp\nwith time zone~ rental_date\n}\n"
+  end
+
+  def tilde_mismatches(samples)
+    samples.filter_map { |length, input| tilde_run_difference(length, input) }
+  end
+
+  def tilde_grammar
+    @tilde_grammar ||= Sirena::Parser::Grammars::ErDiagram.new
+  end
+
+  def tilde_lexer_regex
+    @tilde_lexer_regex ||= Regexp.new(
+      "\\A(?:~(?:[^~\n\r\u2028\u2029]*~)+)", Regexp::MULTILINE
+    )
+  end
+
+  def random_tilde_samples
+    random = Random.new(20_260_929)
+    lengths = random_tilde_lengths(random)
+    lengths.map do |length|
+      [length, "~#{random_tilde_body(length, random)}"]
+    end
+  end
+
+  def random_tilde_lengths(random)
+    Array.new(40) { random.rand(1..20) } +
+      Array.new(40) { random.rand(49_990..50_010) } +
+      Array.new(20) { random.rand(1..150_000) }
+  end
+
+  def random_tilde_body(length, random)
+    broad = ("a".."z").to_a + ("0".."9").to_a + ["-", ".", "/", "_"]
+    noise = [" ", "!", "@"]
+    Array.new(length) { random_tilde_character(random, broad, noise) }.join
+  end
+
+  def random_tilde_character(random, broad, noise)
+    return "~" if random.rand(15).zero?
+
+    pool = random.rand(20) < 19 ? broad : noise
+    pool.sample(random: random)
+  end
+
+  def tilde_run_difference(length, input)
+    expected = tilde_lexer_regex.match(input)&.to_s
+    parsed = parsed_tilde_input(input)
+    return if parsed == expected
+
+    { length: length, expected: expected&.length, got: parsed&.length }
+  end
+
+  def parsed_tilde_input(input)
+    tilde_grammar.tilde_marked_run.parse(input, prefix: true).to_s
+  rescue Parslet::ParseFailed
+    nil
+  end
+end
+
 RSpec.describe Sirena::Parser::ErDiagram do
   include ErTildeTiming
+  include ErTildeChunkSpecHelpers
 
   let(:parser) { described_class.new }
 
   describe "#parse" do
+    # Verified against mermaid 11.16.1's lexer regex for this token --
+    # `/^(?:([^\s]*)[~].*[~]([^\s]*))/i`, no `/s` flag -- `.` cannot cross
+    # a newline in a JS regex without that flag, so mermaid never treats
+    # this as one tilde-quoted type spanning the break. Sirena's grammar
+    # must refuse it too, not silently accept a newline inside the tildes.
     context "when parsing simple ER diagram with relationship" do
       let(:source) { "erDiagram\nCUSTOMER ||--o{ ORDER" }
       let(:diagram) { parser.parse(source) }
@@ -225,18 +296,34 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # `[]` a native `.repeat.as(:string)` capture would produce on no
     # match -- `extract_text` (`builders/er_diagram.rb`) relies on that
     # guarantee and calls `.to_s` on it directly.
-    it "carries an empty quoted note as an empty string, " \
-       "not the literal \"[]\"" do
-      source = <<~MERMAID
-        erDiagram
-        RENTAL {
-          int rental_id PK ""
-        }
-      MERMAID
-      diagram = parser.parse(source)
+    describe "carries an empty quoted note as an empty string, " \
+             "not the literal \"[]\"" do
+      let(:source) do
+        <<~MERMAID
+          erDiagram
+          RENTAL {
+            int rental_id PK ""
+          }
+        MERMAID
+      end
 
-      attr = diagram.find_entity("RENTAL").attributes.first
-      expect(attr.note).to eq("")
+      let(:diagram) do
+        parser.parse(source)
+      end
+
+      let(:attr) do
+        diagram.find_entity("RENTAL").attributes.first
+      end
+
+      before do
+        source
+        diagram
+        attr
+      end
+
+      it "preserves property 1" do
+        expect(attr.note).to eq("")
+      end
     end
 
     # Mermaid's ER `COMMENT` token accepts only double-quoted text with no
@@ -355,16 +442,34 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # `tilde_prefix`'s scan behaves on the note's incompatible byte -- it
     # only proves the parser still returns the right `attribute_type` and
     # `note` for an ASCII-8BIT source that happens to hold one.
-    it "extracts a note holding a byte an encoding-fixed tilde regex cannot " \
-       "match" do
-      source = (+"erDiagram\nCUSTOMER {\n  string name \"note \xFF here\"\n}\n")
-        .force_encoding(Encoding::ASCII_8BIT)
+    describe "extracts a note holding a byte an encoding-fixed tilde " \
+             "regex cannot match" do
+      let(:source) do
+        (+"erDiagram\nCUSTOMER {\n  string name \"note \xFF here\"\n}\n")
+          .force_encoding(Encoding::ASCII_8BIT)
+      end
 
-      diagram = parser.parse(source)
+      let(:diagram) do
+        parser.parse(source)
+      end
 
-      attr = diagram.find_entity("CUSTOMER").attributes.first
-      expect(attr.attribute_type).to eq("string")
-      expect(attr.note).to eq((+"note \xFF here").force_encoding(Encoding::ASCII_8BIT))
+      let(:attr) do
+        diagram.find_entity("CUSTOMER").attributes.first
+      end
+
+      before do
+        source
+        diagram
+        attr
+      end
+
+      it "preserves property 1" do
+        expect(attr.attribute_type).to eq("string")
+      end
+
+      it "preserves property 2" do
+        expect(attr.note).to eq((+"note \xFF here").force_encoding(Encoding::ASCII_8BIT))
+      end
     end
 
     # Unlike the plain-identifier case above, `List~type~` DOES have a `~`,
@@ -377,18 +482,39 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # value) -- reproduced by hand against the pre-fix code. The scan's own
     # contract (what it returns, not just that the full parse doesn't blow
     # up) is pinned directly by greedy_run_spec.rb.
-    it "parses a tilde-quoted type followed by a note holding a byte the " \
-       "tilde regex cannot match" do
-      source = (+"erDiagram\nCUSTOMER {\n  " \
-                 "List~type~ name \"note \xFF here\"\n}\n")
-        .force_encoding(Encoding::ASCII_8BIT)
+    describe "parses a tilde-quoted type followed by a note holding " \
+             "a byte the tilde regex cannot match" do
+      let(:source) do
+        (+"erDiagram\nCUSTOMER {\n  " \
+          "List~type~ name \"note \xFF here\"\n}\n")
+          .force_encoding(Encoding::ASCII_8BIT)
+      end
 
-      diagram = parser.parse(source)
+      let(:diagram) do
+        parser.parse(source)
+      end
 
-      attr = diagram.find_entity("CUSTOMER").attributes.first
-      expect(attr.attribute_type).to eq("List<type>")
-      expect(attr.name).to eq("name")
-      expect(attr.note).to eq((+"note \xFF here").force_encoding(Encoding::ASCII_8BIT))
+      let(:attr) do
+        diagram.find_entity("CUSTOMER").attributes.first
+      end
+
+      before do
+        source
+        diagram
+        attr
+      end
+
+      it "preserves property 1" do
+        expect(attr.attribute_type).to eq("List<type>")
+      end
+
+      it "preserves property 2" do
+        expect(attr.name).to eq("name")
+      end
+
+      it "preserves property 3" do
+        expect(attr.note).to eq((+"note \xFF here").force_encoding(Encoding::ASCII_8BIT))
+      end
     end
 
     it "refuses a tilde-quoted type whose core holds a byte the same regex " \
@@ -416,34 +542,15 @@ RSpec.describe Sirena::Parser::ErDiagram do
       expect(result[:r][:string].line_and_column).to eq([2, 1])
     end
 
-    # Verified against mermaid 11.16.1's lexer regex for this token --
-    # `/^(?:([^\s]*)[~].*[~]([^\s]*))/i`, no `/s` flag -- `.` cannot cross
-    # a newline in a JS regex without that flag, so mermaid never treats
-    # this as one tilde-quoted type spanning the break. Sirena's grammar
-    # must refuse it too, not silently accept a newline inside the tildes.
-    it "refuses a tilde-quoted type only when it spans a newline" do
-      single_line = <<~MERMAID
-        erDiagram
-        RENTAL {
-          ~timestamp with time zone~ rental_date
-        }
-      MERMAID
-      # Proves the refusal below is specific to the newline, not tilde
-      # support being absent -- without this, the raise_error expectation
-      # passes for the wrong reason on code that never parses tildes at all.
-      single_diagram = parser.parse(single_line)
-      single_attr = single_diagram.find_entity("RENTAL").attributes.first
-      expect(single_attr.attribute_type).to eq("<timestamp with time zone>")
+    it "accepts the single-line positive control for the newline boundary" do
+      attr = parser.parse(single_line_tilde_type).find_entity("RENTAL")
+        .attributes.first
+      expect(attr.attribute_type).to eq("<timestamp with time zone>")
+    end
 
-      multi_line = <<~MERMAID
-        erDiagram
-        RENTAL {
-          ~timestamp
-        with time zone~ rental_date
-        }
-      MERMAID
-
-      expect { parser.parse(multi_line) }.to raise_error(Sirena::Parser::ParseError)
+    it "refuses a tilde-quoted type when it spans a newline" do
+      expect { parser.parse(multiline_tilde_type) }
+        .to raise_error(Sirena::Parser::ParseError)
     end
 
     # JS `\s` (what `[^\s]*` excludes) is ECMA-262 WhiteSpace, not just
@@ -453,12 +560,23 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # grammar rule directly: a full diagram parse would also need `ws`/
     # `space` (inherited from `Grammars::Common`, out of this fix's
     # scope) to treat NBSP as a token separator, which is a separate gap.
-    it 'stops the tilde suffix at an NBSP, matching JS `\s`' do
-      grammar = Sirena::Parser::Grammars::ErDiagram.new
+    describe 'stops the tilde suffix at an NBSP, matching JS `\s`' do
+      let(:grammar) do
+        Sirena::Parser::Grammars::ErDiagram.new
+      end
 
-      expect(grammar.tilde_suffix.parse("foo").to_s).to eq("foo")
-      expect { grammar.tilde_suffix.parse("foo bar") }
-        .to raise_error(Parslet::ParseFailed, /Don't know what to do with/)
+      before do
+        grammar
+      end
+
+      it "preserves property 1" do
+        expect(grammar.tilde_suffix.parse("foo").to_s).to eq("foo")
+      end
+
+      it "preserves property 2" do
+        expect { grammar.tilde_suffix.parse("foo bar") }
+          .to raise_error(Parslet::ParseFailed, /Don't know what to do with/)
+      end
     end
 
     # One entry per escape in the grammar's whitespace class (ECMA-262
@@ -526,15 +644,14 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # themselves (U+2028, U+2029) -- checked at the grammar rule directly
     # against the same whole-input reference regex used by the
     # chunk-boundary specs below, not hand-derived.
-    it "stops tilde_marked_run at U+2028 and U+2029, " \
-       "matching the whole-input reference regex" do
-      grammar = Sirena::Parser::Grammars::ErDiagram.new
-      whole_input_regex = Regexp.new("\\A(?:~(?:[^~\n\r\u2028\u2029]*~)+)", Regexp::MULTILINE)
+    ["~a\u2028b~", "~a\u2029b~"].each do |input|
+      it "keeps the lexer from matching the separator in #{input.inspect}" do
+        expect(tilde_lexer_regex.match(input)).to be_nil
+      end
 
-      ["~a\u2028b~", "~a\u2029b~"].each do |input|
-        expect(whole_input_regex.match(input)).to be_nil
-
-        expect { grammar.tilde_marked_run.parse(input) }.to raise_error(Parslet::ParseFailed)
+      it "refuses the separator in #{input.inspect}" do
+        expect { tilde_grammar.tilde_marked_run.parse(input) }
+          .to raise_error(Parslet::ParseFailed)
       end
     end
 
@@ -738,35 +855,53 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # entirely, for a single run longer than one chunk). Compared
     # against the SAME whole-input regex mermaid's own lexer builds for
     # this token, not hand-derived.
-    it "matches a tilde-marked run whose content crosses the internal chunk " \
-       "boundary" do
-      grammar = Sirena::Parser::Grammars::ErDiagram.new
-      whole_input_regex = Regexp.new("\\A(?:~(?:[^~\n\r\u2028\u2029]*~)+)", Regexp::MULTILINE)
-
-      [
-        "~#{'a' * 60_000}~",
-        "~#{Array.new(4_000) { 'a' * 12 }.join('~')}~",
-      ].each do |input|
-        expected = whole_input_regex.match(input)[0]
-        parsed = grammar.tilde_marked_run.parse(input, prefix: true).to_s
-        expect(parsed).to eq(expected)
+    ["~#{'a' * 60_000}~", "~#{Array.new(4_000) { 'a' * 12 }.join('~')}~"]
+      .each_with_index do |input, index|
+        it "matches long tilde run #{index + 1} across the chunk boundary" do
+          expected = tilde_lexer_regex.match(input)[0]
+          parsed = tilde_grammar.tilde_marked_run.parse(input,
+                                                        prefix: true).to_s
+          expect(parsed).to eq(expected)
+        end
       end
-    end
 
-    it "parses a full ER attribute type whose tilde run crosses the internal " \
-       "chunk boundary" do
-      inner = "a" * 60_000
-      source = <<~MERMAID
-        erDiagram
-        RENTAL {
-          ~#{inner}~ name
-        }
-      MERMAID
+    describe "parses a full ER attribute type whose tilde run crosses " \
+             "the internal chunk boundary" do
+      let(:inner) do
+        "a" * 60_000
+      end
 
-      diagram = parser.parse(source)
-      attr = diagram.find_entity("RENTAL").attributes.first
-      expect(attr.name).to eq("name")
-      expect(attr.attribute_type).to eq("<#{inner}>")
+      let(:source) do
+        <<~MERMAID
+          erDiagram
+          RENTAL {
+            ~#{inner}~ name
+          }
+        MERMAID
+      end
+
+      let(:diagram) do
+        parser.parse(source)
+      end
+
+      let(:attr) do
+        diagram.find_entity("RENTAL").attributes.first
+      end
+
+      before do
+        inner
+        source
+        diagram
+        attr
+      end
+
+      it "preserves property 1" do
+        expect(attr.name).to eq("name")
+      end
+
+      it "preserves property 2" do
+        expect(attr.attribute_type).to eq("<#{inner}>")
+      end
     end
 
     # Differential check against the SAME whole-input regex used above,
@@ -776,37 +911,9 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # two hand-picked counterexamples above.
     it "matches the whole-input reference regex across random inputs near " \
        "the chunk boundary" do
-      grammar = Sirena::Parser::Grammars::ErDiagram.new
-      whole_input_regex = Regexp.new("\\A(?:~(?:[^~\n\r\u2028\u2029]*~)+)", Regexp::MULTILINE)
-      broad_pool = ("a".."z").to_a + ("0".."9").to_a + ["-", ".", "/", "_"]
-      noise_pool = [" ", "!", "@"]
-      rng = Random.new(20_260_929)
-      lengths = Array.new(40) { rng.rand(1..20) } +
-        Array.new(40) { rng.rand(49_990..50_010) } +
-        Array.new(20) { rng.rand(1..150_000) }
-
-      mismatches = lengths.filter_map do |length|
-        body = Array.new(length) do
-          if rng.rand(15).zero?
-            "~"
-          else
-            pool = rng.rand(20) < 19 ? broad_pool : noise_pool
-            pool.sample(random: rng)
-          end
-        end.join
-        input = "~#{body}"
-        expected = whole_input_regex.match(input)&.to_s
-        got = begin
-          grammar.tilde_marked_run.parse(input, prefix: true).to_s
-        rescue Parslet::ParseFailed
-          nil
-        end
-        if got != expected
-          { length: length, expected: expected&.length, got: got&.length }
-        end
-      end
-
-      message = "#{mismatches.size}/#{lengths.size} cases mismatched: " \
+      samples = random_tilde_samples
+      mismatches = tilde_mismatches(samples)
+      message = "#{mismatches.size}/#{samples.size} cases mismatched: " \
                 "#{mismatches.first(3)}"
       expect(mismatches).to eq([]), message
     end
@@ -1098,23 +1205,12 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # each is the set mermaid itself rejects (verified against its own
     # parser, see the plan's harness), and nothing else in this suite
     # notices if the grammar is ever widened past mermaid.
-    it "rejects what mermaid rejects (A14)" do
-      fragments = [
-        "CAR:::",
-        "CAR::x",
-        "CAR:::a,",
-        "CAR:::1bad",
-        "classDef x",
-        "CAR:::--",
-      ]
-
-      fragments.each do |fragment|
-        source = "erDiagram\n#{fragment}"
-
-        expect { parser.parse(source) }.to raise_error(
-          Sirena::Parser::ParseError,
-        )
+    ["CAR:::", "CAR::x", "CAR:::a,", "CAR:::1bad", "classDef x", "CAR:::--"]
+      .each do |fragment|
+        it "rejects #{fragment.inspect} as mermaid does (A14)" do
+          source = "erDiagram\n#{fragment}"
+          expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
+        end
       end
-    end
   end
 end

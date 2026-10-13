@@ -106,6 +106,59 @@ module SvgConformanceSpecHelpers
   # conformance alone catches malformed XML.
   #
   # @return [String, nil] the parse error, or nil when the document parses
+  def corpus_conformance_observation
+    baseline = baseline_renderable
+    checks = [baseline.size, baseline.uniq]
+    observation = { baseline: baseline, checks: checks }
+    return observation unless checks[0] >= CONFORMANCE_RENDERED_FLOOR &&
+      checks[1] == baseline
+
+    rendered, offenders = collect_corpus_conformance
+    checks.push(baseline - rendered, offenders)
+    observation.merge(rendered: rendered)
+  end
+
+  def collect_corpus_conformance
+    rendered = []
+    offenders = CONFORMANCE_CORPUS_SOURCES.filter_map do |source_path|
+      corpus_conformance_problem(source_path, rendered)
+    end
+    [rendered, offenders]
+  end
+
+  def corpus_conformance_problem(source_path, rendered)
+    svg = render_or_skip(source_path)
+    return unless svg
+
+    rendered << corpus_name(source_path)
+    malformed = parse_error(svg)
+    if malformed
+      path = source_path.sub("#{CONFORMANCE_ROOT}/", "")
+      return "#{path}: not well-formed: #{malformed}"
+    end
+    result = validate(svg)
+    complaint(source_path, result) unless result.valid?
+  end
+
+  def corpus_conformance_message(observation)
+    lost, offenders = observation.fetch(:checks).drop(2)
+    return "damaged conformance baseline" unless lost && offenders
+
+    "stopped rendering, so nothing checked them: #{lost.sort.join(', ')}\n" \
+      "#{offenders.join("\n")}"
+  end
+
+  def write_corpus_improvement(observation)
+    return unless ENV["CONFORMANCE_WRITE_RENDERABLE"]
+
+    write_renderable(observation.fetch(:rendered))
+  end
+
+  def stale_example_message(comparison)
+    "not tracked, or not what the renderer produces: " \
+      "#{comparison.fetch(:stale).join(', ')}"
+  end
+
   def parse_error(svg)
     REXML::Document.new(svg)
     nil
@@ -225,23 +278,26 @@ RSpec.describe Sirena::Svg do
     end
 
     CONFORMANCE_EXAMPLE_SVGS.each do |svg_path|
-      it "#{svg_path.sub("#{CONFORMANCE_ROOT}/", '')} is conformant" do
-        content = File.read(svg_path)
+      describe "#{svg_path.sub("#{CONFORMANCE_ROOT}/", '')} conformance" do
+        subject(:content) { File.read(svg_path) }
 
-        # A zero-byte file passed every check this repo had: nothing to parse
-        # is nothing to reject, and the docs site is meant to read it once
-        # TODO.foundation/15 wires that build up.
-        expect(content).not_to be_empty
-
-        malformed = parse_error(content)
-        malformed_message = lambda do
-          "#{svg_path.sub("#{CONFORMANCE_ROOT}/", '')}: #{malformed}"
+        let(:malformed) { parse_error(content) }
+        let(:malformed_message) do
+          -> { "#{svg_path.sub("#{CONFORMANCE_ROOT}/", '')}: #{malformed}" }
         end
-        expect(malformed).to be_nil,
-                             malformed_message
+        let(:result) { validate(content) }
 
-        result = validate(content)
-        expect(result).to be_valid, -> { complaint(svg_path, result) }
+        it "contains nonempty SVG bytes" do
+          expect(content).not_to be_empty
+        end
+
+        it "contains well-formed XML" do
+          expect(malformed).to be_nil, malformed_message
+        end
+
+        it "satisfies the chosen SVG conformance profile" do
+          expect(result).to be_valid, -> { complaint(svg_path, result) }
+        end
       end
     end
   end
@@ -252,70 +308,67 @@ RSpec.describe Sirena::Svg do
     end
 
     CONFORMANCE_FIXTURE_SOURCES.each do |source_path|
-      it "renders #{File.basename(File.dirname(source_path))} conformantly" do
-        svg = Sirena::Engine.new.render(File.read(source_path))
+      describe "#{File.basename(File.dirname(source_path))} conformance" do
+        subject(:svg) { Sirena::Engine.new.render(File.read(source_path)) }
 
-        malformed = parse_error(svg)
-        malformed_message = lambda do
-          "#{source_path.sub("#{CONFORMANCE_ROOT}/", '')}: #{malformed}"
+        let(:malformed) { parse_error(svg) }
+        let(:malformed_message) do
+          -> { "#{source_path.sub("#{CONFORMANCE_ROOT}/", '')}: #{malformed}" }
         end
-        expect(malformed).to be_nil,
-                             malformed_message
+        let(:result) { validate(svg) }
 
-        result = validate(svg)
-        expect(result).to be_valid, -> { complaint(source_path, result) }
+        it "renders well-formed XML" do
+          expect(malformed).to be_nil, malformed_message
+        end
+
+        it "renders conformant SVG" do
+          expect(result).to be_valid, -> { complaint(source_path, result) }
+        end
       end
     end
   end
 
   describe "conformance across the mermaid corpus" do
-    # One example rather than 1,997: the useful failure is the whole list of
-    # offending cases and what each emitted, not the first one rspec reaches.
-    #
-    # One example rather than two, as well. Checking the baseline's own
-    # integrity somewhere else did not work: rspec randomises order, so the
-    # render could run first, regenerate over a truncated list, and leave that
-    # check reading the file it had just repaired. Everything that reads,
-    # judges or writes the baseline happens here, in this order.
+    # Read and check baseline integrity before any renderer runs. All four
+    # facts must hold before the optional write can record an improvement.
+    let(:corpus_observation) { corpus_conformance_observation }
+    let(:checks) { corpus_observation.fetch(:checks) }
+    let(:corpus_message) do
+      -> { corpus_conformance_message(corpus_observation) }
+    end
+    let(:corpus_contract) do
+      [be >= CONFORMANCE_RENDERED_FLOOR,
+       corpus_observation.fetch(:baseline), [], []]
+    end
+
     it "renders every case it can render conformantly" do
-      # Read and judged before anything is rendered or written. An emptied or
-      # truncated list would make the subset check below pass against nothing,
-      # and regenerating first would compare the new list against itself.
-      baseline = baseline_renderable
-      expect(baseline.size).to be >= CONFORMANCE_RENDERED_FLOOR
-      expect(baseline.uniq).to eq(baseline)
+      expect(checks).to match(corpus_contract), corpus_message
+      write_corpus_improvement(corpus_observation)
+    end
 
-      rendered = []
-      offenders = CONFORMANCE_CORPUS_SOURCES.filter_map do |source_path|
-        svg = render_or_skip(source_path)
-        next unless svg
-
-        rendered << corpus_name(source_path)
-        malformed = parse_error(svg)
-        if malformed
-          path = source_path.sub("#{CONFORMANCE_ROOT}/", "")
-          next "#{path}: not well-formed: #{malformed}"
-        end
-
-        result = validate(svg)
-        complaint(source_path, result) unless result.valid?
+    describe "baseline guards" do
+      before do
+        allow(self).to receive(:collect_corpus_conformance)
+          .and_raise("rendering began before baseline validation")
       end
 
-      # Checked first: an empty offender list means nothing until the
-      # population it was drawn from is known to be intact. By name, because a
-      # count stays put when one case regresses and another gains.
-      lost = baseline - rendered
-      lost_message = lambda do
-        "stopped rendering, so nothing checked them: #{lost.sort.join(', ')}"
+      it "rejects a truncated baseline before rendering" do
+        allow(self).to receive(:baseline_renderable).and_return([])
+        expect(corpus_observation.fetch(:checks)).not_to match(corpus_contract)
       end
-      expect(lost).to be_empty,
-                      lost_message
-      expect(offenders).to be_empty, -> { offenders.join("\n") }
 
-      # Written last, and only once every assertion above has held, so
-      # regenerating can record a gain but never quietly accept a loss or
-      # launder a damaged list.
-      write_renderable(rendered) if ENV["CONFORMANCE_WRITE_RENDERABLE"]
+      it "rejects duplicate entries before rendering" do
+        duplicate = Array.new(CONFORMANCE_RENDERED_FLOOR, "same-case")
+        allow(self).to receive(:baseline_renderable).and_return(duplicate)
+        expect(corpus_observation.fetch(:checks)).not_to match(corpus_contract)
+      end
+
+      it "rejects a lost case even when the offender list is empty" do
+        baseline = baseline_renderable
+        allow(self).to receive(:collect_corpus_conformance)
+          .and_return([baseline.drop(1), []])
+        expect(corpus_observation.fetch(:checks)).not_to match(corpus_contract)
+      end
     end
   end
 
@@ -326,23 +379,56 @@ RSpec.describe Sirena::Svg do
   describe "the checked-in examples" do
     include SvgConformanceCheckedInExampleHelpers
 
+    let(:example_comparison) do
+      compared = 0
+      stale = CONFORMANCE_EXAMPLE_SOURCES.filter_map do |mmd|
+        rendered = begin
+          render_example(mmd)
+        rescue StandardError
+          next
+        end
+        compared += 1
+        svg_path = mmd.sub(/\.mmd\z/, ".svg")
+        unless CONFORMANCE_EXAMPLE_SVGS.include?(svg_path)
+          next relative(svg_path)
+        end
+
+        relative(svg_path) unless File.read(svg_path) == rendered
+      end
+      expected_count = CONFORMANCE_EXAMPLE_SOURCES.size -
+        CONFORMANCE_UNRENDERABLE_EXAMPLES.size
+      { compared: compared, stale: stale, expected_count: expected_count }
+    end
+    let(:example_rendering) do
+      rendered = {}
+      unrenderable = CONFORMANCE_EXAMPLE_SOURCES.filter_map do |mmd|
+        rendered[mmd] = render_example(mmd)
+        nil
+      rescue StandardError
+        mmd
+      end
+      { rendered: rendered, unrenderable: unrenderable }
+    end
+    let(:task_today_declaration) do
+      "EXAMPLE_TODAY = Date.new(#{CONFORMANCE_EXAMPLE_TODAY.year}, " \
+        "#{CONFORMANCE_EXAMPLE_TODAY.month}, #{CONFORMANCE_EXAMPLE_TODAY.day})"
+    end
+    # Duplicated render inputs must drift loudly here instead of blaming every
+    # checked-in SVG as stale.
+    let(:task_source) { example_task_source }
+
     it "has example sources to render" do
       # 53 is today's .mmd count under examples/; this guard catches
       # sources vanishing.
       expect(CONFORMANCE_EXAMPLE_SOURCES.size).to be >= 53
     end
 
-    # Duplicated render inputs must drift loudly here instead of blaming every
-    # checked-in SVG as stale.
-    it "uses the generation task rendering defaults" do
-      task_source = example_task_source
+    it "uses the generation task date" do
+      expect(task_source).to include(task_today_declaration)
+    end
 
-      expect(task_source).to include(
-        "EXAMPLE_TODAY = Date.new(#{CONFORMANCE_EXAMPLE_TODAY.year}, " \
-        "#{CONFORMANCE_EXAMPLE_TODAY.month}, #{CONFORMANCE_EXAMPLE_TODAY.day})",
-      )
-      # The expression, not the whole assignment: pinning the statement made the
-      # task keep a redundant local just to satisfy this line.
+    # Match the expression so a redundant local assignment is unnecessary.
+    it "uses the generation task theme default" do
       expect(task_source)
         .to include("metadata[\"theme\"] || \"#{CONFORMANCE_EXAMPLE_THEME}\"")
     end
@@ -368,53 +454,27 @@ RSpec.describe Sirena::Svg do
     end
 
     it "renders every source except the ones named as unsupported" do
-      rendered = {}
-      unrenderable = CONFORMANCE_EXAMPLE_SOURCES.filter_map do |mmd|
-        rendered[mmd] = render_example(mmd)
-        nil
-      rescue StandardError
-        mmd
-      end
-
-      rendered.each_value do |svg|
-        expect(svg).not_to be_empty
-        expect(svg_document?(svg)).to be(true)
-      end
-      expect(unrenderable.map { |mmd| relative(mmd) })
+      expect(example_rendering.fetch(:unrenderable).map { |mmd| relative(mmd) })
         .to match_array(CONFORMANCE_UNRENDERABLE_EXAMPLES)
     end
 
+    it "renders nonempty example output" do
+      expect(example_rendering.fetch(:rendered).values.map(&:empty?))
+        .to all(be(false))
+    end
+
+    it "renders SVG-shaped example documents" do
+      flags = example_rendering.fetch(:rendered).values.map do |svg|
+        svg_document?(svg)
+      end
+      expect(flags).to all(be(true))
+    end
+
     it "has checked in exactly what the renderer produces today" do
-      compared = 0
-      stale = CONFORMANCE_EXAMPLE_SOURCES.filter_map do |mmd|
-        rendered = begin
-          render_example(mmd)
-        rescue StandardError
-          next
-        end
-
-        compared += 1
-        svg_path = mmd.sub(/\.mmd\z/, ".svg")
-        unless CONFORMANCE_EXAMPLE_SVGS.include?(svg_path)
-          next relative(svg_path)
-        end
-
-        relative(svg_path) unless File.read(svg_path) == rendered
-      end
-
-      # Checked first, and here rather than only in the example above: a
-      # source that stops rendering is skipped by the rescue, and an empty
-      # stale list says nothing until every source that is not named
-      # unrenderable is known to have been compared.
-      expected_count = CONFORMANCE_EXAMPLE_SOURCES.size -
-        CONFORMANCE_UNRENDERABLE_EXAMPLES.size
-      expect(compared)
-        .to eq(expected_count)
-      stale_message = lambda do
-        "not tracked, or not what the renderer produces: #{stale.join(', ')}"
-      end
-      expect(stale).to be_empty,
-                       stale_message
+      observed = example_comparison
+      expect([observed.fetch(:compared), observed.fetch(:stale)])
+        .to eq([observed.fetch(:expected_count), []]),
+            -> { stale_example_message(observed) }
     end
   end
 end
