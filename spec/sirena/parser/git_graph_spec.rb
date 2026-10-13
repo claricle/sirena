@@ -31,248 +31,318 @@ RSpec.describe Sirena::Parser::GitGraph do
 
   let(:parser) { described_class.new }
 
-  describe "#parse" do
-    context "with simple commits" do
-      it "parses a single commit", :aggregate_failures do
-        source = <<~MERMAID
+  context "with simple commits" do
+    context "when parsing a single commit", :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains diagram" do
         expect(diagram).to be_a(Sirena::Diagram::GitGraph)
-        expect(diagram.commits.size).to eq(1)
-        expect(diagram.commits.first.branch_name).to eq("main")
       end
 
-      it "parses multiple commits with IDs", :aggregate_failures do
-        source = <<~MERMAID
+      it "retains diagram.commits.size" do
+        expect(diagram.commits.size).to eq(1)
+      end
+
+      it "retains diagram.commits.first.branch_name" do
+        expect(diagram.commits.first.branch_name).to eq("main")
+      end
+    end
+
+    context "when parsing multiple commits with IDs", :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit id: "One"
             commit id: "Two"
             commit id: "Three"
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains diagram.commits.size" do
         expect(diagram.commits.size).to eq(3)
-        expect(diagram.commits.map(&:id)).to eq(["One", "Two", "Three"])
       end
 
-      it "parses commits with types", :aggregate_failures do
-        source = <<~MERMAID
+      it "retains diagram.commits.map id" do
+        expect(diagram.commits.map(&:id)).to eq(["One", "Two", "Three"])
+      end
+    end
+
+    context "when parsing commits with types", :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit type: NORMAL
             commit type: REVERSE
             commit type: HIGHLIGHT
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains diagram.commits.size" do
         expect(diagram.commits.size).to eq(3)
+      end
+
+      it "retains diagram.commits.map type" do
         expect(diagram.commits.map(&:type)).to eq(
           ["NORMAL", "REVERSE", "HIGHLIGHT"],
         )
       end
+    end
 
-      it "parses commits with tags", :aggregate_failures do
-        source = <<~MERMAID
+    context "when parsing commits with tags", :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit tag: "v1.0"
             commit id: "Two" tag: "v2.0"
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains diagram.commits.size" do
         expect(diagram.commits.size).to eq(2)
+      end
+
+      it "retains diagram.commits.map tag" do
         expect(diagram.commits.map(&:tag)).to eq(["v1.0", "v2.0"])
       end
     end
+  end
 
-    context "with branches" do
-      it "parses branch creation", :aggregate_failures do
-        source = <<~MERMAID
+  context "with branches" do
+    context "when parsing branch creation", :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit
             branch develop
             checkout develop
             commit
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
-        expect(diagram.branches.size).to eq(2) # main and develop
-        expect(diagram.branches.map(&:name)).to include("develop")
-        expect(diagram.commits.size).to eq(2)
-        expect(diagram.commits.last.branch_name).to eq("develop")
+      it "retains diagram.branches.size" do
+        expect(diagram.branches.size).to eq(2)
       end
 
-      # mermaid accepts real git branch names, not just identifiers.
-      # Corpus case unknown/gitgraph-1aeddce4.mmd checks out
-      # "release/1.0.0".
-      it "parses a branch name with a slash and dots", :aggregate_failures do
-        source = <<~MERMAID
+      it "retains diagram.branches.map name" do
+        expect(diagram.branches.map(&:name)).to include("develop")
+      end
+
+      it "retains diagram.commits.size" do
+        expect(diagram.commits.size).to eq(2)
+      end
+
+      it "retains diagram.commits.last.branch_name" do
+        expect(diagram.commits.last.branch_name).to eq("develop")
+      end
+    end
+
+    # mermaid accepts real git branch names, not just identifiers.
+    # Corpus case unknown/gitgraph-1aeddce4.mmd checks out
+    # "release/1.0.0".
+    context "when parsing a branch name with a slash and dots",
+            :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit
             branch release/1.0.0
             checkout release/1.0.0
             commit
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains diagram.branches.map name" do
         expect(diagram.branches.map(&:name)).to include("release/1.0.0")
+      end
+
+      it "retains diagram.commits.last.branch_name" do
         expect(diagram.commits.last.branch_name).to eq("release/1.0.0")
       end
+    end
 
-      # mermaid's own `REFERENCE` token (`/\w([-.\/\w]*[-\w])?/`) requires
-      # a word character first and a word character or hyphen last --
-      # `.` and `/` are only legal in the middle. A Codex review found an
-      # earlier version of `branch_name` accepted all four leading/trailing
-      # forms mermaid rejects.
-      it "rejects a branch name starting or ending with a dot or slash",
-         :aggregate_failures do
-        grammar = Sirena::Parser::Grammars::GitGraph.new
+    # mermaid's own `REFERENCE` token (`/\w([-.\/\w]*[-\w])?/`) requires
+    # a word character first and a word character or hyphen last --
+    # `.` and `/` are only legal in the middle. A Codex review found an
+    # earlier version of `branch_name` accepted all four leading/trailing
+    # forms mermaid rejects.
+    it "rejects a branch name starting or ending with a dot or slash",
+       :aggregate_failures do
+      grammar = Sirena::Parser::Grammars::GitGraph.new
 
-        # Proves the rejections below are about the boundary specifically,
-        # not dots/slashes being unsupported entirely -- the old character
-        # class (`[a-zA-Z0-9_-]`) rejected a dot or slash ANYWHERE, so
-        # without this the raise_error expectations below would pass for
-        # the wrong reason on that old, narrower class.
-        expect(grammar.branch_name.parse("release/1.0.0").to_s)
-          .to eq("release/1.0.0")
+      # Proves the rejections below are about the boundary specifically,
+      # not dots/slashes being unsupported entirely -- the old character
+      # class (`[a-zA-Z0-9_-]`) rejected a dot or slash ANYWHERE, so
+      # without this the raise_error expectations below would pass for
+      # the wrong reason on that old, narrower class.
+      expect(grammar.branch_name.parse("release/1.0.0").to_s)
+        .to eq("release/1.0.0")
 
-        %w[.foo /foo foo. foo/].each do |name|
-          expect { grammar.branch_name.parse(name) }
-            .to raise_error(Parslet::ParseFailed),
-                "expected #{name.inspect} to be rejected"
+      %w[.foo /foo foo. foo/].each do |name|
+        expect { grammar.branch_name.parse(name) }
+          .to raise_error(Parslet::ParseFailed),
+              "expected #{name.inspect} to be rejected"
+      end
+    end
+
+    # A CHUNK-EDGE regression: `branch_name`'s greedy tail run is matched
+    # internally in bounded chunks (`TrimmedRun`, see the grammar
+    # comment). A naive per-chunk anchored regex is only exact for a pure
+    # character-class run, not this pattern's trailing-anchor requirement
+    # (must end in `-`/word, not `.`/`/`), so a name straddling a chunk
+    # edge used to truncate there instead of continuing into the next
+    # chunk. The run-length probe starts at 64 characters and doubles, so
+    # the edges are the cumulative sums (see `chunk_edges`), not round
+    # numbers. Every shape is checked one character before, on, and one
+    # character after each edge, against the SAME regex mermaid's own
+    # REFERENCE token uses on the whole string at once, not hand-derived.
+    it "matches the whole-input reference regex at every chunk edge" do
+      grammar = Sirena::Parser::Grammars::GitGraph.new
+      whole_input_regex = Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)', Regexp::MULTILINE)
+
+      mismatches = chunk_edges.product([-1, 0, 1]).flat_map do |edge, offset|
+        run_length = edge + offset
+        {
+          "word run" => "a#{'b' * run_length}",
+          "trailing dot" => "a#{'b' * (run_length - 1)}.",
+          "dot then word" => "a#{'b' * (run_length - 1)}.c",
+        }.filter_map do |shape, name|
+          got = grammar.branch_name.parse(name, prefix: true).to_s
+          expected = whole_input_regex.match(name)[0]
+          "#{shape} with run length #{run_length}" if got != expected
         end
       end
 
-      # A CHUNK-EDGE regression: `branch_name`'s greedy tail run is matched
-      # internally in bounded chunks (`TrimmedRun`, see the grammar
-      # comment). A naive per-chunk anchored regex is only exact for a pure
-      # character-class run, not this pattern's trailing-anchor requirement
-      # (must end in `-`/word, not `.`/`/`), so a name straddling a chunk
-      # edge used to truncate there instead of continuing into the next
-      # chunk. The run-length probe starts at 64 characters and doubles, so
-      # the edges are the cumulative sums (see `chunk_edges`), not round
-      # numbers. Every shape is checked one character before, on, and one
-      # character after each edge, against the SAME regex mermaid's own
-      # REFERENCE token uses on the whole string at once, not hand-derived.
-      it "matches the whole-input reference regex at every chunk edge" do
-        grammar = Sirena::Parser::Grammars::GitGraph.new
-        whole_input_regex = Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)', Regexp::MULTILINE)
+      expect(mismatches).to eq([])
+    end
 
-        mismatches = chunk_edges.product([-1, 0, 1]).flat_map do |edge, offset|
-          run_length = edge + offset
-          {
-            "word run" => "a#{'b' * run_length}",
-            "trailing dot" => "a#{'b' * (run_length - 1)}.",
-            "dot then word" => "a#{'b' * (run_length - 1)}.c",
-          }.filter_map do |shape, name|
-            got = grammar.branch_name.parse(name, prefix: true).to_s
-            expected = whole_input_regex.match(name)[0]
-            "#{shape} with run length #{run_length}" if got != expected
-          end
-        end
-
-        expect(mismatches).to eq([])
-      end
-
-      # `branch_name` is `match['\w'] >> TrimmedRun.new(...)` -- the
-      # leading `match['\w']` consumes ONE character before `TrimmedRun`'s
-      # own run starts, so the run itself starts at position 1, not 0.
-      # 64 `a`s here put the `.` as the LAST character of the run's first
-      # chunk.
-      it "parses a full branch statement whose name crosses a chunk edge" do
-        name = "#{'a' * 64}.bbbbbbbbbb"
-        source = <<~MERMAID
+    # `branch_name` is `match['\w'] >> TrimmedRun.new(...)` -- the
+    # leading `match['\w']` consumes ONE character before `TrimmedRun`'s
+    # own run starts, so the run itself starts at position 1, not 0.
+    # 64 `a`s here put the `.` as the LAST character of the run's first
+    # chunk.
+    context "when parsing a full branch statement whose name crosses a " \
+            "chunk edge" do
+      let(:name) { "#{'a' * 64}.bbbbbbbbbb" }
+      let(:source) do
+        <<~MERMAID
           gitGraph
             branch #{name}
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains diagram.branches.map name" do
         expect(diagram.branches.map(&:name)).to include(name)
       end
+    end
 
-      # Differential check against the SAME whole-input regex used above,
-      # across random tail content (dots and slashes included) at lengths
-      # clustered around every chunk edge, plus a spread of other sizes.
-      # Noise (a space) only ever trails the run, never interrupts it: an
-      # early interruption would end the run before it reached the edge
-      # under test.
-      it "matches the whole-input reference regex across random inputs near " \
-         "the chunk edges" do
-        grammar = Sirena::Parser::Grammars::GitGraph.new
-        whole_input_regex = Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)', Regexp::MULTILINE)
-        broad_pool = ("a".."z").to_a + ("0".."9").to_a + ["-", ".", "/", "_"]
-        rng = Random.new(20_260_929)
-        lengths = chunk_edges.flat_map do |edge|
-          ((edge - 2)..(edge + 2)).to_a
-        end +
-          Array.new(20) { rng.rand(1..150_000) }
+    # Differential check against the SAME whole-input regex used above,
+    # across random tail content (dots and slashes included) at lengths
+    # clustered around every chunk edge, plus a spread of other sizes.
+    # Noise (a space) only ever trails the run, never interrupts it: an
+    # early interruption would end the run before it reached the edge
+    # under test.
+    it "matches the whole-input reference regex across random inputs near " \
+       "the chunk edges" do
+      grammar = Sirena::Parser::Grammars::GitGraph.new
+      whole_input_regex = Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)', Regexp::MULTILINE)
+      broad_pool = ("a".."z").to_a + ("0".."9").to_a + ["-", ".", "/", "_"]
+      rng = Random.new(20_260_929)
+      lengths = chunk_edges.flat_map do |edge|
+        ((edge - 2)..(edge + 2)).to_a
+      end +
+        Array.new(20) { rng.rand(1..150_000) }
 
-        mismatches = lengths.filter_map do |length|
-          tail = Array.new(length) { broad_pool.sample(random: rng) }.join
-          input = "a#{tail}#{' !' if rng.rand(2) == 1}"
-          expected = whole_input_regex.match(input)[0]
-          got = grammar.branch_name.parse(input, prefix: true).to_s
-          if got != expected
-            { length: length, expected: expected.length, got: got.length }
-          end
+      mismatches = lengths.filter_map do |length|
+        tail = Array.new(length) { broad_pool.sample(random: rng) }.join
+        input = "a#{tail}#{' !' if rng.rand(2) == 1}"
+        expected = whole_input_regex.match(input)[0]
+        got = grammar.branch_name.parse(input, prefix: true).to_s
+        if got != expected
+          { length: length, expected: expected.length, got: got.length }
         end
-
-        message = "#{mismatches.size}/#{lengths.size} cases mismatched: " \
-                  "#{mismatches.first(3)}"
-        expect(mismatches).to eq([]), message
       end
 
-      # Guards against the OTHER shape a fixed-size-chunk atom can
-      # regress on: many SHORT branch names, not one long one.
-      # `branch_name`'s run used to chunk at a fixed 50_000-char ceiling
-      # regardless of the run's own length, so every short branch name
-      # still paid a ~50_000-char consume + rewind per statement --
-      # linear in the chunk size per branch, not in the name's own
-      # length. Scaling ratio, not an absolute bound, for the same
-      # reason as spec/support/cpu_timing.rb.
-      it "parses many branches with short names at a linear rate, not one " \
-         "per fixed chunk", :speed do
-        small_parse = -> { parser.parse(many_branches_source(500)) }
-        large_parse = -> { parser.parse(many_branches_source(4_000)) }
-        small_time = min_call_time { cpu_time(&small_parse) }
-        large_time = min_call_time { cpu_time(&large_parse) }
+      message = "#{mismatches.size}/#{lengths.size} cases mismatched: " \
+                "#{mismatches.first(3)}"
+      expect(mismatches).to eq([]), message
+    end
 
-        expect(large_time / small_time).to be < 30
-      end
+    # Guards against the OTHER shape a fixed-size-chunk atom can
+    # regress on: many SHORT branch names, not one long one.
+    # `branch_name`'s run used to chunk at a fixed 50_000-char ceiling
+    # regardless of the run's own length, so every short branch name
+    # still paid a ~50_000-char consume + rewind per statement --
+    # linear in the chunk size per branch, not in the name's own
+    # length. Scaling ratio, not an absolute bound, for the same
+    # reason as spec/support/cpu_timing.rb.
+    it "parses many branches with short names at a linear rate, not one " \
+       "per fixed chunk", :speed do
+      small_parse = -> { parser.parse(many_branches_source(500)) }
+      large_parse = -> { parser.parse(many_branches_source(4_000)) }
+      small_time = min_call_time { cpu_time(&small_parse) }
+      large_time = min_call_time { cpu_time(&large_parse) }
 
-      it "parses branch with order", :aggregate_failures do
-        source = <<~MERMAID
+      expect(large_time / small_time).to be < 30
+    end
+
+    context "when parsing branch with order", :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit
             branch test1 order: 3
             branch test2 order: 2
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains branch1.order" do
         branch1 = diagram.branches.find { |b| b.name == "test1" }
-        branch2 = diagram.branches.find { |b| b.name == "test2" }
+
         expect(branch1.order).to eq(3)
-        expect(branch2.order).to eq(2)
       end
 
-      it "parses switch statement" do
-        source = <<~MERMAID
+      it "retains branch2.order" do
+        branch2 = diagram.branches.find { |b| b.name == "test2" }
+
+        expect(branch2.order).to eq(2)
+      end
+    end
+
+    context "when parsing switch statement" do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit
             branch testBranch
             switch testBranch
             commit
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains diagram.commits.last.branch_name" do
         expect(diagram.commits.last.branch_name).to eq("testBranch")
       end
     end
+  end
 
-    context "with merges" do
-      it "parses merge operations", :aggregate_failures do
-        source = <<~MERMAID
+  context "with merges" do
+    context "when parsing merge operations", :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit
             branch develop
@@ -281,15 +351,25 @@ RSpec.describe Sirena::Parser::GitGraph do
             checkout main
             merge develop
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains merge_commit.is_merge" do
         merge_commit = diagram.commits.last
+
         expect(merge_commit.is_merge).to be true
-        expect(merge_commit.merge_branch).to eq("develop")
       end
 
-      it "parses merge with id and tag", :aggregate_failures do
-        source = <<~MERMAID
+      it "retains merge_commit.merge_branch" do
+        merge_commit = diagram.commits.last
+
+        expect(merge_commit.merge_branch).to eq("develop")
+      end
+    end
+
+    context "when parsing merge with id and tag", :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit
             branch develop
@@ -298,18 +378,33 @@ RSpec.describe Sirena::Parser::GitGraph do
             checkout main
             merge develop id: "M1" tag: "v1.0"
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains merge_commit.id" do
         merge_commit = diagram.commits.last
+
         expect(merge_commit.id).to eq("M1")
+      end
+
+      it "retains merge_commit.tag" do
+        merge_commit = diagram.commits.last
+
         expect(merge_commit.tag).to eq("v1.0")
+      end
+
+      it "retains merge_commit.is_merge" do
+        merge_commit = diagram.commits.last
+
         expect(merge_commit.is_merge).to be true
       end
     end
+  end
 
-    context "with cherry-picks" do
-      it "parses cherry-pick operations" do
-        source = <<~MERMAID
+  context "with cherry-picks" do
+    context "when parsing cherry-pick operations" do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit id: "A"
             branch feature
@@ -318,14 +413,20 @@ RSpec.describe Sirena::Parser::GitGraph do
             checkout main
             cherry-pick id: "B"
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains cp_commit.is_cherry_pick" do
         cp_commit = diagram.commits.last
+
         expect(cp_commit.is_cherry_pick).to be true
       end
+    end
 
-      it "parses cherry-pick with parent and tag", :aggregate_failures do
-        source = <<~MERMAID
+    context "when parsing cherry-pick with parent and tag",
+            :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph
             commit id: "ZERO"
             branch feature
@@ -334,35 +435,62 @@ RSpec.describe Sirena::Parser::GitGraph do
             checkout main
             cherry-pick id: "A" parent: "ZERO" tag: "v1.0"
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains cp_commit.is_cherry_pick" do
         cp_commit = diagram.commits.last
+
         expect(cp_commit.is_cherry_pick).to be true
+      end
+
+      it "retains cp_commit.cherry_pick_parent" do
+        cp_commit = diagram.commits.last
+
         expect(cp_commit.cherry_pick_parent).to eq("ZERO")
+      end
+
+      it "retains cp_commit.tag" do
+        cp_commit = diagram.commits.last
+
         expect(cp_commit.tag).to eq("v1.0")
       end
     end
+  end
 
-    context "with orientation" do
-      it "parses TB orientation", :aggregate_failures do
-        source = <<~MERMAID
+  context "with orientation" do
+    context "when parsing TB orientation", :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph TB:
             commit
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains diagram" do
         expect(diagram).to be_a(Sirena::Diagram::GitGraph)
-        expect(diagram.commits.size).to eq(1)
       end
 
-      it "parses LR orientation", :aggregate_failures do
-        source = <<~MERMAID
+      it "retains diagram.commits.size" do
+        expect(diagram.commits.size).to eq(1)
+      end
+    end
+
+    context "when parsing LR orientation", :aggregate_failures do
+      let(:source) do
+        <<~MERMAID
           gitGraph LR:
             commit
         MERMAID
+      end
+      let(:diagram) { parser.parse(source) }
 
-        diagram = parser.parse(source)
+      it "retains diagram" do
         expect(diagram).to be_a(Sirena::Diagram::GitGraph)
+      end
+
+      it "retains diagram.commits.size" do
         expect(diagram.commits.size).to eq(1)
       end
     end

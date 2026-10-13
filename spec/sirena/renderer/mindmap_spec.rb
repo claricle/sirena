@@ -19,6 +19,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
   end
   let(:diagram) { Sirena::Parser::Mindmap.new.parse(source) }
   let(:scene) { Sirena::Layout::Mindmap.new.call(diagram) }
+  let(:link) { scene.edges.first }
   let(:compatible_summaries) do
     graph = Sirena::Notation::Mermaid::IRAdapter.call(:mindmap, diagram)
     [diagram, graph].map do |input|
@@ -28,29 +29,39 @@ RSpec.describe Sirena::Renderer::Mindmap do
     end
   end
 
-  it "returns typed final canvas geometry" do
+  it "returns typed final scene, node and edge classes" do
     actual = [scene.class, scene.children.map(&:class).uniq,
-              scene.edges.map(&:class).uniq, scene.view_box]
-    expected = [Sirena::Layout::Mindmap::Scene,
-                [Sirena::Layout::Mindmap::Node],
-                [Sirena::Layout::Mindmap::Edge],
-                "0 0 #{scene.width} #{scene.height}"]
-    expect(actual).to eq(expected)
+              scene.edges.map(&:class).uniq]
+    expect(actual).to eq([Sirena::Layout::Mindmap::Scene,
+                          [Sirena::Layout::Mindmap::Node],
+                          [Sirena::Layout::Mindmap::Edge]])
   end
 
-  it "includes framing in every node, link, and label coordinate" do
-    root = scene.children.first
-    link = scene.edges.first
+  it "sizes the view box to the final canvas" do
+    expect(scene.view_box).to eq("0 0 #{scene.width} #{scene.height}")
+  end
 
+  it "includes framing in every node and label coordinate" do
+    root = scene.children.first
     coordinates = [root.x, root.y, root.labels.first.x, root.labels.first.y]
     padding = Sirena::Layout::Mindmap::PADDING
-    framing = coordinates.all? { |value| value >= padding }
+
+    expect(coordinates.all? { |value| value >= padding }).to be(true)
+  end
+
+  it "insets the link start from the root centre" do
+    root = scene.children.first
     start = link.sections.first.start_point
     centre_gap = Math.hypot(start.x - root.center_x,
                             start.y - (root.y + (root.height / 2)))
-    path_starts_at_start = link.path.start_with?("M #{start.x} ")
-    expect([framing, centre_gap.round(6), path_starts_at_start])
-      .to eq([true, Sirena::Layout::Mindmap::EDGE_INSET, true])
+
+    expect(centre_gap.round(6)).to eq(Sirena::Layout::Mindmap::EDGE_INSET)
+  end
+
+  it "starts the link path at its start point" do
+    start = link.sections.first.start_point
+
+    expect(link.path.start_with?("M #{start.x} ")).to be(true)
   end
 
   it "renders all node shapes and labels inside node groups" do

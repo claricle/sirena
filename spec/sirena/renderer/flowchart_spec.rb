@@ -46,11 +46,15 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     it "renders graph to SVG document" do
-      svg = render_graph(graph)
+      expect(render_graph(graph)).to be_a(Sirena::Svg::Document)
+    end
 
-      expect(svg).to be_a(Sirena::Svg::Document)
-      expect(svg.width).to be > 0
-      expect(svg.height).to be > 0
+    it "renders a document with positive width" do
+      expect(render_graph(graph).width).to be > 0
+    end
+
+    it "renders a document with positive height" do
+      expect(render_graph(graph).height).to be > 0
     end
 
     it "includes nodes in SVG" do
@@ -92,6 +96,13 @@ RSpec.describe Sirena::Renderer::Flowchart do
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       expect(texts).not_to be_empty
+    end
+
+    it "renders the first node label as its text" do
+      svg = render_graph(graph)
+      groups = svg.children.grep(Sirena::Svg::Group)
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
+
       # `content` is `collection: true`, so read it through Array(...).
       expect(Array(texts.first.content).join).to eq("Start")
     end
@@ -123,14 +134,12 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # the assertion passed on all six rows while no arrowhead was
     # rendered at all. Measured against mmdc 11.12.0, the polygon count
     # below matches mermaid on every row.
-    it "draws an arrowhead only for a link that has one" do
-      { "-->" => 1, "---" => 0, "-.->" => 1, "-.-" => 0,
-        "==>" => 1, "===" => 0 }.each do |link, arrowheads|
-        source = "flowchart TD\n  A#{link}B\n"
-        svg = Sirena.render(source)
-        message = "source #{source.inspect}"
+    { "-->" => 1, "---" => 0, "-.->" => 1, "-.-" => 0,
+      "==>" => 1, "===" => 0 }.each do |link, arrowheads|
+      it "draws an arrowhead only for a link that has one: #{link}" do
+        svg = Sirena.render("flowchart TD\n  A#{link}B\n")
 
-        expect(svg.scan("<polygon").length).to eq(arrowheads), message
+        expect(svg.scan("<polygon").length).to eq(arrowheads)
       end
     end
   end

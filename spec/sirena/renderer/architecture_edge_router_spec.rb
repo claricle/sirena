@@ -38,7 +38,10 @@ module ArchitectureEdgeRouterSpecHelpers
   # sabotaged, because it never reads that constant at all.
   def exit_direction(box, side)
     anchor = face_point(box, side)
-    centre = { x: box[:x] + (box[:width] / 2.0), y: box[:y] + (box[:height] / 2.0) }
+    centre = {
+      x: box[:x] + (box[:width] / 2.0),
+      y: box[:y] + (box[:height] / 2.0),
+    }
     { x: anchor[:x] <=> centre[:x], y: anchor[:y] <=> centre[:y] }
   end
 
@@ -166,7 +169,11 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter, :aggregate_failures do
         points.each_cons(3) do |before, at, after|
           same_direction = (at[:x] <=> before[:x]) == (after[:x] <=> at[:x]) &&
             (at[:y] <=> before[:y]) == (after[:y] <=> at[:y])
-          expect(same_direction).to be(false), "#{at} is collinear with its neighbours and should have been dropped"
+          expect(
+            same_direction,
+            "#{at} is collinear with its neighbours and " \
+            "should have been dropped",
+          ).to be(false)
         end
       end
     end
@@ -203,29 +210,53 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter, :aggregate_failures do
       %w[L R T B].each do |from_side|
         %w[L R T B].each do |to_side|
           it "leaves via #{from_side} and arrives via #{to_side} when bent" do
-            a = ArchitectureEdgeRouterSpecHelpers.box(x: 40, y: 40, width: 60, height: 60)
-            b = ArchitectureEdgeRouterSpecHelpers.box(x: 300, y: 300, width: 60, height: 60)
-            obstacle = ArchitectureEdgeRouterSpecHelpers.box(x: 150, y: 150, width: 100, height: 100)
+            a = ArchitectureEdgeRouterSpecHelpers.box(
+              x: 40, y: 40, width: 60, height: 60,
+            )
+            b = ArchitectureEdgeRouterSpecHelpers.box(
+              x: 300, y: 300, width: 60, height: 60,
+            )
+            obstacle = ArchitectureEdgeRouterSpecHelpers.box(
+              x: 150, y: 150, width: 100, height: 100,
+            )
 
-            points = router.route(from: ArchitectureEdgeRouterSpecHelpers.endpoint(a, from_side), to: ArchitectureEdgeRouterSpecHelpers.endpoint(b, to_side),
-                                  obstacles: [obstacle])
+            points = router.route(
+              from: ArchitectureEdgeRouterSpecHelpers.endpoint(a, from_side),
+              to: ArchitectureEdgeRouterSpecHelpers.endpoint(b, to_side),
+              obstacles: [obstacle],
+            )
 
             if points.length == 2
               # A straight line's direction is fixed by geometry, not the
               # declared faces, so it's not checked against exit_direction/
               # entry_direction - but it still has to be SAFE. route's
-              # fallback returns the straight line regardless of whether
-              # it's actually clear, so a broken direction constraint that
+              # fallback returns the straight line regardless of whether it's
+              # actually clear, so a broken direction constraint that
               # makes search_grid unable to satisfy it degrades straight
               # into the obstacle this test placed in the way - don't skip
               # this branch silently, it's the only check for that case.
-              expect(ArchitectureEdgeRouterSpecHelpers.path_clear_of?(points, obstacle)).to be(true)
+              expect(
+                ArchitectureEdgeRouterSpecHelpers.path_clear_of?(
+                  points,
+                  obstacle,
+                ),
+              ).to be(true)
             else
-              actual_first = { x: points[1][:x] <=> points[0][:x], y: points[1][:y] <=> points[0][:y] }
-              expect(actual_first).to eq(ArchitectureEdgeRouterSpecHelpers.exit_direction(a, from_side))
+              actual_first = {
+                x: points[1][:x] <=> points[0][:x],
+                y: points[1][:y] <=> points[0][:y],
+              }
+              expect(actual_first).to eq(
+                ArchitectureEdgeRouterSpecHelpers.exit_direction(a, from_side),
+              )
 
-              actual_last = { x: points[-1][:x] <=> points[-2][:x], y: points[-1][:y] <=> points[-2][:y] }
-              expect(actual_last).to eq(ArchitectureEdgeRouterSpecHelpers.entry_direction(b, to_side))
+              actual_last = {
+                x: points[-1][:x] <=> points[-2][:x],
+                y: points[-1][:y] <=> points[-2][:y],
+              }
+              expect(actual_last).to eq(
+                ArchitectureEdgeRouterSpecHelpers.entry_direction(b, to_side),
+              )
             end
           end
         end
@@ -234,17 +265,29 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter, :aggregate_failures do
 
     context "when no route exists at all" do
       it "falls back to the straight line rather than raising" do
-        a = ArchitectureEdgeRouterSpecHelpers.box(x: 60, y: 60, width: 80, height: 80)
-        b = ArchitectureEdgeRouterSpecHelpers.box(x: 460, y: 460, width: 80, height: 80)
+        a = ArchitectureEdgeRouterSpecHelpers.box(
+          x: 60, y: 60, width: 80, height: 80,
+        )
+        b = ArchitectureEdgeRouterSpecHelpers.box(
+          x: 460, y: 460, width: 80, height: 80,
+        )
         from = { point: { x: 100, y: 100 }, box: a, side: "R" }
         to = { point: { x: 500, y: 500 }, box: b, side: "L" }
         # A ring of obstacles fully surrounding to's point, leaving no free
         # grid cell for the search to escape through.
         ring = [
-          ArchitectureEdgeRouterSpecHelpers.box(x: 400, y: 400, width: 20, height: 200),
-          ArchitectureEdgeRouterSpecHelpers.box(x: 600, y: 400, width: 20, height: 200),
-          ArchitectureEdgeRouterSpecHelpers.box(x: 400, y: 400, width: 220, height: 20),
-          ArchitectureEdgeRouterSpecHelpers.box(x: 400, y: 600, width: 220, height: 20),
+          ArchitectureEdgeRouterSpecHelpers.box(
+            x: 400, y: 400, width: 20, height: 200,
+          ),
+          ArchitectureEdgeRouterSpecHelpers.box(
+            x: 600, y: 400, width: 20, height: 200,
+          ),
+          ArchitectureEdgeRouterSpecHelpers.box(
+            x: 400, y: 400, width: 220, height: 20,
+          ),
+          ArchitectureEdgeRouterSpecHelpers.box(
+            x: 400, y: 600, width: 220, height: 20,
+          ),
         ]
 
         expect do
@@ -265,8 +308,14 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter, :aggregate_failures do
       # otherwise reconstruct would walk a state graph with no path to it.
       it "falls back to the same point twice rather than raising" do
         a = ArchitectureEdgeRouterSpecHelpers.box(x: 100, y: 100)
-        anchor = { point: ArchitectureEdgeRouterSpecHelpers.face_point(a, "R"), box: a, side: "R" }
-        blocker = ArchitectureEdgeRouterSpecHelpers.box(x: 180, y: 100, width: 80, height: 80)
+        anchor = {
+          point: ArchitectureEdgeRouterSpecHelpers.face_point(a, "R"),
+          box: a,
+          side: "R",
+        }
+        blocker = ArchitectureEdgeRouterSpecHelpers.box(
+          x: 180, y: 100, width: 80, height: 80,
+        )
 
         expect do
           points = router.route(from: anchor, to: anchor, obstacles: [blocker])

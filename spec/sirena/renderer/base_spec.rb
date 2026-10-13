@@ -35,47 +35,46 @@ RSpec.describe Sirena::Renderer::Base do
   end
 
   describe "theme accessors" do
-    it "reads the value from the active theme, not the default one" do
-      expect(renderer.theme_color(:node_fill)).to eq(dark.colors.node_fill)
-      expect(dark.colors.node_fill).not_to eq(Sirena::Theme::Registry.get(:default).colors.node_fill)
-    end
-
-    it "reads each accessor from its own section of the theme" do
-      expect([
-               renderer.theme_color(:node_fill),
-               renderer.theme_typography(:font_family),
-               renderer.theme_shape(:stroke_width),
-               renderer.theme_spacing(:rank_spacing),
-               renderer.theme_effect(:shadow_blur),
-             ]).to eq([
-                        dark.colors.node_fill, dark.typography.font_family,
-                        dark.shapes.stroke_width, dark.spacing.rank_spacing,
-                        dark.effects.shadow_blur
-                      ])
-    end
-
     {
-      theme_color: :node_fill,
-      theme_typography: :font_family,
-      theme_shape: :stroke_width,
-      theme_spacing: :rank_spacing,
-      theme_effect: :shadow_blur,
-    }.each do |accessor, property|
-      it "#{accessor} is nil for an unknown property, no theme, " \
-         "or a theme without the section" do
+      theme_color: [:node_fill, ->(theme) { theme.colors.node_fill }],
+      theme_typography: [
+        :font_family, ->(theme) { theme.typography.font_family }
+      ],
+      theme_shape: [:stroke_width, ->(theme) { theme.shapes.stroke_width }],
+      theme_spacing: [
+        :rank_spacing, ->(theme) { theme.spacing.rank_spacing }
+      ],
+      theme_effect: [:shadow_blur, ->(theme) { theme.effects.shadow_blur }],
+    }.each do |accessor, (property, section)|
+      it "#{accessor} reads from its own section of the active theme" do
+        expect(renderer.public_send(accessor, property))
+          .to eq(section.call(dark))
+      end
+
+      it "#{accessor} is nil for an unknown property" do
         expect(renderer.public_send(accessor, :no_such_property)).to be_nil
+      end
+
+      it "#{accessor} is nil with no theme" do
         expect(themeless.public_send(accessor, property)).to be_nil
+      end
+
+      it "#{accessor} is nil for a theme without the section" do
         expect(hostile.public_send(accessor, property)).to be_nil
       end
+    end
+
+    it "reads a value that differs from the default theme's" do
+      expect(dark.colors.node_fill)
+        .not_to eq(Sirena::Theme::Registry.get(:default).colors.node_fill)
     end
   end
 
   describe "apply_theme_to_*" do
     it "paints a node with the theme fill, stroke and stroke width" do
-      element = Sirena::Svg::Rect.new
-      renderer.apply_theme_to_node(element)
+      node = Sirena::Svg::Rect.new.tap { |e| renderer.apply_theme_to_node(e) }
 
-      expect([element.fill, element.stroke, element.stroke_width]).to eq(
+      expect([node.fill, node.stroke, node.stroke_width]).to eq(
         [dark.colors.node_fill, dark.colors.node_stroke,
          dark.shapes.stroke_width.to_s],
       )
@@ -83,76 +82,83 @@ RSpec.describe Sirena::Renderer::Base do
 
     it "paints an edge with the theme stroke and stroke width, " \
        "leaving fill alone" do
-      element = Sirena::Svg::Path.new
-      renderer.apply_theme_to_edge(element)
+      edge = Sirena::Svg::Path.new.tap { |e| renderer.apply_theme_to_edge(e) }
 
-      expect([element.stroke, element.stroke_width, element.fill]).to eq(
+      expect([edge.stroke, edge.stroke_width, edge.fill]).to eq(
         [dark.colors.edge_stroke, dark.shapes.stroke_width.to_s, nil],
       )
     end
 
     it "paints text with the theme colour, family and size" do
-      element = Sirena::Svg::Text.new
-      renderer.apply_theme_to_text(element)
+      text = Sirena::Svg::Text.new.tap { |e| renderer.apply_theme_to_text(e) }
 
-      expect([element.fill, element.font_family, element.font_size]).to eq(
+      expect([text.fill, text.font_family, text.font_size]).to eq(
         [dark.colors.label_text, dark.typography.font_family,
          dark.typography.font_size_normal.to_s],
       )
     end
 
-    it "leaves every element untouched when the theme has nothing to say" do
-      node = Sirena::Svg::Rect.new
-      edge = Sirena::Svg::Path.new
-      text = Sirena::Svg::Text.new
-      hostile.apply_theme_to_node(node)
-      hostile.apply_theme_to_edge(edge)
-      hostile.apply_theme_to_text(text)
+    context "when the theme has nothing to say" do
+      it "leaves a node untouched" do
+        node = Sirena::Svg::Rect.new.tap { |e| hostile.apply_theme_to_node(e) }
 
-      expect([node.fill, node.stroke, node.stroke_width,
-              edge.stroke, edge.stroke_width,
-              text.fill, text.font_family, text.font_size]).to all(be_nil)
+        expect([node.fill, node.stroke, node.stroke_width]).to all(be_nil)
+      end
+
+      it "leaves an edge untouched" do
+        edge = Sirena::Svg::Path.new.tap { |e| hostile.apply_theme_to_edge(e) }
+
+        expect([edge.stroke, edge.stroke_width]).to all(be_nil)
+      end
+
+      it "leaves text untouched" do
+        text = Sirena::Svg::Text.new.tap { |e| hostile.apply_theme_to_text(e) }
+
+        expect([text.fill, text.font_family, text.font_size]).to all(be_nil)
+      end
     end
   end
 
   describe "#default_style" do
     it "takes node colours and stroke width from the theme" do
-      css = renderer.default_style(:node).to_css
-
-      expect(css).to eq(
+      expect(renderer.default_style(:node).to_css).to eq(
         "fill:#{dark.colors.node_fill};stroke:#{dark.colors.node_stroke};" \
         "stroke-width:#{dark.shapes.stroke_width}",
       )
     end
 
     it "draws an edge unfilled, with the theme stroke" do
-      css = renderer.default_style(:edge).to_css
-
-      expect(css).to eq(
+      expect(renderer.default_style(:edge).to_css).to eq(
         "fill:none;stroke:#{dark.colors.edge_stroke};" \
         "stroke-width:#{dark.shapes.stroke_width}",
       )
     end
 
     it "centres text and takes colour, family and size from the theme" do
-      css = renderer.default_style(:text).to_css
-
-      expect(css).to eq(
+      expect(renderer.default_style(:text).to_css).to eq(
         "fill:#{dark.colors.label_text};" \
         "font-family:#{dark.typography.font_family};" \
         "font-size:#{dark.typography.font_size_normal};text-anchor:middle",
       )
     end
 
-    it "falls back to plain black-on-white values when the theme is absent" do
-      expect(themeless.default_style(:node).to_css)
-        .to eq("fill:#ffffff;stroke:#000000;stroke-width:2.0")
-      expect(themeless.default_style(:edge).to_css)
-        .to eq("fill:none;stroke:#000000;stroke-width:2.0")
-      expect(themeless.default_style(:text).to_css).to eq(
-        "fill:#000000;font-family:Arial, sans-serif;font-size:14.0;" \
-        "text-anchor:middle",
-      )
+    context "when the theme is absent" do
+      it "falls back to a white node with a black stroke" do
+        expect(themeless.default_style(:node).to_css)
+          .to eq("fill:#ffffff;stroke:#000000;stroke-width:2.0")
+      end
+
+      it "falls back to an unfilled edge with a black stroke" do
+        expect(themeless.default_style(:edge).to_css)
+          .to eq("fill:none;stroke:#000000;stroke-width:2.0")
+      end
+
+      it "falls back to black centred Arial text" do
+        expect(themeless.default_style(:text).to_css).to eq(
+          "fill:#000000;font-family:Arial, sans-serif;font-size:14.0;" \
+          "text-anchor:middle",
+        )
+      end
     end
 
     it "is empty for an element type it does not know" do
@@ -186,6 +192,11 @@ RSpec.describe Sirena::Renderer::Base do
 
       expect([doc.width, doc.height, doc.view_box, doc.overflow])
         .to eq([810, 610, "0 0 810 610", nil])
+    end
+
+    it "keeps no horizontal offset state when sizing a Scene" do
+      renderer.create_document(sequence_scene(810, 610, "0 0 810 610"))
+
       expect(renderer.instance_variable_defined?(:@offset_x)).to be(false)
     end
 
@@ -195,6 +206,13 @@ RSpec.describe Sirena::Renderer::Base do
       expect([scene.width, scene.height,
               renderer.create_document(scene).view_box])
         .to eq([100.5, 50.25, "0 0 100.5 50.25"])
+    end
+
+    it "keeps no vertical offset state when sizing a fractional Scene" do
+      renderer.create_document(
+        sequence_scene(100.5, 50.25, "0 0 100.5 50.25"),
+      )
+
       expect(renderer.instance_variable_defined?(:@offset_y)).to be(false)
     end
 
@@ -212,10 +230,15 @@ RSpec.describe Sirena::Renderer::Base do
         .to eq([100, "0 0 100 50"])
     end
 
-    it "sets the overflow attribute only when asked" do
+    it "leaves the overflow attribute unset by default" do
       scene = sequence_scene(100, 50, "0 0 100 50")
 
       expect(renderer.create_document(scene).overflow).to be_nil
+    end
+
+    it "sets the overflow attribute when asked" do
+      scene = sequence_scene(100, 50, "0 0 100 50")
+
       expect(renderer.create_document(scene, overflow: "hidden").overflow)
         .to eq("hidden")
     end

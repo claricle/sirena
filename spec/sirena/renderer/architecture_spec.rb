@@ -14,10 +14,30 @@ module TypedArchitectureSpecHelpers
   def segment_crosses?(node, first, last)
     (0..200).any? do |index|
       ratio = index / 200.0
-      x_coord = first.x + ((last.x - first.x) * ratio)
-      y_coord = first.y + ((last.y - first.y) * ratio)
-      x_coord > node.x && x_coord < node.x + node.width &&
-        y_coord > node.y && y_coord < node.y + node.height
+      inside?(node, interpolate(first.x, last.x, ratio),
+              interpolate(first.y, last.y, ratio))
+    end
+  end
+
+  def interpolate(from, to, ratio)
+    from + ((to - from) * ratio)
+  end
+
+  def inside?(node, x_coord, y_coord)
+    x_coord > node.x && x_coord < node.x + node.width &&
+      y_coord > node.y && y_coord < node.y + node.height
+  end
+
+  def crossings(scene)
+    nodes = scene.children.reject { |node| node.kind == "group" }
+    scene.edges.flat_map { |edge| edge_crossings(edge, nodes) }
+  end
+
+  def edge_crossings(edge, nodes)
+    ends = [edge.source, edge.target]
+    candidates = nodes.reject { |node| ends.include?(node.id) }
+    points(edge).each_cons(2).flat_map do |first, last|
+      candidates.select { |node| segment_crosses?(node, first, last) }
     end
   end
 
@@ -36,68 +56,104 @@ RSpec.describe Sirena::Renderer::Architecture, :aggregate_failures do
   let(:scene) { Sirena::Layout::Architecture.new.call(diagram) }
   let(:svg) { renderer.render(scene) }
 
-  it "renders typed services, routed edges, labels, and the Scene canvas" do
-    xml = svg.to_xml
+  it "renders a typed Document from a typed Scene" do
     expect(svg).to be_a(Sirena::Svg::Document)
     expect(scene).to be_a(Sirena::Layout::Architecture::Scene)
-    expect(xml).to include('id="service-frontend"',
-                           'id="edge-frontend-backend"')
-    expect(xml).to include("Frontend", "Backend API", "Database", "Cache")
-    expect(xml).to include("<path")
+  end
+
+  it "renders typed services and routed edges" do
+    expect(svg.to_xml).to include('id="service-frontend"',
+                                  'id="edge-frontend-backend"')
+  end
+
+  it "renders service labels" do
+    expect(svg.to_xml).to include("Frontend", "Backend API", "Database",
+                                  "Cache")
+  end
+
+  it "renders edge paths" do
+    expect(svg.to_xml).to include("<path")
+  end
+
+  it "uses the Scene canvas" do
     expect([svg.width, svg.height, svg.view_box])
       .to eq([scene.width, scene.height, scene.view_box])
   end
 
-  it "renders an edge label positioned by the typed Scene" do
-    diagram = Sirena::Diagram::Architecture.new(
-      services: [
-        Sirena::Diagram::Architecture::Service.new(id: "a", label: "A",
-                                                   icon: "server"),
-        Sirena::Diagram::Architecture::Service.new(id: "b", label: "B",
-                                                   icon: "server"),
-      ],
-      groups: [], junctions: [],
-      edges: [Sirena::Diagram::Architecture::Edge.new(
-        from_id: "a", to_id: "b", from_position: "R", to_position: "L",
-        label: "HTTP"
-      )]
-    )
-    labeled_scene = Sirena::Layout::Architecture.new.call(diagram)
+  describe "an edge label" do
+    let(:labeled_scene) do
+      diagram = Sirena::Diagram::Architecture.new(
+        services: [
+          Sirena::Diagram::Architecture::Service.new(id: "a", label: "A",
+                                                     icon: "server"),
+          Sirena::Diagram::Architecture::Service.new(id: "b", label: "B",
+                                                     icon: "server"),
+        ],
+        groups: [], junctions: [],
+        edges: [Sirena::Diagram::Architecture::Edge.new(
+          from_id: "a", to_id: "b", from_position: "R", to_position: "L",
+          label: "HTTP"
+        )]
+      )
+      Sirena::Layout::Architecture.new.call(diagram)
+    end
 
-    expect(labeled_scene.edges.first.labels.first.text).to eq("HTTP")
-    expect(renderer.render(labeled_scene).to_xml).to include(">HTTP<")
+    it "is positioned by the typed Scene" do
+      expect(labeled_scene.edges.first.labels.first.text).to eq("HTTP")
+    end
+
+    it "renders the label text" do
+      expect(renderer.render(labeled_scene).to_xml).to include(">HTTP<")
+    end
   end
 
-  it "renders group boundaries and junction circles from typed nodes" do
-    diagram = Sirena::Diagram::Architecture.new(
-      services: [],
-      junctions: [Sirena::Diagram::Architecture::Junction.new(
-        id: "mid", group_id: "api",
-      )],
-      groups: [Sirena::Diagram::Architecture::Group.new(
-        id: "api", label: "API", icon: "cloud",
-      )],
-      edges: [],
-    )
-    xml = renderer.render(Sirena::Layout::Architecture.new.call(diagram)).to_xml
-    expect(xml).to include('id="group-api"', 'id="junction-mid"', "API")
-    expect(xml).to include("<circle")
+  describe "group boundaries and junction circles from typed nodes" do
+    let(:group_xml) do
+      diagram = Sirena::Diagram::Architecture.new(
+        services: [],
+        junctions: [Sirena::Diagram::Architecture::Junction.new(
+          id: "mid", group_id: "api",
+        )],
+        groups: [Sirena::Diagram::Architecture::Group.new(
+          id: "api", label: "API", icon: "cloud",
+        )],
+        edges: [],
+      )
+      scene = Sirena::Layout::Architecture.new.call(diagram)
+      renderer.render(scene).to_xml
+    end
+
+    it "renders the group boundary, the junction and the group label" do
+      expect(group_xml).to include('id="group-api"', 'id="junction-mid"',
+                                   "API")
+    end
+
+    it "renders the junction circle" do
+      expect(group_xml).to include("<circle")
+    end
   end
 
-  it "draws a junction circle from Scene centre and radius" do
-    junction = Sirena::Layout::Architecture::Node.new(
-      id: "mid", kind: "junction", x: 300, y: 40, width: 20, height: 12,
-      center_x: 310, center_y: 46, radius: 10
-    )
-    manual_scene = Sirena::Layout::Architecture::Scene.new(
-      width: 400, height: 200, view_box: "0 0 400 200",
-      children: [junction], edges: []
-    )
-    xml = renderer.render(manual_scene).to_xml
+  describe "a junction circle from Scene centre and radius" do
+    let(:junction_xml) do
+      junction = Sirena::Layout::Architecture::Node.new(
+        id: "mid", kind: "junction", x: 300, y: 40, width: 20, height: 12,
+        center_x: 310, center_y: 46, radius: 10
+      )
+      manual_scene = Sirena::Layout::Architecture::Scene.new(
+        width: 400, height: 200, view_box: "0 0 400 200",
+        children: [junction], edges: []
+      )
+      renderer.render(manual_scene).to_xml
+    end
 
-    expect(xml).to include('id="junction-mid"', 'cx="310.0"', 'cy="46.0"',
-                           'r="10.0"')
-    expect(xml).not_to include('id="service-mid"', 'r="6.0"')
+    it "draws the circle at the Scene centre with the Scene radius" do
+      expect(junction_xml).to include('id="junction-mid"', 'cx="310.0"',
+                                      'cy="46.0"', 'r="10.0"')
+    end
+
+    it "draws no service shape or default radius" do
+      expect(junction_xml).not_to include('id="service-mid"', 'r="6.0"')
+    end
   end
 
   it "keeps every routed point inside the Scene canvas" do
@@ -132,19 +188,8 @@ RSpec.describe Sirena::Renderer::Architecture, :aggregate_failures do
         it "routes #{File.basename(path)} around non-endpoint nodes" do
           diagram = Sirena::Parser::Architecture.new.parse(File.read(path))
           scene = Sirena::Layout::Architecture.new.call(diagram)
-          nodes = scene.children.reject { |node| node.kind == "group" }
-          scene.edges.each do |edge|
-            candidates = nodes.reject do |node|
-              [edge.source, edge.target].include?(node.id)
-            end
-            TypedArchitectureSpecHelpers.points(edge).each_cons(2) do |first, last|
-              candidates.each do |node|
-                expect(TypedArchitectureSpecHelpers.segment_crosses?(node,
-                                                                     first, last))
-                  .to be(false)
-              end
-            end
-          end
+
+          expect(TypedArchitectureSpecHelpers.crossings(scene)).to be_empty
         end
       end
     end

@@ -7,283 +7,473 @@ RSpec.describe Sirena::Parser::C4, :aggregate_failures do
   let(:parser) { described_class.new }
 
   describe "#parse" do
-    it "parses a minimal C4 diagram" do
-      source = "C4 diagram"
+    context "when parsing a minimal C4 diagram" do
+      let(:source) { "C4 diagram" }
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram" do
+        expect(diagram).to be_a(Sirena::Diagram::C4)
+      end
 
-      expect(diagram).to be_a(Sirena::Diagram::C4)
-      expect(diagram.level).to eq("Context")
+      it "retains diagram.level" do
+        expect(diagram.level).to eq("Context")
+      end
     end
 
-    it "parses C4Context header" do
-      source = <<~C4
-        C4Context
-        title System Context diagram
-      C4
+    context "when parsing C4Context header" do
+      let(:source) do
+        <<~C4
+          C4Context
+          title System Context diagram
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.level" do
+        expect(diagram.level).to eq("Context")
+      end
 
-      expect(diagram.level).to eq("Context")
-      expect(diagram.title).to eq("System Context diagram")
+      it "retains diagram.title" do
+        expect(diagram.title).to eq("System Context diagram")
+      end
     end
 
-    it "parses C4Container header" do
-      source = <<~C4
-        C4Container
-        title Container diagram
-      C4
+    context "when parsing C4Container header" do
+      let(:source) do
+        <<~C4
+          C4Container
+          title Container diagram
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
-
-      expect(diagram.level).to eq("Container")
+      it "retains diagram.level" do
+        expect(diagram.level).to eq("Container")
+      end
     end
 
-    it "parses C4Component header" do
-      source = <<~C4
-        C4Component
-        title Component diagram
-      C4
+    context "when parsing C4Component header" do
+      let(:source) do
+        <<~C4
+          C4Component
+          title Component diagram
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
-
-      expect(diagram.level).to eq("Component")
+      it "retains diagram.level" do
+        expect(diagram.level).to eq("Component")
+      end
     end
 
-    it "parses Person element" do
-      source = <<~C4
-        C4Context
-        Person(customer, "Customer", "A customer of the bank")
-      C4
+    context "when parsing Person element" do
+      let(:source) do
+        <<~C4
+          C4Context
+          Person(customer, "Customer", "A customer of the bank")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.elements.length" do
+        expect(diagram.elements.length).to eq(1)
+      end
 
-      expect(diagram.elements.length).to eq(1)
-      expect(diagram.elements[0].id).to eq("customer")
-      expect(diagram.elements[0].label).to eq("Customer")
-      expect(diagram.elements[0].description).to eq("A customer of the bank")
-      expect(diagram.elements[0].element_type).to eq("Person")
-      expect(diagram.elements[0].person?).to be true
+      it "retains diagram.elements 0 .id" do
+        expect(diagram.elements[0].id).to eq("customer")
+      end
+
+      it "retains diagram.elements 0 .label" do
+        expect(diagram.elements[0].label).to eq("Customer")
+      end
+
+      it "retains diagram.elements 0 .description" do
+        expect(diagram.elements[0].description).to eq("A customer of the bank")
+      end
+
+      it "retains diagram.elements 0 .element_type" do
+        expect(diagram.elements[0].element_type).to eq("Person")
+      end
+
+      it "retains diagram.elements 0 .person" do
+        expect(diagram.elements[0].person?).to be true
+      end
     end
 
-    it "parses Person_Ext element" do
-      source = <<~C4
-        C4Context
-        Person_Ext(external, "External User", "An external user")
-      C4
+    context "when parsing Person_Ext element" do
+      let(:source) do
+        <<~C4
+          C4Context
+          Person_Ext(external, "External User", "An external user")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.elements.length" do
+        expect(diagram.elements.length).to eq(1)
+      end
 
-      expect(diagram.elements.length).to eq(1)
-      expect(diagram.elements[0].element_type).to eq("Person_Ext")
-      expect(diagram.elements[0].external).to be true
+      it "retains diagram.elements 0 .element_type" do
+        expect(diagram.elements[0].element_type).to eq("Person_Ext")
+      end
+
+      it "retains diagram.elements 0 .external" do
+        expect(diagram.elements[0].external).to be true
+      end
     end
 
-    it "parses System element" do
-      source = <<~C4
-        C4Context
-        System(banking, "Banking System", "Main banking application")
-      C4
+    context "when parsing System element" do
+      let(:source) do
+        <<~C4
+          C4Context
+          System(banking, "Banking System", "Main banking application")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.elements.length" do
+        expect(diagram.elements.length).to eq(1)
+      end
 
-      expect(diagram.elements.length).to eq(1)
-      expect(diagram.elements[0].id).to eq("banking")
-      expect(diagram.elements[0].element_type).to eq("System")
-      expect(diagram.elements[0].system?).to be true
+      it "retains diagram.elements 0 .id" do
+        expect(diagram.elements[0].id).to eq("banking")
+      end
+
+      it "retains diagram.elements 0 .element_type" do
+        expect(diagram.elements[0].element_type).to eq("System")
+      end
+
+      it "retains diagram.elements 0 .system" do
+        expect(diagram.elements[0].system?).to be true
+      end
     end
 
-    it "parses Container element with technology" do
-      source = <<~C4
-        C4Container
-        Container(webapp, "Web App", "Main interface", "React")
-      C4
+    context "when parsing Container element with technology" do
+      let(:source) do
+        <<~C4
+          C4Container
+          Container(webapp, "Web App", "Main interface", "React")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.elements.length" do
+        expect(diagram.elements.length).to eq(1)
+      end
 
-      expect(diagram.elements.length).to eq(1)
-      expect(diagram.elements[0].id).to eq("webapp")
-      expect(diagram.elements[0].technology).to eq("React")
-      expect(diagram.elements[0].container?).to be true
+      it "retains diagram.elements 0 .id" do
+        expect(diagram.elements[0].id).to eq("webapp")
+      end
+
+      it "retains diagram.elements 0 .technology" do
+        expect(diagram.elements[0].technology).to eq("React")
+      end
+
+      it "retains diagram.elements 0 .container" do
+        expect(diagram.elements[0].container?).to be true
+      end
     end
 
-    it "parses Component element" do
-      source = <<~C4
-        C4Component
-        Component(controller, "API Controller", "Handles requests", "Spring")
-      C4
+    context "when parsing Component element" do
+      let(:source) do
+        <<~C4
+          C4Component
+          Component(controller, "API Controller", "Handles requests", "Spring")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.elements.length" do
+        expect(diagram.elements.length).to eq(1)
+      end
 
-      expect(diagram.elements.length).to eq(1)
-      expect(diagram.elements[0].element_type).to eq("Component")
-      expect(diagram.elements[0].component?).to be true
+      it "retains diagram.elements 0 .element_type" do
+        expect(diagram.elements[0].element_type).to eq("Component")
+      end
+
+      it "retains diagram.elements 0 .component" do
+        expect(diagram.elements[0].component?).to be true
+      end
     end
 
-    it "parses Rel relationship" do
-      source = <<~C4
-        C4Context
-        Person(customer, "Customer")
-        System(banking, "Banking System")
-        Rel(customer, banking, "Uses")
-      C4
+    context "when parsing Rel relationship" do
+      let(:source) do
+        <<~C4
+          C4Context
+          Person(customer, "Customer")
+          System(banking, "Banking System")
+          Rel(customer, banking, "Uses")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.relationships.length" do
+        expect(diagram.relationships.length).to eq(1)
+      end
 
-      expect(diagram.relationships.length).to eq(1)
-      expect(diagram.relationships[0].from_id).to eq("customer")
-      expect(diagram.relationships[0].to_id).to eq("banking")
-      expect(diagram.relationships[0].label).to eq("Uses")
-      expect(diagram.relationships[0].rel_type).to eq("Rel")
+      it "retains diagram.relationships 0 .from_id" do
+        expect(diagram.relationships[0].from_id).to eq("customer")
+      end
+
+      it "retains diagram.relationships 0 .to_id" do
+        expect(diagram.relationships[0].to_id).to eq("banking")
+      end
+
+      it "retains diagram.relationships 0 .label" do
+        expect(diagram.relationships[0].label).to eq("Uses")
+      end
+
+      it "retains diagram.relationships 0 .rel_type" do
+        expect(diagram.relationships[0].rel_type).to eq("Rel")
+      end
     end
 
-    it "parses BiRel relationship" do
-      source = <<~C4
-        C4Context
-        System(systemA, "System A")
-        System(systemB, "System B")
-        BiRel(systemA, systemB, "Syncs with", "HTTPS")
-      C4
+    context "when parsing BiRel relationship" do
+      let(:source) do
+        <<~C4
+          C4Context
+          System(systemA, "System A")
+          System(systemB, "System B")
+          BiRel(systemA, systemB, "Syncs with", "HTTPS")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.relationships.length" do
+        expect(diagram.relationships.length).to eq(1)
+      end
 
-      expect(diagram.relationships.length).to eq(1)
-      expect(diagram.relationships[0].rel_type).to eq("BiRel")
-      expect(diagram.relationships[0].technology).to eq("HTTPS")
-      expect(diagram.relationships[0].bidirectional?).to be true
+      it "retains diagram.relationships 0 .rel_type" do
+        expect(diagram.relationships[0].rel_type).to eq("BiRel")
+      end
+
+      it "retains diagram.relationships 0 .technology" do
+        expect(diagram.relationships[0].technology).to eq("HTTPS")
+      end
+
+      it "retains diagram.relationships 0 .bidirectional" do
+        expect(diagram.relationships[0].bidirectional?).to be true
+      end
     end
 
-    it "parses Enterprise_Boundary" do
-      source = <<~C4
-        C4Context
-        Enterprise_Boundary(b1, "Company Boundary") {
-          System(system1, "Internal System")
-        }
-      C4
-
-      diagram = parser.parse(source)
-
-      expect(diagram.boundaries.length).to eq(1)
-      expect(diagram.boundaries[0].id).to eq("b1")
-      expect(diagram.boundaries[0].label).to eq("Company Boundary")
-      expect(diagram.boundaries[0].boundary_type).to eq("Enterprise_Boundary")
-      expect(diagram.boundaries[0].enterprise?).to be true
-      expect(diagram.elements.length).to eq(1)
-      expect(diagram.elements[0].boundary_id).to eq("b1")
-    end
-
-    it "parses System_Boundary" do
-      source = <<~C4
-        C4Context
-        System_Boundary(b1, "System Boundary") {
-          Container(c1, "Container 1")
-        }
-      C4
-
-      diagram = parser.parse(source)
-
-      expect(diagram.boundaries.length).to eq(1)
-      expect(diagram.boundaries[0].system?).to be true
-    end
-
-    it "parses nested boundaries" do
-      source = <<~C4
-        C4Context
-        Enterprise_Boundary(b1, "Outer") {
-          System_Boundary(b2, "Inner") {
-            System(sys, "System")
+    context "when parsing Enterprise_Boundary" do
+      let(:source) do
+        <<~C4
+          C4Context
+          Enterprise_Boundary(b1, "Company Boundary") {
+            System(system1, "Internal System")
           }
-        }
-      C4
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.boundaries.length" do
+        expect(diagram.boundaries.length).to eq(1)
+      end
 
-      expect(diagram.boundaries.length).to eq(2)
-      # Find the inner boundary
-      inner = diagram.boundaries.find { |b| b.id == "b2" }
-      expect(inner.parent_id).to eq("b1")
+      it "retains diagram.boundaries 0 .id" do
+        expect(diagram.boundaries[0].id).to eq("b1")
+      end
+
+      it "retains diagram.boundaries 0 .label" do
+        expect(diagram.boundaries[0].label).to eq("Company Boundary")
+      end
+
+      it "retains diagram.boundaries 0 .boundary_type" do
+        expect(diagram.boundaries[0].boundary_type).to eq("Enterprise_Boundary")
+      end
+
+      it "retains diagram.boundaries 0 .enterprise" do
+        expect(diagram.boundaries[0].enterprise?).to be true
+      end
+
+      it "retains diagram.elements.length" do
+        expect(diagram.elements.length).to eq(1)
+      end
+
+      it "retains diagram.elements 0 .boundary_id" do
+        expect(diagram.elements[0].boundary_id).to eq("b1")
+      end
     end
 
-    it "parses elements with attributes" do
-      source = <<~C4
-        C4Context
-        Person(user, "User", "Description", $sprite="person", $link="http://example.com", $tags="tag1,tag2")
-      C4
+    context "when parsing System_Boundary" do
+      let(:source) do
+        <<~C4
+          C4Context
+          System_Boundary(b1, "System Boundary") {
+            Container(c1, "Container 1")
+          }
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.boundaries.length" do
+        expect(diagram.boundaries.length).to eq(1)
+      end
 
-      expect(diagram.elements[0].sprite).to eq("person")
-      expect(diagram.elements[0].link).to eq("http://example.com")
-      expect(diagram.elements[0].tags).to eq("tag1,tag2")
+      it "retains diagram.boundaries 0 .system" do
+        expect(diagram.boundaries[0].system?).to be true
+      end
     end
 
-    it "parses UpdateLayoutConfig" do
-      source = <<~C4
-        C4Context
-        UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
-      C4
+    context "when parsing nested boundaries" do
+      let(:source) do
+        <<~C4
+          C4Context
+          Enterprise_Boundary(b1, "Outer") {
+            System_Boundary(b2, "Inner") {
+              System(sys, "System")
+            }
+          }
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.boundaries.length" do
+        expect(diagram.boundaries.length).to eq(2)
+      end
 
-      expect(diagram.layout_config).to include("c4ShapeInRow")
-      expect(diagram.layout_config).to include("3")
+      it "retains inner.parent_id" do
+        inner = diagram.boundaries.find { |b| b.id == "b2" }
+
+        expect(inner.parent_id).to eq("b1")
+      end
     end
 
-    it "parses complex diagram from fixture" do
-      source = File.read(File.expand_path("../../mermaid/c4/c4-8ab0b1ef.mmd", __dir__))
+    context "when parsing elements with attributes" do
+      let(:source) do
+        <<~C4
+          C4Context
+          Person(user, "User", "Description", $sprite="person", $link="http://example.com", $tags="tag1,tag2")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.elements 0 .sprite" do
+        expect(diagram.elements[0].sprite).to eq("person")
+      end
 
-      expect(diagram).to be_a(Sirena::Diagram::C4)
-      expect(diagram.level).to eq("Context")
-      expect(diagram.title).to eq("System Context diagram for Internet Banking System")
-      expect(diagram.elements.length).to be > 0
-      expect(diagram.relationships.length).to be > 0
-      expect(diagram.boundaries.length).to be > 0
+      it "retains diagram.elements 0 .link" do
+        expect(diagram.elements[0].link).to eq("http://example.com")
+      end
+
+      it "retains diagram.elements 0 .tags" do
+        expect(diagram.elements[0].tags).to eq("tag1,tag2")
+      end
     end
 
-    it "validates diagram" do
-      source = <<~C4
-        C4Context
-        Person(customer, "Customer")
-        System(banking, "Banking System")
-        Rel(customer, banking, "Uses")
-      C4
+    context "when parsing UpdateLayoutConfig" do
+      let(:source) do
+        <<~C4
+          C4Context
+          UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains the shape layout option" do
+        expect(diagram.layout_config).to include("c4ShapeInRow")
+      end
 
-      expect(diagram.valid?).to be true
+      it "retains the shape layout value" do
+        expect(diagram.layout_config).to include("3")
+      end
     end
 
-    it "finds elements by id" do
-      source = <<~C4
-        C4Context
-        Person(customer, "Customer")
-        System(banking, "Banking System")
-      C4
+    context "when parsing complex diagram from fixture" do
+      let(:source) do
+        File.read(File.expand_path("../../mermaid/c4/c4-8ab0b1ef.mmd", __dir__))
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram" do
+        expect(diagram).to be_a(Sirena::Diagram::C4)
+      end
 
-      customer = diagram.find_element("customer")
-      expect(customer).not_to be_nil
-      expect(customer.label).to eq("Customer")
+      it "retains diagram.level" do
+        expect(diagram.level).to eq("Context")
+      end
+
+      it "retains diagram.title" do
+        expect(diagram.title).to eq("System Context diagram for Internet Banking System")
+      end
+
+      it "retains diagram.elements.length" do
+        expect(diagram.elements.length).to be > 0
+      end
+
+      it "retains diagram.relationships.length" do
+        expect(diagram.relationships.length).to be > 0
+      end
+
+      it "retains diagram.boundaries.length" do
+        expect(diagram.boundaries.length).to be > 0
+      end
     end
 
-    it "finds relationships from element" do
-      source = <<~C4
-        C4Context
-        Person(customer, "Customer")
-        System(banking, "Banking System")
-        System(email, "Email System")
-        Rel(customer, banking, "Uses")
-        Rel(banking, email, "Sends emails")
-      C4
+    context "when validates diagram" do
+      let(:source) do
+        <<~C4
+          C4Context
+          Person(customer, "Customer")
+          System(banking, "Banking System")
+          Rel(customer, banking, "Uses")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.valid" do
+        expect(diagram.valid?).to be true
+      end
+    end
 
-      rels = diagram.relationships_from("banking")
-      expect(rels.length).to eq(1)
-      expect(rels[0].to_id).to eq("email")
+    context "when finds elements by id" do
+      let(:source) do
+        <<~C4
+          C4Context
+          Person(customer, "Customer")
+          System(banking, "Banking System")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
+
+      it "retains customer" do
+        customer = diagram.find_element("customer")
+
+        expect(customer).not_to be_nil
+      end
+
+      it "retains customer.label" do
+        customer = diagram.find_element("customer")
+
+        expect(customer.label).to eq("Customer")
+      end
+    end
+
+    context "when finds relationships from element" do
+      let(:source) do
+        <<~C4
+          C4Context
+          Person(customer, "Customer")
+          System(banking, "Banking System")
+          System(email, "Email System")
+          Rel(customer, banking, "Uses")
+          Rel(banking, email, "Sends emails")
+        C4
+      end
+      let(:diagram) { parser.parse(source) }
+
+      it "retains rels.length" do
+        rels = diagram.relationships_from("banking")
+
+        expect(rels.length).to eq(1)
+      end
+
+      it "retains rels 0 .to_id" do
+        rels = diagram.relationships_from("banking")
+
+        expect(rels[0].to_id).to eq("email")
+      end
     end
 
     it "parses $link and $tags on nested boundaries" do

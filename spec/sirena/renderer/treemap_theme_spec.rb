@@ -49,17 +49,20 @@ RSpec.describe Sirena::Renderer::Treemap do
     end
   end
 
-  it "keeps an explicit class fill ahead of the dark depth palette" do
-    themed_diagram = Sirena::Parser::Treemap.new.parse(<<~MERMAID)
-      treemap
-      "Section"
-        "Leaf": 5:::important
-      classDef important fill:#f96,stroke:#333;
-    MERMAID
-    dark = Sirena::Theme::Registry.get(:dark)
-    themed_scene = Sirena::Layout::Treemap.new.call(themed_diagram, theme: dark)
+  context "with an explicit class fill on the dark theme" do
+    let(:theme) { Sirena::Theme::Registry.get(:dark) }
+    let(:source) do
+      <<~MERMAID
+        treemap
+        "Section"
+          "Leaf": 5:::important
+        classDef important fill:#f96,stroke:#333;
+      MERMAID
+    end
 
-    expect(themed_scene.cells.first.children.first.fill).to eq("#f96")
+    it "keeps an explicit class fill ahead of the dark depth palette" do
+      expect(scene.cells.first.children.first.fill).to eq("#f96")
+    end
   end
 
   def texts

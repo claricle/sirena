@@ -7,137 +7,205 @@ RSpec.describe Sirena::Parser::Gantt do
   let(:parser) { described_class.new }
 
   describe "#parse" do
-    it "parses a simple Gantt chart" do
-      source = <<~GANTT
-        gantt
-          title Project Timeline
-          dateFormat YYYY-MM-DD
-          section Planning
-          Task 1 :a1, 2024-01-01, 30d
-      GANTT
+    context "when parsing a simple Gantt chart" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            title Project Timeline
+            dateFormat YYYY-MM-DD
+            section Planning
+            Task 1 :a1, 2024-01-01, 30d
+        GANTT
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram" do
+        expect(diagram).to be_a(Sirena::Diagram::Gantt)
+      end
 
-      expect(diagram).to be_a(Sirena::Diagram::Gantt)
-      expect(diagram.title).to eq("Project Timeline")
-      expect(diagram.date_format).to eq("YYYY-MM-DD")
-      expect(diagram.sections.length).to eq(1)
-      expect(diagram.sections.first.name).to eq("Planning")
-      expect(diagram.sections.first.tasks.length).to eq(1)
-      expect(diagram.sections.first.tasks.first.description).to eq("Task 1")
+      it "retains diagram.title" do
+        expect(diagram.title).to eq("Project Timeline")
+      end
+
+      it "retains diagram.date_format" do
+        expect(diagram.date_format).to eq("YYYY-MM-DD")
+      end
+
+      it "retains diagram.sections.length" do
+        expect(diagram.sections.length).to eq(1)
+      end
+
+      it "retains diagram.sections.first.name" do
+        expect(diagram.sections.first.name).to eq("Planning")
+      end
+
+      it "retains diagram.sections.first.tasks.length" do
+        expect(diagram.sections.first.tasks.length).to eq(1)
+      end
+
+      it "retains diagram.sections.first.tasks.first.description" do
+        expect(diagram.sections.first.tasks.first.description).to eq("Task 1")
+      end
     end
 
-    it "parses Gantt with multiple sections" do
-      source = <<~GANTT
-        gantt
-          section Planning
-          Task 1 :a1, 2024-01-01, 30d
-          section Development
-          Task 2 :after a1, 20d
-      GANTT
+    context "when parsing Gantt with multiple sections" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            section Planning
+            Task 1 :a1, 2024-01-01, 30d
+            section Development
+            Task 2 :after a1, 20d
+        GANTT
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
+      it "retains diagram.sections.length" do
+        expect(diagram.sections.length).to eq(2)
+      end
 
-      expect(diagram.sections.length).to eq(2)
-      expect(diagram.sections[0].name).to eq("Planning")
-      expect(diagram.sections[1].name).to eq("Development")
+      it "retains diagram.sections 0 .name" do
+        expect(diagram.sections[0].name).to eq("Planning")
+      end
+
+      it "retains diagram.sections 1 .name" do
+        expect(diagram.sections[1].name).to eq("Development")
+      end
     end
 
-    it "parses tasks with dependencies" do
-      source = <<~GANTT
-        gantt
-          dateFormat YYYY-MM-DD
-          section Tasks
-          Task A :a, 2024-01-01, 10d
-          Task B :b, after a, 5d
-      GANTT
+    context "when parsing tasks with dependencies" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            dateFormat YYYY-MM-DD
+            section Tasks
+            Task A :a, 2024-01-01, 10d
+            Task B :b, after a, 5d
+        GANTT
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
-      tasks = diagram.sections.first.tasks
+      it "retains tasks 0 .id" do
+        tasks = diagram.sections.first.tasks
 
-      expect(tasks[0].id).to eq("a")
-      expect(tasks[1].after_task).to eq("a")
+        expect(tasks[0].id).to eq("a")
+      end
+
+      it "retains tasks 1 .after_task" do
+        tasks = diagram.sections.first.tasks
+
+        expect(tasks[1].after_task).to eq("a")
+      end
     end
 
-    it "parses tasks with status tags" do
-      source = <<~GANTT
-        gantt
-          section Tasks
-          Done task :done, 2024-01-01, 5d
-          Active task :active, 2024-01-06, 3d
-          Critical task :crit, 2024-01-09, 2d
-      GANTT
+    context "when parsing tasks with status tags" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            section Tasks
+            Done task :done, 2024-01-01, 5d
+            Active task :active, 2024-01-06, 3d
+            Critical task :crit, 2024-01-09, 2d
+        GANTT
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
-      tasks = diagram.sections.first.tasks
+      it "retains tasks 0 .done" do
+        tasks = diagram.sections.first.tasks
 
-      expect(tasks[0].done?).to be true
-      expect(tasks[1].active?).to be true
-      expect(tasks[2].critical?).to be true
+        expect(tasks[0].done?).to be true
+      end
+
+      it "retains tasks 1 .active" do
+        tasks = diagram.sections.first.tasks
+
+        expect(tasks[1].active?).to be true
+      end
+
+      it "retains tasks 2 .critical" do
+        tasks = diagram.sections.first.tasks
+
+        expect(tasks[2].critical?).to be true
+      end
     end
 
-    it "parses axis format configuration" do
-      source = <<~GANTT
-        gantt
-          dateFormat YYYY-MM-DD
-          axisFormat %m-%d
-          section Tasks
-          Task 1 :2024-01-01, 10d
-      GANTT
+    context "when parsing axis format configuration" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            dateFormat YYYY-MM-DD
+            axisFormat %m-%d
+            section Tasks
+            Task 1 :2024-01-01, 10d
+        GANTT
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
-
-      expect(diagram.axis_format).to eq("%m-%d")
+      it "retains diagram.axis_format" do
+        expect(diagram.axis_format).to eq("%m-%d")
+      end
     end
 
-    it "parses excludes configuration" do
-      source = <<~GANTT
-        gantt
-          excludes weekends
-          section Tasks
-          Task 1 :2024-01-01, 10d
-      GANTT
+    context "when parsing excludes configuration" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            excludes weekends
+            section Tasks
+            Task 1 :2024-01-01, 10d
+        GANTT
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
-
-      expect(diagram.excludes).to include("weekends")
+      it "retains diagram.excludes" do
+        expect(diagram.excludes).to include("weekends")
+      end
     end
 
-    it "parses the weekend directive" do
-      source = <<~GANTT
-        gantt
-          excludes weekends
-          weekend friday
-          section Tasks
-          Task 1 :2024-01-01, 10d
-      GANTT
+    context "when parsing the weekend directive" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            excludes weekends
+            weekend friday
+            section Tasks
+            Task 1 :2024-01-01, 10d
+        GANTT
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
-
-      expect(diagram.weekend).to eq("friday")
+      it "retains diagram.weekend" do
+        expect(diagram.weekend).to eq("friday")
+      end
     end
 
-    it "parses the inclusiveEndDates directive" do
-      source = <<~GANTT
-        gantt
-        dateFormat yyyy-mm-dd
-        inclusiveEndDates
-      GANTT
+    context "when parsing the inclusiveEndDates directive" do
+      let(:source) do
+        <<~GANTT
+          gantt
+          dateFormat yyyy-mm-dd
+          inclusiveEndDates
+        GANTT
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
-
-      expect(diagram.inclusive_end_dates).to be(true)
+      it "retains diagram.inclusive_end_dates" do
+        expect(diagram.inclusive_end_dates).to be(true)
+      end
     end
 
-    it "defaults inclusiveEndDates to false when absent" do
-      source = <<~GANTT
-        gantt
-        dateFormat yyyy-mm-dd
-      GANTT
+    context "when defaults inclusiveEndDates to false when absent" do
+      let(:source) do
+        <<~GANTT
+          gantt
+          dateFormat yyyy-mm-dd
+        GANTT
+      end
+      let(:diagram) { parser.parse(source) }
 
-      diagram = parser.parse(source)
-
-      expect(diagram.inclusive_end_dates).to be(false)
+      it "retains diagram.inclusive_end_dates" do
+        expect(diagram.inclusive_end_dates).to be(false)
+      end
     end
 
     # Task detail fields (tags, id, dates, duration, after/until) are a
@@ -145,33 +213,68 @@ RSpec.describe Sirena::Parser::Gantt do
     # classified by POSITION — the id is always first when exactly three
     # value fields remain, regardless of what its text looks like
     # (corpus gantt/click_security_loose-0d2cc455).
-    it "parses a tag, an id, and explicit start and end dates in one task" do
-      source = <<~GANTT
-        gantt
-          section Tasks
-          Completed task            :done,    des1, 2014-01-06,2014-01-08
-      GANTT
+    context "when parsing a tag, an id, and explicit start and end dates " \
+            "in one task" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            section Tasks
+            Completed task            :done,    des1, 2014-01-06,2014-01-08
+        GANTT
+      end
 
-      task = parser.parse(source).sections.first.tasks.first
+      it "retains task.tags" do
+        task = parser.parse(source).sections.first.tasks.first
 
-      expect(task.tags).to eq(["done"])
-      expect(task.id).to eq("des1")
-      expect(task.start_date).to eq("2014-01-06")
-      expect(task.end_date).to eq("2014-01-08")
+        expect(task.tags).to eq(["done"])
+      end
+
+      it "retains task.id" do
+        task = parser.parse(source).sections.first.tasks.first
+
+        expect(task.id).to eq("des1")
+      end
+
+      it "retains task.start_date" do
+        task = parser.parse(source).sections.first.tasks.first
+
+        expect(task.start_date).to eq("2014-01-06")
+      end
+
+      it "retains task.end_date" do
+        task = parser.parse(source).sections.first.tasks.first
+
+        expect(task.end_date).to eq("2014-01-08")
+      end
     end
 
-    it "parses multiple comma-separated tags followed by a duration" do
-      source = <<~GANTT
-        gantt
-          section Tasks
-          Create tests for parser             :crit, active, 3d
-      GANTT
+    context "when parsing multiple comma-separated tags followed by a " \
+            "duration" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            section Tasks
+            Create tests for parser             :crit, active, 3d
+        GANTT
+      end
 
-      task = parser.parse(source).sections.first.tasks.first
+      it "retains task.tags" do
+        task = parser.parse(source).sections.first.tasks.first
 
-      expect(task.tags).to eq(%w[crit active])
-      expect(task.duration).to eq("3d")
-      expect(task.id).to be_nil
+        expect(task.tags).to eq(%w[crit active])
+      end
+
+      it "retains task.duration" do
+        task = parser.parse(source).sections.first.tasks.first
+
+        expect(task.duration).to eq("3d")
+      end
+
+      it "retains task.id" do
+        task = parser.parse(source).sections.first.tasks.first
+
+        expect(task.id).to be_nil
+      end
     end
 
     it "parses comma-separated tags followed by an after-dependency and a " \
@@ -189,17 +292,27 @@ RSpec.describe Sirena::Parser::Gantt do
       expect(task.duration).to eq("2d")
     end
 
-    it "parses an after-dependency with trailing whitespace before its comma" do
-      source = <<~GANTT
-        gantt
-          section Tasks
-          Add gantt diagram to demo page      :after a1  , 20h
-      GANTT
+    context "when parsing an after-dependency with trailing whitespace " \
+            "before its comma" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            section Tasks
+            Add gantt diagram to demo page      :after a1  , 20h
+        GANTT
+      end
 
-      task = parser.parse(source).sections.first.tasks.first
+      it "retains task.after_task" do
+        task = parser.parse(source).sections.first.tasks.first
 
-      expect(task.after_task).to eq("a1")
-      expect(task.duration).to eq("20h")
+        expect(task.after_task).to eq("a1")
+      end
+
+      it "retains task.duration" do
+        task = parser.parse(source).sections.first.tasks.first
+
+        expect(task.duration).to eq("20h")
+      end
     end
 
     # An after-dependency supplies the START; a single date field left over
@@ -207,19 +320,29 @@ RSpec.describe Sirena::Parser::Gantt do
     # calculated_start only from the referenced task once after_task is
     # set, and end_date only from this field — see
     # Gantt#resolve_task_dependency).
-    it "treats a lone date after an after-dependency as the end date" do
-      source = <<~GANTT
-        gantt
-          dateFormat YYYY-MM-DD
-          section Tasks
-          Task A :a, 2024-01-01, 2024-01-03
-          Task B :b, after a, 2024-01-10
-      GANTT
+    context "when treats a lone date after an after-dependency as the end " \
+            "date" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            dateFormat YYYY-MM-DD
+            section Tasks
+            Task A :a, 2024-01-01, 2024-01-03
+            Task B :b, after a, 2024-01-10
+        GANTT
+      end
 
-      task_b = parser.parse(source).sections.first.tasks[1]
+      it "retains task_b.start_date" do
+        task_b = parser.parse(source).sections.first.tasks[1]
 
-      expect(task_b.start_date).to be_nil
-      expect(task_b.end_date).to eq("2024-01-10")
+        expect(task_b.start_date).to be_nil
+      end
+
+      it "retains task_b.end_date" do
+        task_b = parser.parse(source).sections.first.tasks[1]
+
+        expect(task_b.end_date).to eq("2024-01-10")
+      end
     end
 
     # Three value fields (tags stripped, but an after/until dependency still
@@ -248,20 +371,40 @@ RSpec.describe Sirena::Parser::Gantt do
     # Counting only the fields left once the dependency is already gone
     # under-counts to two, skips the id assignment, and silently drops a
     # date-shaped id that a later "after <that id>" reference depends on.
-    it "counts an after-dependency field toward the three-value id rule" do
-      source = <<~GANTT
-        gantt
-          dateFormat YYYY-MM-DD
-          section Tasks
-          T: 2024-01-01, after a, 2024-01-06
-      GANTT
+    context "when counts an after-dependency field toward the three-value " \
+            "id rule" do
+      let(:source) do
+        <<~GANTT
+          gantt
+            dateFormat YYYY-MM-DD
+            section Tasks
+            T: 2024-01-01, after a, 2024-01-06
+        GANTT
+      end
 
-      task = parser.parse(source).sections.first.tasks.first
+      it "retains task.id" do
+        task = parser.parse(source).sections.first.tasks.first
 
-      expect(task.id).to eq("2024-01-01")
-      expect(task.after_task).to eq("a")
-      expect(task.start_date).to be_nil
-      expect(task.end_date).to eq("2024-01-06")
+        expect(task.id).to eq("2024-01-01")
+      end
+
+      it "retains task.after_task" do
+        task = parser.parse(source).sections.first.tasks.first
+
+        expect(task.after_task).to eq("a")
+      end
+
+      it "retains task.start_date" do
+        task = parser.parse(source).sections.first.tasks.first
+
+        expect(task.start_date).to be_nil
+      end
+
+      it "retains task.end_date" do
+        task = parser.parse(source).sections.first.tasks.first
+
+        expect(task.end_date).to eq("2024-01-06")
+      end
     end
 
     # `dateFormat YYYYMMDD` produces separator-less date fields like

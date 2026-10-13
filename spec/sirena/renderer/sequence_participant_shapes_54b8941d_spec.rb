@@ -17,26 +17,37 @@ RSpec.describe Sirena::Renderer::Sequence, :aggregate_failures do
     Sirena::Layout::Sequence.new.to_graph(diagram)
   end
 
-  it "draws the typed participant symbols at their lifeline centers" do
-    participants = scene.participants.to_h { |item| [item.id, item] }
+  let(:participants) { scene.participants.to_h { |item| [item.id, item] } }
 
+  it "draws Charlie's circle at its lifeline center" do
     expect(participants["Charlie"].shape_circle)
       .to have_attributes(x: 125, y: 43, radius: 22)
+  end
+
+  it "draws Charlie's boundary line beside its circle" do
     expect(participants["Charlie"].shape_lines.first)
       .to have_attributes(x1: 70, y1: 43, x2: 110, y2: 43)
+  end
+
+  it "draws David's circle at its lifeline center" do
     expect(participants["David"].shape_circle)
       .to have_attributes(x: 325, y: 42, radius: 22)
+  end
+
+  it "draws Eve's circle at its lifeline center" do
     expect(participants["Eve"].shape_circle)
       .to have_attributes(x: 525, y: 41, radius: 22)
+  end
+
+  it "draws Eve's entity line under its circle" do
     expect(participants["Eve"].shape_lines.first)
       .to have_attributes(x1: 503, y1: 63, x2: 547, y2: 63)
   end
 
-  it "renders circles and type-specific marks instead of participant boxes" do
-    xml = Sirena.render(source)
+  %w[Charlie David Eve].each do |id|
+    it "renders #{id} as a circle with marks instead of a box" do
+      group = Sirena.render(source)[%r{<g id="participant-#{id}".*?</g>}m]
 
-    %w[Charlie David Eve].each do |id|
-      group = xml[%r{<g id="participant-#{id}".*?</g>}m]
       expect(group).to include("<circle")
       expect(group).not_to include("<rect")
     end
