@@ -492,23 +492,23 @@ class MermaidFixtureGenerator
           # Succeeded but should have failed - UNEXPECTED
           stats[:error_unexpected_success] += 1
           unexpected_successes << { file: basename, note: FAIL_NOTE }
-          print "U"  # U = Unexpected success (fail)
+          print "U" # U = Unexpected success (fail)
         else
           # Failed as expected - this is CORRECT
           stats[:error_expected_fail] += 1
-          print "E"  # E = Expected error (pass)
+          print "E" # E = Expected error (pass)
         end
       else
         # File is EXPECTED to succeed
         if success
           # Succeeded as expected - this is CORRECT
           stats[:correct_success] += 1
-          print "."  # . = Correct success (pass)
+          print "." # . = Correct success (pass)
         else
           # Failed but should have succeeded - UNEXPECTED
           stats[:correct_unexpected_fail] += 1
           unexpected_failures << { file: basename, error: error_msg }
-          print "F"  # F = Unexpected failure (fail)
+          print "F" # F = Unexpected failure (fail)
         end
       end
 
@@ -594,10 +594,10 @@ class MermaidFixtureGenerator
     else
       # Extract meaningful error message
       error_msg = (stderr + stdout).lines
-                    .reject do |line|
-                      line.include?("Generating single mermaid chart")
-                    end
-                    .first&.strip || "Unknown error"
+        .reject do |line|
+          line.include?("Generating single mermaid chart")
+        end
+        .first&.strip || "Unknown error"
       [false, error_msg]
     end
   end

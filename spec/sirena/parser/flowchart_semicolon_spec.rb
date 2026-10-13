@@ -494,7 +494,7 @@ RSpec.describe Sirena::Parser::Flowchart do
         average = [bends.sum(&:x) / bends.length,
                    bends.sum(&:y) / bends.length]
         direction = if (average[0] - centre[0]).abs >
-                       (average[1] - centre[1]).abs
+            (average[1] - centre[1]).abs
                       average[0] < centre[0] ? "LEFT" : "RIGHT"
                     else
                       average[1] < centre[1] ? "UP" : "DOWN"

@@ -145,7 +145,7 @@ module Sirena
             str("accDescr").absent? >>
             line_end.absent? >>
             any).repeat(1).as(:task) >>
-          line_end
+            line_end
         end
       end
     end

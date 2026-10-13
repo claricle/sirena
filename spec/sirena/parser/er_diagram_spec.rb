@@ -593,8 +593,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
       noise_pool = [" ", "!", "@"]
       rng = Random.new(20_260_929)
       lengths = Array.new(40) { rng.rand(1..20) } +
-                Array.new(40) { rng.rand(49_990..50_010) } +
-                Array.new(20) { rng.rand(1..150_000) }
+        Array.new(40) { rng.rand(49_990..50_010) } +
+        Array.new(20) { rng.rand(1..150_000) }
 
       mismatches = lengths.filter_map do |length|
         body = Array.new(length) do

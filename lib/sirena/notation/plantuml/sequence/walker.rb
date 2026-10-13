@@ -258,10 +258,7 @@ module Sirena
           end
 
           def message_row(message)
-            if !@label_inset && message.self_message? && message.label.to_s.empty?
-              return CLASSIC_UNLABELLED_SELF_ROW
-            end
-            return @self_row if message.self_message?
+            return self_message_row(message) if message.self_message?
             if following_unlabelled_row?
               return @following_unlabelled_row
             end
@@ -270,6 +267,12 @@ module Sirena
             end
 
             @row
+          end
+
+          def self_message_row(message)
+            return @self_row if @label_inset || !message.label.to_s.empty?
+
+            CLASSIC_UNLABELLED_SELF_ROW
           end
 
           def following_unlabelled_row?

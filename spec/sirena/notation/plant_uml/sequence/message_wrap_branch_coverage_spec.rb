@@ -5,47 +5,48 @@ require "sirena/notation/plantuml/sequence/message_wrap"
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::MessageWrap do
   let(:measure) { ->(text) { text.length * 10.0 } }
-
-  it "decodes escaped line breaks without consuming escaped backslashes" do
-    cases = [
-      [1, ["one", "two"]],
-      [2, ["one\\ntwo"]],
-      [3, ["one\\", "two"]],
-    ]
-
-    [nil, 40].each do |limit|
+  let(:actual_lines) do
+    [nil, 40].flat_map do |limit|
       wrapper = described_class.new(limit, measure)
-      cases.each do |slashes, expected|
-        backslashes = "\\" * slashes
-        label = "one#{backslashes}ntwo"
-
-        expect(wrapper.lines(label)).to eq(expected)
-      end
+      cases.map { |label, _expected| wrapper.lines(label) }
     end
   end
 
-  it "preserves empty rows around explicit line breaks" do
-    cases = [
-      ["\\none", ["", "one"]],
-      ["one\\n", ["one", ""]],
-      ["one\\n\\ntwo", ["one", "", "two"]],
-      ["\\n", ["", ""]],
-    ]
+  context "with escaped line breaks" do
+    let(:cases) do
+      [
+        ["one\\ntwo", ["one", "two"]],
+        ["one\\\\ntwo", ["one\\ntwo"]],
+        ["one\\\\\\ntwo", ["one\\", "two"]],
+      ]
+    end
 
-    [nil, 40].each do |limit|
-      wrapper = described_class.new(limit, measure)
-      cases.each do |label, expected|
-        expect(wrapper.lines(label)).to eq(expected)
-      end
+    it "decodes line breaks without consuming escaped backslashes" do
+      expect(actual_lines).to eq(cases.map(&:last) * 2)
     end
   end
 
-  it "preserves explicit rows when the label already contains newlines" do
-    [nil, 40].each do |limit|
-      wrapper = described_class.new(limit, measure)
+  context "with empty explicit rows" do
+    let(:cases) do
+      [
+        ["\\none", ["", "one"]],
+        ["one\\n", ["one", ""]],
+        ["one\\n\\ntwo", ["one", "", "two"]],
+        ["\\n", ["", ""]],
+        ["", [""]],
+      ]
+    end
 
-      expect(wrapper.lines("\none\n\ntwo\n"))
-        .to eq(["", "one", "", "two", ""])
+    it "preserves empty rows around explicit line breaks" do
+      expect(actual_lines).to eq(cases.map(&:last) * 2)
+    end
+  end
+
+  context "when the label already contains newlines" do
+    let(:cases) { [["\none\n\ntwo\n", ["", "one", "", "two", ""]]] }
+
+    it "preserves explicit rows" do
+      expect(actual_lines).to eq(cases.map(&:last) * 2)
     end
   end
 
@@ -53,7 +54,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::MessageWrap do
     wrapper = described_class.new(50, measure)
     label = "aa bb\\ncc dd ee"
 
-    expect(wrapper.lines(label)).to eq(["aa bb", "cc dd", "ee"])
-    expect(wrapper.width(label)).to eq(50.0)
+    expect([wrapper.lines(label), wrapper.width(label)])
+      .to eq([["aa bb", "cc dd", "ee"], 50.0])
   end
 end

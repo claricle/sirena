@@ -1190,7 +1190,7 @@ module Sirena
             end
           end
           char = closing.absent? >> blank.absent? >> str('"').absent? >>
-                 str("%%{").absent? >> any
+            str("%%{").absent? >> any
           char = forbidden.absent? >> char if forbidden
           gap = blank.repeat(1) >> closing.absent?
           text = char >> (char | gap).repeat

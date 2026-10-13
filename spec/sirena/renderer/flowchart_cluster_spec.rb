@@ -264,7 +264,7 @@ module FlowchartClusterSpecHelpers
     return false if len.zero?
 
     cross = ((to[0] - from[0]) * (y - from[1])) -
-            ((to[1] - from[1]) * (x - from[0]))
+      ((to[1] - from[1]) * (x - from[0]))
     return false if (cross.abs / len) > 1
 
     # Divided back to a length, so the slop is a unit here as it is on
