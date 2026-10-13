@@ -1,9 +1,5 @@
 ---
 cop: Naming/MethodParameterName
 rows:
-- file: lib/sirena/renderer/sequence.rb
-  count: 19
 - file: spec/sirena/renderer/architecture_edge_router_spec.rb
   count: 4
-- file: spec/sirena/renderer/flowchart_cluster_spec.rb
-  count: 21
