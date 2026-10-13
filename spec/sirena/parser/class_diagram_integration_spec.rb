@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe "ClassDiagram Integration", :aggregate_failures do
+RSpec.describe Sirena::Parser::ClassDiagram, :aggregate_failures do
   describe "complete class diagram pipeline" do
-    let(:diagram) { Sirena::Parser::ClassDiagram.new.parse(source) }
+    let(:diagram) { described_class.new.parse(source) }
     let(:scene) { Sirena::Layout::ClassDiagram.new.call(diagram) }
     let(:svg) { Sirena::Renderer::ClassDiagram.new.render(scene) }
 
@@ -169,7 +169,7 @@ RSpec.describe "ClassDiagram Integration", :aggregate_failures do
       handlers = Sirena::DiagramRegistry.get(:class_diagram)
 
       expect(handlers).not_to be_nil
-      expect(handlers[:parser]).to eq(Sirena::Parser::ClassDiagram)
+      expect(handlers[:parser]).to eq(described_class)
       expect(handlers[:transform]).to eq(Sirena::Layout::ClassDiagram)
       expect(handlers[:renderer]).to eq(Sirena::Renderer::ClassDiagram)
     end

@@ -3,9 +3,9 @@
 require "spec_helper"
 require "rexml/document"
 
-RSpec.describe "Flowchart Integration", :aggregate_failures do
+RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
   describe "complete flowchart pipeline" do
-    let(:diagram) { Sirena::Parser::Flowchart.new.parse(source) }
+    let(:diagram) { described_class.new.parse(source) }
     let(:scene) { Sirena::Layout::Flowchart.new.to_graph(diagram) }
     let(:svg) { Sirena::Renderer::Flowchart.new.render(scene) }
 
@@ -80,7 +80,7 @@ RSpec.describe "Flowchart Integration", :aggregate_failures do
       handlers = Sirena::DiagramRegistry.get(:flowchart)
 
       expect(handlers).not_to be_nil
-      expect(handlers[:parser]).to eq(Sirena::Parser::Flowchart)
+      expect(handlers[:parser]).to eq(described_class)
       expect(handlers[:transform]).to eq(Sirena::Layout::Flowchart)
       expect(handlers[:renderer]).to eq(Sirena::Renderer::Flowchart)
     end

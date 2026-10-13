@@ -9,11 +9,11 @@ module ReferenceFixtureSpecHelpers
   end
 end
 
-RSpec.describe "Reference SVG Fixtures" do
+RSpec.describe Sirena::Engine do
   include ReferenceFixtureSpecHelpers
   include FixtureLengthBand
 
-  let(:engine) { Sirena::Engine.new }
+  let(:engine) { described_class.new }
 
   shared_examples(
     "validates against reference fixture",

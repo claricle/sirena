@@ -5,8 +5,8 @@ require "sirena/parser/git_graph"
 require "sirena/layout/git_graph"
 require "sirena/renderer/git_graph"
 
-RSpec.describe "Git Graph Integration", :aggregate_failures do
-  let(:diagram) { Sirena::Parser::GitGraph.new.parse(source) }
+RSpec.describe Sirena::Parser::GitGraph, :aggregate_failures do
+  let(:diagram) { described_class.new.parse(source) }
   let(:layout) { Sirena::Layout::GitGraph.new.to_graph(diagram) }
   let(:svg) { Sirena::Renderer::GitGraph.new.render(layout) }
 

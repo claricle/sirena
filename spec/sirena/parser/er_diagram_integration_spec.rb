@@ -9,11 +9,11 @@ module ErIntegrationSpecHelpers
   end
 end
 
-RSpec.describe "ErDiagram Integration", :aggregate_failures do
+RSpec.describe Sirena::Parser::ErDiagram, :aggregate_failures do
   include ErIntegrationSpecHelpers
 
   describe "complete ER diagram pipeline" do
-    let(:diagram) { Sirena::Parser::ErDiagram.new.parse(source) }
+    let(:diagram) { described_class.new.parse(source) }
     let(:scene) { Sirena::Layout::ErDiagram.new.to_graph(diagram) }
     let(:svg) { Sirena::Renderer::ErDiagram.new.render(scene) }
 
@@ -346,7 +346,7 @@ RSpec.describe "ErDiagram Integration", :aggregate_failures do
       handlers = Sirena::DiagramRegistry.get(:er_diagram)
 
       expect(handlers).not_to be_nil
-      expect(handlers[:parser]).to eq(Sirena::Parser::ErDiagram)
+      expect(handlers[:parser]).to eq(described_class)
       expect(handlers[:transform]).to eq(Sirena::Layout::ErDiagram)
       expect(handlers[:renderer]).to eq(Sirena::Renderer::ErDiagram)
     end
