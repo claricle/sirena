@@ -1,5 +1,0 @@
----
-cop: Lint/DuplicateBranch
-rows:
-- file: lib/sirena/layout/architecture.rb
-  count: 1

@@ -1,8 +1,6 @@
 ---
 cop: Metrics/MethodLength
 rows:
-- file: lib/sirena/layout/architecture.rb
-  count: 6
 - file: lib/sirena/layout/block.rb
   count: 3
 - file: lib/sirena/layout/gantt.rb
@@ -13,8 +11,6 @@ rows:
   count: 2
 - file: lib/sirena/layout/sequence.rb
   count: 5
-- file: lib/sirena/layout/state_diagram.rb
-  count: 4
 - file: lib/sirena/layout/xy_chart.rb
   count: 2
 - file: lib/sirena/notation/mermaid/git_graph_config.rb
@@ -28,14 +24,6 @@ rows:
 - file: lib/sirena/renderer/error.rb
   count: 3
 - file: lib/sirena/renderer/info.rb
-  count: 1
-- file: lib/sirena/renderer/mindmap.rb
-  count: 6
-- file: lib/sirena/renderer/radar.rb
-  count: 1
-- file: lib/sirena/renderer/sequence.rb
-  count: 6
-- file: lib/sirena/renderer/state_diagram.rb
   count: 1
 - file: lib/sirena/renderer/treemap.rb
   count: 2

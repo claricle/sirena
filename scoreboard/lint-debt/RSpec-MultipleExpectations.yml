@@ -27,63 +27,19 @@ rows:
   count: 2
 - file: spec/sirena/exhaustion_errors_spec.rb
   count: 2
-- file: spec/sirena/layout/base_call_spec.rb
-  count: 2
-- file: spec/sirena/layout/git_graph_palette_spec.rb
-  count: 1
-- file: spec/sirena/layout/grid_spec.rb
-  count: 4
 - file: spec/sirena/markdown_text_spec.rb
   count: 12
-- file: spec/sirena/parser/class_diagram_parser_annotations_members_spec.rb
-  count: 1
 - file: spec/sirena/parser/er_diagram_spec.rb
   count: 6
-- file: spec/sirena/parser/error_position_spec.rb
-  count: 5
 - file: spec/sirena/parser/flowchart_node_metadata_spec.rb
-  count: 6
-- file: spec/sirena/parser/flowchart_parser_amp_group_spec.rb
-  count: 1
+  count: 4
 - file: spec/sirena/parser/flowchart_parser_edge_id_spec.rb
-  count: 2
-- file: spec/sirena/parser/flowchart_parser_inline_label_spec.rb
-  count: 2
-- file: spec/sirena/parser/flowchart_parser_link_style_spec.rb
   count: 1
-- file: spec/sirena/parser/flowchart_parser_style_lists_spec.rb
-  count: 2
-- file: spec/sirena/parser/flowchart_quoted_paren_label_spec.rb
-  count: 1
-- file: spec/sirena/parser/flowchart_semicolon_spec.rb
-  count: 2
 - file: spec/sirena/parser/gantt_spec.rb
   count: 4
 - file: spec/sirena/parser/greedy_run_spec.rb
-  count: 6
-- file: spec/sirena/parser/packet_spec.rb
-  count: 6
-- file: spec/sirena/parser/quadrant_spec.rb
-  count: 6
-- file: spec/sirena/parser/requirement_spec.rb
-  count: 1
-- file: spec/sirena/renderer/flowchart_cluster_spec.rb
-  count: 24
-- file: spec/sirena/renderer/flowchart_link_spec.rb
-  count: 30
-- file: spec/sirena/svg/arrowhead_spec.rb
-  count: 2
-- file: spec/sirena/svg/escaping_boundary_spec.rb
-  count: 7
-- file: spec/sirena/svg/group_spec.rb
-  count: 1
-- file: spec/sirena/svg/no_runtime_remediation_spec.rb
-  count: 1
-- file: spec/sirena/svg/numbers_spec.rb
-  count: 1
-- file: spec/sirena/svg/path_geometry_spec.rb
   count: 3
-- file: spec/sirena/svg/tiny_properties_spec.rb
+- file: spec/sirena/parser/requirement_spec.rb
   count: 1
 - file: spec/sirena/theme/color_palette_fallback_keys_spec.rb
   count: 1

@@ -22,11 +22,6 @@ Layout/LineLength:
 Lint/AmbiguousOperatorPrecedence:
   Enabled: false
 
-# Offense count: 20
-# Configuration parameters: IgnoreLiteralBranches, IgnoreConstantBranches, IgnoreDuplicateElseBranch.
-Lint/DuplicateBranch:
-  Enabled: false
-
 # Offense count: 317
 # Configuration parameters: AllowedMethods, AllowedPatterns, CountRepeatedAttributes, Max.
 Metrics/AbcSize:
