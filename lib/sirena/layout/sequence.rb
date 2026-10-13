@@ -249,10 +249,7 @@ module Sirena
       def placed_geometry(graph, positions, placement)
         count = graph.dig(:metadata, :message_count) || 0
         {
-          lifelines: lifeline_geometry(
-            created_positions(positions, placement), count,
-            stack_height(placement)
-          ),
+          lifelines: placed_lifelines(positions, placement, count),
           messages: typed_messages(graph[:edges], positions, placement),
           notes: placement.notes,
           frames: frame_shapes(positions, placement),
@@ -297,20 +294,7 @@ module Sirena
 
       def transform_participants(graph)
         participant_nodes(graph).map.with_index do |participant, index|
-          label = measured_label(participant.label, participant_font_size)
-          {
-            id: participant.id,
-            width: participant_width(label),
-            height: PARTICIPANT_HEIGHT,
-            labels: [label],
-            metadata: {
-              actor_type: participant_type(graph, participant),
-              shape_type: participant_shape(graph, participant),
-              created: created?(graph, participant),
-              index: index,
-              lifeline_length: calculate_lifeline_length(graph),
-            },
-          }
+          transformed_participant(graph, participant, index)
         end
       end
 
@@ -484,18 +468,10 @@ module Sirena
         actor_type = participant.dig(:metadata, :actor_type) || "participant"
         shape_type = participant.dig(:metadata, :shape_type)
         Participant.new(
-          id: participant[:id], actor_type: actor_type, shape_type: shape_type,
-          x: position[:x], y: position[:y],
-          width: participant[:width] || PARTICIPANT_WIDTH,
-          height: participant[:height] || PARTICIPANT_HEIGHT,
-          corner_radius: 5,
-          label: typed_participant_label(
-            label, position, actor_type, shape_type
-          ),
-          actor_head: actor_head(position, actor_type),
-          actor_lines: actor_lines(position, actor_type),
-          shape_circle: participant_shape_circle(position, shape_type),
-          shape_lines: participant_shape_lines(position, shape_type)
+          **participant_box_geometry(participant, position),
+          actor_type: actor_type, shape_type: shape_type,
+          label: placed_label(label, position, actor_type, shape_type),
+          **participant_figure_geometry(position, actor_type, shape_type)
         )
       end
 
@@ -562,16 +538,10 @@ module Sirena
         center = position[:center_x]
         top = position[:y]
         case shape_type
-        when "boundary"
-          [line(center - 55, top + 33, center - 15, top + 33),
-           line(center - 55, top + 23, center - 55, top + 43)]
-        when "control"
-          [line(center - 4, top + 13, center + 4, top + 13),
-           line(center + 4, top + 13, center + 1, top + 17)]
-        when "entity"
-          [line(center - 22, top + 53, center + 22, top + 53)]
-        else
-          []
+        when "boundary" then boundary_lines(center, top)
+        when "control" then control_lines(center, top)
+        when "entity" then [line(center - 22, top + 53, center + 22, top + 53)]
+        else []
         end
       end
 
@@ -768,14 +738,7 @@ module Sirena
         top = vertical
         bottom = vertical + SELF_LOOP_HEIGHT
         reach = horizontal + SELF_LOOP_WIDTH
-        heads = head_ends(style).map do |which|
-          edge_y = which == :source ? top : bottom
-          span = {
-            x1: horizontal + ARROW_SIZE, y1: edge_y,
-            x2: horizontal, y2: edge_y
-          }
-          head_geometry(:target, span, style)
-        end
+        heads = self_arrow_heads(horizontal, top, bottom, style)
         {
           loop_path: "M #{horizontal},#{top} C #{reach},#{top - 10} " \
                      "#{reach},#{bottom + 10} #{horizontal},#{bottom}",
@@ -904,6 +867,69 @@ module Sirena
 
       def line(start_x, start_y, end_x, end_y)
         Line.new(x1: start_x, y1: start_y, x2: end_x, y2: end_y)
+      end
+
+      def placed_label(label, position, actor_type, shape_type)
+        typed_participant_label(label, position, actor_type, shape_type)
+      end
+
+      def placed_lifelines(positions, placement, count)
+        lifeline_geometry(created_positions(positions, placement), count,
+                          stack_height(placement))
+      end
+
+      def transformed_participant(graph, participant, index)
+        label = measured_label(participant.label, participant_font_size)
+        {
+          id: participant.id, width: participant_width(label),
+          height: PARTICIPANT_HEIGHT, labels: [label],
+          metadata: participant_metadata(graph, participant, index)
+        }
+      end
+
+      def participant_metadata(graph, participant, index)
+        {
+          actor_type: participant_type(graph, participant),
+          shape_type: participant_shape(graph, participant),
+          created: created?(graph, participant), index: index,
+          lifeline_length: calculate_lifeline_length(graph)
+        }
+      end
+
+      def participant_box_geometry(participant, position)
+        {
+          id: participant[:id], x: position[:x], y: position[:y],
+          width: participant[:width] || PARTICIPANT_WIDTH,
+          height: participant[:height] || PARTICIPANT_HEIGHT, corner_radius: 5
+        }
+      end
+
+      def participant_figure_geometry(position, actor_type, shape_type)
+        {
+          actor_head: actor_head(position, actor_type),
+          actor_lines: actor_lines(position, actor_type),
+          shape_circle: participant_shape_circle(position, shape_type),
+          shape_lines: participant_shape_lines(position, shape_type),
+        }
+      end
+
+      def boundary_lines(center, top)
+        [line(center - 55, top + 33, center - 15, top + 33),
+         line(center - 55, top + 23, center - 55, top + 43)]
+      end
+
+      def control_lines(center, top)
+        [line(center - 4, top + 13, center + 4, top + 13),
+         line(center + 4, top + 13, center + 1, top + 17)]
+      end
+
+      def self_arrow_heads(horizontal, top, bottom, style)
+        head_ends(style).map do |which|
+          edge_y = which == :source ? top : bottom
+          span = { x1: horizontal + ARROW_SIZE, y1: edge_y,
+                   x2: horizontal, y2: edge_y }
+          head_geometry(:target, span, style)
+        end
       end
     end
   end

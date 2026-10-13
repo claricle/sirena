@@ -54,121 +54,15 @@ module ExampleTasks
   end
 
   def validate_examples(examples_dir)
-    failed = []
-    known_unrenderable = []
-    unexpectedly_renderable = []
-    passed = 0
-    total = 0
-
-    puts "Validating examples..."
-    puts ". rendered   K known unrenderable   F failure"
-    puts ""
-
-    # Enumerated the same way :generate walks sources -- diagram_dirs skips a
-    # symlinked diagram directory and mmd_files_in skips a symlinked .mmd --
-    # not a raw Dir.glob, which followed both and read whatever they pointed at.
-    mmd_files = diagram_dirs(examples_dir)
-      .flat_map { |dir| mmd_files_in(dir) }
-      .sort
-
-    mmd_files.each do |mmd_file|
-      total += 1
-      # Same check-list-once-read-later shape `copy_through_rename` closed
-      # for the docs-assets copy (see its comment): `mmd_files_in` filters
-      # `plain_mmd?` when the list above is built, then this reads by name
-      # later with no re-check. Accepted as-is rather than fixed alongside:
-      # the payload here has to survive being interpreted as Mermaid and
-      # rendered before it reaches any output, unlike the copy path's raw
-      # byte-for-byte read, so the blast radius is a validation run
-      # rendering unexpected content, not a verbatim file leak. Revisit if
-      # this task's threat model changes (e.g. moves to a shared machine).
-      source = File.read(mmd_file)
-      relative_path = mmd_file.sub("#{examples_dir}/", "")
-      expected_unrenderable = EXPECTED_UNRENDERABLE_SOURCES.include?(
-        relative_path,
-      )
-      # Read outside the render-failure rescue below, the same as generation:
-      # a malformed .yml is a metadata problem, not evidence the source fails
-      # to render, and folding it into the rescue gave a bad .yml on an
-      # allowlisted source the same "known unrenderable" pass as a genuine
-      # render failure — so validation reported success on broken metadata.
-      theme = theme_for(mmd_file)
-
-      # And BUILD THE ENGINE here too, for the same reason one level down.
-      # `theme_for` only reads the .yml; the theme it NAMES is loaded inside
-      # `Sirena.render`, which put a broken theme FILE back inside the rescue
-      # — so an allowlisted source whose theme would not load was still
-      # counted "known unrenderable" and validation still reported success.
-      #
-      # `Engine.new` does the theme loading in its constructor, so a theme
-      # that cannot load raises HERE and fails the task loudly. Verified
-      # equivalent to the previous call for every built-in theme:
-      # `Sirena.render(src, theme: t, today: d)` and
-      # `Engine.new(theme: t, today: d).render(src)` are byte-identical.
-      engine = Sirena::Engine.new(theme: theme, today: EXAMPLE_TODAY)
-
-      begin
-        engine.render(source)
-        if expected_unrenderable
-          unexpectedly_renderable << relative_path
-          print "F"
-        else
-          passed += 1
-          print "."
-        end
-      rescue StandardError => e
-        if expected_unrenderable
-          known_unrenderable << { file: relative_path, error: e.message }
-          print "K"
-        else
-          failed << { file: relative_path, error: e.message }
-          print "F"
-        end
-      end
-    end
-
-    failure_count = failed.size + unexpectedly_renderable.size
-
-    puts "\n\n"
-    puts "=" * 60
-    puts "Validation Results"
-    puts "=" * 60
-    renderable = total - known_unrenderable.size
-    puts "Total:  #{total}"
-    percentage = if renderable.zero?
-                   "n/a"
-                 else
-                   "#{(passed.to_f / renderable * 100).round(1)}%"
-                 end
-    puts "Passed: #{passed} of #{renderable} renderable (#{percentage})"
-    puts "Known unrenderable: #{known_unrenderable.size}"
-    puts "Failed: #{failure_count}"
-    puts "=" * 60
-
-    if known_unrenderable.any?
-      puts "\nKnown unrenderable:"
-      known_unrenderable.each do |f|
-        puts "  ⚠️  #{f[:file]}"
-        puts "    #{f[:error]}"
-      end
-    end
-
-    if failure_count.positive?
-      puts "\nFailures:"
-      failed.each do |f|
-        puts "  ✗ #{f[:file]}"
-        puts "    #{f[:error]}"
-      end
-      unexpectedly_renderable.each do |file|
-        puts "  ✗ #{file}"
-        puts "    listed as known unrenderable but rendered successfully"
-      end
-      raise ValidationFailed, "validation failed: #{failed.size} failing, " \
-                              "#{unexpectedly_renderable.size} " \
-                              "unexpectedly renderable"
-    else
-      puts "\n✅ All renderable examples validated successfully!"
-    end
+    stats = validation_statistics
+    print_validation_heading
+    sources = diagram_dirs(examples_dir).flat_map do |dir|
+      mmd_files_in(dir)
+    end.sort
+    sources.each { |source| validate_source(source, examples_dir, stats) }
+    print_validation_summary(stats)
+    print_known_unrenderable(stats[:known_unrenderable])
+    finish_validation(stats)
   end
 
   # Literal children, never a glob. A directory legitimately named `g*` is a
@@ -218,34 +112,13 @@ module ExampleTasks
   # NOFOLLOW-where-defined, symlink?-check-elsewhere fallback
   # `copy_through_rename` uses, re-checked once more right after the open on
   # platforms without NOFOLLOW.
-  def with_examples_lock(examples_dir)
+  def with_examples_lock(examples_dir, &)
     root = verified_root(examples_dir)
     return yield unless File.directory?(root)
 
     lock_path = examples_lock_path(root)
-    flags = File::RDWR | File::CREAT
-    flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
-    if !File.const_defined?(:NOFOLLOW) && File.symlink?(lock_path)
-      raise "examples lock became unsafe to open: #{lock_path}"
-    end
-
-    handle =
-      begin
-        File.open(lock_path, flags, 0o644)
-      rescue Errno::ELOOP
-        raise "examples lock became unsafe to open: #{lock_path}"
-      end
-
-    begin
-      if !File.const_defined?(:NOFOLLOW) && File.symlink?(lock_path)
-        raise "examples lock became unsafe to open: #{lock_path}"
-      end
-
-      handle.flock(File::LOCK_EX)
-      yield
-    ensure
-      handle.close
-    end
+    handle = open_examples_lock(lock_path)
+    within_examples_lock(handle, lock_path, &)
   end
 
   def examples_lock_path(root)
@@ -309,30 +182,8 @@ module ExampleTasks
       return nil
     end
 
-    type_identity = create_real_directory(
-      type,
-      label: "docs target for #{type}",
-    )
-
-    copied = within_pinned_directory(
-      type,
-      expected_identity: type_identity,
-      label: "docs target for #{type}",
-    ) do
-      svg_files.count do |svg_file|
-        destination = File.basename(svg_file)
-        unless manageable_relative?(destination)
-          puts "  ⚠️  skipped #{type}/#{destination}, " \
-               "its docs copy target is a symlink or already exists as " \
-               "something other than a plain file"
-          next false
-        end
-
-        copy_through_rename(svg_file, destination)
-        true
-      end
-    end
-
+    identity = create_real_directory(type, label: "docs target for #{type}")
+    copied = copy_into_type_directory(type, svg_files, identity)
     [type, copied]
   end
 
@@ -437,25 +288,16 @@ module ExampleTasks
   # fixed-length, independent of DESTINATION's basename, or a legal 255-byte
   # target name can produce an illegal temporary one (ENAMETOOLONG).
   def atomic_write(destination)
-    temporary = File.join(
-      File.dirname(destination),
-      ".sirena-#{Process.pid}-#{SecureRandom.hex(8)}.tmp",
-    )
+    temporary = temporary_write_path(destination)
     created = false
-    begin
-      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL) do |file|
-        created = true
-        yield file
-      end
-      File.rename(temporary, destination)
-      # Renamed, so the temporary name is vacant. Leaving `created` set made
-      # the ensure below unlink whatever next claimed that name.
-      created = false
-    ensure
-      # Only what this call made. Removing a name this call refused to write
-      # to would be the same mistake one step down.
-      FileUtils.rm_f(temporary) if created
+    File.open(temporary, File::WRONLY | File::CREAT | File::EXCL) do |file|
+      created = true
+      yield file
     end
+    File.rename(temporary, destination)
+    created = false
+  ensure
+    FileUtils.rm_f(temporary) if created
   end
 
   # `atomic_write` (not `FileUtils.cp`) so a symlink at DESTINATION cannot
@@ -467,33 +309,10 @@ module ExampleTasks
   def copy_through_rename(source, destination)
     read_flags = File::RDONLY
     read_flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
-
     atomic_write(destination) do |file|
-      if !File.const_defined?(:NOFOLLOW) && File.symlink?(source)
-        raise "source became unsafe to read: #{source}"
-      end
-
-      begin
-        File.open(source, read_flags) { |src| IO.copy_stream(src, file) }
-      rescue Errno::ELOOP
-        # Only reachable where NOFOLLOW is defined: the open itself refused a
-        # symlink raced into SOURCE's name between the check above (a no-op
-        # on this platform) and this line, one syscall instead of two.
-        raise "source became unsafe to read: #{source}"
-      end
-
-      # KNOWN, DISCLOSED GAP on a platform without NOFOLLOW (Windows): the
-      # check above and the open are still check-then-act, so a swap timed
-      # inside that window is followed and already copied into the temp
-      # file by the time execution reaches here -- this cannot un-read it.
-      # What it CAN do: if SOURCE is still a symlink right now, discard the
-      # copy (atomic_write's own ensure unlinks the temp file) instead of
-      # renaming it into DESTINATION, confining a won race to this run's
-      # temp file. An attacker who swaps SOURCE back before this line runs
-      # defeats even this; that residual window is real and not closed here.
-      if !File.const_defined?(:NOFOLLOW) && File.symlink?(source)
-        raise "source became unsafe to read: #{source}"
-      end
+      ensure_safe_source(source)
+      copy_open_source(source, read_flags, file)
+      ensure_safe_source(source)
     end
   end
 
@@ -512,33 +331,8 @@ module ExampleTasks
     path = File.expand_path(path)
     raise "#{label} must not be a link: #{path}" if File.symlink?(path)
 
-    if path == GEM_ROOT || path.start_with?("#{GEM_ROOT}#{File::SEPARATOR}")
-      existing = path
-      existing = File.dirname(existing) until File.exist?(existing)
-
-      # Compared against GEM_ROOT's OWN resolution, not against the literal
-      # path: GEM_ROOT itself may sit beneath a symlink this task has no
-      # claim on (confirmed by execution -- macOS's Dir.mktmpdir routes
-      # through /var -> private/var, and a checkout can legitimately sit
-      # under a symlinked mount), which is not this task's business (see
-      # GEM_ROOT's comment). Comparing the literal path against realpath
-      # unconditionally made THIS check false-positive on exactly the kind
-      # of path it must not: every nested directory under a GEM_ROOT that
-      # itself resolves through any symlink, with no symlink actually
-      # introduced below it. Only a symlink on the portion BELOW GEM_ROOT
-      # (the part this task actually owns) is checked.
-      real_gem_root = File.realpath(GEM_ROOT)
-      suffix = if existing == GEM_ROOT
-                 nil
-               else
-                 existing.delete_prefix("#{GEM_ROOT}#{File::SEPARATOR}")
-               end
-      expected = suffix ? File.join(real_gem_root, suffix) : real_gem_root
-      if File.realpath(existing) != expected
-        raise "#{label} sits beneath a symlinked directory: #{path}"
-      end
-    end
-
+    verify_root_ancestors(path, label) if
+      path == GEM_ROOT || path.start_with?("#{GEM_ROOT}#{File::SEPARATOR}")
     path
   end
 
@@ -611,19 +405,13 @@ module ExampleTasks
   end
 
   def prune_orphan_svgs(examples_dir)
-    removed = 0
-    orphan_svgs(examples_dir).each do |svg_file|
-      # Re-decided here, not trusted from the list above. The lock makes an
-      # interleaved `generate` impossible; this also covers a source restored
-      # by hand, which no lock of ours can serialise.
-      next unless still_orphaned?(examples_dir, svg_file)
+    orphan_svgs(examples_dir).count do |svg_file|
+      next false unless still_orphaned?(examples_dir, svg_file)
 
       File.delete(svg_file)
-      removed += 1
-      puts "    removed #{svg_file.sub("#{examples_dir}/", '')}, which " \
-           "no longer has a source"
+      print_removed_orphan(examples_dir, svg_file)
+      true
     end
-    removed
   end
 
   # Whether SVG_FILE is STILL an orphan at this instant, rather than at the
@@ -677,27 +465,10 @@ module ExampleTasks
   # not just write. Deleting the stale SVG is `rake examples:prune`'s job — a
   # deliberate, standalone run with no concurrent writer to race.
   def handle_failed_svgs(failed_renders, examples_dir)
-    unexpected_sources = failed_renders.map(&:first) -
-      EXPECTED_UNRENDERABLE_SOURCES
-    unless unexpected_sources.empty?
-      puts "\n⚠️  Unexpected render failure: example sources failed to render."
-      puts "   Unexpected: #{unexpected_sources.sort.join(', ')}; SVGs that " \
-           "did render have " \
-           "already been rewritten, while nothing was deleted."
-      raise UnexpectedRenderFailure,
-            "unexpected render failure: #{unexpected_sources.sort.join(', ')}"
-    end
-
-    stale = failed_renders.map(&:last).select do |svg_file|
-      File.exist?(svg_file)
-    end
-    return if stale.empty?
-
-    puts "\n⚠️  #{stale.size} SVG(s) no longer render and are still tracked:"
-    stale.each do |svg_file|
-      puts "    #{svg_file.delete_prefix("#{examples_dir}/")}"
-    end
-    puts "   Run 'rake examples:prune' to delete them."
+    unexpected = failed_renders.map(&:first) - EXPECTED_UNRENDERABLE_SOURCES
+    raise_unexpected_render_failure(unexpected) unless unexpected.empty?
+    stale = failed_renders.map(&:last).select { |svg| File.exist?(svg) }
+    print_stale_failed_svgs(stale, examples_dir) unless stale.empty?
   end
 
   # A nil or partial render must not destroy the document already there --
@@ -768,65 +539,12 @@ module ExampleTasks
   # throwaway tree. A destructive task nobody can run in a sandbox is a task
   # nobody can prove.
   def generate_examples(examples_dir)
-    total_generated = 0
-    failed_renders = []
-
+    stats = { total_generated: 0, failed_renders: [] }
     diagram_dirs(examples_dir).each do |dir|
-      diagram_type = File.basename(dir)
-      puts "\n\u{1F4CA} Generating examples for #{diagram_type}..."
-      mmd_files = mmd_files_in(dir)
-
-      if mmd_files.empty?
-        puts "  \u26a0\ufe0f  No examples found for #{diagram_type}"
-        next
-      end
-
-      mmd_files.each do |mmd_file|
-        basename = File.basename(mmd_file, ".mmd")
-        # From the source path, not rebuilt from the directory: a directory
-        # named with glob syntax made those two disagree.
-        svg_file = mmd_file.sub(/\.mmd\z/, ".svg")
-        # Read outside the render-failure rescue below: a malformed .yml is a
-        # metadata problem, not evidence the source fails to render, and
-        # folding it into failed_renders gave a bad .yml on an allowlisted
-        # source the same deletion permission as a genuine render failure.
-        theme = theme_for(mmd_file)
-
-        begin
-          # Same accepted gap as `validate_examples` above, same reasoning:
-          # `mmd_files_in` checked `plain_mmd?` once when the list was built,
-          # this reads by name later with no re-check, and the payload still
-          # has to survive Mermaid parsing before it reaches output.
-          svg = Sirena.render(
-            File.read(mmd_file),
-            theme: theme,
-            today: EXAMPLE_TODAY,
-          )
-          write_svg(svg_file, svg, examples_dir)
-          puts "  \u2713 #{basename}.svg"
-          total_generated += 1
-        rescue SystemCallError
-          # An I/O failure, not a render failure: the OS refused the write
-          # itself (a full disk, Errno::EFBIG), and the source may render
-          # perfectly well. Folding this into the render-failure rescue
-          # below let handle_failed_svgs mistake it for the source failing
-          # to render, and for an allowlisted source that meant deleting the
-          # previous good SVG on the strength of a write failure. This must
-          # abort the task instead, the same way an unreadable diagram
-          # directory already does (see 'refusing what it did not create').
-          raise
-        rescue StandardError => e
-          puts "  \u2717 #{basename}.svg - ERROR: #{e.message}"
-          failed_renders << [
-            mmd_file.delete_prefix("#{examples_dir}/"),
-            svg_file,
-          ]
-        end
-      end
+      generate_directory(dir, examples_dir, stats)
     end
-
     report_orphan_svgs(examples_dir)
-    [total_generated, failed_renders]
+    [stats[:total_generated], stats[:failed_renders]]
   end
 
   # A symlinked diagram directory resolves outside examples/, and the loop
@@ -873,4 +591,265 @@ module ExampleTasks
                        :within_diagram_directory, :write_svg_in_directory,
                        :ensure_manageable_relative,
                        :warn_symlinked_directory
+
+  def validation_statistics
+    { failed: [], known_unrenderable: [], unexpectedly_renderable: [],
+      passed: 0, total: 0 }
+  end
+
+  def print_validation_heading
+    puts "Validating examples..."
+    puts ". rendered   K known unrenderable   F failure"
+    puts ""
+  end
+
+  # Metadata and engine construction must stay outside the render rescue:
+  # a broken theme is a task error even for an expected-unrenderable source.
+  def validate_source(mmd_file, examples_dir, stats)
+    stats[:total] += 1
+    source = File.read(mmd_file)
+    relative = mmd_file.sub("#{examples_dir}/", "")
+    expected = EXPECTED_UNRENDERABLE_SOURCES.include?(relative)
+    theme = theme_for(mmd_file)
+    engine = Sirena::Engine.new(theme: theme, today: EXAMPLE_TODAY)
+    validate_render(engine, source, relative, expected, stats)
+  end
+
+  def validate_render(engine, source, relative, expected, stats)
+    engine.render(source)
+    if expected
+      stats[:unexpectedly_renderable] << relative
+      print "F"
+    else
+      stats[:passed] += 1
+      print "."
+    end
+  rescue StandardError => e
+    record_validation_failure(relative, expected, stats, e)
+  end
+
+  def record_validation_failure(relative, expected, stats, error)
+    key = expected ? :known_unrenderable : :failed
+    stats[key] << { file: relative, error: error.message }
+    print expected ? "K" : "F"
+  end
+
+  def validation_failure_count(stats)
+    stats[:failed].size + stats[:unexpectedly_renderable].size
+  end
+
+  def print_validation_summary(stats)
+    puts "\n\n"
+    puts "=" * 60
+    puts "Validation Results"
+    puts "=" * 60
+    print_validation_counts(stats)
+    puts "=" * 60
+  end
+
+  def print_validation_counts(stats)
+    renderable = stats[:total] - stats[:known_unrenderable].size
+    puts "Total:  #{stats[:total]}"
+    puts "Passed: #{stats[:passed]} of #{renderable} renderable " \
+         "(#{validation_percentage(stats[:passed], renderable)})"
+    print_validation_failure_counts(stats)
+  end
+
+  def print_validation_failure_counts(stats)
+    puts "Known unrenderable: #{stats[:known_unrenderable].size}"
+    puts "Failed: #{validation_failure_count(stats)}"
+  end
+
+  def validation_percentage(passed, renderable)
+    return "n/a" if renderable.zero?
+
+    "#{(passed.to_f / renderable * 100).round(1)}%"
+  end
+
+  def print_known_unrenderable(entries)
+    return unless entries.any?
+
+    puts "\nKnown unrenderable:"
+    entries.each do |entry|
+      puts "  ⚠️  #{entry[:file]}"
+      puts "    #{entry[:error]}"
+    end
+  end
+
+  def finish_validation(stats)
+    unless validation_failure_count(stats).positive?
+      puts "\n✅ All renderable examples validated successfully!"
+      return
+    end
+
+    print_validation_failures(stats)
+    raise ValidationFailed, validation_failure_message(stats)
+  end
+
+  def validation_failure_message(stats)
+    "validation failed: #{stats[:failed].size} failing, " \
+      "#{stats[:unexpectedly_renderable].size} unexpectedly renderable"
+  end
+
+  def print_validation_failures(stats)
+    puts "\nFailures:"
+    stats[:failed].each do |entry|
+      puts "  ✗ #{entry[:file]}"
+      puts "    #{entry[:error]}"
+    end
+    stats[:unexpectedly_renderable].each do |file|
+      puts "  ✗ #{file}"
+      puts "    listed as known unrenderable but rendered successfully"
+    end
+  end
+
+  def open_examples_lock(lock_path)
+    flags = File::RDWR | File::CREAT
+    flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+    ensure_safe_lock(lock_path)
+    File.open(lock_path, flags, 0o644)
+  rescue Errno::ELOOP
+    raise "examples lock became unsafe to open: #{lock_path}"
+  end
+
+  def within_examples_lock(handle, lock_path)
+    ensure_safe_lock(lock_path)
+    handle.flock(File::LOCK_EX)
+    yield
+  ensure
+    handle.close
+  end
+
+  def ensure_safe_lock(lock_path)
+    return unless !File.const_defined?(:NOFOLLOW) && File.symlink?(lock_path)
+
+    raise "examples lock became unsafe to open: #{lock_path}"
+  end
+
+  def copy_into_type_directory(type, svg_files, identity)
+    within_pinned_directory(type, expected_identity: identity,
+                                  label: "docs target for #{type}") do
+      svg_files.count { |svg| copy_svg_into_type?(type, svg) }
+    end
+  end
+
+  def copy_svg_into_type?(type, svg_file)
+    destination = File.basename(svg_file)
+    unless manageable_relative?(destination)
+      puts "  ⚠️  skipped #{type}/#{destination}, " \
+           "its docs copy target is a symlink or already exists as " \
+           "something other than a plain file"
+      return false
+    end
+
+    copy_through_rename(svg_file, destination)
+    true
+  end
+
+  def temporary_write_path(destination)
+    File.join(File.dirname(destination),
+              ".sirena-#{Process.pid}-#{SecureRandom.hex(8)}.tmp")
+  end
+
+  def ensure_safe_source(source)
+    return unless !File.const_defined?(:NOFOLLOW) && File.symlink?(source)
+
+    raise "source became unsafe to read: #{source}"
+  end
+
+  def copy_open_source(source, read_flags, file)
+    File.open(source, read_flags) { |input| IO.copy_stream(input, file) }
+  rescue Errno::ELOOP
+    raise "source became unsafe to read: #{source}"
+  end
+
+  def verify_root_ancestors(path, label)
+    existing = path
+    existing = File.dirname(existing) until File.exist?(existing)
+    real_gem_root = File.realpath(GEM_ROOT)
+    suffix = existing.delete_prefix("#{GEM_ROOT}#{File::SEPARATOR}") unless
+      existing == GEM_ROOT
+    expected = suffix ? File.join(real_gem_root, suffix) : real_gem_root
+    return if File.realpath(existing) == expected
+
+    raise "#{label} sits beneath a symlinked directory: #{path}"
+  end
+
+  def print_removed_orphan(examples_dir, svg_file)
+    puts "    removed #{svg_file.sub("#{examples_dir}/", '')}, which " \
+         "no longer has a source"
+  end
+
+  def raise_unexpected_render_failure(unexpected)
+    puts "\n⚠️  Unexpected render failure: example sources failed to render."
+    puts "   Unexpected: #{unexpected.sort.join(', ')}; SVGs that " \
+         "did render have already been rewritten, while nothing was deleted."
+    raise UnexpectedRenderFailure,
+          "unexpected render failure: #{unexpected.sort.join(', ')}"
+  end
+
+  def print_stale_failed_svgs(stale, examples_dir)
+    puts "\n⚠️  #{stale.size} SVG(s) no longer render and are still tracked:"
+    stale.each { |svg| puts "    #{svg.delete_prefix("#{examples_dir}/")}" }
+    puts "   Run 'rake examples:prune' to delete them."
+  end
+
+  def generate_directory(dir, examples_dir, stats)
+    diagram_type = File.basename(dir)
+    puts "\n\u{1F4CA} Generating examples for #{diagram_type}..."
+    sources = mmd_files_in(dir)
+    if sources.empty?
+      puts "  \u26a0\ufe0f  No examples found for #{diagram_type}"
+      return
+    end
+
+    sources.each { |source| generate_source(source, examples_dir, stats) }
+  end
+
+  # Metadata is read before the rescue; I/O failures still abort the task.
+  def generate_source(mmd_file, examples_dir, stats)
+    svg_file = mmd_file.sub(/\.mmd\z/, ".svg")
+    theme = theme_for(mmd_file)
+    attempt_source_generation(mmd_file, svg_file, theme, examples_dir, stats)
+  end
+
+  def attempt_source_generation(mmd_file, svg_file, theme, examples_dir, stats)
+    basename = File.basename(mmd_file, ".mmd")
+    generate_source_svg(mmd_file, svg_file, theme, examples_dir)
+    puts "  \u2713 #{basename}.svg"
+    stats[:total_generated] += 1
+  rescue SystemCallError
+    raise
+  rescue StandardError => e
+    puts "  \u2717 #{basename}.svg - ERROR: #{e.message}"
+    record_failed_generation(mmd_file, svg_file, examples_dir, stats)
+  end
+
+  def record_failed_generation(mmd_file, svg_file, examples_dir, stats)
+    stats[:failed_renders] << [mmd_file.delete_prefix("#{examples_dir}/"),
+                               svg_file]
+  end
+
+  def generate_source_svg(mmd_file, svg_file, theme, examples_dir)
+    svg = Sirena.render(File.read(mmd_file), theme: theme, today: EXAMPLE_TODAY)
+    write_svg(svg_file, svg, examples_dir)
+  end
+
+  private_class_method :validation_statistics, :print_validation_heading,
+                       :validate_source, :validate_render,
+                       :record_validation_failure, :validation_failure_count,
+                       :print_validation_summary, :print_validation_counts,
+                       :validation_percentage, :print_known_unrenderable,
+                       :finish_validation, :print_validation_failures,
+                       :open_examples_lock, :within_examples_lock,
+                       :ensure_safe_lock, :copy_into_type_directory,
+                       :copy_svg_into_type?, :temporary_write_path,
+                       :ensure_safe_source, :copy_open_source,
+                       :verify_root_ancestors, :print_removed_orphan,
+                       :raise_unexpected_render_failure,
+                       :print_stale_failed_svgs, :generate_directory,
+                       :generate_source, :generate_source_svg,
+                       :print_validation_failure_counts,
+                       :validation_failure_message,
+                       :attempt_source_generation, :record_failed_generation
 end

@@ -127,16 +127,20 @@ RSpec.describe Sirena::Engine do
     # reaches the SVG text, and the fixture above only exercises the max-date
     # fallback, so comparing rendered output cannot see this at all. The
     # computed task date can.
-    it "takes the year of a partial date from the pin" do
-      years = [early, late].map do |pin|
-        source = "gantt\n  dateFormat MM/DD\n  section S\n  T1 : 08/17, 3d\n"
-        diagram = Sirena::Parser::Gantt.new.parse(source)
-        transform = Sirena::Layout::Gantt.new
-        transform.today = pin
-        transform.to_graph(diagram).sections.first.tasks.first.start_date.year
+    describe "the year of a partial date" do
+      let(:years) do
+        [early, late].map do |pin|
+          source = "gantt\n  dateFormat MM/DD\n  section S\n  T1 : 08/17, 3d\n"
+          diagram = Sirena::Parser::Gantt.new.parse(source)
+          transform = Sirena::Layout::Gantt.new
+          transform.today = pin
+          transform.to_graph(diagram).sections.first.tasks.first.start_date.year
+        end
       end
 
-      expect(years).to eq([early.year, late.year])
+      it "takes the year from the pin" do
+        expect(years).to eq([early.year, late.year])
+      end
     end
 
     # Every other example here injects through the constructor. Reverting the
@@ -191,6 +195,9 @@ RSpec.describe Sirena::Engine do
 
     it "takes only the missing fields from the pin" do
       expect(parsed_gantt_date("2024-03-05", early)).to eq(Date.new(2024, 3, 5))
+    end
+
+    it "uses the pin when the text is not a date" do
       expect(parsed_gantt_date("nonsense", early)).to eq(early)
     end
 
@@ -203,19 +210,24 @@ RSpec.describe Sirena::Engine do
     # counts as passing without ever asserting the render is right. Runs in
     # `spec:corpus`, isolated from the coverage-collecting `spec:unit` run:
     # see .simplecov and tasks/coverage.rake.
-    it "never changes whether a diagram type renders at all", :corpus do
-      differing = Dir.children(corpus).sort.filter_map do |type|
-        file = Dir.glob(File.join(corpus, type, "*.mmd")).min
-        next unless file
+    describe "pinning diagram type outcomes", :corpus do
+      let(:differing) do
+        Dir.children(corpus).sort.filter_map do |type|
+          file = Dir.glob(File.join(corpus, type, "*.mmd")).min
+          next unless file
 
-        source = File.read(file)
-        next if outcome(source) == outcome(source, today: early)
+          source = File.read(file)
+          next if outcome(source) == outcome(source, today: early)
 
-        "#{type}: #{outcome(source)} unpinned vs " \
-          "#{outcome(source, today: early)} pinned"
+          "#{type}: #{outcome(source)} unpinned vs " \
+            "#{outcome(source, today: early)} pinned"
+        end
       end
 
-      expect(differing).to be_empty, "pinning altered:\n#{differing.join("\n")}"
+      it "never changes whether a diagram type renders at all" do
+        expect(differing).to be_empty,
+                             "pinning altered:\n#{differing.join("\n")}"
+      end
     end
   end
 
@@ -223,10 +235,15 @@ RSpec.describe Sirena::Engine do
   # ids shared the author's namespace, so an explicit block could overwrite a
   # generated one and take its children out of the SVG.
   describe "generated ids stay out of the author namespace" do
-    it "keeps an explicit block and a generated block apart" do
-      svg = render("block-beta\n  block\n    child\n  end\n  compound_1\n")
+    let(:svg) do
+      render("block-beta\n  block\n    child\n  end\n  compound_1\n")
+    end
 
+    it "keeps the generated block child" do
       expect(svg).to include("child")
+    end
+
+    it "keeps explicit and generated block identities apart" do
       expect(svg.scan(/id="([^"]*compound[^"]*)"/).flatten.uniq.size).to eq(2)
     end
 
