@@ -24,9 +24,10 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
   it "reserves activation interior and lands messages on exposed bar edges" do
     lifelines = scene.lifelines.map(&:x1)
-    first_bar_edges = [scene.bars[0].x + scene.bars[0].width, scene.bars[1].x]
+    first_bar_edges = [scene.bars[0].x + scene.bars[0].width,
+                       scene.bars[1].x - 2.0]
 
     expect([lifelines.last - lifelines.first, x_points(scene.arrows.first)])
-      .to eq([68.8, first_bar_edges])
+      .to eq([68.03173828125, first_bar_edges])
   end
 end

@@ -31,7 +31,7 @@ module Sirena
         class Walker
           ROW = 40.0
           LINE_LEADING = 1.1776
-          SELF_WIDTH = 36.0
+          SELF_WIDTH = 42.0
           CLASSIC_SELF_WIDTH = 42.0
           CLASSIC_UNLABELLED_SELF_ROW = 27.0
           private_constant :CLASSIC_SELF_WIDTH, :CLASSIC_UNLABELLED_SELF_ROW
@@ -45,6 +45,22 @@ module Sirena
           TOP_OFFSET = 20.0
           NOTE_ABOVE = 35.0
           LEFT_EDGE = 0.0
+          TEOZ_NESTED_HEADER_ROW = 31.3105
+          TEOZ_MESSAGE_HEADER_ROW = 28.6211
+          TEOZ_EMPTY_HEADER_ROW = 13.3105
+          TEOZ_MESSAGE_BASE_ROW = 14.0
+          TEOZ_FRAME_BOTTOM_PAD = 6.0
+          TEOZ_ROOT_CLOSE_GAP = 16.6895
+          TEOZ_NESTED_CLOSE_GAP = 14.0
+          TEOZ_LABEL_HEIGHT = 15.3105
+          TEOZ_SELF_CONTACT_INSET = 2.5
+          TEOZ_CONTACT_PADDING = 2.0
+          private_constant :TEOZ_NESTED_HEADER_ROW, :TEOZ_MESSAGE_HEADER_ROW,
+                           :TEOZ_EMPTY_HEADER_ROW, :TEOZ_MESSAGE_BASE_ROW,
+                           :TEOZ_FRAME_BOTTOM_PAD,
+                           :TEOZ_ROOT_CLOSE_GAP,
+                           :TEOZ_NESTED_CLOSE_GAP, :TEOZ_LABEL_HEIGHT,
+                           :TEOZ_SELF_CONTACT_INSET, :TEOZ_CONTACT_PADDING
           PLACERS = { Message => :message, Activation => :activation,
                       Destroy => :destroy, Fragment => :fragment,
                       Ref => :ref, PageBreak => :page_break }.freeze
@@ -54,10 +70,17 @@ module Sirena
                               :fragment_row, :branch_gap,
                               :fragment_close_gap, :divider_row,
                               :group_fragment_row, :group_close_gap,
-                              :activation_edges,
+                              :activation_edges, :teoz_fragment_cadence,
                               :deactivation_gap, :bare_deactivation_gap,
                               :bounds,
                               keyword_init: true)
+
+          def self.following_activations(items, parallel_notes: false)
+            items.take_while do |item|
+              item.is_a?(Activation) ||
+                (parallel_notes && item.is_a?(Note) && item.parallel?)
+            end.grep(Activation)
+          end
 
           attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
                       :right, :y, :page_breaks
@@ -86,6 +109,7 @@ module Sirena
             @edge_right = edge_right
             @appearance = appearance
             @fragmented = items.any?(Fragment)
+            @fragment_contacts = fragment_contacts(items)
             walk_items(items)
             @tracker.finish(@y - 20)
             self
@@ -105,10 +129,12 @@ module Sirena
 
           def apply_message_config(config)
             @message_measure = config_value(config, :message_measure, @measure)
+            @monospace_measure = @message_measure
             @message_font_size = config_value(config, :message_font_size,
                                               @font_size)
             @message_family = config.message_family
             @label_inset = config.label_inset
+            @teoz_fragment_cadence = config.teoz_fragment_cadence
             @activation_edges = config.activation_edges
           end
 
@@ -149,14 +175,20 @@ module Sirena
 
           def prepare_item(items, index, item)
             following = items.drop(index + 1)
-            @following_activations = following.take_while do |candidate|
-              candidate.is_a?(Activation)
-            end
+            collect_following_activations(following, item)
             @next_non_activation = following.find do |candidate|
               !candidate.is_a?(Activation)
             end
             @mark_y = nil unless anchoring?(item)
             @headroom = headroom(items, index)
+            @item_index = index
+          end
+
+          def collect_following_activations(following, item)
+            parallel_notes = @label_inset && item.is_a?(Message)
+            @following_activations = self.class.following_activations(
+              following, parallel_notes: parallel_notes
+            )
           end
 
           def start_empty
@@ -187,7 +219,7 @@ module Sirena
             @previous_self_message = false unless continues_self_run?(item)
             @resume = nil
             offset = row_offset(item)
-            begin_row(item, offset) if offset
+            begin_row(item, offset, previous) if offset
             place(item, previous)
             resume_after_parallel(item) if @resume && !opens_block?(item)
           end
@@ -225,14 +257,36 @@ module Sirena
 
           # Records the line a following `&` item aligns its top with, or
           # moves a `&` item up to the line the one before it recorded.
-          def begin_row(item, offset)
+          def begin_row(item, offset, previous)
             if item.parallel?
               @resume = @y
-              @y = @row_line + offset
+              @y = @row_line + offset + parallel_contact_offset(item, previous)
             else
               attached = item.is_a?(Note) && item.attached?
               @row_line = attached ? @last_y : @y - offset
             end
+          end
+
+          # Parallel tiles share their contact point, rather than their top.
+          # A frame contacts at its top; a self arrow contacts below its shaft.
+          def parallel_contact_offset(item, previous)
+            return 0.0 unless @teoz_fragment_cadence
+            if self_before_frame?(item, previous)
+              return TEOZ_SELF_CONTACT_INSET
+            end
+            return 0.0 unless self_after_frame?(item, previous)
+
+            -TEOZ_SELF_CONTACT_INSET - (self_top - @y)
+          end
+
+          def self_before_frame?(item, previous)
+            item.is_a?(Fragment) && previous.is_a?(Message) &&
+              previous.self_message?
+          end
+
+          def self_after_frame?(item, previous)
+            item.is_a?(Message) && item.self_message? &&
+              previous.is_a?(Fragment) && previous.phase == :close
           end
 
           def place(item, previous)
@@ -247,18 +301,39 @@ module Sirena
           end
 
           def message(message)
-            adjust_self_run(message)
+            apply_message_font(message)
             start_row(message)
             @message_activations = active_participants
             from, to = ends_of(message)
             draw(message, from, to) unless message.style.hidden
             touch(*extent(message, from, to))
             @y += message_row(message)
-            @previous_self_message = message.self_message? && !message.parallel?
+          end
+
+          def apply_message_font(message)
+            return unless @label_inset
+
+            @message_family = message.label_family || "sans-serif"
+            @message_measure = if @message_family == "monospace"
+                                 @monospace_measure
+                               else
+                                 method(:sans_message_width)
+                               end
+          end
+
+          def sans_message_width(text)
+            TextAdvances.width(text, font_size: @message_font_size)
           end
 
           def message_row(message)
+            return teoz_message_row(message) if @teoz_fragment_cadence
+
             return self_message_row(message) if message.self_message?
+
+            plain_message_row(message)
+          end
+
+          def plain_message_row(message)
             if following_unlabelled_row?
               return @following_unlabelled_row
             end
@@ -266,7 +341,30 @@ module Sirena
               return @unlabelled_row
             end
 
+            if @label_inset && message.label_family != "monospace"
+              return 29.3105
+            end
+
             @row
+          end
+
+          def teoz_message_row(message)
+            text_height = teoz_row_text_height(message)
+            loop_height = message.self_message? ? LOOP_HEIGHT : 0.0
+            TEOZ_MESSAGE_BASE_ROW + text_height + loop_height
+          end
+
+          def teoz_row_text_height(message)
+            following = @next_non_activation
+            if following.is_a?(Message) && !following.parallel?
+              return following.label.to_s.empty? ? 0.0 : TEOZ_LABEL_HEIGHT
+            end
+
+            teoz_text_height(message)
+          end
+
+          def teoz_text_height(message)
+            label_lines(message).size * TEOZ_LABEL_HEIGHT
           end
 
           def self_message_row(message)
@@ -287,21 +385,6 @@ module Sirena
 
           def active_participants
             @following_activations.select(&:on?).map(&:participant)
-          end
-
-          def adjust_self_run(message)
-            return unless @label_inset && !message.parallel?
-
-            @y += @self_row - @row if entering_self_run?(message)
-            @y -= @self_row - @row if leaving_self_run?(message)
-          end
-
-          def entering_self_run?(message)
-            message.self_message? && !@previous_self_message
-          end
-
-          def leaving_self_run?(message)
-            !message.self_message? && @previous_self_message
           end
 
           # A note hanging off a message reaches above it; a tall one pushes
@@ -328,6 +411,13 @@ module Sirena
             @y += [label_lines(message).size - 1, 0].max * line_step
             @self_drop = message.self_message? ? self_height : 0.0
             @last_y = @mark_y = @y
+            record_text_height(message)
+          end
+
+          def record_text_height(message)
+            return if !@teoz_fragment_cadence || @blocks.empty?
+
+            @blocks.last[:text_height] = teoz_text_height(message)
           end
 
           def ends_of(message)
@@ -365,12 +455,23 @@ module Sirena
 
           def participant_place(place, message)
             at = centre(place)
-            if @activation_edges
+            if @label_inset && message.self_message?
+              return compact_self_place(place, message, at)
+            end
+            if @label_inset || @activation_edges
               return compact_activation_place(place, message, at)
             end
             return at unless activated_end?(place, message)
 
             at + activation_end_inset(place, message, at)
+          end
+
+          def compact_self_place(place, message, at)
+            depth = compact_activation_depth(place)
+            return at if depth.zero?
+
+            side = message.leftward? ? -1 : 1
+            at + ((depth - 1 + side) * (BarTracker::WIDTH / 2))
           end
 
           def compact_activation_place(place, message, at)
@@ -410,7 +511,9 @@ module Sirena
           def edge_x(edge, message)
             return local_x(edge, message) if edge.local?
 
-            edge.left? ? LEFT_EDGE : @edge_right
+            return @edge_right unless edge.left?
+
+            @label_inset ? 10.0 : LEFT_EDGE
           end
 
           def local_x(edge, message)
@@ -471,10 +574,16 @@ module Sirena
 
           def straight(message, from, to)
             sign = to >= from ? 1 : -1
+            to -= sign * 2.0 if compact_filled_head?(message)
             tail, start = ArrowMarks.for(message.style.tail, from, @y, sign)
             head, stop = ArrowMarks.for(message.style.head, to, @y, -sign)
             { path: "M #{start} #{@y} L #{stop} #{@y}", marks: tail + head,
               label: straight_label(from, to) }
+          end
+
+          def compact_filled_head?(message)
+            @label_inset && message.style.head.glyph == :filled &&
+              !message.style.head.circle
           end
 
           def straight_label(from, to)
@@ -487,7 +596,7 @@ module Sirena
           # message written `<-` loops out on the left.
           def self_arrow(message, centre)
             side = loops_left?(message) ? -1 : 1
-            far = centre + (side * self_width)
+            far = centre + (side * self_reach(message))
             top = self_top
             bottom = top + self_height
             marks, start, stop = self_marks(message, centre, top, bottom, side)
@@ -497,7 +606,14 @@ module Sirena
           end
 
           def self_width
-            @label_inset ? SELF_WIDTH : CLASSIC_SELF_WIDTH
+            CLASSIC_SELF_WIDTH
+          end
+
+          def self_reach(message)
+            return self_width unless @label_inset && message.leftward?
+
+            spread = [compact_activation_depth(message.from) - 1, 0].max
+            self_width + (spread * (BarTracker::WIDTH / 2))
           end
 
           def self_marks(message, centre, top, bottom, side)
@@ -514,18 +630,17 @@ module Sirena
             end
 
             centre = far - (side * SELF_WIDTH)
-            [centre + (side * @label_inset), @y - 18.0659,
+            [centre + (side * @label_inset), @y - 5.0659,
              side.positive? ? "start" : "end"]
           end
 
           def self_height
-            return LOOP_HEIGHT unless @label_inset
-            return COMPACT_FRAGMENT_SELF_HEIGHT if @fragmented
-
-            SELF_HEIGHT
+            LOOP_HEIGHT
           end
 
           def self_top
+            return @y if @teoz_fragment_cadence
+
             return @y unless @label_inset && @fragmented
 
             @y + ((SELF_HEIGHT - self_height) / 2)
@@ -677,17 +792,66 @@ module Sirena
           end
 
           def open_block(item)
+            @y += @fragment_contacts.fetch(@item_index, 0.0)
             @blocks << { keyword: item.keyword, label: item.label.to_s,
                          top: @y - 20, low: Float::INFINITY,
                          high: -Float::INFINITY, branches: [], depth: 0,
-                         resume: @resume, tab: tab_size }
+                         resume: @resume, tab: tab_size, text_height: 0.0 }
             @y += fragment_row(item) + tab_size.height_growth
           end
 
           def fragment_row(item)
+            return teoz_header_row if @teoz_fragment_cadence
+
             return @group_fragment_row if group?(item) && @group_fragment_row
 
             @fragment_row
+          end
+
+          def teoz_header_row
+            following = @next_non_activation
+            if following.is_a?(Fragment) && following.phase == :open
+              return TEOZ_NESTED_HEADER_ROW
+            end
+
+            if following.is_a?(Message) && !following.label.to_s.empty?
+              return TEOZ_MESSAGE_HEADER_ROW
+            end
+
+            TEOZ_EMPTY_HEADER_ROW
+          end
+
+          def fragment_contacts(items)
+            return {} unless @teoz_fragment_cadence
+
+            fragment_ends(items).transform_values do |index|
+              message = following_parallel_self(items, index)
+              message ? self_contact(message) : 0.0
+            end
+          end
+
+          def fragment_ends(items)
+            stack = []
+            items.each_with_index.with_object({}) do |(item, index), ends|
+              next unless item.is_a?(Fragment)
+
+              stack << index if item.phase == :open
+              ends[stack.pop] = index if item.phase == :close
+            end
+          end
+
+          def following_parallel_self(items, index)
+            following = items.drop(index + 1).find do |item|
+              !item.is_a?(Activation)
+            end
+            return unless following.is_a?(Message) && following.parallel?
+
+            following if following.self_message?
+          end
+
+          def self_contact(message)
+            text_height = label_lines(message).size * TEOZ_LABEL_HEIGHT
+            text_height + (LOOP_HEIGHT / 2) + TEOZ_CONTACT_PADDING
           end
 
           def group?(fragment)
@@ -700,21 +864,52 @@ module Sirena
 
           def branch(item)
             @blocks.last[:branches] << [@y - 10, item.label.to_s]
-            @y += @branch_gap
+            @y += branch_row
+          end
+
+          def branch_row
+            return @branch_gap unless @teoz_fragment_cadence
+
+            following = @next_non_activation
+            if following.is_a?(Message) && following.label.to_s.empty?
+              return @branch_gap - TEOZ_LABEL_HEIGHT
+            end
+
+            @branch_gap
           end
 
           def close_block
             block = @blocks.pop
-            bottom = @y - 20
+            bottom = @y - fragment_bottom_offset(block)
             @y = [@y + close_gap(block), block[:resume]].compact.max
             @row_line = block[:top]
             emit_fragment(block, bottom)
           end
 
+          def fragment_bottom_offset(block)
+            return TOP_OFFSET unless @teoz_fragment_cadence
+
+            block[:text_height] + TEOZ_FRAME_BOTTOM_PAD
+          end
+
           def close_gap(block)
+            if @teoz_fragment_cadence
+              return teoz_root_close_gap(block) if @blocks.empty?
+
+              return TEOZ_NESTED_CLOSE_GAP
+            end
             return @group_close_gap if group_close_gap?(block)
 
             @fragment_close_gap
+          end
+
+          def teoz_root_close_gap(block)
+            following = @next_non_activation
+            return TEOZ_ROOT_CLOSE_GAP unless following.is_a?(Message)
+            return TEOZ_ROOT_CLOSE_GAP if following.parallel?
+
+            next_text = following.label.to_s.empty? ? 0.0 : TEOZ_LABEL_HEIGHT
+            TEOZ_NESTED_CLOSE_GAP + next_text - block[:text_height]
           end
 
           def group_close_gap?(block)
@@ -732,7 +927,10 @@ module Sirena
 
           def deepen_parent(block)
             parent = @blocks.last
-            parent[:depth] = [parent[:depth], block[:depth] + 1].max if parent
+            return unless parent
+
+            parent[:depth] = [parent[:depth], block[:depth] + 1].max
+            parent[:text_height] = block[:text_height]
           end
 
           def divider(item)

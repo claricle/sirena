@@ -21,10 +21,10 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "matches self-loop height in a fragment-bearing Teoz diagram" do
-    expect(loop_height("alt branch", "A -> A: nested", "end")).to eq(17.75)
+    expect(loop_height("alt branch", "A -> A: nested", "end")).to eq(13.0)
   end
 
-  it "keeps the ordinary Teoz self-loop height" do
-    expect(loop_height("A -> A: plain")).to eq(20.0)
+  it "matches the pinned ordinary Teoz self-loop shaft height" do
+    expect(loop_height("A -> A: plain")).to eq(13.0)
   end
 end

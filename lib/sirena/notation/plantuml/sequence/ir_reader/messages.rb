@@ -19,9 +19,16 @@ module Sirena
               kind = set?(node, "parallel", index) ? ParallelMessage : Message
               number = index.detail(node, "number")
               kind.new(from: place(edge.source_id, index),
-                       to: place(edge.target_id, index), label: node.label,
+                       to: place(edge.target_id, index),
+                       label: display_label(node, index),
                        style: style(node, edge, index),
                        number: number&.to_i)
+            end
+
+            def display_label(node, index)
+              Message::Label.new(content: node.label,
+                                 font_family: index.detail(node,
+                                                           "label_family"))
             end
 
             def style(node, edge, index)

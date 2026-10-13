@@ -603,7 +603,7 @@ module Sirena
 
             from, to = reversed ? ends.reverse : ends
             kind = @parallel ? ParallelMessage : Message
-            kind.new(from: from, to: to, label: message_label(match[7]),
+            kind.new(from: from, to: to, label: display_label(match[7]),
                      style: style)
           end
 
@@ -612,6 +612,12 @@ module Sirena
           # single backslash and escaped quote remain content. Explicit line
           # breaks must be decoded before deciding whether quotes enclose one
           # display line.
+          def display_label(label)
+            family = "monospace" if label&.start_with?('""')
+            Message::Label.new(content: message_label(label),
+                               font_family: family)
+          end
+
           def message_label(label)
             doubled_quotes = label&.start_with?('""') && label.end_with?('""')
             return label unless doubled_quotes

@@ -60,6 +60,11 @@ module Sirena
           COMPACT_GROUP_ROW = 13.3105
           COMPACT_GROUP_CLOSE = 32.0
           COMPACT_BRANCH_GAP = 28.0
+          TEOZ_FRAGMENT_BRANCH_GAP = 30.9551
+          TEOZ_FIRST_MESSAGE_GAP = 30.3105
+          TEOZ_FIRST_UNLABELLED_GAP = 15.0
+          private_constant :TEOZ_FRAGMENT_BRANCH_GAP, :TEOZ_FIRST_MESSAGE_GAP,
+                           :TEOZ_FIRST_UNLABELLED_GAP
           COMPACT_FRAGMENT_CLOSE = 10.0
           COMPACT_SELF_ROW = 42.1328
           COMPACT_SELF_CLEARANCE = 53.0
@@ -182,6 +187,7 @@ module Sirena
           end
 
           def measure_heads
+            @activation_depths = activation_depths
             @widths = @diagram.participants.map { |p| head_width(p) }
             @centers = centers(@widths)
             @head_height = head_height
@@ -262,6 +268,7 @@ module Sirena
               message_family: ("monospace" if compact?),
               label_inset: (7 if compact?), bounds: head_bounds,
               activation_edges: activation_edges?,
+              teoz_fragment_cadence: teoz_fragment_cadence?,
               **walker_cadence
             )
           end
@@ -296,6 +303,8 @@ module Sirena
           end
 
           def branch_gap
+            return TEOZ_FRAGMENT_BRANCH_GAP if teoz_fragment_cadence?
+
             compact? ? COMPACT_BRANCH_GAP : CLASSIC_BRANCH_GAP
           end
 
@@ -434,11 +443,6 @@ module Sirena
           end
 
           def participant_label_width(participant)
-            if compact? && !compact_timeline?
-              return measure_text(participant.label,
-                                  font_size: head_font_size)[:width]
-            end
-
             TextAdvances.width(participant.label,
                                font_size: head_font_size,
                                bold: bold_heads?)
@@ -683,17 +687,41 @@ module Sirena
             unless compact?
               return classic_message_room(message, room, self_message)
             end
-            return room + activation_bar_clearance unless self_message
+
+            compact_message_room(message, room, self_message)
+          end
+
+          def compact_message_room(message, room, self_message)
+            unless self_message
+              clearance = activation_bar_clearance(message)
+              return room + ArrowMarks::LENGTH + clearance
+            end
 
             label_room = [SELF_WIDTH, 7 + sans_label_width(message)].max
             [COMPACT_SELF_CLEARANCE, label_room + head_padding].max
           end
 
-          def activation_bar_clearance
-            return 0 unless two_party_activation_timeline?
-            return 0 unless @diagram.items.first.is_a?(Activation)
+          def activation_bar_clearance(message)
+            depths = contact_activation_depths(message)
+            from, to = indexes(message)
+            target = depths[message.to]
+            return active_bar_half(target) unless from > to
 
-            BarTracker::WIDTH - 2.0
+            (target * BarTracker::WIDTH / 2) +
+              active_bar_half(depths[message.from])
+          end
+
+          def active_bar_half(depth)
+            depth.positive? ? BarTracker::WIDTH / 2 : 0.0
+          end
+
+          def contact_activation_depths(message)
+            depths = @activation_depths.fetch(message).dup
+            index = @diagram.items.index { |item| item.equal?(message) }
+            following = @diagram.items.drop(index + 1)
+            Walker.following_activations(following, parallel_notes: true)
+              .select(&:on?).each { |item| depths[item.participant] += 1 }
+            depths
           end
 
           def classic_message_room(message, ordinary, self_message)
@@ -702,7 +730,35 @@ module Sirena
             room = label_width(message) + (2 * INTRINSIC_HEAD_PADDING)
             return room unless nested_in_fragment?(message)
 
-            [room, CLASSIC_SELF_CLEARANCE].max
+            [room, classic_self_clearance(message)].max
+          end
+
+          def classic_self_clearance(message)
+            depth = @activation_depths.fetch(message)[message.from]
+            extra = depth.positive? ? (depth + 1) * BarTracker::WIDTH : 0
+            CLASSIC_SELF_CLEARANCE + extra
+          end
+
+          def activation_depths
+            active = Hash.new(0)
+            depths = Hash.new.compare_by_identity
+            @diagram.items.each_with_object(depths) do |item, measured|
+              if item.is_a?(Message)
+                measured[item] = active.dup
+              else
+                update_activation_depth(active, item)
+              end
+            end
+          end
+
+          def update_activation_depth(active, item)
+            case item
+            when Activation
+              delta = item.on? ? 1 : -1
+              depth = active[item.participant] + delta
+              active[item.participant] = [depth, 0].max
+            when Destroy then active[item.participant] = 0
+            end
           end
 
           def nested_in_fragment?(item)
@@ -736,7 +792,21 @@ module Sirena
           def label_width(message)
             return 0.0 unless message.label
 
-            wrap.width(message.label) + numbering.extra(message)
+            measured = message_wrap(message).width(message.label)
+            measured + numbering.extra(message)
+          end
+
+          def message_wrap(message)
+            MessageWrap.new(@diagram.appearance.max_message,
+                            label_measure(message))
+          end
+
+          def label_measure(message)
+            if message.label_family == "monospace" || !compact?
+              return method(:label_text_width)
+            end
+
+            method(:sans_width)
           end
 
           def wrap
@@ -1237,7 +1307,7 @@ module Sirena
             return MIN_WIDTH_GLYPH_GAP if minimum_width_mixed_glyphs?
             return COMPACT_TIMELINE_GAP if compact_timeline?
 
-            compact? ? COMPACT_MIN_GAP : MIN_GAP
+            compact? ? COMPACT_TIMELINE_GAP : MIN_GAP
           end
 
           def plain_head_height
@@ -1249,17 +1319,35 @@ module Sirena
           end
 
           def first_row_gap
-            if minimum_width_mixed_glyphs?
-              return MIN_WIDTH_GLYPH_FIRST_ROW_GAP
-            end
-            if compact_timeline?
-              return COMPACT_GROUP_FIRST_ROW_GAP
-            end
+            return MIN_WIDTH_GLYPH_FIRST_ROW_GAP if minimum_width_mixed_glyphs?
+            return COMPACT_GROUP_FIRST_ROW_GAP if compact_timeline?
+            return teoz_first_row_gap if teoz_fragment_cadence?
             if classic_unlabelled_first_message?
               return CLASSIC_UNLABELLED_FIRST_ROW_GAP
             end
 
-            compact? ? COMPACT_FIRST_ROW_GAP : CLASSIC_FIRST_ROW_GAP
+            compact? ? compact_first_row_gap : CLASSIC_FIRST_ROW_GAP
+          end
+
+          def compact_first_row_gap
+            first = @diagram.messages.first
+            return COMPACT_FIRST_ROW_GAP if first&.label_family == "monospace"
+
+            TEOZ_FIRST_MESSAGE_GAP
+          end
+
+          def teoz_first_row_gap
+            first = @diagram.items.find { |item| !item.is_a?(Activation) }
+            return COMPACT_GROUP_FIRST_ROW_GAP if first.is_a?(Fragment)
+            if first.is_a?(Message) && first.label.to_s.empty?
+              return TEOZ_FIRST_UNLABELLED_GAP
+            end
+
+            TEOZ_FIRST_MESSAGE_GAP
+          end
+
+          def teoz_fragment_cadence?
+            compact? && @diagram.items.any?(Fragment) && !compact_timeline?
           end
 
           def classic_unlabelled_first_message?
@@ -1277,10 +1365,14 @@ module Sirena
           end
 
           def row_height
+            return CLASSIC_ROW if teoz_fragment_cadence?
+
             compact? ? COMPACT_ROW : CLASSIC_ROW
           end
 
           def self_row_height
+            return CLASSIC_SELF_ROW if teoz_fragment_cadence?
+
             compact? ? COMPACT_SELF_ROW : CLASSIC_SELF_ROW
           end
 

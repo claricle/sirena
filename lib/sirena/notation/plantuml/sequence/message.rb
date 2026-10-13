@@ -12,12 +12,15 @@ module Sirena
         # source text. `from` or `to` is an {Edge} when the message has no
         # participant at that end. `number` is the `autonumber` count, or nil.
         class Message
-          attr_reader :from, :to, :label, :style, :number
+          Label = Struct.new(:content, :font_family, keyword_init: true)
+
+          attr_reader :from, :to, :label, :style, :number, :label_family
 
           def initialize(from:, to:, label:, style:, number: nil)
             @from = from
             @to = to
-            @label = label
+            @label = label.is_a?(Label) ? label.content : label
+            @label_family = label.is_a?(Label) ? label.font_family : nil
             @style = style
             @number = number
             freeze
@@ -25,7 +28,8 @@ module Sirena
 
           # @return [Message] the same message, drawn with `number`
           def numbered(number)
-            self.class.new(from: from, to: to, label: label, style: style,
+            display = Label.new(content: label, font_family: label_family)
+            self.class.new(from: from, to: to, label: display, style: style,
                            number: number)
           end
 
