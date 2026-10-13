@@ -119,12 +119,14 @@ module CoverageTasks
       "ls-files", "--others", "--exclude-standard", "-z",
       label: "git ls-files --others --exclude-standard"
     )
-    (diff_paths(changed) + untracked.split("\0")).uniq
+    (diff_paths(changed, base) + untracked.split("\0")).uniq
   end
 
-  def diff_paths(name_status)
+  def diff_paths(name_status, base = coverage_base)
     parse_name_status(name_status).flat_map do |status, paths|
-      identical_spec_move?(status, paths) ? paths.last(1) : paths
+      move = identical_spec_move?(status, paths) ||
+        identical_benchmark_move?(status, paths, base)
+      move ? paths.last(1) : paths
     end
   end
 
@@ -152,6 +154,11 @@ module CoverageTasks
 
   # Same pattern as .rspec's default and Sirena::SpecShard::PATTERN.
   SPEC_PATTERN = "spec/**{,/*/**}/*_spec.rb"
+  BENCHMARK_PATTERN = "spec/benchmarks/**/*_spec.rb"
+  BENCHMARK_PATTERNS = [
+    "spec/benchmarks/**/*_benchmark.rb",
+    BENCHMARK_PATTERN,
+  ].freeze
 
   # `status == "R100"` is redundant while the diff runs with
   # `--find-renames=100%`; keep it, it becomes the only check if that flag
@@ -165,8 +172,40 @@ module CoverageTasks
   end
 
   def spec_file?(path)
-    File.fnmatch?(SPEC_PATTERN, path,
-                  File::FNM_PATHNAME | File::FNM_EXTGLOB)
+    !benchmark_file?(path) && matches_pattern?(SPEC_PATTERN, path)
+  end
+
+  def identical_benchmark_move?(status, paths, base)
+    return false unless status == "R100"
+
+    old_path, new_path = paths
+    return false unless paths.all? { |path| benchmark_file?(path) }
+    return false unless Dir.glob(BENCHMARK_PATTERN).include?(new_path)
+    return false unless regular_file?(new_path)
+
+    regular_base_file?(old_path, base)
+  end
+
+  def regular_file?(path)
+    File.file?(path) && !File.symlink?(path)
+  end
+
+  def benchmark_file?(path)
+    BENCHMARK_PATTERNS.any? { |pattern| matches_pattern?(pattern, path) }
+  end
+
+  def matches_pattern?(pattern, path)
+    File.fnmatch?(pattern, path, File::FNM_PATHNAME | File::FNM_EXTGLOB)
+  end
+
+  def regular_base_file?(path, base)
+    ancestor = git_output!("merge-base", base, "HEAD",
+                           label: "git merge-base").strip
+    mode = git_output!(
+      "ls-tree", "--format=%(objectmode)", ancestor, "--", path,
+      label: "git ls-tree"
+    ).strip
+    %w[100644 100755].include?(mode)
   end
 
   def git_output!(*, label:)
@@ -299,6 +338,7 @@ namespace :spec do
   desc "Run every spec except the corpus fixture sweep"
   RSpec::Core::RakeTask.new(:unit) do |task|
     task.rspec_opts = "--tag ~corpus"
+    task.exclude_pattern = CoverageTasks::BENCHMARK_PATTERN
   end
 end
 
