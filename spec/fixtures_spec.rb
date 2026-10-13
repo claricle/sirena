@@ -2,7 +2,15 @@
 
 require "spec_helper"
 
+module ReferenceFixtureSpecHelpers
+  def length_band_message(actual_svg, expected_svg, diagram_type, baseline)
+    ratio = length_ratio(actual_svg, expected_svg).round(4)
+    "ratio #{ratio} is outside 2x of the #{diagram_type} baseline #{baseline}"
+  end
+end
+
 RSpec.describe "Reference SVG Fixtures" do
+  include ReferenceFixtureSpecHelpers
   include FixtureLengthBand
 
   let(:engine) { Sirena::Engine.new }
@@ -16,53 +24,56 @@ RSpec.describe "Reference SVG Fixtures" do
     let(:expected_path) do
       File.expand_path("fixtures/#{diagram_type}/expected.svg", __dir__)
     end
-    let(:input_mmd) { File.read(input_path) }
+    let(:actual_svg) { engine.render(File.read(input_path)) }
     let(:expected_svg) { File.read(expected_path) }
 
-    it "generates valid SVG output" do
-      actual_svg = engine.render(input_mmd)
+    before { actual_svg }
 
+    it "generates SVG text" do
       expect(actual_svg).to be_a(String)
+    end
+
+    it "generates nonempty output" do
       expect(actual_svg).not_to be_empty
+    end
+
+    it "includes an opening SVG tag" do
       expect(actual_svg).to include("<svg")
+    end
+
+    it "includes a closing SVG tag" do
       expect(actual_svg).to include("</svg>")
     end
 
-    it "includes expected SVG structure elements" do
-      actual_svg = engine.render(input_mmd)
-
-      # Verify basic SVG structure
+    it "includes the expected root structure" do
       expect(actual_svg).to match(/<svg[^>]*>/)
-      expect(actual_svg).to include("</svg>")
+    end
 
-      # Verify presence of graphical elements
+    it "closes the expected root structure" do
+      expect(actual_svg).to include("</svg>")
+    end
+
+    it "includes graphical elements" do
       expect(actual_svg).to match(/<g[^>]*>|<rect[^>]*>|<path[^>]*>/)
     end
 
-    it "produces output comparable to reference" do
-      actual_svg = engine.render(input_mmd)
-
-      # Note: We don't require exact match due to implementation differences
-      # Instead, verify structural similarity
-
-      # Both should be valid SVG
+    it "starts the actual output with SVG" do
       expect(actual_svg).to start_with("<svg")
+    end
+
+    it "starts the reference output with SVG" do
       expect(expected_svg).to start_with("<svg")
+    end
 
-      # Sirena's output is a per-type fraction of Mermaid's size. The band is
-      # centred on that type's measured ratio (see FixtureLengthBand), so a
-      # collapse to a fraction of today's output fails, not just a collapse
-      # to 2% of the reference.
-      ratio = length_ratio(actual_svg, expected_svg).round(4)
-      message = "ratio #{ratio} is outside 2x of the #{diagram_type} " \
-                "baseline #{baseline_ratio}"
-
+    # A per-type band rejects collapse relative to the measured baseline.
+    it "produces output comparable to reference" do
+      message = length_band_message(actual_svg, expected_svg,
+                                    diagram_type, baseline_ratio)
       expect(within_length_band?(actual_svg, expected_svg, baseline_ratio))
         .to be(true), message
     end
 
     it "fails the length band when the output is 50x smaller" do
-      actual_svg = engine.render(input_mmd)
       collapsed = actual_svg[0, actual_svg.length / 50]
 
       expect(within_length_band?(collapsed, expected_svg,
@@ -70,8 +81,6 @@ RSpec.describe "Reference SVG Fixtures" do
     end
 
     it "fails the length band when the output is 3x larger" do
-      actual_svg = engine.render(input_mmd)
-
       expect(within_length_band?(actual_svg * 3, expected_svg,
                                  baseline_ratio)).to be(false)
     end
@@ -125,26 +134,18 @@ RSpec.describe "Reference SVG Fixtures" do
   end
 
   describe "Fixture completeness" do
-    it "has fixtures for all supported diagram types" do
-      expected_types = %w[
-        flowchart
-        sequence
-        class_diagram
-        state_diagram
-        er_diagram
-        user_journey
-        xy_chart
-        sankey
-      ]
-
-      expected_types.each do |type|
+    %w[
+      flowchart sequence class_diagram state_diagram er_diagram
+      user_journey xy_chart sankey
+    ].each do |type|
+      it "has the input fixture for #{type}" do
         input = File.expand_path("fixtures/#{type}/input.mmd", __dir__)
-        expected = File.expand_path("fixtures/#{type}/expected.svg", __dir__)
+        expect(File).to exist(input), "Missing input fixture for #{type}"
+      end
 
-        expect(File).to exist(input),
-                        "Missing input fixture for #{type}"
-        expect(File).to exist(expected),
-                        "Missing expected SVG for #{type}"
+      it "has the expected SVG fixture for #{type}" do
+        expected = File.expand_path("fixtures/#{type}/expected.svg", __dir__)
+        expect(File).to exist(expected), "Missing expected SVG for #{type}"
       end
     end
   end

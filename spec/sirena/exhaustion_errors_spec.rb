@@ -51,6 +51,17 @@ RSpec.describe Sirena::Engine do
       end
     end
 
+    let(:protected) do
+      [*process_control_flow, ExceptionFamily::TIMEOUT_UNWINDING]
+    end
+    # Keep this: it constrains the CONSTANT, so nothing can quietly add
+    # `exit` or Ctrl-C to what the boundaries are told to swallow. It says
+    # nothing about the rescue SITES -- `rescue Exception` written at one of
+    # them passes this example untouched. The site examples are what cover
+    # that direction: four for the engine below, four more for the batch
+    # command in its own spec.
+    let(:process_control_flow) { [SystemExit, SignalException, Interrupt] }
+
     it "names only classes that really are outside StandardError" do
       expect(Sirena::EXHAUSTION_ERRORS)
         .to all(
@@ -71,17 +82,11 @@ RSpec.describe Sirena::Engine do
         .to contain_exactly(SystemStackError, NoMemoryError)
     end
 
-    # Keep this: it constrains the CONSTANT, so nothing can quietly add
-    # `exit` or Ctrl-C to what the boundaries are told to swallow. It says
-    # nothing about the rescue SITES -- `rescue Exception` written at one of
-    # them passes this example untouched. The site examples are what cover
-    # that direction: four for the engine below, four more for the batch
-    # command in its own spec.
-    it "excludes process and host control flow" do
-      process_control_flow = [SystemExit, SignalException, Interrupt]
-      protected = [*process_control_flow, ExceptionFamily::TIMEOUT_UNWINDING]
-
+    it "keeps process control flow outside StandardError" do
       expect(outside_standard_error).to include(*process_control_flow)
+    end
+
+    it "excludes process and host control flow from exhaustion" do
       expect(Sirena::EXHAUSTION_ERRORS).not_to include(*protected)
     end
   end
@@ -114,19 +119,33 @@ RSpec.describe Sirena::Engine do
     # the message excludes whatever `backtrace` holds -- for a fraction of
     # the cost, and it lets the assertion pin an EXACT frame list on the
     # cause instead of merely a frame count.
-    it "keeps the message short and the backtrace on the cause, " \
-       "not the message" do
-      overflow = SystemStackError.new("stack level too deep")
-      overflow.set_backtrace(%w[fake:1 fake:2 fake:3])
+    describe "the wrapped exhaustion error" do
+      let(:overflow) do
+        SystemStackError.new("stack level too deep").tap do |error|
+          error.set_backtrace(%w[fake:1 fake:2 fake:3])
+        end
+      end
+      let(:wrapped_error) do
+        rendering(overflow).call
+      rescue Sirena::Engine::PipelineError => e
+        e
+      end
 
-      # The block form, not a bare `begin`/`rescue`: a rescue whose body holds
-      # the assertions runs NOTHING when nothing raises, so the example passes
-      # while asserting zero things.
-      expect(&rendering(overflow))
-        .to raise_error(Sirena::Engine::PipelineError) do |e|
-        expect(e.message).to eq("Rendering failed: stack level too deep")
-        expect(e.cause).to be(overflow)
-        expect(e.cause.backtrace).to eq(%w[fake:1 fake:2 fake:3])
+      it "raises a pipeline error" do
+        expect(&rendering(overflow)).to raise_error(Sirena::Engine::PipelineError)
+      end
+
+      it "keeps the message short" do
+        expect(wrapped_error.message).to eq("Rendering failed: " \
+                                            "stack level too deep")
+      end
+
+      it "keeps the original error as the cause" do
+        expect(wrapped_error.cause).to be(overflow)
+      end
+
+      it "keeps the backtrace on the cause" do
+        expect(wrapped_error.cause.backtrace).to eq(%w[fake:1 fake:2 fake:3])
       end
     end
 
@@ -217,34 +236,31 @@ RSpec.describe Sirena::Engine do
     # longer demonstrates what this example needs to pin: that a genuine,
     # uncontrolled `SystemStackError` reaching `Theme.load` still becomes a
     # `PipelineError` instead of killing the host.
-    it "turns an exhausting theme into a PipelineError " \
-       "instead of killing the host" do
-      Tempfile.create(["bomb", ".yml"]) do |file|
-        file.write("name: value\n")
-        file.flush
-        allow(Sirena::Theme).to receive(:load)
-          .and_raise(SystemStackError.new("stack level too deep"))
-
-        expect { described_class.new(theme: file.path) }
-          .to raise_error(Sirena::Engine::PipelineError, /Theme loading failed/)
+    let(:theme_construction) do
+      lambda do
+        Tempfile.create(["bomb", ".yml"]) do |file|
+          file.write("name: value\n")
+          file.flush
+          allow(Sirena::Theme).to receive(:load)
+            .and_raise(SystemStackError.new("stack level too deep"))
+          described_class.new(theme: file.path)
+        end
       end
+    end
+    let(:theme_cause) do
+      theme_construction.call
+    rescue Sirena::Engine::PipelineError => e
+      e.cause
+    end
+
+    it "turns an exhausting theme into a " \
+       "PipelineError instead of killing the host" do
+      expect(&theme_construction)
+        .to raise_error(Sirena::Engine::PipelineError, /Theme loading failed/)
     end
 
     it "keeps the original exhaustion error reachable as the cause" do
-      Tempfile.create(["bomb", ".yml"]) do |file|
-        file.write("name: value\n")
-        file.flush
-        allow(Sirena::Theme).to receive(:load)
-          .and_raise(SystemStackError.new("stack level too deep"))
-
-        cause = begin
-          described_class.new(theme: file.path)
-        rescue Sirena::Engine::PipelineError => e
-          e.cause
-        end
-
-        expect(cause).to be_a(SystemStackError)
-      end
+      expect(theme_cause).to be_a(SystemStackError)
     end
 
     # The constructor rescues `*EXHAUSTION_ERRORS`, and nothing else pinned

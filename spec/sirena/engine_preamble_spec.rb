@@ -99,21 +99,28 @@ RSpec.describe Sirena::Engine do
         .to raise_error(described_class::PipelineError, /frontmatter/i)
     end
 
-    it "is refused on a stack too small to walk it" do
-      # Deeply nested mappings exhausted a Fiber's stack before the depth
-      # bound fired, and SystemStackError is not a StandardError: it went
-      # past the rescue below and out of the gem, whatever this contract
-      # says. The stack belongs to the caller, so the smallest one decides.
-      nest = "#{'{x: ' * 255}x#{'}' * 255}"
-      source = "---\ntitle: T\nx: #{nest}\n---\npie\n#{slices}"
+    describe "is refused on a stack too small to walk it" do
+      let(:nest) do
+        "#{'{x: ' * 255}x#{'}' * 255}"
+      end
 
-      raised = Fiber.new do
-        engine.render(source)
-      rescue described_class::PipelineError => e
-        e.message
-      end.resume
+      let(:source) do
+        "---\ntitle: T\nx: #{nest}\n---\npie\n#{slices}"
+      end
 
-      expect(raised).to match(/frontmatter is nested too deeply/i)
+      let(:raised) do
+        engine_instance = engine
+        source_bytes = source
+        Fiber.new do
+          engine_instance.render(source_bytes)
+        rescue described_class::PipelineError => e
+          e.message
+        end.resume
+      end
+
+      it "reports excessive frontmatter nesting" do
+        expect(raised).to match(/frontmatter is nested too deeply/i)
+      end
     end
   end
 
@@ -203,13 +210,10 @@ RSpec.describe Sirena::Engine do
   end
 
   describe "#render refusal enumerations" do
-    let(:empty_preamble_forms) do
-      {
-        "%%\n" => "an empty comment",
-        "%%{}%%\n" => "a directive with no header",
-      }
-    end
-
+    preamble_forms = {
+      "%%\n" => "an empty comment",
+      "%%{}%%\n" => "a directive with no header",
+    }
     {
       flowchart: "flowchart LR\n  A-->B\n",
       er_diagram: "erDiagram\n  A ||--o{ B : has\n",
@@ -221,29 +225,40 @@ RSpec.describe Sirena::Engine do
       sankey: "sankey-beta\nA,B,1\n",
       requirement: "requirementDiagram\n",
     }.each do |type, body|
-      it "refuses both empty preamble forms for #{type}" do
-        empty_preamble_forms.each do |preamble, reason|
-          expect { engine.render("#{preamble}#{body}") }
-            .to raise_error(
-              described_class::PipelineError,
-              /\AA #{type} diagram does not accept #{reason}\./,
-            )
+      preamble_forms.each do |preamble, reason|
+        describe "#{type} with #{reason}" do
+          let(:source) { "#{preamble}#{body}" }
+          let(:refusal) do
+            /\AA #{type} diagram does not accept #{reason}\./
+          end
+
+          it "refuses the preamble" do
+            expect { engine.render(source) }
+              .to raise_error(described_class::PipelineError, refusal)
+          end
         end
       end
     end
 
-    it "refuses a headerless directive for state_diagram" do
-      source = "%%{}%%\nstateDiagram-v2\n  [*] --> S\n"
-      message = Regexp.new(
-        "\\AA state_diagram diagram does not accept a directive with " \
-        "no header\\.",
-      )
+    describe "refuses a headerless directive for state_diagram" do
+      let(:source) do
+        "%%{}%%\nstateDiagram-v2\n  [*] --> S\n"
+      end
 
-      expect { engine.render(source) }
-        .to raise_error(
-          described_class::PipelineError,
-          message,
+      let(:message) do
+        Regexp.new(
+          "\\AA state_diagram diagram does not accept a directive with " \
+          "no header\\.",
         )
+      end
+
+      it "raises the expected refusal" do
+        expect { engine.render(source) }
+          .to raise_error(
+            described_class::PipelineError,
+            message,
+          )
+      end
     end
 
     {
@@ -266,18 +281,25 @@ RSpec.describe Sirena::Engine do
       treemap: "treemap-beta\n\"A\": 1\n",
       c4: "C4Context\n  Person(a, \"A\")\n",
     }.each do |type, body|
-      it "refuses late frontmatter for #{type}" do
-        source = "%% note\n---\ntitle: T\n---\n#{body}"
-        message = Regexp.new(
-          "\\AA #{type} diagram does not accept frontmatter " \
-          "behind another item\\.",
-        )
+      describe "refuses late frontmatter for #{type}" do
+        let(:source) do
+          "%% note\n---\ntitle: T\n---\n#{body}"
+        end
 
-        expect { engine.render(source) }
-          .to raise_error(
-            described_class::PipelineError,
-            message,
+        let(:message) do
+          Regexp.new(
+            "\\AA #{type} diagram does not accept frontmatter " \
+            "behind another item\\.",
           )
+        end
+
+        it "raises the expected refusal" do
+          expect { engine.render(source) }
+            .to raise_error(
+              described_class::PipelineError,
+              message,
+            )
+        end
       end
     end
   end
@@ -322,13 +344,22 @@ RSpec.describe Sirena::Engine do
         .to raise_error(described_class::PipelineError, /does not accept/)
     end
 
-    it "still draws the first fence's title on a pie behind a second" do
-      source = "---\ntitle: First\n---\n---\ntitle: U\n---\npie\n#{slices}"
+    describe "still draws the first fence's title on a pie behind a second" do
+      let(:source) do
+        "---\ntitle: First\n---\n---\ntitle: U\n---\npie\n#{slices}"
+      end
 
-      xml = engine.render(source)
+      let(:xml) do
+        engine.render(source)
+      end
 
-      expect(xml).to include("First")
-      expect(xml).not_to include(">U<")
+      it "uses the first frontmatter title" do
+        expect(xml).to include("First")
+      end
+
+      it "does not draw the second frontmatter title" do
+        expect(xml).not_to include(">U<")
+      end
     end
   end
 

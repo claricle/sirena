@@ -31,21 +31,24 @@ module Sirena
       protected
 
       def render_info_text(scene, svg)
-        label = scene.label
-
-        text = Svg::Text.new.tap do |t|
-          t.x = label.x
-          t.y = label.y
-          t.content = label.text
-          t.fill = theme_color(:label_text)
-          t.font_family = theme_typography(:font_family) ||
-            "Arial, sans-serif"
-          t.font_size = number_string(label.font_size)
-          t.text_anchor = label.text_anchor
-          t.font_weight = label.font_weight
+        svg << Svg::Text.new.tap do |text|
+          set_info_geometry(text, scene.label)
+          set_info_style(text, scene.label)
         end
+      end
 
-        svg << text
+      def set_info_geometry(text, label)
+        text.x = label.x
+        text.y = label.y
+        text.content = label.text
+        text.text_anchor = label.text_anchor
+      end
+
+      def set_info_style(text, label)
+        text.fill = theme_color(:label_text)
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = number_string(label.font_size)
+        text.font_weight = label.font_weight
       end
 
       def number_string(value)

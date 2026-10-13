@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "tmpdir"
+require "fileutils"
 require "ripper"
 
 # Finds every shipped-code reference to svg_conform's `apply_fixes`, which
@@ -102,11 +103,23 @@ RSpec.describe "svg_conform apply_fixes", :aggregate_failures, type: :task do
     let(:fixes_called) { Class.new(StandardError) }
     let(:profile) { Sirena::Svg::CONFORMANCE_PROFILE }
     let(:broken_svg) { '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>' }
-    let(:conformant_svgs) do
-      %w[flowchart sequence class_diagram state_diagram er_diagram user_journey
-         xy_chart sankey].map do |type|
+    let(:conformant_validation_files) do
+      directory = Dir.mktmpdir
+      files = %w[flowchart sequence class_diagram state_diagram er_diagram
+                 user_journey xy_chart sankey].map.with_index do |type, index|
         input = File.join(repo_root, "spec", "fixtures", type, "input.mmd")
-        Sirena::Engine.new.render(File.read(input))
+        svg = Sirena::Engine.new.render(File.read(input))
+        path = File.join(directory, "#{index}.svg")
+        File.write(path, svg)
+        [svg, path]
+      end
+      [directory, files]
+    end
+
+    after do |example|
+      if example.description ==
+          "does not invoke fixes while validating Sirena output"
+        FileUtils.remove_entry(conformant_validation_files.first)
       end
     end
 
@@ -132,16 +145,10 @@ RSpec.describe "svg_conform apply_fixes", :aggregate_failures, type: :task do
     end
 
     it "does not invoke fixes while validating Sirena output" do
-      Dir.mktmpdir do |dir|
-        conformant_svgs.each_with_index do |svg, i|
-          path = File.join(dir, "#{i}.svg")
-          File.write(path, svg)
-
-          expect(SvgConform.validate(svg, profile: profile,
-                                          fix: true)).to be_valid
-          expect(SvgConform.validate_file(path, profile: profile,
-                                                fix: true)).to be_valid
-        end
+      _, files = conformant_validation_files
+      files.each do |svg, path|
+        expect(SvgConform.validate(svg, profile:, fix: true)).to be_valid
+        expect(SvgConform.validate_file(path, profile:, fix: true)).to be_valid
       end
     end
 

@@ -59,29 +59,35 @@ PREDEFINED_ENTITIES = %w[amp lt gt quot apos].freeze
 # entity after it.
 def undeclared_entity?(output)
   scanner = StringScanner.new(output)
-
   until scanner.eos?
-    if scanner.scan("<!--")
-      break unless scanner.skip_until(/-->/)
-    elsif scanner.scan("<![CDATA[")
-      break unless scanner.skip_until(/\]\]>/)
-    elsif scanner.scan("<?")
-      # A processing instruction owns its text too. Without this branch a
-      # `<!--` inside one opened a comment that ran past the PI's end.
-      break unless scanner.skip_until(/\?>/)
-    elsif (ref = scanner.scan(/&([^;&<\s]+);/))
-      name = ref[1..-2]
-      numeric = name.start_with?("#")
-      return true unless numeric || PREDEFINED_ENTITIES.include?(name)
-    else
-      # Not a construct we track: step past this character, then jump to the
-      # next one that could start one.
-      scanner.getch
-      scanner.skip(/[^&<]*/)
-    end
+    return true if scan_entity(scanner) == :undeclared
+    break if scanner.eos?
   end
-
   false
+end
+
+def scan_entity(scanner)
+  closer = ignored_xml_section(scanner)
+  return scanner.skip_until(closer) || scanner.terminate if closer
+
+  reference = scanner.scan(/&([^;&<\s]+);/)
+  return :undeclared if reference && unknown_entity?(reference[1..-2])
+  return if reference
+
+  scanner.getch
+  scanner.skip(/[^&<]*/)
+end
+
+def ignored_xml_section(scanner)
+  return /-->/ if scanner.scan("<!--")
+  return /\]\]>/ if scanner.scan("<![CDATA[")
+  return /\?>/ if scanner.scan("<?")
+
+  nil
+end
+
+def unknown_entity?(name)
+  !name.start_with?("#") && !PREDEFINED_ENTITIES.include?(name)
 end
 
 def render_result(source)
@@ -134,69 +140,72 @@ def verdicts
   return {} unless File.exist?(path)
 
   rows = YAML.load_file(path)
-  unless rows.is_a?(Array) && rows.all?(Hash)
-    warn "  WARNING: corpus-verdicts.yml is not a list of rows; ignoring it."
-    return {}
-  end
-
-  # A typo'd verdict used to be accepted as truthy and then quietly dropped
-  # from every bucket, so a two-case file holding `valid` and `vlaid` reported
-  # "against valid cases only: 1/1 = 100.0%".
-  bad = rows.reject { |row| VERDICTS.include?(row["verdict"]) }
-  unless bad.empty?
-    bad_verdicts = bad.map { |row| row["verdict"].inspect }.uniq.first(3)
-    warn "  WARNING: #{bad.size} row(s) carry an unknown verdict " \
-         "(#{bad_verdicts.join(', ')}); " \
-         "ignoring the file rather than reporting over a subset."
-    return {}
-  end
+  return {} unless valid_verdict_rows?(rows)
 
   rows.to_h { |row| [row["case"], row["verdict"]] }
 end
 
+def valid_verdict_rows?(rows)
+  unless rows.is_a?(Array) && rows.all?(Hash)
+    warn "  WARNING: corpus-verdicts.yml is not a list of rows; ignoring it."
+    return false
+  end
+  bad = rows.reject { |row| VERDICTS.include?(row["verdict"]) }
+  return true if bad.empty?
+
+  warn_bad_verdicts(bad)
+  false
+end
+
+def warn_bad_verdicts(bad)
+  bad_verdicts = bad.map { |row| row["verdict"].inspect }.uniq.first(3)
+  warn "  WARNING: #{bad.size} row(s) carry an unknown verdict " \
+       "(#{bad_verdicts.join(', ')}); " \
+       "ignoring the file rather than reporting over a subset."
+end
+
 def report(sweep_results, list_failing:)
-  # An empty corpus otherwise printed "0/0 = NaN%" and exited 0, which reads
-  # as a successful measurement of nothing.
-  empty = sweep_results.values.all?(&:empty?)
-  abort "No corpus cases found; nothing to measure." if empty
+  abort "No corpus cases found; nothing to measure." if
+    sweep_results.values.all?(&:empty?)
 
   puts "TYPE              PASS   FAIL  TIMEOUT    RATE"
-  sweep_results.sort.each do |type, results|
-    # Type discovery only keeps directories that hold cases, so an empty one
-    # means the files went away mid-run. Report it rather than dividing by
-    # zero on the way to saying nothing.
-    if results.empty?
-      warn "#{type}: no cases at sweep time; skipped"
-      next
-    end
-
-    tally = results.values.tally
-    passed = tally.fetch(:pass, 0)
-    puts format(
-      "%<type>-15s %<passed>6d %<failed>6d %<timeout>8d %<rate>6.1f%%",
-      type: type, passed: passed,
-      failed: tally.fetch(:fail, 0),
-      timeout: tally.fetch(:timeout, 0),
-      rate: 100.0 * passed / results.size
-    )
-  end
-  all = sweep_results.values.flat_map(&:values)
-  total_passed = all.count(:pass)
-  puts format("TOTAL: %<passed>d/%<total>d = %<rate>.1f%%",
-              passed: total_passed, total: all.size,
-              rate: 100.0 * total_passed / all.size)
+  sweep_results.sort.each { |type, results| report_type(type, results) }
+  report_total(sweep_results)
   report_by_verdict(sweep_results)
-  return unless list_failing
+  report_failures(sweep_results) if list_failing
+end
 
-  # Corpus-relative, not absolute: the base/head comparison this output exists
-  # for runs in two different worktrees, and absolute paths made every
-  # unchanged failure look like a difference.
+def report_type(type, results)
+  if results.empty?
+    warn "#{type}: no cases at sweep time; skipped"
+    return
+  end
+  puts type_summary(type, results)
+end
+
+def type_summary(type, results)
+  tally = results.values.tally
+  passed = tally.fetch(:pass, 0)
+  format(
+    "%<type>-15s %<passed>6d %<failed>6d %<timeout>8d %<rate>6.1f%%",
+    type: type, passed: passed, failed: tally.fetch(:fail, 0),
+    timeout: tally.fetch(:timeout, 0), rate: 100.0 * passed / results.size
+  )
+end
+
+def report_total(sweep_results)
+  all = sweep_results.values.flat_map(&:values)
+  passed = all.count(:pass)
+  puts format("TOTAL: %<passed>d/%<total>d = %<rate>.1f%%",
+              passed: passed, total: all.size, rate: 100.0 * passed / all.size)
+end
+
+# Relative paths remain comparable across two different worktrees.
+def report_failures(sweep_results)
   sweep_results.sort.each do |_type, results|
-    results.reject { |_, status| status == :pass }
-      .each do |path, status|
-        relative_path = path.sub("#{CORPUS_ROOT}/", "")
-        puts "#{status}: #{relative_path}"
-      end
+    results.reject { |_, status| status == :pass }.each do |path, status|
+      puts "#{status}: #{path.sub("#{CORPUS_ROOT}/", '')}"
+    end
   end
 end
 
@@ -206,46 +215,49 @@ def report_by_verdict(sweep_results)
   known = verdicts
   return if known.empty?
 
-  tally = Hash.new { |h, k| h[k] = [0, 0] }
+  tally, unmatched = tally_verdicts(sweep_results, known)
+  warn_unmatched_verdicts(unmatched) if unmatched.positive?
+  return if tally.empty?
+
+  puts "\nBY VERDICT (see scripts/corpus_verdicts.rb)"
+  tally.sort.each { |verdict, counts| report_verdict(verdict, counts) }
+  report_valid_cases(tally["valid"]) if tally.key?("valid")
+end
+
+def tally_verdicts(sweep_results, known)
+  tally = Hash.new { |hash, verdict| hash[verdict] = [0, 0] }
   unmatched = 0
   sweep_results.each do |type, results|
     results.each do |path, status|
       verdict = known[File.join(type, File.basename(path))]
-      unless verdict
-        unmatched += 1
-        next
-      end
-
-      tally[verdict][0] += 1 if status == :pass
-      tally[verdict][1] += 1
+      verdict ? count_verdict(tally[verdict], status) : unmatched += 1
     end
   end
-  # Warn before the early return: if NOTHING matched, the tally is empty and a
-  # silent return would look like "no verdicts file" rather than "the verdicts
-  # file does not cover what was swept".
-  if unmatched.positive?
-    warn "  WARNING: #{unmatched} swept case(s) have no verdict. Re-run " \
-         "scripts/corpus_verdicts.rb --write."
-  end
+  [tally, unmatched]
+end
 
-  return if tally.empty?
+def count_verdict(counts, status)
+  counts[0] += 1 if status == :pass
+  counts[1] += 1
+end
 
-  puts "\nBY VERDICT (see scripts/corpus_verdicts.rb)"
-  tally.sort.each do |verdict, (passed, total)|
-    puts format("  %<verdict>-9s %<passed>5d/%<total>-5d = %<rate>5.1f%%",
-                verdict: verdict, passed: passed, total: total,
-                rate: 100.0 * passed / total)
-  end
+def warn_unmatched_verdicts(unmatched)
+  warn "  WARNING: #{unmatched} swept case(s) have no verdict. Re-run " \
+       "scripts/corpus_verdicts.rb --write."
+end
 
-  # `tally` has a default block, so reading tally['valid'] would materialise
-  # [0, 0] and print 0/0 = NaN%. Ask before reading.
-  return unless tally.key?("valid")
+def report_verdict(verdict, counts)
+  passed, total = counts
+  puts format("  %<verdict>-9s %<passed>5d/%<total>-5d = %<rate>5.1f%%",
+              verdict: verdict, passed: passed, total: total,
+              rate: 100.0 * passed / total)
+end
 
-  valid = tally["valid"]
+def report_valid_cases(counts)
+  passed, total = counts
   puts format(
     "  --> against valid cases only: %<passed>d/%<total>d = %<rate>.1f%%",
-    passed: valid[0], total: valid[1],
-    rate: 100.0 * valid[0] / valid[1]
+    passed: passed, total: total, rate: 100.0 * passed / total,
   )
 end
 

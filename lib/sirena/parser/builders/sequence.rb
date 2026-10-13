@@ -159,11 +159,17 @@ module Sirena
           @known_actor_ids << id
           @box_ids&.push(id)
           label = participant_label(id, stmt[:label])
-          existing = diagram.find_participant(id)
+          known = diagram.find_participant(id)
           shape = shape_type_of(stmt[:shape_metadata])
-          return update_participant(existing, label, actor_type, shape) if existing
+          return update_participant(known, label, actor_type, shape) if known
 
-          diagram.participants << participant(id, label, actor_type).tap do |item|
+          diagram.participants << created_participant(
+            id, label, actor_type, shape, stmt
+          )
+        end
+
+        def created_participant(id, label, actor_type, shape, stmt)
+          participant(id, label, actor_type).tap do |item|
             item.created = true if stmt[:create]
             item.shape_type = shape
           end

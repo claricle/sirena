@@ -3,6 +3,10 @@
 require "spec_helper"
 
 module FlowchartSubgraphSpecHelpers
+  def following_parse_ids(parser)
+    parser.parse("graph TD\nsubgraph two B\nZ\nend\n").subgraphs.map(&:id)
+  end
+
   def node_ids(source)
     described_class.new.parse(source).nodes.map(&:id).sort
   end
@@ -502,6 +506,19 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
 
   describe "the subgraph model" do
     # Every title case below was read off mmdc 11.12.0.
+    let(:refused_source) do
+      "graph TD\nsubgraph one A\nX\nend\n" \
+        "subgraph a\nsubgraph a\nY\nend\nend\n"
+    end
+    let(:successive_diagrams) do
+      [cleanup_parser.parse("graph TD\nsubgraph one A\nX\nend\n"),
+       cleanup_parser.parse("graph TD\nsubgraph two B\nY\nend\n")]
+    end
+    # The bookkeeping references every subgraph statement, so keeping it
+    # after the parse keeps the whole tree alive. A second parse
+    # numbering from zero is what a caller would see.
+    let(:cleanup_parser) { described_class.new }
+
     it "falls back to the id when nothing is written" do
       expect(only("graph TD\nsubgraph s\nA\nend\n").title).to eq("s")
     end
@@ -675,30 +692,17 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
       expect(Sirena::Parser::Builders::Flowchart).to have_received(:new).twice
     end
 
-    # The bookkeeping references every subgraph statement, so keeping it
-    # after the parse keeps the whole tree alive. A second parse
-    # numbering from zero is what a caller would see.
     it "lets the parse tree go when it is done" do
-      parser = described_class.new
-      first = parser.parse("graph TD\nsubgraph one A\nX\nend\n")
-      second = parser.parse("graph TD\nsubgraph two B\nY\nend\n")
-
-      expect([first, second].map { |d| d.subgraphs.map(&:id) })
+      expect(successive_diagrams.map { |diagram| diagram.subgraphs.map(&:id) })
         .to eq([%w[subGraph0], %w[subGraph0]])
       expect(Thread.current.keys).not_to include(:sirena_flowchart_transform)
     end
 
     it "lets it go even when the parse is refused" do
-      parser = described_class.new
-      refused = "graph TD\nsubgraph one A\nX\nend\n" \
-                "subgraph a\nsubgraph a\nY\nend\nend\n"
-
-      expect { parser.parse(refused) }
+      expect { cleanup_parser.parse(refused_source) }
         .to raise_error(Sirena::Parser::ParseError)
-
       expect(Thread.current.keys).not_to include(:sirena_flowchart_transform)
-      expect(parser.parse("graph TD\nsubgraph two B\nZ\nend\n")
-                   .subgraphs.map(&:id)).to eq(%w[subGraph0])
+      expect(following_parse_ids(cleanup_parser)).to eq(%w[subGraph0])
     end
 
     # A free title makes mermaid generate the id, and it numbers the

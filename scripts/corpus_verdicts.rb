@@ -103,21 +103,22 @@ def stale_rejection?(base, source)
   path = "#{base}.error"
   return false unless File.exist?(path)
 
-  # mermaid echoes the offending input on the line after "Parse error on
-  # line N:", prefixed with "..." when it truncates the left side. Anything
-  # else in the file is the message, a caret, or a Node stack trace.
-  lines = File.read(path).lines
-  marker = lines.index { |l| l.match?(/Parse error on line \d+:/) }
-  return false unless marker
-
-  echo = lines[marker + 1].to_s.strip.delete_prefix("...").strip
+  echo = rejection_echo(path)
   return false if echo.length < 12
 
-  # Whitespace differs between the echo and the source, so compare on the
-  # non-space characters.
-  squash = ->(s) { s.gsub(/\s+/, "") }
+  !squash_whitespace(source).include?(squash_whitespace(echo[0, 40]))
+end
 
-  !squash.call(source).include?(squash.call(echo[0, 40]))
+def rejection_echo(path)
+  lines = File.read(path).lines
+  marker = lines.index { |line| line.match?(/Parse error on line \d+:/) }
+  return "" unless marker
+
+  lines[marker + 1].to_s.strip.delete_prefix("...").strip
+end
+
+def squash_whitespace(text)
+  text.gsub(/\s+/, "")
 end
 
 # spec/mermaid/error/ holds diagrams that are SUPPOSED to fail — mermaid has an
@@ -137,10 +138,11 @@ def artifact_reason(source)
   return "indented frontmatter closer" if source.match?(INDENTED_FRONTMATTER)
 
   stripped = source.rstrip
-  truncated = TRUNCATIONS.any? { |pattern| stripped.match?(pattern) }
-  return "truncated source" if truncated
+  truncation_reason(stripped)
+end
 
-  nil
+def truncation_reason(source)
+  "truncated source" if TRUNCATIONS.any? { |pattern| source.match?(pattern) }
 end
 
 # Mermaid renders a syntax error AS an SVG — the bomb graphic, tagged
@@ -175,16 +177,15 @@ end
 def cases(types)
   corpus_types(types).flat_map do |type|
     Dir.glob(File.join(CORPUS_ROOT, type, "*.mmd")).map do |path|
-      source = File.read(path)
-      {
-        type: type,
-        path: path,
-        base: path.delete_suffix(".mmd"),
-        source: source,
-        digest: Digest::SHA256.hexdigest(source),
-      }
+      corpus_entry(type, path)
     end
   end
+end
+
+def corpus_entry(type, path)
+  source = File.read(path)
+  { type: type, path: path, base: path.delete_suffix(".mmd"),
+    source: source, digest: Digest::SHA256.hexdigest(source) }
 end
 
 # Rendering evidence, but only a REAL render. An SVG carrying mermaid's error
@@ -242,29 +243,32 @@ end
 def classify(entry, group, oracle = {})
   twins = twins_of(entry, group)
   artifact = artifact_reason(entry[:source])
+  rendered_verdict(entry, twins, artifact) ||
+    source_verdict(entry, twins, artifact) ||
+    oracle_verdict(entry, oracle)
+end
 
+def rendered_verdict(entry, twins, artifact)
   if rendered?(entry)
-    if artifact
-      return ["valid", "mmdc rendered it (source also looks damaged: " \
-                       "#{artifact})"]
-    end
-
-    return ["valid", "mmdc rendered it"]
+    evidence = "mmdc rendered it"
+    evidence += " (source also looks damaged: #{artifact})" if artifact
+    return ["valid", evidence]
   end
-
   twin = twins.find { |other| rendered?(other) }
-  return ["valid", "twin rendered: #{File.basename(twin[:base])}"] if twin
+  ["valid", "twin rendered: #{File.basename(twin[:base])}"] if twin
+end
 
+def source_verdict(entry, twins, artifact)
   return ["artifact", artifact] if artifact
   return ["invalid", "mmdc rejected it"] if rejected?(entry)
 
   twin = twins.find { |other| rejected?(other) }
-  return ["invalid", "twin rejected: #{File.basename(twin[:base])}"] if twin
+  ["invalid", "twin rejected: #{File.basename(twin[:base])}"] if twin
+end
 
-  oracle_row = oracle[entry[:digest]]
-  return CorpusOracle.row_verdict(oracle_row) if oracle_row
-
-  ["unknown", "no evidence"]
+def oracle_verdict(entry, oracle)
+  row = oracle[entry[:digest]]
+  row ? CorpusOracle.row_verdict(row) : ["unknown", "no evidence"]
 end
 
 # Re-checks one case against the installed mmdc using the shared oracle.
@@ -284,32 +288,42 @@ end
 # other verdict alone: rendering evidence already outranks everything, and
 # artifact rows are about the source rather than about mermaid's opinion.
 def verify_invalid!(rows, entries)
-  by_case = entries.to_h { |e| [e[:path].sub("#{CORPUS_ROOT}/", ""), e] }
-  checked = 0
-  promoted = 0
-  errors = 0
-
+  by_case = entries.to_h { |entry| [corpus_relative_path(entry), entry] }
+  counts = Hash.new(0)
   rows.each do |row|
-    next unless row["verdict"] == "invalid"
+    entry = by_case[row["case"]]
+    next unless row["verdict"] == "invalid" && entry
 
-    entry = by_case[row["case"]] or next
-    checked += 1
-    case local_mmdc_verdict(entry[:path])
-    when :accepts
-      row["verdict"] = "valid"
-      row["evidence"] = "local mmdc renders it (sidecar rejection was stale)"
-      promoted += 1
-    when :rejects
-      row["evidence"] = "local mmdc rejects it too"
-    when :error
-      row["evidence"] = "local mmdc could not be run"
-      errors += 1
-    end
+    counts[:checked] += 1
+    verify_invalid_row(row, entry[:path], counts)
   end
+  report_verification(counts)
+  counts[:errors]
+end
 
-  warn "  checked #{checked} invalid case(s) against local mmdc; " \
-       "#{promoted} promoted to valid"
-  errors
+def corpus_relative_path(entry)
+  entry[:path].sub("#{CORPUS_ROOT}/", "")
+end
+
+def verify_invalid_row(row, path, counts)
+  case local_mmdc_verdict(path)
+  when :accepts then promote_invalid_row(row, counts)
+  when :rejects then row["evidence"] = "local mmdc rejects it too"
+  when :error
+    row["evidence"] = "local mmdc could not be run"
+    counts[:errors] += 1
+  end
+end
+
+def promote_invalid_row(row, counts)
+  row["verdict"] = "valid"
+  row["evidence"] = "local mmdc renders it (sidecar rejection was stale)"
+  counts[:promoted] += 1
+end
+
+def report_verification(counts)
+  warn "  checked #{counts[:checked]} invalid case(s) against local mmdc; " \
+       "#{counts[:promoted]} promoted to valid"
 end
 
 # The cases no committed evidence settles, as CorpusOracle.refresh wants them.

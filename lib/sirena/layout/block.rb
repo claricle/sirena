@@ -290,101 +290,14 @@ module Sirena
       end
 
       def calculate_column_layout(blocks, columns, auto_layout:, span_layout:)
-        positioned_blocks = {}
-
-        current_row = 0
-        current_col = 0
-        row_heights = []
-        col_widths = Array.new(columns, 0)
-        width_font_size = compact_width_font_size(columns, span_layout)
-        span_column_width = span_column_width(blocks, width_font_size) if
-          span_layout
-        uniform_grid = uniform_grid_dimensions(blocks, auto_layout)
-
+        positioned = {}
+        cursor = column_layout_cursor(columns)
+        settings = column_layout_settings(blocks, columns, auto_layout,
+                                          span_layout)
         blocks.each do |block|
-          block_width = block_span(block)
-
-          # Handle space blocks
-          if space?(block)
-            if uniform_grid
-              row_heights[current_row] = uniform_grid.fetch(:height)
-            end
-            current_col += block_width
-            if current_col >= columns
-              current_col = 0
-              current_row += 1
-            end
-            next
-          end
-
-          # Calculate block dimensions
-          dims = block_dimensions(
-            block, auto_layout: auto_layout, span_layout: span_layout,
-                   uniform_grid: uniform_grid,
-                   width_font_size: width_font_size
-          )
-
-          # Check if block fits in current row
-          if !span_layout && current_col + block_width > columns
-            current_col = 0
-            current_row += 1
-          end
-
-          # Position block
-          spacing = compact_spacing(auto_layout, span_layout, uniform_grid)
-          x = calculate_x_position(
-            current_col, col_widths, spacing, span_column_width
-          )
-          y = calculate_y_position(current_row, row_heights, spacing)
-          if uniform_grid && special_shape?(block)
-            x += (uniform_grid.fetch(:width) - dims.fetch(:width)) / 2
-            y += (uniform_grid.fetch(:height) - dims.fetch(:height)) / 2
-          end
-          width = spanned_width(
-            dims[:width], block_width, spacing, span_column_width
-          )
-
-          positioned_blocks[block.id] = {
-            block: block,
-            x: x,
-            y: y,
-            width: width,
-            height: dims[:height],
-            row: current_row,
-            col: current_col,
-            col_span: block_width,
-          }
-
-          # Update column widths
-          (current_col...(current_col + block_width)).each do |col|
-            next unless col < columns
-
-            col_widths[col] = [col_widths[col], dims[:width]].max
-          end
-
-          # Update row height
-          current_height = row_heights[current_row] || 0
-          occupied_height = uniform_grid&.fetch(:height) || dims[:height]
-          row_heights[current_row] = [current_height, occupied_height].max
-
-          # Handle compound blocks
-          if compound?(block) && !children(block).empty?
-            child_layout = layout_compound_children(
-              block, x, y, compact: !uniform_grid.nil?,
-                           parent_width: width
-            )
-            positioned_blocks.merge!(child_layout)
-          end
-
-          # Move to next position
-          current_col += block_width
-          if current_col >= columns
-            current_col = 0
-            current_row += 1
-          end
+          place_column_block(block, cursor, settings, positioned)
         end
-
-        positioned_blocks
+        positioned
       end
 
       def block_dimensions(block, auto_layout:, span_layout:, uniform_grid:,
@@ -554,31 +467,12 @@ module Sirena
 
       def calculate_block_dimensions(block, auto_layout:,
                                      width_font_size: normal_font_size)
-        if arrow?(block)
-          return {
-            width: DEFAULT_BLOCK_WIDTH / 2,
-            height: DEFAULT_BLOCK_HEIGHT / 2,
-          }
-        end
+        return arrow_block_dimensions if arrow?(block)
 
-        label = block_label_text(block)
-        label_dims = measure_text(label, font_size: normal_font_size)
-        width = label_width(label, label_dims, auto_layout, width_font_size)
-        width += auto_layout ? 8 : 40
-        height = label_dims[:height] + (auto_layout ? 13 : 30)
-        unless auto_layout
-          width = [width, DEFAULT_BLOCK_WIDTH].max
-          height = [height, DEFAULT_BLOCK_HEIGHT].max
-        end
+        dimensions = label_block_dimensions(block, auto_layout, width_font_size)
+        return dimensions unless compound?(block)
 
-        if compound?(block)
-          return compound_dimensions(block, width, height)
-        end
-
-        {
-          width: width,
-          height: height,
-        }
+        compound_dimensions(block, dimensions[:width], dimensions[:height])
       end
 
       def block_label_text(block)
@@ -636,38 +530,15 @@ module Sirena
 
       def calculate_connections(connections, blocks_layout, auto_layout:)
         connections.filter_map do |connection|
-          from_block = blocks_layout[connection.source_id]
-          to_block = blocks_layout[connection.target_id]
-
-          next unless from_block && to_block
-
-          points = connection_points(from_block, to_block, auto_layout)
-          {
-            from: connection.source_id,
-            to: connection.target_id,
-            from_x: points[0], from_y: points[1],
-            to_x: points[2], to_y: points[3],
-            connection_type: connection.role
-          }
+          positioned_connection(connection, blocks_layout, auto_layout)
         end
       end
 
       def connection_points(from_block, to_block, auto_layout)
-        if auto_layout && same_row?(from_block, to_block)
-          return [
-            from_block[:x] + from_block[:width],
-            from_block[:y] + (from_block[:height] / 2),
-            to_block[:x],
-            to_block[:y] + (to_block[:height] / 2),
-          ]
-        end
+        return horizontal_connection_points(from_block, to_block) if
+          auto_layout && same_row?(from_block, to_block)
 
-        [
-          from_block[:x] + (from_block[:width] / 2),
-          from_block[:y] + from_block[:height],
-          to_block[:x] + (to_block[:width] / 2),
-          to_block[:y],
-        ]
+        vertical_connection_points(from_block, to_block)
       end
 
       def same_row?(from_block, to_block)
@@ -692,6 +563,175 @@ module Sirena
       def normal_font_size
         theme.typography&.font_size_normal ||
           Theme::Registry.get(:default).typography.font_size_normal
+      end
+
+      def column_layout_cursor(columns)
+        { row: 0, col: 0, row_heights: [], col_widths: Array.new(columns, 0) }
+      end
+
+      def column_layout_settings(blocks, columns, auto_layout, span_layout)
+        width_font_size = compact_width_font_size(columns, span_layout)
+        column_width = span_column_width(blocks, width_font_size) if span_layout
+        {
+          columns: columns, auto_layout: auto_layout, span_layout: span_layout,
+          width_font_size: width_font_size, column_width: column_width,
+          uniform_grid: uniform_grid_dimensions(blocks, auto_layout)
+        }
+      end
+
+      def place_column_block(block, cursor, settings, positioned)
+        span = block_span(block)
+        return place_column_space(cursor, settings, span) if space?(block)
+
+        dimensions = column_block_dimensions(block, settings)
+        fit_column_block(cursor, settings, span)
+        geometry = placed_geometry(block, dimensions, cursor, settings, span)
+        positioned[block.id] = geometry
+        update_column_dimensions(cursor, settings, dimensions, span)
+        place_column_children(block, geometry, settings, positioned)
+        advance_column(cursor, settings[:columns], span)
+      end
+
+      def column_block_dimensions(block, settings)
+        block_dimensions(
+          block, auto_layout: settings[:auto_layout],
+                 span_layout: settings[:span_layout],
+                 uniform_grid: settings[:uniform_grid],
+                 width_font_size: settings[:width_font_size]
+        )
+      end
+
+      def place_column_space(cursor, settings, span)
+        grid = settings[:uniform_grid]
+        cursor[:row_heights][cursor[:row]] = grid.fetch(:height) if grid
+        advance_column(cursor, settings[:columns], span)
+      end
+
+      def advance_column(cursor, columns, span)
+        cursor[:col] += span
+        return if cursor[:col] < columns
+
+        cursor[:col] = 0
+        cursor[:row] += 1
+      end
+
+      def fit_column_block(cursor, settings, span)
+        return if settings[:span_layout] ||
+          cursor[:col] + span <= settings[:columns]
+
+        cursor[:col] = 0
+        cursor[:row] += 1
+      end
+
+      def placed_geometry(block, dimensions, cursor, settings, span)
+        spacing = compact_spacing(settings[:auto_layout],
+                                  settings[:span_layout],
+                                  settings[:uniform_grid])
+        horizontal, vertical = column_block_position(cursor, settings, spacing)
+        horizontal, vertical = centered_column_position(
+          block, dimensions, settings[:uniform_grid], [horizontal, vertical]
+        )
+        position = [horizontal, vertical, spacing, settings[:column_width]]
+        column_geometry(block, dimensions, cursor, position, span)
+      end
+
+      def column_block_position(cursor, settings, spacing)
+        [calculate_x_position(cursor[:col], cursor[:col_widths], spacing,
+                              settings[:column_width]),
+         calculate_y_position(cursor[:row], cursor[:row_heights], spacing)]
+      end
+
+      def centered_column_position(block, dimensions, grid, position)
+        return position unless grid && special_shape?(block)
+
+        horizontal, vertical = position
+        horizontal += (grid.fetch(:width) - dimensions.fetch(:width)) / 2
+        vertical += (grid.fetch(:height) - dimensions.fetch(:height)) / 2
+        [horizontal, vertical]
+      end
+
+      def column_geometry(block, dimensions, cursor, position, span)
+        horizontal, vertical, spacing, column_width = position
+        {
+          block: block, x: horizontal, y: vertical,
+          width: spanned_width(dimensions[:width], span, spacing, column_width),
+          height: dimensions[:height], row: cursor[:row], col: cursor[:col],
+          col_span: span
+        }
+      end
+
+      def update_column_dimensions(cursor, settings, dimensions, span)
+        update_column_widths(cursor, settings[:columns], dimensions[:width],
+                             span)
+        row = cursor[:row]
+        current_height = cursor[:row_heights][row] || 0
+        height = settings[:uniform_grid]&.fetch(:height) || dimensions[:height]
+        cursor[:row_heights][row] = [current_height, height].max
+      end
+
+      def update_column_widths(cursor, columns, width, span)
+        (cursor[:col]...(cursor[:col] + span)).each do |col|
+          next unless col < columns
+
+          widths = cursor[:col_widths]
+          widths[col] = [widths[col], width].max
+        end
+      end
+
+      def place_column_children(block, geometry, settings, positioned)
+        return unless compound?(block) && !children(block).empty?
+
+        positioned.merge!(layout_compound_children(
+                            block, geometry[:x], geometry[:y],
+                            compact: !settings[:uniform_grid].nil?,
+                            parent_width: geometry[:width]
+                          ))
+      end
+
+      def arrow_block_dimensions
+        { width: DEFAULT_BLOCK_WIDTH / 2, height: DEFAULT_BLOCK_HEIGHT / 2 }
+      end
+
+      def label_block_dimensions(block, auto_layout, width_font_size)
+        label = block_label_text(block)
+        label_dims = measure_text(label, font_size: normal_font_size)
+        width = label_width(label, label_dims, auto_layout, width_font_size)
+        width += auto_layout ? 8 : 40
+        height = label_dims[:height] + (auto_layout ? 13 : 30)
+        return { width: width, height: height } if auto_layout
+
+        { width: [width, DEFAULT_BLOCK_WIDTH].max,
+          height: [height, DEFAULT_BLOCK_HEIGHT].max }
+      end
+
+      def positioned_connection(connection, blocks_layout, auto_layout)
+        from_block = blocks_layout[connection.source_id]
+        to_block = blocks_layout[connection.target_id]
+        return unless from_block && to_block
+
+        connection_geometry(connection,
+                            connection_points(from_block, to_block,
+                                              auto_layout))
+      end
+
+      def connection_geometry(connection, points)
+        {
+          from: connection.source_id, to: connection.target_id,
+          from_x: points[0], from_y: points[1],
+          to_x: points[2], to_y: points[3], connection_type: connection.role
+        }
+      end
+
+      def horizontal_connection_points(from_block, to_block)
+        [from_block[:x] + from_block[:width],
+         from_block[:y] + (from_block[:height] / 2),
+         to_block[:x], to_block[:y] + (to_block[:height] / 2)]
+      end
+
+      def vertical_connection_points(from_block, to_block)
+        [from_block[:x] + (from_block[:width] / 2),
+         from_block[:y] + from_block[:height],
+         to_block[:x] + (to_block[:width] / 2), to_block[:y]]
       end
     end
   end

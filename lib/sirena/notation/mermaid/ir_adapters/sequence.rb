@@ -52,16 +52,21 @@ module Sirena
                 id: id, label: participant.label,
                 role: participant_role(participant.actor_type)
               )
-              values = [
-                ["original_identifier", participant.id],
-                ["participant_type", participant.actor_type],
-                ["participant_shape", participant.shape_type],
-                ["participant_created", (true if participant.created)],
-                ["sequence_index", index],
-              ]
+              values = participant_semantics(participant, index)
               [entity, *semantic_nodes(id, values, occupied)]
             end
           end
+
+          def participant_semantics(participant, index)
+            [
+              ["original_identifier", participant.id],
+              ["participant_type", participant.actor_type],
+              ["participant_shape", participant.shape_type],
+              ["participant_created", (true if participant.created)],
+              ["sequence_index", index],
+            ]
+          end
+          private_class_method :participant_semantics
 
           def participant_role(actor_type)
             actor_type == "actor" ? "actor" : "participant"

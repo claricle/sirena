@@ -6,12 +6,23 @@ RSpec.describe Sirena::Parser::Flowchart do
   include FlowchartParserHelpers
 
   describe "an edge id written before the link" do
-    it "leaves the id out of the nodes and keeps the edge" do
-      diagram = parse_flowchart("A e1@--> B")
+    describe "leaves the id out of the nodes and keeps the edge" do
+      let(:diagram) do
+        parse_flowchart("A e1@--> B")
+      end
 
-      expect(diagram.nodes.map(&:id)).to eq(%w[A B])
-      expect(diagram.edges.map { |e| [e.source_id, e.target_id] })
-        .to eq([%w[A B]])
+      before do
+        diagram
+      end
+
+      it "preserves property 1" do
+        expect(diagram.nodes.map(&:id)).to eq(%w[A B])
+      end
+
+      it "preserves property 2" do
+        expect(diagram.edges.map { |e| [e.source_id, e.target_id] })
+          .to eq([%w[A B]])
+      end
     end
 
     it "takes the id on a link with an inline label" do
@@ -220,17 +231,14 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(edge_links("A ..x@--> B")).to eq(%w[A>B])
     end
 
-    it "refuses an id beginning with an earlier lexer token" do
-      aggregate_failures do
-        %w[
-          style style-x classDef default graph flowchart-elk subgraph end _self
-          accTitle:x accDescr:x accDescr{x
-        ].each do |id|
-          source = "A #{id}@--> B"
-
-          expect { parse_flowchart(source) }
-            .to raise_error(Sirena::Parser::ParseError), source.inspect
-        end
+    %w[
+      style style-x classDef default graph flowchart-elk subgraph end _self
+      accTitle:x accDescr:x accDescr{x
+    ].each do |id|
+      it "refuses the edge id claimed by the earlier token #{id}" do
+        source = "A #{id}@--> B"
+        expect { parse_flowchart(source) }
+          .to raise_error(Sirena::Parser::ParseError), source.inspect
       end
     end
 

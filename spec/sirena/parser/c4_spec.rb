@@ -395,7 +395,8 @@ RSpec.describe Sirena::Parser::C4, :aggregate_failures do
       end
 
       it "retains diagram.title" do
-        expect(diagram.title).to eq("System Context diagram for Internet Banking System")
+        expect(diagram.title)
+          .to eq("System Context diagram for Internet Banking System")
       end
 
       it "retains diagram.elements.length" do

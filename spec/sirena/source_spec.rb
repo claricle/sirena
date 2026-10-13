@@ -38,6 +38,39 @@ module SourceSpecHelpers
   end
   module_function :with_bytes
 
+  def forced_fiber_verdict(levels)
+    script = forced_fiber_script(levels)
+    IO.popen({ "RUBY_FIBER_VM_STACK_SIZE" => "32768" },
+             [RbConfig.ruby, "-I", File.expand_path("../../lib", __dir__),
+              "-e", script], err: %i[child out], &:read)
+  end
+
+  def forced_fiber_script(levels)
+    <<~RUBY
+      require "sirena"
+      verdict = Fiber.new do
+        Sirena::Source.title(#{deep_map(levels).inspect})
+      rescue Sirena::Source::MalformedFrontmatter
+        :refused
+      end.resume
+      print verdict
+    RUBY
+  end
+
+  def depth_limit_alias_source
+    "a: &a x\ntitle: #{'[' * 256}*a#{']' * 256}"
+  end
+
+  def alias_bomb_source
+    "a: &a [x,x,x,x,x,x,x,x,x]\n" \
+      "b: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a]\n" \
+      "c: &c [*b,*b,*b,*b,*b,*b,*b,*b,*b]\n" \
+      "d: &d [*c,*c,*c,*c,*c,*c,*c,*c,*c]\n" \
+      "e: &e [*d,*d,*d,*d,*d,*d,*d,*d,*d]\n" \
+      "title: *e\n"
+  end
+  module_function :alias_bomb_source
+
   def in_a_fiber(yaml)
     Fiber.new do
       described_class.title(yaml)
@@ -48,6 +81,10 @@ module SourceSpecHelpers
 end
 
 module SourceSplitSpecHelpers
+  def init_directive_source
+    %(%%{init: {"theme":"base"}}%%\nsequenceDiagram\n  A->>B: m\n)
+  end
+
   def complete_preamble
     "---\ntitle: T\n---\n%%{init: {}}%%\n%% note\n" \
       "flowchart LR\n  A-->B\n"
@@ -72,9 +109,7 @@ RSpec.describe Sirena::Source do
     end
 
     it "separates a %%{init}%% directive from the body" do
-      result = described_class.split(
-        %(%%{init: {"theme":"base"}}%%\nsequenceDiagram\n  A->>B: m\n),
-      )
+      result = described_class.split(init_directive_source)
 
       expect(result[:directives])
         .to eq([%(%%{init: {"theme":"base"}}%%)])
@@ -1132,29 +1167,8 @@ RSpec.describe Sirena::Source do
       end
 
       it "refuses a mapping that overflows the stack below the depth bound" do
-        # The overflow is forced, not hoped for: a child Ruby with a 32 KB
-        # Fiber VM stack (RUBY_FIBER_VM_STACK_SIZE, read at startup) cannot
-        # hold 200 mapping levels on any platform, and 200 is under
-        # MAX_NESTING, so only the SystemStackError rescue can refuse it.
         levels = 200
-        script = <<~RUBY
-          require "sirena"
-          verdict = Fiber.new do
-            Sirena::Source.title(#{deep_map(levels).inspect})
-          rescue Sirena::Source::MalformedFrontmatter
-            :refused
-          end.resume
-          print verdict
-        RUBY
-        env = { "RUBY_FIBER_VM_STACK_SIZE" => "32768" }
-        output = IO.popen(
-          env,
-          [RbConfig.ruby, "-I", File.expand_path("../../lib", __dir__),
-           "-e", script],
-          err: %i[child out],
-          &:read
-        )
-
+        output = forced_fiber_verdict(levels)
         expect(levels).to be < Sirena::Source::Frontmatter::MAX_NESTING
         expect(output.lines.last).to eq("refused")
       end
@@ -1168,12 +1182,9 @@ RSpec.describe Sirena::Source do
         # bottomed out in an alias never reached it. Depth 257 was refused
         # with a scalar leaf and drawn with an alias leaf: the same shape,
         # two verdicts, and the deeper one is the one an attacker picks.
-        leaf_alias = "a: &a x\ntitle: #{'[' * 256}*a#{']' * 256}"
-        leaf_scalar = "title: #{'[' * 256}x#{']' * 256}"
-
-        expect { described_class.title(leaf_alias) }
+        expect { described_class.title(depth_limit_alias_source) }
           .to raise_error(Sirena::Source::MalformedFrontmatter, /deeply/)
-        expect { described_class.title(leaf_scalar) }
+        expect { described_class.title(deep_nest(256)) }
           .to raise_error(Sirena::Source::MalformedFrontmatter, /deeply/)
       end
     end
@@ -1338,14 +1349,7 @@ RSpec.describe Sirena::Source do
       end
 
       it "refuses an alias bomb reached through the title" do
-        bomb = "a: &a [x,x,x,x,x,x,x,x,x]\n" \
-               "b: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a]\n" \
-               "c: &c [*b,*b,*b,*b,*b,*b,*b,*b,*b]\n" \
-               "d: &d [*c,*c,*c,*c,*c,*c,*c,*c,*c]\n" \
-               "e: &e [*d,*d,*d,*d,*d,*d,*d,*d,*d]\n" \
-               "title: *e\n"
-
-        expect { described_class.title(bomb) }
+        expect { described_class.title(SourceSpecHelpers.alias_bomb_source) }
           .to raise_error(Sirena::Source::MalformedFrontmatter, /many values/)
       end
 

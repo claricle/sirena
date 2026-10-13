@@ -119,21 +119,32 @@ RSpec.describe HardenedMmdc, :aggregate_failures do
     # then run_mmdc cleans up again because it came away with no status. The
     # second pass has nothing left to wait for, and it used to raise
     # Errno::ECHILD straight out of the harness on every case that timed out.
-    it "cleans up twice after a case that timed out without raising" do
-      stub_const("HardenedMmdc::CASE_TIMEOUT", 0.3)
-
-      status, output = Dir.mktmpdir do |dir|
-        prefix_path(fake_mmdc(dir, "#!/bin/sh\nexec /bin/sleep 26.43\n")) do
-          Timeout.timeout(guard) do
-            described_class.run_mmdc(File.join(dir, "in.mmd"),
-                                     File.join(dir, "out.svg"))
+    describe "cleans up twice after a case that timed out without raising" do
+      subject(:run_result) do
+        Dir.mktmpdir do |dir|
+          prefix_path(fake_mmdc(dir, "#!/bin/sh\nexec /bin/sleep 26.43\n")) do
+            Timeout.timeout(guard) do
+              described_class.run_mmdc(File.join(dir, "in.mmd"),
+                                       File.join(dir, "out.svg"))
+            end
           end
         end
       end
 
-      expect(status).to be_nil
-      expect(output).to eq("")
-      expect(gone?("26.43")).to be(true)
+      before { stub_const("HardenedMmdc::CASE_TIMEOUT", 0.3) }
+
+      it "returns no status after the deadline kills mmdc" do
+        expect(run_result.first).to be_nil
+      end
+
+      it "returns an empty diagnostic after the timeout" do
+        expect(run_result.last).to eq("")
+      end
+
+      it "leaves no timed-out process after both cleanup passes" do
+        run_result
+        expect(gone?("26.43")).to be(true)
+      end
     end
   end
 
@@ -151,19 +162,30 @@ RSpec.describe HardenedMmdc, :aggregate_failures do
     # A child that leaves the group is out of reach of the kill and still
     # holds the pipe, so reading to EOF waits on IT: one escaped Chromium
     # held a 30s case open for 301.7s.
-    it "stops waiting on the pipe when a child escapes the group" do
-      stub_const("HardenedMmdc::DRAIN_GRACE", 0.3)
+    describe "stops waiting on the pipe when a child escapes the group" do
+      subject(:escaped_run) do
+        Dir.mktmpdir do |dir|
+          pidfile = File.join(dir, "child.pid")
+          status, output = run_fake_mmdc(dir, pidfile, escape: true)
+          { status: status, output: output,
+            child_died: dies?(File.read(pidfile).to_i) }
+        ensure
+          kill_quietly(File.read(pidfile).to_i) if File.size?(pidfile)
+        end
+      end
 
-      Dir.mktmpdir do |dir|
-        pidfile = File.join(dir, "child.pid")
+      before { stub_const("HardenedMmdc::DRAIN_GRACE", 0.3) }
 
-        status, output = run_fake_mmdc(dir, pidfile, escape: true)
+      it "preserves the successful mmdc status" do
+        expect(escaped_run.fetch(:status)).to be_success
+      end
 
-        expect(status).to be_success
-        expect(output).to eq("")
-        expect(dies?(File.read(pidfile).to_i)).to be(true)
-      ensure
-        kill_quietly(File.read(pidfile).to_i) if File.size?(pidfile)
+      it "finishes reading the diagnostic without waiting for EOF" do
+        expect(escaped_run.fetch(:output)).to eq("")
+      end
+
+      it "kills the escaped child before fixture cleanup" do
+        expect(escaped_run.fetch(:child_died)).to be(true)
       end
     end
 
@@ -171,92 +193,119 @@ RSpec.describe HardenedMmdc, :aggregate_failures do
     # BEFORE its child escapes and holds the pipe open. Giving up on EOF must
     # not throw away what was already read — that diagnostic is the one
     # piece of evidence explaining why the case is being abandoned.
-    it "keeps a diagnostic when an escaped child prevents EOF" do
-      stub_const("HardenedMmdc::DRAIN_GRACE", 0.3)
-
-      Dir.mktmpdir do |dir|
-        pidfile = File.join(dir, "child.pid")
-        script = escaping_child_with_output(pidfile, "syntax error")
-
-        prefix_path(fake_mmdc(dir, script)) do
-          _status, output = Timeout.timeout(guard) do
-            described_class.run_mmdc(File.join(dir, "in.mmd"),
-                                     File.join(dir, "out.svg"))
+    describe "keeps a diagnostic when an escaped child prevents EOF" do
+      subject(:diagnostic) do
+        Dir.mktmpdir do |dir|
+          pidfile = File.join(dir, "child.pid")
+          script = escaping_child_with_output(pidfile, "syntax error")
+          prefix_path(fake_mmdc(dir, script)) do
+            _status, output = Timeout.timeout(guard) do
+              described_class.run_mmdc(File.join(dir, "in.mmd"),
+                                       File.join(dir, "out.svg"))
+            end
+            output
           end
-
-          expect(output).to eq("syntax error")
-        end
-      ensure
-        kill_quietly(File.read(pidfile).to_i) if File.size?(pidfile)
-      end
-    end
-
-    it "passes source bytes to mmdc unchanged" do
-      Dir.mktmpdir do |dir|
-        input = File.join(dir, "in.mmd")
-        output = File.join(dir, "out.svg")
-        source = "flowchart LR\n  A[\xFF\xFE]\n".b
-        File.binwrite(input, source)
-
-        prefix_path(fake_mmdc(dir, <<~SH)) do
-          #!/bin/sh
-          /bin/cp "$2" "$4"
-        SH
-          status, = described_class.run_mmdc(input, output)
-
-          expect(status).to be_success
-          expect(File.binread(output)).to eq(source)
-        end
-      end
-    end
-
-    it "drains a large mmdc diagnostic while it runs" do
-      Dir.mktmpdir do |dir|
-        input = File.join(dir, "in.mmd")
-        output = File.join(dir, "out.svg")
-        File.write(input, trivial_source)
-
-        prefix_path(fake_mmdc(dir, <<~SH)) do
-          #!/bin/sh
-          perl -e 'print "x" x 100000'
-        SH
-          status, diagnostic = described_class.run_mmdc(input, output)
-
-          expect(status).to be_success
-          expect(diagnostic).to eq("x" * 100_000)
-        end
-      end
-    end
-
-    it "cleans up when interrupted" do
-      Dir.mktmpdir do |dir|
-        input = File.join(dir, "in.mmd")
-        output = File.join(dir, "out.svg")
-        pidfile = File.join(dir, "mmdc.pid")
-        File.write(input, trivial_source)
-
-        prefix_path(fake_mmdc(dir, interruptible_mmdc(pidfile))) do
-          wait_for_pid = proc do
-            Timeout.timeout(guard) { sleep 0.01 until File.exist?(pidfile) }
-          end
-          original_descendants_of = described_class.method(:descendants_of)
-          allow(described_class).to receive(:descendants_of) do |pid|
-            result = original_descendants_of.call(pid)
-            wait_for_pid.call
-            result
-          end
-          allow(described_class)
-            .to receive(:wait_with_deadline)
-            .and_raise(Interrupt)
-
-          expect do
-            described_class.run_mmdc(input, output)
-          end.to raise_error(Interrupt)
-          pid = File.read(pidfile).to_i
-          expect(dies?(pid)).to be(true)
         ensure
-          kill_quietly(pid) if pid
+          kill_quietly(File.read(pidfile).to_i) if File.size?(pidfile)
         end
+      end
+
+      before { stub_const("HardenedMmdc::DRAIN_GRACE", 0.3) }
+
+      it "keeps the diagnostic read before the child escaped" do
+        expect(diagnostic).to eq("syntax error")
+      end
+    end
+
+    describe "passes source bytes to mmdc unchanged" do
+      subject(:source_copy) do
+        Dir.mktmpdir do |dir|
+          input = File.join(dir, "in.mmd")
+          output = File.join(dir, "out.svg")
+          source = "flowchart LR\n  A[\xFF\xFE]\n".b
+          File.binwrite(input, source)
+          prefix_path(fake_mmdc(dir, <<~SH)) do
+            #!/bin/sh
+            /bin/cp "$2" "$4"
+          SH
+            status, = described_class.run_mmdc(input, output)
+            { status: status, bytes: File.binread(output), source: source }
+          end
+        end
+      end
+
+      it "runs mmdc successfully" do
+        expect(source_copy.fetch(:status)).to be_success
+      end
+
+      it "passes the binary source bytes unchanged" do
+        expect(source_copy.fetch(:bytes)).to eq(source_copy.fetch(:source))
+      end
+    end
+
+    describe "drains a large mmdc diagnostic while it runs" do
+      subject(:run_result) do
+        Dir.mktmpdir do |dir|
+          input = File.join(dir, "in.mmd")
+          output = File.join(dir, "out.svg")
+          File.write(input, trivial_source)
+          prefix_path(fake_mmdc(dir, <<~SH)) do
+            #!/bin/sh
+            perl -e 'print "x" x 100000'
+          SH
+            described_class.run_mmdc(input, output)
+          end
+        end
+      end
+
+      it "keeps the successful exit status while draining output" do
+        expect(run_result.first).to be_success
+      end
+
+      it "drains the entire large diagnostic" do
+        expect(run_result.last).to eq("x" * 100_000)
+      end
+    end
+
+    describe "cleans up when interrupted" do
+      subject(:interrupted_run) do
+        Dir.mktmpdir do |dir|
+          input = File.join(dir, "in.mmd")
+          output = File.join(dir, "out.svg")
+          pidfile = File.join(dir, "mmdc.pid")
+          File.write(input, trivial_source)
+          prefix_path(fake_mmdc(dir, interruptible_mmdc(pidfile))) do
+            wait_for_pid = proc do
+              Timeout.timeout(guard) { sleep 0.01 until File.exist?(pidfile) }
+            end
+            original_descendants_of = described_class.method(:descendants_of)
+            allow(described_class).to receive(:descendants_of) do |process_id|
+              result = original_descendants_of.call(process_id)
+              wait_for_pid.call
+              result
+            end
+            allow(described_class).to receive(:wait_with_deadline)
+              .and_raise(Interrupt)
+            interruption = begin
+              described_class.run_mmdc(input, output)
+              nil
+            rescue Interrupt => e
+              e
+            end
+            pid = File.read(pidfile).to_i
+            { exception: interruption, child_died: dies?(pid) }
+          ensure
+            kill_quietly(pid) if pid
+          end
+        end
+      end
+
+      it "lets the interruption reach the caller" do
+        expect(interrupted_run.fetch(:exception)).to be_a(Interrupt)
+      end
+
+      it "kills the interrupted process before fixture cleanup" do
+        expect(interrupted_run.fetch(:child_died)).to be(true)
       end
     end
   end
@@ -267,23 +316,30 @@ RSpec.describe HardenedMmdc, :aggregate_failures do
   # fake mmdc that only sleeps, and it hung until an external `timeout`
   # intervened, because nothing inside the call would stop it.
   describe "protecting a second call site the same way" do
-    let(:corpus_harness) { Class.new { include CorpusVerdicts }.new }
-
-    it "kills a hanging mmdc reached through corpus verdicts" do
-      stub_const("HardenedMmdc::CASE_TIMEOUT", 0.3)
-
-      Dir.mktmpdir do |dir|
-        input = File.join(dir, "in.mmd")
-        File.write(input, trivial_source)
-
-        prefix_path(fake_mmdc(dir, "#!/bin/sh\nexec /bin/sleep 26.83\n")) do
-          verdict = Timeout.timeout(guard) do
-            corpus_harness.send(:local_mmdc_verdict, input)
+    describe "kills a hanging mmdc reached through corpus verdicts" do
+      subject(:verdict_run) do
+        Dir.mktmpdir do |dir|
+          input = File.join(dir, "in.mmd")
+          File.write(input, trivial_source)
+          prefix_path(fake_mmdc(dir, "#!/bin/sh\nexec /bin/sleep 26.83\n")) do
+            verdict = Timeout.timeout(guard) do
+              Class.new do
+                include CorpusVerdicts
+              end.new.send(:local_mmdc_verdict, input)
+            end
+            { verdict: verdict, process_gone: gone?("26.83") }
           end
-
-          expect(verdict).to be(:error)
-          expect(gone?("26.83")).to be(true)
         end
+      end
+
+      before { stub_const("HardenedMmdc::CASE_TIMEOUT", 0.3) }
+
+      it "reports the timed-out verdict as an error" do
+        expect(verdict_run.fetch(:verdict)).to be(:error)
+      end
+
+      it "kills the hanging process reached through corpus verdicts" do
+        expect(verdict_run.fetch(:process_gone)).to be(true)
       end
     end
   end

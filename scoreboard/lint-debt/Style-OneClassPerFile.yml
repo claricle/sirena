@@ -1,7 +1,0 @@
----
-cop: Style/OneClassPerFile
-rows:
-- file: scripts/extract_mermaid_tests.rb
-  count: 1
-- file: tasks/generate_mermaid_fixtures.rake
-  count: 2

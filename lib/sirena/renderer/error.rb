@@ -41,52 +41,19 @@ module Sirena
 
       def render_error_box(scene, svg)
         geometry = scene.box
-        box = Svg::Rect.new.tap do |r|
-          r.x = geometry.x
-          r.y = geometry.y
-          r.width = geometry.width
-          r.height = geometry.height
-          r.fill = theme_color(:surface)
-          r.stroke = theme_color(:error)
-          r.stroke_width = "2"
-          r.rx = geometry.corner_radius
-          r.ry = geometry.corner_radius
-        end
-
+        box = rectangle_geometry(geometry)
+        box.fill = theme_color(:surface)
+        box.stroke = theme_color(:error)
+        box.stroke_width = "2"
+        box.rx = geometry.corner_radius
+        box.ry = geometry.corner_radius
         svg << box
       end
 
       def render_error_icon(scene, svg)
-        # Error icon circle
-        circle = Svg::Circle.new.tap do |c|
-          c.cx = scene.icon.x
-          c.cy = scene.icon.y
-          c.r = scene.icon.radius
-          c.fill = theme_color(:error)
-          c.stroke = theme_color(:edge_stroke)
-          c.stroke_width = "2"
-        end
-        svg << circle
-
-        # Exclamation mark - vertical line
-        line = Svg::Rect.new.tap do |r|
-          r.x = scene.mark.x
-          r.y = scene.mark.y
-          r.width = scene.mark.width
-          r.height = scene.mark.height
-          r.fill = theme_color(:background)
-          r.rx = scene.mark.corner_radius
-        end
-        svg << line
-
-        # Exclamation mark - dot
-        dot = Svg::Circle.new.tap do |c|
-          c.cx = scene.dot.x
-          c.cy = scene.dot.y
-          c.r = scene.dot.radius
-          c.fill = theme_color(:background)
-        end
-        svg << dot
+        svg << error_icon_circle(scene.icon)
+        svg << error_icon_mark(scene.mark)
+        svg << error_icon_dot(scene.dot)
       end
 
       def render_error_text(scene, svg)
@@ -96,21 +63,68 @@ module Sirena
       end
 
       def text_element(label)
-        Svg::Text.new.tap do |t|
-          t.x = label.x
-          t.y = label.y
-          t.content = label.text
-          t.fill = theme_color(:error)
-          t.font_family = theme_typography(:font_family) ||
-            "Arial, sans-serif"
-          t.font_size = number_string(label.font_size)
-          t.text_anchor = label.text_anchor
-          t.font_weight = label.font_weight
+        Svg::Text.new.tap do |text|
+          position_error_text(text, label)
+          text.content = label.text
+          style_error_text(text, label)
         end
       end
 
       def number_string(value)
         value.to_i == value ? value.to_i.to_s : value.to_s
+      end
+
+      private
+
+      def rectangle_geometry(geometry)
+        Svg::Rect.new.tap do |rect|
+          rect.x = geometry.x
+          rect.y = geometry.y
+          rect.width = geometry.width
+          rect.height = geometry.height
+        end
+      end
+
+      def circle_geometry(geometry)
+        Svg::Circle.new.tap do |circle|
+          circle.cx = geometry.x
+          circle.cy = geometry.y
+          circle.r = geometry.radius
+        end
+      end
+
+      def error_icon_circle(geometry)
+        circle_geometry(geometry).tap do |circle|
+          circle.fill = theme_color(:error)
+          circle.stroke = theme_color(:edge_stroke)
+          circle.stroke_width = "2"
+        end
+      end
+
+      def error_icon_mark(geometry)
+        rectangle_geometry(geometry).tap do |rect|
+          rect.fill = theme_color(:background)
+          rect.rx = geometry.corner_radius
+        end
+      end
+
+      def error_icon_dot(geometry)
+        circle_geometry(geometry).tap do |circle|
+          circle.fill = theme_color(:background)
+        end
+      end
+
+      def position_error_text(text, label)
+        text.x = label.x
+        text.y = label.y
+      end
+
+      def style_error_text(text, label)
+        text.fill = theme_color(:error)
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = number_string(label.font_size)
+        text.text_anchor = label.text_anchor
+        text.font_weight = label.font_weight
       end
     end
   end

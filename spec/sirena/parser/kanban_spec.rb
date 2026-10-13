@@ -4,6 +4,15 @@ require "spec_helper"
 require "timeout"
 
 module KanbanSpecHelpers
+  SEPARATED_NONZERO_VALUES = {
+    "0__1" => "1", "0___1" => "1", "-0__1" => "-1", "00__01" => "1",
+    "0__10" => "10", "0x_1" => "1", "0x__1" => "1", "0x_10" => "16",
+    "0x_a" => "10", "-0x_1" => "-1", "0x_0_1" => "1", "0o_1" => "1",
+    "0o__1" => "1", "0o_10" => "8", "-0o_1" => "-1", "0o_0_1" => "1",
+    "0b_1" => "1", "0b__1" => "1", "0b_10" => "2", "-0b_1" => "-1",
+    "0b_0_1" => "1", "0__1e0" => "1", "0__1E0" => "1"
+  }.freeze
+
   # mermaid gates each field on JS truthiness after js-yaml resolves the
   # scalar, so these are never set and the field falls back. Every value
   # below was driven through mmdc 11.12.0, not recalled.
@@ -577,15 +586,10 @@ RSpec.describe Sirena::Parser::Kanban do
       expect(ids).to eq(["root"])
     end
 
-    it "still refuses trailing free text after a bare id" do
-      # The reason bare_item stays an identifier: mermaid accepts a bare
-      # label with spaces, and widening to match would swallow the
-      # unsupported constructs above as literal labels.
-      aggregate_failures do
-        ["root trailing", "root two more words"].each do |line|
-          expect { parser.parse("kanban\n  #{line}\n") }
-            .to raise_error(Sirena::Parser::ParseError), line
-        end
+    ["root trailing", "root two more words"].each do |line|
+      it "refuses trailing free text in #{line.inspect}" do
+        expect { parser.parse("kanban\n  #{line}\n") }
+          .to raise_error(Sirena::Parser::ParseError), line
       end
     end
   end
@@ -626,12 +630,19 @@ RSpec.describe Sirena::Parser::Kanban do
       "022" => "kanban\n    root\n      theId(child1)\n",
       "023" => "kanban\nroot\n      theId(child1)\n",
     }.each do |corpus_id, source|
-      it "accepts the shaped child (corpus #{corpus_id})" do
-        diagram = parser.parse(source)
-        aggregate_failures do
+      describe "the shaped child in corpus #{corpus_id}" do
+        let(:diagram) { parser.parse(source) }
+        let(:card) { diagram.columns.first.cards.first }
+
+        it "keeps the root column id" do
           expect(diagram.columns.map(&:id)).to eq(["root"]), corpus_id
-          card = diagram.columns.first.cards.first
+        end
+
+        it "keeps the shaped child id" do
           expect(card.id).to eq("theId"), corpus_id
+        end
+
+        it "keeps the shaped child text" do
           expect(card.text).to eq("child1"), corpus_id
         end
       end
@@ -880,15 +891,28 @@ RSpec.describe Sirena::Parser::Kanban do
         .to eq([["root"], "String containing []"])
     end
 
-    it "keeps a literal bracket pair and a literal paren pair on a column " \
-       "and its child (corpus 029)" do
-      diagram = parser.parse(
-        "kanban\n    root[\"String containing []\"]\n      child1[\"String " \
-        "containing ()\"]",
-      )
-      column = diagram.columns.first
-      expect([column.title, column.cards.map(&:id), column.cards.first.text])
-        .to eq(["String containing []", ["child1"], "String containing ()"])
+    describe "keeps a literal bracket pair and a literal paren pair " \
+             "on a column and its child (corpus 029)" do
+      let(:diagram) do
+        parser.parse(
+          "kanban\n    root[\"String containing []\"]\n      child1[\"String " \
+          "containing ()\"]",
+        )
+      end
+
+      let(:column) do
+        diagram.columns.first
+      end
+
+      before do
+        diagram
+        column
+      end
+
+      it "preserves property 1" do
+        expect([column.title, column.cards.map(&:id), column.cards.first.text])
+          .to eq(["String containing []", ["child1"], "String containing ()"])
+      end
     end
   end
 
@@ -1503,14 +1527,19 @@ RSpec.describe Sirena::Parser::Kanban do
       expect(diagram.columns.first.classes).to eq(%w[m-4 p-8])
     end
 
-    it "splits classes on whitespace regardless of $; " \
-       "(Ruby global field separator)" do
-      old_fs = $;
-      $; = ","
-      diagram = parser.parse("kanban\n    root[The root]\n    :::m-4 p-8\n")
-      expect(diagram.columns.first.classes).to eq(%w[m-4 p-8])
-    ensure
-      $; = old_fs
+    describe "class splitting with a changed Ruby field separator" do
+      around do |test|
+        old_fs = $;
+        $; = ","
+        test.run
+      ensure
+        $; = old_fs
+      end
+
+      it "splits classes on whitespace regardless of $;" do
+        diagram = parser.parse("kanban\n    root[The root]\n    :::m-4 p-8\n")
+        expect(diagram.columns.first.classes).to eq(%w[m-4 p-8])
+      end
     end
 
     context "when accepts a class line followed by " \
@@ -1547,16 +1576,38 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
-    it "applies a class line to a card, " \
-       "and a later card stays unaffected (corpus 030)", :aggregate_failures do
-      source = "kanban\n  root(Root)\n    Child(Child)\n    " \
-               ":::hot\n      a(a)\n      b[New Stuff]\n"
-      diagram = parser.parse(source)
-      cards = diagram.columns.first.cards.to_h { |c| [c.id, c] }
+    describe "applies a class line to a card, and a later card stays " \
+             "unaffected (corpus 030)", :aggregate_failures do
+      let(:source) do
+        "kanban\n  root(Root)\n    Child(Child)\n    " \
+          ":::hot\n      a(a)\n      b[New Stuff]\n"
+      end
 
-      expect(cards.fetch("Child").classes).to eq(["hot"])
-      expect(cards.fetch("a").classes).to eq([])
-      expect(cards.fetch("b").classes).to eq([])
+      let(:diagram) do
+        parser.parse(source)
+      end
+
+      let(:cards) do
+        diagram.columns.first.cards.to_h { |c| [c.id, c] }
+      end
+
+      before do
+        source
+        diagram
+        cards
+      end
+
+      it "preserves property 1" do
+        expect(cards.fetch("Child").classes).to eq(["hot"])
+      end
+
+      it "preserves property 2" do
+        expect(cards.fetch("a").classes).to eq([])
+      end
+
+      it "preserves property 3" do
+        expect(cards.fetch("b").classes).to eq([])
+      end
     end
 
     it "strips leading/trailing space around the class list " \
@@ -1689,7 +1740,8 @@ RSpec.describe Sirena::Parser::Kanban do
     # label, carrying metadata.
     let(:source) { "kanban\n  col[Todo]\n    child1@{ assigned: knsv }\n" }
 
-    it "titles the card by its id and keeps the metadata", :aggregate_failures do
+    it "titles the card by its id and keeps the metadata",
+       :aggregate_failures do
       card = parser.parse(source).columns.first.cards.first
       expect(card.id).to eq("child1")
       expect(card.text).to eq("child1")
@@ -1711,12 +1763,10 @@ RSpec.describe Sirena::Parser::Kanban do
         .to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "refuses it whatever the case" do
-      aggregate_failures do
-        %w[Kanban KANBAN KaNbAn kAnBaN kanBan kanbaN].each do |word|
-          expect { parser.parse("kanban\n  root[Root]\n  #{word}\n") }
-            .to raise_error(Sirena::Parser::ParseError), word
-        end
+    %w[Kanban KANBAN KaNbAn kAnBaN kanBan kanbaN].each do |word|
+      it "refuses the bare kanban keyword spelled #{word}" do
+        expect { parser.parse("kanban\n  root[Root]\n  #{word}\n") }
+          .to raise_error(Sirena::Parser::ParseError), word
       end
     end
 
@@ -1753,16 +1803,23 @@ RSpec.describe Sirena::Parser::Kanban do
   end
 
   context "with a metadata value mermaid resolves as falsy" do
-    it "falls back for every spelling of zero" do
-      # The signed forms carry the leading-sign branch of each radix
-      # pattern, and `0e-0` the exponent's - the only sign the float
-      # reaches, since `unquoted_value` admits `-` but not `+`.
-      aggregate_failures do
-        %w[0 -0 00 000 -00 0x0 0o0 0b0 0e0 0E0
-           -0x0 -0o0 -0b0 0e-0].each do |zero|
+    %w[0 -0 00 000 -00 0x0 0o0 0b0 0e0 0E0 -0x0 -0o0 -0b0 0e-0
+       0.0 -0.0 +0 .nan ~]
+      .each do |zero|
+        it "falls back for the falsy scalar #{zero}" do
           expect(title_for(zero)).to eq("A"), "expected #{zero} to be dropped"
         end
       end
+
+    let(:truthy_card) do
+      parsed_card(
+        "kanban\n  col[C]\n    k[K]@{ assigned: knsv, ticket: MC-1, " \
+        "icon: star, priority: High, label: 'Fix' }\n",
+      )
+    end
+    let(:falsy_card) do
+      parsed_card("kanban\n  col[C]\n    k[K]@{ assigned: 0, ticket: false, " \
+                  "icon: null, priority: 0x0, label: '' }\n")
     end
 
     it "falls back for false and null " \
@@ -1813,19 +1870,10 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
-    it "reads the values a dot, plus or tilde makes" do
-      # These three characters are new in the unquoted charset. Before
-      # them the whole line raised a parse error, where mmdc 11.12.0 draws
-      # the node. js-yaml resolves the first five falsy, so the title
-      # falls back, and keeps the rest as numbers.
-      aggregate_failures do
-        %w[0.0 -0.0 +0 .nan ~].each do |zero|
-          expect(title_for(zero)).to eq("A"), "expected #{zero} to be dropped"
-        end
-        { "1.5" => "1.5", "0.1" => "0.1", "+7" => "7" }.each do |text, drawn|
-          message = "expected #{text} to draw #{drawn}"
-          expect(title_for(text)).to eq(drawn), message
-        end
+    { "1.5" => "1.5", "0.1" => "0.1", "+7" => "7" }.each do |text, drawn|
+      it "draws the numeric dot or plus value #{text}" do
+        expect(title_for(text)).to eq(drawn),
+                                   "expected #{text} to draw #{drawn}"
       end
     end
 
@@ -1840,33 +1888,10 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
-    it "strips the separators before converting, " \
-       "so a non-zero payload survives" do
-      # The other half of the separator rule, and the only half that can
-      # tell stripping from tolerating. Every value in the drop example
-      # above has a ZERO payload, where Ruby's own `to_i` already reaches
-      # zero whether or not the separators are removed first - `0x_0` and
-      # `0__0` are dropped either way. Only a NON-zero payload behind a
-      # separator distinguishes them: without the strip, `to_i(16)` reads
-      # `0x_1` as 0 and `to_i` truncates `0__1` at the double separator,
-      # and both would be dropped where mermaid draws a label.
-      #
-      # mmdc 11.12.0 resolves each of these to a truthy number and keeps
-      # the label row, drawn as the number: `0x_1` is 1, `0x_a` 10, `0x_10`
-      # 16, `-0x_1` -1.
-      drawn = {
-        "0__1" => "1", "0___1" => "1", "-0__1" => "-1", "00__01" => "1",
-        "0__10" => "10", "0x_1" => "1", "0x__1" => "1", "0x_10" => "16",
-        "0x_a" => "10", "-0x_1" => "-1", "0x_0_1" => "1", "0o_1" => "1",
-        "0o__1" => "1", "0o_10" => "8", "-0o_1" => "-1", "0o_0_1" => "1",
-        "0b_1" => "1", "0b__1" => "1", "0b_10" => "2", "-0b_1" => "-1",
-        "0b_0_1" => "1", "0__1e0" => "1", "0__1E0" => "1"
-      }
-      aggregate_failures do
-        drawn.each do |text, expected|
-          message = "expected #{text} to draw #{expected}"
-          expect(title_for(text)).to eq(expected), message
-        end
+    KanbanSpecHelpers::SEPARATED_NONZERO_VALUES.each do |text, expected|
+      it "keeps the non-zero payload in #{text}" do
+        expect(title_for(text)).to eq(expected),
+                                   "expected #{text} to draw #{expected}"
       end
     end
 
@@ -1912,27 +1937,16 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
-    it "drops a falsy value on each of the five gated fields, " \
-       "and keeps a truthy one" do
-      # The positive control matters: KanbanCard#metadata is a `.compact`
-      # over five attributes, so an empty hash cannot by itself tell
-      # "dropped" from "never parsed". The truthy row proves the fields do
-      # land when mermaid would set them.
-      falsy = "kanban\n  col[C]\n    k[K]@{ assigned: 0, ticket: false, " \
-              "icon: null, priority: 0x0, label: '' }\n"
-      truthy = "kanban\n  col[C]\n    k[K]@{ assigned: knsv, ticket: MC-1, " \
-               "icon: star, priority: High, label: 'Fix' }\n"
+    def truthy_card_metadata
+      { assigned: "knsv", ticket: "MC-1", icon: "star",
+        priority: "High", label: "Fix" }
+    end
 
+    it "drops falsy gated fields and keeps all five truthy fields" do
       aggregate_failures do
-        card = parser.parse(falsy).columns.first.cards.first
-        expect(card.metadata).to eq({})
-        expect(card.text).to eq("K")
-
-        kept = parser.parse(truthy).columns.first.cards.first
-        expect(kept.metadata).to eq(
-          assigned: "knsv", ticket: "MC-1", icon: "star",
-          priority: "High", label: "Fix"
-        )
+        expect(falsy_card.metadata).to eq({})
+        expect(falsy_card.text).to eq("K")
+        expect(truthy_card.metadata).to eq(truthy_card_metadata)
       end
     end
   end
@@ -2061,21 +2075,17 @@ RSpec.describe Sirena::Parser::Kanban do
   # closing delimiter and the parse failed outright - not a symptom, a
   # straight parse failure on legitimate Unicode input.
   context "with a multibyte label, icon or class body" do
-    it "parses a label, icon and class body " \
-       "containing multibyte characters", :aggregate_failures do
-      label = parser.parse("kanban\n  id1[Todo]\n    root[café]\n")
-        .columns.first.cards.first
-      expect(label.text).to eq("café")
-
-      icon = parser.parse(
-        "kanban\n  id1[Todo]\n    root[Task]\n    ::icon(fa-café)\n",
-      ).columns.first.cards.first
-      expect(icon.icon).to eq("fa-café")
-
-      classed = parser.parse(
-        "kanban\n  id1[Todo]\n    root[Task]\n    :::café-class\n",
-      ).columns.first.cards.first
-      expect(classed.classes).to eq(["café-class"])
+    {
+      text: ["kanban\n  id1[Todo]\n    root[café]\n", "café"],
+      icon: ["kanban\n  id1[Todo]\n    root[Task]\n    ::icon(fa-café)\n",
+             "fa-café"],
+      classes: ["kanban\n  id1[Todo]\n    root[Task]\n    :::café-class\n",
+                ["café-class"]],
+    }.each do |field, (source, expected)|
+      it "parses a multibyte #{field} body without overconsuming" do
+        card = parsed_card(source)
+        expect(card.public_send(field)).to eq(expected)
+      end
     end
   end
 

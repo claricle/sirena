@@ -3,47 +3,11 @@ cop: RSpec/MultipleExpectations
 rows:
 - file: spec/contract_spec.rb
   count: 1
-- file: spec/fixtures_spec.rb
-  count: 4
-- file: spec/sirena/cli_spec.rb
-  count: 6
-- file: spec/sirena/commands/batch_spec.rb
-  count: 3
 - file: spec/sirena/commands/render_spec.rb
   count: 1
 - file: spec/sirena/component_require_spec.rb
   count: 1
-- file: spec/sirena/determinism_spec.rb
-  count: 2
-- file: spec/sirena/diagram/er_diagram_spec.rb
-  count: 1
-- file: spec/sirena/engine_preamble_spec.rb
-  count: 1
-- file: spec/sirena/engine_spec.rb
-  count: 6
-- file: spec/sirena/error_report_spec.rb
-  count: 1
 - file: spec/sirena/error_taxonomy_spec.rb
   count: 2
-- file: spec/sirena/exhaustion_errors_spec.rb
-  count: 2
-- file: spec/sirena/markdown_text_spec.rb
-  count: 12
-- file: spec/sirena/parser/er_diagram_spec.rb
-  count: 6
-- file: spec/sirena/parser/flowchart_node_metadata_spec.rb
-  count: 4
-- file: spec/sirena/parser/flowchart_parser_edge_id_spec.rb
-  count: 1
-- file: spec/sirena/parser/gantt_spec.rb
-  count: 4
-- file: spec/sirena/parser/greedy_run_spec.rb
-  count: 3
-- file: spec/sirena/parser/requirement_spec.rb
-  count: 1
-- file: spec/sirena/theme/color_palette_fallback_keys_spec.rb
-  count: 1
 - file: spec/spec_helper_corpus_guard_spec.rb
   count: 1
-- file: spec/svg_conformance_spec.rb
-  count: 6

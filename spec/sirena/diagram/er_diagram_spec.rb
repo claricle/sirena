@@ -155,7 +155,8 @@ RSpec.describe Sirena::Diagram::ErDiagram do
       expect(diagram.class_defs).to eq("a" => "fill:red")
     end
 
-    it "accumulates a repeated declaration for the same name, not replaces it" do
+    it "accumulates a repeated declaration for the same name, " \
+       "not replaces it" do
       # Mermaid's own db stores every classDef for one name as an array in
       # source order rather than overwriting; verified against its parser.
       # Comma-joining reproduces that, since parse_declaration already
@@ -177,133 +178,139 @@ RSpec.describe Sirena::Diagram::ErDiagram do
   describe "#identifying_relationships" do
     let(:diagram) { described_class.new }
 
-    it "returns only identifying relationships" do
-      relationships = diagram_with_mixed_relationships.identifying_relationships
+    let(:relationships) do
+      diagram_with_mixed_relationships.identifying_relationships
+    end
+
+    it "keeps exactly one identifying relationship" do
       expect(relationships.length).to eq(1)
+    end
+
+    it "keeps the identifying relationship type" do
       expect(relationships.first.relationship_type).to eq("identifying")
     end
   end
-end
 
-RSpec.describe Sirena::Diagram::ErEntity do
-  def entity_with(attributes)
-    described_class.new(
-      id: "CUSTOMER", name: "CUSTOMER", attributes: attributes,
-    )
-  end
-
-  describe "#valid?" do
-    it "returns true for entity with id and name" do
-      entity = described_class.new(id: "CUSTOMER", name: "CUSTOMER")
-      expect(entity.valid?).to be true
-    end
-
-    it "returns false for entity without id" do
-      entity = described_class.new(name: "CUSTOMER")
-      expect(entity.valid?).to be false
-    end
-
-    it "returns false for entity without name" do
-      entity = described_class.new(id: "CUSTOMER")
-      expect(entity.valid?).to be false
-    end
-
-    it "returns false when the attribute collection is missing" do
-      entity = entity_with(nil)
-
-      expect(entity.valid?).to be false
-    end
-
-    it "returns false when an attribute member is nil" do
-      entity = entity_with([nil])
-
-      expect(entity.valid?).to be false
-    end
-  end
-end
-
-RSpec.describe Sirena::Diagram::ErAttribute do
-  describe "#valid?" do
-    it "returns true for attribute with name" do
-      attribute = described_class.new(name: "customer_id")
-      expect(attribute.valid?).to be true
-    end
-
-    it "returns false for attribute without name" do
-      attribute = described_class.new
-      expect(attribute.valid?).to be false
-    end
-  end
-
-  describe "#primary_key?" do
-    it "returns true when key_type is PK" do
-      attribute = described_class.new(
-        name: "id",
-        key_type: "PK",
+  describe Sirena::Diagram::ErEntity do
+    def entity_with(attributes)
+      described_class.new(
+        id: "CUSTOMER", name: "CUSTOMER", attributes: attributes,
       )
-      expect(attribute.primary_key?).to be true
     end
 
-    it "returns false when key_type is not PK" do
-      attribute = described_class.new(name: "name")
-      expect(attribute.primary_key?).to be false
-    end
-  end
+    describe "#valid?" do
+      it "returns true for entity with id and name" do
+        entity = described_class.new(id: "CUSTOMER", name: "CUSTOMER")
+        expect(entity.valid?).to be true
+      end
 
-  describe "#foreign_key?" do
-    it "returns true when key_type is FK" do
-      attribute = described_class.new(
-        name: "customer_id",
-        key_type: "FK",
-      )
-      expect(attribute.foreign_key?).to be true
-    end
+      it "returns false for entity without id" do
+        entity = described_class.new(name: "CUSTOMER")
+        expect(entity.valid?).to be false
+      end
 
-    it "returns false when key_type is not FK" do
-      attribute = described_class.new(name: "name")
-      expect(attribute.foreign_key?).to be false
-    end
-  end
-end
+      it "returns false for entity without name" do
+        entity = described_class.new(id: "CUSTOMER")
+        expect(entity.valid?).to be false
+      end
 
-RSpec.describe Sirena::Diagram::ErRelationship do
-  def relationship(**attributes)
-    defaults = {
-      from_id: "CUSTOMER", to_id: "ORDER",
-      relationship_type: "non-identifying",
-      cardinality_from: "one", cardinality_to: "zero_or_more"
-    }
-    described_class.new(**defaults, **attributes)
-  end
+      it "returns false when the attribute collection is missing" do
+        entity = entity_with(nil)
 
-  describe "#valid?" do
-    it "returns true for relationship with all required fields" do
-      expect(relationship.valid?).to be true
-    end
+        expect(entity.valid?).to be false
+      end
 
-    it "returns false without from_id" do
-      expect(relationship(from_id: nil).valid?).to be false
-    end
+      it "returns false when an attribute member is nil" do
+        entity = entity_with([nil])
 
-    it "returns false without cardinality_from" do
-      expect(relationship(cardinality_from: nil).valid?).to be false
+        expect(entity.valid?).to be false
+      end
     end
   end
 
-  describe "#identifying?" do
-    it "returns true for identifying type" do
-      identifying = relationship(relationship_type: "identifying")
-      expect(identifying.identifying?).to be true
+  describe Sirena::Diagram::ErAttribute do
+    describe "#valid?" do
+      it "returns true for attribute with name" do
+        attribute = described_class.new(name: "customer_id")
+        expect(attribute.valid?).to be true
+      end
+
+      it "returns false for attribute without name" do
+        attribute = described_class.new
+        expect(attribute.valid?).to be false
+      end
     end
 
-    it "returns false for other types" do
-      expect(relationship.identifying?).to be false
+    describe "#primary_key?" do
+      it "returns true when key_type is PK" do
+        attribute = described_class.new(
+          name: "id",
+          key_type: "PK",
+        )
+        expect(attribute.primary_key?).to be true
+      end
+
+      it "returns false when key_type is not PK" do
+        attribute = described_class.new(name: "name")
+        expect(attribute.primary_key?).to be false
+      end
+    end
+
+    describe "#foreign_key?" do
+      it "returns true when key_type is FK" do
+        attribute = described_class.new(
+          name: "customer_id",
+          key_type: "FK",
+        )
+        expect(attribute.foreign_key?).to be true
+      end
+
+      it "returns false when key_type is not FK" do
+        attribute = described_class.new(name: "name")
+        expect(attribute.foreign_key?).to be false
+      end
     end
   end
 
-  describe "#non_identifying?" do
-    it "returns true for non-identifying type" do
-      expect(relationship.non_identifying?).to be true
+  describe Sirena::Diagram::ErRelationship do
+    def relationship(**attributes)
+      defaults = {
+        from_id: "CUSTOMER", to_id: "ORDER",
+        relationship_type: "non-identifying",
+        cardinality_from: "one", cardinality_to: "zero_or_more"
+      }
+      described_class.new(**defaults, **attributes)
+    end
+
+    describe "#valid?" do
+      it "returns true for relationship with all required fields" do
+        expect(relationship.valid?).to be true
+      end
+
+      it "returns false without from_id" do
+        expect(relationship(from_id: nil).valid?).to be false
+      end
+
+      it "returns false without cardinality_from" do
+        expect(relationship(cardinality_from: nil).valid?).to be false
+      end
+    end
+
+    describe "#identifying?" do
+      it "returns true for identifying type" do
+        identifying = relationship(relationship_type: "identifying")
+        expect(identifying.identifying?).to be true
+      end
+
+      it "returns false for other types" do
+        expect(relationship.identifying?).to be false
+      end
+    end
+
+    describe "#non_identifying?" do
+      it "returns true for non-identifying type" do
+        expect(relationship.non_identifying?).to be true
+      end
     end
   end
 end

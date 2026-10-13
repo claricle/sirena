@@ -1,15 +1,5 @@
 ---
 cop: Metrics/ParameterLists
 rows:
-- file: lib/sirena/layout/git_graph.rb
-  count: 2
-- file: lib/sirena/layout/sequence/actor_gaps.rb
-  count: 1
-- file: lib/sirena/layout/sequence/message_rows.rb
-  count: 1
-- file: scripts/extract_mermaid_tests.rb
-  count: 2
-- file: scripts/mermaid_fuzz.rb
-  count: 1
 - file: spec/support/layout_parity/git_graph_recognizer.rb
   count: 1

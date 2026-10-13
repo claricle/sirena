@@ -64,23 +64,26 @@ def render(body)
   Dir.mktmpdir do |dir|
     input = File.join(dir, "probe.mmd")
     output = File.join(dir, "probe.svg")
-    # The seed pins the hand-drawn renderer, which is the one that would
-    # group names by noise rather than by geometry. Measured: the default
-    # look is already deterministic, so this only bites if the probe is
-    # ever run with `look: handDrawn`.
-    File.write(input, "%%{init: {\"handDrawnSeed\": 1}}%%\n" \
-                      "flowchart TD\n  #{body}\n")
+    write_shape_probe(input, body)
     _, _, status = Open3.capture3("mmdc", "-i", input, "-o", output)
     return nil unless status.success?
 
-    svg = File.read(output)
-    # mmdc exits 0 while emitting an SVG error page, so the exit status
-    # alone let a rejected shape name into the table with a fingerprint
-    # taken from the error drawing.
-    return nil if svg[/<svg[^>]*aria-roledescription="error"/]
-
-    fingerprint(svg)
+    generated_fingerprint(output)
   end
+end
+
+# Pin the hand-drawn renderer's seed as well as the default look.
+def write_shape_probe(input, body)
+  File.write(input, "%%{init: {\"handDrawnSeed\": 1}}%%\n" \
+                    "flowchart TD\n  #{body}\n")
+end
+
+def generated_fingerprint(output)
+  svg = File.read(output)
+  # A successful exit can still produce Mermaid's rejection drawing.
+  return nil if svg[/<svg[^>]*aria-roledescription="error"/]
+
+  fingerprint(svg)
 end
 
 # The node's own drawing, reduced to its element kinds, its path command

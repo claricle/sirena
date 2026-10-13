@@ -192,11 +192,17 @@ module Sirena
         index = RISK_LEVELS.index(risk.downcase)
         return theme_color(:requirement_unknown_risk_border) unless index
 
+        risk_palette_colors.palette(:requirement_risk, index)
+      end
+
+      private
+
+      def risk_palette_colors
         colors = theme&.colors
         palette = colors&.requirement_risk_palette
         colors = Theme::Registry.get(:default).colors if palette.nil? ||
           palette.empty?
-        colors.palette(:requirement_risk, index)
+        colors
       end
     end
   end

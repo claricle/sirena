@@ -16,6 +16,14 @@ RSpec.describe Sirena::Theme::Completion do
     Sirena::Theme.new(name: "mine", colors: { background: "#101010" })
   end
   let(:completed) { described_class.call(partial) }
+  let(:named_palette_keys) do
+    %i[
+      mindmap treemap quadrant requirement_risk user_journey_actor
+      user_journey_section
+    ].map do |name|
+      :"#{name}_palette"
+    end
+  end
 
   it "keeps the colours the theme sets" do
     expect([completed.name, completed.colors.background])
@@ -30,15 +38,8 @@ RSpec.describe Sirena::Theme::Completion do
   end
 
   it "completes every named diagram palette" do
-    keys = %i[
-      mindmap treemap quadrant requirement_risk user_journey_actor
-      user_journey_section
-    ].map do |name|
-      :"#{name}_palette"
-    end
-
-    expect(keys.map { |key| completed.colors.public_send(key) })
-      .to eq(keys.map { |key| default.colors.public_send(key) })
+    expect(named_palette_keys.map { |key| completed.colors.public_send(key) })
+      .to eq(named_palette_keys.map { |key| default.colors.public_send(key) })
   end
 
   it "leaves unset single colours unpainted" do

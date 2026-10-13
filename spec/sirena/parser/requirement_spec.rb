@@ -430,17 +430,25 @@ RSpec.describe Sirena::Parser::Requirement do
       "an ideographic space" => "\u3000",
       "a zero-width no-break space" => "\uFEFF",
     }.each do |label, gap|
-      it "accepts #{label} in each accessibility opener" do
-        source = "requirementDiagram\n" \
-                 "accTitle#{gap}: Title\n" \
-                 "accDescr#{gap}: Description\n"
-        result = parser.parse(source)
+      describe "accepts #{label} in each accessibility opener" do
+        let(:line_result) do
+          parser.parse("requirementDiagram\n" \
+                       "accTitle#{gap}: Title\n" \
+                       "accDescr#{gap}: Description\n")
+        end
 
-        expect(result.acc_title).to eq("Title")
-        expect(result.acc_description).to eq("Description")
+        it "reads the title" do
+          expect(line_result.acc_title).to eq("Title")
+        end
 
-        result = parser.parse("requirementDiagram\naccDescr#{gap}{Block}\n")
-        expect(result.acc_description).to eq("Block")
+        it "reads the line description" do
+          expect(line_result.acc_description).to eq("Description")
+        end
+
+        it "reads the block description" do
+          result = parser.parse("requirementDiagram\naccDescr#{gap}{Block}\n")
+          expect(result.acc_description).to eq("Block")
+        end
       end
     end
 
@@ -450,14 +458,13 @@ RSpec.describe Sirena::Parser::Requirement do
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "trims JavaScript whitespace from every accessibility value form" do
-      [
-        ["accTitle: Title\uFEFF", :acc_title, "Title"],
-        ["accDescr: Description\uFEFF", :acc_description, "Description"],
-        ["accDescr {Block\uFEFF}", :acc_description, "Block"],
-      ].each do |directive, attribute, expected|
+    [
+      ["accTitle: Title\uFEFF", :acc_title, "Title"],
+      ["accDescr: Description\uFEFF", :acc_description, "Description"],
+      ["accDescr {Block\uFEFF}", :acc_description, "Block"],
+    ].each do |directive, attribute, expected|
+      it "trims the JavaScript whitespace from #{directive.inspect}" do
         result = parser.parse("requirementDiagram\n#{directive}\n")
-
         expect(result.public_send(attribute)).to eq(expected)
       end
     end

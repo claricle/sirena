@@ -30,10 +30,14 @@ RSpec.describe Sirena::Theme, :aggregate_failures do
   end
 
   describe ".load" do
+    let(:default_theme_path) do
+      File.join(__dir__, "..", "..", "lib", "sirena",
+                "theme", "builtin", "default.yml")
+    end
+    let(:default_theme) { described_class.load(default_theme_path) }
+
     it "loads theme from YAML file" do
-      theme_path = File.join(__dir__, "..", "..", "lib", "sirena",
-                             "theme", "builtin", "default.yml")
-      theme = described_class.load(theme_path)
+      theme = default_theme
 
       expect(theme).to be_a(described_class)
       expect(theme.name).to eq("default")
@@ -41,9 +45,7 @@ RSpec.describe Sirena::Theme, :aggregate_failures do
     end
 
     it "loads colors from YAML" do
-      theme_path = File.join(__dir__, "..", "..", "lib", "sirena",
-                             "theme", "builtin", "default.yml")
-      theme = described_class.load(theme_path)
+      theme = default_theme
 
       expect(theme.colors).to be_a(Sirena::Theme::ColorPalette)
       expect(theme.colors.node_fill).to eq("#ffffff")
@@ -51,9 +53,7 @@ RSpec.describe Sirena::Theme, :aggregate_failures do
     end
 
     it "loads typography from YAML" do
-      theme_path = File.join(__dir__, "..", "..", "lib", "sirena",
-                             "theme", "builtin", "default.yml")
-      theme = described_class.load(theme_path)
+      theme = default_theme
 
       expect(theme.typography).to be_a(Sirena::Theme::Typography)
       expect(theme.typography.font_family).to include("Arial")

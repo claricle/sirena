@@ -68,14 +68,7 @@ end
 
 # @return [Symbol] :accepts, :rejects, or :error when mmdc could not be run
 def mermaid_verdict(source)
-  result = Dir.mktmpdir do |dir|
-    input = File.join(dir, "probe.mmd")
-    File.write(input, source)
-
-    MmdcOracle.verdict(input) do |probe, output|
-      HardenedMmdc.run_mmdc(probe, output)
-    end
-  end
+  result = measured_mermaid_result(source)
 
   warn "  mmdc: #{result.diagnostic}" if result.verdict == :error
   result.verdict
@@ -85,6 +78,17 @@ rescue SystemCallError => e
   # probe we could not measure, not a reason to abandon the run.
   warn "  mmdc: #{e.message}"
   :error
+end
+
+def measured_mermaid_result(source)
+  Dir.mktmpdir do |dir|
+    input = File.join(dir, "probe.mmd")
+    File.write(input, source)
+
+    MmdcOracle.verdict(input) do |probe, output|
+      HardenedMmdc.run_mmdc(probe, output)
+    end
+  end
 end
 
 # Records are kept byte for byte — do not strip them, that changes the
@@ -112,30 +116,41 @@ def probes(paths)
 end
 
 def report(verdicts, only_gaps:)
-  shown = verdicts.reject { |v| v.kind == :agree }
-  shown = shown.select { |v| v.kind == :gap } if only_gaps
+  shown_verdicts(verdicts, only_gaps).each { |verdict| print_verdict(verdict) }
+  print_verdict_summary(verdicts)
+end
 
-  shown.each do |verdict|
-    label = LABELS.fetch(verdict.kind)
-    puts format(
-      "%<label>-16s %<source>s",
-      label: label, source: one_line(verdict.source),
-    )
-  end
+def shown_verdicts(verdicts, only_gaps)
+  shown = verdicts.reject { |verdict| verdict.kind == :agree }
+  only_gaps ? shown.select { |verdict| verdict.kind == :gap } : shown
+end
 
+def print_verdict(verdict)
+  puts format(
+    "%<label>-16s %<source>s",
+    label: LABELS.fetch(verdict.kind), source: one_line(verdict.source),
+  )
+end
+
+def print_verdict_summary(verdicts)
   tally = verdicts.group_by(&:kind).transform_values(&:size)
   puts
-  summary_format = "%<total>d probes: %<agree>d agree, %<gaps>d gaps, " \
-                   "%<over_accepted>d over-accepted, " \
-                   "%<mmdc_failures>d mmdc failures"
-  puts format(
-    summary_format,
+  puts format(verdict_summary_format, **verdict_summary_counts(verdicts, tally))
+end
+
+def verdict_summary_format
+  "%<total>d probes: %<agree>d agree, %<gaps>d gaps, " \
+    "%<over_accepted>d over-accepted, %<mmdc_failures>d mmdc failures"
+end
+
+def verdict_summary_counts(verdicts, tally)
+  {
     total: verdicts.size,
     agree: tally[:agree].to_i,
     gaps: tally[:gap].to_i,
     over_accepted: tally[:over_acceptance].to_i,
     mmdc_failures: tally[:infrastructure].to_i,
-  )
+  }
 end
 
 # Leading whitespace is often the whole point of a probe — the indented

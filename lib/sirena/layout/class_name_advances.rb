@@ -2,7 +2,8 @@
 
 module Sirena
   module Layout
-    # Advances, in per-mille em, of the ASCII letters, digits and - _ < > of mmdc's
+    # Advances, in per-mille em, of the ASCII letters, digits and - _ < >
+    # of mmdc's
     # bold class names (Trebuchet MS Bold). Fitted so that the width of every
     # reference class-name label in spec/fixtures_mermaid stays within half
     # a pixel; any other character is the regular face widened by

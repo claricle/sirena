@@ -63,7 +63,9 @@ RSpec.describe SpecSupport::LayoutParity::ClassDiagramRecognizer do
   end
 
   it "recognizes a reference id carrying the my-svg- diagram prefix" do
-    prefixed = ordinal_reference.sub('id="classId-order', 'id="my-svg-classId-order')
+    prefixed = ordinal_reference.sub(
+      'id="classId-order', 'id="my-svg-classId-order'
+    )
     expect(recognized(prefixed)).to eq([ordinal_expected.first])
   end
 

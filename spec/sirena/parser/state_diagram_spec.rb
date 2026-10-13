@@ -313,29 +313,58 @@ RSpec.describe Sirena::Parser::StateDiagram do
   # One example per corpus case the statement form was added for. Every
   # claim about mermaid below was measured against mmdc 11.12.0.
   describe 'state "Label" as Id', :aggregate_failures do
-    it "names and labels a state (statediagram_v2_spec-2d12b6d7)" do
-      diagram = corpus(
-        "state_diagram/statediagram_v2_spec-2d12b6d7.mmd",
-      )
+    describe "names and labels a state (statediagram_v2_spec-2d12b6d7)" do
+      let(:diagram) do
+        corpus(
+          "state_diagram/statediagram_v2_spec-2d12b6d7.mmd",
+        )
+      end
 
-      expect(diagram.find_state("NotShooting").label)
-        .to eq("Not Shooting State")
-      expect(diagram.find_state("Idle").label).to eq("Idle mode")
-      expect(diagram.find_state("Configuring").label)
-        .to eq("Configuring mode")
+      before do
+        diagram
+      end
+
+      it "preserves property 1" do
+        expect(diagram.find_state("NotShooting").label)
+          .to eq("Not Shooting State")
+      end
+
+      it "preserves property 2" do
+        expect(diagram.find_state("Idle").label).to eq("Idle mode")
+      end
+
+      it "preserves property 3" do
+        expect(diagram.find_state("Configuring").label)
+          .to eq("Configuring mode")
+      end
     end
 
-    it "labels a composite carrying a note (statediagram_v2_spec-3249fd2d)" do
-      diagram = corpus(
-        "state_diagram/statediagram_v2_spec-3249fd2d.mmd",
-      )
+    describe "labels a composite carrying a note " \
+             "(statediagram_v2_spec-3249fd2d)" do
+      let(:diagram) do
+        corpus(
+          "state_diagram/statediagram_v2_spec-3249fd2d.mmd",
+        )
+      end
 
-      expect(diagram.find_state("NotShooting").label)
-        .to eq("Not Shooting State")
-      expect(diagram.transitions.map(&:to_id)).to include("NotShooting")
-      expect([diagram.states.map(&:id),
-              diagram.find_state("NotShooting").children.map(&:id)])
-        .to eq([%w[start_1 NotShooting], %w[Idle Configuring start_2]])
+      before do
+        diagram
+      end
+
+      it "preserves property 1" do
+        expect(diagram.find_state("NotShooting").label)
+          .to eq("Not Shooting State")
+      end
+
+      it "preserves property 2" do
+        expect(diagram.transitions.map(&:to_id)).to include("NotShooting")
+      end
+
+      it "preserves property 3" do
+        expect([diagram.states.map(&:id),
+                diagram.find_state("NotShooting").children.map(&:id)])
+          .to eq([%w[start_1 NotShooting], %w[Idle Configuring start_2]])
+      end
     end
 
     # mmdc refuses the reverse order: `state Idle as "Idle mode"` is a
@@ -462,6 +491,11 @@ RSpec.describe Sirena::Parser::StateDiagram do
       end
       let(:diagram) { parser.parse(source) }
 
+      let(:marker_states) do
+        marker_diagram = parser.parse("stateDiagram-v2\nstate  A <<choice>>\n")
+        marker_diagram.states.map { |state| [state.id, state.state_type] }
+      end
+
       it "retains diagram.direction" do
         expect(diagram.direction).to eq("LR")
       end
@@ -480,15 +514,8 @@ RSpec.describe Sirena::Parser::StateDiagram do
         end.to raise_error(Sirena::Parser::ParseError)
       end
 
-      it "retains map" do
-        marker_diagram = parser.parse(
-          "stateDiagram-v2\nstate  A <<choice>>\n",
-        )
-
-        expect(marker_diagram.states.map do |state|
-          [state.id, state.state_type]
-        end)
-          .to eq([["A", "choice"]])
+      it "retains the spaced marker's id and state type" do
+        expect(marker_states).to eq([["A", "choice"]])
       end
     end
   end

@@ -137,21 +137,21 @@ RSpec.describe Sirena::Parser::Flowchart, :aggregate_failures do
     # The same shape with a reference after it, and one with two
     # top-level declarations first. Order permutations, because a rule
     # measured on one order is the defect that produced this example.
-    it "keeps the holder parented however the redeclarations are ordered" do
-      {
-        "top, nested, reference" =>
-          "flowchart TD\nsubgraph b\nX\nend\nsubgraph a\nsubgraph b\n" \
-          "Y\nend\nend\nsubgraph c\nb\nend\n",
-        "top, top, nested" =>
-          "flowchart TD\nsubgraph b\nX\nend\nsubgraph b\nY\nend\n" \
-          "subgraph a\nsubgraph b\nZ\nend\nend\n",
-        "nested, top" =>
-          "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
-          "subgraph b\nY\nend\n",
-      }.each do |order, source|
-        held = boxes(source)
+    {
+      "top, nested, reference" =>
+        "flowchart TD\nsubgraph b\nX\nend\nsubgraph a\nsubgraph b\n" \
+        "Y\nend\nend\nsubgraph c\nb\nend\n",
+      "top, top, nested" =>
+        "flowchart TD\nsubgraph b\nX\nend\nsubgraph b\nY\nend\n" \
+        "subgraph a\nsubgraph b\nZ\nend\nend\n",
+      "nested, top" =>
+        "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
+        "subgraph b\nY\nend\n",
+    }.each do |order, source|
+      describe "holder ownership with #{order}" do
+        let(:held) { boxes(source) }
 
-        aggregate_failures(order) do
+        it "keeps the same drawable holder and parent-child relation" do
           expect(held["b"].parent_id).to eq("a")
           expect(held["b"]).to be_drawable
           expect(held["a"].child_ids).to eq(%w[b])

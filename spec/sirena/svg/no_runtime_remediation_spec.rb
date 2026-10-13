@@ -13,7 +13,7 @@ require "ripper"
 #
 # A structural check rather than a behavioural one, because the failure mode
 # is a call nobody writes a test for.
-REMEDIATION_LIB_ROOT = File.expand_path("../../../lib", __dir__)
+REMEDIATION_LIB_ROOT = SpecSupport::RepositoryPaths.path("lib")
 REMEDIATION_LIB_FILES = Dir.glob(File.join(REMEDIATION_LIB_ROOT, "**",
                                            "*.{rb,rake}")).freeze
 
@@ -78,9 +78,9 @@ RSpec.describe Sirena::Svg do
     end
 
     it "does not declare svg_conform as a runtime dependency" do
-      gemspec = Gem::Specification.load(File.expand_path(
-                                          "../../../sirena.gemspec", __dir__
-                                        ))
+      gemspec = Gem::Specification.load(
+        SpecSupport::RepositoryPaths.path("sirena.gemspec"),
+      )
 
       expect(gemspec.runtime_dependencies.map(&:name))
         .not_to include("svg_conform")

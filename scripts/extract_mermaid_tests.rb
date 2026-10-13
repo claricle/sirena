@@ -4,10 +4,6 @@
 # Comprehensive test extraction from mermaid-js repository
 # Extracts ALL Mermaid diagram test cases for sirena validation
 
-# A task file and its helpers, not library code. The cop wants one
-# class per file, which is right for lib/ and wrong for a script whose
-# helpers exist only to serve it.
-# rubocop:disable Style/OneClassPerFile
 require "fileutils"
 require "json"
 require_relative "corpus_case_identity"
@@ -45,45 +41,59 @@ DIAGRAM_TYPES = {
   zenuml: /^zenuml/i,
 }.freeze
 
-# Test case structure
-class TestCase
-  attr_accessor :name,
-                :diagram_type,
-                :source,
-                :source_file,
-                :line_number,
-                :metadata,
-                :stable_id
-
-  def initialize(name:, type:, source:, file:, line:, metadata: {})
-    @name = name
-    @diagram_type = type
-    @source = source
-    @source_file = file
-    @line_number = line
-    @metadata = metadata
-  end
-
-  # The CorpusCaseIdentity record for this case. The title is the upstream
-  # test name when the extractor found one; the rest are identified by
-  # path and source alone.
-  def identity_record(root:)
-    { type: diagram_type.to_s,
-      upstream_path: source_file.sub(root, ""),
-      title: metadata[:test_name],
-      source: source }
-  end
-
-  def to_mmd_filename
-    safe_name = name.gsub(/[^a-zA-Z0-9_-]/, "_").downcase
-    "#{safe_name}.mmd"
-  end
-end
-
 # naming: :stable writes <type>/<slug>-<hash8>.mmd from CorpusCaseIdentity.
 # :ordinal retains the old NNN_<name>.mmd layout only for migration tooling.
 # Stable IDs are computed in both modes, so a collision fails before any write.
 class MermaidTestExtractor
+  class TestCase
+    attr_accessor :name,
+                  :diagram_type,
+                  :source,
+                  :source_file,
+                  :line_number,
+                  :metadata,
+                  :stable_id
+
+    def initialize(name:, type:, source:, file:, **properties)
+      @name = name
+      @diagram_type = type
+      @source = source
+      @source_file = file
+      @line_number = properties.delete(:line) { missing_line! }
+      @metadata = properties.delete(:metadata) { {} }
+      reject_unknown_properties!(properties)
+    end
+
+    # The CorpusCaseIdentity record for this case. The title is the upstream
+    # test name when the extractor found one; the rest are identified by
+    # path and source alone.
+    def identity_record(root:)
+      { type: diagram_type.to_s,
+        upstream_path: source_file.sub(root, ""),
+        title: metadata[:test_name],
+        source: source }
+    end
+
+    def to_mmd_filename
+      safe_name = name.gsub(/[^a-zA-Z0-9_-]/, "_").downcase
+      "#{safe_name}.mmd"
+    end
+
+    private
+
+    def missing_line!
+      raise ArgumentError, "missing keyword: :line"
+    end
+
+    def reject_unknown_properties!(properties)
+      return if properties.empty?
+
+      keys = properties.keys.map(&:inspect).join(", ")
+      noun = properties.size == 1 ? "keyword" : "keywords"
+      raise ArgumentError, "unknown #{noun}: #{keys}"
+    end
+  end
+
   NAMINGS = %i[ordinal stable].freeze
 
   def initialize(root:, commit_sha:, output_dir: OUTPUT_DIR,
@@ -111,10 +121,7 @@ class MermaidTestExtractor
   end
 
   def extract_all
-    puts "Extracting Mermaid tests from #{@root}"
-    puts "=" * 80
-    puts "Searching for #{DIAGRAM_TYPES.keys.length} diagram types"
-    puts "=" * 80
+    print_extraction_header
 
     extract_cypress_configuration_tests
     extract_cypress_rendering_tests
@@ -130,351 +137,177 @@ class MermaidTestExtractor
 
   private
 
-  # 1. cypress/integration/other/configuration.spec.js - all diagram types
+  def print_extraction_header
+    puts "Extracting Mermaid tests from #{@root}"
+    puts "=" * 80
+    puts "Searching for #{DIAGRAM_TYPES.keys.length} diagram types"
+    puts "=" * 80
+  end
+
   def extract_cypress_configuration_tests
     file = "#{@root}/cypress/integration/other/configuration.spec.js"
     return unless File.exist?(file)
 
     puts "\n[1/7] Extracting from configuration.spec.js..."
-    content = File.read(file)
-
-    # Build regex pattern for all diagram keywords
     keywords = diagram_keywords(escape_pipes: true)
-
-    # Find all backtick diagram blocks
-    content.scan(/`((?:#{keywords})[^`]*)`/mi) do
-      match_pos = $~.begin(0)
-      diagram_src = $1.strip
-      next if diagram_src.length < 5
-
-      type = detect_diagram_type(diagram_src)
-      next if type == :unknown
-
-      add_test(
-        name: "config_#{type}_#{@stats[type]}",
-        type: type,
-        source: diagram_src,
-        file: file,
-        line: content[0...match_pos].count("\n"),
-      )
-      @file_stats[file] += 1
-    end
-
+    count = scan_diagrams(file, /`((?:#{keywords})[^`]*)`/mi,
+                          family: "config", minimum: 5)
+    @file_stats[file] += count
     puts "  Found #{@file_stats[file]} tests"
   end
 
-  # 2. cypress/integration/rendering/*.{js,ts} - all rendering tests
   def extract_cypress_rendering_tests
     puts "\n[2/7] Extracting from cypress/integration/rendering/*.{js,ts}..."
-
-    rendering_glob = "#{@root}/cypress/integration/rendering/" \
-                     "*.{js,ts}"
-    Dir.glob(rendering_glob).each do |file|
-      content = File.read(file)
-      file_count = 0
-
-      # Pattern 1: Backtick strings
-      keywords_pattern = diagram_keywords
-      content.scan(/`((?:#{keywords_pattern})[^`]*)`/mi) do
-        match_pos = $~.begin(0)
-        diagram_src = $1.strip
-        type = detect_diagram_type(diagram_src)
-        next if type == :unknown
-
-        add_test(
-          name: "rendering_#{File.basename(file, '.*')}_#{type}_" \
-                "#{@stats[type]}",
-          type: type,
-          source: diagram_src,
-          file: file,
-          line: content[0...match_pos].count("\n"),
-        )
-        file_count += 1
-      end
-
-      # Pattern 2: Single-quoted strings
-      content.scan(/'((?:#{keywords_pattern})[^']*(?:\n[^']*)*?)'/mi) do
-        match_pos = $~.begin(0)
-        diagram_src = $1.strip
-        type = detect_diagram_type(diagram_src)
-        next if type == :unknown
-
-        add_test(
-          name: "rendering_#{File.basename(file, '.*')}_#{type}_" \
-                "#{@stats[type]}",
-          type: type,
-          source: diagram_src,
-          file: file,
-          line: content[0...match_pos].count("\n"),
-        )
-        file_count += 1
-      end
-
-      @file_stats[file] = file_count
-      if file_count.positive?
-        puts "  #{File.basename(file)}: #{file_count} tests"
-      end
-    end
+    keywords = diagram_keywords
+    patterns = [/`((?:#{keywords})[^`]*)`/mi,
+                /'((?:#{keywords})[^']*(?:\n[^']*)*?)'/mi]
+    extract_files("#{@root}/cypress/integration/rendering/*.{js,ts}",
+                  patterns, family: "rendering")
   end
 
-  # 3. cypress/platform/*.html - all HTML embedded diagrams
   def extract_cypress_platform_tests
     puts "\n[3/7] Extracting from cypress/platform/*.html..."
-
-    Dir.glob("#{@root}/cypress/platform/**/*.html").each do |file|
-      content = File.read(file)
-      file_count = 0
-
-      # Pattern 1: <pre class="mermaid"> blocks
-      content.scan(/<pre\s+class="mermaid"[^>]*>(.*?)<\/pre>/mi) do
-        match_pos = $~.begin(0)
-        diagram_src = $1.strip
-        diagram_src = diagram_src.gsub("&lt;", "<")
-          .gsub("&gt;", ">")
-          .gsub("&amp;", "&")
-        type = detect_diagram_type(diagram_src)
-        next if type == :unknown
-
-        add_test(
-          name: "platform_#{File.basename(file, '.html')}_#{type}_" \
-                "#{@stats[type]}",
-          type: type,
-          source: diagram_src,
-          file: file,
-          line: content[0...match_pos].count("\n"),
-        )
-        file_count += 1
-      end
-
-      # Pattern 2: <div class="mermaid"> blocks
-      content.scan(/<div\s+class="mermaid"[^>]*>(.*?)<\/div>/mi) do
-        match_pos = $~.begin(0)
-        diagram_src = $1.strip
-        diagram_src = diagram_src.gsub("&lt;", "<")
-          .gsub("&gt;", ">")
-          .gsub("&amp;", "&")
-        type = detect_diagram_type(diagram_src)
-        next if type == :unknown
-
-        add_test(
-          name: "platform_#{File.basename(file, '.html')}_#{type}_" \
-                "#{@stats[type]}",
-          type: type,
-          source: diagram_src,
-          file: file,
-          line: content[0...match_pos].count("\n"),
-        )
-        file_count += 1
-      end
-
-      @file_stats[file] = file_count
-      if file_count.positive?
-        puts "  #{File.basename(file)}: #{file_count} tests"
-      end
-    end
+    patterns = [/<pre\s+class="mermaid"[^>]*>(.*?)<\/pre>/mi,
+                /<div\s+class="mermaid"[^>]*>(.*?)<\/div>/mi]
+    extract_files("#{@root}/cypress/platform/**/*.html", patterns,
+                  family: "platform", html: true)
   end
 
-  # 4. packages/examples/src/examples/*.ts - official examples
   def extract_package_examples
     puts "\n[4/7] Extracting from packages/examples/src/examples/*.ts..."
-
-    example_glob = "#{@root}/packages/examples/src/examples/*.ts"
-    Dir.glob(example_glob).each do |file|
-      content = File.read(file)
-      file_count = 0
-
-      # Pattern 1: diagram: `...`
-      keywords_pattern = diagram_keywords
-      content.scan(/diagram\s*:\s*`((?:#{keywords_pattern})[^`]*)`/mi) do
-        match_pos = $~.begin(0)
-        diagram_src = $1.strip
-        type = detect_diagram_type(diagram_src)
-        next if type == :unknown
-
-        add_test(
-          name: "example_#{File.basename(file, '.ts')}_#{@stats[type]}",
-          type: type,
-          source: diagram_src,
-          file: file,
-          line: content[0...match_pos].count("\n"),
-        )
-        file_count += 1
-      end
-
-      # Pattern 2: code: `...` or src: `...`
-      content.scan(/(?:code|src)\s*:\s*`((?:#{keywords_pattern})[^`]*)`/mi) do
-        match_pos = $~.begin(0)
-        diagram_src = $1.strip
-        type = detect_diagram_type(diagram_src)
-        next if type == :unknown
-
-        add_test(
-          name: "example_#{File.basename(file, '.ts')}_#{@stats[type]}",
-          type: type,
-          source: diagram_src,
-          file: file,
-          line: content[0...match_pos].count("\n"),
-        )
-        file_count += 1
-      end
-
-      @file_stats[file] = file_count
-      if file_count.positive?
-        puts "  #{File.basename(file)}: #{file_count} tests"
-      end
-    end
+    keywords = diagram_keywords
+    patterns = [/diagram\s*:\s*`((?:#{keywords})[^`]*)`/mi,
+                /(?:code|src)\s*:\s*`((?:#{keywords})[^`]*)`/mi]
+    extract_files("#{@root}/packages/examples/src/examples/*.ts", patterns,
+                  family: "example")
   end
 
-  # 5. packages/mermaid/src/diagrams/**/*.{spec,test}.{ts,js} - parser tests
   def extract_diagram_parser_tests
     puts "\n[5/7] Extracting from packages/mermaid/src/diagrams/" \
          "**/*.{spec,test}.{ts,js}..."
-
-    diagram_glob = "#{@root}/packages/mermaid/src/diagrams/" \
-                   "**/*.{spec,test}.{ts,js}"
-    Dir.glob(diagram_glob).each do |file|
+    glob = "#{@root}/packages/mermaid/src/diagrams/**/*.{spec,test}.{ts,js}"
+    Dir.glob(glob).each do |file|
       content = File.read(file)
-      file_count = 0
-
-      # Pattern 1: it/test with const str = string concatenation
-      callback_pattern = /
-        (?:it|test)\s*\(\s*['"]([^'"]+)['"]\s*,\s*
-        (?:function\s*\(\s*\)\s*\{|\(\s*\)\s*=>|
-           async\s*(?:function\s*)?\(\s*\)\s*(?:=>)?\s*\{)
-        (.*?)(?:parser\.parse|expect)
-      /mix
-      content.scan(callback_pattern) do
-        match_pos = $~.begin(0)
-        test_name = $1
-        test_body = $2
-        if test_body =~ /const\s+str\s*=\s*([^;]+);/mi
-          str_value = $1
-          diagram_src = extract_concatenated_string(str_value)
-          type = detect_diagram_type(diagram_src)
-          next if type == :unknown || diagram_src.length < 5
-
-          add_test(
-            name: "parser_#{sanitize_test_name(test_name)}_#{@stats[type]}",
-            type: type,
-            source: diagram_src.strip,
-            file: file,
-            line: content[0...match_pos].count("\n"),
-            metadata: { test_name: test_name },
-          )
-          file_count += 1
-        end
-      end
-
-      # Pattern 2: Direct backtick strings in tests
-      keywords_pattern = diagram_keywords
-      backtick_pattern = /
-        (?:it|test)\s*\(\s*['"]([^'"]+)['"]\s*,.*?
-        `((?:#{keywords_pattern})[^`]*)`
-      /mix
-      content.scan(backtick_pattern) do
-        match_pos = $~.begin(0)
-        test_name = $1
-        diagram_src = $2
-        type = detect_diagram_type(diagram_src)
-        next if type == :unknown
-
-        add_test(
-          name: "parser_#{sanitize_test_name(test_name)}_#{@stats[type]}",
-          type: type,
-          source: diagram_src.strip,
-          file: file,
-          line: content[0...match_pos].count("\n"),
-          metadata: { test_name: test_name },
-        )
-        file_count += 1
-      end
-
-      @file_stats[file] = file_count
-      if file_count.positive?
-        puts "  #{File.basename(file)}: #{file_count} tests"
-      end
+      count = scan_parser_callbacks(file, content)
+      count += scan_parser_templates(file, content)
+      report_file(file, count)
     end
   end
 
-  # 6. packages/parser/tests/*.{spec,test}.{ts,js} - parser package tests
+  def scan_parser_callbacks(file, content)
+    pattern = /
+      (?:it|test)\s*\(\s*['"]([^'"]+)['"]\s*,\s*
+      (?:function\s*\(\s*\)\s*\{|\(\s*\)\s*=>|
+         async\s*(?:function\s*)?\(\s*\)\s*(?:=>)?\s*\{)
+      (.*?)(?:parser\.parse|expect)
+    /mix
+    scan_diagrams(file, pattern, family: "parser", callback: true,
+                                 minimum: 5, content: content)
+  end
+
+  def scan_parser_templates(file, content)
+    keywords = diagram_keywords
+    pattern = /
+      (?:it|test)\s*\(\s*['"]([^'"]+)['"]\s*,.*?
+      `((?:#{keywords})[^`]*)`
+    /mix
+    scan_diagrams(file, pattern, family: "parser", content: content)
+  end
+
   def extract_parser_tests
     puts "\n[6/7] Extracting from packages/parser/tests/" \
          "*.{spec,test}.{ts,js}..."
+    keywords = diagram_keywords
+    extract_files("#{@root}/packages/parser/tests/**/*.{spec,test}.{ts,js}",
+                  [/`((?:#{keywords})[^`]*)`/mi], family: "parsertest")
+  end
 
-    parser_glob = "#{@root}/packages/parser/tests/" \
-                  "**/*.{spec,test}.{ts,js}"
-    Dir.glob(parser_glob).each do |file|
-      content = File.read(file)
-      file_count = 0
-
-      keywords_pattern = diagram_keywords
-
-      # Backtick strings
-      content.scan(/`((?:#{keywords_pattern})[^`]*)`/mi) do
-        match_pos = $~.begin(0)
-        diagram_src = $1.strip
-        type = detect_diagram_type(diagram_src)
-        next if type == :unknown
-
-        add_test(
-          name: "parsertest_#{File.basename(file, '.*')}_#{@stats[type]}",
-          type: type,
-          source: diagram_src,
-          file: file,
-          line: content[0...match_pos].count("\n"),
-        )
-        file_count += 1
-      end
-
-      @file_stats[file] = file_count
-      if file_count.positive?
-        puts "  #{File.basename(file)}: #{file_count} tests"
-      end
+  def extract_rendering_spec_files
+    puts "\n[7/7] Scanning additional spec files..."
+    patterns = ["#{@root}/cypress/integration/**/*.spec.{js,ts}",
+                "#{@root}/packages/mermaid/src/**/*.spec.{ts,js}"]
+    patterns.each do |glob|
+      Dir.glob(glob).each { |file| extract_additional_file(file) }
     end
   end
 
-  # 7. Additional rendering spec files
-  def extract_rendering_spec_files
-    puts "\n[7/7] Scanning additional spec files..."
+  def extract_additional_file(file)
+    return if @file_stats[file]&.positive?
 
-    # Check for any missed spec files
-    additional_patterns = [
-      "#{@root}/cypress/integration/**/*.spec.{js,ts}",
-      "#{@root}/packages/mermaid/src/**/*.spec.{ts,js}",
-    ]
+    keywords = diagram_keywords
+    count = scan_diagrams(file, /[`'"]((?:#{keywords})[^`'"]*)[`'"]/mi,
+                          family: "spec", minimum: 5)
+    report_file(file, count) if count.positive?
+  end
 
-    additional_patterns.each do |pattern|
-      Dir.glob(pattern).each do |file|
-        # Skip files already processed by primary extractors.
-        next if @file_stats[file]&.positive?
-
-        content = File.read(file)
-        file_count = 0
-
-        keywords_pattern = diagram_keywords
-
-        content.scan(/[`'"]((?:#{keywords_pattern})[^`'"]*)[`'"]/mi) do
-          match_pos = $~.begin(0)
-          diagram_src = $1.strip
-          type = detect_diagram_type(diagram_src)
-          next if type == :unknown || diagram_src.length < 5
-
-          add_test(
-            name: "spec_#{File.basename(file, '.*')}_#{@stats[type]}",
-            type: type,
-            source: diagram_src,
-            file: file,
-            line: content[0...match_pos].count("\n"),
-          )
-          file_count += 1
-        end
-
-        if file_count.positive?
-          @file_stats[file] = file_count
-          puts "  #{File.basename(file)}: #{file_count} tests"
-        end
+  def extract_files(glob, patterns, **options)
+    Dir.glob(glob).each do |file|
+      content = File.read(file)
+      count = patterns.sum do |pattern|
+        scan_diagrams(file, pattern, **options, content: content)
       end
+      report_file(file, count)
     end
+  end
+
+  def report_file(file, count)
+    @file_stats[file] = count
+    puts "  #{File.basename(file)}: #{count} tests" if count.positive?
+  end
+
+  def scan_diagrams(file, pattern, **options)
+    content = options.fetch(:content) { File.read(file) }
+    count = 0
+    content.scan(pattern) do
+      match = Regexp.last_match
+      count += 1 if collect_diagram?(file, content, match, options)
+    end
+    count
+  end
+
+  def collect_diagram?(file, content, match, options)
+    source = matched_source(match, options)
+    type = detect_diagram_type(source)
+    return false if unusable_source?(source, type, options)
+
+    title = match[1] if options[:family] == "parser"
+    add_test(name: extracted_name(file, type, title, options[:family]),
+             type: type, source: source.strip, file: file,
+             line: content[0...match.begin(0)].count("\n"),
+             metadata: title ? { test_name: title } : {})
+    true
+  end
+
+  def unusable_source?(source, type, options)
+    type == :unknown || source.length < options.fetch(:minimum, 0)
+  end
+
+  def matched_source(match, options)
+    source = options[:family] == "parser" ? match[2] : match[1]
+    return callback_source(source) if options[:callback]
+
+    source = source.strip
+    options[:html] ? decode_html(source) : source
+  end
+
+  def callback_source(body)
+    match = /const\s+str\s*=\s*([^;]+);/mi.match(body)
+    match ? extract_concatenated_string(match[1]) : ""
+  end
+
+  def decode_html(source)
+    source.gsub("&lt;", "<").gsub("&gt;", ">").gsub("&amp;", "&")
+  end
+
+  def extracted_name(file, type, title, family)
+    return "parser_#{sanitize_test_name(title)}_#{@stats[type]}" if title
+    return "config_#{type}_#{@stats[type]}" if family == "config"
+
+    basename = File.basename(file, ".*")
+    parts = [family, basename]
+    parts << type if %w[rendering platform].include?(family)
+    parts << @stats[type]
+    parts.join("_")
   end
 
   def diagram_keywords(escape_pipes: false)
@@ -513,14 +346,13 @@ class MermaidTestExtractor
     name.gsub(/[^a-zA-Z0-9_-]/, "_").squeeze("_")
   end
 
-  def add_test(name:, type:, source:, file:, line:, metadata: {})
+  def add_test(name:, type:, source:, file:, **)
     @test_cases << TestCase.new(
       name: name,
       type: type,
       source: source,
       file: file,
-      line: line,
-      metadata: metadata,
+      **,
     )
     @stats[type] += 1
   end
@@ -584,19 +416,28 @@ class MermaidTestExtractor
     puts "=" * 80
     puts "Total test cases extracted: #{@test_cases.length}"
     puts "Files processed: #{@file_stats.length}"
+    print_type_summary
+    puts "\nOutput directory: #{@output_dir}"
+    print_missing_types
+    print_next_steps
+  end
+
+  def print_type_summary
     puts "\nBy diagram type (sorted by count):"
-    @stats.sort_by { |_, v| -v }.each do |type, count|
+    @stats.sort_by { |_, count| -count }.each do |type, count|
       puts "  #{sprintf('%-20s', type)}: #{sprintf('%4d', count)} tests"
     end
-    puts "\nOutput directory: #{@output_dir}"
+  end
 
-    # Show diagram types with no tests
+  def print_missing_types
     missing = DIAGRAM_TYPES.keys - @stats.keys
-    if missing.any?
-      puts "\nDiagram types with no tests found:"
-      missing.each { |type| puts "  ⚠ #{type}" }
-    end
+    return unless missing.any?
 
+    puts "\nDiagram types with no tests found:"
+    missing.each { |type| puts "  ⚠ #{type}" }
+  end
+
+  def print_next_steps
     puts "\nNext steps:"
     puts "  1. Review extracted tests in spec/mermaid/"
     puts "  2. Run: ruby scripts/create_diagram_inventory.rb"
@@ -605,6 +446,8 @@ class MermaidTestExtractor
     puts "  4. Create RSpec tests for each type"
   end
 end
+
+TestCase = MermaidTestExtractor::TestCase
 
 if $PROGRAM_NAME == __FILE__
   require "optparse"
@@ -627,4 +470,3 @@ if $PROGRAM_NAME == __FILE__
     abort "#{e.class}: #{e.message}"
   end
 end
-# rubocop:enable Style/OneClassPerFile

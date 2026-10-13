@@ -43,13 +43,18 @@ module MmdcOracle
   def direct_verdict(status, output)
     return :error if status.nil?
 
-    svg = File.binread(output) if File.file?(output)
+    svg = output_svg(output)
     return :error if infrastructure_failure?(status, svg)
     return :rejects if svg && error_page?(svg)
     return :accepts if successful?(status)
 
     :ambiguous
   end
+
+  def output_svg(output)
+    File.binread(output) if File.file?(output)
+  end
+  private_class_method :output_svg
 
   # A successful exit with no valid SVG is still infrastructure failure even
   # when nothing was written at all (svg is nil). Beyond that, this check is
@@ -75,12 +80,18 @@ module MmdcOracle
     end
     return Result.new(:error, probe.diagnostic) if canary.verdict == :accepts
 
+    diagnostic = failed_health_check_diagnostic(probe, canary)
+    Result.new(:error, diagnostic)
+  end
+
+  def failed_health_check_diagnostic(probe, canary)
     messages = [probe.diagnostic, canary.diagnostic].reject(&:empty?).uniq
     if messages.empty?
       messages << "mmdc also failed its known-valid health check"
     end
-    Result.new(:error, messages.join("\n"))
+    messages.join("\n")
   end
+  private_class_method :failed_health_check_diagnostic
 
   def successful?(status)
     status == true || (status.respond_to?(:success?) && status.success?)

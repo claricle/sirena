@@ -29,13 +29,28 @@ RSpec.describe Sirena::Parser::Atoms::GreedyRun do
       expect(tree.to_s).to eq("")
     end
 
-    it "consumes a run longer than one chunk in more than one chunk " \
-       "without losing characters" do
-      long_run = "a" * 120_000
-      tree = atom.parse(long_run)
+    describe "consumes a run longer than one chunk in more than one chunk " \
+             "without losing characters" do
+      let(:long_run) do
+        "a" * 120_000
+      end
 
-      expect(tree.to_s).to eq(long_run)
-      expect(tree.to_s.length).to eq(120_000)
+      let(:tree) do
+        atom.parse(long_run)
+      end
+
+      before do
+        long_run
+        tree
+      end
+
+      it "preserves property 1" do
+        expect(tree.to_s).to eq(long_run)
+      end
+
+      it "preserves property 2" do
+        expect(tree.to_s.length).to eq(120_000)
+      end
     end
 
     # Measured at position 0, an empty (unscanned) line cache and the
@@ -88,31 +103,71 @@ RSpec.describe Sirena::Parser::Atoms::GreedyRun do
     # an ASCII-8BIT source with a byte >= 0x80 used to raise
     # `Encoding::CompatibilityError` straight out of `Regexp#match` instead
     # of failing to match, crashing the whole parse.
-    it "keeps the compatible run before an encoding-incompatible byte " \
-       "instead of raising" do
-      source = Parslet::Source.new((+"ab\xFFcd").force_encoding(Encoding::ASCII_8BIT))
-      anchored = Regexp.new('\A(?:[^~\u00A0])*', Regexp::MULTILINE)
+    describe "keeps the compatible run before an encoding-incompatible byte " \
+             "instead of raising" do
+      let(:source) do
+        Parslet::Source.new((+"ab\xFFcd").force_encoding(Encoding::ASCII_8BIT))
+      end
 
-      matched = described_class.scan(source, anchored)
+      let(:anchored) do
+        Regexp.new('\A(?:[^~\u00A0])*', Regexp::MULTILINE)
+      end
 
-      expect(matched).to eq("ab")
-      expect(source.chars_left).to eq(3)
+      let(:matched) do
+        described_class.scan(source, anchored)
+      end
+
+      before do
+        source
+        anchored
+        matched
+      end
+
+      it "preserves property 1" do
+        expect(matched).to eq("ab")
+      end
+
+      it "preserves property 2" do
+        expect(source.chars_left).to eq(3)
+      end
     end
 
     # The kept prefix must be the same regardless of which doubling-probe
     # chunk the incompatible byte lands in (probe starts at 64, doubles
     # each round) -- the fix must not depend on the chunk boundary.
     [30, 64, 100, 130, 200].each do |ascii_run_length|
-      it "keeps a #{ascii_run_length}-byte compatible run wherever the " \
-         "incompatible byte falls" do
-        prefix = "a" * ascii_run_length
-        source = Parslet::Source.new("#{prefix}\xFF".force_encoding(Encoding::ASCII_8BIT))
-        anchored = Regexp.new('\A(?:[^~\u00A0])*', Regexp::MULTILINE)
+      describe "keeps a #{ascii_run_length}-byte compatible run wherever the " \
+               "incompatible byte falls" do
+        let(:prefix) do
+          "a" * ascii_run_length
+        end
 
-        matched = described_class.scan(source, anchored)
+        let(:source) do
+          Parslet::Source.new("#{prefix}\xFF".force_encoding(Encoding::ASCII_8BIT))
+        end
 
-        expect(matched).to eq(prefix)
-        expect(source.chars_left).to eq(1)
+        let(:anchored) do
+          Regexp.new('\A(?:[^~\u00A0])*', Regexp::MULTILINE)
+        end
+
+        let(:matched) do
+          described_class.scan(source, anchored)
+        end
+
+        before do
+          prefix
+          source
+          anchored
+          matched
+        end
+
+        it "preserves property 1" do
+          expect(matched).to eq(prefix)
+        end
+
+        it "preserves property 2" do
+          expect(source.chars_left).to eq(1)
+        end
       end
     end
   end

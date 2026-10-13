@@ -25,14 +25,15 @@ module Sirena
         # @param font_size [Numeric] message and note text size
         # @param wrap [Boolean] the global wrap setting
         # @param creations [Creations] participants a `create` declares
-        def initialize(children, edges, notes, font_size:, wrap: false,
-                       creations: nil)
+        def initialize(children, edges, notes, font_size:, **options)
+          check_options!(options)
           @ids = children.map { |child| child[:id] }
           @widths = children.to_h { |child| [child[:id], child[:width]] }
           @edges = edges
           @notes = notes || []
           @font_size = font_size
-          @wrap = wrap
+          @wrap = options.fetch(:wrap, false)
+          creations = options.fetch(:creations, nil)
           @created = creations ? creations.ids : []
         end
 
@@ -47,6 +48,15 @@ module Sirena
         end
 
         private
+
+        def check_options!(options)
+          unknown = options.keys - %i[wrap creations]
+          return if unknown.empty?
+
+          label = unknown.one? ? "keyword" : "keywords"
+          names = unknown.map(&:inspect).join(", ")
+          raise ArgumentError, "unknown #{label}: #{names}"
+        end
 
         # mmdc seats a created participant half a box further out.
         def created_room(id)

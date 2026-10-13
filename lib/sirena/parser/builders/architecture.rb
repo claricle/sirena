@@ -87,16 +87,15 @@ module Sirena
 
         def create_edge(data)
           Diagram::Architecture::Edge.new.tap do |edge|
-            assign_attributes(
-              edge,
-              data,
-              from_id: :from,
-              to_id: :to,
-              from_position: :from_pos,
-              to_position: :to_pos,
-              label: :label,
-            )
+            assign_attributes(edge, data, edge_attributes)
           end
+        end
+
+        def edge_attributes
+          {
+            from_id: :from, to_id: :to, from_position: :from_pos,
+            to_position: :to_pos, label: :label
+          }
         end
 
         def assign_attributes(model, data, attributes)
@@ -114,22 +113,21 @@ module Sirena
 
         def extract_text(value)
           case value
-          when Hash
-            if value[:string]
-              value[:string].to_s
-            else
-              value.values.first.to_s
-            end
-          when Array
-            # Parslet's `.repeat` (no minimum) yields [] rather than a
-            # slice when it matches zero characters, e.g. an empty
-            # `accDescr {}` block - treat that the same as no text.
-            value.map { |v| extract_text(v) }.join
-          when String
-            value
+          when Hash then hash_text(value)
+          # Parslet repeat can yield [] for empty accDescr: treat it as no text.
+          when Array then value.map { |v| extract_text(v) }.join
+          when String then value
           else
             value.to_s
           end.strip
+        end
+
+        def hash_text(value)
+          if value[:string]
+            value[:string].to_s
+          else
+            value.values.first.to_s
+          end
         end
       end
     end

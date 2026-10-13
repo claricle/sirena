@@ -22,6 +22,44 @@ module GitGraphChunkEdgeHelpers
   def chunk_edges
     [64, 192, 448, 960, 1_984, 4_032, 8_128, 16_320, 32_704, 65_472, 115_472]
   end
+
+  def branch_grammar
+    @branch_grammar ||= Sirena::Parser::Grammars::GitGraph.new
+  end
+
+  def branch_lexer_regex
+    @branch_lexer_regex ||= Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)',
+                                       Regexp::MULTILINE)
+  end
+
+  def random_branch_samples
+    random = Random.new(20_260_929)
+    lengths = chunk_edges.flat_map { |edge| ((edge - 2)..(edge + 2)).to_a } +
+      Array.new(20) { random.rand(1..150_000) }
+    pool = branch_character_pool
+    lengths.map { |length| [length, random_branch_input(length, random, pool)] }
+  end
+
+  def branch_character_pool
+    ("a".."z").to_a + ("0".."9").to_a + ["-", ".", "/", "_"]
+  end
+
+  def random_branch_input(length, random, pool)
+    tail = Array.new(length) { pool.sample(random: random) }.join
+    "a#{tail}#{' !' if random.rand(2) == 1}"
+  end
+
+  def branch_mismatches(samples)
+    samples.filter_map { |length, input| branch_difference(length, input) }
+  end
+
+  def branch_difference(length, input)
+    expected = branch_lexer_regex.match(input)[0]
+    parsed = branch_grammar.branch_name.parse(input, prefix: true).to_s
+    return if parsed == expected
+
+    { length: length, expected: expected.length, got: parsed.length }
+  end
 end
 
 RSpec.describe Sirena::Parser::GitGraph do
@@ -176,20 +214,14 @@ RSpec.describe Sirena::Parser::GitGraph do
     # `.` and `/` are only legal in the middle. A Codex review found an
     # earlier version of `branch_name` accepted all four leading/trailing
     # forms mermaid rejects.
-    it "rejects a branch name starting or ending with a dot or slash",
-       :aggregate_failures do
-      grammar = Sirena::Parser::Grammars::GitGraph.new
-
-      # Proves the rejections below are about the boundary specifically,
-      # not dots/slashes being unsupported entirely -- the old character
-      # class (`[a-zA-Z0-9_-]`) rejected a dot or slash ANYWHERE, so
-      # without this the raise_error expectations below would pass for
-      # the wrong reason on that old, narrower class.
-      expect(grammar.branch_name.parse("release/1.0.0").to_s)
+    it "accepts dots and slashes inside a branch name as a positive control" do
+      expect(branch_grammar.branch_name.parse("release/1.0.0").to_s)
         .to eq("release/1.0.0")
+    end
 
-      %w[.foo /foo foo. foo/].each do |name|
-        expect { grammar.branch_name.parse(name) }
+    %w[.foo /foo foo. foo/].each do |name|
+      it "rejects the dot or slash boundary in #{name.inspect}" do
+        expect { branch_grammar.branch_name.parse(name) }
           .to raise_error(Parslet::ParseFailed),
               "expected #{name.inspect} to be rejected"
       end
@@ -206,24 +238,39 @@ RSpec.describe Sirena::Parser::GitGraph do
     # numbers. Every shape is checked one character before, on, and one
     # character after each edge, against the SAME regex mermaid's own
     # REFERENCE token uses on the whole string at once, not hand-derived.
-    it "matches the whole-input reference regex at every chunk edge" do
-      grammar = Sirena::Parser::Grammars::GitGraph.new
-      whole_input_regex = Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)', Regexp::MULTILINE)
+    describe "matches the whole-input reference regex at every chunk edge" do
+      let(:grammar) do
+        Sirena::Parser::Grammars::GitGraph.new
+      end
 
-      mismatches = chunk_edges.product([-1, 0, 1]).flat_map do |edge, offset|
-        run_length = edge + offset
-        {
-          "word run" => "a#{'b' * run_length}",
-          "trailing dot" => "a#{'b' * (run_length - 1)}.",
-          "dot then word" => "a#{'b' * (run_length - 1)}.c",
-        }.filter_map do |shape, name|
-          got = grammar.branch_name.parse(name, prefix: true).to_s
-          expected = whole_input_regex.match(name)[0]
-          "#{shape} with run length #{run_length}" if got != expected
+      let(:whole_input_regex) do
+        Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)', Regexp::MULTILINE)
+      end
+
+      let(:mismatches) do
+        chunk_edges.product([-1, 0, 1]).flat_map do |edge, offset|
+          run_length = edge + offset
+          {
+            "word run" => "a#{'b' * run_length}",
+            "trailing dot" => "a#{'b' * (run_length - 1)}.",
+            "dot then word" => "a#{'b' * (run_length - 1)}.c",
+          }.filter_map do |shape, name|
+            got = grammar.branch_name.parse(name, prefix: true).to_s
+            expected = whole_input_regex.match(name)[0]
+            "#{shape} with run length #{run_length}" if got != expected
+          end
         end
       end
 
-      expect(mismatches).to eq([])
+      before do
+        grammar
+        whole_input_regex
+        mismatches
+      end
+
+      it "preserves property 1" do
+        expect(mismatches).to eq([])
+      end
     end
 
     # `branch_name` is `match['\w'] >> TrimmedRun.new(...)` -- the
@@ -255,26 +302,9 @@ RSpec.describe Sirena::Parser::GitGraph do
     # under test.
     it "matches the whole-input reference regex across random inputs near " \
        "the chunk edges" do
-      grammar = Sirena::Parser::Grammars::GitGraph.new
-      whole_input_regex = Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)', Regexp::MULTILINE)
-      broad_pool = ("a".."z").to_a + ("0".."9").to_a + ["-", ".", "/", "_"]
-      rng = Random.new(20_260_929)
-      lengths = chunk_edges.flat_map do |edge|
-        ((edge - 2)..(edge + 2)).to_a
-      end +
-        Array.new(20) { rng.rand(1..150_000) }
-
-      mismatches = lengths.filter_map do |length|
-        tail = Array.new(length) { broad_pool.sample(random: rng) }.join
-        input = "a#{tail}#{' !' if rng.rand(2) == 1}"
-        expected = whole_input_regex.match(input)[0]
-        got = grammar.branch_name.parse(input, prefix: true).to_s
-        if got != expected
-          { length: length, expected: expected.length, got: got.length }
-        end
-      end
-
-      message = "#{mismatches.size}/#{lengths.size} cases mismatched: " \
+      samples = random_branch_samples
+      mismatches = branch_mismatches(samples)
+      message = "#{mismatches.size}/#{samples.size} cases mismatched: " \
                 "#{mismatches.first(3)}"
       expect(mismatches).to eq([]), message
     end
@@ -504,16 +534,18 @@ RSpec.describe Sirena::Parser::GitGraph do
   # spec_helper has loaded the whole gem ($LOADED_FEATURES makes a
   # second `require` a no-op), so this shells out to a real subprocess.
   describe "grammar file, required standalone", :aggregate_failures do
-    it "loads sirena/parser/grammars/git_graph and parses a branch name " \
-       "without the ER grammar loaded first" do
-      out, status = Open3.capture2e(
+    let(:standalone_result) do
+      Open3.capture2e(
         "ruby", "-Ilib", "-e",
         'require "sirena/parser/grammars/git_graph"; ' \
         "tree = Sirena::Parser::Grammars::GitGraph.new" \
         ".parse(\"gitGraph\n  branch release/1.0\n\"); " \
         "puts tree[:statements].first[:branch][:name]"
       )
+    end
 
+    it "loads the grammar standalone and parses the expected branch name" do
+      out, status = standalone_result
       message = "expected exit 0, got #{status.exitstatus}:\n#{out}"
       expect(status).to be_success, message
       expect(out.strip).to eq("release/1.0")

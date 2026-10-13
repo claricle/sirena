@@ -30,6 +30,17 @@ RSpec.describe Sirena::Diagram::Architecture do
   describe "#valid?" do
     include ArchitectureDiagramValiditySpecHelpers
 
+    let(:three_group_cycle_with_service) do
+      described_class.new(
+        groups: [
+          group("a", parent_id: "c"),
+          group("b", parent_id: "a"),
+          group("c", parent_id: "b"),
+        ],
+        services: [service("s1", group_id: "a")],
+      )
+    end
+
     it "returns true for a diagram with no groups, services, or junctions" do
       expect(described_class.new.valid?).to be true
     end
@@ -60,16 +71,7 @@ RSpec.describe Sirena::Diagram::Architecture do
     # broken shape happens to crash downstream, not whether it is valid.
     it "returns false for a three-group cycle even when one member has " \
        "a direct service" do
-      diagram = described_class.new(
-        groups: [
-          group("a", parent_id: "c"),
-          group("b", parent_id: "a"),
-          group("c", parent_id: "b"),
-        ],
-        services: [service("s1", group_id: "a")],
-      )
-
-      expect(diagram.valid?).to be false
+      expect(three_group_cycle_with_service.valid?).to be false
     end
 
     it "returns false when a group is its own parent" do

@@ -199,16 +199,30 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # Example 1 — green control. Also, per the plan, the dangling
   # site-absolute <a href> doubles as R23's detector: if the verifier ever
   # started collecting anchor refs, this example alone would catch it.
-  it "reports no failures for a complete site, and does not collect a " \
-     "dangling <a href>" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, "diagram_types/mindmap/index.html",
-                 page_html(extra: { dangling_anchor: true }))
-      write_page(site_dir, "_diagram_types/mindmap/index.html",
-                 page_html(extra: { dangling_anchor: true }))
+  describe "reports no failures for a complete site, and does not collect a " \
+           "dangling <a href>" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(site_dir, "diagram_types/mindmap/index.html",
+                   page_html(extra: { dangling_anchor: true }))
+        write_page(site_dir, "_diagram_types/mindmap/index.html",
+                   page_html(extra: { dangling_anchor: true }))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
@@ -242,71 +256,110 @@ RSpec.describe Sirena::DocsSiteVerifier do
   end
 
   # Example 4 — R5
-  it "reports no failures when include: omits _diagram_types and _site has " \
-     "no include-path copy" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(
-        tmp,
-        config_overrides: { "include" => [] },
-      )
-      FileUtils.rm_rf(File.join(site_dir, "_diagram_types"))
+  describe "reports no failures when include: " \
+           "omits _diagram_types and _site has " \
+           "no include-path copy" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(
+          tmp,
+          config_overrides: { "include" => [] },
+        )
+        FileUtils.rm_rf(File.join(site_dir, "_diagram_types"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 5 — R6
-  it "requires a nested source at both nested paths" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_source(docs_dir, "examples/flowchart-examples")
-      write_page(
-        site_dir,
-        "diagram_types/examples/flowchart-examples/index.html",
-        page_html,
-      )
-      write_page(
-        site_dir,
-        "_diagram_types/examples/flowchart-examples/index.html",
-        page_html,
-      )
-      FileUtils.rm_rf(File.join(site_dir, "diagram_types/examples"))
-      FileUtils.rm_rf(File.join(site_dir, "_diagram_types/examples"))
+  describe "requires a nested source at both nested paths" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        manifest_failure(
-          "_diagram_types/examples/flowchart-examples.adoc",
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_source(docs_dir, "examples/flowchart-examples")
+        write_page(
+          site_dir,
           "diagram_types/examples/flowchart-examples/index.html",
-        ),
-        manifest_failure(
-          "_diagram_types/examples/flowchart-examples.adoc",
+          page_html,
+        )
+        write_page(
+          site_dir,
           "_diagram_types/examples/flowchart-examples/index.html",
-        ),
-      )
+          page_html,
+        )
+        FileUtils.rm_rf(File.join(site_dir, "diagram_types/examples"))
+        FileUtils.rm_rf(File.join(site_dir, "_diagram_types/examples"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            manifest_failure(
+              "_diagram_types/examples/flowchart-examples.adoc",
+              "diagram_types/examples/flowchart-examples/index.html",
+            ),
+            manifest_failure(
+              "_diagram_types/examples/flowchart-examples.adoc",
+              "_diagram_types/examples/flowchart-examples/index.html",
+            ),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
   # Example 6 — R7
-  it "requires index.adoc at diagram_types/index/index.html and " \
-     "_diagram_types/index.html" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_source(docs_dir, "index")
-      write_page(site_dir, "diagram_types/index/index.html", page_html)
-      write_page(site_dir, "_diagram_types/index.html", page_html)
-      FileUtils.rm_rf(File.join(site_dir, "diagram_types/index"))
-      FileUtils.rm(File.join(site_dir, "_diagram_types/index.html"))
+  describe "requires index.adoc at diagram_types/index/index.html and " \
+           "_diagram_types/index.html" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        manifest_failure(
-          "_diagram_types/index.adoc",
-          "diagram_types/index/index.html",
-        ),
-        manifest_failure(
-          "_diagram_types/index.adoc",
-          "_diagram_types/index.html",
-        ),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_source(docs_dir, "index")
+        write_page(site_dir, "diagram_types/index/index.html", page_html)
+        write_page(site_dir, "_diagram_types/index.html", page_html)
+        FileUtils.rm_rf(File.join(site_dir, "diagram_types/index"))
+        FileUtils.rm(File.join(site_dir, "_diagram_types/index.html"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            manifest_failure(
+              "_diagram_types/index.adoc",
+              "diagram_types/index/index.html",
+            ),
+            manifest_failure(
+              "_diagram_types/index.adoc",
+              "_diagram_types/index.html",
+            ),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -314,95 +367,159 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # `dir == '.'` arm; a mutant that collapsed every index source to the
   # same top-level `_diagram_types/index.html` survived every other
   # example because none of them nested an index.adoc in a subdirectory.
-  it "collapses a nested index.adoc to its own subdirectory, not the " \
-     "site root" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_source(docs_dir, "examples/index")
-      write_page(site_dir, "diagram_types/examples/index/index.html", page_html)
-      write_page(site_dir, "_diagram_types/examples/index.html", page_html)
-      FileUtils.rm_rf(File.join(site_dir, "diagram_types/examples/index"))
-      FileUtils.rm(File.join(site_dir, "_diagram_types/examples/index.html"))
+  describe "collapses a nested index.adoc to its own subdirectory, not the " \
+           "site root" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        manifest_failure(
-          "_diagram_types/examples/index.adoc",
-          "diagram_types/examples/index/index.html",
-        ),
-        manifest_failure(
-          "_diagram_types/examples/index.adoc",
-          "_diagram_types/examples/index.html",
-        ),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_source(docs_dir, "examples/index")
+        write_page(site_dir, "diagram_types/examples/index/index.html",
+                   page_html)
+        write_page(site_dir, "_diagram_types/examples/index.html", page_html)
+        FileUtils.rm_rf(File.join(site_dir, "diagram_types/examples/index"))
+        FileUtils.rm(File.join(site_dir, "_diagram_types/examples/index.html"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            manifest_failure(
+              "_diagram_types/examples/index.adoc",
+              "diagram_types/examples/index/index.html",
+            ),
+            manifest_failure(
+              "_diagram_types/examples/index.adoc",
+              "_diagram_types/examples/index.html",
+            ),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
   # Example 7 — R8. Strip the layout marker while keeping the stylesheet
   # links, proving R8 is not a duplicate of R9.
-  it "names the page lacking the layout marker while its theme stylesheet " \
-     "stays intact" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, "diagram_types/mindmap/index.html",
-                 page_html(layout_marker: "main-content-wrapX"))
+  describe "names the page lacking the layout " \
+           "marker while its theme stylesheet " \
+           "stays intact" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        layout_failure(MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(site_dir, "diagram_types/mindmap/index.html",
+                   page_html(layout_marker: "main-content-wrapX"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            layout_failure(MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
   # Example 8 — R9. Strip the stylesheet while keeping the layout marker
   # and a theme-named <script src>, so an implementation reading R9 as
   # "any ref containing the theme name" is defeated.
-  it "names the page linking no theme stylesheet while the layout marker " \
-     "and a theme-named script stay" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(
-        site_dir, "diagram_types/mindmap/index.html",
-        page_html(
-          theme: nil,
-          extra: {
-            script: "#{DEFAULT_BASEURL}/assets/js/#{DEFAULT_THEME}.js",
-          },
-        )
-      )
-      write_asset(site_dir, "assets/js/#{DEFAULT_THEME}.js")
+  describe "names the page linking no theme " \
+           "stylesheet while the layout marker " \
+           "and a theme-named script stay" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        stylesheet_failure(MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(
+          site_dir, "diagram_types/mindmap/index.html",
+          page_html(
+            theme: nil,
+            extra: {
+              script: "#{DEFAULT_BASEURL}/assets/js/#{DEFAULT_THEME}.js",
+            },
+          )
+        )
+        write_asset(site_dir, "assets/js/#{DEFAULT_THEME}.js")
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            stylesheet_failure(MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
   # Example 9 — R10. theme: is "pico" while the page links just-the-docs
   # CSS, so a hardcoded "just-the-docs" string cannot pass by accident.
-  it "reports a page linking only just-the-docs CSS when theme: is pico" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(
-        tmp,
-        config_overrides: { "theme" => "pico" },
-      )
+  describe "reports a page linking only " \
+           "just-the-docs CSS when theme: is pico" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        stylesheet_failure(MINDMAP_PAGE, "pico"),
-        stylesheet_failure(INCLUDE_MINDMAP_PAGE, "pico"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(
+          tmp,
+          config_overrides: { "theme" => "pico" },
+        )
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            stylesheet_failure(MINDMAP_PAGE, "pico"),
+            stylesheet_failure(INCLUDE_MINDMAP_PAGE, "pico"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
   # Example 10 — R11. A2 is site-wide: a non-diagram page missing the
   # stylesheet is reported too.
-  it "reports a non-diagram page missing the theme stylesheet" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, "pages/comparison/index.html",
-                 page_html(theme: nil))
+  describe "reports a non-diagram page missing the theme stylesheet" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        stylesheet_failure("pages/comparison/index.html"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(site_dir, "pages/comparison/index.html",
+                   page_html(theme: nil))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            stylesheet_failure("pages/comparison/index.html"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -415,28 +532,55 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # own example each: a spec built against one cannot exercise the other,
   # since `include_path_for('mindmap')` and the collection path are
   # different strings.
-  it "does not accept a directory standing in for the collection-path page" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      FileUtils.rm_f(File.join(site_dir, "diagram_types/mindmap/index.html"))
-      FileUtils.mkdir_p(File.join(site_dir, "diagram_types/mindmap/index.html"))
+  describe "does not accept a directory " \
+           "standing in for the collection-path page" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        manifest_failure(MINDMAP_SOURCE, MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        FileUtils.rm_f(File.join(site_dir, "diagram_types/mindmap/index.html"))
+        FileUtils.mkdir_p(File.join(site_dir,
+                                    "diagram_types/mindmap/index.html"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            manifest_failure(MINDMAP_SOURCE, MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
-  it "does not accept a directory standing in for the include-path page" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      FileUtils.rm_f(File.join(site_dir, "_diagram_types/mindmap/index.html"))
-      FileUtils.mkdir_p(File.join(site_dir,
-                                  "_diagram_types/mindmap/index.html"))
+  describe "does not accept a directory " \
+           "standing in for the include-path page" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        manifest_failure(MINDMAP_SOURCE, INCLUDE_MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        FileUtils.rm_f(File.join(site_dir, "_diagram_types/mindmap/index.html"))
+        FileUtils.mkdir_p(File.join(site_dir,
+                                    "_diagram_types/mindmap/index.html"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            manifest_failure(MINDMAP_SOURCE, INCLUDE_MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -458,16 +602,30 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # Nokogiri cannot tell `<script src>` from `<script src="">` — both give ""
   # — and nothing tested an attribute for `true`, so the sentinel was dead
   # weight as well as harmful.
-  it "keeps an empty attribute value instead of turning it into true" do
-    Dir.mktmpdir do |tmp|
-      _docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html.sub("</head>", '<script src=""></script></head>')
-      path = File.join(site_dir, "pages/comparison/index.html")
-      write_page(site_dir, "pages/comparison/index.html", html)
+  describe "keeps an empty attribute value instead of turning it into true" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      page = Sirena::DocsSiteVerifier::Page.new(path, site_dir)
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        _docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html.sub("</head>", '<script src=""></script></head>')
+        path = File.join(site_dir, "pages/comparison/index.html")
+        write_page(site_dir, "pages/comparison/index.html", html)
 
-      expect(page.script_srcs).to eq([""])
+        page = Sirena::DocsSiteVerifier::Page.new(path, site_dir)
+
+        {
+          result: page.script_srcs,
+          expected: [
+            [""],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
@@ -475,28 +633,52 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # clauses (layout marker, stylesheet); example 10 above only pins the
   # stylesheet one. A mutant that scopes the LAYOUT check to diagram pages
   # only survived every example until this was added.
-  it "reports a non-diagram page missing the layout marker" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, "pages/comparison/index.html",
-                 page_html(layout_marker: "main-content-wrapX"))
+  describe "reports a non-diagram page missing the layout marker" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        layout_failure("pages/comparison/index.html"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(site_dir, "pages/comparison/index.html",
+                   page_html(layout_marker: "main-content-wrapX"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            layout_failure("pages/comparison/index.html"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
   # Example 11 — R12
-  it "names the diagram page carrying no recognized block marker" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, "diagram_types/mindmap/index.html",
-                 page_html(marker: "not-a-real-marker"))
+  describe "names the diagram page carrying no recognized block marker" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        marker_failure(MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(site_dir, "diagram_types/mindmap/index.html",
+                   page_html(marker: "not-a-real-marker"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            marker_failure(MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -505,37 +687,53 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # and image-only (examples.rake's default-metadata output, split so
   # neither masks the other -- see the note on the LOW finding below).
   # None exists in today's real _site.
-  it "passes a table-only page, a list-only page, a listing-only page and " \
-     "an image-only page" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      %w[table-page list-page listing-page image-page].each do |name|
-        write_source(docs_dir, name)
-      end
+  describe "passes a table-only page, a " \
+           "list-only page, a listing-only page and " \
+           "an image-only page" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      # MEDIUM-10, found by Codex. The image-page body used to be
-      # `<div class="imageblock">x</div>` -- artificial text that masked
-      # the real shape entirely. A real Asciidoctor `imageblock` (see
-      # https://docs.asciidoctor.org html5 converter output) is
-      # `<div class="imageblock"><div class="content"><img ...></div></div>`
-      # -- `alt` is an attribute, not a text node, so a genuine image-only
-      # page has NO text at all. Confirmed directly:
-      # `Nokogiri::HTML5.parse(real_imageblock_html).text == ""`.
-      bodies = {
-        "table-page" => '<table class="tableblock"><tr><td>x</td></tr></table>',
-        "list-page" => '<ul class="ulist"><li>x</li></ul>',
-        "listing-page" => '<div class="listingblock">x</div>',
-        "image-page" => '<div class="imageblock"><div class="content">' \
-                        '<img src="diagram.png" alt="Example"></div></div>',
-      }
-      bodies.each do |name, body|
-        write_page(site_dir, "diagram_types/#{name}/index.html",
-                   page_html_with_body(body))
-        write_page(site_dir, "_diagram_types/#{name}/index.html",
-                   page_html_with_body(body))
-      end
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        %w[table-page list-page listing-page image-page].each do |name|
+          write_source(docs_dir, name)
+        end
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+        # MEDIUM-10, found by Codex. The image-page body used to be
+        # `<div class="imageblock">x</div>` -- artificial text that masked
+        # the real shape entirely. A real Asciidoctor `imageblock` (see
+        # https://docs.asciidoctor.org html5 converter output) is
+        # `<div class="imageblock"><div class="content"><img ...></div></div>`
+        # -- `alt` is an attribute, not a text node, so a genuine image-only
+        # page has NO text at all. Confirmed directly:
+        # `Nokogiri::HTML5.parse(real_imageblock_html).text == ""`.
+        bodies = {
+          "table-page" => "<table " \
+                          "class=\"tableblock\"><tr><td>x</td></tr></table>",
+          "list-page" => '<ul class="ulist"><li>x</li></ul>',
+          "listing-page" => '<div class="listingblock">x</div>',
+          "image-page" => '<div class="imageblock"><div class="content">' \
+                          '<img src="diagram.png" alt="Example"></div></div>',
+        }
+        bodies.each do |name, body|
+          write_page(site_dir, "diagram_types/#{name}/index.html",
+                     page_html_with_body(body))
+          write_page(site_dir, "_diagram_types/#{name}/index.html",
+                     page_html_with_body(body))
+        end
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
@@ -543,15 +741,27 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # context, not `tableblock`) sitting in BLOCK_MARKERS, contradicting this
   # file's own comment that Asciidoctor never emits it bare. A page whose
   # only class is literally "table" must still be reported.
-  it 'does not accept bare "table" as a recognized block marker' do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, "diagram_types/mindmap/index.html",
-                 page_html(marker: "table"))
+  describe 'does not accept bare "table" as a recognized block marker' do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        marker_failure(MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(site_dir, "diagram_types/mindmap/index.html",
+                   page_html(marker: "table"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            marker_failure(MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -561,20 +771,32 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # markers on SEPARATE pages, so each is independently load-bearing; this
   # example pins that directly by deleting the marker from a page's own
   # class list and expecting a failure.
-  it "reports an image-only page whose sole marker class is missing" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_source(docs_dir, "image-only")
-      body = '<div class="not-a-real-marker">x</div>'
-      write_page(site_dir, "diagram_types/image-only/index.html",
-                 page_html_with_body(body))
-      write_page(site_dir, "_diagram_types/image-only/index.html",
-                 page_html_with_body(body))
+  describe "reports an image-only page whose sole marker class is missing" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        marker_failure("diagram_types/image-only/index.html"),
-        marker_failure("_diagram_types/image-only/index.html"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_source(docs_dir, "image-only")
+        body = '<div class="not-a-real-marker">x</div>'
+        write_page(site_dir, "diagram_types/image-only/index.html",
+                   page_html_with_body(body))
+        write_page(site_dir, "_diagram_types/image-only/index.html",
+                   page_html_with_body(body))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            marker_failure("diagram_types/image-only/index.html"),
+            marker_failure("_diagram_types/image-only/index.html"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -592,27 +814,43 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # content, which never reaches the page). Confirmed directly against the
   # installed gem before this fix: both bodies made `renders_content?`
   # return `false`.
-  it "passes a video-only page and a textarea-content page" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      %w[video-page textarea-page].each { |name| write_source(docs_dir, name) }
+  describe "passes a video-only page and a textarea-content page" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      bodies = {
-        "video-page" =>
-          '<div class="videoblock"><div class="content">' \
-          '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" ' \
-          'frameborder="0" allowfullscreen></iframe></div></div>',
-        "textarea-page" =>
-          '<div class="paragraph"><p><textarea>Visible</textarea></p></div>',
-      }
-      bodies.each do |name, body|
-        write_page(site_dir, "diagram_types/#{name}/index.html",
-                   page_html_with_body(body))
-        write_page(site_dir, "_diagram_types/#{name}/index.html",
-                   page_html_with_body(body))
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        %w[video-page textarea-page].each do |name|
+          write_source(docs_dir, name)
+        end
+
+        bodies = {
+          "video-page" =>
+            '<div class="videoblock"><div class="content">' \
+            '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" ' \
+            'frameborder="0" allowfullscreen></iframe></div></div>',
+          "textarea-page" =>
+            '<div class="paragraph"><p><textarea>Visible</textarea></p></div>',
+        }
+        bodies.each do |name, body|
+          write_page(site_dir, "diagram_types/#{name}/index.html",
+                     page_html_with_body(body))
+          write_page(site_dir, "_diagram_types/#{name}/index.html",
+                     page_html_with_body(body))
+        end
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
       end
+    end
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
@@ -652,81 +890,134 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # directly: reverting `rendered_text`'s `[hidden]` unlink to
   # `.each { |el| el.children.unlink }` leaves this page's `failures`
   # empty; the real code (unlinking the element itself) correctly reports it.
-  it "rejects a hidden-text-only page and accepts an inline-SVG-only page" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      %w[hidden-text-page inline-svg-page hidden-svg-page].each do |name|
-        write_source(docs_dir, name)
-      end
+  describe "rejects a hidden-text-only page " \
+           "and accepts an inline-SVG-only page" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      bodies = {
-        "hidden-text-page" =>
-          '<div class="paragraph"><p><span hidden>Invisible</span></p></div>',
-        "inline-svg-page" =>
-          '<div class="imageblock"><div class="content">' \
-          '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">' \
-          '<rect width="10" height="10" fill="red"/></svg></div></div>',
-        "hidden-svg-page" =>
-          '<div class="imageblock"><div class="content">' \
-          '<svg hidden xmlns="http://www.w3.org/2000/svg" ' \
-          'width="10" height="10">' \
-          '<rect width="10" height="10" fill="red"/></svg></div></div>',
-      }
-      bodies.each do |name, body|
-        write_page(site_dir, "diagram_types/#{name}/index.html",
-                   page_html_with_body(body))
-        write_page(site_dir, "_diagram_types/#{name}/index.html",
-                   page_html_with_body(body))
-      end
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        %w[hidden-text-page inline-svg-page hidden-svg-page].each do |name|
+          write_source(docs_dir, name)
+        end
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        empty_content_failure("diagram_types/hidden-text-page/index.html"),
-        empty_content_failure("_diagram_types/hidden-text-page/index.html"),
-        empty_content_failure("diagram_types/hidden-svg-page/index.html"),
-        empty_content_failure("_diagram_types/hidden-svg-page/index.html"),
-      )
+        bodies = {
+          "hidden-text-page" =>
+            '<div class="paragraph"><p><span hidden>Invisible</span></p></div>',
+          "inline-svg-page" =>
+            '<div class="imageblock"><div class="content">' \
+            '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">' \
+            '<rect width="10" height="10" fill="red"/></svg></div></div>',
+          "hidden-svg-page" =>
+            '<div class="imageblock"><div class="content">' \
+            '<svg hidden xmlns="http://www.w3.org/2000/svg" ' \
+            'width="10" height="10">' \
+            '<rect width="10" height="10" fill="red"/></svg></div></div>',
+        }
+        bodies.each do |name, body|
+          write_page(site_dir, "diagram_types/#{name}/index.html",
+                     page_html_with_body(body))
+          write_page(site_dir, "_diagram_types/#{name}/index.html",
+                     page_html_with_body(body))
+        end
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            empty_content_failure("diagram_types/hidden-text-page/index.html"),
+            empty_content_failure("_diagram_types/hidden-text-page/index.html"),
+            empty_content_failure("diagram_types/hidden-svg-page/index.html"),
+            empty_content_failure("_diagram_types/hidden-svg-page/index.html"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
   # Example 13 — R14, lead-role form only.
-  it 'accepts a page whose only marked div is class="paragraph lead"' do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      body = '<div class="paragraph lead"><p>hi</p></div>'
-      write_page(site_dir, "diagram_types/mindmap/index.html",
-                 page_html_with_body(body))
-      write_page(site_dir, "_diagram_types/mindmap/index.html",
-                 page_html_with_body(body))
+  describe 'accepts a page whose only marked div is class="paragraph lead"' do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        body = '<div class="paragraph lead"><p>hi</p></div>'
+        write_page(site_dir, "diagram_types/mindmap/index.html",
+                   page_html_with_body(body))
+        write_page(site_dir, "_diagram_types/mindmap/index.html",
+                   page_html_with_body(body))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 14 — R14, anchored form only.
-  it "accepts a page whose only marked div is " \
-     '<div id="..." class="paragraph">' do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      body = '<div id="example-metadata" class="paragraph"><p>hi</p></div>'
-      write_page(site_dir, "diagram_types/mindmap/index.html",
-                 page_html_with_body(body))
-      write_page(site_dir, "_diagram_types/mindmap/index.html",
-                 page_html_with_body(body))
+  describe "accepts a page whose only marked div is " \
+           '<div id="..." class="paragraph">' do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        body = '<div id="example-metadata" class="paragraph"><p>hi</p></div>'
+        write_page(site_dir, "diagram_types/mindmap/index.html",
+                   page_html_with_body(body))
+        write_page(site_dir, "_diagram_types/mindmap/index.html",
+                   page_html_with_body(body))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 15 — R15
-  it "reports a page in the underscore tree missing every marker" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, "_diagram_types/mindmap/index.html",
-                 page_html(marker: "not-a-real-marker"))
+  describe "reports a page in the underscore tree missing every marker" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        marker_failure(INCLUDE_MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(site_dir, "_diagram_types/mindmap/index.html",
+                   page_html(marker: "not-a-real-marker"))
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            marker_failure(INCLUDE_MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -743,25 +1034,38 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # Example 17 — R17, "collected from every page". The unique missing
   # asset sits on the page that sorts LAST under Dir.glob's sorted order,
   # so a first-page-only implementation would miss it.
-  it "reports a unique missing asset referenced only by the last-traversed " \
-     "non-diagram page" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      # 'pages/zzz-last' sorts after 'diagram_types/...'
-      # and '_diagram_types/...'.
-      script = "#{DEFAULT_BASEURL}/assets/js/only-here.js"
-      write_page(
-        site_dir, "pages/zzz-last/index.html",
-        page_html(extra: { script: script })
-      )
+  describe "reports a unique missing asset " \
+           "referenced only by the last-traversed " \
+           "non-diagram page" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        asset_failure(
-          script,
-          "pages/zzz-last/index.html",
-          "/assets/js/only-here.js",
-        ),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        # 'pages/zzz-last' sorts after 'diagram_types/...'
+        # and '_diagram_types/...'.
+        script = "#{DEFAULT_BASEURL}/assets/js/only-here.js"
+        write_page(
+          site_dir, "pages/zzz-last/index.html",
+          page_html(extra: { script: script })
+        )
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            asset_failure(
+              script,
+              "pages/zzz-last/index.html",
+              "/assets/js/only-here.js",
+            ),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -771,223 +1075,386 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # happens to be walked last. A mutant that flips `||=` to `=` reports
   # the same count with the same asset name and stayed green here until
   # the referencing page itself was pinned.
-  it "reports one missing asset referenced by three pages exactly once, " \
-     "attributed to the first" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      missing_script = "#{DEFAULT_BASEURL}/assets/js/shared-missing.js"
-      write_page(site_dir, "diagram_types/mindmap/index.html",
-                 page_html(extra: { script: missing_script }))
-      write_page(site_dir, "_diagram_types/mindmap/index.html",
-                 page_html(extra: { script: missing_script }))
-      write_page(site_dir, "pages/other/index.html",
-                 page_html(extra: { script: missing_script }))
+  describe "reports one missing asset " \
+           "referenced by three pages exactly once, " \
+           "attributed to the first" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      # One failure, not three; '_diagram_types/...' sorts before
-      # 'diagram_types/...' and 'pages/...' under Dir.glob's default sorted
-      # order, so that is the page it is attributed to.
-      expect(verifier_for(docs_dir, site_dir).failures).to eq(
-        [
-          asset_failure(
-            missing_script,
-            INCLUDE_MINDMAP_PAGE,
-            "/assets/js/shared-missing.js",
-          ),
-        ],
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        missing_script = "#{DEFAULT_BASEURL}/assets/js/shared-missing.js"
+        write_page(site_dir, "diagram_types/mindmap/index.html",
+                   page_html(extra: { script: missing_script }))
+        write_page(site_dir, "_diagram_types/mindmap/index.html",
+                   page_html(extra: { script: missing_script }))
+        write_page(site_dir, "pages/other/index.html",
+                   page_html(extra: { script: missing_script }))
+
+        # One failure, not three; '_diagram_types/...' sorts before
+        # 'diagram_types/...' and 'pages/...' under Dir.glob's default sorted
+        # order, so that is the page it is attributed to.
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [
+              asset_failure(
+                missing_script,
+                INCLUDE_MINDMAP_PAGE,
+                "/assets/js/shared-missing.js",
+              ),
+            ],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 19 — R18. A supplied baseurl different from the config's is
   # what gets stripped.
-  it "strips the supplied --baseurl, not the config baseurl, when " \
-     "resolving refs" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, "diagram_types/mindmap/index.html",
-                 page_html(baseurl: "/other-base"))
-      write_page(site_dir, "_diagram_types/mindmap/index.html",
-                 page_html(baseurl: "/other-base"))
-      write_asset(site_dir, "assets/css/just-the-docs-default.css")
+  describe "strips the supplied --baseurl, not the config baseurl, when " \
+           "resolving refs" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir,
-                              baseurl: "/other-base").failures
-      expect(failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(site_dir, "diagram_types/mindmap/index.html",
+                   page_html(baseurl: "/other-base"))
+        write_page(site_dir, "_diagram_types/mindmap/index.html",
+                   page_html(baseurl: "/other-base"))
+        write_asset(site_dir, "assets/css/just-the-docs-default.css")
+
+        failures = verifier_for(docs_dir, site_dir,
+                                baseurl: "/other-base").failures
+        {
+          result: failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 20 — R19
-  it "reports a missing asset referenced only by a link[rel=stylesheet]" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      asset = "#{DEFAULT_BASEURL}/assets/css/missing.css"
-      write_page(
-        site_dir, "diagram_types/mindmap/index.html",
-        page_html(extra: { link: { rel: "stylesheet", href: asset } })
-      )
+  describe "reports a missing asset " \
+           "referenced only by a link[rel=stylesheet]" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        asset_failure(asset, MINDMAP_PAGE, "/assets/css/missing.css"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        asset = "#{DEFAULT_BASEURL}/assets/css/missing.css"
+        write_page(
+          site_dir, "diagram_types/mindmap/index.html",
+          page_html(extra: { link: { rel: "stylesheet", href: asset } })
+        )
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            asset_failure(asset, MINDMAP_PAGE, "/assets/css/missing.css"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
   # Example 21 — R20
-  it "reports a missing asset referenced only by a script[src]" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      asset = "#{DEFAULT_BASEURL}/assets/js/missing.js"
-      write_page(
-        site_dir, "diagram_types/mindmap/index.html",
-        page_html(extra: { script: asset })
-      )
+  describe "reports a missing asset referenced only by a script[src]" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        asset_failure(asset, MINDMAP_PAGE, "/assets/js/missing.js"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        asset = "#{DEFAULT_BASEURL}/assets/js/missing.js"
+        write_page(
+          site_dir, "diagram_types/mindmap/index.html",
+          page_html(extra: { script: asset })
+        )
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            asset_failure(asset, MINDMAP_PAGE, "/assets/js/missing.js"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
   # Example 22 — R21, external
-  it "does not report an external https stylesheet as missing" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(
-        site_dir, "diagram_types/mindmap/index.html",
-        page_html(
-          extra: {
-            link: {
-              rel: "stylesheet",
-              href: "https://fonts.googleapis.com/x.css",
-            },
-          },
-        )
-      )
-      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
+  describe "does not report an external https stylesheet as missing" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(
+          site_dir, "diagram_types/mindmap/index.html",
+          page_html(
+            extra: {
+              link: {
+                rel: "stylesheet",
+                href: "https://fonts.googleapis.com/x.css",
+              },
+            },
+          )
+        )
+        write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 23 — R21, relative
-  it "does not report a relative stylesheet as missing" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(
-        site_dir, "diagram_types/mindmap/index.html",
-        page_html(
-          extra: {
-            link: { rel: "stylesheet", href: "assets/css/relative.css" },
-          },
-        )
-      )
-      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
+  describe "does not report a relative stylesheet as missing" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(
+          site_dir, "diagram_types/mindmap/index.html",
+          page_html(
+            extra: {
+              link: { rel: "stylesheet", href: "assets/css/relative.css" },
+            },
+          )
+        )
+        write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 24 — R22
-  it "does not report a protocol-relative stylesheet as missing" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(
-        site_dir, "diagram_types/mindmap/index.html",
-        page_html(
-          extra: {
-            link: { rel: "stylesheet", href: "//cdn.example.com/x.css" },
-          },
-        )
-      )
-      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
+  describe "does not report a protocol-relative stylesheet as missing" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(
+          site_dir, "diagram_types/mindmap/index.html",
+          page_html(
+            extra: {
+              link: { rel: "stylesheet", href: "//cdn.example.com/x.css" },
+            },
+          )
+        )
+        write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 25 — R23, anchor
-  it "does not report a dangling site-absolute <a href> as a missing asset" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, "diagram_types/mindmap/index.html",
-                 page_html(extra: { dangling_anchor: true }))
-      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
+  describe "does not report a dangling " \
+           "site-absolute <a href> as a missing asset" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        write_page(site_dir, "diagram_types/mindmap/index.html",
+                   page_html(extra: { dangling_anchor: true }))
+        write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 26 — R23, non-stylesheet <link>. Site-absolute, unlike a real
   # canonical link, so the site-absolute filter cannot mask this the way
   # it masks real rel="canonical" hrefs.
-  it "does not report a dangling site-absolute link[rel=preload] as a " \
-     "missing asset" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      preload = "#{DEFAULT_BASEURL}/does-not-exist.woff2"
-      write_page(
-        site_dir, "diagram_types/mindmap/index.html",
-        page_html(extra: { link: { rel: "preload", href: preload } })
-      )
-      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
+  describe "does not report a dangling site-absolute link[rel=preload] as a " \
+           "missing asset" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        preload = "#{DEFAULT_BASEURL}/does-not-exist.woff2"
+        write_page(
+          site_dir, "diagram_types/mindmap/index.html",
+          page_html(extra: { link: { rel: "preload", href: preload } })
+        )
+        write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 27 — R24
-  it "requires the search index when search_enabled is true, and not when " \
-     "false" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      FileUtils.rm(File.join(site_dir, "assets/js/search-data.json"))
+  describe "requires the search index when " \
+           "search_enabled is true, and not when " \
+           "false" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      docs_dir2, site_dir2 = build_valid_site(
-        File.join(tmp, "no-search"),
-        config_overrides: { "search_enabled" => false },
-      )
-      FileUtils.rm(File.join(site_dir2, "assets/js/search-data.json"))
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        FileUtils.rm(File.join(site_dir, "assets/js/search-data.json"))
 
-      reported = [verifier_for(docs_dir, site_dir).failures,
-                  verifier_for(docs_dir2, site_dir2).failures]
+        docs_dir2, site_dir2 = build_valid_site(
+          File.join(tmp, "no-search"),
+          config_overrides: { "search_enabled" => false },
+        )
+        FileUtils.rm(File.join(site_dir2, "assets/js/search-data.json"))
 
-      expect(reported)
-        .to eq([['asset: search index "assets/js/search-data.json" missing'],
-                []])
+        reported = [verifier_for(docs_dir, site_dir).failures,
+                    verifier_for(docs_dir2, site_dir2).failures]
+
+        {
+          result: reported,
+          expected: [
+            [['asset: search index "assets/js/search-data.json" missing'],
+             []],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # Example 28 — R1
-  it "refuses, naming the template found, when the collection permalink " \
-     "differs" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(
-        tmp,
-        config_overrides: {
-          "collections" => {
-            "diagram_types" => { "permalink" => "/:path/" },
-          },
-        },
-      )
+  describe "refuses, naming the template " \
+           "found, when the collection permalink " \
+           "differs" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'config: collections.diagram_types.permalink is "/:path/", ' \
-        'expected "/:collection/:path/"',
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(
+          tmp,
+          config_overrides: {
+            "collections" => {
+              "diagram_types" => { "permalink" => "/:path/" },
+            },
+          },
+        )
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            'config: collections.diagram_types.permalink is "/:path/", ' \
+            'expected "/:collection/:path/"',
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
   # Example 29 — R2, empty string.
-  it "refuses when theme: is empty" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp,
-                                            config_overrides: { "theme" => "" })
+  describe "refuses when theme: is empty" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        "config: theme is absent or empty",
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(
+          tmp, config_overrides: { "theme" => "" }
+        )
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            "config: theme is absent or empty",
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -995,16 +1462,28 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # string. `theme.nil? || theme.to_s.empty?` collapses to `theme == ''`
   # and stays true for '' -- but a config with no `theme:` key at all
   # (Psych parses that as nil) is only caught by the `.nil?` half.
-  it "refuses when theme: is not set at all" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(
-        tmp,
-        config_overrides: { "theme" => nil },
-      )
+  describe "refuses when theme: is not set at all" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        "config: theme is absent or empty",
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(
+          tmp,
+          config_overrides: { "theme" => nil },
+        )
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            "config: theme is absent or empty",
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -1016,86 +1495,137 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # HIGH-1a. A commented-out stylesheet link must not satisfy A2's
   # stylesheet clause -- text-matching without stripping comments made a
   # dead link indistinguishable from a live one.
-  it "reports a page whose only theme stylesheet link is inside an HTML " \
-     "comment" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      href = "#{DEFAULT_BASEURL}/assets/css/#{DEFAULT_THEME}-default.css"
-      html = <<~HTML
-        <html><head><!-- <link rel="stylesheet" href="#{href}"> --></head>
-        <body>
-          <div class="main-content-wrap">
-            <div class="paragraph"><p>hi</p></div>
-          </div>
-        </body></html>
-      HTML
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a page whose only theme " \
+           "stylesheet link is inside an HTML " \
+           "comment" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        stylesheet_failure(MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        href = "#{DEFAULT_BASEURL}/assets/css/#{DEFAULT_THEME}-default.css"
+        html = <<~HTML
+          <html><head><!-- <link rel="stylesheet" href="#{href}"> --></head>
+          <body>
+            <div class="main-content-wrap">
+              <div class="paragraph"><p>hi</p></div>
+            </div>
+          </body></html>
+        HTML
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            stylesheet_failure(MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
   # HIGH-1b. `data-class="main-content-wrap"` is a different attribute
   # from `class="main-content-wrap"` -- a `\b`-based regex cannot tell
   # them apart because `-` is a non-word character.
-  it "reports a page whose layout marker sits in a data-class attribute, " \
-     "not class" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html.sub('class="main-content-wrap"',
-                           'data-class="main-content-wrap"')
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a page whose layout " \
+           "marker sits in a data-class attribute, " \
+           "not class" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        layout_failure(MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html.sub('class="main-content-wrap"',
+                             'data-class="main-content-wrap"')
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            layout_failure(MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
   # HIGH-1c. The sole content marker, commented out, must not satisfy A3.
-  it "reports a diagram page whose only block marker is inside an HTML " \
-     "comment" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html_with_body(
-        '<!-- <div class="paragraph"><p>hi</p></div> -->',
-      )
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a diagram page whose only block marker is inside an HTML " \
+           "comment" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      # FOUR failures, not two. A marker commented out of the page renders
-      # nothing, so the page fails on both halves -- missing marker AND no
-      # rendered text. The second half is what catches a page that KEEPS its
-      # marker and still shows nothing, which the marker check alone passed.
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        marker_failure(MINDMAP_PAGE),
-        marker_failure(INCLUDE_MINDMAP_PAGE),
-        empty_content_failure(MINDMAP_PAGE),
-        empty_content_failure(INCLUDE_MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html_with_body(
+          '<!-- <div class="paragraph"><p>hi</p></div> -->',
+        )
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        # FOUR failures, not two. A marker commented out of the page renders
+        # nothing, so the page fails on both halves -- missing marker AND no
+        # rendered text. The second half is what catches a page that KEEPS its
+        # marker and still shows nothing, which the marker check alone passed.
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            marker_failure(MINDMAP_PAGE),
+            marker_failure(INCLUDE_MINDMAP_PAGE),
+            empty_content_failure(MINDMAP_PAGE),
+            empty_content_failure(INCLUDE_MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
   # HIGH-1d. Marker presence is a PROXY for "this page has content".
   # A page can carry the marker and render nothing at all, which is what
   # the marker check alone passed for the whole life of this verifier.
-  it "reports a diagram page carrying a block marker that renders no text" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html_with_body('<div class="paragraph"></div>')
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a diagram page carrying a " \
+           "block marker that renders no text" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        empty_content_failure(MINDMAP_PAGE),
-        empty_content_failure(INCLUDE_MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html_with_body('<div class="paragraph"></div>')
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            empty_content_failure(MINDMAP_PAGE),
+            empty_content_failure(INCLUDE_MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -1113,22 +1643,34 @@ RSpec.describe Sirena::DocsSiteVerifier do
     "an attribute value" => '<div data-x="</template>"></div>',
     "a script string" => '<script>var s = "</template>";</script>',
   }.each do |placement, trap|
-    it "does not read template content as live when #{placement} holds a " \
-       "closing tag" do
-      Dir.mktmpdir do |tmp|
-        docs_dir, site_dir = build_valid_site(tmp)
-        html = page_html_with_body(
-          %(<template>#{trap}<div class="paragraph">Inert</div></template>),
-        )
-        write_page(site_dir, "diagram_types/mindmap/index.html", html)
-        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+    describe "does not read template content as live " \
+             "when #{placement} holds a closing tag" do
+      subject(:verification_result) { verification.fetch(:result) }
 
-        expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-          marker_failure(MINDMAP_PAGE),
-          marker_failure(INCLUDE_MINDMAP_PAGE),
-          empty_content_failure(MINDMAP_PAGE),
-          empty_content_failure(INCLUDE_MINDMAP_PAGE),
-        )
+      let(:expected_results) { verification.fetch(:expected) }
+      let(:verification) do
+        Dir.mktmpdir do |tmp|
+          docs_dir, site_dir = build_valid_site(tmp)
+          html = page_html_with_body(
+            %(<template>#{trap}<div class="paragraph">Inert</div></template>),
+          )
+          write_page(site_dir, "diagram_types/mindmap/index.html", html)
+          write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+          {
+            result: verifier_for(docs_dir, site_dir).failures,
+            expected: [
+              marker_failure(MINDMAP_PAGE),
+              marker_failure(INCLUDE_MINDMAP_PAGE),
+              empty_content_failure(MINDMAP_PAGE),
+              empty_content_failure(INCLUDE_MINDMAP_PAGE),
+            ],
+          }
+        end
+      end
+
+      it "matches the expected result" do
+        expect(verification_result).to match_array(expected_results)
       end
     end
   end
@@ -1138,21 +1680,33 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # that content is genuinely inert and the page really does render nothing.
   # The old scanner's `scan_until` found no closing tag, left the position
   # unmoved, and carried on reading the swallowed markup as live.
-  it "treats markup after an unclosed template as inert, not live" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html_with_body(
-        '<template><div class="paragraph">Swallowed</div>',
-      )
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "treats markup after an unclosed template as inert, not live" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        marker_failure(MINDMAP_PAGE),
-        marker_failure(INCLUDE_MINDMAP_PAGE),
-        empty_content_failure(MINDMAP_PAGE),
-        empty_content_failure(INCLUDE_MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html_with_body(
+          '<template><div class="paragraph">Swallowed</div>',
+        )
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            marker_failure(MINDMAP_PAGE),
+            marker_failure(INCLUDE_MINDMAP_PAGE),
+            empty_content_failure(MINDMAP_PAGE),
+            empty_content_failure(INCLUDE_MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -1160,68 +1714,122 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # reported, even though the SAME relative path happens to exist
   # physically in `_site` (which carries no baseurl directory at all) --
   # under a real deployment at that baseurl, the un-prefixed URL 404s.
-  it "reports a stylesheet URL missing the required baseurl prefix" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html.sub(
-        %(href="#{DEFAULT_BASEURL}/assets), 'href="/assets'
-      )
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a stylesheet URL missing the required baseurl prefix" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        baseurl_failure("/assets/css/just-the-docs-default.css"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html.sub(
+          %(href="#{DEFAULT_BASEURL}/assets), 'href="/assets'
+        )
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            baseurl_failure("/assets/css/just-the-docs-default.css"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
   # HIGH-2b. `/sirenax/...` is a different path than `/sirena/...` --
   # `start_with?(baseurl)` alone would strip the substring and wrongly
   # resolve it. The boundary must be segment-aware.
-  it "reports a stylesheet URL whose path merely starts with the baseurl " \
-     "string" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html.sub(
-        %(href="#{DEFAULT_BASEURL}/assets), 'href="/sirenax/assets'
-      )
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a stylesheet URL whose " \
+           "path merely starts with the baseurl " \
+           "string" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        baseurl_failure("/sirenax/assets/css/just-the-docs-default.css"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html.sub(
+          %(href="#{DEFAULT_BASEURL}/assets), 'href="/sirenax/assets'
+        )
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            baseurl_failure("/sirenax/assets/css/just-the-docs-default.css"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
   # MEDIUM-2. A query string is not part of the file path a server looks
   # up -- `?v=1` on an otherwise-valid asset URL must not turn it into a
   # false failure.
-  it "does not report a valid asset carrying a cache-busting query string " \
-     "as missing" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html.sub('.css">', '.css?v=1">')
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "does not report a valid asset " \
+           "carrying a cache-busting query string " \
+           "as missing" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html.sub('.css">', '.css?v=1">')
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
   # MEDIUM-2, the other half. The same comment (scripts/verify_docs_site.rb)
   # names a fragment alongside a query string; only the query string had a
   # spec until this one.
-  it "does not report a valid asset carrying a URL fragment as missing" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html.sub('.css">', '.css#section">')
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "does not report a valid asset carrying a URL fragment as missing" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html.sub('.css">', '.css#section">')
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
@@ -1236,92 +1844,146 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # renders it and nothing here clones it in -- a stylesheet link, layout
   # marker and content marker that exist only inside a <template> have not
   # actually shipped.
-  it "reports a page whose stylesheet, layout marker and content marker " \
-     "exist only inside a <template>" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      href = "#{DEFAULT_BASEURL}/assets/css/#{DEFAULT_THEME}-default.css"
-      html = <<~HTML
-        <html><head></head>
-        <body>
-          <template>
-            <link rel="stylesheet" href="#{href}">
-            <div class="main-content-wrap">
-              <div class="paragraph"><p>hi</p></div>
-            </div>
-          </template>
-        </body></html>
-      HTML
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a page whose stylesheet, " \
+           "layout marker and content marker " \
+           "exist only inside a <template>" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        layout_failure(MINDMAP_PAGE),
-        stylesheet_failure(MINDMAP_PAGE),
-        marker_failure(MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        href = "#{DEFAULT_BASEURL}/assets/css/#{DEFAULT_THEME}-default.css"
+        html = <<~HTML
+          <html><head></head>
+          <body>
+            <template>
+              <link rel="stylesheet" href="#{href}">
+              <div class="main-content-wrap">
+                <div class="paragraph"><p>hi</p></div>
+              </div>
+            </template>
+          </body></html>
+        HTML
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            layout_failure(MINDMAP_PAGE),
+            stylesheet_failure(MINDMAP_PAGE),
+            marker_failure(MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
   # HIGH-3b. Attribute parsing is grammar-based, not whitespace-shaped --
   # `src = "…"` (spaced `=`) is exactly as much a `src` attribute as
   # `src="…"`, so a missing target must still be reported.
-  it "reports a missing script asset whose src attribute has whitespace " \
-     "around the equals sign" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      missing = "#{DEFAULT_BASEURL}/assets/js/missing.js"
-      html = page_html.sub("</head>",
-                           %(<script src = "#{missing}"></script></head>))
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a missing script asset " \
+           "whose src attribute has whitespace " \
+           "around the equals sign" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        asset_failure(missing, INCLUDE_MINDMAP_PAGE, "/assets/js/missing.js"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        missing = "#{DEFAULT_BASEURL}/assets/js/missing.js"
+        html = page_html.sub("</head>",
+                             %(<script src = "#{missing}"></script></head>))
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            asset_failure(missing, INCLUDE_MINDMAP_PAGE,
+                          "/assets/js/missing.js"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
   # MEDIUM-3a. `File.exist?` is true for a directory. A stylesheet href
   # that resolves to a directory sharing the asset's name is not a file a
   # server can return, so it must be reported the same as a missing one.
-  it "reports a stylesheet asset that resolves to a directory, not a file" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      FileUtils.mkdir_p(File.join(site_dir, "assets/css/phantom.css"))
-      href = "#{DEFAULT_BASEURL}/assets/css/phantom.css"
-      html = page_html.sub("</head>",
-                           %(<link rel="stylesheet" href="#{href}"></head>))
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a stylesheet asset that " \
+           "resolves to a directory, not a file" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        asset_failure(href, INCLUDE_MINDMAP_PAGE, "/assets/css/phantom.css"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        FileUtils.mkdir_p(File.join(site_dir, "assets/css/phantom.css"))
+        href = "#{DEFAULT_BASEURL}/assets/css/phantom.css"
+        html = page_html.sub("</head>",
+                             %(<link rel="stylesheet" href="#{href}"></head>))
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            asset_failure(href, INCLUDE_MINDMAP_PAGE,
+                          "/assets/css/phantom.css"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
   # MEDIUM-3b. `../` in a ref can walk the resolved path outside `_site`
   # entirely, onto a real file that happens to sit next to it in `docs/`.
   # That file existing is not the asset existing.
-  it "reports a stylesheet asset whose ../ reference resolves outside _site" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      File.write(File.join(docs_dir, "outside.css"),
-                 "/* not part of the deployed site */")
-      href = "#{DEFAULT_BASEURL}/../outside.css"
-      html = page_html.sub("</head>",
-                           %(<link rel="stylesheet" href="#{href}"></head>))
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a stylesheet asset whose " \
+           "../ reference resolves outside _site" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        asset_failure(href, INCLUDE_MINDMAP_PAGE, "/../outside.css"),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        File.write(File.join(docs_dir, "outside.css"),
+                   "/* not part of the deployed site */")
+        href = "#{DEFAULT_BASEURL}/../outside.css"
+        html = page_html.sub("</head>",
+                             %(<link rel="stylesheet" href="#{href}"></head>))
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            asset_failure(href, INCLUDE_MINDMAP_PAGE, "/../outside.css"),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
@@ -1339,15 +2001,30 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # on ordinary valid HTML regardless of anything in this file. Keep this
   # spec; it becomes the only check that catches a regression back to a
   # hand-rolled/backtracking tokenizer.
-  it "does not hang tokenizing a page whose only remaining markup after " \
-     "the last tag is closing tags" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
+  describe "does not hang tokenizing a page " \
+           "whose only remaining markup after " \
+           "the last tag is closing tags" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = Timeout.timeout(2) do
-        verifier_for(docs_dir, site_dir).failures
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+
+        failures = Timeout.timeout(2) do
+          verifier_for(docs_dir, site_dir).failures
+        end
+        {
+          result: failures,
+          expected: [
+            [],
+          ],
+        }
       end
-      expect(failures).to eq([])
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
@@ -1362,32 +2039,44 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # unconditionally, which closes only the INNER template here -- the
   # stylesheet link, layout marker and content marker that follow it are
   # still inside the outer template and must stay inert.
-  it "reports a page whose live-looking markup sits inside a template " \
-     "nested in another template" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      href = "#{DEFAULT_BASEURL}/assets/css/#{DEFAULT_THEME}-default.css"
-      html = <<~HTML
-        <html><head></head>
-        <body>
-          <template>
-            <template></template>
-            <link rel="stylesheet" href="#{href}">
-            <div class="main-content-wrap">
-              <div class="paragraph"><p>hi</p></div>
-            </div>
-          </template>
-        </body></html>
-      HTML
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a page whose live-looking markup sits inside a template " \
+           "nested in another template" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        layout_failure(MINDMAP_PAGE),
-        stylesheet_failure(MINDMAP_PAGE),
-        marker_failure(MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        href = "#{DEFAULT_BASEURL}/assets/css/#{DEFAULT_THEME}-default.css"
+        html = <<~HTML
+          <html><head></head>
+          <body>
+            <template>
+              <template></template>
+              <link rel="stylesheet" href="#{href}">
+              <div class="main-content-wrap">
+                <div class="paragraph"><p>hi</p></div>
+              </div>
+            </template>
+          </body></html>
+        HTML
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            layout_failure(MINDMAP_PAGE),
+            stylesheet_failure(MINDMAP_PAGE),
+            marker_failure(MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
@@ -1396,30 +2085,43 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # parsed into real elements, so a stylesheet link, layout marker or
   # content marker living only inside a `<textarea>` has not actually
   # shipped, the same as script/style content.
-  it "reports a page whose live-looking markup sits only inside a textarea" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      href = "#{DEFAULT_BASEURL}/assets/css/#{DEFAULT_THEME}-default.css"
-      html = <<~HTML
-        <html><head></head>
-        <body>
-          <textarea>
-            <link rel="stylesheet" href="#{href}">
-            <div class="main-content-wrap">
-              <div class="paragraph"><p>hi</p></div>
-            </div>
-          </textarea>
-        </body></html>
-      HTML
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports a page whose live-looking " \
+           "markup sits only inside a textarea" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      failures = verifier_for(docs_dir, site_dir).failures
-      expect(failures).to include(
-        layout_failure(MINDMAP_PAGE),
-        stylesheet_failure(MINDMAP_PAGE),
-        marker_failure(MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        href = "#{DEFAULT_BASEURL}/assets/css/#{DEFAULT_THEME}-default.css"
+        html = <<~HTML
+          <html><head></head>
+          <body>
+            <textarea>
+              <link rel="stylesheet" href="#{href}">
+              <div class="main-content-wrap">
+                <div class="paragraph"><p>hi</p></div>
+              </div>
+            </textarea>
+          </body></html>
+        HTML
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        failures = verifier_for(docs_dir, site_dir).failures
+        {
+          result: failures,
+          expected: [
+            layout_failure(MINDMAP_PAGE),
+            stylesheet_failure(MINDMAP_PAGE),
+            marker_failure(MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to include(*expected_results)
     end
   end
 
@@ -1429,17 +2131,30 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # `.exist?` is true for a directory, so a directory happening to sit at
   # `assets/js/search-data.json` satisfied the requirement without a real
   # search index ever being built.
-  it "reports the search index missing when a directory sits at its path " \
-     "instead of a file" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      search_index = File.join(site_dir, "assets/js/search-data.json")
-      FileUtils.rm(search_index)
-      FileUtils.mkdir_p(search_index)
+  describe "reports the search index missing " \
+           "when a directory sits at its path " \
+           "instead of a file" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'asset: search index "assets/js/search-data.json" missing',
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        search_index = File.join(site_dir, "assets/js/search-data.json")
+        FileUtils.rm(search_index)
+        FileUtils.mkdir_p(search_index)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            'asset: search index "assets/js/search-data.json" missing',
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -1464,43 +2179,56 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # otherwise-empty page): rendered `<main>` text was "", but the verifier's
   # `.main-content-wrap`-scoped text was "Back to top This site uses Just
   # the Docs, a documentation theme for Jekyll."
-  it "reports empty content even when the theme footer pads " \
-     ".main-content-wrap with visible text" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      href = "#{DEFAULT_BASEURL}/assets/css/#{DEFAULT_THEME}-default.css"
-      html = <<~HTML
-        <html><head><link rel="stylesheet" href="#{href}"></head>
-        <body>
-          <div class="main-content-wrap">
-            <div id="main-content" class="main-content">
-              <main><div class="paragraph"></div></main>
-              <footer>
-                <p><a href="#top">Back to top</a></p>
-                <div>
-                  This site uses
-                  <a href="https://github.com/just-the-docs/just-the-docs">
-                    Just the Docs
-                  </a>, a documentation theme for Jekyll.
-                </div>
-              </footer>
-            </div>
-          </div>
-        </body></html>
-      HTML
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports empty content even when the theme footer pads " \
+           ".main-content-wrap with visible text" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      # MEDIUM-9, found by Codex. The old message always named
-      # `LAYOUT_BODY_MARKER`, which was false here: `rendered_text` reads
-      # `<main>` when it exists (per the HIGH-5 fix above), so THIS page's
-      # empty-content failure is about `<main>`, not `.main-content-wrap`
-      # -- the wrapper genuinely renders text (the footer) and saying so
-      # would contradict the fix this spec exists to pin.
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        "content: diagram_types/mindmap/index.html renders no text in main",
-        "content: _diagram_types/mindmap/index.html renders no text in main",
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        href = "#{DEFAULT_BASEURL}/assets/css/#{DEFAULT_THEME}-default.css"
+        html = <<~HTML
+          <html><head><link rel="stylesheet" href="#{href}"></head>
+          <body>
+            <div class="main-content-wrap">
+              <div id="main-content" class="main-content">
+                <main><div class="paragraph"></div></main>
+                <footer>
+                  <p><a href="#top">Back to top</a></p>
+                  <div>
+                    This site uses
+                    <a href="https://github.com/just-the-docs/just-the-docs">
+                      Just the Docs
+                    </a>, a documentation theme for Jekyll.
+                  </div>
+                </footer>
+              </div>
+            </div>
+          </body></html>
+        HTML
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        # MEDIUM-9, found by Codex. The old message always named
+        # `LAYOUT_BODY_MARKER`, which was false here: `rendered_text` reads
+        # `<main>` when it exists (per the HIGH-5 fix above), so THIS page's
+        # empty-content failure is about `<main>`, not `.main-content-wrap`
+        # -- the wrapper genuinely renders text (the footer) and saying so
+        # would contradict the fix this spec exists to pin.
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            "content: diagram_types/mindmap/index.html renders no text in main",
+            "content: _diagram_types/mindmap/" \
+            "index.html renders no text in main",
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
@@ -1553,19 +2281,33 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # (verified: a `<!-- comment -->` sibling of a live `<div>` never
   # contributes to `.text`, and never shows up as a `document.css` match),
   # so the pre-strip only ever subtracts content it did not need to.
-  it "does not delete real content between a false comment-open in a " \
-     "script and a later real comment" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html_with_body(
-        '<script>const marker = "<!--";</script>' \
-        '<div class="paragraph"><p>hi</p></div>' \
-        "<!-- trailing comment -->",
-      )
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "does not delete real content between a false comment-open in a " \
+           "script and a later real comment" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html_with_body(
+          '<script>const marker = "<!--";</script>' \
+          '<div class="paragraph"><p>hi</p></div>' \
+          "<!-- trailing comment -->",
+        )
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            [],
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to eq(*expected_results)
     end
   end
 
@@ -1577,21 +2319,34 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # check even though a `<template>`'s content never ships. The visible
   # fallback text elsewhere on the page carries no marker at all, so the
   # only Asciidoctor marker on the page is the inert one.
-  it "reports no recognized marker when the only marker class sits on a " \
-     "skipped element itself" do
-    Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html_with_body(
-        '<template class="paragraph"></template>' \
-        "<p>Visible fallback text</p>",
-      )
-      write_page(site_dir, "diagram_types/mindmap/index.html", html)
-      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+  describe "reports no recognized marker when " \
+           "the only marker class sits on a " \
+           "skipped element itself" do
+    subject(:verification_result) { verification.fetch(:result) }
 
-      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        marker_failure(MINDMAP_PAGE),
-        marker_failure(INCLUDE_MINDMAP_PAGE),
-      )
+    let(:expected_results) { verification.fetch(:expected) }
+    let(:verification) do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html_with_body(
+          '<template class="paragraph"></template>' \
+          "<p>Visible fallback text</p>",
+        )
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
+
+        {
+          result: verifier_for(docs_dir, site_dir).failures,
+          expected: [
+            marker_failure(MINDMAP_PAGE),
+            marker_failure(INCLUDE_MINDMAP_PAGE),
+          ],
+        }
+      end
+    end
+
+    it "matches the expected result" do
+      expect(verification_result).to match_array(expected_results)
     end
   end
 
