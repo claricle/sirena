@@ -39,10 +39,7 @@ module Sirena
 
       def field_box(box)
         Svg::Rect.new.tap do |rect|
-          rect.x = box.x
-          rect.y = box.y
-          rect.width = box.width
-          rect.height = box.height
+          set_field_geometry(rect, box)
           rect.fill = theme_color(:field_background)
           rect.stroke = theme_color(:field_border)
           rect.stroke_width = "1"
@@ -51,15 +48,27 @@ module Sirena
 
       def label_element(label)
         Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
-          text.text_anchor = label.text_anchor
-          text.dominant_baseline = label.dominant_baseline
+          set_label_geometry(text, label)
           text.fill = label_color(label.style)
           text.font_size = number_string(label.font_size)
-          text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+          text.font_family = theme_typography(:font_family) ||
+            "Arial, sans-serif"
           text.content = label.text
         end
+      end
+
+      def set_field_geometry(rect, box)
+        rect.x = box.x
+        rect.y = box.y
+        rect.width = box.width
+        rect.height = box.height
+      end
+
+      def set_label_geometry(text, label)
+        text.x = label.x
+        text.y = label.y
+        text.text_anchor = label.text_anchor
+        text.dominant_baseline = label.dominant_baseline
       end
 
       def label_color(style)

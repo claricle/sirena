@@ -32,51 +32,57 @@ module Sirena
       end
 
       def add_title(doc, label)
-        text = Svg::Text.new.tap do |t|
-          t.content = label.text
-          t.x = label.x
-          t.y = label.y
-          t.fill = label_fill("#333")
-          t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-          t.font_size = number_string(label.font_size)
-          t.font_weight = label.font_weight
-          t.text_anchor = label.text_anchor
+        doc << Svg::Text.new.tap do |text|
+          set_title_geometry(text, label)
+          set_title_style(text, label)
         end
-        doc << text
+      end
+
+      def set_title_geometry(text, label)
+        text.content = label.text
+        text.x = label.x
+        text.y = label.y
+        text.text_anchor = label.text_anchor
+      end
+
+      def set_title_style(text, label)
+        text.fill = label_fill("#333")
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = number_string(label.font_size)
+        text.font_weight = label.font_weight
       end
 
       def render_cell(doc, cell, parent_group = nil)
-        group = Svg::Group.new
-
-        # Draw cell rectangle
-        rect = Svg::Rect.new.tap do |r|
-          r.x = cell.box.x
-          r.y = cell.box.y
-          r.width = cell.box.width
-          r.height = cell.box.height
-          r.fill = cell.fill
-          r.stroke = cell.stroke
-          r.stroke_width = "2"
-          r.rx = cell.box.corner_radius
-          r.ry = cell.box.corner_radius
-        end
-        group << rect
-
-        # Add label
-        group << label_element(cell.label)
-
-        # Add value if it's a leaf
-        group << label_element(cell.value_label) if cell.value_label
-        add_section_total(group, cell)
-
-        # Render children recursively
+        group = cell_group(cell)
         cell.children.each { |child| render_cell(group, child, group) }
+        (parent_group || doc) << group
+      end
 
-        if parent_group
-          parent_group << group
-        else
-          doc << group
+      def cell_group(cell)
+        Svg::Group.new.tap do |group|
+          group << cell_box(cell)
+          group << label_element(cell.label)
+          group << label_element(cell.value_label) if cell.value_label
+          add_section_total(group, cell)
         end
+      end
+
+      def cell_box(cell)
+        Svg::Rect.new.tap do |rect|
+          set_cell_box_geometry(rect, cell.box)
+          rect.fill = cell.fill
+          rect.stroke = cell.stroke
+          rect.stroke_width = "2"
+        end
+      end
+
+      def set_cell_box_geometry(rect, box)
+        rect.x = box.x
+        rect.y = box.y
+        rect.width = box.width
+        rect.height = box.height
+        rect.rx = box.corner_radius
+        rect.ry = box.corner_radius
       end
 
       def add_section_total(group, cell)

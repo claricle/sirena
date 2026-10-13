@@ -117,11 +117,14 @@ module MermaidFuzz
     # SAFE_CHARS-only monkeypatch that fooled the source-scanning version.
     def exercised_both_pools?
       ids = @last_ids || []
-      ids.any? { |id| id.chars.any? { |c| SAFE_CHARS.include?(c) } } &&
-        ids.any? { |id| id.chars.any? { |c| @wild_chars.include?(c) } }
+      includes_pool?(ids, SAFE_CHARS) && includes_pool?(ids, @wild_chars)
     end
 
     private
+
+    def includes_pool?(ids, pool)
+      ids.any? { |id| id.chars.any? { |character| pool.include?(character) } }
+    end
 
     def random_id
       length = @rng.rand(1..6)
@@ -153,26 +156,33 @@ module MermaidFuzz
     module_function
 
     def run(cases, getter:, preflight:)
-      payload = {
-        getter: getter,
-        preflight: preflight,
-        cases: cases.map { |c| { id: c.id, source: c.source } },
-      }.to_json
+      payload = runner_payload(cases, getter, preflight)
       stdout, stderr, status = Open3.capture3(
         "node", MERMAID_RUNNER, stdin_data: payload
       )
       error = "mermaid runner failed (exit #{status.exitstatus}):\n#{stderr}"
       raise error unless status.success?
 
-      JSON.parse(stdout, symbolize_names: true).to_h do |r|
-        verdict = if r[:accepted]
-                    { accepted: true, ids: r[:ids] }
-                  else
-                    { accepted: false, error: r[:error] }
-                  end
-        [r[:id].to_s, verdict]
+      JSON.parse(stdout, symbolize_names: true)
+        .to_h { |row| [row[:id].to_s, runner_verdict(row)] }
+    end
+
+    def runner_payload(cases, getter, preflight)
+      { getter: getter, preflight: preflight,
+        cases: cases.map do |item|
+          { id: item.id, source: item.source }
+        end }.to_json
+    end
+
+    def runner_verdict(row)
+      if row[:accepted]
+        { accepted: true, ids: row[:ids] }
+      else
+        { accepted: false, error: row[:error] }
       end
     end
+
+    private_class_method :runner_payload, :runner_verdict
   end
 
   # Runs a type-specific verdict proc over every case in-process (no
@@ -317,14 +327,13 @@ module MermaidFuzz
     #   this diagram type -- see MermaidSide's doc on why it must be fixed
     def initialize(
       label:, generator_factory:, known_divergences:, sirena_verdict_for:,
-      mermaid_getter:, mermaid_preflight:
+      **mermaid_options
     )
       @label = label
       @generator_factory = generator_factory
       @known_divergences = known_divergences
       @sirena_verdict_for = sirena_verdict_for
-      @mermaid_getter = mermaid_getter
-      @mermaid_preflight = mermaid_preflight
+      set_mermaid_options(**mermaid_options)
     end
 
     # Builds cases, compares BOTH sides ONCE (a single mermaid_fuzz_runner.js
@@ -340,37 +349,52 @@ module MermaidFuzz
     # agreement case and known divergences are now the head of `cases`, so
     # one comparison pass answers all three questions below.
     def run(seed:, count:, verbose: false)
-      generator = @generator_factory.call(Random.new(seed))
-      generated = generator.cases(count)
-      agreement_case = Case.new(AGREEMENT_CASE_ID, @mermaid_preflight)
-      cases = [agreement_case] + @known_divergences + generated
+      generator, cases, generated = build_cases(seed, count)
       comparisons = compare(cases)
-      agreement_comparison = comparisons.first
-      known_comparisons = comparisons[1, @known_divergences.size]
-      divergences = comparisons.select(&:divergence?)
-      proven = proven?(
-        agreement_comparison, known_comparisons, generator, generated
-      )
-
-      puts "== #{@label} (seed=#{seed}) =="
-      unless proven
-        warn_unproven(
-          agreement_comparison, known_comparisons, generator, generated
-        )
+      agreement = comparisons.first
+      known = comparisons[1, @known_divergences.size]
+      proven = proven?(agreement, known, generator, generated)
+      report_run(seed, comparisons, verbose, proven) do
+        warn_unproven(agreement, known, generator, generated)
       end
-      (verbose ? comparisons : divergences).each { |c| puts c }
-      puts "#{@label}: #{cases.size} cases, #{divergences.size} divergences " \
-           "#{divergences.group_by(&:kind).transform_values(&:size)}"
-
-      Result.new(
-        label: @label,
-        proven: proven,
-        cases_total: cases.size,
-        divergences: divergences,
-      )
+      build_result(cases, comparisons, proven)
     end
 
     private
+
+    def set_mermaid_options(mermaid_getter:, mermaid_preflight:)
+      @mermaid_getter = mermaid_getter
+      @mermaid_preflight = mermaid_preflight
+    end
+
+    def build_cases(seed, count)
+      generator = @generator_factory.call(Random.new(seed))
+      generated = generator.cases(count)
+      agreement = Case.new(AGREEMENT_CASE_ID, @mermaid_preflight)
+      [generator, [agreement] + @known_divergences + generated, generated]
+    end
+
+    def report_run(seed, comparisons, verbose, proven)
+      puts "== #{@label} (seed=#{seed}) =="
+      # Diagnostics precede case output; the caller supplies them when unproven.
+      yield unless proven
+      report_comparisons(comparisons, verbose)
+    end
+
+    def report_comparisons(comparisons, verbose)
+      divergences = comparisons.select(&:divergence?)
+      (verbose ? comparisons : divergences).each do |comparison|
+        puts comparison
+      end
+      summary = divergences.group_by(&:kind).transform_values(&:size)
+      puts "#{@label}: #{comparisons.size} cases, " \
+           "#{divergences.size} divergences #{summary}"
+    end
+
+    def build_result(cases, comparisons, proven)
+      Result.new(label: @label, proven: proven, cases_total: cases.size,
+                 divergences: comparisons.select(&:divergence?))
+    end
 
     # The "proven able to go red" check the PR brief requires before
     # generated numbers are trusted, in three parts:
@@ -396,35 +420,44 @@ module MermaidFuzz
       true
     end
 
-    def warn_unproven(
-      agreement_comparison, known_comparisons, generator, generated
-    )
-      if agreement_comparison.divergence?
-        warn "#{@label}: NEGATIVE CONTROL FAILED -- a known-valid source was " \
-             "flagged as a divergence: #{agreement_comparison}. The checker " \
-             "itself is untrustworthy."
-      end
+    def warn_unproven(agreement, known, generator, generated)
+      warn_failed_agreement(agreement) if agreement.divergence?
+      warn_known_divergences(known)
+      warn_safe_generator(generated.size) if generator_unproven?(generator,
+                                                                 generated)
+    end
 
+    def warn_failed_agreement(comparison)
+      warn "#{@label}: NEGATIVE CONTROL FAILED -- a known-valid source was " \
+           "flagged as a divergence: #{comparison}. The checker " \
+           "itself is untrustworthy."
+    end
+
+    def warn_known_divergences(comparisons)
       if @known_divergences.empty?
         warn "#{@label}: NO known-divergence regression case -- " \
              "this generator has never been shown to catch anything real. " \
              "See mermaid_fuzz.rb banner."
-      elsif !known_comparisons.all?(&:divergence?)
-        caught = known_comparisons.count(&:divergence?)
-        warn "#{@label}: #{caught}/#{@known_divergences.size} known " \
-             "divergences caught -- a regression case stopped diverging. " \
-             "Investigate before trusting this run."
-        known_comparisons.reject(&:divergence?).each do |comparison|
-          warn "  NOT caught: #{comparison}"
-        end
+      elsif !comparisons.all?(&:divergence?)
+        warn_missing_divergences(comparisons)
       end
+    end
 
-      if generator_unproven?(generator, generated)
-        warn "#{@label}: GENERATOR NEVER EXPLORED ITS WILD CHARACTER POOL " \
-             "across #{generated.size} generated cases -- the reported " \
-             "numbers test nothing beyond safe identifiers. Check the " \
-             "generator_factory wiring."
+    def warn_missing_divergences(comparisons)
+      caught = comparisons.count(&:divergence?)
+      warn "#{@label}: #{caught}/#{@known_divergences.size} known " \
+           "divergences caught -- a regression case stopped diverging. " \
+           "Investigate before trusting this run."
+      comparisons.reject(&:divergence?).each do |comparison|
+        warn "  NOT caught: #{comparison}"
       end
+    end
+
+    def warn_safe_generator(count)
+      warn "#{@label}: GENERATOR NEVER EXPLORED ITS WILD CHARACTER POOL " \
+           "across #{count} generated cases -- the reported " \
+           "numbers test nothing beyond safe identifiers. Check the " \
+           "generator_factory wiring."
     end
 
     def generator_unproven?(generator, generated)

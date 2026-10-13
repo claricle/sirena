@@ -99,42 +99,29 @@ module Sirena
       # @return [Hash] layout data with axes, datasets, and dimensions
       def build_graph(diagram)
         data = ir_document(diagram)
-        # Calculate plot area
-        plot_width = DEFAULT_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
-        plot_height = DEFAULT_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
-
-        # Position axes
-        x_axis_layout = position_x_axis(
-          axis_data(data, "horizontal_axis"), plot_width
-        )
-        y_axis_layout = position_y_axis(
-          axis_data(data, "vertical_axis"), plot_height
-        )
-
-        # Position datasets
-        datasets_layout = position_datasets(
-          datasets(data),
-          x_axis_layout,
-          y_axis_layout,
-          plot_width,
-          plot_height,
-        )
-
-        {
-          width: DEFAULT_WIDTH,
-          height: DEFAULT_HEIGHT,
-          plot_x: MARGIN_LEFT,
-          plot_y: MARGIN_TOP,
-          plot_width: plot_width,
-          plot_height: plot_height,
-          x_axis: x_axis_layout,
-          y_axis: y_axis_layout,
-          datasets: datasets_layout,
-          title: data.label,
-        }
+        width = DEFAULT_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
+        height = DEFAULT_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
+        x_axis = position_x_axis(axis_data(data, "horizontal_axis"), width)
+        y_axis = position_y_axis(axis_data(data, "vertical_axis"), height)
+        graph_data(data, x_axis, y_axis, width, height)
       end
 
       private
+
+      def graph_data(data, x_axis, y_axis, width, height)
+        graph_dimensions(width, height).merge(
+          x_axis: x_axis, y_axis: y_axis,
+          datasets: position_datasets(datasets(data), x_axis, y_axis,
+                                      width, height),
+          title: data.label
+        )
+      end
+
+      def graph_dimensions(width, height)
+        { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT,
+          plot_x: MARGIN_LEFT, plot_y: MARGIN_TOP,
+          plot_width: width, plot_height: height }
+      end
 
       def scene(diagram)
         graph = build_graph(diagram)
@@ -550,22 +537,17 @@ module Sirena
       # @return [Array<Hash>] positioned datasets
       def position_datasets(datasets, x_axis, y_axis, width, height)
         datasets.map do |dataset|
-          points = position_dataset_points(
-            dataset,
-            x_axis,
-            y_axis,
-            width,
-            height,
-          )
+          points = position_dataset_points(dataset, x_axis, y_axis,
+                                           width, height)
 
-          {
-            id: dataset[:id],
-            label: dataset[:label],
-            chart_type: dataset[:chart_type],
-            color: dataset[:color],
-            points: points,
-          }
+          positioned_dataset(dataset, points)
         end
+      end
+
+      def positioned_dataset(dataset, points)
+        { id: dataset[:id], label: dataset[:label],
+          chart_type: dataset[:chart_type], color: dataset[:color],
+          points: points }
       end
 
       # Positions points for a single dataset.

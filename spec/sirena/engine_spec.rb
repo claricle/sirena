@@ -26,13 +26,19 @@ RSpec.describe Sirena::Engine do
     context "with flowchart diagram" do
       let(:source) { "graph TD\nA-->B" }
 
+      let(:result) do
+        engine.render(source)
+      end
+
       it "detects flowchart diagram type" do
         expect { engine.render(source) }.not_to raise_error
       end
 
-      it "returns SVG output" do
-        result = engine.render(source)
+      it "returns SVG text" do
         expect(result).to be_a(String)
+      end
+
+      it "includes an opening SVG tag" do
         expect(result).to include("<svg")
       end
     end
@@ -92,10 +98,20 @@ RSpec.describe Sirena::Engine do
 
       # mmdc renders this source at viewBox="-8 -8 16 16", max-width 16px.
       # Sirena keeps its own "0 0" origin and matches the 16x16 extent.
-      it "renders the 16x16 empty canvas with nothing in it" do
+
+      it "uses the empty canvas width" do
         expect(document.root.attributes["width"]).to eq("16.0")
+      end
+
+      it "uses the empty canvas height" do
         expect(document.root.attributes["height"]).to eq("16.0")
+      end
+
+      it "uses the empty canvas view box" do
         expect(document.root.attributes["viewBox"]).to eq("0 0 16 16")
+      end
+
+      it "keeps the empty canvas empty" do
         expect(document.root.elements.to_a).to eq([])
       end
     end
@@ -112,27 +128,36 @@ RSpec.describe Sirena::Engine do
     # output looks SVG-shaped. Runs in `spec:corpus`, isolated from the
     # coverage-collecting `spec:unit` run: see .simplecov and
     # tasks/coverage.rake.
-    context "with treemap corpus cases", :corpus do
-      # Globbing at definition time means an empty or moved directory
-      # would silently define zero examples and still pass, so guard it.
-      it "finds treemap corpus cases to render" do
-        expect(
-          Dir.glob(File.expand_path("../mermaid/treemap/*.mmd", __dir__)),
-        ).not_to be_empty
+
+    # Globbing at definition time means an empty or moved directory
+    # would silently define zero examples and still pass, so guard it.
+    it "finds treemap corpus cases to render", :corpus do
+      expect(
+        Dir.glob(File.expand_path("../mermaid/treemap/*.mmd", __dir__)),
+      ).not_to be_empty
+    end
+
+    # 007 is excluded: it fails at parse and is flagged
+    # probably-oracle-invalid (pending item 02's verdict).
+    Dir.glob(File.expand_path("../mermaid/treemap/*.mmd", __dir__))
+      .reject do |path|
+        path.end_with?("treemap_spec-da322cba.mmd")
       end
-
-      # 007 is excluded: it fails at parse and is flagged
-      # probably-oracle-invalid (pending item 02's verdict).
-      Dir.glob(File.expand_path("../mermaid/treemap/*.mmd", __dir__))
-        .reject do |path|
-          path.end_with?("treemap_spec-da322cba.mmd")
+      .each do |fixture_file|
+      describe "renders #{File.basename(fixture_file)}", :corpus do
+        let(:result) do
+          engine.render(File.read(fixture_file))
         end
-        .each do |fixture_file|
-        it "renders #{File.basename(fixture_file)}" do
-          result = engine.render(File.read(fixture_file))
 
+        it "returns corpus SVG text" do
           expect(result).to be_a(String)
+        end
+
+        it "includes the corpus SVG opening tag" do
           expect(result).to include("<svg")
+        end
+
+        it "closes the corpus SVG" do
           expect(result.rstrip).to end_with("</svg>")
         end
       end
@@ -232,6 +257,26 @@ RSpec.describe Sirena::Engine do
     context "with unknown diagram type" do
       let(:source) { "unknown\ntest" }
 
+      # A list of keywords glued together with no separator would still
+      # pass the include-per-type check above (each stays a contiguous
+      # substring of the concatenation) -- assert the comma-separated
+      # format the docstring promises, so dropping the separator is caught.
+      let(:sorted_keywords) do
+        Sirena::DiagramRegistry.types.sort.map do |type|
+          Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.fetch(type)
+        end
+      end
+      # The message must name the keyword a user actually types
+      # (`sequenceDiagram`), not DiagramRegistry's internal registration
+      # key (`:sequence`) -- DIAGRAM_TYPE_KEYWORDS is the translation
+      # table, checked for completeness against DiagramRegistry.types by
+      # the spec below.
+      let(:type_failure) do
+        engine.render(source)
+      rescue Sirena::Engine::DiagramTypeError => e
+        e
+      end
+
       it "raises DiagramTypeError" do
         expect { engine.render(source) }.to raise_error(
           Sirena::Engine::DiagramTypeError,
@@ -239,19 +284,10 @@ RSpec.describe Sirena::Engine do
         )
       end
 
-      # The message must name the keyword a user actually types
-      # (`sequenceDiagram`), not DiagramRegistry's internal registration
-      # key (`:sequence`) -- DIAGRAM_TYPE_KEYWORDS is the translation
-      # table, checked for completeness against DiagramRegistry.types by
-      # the spec below.
-      it "names the actual keyword for every registered diagram type" do
-        expect { engine.render(source) }.to raise_error(
-          Sirena::Engine::DiagramTypeError,
-        ) do |error|
-          Sirena::DiagramRegistry.types.each do |type|
-            keyword = Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.fetch(type)
-            expect(error.message).to include(keyword)
-          end
+      Sirena::DiagramRegistry.types.each do |type|
+        it "names the actual keyword for #{type}" do
+          keyword = Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.fetch(type)
+          expect(type_failure.message).to include(keyword)
         end
       end
 
@@ -265,19 +301,8 @@ RSpec.describe Sirena::Engine do
           .to eq(Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.keys.sort)
       end
 
-      # A list of keywords glued together with no separator would still
-      # pass the include-per-type check above (each stays a contiguous
-      # substring of the concatenation) -- assert the comma-separated
-      # format the docstring promises, so dropping the separator is caught.
       it "separates each keyword with a comma and a space" do
-        expect { engine.render(source) }.to raise_error(
-          Sirena::Engine::DiagramTypeError,
-        ) do |error|
-          sorted_keywords = Sirena::DiagramRegistry.types.sort.map do |type|
-            Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.fetch(type)
-          end
-          expect(error.message).to include(sorted_keywords.join(", "))
-        end
+        expect(type_failure.message).to include(sorted_keywords.join(", "))
       end
     end
 
@@ -304,6 +329,21 @@ RSpec.describe Sirena::Engine do
       let(:log_output) { StringIO.new }
       let(:logger) { Logger.new(log_output) }
 
+      # apply_log_level used to mutate an injected logger's `.level=` on
+      # every construction/render -- crashing outright for a duck-typed
+      # logger that only implements the documented `debug`/`info`/`warn`
+      # contract, and corrupting a shared logger's own level as a side
+      # effect otherwise. Logging is now gated purely on @verbose, so
+      # neither construction nor render ever calls `.level=`.
+
+      let(:minimal_logger) do
+        Class.new do
+          def debug(_msg); end
+          def info(_msg); end
+          def warn(_msg); end
+        end.new
+      end
+
       it "logs through the injected logger instead of building its own" do
         described_class.new(logger: logger).render(source, verbose: true)
 
@@ -316,19 +356,7 @@ RSpec.describe Sirena::Engine do
         expect(log_output.string).to be_empty
       end
 
-      # apply_log_level used to mutate an injected logger's `.level=` on
-      # every construction/render -- crashing outright for a duck-typed
-      # logger that only implements the documented `debug`/`info`/`warn`
-      # contract, and corrupting a shared logger's own level as a side
-      # effect otherwise. Logging is now gated purely on @verbose, so
-      # neither construction nor render ever calls `.level=`.
-      it "accepts a duck-typed logger with no #level= method" do
-        minimal_logger = Class.new do
-          def debug(_msg); end
-          def info(_msg); end
-          def warn(_msg); end
-        end.new
-
+      it "renders without raising" do
         expect do
           described_class.new(logger: minimal_logger)
             .render(source, verbose: true)
@@ -351,6 +379,12 @@ RSpec.describe Sirena::Engine do
     context "with an unknown theme name" do
       let(:source) { "graph TD\nA-->B" }
 
+      let(:theme_failure) do
+        engine.render(source, theme: "nosuchtheme")
+      rescue Sirena::Engine::PipelineError => e
+        e
+      end
+
       it "raises instead of silently falling back to the default theme" do
         expect { engine.render(source, theme: "nosuchtheme") }.to raise_error(
           Sirena::Engine::PipelineError,
@@ -358,13 +392,9 @@ RSpec.describe Sirena::Engine do
         )
       end
 
-      it "lists the valid theme names in the error" do
-        expect { engine.render(source, theme: "nosuchtheme") }.to raise_error(
-          Sirena::Engine::PipelineError,
-        ) do |error|
-          Sirena::Theme::Registry.list.each do |name|
-            expect(error.message).to include(name.to_s)
-          end
+      Sirena::Theme::Registry.list.each do |name|
+        it "lists #{name} as a valid theme in the error" do
+          expect(theme_failure.message).to include(name.to_s)
         end
       end
 

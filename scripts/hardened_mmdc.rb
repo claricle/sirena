@@ -24,6 +24,10 @@ module HardenedMmdc
   # escaped the kill still holds the write end, and it will not let go.
   DRAIN_GRACE = 1
 
+  Session = Struct.new(:pid, :status, :descendants, :drain, :buffer,
+                       keyword_init: true)
+  private_constant :Session
+
   # Spawned into its own process group so a hung Chromium goes down with it.
   # Drain the output on a thread rather than reading it after the wait — a
   # full pipe would otherwise block mmdc's write and starve the deadline.
@@ -34,27 +38,35 @@ module HardenedMmdc
   # close, even when the spawn itself raises.
   def run_mmdc(input, output)
     IO.pipe do |stdout_r, stdout_w|
-      pid = Process.spawn(MermaidToolchain.environment,
-                          *MermaidToolchain.command("-i", input, "-o", output),
-                          out: stdout_w, err: stdout_w, pgroup: true)
+      session = Session.new(descendants: [], buffer: +"")
+      session.pid = spawn_mmdc(input, output, stdout_w)
       stdout_w.close
-      # Appended to as bytes arrive, not returned once at the end: a drain
-      # that never reaches EOF (an escaped descendant still holds the write
-      # end) still leaves whatever it already read sitting in this buffer,
-      # instead of losing it behind a `Thread#value` that never resolves.
-      buffer = +""
-      drain = Thread.new { drain_into(stdout_r, buffer) }
-
-      descendants = descendants_of(pid)
-      status = wait_with_deadline(pid, descendants: descendants)
-      kill_group_id(pid)
-      drain.join(DRAIN_GRACE)
-      [status, buffer]
+      session.drain = Thread.new { drain_into(stdout_r, session.buffer) }
+      finish_session(session)
     ensure
-      kill_group(pid) if pid && status.nil?
-      kill_each(descendants || [])
-      drain&.kill
+      cleanup_session(session) if session
     end
+  end
+
+  def spawn_mmdc(input, output, pipe)
+    Process.spawn(MermaidToolchain.environment,
+                  *MermaidToolchain.command("-i", input, "-o", output),
+                  out: pipe, err: pipe, pgroup: true)
+  end
+
+  def finish_session(session)
+    session.descendants = descendants_of(session.pid)
+    session.status = wait_with_deadline(session.pid,
+                                        descendants: session.descendants)
+    kill_group_id(session.pid)
+    session.drain.join(DRAIN_GRACE)
+    [session.status, session.buffer]
+  end
+
+  def cleanup_session(session)
+    kill_group(session.pid) if session.pid && session.status.nil?
+    kill_each(session.descendants)
+    session.drain&.kill
   end
 
   # Reads in chunks rather than in one `read` call so a hung upstream that
@@ -70,10 +82,7 @@ module HardenedMmdc
     deadline = monotonic + CASE_TIMEOUT
 
     loop do
-      if descendants
-        descendants.concat(descendants_of(pid))
-        descendants.uniq!
-      end
+      update_descendants(descendants, pid) if descendants
 
       finished, status = Process.waitpid2(pid, Process::WNOHANG)
       return status if finished
@@ -81,6 +90,11 @@ module HardenedMmdc
 
       sleep 0.05
     end
+  end
+
+  def update_descendants(descendants, pid)
+    descendants.concat(descendants_of(pid))
+    descendants.uniq!
   end
 
   # Killing mmdc's process group alone is not enough — Chromium runs in a
@@ -144,6 +158,19 @@ module HardenedMmdc
 
   # The whole subtree, from one `ps` snapshot.
   def subtree_of(pid)
+    parents = process_parents
+    found = []
+    queue = [pid]
+    until queue.empty?
+      children = parents[queue.shift].uniq
+      new_children = children.reject { |child| found.include?(child) }
+      found.concat(new_children)
+      queue.concat(new_children)
+    end
+    found
+  end
+
+  def process_parents
     parents = Hash.new { |hash, key| hash[key] = [] }
     capture(["ps", "-eo", "pid=,ppid="], PS_TIMEOUT).each_line do |line|
       child, parent = line.split.map do |field|
@@ -151,19 +178,7 @@ module HardenedMmdc
       end
       parents[parent] << child if child&.positive? && parent&.positive?
     end
-
-    found = []
-    queue = [pid]
-    until queue.empty?
-      current = queue.shift
-      parents[current].each do |child|
-        next if found.include?(child)
-
-        found << child
-        queue << child
-      end
-    end
-    found
+    parents
   end
 
   def monotonic
@@ -201,5 +216,7 @@ module HardenedMmdc
   # top-level scoping in mermaid_diff.rb, before this module existed).
   private_class_method :wait_with_deadline, :kill_group, :status_unless_killed,
                        :kill_group_id, :kill_each, :descendants_of, :subtree_of,
-                       :drain_into, :monotonic, :capture_command
+                       :drain_into, :monotonic, :capture_command, :spawn_mmdc,
+                       :finish_session, :cleanup_session, :update_descendants,
+                       :process_parents
 end

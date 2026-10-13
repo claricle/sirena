@@ -17,6 +17,10 @@ module CliSpecHelpers
     -> { described_class.start(args) }
   end
 
+  def exit_error(status_matcher)
+    a_kind_of(SystemExit).and(have_attributes(status: status_matcher))
+  end
+
   def capture_stdout
     original_stdout = $stdout
     $stdout = StringIO.new
@@ -43,7 +47,7 @@ RSpec.describe Sirena::Cli do
 
       expect(&rendering(overflow))
         .to output(/\AError: stack level too deep\n\z/).to_stderr
-        .and raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+        .and raise_error(exit_error(1))
     end
 
     it "converts an exhausted heap into a clean exit instead of a raw crash" do
@@ -51,13 +55,12 @@ RSpec.describe Sirena::Cli do
 
       expect(&rendering(exhausted))
         .to output(/\AError: failed to allocate memory\n\z/).to_stderr
-        .and raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+        .and raise_error(exit_error(1))
     end
 
     it "lets an exit request through untouched" do
-      expect(&rendering(SystemExit)).to raise_error(SystemExit) do |error|
-        expect(error.status).not_to eq(1)
-      end
+      expect(&rendering(SystemExit))
+        .to raise_error(exit_error(satisfy { |status| status != 1 }))
     end
 
     it "lets an interrupt through untouched" do
@@ -110,21 +113,23 @@ RSpec.describe Sirena::Cli do
     # directly, `e.backtrace` still reads nil after the exception has
     # passed through `and_raise`'s `raise`. No VM allocation, no
     # platform dependency.
-    it "reports a backtrace-less exhaustion under --verbose without crashing" do
-      exhausted = NoMemoryError.new("failed to allocate memory")
-      allow(exhausted).to receive(:backtrace).and_return(nil)
-      fake_command = instance_double(Sirena::Commands::RenderCommand)
-      allow(fake_command).to receive(:run).and_raise(exhausted)
-      allow(Sirena::Commands::RenderCommand).to receive(:new)
-        .and_return(fake_command)
+    describe "backtrace-less exhaustion under --verbose" do
+      let(:exhausted) { NoMemoryError.new("failed to allocate memory") }
+      let(:fake_command) { instance_double(Sirena::Commands::RenderCommand) }
 
-      # `warn error.backtrace&.join("\n")` on a nil backtrace warns nil --
-      # an extra blank line, not a crash. That blank line is what proves
-      # the `&.` ran rather than raising, so it is asserted here rather
-      # than trimmed away.
-      expect { described_class.start(["render", "unused.mmd", "--verbose"]) }
-        .to output("Error: failed to allocate memory\n\n").to_stderr
-        .and raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+      before do
+        allow(exhausted).to receive(:backtrace).and_return(nil)
+        allow(fake_command).to receive(:run).and_raise(exhausted)
+        allow(Sirena::Commands::RenderCommand).to receive(:new)
+          .and_return(fake_command)
+      end
+
+      # The extra blank line pins nil-backtrace formatting without a crash.
+      it "reports the exhaustion and exits unsuccessfully" do
+        expect { described_class.start(["render", "unused.mmd", "--verbose"]) }
+          .to output("Error: failed to allocate memory\n\n").to_stderr
+          .and raise_error(exit_error(1))
+      end
     end
 
     context "with --verbose and a failure that has a backtrace and a cause" do
@@ -179,7 +184,7 @@ RSpec.describe Sirena::Cli do
 
       it "exits 1" do
         expect(&batching)
-          .to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+          .to raise_error(exit_error(1))
       end
     end
 
@@ -199,6 +204,11 @@ RSpec.describe Sirena::Cli do
   end
 
   describe "types command" do
+    let(:expected_type_names) do
+      %w[flowchart sequence class_diagram state_diagram er_diagram user_journey]
+    end
+    let(:type_output) { capture_stdout { described_class.start(["types"]) } }
+
     it "lists supported diagram types" do
       expect { described_class.start(["types"]) }.to output(
         /Supported diagram types:/,
@@ -206,13 +216,7 @@ RSpec.describe Sirena::Cli do
     end
 
     it "includes all registered types" do
-      output = capture_stdout { described_class.start(["types"]) }
-      expect(output).to include("flowchart")
-      expect(output).to include("sequence")
-      expect(output).to include("class_diagram")
-      expect(output).to include("state_diagram")
-      expect(output).to include("er_diagram")
-      expect(output).to include("user_journey")
+      expect(type_output).to include(*expected_type_names)
     end
   end
 

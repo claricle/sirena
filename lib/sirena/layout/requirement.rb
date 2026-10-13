@@ -577,14 +577,20 @@ module Sirena
       end
 
       def calculate_node_positions(diagram)
-        sized = rank_nodes(diagram).map do |rank|
-          rank.map { |node| size_node(node) }
-        end
+        sized = sized_ranks(diagram)
         return empty_node_positions if sized.empty?
 
         canvas_width = sized.map { |rank| rank_width(rank) }.max.to_f
         positioned = { requirements: {}, elements: {} }
         top = place_ranks(sized, canvas_width, positioned)
+        positioned_canvas(positioned, canvas_width, top)
+      end
+
+      def sized_ranks(diagram)
+        rank_nodes(diagram).map { |rank| rank.map { |node| size_node(node) } }
+      end
+
+      def positioned_canvas(positioned, canvas_width, top)
         positioned.merge(
           width: canvas_width + (2 * CANVAS_MARGIN),
           height: top - RANK_SEPARATION + CANVAS_MARGIN,
@@ -709,33 +715,32 @@ module Sirena
       end
 
       def calculate_relationships(diagram, nodes_layout)
-        requirements = nodes_layout[:requirements]
-        elements = nodes_layout[:elements]
-        all_nodes = requirements.merge(elements)
+        all_nodes = nodes_layout[:requirements].merge(nodes_layout[:elements])
+        diagram.relationships.filter_map do |relationship|
+          source = all_nodes[relationship.source]
+          target = all_nodes[relationship.target]
+          next unless source && target
 
-        diagram.relationships.filter_map do |rel|
-          source_node = all_nodes[rel.source]
-          target_node = all_nodes[rel.target]
-
-          next unless source_node && target_node
-
-          # Calculate connection points
-          source_x = source_node[:x] + (source_node[:width] / 2)
-          source_y = source_node[:y] + source_node[:height]
-          target_x = target_node[:x] + (target_node[:width] / 2)
-          target_y = target_node[:y]
-
-          {
-            relationship: rel,
-            source: rel.source,
-            target: rel.target,
-            type: rel.type,
-            from_x: source_x,
-            from_y: source_y,
-            to_x: target_x,
-            to_y: target_y,
-          }
+          relationship_geometry(relationship, source, target)
         end
+      end
+
+      def relationship_geometry(relationship, source, target)
+        {
+          relationship: relationship,
+          source: relationship.source,
+          target: relationship.target,
+          type: relationship.type,
+        }.merge(connection_coordinates(source, target))
+      end
+
+      def connection_coordinates(source, target)
+        {
+          from_x: source[:x] + (source[:width] / 2),
+          from_y: source[:y] + source[:height],
+          to_x: target[:x] + (target[:width] / 2),
+          to_y: target[:y],
+        }
       end
 
       def wrap_text(text, max_width, font_size)
