@@ -33,7 +33,8 @@ module Sirena
 
     CASE_TIMEOUT = 10
     # Gantt bars are placed relative to today, so an unpinned render judges a
-    # different document every day. Same date spec/svg_conformance_spec.rb pins.
+    # different document every day. Same date
+    # spec/sirena/svg_conformance_spec.rb pins.
     TODAY = Date.new(2026, 1, 1)
 
     module_function

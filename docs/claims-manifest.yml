@@ -108,13 +108,13 @@
 - claim: "Metanorma-oriented output means self-contained SVG validated with svg_conform"
   file: "README.adoc"
   disposition: "corrected"
-  evidence: "bundle exec rspec spec/svg_conformance_spec.rb"
+  evidence: "bundle exec rspec spec/sirena/svg_conformance_spec.rb"
   pr: 106
 
 - claim: "benchmark:quick and benchmark:compare run; the report is a dated single-machine measurement"
   file: "tasks/benchmark.rake, docs/PERFORMANCE_BENCHMARK.adoc"
   disposition: "verified"
-  evidence: "bundle exec rspec spec/tasks/benchmark_rake_spec.rb spec/docs/performance_benchmark_truth_spec.rb"
+  evidence: "bundle exec rspec spec/rake/dsl_benchmark_spec.rb spec/docs/performance_benchmark_truth_spec.rb"
   pr: 216
 
 - claim: Parslet-based parsing** - Superior error messages and maintainability

@@ -19,7 +19,8 @@ module Sirena
   # `Timeout.timeout` stop working. That is why this is an allowlist of two
   # and not a `rescue Exception` with a list of exemptions.
   #
-  # `spec/sirena/exhaustion_errors_spec.rb` enumerates the loaded hierarchy
+  # `spec/sirena/engine_exhaustion_errors_spec.rb` enumerates the
+  # loaded hierarchy
   # and holds this list against it in the two directions a machine can
   # decide: every name here really is outside `StandardError`, and no
   # control-flow class is here. Whether a NEW class is exhaustion is a

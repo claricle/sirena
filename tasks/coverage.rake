@@ -9,9 +9,9 @@ require "digest"
 # TODO.foundation/03-coverage-gate.md item 1: the corpus fixture sweeps
 # (examples tagged :corpus -- spec/sirena/parser/{error,info,quadrant}_spec.rb,
 # spec/sirena/engine_spec.rb's treemap context, and
-# spec/sirena/determinism_spec.rb's "never changes whether a diagram type
+# spec/sirena/engine_determinism_spec.rb's "never changes whether a diagram type
 # renders at all") assert only that sirena doesn't raise, that its output
-# looks SVG-shaped, or (determinism_spec.rb) that two rescued outcome
+# looks SVG-shaped, or (engine_determinism_spec.rb) that two rescued outcome
 # strings match -- lines they merely exercise would count as "covered"
 # without ever being asserted against if SimpleCov instrumented them. So
 # they run in their own rspec process (spec:corpus), which never requires

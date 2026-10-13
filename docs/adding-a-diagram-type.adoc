@@ -116,7 +116,7 @@ without another hand-edited list.
 
 [source,shell]
 ----
-bundle exec rspec spec/contract_spec.rb -e demo
+bundle exec rspec spec/sirena/notation/mermaid_contract_spec.rb -e demo
 bundle exec rspec \
   spec/sirena/parser/demo_spec.rb \
   spec/sirena/diagram/demo_spec.rb \

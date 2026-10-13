@@ -17,9 +17,9 @@ module TypeGeneratorSpecHelpers
     "spec/spec_helper.rb",
     "spec/support",
     "spec/fixtures/contract",
-    "spec/contract_spec.rb",
+    "spec/sirena/notation/mermaid_contract_spec.rb",
     "spec/sirena/notation/mermaid_ir_type_map_spec.rb",
-    "spec/sirena/svg/registry_spec.rb",
+    "spec/sirena/diagram_registry_svg_spec.rb",
   ].freeze
 
   def registered_row(name)
@@ -79,9 +79,9 @@ module TypeGeneratorSpecHelpers
       "spec/sirena/notation/mermaid/ir_adapters/#{ACCEPTANCE_NAME}_spec.rb",
     )
     generated + [
-      "spec/contract_spec.rb",
+      "spec/sirena/notation/mermaid_contract_spec.rb",
       "spec/sirena/notation/mermaid_ir_type_map_spec.rb",
-      "spec/sirena/svg/registry_spec.rb",
+      "spec/sirena/diagram_registry_svg_spec.rb",
     ]
   end
 

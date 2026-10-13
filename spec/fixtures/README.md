@@ -155,7 +155,7 @@ To regenerate reference fixtures from mermaid-js:
 
 4. Run tests to ensure compatibility:
    ```bash
-   bundle exec rspec spec/fixtures_spec.rb
+   bundle exec rspec spec/sirena/engine_reference_fixtures_spec.rb
    ```
 
 5. Commit the updated fixtures if tests pass

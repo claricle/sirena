@@ -53,7 +53,7 @@ NOT YET APPLIED.
 ## Adding a gate to a lane
 
 1. Add one job to `ci.yml`, with `timeout-minutes` (a `uses:` job cannot have one; put it inside the called workflow).
-2. Add its id to the `needs:` of the aggregator for its lane. A job in `ci.yml` that no aggregator needs fails `spec/workflows/workflows_spec.rb`.
+2. Add its id to the `needs:` of the aggregator for its lane. A job in `ci.yml` that no aggregator needs fails `spec/workflow_pins_ci_spec.rb`.
 3. Never rename `fast-lane` / `full-lane`.
 4. Oracle and comparison specs FAIL, not skip, when their binary is missing in CI. Skip loudly only locally.
 5. Provision your own toolchain inside your job (02a: oracle, 12: PlantUML/Java/Graphviz). The PlantUML jar version and sha256 live in `spec/plantuml/pin.json`; `scripts/install_plantuml.sh` reads them and refuses a checksum mismatch. Graphviz comes from apt and is NOT version-pinned; the spec only checks that `dot` runs.
@@ -68,7 +68,7 @@ Worked example, a conformance job for the full lane:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
       - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
         with: { ruby-version: '3.3', bundler-cache: true }
-      - run: bundle exec rspec spec/svg_conformance_spec.rb
+      - run: bundle exec rspec spec/sirena/svg_conformance_spec.rb
   # ...and in full-lane:  needs: [docs-build, links, conformance]
 ```
 

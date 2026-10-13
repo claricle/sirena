@@ -7,7 +7,7 @@ RSpec.describe Sirena::Svg::Text do
   # lutaml-model version -- see `Svg::Text#body` (lib/sirena/svg/text.rb) for
   # why. This property is independent of the deleted `xml do` mapping: it
   # holds for a renderer-constructed instance, which is the only way a Text
-  # is built now that `from_xml` raises (see no_xml_mapping_spec.rb).
+  # is built now that `from_xml` raises (see svg_no_xml_mapping_spec.rb).
   #
   # Diagnostic, not a mutation-prover: `Array('plain string').join` equals
   # 'plain string' whether or not `collection: true` is on the attribute, so

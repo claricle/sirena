@@ -55,7 +55,8 @@ end
 SimpleCov.configure do |config|
   # A COVERAGE=true subprocess that is not spec:unit itself (e.g. a spec that
   # shells out to prove the corpus-exclusion guard -- see
-  # spec/spec_helper_corpus_guard_spec.rb) would otherwise write into this
+  # spec/rspec/core/configuration_corpus_guard_spec.rb) would otherwise
+  # write into this
   # same directory: SimpleCov merges any .resultset.json it finds here within
   # its merge_timeout, so the child's corpus-tagged hits would land in the
   # parent's coverage.json even though the child process itself never

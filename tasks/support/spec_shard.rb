@@ -15,7 +15,7 @@ module Sirena
       "spec/sirena/lint_debt_spec.rb" => 178,
       "spec/sirena/lint_debt_scoreboard_spec.rb" => 164,
       "spec/scripts/corpus_sweep_task_spec.rb" => 58,
-      "spec/svg_conformance_spec.rb" => 27,
+      "spec/sirena/svg_conformance_spec.rb" => 27,
       "spec/sirena/conformance_spec.rb" => 24,
       "spec/sirena/theme_spec.rb" => 11,
       "spec/sirena/parser/user_journey_spec.rb" => 11,
