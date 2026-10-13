@@ -805,9 +805,21 @@ RSpec.describe Sirena::Parser::Flowchart do
   # which is what mermaid does — it strips a comment only at a line start,
   # so a mid-line `%%` is ordinary text.
   #
-  # Nothing downstream reads either value today, so the change is invisible
-  # in the SVG. Pinned here because "invisible" is exactly how it would rot.
+  # Inline node paints now consume style values; click callbacks remain
+  # unrendered. Preserve both raw captures and their distinct paint effects.
   describe "a %% inside a declaration the scanners read" do
+    # Pinned mmdc 11.12.0 emits invalid `fill:red %% c !important` for
+    # the widened value and valid `fill:red !important` for the plain one.
+    # Their old SVG equality assertion encoded the discarded-style defect.
+    let(:style_fills) do
+      ["red %% c", "red"].map do |paint|
+        svg = engine.render("graph TD\nA-->B\nstyle A fill:#{paint}\n")
+        document = REXML::Document.new(svg)
+        REXML::XPath.first(document, "//*[@id='node-A']/rect")
+          .attributes["fill"]
+      end
+    end
+
     it "keeps a spaced %% in a style property list" do
       source = "graph TD\nA-->B\nstyle A fill:red %% c\n"
 
@@ -820,10 +832,11 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(capture(source, :click_action)).to eq("cb%%c")
     end
 
-    # Neither value reaches the renderer, so the widened text cannot change
-    # a diagram. If that stops being true, this is the example that says so.
+    it "ignores invalid paint and applies the plain style property" do
+      expect(style_fills).to eq(["#ffffff", "red"])
+    end
+
     {
-      "a style property list" => ["style A fill:red %% c", "style A fill:red"],
       "a click callback" => ["click A cb%%c", "click A cb"],
     }.each do |label, (with_comment, without)|
       it "draws #{label} the same either way" do

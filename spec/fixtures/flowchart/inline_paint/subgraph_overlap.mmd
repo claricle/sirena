@@ -1,0 +1,10 @@
+flowchart TD
+  subgraph Intake
+    A[Receive document] --> B{Diagram source?}
+  end
+  B -->|Mermaid| C[Render Mermaid]
+  B -->|PlantUML| D[Render PlantUML]
+  C --> E[Embed SVG]
+  D --> E
+  E --> F[Build publication]
+  style E fill:#e8f4ea,stroke:#3f7f55

@@ -475,8 +475,23 @@ module Sirena
 
         def process_style_statement(diagram, stmt, context, _parents)
           declare_styled_node(diagram, stmt[:style_target], context)
+          node = diagram.find_node(stmt[:style_target].to_s)
+          apply_node_paint(node, stmt[:style_props]) if node
         end
         private :process_style_statement
+
+        # Commas within paint functions belong to the value. Only a comma
+        # introducing another property ends a declaration.
+        def apply_node_paint(node, properties)
+          declarations = properties.to_s.scan(
+            /(?:\A|,)\s*(fill|stroke)\s*:\s*(.*?)(?=,\s*[\w-]+\s*:|\z)/m,
+          )
+          declarations.each do |property, value|
+            paint = Diagram::FlowchartNode.paint_value(value)
+            node.public_send("#{property}=", paint) if paint
+          end
+        end
+        private :apply_node_paint
 
         def process_link_style_statement(diagram, stmt, _context, _parents)
           process_link_style(diagram, stmt)

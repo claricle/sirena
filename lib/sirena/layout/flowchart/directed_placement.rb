@@ -281,8 +281,14 @@ module Sirena
           side, vertical = padding
           inner = right_of(contents) - left_of(contents)
           cluster[:width] = boxed_width(cluster, inner, side)
-          settle(contents, cluster[:width] - inner, vertical)
+          settle(contents, cluster[:width] - inner,
+                 cluster_header_padding(cluster, vertical))
           cluster[:height] = bottom_of(contents) + vertical
+        end
+
+        def cluster_header_padding(cluster, vertical)
+          height = label_size(cluster, :height)
+          height < vertical ? vertical : height + PAGE_MARGIN
         end
 
         def boxed_width(cluster, inner, side)

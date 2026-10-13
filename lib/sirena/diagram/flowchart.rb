@@ -24,6 +24,48 @@ module Sirena
 
       # Optional classes/styles
       attribute :classes, :string
+      attribute :fill, :string
+      attribute :stroke, :string
+
+      PAINT_KEYWORDS = %w[
+        none currentcolor transparent aliceblue antiquewhite aqua aquamarine
+        azure beige bisque black blanchedalmond blue blueviolet brown burlywood
+        cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson
+        cyan darkblue darkcyan darkgoldenrod darkgray darkgrey darkgreen
+        darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred
+        darksalmon darkseagreen darkslateblue darkslategray darkslategrey
+        darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue
+        firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold
+        goldenrod gray grey green greenyellow honeydew hotpink indianred indigo
+        ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue
+        lightcoral lightcyan lightgoldenrodyellow lightgray lightgrey lightgreen
+        lightpink lightsalmon lightseagreen lightskyblue lightslategray
+        lightslategrey lightsteelblue lightyellow lime limegreen linen magenta
+        maroon mediumaquamarine mediumblue mediumorchid mediumpurple
+        mediumseagreen mediumslateblue mediumspringgreen mediumturquoise
+        mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite
+        navy oldlace olive olivedrab orange orangered orchid palegoldenrod
+        palegreen paleturquoise palevioletred papayawhip peachpuff peru pink
+        plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown
+        salmon sandybrown seagreen seashell sienna silver skyblue slateblue
+        slategray slategrey snow springgreen steelblue tan teal thistle tomato
+        turquoise violet wheat white whitesmoke yellow yellowgreen
+      ].freeze
+      HEX_PAINT = /\A#(?:[0-9a-f]{3}|[0-9a-f]{6})\z/i
+      RGB_COMPONENT = /[+-]?(?:\d+(?:\.\d*)?|\.\d+)%?/
+      RGB_PAINT = /\Argb\(\s*#{RGB_COMPONENT}\s*,
+                   \s*#{RGB_COMPONENT}\s*,\s*#{RGB_COMPONENT}\s*\)\z/ix
+      private_constant :PAINT_KEYWORDS, :HEX_PAINT, :RGB_COMPONENT, :RGB_PAINT
+
+      # Invalid CSS declarations leave the earlier paint in force. Keep the
+      # supported opaque color forms separate from permissive parser tails.
+      def self.paint_value(value)
+        paint = value.to_s.strip
+        return paint if PAINT_KEYWORDS.include?(paint.downcase)
+        return paint if HEX_PAINT.match?(paint) || RGB_PAINT.match?(paint)
+
+        nil
+      end
 
       # Initialize with default shape
       def initialize(*args)
