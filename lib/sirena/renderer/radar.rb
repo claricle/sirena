@@ -19,8 +19,7 @@ module Sirena
       def render(scene)
         scene = typed_scene(scene)
         svg = create_document(scene)
-        scene.grid_circles.each { |ring| svg << grid_ring(ring, scene) }
-        scene.axes.each { |axis| render_axis(axis, svg) }
+        render_grid(scene, svg)
         scene.curves.each { |curve| render_curve(curve, svg, scene) }
         scene.legend.each { |entry| render_legend(entry, svg) }
         svg << label_element(scene.title) if scene.title
@@ -65,15 +64,7 @@ module Sirena
       end
 
       def render_axis(axis, svg)
-        svg << Svg::Line.new.tap do |line|
-          line.x1 = axis.line.x1
-          line.y1 = axis.line.y1
-          line.x2 = axis.line.x2
-          line.y2 = axis.line.y2
-          line.stroke = theme_color(:radar_axis_line)
-          line.stroke_width = "1"
-          line.class_name = "radarAxisLine"
-        end
+        svg << axis_line(axis.line)
         svg << label_element(axis.label)
       end
 
@@ -125,14 +116,7 @@ module Sirena
       end
 
       def render_legend(entry, svg)
-        color = curve_color(entry.color_index)
-        svg << Svg::Circle.new.tap do |circle|
-          circle.cx = entry.marker.x
-          circle.cy = entry.marker.y
-          circle.r = entry.marker.radius
-          circle.fill = color
-          circle.stroke = "none"
-        end
+        svg << legend_marker(entry.marker, curve_color(entry.color_index))
         svg << label_element(entry.label)
       end
 
@@ -140,13 +124,7 @@ module Sirena
         Svg::Text.new.tap do |text|
           text.x = label.x
           text.y = label.y
-          text.text_anchor = label.text_anchor
-          text.fill = theme_color(:label_text)
-          text.font_size = number_string(label.font_size)
-          text.font_family =
-            theme_typography(:font_family) || "Arial, sans-serif"
-          text.font_weight = label.font_weight if label.font_weight
-          text.class_name = label.class_name
+          style_label(text, label)
           text.content = label.text
         end
       end
@@ -157,6 +135,56 @@ module Sirena
 
       def number_string(value)
         value.to_i == value ? value.to_i.to_s : value.to_s
+      end
+
+      private
+
+      def render_grid(scene, svg)
+        scene.grid_circles.each { |ring| svg << grid_ring(ring, scene) }
+        scene.axes.each { |axis| render_axis(axis, svg) }
+      end
+
+      def axis_line(geometry)
+        Svg::Line.new.tap do |line|
+          line.x1 = geometry.x1
+          line.y1 = geometry.y1
+          line.x2 = geometry.x2
+          line.y2 = geometry.y2
+          style_axis_line(line)
+        end
+      end
+
+      def style_axis_line(line)
+        line.stroke = theme_color(:radar_axis_line)
+        line.stroke_width = "1"
+        line.class_name = "radarAxisLine"
+      end
+
+      def legend_marker(marker, color)
+        Svg::Circle.new.tap do |circle|
+          circle.cx = marker.x
+          circle.cy = marker.y
+          circle.r = marker.radius
+          circle.fill = color
+          circle.stroke = "none"
+        end
+      end
+
+      def style_label(text, label)
+        text.text_anchor = label.text_anchor
+        text.fill = theme_color(:label_text)
+        apply_label_typography(text, label)
+        text.class_name = label.class_name
+      end
+
+      def apply_label_typography(text, label)
+        text.font_size = number_string(label.font_size)
+        text.font_family = label_font_family
+        text.font_weight = label.font_weight if label.font_weight
+      end
+
+      def label_font_family
+        theme_typography(:font_family) || "Arial, sans-serif"
       end
     end
   end
