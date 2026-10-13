@@ -160,7 +160,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     it "loops a message written <- to its sender on the left" do
       numbers = numbers_of("A <- A : hi")
 
-      expect(numbers[2]).to eq(numbers[0] - 36)
+      expect(numbers[2]).to eq(numbers[0] - 42)
     end
 
     it "anchors the label of a left loop at its end" do

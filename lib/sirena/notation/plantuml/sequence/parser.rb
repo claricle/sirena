@@ -609,10 +609,13 @@ module Sirena
 
           # PlantUML treats doubled quotes around a message label as display
           # delimiters. Backslashes inside that form use pair escaping; a
-          # single backslash and escaped quote remain content.
+          # single backslash and escaped quote remain content. Explicit line
+          # breaks must be decoded before deciding whether quotes enclose one
+          # display line.
           def message_label(label)
             doubled_quotes = label&.start_with?('""') && label.end_with?('""')
             return label unless doubled_quotes
+            return label if label.include?("\\n")
 
             label[2...-2].strip.gsub("\\\\", "\\")
           end
