@@ -527,7 +527,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
         "list-page" => '<ul class="ulist"><li>x</li></ul>',
         "listing-page" => '<div class="listingblock">x</div>',
         "image-page" => '<div class="imageblock"><div class="content">' \
-                         '<img src="diagram.png" alt="Example"></div></div>',
+                        '<img src="diagram.png" alt="Example"></div></div>',
       }
       bodies.each do |name, body|
         write_page(site_dir, "diagram_types/#{name}/index.html",
@@ -973,7 +973,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'config: collections.diagram_types.permalink is "/:path/", ' \
-          'expected "/:collection/:path/"',
+        'expected "/:collection/:path/"',
       )
     end
   end
@@ -1525,7 +1525,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
         "config: collections.diagram_types.permalink is nil, " \
-          'expected "/:collection/:path/"',
+        'expected "/:collection/:path/"',
       )
     end
   end
@@ -1550,8 +1550,8 @@ RSpec.describe Sirena::DocsSiteVerifier do
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html_with_body(
         '<script>const marker = "<!--";</script>' \
-          '<div class="paragraph"><p>hi</p></div>' \
-          "<!-- trailing comment -->",
+        '<div class="paragraph"><p>hi</p></div>' \
+        "<!-- trailing comment -->",
       )
       write_page(site_dir, "diagram_types/mindmap/index.html", html)
       write_page(site_dir, "_diagram_types/mindmap/index.html", html)
@@ -1574,7 +1574,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html_with_body(
         '<template class="paragraph"></template>' \
-          "<p>Visible fallback text</p>",
+        "<p>Visible fallback text</p>",
       )
       write_page(site_dir, "diagram_types/mindmap/index.html", html)
       write_page(site_dir, "_diagram_types/mindmap/index.html", html)

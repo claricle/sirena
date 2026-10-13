@@ -259,15 +259,15 @@ RSpec.describe MermaidDiff, :aggregate_failures do
         "",
         1,
         "GAP              not a diagram\n\n" \
-          "2 probes: 1 agree, 1 gaps, 0 over-accepted, 0 mmdc failures\n",
+        "2 probes: 1 agree, 1 gaps, 0 over-accepted, 0 mmdc failures\n",
         "",
         1,
         "OVER-ACCEPTANCE  flowchart LR |   A[reject-by-fake]\n\n" \
-          "1 probes: 0 agree, 0 gaps, 1 over-accepted, 0 mmdc failures\n",
+        "1 probes: 0 agree, 0 gaps, 1 over-accepted, 0 mmdc failures\n",
         "",
         1,
         "MMDC FAILED      flowchart LR |   A --> B\n\n" \
-          "1 probes: 0 agree, 0 gaps, 0 over-accepted, 1 mmdc failures\n",
+        "1 probes: 0 agree, 0 gaps, 0 over-accepted, 1 mmdc failures\n",
         "  mmdc: browser launch failed\n",
       ]
 
@@ -283,7 +283,7 @@ RSpec.describe MermaidDiff, :aggregate_failures do
       expected = [
         1,
         "GAP              not a diagram\n\n" \
-          "2 probes: 0 agree, 1 gaps, 1 over-accepted, 0 mmdc failures\n",
+        "2 probes: 0 agree, 1 gaps, 1 over-accepted, 0 mmdc failures\n",
         "",
       ]
 

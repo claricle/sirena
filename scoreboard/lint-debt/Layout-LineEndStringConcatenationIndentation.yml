@@ -1,9 +1,0 @@
----
-cop: Layout/LineEndStringConcatenationIndentation
-rows:
-- file: spec/scripts/docs_site_verifier_spec.rb
-  count: 5
-- file: spec/scripts/mermaid_diff_spec.rb
-  count: 4
-- file: spec/sirena/parser/kanban_spec.rb
-  count: 1

@@ -713,7 +713,7 @@ module Sirena
         elements = nodes_layout[:elements]
         all_nodes = requirements.merge(elements)
 
-        diagram.relationships.map do |rel|
+        diagram.relationships.filter_map do |rel|
           source_node = all_nodes[rel.source]
           target_node = all_nodes[rel.target]
 
@@ -735,7 +735,7 @@ module Sirena
             to_x: target_x,
             to_y: target_y,
           }
-        end.compact
+        end
       end
 
       def wrap_text(text, max_width, font_size)
