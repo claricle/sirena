@@ -1,5 +1,0 @@
----
-cop: RSpec/ExampleLength
-rows:
-- file: spec/sirena/renderer/architecture_edge_router_spec.rb
-  count: 6

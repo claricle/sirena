@@ -1,10 +1,4 @@
 ---
-Layout/LineLength:
-  Enabled: false
-Metrics/AbcSize:
-  Enabled: false
-Naming/MethodParameterName:
-  Enabled: false
 RSpec/DescribeClass:
   Exclude:
   - "**/spec/features/**/*"
@@ -22,7 +16,5 @@ RSpec/DescribeClass:
   - spec/integration/requirement_integration_spec.rb
   - spec/integration/state_diagram_integration_spec.rb
   - spec/integration/user_journey_integration_spec.rb
-RSpec/ExampleLength:
-  Max: 40
 RSpec/SpecFilePathFormat:
   Enabled: false
