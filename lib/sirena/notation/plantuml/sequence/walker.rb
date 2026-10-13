@@ -864,7 +864,22 @@ module Sirena
 
           def branch(item)
             @blocks.last[:branches] << [@y - 10, item.label.to_s]
-            @y += branch_row
+            @y += branch_row + classic_guard_row(item)
+          end
+
+          def classic_guard_row(item)
+            return 0.0 if @label_inset || item.label.to_s.strip.empty?
+
+            [classic_guard_y + @font_size - next_classic_label_y, 0.0].max
+          end
+
+          def classic_guard_y
+            separator_y = @blocks.last[:branches].last.first
+            FragmentShape.branch_text_baseline(separator_y)
+          end
+
+          def next_classic_label_y
+            straight_label(0, 0)[1] + branch_row
           end
 
           def branch_row

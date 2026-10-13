@@ -161,7 +161,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
   def expected_edge_style
     ["3.5", "2",
      [Sirena::Svg::Path, Sirena::Svg::Polygon, Sirena::Svg::Circle,
-      Sirena::Svg::Line, Sirena::Svg::Text],
+      Sirena::Svg::Line, Sirena::Svg::Rect, Sirena::Svg::Text],
      "none"]
   end
 

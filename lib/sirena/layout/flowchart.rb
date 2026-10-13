@@ -169,6 +169,8 @@ module Sirena
       end
 
       class Node < Lutaml::Model::Serializable
+        attribute :fill, :string
+        attribute :stroke, :string
         attribute :id, :string
         attribute :x, :float
         attribute :y, :float
@@ -253,6 +255,7 @@ module Sirena
 
       def scene_from_graph(graph)
         flat = flatten(graph)
+        flat[:label_endpoints] = label_endpoints(graph, flat[:clusters])
         dx, dy = self_loop_overflow(flat)
         page = shift_page(flat, dx, dy)
         edges = typed_edges(page)
@@ -371,6 +374,8 @@ module Sirena
         shape = node.dig(:metadata, :shape) || "rect"
         kind = is_cluster ? "cluster" : (NODE_OUTLINES[shape] || "rect")
         { id: node[:id], **bounds, shape: shape, shape_kind: kind,
+          fill: node.dig(:metadata, :fill),
+          stroke: node.dig(:metadata, :stroke),
           labels: typed_node_labels(node, bounds, is_cluster),
           **shape_geometry(kind, bounds), **painted_box(bounds, is_cluster),
           cluster: is_cluster, container: node.key?(:children) }
@@ -393,6 +398,7 @@ module Sirena
       def typed_node_labels(node, bounds, cluster)
         (node[:labels] || []).first(1).map do |label|
           x, y = node_label_anchor(bounds, cluster)
+          y = cluster_title_y(node, bounds, label) if cluster
           Label.new(
             text: label[:text], width: label[:width], height: label[:height],
             x: x, y: y, **label_geometry(label, x, y, with_runs: !cluster)
@@ -405,6 +411,21 @@ module Sirena
         label_y = y + (cluster ? CLUSTER_TITLE_BASELINE : height / 2.0)
         label_x = cluster ? x + (width.to_i / 2) : x + (width / 2.0)
         [label_x, label_y]
+      end
+
+      # Keep a title inside the reserved header, rather than over its first
+      # child. Ordinary headers retain their established label position.
+      def cluster_title_y(node, bounds, label)
+        header = cluster_header_height(node, bounds)
+        half = label[:height].to_f / 2.0
+        center = CLUSTER_TITLE_BASELINE.to_f
+        center = header / 2.0 if center <= half || center + half >= header
+        bounds[:y] + center
+      end
+
+      def cluster_header_height(node, bounds)
+        (node[:children] || []).filter_map { |child| child[:y] }.min ||
+          bounds[:height]
       end
 
       def label_geometry(label, x_pos, y_pos, with_runs: false)
@@ -495,12 +516,43 @@ module Sirena
 
       def typed_edge_attributes(edge, graph, source, target)
         route, bends, label_route = edge_route(edge, graph, source, target)
+        label_route = external_label_route(edge, graph, label_route)
         type = edge.dig(:metadata, :arrow_type).to_s
         { id: edge[:id], source: source[:id], target: target[:id],
           sections: [typed_section(route, bends)],
           labels: typed_edge_labels(edge, source, target, bends, label_route),
           arrow_type: type, path: edge_path(route, bends),
           heads: typed_heads(route, bends, source, target, type) }
+      end
+
+      # A crossing edge's label belongs between the boxes at its layout
+      # level: the enclosing cluster and the outside node, not an interior
+      # node's clipped outline. Keep the actual arrow route unchanged.
+      def label_endpoints(graph, clusters)
+        levels = LevelEdges.new(graph)
+        containers = [nil, *clusters.map { |cluster| cluster[:id] }]
+        entries = containers.flat_map { |container| levels.at(container) }
+        entries.to_h do |edge, from, to|
+          [edge[:id], [from, to]]
+        end
+      end
+
+      def external_label_route(edge, graph, ordinary)
+        ids = crossing_label_ids(edge, graph)
+        return ordinary unless ids
+
+        source, target = ids.map { |id| find_endpoint(graph, id) }
+        return ordinary unless source && target
+
+        edge_router.route(source, target, []).last
+      end
+
+      def crossing_label_ids(edge, graph)
+        ids = graph.fetch(:label_endpoints, {})[edge[:id]]
+        return unless ids&.all?
+        return if ids == [edge[:sources]&.first, edge[:targets]&.first]
+
+        ids
       end
 
       def typed_section(route, bends)
@@ -1028,7 +1080,14 @@ module Sirena
           labels: [transformed_node_label(node, dims)],
           metadata: { shape: shape,
                       classes: semantic_value(semantics, "style_reference"),
-                      subgraph_collision: collision } }
+                      subgraph_collision: collision,
+                      **node_paints(semantics) } }
+      end
+
+      def node_paints(semantics)
+        %w[fill stroke].to_h do |role|
+          [role.to_sym, semantic_value(semantics, role)]
+        end
       end
 
       def transformed_node_label(node, dims)

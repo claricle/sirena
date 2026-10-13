@@ -57,7 +57,8 @@ module Sirena
             )
             semantics = [["source_identifier", node.id],
                          ["shape", node.shape],
-                         ["style_reference", node.classes]]
+                         ["style_reference", node.classes],
+                         ["fill", node.fill], ["stroke", node.stroke]]
             semantics << ["subgraph_collision", "true"] if subgraph_collision
             [entity, *semantic_nodes(id, semantics, occupied)]
           end
