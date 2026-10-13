@@ -18,11 +18,13 @@
 <g id="edge-Validate_to_Process">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 152.8 329.3 L 98.5 427.8"/>
   <polygon fill="#000000" stroke="#000000" points="98.4,427.8 105.8,422.8 98.8,418.9"/>
+  <rect fill="#ffffff" stroke="none" x="111.49000000000001" y="357.95" width="28.32" height="20.0"/>
   <text fill="#000000" x="125.65" y="373.55" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Yes</text>
 </g>
 <g id="edge-Validate_to_Error">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 203.0 328.2 L 261.9 427.8"/>
   <polygon fill="#000000" stroke="#000000" points="261.9,427.8 261.3,418.9 254.4,423.0"/>
+  <rect fill="#ffffff" stroke="none" x="221.04999999999998" y="357.4" width="22.8" height="20.0"/>
   <text fill="#000000" x="232.45" y="373.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">No</text>
 </g>
 <g id="edge-Error_to_Input">
@@ -44,11 +46,13 @@
 <g id="edge-Save_to_DB">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 177.3 922.4 L 177.3 996.4"/>
   <polygon fill="#000000" stroke="#000000" points="177.3,996.4 181.3,988.4 173.3,988.4"/>
+  <rect fill="#ffffff" stroke="none" x="163.14000000000001" y="938.8" width="28.32" height="20.0"/>
   <text fill="#000000" x="177.3" y="954.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Yes</text>
 </g>
 <g id="edge-Save_to_Display">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 177.3 922.4 L 177.3 1100.4"/>
   <polygon fill="#000000" stroke="#000000" points="177.3,1100.4 181.3,1092.4 173.3,1092.4"/>
+  <rect fill="#ffffff" stroke="none" x="165.9" y="990.8000000000001" width="22.8" height="20.0"/>
   <text fill="#000000" x="177.3" y="1006.4000000000001" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">No</text>
 </g>
 <g id="edge-DB_to_Display">

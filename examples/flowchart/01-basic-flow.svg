@@ -18,11 +18,13 @@
 <g id="edge-Decision_to_Success">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 126.0 295.5 L 79.0 385.9"/>
   <polygon fill="#000000" stroke="#000000" points="79.0,385.9 86.3,380.6 79.2,376.9"/>
+  <rect fill="#ffffff" stroke="none" x="88.34" y="320.09999999999997" width="28.32" height="20.0"/>
   <text fill="#000000" x="102.5" y="335.7" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Yes</text>
 </g>
 <g id="edge-Decision_to_Error">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 158.8 295.5 L 205.8 385.9"/>
   <polygon fill="#000000" stroke="#000000" points="205.8,385.9 205.7,376.9 198.6,380.6"/>
+  <rect fill="#ffffff" stroke="none" x="170.9" y="320.09999999999997" width="22.8" height="20.0"/>
   <text fill="#000000" x="182.3" y="335.7" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">No</text>
 </g>
 <g id="edge-Success_to_End">
