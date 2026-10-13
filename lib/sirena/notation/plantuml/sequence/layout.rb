@@ -594,8 +594,11 @@ module Sirena
               (previous.is_a?(Message) && previous.self_message?)
           end
 
-          # Room beside a note so it does not cover a neighbour's lifeline.
+          # Classic side notes keep clear of neighbouring lifelines; Teoz
+          # allows them to cross the neighbouring lifeline.
           def widen_note(gaps, note, span)
+            return if compact? && %i[left right].include?(note.side)
+
             need = NoteGeometry.natural_width(note, method(:text_width))
             low, high = span
             case note.side
