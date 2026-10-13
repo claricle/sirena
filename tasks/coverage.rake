@@ -102,16 +102,71 @@ module CoverageTasks
           "coverage:changed_lines"
   end
 
+  # `--find-renames=100%` is passed explicitly so an ambient `diff.renames`
+  # setting cannot change what counts as a rename. The old path of an
+  # identical move to another default-discovered spec file is dropped from
+  # the result; every other status, including an edited rename, reports each
+  # path it names.
   def changed_paths(base)
+    # The label keeps its historical `--name-only` wording: callers and
+    # specs match on it.
     changed = git_output!(
-      "diff", "--name-only", "-z", "--merge-base", base,
+      "diff", "--name-status", "-z", "--find-renames=100%",
+      "--merge-base", base,
       label: "git diff --name-only --merge-base #{base}"
     )
     untracked = git_output!(
       "ls-files", "--others", "--exclude-standard", "-z",
       label: "git ls-files --others --exclude-standard"
     )
-    (changed.split("\0") + untracked.split("\0")).uniq
+    (diff_paths(changed) + untracked.split("\0")).uniq
+  end
+
+  def diff_paths(name_status)
+    parse_name_status(name_status).flat_map do |status, paths|
+      identical_spec_move?(status, paths) ? paths.last(1) : paths
+    end
+  end
+
+  # `<status> NUL <path> NUL` for most statuses, `<status> NUL <old> NUL
+  # <new> NUL` for renames and copies.
+  def parse_name_status(output)
+    tokens = output.split("\0")
+    entries = []
+    entries << next_status_entry!(tokens) until tokens.empty?
+    entries
+  end
+
+  def next_status_entry!(tokens)
+    status = tokens.shift
+    count = status.start_with?("R", "C") ? 2 : 1
+    paths = tokens.shift(count)
+    return [status, paths] if complete_entry?(status, paths, count)
+
+    raise "git diff --name-status output is malformed near #{status.inspect}"
+  end
+
+  def complete_entry?(status, paths, count)
+    !status.empty? && paths.length == count && paths.none?(&:empty?)
+  end
+
+  # Same pattern as .rspec's default and Sirena::SpecShard::PATTERN.
+  SPEC_PATTERN = "spec/**{,/*/**}/*_spec.rb"
+
+  # `status == "R100"` is redundant while the diff runs with
+  # `--find-renames=100%`; keep it, it becomes the only check if that flag
+  # is ever loosened.
+  def identical_spec_move?(status, paths)
+    return false unless status == "R100"
+
+    old_path, new_path = paths
+    spec_file?(old_path) && spec_file?(new_path) &&
+      File.file?(new_path) && !File.symlink?(new_path)
+  end
+
+  def spec_file?(path)
+    File.fnmatch?(SPEC_PATTERN, path,
+                  File::FNM_PATHNAME | File::FNM_EXTGLOB)
   end
 
   def git_output!(*, label:)
