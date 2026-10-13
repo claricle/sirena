@@ -5,7 +5,12 @@
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
 | Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.2/3.3/3.4 stable and 4.0 experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
-| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `conformance` (`rake conformance:check`), `fresh-resolution` (no lockfile, `bundle exec rake`), `plantuml-toolchain` (pinned PlantUML jar + Java 21 + Graphviz, `spec/plantuml/toolchain_probe_spec.rb`) | < 30 min |
+| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `conformance` (`rake conformance:check`), `fresh-resolution` (no lockfile, `bundle exec rake`), `plantuml-toolchain` (pinned PlantUML jar + Java 21 + Graphviz, `spec/plantuml/toolchain_probe_spec.rb`), `coverage` (`bundle exec rake coverage:guard`) | < 30 min |
+
+`coverage` measures the corpus-excluded suite once and enforces the configured
+97% line and 97% branch floors. Its changed-line check requires 100% coverage
+of changed executable `lib/**/*.rb` lines against the event's base, using the
+full checkout history.
 
 Reserved, not yet wired: snippet spec (16), parity (14). Corpus (02b) runs
 inside `unit` (`bundle exec rake` includes `corpus:check`). The scoreboard guard (02b)

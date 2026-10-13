@@ -48,7 +48,7 @@ module SimpleCovConfiguration
   def configure_floor(config)
     # Runs with failing examples skip these line and branch floors. Coverage
     # can be order-sensitive, so re-measure several seeds before raising them.
-    config.minimum_coverage line: 97.00, branch: 89.00
+    config.minimum_coverage line: 97.00, branch: 97.00
   end
 end
 

@@ -294,6 +294,52 @@ RSpec.describe "tasks/coverage.rake", :aggregate_failures do
       expect_sh_invoked_for_gate!(base)
     end
 
+    %w[.rubocop_todo.yml
+       scoreboard/lint-debt/Style-GuardClause.yml].each do |path|
+      context "when deleting #{path}" do
+        before do
+          init_repo!
+          commit!(path, "static metadata\n")
+          ENV["COVERAGE_BASE"] = head_sha
+          run_git! "rm", "-q", path
+          run_git! "commit", "-q", "-m", "delete metadata"
+          FileUtils.mkdir_p("coverage")
+          File.write("coverage/coverage.json", JSON.generate("coverage" => {}))
+          stub_sh!
+        end
+
+        it "still invokes the 100 percent changed-line gate" do
+          invoke!
+
+          expect_sh_invoked_for_gate!(ENV.fetch("COVERAGE_BASE"))
+        end
+      end
+    end
+
+    %w[spec/foo_spec.rb scripts/lint.rb Rakefile .rubocop.yml
+       scoreboard/lint-debt/Style-GuardClause.rb
+       scoreboard/lint-debt/Style-GuardClause.yaml
+       scoreboard/lint-debt/nested/Style-GuardClause.yml
+       scoreboard/Style-GuardClause.yml].each do |path|
+      context "when deleting #{path}" do
+        before do
+          init_repo!
+          commit!(path, "static metadata\n")
+          ENV["COVERAGE_BASE"] = head_sha
+          run_git! "rm", "-q", path
+          run_git! "commit", "-q", "-m", "delete metadata"
+          FileUtils.mkdir_p("coverage")
+          File.write("coverage/coverage.json", JSON.generate("coverage" => {}))
+          stub_sh!
+        end
+
+        it "rejects the deletion before invoking the changed-line gate" do
+          expect { invoke! }.to raise_error(/deleted vs COVERAGE_BASE=/)
+          expect(main_object).not_to have_received(:sh)
+        end
+      end
+    end
+
     it "raises when a changed non-lib file (e.g. its only covering spec) " \
        "was deleted -- the old report can no longer prove what ran against " \
        "a lib/*.rb file it still covers" do
