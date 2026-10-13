@@ -20,7 +20,7 @@ require "open3"
 # example also gets its own throwaway git repo, so `coverage:changed_lines`'s
 # `git diff --merge-base` / `git ls-files` calls have something real to run
 # against without touching this repo's own history or coverage/ directory.
-RSpec.describe "tasks/coverage.rake", :aggregate_failures do
+RSpec.describe Rake::DSL, :aggregate_failures do
   around do |example|
     original_application = Rake.application
     Rake.application = Rake::Application.new

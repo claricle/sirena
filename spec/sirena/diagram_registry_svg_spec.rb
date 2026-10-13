@@ -74,8 +74,8 @@ end
 # Iterates every DiagramRegistry type, REXML-parses its rendered SVG, and
 # asserts the root is <svg>. Catches a hand-written to_xml emitting
 # malformed output or dropping the root.
-RSpec.describe "SVG output for every registered diagram type" do # rubocop:disable RSpec/DescribeClass
-  Sirena::DiagramRegistry.types.each do |type|
+RSpec.describe Sirena::DiagramRegistry do
+  described_class.types.each do |type|
     it "has a real fixture or corpus source for #{type}" do
       message = "no contract/input fixture and no spec/mermaid corpus case " \
                 "matches Engine::DIAGRAM_TYPE_PATTERNS[:#{type}] -- add one " \

@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe "Requirement Integration", :aggregate_failures do
+RSpec.describe Sirena::Parser::Requirement, :aggregate_failures do
   describe "complete requirement pipeline" do
-    let(:diagram) { Sirena::Parser::Requirement.new.parse(source) }
+    let(:diagram) { described_class.new.parse(source) }
     let(:scene) { Sirena::Layout::Requirement.new.call(diagram) }
     let(:svg) { Sirena::Renderer::Requirement.new.render(scene) }
 
@@ -230,7 +230,7 @@ RSpec.describe "Requirement Integration", :aggregate_failures do
       handlers = Sirena::DiagramRegistry.get(:requirement)
 
       expect(handlers).not_to be_nil
-      expect(handlers[:parser]).to eq(Sirena::Parser::Requirement)
+      expect(handlers[:parser]).to eq(described_class)
       expect(handlers[:transform]).to eq(Sirena::Layout::Requirement)
       expect(handlers[:renderer]).to eq(Sirena::Renderer::Requirement)
     end

@@ -47,10 +47,7 @@ module FakeExecutableHelper
   end
 end
 
-# rubocop:disable RSpec/DescribeClass -- no single class to describe (whole rake
-# namespace + PerformanceBenchmarker); same shape as
-# spec/tasks/coverage_rake_spec.rb.
-RSpec.describe "tasks/benchmark.rake", :aggregate_failures do
+RSpec.describe Rake::DSL, :aggregate_failures do
   include BareSirenaModuleHelper
   include FakeExecutableHelper
 
@@ -233,4 +230,3 @@ RSpec.describe "tasks/benchmark.rake", :aggregate_failures do
     end
   end
 end
-# rubocop:enable RSpec/DescribeClass

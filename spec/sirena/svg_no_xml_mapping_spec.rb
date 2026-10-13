@@ -10,7 +10,7 @@ require "spec_helper"
 # now raises. Nothing else in this diff proves that -- it's the one place a
 # whole-file revert of lib/sirena/svg/{text,tspan,group,document}.rb produces
 # a genuinely different outcome from the code as shipped.
-RSpec.describe "SVG classes with no lutaml xml mapping" do # rubocop:disable RSpec/DescribeClass
+RSpec.describe Sirena::Svg do
   [
     [Sirena::Svg::Text, "<text/>"],
     [Sirena::Svg::Tspan, "<tspan/>"],

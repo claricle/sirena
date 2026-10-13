@@ -305,7 +305,7 @@ headings silently drop everything after the first block.
 - [x] C — `cat lib/sirena/renderer/*.rb | grep -o '#[0-9a-fA-F]\{6\}' | wc -l` returns **10 or fewer**, against a measured baseline of **269** (2026-09-01). Count OCCURRENCES, not lines: `grep -c` reports c4.rb at 11 where the part C baseline above says 25, so the two are not comparable and "near zero" cannot be judged from it
       Proof (2026-10-13, `main a23c2d193`): nine six-digit hex occurrences,
       counted with the criterion's exact file scope and occurrence predicate.
-- [ ] C — for EVERY registered type, not just git_graph: rendering under `default`
+- [x] C — for EVERY registered type, not just git_graph: rendering under `default`
       and under `dark` differs in that type's OWN categorical palette colours
       specifically (the values step 1 moved into the theme), not merely
       somewhere in the document. `pie` needs the same specific check as
@@ -317,4 +317,15 @@ headings silently drop everything after the first block.
       `grep -c '#4472C4' d.svg k.svg` -> 1 in each. So "switching themes
       visibly changes output for every registered type" is satisfied today
       without the palette ever moving, and is not sufficient on its own
+      Owner clarification (2026-10-13): use each type’s existing categorical
+      palettes or semantic paint roles; no new palette or styling schema is
+      required for types that use semantic roles. Executed proof:
+      `spec/sirena/engine_registered_type_theme_paint_spec.rb` checks exact
+      selected diagram-owned fill/stroke values against the builtin YAML
+      under both themes, including every registered type and named palette.
+      The focused proof passes 26 examples. Controls freezing categorical
+      paints fail 11 type examples; freezing semantic paints fails 13. A
+      changing root background with both sets frozen still fails all 24
+      type examples. This proves selected owned paints, not every palette
+      index or custom-style override.
 - [ ] `rake corpus:check` unchanged after every one of the three PRs — colour does not affect pass/fail either

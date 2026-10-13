@@ -2,7 +2,6 @@ inherit_from:
   # Pinned to a SHA, not `main`. Bump it deliberately, in its own PR, so an
   # upstream edit cannot turn this lane red on its own.
   - https://raw.githubusercontent.com/riboseinc/oss-guides/03e81f3124ceab971146671d140e410e0e915c06/ci/rubocop.yml
-  - .rubocop_todo.yml
 
 plugins:
 - rubocop-performance

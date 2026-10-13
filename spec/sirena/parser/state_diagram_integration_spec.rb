@@ -69,7 +69,7 @@ module StateDiagramOracleCases
   end
 end
 
-RSpec.describe "StateDiagram Integration", :aggregate_failures do
+RSpec.describe Sirena::Parser::StateDiagram, :aggregate_failures do
   include StateDiagramIntegrationSpecHelpers
 
   describe "complete state diagram pipeline" do
@@ -398,7 +398,7 @@ RSpec.describe "StateDiagram Integration", :aggregate_failures do
       handlers = Sirena::DiagramRegistry.get(:state_diagram)
 
       expect(handlers).not_to be_nil
-      expect(handlers[:parser]).to eq(Sirena::Parser::StateDiagram)
+      expect(handlers[:parser]).to eq(described_class)
       expect(handlers[:transform]).to eq(Sirena::Layout::StateDiagram)
       expect(handlers[:renderer]).to eq(Sirena::Renderer::StateDiagram)
     end

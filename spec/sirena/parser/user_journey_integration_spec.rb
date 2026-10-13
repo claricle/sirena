@@ -3,9 +3,9 @@
 require "spec_helper"
 require "sirena"
 
-RSpec.describe "UserJourney Integration", :aggregate_failures do
+RSpec.describe Sirena::Parser::UserJourney, :aggregate_failures do
   describe "complete user journey pipeline" do
-    let(:diagram) { Sirena::Parser::UserJourney.new.parse(source) }
+    let(:diagram) { described_class.new.parse(source) }
 
     context "with a simple user journey" do
       let(:source) do
@@ -125,7 +125,7 @@ RSpec.describe "UserJourney Integration", :aggregate_failures do
       handlers = Sirena::DiagramRegistry.get(:user_journey)
 
       expect(handlers).not_to be_nil
-      expect(handlers[:parser]).to eq(Sirena::Parser::UserJourney)
+      expect(handlers[:parser]).to eq(described_class)
       expect(handlers[:transform]).to eq(Sirena::Layout::UserJourney)
       expect(handlers[:renderer]).to eq(Sirena::Renderer::UserJourney)
     end
