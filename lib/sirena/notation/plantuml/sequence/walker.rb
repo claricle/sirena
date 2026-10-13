@@ -32,6 +32,9 @@ module Sirena
           ROW = 40.0
           LINE_LEADING = 1.1776
           SELF_WIDTH = 36.0
+          CLASSIC_SELF_WIDTH = 42.0
+          CLASSIC_UNLABELLED_SELF_ROW = 27.0
+          private_constant :CLASSIC_SELF_WIDTH, :CLASSIC_UNLABELLED_SELF_ROW
           SELF_HEIGHT = 20.0
           COMPACT_FRAGMENT_SELF_HEIGHT = 17.75
           LOOP_HEIGHT = 13.0
@@ -255,6 +258,9 @@ module Sirena
           end
 
           def message_row(message)
+            if !@label_inset && message.self_message? && message.label.to_s.empty?
+              return CLASSIC_UNLABELLED_SELF_ROW
+            end
             return @self_row if message.self_message?
             if following_unlabelled_row?
               return @following_unlabelled_row
@@ -272,7 +278,7 @@ module Sirena
 
           def following_unlabelled_message?
             @next_non_activation.is_a?(Message) &&
-              !@next_non_activation.self_message? &&
+              (!@label_inset || !@next_non_activation.self_message?) &&
               @next_non_activation.label.to_s.empty?
           end
 
@@ -452,7 +458,7 @@ module Sirena
           end
 
           def reach(message)
-            SELF_WIDTH + 6 + label_width(message)
+            self_width + 6 + label_width(message)
           end
 
           def label_width(message)
@@ -478,13 +484,17 @@ module Sirena
           # message written `<-` loops out on the left.
           def self_arrow(message, centre)
             side = loops_left?(message) ? -1 : 1
-            far = centre + (side * SELF_WIDTH)
+            far = centre + (side * self_width)
             top = self_top
             bottom = top + self_height
             marks, start, stop = self_marks(message, centre, top, bottom, side)
             { path: "M #{start} #{top} L #{far} #{top} L #{far} #{bottom} " \
                     "L #{stop} #{bottom}",
               marks: marks, label: loop_label(far, side) }
+          end
+
+          def self_width
+            @label_inset ? SELF_WIDTH : CLASSIC_SELF_WIDTH
           end
 
           def self_marks(message, centre, top, bottom, side)
