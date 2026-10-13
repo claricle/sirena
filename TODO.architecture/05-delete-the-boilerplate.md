@@ -10,9 +10,11 @@ dimensions, and no renderer retains offset instance variables.
 
 The first three Part C criteria below have executed proof from `main`
 `a23c2d193` on 2026-10-13. Named palettes and builtin paint-role guarantees
-are implemented. The strict all-type OWN categorical-paint criterion and
-historical per-part corpus-gate evidence remain open; whole-SVG differences
-do not satisfy the former.
+are implemented. The owner-clarified all-type owned-paint criterion is
+satisfied by the landed 26-example proof in
+`spec/sirena/engine_registered_type_theme_paint_spec.rb`. Historical per-part
+corpus-gate evidence remains open; whole-SVG differences alone remain
+insufficient.
 
 Focused existing proof: `spec/sirena/theme/color_palette_fallback_keys_spec.rb`,
 `spec/sirena/layout/git_graph_palette_spec.rb`,
@@ -329,3 +331,11 @@ headings silently drop everything after the first block.
       type examples. This proves selected owned paints, not every palette
       index or custom-style override.
 - [ ] `rake corpus:check` unchanged after every one of the three PRs — colour does not affect pass/fail either
+      Historical evidence recovered on 2026-10-13: the original integrations
+      #226 (A), #254 (B) and #275 (C) each logged a clean full-corpus check.
+      A and C also have byte-identical base/head corpus scoreboards. B records
+      14 C4 false-to-true improvements (eight artifacts and six invalids),
+      with case IDs and verdicts unchanged. Its clean check establishes
+      consistency with the updated scoreboard, not unchanged pass/fail
+      against the base; this criterion therefore remains unchecked. These
+      original-run logs do not establish the later Part C follow-up results.
