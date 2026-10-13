@@ -1,6 +1,6 @@
 # 07 — Corpus burndown: class and all remaining types
 
-Status (reconciled 2026-10-10): **corpus target met; card remains open.** The
+Status (reconciled 2026-10-13): **corpus and branch-floor targets met.** The
 scoreboard records 831 oracle-valid cases across the types owned by 07a–07f,
 and all 831 pass. Their other rows are fully classified (172 invalid and 173
 artifacts; no unknown verdicts).
@@ -10,9 +10,8 @@ The six required singleton-capture grep audits are recorded in the generated
 builder paths and records 07e's explicit zero-hit result. Sankey's empty-input
 gap closed in PR #248. The C4, Error and User Journey theme-output gaps are
 also closed, and `DiagramTypeGaps::BY_TYPE` no longer creates pending contract
-examples. One acceptance criterion is still open: item 07 must complete the
-joint item-14 handoff to the 90% branch floor; the current enforced floor is
-89%.
+examples. The enforced branch floor is now 97%, satisfying item 07's joint
+item-14 target of at least 90%.
 
 Can start: after 02. Same target, method, and parallelism rules as item
 06 — including the serialized shared-grammar track for anything touching
@@ -80,10 +79,10 @@ Both are second-finisher rules, because the tracks run concurrently:
 finisher records the handoff in its PR body and closes; the second
 performs the raise.
 
-The repository already enforces 89%, which supersedes the earlier 70% and 80%
-rungs without satisfying the final handoff. Item 07 remains responsible with
-item 14 for landing an enforced floor of at least 90%; this reconciliation
-does not round 89 up or claim that handoff occurred.
+The repository now enforces 97% branch coverage in `.simplecov`, exceeding
+the joint item-07/item-14 requirement of at least 90%. This satisfies the
+branch-floor criterion; it does not reconstruct historical PR handoff
+provenance.
 
 This item OWNS the types in 07a–07f. The all-types statement above can
 only be evaluated once item 06 has closed flowchart/state/er/treemap and
