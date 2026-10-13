@@ -95,7 +95,7 @@ See link:examples/README.adoc[] for working examples of all diagram types.
 * **Metanorma-oriented SVG** - Self-contained SVG for embedding in Metanorma
   documents; flowchart, sequence, class, pie and Gantt renders pass
   `svg_conform`'s `:metanorma` conformance check with zero errors (checked
-  directly against `SvgConform.validate`; `spec/svg_conformance_spec.rb`
+  directly against `SvgConform.validate`; `spec/sirena/svg_conformance_spec.rb`
   runs this on every suite run against shipped examples, reference
   fixtures, and the mermaid corpus)
 

@@ -718,7 +718,7 @@ Declared in `sirena.gemspec`:
 ## Integration with Metanorma
 
 Sirena's SVG is meant to be embedded in Metanorma documents.
-`spec/svg_conformance_spec.rb` validates, against `svg_conform` with
+`spec/sirena/svg_conformance_spec.rb` validates, against `svg_conform` with
 `CONFORMANCE_PROFILE = :metanorma`: the `examples/*.svg` files the gem ships,
 the reference fixtures rendered for the 8 types that have an `input.mmd`
 under `spec/fixtures/`, and the mermaid-corpus cases that render today (a

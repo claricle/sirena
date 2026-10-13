@@ -4,7 +4,8 @@ require "json"
 require "open3"
 require "rbconfig"
 
-# Asks tasks/corpus.rake for its answers in a child process. corpus_spec.rb
+# Asks tasks/corpus.rake for its answers in a child process.
+# corpus_tasks_spec.rb
 # loads that file into the suite unconditionally, so a second in-process load
 # would redefine its constants and append every rake action twice.
 module CorpusRakeProbe

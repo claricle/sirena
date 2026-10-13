@@ -28,7 +28,7 @@ module Sirena
     # enforces the SVG Tiny 1.2 element/attribute table -- but does not
     # by itself guarantee self-containment: an external
     # <?xml-stylesheet?> PI still validates clean under it. Nothing
-    # Sirena emits produces one; spec/svg_conformance_spec.rb holds
+    # Sirena emits produces one; spec/sirena/svg_conformance_spec.rb holds
     # that line -- don't drop it assuming the profile alone covers it.
     #
     # :svg_1_2_rfc restricts colour/fonts and would erase themes -- not

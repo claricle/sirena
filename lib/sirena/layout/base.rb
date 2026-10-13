@@ -34,7 +34,8 @@ module Sirena
       # input; leave it unset and the one read below supplies the real date.
       # The writer is public; the reader is private (see below), so a
       # subclass reads `today` and nothing outside the layout can.
-      # Only spec/sirena/determinism_spec.rb pins it today. The byte-identity
+      # Only spec/sirena/engine_determinism_spec.rb pins it today.
+      # The byte-identity
       # gate and the layout comparator that would also want it do not exist
       # yet — do not read this as "already covered".
       attr_writer :today

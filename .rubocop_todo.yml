@@ -6,15 +6,13 @@ RSpec/DescribeClass:
   - "**/spec/routing/**/*"
   - "**/spec/system/**/*"
   - "**/spec/views/**/*"
-  - spec/fixtures_spec.rb
-  - spec/spec_helper_corpus_guard_spec.rb
-  - spec/tasks/coverage_rake_spec.rb
-  - spec/integration/class_diagram_integration_spec.rb
-  - spec/integration/er_diagram_integration_spec.rb
-  - spec/integration/flowchart_integration_spec.rb
-  - spec/integration/git_graph_integration_spec.rb
-  - spec/integration/requirement_integration_spec.rb
-  - spec/integration/state_diagram_integration_spec.rb
-  - spec/integration/user_journey_integration_spec.rb
-RSpec/SpecFilePathFormat:
-  Enabled: false
+  - spec/sirena/engine_reference_fixtures_spec.rb
+  - spec/rspec/core/configuration_corpus_guard_spec.rb
+  - spec/rake/dsl_coverage_spec.rb
+  - spec/sirena/parser/class_diagram_integration_spec.rb
+  - spec/sirena/parser/er_diagram_integration_spec.rb
+  - spec/sirena/parser/flowchart_integration_spec.rb
+  - spec/sirena/parser/git_graph_integration_spec.rb
+  - spec/sirena/parser/requirement_integration_spec.rb
+  - spec/sirena/parser/state_diagram_integration_spec.rb
+  - spec/sirena/parser/user_journey_integration_spec.rb

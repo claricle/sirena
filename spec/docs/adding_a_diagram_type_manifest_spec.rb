@@ -19,7 +19,7 @@ module AddingADiagramTypeManifest
     "bundle exec rake 'type:new[demo]'",
     "bundle exec rake 'corpus[pie]'",
     "bundle exec rake 'corpus[pie,valid]'",
-    "bundle exec rspec spec/contract_spec.rb -e demo",
+    "bundle exec rspec spec/sirena/notation/mermaid_contract_spec.rb -e demo",
     "spec/support/diagram_type_examples.rb",
   ].freeze
 end
