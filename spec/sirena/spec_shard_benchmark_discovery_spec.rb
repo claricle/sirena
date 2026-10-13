@@ -42,8 +42,11 @@ RSpec.describe Sirena::SpecShard, :aggregate_failures do
   let(:arguments) { ["benchmark"] }
   let(:shard) { nil }
   let(:result) do
+    # This child inspects discovery without running examples; keep its load
+    # outside the parent suite's coverage report.
     output, error, status = Open3.capture3(
-      { "SIRENA_SPEC_SHARD" => shard }, RbConfig.ruby, "-rbundler/setup",
+      { "SIRENA_SPEC_SHARD" => shard, "COVERAGE" => nil },
+      RbConfig.ruby, "-rbundler/setup",
       "-e", script, *arguments, chdir: File.expand_path("../..", __dir__)
     )
     raise error unless status.success?
