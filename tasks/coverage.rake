@@ -133,7 +133,9 @@ module CoverageTasks
   end
 
   def ensure_safe_deletions!(paths, base)
-    deleted = paths.reject { |path| File.exist?(path) || lib_source?(path) }
+    deleted = paths.reject do |path|
+      File.exist?(path) || lib_source?(path) || lint_debt_file?(path)
+    end
     return if deleted.empty?
 
     raise "#{deleted.join(', ')} deleted vs COVERAGE_BASE=#{base.inspect} -- " \
@@ -142,6 +144,12 @@ module CoverageTasks
           "cannot clear it (it does not change what changed vs " \
           "COVERAGE_BASE). " \
           "Move COVERAGE_BASE past this deletion instead."
+  end
+
+  # These static RuboCop records do not exercise the measured lib/ source.
+  def lint_debt_file?(path)
+    path == ".rubocop_todo.yml" ||
+      path.match?(%r{\Ascoreboard/lint-debt/[^/]+\.yml\z})
   end
 
   def line_only_report
