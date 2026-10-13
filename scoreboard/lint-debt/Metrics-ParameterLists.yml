@@ -1,5 +1,0 @@
----
-cop: Metrics/ParameterLists
-rows:
-- file: spec/support/layout_parity/git_graph_recognizer.rb
-  count: 1

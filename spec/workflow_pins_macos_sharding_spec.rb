@@ -69,7 +69,10 @@ RSpec.describe WorkflowPins do
 
   context "with the actual source partition" do
     let(:shards) { (1..3).map { |index| Sirena::SpecShard.new(index, 3) } }
-    let(:all_files) { Dir.glob(Sirena::SpecShard::PATTERN).uniq.sort }
+    let(:all_files) do
+      benchmarks = Dir.glob("spec/benchmarks/**/*_spec.rb")
+      (Dir.glob(Sirena::SpecShard::PATTERN) - benchmarks).uniq.sort
+    end
 
     it "runs every unit file exactly once across the macOS groups" do
       expect(shards.flat_map(&:files).sort).to eq(all_files)
