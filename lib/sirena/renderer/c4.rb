@@ -58,10 +58,7 @@ module Sirena
         Svg::Group.new.tap do |group|
           group.id = "boundary-#{node.id}"
           group.children << boundary_rect(node)
-          unless node.labels.empty?
-            group.children << label_element(node.labels.first,
-                                            element_colours(node)[:text])
-          end
+          append_boundary_label(group, node)
         end
       end
 
@@ -94,9 +91,7 @@ module Sirena
           group.children << element_box(node, colours)
           add_person_icon(group, node, colours) if node.kind == "person"
           add_stereotype(group, node, colours)
-          node.labels.each do |label|
-            group.children << label_element(label, colours[:text])
-          end
+          append_element_labels(group, node, colours)
         end
       end
 
@@ -207,12 +202,8 @@ module Sirena
         section = edge.sections.first
         group = Svg::Group.new.tap { |item| item.id = edge.id }
         group.children << relationship_stroke(section)
-        edge.arrowheads.each do |points|
-          group.children << arrowhead(points)
-        end
-        edge.labels.each do |label|
-          group.children << label_element(label, theme_color(:label_text))
-        end
+        append_relationship_arrowheads(group, edge)
+        append_relationship_labels(group, edge)
         svg << group
       end
 
@@ -227,8 +218,7 @@ module Sirena
         start_point = section.start_point
         end_point = section.end_point
         Svg::Path.new.tap do |path|
-          path.d = "M#{start_point.x},#{start_point.y} " \
-                   "Q#{control.x},#{control.y} #{end_point.x},#{end_point.y}"
+          path.d = relationship_curve_data(start_point, control, end_point)
           path.fill = "none"
           path.stroke = theme_color(:edge_stroke)
           path.stroke_width = "2"
@@ -268,6 +258,36 @@ module Sirena
 
       def positioned?(node)
         !node.x.nil? && !node.y.nil?
+      end
+
+      private
+
+      def append_boundary_label(group, node)
+        return if node.labels.empty?
+
+        group.children << label_element(node.labels.first,
+                                        element_colours(node)[:text])
+      end
+
+      def append_element_labels(group, node, colours)
+        node.labels.each do |label|
+          group.children << label_element(label, colours[:text])
+        end
+      end
+
+      def append_relationship_arrowheads(group, edge)
+        edge.arrowheads.each { |points| group.children << arrowhead(points) }
+      end
+
+      def append_relationship_labels(group, edge)
+        edge.labels.each do |label|
+          group.children << label_element(label, theme_color(:label_text))
+        end
+      end
+
+      def relationship_curve_data(start_point, control, end_point)
+        "M#{start_point.x},#{start_point.y} " \
+          "Q#{control.x},#{control.y} #{end_point.x},#{end_point.y}"
       end
     end
   end
