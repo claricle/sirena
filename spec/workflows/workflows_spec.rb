@@ -121,10 +121,19 @@ module WorkflowHelpers
       "ruby" => %w[3.2 3.3 3.4],
       "experimental" => [false],
       "shard" => shards,
-      "exclude" => %w[ubuntu-latest macos-latest].product(shards.drop(1))
-        .map { |os, shard| { "os" => os, "shard" => shard } },
+      "exclude" => expected_unsharded_cells(shards.drop(1)),
       "include" => expected_ruby4_cells(shards),
     }
+  end
+
+  def expected_unsharded_cells(shards)
+    ubuntu = shards.map do |shard|
+      { "os" => "ubuntu-latest", "shard" => shard }
+    end
+    macos = %w[3.2 3.3].product(shards).map do |ruby, shard|
+      { "os" => "macos-latest", "ruby" => ruby, "shard" => shard }
+    end
+    ubuntu + macos
   end
 
   # Ruby 4.0 is experimental everywhere; only Windows is split into shards.
@@ -258,9 +267,11 @@ RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/De
         .to eq(leptris_selector)
     end
 
-    it "gives the rake step a shard only on Windows" do
+    it "shards Windows and macOS Ruby 3.4 without changing other cells" do
       expect(unit_rake_step(jobs).dig("env", "SIRENA_SPEC_SHARD"))
-        .to eq("${{ matrix.os == 'windows-latest' && matrix.shard || '' }}")
+        .to eq("${{ (matrix.os == 'windows-latest' || " \
+               "(matrix.os == 'macos-latest' && matrix.ruby == '3.4')) && " \
+               "matrix.shard || '' }}")
     end
 
     it "runs on pull requests, merge queue, push, dispatch and a nightly " \
