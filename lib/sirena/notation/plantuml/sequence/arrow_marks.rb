@@ -56,7 +56,8 @@ module Sirena
           def half_or_head(tip)
             back = tip + (@inward * LENGTH)
             case @end.glyph
-            when :filled, :open then [triangle(tip, back)]
+            when :filled then [triangle(tip, back)]
+            when :open then open_head(tip, back)
             when :upper then [half(tip, back, -HALF_WIDTH)]
             when :lower then [half(tip, back, HALF_WIDTH)]
             when :upper_open then [stroke([tip, @y], [back, @y - HALF_WIDTH])]
@@ -64,9 +65,15 @@ module Sirena
             end
           end
 
+          def open_head(tip, back)
+            [stroke([tip, @y], [back, @y - HALF_WIDTH]),
+             stroke([tip, @y], [back, @y + HALF_WIDTH])]
+          end
+
           def triangle(tip, back)
-            polygon([[tip, @y], [back, @y - HALF_WIDTH],
-                     [back, @y + HALF_WIDTH]])
+            notch = tip + (@inward * 6.0)
+            polygon([[back, @y - HALF_WIDTH], [tip, @y],
+                     [back, @y + HALF_WIDTH], [notch, @y]])
           end
 
           def half(tip, back, side)

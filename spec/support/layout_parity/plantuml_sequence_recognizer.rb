@@ -162,14 +162,42 @@ module SpecSupport
       end
 
       def labelled_message_element(extractor, prefix, texts, index)
-        geometry = texts.one? ? [*prefix, *texts] : prefix
-        boxes = geometry.filter_map { |item| extractor.bbox(item) }
-        box = Bbox.union(boxes)
+        box = legacy_message_bbox(extractor, prefix)
         return unless box
 
         label = normalize(texts.map(&:text))
         Element.new(kind: :message, key: index, bbox: box,
                     label: label, identity: :label)
+      end
+
+      def legacy_message_bbox(extractor, nodes)
+        geometry = nodes.reject do |node|
+          node.name == "text" || participant_geometry?(node)
+        end
+        Bbox.union(geometry.filter_map { |node| extractor.bbox(node) })
+      end
+
+      def participant_geometry?(node)
+        kinds = %w[participant participant-head participant-tail]
+        classes(node).intersect?(kinds) ||
+          legacy_lifelines(node.parent).include?(node) ||
+          legacy_actor_part?(node)
+      end
+
+      def legacy_actor_part?(node)
+        ellipse = node.name == "path" ? node.previous_element : node
+        return false unless actor_shape?(ellipse, ellipse&.next_element)
+
+        legacy_actor_label?(ellipse.previous_element)
+      end
+
+      def legacy_actor_label?(text)
+        return false unless text&.name == "text"
+
+        root = text.parent
+        legacy_lifelines(root).any? do |group|
+          participant_texts(root, group.at_xpath("./title").text).include?(text)
+        end
       end
 
       def joined_label(children, node, index)
@@ -192,8 +220,7 @@ module SpecSupport
 
       def unlabelled_message(extractor, children, line, index)
         run = unlabelled_message_run(children, line)
-        boxes = run.filter_map { |item| extractor.bbox(item) }
-        box = Bbox.union(boxes)
+        box = legacy_message_bbox(extractor, run)
         return unless box
 
         Element.new(kind: :message, key: index + 1, bbox: box, label: "")

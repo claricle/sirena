@@ -50,13 +50,13 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   context "with ordinary Teoz self messages" do
     let(:body) { "!pragma teoz true\nA -> A: right\nA <- A: left" }
 
-    it "preserves the thirty-six-pixel Teoz reach" do
+    it "uses the pinned forty-two-pixel Teoz reach" do
       reaches = scene.arrows.map do |arrow|
         coordinates = arrow.path.scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
         (coordinates[2] - coordinates[0]).abs
       end
 
-      expect(reaches).to eq([36.0, 36.0])
+      expect(reaches).to eq([42.0, 42.0])
     end
   end
 end

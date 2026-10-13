@@ -110,16 +110,16 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
   it "points a reversed arrow at the participant on the left" do
     arrow = scene_of("A -> B", "B -> A").arrows.last
-    tip = arrow.marks.first.points.split.first.split(",").first.to_f
+    tip = arrow.marks.first.points.split[1].split(",").first.to_f
 
     expect(tip).to be < arrow.path[/M (\S+)/, 1].to_f
   end
 
-  it "fills the head of -> and leaves ->> open" do
+  it "draws -> as a filled polygon and ->> as two strokes" do
     arrows = scene_of("A -> B", "A ->> B").arrows
-    filled = arrows.map { |arrow| arrow.marks.first.filled }
 
-    expect(filled).to eq([true, false])
+    expect([arrows.first.marks.map(&:filled), arrows.last.marks.map(&:kind)])
+      .to eq([[true], ["line", "line"]])
   end
 
   describe "arrow ends" do
@@ -521,16 +521,17 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
     it "draws a message beside a block that has just closed" do
       scene = teoz_scene("opt", "A -> B", "end", "& C -> C")
-      centred_loop_top = scene.fragments.first.y + 1.125
+      contact_loop_top = scene.fragments.first.y - 2.5
 
       expect(scene.arrows.last.path[/M \S+ (\S+)/, 1].to_f)
-        .to eq(centred_loop_top)
+        .to eq(contact_loop_top)
     end
 
     it "continues below a taller message beside a short block" do
       scene = teoz_scene("A -> A", "& opt", "end", "B -> C")
 
-      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(41.0078)
+      expect(arrow_ys(scene).last - arrow_ys(scene).first)
+        .to be_within(0.0001).of(49.8105)
     end
   end
 

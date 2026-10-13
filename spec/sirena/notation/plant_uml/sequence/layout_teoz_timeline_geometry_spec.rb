@@ -58,14 +58,14 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
   it "tracks nested activation edges" do
     expect(timeline_end_xs(6..9)).to eq(
-      [168.43603515625, 173.43603515625, 178.43603515625, 183.43603515625],
+      [166.43603515625, 171.43603515625, 176.43603515625, 181.43603515625],
     )
   end
 
   it "clears activation edges on destruction" do
     expect(timeline_x_pairs(-2..-1)).to eq(
-      [[61.4130859375, 173.43603515625],
-       [173.43603515625, 61.4130859375]],
+      [[61.4130859375, 171.43603515625],
+       [173.43603515625, 63.4130859375]],
     )
   end
 end

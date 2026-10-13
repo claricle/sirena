@@ -22,6 +22,7 @@ module Sirena
             def details(message, node, sink)
               style = message.style
               sink.detail(node, "number", message.number)
+              sink.detail(node, "label_family", message.label_family)
               flags(message).each do |role, on|
                 sink.detail(node, role, "true") if on
               end
