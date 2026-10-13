@@ -104,10 +104,13 @@ module SpecSupport
 
       def bottom_axis_label(line, labels)
         labels.select do |entry|
-          box = entry[:box]
-          (box.center.first - line.center.first).abs <= 0.01 &&
-            box.min_y >= line.max_y
+          bottom_axis_candidate?(line, entry[:box])
         end.min_by { |entry| entry[:box].min_y - line.max_y }
+      end
+
+      def bottom_axis_candidate?(line, box)
+        (box.center.first - line.center.first).abs <= 0.01 &&
+          box.min_y >= line.max_y
       end
 
       def tick_elements(extractor, nodes)

@@ -57,18 +57,25 @@ RSpec.describe Sirena do
     # tip (their nested Error classes were defined directly under the
     # `require_relative '../error'` already present in each base.rb, so
     # the guarantee predates this diff and needs no new example here).
-    it "defines DiagramTypeError and PipelineError as Sirena::Error " \
-       "subclasses when sirena/engine is required standalone" do
-      out, status = Open3.capture2e(
-        "ruby", "-Ilib", "-e",
-        'require "sirena/engine"; ' \
-        "puts Sirena::Engine::DiagramTypeError < Sirena::Error; " \
-        "puts Sirena::Engine::PipelineError < Sirena::Error"
-      )
+    context "with engine required standalone" do
+      let(:result) do
+        Open3.capture2e(
+          "ruby", "-Ilib", "-e",
+          'require "sirena/engine"; ' \
+          "puts Sirena::Engine::DiagramTypeError < Sirena::Error; " \
+          "puts Sirena::Engine::PipelineError < Sirena::Error"
+        )
+      end
 
-      expect(status).to be_success,
-                        "expected exit 0, got #{status.exitstatus}:\n#{out}"
-      expect(out.lines.map(&:chomp)).to eq(%w[true true])
+      it "loads the engine successfully" do
+        out, status = result
+        expect(status).to be_success,
+                          "expected exit 0, got #{status.exitstatus}:\n#{out}"
+      end
+
+      it "defines both engine errors as Sirena::Error subclasses" do
+        expect(result.first.lines.map(&:chomp)).to eq(%w[true true])
+      end
     end
   end
 end

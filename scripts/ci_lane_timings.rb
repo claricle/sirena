@@ -12,7 +12,7 @@ module CiLaneTimings
   LANES = {
     "fast" => /\A(?:unit \(|pins\z|oracle-toolchain\z|lint\z)/,
     "full" => %r{\A(?:docs-build\ /|links\ /|conformance\z|fresh-resolution\z|
-                     plantuml-toolchain\z)}x,
+                     plantuml-toolchain\z|coverage\z)}x,
   }.freeze
 
   BUCKETS = %i[warm restore_key cold none].freeze

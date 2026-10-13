@@ -66,28 +66,24 @@ RSpec.describe "tasks/benchmark.rake", :aggregate_failures do
     expect(err).not_to include("NoMethodError")
   end
 
-  it "fails the same way this bug used to, if the require is removed " \
-     "(mutation control)" do
-    source = File.read(File.join(repo_root, "tasks/benchmark.rake"))
-    without_require = source.sub("require \"sirena\"\n", "")
-    # Sanity: the substitution actually matched.
-    expect(without_require).not_to eq(source)
+  context "with the Sirena require removed" do
+    let(:source) { File.read(File.join(repo_root, "tasks/benchmark.rake")) }
+    let(:without_require) { source.sub("require \"sirena\"\n", "") }
+    let(:mutation_result) do
+      Dir.mktmpdir do |dir|
+        FileUtils.mkdir_p(File.join(dir, "tasks"))
+        File.write(File.join(dir, "tasks/benchmark.rake"), without_require)
+        FileUtils.ln_s(File.join(repo_root, "lib"), File.join(dir, "lib"))
+        run_against_bare_sirena_module(dir, 'Sirena.render("graph TD\\nA-->B")')
+      end
+    end
 
-    Dir.mktmpdir do |dir|
-      FileUtils.mkdir_p(File.join(dir, "tasks"))
-      File.write(File.join(dir, "tasks/benchmark.rake"), without_require)
-      FileUtils.ln_s(File.join(repo_root, "lib"), File.join(dir, "lib"))
+    it "actually removes the require from the source" do
+      expect(without_require).not_to eq(source)
+    end
 
-      script = <<~RUBY
-        require 'rake'
-        require_relative 'lib/sirena/version'
-        load 'tasks/benchmark.rake'
-        Sirena.render("graph TD\\nA-->B")
-      RUBY
-      _out, err, status = Open3.capture3(
-        "ruby", "-I", "lib", "-e", script, chdir: dir
-      )
-
+    it "fails the same way as the original load-order bug" do
+      _out, err, status = mutation_result
       expect(status).not_to be_success
       expect(err).to include("NoMethodError")
     end
@@ -132,18 +128,20 @@ RSpec.describe "tasks/benchmark.rake", :aggregate_failures do
       Rake.application = original_application
     end
 
-    it "reports no numbers, only that nothing was measured -- " \
-       "no hardcoded estimate" do
-      fake_available = Class.new(PerformanceBenchmarker) do
+    let(:available_benchmarker) do
+      Class.new(PerformanceBenchmarker) do
         def mermaid_cli_available?
           true
         end
-      end
+      end.new
+    end
+    let(:memory_usage) { available_benchmarker.send(:benchmark_memory_usage) }
 
-      result = fake_available.new.send(:benchmark_memory_usage)
-
-      expect(result.keys).to eq([:note])
-      expect(result[:note]).to eq("Memory usage was not measured in this run")
+    it "reports no numbers, only that nothing was measured -- " \
+       "no hardcoded estimate" do
+      expect(memory_usage.keys).to eq([:note])
+      expect(memory_usage[:note])
+        .to eq("Memory usage was not measured in this run")
     end
   end
 
@@ -168,31 +166,8 @@ RSpec.describe "tasks/benchmark.rake", :aggregate_failures do
       Rake.application = original_application
     end
 
-    it "reports no mermaid timing for a single render when every mmdc " \
-       "invocation fails" do
-      with_fake_executable("mmdc") do
-        result = PerformanceBenchmarker.new.send(:benchmark_single_renders)
-
-        expect(result).not_to be_empty
-        expect(result.values.map { |data| data[:mermaid_time] }).to all(be_nil)
-      end
-    end
-
-    it "omits mermaid_total from a batch render when every mmdc " \
-       "invocation fails" do
-      with_fake_executable("mmdc") do
-        result = PerformanceBenchmarker.new.send(:benchmark_batch_renders)
-
-        expect(result[:sirena_total]).not_to be_nil
-        expect(result).not_to have_key(:mermaid_total)
-        expect(result).not_to have_key(:mermaid_per_diagram)
-      end
-    end
-
-    it "generates a report from a failed batch without raising " \
-       "(regression for the nil-division crash)" do
-      benchmarker = PerformanceBenchmarker.new
-      results = {
+    let(:failed_batch_results) do
+      {
         system_info: {
           ruby_version: "0", platform: "x", sirena_version: "0",
           mermaid_cli_version: "unknown",
@@ -208,10 +183,44 @@ RSpec.describe "tasks/benchmark.rake", :aggregate_failures do
         memory_usage: {},
         startup_time: { sirena: 0.5, mermaid: nil },
       }
+    end
 
-      report = nil
-      expect { report = benchmarker.send(:generate_report, results) }
-        .not_to raise_error
+    let(:single_results) do
+      with_fake_executable("mmdc") do
+        PerformanceBenchmarker.new.send(:benchmark_single_renders)
+      end
+    end
+
+    let(:batch_results) do
+      with_fake_executable("mmdc") do
+        PerformanceBenchmarker.new.send(:benchmark_batch_renders)
+      end
+    end
+
+    it "reports no mermaid timing for a single render when every mmdc " \
+       "invocation fails" do
+      expect(single_results).not_to be_empty
+      expect(single_results.values.map { |data| data[:mermaid_time] })
+        .to all(be_nil)
+    end
+
+    it "omits mermaid_total from a batch render when every mmdc " \
+       "invocation fails" do
+      expect(batch_results[:sirena_total]).not_to be_nil
+      expect(batch_results).not_to have_key(:mermaid_total)
+      expect(batch_results).not_to have_key(:mermaid_per_diagram)
+    end
+
+    it "generates a report from a failed batch without raising " \
+       "(regression for the nil-division crash)" do
+      expect do
+        PerformanceBenchmarker.new.send(:generate_report, failed_batch_results)
+      end.not_to raise_error
+    end
+
+    it "marks absent timings in the failed batch report as not measured" do
+      report = PerformanceBenchmarker.new.send(:generate_report,
+                                               failed_batch_results)
       expect(report).to include("not measured")
     end
 

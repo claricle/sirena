@@ -14,6 +14,13 @@ RSpec.describe SpecSupport::LayoutParity::SequenceRecognizer do
     ]
   end
 
+  let(:stick_reference) do
+    reference_svg("sequence/sequencediagram_spec-28d5e36c.svg")
+  end
+  let(:stick_sirena) do
+    Sirena.render("sequenceDiagram\n  actor A\n  actor B\n")
+  end
+
   def recognized(svg)
     extract(svg, recognizer).elements.map do |element|
       [element.kind, element.key, element.label]
@@ -44,10 +51,7 @@ RSpec.describe SpecSupport::LayoutParity::SequenceRecognizer do
   end
 
   it "recognizes stick-figure participants the way it recognizes boxes" do
-    stick = reference_svg("sequence/sequencediagram_spec-28d5e36c.svg")
-    sirena = Sirena.render("sequenceDiagram\n  actor A\n  actor B\n")
-
-    expect([recognized(stick), recognized(sirena)]).to eq(
+    expect([recognized(stick_reference), recognized(stick_sirena)]).to eq(
       [[[:"participant-top", "A", "A"], [:"participant-top", "B", "B"]],
        [[:"participant-top", "A", "A"], [:"participant-top", "B", "B"]]],
     )

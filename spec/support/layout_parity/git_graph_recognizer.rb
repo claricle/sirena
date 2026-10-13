@@ -165,9 +165,8 @@ module SpecSupport
 
         explicit_kind = explicit_label_kind(text)
         kind = explicit_kind ||
-          sirena_label_kind(entry[:box], marker.bbox, markers, orientation,
-                            text["font-weight"] == "bold",
-                            text["text-anchor"])
+          sirena_label_kind(entry[:box], marker.bbox, markers,
+                            orientation, text)
         return unless explicit_kind ||
           recognized_label_position?(kind, entry[:box], marker)
 
@@ -194,8 +193,8 @@ module SpecSupport
         kind == :commit_label && label.match?(GENERATED_COMMIT_LABEL)
       end
 
-      def sirena_label_kind(label, marker, markers, orientation, bold, anchor)
-        if bold && (anchor == "start" ||
+      def sirena_label_kind(label, marker, markers, orientation, text)
+        if text["font-weight"] == "bold" && (text["text-anchor"] == "start" ||
                     branch_position?(label, markers, orientation))
           return :branch_label
         end

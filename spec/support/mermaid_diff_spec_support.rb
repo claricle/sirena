@@ -39,36 +39,40 @@ module MermaidDiffSpecSupport
         probe = File.join(dir, "probe.txt")
         File.write(probe, source)
         bin = fake_mmdc(dir, mmdc)
-        script = if relative
-                   "./scripts/mermaid_diff.rb"
-                 else
-                   File.expand_path("../../scripts/mermaid_diff.rb", __dir__)
-                 end
-        command = if relative
-                    ["bundle", "exec", script, *options, probe]
-                  else
-                    [RbConfig.ruby, script, *options, probe]
-                  end
-        capture = proc do
-          Open3.capture3(
-            { "PATH" => "#{bin}:#{ENV.fetch('PATH')}",
-              "SIRENA_ALLOW_TEST_MMDC" => "1",
-              "SIRENA_MMDC_TEST_BIN" => File.join(bin, "mmdc") },
-            *command,
-          )
-        end
-
-        stdout, stderr, status = if relative
-                                   Dir.chdir(
-                                     File.expand_path("../..", __dir__),
-                                     &capture
-                                   )
-                                 else
-                                   capture.call
-                                 end
+        command = harness_command(options, probe, relative)
+        stdout, stderr, status = capture_harness(bin, command, relative)
         [stdout, stderr.gsub(YEPTRIS_NOTICE, ""), status]
       end
     end
+
+    def harness_command(options, probe, relative)
+      if relative
+        return ["bundle", "exec", "./scripts/mermaid_diff.rb", *options, probe]
+      end
+
+      script = File.expand_path("../../scripts/mermaid_diff.rb", __dir__)
+      [RbConfig.ruby, script, *options, probe]
+    end
+
+    def capture_harness(bin, command, relative)
+      capture = proc do
+        Open3.capture3(
+          { "PATH" => "#{bin}:#{ENV.fetch('PATH')}",
+            "SIRENA_ALLOW_TEST_MMDC" => "1",
+            "SIRENA_MMDC_TEST_BIN" => File.join(bin, "mmdc") },
+          *command,
+        )
+      end
+      capture_in_harness_directory(relative, &capture)
+    end
+
+    def capture_in_harness_directory(relative, &)
+      return yield unless relative
+
+      Dir.chdir(File.expand_path("../..", __dir__), &)
+    end
+
+    private :harness_command, :capture_harness, :capture_in_harness_directory
 
     def oracle_verdict(svg)
       MmdcOracle.verdict("probe") do |_input, output|

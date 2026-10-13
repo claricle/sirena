@@ -137,7 +137,10 @@ RSpec.describe Sirena::Commands::RenderCommand do
         run_command.call(input_path, options.merge(output: output_path))
       end
         .not_to output.to_stdout
+    end
 
+    it "writes SVG to the requested path" do
+      run_command.call(input_path, options.merge(output: output_path))
       expect(File.read(output_path)).to start_with("<svg")
     end
 
@@ -155,16 +158,19 @@ RSpec.describe Sirena::Commands::RenderCommand do
         .to output("#{File.read(output_path)}\n").to_stdout
     end
 
-    it "reports an unwritable output path by name" do
-      input_path
-      allow(File).to receive(:binwrite).and_raise(Errno::EACCES)
-
-      expect do
-        run_command.call(input_path, options.merge(output: output_path))
+    context "when the output path is unwritable" do
+      before do
+        input_path
+        allow(File).to receive(:binwrite).and_raise(Errno::EACCES)
       end
-        .to raise_error(
+
+      it "reports the unwritable path by name" do
+        expect do
+          run_command.call(input_path, options.merge(output: output_path))
+        end.to raise_error(
           ArgumentError, "Permission denied writing to: #{output_path}"
         )
+      end
     end
   end
 
@@ -194,13 +200,18 @@ RSpec.describe Sirena::Commands::RenderCommand do
   describe "theme" do
     let(:output_path) { File.join(dir, "out.svg") }
 
-    it "passes the theme option through to the rendered output" do
-      dark_path = File.join(dir, "dark.svg")
+    def dark_path
+      File.join(dir, "dark.svg")
+    end
+
+    before do
       run_command.call(input_path, options.merge(output: output_path))
       run_command.call(
         input_path, options.merge(output: dark_path, theme: "dark")
       )
+    end
 
+    it "passes the theme option through to the rendered output" do
       expect(File.read(dark_path)).not_to eq(File.read(output_path))
     end
   end

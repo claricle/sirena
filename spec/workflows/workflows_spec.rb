@@ -197,20 +197,31 @@ RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/De
         .to eq(["a"])
     end
 
-    it "exits non-zero from the script when a seeded workflow is unpinned" do
+    def write_seeded_workflow(dir)
+      scripts = File.join(dir, "scripts")
+      workflows = File.join(dir, ".github/workflows")
+      FileUtils.mkdir_p([scripts, workflows])
+      script = File.join(scripts, "check_workflow_pins.rb")
+      FileUtils.cp(File.join(root, "scripts/check_workflow_pins.rb"), script)
+      File.write(File.join(workflows, "x.yml"), unpinned_workflow_yaml)
+      script
+    end
+
+    def unpinned_workflow_yaml
+      "on: push\njobs:\n  j:\n    timeout-minutes: 1\n    " \
+        "steps:\n      - uses: actions/checkout@v4\n"
+    end
+
+    def seeded_workflow_result
       Dir.mktmpdir do |dir|
-        scripts = File.join(dir, "scripts")
-        workflows = File.join(dir, ".github/workflows")
-        FileUtils.mkdir_p([scripts, workflows])
-        script = File.join(scripts, "check_workflow_pins.rb")
-        FileUtils.cp(File.join(root, "scripts/check_workflow_pins.rb"), script)
-        workflow = "on: push\njobs:\n  j:\n    timeout-minutes: 1\n    " \
-                   "steps:\n      - uses: actions/checkout@v4\n"
-        File.write(File.join(workflows, "x.yml"), workflow)
-        _, err, status = Open3.capture3(RbConfig.ruby, script)
-        expect(status.exitstatus).to eq(1)
-        expect(err).to include("unpinned actions/checkout@v4")
+        Open3.capture3(RbConfig.ruby, write_seeded_workflow(dir))
       end
+    end
+
+    it "exits non-zero from the script when a seeded workflow is unpinned" do
+      _, err, status = seeded_workflow_result
+      expect(status.exitstatus).to eq(1)
+      expect(err).to include("unpinned actions/checkout@v4")
     end
   end
 
@@ -259,8 +270,8 @@ RSpec.describe "CI workflows", :aggregate_failures do # rubocop:disable RSpec/De
                                        "workflow_dispatch", "schedule")
     end
 
-    it "names both aggregators with stable job names, always() and a timeout" do
-      aggregators.each do |name|
+    %w[fast-lane full-lane].each do |name|
+      it "names #{name} with its stable name, always() and a timeout" do
         job = jobs.fetch(name)
         expect(job["name"]).to eq(name)
         expect(job["if"]).to include("always()")

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "yaml"
 require_relative "../../scripts/ci_lane_timings"
 
 RSpec.describe CiLaneTimings, :aggregate_failures do
@@ -37,6 +38,37 @@ RSpec.describe CiLaneTimings, :aggregate_failures do
 
     it "is nil when no job of the lane ran" do
       expect(described_class.sample([ci_job("lint", 1)], "full", {})).to be_nil
+    end
+  end
+
+  context "with coverage on the full-lane critical path" do
+    let(:jobs) do
+      [ci_job(unit_name, 8), ci_job("docs-build / build", 12),
+       ci_job("fresh-resolution", 20), ci_job("coverage", 31),
+       ci_job("coverage-extra", 40)]
+    end
+
+    it "uses the coverage runtime and its own cache classification" do
+      expect(described_class.sample(jobs, "full", "coverage" => :warm))
+        .to eq(job: "coverage", seconds: 1_860, cache: :warm)
+    end
+  end
+
+  describe "full-lane workflow membership" do
+    let(:workflow_jobs) do
+      path = File.expand_path("../../.github/workflows/ci.yml", __dir__)
+      YAML.load_file(path).fetch("jobs")
+    end
+    let(:required_job_names) do
+      workflow_jobs.fetch("full-lane").fetch("needs").map do |key|
+        job = workflow_jobs.fetch(key)
+        job.key?("uses") ? "#{key} / child" : job.fetch("name", key)
+      end
+    end
+
+    it "includes every job the actual full-lane gate waits for" do
+      expect(required_job_names.grep(described_class::LANES.fetch("full")))
+        .to eq(required_job_names)
     end
   end
 
@@ -140,6 +172,13 @@ RSpec.describe CiLaneTimings, :aggregate_failures do
         "fast: no cold sample",
         "full: no cache-independent sample",
       )
+    end
+
+    it "rejects slow coverage without dropping required cache evidence" do
+      sample = { job: "coverage", cache: :warm, seconds: 1_860 }
+      samples = within_budget.merge("full" => within_budget["full"] + [sample])
+      expect(described_class.budget_problems(samples))
+        .to eq(["full: coverage warm sample is 31.0 min (budget < 30 min)"])
     end
 
     it "rejects every sample at or above a lane's strict budget" do
