@@ -25,6 +25,7 @@ module Sirena
     # Seconds the last group also spends on the non-RSpec rake tasks.
     TAIL_SECONDS = 55
     PATTERN = "spec/**{,/*/**}/*_spec.rb"
+    BENCHMARK_PATTERN = "spec/benchmarks/**/*_spec.rb"
 
     attr_reader :index, :count
 
@@ -52,7 +53,7 @@ module Sirena
 
     # PATTERN matches some files twice (rspec's own default does too).
     def files(all = Dir.glob(PATTERN))
-      groups(all.uniq.sort)[index - 1].sort
+      groups((all - Dir.glob(BENCHMARK_PATTERN)).uniq.sort)[index - 1].sort
     end
 
     private

@@ -11,15 +11,17 @@ SPEC_SHARD = Sirena::SpecShard.from_env
 
 RSpec::Core::RakeTask.new(:spec) do |task|
   task.pattern = SPEC_SHARD.files if SPEC_SHARD
+  task.exclude_pattern = Sirena::SpecShard::BENCHMARK_PATTERN
 end
 
-# Speed and size checks, held out of `rspec`'s default pattern by their
-# file names. They read the clock and build fixtures with thousands of
+# Speed and size checks are excluded from ordinary spec discovery.
+# They read the clock and build fixtures with thousands of
 # boxes, so an ordinary run stays quick and cannot go red because the
 # machine was busy. `rake` still runs them, so CI guards every
 # regression they pin.
 RSpec::Core::RakeTask.new(:benchmark) do |task|
-  task.pattern = "spec/benchmarks/**/*_benchmark.rb"
+  task.pattern = Sirena::SpecShard::BENCHMARK_PATTERN
+  task.exclude_pattern = ""
 end
 
 # Load custom rake tasks

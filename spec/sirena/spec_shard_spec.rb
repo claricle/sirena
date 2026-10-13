@@ -17,7 +17,10 @@ end
 RSpec.describe Sirena::SpecShard do
   include SpecShardSpecHelpers
 
-  let(:all_files) { Dir.glob(described_class::PATTERN).uniq.sort }
+  let(:all_files) do
+    (Dir.glob(described_class::PATTERN) -
+      Dir.glob("spec/benchmarks/**/*_spec.rb")).uniq.sort
+  end
   let(:heavy) do
     %w[spec/sirena/lint_debt_spec.rb spec/sirena/lint_debt_scoreboard_spec.rb]
   end
