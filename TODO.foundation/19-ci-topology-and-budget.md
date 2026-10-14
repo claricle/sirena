@@ -1,17 +1,48 @@
 # 19 — CI topology, runtime budget, external pins
 
-Status (reconciled 2026-10-13): **repository-side 19a core landed; 19a and
+Status (reconciled 2026-10-14): **repository-side 19a core landed; 19a and
 19b remain open.** Current `main` owns its workflow YAML, has stable
 `fast-lane` and `full-lane` aggregators, pins external actions, and documents
 the extension contract with a worked example. PR #222 merged on 2026-10-09:
-`release.yml` now owns publishing directly, removing the transitive release
-workflow dependency. Still required for 19a closeout: the complete seeded
-event/baseline proof and recorded owner branch protection with strictness or a
-required merge queue. The read-only GitHub settings audit on 2026-10-13 found
-`main` unprotected, with no required checks or effective rulesets; the release
-bypass documented by item 17 is also unapplied. 19b still requires final gate
-consolidation, complete cold/warm lane timing evidence, and protection
-reverification.
+`release.yml` owns publishing directly, removing the transitive release
+workflow dependency.
+
+The repository-level event proof now executes 35 scenarios across seven
+modes through real Git histories, the production baseline CLI and actual
+`corpus:check`: unchanged, recorded improvement, regression, deletion and
+stale improvement. See
+`spec/scripts/scoreboard_baseline_event_freshness_spec.rb` and
+`spec/support/seeded_freshness_repo.rb`. Dispatch without a baseline and
+nightly retain explicitly defined HEAD-consistency semantics. These local
+payloads do not establish every hosted event's fetch/ref delivery or pinned
+oracle provenance. Hosted deliberate controls
+[38561429267](https://github.com/claricle/sirena/actions/runs/38561429267) and
+[38561596382](https://github.com/claricle/sirena/actions/runs/38561596382)
+proved that both stable, always-running aggregators reject a genuinely failed
+and a genuinely skipped required child using the unchanged production
+verdict script. Their temporary manual-only proof branch remains unmerged.
+
+19a still requires recorded owner branch protection with strictness or a
+required merge queue; Ronald owns that external setting. The read-only
+GitHub settings audit on 2026-10-13 found `main` unprotected, with no required
+checks or effective rulesets; the release bypass documented by item 17 is
+also unapplied. 19b remains open: complete current-lane cold/warm evidence,
+budget satisfaction and protection reverification are still required. The
+selected topology retains Windows' three groups and runs macOS once per
+Ruby, preserving all twelve Ruby/OS combinations and every gate. Matched
+same-branch warm samples
+[38562661316](https://github.com/claricle/sirena/actions/runs/38562661316)
+(12 unit jobs) and
+[38565260570](https://github.com/claricle/sirena/actions/runs/38565260570)
+(20 unit jobs) measured complete fast/full spans of 1105/622 and 897/604
+seconds, including queue and aggregators. Their unit cache keys and resolved
+leptris 1.9.355.0 matched. This single pair supports retaining Windows groups;
+it does not establish a general speedup. The earlier 22/20-job samples with
+leptris 1.9.354.0 differed by only three seconds in the fast lane (688/691),
+so no macOS-specific latency improvement is claimed. The selected fast span
+still exceeds the unchanged 600-second budget, and a fully cold sample for
+both complete lanes is absent. Budgets and gates remain unchanged; this
+evidence does not close the card.
 
 Split into two PRs, because six wave-1 items (01, 02, 08, 11, 15 and 19
 itself) all need to touch CI and only one of them can own the files.
