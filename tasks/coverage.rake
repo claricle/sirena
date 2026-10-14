@@ -125,7 +125,8 @@ module CoverageTasks
   def diff_paths(name_status, base = coverage_base)
     parse_name_status(name_status).flat_map do |status, paths|
       move = identical_spec_move?(status, paths) ||
-        identical_benchmark_move?(status, paths, base)
+        identical_benchmark_move?(status, paths, base) ||
+        identical_plan_archive?(status, paths, base)
       move ? paths.last(1) : paths
     end
   end
@@ -186,6 +187,27 @@ module CoverageTasks
     regular_base_file?(old_path, base)
   end
 
+  # Plan archives are static Markdown, never executable coverage fixtures.
+  def identical_plan_archive?(status, paths, base)
+    return false unless status == "R100"
+
+    old_path, new_path = paths
+    return false unless old_path.match?(
+      %r{\ATODO\.(?:foundation|architecture|notations)/[^/]+\.md\z},
+    )
+
+    archive = "docs/history/completed-plans/#{File.basename(old_path)}"
+    return false unless new_path == archive
+    return false unless static_archive_file?(new_path)
+
+    regular_base_file?(old_path, base, modes: %w[100644])
+  end
+
+  def static_archive_file?(path)
+    regular_file?(path) && File.stat(path).mode.nobits?(0o111) &&
+      File.realpath(path) == File.join(File.realpath(Dir.pwd), path)
+  end
+
   def regular_file?(path)
     File.file?(path) && !File.symlink?(path)
   end
@@ -198,14 +220,14 @@ module CoverageTasks
     File.fnmatch?(pattern, path, File::FNM_PATHNAME | File::FNM_EXTGLOB)
   end
 
-  def regular_base_file?(path, base)
+  def regular_base_file?(path, base, modes: %w[100644 100755])
     ancestor = git_output!("merge-base", base, "HEAD",
                            label: "git merge-base").strip
     mode = git_output!(
       "ls-tree", "--format=%(objectmode)", ancestor, "--", path,
       label: "git ls-tree"
     ).strip
-    %w[100644 100755].include?(mode)
+    modes.include?(mode)
   end
 
   def git_output!(*, label:)

@@ -17,7 +17,7 @@ module Sirena
     # Registration with the notation registry waits for the registry itself.
     #
     # The identity methods below follow the plugin interface in
-    # TODO.foundation/10a-notation-contract.md, section 4.
+    # docs/history/completed-plans/10a-notation-contract.md, section 4.
     module PlantUML
       extend self
 
