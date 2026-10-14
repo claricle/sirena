@@ -654,7 +654,7 @@ any object answering `id`, `extensions`, `claims?(source)`, `parse(source)`
 Sirena itself: `require "sirena"; require "my_notation"`. `register` raises
 `NotationRegistrationError` for a malformed member, a duplicate id or a
 duplicate extension. The contract is
-`TODO.foundation/10a-notation-contract.md`.
+`docs/history/completed-plans/10a-notation-contract.md`.
 
 ### Strategy Pattern (Layout/Renderer)
 

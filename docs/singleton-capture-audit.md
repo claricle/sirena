@@ -83,7 +83,7 @@ ruby scripts/audit_singleton_captures.rb --check
 - `lib/sirena/parser/builders/kanban.rb:389` — `lines_array = Array(lines)`
 - `lib/sirena/parser/builders/radar.rb:117` — `Array(statements).grep(Hash).each do |statement|`
 - `lib/sirena/parser/radar.rb:65` — `assign_curve_values(curve, Array(data[:values]), axes)`
-- `lib/sirena/parser/user_journey.rb:177` — `Array(tree[:lines]).each do |line|`
+- `lib/sirena/parser/user_journey.rb:180` — `Array(tree[:lines]).each do |line|`
 
 ## 07e — architecture, c4, block
 

@@ -1,7 +1,7 @@
 # 10 — Notation registry (two-level), fast-tracked
 
 Status (2026-10-10): **complete.** The owner-approved
-Reading A contract is committed in `TODO.foundation/10a-notation-contract.md`.
+Reading A contract is committed in `docs/history/completed-plans/10a-notation-contract.md`.
 It makes one unambiguous choice for API placement, identifiers, precedence,
 mismatch/unknown errors, stdin, built-in discovery, external discovery, CLI
 behavior, and the interim IR boundary. The 10b truth-table, fake-notation,
@@ -107,7 +107,7 @@ decided by whoever types fastest. The split is what makes it real.
 answers every question above with a single unambiguous choice. No
 "either/or" survives into 10b.
 
-Complete: `TODO.foundation/10a-notation-contract.md` is marked approved and
+Complete: `docs/history/completed-plans/10a-notation-contract.md` is marked approved and
 records the owner decision for every listed contract question.
 
 **10b** — a truth-table spec covers the precedence rules (explicit vs

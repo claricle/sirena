@@ -65,8 +65,11 @@ module Sirena
       # an alternative able to run to the end of the source makes the whole
       # parse quadratic in the block's length. Anything added to
       # `acc_block_comment` inherits this constraint.
+      # Consume ordinary text without checking comment openers per character.
+      # Stop before every line terminator so comments retain their boundaries.
       rule(:acc_block_body) do
-        (acc_block_comment | (str("}").absent? >> any)).repeat
+        (match['[^}\n\r\u2028\u2029]'].repeat(1) |
+          acc_block_comment | (str("}").absent? >> any)).repeat
       end
 
       # An opener whose brace never closes makes the whole source unparseable,
