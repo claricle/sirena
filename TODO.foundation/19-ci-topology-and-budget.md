@@ -28,12 +28,21 @@ GitHub settings audit on 2026-10-13 found `main` unprotected, with no required
 checks or effective rulesets; the release bypass documented by item 17 is
 also unapplied. 19b remains open: complete current-lane cold/warm evidence,
 budget satisfaction and protection reverification are still required. The
-controlled 22-unit baseline run (all observed Bundler caches exact hits)
-[38556663574](https://github.com/claricle/sirena/actions/runs/38556663574)
-measured complete fast/full spans of 688/686 seconds, including queue and
-aggregators; the fast span exceeds the unchanged 600-second budget. A fully
-cold sample for both complete lanes is still absent. The budgets and every
-required gate remain unchanged; this evidence does not close the card.
+selected topology retains Windows' three groups and runs macOS once per
+Ruby, preserving all twelve Ruby/OS combinations and every gate. Matched
+same-branch warm samples
+[38562661316](https://github.com/claricle/sirena/actions/runs/38562661316)
+(12 unit jobs) and
+[38565260570](https://github.com/claricle/sirena/actions/runs/38565260570)
+(20 unit jobs) measured complete fast/full spans of 1105/622 and 897/604
+seconds, including queue and aggregators. Their unit cache keys and resolved
+leptris 1.9.355.0 matched. This single pair supports retaining Windows groups;
+it does not establish a general speedup. The earlier 22/20-job samples with
+leptris 1.9.354.0 differed by only three seconds in the fast lane (688/691),
+so no macOS-specific latency improvement is claimed. The selected fast span
+still exceeds the unchanged 600-second budget, and a fully cold sample for
+both complete lanes is absent. Budgets and gates remain unchanged; this
+evidence does not close the card.
 
 Split into two PRs, because six wave-1 items (01, 02, 08, 11, 15 and 19
 itself) all need to touch CI and only one of them can own the files.
