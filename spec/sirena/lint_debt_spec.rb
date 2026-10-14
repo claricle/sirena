@@ -260,6 +260,58 @@ RSpec.describe Sirena::LintDebt do
       end
     end
 
+    context "with an invalid exception before measurement" do
+      before do
+        allow(Open3).to receive(:capture3)
+          .and_raise("unexpected RuboCop subprocess")
+      end
+
+      it "rejects an incomplete entry without starting RuboCop" do
+        write_exceptions([signed_entry.except("cop")])
+
+        expect { debt.total }.to raise_error(
+          err_class, "exception ?/#{grammar_file}: cop is required"
+        )
+      end
+
+      it "rejects malformed report metadata without starting RuboCop" do
+        write_exceptions([signed_entry.except("cop")])
+
+        expect { debt.report }.to raise_error(
+          err_class, "exception ?/#{grammar_file}: cop is required"
+        )
+      end
+
+      it "rejects an unsigned entry without starting RuboCop" do
+        write_long_method_offence(grammar_file)
+        write_exceptions([signed_entry.except("approved_by")])
+
+        expect { debt.total }.to raise_error(
+          err_class, signature_message("approved_by")
+        )
+      end
+    end
+
+    context "with a stale entry before an unsigned entry" do
+      let(:stale_entry) do
+        signed_entry.merge("cop" => "Metrics/ParameterLists")
+      end
+
+      before do
+        write_long_method_offence(grammar_file)
+        write_exceptions([
+                           stale_entry,
+                           signed_entry.except("approved_by"),
+                         ])
+      end
+
+      it "preserves the first entry's stale-row error" do
+        expect { debt.total }.to raise_error(
+          err_class, /Metrics\/ParameterLists.*matches no current offence row/
+        )
+      end
+    end
+
     # A malformed file must stop the rake task with a message naming the
     # entry, not an error its rescue of ExecutionError lets through.
     it "refuses an exception missing cop" do
