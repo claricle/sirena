@@ -258,7 +258,7 @@ module CoverageTasks
 
   def ensure_safe_deletions!(paths, base)
     deleted = paths.reject do |path|
-      File.exist?(path) || lib_source?(path) || lint_debt_file?(path)
+      safe_deleted_path?(path, base)
     end
     return if deleted.empty?
 
@@ -268,6 +268,17 @@ module CoverageTasks
           "cannot clear it (it does not change what changed vs " \
           "COVERAGE_BASE). " \
           "Move COVERAGE_BASE past this deletion instead."
+  end
+
+  def safe_deleted_path?(path, base)
+    File.exist?(path) || lib_source?(path) || lint_debt_file?(path) ||
+      completed_plan_document?(path, base)
+  end
+
+  # Completed historical Markdown does not exercise measured library code.
+  def completed_plan_document?(path, base)
+    path.match?(%r{\Adocs/history/completed-plans/[^/]+\.md\z}) &&
+      regular_base_file?(path, base, modes: %w[100644])
   end
 
   # These static RuboCop records do not exercise the measured lib/ source.
