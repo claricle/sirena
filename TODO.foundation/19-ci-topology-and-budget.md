@@ -1,17 +1,39 @@
 # 19 — CI topology, runtime budget, external pins
 
-Status (reconciled 2026-10-13): **repository-side 19a core landed; 19a and
+Status (reconciled 2026-10-14): **repository-side 19a core landed; 19a and
 19b remain open.** Current `main` owns its workflow YAML, has stable
 `fast-lane` and `full-lane` aggregators, pins external actions, and documents
 the extension contract with a worked example. PR #222 merged on 2026-10-09:
-`release.yml` now owns publishing directly, removing the transitive release
-workflow dependency. Still required for 19a closeout: the complete seeded
-event/baseline proof and recorded owner branch protection with strictness or a
-required merge queue. The read-only GitHub settings audit on 2026-10-13 found
-`main` unprotected, with no required checks or effective rulesets; the release
-bypass documented by item 17 is also unapplied. 19b still requires final gate
-consolidation, complete cold/warm lane timing evidence, and protection
-reverification.
+`release.yml` owns publishing directly, removing the transitive release
+workflow dependency.
+
+The repository-level event proof now executes 35 scenarios across seven
+modes through real Git histories, the production baseline CLI and actual
+`corpus:check`: unchanged, recorded improvement, regression, deletion and
+stale improvement. See
+`spec/scripts/scoreboard_baseline_event_freshness_spec.rb` and
+`spec/support/seeded_freshness_repo.rb`. Dispatch without a baseline and
+nightly retain explicitly defined HEAD-consistency semantics. These local
+payloads do not establish every hosted event's fetch/ref delivery or pinned
+oracle provenance. Hosted deliberate controls
+[38561429267](https://github.com/claricle/sirena/actions/runs/38561429267) and
+[38561596382](https://github.com/claricle/sirena/actions/runs/38561596382)
+proved that both stable, always-running aggregators reject a genuinely failed
+and a genuinely skipped required child using the unchanged production
+verdict script. Their temporary manual-only proof branch remains unmerged.
+
+19a still requires recorded owner branch protection with strictness or a
+required merge queue; Ronald owns that external setting. The read-only
+GitHub settings audit on 2026-10-13 found `main` unprotected, with no required
+checks or effective rulesets; the release bypass documented by item 17 is
+also unapplied. 19b remains open: complete current-lane cold/warm evidence,
+budget satisfaction and protection reverification are still required. The
+controlled 22-unit baseline run (all observed Bundler caches exact hits)
+[38556663574](https://github.com/claricle/sirena/actions/runs/38556663574)
+measured complete fast/full spans of 688/686 seconds, including queue and
+aggregators; the fast span exceeds the unchanged 600-second budget. A fully
+cold sample for both complete lanes is still absent. The budgets and every
+required gate remain unchanged; this evidence does not close the card.
 
 Split into two PRs, because six wave-1 items (01, 02, 08, 11, 15 and 19
 itself) all need to touch CI and only one of them can own the files.
