@@ -29,8 +29,7 @@ RSpec.describe WorkflowPins do
         3.2|ubuntu-latest|1/3|false 3.3|ubuntu-latest|1/3|false
         3.4|ubuntu-latest|1/3|false
         3.2|macos-latest|1/3|false 3.3|macos-latest|1/3|false
-        3.4|macos-latest|1/3|false 3.4|macos-latest|2/3|false
-        3.4|macos-latest|3/3|false
+        3.4|macos-latest|1/3|false
         3.2|windows-latest|1/3|false 3.2|windows-latest|2/3|false
         3.2|windows-latest|3/3|false 3.3|windows-latest|1/3|false
         3.3|windows-latest|2/3|false 3.3|windows-latest|3/3|false
@@ -42,15 +41,14 @@ RSpec.describe WorkflowPins do
       ]
     end
 
-    it "changes only macOS Ruby 3.4 from one job to three" do
+    it "keeps non-Windows combinations whole and Windows grouped" do
       expect(signatures.sort).to eq(expected_cells.sort)
     end
   end
 
   context "with shard labels and execution" do
     let(:sharding_condition) do
-      "(matrix.os == 'windows-latest' || " \
-        "(matrix.os == 'macos-latest' && matrix.ruby == '3.4'))"
+      "matrix.os == 'windows-latest'"
     end
     let(:expected_env) do
       "${{ #{sharding_condition} && matrix.shard || '' }}"
@@ -60,21 +58,21 @@ RSpec.describe WorkflowPins do
         "#{sharding_condition} && format(', shard {0}', matrix.shard) || '' }})"
     end
 
-    it "selects the same Windows and macOS cells for labels and execution" do
+    it "selects only Windows cells for shard labels and execution" do
       step = unit.fetch("steps").find { |row| row["run"] == "bundle exec rake" }
       expect([unit.fetch("name"), step.dig("env", "SIRENA_SPEC_SHARD")])
         .to eq([expected_label, expected_env])
     end
   end
 
-  context "with the actual source partition" do
+  context "with the retained Windows source partition" do
     let(:shards) { (1..3).map { |index| Sirena::SpecShard.new(index, 3) } }
     let(:all_files) do
       benchmarks = Dir.glob("spec/benchmarks/**/*_spec.rb")
       (Dir.glob(Sirena::SpecShard::PATTERN) - benchmarks).uniq.sort
     end
 
-    it "runs every unit file exactly once across the macOS groups" do
+    it "runs every unit file exactly once across the Windows groups" do
       expect(shards.flat_map(&:files).sort).to eq(all_files)
     end
 

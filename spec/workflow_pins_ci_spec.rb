@@ -128,13 +128,9 @@ module WorkflowHelpers
   end
 
   def expected_unsharded_cells(shards)
-    ubuntu = shards.map do |shard|
-      { "os" => "ubuntu-latest", "shard" => shard }
+    %w[ubuntu-latest macos-latest].product(shards).map do |os, shard|
+      { "os" => os, "shard" => shard }
     end
-    macos = %w[3.2 3.3].product(shards).map do |ruby, shard|
-      { "os" => "macos-latest", "ruby" => ruby, "shard" => shard }
-    end
-    ubuntu + macos
   end
 
   # Ruby 4.0 is experimental everywhere; only Windows is split into shards.
@@ -267,11 +263,9 @@ RSpec.describe WorkflowPins, :aggregate_failures do
         .to eq(leptris_selector)
     end
 
-    it "shards Windows and macOS Ruby 3.4 without changing other cells" do
+    it "shards only Windows and runs every other combination in full" do
       expect(unit_rake_step(jobs).dig("env", "SIRENA_SPEC_SHARD"))
-        .to eq("${{ (matrix.os == 'windows-latest' || " \
-               "(matrix.os == 'macos-latest' && matrix.ruby == '3.4')) && " \
-               "matrix.shard || '' }}")
+        .to eq("${{ matrix.os == 'windows-latest' && matrix.shard || '' }}")
     end
 
     it "runs on pull requests, merge queue, push, dispatch and a nightly " \
