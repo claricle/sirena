@@ -116,17 +116,31 @@ module WorkflowHelpers
   end
 
   def expected_unit_matrix
+    shards = %w[1/3 2/3 3/3]
     {
       "os" => %w[ubuntu-latest macos-latest windows-latest],
       "ruby" => %w[3.2 3.3 3.4],
       "experimental" => [false],
-      "include" => expected_ruby4_cells,
+      "shard" => shards,
+      "exclude" => expected_unsharded_cells(shards.drop(1)),
+      "include" => expected_ruby4_cells(shards),
     }
   end
 
-  def expected_ruby4_cells
-    %w[ubuntu-latest macos-latest windows-latest].map do |os|
-      { "os" => os, "ruby" => "4.0", "experimental" => true }
+  def expected_unsharded_cells(shards)
+    %w[ubuntu-latest macos-latest].product(shards).map do |os, shard|
+      { "os" => os, "shard" => shard }
+    end
+  end
+
+  # Ruby 4.0 is experimental everywhere; only Windows is split into shards.
+  def expected_ruby4_cells(shards)
+    cell = { "ruby" => "4.0", "experimental" => true }
+    unsharded = %w[ubuntu-latest macos-latest].map do |os|
+      { "os" => os }.merge(cell)
+    end
+    unsharded + shards.map do |shard|
+      { "os" => "windows-latest", "shard" => shard }.merge(cell)
     end
   end
 
@@ -249,8 +263,9 @@ RSpec.describe WorkflowPins, :aggregate_failures do
         .to eq(leptris_selector)
     end
 
-    it "runs the full default suite without selecting a shard" do
-      expect(unit_rake_step(jobs).dig("env", "SIRENA_SPEC_SHARD")).to be_nil
+    it "shards only Windows and runs every other combination in full" do
+      expect(unit_rake_step(jobs).dig("env", "SIRENA_SPEC_SHARD"))
+        .to eq("${{ matrix.os == 'windows-latest' && matrix.shard || '' }}")
     end
 
     it "runs on pull requests, merge queue, push, dispatch and a nightly " \

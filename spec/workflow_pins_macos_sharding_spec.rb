@@ -16,7 +16,7 @@ RSpec.describe WorkflowPins do
         axes.keys.zip(values).to_h
       end
       base.reject do |cell|
-        matrix.fetch("exclude", []).any? { |exclude| exclude <= cell }
+        matrix.fetch("exclude").any? { |exclude| exclude <= cell }
       end + matrix.fetch("include")
     end
     let(:signatures) do
@@ -26,42 +26,53 @@ RSpec.describe WorkflowPins do
     end
     let(:expected_cells) do
       %w[
-        3.2|ubuntu-latest||false 3.3|ubuntu-latest||false
-        3.4|ubuntu-latest||false
-        3.2|macos-latest||false 3.3|macos-latest||false
-        3.4|macos-latest||false
-        3.2|windows-latest||false 3.3|windows-latest||false
-        3.4|windows-latest||false
+        3.2|ubuntu-latest|1/3|false 3.3|ubuntu-latest|1/3|false
+        3.4|ubuntu-latest|1/3|false
+        3.2|macos-latest|1/3|false 3.3|macos-latest|1/3|false
+        3.4|macos-latest|1/3|false
+        3.2|windows-latest|1/3|false 3.2|windows-latest|2/3|false
+        3.2|windows-latest|3/3|false 3.3|windows-latest|1/3|false
+        3.3|windows-latest|2/3|false 3.3|windows-latest|3/3|false
+        3.4|windows-latest|1/3|false 3.4|windows-latest|2/3|false
+        3.4|windows-latest|3/3|false
         4.0|ubuntu-latest||true 4.0|macos-latest||true
-        4.0|windows-latest||true
+        4.0|windows-latest|1/3|true 4.0|windows-latest|2/3|true
+        4.0|windows-latest|3/3|true
       ]
     end
 
-    it "runs every Ruby and OS combination exactly once" do
+    it "keeps non-Windows combinations whole and Windows grouped" do
       expect(signatures.sort).to eq(expected_cells.sort)
     end
   end
 
-  context "with complete suite execution" do
+  context "with shard labels and execution" do
+    let(:sharding_condition) do
+      "matrix.os == 'windows-latest'"
+    end
+    let(:expected_env) do
+      "${{ #{sharding_condition} && matrix.shard || '' }}"
+    end
     let(:expected_label) do
-      "unit (ruby ${{ matrix.ruby }}, ${{ matrix.os }})"
+      "unit (ruby ${{ matrix.ruby }}, ${{ matrix.os }}${{ " \
+        "#{sharding_condition} && format(', shard {0}', matrix.shard) || '' }})"
     end
 
-    it "labels the combination and leaves shard selection unset" do
+    it "selects only Windows cells for shard labels and execution" do
       step = unit.fetch("steps").find { |row| row["run"] == "bundle exec rake" }
       expect([unit.fetch("name"), step.dig("env", "SIRENA_SPEC_SHARD")])
-        .to eq([expected_label, nil])
+        .to eq([expected_label, expected_env])
     end
   end
 
-  context "with the existing source partition utility" do
+  context "with the retained Windows source partition" do
     let(:shards) { (1..3).map { |index| Sirena::SpecShard.new(index, 3) } }
     let(:all_files) do
       benchmarks = Dir.glob("spec/benchmarks/**/*_spec.rb")
       (Dir.glob(Sirena::SpecShard::PATTERN) - benchmarks).uniq.sort
     end
 
-    it "runs every unit file exactly once across its groups" do
+    it "runs every unit file exactly once across the Windows groups" do
       expect(shards.flat_map(&:files).sort).to eq(all_files)
     end
 
