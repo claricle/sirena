@@ -130,6 +130,15 @@ RSpec.describe CoverageTasks do
 
   it "refuses an executable destination" do
     File.chmod(0o755, new_path)
+    sh(Dir.pwd, "git", "update-index", "--chmod=+x", new_path)
+
+    expect(described_class.changed_paths(base)).to include(old_path)
+  end
+
+  it "refuses Git executable mode when filesystem mode tracking is disabled" do
+    sh(Dir.pwd, "git", "config", "core.filemode", "false")
+    File.chmod(0o644, new_path)
+    sh(Dir.pwd, "git", "update-index", "--chmod=+x", new_path)
 
     expect(described_class.changed_paths(base)).to include(old_path)
   end
@@ -155,6 +164,7 @@ RSpec.describe CoverageTasks do
       sh(Dir.pwd, "git", "reset", "--hard", base)
       File.chmod(0o755, old_path)
       sh(Dir.pwd, "git", "add", "-A")
+      sh(Dir.pwd, "git", "update-index", "--chmod=+x", old_path)
       sh(Dir.pwd, "git", "commit", "-q", "-m", "executable")
       executable_base
       FileUtils.mkdir_p(File.dirname(new_path))

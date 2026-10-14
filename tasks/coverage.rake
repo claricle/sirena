@@ -205,7 +205,15 @@ module CoverageTasks
 
   def static_archive_file?(path)
     regular_file?(path) && File.stat(path).mode.nobits?(0o111) &&
-      File.realpath(path) == File.join(File.realpath(Dir.pwd), path)
+      File.realpath(path) == File.join(File.realpath(Dir.pwd), path) &&
+      static_index_file?(path)
+  end
+
+  # Windows cannot represent executable bits with chmod; Git still can.
+  def static_index_file?(path)
+    entries = git_output!("ls-files", "--stage", "-z", "--", path,
+                          label: "git ls-files --stage").split("\0")
+    entries.one? && entries.first.match?(/\A100644 [0-9a-f]+ 0\t/)
   end
 
   def regular_file?(path)
