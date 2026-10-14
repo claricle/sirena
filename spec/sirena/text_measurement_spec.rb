@@ -56,6 +56,13 @@ RSpec.describe Sirena::TextMeasurement do
         .to eq(width("a b", monospace: true))
     end
 
+    it "keeps every non-spacing ASCII control at zero width" do
+      controls = ((0..31).to_a - [9, 10, 13] + [127]).pack("C*")
+
+      expect([width(controls), width(controls, monospace: true)])
+        .to eq([0.0, 0.0])
+    end
+
     # Chrome (SVG <text>, Arial 1000px): "a\u00ADb" and "ab" both 1.112 em.
     it "measures a soft hyphen as zero width, though the table lists it" do
       expect(width("a\u00ADb")).to eq(width("ab"))
@@ -165,6 +172,20 @@ RSpec.describe Sirena::TextMeasurement do
   end
 
   describe "face" do
+    it "measures whitespace and controls without looking up a face" do
+      measured = described_class.measure_in(
+        :unknown, "\t\n\0\x7f", font_size: 100
+      )
+
+      expect(measured).to eq(width: 55.6, height: 100.0)
+    end
+
+    it "rejects an unknown face when a visible glyph needs it" do
+      expect do
+        described_class.measure_in(:unknown, "A", font_size: 100)
+      end.to raise_error(KeyError, /unknown/)
+    end
+
     it "measures in Trebuchet MS when asked" do
       width = described_class.measure_in(:trebuchet, "A", font_size: 16)
 

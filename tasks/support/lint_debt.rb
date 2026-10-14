@@ -83,7 +83,7 @@ module Sirena
     # is subtracted, sorted by cop then file so two runs on two machines
     # agree byte-for-byte.
     def rows
-      @rows ||= apply_exceptions(measured_rows)
+      @rows ||= apply_exceptions
     end
 
     def total
@@ -354,11 +354,11 @@ module Sirena
             "#{path}: top level must be a mapping with an exceptions list"
     end
 
-    def apply_exceptions(current_rows)
+    def apply_exceptions
       exceptions.each do |exception|
-        validate_exception!(exception, current_rows)
+        validate_exception!(exception)
       end
-      current_rows.reject { |row| signed?(row) }
+      measured_rows.reject { |row| signed?(row) }
     end
 
     def signed?(row)
@@ -367,7 +367,7 @@ module Sirena
       end
     end
 
-    def validate_exception!(exception, current_rows)
+    def validate_exception!(exception)
       refuse_incomplete!(exception)
       cop = exception.fetch("cop")
       file = exception.fetch("file")
@@ -376,7 +376,7 @@ module Sirena
       refuse_wrong_class!(cop, file)
       refuse_wrong_location!(cop, file)
       refuse_missing_file!(cop, file)
-      refuse_stale_entry!(cop, file, current_rows)
+      refuse_stale_entry!(cop, file, measured_rows)
     end
 
     # `scoreboard/lint-exceptions.yml` says every entry carries four fields.

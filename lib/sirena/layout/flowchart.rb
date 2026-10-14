@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "flowchart/directed_placement"
 require_relative "flowchart/edge_router"
+require_relative "flowchart/label_backdrop_geometry"
 require_relative "elk_placement"
 require_relative "../diagram/flowchart"
 require_relative "../diagram/flowchart_label_text"
@@ -120,6 +121,10 @@ module Sirena
         attribute :lines, :string, collection: true, default: -> { [] }
         attribute :line_ys, :float, collection: true, default: -> { [] }
         attribute :runs, TextRun, collection: true, default: -> { [] }
+
+        def backdrop_geometry(font_size:)
+          LabelBackdropGeometry.for_label(self, font_size: font_size)
+        end
 
         alias assign_line_ys line_ys=
         private :assign_line_ys

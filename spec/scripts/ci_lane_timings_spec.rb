@@ -45,12 +45,34 @@ RSpec.describe CiLaneTimings, :aggregate_failures do
     let(:jobs) do
       [ci_job(unit_name, 8), ci_job("docs-build / build", 12),
        ci_job("fresh-resolution", 20), ci_job("coverage", 31),
-       ci_job("coverage-extra", 40)]
+       ci_job("coverage-extra", 40), ci_job("full-lane", 32)]
     end
 
-    it "uses the coverage runtime and its own cache classification" do
-      expect(described_class.sample(jobs, "full", "coverage" => :warm))
-        .to eq(job: "coverage", seconds: 1_860, cache: :warm)
+    it "includes aggregator time with coverage on the critical path" do
+      expect(described_class.sample(jobs, "full", { "coverage" => :warm }))
+        .to eq(job: "coverage", seconds: 1_920, cache: :warm)
+    end
+  end
+
+  describe "complete lane spans" do
+    let(:jobs) do
+      [ci_job(unit_name, 5, queued: 4), ci_job("lint", 6),
+       ci_job("fast-lane", 0.5, queued: 10)]
+    end
+    let(:created_at) { "2026-10-10T12:00:00Z" }
+
+    it "counts runner queues and aggregation instead of the longest runtime" do
+      expect(described_class.sample(jobs, "fast", {}, created_at: created_at))
+        .to eq(job: unit_name, seconds: 630, cache: :none)
+    end
+
+    it "rejects a partial span without aggregator evidence" do
+      expect(described_class.sample(jobs.take(2), "fast", {})).to be_nil
+    end
+
+    it "classifies the prerequisite that actually completes last" do
+      expect(described_class.sample(jobs, "fast", { unit_name => :cold }))
+        .to include(cache: :cold)
     end
   end
 
@@ -115,13 +137,21 @@ RSpec.describe CiLaneTimings, :aggregate_failures do
       expect(summary[:none]).to eq(count: 1, median: 1.0, max: 1.0)
     end
 
-    it "labels a sample with no cache line as none" do
-      jobs = [ci_job("fresh-resolution", 7)]
+    context "with a completed full lane" do
+      let(:jobs) do
+        [ci_job("fresh-resolution", 7), ci_job("full-lane", 7.5)]
+      end
 
-      expect(described_class.sample(jobs, "full", {}))
-        .to include(cache: :none, seconds: 420)
-      expect(described_class.sample(jobs, "full", "fresh-resolution" => :warm))
-        .to include(cache: :warm)
+      it "labels a sample with no cache line as none" do
+        expect(described_class.sample(jobs, "full", {}))
+          .to include(cache: :none, seconds: 450)
+      end
+
+      it "retains an observed warm cache classification" do
+        caches = { "fresh-resolution" => :warm }
+        expect(described_class.sample(jobs, "full", caches))
+          .to include(cache: :warm)
+      end
     end
   end
 

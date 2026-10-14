@@ -5,14 +5,15 @@ require "time"
 
 # Times the two CI lanes from `gh run view --json jobs` output.
 #
-# A lane's time in one run is its slowest job, started_at to completed_at, so
-# runner queue time is excluded. Runs are then split by the cache state the
-# slowest job's ruby/setup-ruby step logged.
+# A lane spans run creation through its required aggregator's completion,
+# including runner queues and aggregation. Cache classification belongs to
+# the final prerequisite's observed ruby/setup-ruby log.
 module CiLaneTimings
   LANES = {
-    "fast" => /\A(?:unit \(|pins\z|oracle-toolchain\z|lint\z)/,
+    "fast" => %r{\A(?:unit\ \(|pins\z|oracle-toolchain\z|lint\z|
+                     scoreboard-baseline\z)}x,
     "full" => %r{\A(?:docs-build\ /|links\ /|conformance\z|fresh-resolution\z|
-                     plantuml-toolchain\z|coverage\z)}x,
+                     plantuml-toolchain\z|coverage\z|scoreboard-baseline\z)}x,
   }.freeze
 
   BUCKETS = %i[warm restore_key cold none].freeze
@@ -53,10 +54,28 @@ module CiLaneTimings
 
   # +caches+ maps job name => classification for the jobs whose logs were
   # read. Returns nil when the lane has no job that ran.
-  def sample(jobs, lane, caches)
-    job = slowest(jobs, lane) or return nil
-    { job: job["name"], seconds: duration(job),
+  def critical(jobs, lane)
+    lane_jobs(jobs, lane).max_by { |job| Time.iso8601(job["completedAt"]) }
+  end
+
+  def sample(jobs, lane, caches, created_at: nil)
+    job = critical(jobs, lane) or return nil
+    gate = successful_gate(jobs, lane) or return nil
+    { job: job["name"], seconds: span(jobs, lane, gate, created_at),
       cache: caches[job["name"]] || :none }
+  end
+
+  def successful_gate(jobs, lane)
+    jobs.find do |row|
+      row["name"] == "#{lane}-lane" && row["conclusion"] == "success"
+    end
+  end
+
+  def span(jobs, lane, gate, created_at)
+    started = created_at || lane_jobs(jobs, lane).map do |row|
+      row.fetch("startedAt")
+    end.min
+    Time.iso8601(gate.fetch("completedAt")) - Time.iso8601(started)
   end
 
   def median(values)
@@ -132,16 +151,23 @@ if __FILE__ == $PROGRAM_NAME
     view = gh.call("run", "view", run["databaseId"].to_s, "-R", repo,
                    "--json", "jobs")
     jobs = JSON.parse(view)["jobs"]
-    # sharded topology only
+    # Sharded topology only.
     next unless jobs.any? { |j| j["name"].include?("windows-latest, shard") }
 
     caches = {}
     CiLaneTimings::LANES.each_key do |lane|
-      job = CiLaneTimings.slowest(jobs, lane) or next
-      log = gh.call("api",
-                    "repos/#{repo}/actions/jobs/#{job['databaseId']}/logs").to_s
-      caches[job["name"]] = CiLaneTimings.classify_log(log)
-      s = CiLaneTimings.sample(jobs, lane, caches)
+      CiLaneTimings.lane_jobs(jobs, lane).each do |job|
+        log = gh.call("api",
+                      "repos/#{repo}/actions/jobs/#{job['databaseId']}/logs")
+        abort "missing cache log for #{job['name']}" unless log
+
+        caches[job["name"]] = CiLaneTimings.classify_log(log)
+        puts [run["databaseId"], "cache", job["name"],
+              caches[job["name"]] || :none].join("\t")
+      end
+      s = CiLaneTimings.sample(jobs, lane, caches, created_at: run["createdAt"])
+      next unless s
+
       samples[lane] << s
       puts [run["databaseId"], lane, s[:job], s[:seconds].round,
             s[:cache]].join("\t")

@@ -39,6 +39,7 @@ module Sirena
     # SVG draws one <text> as ONE line: a tab, newline or carriage return is
     # collapsed to a space. A CRLF is counted twice (an over-estimate).
     SVG_WHITESPACE = /[\t\n\r]/
+    ASCII_WHITESPACE = [9, 10, 13].freeze
 
     # Codepoints whose width comes from ligature substitution, so no
     # per-character rule describes them. Chrome measured 1.234, 1.025, 1.221
@@ -99,10 +100,27 @@ module Sirena
 
     # @return [Float] the width of the text drawn as one line
     def self.calculate_width(text, font_size, monospace, face)
-      total = normalize(text).scan(CLUSTER).sum do |cluster|
+      normalized = normalize(text)
+      if normalized.ascii_only?
+        return ascii_width(normalized, monospace, face) * font_size / 1000.0
+      end
+
+      total = normalized.scan(CLUSTER).sum do |cluster|
         cluster.length == 2 ? EMOJI_ADVANCE : advance(cluster, monospace, face)
       end
       total * font_size / 1000.0
+    end
+
+    def self.ascii_width(text, monospace, face)
+      text.each_byte.sum { |code| ascii_advance(code, monospace, face) }
+    end
+
+    def self.ascii_advance(code, monospace, face)
+      return whitespace_advance(monospace) if ASCII_WHITESPACE.include?(code)
+      return 0 if code < 32 || code == 127
+
+      table = FACE_TABLES.fetch(face)[code] || ArialAdvances::TABLE[code]
+      table_advance(table, monospace)
     end
 
     # @return [Integer] the advance of one character in per-mille em
@@ -155,6 +173,6 @@ module Sirena
 
     private_class_method :calculate_width, :calculate_height, :advance,
                          :fallback_advance, :table_advance, :whitespace_advance,
-                         :normalize
+                         :normalize, :ascii_width, :ascii_advance
   end
 end

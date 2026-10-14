@@ -4,8 +4,8 @@
 
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
-| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.2/3.3/3.4 stable and 4.0 experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
-| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `conformance` (`rake conformance:check`), `fresh-resolution` (no lockfile, `bundle exec rake`), `plantuml-toolchain` (pinned PlantUML jar + Java 21 + Graphviz, `spec/plantuml/toolchain_probe_spec.rb`), `coverage` (`bundle exec rake coverage:guard`) | < 30 min |
+| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.2/3.3/3.4 stable and 4.0 experimental x ubuntu/macos/windows), `pins`, `oracle-toolchain`, `scoreboard-baseline`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
+| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `conformance` (`rake conformance:check`), `fresh-resolution` (no lockfile, `bundle exec rake`), `plantuml-toolchain` (pinned PlantUML jar + Java 21 + Graphviz, `spec/plantuml/toolchain_probe_spec.rb`), `coverage` (`bundle exec rake coverage:guard`), `scoreboard-baseline` | < 30 min |
 
 `coverage` measures the corpus-excluded suite once and enforces the configured
 97% line and 97% branch floors. Its changed-line check requires 100% coverage
@@ -13,12 +13,22 @@ of changed executable `lib/**/*.rb` lines against the event's base, using the
 full checkout history.
 
 Reserved, not yet wired: snippet spec (16), parity (14). Corpus (02b) runs
-inside `unit` (`bundle exec rake` includes `corpus:check`). The scoreboard guard (02b)
-goes in BOTH lanes. `lint` (19b) is folded into the fast lane as an ordinary
+inside `unit` (`bundle exec rake` includes `corpus:check`).
+`scoreboard-baseline` (02b) is required by BOTH lanes. It reads committed
+corpus, conformance and layout ledgers against the event baseline and rejects
+regressions, deleted cases and malformed rows. Its full-history checkout
+explicitly fetches PR/merge-group base branches; schedule and dispatch use
+consistency semantics. Existing fresh-measurement gates remain required.
+`lint` (19b) is folded into the fast lane as an ordinary
 job hanging off `fast-lane`; there is no standalone `lint.yml` workflow, and
 no separate `lint / rubocop` required check.
 
-Budgets are targets. Measured 2026-10-09 to 2026-10-10 from 64 successful
+Budgets are targets. Current instrumentation measures run creation through
+the required lane aggregator's completion, including queues and aggregation.
+It records each prerequisite's observed cache state separately.
+
+The table below is historical evidence for an earlier topology, measured
+2026-10-09 to 2026-10-10 from 64 successful
 `ci` runs (19b). A lane's time here is its slowest job, `started_at` to
 `completed_at`, so runner queue time is excluded. "Warm" means the
 `ruby/setup-ruby` step logged `Cache hit for:` (exact key). Cold is not
@@ -41,6 +51,12 @@ passes `tasks/support/spec_shard.rb`'s file list to RSpec; the last shard also
 runs the rake tasks that follow RSpec (benchmark, corpus, claims, layout
 parity). Every spec file lands in exactly one shard
 (`spec/sirena/spec_shard_spec.rb`). Ubuntu and macOS stay one job per cell.
+
+For repeatable Ruby dependency cache evidence, dispatch CI with a unique
+`cache_version`, then rerun the same source and key. Nondefault versions
+include the job name, so one job cannot warm another job's cold-proof cache.
+The default remains `0`; no shared cache is deleted. Report mixed job cache
+states explicitly.
 
 ## Branch protection (owner applies; a repository setting, not YAML)
 

@@ -279,55 +279,17 @@ module Sirena
         theme_color(:edge_stroke)
       end
 
-      # The text's alphabetic baseline sits below its measured middle.
-      # An eighth-em margin also covers descenders and antialiased ink.
       def edge_label_backdrop(label)
-        measured = measured_edge_label(label)
-        Svg::Rect.new(**edge_label_bounds(measured),
-                      fill: edge_label_background_color, stroke: "none")
-      end
-
-      # Hand-positioned and directly constructed scenes may omit metrics.
-      # SVG's unset font size is medium (16px); keep the original label intact.
-      def measured_edge_label(label)
         font_size = label.font_size || Layout::Flowchart::DEFAULT_FONT_SIZE
-        size = measured_edge_label_size(label, font_size)
-        label.dup.tap do |measured|
-          measured.font_size = font_size
-          measured.width = size[:width]
-          measured.height = size[:height]
-        end
-      end
-
-      def measured_edge_label_size(label, font_size)
-        TextMeasurement.measure(
-          label.text,
-          font_size: font_size,
-          width: label.width,
-          height: label.height,
-        )
+        bounds = label.backdrop_geometry(font_size: font_size)
+        Svg::Rect.new(x: bounds.x, y: bounds.y,
+                      width: bounds.width, height: bounds.height,
+                      fill: edge_label_background_color, stroke: "none")
       end
 
       def edge_label_background_color
         theme_color(:background) ||
           Theme::Registry.get(:default).colors.background
-      end
-
-      def edge_label_bounds(label)
-        padding = label.font_size / 8.0
-        { x: label.x - (label.width / 2.0) - padding,
-          y: edge_label_top(label) - padding,
-          **padded_label_size(label, padding) }
-      end
-
-      def padded_label_size(label, padding)
-        { width: label.width + (padding * 2),
-          height: label.height + (padding * 2) }
-      end
-
-      def edge_label_top(label)
-        label.y - (label.height / 2.0) -
-          (Layout::Flowchart::MIDDLE_BASELINE_EMS * label.font_size)
       end
 
       def edge_label(label)

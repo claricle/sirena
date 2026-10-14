@@ -11,6 +11,11 @@ on:
     branches: [main]
     tags: [v*]
   workflow_dispatch:
+    inputs:
+      cache_version:
+        description: Ruby cache version for repeatable cold/warm evidence
+        type: string
+        default: '0'
   schedule:
     # Nightly full run on main: belt and braces, not the primary gate.
     - cron: '17 3 * * *'
@@ -67,6 +72,9 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          cache-version: >-
+            ${{ inputs.cache_version && inputs.cache_version != '0' &&
+            format('{0}-{1}', inputs.cache_version, github.job) || '0' }}
       - run: bundle exec rake
         env:
           # leptris has no Ruby 3.2 Windows native bundle. Select its
@@ -126,8 +134,38 @@ jobs:
           # cops are already configured against. Lint runs once, here.
           ruby-version: '3.2'
           bundler-cache: true
+          cache-version: >-
+            ${{ inputs.cache_version && inputs.cache_version != '0' &&
+            format('{0}-{1}', inputs.cache_version, github.job) || '0' }}
       - run: bundle exec rubocop
       - run: bundle exec rake lint:debt:check
+
+  scoreboard-baseline:
+    name: scoreboard-baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          cache-version: >-
+            ${{ inputs.cache_version && inputs.cache_version != '0' &&
+            format('{0}-{1}', inputs.cache_version, github.job) || '0' }}
+      - name: Fetch the event base branch
+        run: |
+          if [ -n "$BASE_REF" ]; then
+            branch="${BASE_REF#refs/heads/}"
+            git fetch --no-tags origin "$BASE_REF:refs/remotes/origin/$branch"
+          fi
+        env:
+          BASE_REF: >-
+            ${{ github.event.pull_request.base.ref ||
+            github.event.merge_group.base_ref || '' }}
+      - run: bundle exec ruby scripts/scoreboard_baseline.rb
 
   # Reserved fast-lane slots, one job each, added to `needs` below:
   #   snippet spec (16), scoreboard guard (02b)
@@ -135,7 +173,7 @@ jobs:
   fast-lane:
     name: fast-lane
     if: ${{ always() }}
-    needs: [unit, pins, oracle-toolchain, lint]
+    needs: [unit, pins, oracle-toolchain, lint, scoreboard-baseline]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -171,6 +209,9 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
+          cache-version: >-
+            ${{ inputs.cache_version && inputs.cache_version != '0' &&
+            format('{0}-{1}', inputs.cache_version, github.job) || '0' }}
       - run: bundle exec rake conformance:check
       - run: bundle exec rake plantuml:check
 
@@ -187,6 +228,9 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
+          cache-version: >-
+            ${{ inputs.cache_version && inputs.cache_version != '0' &&
+            format('{0}-{1}', inputs.cache_version, github.job) || '0' }}
       - run: bundle exec rake coverage:guard
         env:
           COVERAGE_BASE: >-
@@ -227,6 +271,9 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
+          cache-version: >-
+            ${{ inputs.cache_version && inputs.cache_version != '0' &&
+            format('{0}-{1}', inputs.cache_version, github.job) || '0' }}
       - run: sudo apt-get install --yes --no-install-recommends graphviz
       - run: scripts/install_plantuml.sh
       - run: bundle exec rspec spec/plantuml/toolchain_probe_spec.rb --tag toolchain
@@ -239,7 +286,7 @@ jobs:
   full-lane:
     name: full-lane
     if: ${{ always() }}
-    needs: [docs-build, links, conformance, fresh-resolution, plantuml-toolchain, coverage]
+    needs: [docs-build, links, conformance, fresh-resolution, plantuml-toolchain, coverage, scoreboard-baseline]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
