@@ -21,6 +21,8 @@ number makes is in [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
 ### Added
 
 - Added a notation registry, API notation selection, and CLI `--notation` /
