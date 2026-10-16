@@ -91,9 +91,7 @@ module WorkflowHelpers
     publish = named_step(release_job, "publish gem")
     [
       build,
-      publish.fetch("run").include?(
-        'gem push "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"',
-      ),
+      publish.fetch("run").strip,
       publish.dig("env", "RUBYGEMS_API_KEY"),
     ]
   end
@@ -102,7 +100,15 @@ module WorkflowHelpers
     command =
       "gem build sirena.gemspec --output " \
       '"$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"'
-    [command, true, "${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}"]
+    [command, 'gem push "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"', nil]
+  end
+
+  def authentication_step(jobs)
+    named_step(jobs.fetch("release"), "authenticate with RubyGems")
+  end
+
+  def release_step_names(jobs)
+    jobs.fetch("release").fetch("steps").map { |step| step["name"] }
   end
 
   def oracle_browser_scope(jobs)
@@ -384,6 +390,32 @@ RSpec.describe WorkflowPins, :aggregate_failures do
 
     it "permits only a version change before an atomic push" do
       expect(version_push_values(jobs)).to eq([true, true])
+    end
+
+    it "grants OIDC permission only to the publishing job" do
+      expect(jobs.fetch("release").dig("permissions", "id-token"))
+        .to eq("write")
+      expect(release.fetch("permissions")).not_to have_key("id-token")
+    end
+
+    it "uses the official RubyGems credential action" do
+      expect(authentication_step(jobs).fetch("uses"))
+        .to start_with("rubygems/configure-rubygems-credentials@")
+    end
+
+    it "allows an existing API key without requiring one" do
+      step = authentication_step(jobs)
+      expect(step.fetch("with")).to eq(
+        "api-token" => "${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}",
+      )
+      expect(step).not_to have_key("if")
+    end
+
+    it "authenticates before preparing or pushing a version" do
+      expected = ["authenticate with RubyGems",
+                  "prepare version-only release commit",
+                  "push version commit and tag"]
+      expect(release_step_names(jobs) & expected).to eq(expected)
     end
 
     it "builds and publishes the gem without a reusable release workflow" do

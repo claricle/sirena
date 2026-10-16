@@ -44,6 +44,10 @@ jobs:
   release:
     name: publish gem
     needs: [preflight]
+    permissions:
+      checks: read
+      contents: write
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -66,6 +70,11 @@ jobs:
             > "$RUNNER_TEMP/check-runs.json"
           ruby scripts/check_release_source.rb checked-main \
             "$GITHUB_SHA" "$main_sha" "$RUNNER_TEMP/check-runs.json"
+
+      - name: authenticate with RubyGems
+        uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a  # v2.1.0
+        with:
+          api-token: ${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}
 
       - name: prepare version-only release commit
         run: |
@@ -96,13 +105,7 @@ jobs:
           git push --atomic origin HEAD:main "refs/tags/$tag"
 
       - name: publish gem
-        env:
-          RUBYGEMS_API_KEY: ${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}
-        run: |
-          mkdir -p "$HOME/.gem"
-          printf '%s\n' '---' ":rubygems_api_key: $RUBYGEMS_API_KEY" > "$HOME/.gem/credentials"
-          chmod 0600 "$HOME/.gem/credentials"
-          gem push "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"
+        run: gem push "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"
 
       - name: remove publishing credentials
         if: always()
