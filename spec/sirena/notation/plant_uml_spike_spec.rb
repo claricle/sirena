@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "open3"
+require_relative "../../support/leptris_fallback_notice_spec_support"
 require "rexml/document"
 require "yaml"
 require "sirena/notation/plantuml"
@@ -146,7 +147,7 @@ module PlantUmlSpikeHelpers
   # exited cleanly and its output.
   def ruby_output(code)
     out, status = Open3.capture2e(RbConfig.ruby, "-Ilib", "-e", code)
-    [status.success?, out]
+    [status.success?, LeptrisFallbackNoticeSpecSupport.normalize(out)]
   end
 
   def rendering_failures
