@@ -6,6 +6,7 @@ require "rbconfig"
 require "rexml/document"
 require "shellwords"
 require "tmpdir"
+require_relative "../support/leptris_fallback_notice_spec_support"
 
 module PlantUmlReadmeExample
   ROOT = File.expand_path("../..", __dir__)
@@ -38,6 +39,7 @@ module PlantUmlReadmeExample
       stdout, stderr, status = Open3.capture3(
         RbConfig.ruby, "-I", LIB, EXECUTABLE, *arguments(name), chdir: dir
       )
+      stderr = LeptrisFallbackNoticeSpecSupport.normalize(stderr)
       svg = File.binread(output(dir, name)) if status.success?
       Result.new(status:, stdout:, stderr:, svg:)
     end

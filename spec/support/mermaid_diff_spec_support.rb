@@ -5,6 +5,7 @@ require "rbconfig"
 require "stringio"
 require "timeout"
 require "tmpdir"
+require_relative "leptris_fallback_notice_spec_support"
 
 module MermaidDiffSpecSupport
   module Helpers
@@ -41,7 +42,8 @@ module MermaidDiffSpecSupport
         bin = fake_mmdc(dir, mmdc)
         command = harness_command(options, probe, relative)
         stdout, stderr, status = capture_harness(bin, command, relative)
-        [stdout, stderr.gsub(YEPTRIS_NOTICE, ""), status]
+        stderr = stderr.gsub(YEPTRIS_NOTICE, "")
+        [stdout, LeptrisFallbackNoticeSpecSupport.normalize(stderr), status]
       end
     end
 

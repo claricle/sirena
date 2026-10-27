@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "open3"
+require_relative "../support/leptris_fallback_notice_spec_support"
 
 # Pure (shells out, no example state needed), so it is a module function;
 # included below so call sites stay bare method calls.
@@ -11,7 +12,10 @@ module ComponentRequireHelper
   # `require "sirena/parser"` a silent no-op once spec_helper has already
   # loaded the whole gem.
   def require_standalone(path)
-    Open3.capture2e("ruby", "-Ilib", "-e", "require #{path.inspect}")
+    out, status = Open3.capture2e(
+      "ruby", "-Ilib", "-e", "require #{path.inspect}"
+    )
+    [LeptrisFallbackNoticeSpecSupport.normalize(out), status]
   end
   module_function :require_standalone
 end
@@ -59,12 +63,13 @@ RSpec.describe Sirena do
     # the guarantee predates this diff and needs no new example here).
     context "with engine required standalone" do
       let(:result) do
-        Open3.capture2e(
+        out, status = Open3.capture2e(
           "ruby", "-Ilib", "-e",
           'require "sirena/engine"; ' \
           "puts Sirena::Engine::DiagramTypeError < Sirena::Error; " \
           "puts Sirena::Engine::PipelineError < Sirena::Error"
         )
+        [LeptrisFallbackNoticeSpecSupport.normalize(out), status]
       end
 
       it "loads the engine successfully" do
