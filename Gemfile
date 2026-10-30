@@ -29,3 +29,6 @@ gem "rubocop-rake", "0.7.1", require: false
 gem "rubocop-rspec", "3.10.2", require: false
 gem "simplecov", "~> 1.2.0", require: false
 gem "svg_conform", "~> 0.2.0"
+
+# elkrb#115 (elk.alignment) until it is released; then the gemspec line alone.
+gem "elkrb", github: "claricle/elkrb", branch: "align-node-placement"

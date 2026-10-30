@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
                        "packet, treemap, info, and error displays."
   spec.homepage      = "https://github.com/claricle/sirena"
   spec.license       = "BSD-2-Clause"
-  spec.required_ruby_version = ">= 3.2.0"
+  spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
@@ -40,10 +40,11 @@ Gem::Specification.new do |spec|
 
   # Not yet called. TODO.foundation/14 tracks wiring it into
   # Engine#layout_graph.
-  spec.add_dependency "elkrb", "~> 1.0"
+  spec.add_dependency "elkrb", "~> 2.0"
   spec.add_dependency "kramdown", "~> 2.5"
   # From 0.8.32, a `collection: true` attribute reads back as an Array even
   # after a scalar assignment; read it through Array(...), never raw.
+  spec.add_dependency "logger"
   spec.add_dependency "lutaml-model", "~> 0.8.0"
   spec.add_dependency "plurimath-parslet", "~> 3.0"
   spec.add_dependency "thor"

@@ -2,6 +2,7 @@
 
 require "elkrb"
 require_relative "base"
+require_relative "elk_notices"
 
 module Sirena
   module Layout
@@ -11,14 +12,33 @@ module Sirena
     # Hash in place, a child positioned inside its parent. An elkrb
     # failure raises LayoutError; nothing falls back to Grid.
     #
-    # elkrb 1.0.2's layered algorithm reads no `elk.direction` and takes
-    # its spacing from the options argument, not the graph's
-    # layoutOptions, so both are handled here.
+    # elkrb 2 lays out all four directions itself and reads direction and
+    # spacing from the graph's layoutOptions.
     class ElkPlacement
+      ElkNotices.install
+
       DOWN = "DOWN"
       LEFT = "LEFT"
       RIGHT = "RIGHT"
       UP = "UP"
+      DIRECTIONS = [DOWN, LEFT, RIGHT, UP].freeze
+      # The side of a layer where its first layer starts: nodes of unequal
+      # size line up on it instead of being centred across the layer.
+      # With the sweeps off elkrb keeps the model order of a layer apart
+      # from its greedy switch; a caller that wants dagre-like ordering
+      # sets elk.layered.crossingMinimization.strategy itself.
+      NO_SWEEP = "NONE"
+      # Boxes the caller lists first stay first in their layer.
+      MODEL_ORDER = {
+        Base::ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
+      }.freeze
+      SPACINGS = [Base::ElkOptions::NODE_NODE_SPACING,
+                  Base::ElkOptions::LAYER_SPACING].freeze
+      # elkrb statuses of options that parse but never change its result.
+      NOT_ACTED_ON = %i[accepted unsupported].freeze
+      LAYER_START = {
+        DOWN => "TOP", UP => "BOTTOM", RIGHT => "LEFT", LEFT => "RIGHT"
+      }.freeze
 
       # @param graph [Hash] the graph to position in place
       # @return [Hash] the same graph
@@ -38,58 +58,57 @@ module Sirena
       private
 
       def place(graph, options)
-        direction = options[Base::ElkOptions::DIRECTION] || DOWN
-        return place_down(graph, options) if direction == DOWN
-        return place_right(graph, options) if direction == RIGHT
-        return place_up(graph, options) if direction == UP
-        return place_left(graph, options) if direction == LEFT
+        direction = direction_of(options)
+        unless DIRECTIONS.include?(direction)
+          raise LayoutError,
+                "elkrb layered cannot lay out direction #{direction}"
+        end
 
-        raise LayoutError,
-              "elkrb layered cannot lay out direction #{direction}"
-      end
-
-      def place_down(graph, options)
-        placed = Elkrb.layout(layout_input(graph), spacing(options))
+        placed = Elkrb.layout(layout_input(graph, options))
         copy_layout(graph, placed)
       end
 
-      def place_right(graph, options)
-        placed = Elkrb.layout(layout_input(graph, transpose: true),
-                              spacing(options))
-        copy_right_layout(graph, placed)
-      end
-
-      def place_up(graph, options)
-        placed = Elkrb.layout(layout_input(graph), spacing(options))
-        copy_up_layout(graph, placed)
-      end
-
-      def place_left(graph, options)
-        placed = Elkrb.layout(layout_input(graph, transpose: true),
-                              spacing(options))
-        copy_left_layout(graph, placed)
-      end
-
-      def spacing(options)
+      # elkrb 2 reads direction and spacing from the graph's own
+      # layoutOptions, and defaults to RIGHT, so both are set explicitly.
+      def layered_options(options)
         {
-          spacing_node_node: options[Base::ElkOptions::NODE_NODE_SPACING],
-          layer_spacing: options[Base::ElkOptions::LAYER_SPACING],
-        }.compact
+          Base::ElkOptions::DIRECTION => DOWN,
+          "elk.alignment" => LAYER_START.fetch(direction_of(options)),
+          "elk.separateConnectedComponents" => false,
+          Base::ElkOptions::CROSSING_MINIMIZATION =>
+            options.fetch(Base::ElkOptions::CROSSING_MINIMIZATION, NO_SWEEP),
+        }.merge(options.slice(Base::ElkOptions::DIRECTION, *SPACINGS)).compact
       end
 
-      def layout_input(graph, transpose: false)
+      # Sirena's graphs carry options for other layout engines too. elkrb
+      # parses the ones it does not act on and warns about each on every
+      # layout, so only the options that change its result are handed over.
+      def acted_on(options)
+        options.reject do |id, _value|
+          NOT_ACTED_ON.include?(Elkrb.known_layout_options.dig(id, :status))
+        end
+      end
+
+      def direction_of(options)
+        options.fetch(Base::ElkOptions::DIRECTION, DOWN)
+      end
+
+      def layout_input(graph, options)
         input = graph.dup
-        transpose_dimensions(input, graph) if transpose
-        copy_input_children(input, graph, transpose)
+        own = graph[:layoutOptions] || {}
+        input[:layoutOptions] = acted_on(
+          MODEL_ORDER.merge(own).merge(layered_options(options)),
+        )
+        copy_input_children(input, graph, options)
         copy_input_edges(input, graph)
         input
       end
 
-      def copy_input_children(input, graph, transpose)
+      def copy_input_children(input, graph, options)
         return unless graph[:children]
 
         input[:children] = graph[:children].map do |child|
-          layout_input(child, transpose: transpose)
+          layout_input(child, options)
         end
       end
 
@@ -100,13 +119,6 @@ module Sirena
         input[:edges] = graph[:edges].reject do |edge|
           closes_cycle?(edge, links)
         end
-      end
-
-      def transpose_dimensions(input, graph)
-        return unless graph.key?(:width) && graph.key?(:height)
-
-        input[:width] = graph[:height]
-        input[:height] = graph[:width]
       end
 
       def closes_cycle?(edge, links)
@@ -144,45 +156,6 @@ module Sirena
         copy_sections(graph[:edges] || [], placed.edges || [])
       end
 
-      def copy_right_layout(graph, placed)
-        copy_right_positions(graph[:children] || [], placed.children || [])
-        copy_sections(graph[:edges] || [], placed.edges || [], transpose: true)
-      end
-
-      def copy_up_layout(graph, placed)
-        extent = reverse_extent(placed)
-        copy_up_positions(graph[:children] || [], placed.children || [],
-                          extent)
-        copy_sections(graph[:edges] || [], placed.edges || [],
-                      reverse_extent: extent)
-      end
-
-      def copy_left_layout(graph, placed)
-        extent = reverse_extent(placed)
-        copy_left_positions(graph[:children] || [], placed.children || [],
-                            extent)
-        options = { transpose: true, reverse_extent: extent }
-        copy_sections(graph[:edges] || [], placed.edges || [], **options)
-      end
-
-      def reverse_extent(placed)
-        children = placed.children || []
-        return placed.height if children.empty?
-
-        bottom = children.map { |child| child.y + child.height }.max
-        return placed.height if extent_covers?(placed.height, bottom)
-
-        reverse_origin(children, bottom)
-      end
-
-      def extent_covers?(extent, bottom)
-        extent && extent >= bottom
-      end
-
-      def reverse_origin(children, bottom)
-        children.map(&:y).min + bottom
-      end
-
       # elkrb keeps child order, so the two trees are walked in step.
       def copy_positions(children, placed)
         children.zip(placed).each do |child, result|
@@ -192,77 +165,32 @@ module Sirena
         end
       end
 
-      def copy_right_positions(children, placed)
-        children.zip(placed).each do |child, result|
-          child.merge!(x: result.y, y: result.x,
-                       width: result.height, height: result.width)
-          copy_right_layout(child, result)
-        end
-      end
-
-      def copy_up_positions(children, placed, extent)
-        children.zip(placed).each do |child, result|
-          child.merge!(x: result.x, y: extent - result.y - result.height,
-                       width: result.width, height: result.height)
-          copy_up_layout(child, result)
-        end
-      end
-
-      def copy_left_positions(children, placed, extent)
-        children.zip(placed).each do |child, result|
-          child.merge!(x: extent - result.y - result.height, y: result.x,
-                       width: result.height, height: result.width)
-          copy_left_layout(child, result)
-        end
-      end
-
-      def copy_sections(edges, placed, transpose: false, reverse_extent: nil)
+      def copy_sections(edges, placed)
         placed_by_id = placed.group_by(&:id)
         edges.each do |edge|
-          copy_edge_sections(edge, placed_by_id[edge[:id]]&.shift,
-                             transpose: transpose,
-                             reverse_extent: reverse_extent)
+          copy_edge_sections(edge, placed_by_id[edge[:id]]&.shift)
         end
       end
 
-      def copy_edge_sections(edge, result, transpose: false,
-                             reverse_extent: nil)
+      def copy_edge_sections(edge, result)
         return unless result
 
         sections = result.sections
         return if sections.nil? || sections.empty?
 
-        options = { transpose: transpose, reverse_extent: reverse_extent }
-        edge[:sections] = sections.map do |section|
-          section_hash(section, **options)
-        end
+        edge[:sections] = sections.map { |section| section_hash(section) }
       end
 
-      def section_hash(section, transpose: false, reverse_extent: nil)
-        options = { transpose: transpose, reverse_extent: reverse_extent }
+      def section_hash(section)
         {
-          startPoint: point_hash(section.start_point, **options),
-          endPoint: point_hash(section.end_point, **options),
-          bendPoints: (section.bend_points || []).map do |point|
-            point_hash(point, **options)
-          end,
+          startPoint: point_hash(section.start_point),
+          endPoint: point_hash(section.end_point),
+          bendPoints: (section.bend_points || []).map { |p| point_hash(p) },
         }
       end
 
-      def point_hash(point, transpose: false, reverse_extent: nil)
-        result = if transpose
-                   { x: point.y, y: point.x }
-                 else
-                   { x: point.x, y: point.y }
-                 end
-        reverse_point(result, transpose, reverse_extent)
-      end
-
-      def reverse_point(point, transpose, extent)
-        return point unless extent
-
-        axis = transpose ? :x : :y
-        point.merge(axis => extent - point[axis])
+      def point_hash(point)
+        { x: point.x, y: point.y }
       end
     end
   end
