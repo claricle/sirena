@@ -100,7 +100,7 @@
   <text fill="#000000" x="177.344" y="1028.984" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Database</text>
 </g>
 <g id="node-Display">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="97.39999999999999" y="1100.384" width="159.888" height="54.0"/>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="97.4" y="1100.384" width="159.888" height="54.0"/>
   <text fill="#000000" x="177.344" y="1132.984" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Display Result</text>
 </g>
 <g id="node-End">
