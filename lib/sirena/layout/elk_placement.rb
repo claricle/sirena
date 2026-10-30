@@ -2,6 +2,7 @@
 
 require "elkrb"
 require_relative "base"
+require_relative "elk_notices"
 
 module Sirena
   module Layout
@@ -14,6 +15,8 @@ module Sirena
     # elkrb 2 lays out all four directions itself and reads direction and
     # spacing from the graph's layoutOptions.
     class ElkPlacement
+      Elkrb.logger = ElkNotices.new($stderr, level: Logger::WARN)
+
       DOWN = "DOWN"
       LEFT = "LEFT"
       RIGHT = "RIGHT"
@@ -31,6 +34,8 @@ module Sirena
       }.freeze
       SPACINGS = [Base::ElkOptions::NODE_NODE_SPACING,
                   Base::ElkOptions::LAYER_SPACING].freeze
+      # elkrb statuses of options that parse but never change its result.
+      NOT_ACTED_ON = %i[accepted unsupported].freeze
       LAYER_START = {
         DOWN => "TOP", UP => "BOTTOM", RIGHT => "LEFT", LEFT => "RIGHT"
       }.freeze
@@ -75,6 +80,15 @@ module Sirena
         }.merge(options.slice(Base::ElkOptions::DIRECTION, *SPACINGS)).compact
       end
 
+      # Sirena's graphs carry options for other layout engines too. elkrb
+      # parses the ones it does not act on and warns about each on every
+      # layout, so only the options that change its result are handed over.
+      def acted_on(options)
+        options.reject do |id, _value|
+          NOT_ACTED_ON.include?(Elkrb.known_layout_options.dig(id, :status))
+        end
+      end
+
       def direction_of(options)
         options.fetch(Base::ElkOptions::DIRECTION, DOWN)
       end
@@ -82,8 +96,9 @@ module Sirena
       def layout_input(graph, options)
         input = graph.dup
         own = graph[:layoutOptions] || {}
-        input[:layoutOptions] = MODEL_ORDER.merge(own)
-          .merge(layered_options(options))
+        input[:layoutOptions] = acted_on(
+          MODEL_ORDER.merge(own).merge(layered_options(options)),
+        )
         copy_input_children(input, graph, options)
         copy_input_edges(input, graph)
         input
