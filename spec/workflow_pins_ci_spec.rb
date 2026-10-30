@@ -125,7 +125,7 @@ module WorkflowHelpers
     shards = %w[1/3 2/3 3/3]
     {
       "os" => %w[ubuntu-latest macos-latest windows-latest],
-      "ruby" => %w[3.2 3.3 3.4],
+      "ruby" => %w[3.3 3.4],
       "experimental" => [false],
       "shard" => shards,
       "exclude" => expected_unsharded_cells(shards.drop(1)),
@@ -154,11 +154,6 @@ module WorkflowHelpers
     jobs.fetch("unit").fetch("steps").find do |step|
       step["run"] == "bundle exec rake"
     end
-  end
-
-  def leptris_selector
-    "${{ matrix.os == 'windows-latest' && " \
-      "matrix.ruby == '3.2' && '1' || '' }}"
   end
 end
 
@@ -264,9 +259,10 @@ RSpec.describe WorkflowPins, :aggregate_failures do
         .to eq(expected_unit_matrix)
     end
 
-    it "selects leptris FFI only for Ruby 3.2 on Windows" do
-      expect(unit_rake_step(jobs).dig("env", "LEPTRIS_NO_NATIVE"))
-        .to eq(leptris_selector)
+    it "never forces leptris FFI now that every cell has a native bundle" do
+      env = unit_rake_step(jobs).fetch("env")
+
+      expect(env).not_to have_key("LEPTRIS_NO_NATIVE")
     end
 
     it "shards only Windows and runs every other combination in full" do
