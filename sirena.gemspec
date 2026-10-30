@@ -44,6 +44,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "kramdown", "~> 2.5"
   # From 0.8.32, a `collection: true` attribute reads back as an Array even
   # after a scalar assignment; read it through Array(...), never raw.
+  spec.add_dependency "logger"
   spec.add_dependency "lutaml-model", "~> 0.8.0"
   spec.add_dependency "plurimath-parslet", "~> 3.0"
   spec.add_dependency "thor"
