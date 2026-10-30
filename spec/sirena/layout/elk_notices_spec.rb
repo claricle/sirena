@@ -42,6 +42,13 @@ RSpec.describe Sirena::Layout::ElkNotices do
     expect(output.string).to include("boom").and include("unknown option")
   end
 
+  it "forwards other messages that arrive through add or log" do
+    filtered.add(Logger::ERROR, "via add")
+    filtered.log(Logger::ERROR, "via log")
+
+    expect(output.string).to include("via add").and include("via log")
+  end
+
   it "keeps the wrapped logger's level and formatter" do
     host.level = Logger::ERROR
     filtered.warn("quiet")
