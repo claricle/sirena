@@ -15,7 +15,7 @@ module Sirena
     # elkrb 2 lays out all four directions itself and reads direction and
     # spacing from the graph's layoutOptions.
     class ElkPlacement
-      Elkrb.logger = ElkNotices.new($stderr, level: Logger::WARN)
+      ElkNotices.install
 
       DOWN = "DOWN"
       LEFT = "LEFT"
