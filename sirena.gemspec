@@ -40,7 +40,7 @@ Gem::Specification.new do |spec|
 
   # Not yet called. TODO.foundation/14 tracks wiring it into
   # Engine#layout_graph.
-  spec.add_dependency "elkrb", "~> 1.0"
+  spec.add_dependency "elkrb", "~> 2.0"
   spec.add_dependency "kramdown", "~> 2.5"
   # From 0.8.32, a `collection: true` attribute reads back as an Array even
   # after a scalar assignment; read it through Array(...), never raw.

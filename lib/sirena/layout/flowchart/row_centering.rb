@@ -146,7 +146,8 @@ module Sirena
 
         def centre_rows(rows)
           widest = rows.values.map { |row| span(row) }.max
-          rows.each_value { |row| centre(row, widest) }
+          left = rows.values.flatten.map { |box| box[:x] }.min
+          rows.each_value { |row| centre(row, widest, left) }
           @flat
         end
 
@@ -210,8 +211,11 @@ module Sirena
           centres[box[:id]] - (box[:width] / 2.0)
         end
 
-        def centre(row, widest)
-          shift = (widest - span(row)) / 2.0
+        # Puts the row's middle on the middle of the widest row, wherever
+        # elkrb left the row to begin with.
+        def centre(row, widest, left)
+          start = row.map { |box| box[:x] }.min
+          shift = left + ((widest - span(row)) / 2.0) - start
           row.each { |box| box[:x] += shift }
         end
 
