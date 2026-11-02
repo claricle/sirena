@@ -52,6 +52,19 @@ RSpec.describe Sirena::Layout::ElkPlacement do
     described_class.apply(right_graph)
   end
 
+  def capture_input
+    sent = []
+    allow(Elkrb).to receive(:layout) do |input|
+      sent << input
+      routed_result
+    end
+    sent
+  end
+
+  def box_sizes(input)
+    input[:children].map { |box| box.values_at(:width, :height) }
+  end
+
   def first_section(value)
     apply_direction(value)[:edges].first[:sections].first
   end
@@ -70,19 +83,26 @@ RSpec.describe Sirena::Layout::ElkPlacement do
       .to eq([true, 120.0, 60.0])
   end
 
-  it "transposes every routed edge coordinate" do
+  it "copies a rightward route as elkrb laid it" do
     allow(Elkrb).to receive(:layout).and_return(routed_result)
     section = first_section("RIGHT")
-    expect(section).to eq(startPoint: { x: 127, y: 23 },
-                          endPoint: { x: 207, y: 43 },
-                          bendPoints: [{ x: 167, y: 33 }])
+    expect(section).to eq(startPoint: { x: 23, y: 127 },
+                          endPoint: { x: 43, y: 207 },
+                          bendPoints: [{ x: 33, y: 167 }])
   end
 
-  it "preserves downward placement exactly" do
+  it "asks elkrb for the direction itself instead of turning the boxes" do
+    sent = capture_input
+    apply_direction("RIGHT")
+    expect([sent.first[:layoutOptions][direction], box_sizes(sent.first)])
+      .to eq(["RIGHT", [[120, 40], [80, 60]]])
+  end
+
+  it "keeps elkrb's downward placement, b centred under a" do
     right_graph[:layoutOptions][direction] = "DOWN"
     result = described_class.apply(right_graph)
     expect(geometry(result)).to eq([["a", 12.0, 12.0, 120.0, 40.0],
-                                    ["b", 12.0, 132.0, 80.0, 60.0]])
+                                    ["b", 32.0, 132.0, 80.0, 60.0]])
   end
 
   it "lays a real elkrb graph from bottom to top" do
@@ -91,11 +111,11 @@ RSpec.describe Sirena::Layout::ElkPlacement do
       .to eq([true, 40.0, 80.0])
   end
 
-  it "mirrors every upward route coordinate" do
+  it "copies an upward route as elkrb laid it" do
     allow(Elkrb).to receive(:layout).and_return(routed_result)
     expect(first_section("UP"))
-      .to eq(startPoint: { x: 23, y: 177 },
-             endPoint: { x: 43, y: 97 }, bendPoints: [{ x: 33, y: 137 }])
+      .to eq(startPoint: { x: 23, y: 127 },
+             endPoint: { x: 43, y: 207 }, bendPoints: [{ x: 33, y: 167 }])
   end
 
   it "lays a real elkrb graph from right to left" do
@@ -104,11 +124,11 @@ RSpec.describe Sirena::Layout::ElkPlacement do
       .to eq([true, 120.0, 60.0])
   end
 
-  it "transposes and mirrors every leftward route coordinate" do
+  it "copies a leftward route as elkrb laid it" do
     allow(Elkrb).to receive(:layout).and_return(routed_result)
     expect(first_section("LEFT"))
-      .to eq(startPoint: { x: 177, y: 23 },
-             endPoint: { x: 97, y: 43 }, bendPoints: [{ x: 137, y: 33 }])
+      .to eq(startPoint: { x: 23, y: 127 },
+             endPoint: { x: 43, y: 207 }, bendPoints: [{ x: 33, y: 167 }])
   end
 
   it "keeps reversed compound nodes in the positive root frame" do

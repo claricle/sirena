@@ -8,64 +8,64 @@
 >
 <g id="defs"/>
 <g id="rel-Mammal_to_Animal">
-  <line stroke="#000000" stroke-width="2" x1="338.9185826771653" y1="558.0" x2="362.0248818897637" y2="508.0"/>
-  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="362.0248818897637,508 353.85314262095443,513.7639116338299 362.9307061554245,517.9588896168067"/>
+  <line stroke="#000000" stroke-width="2" x1="276.3541207349081" y1="558.0" x2="317.86173228346456" y2="508.0"/>
+  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="317.86173228346456,508 308.4829739060659,511.4697105496532 316.1772105745438,517.8570982856099"/>
 </g>
 <g id="rel-Bird_to_Animal">
-  <line stroke="#000000" stroke-width="2" x1="499.7251968503937" y1="558.0" x2="475.53543307086613" y2="508.0"/>
-  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="475.53543307086613,508 474.80609339060794,517.9733677176168 483.8079530354768,513.6183105499"/>
+  <line stroke="#000000" stroke-width="2" x1="562.2896587926509" y1="558.0" x2="519.6985826771654" y2="508.0"/>
+  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="519.6985826771654,508 521.5080779072231,517.8349238437519 529.1206241851687,511.35039308461916"/>
 </g>
 <g id="rel-Dog_to_Mammal">
-  <line stroke="#000000" stroke-width="2" x1="185.50172477064217" y1="776.0" x2="228.26227522935778" y2="726.0"/>
-  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="228.26227522935778,726 218.8336818767436,729.3319104716423 226.43349766462836,735.8313566011382"/>
+  <line stroke="#000000" stroke-width="2" x1="149.48242201834861" y1="776.0" x2="170.8029113149847" y2="726.0"/>
+  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="170.8029113149847,726 162.80670671303224,732.0050571990377 172.00534109955373,735.9274449186677"/>
 </g>
 <g id="rel-Cat_to_Mammal">
-  <line stroke="#000000" stroke-width="2" x1="324.2526260869565" y1="776.0" x2="315.240452173913" y2="726.0"/>
-  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="315.240452173913,726 311.8559445246139,735.4098410173517 321.6973597158629,733.6359901122717"/>
+  <line stroke="#000000" stroke-width="2" x1="285.2354434782609" y1="776.0" x2="255.90182028985507" y2="726.0"/>
+  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="255.90182028985507,726 255.97145396879708,735.9997575545989 264.59668120329405,730.9395742423767"/>
 </g>
 <g id="rel-Eagle_to_Bird">
-  <line stroke="#000000" stroke-width="2" x1="541.8121834862386" y1="776.0" x2="541.2718165137615" y2="726.0"/>
-  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="541.2718165137615,726 536.3656973243941,734.7137818712498 546.3651133826164,734.6057147876113"/>
+  <line stroke="#000000" stroke-width="2" x1="577.8314862385321" y1="776.0" x2="598.7311804281346" y2="726.0"/>
+  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="598.7311804281346,726 590.7780715931732,732.0620178042677 600.0044874273433,735.9186031922729"/>
 </g>
 <g id="rel-Penguin_to_Bird">
-  <line stroke="#000000" stroke-width="2" x1="674.3280956937799" y1="776.0" x2="624.3414928229665" y2="726.0"/>
-  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="624.3414928229665,726 626.9283890140719,735.6596049658589 634.0004042094753,728.5894846644791"/>
+  <line stroke="#000000" stroke-width="2" x1="707.873071770335" y1="776.0" x2="680.2497862838916" y2="726.0"/>
+  <polygon fill="#000000" stroke="#000000" stroke-width="2" points="680.2497862838916,726 680.0611527064569,735.9982207103797 688.8141826230067,731.1624718252549"/>
 </g>
 <g id="rel-Owner_to_Animal">
-  <line stroke="#000000" stroke-width="2" x1="417.48" y1="200.0" x2="417.4799999999999" y2="268.0"/>
+  <line stroke="#000000" stroke-width="2" x1="417.4799999999999" y1="200.0" x2="417.48" y2="268.0"/>
   <text fill="#000000" x="417.47999999999996" y="229.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">owns</text>
-  <text fill="#000000" x="422.48" y="195.0" font-family="Arial, sans-serif" font-size="12">1</text>
-  <text fill="#000000" x="412.4799999999999" y="263.0" text-anchor="end" font-family="Arial, sans-serif" font-size="12">*</text>
+  <text fill="#000000" x="422.4799999999999" y="195.0" font-family="Arial, sans-serif" font-size="12">1</text>
+  <text fill="#000000" x="412.48" y="263.0" text-anchor="end" font-family="Arial, sans-serif" font-size="12">*</text>
 </g>
 <g id="class-Animal">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="312.53599999999994" y="268.0" width="209.88799999999998" height="240.0" rx="3.0" ry="3.0"/>
-  <text fill="#000000" x="417.4799999999999" y="278.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Animal</text>
-  <line stroke="#000000" stroke-width="1" x1="312.53599999999994" y1="301.0" x2="522.424" y2="301.0"/>
-  <text fill="#000000" x="322.53599999999994" y="311.0" font-family="monospace" font-size="12">+String name</text>
-  <text fill="#000000" x="322.53599999999994" y="329.0" font-family="monospace" font-size="12">+int age</text>
-  <text fill="#000000" x="322.53599999999994" y="347.0" font-family="monospace" font-size="12">+String species</text>
-  <line stroke="#000000" stroke-width="1" x1="312.53599999999994" y1="370.0" x2="522.424" y2="370.0"/>
-  <text fill="#000000" x="322.53599999999994" y="380.0" font-family="monospace" font-size="12">+makeSound() : void</text>
-  <text fill="#000000" x="322.53599999999994" y="398.0" font-family="monospace" font-size="12">+eat(food Food) : void</text>
-  <text fill="#000000" x="322.53599999999994" y="416.0" font-family="monospace" font-size="12">+sleep() : void</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="312.536" y="268.0" width="209.88799999999998" height="240.0" rx="3.0" ry="3.0"/>
+  <text fill="#000000" x="417.48" y="278.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Animal</text>
+  <line stroke="#000000" stroke-width="1" x1="312.536" y1="301.0" x2="522.424" y2="301.0"/>
+  <text fill="#000000" x="322.536" y="311.0" font-family="monospace" font-size="12">+String name</text>
+  <text fill="#000000" x="322.536" y="329.0" font-family="monospace" font-size="12">+int age</text>
+  <text fill="#000000" x="322.536" y="347.0" font-family="monospace" font-size="12">+String species</text>
+  <line stroke="#000000" stroke-width="1" x1="312.536" y1="370.0" x2="522.424" y2="370.0"/>
+  <text fill="#000000" x="322.536" y="380.0" font-family="monospace" font-size="12">+makeSound() : void</text>
+  <text fill="#000000" x="322.536" y="398.0" font-family="monospace" font-size="12">+eat(food Food) : void</text>
+  <text fill="#000000" x="322.536" y="416.0" font-family="monospace" font-size="12">+sleep() : void</text>
 </g>
 <g id="class-Mammal">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="202.21599999999995" y="558.0" width="195.768" height="168.0" rx="3.0" ry="3.0"/>
-  <text fill="#000000" x="300.09999999999997" y="568.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Mammal</text>
-  <line stroke="#000000" stroke-width="1" x1="202.21599999999995" y1="591.0" x2="397.9839999999999" y2="591.0"/>
-  <text fill="#000000" x="212.21599999999995" y="601.0" font-family="monospace" font-size="12">+String furColor</text>
-  <text fill="#000000" x="212.21599999999995" y="619.0" font-family="monospace" font-size="12">+bool warmBlooded</text>
-  <line stroke="#000000" stroke-width="1" x1="202.21599999999995" y1="642.0" x2="397.9839999999999" y2="642.0"/>
-  <text fill="#000000" x="212.21599999999995" y="652.0" font-family="monospace" font-size="12">+giveBirth() : void</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="108.73733333333331" y="558.0" width="195.768" height="168.0" rx="3.0" ry="3.0"/>
+  <text fill="#000000" x="206.62133333333333" y="568.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Mammal</text>
+  <line stroke="#000000" stroke-width="1" x1="108.73733333333331" y1="591.0" x2="304.5053333333333" y2="591.0"/>
+  <text fill="#000000" x="118.73733333333331" y="601.0" font-family="monospace" font-size="12">+String furColor</text>
+  <text fill="#000000" x="118.73733333333331" y="619.0" font-family="monospace" font-size="12">+bool warmBlooded</text>
+  <line stroke="#000000" stroke-width="1" x1="108.73733333333331" y1="642.0" x2="304.5053333333333" y2="642.0"/>
+  <text fill="#000000" x="118.73733333333331" y="652.0" font-family="monospace" font-size="12">+giveBirth() : void</text>
 </g>
 <g id="class-Bird">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="447.984" y="558.0" width="184.76" height="168.0" rx="3.0" ry="3.0"/>
-  <text fill="#000000" x="540.364" y="568.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Bird</text>
-  <line stroke="#000000" stroke-width="1" x1="447.984" y1="591.0" x2="632.7439999999999" y2="591.0"/>
-  <text fill="#000000" x="457.984" y="601.0" font-family="monospace" font-size="12">+bool canFly</text>
-  <text fill="#000000" x="457.984" y="619.0" font-family="monospace" font-size="12">+String featherColor</text>
-  <line stroke="#000000" stroke-width="1" x1="447.984" y1="642.0" x2="632.7439999999999" y2="642.0"/>
-  <text fill="#000000" x="457.984" y="652.0" font-family="monospace" font-size="12">+layEggs() : void</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="541.4626666666667" y="558.0" width="184.76" height="168.0" rx="3.0" ry="3.0"/>
+  <text fill="#000000" x="633.8426666666667" y="568.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Bird</text>
+  <line stroke="#000000" stroke-width="1" x1="541.4626666666667" y1="591.0" x2="726.2226666666667" y2="591.0"/>
+  <text fill="#000000" x="551.4626666666667" y="601.0" font-family="monospace" font-size="12">+bool canFly</text>
+  <text fill="#000000" x="551.4626666666667" y="619.0" font-family="monospace" font-size="12">+String featherColor</text>
+  <line stroke="#000000" stroke-width="1" x1="541.4626666666667" y1="642.0" x2="726.2226666666667" y2="642.0"/>
+  <text fill="#000000" x="551.4626666666667" y="652.0" font-family="monospace" font-size="12">+layEggs() : void</text>
 </g>
 <g id="class-Dog">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="8.0" y="776.0" width="211.32799999999997" height="168.0" rx="3.0" ry="3.0"/>
@@ -103,13 +103,13 @@
   <text fill="#000000" x="681.656" y="837.0" font-family="monospace" font-size="12">+slide() : void</text>
 </g>
 <g id="class-Owner">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="289.116" y="8.0" width="256.728" height="192.0" rx="3.0" ry="3.0"/>
-  <text fill="#000000" x="417.48" y="18.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Owner</text>
-  <line stroke="#000000" stroke-width="1" x1="289.116" y1="41.0" x2="545.844" y2="41.0"/>
-  <text fill="#000000" x="299.116" y="51.0" font-family="monospace" font-size="12">+String name</text>
-  <text fill="#000000" x="299.116" y="69.0" font-family="monospace" font-size="12">+String address</text>
-  <text fill="#000000" x="299.116" y="87.0" font-family="monospace" font-size="12">+List&lt;Animal&gt; pets</text>
-  <line stroke="#000000" stroke-width="1" x1="289.116" y1="110.0" x2="545.844" y2="110.0"/>
-  <text fill="#000000" x="299.116" y="120.0" font-family="monospace" font-size="12">+adoptPet(pet Animal) : void</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="289.11599999999993" y="8.0" width="256.728" height="192.0" rx="3.0" ry="3.0"/>
+  <text fill="#000000" x="417.4799999999999" y="18.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Owner</text>
+  <line stroke="#000000" stroke-width="1" x1="289.11599999999993" y1="41.0" x2="545.8439999999999" y2="41.0"/>
+  <text fill="#000000" x="299.11599999999993" y="51.0" font-family="monospace" font-size="12">+String name</text>
+  <text fill="#000000" x="299.11599999999993" y="69.0" font-family="monospace" font-size="12">+String address</text>
+  <text fill="#000000" x="299.11599999999993" y="87.0" font-family="monospace" font-size="12">+List&lt;Animal&gt; pets</text>
+  <line stroke="#000000" stroke-width="1" x1="289.11599999999993" y1="110.0" x2="545.8439999999999" y2="110.0"/>
+  <text fill="#000000" x="299.11599999999993" y="120.0" font-family="monospace" font-size="12">+adoptPet(pet Animal) : void</text>
 </g>
 </svg>

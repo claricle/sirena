@@ -2,6 +2,7 @@
 
 require_relative "../elk_placement"
 require_relative "cluster_reach"
+require_relative "edge_order"
 require_relative "component_packing"
 require_relative "layer_spacing"
 require_relative "level_edges"
@@ -31,6 +32,9 @@ module Sirena
         NESTED_CLUSTER_SIDE = 37.5
         CLUSTER_VERTICAL = 25.0
         INDEPENDENT_CLUSTER_PADDING = 37.5
+        # elkrb with its sweeps off flips the first layer of a fan; the
+        # sweeps keep the order the boxes are given in.
+        LAYER_SWEEP = "LAYER_SWEEP"
         MIRRORED_X = [Base::DIRECTION_LEFT].freeze
         MIRRORED_Y = [Base::DIRECTION_UP].freeze
 
@@ -336,6 +340,7 @@ module Sirena
           transposed = frame.sideways?
           transpose(flat) if transposed
           children = flat[:children]
+          EdgeOrder.apply(flat)
           order_leading_clusters(flat, leading_clusters)
           layout_flat(flat, frame, cluster_names, transposed)
           align_leading_clusters(flat, leading_clusters, transposed)
@@ -394,6 +399,7 @@ module Sirena
           @options.merge(
             Base::ElkOptions::DIRECTION => ElkPlacement::DOWN,
             Base::ElkOptions::LAYER_SPACING => frame.rank_spacing,
+            Base::ElkOptions::CROSSING_MINIMIZATION => LAYER_SWEEP,
           )
         end
 

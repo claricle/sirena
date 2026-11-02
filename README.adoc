@@ -126,7 +126,7 @@ gem install sirena
 
 === Requirements
 
-Ruby 3.2 or higher.
+Ruby 3.3 or higher.
 
 
 == Quick start

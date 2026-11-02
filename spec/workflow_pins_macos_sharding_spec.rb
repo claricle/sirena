@@ -26,12 +26,9 @@ RSpec.describe WorkflowPins do
     end
     let(:expected_cells) do
       %w[
-        3.2|ubuntu-latest|1/3|false 3.3|ubuntu-latest|1/3|false
-        3.4|ubuntu-latest|1/3|false
-        3.2|macos-latest|1/3|false 3.3|macos-latest|1/3|false
-        3.4|macos-latest|1/3|false
-        3.2|windows-latest|1/3|false 3.2|windows-latest|2/3|false
-        3.2|windows-latest|3/3|false 3.3|windows-latest|1/3|false
+        3.3|ubuntu-latest|1/3|false 3.4|ubuntu-latest|1/3|false
+        3.3|macos-latest|1/3|false 3.4|macos-latest|1/3|false
+        3.3|windows-latest|1/3|false
         3.3|windows-latest|2/3|false 3.3|windows-latest|3/3|false
         3.4|windows-latest|1/3|false 3.4|windows-latest|2/3|false
         3.4|windows-latest|3/3|false

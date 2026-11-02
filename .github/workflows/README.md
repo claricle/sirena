@@ -4,7 +4,7 @@
 
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
-| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.2/3.3/3.4 stable and 4.0 experimental x ubuntu/macos/windows), `pins`, `oracle-toolchain`, `scoreboard-baseline`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
+| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4 stable and 4.0 experimental x ubuntu/macos/windows), `pins`, `oracle-toolchain`, `scoreboard-baseline`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
 | Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `conformance` (`rake conformance:check`), `fresh-resolution` (no lockfile, `bundle exec rake`), `plantuml-toolchain` (pinned PlantUML jar + Java 21 + Graphviz, `spec/plantuml/toolchain_probe_spec.rb`), `coverage` (`bundle exec rake coverage:guard`), `scoreboard-baseline` | < 30 min |
 
 `coverage` measures the corpus-excluded suite once and enforces the configured
@@ -99,7 +99,7 @@ replace the SHA, update the comment, run `bundle exec rspec spec/workflows`.
 ## What generic-rake ran (audit, metanorma/ci@875ae77e)
 
 Explicit now in `unit`: checkout, `ruby/setup-ruby` with bundler cache,
-`bundle exec rake` over Ruby 3.2, 3.3, and 3.4 as stable versions and Ruby 4.0
+`bundle exec rake` over Ruby 3.3 and 3.4 as stable versions and Ruby 4.0
 as experimental on macOS, Ubuntu, and Windows. Not carried over: Java 17 setup
 (nothing here uses it), recursive submodules (there are none), the
 metanorma tool installers, private fonts. Its `tests-passed` repository

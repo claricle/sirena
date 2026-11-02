@@ -17,8 +17,8 @@ RSpec.describe Sirena::Layout::ElkPlacement do
 
   it "retains a sourced edge without a target in the ELK input" do
     returned = described_class.apply(graph)
-    actual = [received.dig(0, :edges), received[1], returned.equal?(graph)]
+    actual = [received.size, received.dig(0, :edges), returned.equal?(graph)]
 
-    expect(actual).to eq([[edge], {}, true])
+    expect(actual).to eq([1, [edge], true])
   end
 end

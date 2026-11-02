@@ -21,6 +21,11 @@ number makes is in [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+### Changed
+
+- Sirena now requires Ruby 3.3 or newer and elkrb `~> 2.0`. elkrb 2 itself
+  requires Ruby 3.3.
+
 ## [0.2.0] - 2026-10-16
 
 ### Added
