@@ -25,8 +25,7 @@ RSpec.describe Sirena::Parser::Native do
       puts "parsed"
     RUBY
     env = { "RUBY_THREAD_MACHINE_STACK_SIZE" => "1048576" }
-    output, = Open3.capture2e(env, RbConfig.ruby, "-e", script)
-    output.include?("[BUG]") ? output : output.lines.last.to_s.strip
+    Open3.capture2e(env, RbConfig.ruby, "-e", script).first.strip
   end
 
   describe ".parse" do
@@ -62,6 +61,7 @@ RSpec.describe Sirena::Parser::Native do
     it "answers a deeply nested flowchart without killing the process" do
       expect(parse_on_small_stack(nested_flowchart(100)))
         .to match(/\Aparsed\z|SystemStackError/)
+        .and(satisfy { |output| !output.include?("[BUG]") })
     end
   end
 end
