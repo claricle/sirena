@@ -16,10 +16,9 @@ abort "usage: build_native_artifact.rb PARG_OUT JSON_OUT [type ...]" unless json
 
 files = Dir.glob(File.join(dir, "*.parg"))
 unless types.empty?
-  files = files.select do |f|
-    types.include?(File.basename(f,
-                                 ".parg")) || File.basename(f).start_with?("00_")
-  end
+  unless types.empty?
+  keep = ->(file) { File.basename(file).start_with?("00_") || types.include?(File.basename(file, ".parg")) }
+  files = files.select(&keep)
 end
 text = files.map { |f| File.read(f).rstrip }.join("\n\n")
 File.write(parg_out, "#{text}\n}\n")
