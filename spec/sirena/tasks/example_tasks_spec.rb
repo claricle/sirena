@@ -1601,8 +1601,11 @@ RSpec.describe ExampleTasks, :aggregate_failures do
         File.join(examples_dir, "broken-theme.yml")
       end
 
+      # lutaml-model loads yeptris lazily since 0.8.162, so the constant
+      # exists only once a YAML parse has gone through it.
       let(:types) do
-        [Yeptris::ParseError, Lutaml::Model::InvalidFormatError]
+        [Lutaml::Model::InvalidFormatError,
+         Object.const_defined?("Yeptris::ParseError") && Yeptris::ParseError].grep(Class)
       end
 
       let(:matcher) do
