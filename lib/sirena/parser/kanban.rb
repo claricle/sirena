@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/kanban"
 require_relative "builders/kanban"
+require_relative "native/builders/kanban"
 require_relative "../diagram/kanban"
 
 module Sirena
@@ -36,6 +37,7 @@ module Sirena
 
       grammar Grammars::Kanban
       builder Builders::Kanban
+      native :kanban, builder: Native::Builders::Kanban
 
       # Parses kanban diagram source into a Kanban model.
       #
@@ -50,6 +52,22 @@ module Sirena
         end
 
         super(readable_source(source))
+      end
+
+      # The diagram for a builder's result: every column with its cards.
+      #
+      # @param result [Hash] the builder's +:columns+
+      # @return [Diagram::Kanban] the kanban diagram model
+      def create_diagram(result)
+        diagram = Diagram::Kanban.new
+
+        # Build columns and cards
+        result[:columns].each do |column_data|
+          column = build_column(column_data)
+          diagram.add_column(column)
+        end
+
+        diagram
       end
 
       private
@@ -83,18 +101,6 @@ module Sirena
       # `newline` knows `\n` and `\r\n` only.
       def normalize_line_ends(source)
         source.gsub(/\r\n?/, "\n")
-      end
-
-      def create_diagram(result)
-        diagram = Diagram::Kanban.new
-
-        # Build columns and cards
-        result[:columns].each do |column_data|
-          column = build_column(column_data)
-          diagram.add_column(column)
-        end
-
-        diagram
       end
 
       def build_column(column_data)
