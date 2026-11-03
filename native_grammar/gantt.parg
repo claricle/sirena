@@ -1,0 +1,59 @@
+  ## ------------------------------------------------------------------
+  ## gantt (grammars/gantt.rb)
+  ## ------------------------------------------------------------------
+
+  gantt_text = 1*( !line_end ANY )
+
+  gantt_title = "title" 1*sp gantt_text as title line_end
+
+  gantt_date_format = "dateFormat" 1*sp gantt_text as date_format line_end
+
+  gantt_axis_format = "axisFormat" 1*sp gantt_text as axis_format line_end
+
+  gantt_tick_interval = "tickInterval" 1*sp gantt_text as tick_interval line_end
+
+  gantt_excludes = "excludes" 1*sp gantt_text as excludes line_end
+
+  gantt_weekend = "weekend" 1*sp gantt_text as weekend line_end
+
+  gantt_inclusive_end_dates = "inclusiveEndDates" as inclusive_end_dates line_end
+
+  gantt_today_marker = "todayMarker" 1*sp gantt_text as today_marker line_end
+
+  gantt_acc_title = "accTitle" *sp ":" *sp rest_of_line as acc_title line_end
+
+  gantt_acc_descr_single = "accDescr" *sp ":" *sp rest_of_line as acc_descr line_end
+
+  gantt_acc_descr_multi = "accDescr" *sp "{" ws *( !"}" ANY ) as acc_descr ws "}" line_end
+
+  gantt_section = "section" 1*sp gantt_text as section line_end
+
+  gantt_identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
+
+  gantt_click_href = "href" 1*sp gantt_text as href
+
+  gantt_click_callback = "call" 1*sp gantt_text as callback
+
+  gantt_click = "click" 1*sp gantt_identifier as click_id 1*sp ( gantt_click_href / gantt_click_callback ) line_end
+
+  gantt_description = 1*( !":" !line_end ANY )
+
+  gantt_field = 1*( !"," !line_end ANY )
+
+  gantt_details = gantt_field as field *( *sp "," *sp gantt_field as field )
+
+  gantt_task = gantt_description as description *sp ":" *sp gantt_details as task_details line_end
+
+  gantt_statement = gantt_acc_title / gantt_acc_descr_single / gantt_acc_descr_multi / gantt_title / gantt_date_format / gantt_axis_format / gantt_tick_interval / gantt_excludes / gantt_weekend / gantt_inclusive_end_dates / gantt_today_marker / gantt_section / gantt_click / gantt_task as task_entry / comment line_end
+
+  gantt = ws "gantt" as header ws *( gantt_statement ws ) ws
+
+  entry gantt: gantt
+
+  test gantt {
+    accept "gantt"
+    accept "gantt\n  title T\n  dateFormat YYYY-MM-DD\n  section S\n  Task :a1, 2024-01-01, 3d"
+    accept "gantt\n  click a1 href http://x"
+    reject "gant"
+    reject "gantt\n  nonsense"
+  }
