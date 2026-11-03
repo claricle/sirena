@@ -16,7 +16,7 @@
 
   block_columns = "columns" as columns_keyword sp block_integer as columns_value line_end
 
-  block_style_property = 1*( !line_end !"," ANY )
+  block_style_property = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / "," / ";" ) ANY ) / le_mid / !line_end !"," ANY )
 
   block_style_properties = block_style_property *( "," block_style_property )
 

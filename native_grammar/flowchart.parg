@@ -42,11 +42,11 @@
 
   flowchart_acc_gap = *flowchart_ls *( newline *( flowchart_ls / newline / comment ) )
 
-  flowchart_acc_line = ( "accTitle" / "accDescr" ) as acc_keyword flowchart_acc_gap ":" flowchart_acc_gap *( !newline ANY ) as acc_text ( newline / eof )
+  flowchart_acc_line = ( "accTitle" / "accDescr" ) as acc_keyword flowchart_acc_gap ":" flowchart_acc_gap *( 1*( !( "\n" / "\r" ) ANY ) / !newline ANY ) as acc_text ( newline / eof )
 
-  flowchart_comment_line = newline *flowchart_ls "%%" *( !newline ANY )
+  flowchart_comment_line = newline *flowchart_ls "%%" *( 1*( !( "\n" / "\r" ) ANY ) / !newline ANY )
 
-  flowchart_acc_block_body = *( flowchart_comment_line / ( !"}" ANY ) )
+  flowchart_acc_block_body = *( flowchart_comment_line / 1*( !( "\n" / "\r" / "}" ) ANY ) / n_7D )
 
   flowchart_acc_descr_block = "accDescr" as acc_keyword flowchart_acc_gap "{" flowchart_acc_block_body as acc_text [ "}" *flowchart_ls [";"] ]
 
@@ -134,7 +134,7 @@
 
   flowchart_subgraph_name_word = !flowchart_bare_subgraph_end !flowchart_restart_subgraph_keyword !flowchart_dot_run_before_link !flowchart_restart_arrowhead_open flowchart_id_run
 
-  flowchart_subgraph_quoted_name = %x22 1*( !%x22 ANY ) as string %x22
+  flowchart_subgraph_quoted_name = %x22 1*( !( "\"" ) ANY ) as string %x22
 
   flowchart_subgraph_id = flowchart_subgraph_quoted_name / ( %x22 %x22 *sp flowchart_subgraph_name_word ) / flowchart_subgraph_name_word
 
@@ -144,7 +144,7 @@
 
   flowchart_bracketed_title = flowchart_bracket_title flowchart_bracket_title_end
 
-  flowchart_comment_word = "%%" *( !newline ANY )
+  flowchart_comment_word = "%%" *( 1*( !( "\n" / "\r" ) ANY ) / !newline ANY )
 
   flowchart_title_run = flowchart_comment_word / flowchart_subgraph_name_word
 
@@ -187,16 +187,16 @@
   flowchart_hash_terminated_space = 1*sp ( "#" / !( newline / eof ) )
 
   ## declaration_run(*guards), one rule per guard set
-  flowchart_run = 1*( !";" !newline !sp ANY ) / flowchart_declaration_space
+  flowchart_run = 1*( 1*( !( "\t" / "\n" / "\r" / " " / ";" ) ANY ) / !";" !newline !sp ANY ) / flowchart_declaration_space
 
-  flowchart_run_hcg = 1*( !flowchart_hashed_comma_gap !";" !newline !sp ANY ) / flowchart_declaration_space
+  flowchart_run_hcg = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "," / ";" ) ANY ) / !flowchart_hashed_comma_gap !";" !newline !sp ANY ) / flowchart_declaration_space
 
-  flowchart_run_st = 1*( !flowchart_structural_token !";" !newline !sp ANY ) / flowchart_declaration_space
+  flowchart_run_st = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "(" / ")" / "-" / ":" / ";" / "<" / "=" / ">" / "@" / "[" / "]" / "^" / "{" / "|" / "}" / "~" ) ANY ) / !flowchart_structural_token !";" !newline !sp ANY ) / flowchart_declaration_space
 
   ## hash_terminated_run(*guards)
-  flowchart_hash_run = 1*( !"#" !";" !newline !sp ANY ) / flowchart_hash_terminated_space
+  flowchart_hash_run = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "#" / ";" ) ANY ) / !"#" !";" !newline !sp ANY ) / flowchart_hash_terminated_space
 
-  flowchart_hash_run_cg = 1*( !flowchart_comma_gap !"#" !";" !newline !sp ANY ) / flowchart_hash_terminated_space
+  flowchart_hash_run_cg = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "#" / "," / ";" ) ANY ) / !flowchart_comma_gap !"#" !";" !newline !sp ANY ) / flowchart_hash_terminated_space
 
   flowchart_hashed_comma_gap_scan = *flowchart_run_hcg flowchart_hashed_comma_gap
 
@@ -228,21 +228,21 @@
 
   flowchart_link_style_targets = "default" / ( flowchart_link_index *( "," flowchart_link_index ) )
 
-  flowchart_link_curve_char = !flowchart_ls !newline !";" ANY
+  flowchart_link_curve_char = n_09_0A_0B_0C_0D_20_3B_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF / ( %x0D !%x0A )
 
-  flowchart_link_style_props = ( "interpolate" flowchart_ls 1*flowchart_link_curve_char as link_curve [ 1*flowchart_ls flowchart_style_property_list as link_props ] ) / ( flowchart_style_property_list as link_props )
+  flowchart_link_style_props = ( "interpolate" flowchart_ls 1*( 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / ";" / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / "　" / "﻿" ) ANY ) / flowchart_link_curve_char ) as link_curve [ 1*flowchart_ls flowchart_style_property_list as link_props ] ) / ( flowchart_style_property_list as link_props )
 
   flowchart_link_style_statement = "linkStyle" as link_style_keyword flowchart_ls flowchart_link_style_targets as link_targets flowchart_ls flowchart_link_style_props flowchart_statement_end as link_end
 
   ## --- click ----------------------------------------------------------
 
-  flowchart_quoted_run = %x22 1*( !%x22 ANY ) %x22
+  flowchart_quoted_run = %x22 1*( !( "\"" ) ANY ) %x22
 
   flowchart_link_target = ( "_parent" / "_blank" / "_self" / "_top" ) flowchart_word_boundary
 
   flowchart_callback_gap = 1*( sp / newline / comment )
 
-  flowchart_callback_name = 1*( !"(" !flowchart_line_end ANY )
+  flowchart_callback_name = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "(" / ";" ) ANY ) / !"(" !flowchart_line_end ANY )
 
   flowchart_callback_action = "call" flowchart_callback_gap flowchart_callback_name [flowchart_callback_gap] "(" *( !")" ANY ) ")" [ sp flowchart_quoted_run ]
 
@@ -252,23 +252,23 @@
 
   flowchart_link_action = flowchart_quoted_run flowchart_link_tail
 
-  flowchart_token_char = !sp !flowchart_line_end !";" !flowchart_structural_token ANY
+  flowchart_token_char = n_09_0A_0D_20_28_29_2D_3A_3B_3C_3D_3E_40_5B_5D_5E_7B_7C_7D_7E / ( !sp !flowchart_line_end !";" !flowchart_structural_token ANY )
 
-  flowchart_bare_token = !flowchart_reserved_keyword !%x22 flowchart_token_char *flowchart_token_char
+  flowchart_bare_token = !flowchart_reserved_keyword !%x22 1*( 1*( !( "\t" / "\n" / "\r" / " " / "(" / ")" / "-" / ":" / ";" / "<" / "=" / ">" / "@" / "[" / "]" / "^" / "{" / "|" / "}" / "~" ) ANY ) / flowchart_token_char )
 
   flowchart_callback_name_action = flowchart_bare_token [ sp flowchart_quoted_run ]
 
   flowchart_click_action = flowchart_callback_action / flowchart_href_action / flowchart_link_action / flowchart_callback_name_action
 
-  flowchart_click_target = !%x22 1*( !( sp / newline ) ANY )
+  flowchart_click_target = !%x22 1*( 1*( !( "\t" / "\n" / "\r" / " " ) ANY ) / !( sp / newline ) ANY )
 
   flowchart_click_statement = "click" as click_keyword 1*sp flowchart_click_target as click_target ( sp flowchart_click_action as click_action ) flowchart_statement_end
 
   ## --- node shapes ----------------------------------------------------
 
-  flowchart_inline_comment_line = newline *flowchart_ls "%%" !"{" *( !newline ANY )
+  flowchart_inline_comment_line = newline *flowchart_ls "%%" !"{" *( 1*( !( "\n" / "\r" ) ANY ) / !newline ANY )
 
-  flowchart_quoted_label = %x22 *( flowchart_inline_comment_line / ( !"%%{" !%x22 ANY ) ) %x22
+  flowchart_quoted_label = %x22 *( flowchart_inline_comment_line / 1*( !( "\n" / "\r" / "\"" / "%" ) ANY ) / n_22_25 / ( !"%%{" "%" ) ) %x22
 
   flowchart_shape_triple_circle = "(((" as open *( !")))" ANY ) as label ")))" as close
 
@@ -284,17 +284,17 @@
 
   flowchart_shape_parallelogram = "[/" as open *( !"/]" ANY ) as label "/]" as close
 
-  flowchart_shape_parallelogram_alt = ( "[" %x5C ) as open *( !( %x5C "]" ) ANY ) as label ( %x5C "]" ) as close
+  flowchart_shape_parallelogram_alt = ( "[" %x5C ) as open *( 1*( !( "\\" ) ANY ) / !( %x5C "]" ) ANY ) as label ( %x5C "]" ) as close
 
-  flowchart_shape_trapezoid = "[/" as open *( !( %x5C "]" ) ANY ) as label ( %x5C "]" ) as close
+  flowchart_shape_trapezoid = "[/" as open *( 1*( !( "\\" ) ANY ) / !( %x5C "]" ) ANY ) as label ( %x5C "]" ) as close
 
   flowchart_shape_trapezoid_alt = ( "[" %x5C ) as open *( !"/]" ANY ) as label "/]" as close
 
   flowchart_shape_asymmetric = ">" as open *( !"]" ANY ) as label "]" as close
 
-  flowchart_shape_rectangle = "[" as open *( flowchart_quoted_label / ( !( "]" / ")" ) ANY ) ) as label "]" as close
+  flowchart_shape_rectangle = "[" as open *( flowchart_quoted_label / 1*( !( "\"" / ")" / "]" ) ANY ) / n_29_5D ) as label "]" as close
 
-  flowchart_shape_rounded = "(" as open *( flowchart_quoted_label / flowchart_inline_comment_line / ( !( ")" / %x22 ) ANY ) ) as label ")" as close
+  flowchart_shape_rounded = "(" as open *( flowchart_quoted_label / flowchart_inline_comment_line / 1*( !( "\n" / "\r" / "\"" / ")" ) ANY ) / n_22_29 ) as label ")" as close
 
   flowchart_shape_rhombus = "{" as open *( !"}" ANY ) as label "}" as close
 
@@ -302,11 +302,11 @@
 
   ## --- nodes ----------------------------------------------------------
 
-  flowchart_metadata_comment_line = newline *flowchart_ls "%%" !"{" 1*( !newline ANY )
+  flowchart_metadata_comment_line = newline *flowchart_ls "%%" !"{" 1*( 1*( !( "\n" / "\r" ) ANY ) / !newline ANY )
 
-  flowchart_metadata_quoted = %x22 *( flowchart_metadata_comment_line / ( !%x22 ANY ) ) %x22
+  flowchart_metadata_quoted = %x22 *( flowchart_metadata_comment_line / 1*( !( "\n" / "\r" / "\"" ) ANY ) / n_22 ) %x22
 
-  flowchart_metadata_body = *( flowchart_metadata_comment_line / flowchart_metadata_quoted / ( !( %x22 / "}" / "^" ) ANY ) )
+  flowchart_metadata_body = *( flowchart_metadata_comment_line / flowchart_metadata_quoted / 1*( !( "\n" / "\r" / "\"" / "^" / "}" ) ANY ) / n_22_5E_7D )
 
   flowchart_node_metadata = "@{" flowchart_metadata_body as body "}" !( 1*flowchart_ls flowchart_edge_id_ahead )
 
@@ -354,11 +354,11 @@
 
   flowchart_dotted_closing = [flowchart_link_start] flowchart_dotted_close
 
-  flowchart_solid_char = !"--" !flowchart_solid_closing !flowchart_inline_blank !%x22 !"%%{" ANY
+  flowchart_solid_char = n_09_0A_0B_0C_0D_20_22_25_2D_3C_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF / ( !"--" !flowchart_solid_closing !flowchart_inline_blank !%x22 !"%%{" ANY )
 
-  flowchart_thick_char = !"=" !flowchart_thick_closing !flowchart_inline_blank !%x22 !"%%{" ANY
+  flowchart_thick_char = n_09_0A_0B_0C_0D_20_22_25_3C_3D_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF / ( !"=" !flowchart_thick_closing !flowchart_inline_blank !%x22 !"%%{" ANY )
 
-  flowchart_dotted_char = !"." !flowchart_dotted_closing !flowchart_inline_blank !%x22 !"%%{" ANY
+  flowchart_dotted_char = n_09_0A_0B_0C_0D_20_22_25_2D_2E_3C_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF / ( !"." !flowchart_dotted_closing !flowchart_inline_blank !%x22 !"%%{" ANY )
 
   flowchart_solid_gap = 1*flowchart_inline_blank !flowchart_solid_closing
 
@@ -366,11 +366,11 @@
 
   flowchart_dotted_gap = 1*flowchart_inline_blank !flowchart_dotted_closing
 
-  flowchart_solid_label = ( flowchart_quoted_label *( flowchart_solid_char / flowchart_solid_gap ) ) / ( flowchart_solid_char *( flowchart_solid_char / flowchart_solid_gap ) )
+  flowchart_solid_label = ( flowchart_quoted_label *( 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "\"" / "%" / "-" / "<" / "o" / "x" / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / "　" / "﻿" ) ANY ) / flowchart_solid_char / flowchart_solid_gap ) ) / ( flowchart_solid_char *( 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "\"" / "%" / "-" / "<" / "o" / "x" / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / "　" / "﻿" ) ANY ) / flowchart_solid_char / flowchart_solid_gap ) )
 
-  flowchart_thick_label = ( flowchart_quoted_label *( flowchart_thick_char / flowchart_thick_gap ) ) / ( flowchart_thick_char *( flowchart_thick_char / flowchart_thick_gap ) )
+  flowchart_thick_label = ( flowchart_quoted_label *( 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "\"" / "%" / "<" / "=" / "o" / "x" / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / "　" / "﻿" ) ANY ) / flowchart_thick_char / flowchart_thick_gap ) ) / ( flowchart_thick_char *( 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "\"" / "%" / "<" / "=" / "o" / "x" / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / "　" / "﻿" ) ANY ) / flowchart_thick_char / flowchart_thick_gap ) )
 
-  flowchart_dotted_label = ( flowchart_quoted_label *( flowchart_dotted_char / flowchart_dotted_gap ) ) / ( flowchart_dotted_char *( flowchart_dotted_char / flowchart_dotted_gap ) )
+  flowchart_dotted_label = ( flowchart_quoted_label *( 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "\"" / "%" / "-" / "." / "<" / "o" / "x" / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / "　" / "﻿" ) ANY ) / flowchart_dotted_char / flowchart_dotted_gap ) ) / ( flowchart_dotted_char *( 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "\"" / "%" / "-" / "." / "<" / "o" / "x" / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / "　" / "﻿" ) ANY ) / flowchart_dotted_char / flowchart_dotted_gap ) )
 
   flowchart_inline_solid = ( [flowchart_link_start] "--" ) as open *flowchart_inline_blank flowchart_solid_label as label *flowchart_inline_blank flowchart_solid_closing as close
 
@@ -384,17 +384,17 @@
 
   ## Edge ids: only an id without a further "@" in its run, which is the
   ## case where Parslet's last-"@" search ends at the first one.
-  flowchart_edge_id_char = !( "@" / flowchart_ls / newline / %x22 ) ANY
+  flowchart_edge_id_char = n_09_0A_0B_0C_0D_20_22_40_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF / ( %x0D !%x0A )
 
   flowchart_edge_id_link_start = [ "x" / "o" / "<" ] ( "--" / "==" / "-." / ( 1*"." "-" ) / "~~~" )
 
   flowchart_link_opener = [ "x" / "o" / "<" ] ( "-" / "=" / "." / "~~~" )
 
-  flowchart_edge_id_ahead = &( !flowchart_edge_id_link_start 1*flowchart_edge_id_char "@" !( *flowchart_edge_id_char "@" ) flowchart_acc_gap flowchart_link_opener )
+  flowchart_edge_id_ahead = &( !flowchart_edge_id_link_start 1*( 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "\"" / "@" / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / "　" / "﻿" ) ANY ) / flowchart_edge_id_char ) "@" !( *( 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "\"" / "@" / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / "　" / "﻿" ) ANY ) / flowchart_edge_id_char ) "@" ) flowchart_acc_gap flowchart_link_opener )
 
   flowchart_edge_id_preempted = flowchart_reserved_word / ( "default" flowchart_word_boundary ) / ( "accTitle" ":" ) / ( "accDescr" ( ":" / "{" ) )
 
-  flowchart_edge_id_body = 1*flowchart_edge_id_char as edge_id "@" flowchart_acc_gap
+  flowchart_edge_id_body = 1*( 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "\"" / "@" / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / " " / "　" / "﻿" ) ANY ) / flowchart_edge_id_char ) as edge_id "@" flowchart_acc_gap
 
   flowchart_edge = ( ( 1*flowchart_ls !flowchart_edge_id_preempted flowchart_edge_id_ahead flowchart_edge_id_body ) / ws ) ( flowchart_piped_edge / flowchart_inline_label_edge ) ws !flowchart_reserved_keyword flowchart_node_with_shape as target flowchart_amp_group as group
 

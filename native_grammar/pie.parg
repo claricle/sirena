@@ -2,7 +2,7 @@
   ## pie (grammars/pie.rb)
   ## ------------------------------------------------------------------
 
-  pie_title_text = *( !line_end ANY )
+  pie_title_text = *( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / !line_end ANY )
 
   pie_title = "title" ( ":" / 1*sp ) pie_title_text as text
 
