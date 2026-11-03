@@ -1,0 +1,10 @@
+@startsalt
+{
+    {T!
+        + <b>L</b> | list | .
+        ++ <b>Caption</b> | . | substructure, e.g. <P>
+        ++ <b>LI</b> | list item | .
+        ++ <b>LI</b> | list item | .
+    }
+}
+@endsalt

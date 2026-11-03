@@ -103,7 +103,8 @@ RSpec.describe Sirena::Cli do
       _, err, status = run_cli("render", "--notation", "nope", write("a.mmd"))
 
       expect([status, err]).to eq(
-        [1, "Error: Unknown notation: nope. Valid notations: mermaid\n"],
+        [1, "Error: Unknown notation: nope. " \
+            "Valid notations: mermaid, plantuml_salt\n"],
       )
     end
 

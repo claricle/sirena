@@ -1,0 +1,13 @@
+@startsalt
+{
+    {T!
+        + <b>Table</b> | . | .
+        ++ <b>Caption</b> | . | substructure, e.g. <P>
+        ++ <b>TR</b> | table row | .
+        +++ ... | cells in first row of table | .
+        ++ <b>TR</b> | table row | .
+        +++ ... | cells in next row of table | .
+        ++ ... | . | .
+    }
+}
+@endsalt

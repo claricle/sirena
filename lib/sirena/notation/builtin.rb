@@ -35,3 +35,4 @@ Sirena::Notation::Mermaid::TYPES.each do |type, row|
 end
 
 Sirena::Notation.register(Sirena::Notation::Mermaid)
+require_relative "plantuml_salt"

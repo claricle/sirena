@@ -1,0 +1,14 @@
+@startsalt
+{
+    {T!
+        + <b>TOC</b> | table of contents | .
+        ++ <b>TOCI</b> | table of contents item | .
+        ++ <b>P</b> | paragraph | .
+        +++ <b>Reference</b> | . | .
+        ++++ <b>Link</b> | . | .
+        +++++ <b>Link-OBJR</b> | . | .
+        +++++ <b>Lbl</b> | label | In cases where the TOCI is numbered, "1."
+        +++++ <b>Span</b> | . | "Introduction .................. page 5"
+    }
+}
+@endsalt

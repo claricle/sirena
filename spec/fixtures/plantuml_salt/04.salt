@@ -1,0 +1,10 @@
+@startsalt
+{
+    {T!
+        + <b>P</b> | paragraph | .
+        + <b>BlockQuote</b> | . | .
+        ++ <b>P</b> | paragraph | content
+        ++ <b>P</b> | paragraph | content
+    }
+}
+@endsalt

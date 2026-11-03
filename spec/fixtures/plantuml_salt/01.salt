@@ -1,0 +1,10 @@
+@startsalt
+{
+    {T!
+        + <b>Figure</b> alt="PDF icon" | . | a captioned illustration with alternate text
+        ++ <b>Caption</b> | . | .
+        +++ <b>P</b> | paragraph | remark or notice
+        +++ <b>P</b> lang="en-us" | paragraph | "relevant content"
+    }
+}
+@endsalt
