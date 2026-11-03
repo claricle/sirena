@@ -10,7 +10,7 @@ RSpec.describe Sirena::Parser::Native, ".parse parity (requirement)" do
     "requirementDiagram\n",
     "  requirementDiagram  \n",
     "requirementDiagram\r\n  requirement r {\r\n    id: 1\r\n  }\r\n",
-    "requirementDiagram\n  requirement r {\n    id: 1\n    text: some text\n    " \
+    "requirementDiagram\n  requirement r {\n    id: 1\n    text: some\n    " \
     "risk: high\n    verifymethod: test\n  }",
     "requirementDiagram\n  functionalRequirement f { id: 1 }",
     "requirementDiagram\n  interfaceRequirement i {\n  }",
