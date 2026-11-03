@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/info"
 require_relative "builders/info"
+require_relative "native/builders/info"
 require_relative "../diagram/info"
 
 module Sirena
@@ -25,6 +26,7 @@ module Sirena
     class Info < Base
       grammar Grammars::Info
       builder Builders::Info
+      native :info, builder: Native::Builders::Info
     end
   end
 end

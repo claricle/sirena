@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "parslet"
+require_relative "native"
+require_relative "native/declined"
 require_relative "../error"
 require_relative "../error/parse_error"
 
@@ -28,6 +30,19 @@ module Sirena
       private_constant :EMPTY_SEPARATOR, :LINE_SEPARATOR
 
       class << self
+        # Declares (with an argument) or reads (without) the native entry:
+        # the mermaid.parg entry name and the native builder class that
+        # turns its tree into the diagram. Without it, or when the native
+        # engine is absent, the Parslet grammar parses.
+        #
+        # @param entry [Symbol, nil] a mermaid.parg entry name
+        # @param builder [Class, nil] builder responding to #apply(tree)
+        # @return [Array(Symbol, Class), nil] the declared pair
+        def native(entry = nil, builder: nil)
+          @native = [entry, builder] if entry
+          @native || (superclass.native if superclass.respond_to?(:native))
+        end
+
         # Declares (with an argument) or reads (without) the grammar class.
         # A subclass inherits its parent's declaration.
         #
@@ -60,11 +75,27 @@ module Sirena
       # @raise [NotImplementedError] if nothing is declared or overridden
       def parse(source)
         require_declarations
-        tree = parse_with_grammar(self.class.grammar.new, source)
-        create_diagram(self.class.builder.new.apply(tree))
+        native_diagram(source) || ruby_diagram(source)
       end
 
       private
+
+      # The native path's diagram, or nil when it declines: no engine, a
+      # rejection, or an input the Ruby builder must answer for.
+      def native_diagram(source)
+        entry, builder = self.class.native
+        return nil unless entry
+
+        tree = Native.parse(entry, source)
+        tree && builder.new.apply(tree)
+      rescue Native::Declined
+        nil
+      end
+
+      def ruby_diagram(source)
+        tree = parse_with_grammar(self.class.grammar.new, source)
+        create_diagram(self.class.builder.new.apply(tree))
+      end
 
       def require_declarations
         return if self.class.grammar && self.class.builder

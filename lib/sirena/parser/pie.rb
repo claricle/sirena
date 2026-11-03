@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/pie"
 require_relative "builders/pie"
+require_relative "native/builders/pie"
 require_relative "../diagram/pie"
 
 module Sirena
@@ -25,6 +26,7 @@ module Sirena
     class Pie < Base
       grammar Grammars::Pie
       builder Builders::Pie
+      native :pie, builder: Native::Builders::Pie
     end
   end
 end

@@ -5,6 +5,8 @@ source "https://rubygems.org"
 gemspec
 
 gem "benchmark"
+# Native Mermaid parse path; the Parslet grammars are the fallback.
+gem "parsanol", require: false
 gem "rake"
 # corpus_sweep and the kanban integration spec both parse SVG output.
 gem "rexml"
