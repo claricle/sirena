@@ -15,10 +15,12 @@ parg_out, json_out, *types = ARGV
 abort "usage: build_native_artifact.rb PARG_OUT JSON_OUT [type ...]" unless json_out
 
 files = Dir.glob(File.join(dir, "*.parg"))
+always = ->(file) { File.basename(file).start_with?("00_") }
+wanted = ->(file) { types.include?(File.basename(file, ".parg")) }
 unless types.empty?
-  unless types.empty?
-  keep = ->(file) { File.basename(file).start_with?("00_") || types.include?(File.basename(file, ".parg")) }
-  files = files.select(&keep)
+  files = files.select do |file|
+    always.(file) || wanted.(file)
+  end
 end
 text = files.map { |f| File.read(f).rstrip }.join("\n\n")
 File.write(parg_out, "#{text}\n}\n")
