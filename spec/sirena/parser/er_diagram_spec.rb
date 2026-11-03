@@ -73,6 +73,14 @@ RSpec.describe Sirena::Parser::ErDiagram do
 
   let(:parser) { described_class.new }
 
+  # The :speed examples bound the Parslet grammar's own scaling (tilde and
+  # note rules). The native engine answers these pathological inputs far
+  # slower than the grammar, so they pin the Ruby path; native/Parslet
+  # agreement on ER input is covered by native_parse_parity_er_diagram_spec.
+  around(:each, :speed) do |example|
+    NativeParity.with_native(false) { example.run }
+  end
+
   describe "#parse" do
     # Verified against mermaid 11.16.1's lexer regex for this token --
     # `/^(?:([^\s]*)[~].*[~]([^\s]*))/i`, no `/s` flag -- `.` cannot cross
