@@ -168,6 +168,11 @@ module Sirena
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
+          # A `...` gap between two messages, with its text if it has any.
+          class Delay < Lutaml::Model::Serializable
+            attribute :texts, PlantUML::Scene::Text, collection: true
+          end
+
           attribute :banners, Banner, collection: true
           attribute :title, Title
           attribute :text_blocks, TextBlock, collection: true
@@ -176,6 +181,7 @@ module Sirena
           attribute :fragments, Fragment, collection: true
           attribute :notes, Note, collection: true
           attribute :dividers, Divider, collection: true
+          attribute :delays, Delay, collection: true
           attribute :bars, Bar, collection: true
           attribute :crosses, PlantUML::Scene::Segment, collection: true
           attribute :page_breaks, PlantUML::Scene::Segment, collection: true

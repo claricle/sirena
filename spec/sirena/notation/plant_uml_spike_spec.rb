@@ -362,7 +362,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       "hide A --> B" => ["hide", 3],
       "A --> B C" => ["statement", 3],
       "left to right direction x" => ["statement", 3],
-      "abstract A" => ["class declaration form", 3],
+      "abstract A B" => ["class declaration form", 3],
       "A ->> B" => ["single-dash arrow", 3],
       "A <<- B" => ["single-dash arrow", 3],
       "titles x" => ["statement", 3],

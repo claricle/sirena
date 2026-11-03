@@ -2,6 +2,7 @@
 
 require_relative "activation"
 require_relative "arrow_style"
+require_relative "delay"
 require_relative "destroy"
 require_relative "divider"
 require_relative "fragment"
@@ -120,6 +121,10 @@ module Sirena
 
           def divider(label)
             @items << Divider.new(label: label)
+          end
+
+          def delay(label)
+            @items << Delay.new(label: label)
           end
 
           def open_block(keyword, label, parallel: false)

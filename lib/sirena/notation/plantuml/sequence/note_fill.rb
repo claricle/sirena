@@ -19,7 +19,7 @@ module Sirena
             "lightgreen" => "#90EE90", "lightgray" => "#D3D3D3",
             "white" => "#FFFFFF", "black" => "#000000", "gray" => "#808080",
             "cyan" => "#00FFFF", "magenta" => "#FF00FF",
-            "purple" => "#800080"
+            "purple" => "#800080", "aqua" => "#00FFFF"
           }.freeze
 
           # @param token [String] such as `#red` or `#ff8800`

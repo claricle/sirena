@@ -2,6 +2,7 @@
 
 require_relative "../activation"
 require_relative "../destroy"
+require_relative "../delay"
 require_relative "../divider"
 require_relative "../fragment"
 require_relative "../note"
@@ -38,6 +39,10 @@ module Sirena
 
             def divider(node, _index)
               Divider.new(label: node.label)
+            end
+
+            def delay(node, _index)
+              Delay.new(label: node.label.to_s)
             end
 
             def activation(node, index)
