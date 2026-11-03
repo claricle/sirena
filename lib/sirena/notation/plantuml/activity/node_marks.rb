@@ -1,0 +1,101 @@
+# frozen_string_literal: true
+
+require_relative "metrics"
+
+module Sirena
+  module Notation
+    module PlantUML
+      module Activity
+        # Draws a node, and the notes beside it.
+        class NodeMarks
+          PAPER = "#F1F1F1"
+          NOTE_PAPER = "#FEFFDD"
+          INK = "#181818"
+          FOLD = 6.0
+          private_constant :PAPER, :NOTE_PAPER, :INK, :FOLD
+
+          def initialize(boxes, canvas)
+            @boxes = boxes
+            @canvas = canvas
+          end
+
+          # @param node [Node]
+          def draw(node)
+            box = @boxes.fetch(node)
+            case node.kind
+            when :start then @canvas.circle(box, 10.0, fill: "#222222")
+            when :stop then stop(box)
+            when :merge then diamond(box, node.fill)
+            when :bar then bar(node, box)
+            when :decision then decision(node, box)
+            else action(node, box)
+            end
+          end
+
+          # @param node [Node] the node the note is attached to
+          # @param note [Note]
+          # @param box [Box] where the note sits
+          def note(node, note, box)
+            @canvas.polygon(outline(box), fill: NOTE_PAPER)
+            pad = Metrics::NOTE_PAD
+            @canvas.lines(note.lines, [box.left + pad, box.top + pad + 11])
+            connector(@boxes.fetch(node), note.side, box)
+          end
+
+          private
+
+          # A rectangle with its top right corner folded.
+          def outline(box)
+            [[box.left, box.top], [box.right - FOLD, box.top],
+             [box.right, box.top + FOLD], [box.right, box.bottom],
+             [box.left, box.bottom]]
+          end
+
+          def connector(anchor, side, box)
+            near = if side == :right
+                     [anchor.right,
+                      box.left]
+                   else
+                     [anchor.left, box.right]
+                   end
+            @canvas.path(near.map { |x_pos| [x_pos, anchor.cy] }, stroke: INK,
+                                                                  dash: "7,5")
+          end
+
+          def action(node, box)
+            @canvas.rect(box, fill: node.fill || PAPER, radius: 12.5)
+            centred(node.lines, box)
+          end
+
+          def decision(node, box)
+            diamond(box, node.fill)
+            centred(node.lines, box)
+          end
+
+          def diamond(box, fill)
+            @canvas.polygon([[box.cx, box.top], [box.right, box.cy],
+                             [box.cx, box.bottom], [box.left, box.cy]],
+                            fill: fill || PAPER)
+          end
+
+          def stop(box)
+            @canvas.circle(box, 11.0, fill: "none")
+            @canvas.circle(box, 6.0, fill: "#222222")
+          end
+
+          def bar(node, box)
+            @canvas.rect(box, fill: "#000000")
+            return unless node.text
+
+            @canvas.lines([node.text], [box.right + 6, box.cy + 4])
+          end
+
+          def centred(rows, box)
+            first = box.cy - (Metrics.text_height(rows) / 2.0) + 11
+            @canvas.lines(rows, [box.cx, first], anchor: "middle")
+          end
+        end
+      end
+    end
+  end
+end

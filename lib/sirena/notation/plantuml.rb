@@ -6,11 +6,12 @@ require_relative "plantuml/ir_adapter"
 require_relative "plantuml/layout"
 require_relative "plantuml/renderer"
 require_relative "plantuml/sequence"
+require_relative "plantuml/activity"
 
 module Sirena
   module Notation
-    # The PlantUML notation: class diagrams, and sequence diagrams in
-    # {Sequence}.
+    # The PlantUML notation: class diagrams, sequence diagrams in
+    # {Sequence} and activity diagrams in {Activity}.
     #
     # Not loaded by `require "sirena"`: a consumer requires this file, which
     # is how an external notation is meant to arrive (10a, "Discovery").
@@ -47,7 +48,7 @@ module Sirena
 
       # @return [Array<Symbol>] diagram types, in display order
       def types
-        %i[class_diagram sequence_diagram].freeze
+        %i[class_diagram sequence_diagram activity_diagram].freeze
       end
 
       # @param source [String] any String, including binary or invalid UTF-8
@@ -63,6 +64,7 @@ module Sirena
       # @param source [String] PlantUML source
       # @return [Notation::Parsed]
       def parse(source)
+        return Activity.parse(source) if Activity.activity?(source)
         return Sequence.parse(source) if Sequence.sequence?(source)
 
         Notation::Parsed.new(
