@@ -14,8 +14,18 @@ module Sirena
       ARTIFACT_VARIABLE = "SIRENA_NATIVE_ARTIFACT"
       DISABLE_VARIABLE = "SIRENA_NATIVE_PARSER"
       DISABLED_VALUES = %w[0 off false ruby].freeze
+      # The engine recurses on the machine stack once per nested block and
+      # a source that nests deeper than the stack allows kills the whole
+      # process (a segfault in the extension, not a SystemStackError): about
+      # 60 nested subgraphs on a 1 MB stack, Windows' main-thread size. Past
+      # this depth the Ruby grammar answers, as it does without the engine.
+      MAX_NESTING = 32
+      NESTING_OPEN = /\A\s*(?:subgraph|block:|alt|loop|opt|par|critical|break|
+                            rect|box)\b|\{\s*\z/ix
+      NESTING_CLOSE = /\A\s*(?:end\b|\})/i
       private_constant :ARTIFACT_PATH, :ARTIFACT_VARIABLE, :DISABLE_VARIABLE,
-                       :DISABLED_VALUES
+                       :DISABLED_VALUES, :MAX_NESTING, :NESTING_OPEN,
+                       :NESTING_CLOSE
 
       class << self
         # @return [Boolean] whether the parsanol engine and artifact loaded
@@ -30,7 +40,7 @@ module Sirena
         # @return [Hash, Array, Parsanol::Slice, nil] the parse tree, or
         #   nil when the native path does not answer
         def parse(entry, source)
-          return nil if disabled? || !readable?(source)
+          return nil if disabled? || !readable?(source) || too_deep?(source)
 
           artifact&.parse(entry.to_s, source)
         rescue Parsanol::ParseFailed
@@ -51,6 +61,22 @@ module Sirena
 
         def readable?(source)
           source.encoding == Encoding::UTF_8 && source.valid_encoding?
+        end
+
+        # Whether blocks opened and not yet closed ever pass MAX_NESTING.
+        # A line that merely looks like an opener only sends the source to
+        # the Ruby grammar, which answers identically.
+        def too_deep?(source)
+          depth = 0
+          source.each_line do |line|
+            if line.match?(NESTING_OPEN)
+              depth += 1
+              return true if depth > MAX_NESTING
+            elsif line.match?(NESTING_CLOSE)
+              depth -= 1 if depth.positive?
+            end
+          end
+          false
         end
 
         def artifact
