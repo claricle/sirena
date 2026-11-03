@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/packet"
 require_relative "builders/packet"
+require_relative "native/builders/packet"
 require_relative "../diagram/packet"
 
 module Sirena
@@ -28,6 +29,7 @@ module Sirena
     class Packet < Base
       grammar Grammars::Packet
       builder Builders::Packet
+      native :packet, builder: Native::Builders::Packet
 
       private
 
