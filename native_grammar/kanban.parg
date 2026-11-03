@@ -9,15 +9,27 @@
 
   kanban_line_sep = %x2028 / %x2029
 
+  ## Runs are written as positive character classes: the engine scans
+  ## those in linear time, but not a negated ANY.
+  kanban_not_lf = %x00-09 / %x0B-10FFFF
+
+  kanban_not_comment_end = %x00-09 / %x0B-2027 / %x202A-10FFFF
+
+  kanban_not_crlf = %x00-09 / %x0B-0C / %x0E-10FFFF
+
+  kanban_not_quote_lf = %x00-09 / %x0B-21 / %x23-10FFFF
+
+  kanban_not_body_end = %x00-09 / %x0B-21 / %x23-5D / %x5F-7C / %x7E-10FFFF
+
   kanban_word_char = ALPHA / DIGIT / "_"
 
   kanban_identifier = ( ALPHA / "_" ) *kanban_word_char
 
-  kanban_comment_body = *( !%x0A !%x2028 !%x2029 ANY )
+  kanban_comment_body = *( kanban_not_comment_end )
 
   kanban_comment = "%%" kanban_comment_body
 
-  kanban_rest = *( !%x0A ANY )
+  kanban_rest = *( kanban_not_lf )
 
   kanban_comment_line_start = "%%" !"{" kanban_rest
 
@@ -43,7 +55,7 @@
 
   kanban_icon_modifier = kanban_icon_keyword 1*( !")" ANY ) as icon ")"
 
-  kanban_class_modifier = ":::" 1*( !%x0A !%x2028 !%x2029 ANY ) as classes
+  kanban_class_modifier = ":::" 1*( kanban_not_comment_end ) as classes
 
   kanban_modifier_line = *sp as indent ( kanban_icon_modifier / kanban_class_modifier ) kanban_line_end
 
@@ -65,13 +77,13 @@
 
   kanban_bare_item = kanban_identifier as id !( *sp ( "%%" / kanban_line_space ) )
 
-  kanban_metadata_comment_line = newline *kanban_line_space "%%" !"{" 1*( !%x0D !%x0A ANY )
+  kanban_metadata_comment_line = newline *kanban_line_space "%%" !"{" 1*( kanban_not_crlf )
 
-  kanban_metadata_quoted = %x22 *( kanban_metadata_comment_line / 1*( !%x22 !%x0A ANY ) / newline ) %x22
+  kanban_metadata_quoted = %x22 *( kanban_metadata_comment_line / 1*( kanban_not_quote_lf ) / newline ) %x22
 
   kanban_blank_line_run = 1*( newline &newline )
 
-  kanban_metadata_body = *( 1*( !%x22 !"}" !"^" !%x0A ANY ) / kanban_blank_line_run / kanban_metadata_comment_line / kanban_metadata_quoted / newline )
+  kanban_metadata_body = *( 1*( kanban_not_body_end ) / kanban_blank_line_run / kanban_metadata_comment_line / kanban_metadata_quoted / newline )
 
   kanban_metadata = "@" *sp "{" kanban_metadata_body as body "}"
 

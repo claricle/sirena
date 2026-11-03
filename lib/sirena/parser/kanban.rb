@@ -35,6 +35,13 @@ module Sirena
         id text assigned ticket icon label priority classes
       ].freeze
 
+      # The native engine joins what each line captured, so its time grows
+      # with the source's bytes times its lines; the Parslet grammar scans
+      # the same source in linear time. A board is a few KB, so a source
+      # this large goes straight to Parslet.
+      NATIVE_BYTE_LIMIT = 100_000
+      private_constant :NATIVE_BYTE_LIMIT
+
       grammar Grammars::Kanban
       builder Builders::Kanban
       native :kanban, builder: Native::Builders::Kanban
@@ -71,6 +78,12 @@ module Sirena
       end
 
       private
+
+      def native_diagram(source)
+        return nil if source.bytesize > NATIVE_BYTE_LIMIT
+
+        super
+      end
 
       def readable_source(source)
         normalize_line_ends(transcode_to_utf8(source))
