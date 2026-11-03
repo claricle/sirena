@@ -1,0 +1,199 @@
+  ## ------------------------------------------------------------------
+  ## sequence (grammars/sequence.rb)
+  ## ------------------------------------------------------------------
+
+  ## Runs are positive character classes: the engine scans those in
+  ## linear time, which a negated ANY does not get.
+  sequence_word_char = ALPHA / DIGIT / "_"
+
+  sequence_not_lf = %x00-09 / %x0B-10FFFF
+
+  ## not LF, CR, "#" or ";"
+  sequence_text_char = %x00-09 / %x0B-0C / %x0E-22 / %x24-3A / %x3C-10FFFF
+
+  ## not "#", ";" or LF
+  sequence_title_char = %x00-09 / %x0B-22 / %x24-3A / %x3C-10FFFF
+
+  ## not "+" "<" ">" "-" ":" LF CR "," ";"
+  sequence_tail_char = %x00-09 / %x0B-0C / %x0E-2A / %x2E-39 / %x3D / %x3F-10FFFF
+
+  ## not "+" "<" ">" "(" ")" "-"
+  sequence_plain_char = %x00-27 / %x2A / %x2C / %x2E-3B / %x3D / %x3F-10FFFF
+
+  ## not "+" "<" ">" "-"
+  sequence_actor_plain = %x00-2A / %x2C / %x2E-3B / %x3D / %x3F-10FFFF
+
+  sequence_char_ref = "#" 1*sequence_word_char ";"
+
+  sequence_trailing_comment = [ *sp "#" *sequence_not_lf ]
+
+  ## line_end, then ";", then a bare CR at the end; line_end's empty-capable
+  ## end-of-input arm goes last (the engine refuses an empty arm earlier).
+  sequence_boundary = sequence_trailing_comment ( [";"] *sp [comment] newline / ";" !( *sp eof ) / ( %x0D eof ) / [";"] *sp eof )
+
+  sequence_text_run = *( sequence_char_ref / 1*sequence_text_char )
+
+  sequence_rest_of_line = *sequence_not_lf line_end
+
+  sequence_comment_statement = "%" !"{" *( !line_end ANY ) line_end
+
+  sequence_hash_comment_statement = !sequence_char_ref "#" *( !line_end ANY ) line_end
+
+  sequence_title_statement = "title" ( ":" *sp / 1*sp ) *sequence_title_char sequence_boundary
+
+  sequence_acc_title_statement = "accTitle" *sp ":" sequence_rest_of_line
+
+  sequence_acc_descr_statement = "accDescr" *sp ":" sequence_rest_of_line
+
+  sequence_acc_descr_block = "accDescr" *sp "{" *( !"}" ANY ) "}" sequence_boundary
+
+  sequence_number = ( 1*DIGIT [ "." DIGIT [DIGIT] ] ) / ( "." DIGIT [DIGIT] )
+
+  sequence_numbering = sequence_number [ 1*sp sequence_number ]
+
+  sequence_autonumber_statement = "autonumber" [ 1*sp ( "off" / sequence_numbering ) ] sequence_boundary
+
+  sequence_metadata_statement = sequence_title_statement / sequence_acc_title_statement / sequence_acc_descr_block / sequence_acc_descr_statement / sequence_autonumber_statement
+
+  ## --- arrows ---------------------------------------------------------
+
+  sequence_dotted_arrow = "-->>" / "--|/" / "--|" %x5C / "--//" / "--" %x5C %x5C / "--x" / "--X" / "--)" / "-->"
+
+  sequence_solid_arrow = "->>" / "-|/" / "-|" %x5C / "-//" / "-" %x5C %x5C / "-x" / "-X" / "-)" / "->"
+
+  sequence_reversed_arrow = "/|--" / "/|-" / %x5C "|--" / %x5C "|-" / "//--" / "//-" / %x5C %x5C "--" / %x5C %x5C "-"
+
+  sequence_arrow_base = "<<-->>" / "<<->>" / sequence_dotted_arrow / sequence_solid_arrow / sequence_reversed_arrow
+
+  sequence_activation_suffix = *sp ( "+" / "-" )
+
+  sequence_arrow = sequence_arrow_base as arrow_base [ sequence_activation_suffix as activation ]
+
+  sequence_message_signal = ( "()" *sp sequence_arrow_base as arrow_base *sp [ "()" ] ) / ( sequence_arrow_base as arrow_base *sp "()" ) / sequence_arrow
+
+  ## --- actor names ----------------------------------------------------
+
+  sequence_alias_keyword = 1*sp "as" 1*sp
+
+  sequence_actor_stop = sequence_arrow_base / ":" / "," / ";" / "%%" / sequence_alias_keyword / "@{" / newline
+
+  sequence_actor_char = !sequence_actor_stop ( sequence_actor_plain / ( "-" !( "-" / sequence_arrow_base / ":" / "," / ";" / "%%" / sequence_alias_keyword / "@{" ) ) )
+
+  sequence_actor_lead = !( ")" / "|" / ">" / "/" ) sequence_actor_char
+
+  sequence_actor_name = ( sequence_char_ref / sequence_actor_lead ) *( sequence_char_ref / sequence_actor_char )
+
+  sequence_declaration_stop = "<" / ">" / ":" / "," / ";" / "%%" / "@" / newline
+
+  sequence_declaration_char = !sequence_declaration_stop ANY
+
+  sequence_declaration_lead = sequence_char_ref / ( !"#" sequence_declaration_char )
+
+  sequence_declaration_word_char = !( sequence_declaration_stop / sp ) ANY
+
+  sequence_declaration_word_lead = sequence_char_ref / ( !"#" sequence_declaration_word_char )
+
+  sequence_declaration_name = ( sequence_declaration_word_lead *( sequence_char_ref / sequence_declaration_word_char ) &sequence_alias_keyword ) / ( sequence_declaration_lead *( sequence_char_ref / sequence_declaration_char ) )
+
+  sequence_message_actor_stop = sequence_arrow_base / ":" / "," / ";" / "%%" / "@{" / "(" / ")" / newline
+
+  sequence_continuation_entry_stop = sequence_arrow_base / "--" / "-/" / "-" %x5C
+
+  sequence_message_actor_continuation = !sequence_continuation_entry_stop "-" 1*sequence_tail_char
+
+  sequence_message_actor_char = !sequence_message_actor_stop ( sequence_plain_char / ( "-" !( "-" / "/" / %x5C / sequence_message_actor_stop ) ) )
+
+  sequence_message_actor_lead_char = !sequence_message_actor_stop !"#" sequence_plain_char
+
+  sequence_lexed_number = ( 1*DIGIT [ "." DIGIT [DIGIT] ] ) / ( "." DIGIT [DIGIT] )
+
+  sequence_token_opener = ( "%" !"{" ) / ( sequence_lexed_number ( %x20 / %x0A ) )
+
+  sequence_message_actor_lead = sequence_char_ref / ( !( ")" / ">" / "/" / %x5C ) !sequence_token_opener sequence_message_actor_lead_char )
+
+  sequence_message_actor_run = sequence_char_ref / sequence_message_actor_continuation / ( !( "/" / %x5C ) sequence_message_actor_char )
+
+  sequence_fused_stop = ":" / "," / ";" / "%%" / "@{" / "(" / ")" / newline
+
+  sequence_message_actor_slash_fusion = !sequence_reversed_arrow ( "/" / %x5C ) *( sequence_char_ref / sequence_message_actor_continuation / ( !sequence_fused_stop sequence_plain_char ) )
+
+  sequence_message_actor_name = sequence_message_actor_lead *sequence_message_actor_run [ sequence_message_actor_slash_fusion ]
+
+  ## --- declarations ---------------------------------------------------
+
+  sequence_shape_metadata = "@{" 1*( !"}" !newline ANY ) "}"
+
+  sequence_declaration_identity = sequence_declaration_name as id [ sequence_shape_metadata as shape_metadata ] *sp
+
+  sequence_unquoted_label = 1*( sequence_char_ref / ( !line_end !";" ANY ) )
+
+  sequence_declaration_label = "as" 1*sp sequence_unquoted_label as label
+
+  sequence_participant_body = "participant" 1*sp sequence_declaration_identity [ sequence_declaration_label ]
+
+  sequence_actor_body = "actor" 1*sp sequence_declaration_identity [ sequence_declaration_label ]
+
+  sequence_participant_declaration = sequence_participant_body sequence_boundary "" as participant
+
+  sequence_actor_declaration = sequence_actor_body sequence_boundary "" as actor
+
+  sequence_create_statement = "create" as create 1*sp ( ( sequence_participant_body sequence_boundary "" as participant ) / ( sequence_actor_body sequence_boundary "" as actor ) )
+
+  sequence_destroy_statement = "destroy" 1*sp sequence_declaration_name as destroy sequence_boundary
+
+  sequence_links_statement = "links" 1*sp sequence_message_actor_name as links ":" sequence_text_run sequence_boundary
+
+  ## --- messages, notes, activation -------------------------------------
+
+  sequence_message_text = ":" *sp sequence_text_run as message_text
+
+  sequence_message = sequence_message_actor_name as from *sp sequence_message_signal as arrow *sp sequence_message_actor_name as to *sp sequence_message_text as text sequence_boundary
+
+  sequence_note_position = ( "left" 1*sp "of" ) as left_of / ( "right" 1*sp "of" ) as right_of / "over" as over
+
+  sequence_note_participant = sequence_actor_name as participant
+
+  sequence_note_participants = sequence_note_participant *( *sp "," *sp sequence_note_participant )
+
+  sequence_note_statement = ( "note" / "Note" ) 1*sp sequence_note_position as position 1*sp sequence_note_participants as participants *sp ":" *sp sequence_text_run as note_text sequence_boundary
+
+  sequence_activation_command = "activate" 1*sp sequence_actor_name as activate line_end
+
+  sequence_deactivation_command = "deactivate" 1*sp sequence_actor_name as deactivate line_end
+
+  ## --- blocks ---------------------------------------------------------
+
+  sequence_box_statement = "box" 1*sp sequence_text_run as box_label sequence_boundary ws sequence_statements as box_statements ws "end" line_end
+
+  sequence_loop_structure = "loop" *sp sequence_text_run as loop_label sequence_boundary ws sequence_statements as loop_statements ws "end" line_end
+
+  sequence_alt_structure = "alt" *sp sequence_text_run as alt_label sequence_boundary ws sequence_statements as alt_statements ws *( "else" *sp sequence_text_run as else_label sequence_boundary ws sequence_statements as else_statements ws ) as else_blocks "end" line_end
+
+  sequence_opt_structure = "opt" !sequence_word_char *sp sequence_text_run as opt_label sequence_boundary ws sequence_statements as opt_statements ws "end" line_end
+
+  sequence_rect_structure = "rect" !sequence_word_char *sp sequence_text_run as rect_label sequence_boundary ws sequence_statements as rect_statements ws "end" line_end
+
+  sequence_par_structure = "par" *sp sequence_text_run as par_label sequence_boundary ws sequence_statements as par_statements ws *( "and" *sp sequence_text_run as and_label sequence_boundary ws sequence_statements as and_statements ws ) as and_blocks "end" line_end
+
+  sequence_critical_structure = "critical" *sp sequence_text_run as critical_label sequence_boundary ws sequence_statements as critical_statements ws *( "option" *sp sequence_text_run as option_label sequence_boundary ws sequence_statements as option_statements ws ) as option_blocks "end" line_end
+
+  sequence_break_structure = "break" *sp sequence_text_run as break_label sequence_boundary ws sequence_statements as break_statements ws "end" line_end
+
+  sequence_control_structure = sequence_loop_structure / sequence_alt_structure / sequence_opt_structure / sequence_rect_structure / sequence_par_structure / sequence_critical_structure / sequence_break_structure
+
+  sequence_statement = sequence_comment_statement / sequence_hash_comment_statement / sequence_metadata_statement / sequence_create_statement / sequence_destroy_statement / sequence_links_statement / sequence_participant_declaration / sequence_actor_declaration / sequence_note_statement / sequence_box_statement / sequence_activation_command / sequence_deactivation_command / sequence_control_structure / sequence_message
+
+  sequence_statements = 1*( sequence_statement ws *( ";" ws ) )
+
+  sequence = ws "sequenceDiagram" as header [";"] ws [ sequence_statements as statements ] ws
+
+  entry sequence: sequence
+
+  test sequence {
+    accept "sequenceDiagram"
+    accept "sequenceDiagram\n  participant A\n  A->>B: hi"
+    accept "sequenceDiagram\n  loop L\n    A->>B: m\n  end"
+    accept "sequenceDiagram\n  Note over A,B: n"
+    reject "sequenceDiagram\n  A->>B"
+    reject "sequencediagram"
+  }
