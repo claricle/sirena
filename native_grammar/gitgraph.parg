@@ -1,0 +1,113 @@
+  ## ------------------------------------------------------------------
+  ## gitgraph (grammars/git_graph.rb)
+  ## ------------------------------------------------------------------
+
+  gitgraph_nonspace = !( sp / %x0A / %x0D / %x0B / %x0C / "," ) ANY
+
+  gitgraph_plain_id = %x22 1*( !%x22 ANY ) as id %x22 / "'" 1*( !"'" ANY ) as id "'" / 1*gitgraph_nonspace as id
+
+  gitgraph_plain_tag = %x22 1*( !%x22 ANY ) as tag %x22 / "'" 1*( !"'" ANY ) as tag "'" / 1*gitgraph_nonspace as tag
+
+  gitgraph_plain_parent = %x22 1*( !%x22 ANY ) as parent %x22 / "'" 1*( !"'" ANY ) as parent "'" / 1*gitgraph_nonspace as parent
+
+  gitgraph_break = %x0A / %x0D / %x2028 / %x2029
+
+  gitgraph_escape = "\\" !gitgraph_break ANY
+
+  gitgraph_dq_message = %x22 *( gitgraph_escape / !( %x22 / "\\" ) ANY ) as message %x22
+
+  gitgraph_sq_message = "'" *( gitgraph_escape / !( "'" / "\\" ) ANY ) as message "'"
+
+  gitgraph_dq_name = %x22 *( gitgraph_escape / !( %x22 / "\\" ) ANY ) as name %x22
+
+  gitgraph_sq_name = "'" *( gitgraph_escape / !( "'" / "\\" ) ANY ) as name "'"
+
+  gitgraph_dq_branch = %x22 *( gitgraph_escape / !( %x22 / "\\" ) ANY ) as branch %x22
+
+  gitgraph_sq_branch = "'" *( gitgraph_escape / !( "'" / "\\" ) ANY ) as branch "'"
+
+  gitgraph_word = ALPHA / DIGIT / "_"
+
+  gitgraph_branch_name = gitgraph_word *( *( "." / "/" ) ( "-" / gitgraph_word ) )
+
+  gitgraph_new_name = *sp ( gitgraph_dq_name / gitgraph_sq_name ) / 1*sp gitgraph_branch_name as name
+
+  gitgraph_ref_name = *sp ( gitgraph_dq_branch / gitgraph_sq_branch ) / 1*sp gitgraph_branch_name as branch
+
+  gitgraph_commit_id = "id:" *sp gitgraph_plain_id
+
+  gitgraph_commit_type = "type:" *sp ( "NORMAL" / "REVERSE" / "HIGHLIGHT" ) as type
+
+  gitgraph_commit_tag = "tag:" *sp gitgraph_plain_tag
+
+  gitgraph_commit_message = "msg:" *sp ( gitgraph_dq_message / gitgraph_sq_message ) / gitgraph_dq_message / gitgraph_sq_message
+
+  gitgraph_commit_option = gitgraph_commit_id / gitgraph_commit_type / gitgraph_commit_tag / gitgraph_commit_message
+
+  gitgraph_commit_options = ( 1*sp / &( %x22 / "'" ) ) 1*( gitgraph_commit_option *sp )
+
+  gitgraph_commit_body = "commit" [ gitgraph_commit_options as options ]
+
+  gitgraph_commit = gitgraph_commit_body as commit line_end
+
+  gitgraph_order = "order:" *sp 1*DIGIT as order
+
+  gitgraph_branch_options = sp 1*( gitgraph_order *sp )
+
+  gitgraph_branch_body = "branch" gitgraph_new_name [ gitgraph_branch_options as options ]
+
+  gitgraph_branch = gitgraph_branch_body as branch line_end
+
+  gitgraph_checkout_body = "checkout" gitgraph_ref_name
+
+  gitgraph_checkout = gitgraph_checkout_body as checkout line_end
+
+  gitgraph_switch_body = "switch" gitgraph_ref_name
+
+  gitgraph_switch = gitgraph_switch_body as switch line_end
+
+  gitgraph_quoted = %x22 *( !%x22 ANY ) %x22 / "'" *( !"'" ANY ) "'"
+
+  gitgraph_merge_option = gitgraph_commit_id / gitgraph_commit_type / gitgraph_commit_tag / "random:" gitgraph_quoted
+
+  gitgraph_merge_options = sp 1*( gitgraph_merge_option *sp )
+
+  gitgraph_merge_body = "merge" gitgraph_ref_name [ gitgraph_merge_options as options ]
+
+  gitgraph_merge = gitgraph_merge_body as merge line_end
+
+  gitgraph_pick_id = "id:" *sp gitgraph_plain_id
+
+  gitgraph_pick_parent = "parent:" *sp gitgraph_plain_parent
+
+  gitgraph_pick_option = gitgraph_pick_id / gitgraph_pick_parent / gitgraph_commit_tag
+
+  gitgraph_pick_options = 1*( gitgraph_pick_option *sp )
+
+  gitgraph_pick_body = "cherry-pick" 1*sp gitgraph_pick_options as options
+
+  gitgraph_cherry_pick = gitgraph_pick_body as cherry_pick line_end
+
+  gitgraph_acc_title = "accTitle" *sp ":" *sp rest_of_line as acc_title line_end
+
+  gitgraph_acc_descr_single = "accDescr" *sp ":" *sp rest_of_line as acc_descr line_end
+
+  gitgraph_acc_descr_multi = "accDescr" *( sp / newline ) "{" ws *( !"}" ANY ) as acc_descr "}" line_end
+
+  gitgraph_statement = gitgraph_commit / gitgraph_branch / gitgraph_checkout / gitgraph_switch / gitgraph_merge / gitgraph_cherry_pick / gitgraph_acc_title / gitgraph_acc_descr_single / gitgraph_acc_descr_multi
+
+  gitgraph_direction = ( "TB" / "LR" / "BT" ) as direction
+
+  gitgraph_header = "gitGraph" [ ( *sp gitgraph_direction *sp ":" / ":" ) ] ws
+
+  gitgraph = ws gitgraph_header [ 1*( gitgraph_statement ws ) as statements ] ws
+
+  entry gitgraph: gitgraph
+
+  test gitgraph {
+    accept "gitGraph"
+    accept "gitGraph:\n commit\n branch dev\n checkout dev\n commit id: \"a\"\n"
+    accept "gitGraph LR:\n commit"
+    reject "gitGraph LR\n commit"
+    reject "Graph"
+  }

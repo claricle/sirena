@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/git_graph"
 require_relative "builders/git_graph"
+require_relative "native/builders/gitgraph"
 require_relative "../diagram/git_graph"
 
 module Sirena
@@ -33,6 +34,8 @@ module Sirena
     #   MERMAID
     #   diagram = parser.parse(source)
     class GitGraph < Base
+      native :gitgraph, builder: Native::Builders::GitGraph
+
       COMMIT_ATTRIBUTES = %i[
         id message type tag tags branch_name parent_ids is_merge merge_branch
         is_cherry_pick cherry_pick_parent
@@ -47,14 +50,31 @@ module Sirena
       # @return [Diagram::GitGraph] the parsed git graph diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source, main_branch_name: "main")
+        result, orientation =
+          native_result(source, main_branch_name) ||
+          ruby_result(source, main_branch_name)
+        create_diagram(result, orientation)
+      end
+
+      private
+
+      # The native path's graph data and orientation, or nil when it
+      # declines.
+      def native_result(source, main_branch_name)
+        entry, builder = self.class.native
+        tree = Native.parse(entry, source)
+        tree && builder.new.apply(tree, main_branch_name: main_branch_name)
+      rescue Native::Declined
+        nil
+      end
+
+      def ruby_result(source, main_branch_name)
         tree = parse_with_grammar(Grammars::GitGraph.new, source)
         result = Builders::GitGraph.build(
           tree[:statements], main_branch_name: main_branch_name
         )
-        create_diagram(result, tree.fetch(:direction, "LR").to_s)
+        [result, tree.fetch(:direction, "LR").to_s]
       end
-
-      private
 
       def create_diagram(result, orientation)
         diagram = Diagram::GitGraph.new(
