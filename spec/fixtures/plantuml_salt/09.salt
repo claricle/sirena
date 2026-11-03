@@ -1,0 +1,17 @@
+@startsalt
+{
+    {T!
+        + <b>Part</b> | . | e.g. category of a magazine
+        ++ <b>Art</b> | article | first article in a category
+        +++ <b>H1</b> | level 1 heading | main content of the article
+        +++ <b>P</b> | paragraph | .
+        +++ <b>Sect</b> | section | .
+        ++++ <b>P</b> | . | .
+        ++++ <b>Div</b> Lang="de-DE" | . | passage of foreign language content, where a Lang attribute is assigned to <Div>
+        +++++ <b>P</b> | paragraph | .
+        +++++ <b>P</b> | paragraph | .
+        ++ <b>Art</b> | article | .
+        ++ ... | . | .
+    }
+}
+@endsalt

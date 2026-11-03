@@ -1,0 +1,10 @@
+@startsalt
+{
+    {T!
+        + <b>Table</b> | . | .
+        ++ <b>TR</b> | table row | .
+        ++ <b>TR</b> | table row | .
+        ++ <b>Caption</b> | . | substructure, e.g. <P>
+    }
+}
+@endsalt

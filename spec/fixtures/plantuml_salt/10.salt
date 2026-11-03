@@ -1,0 +1,12 @@
+@startsalt
+{
+    {T!
+        + <b>TOC</b> | table of contents | .
+        ++ <b>TOCI</b> | table of contents item | "Chapter 1"
+        ++ <b>TOCI</b> | table of contents item | "Chapter 2"
+        ++ <b>TOC</b> | . | .
+        +++ <b>TOCI</b> | table of contents item | "Chapter 2.1"
+        +++ <b>TOCI</b> | table of contents item | "Chapter 2.2"
+    }
+}
+@endsalt
