@@ -5,13 +5,6 @@ require "spec_helper"
 RSpec.describe Sirena::Parser::Flowchart do
   include FlowchartParserHelpers
 
-  # The :speed bounds guard the Parslet grammar's own scaling; the native
-  # engine is measured separately (scripts/benchmark_native_parse.rb) and
-  # agreement is covered by native_parse_parity_flowchart_spec.
-  around(:each, :speed) do |example|
-    NativeParity.with_native(false) { example.run }
-  end
-
   describe "a label written inside the link" do
     {
       "A-- text -->B" => "arrow",
