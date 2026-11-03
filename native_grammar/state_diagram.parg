@@ -1,0 +1,93 @@
+  ## ------------------------------------------------------------------
+  ## state_diagram (grammars/state_diagram.rb)
+  ## ------------------------------------------------------------------
+
+  state_diagram_name = 1*( ALPHA / DIGIT / "_" )
+
+  state_diagram_line_char = !line_end ANY
+
+  state_diagram_arrow = "-->" as arrow
+
+  state_diagram_quoted_id = %x22 *( "\\" ANY / !%x22 ANY ) %x22 / "'" *( "\\" ANY / !"'" ANY ) "'"
+
+  state_diagram_label_string = %x22 *( !%x22 ANY ) as string %x22
+
+  state_diagram_id = dq_string / sq_string / state_diagram_name
+
+  state_diagram_reserved = ( %i"classDef" / %i"class" / %i"click" / %i"href" / %i"scale" / %i"default" / %i"note" / %i"state" / %i"style" ) !( ALPHA / DIGIT / "_" )
+
+  state_diagram_marker = "<<" ( "choice" / "fork" / "join" ) as marker_type ">>"
+
+  state_diagram_direction_value = ( "TB" / "BT" / "LR" / "RL" ) as dir_value
+
+  state_diagram_direction = "direction" 1*sp state_diagram_direction_value as direction line_end
+
+  state_diagram_header_direction = *sp state_diagram_direction
+
+  state_diagram_header = ( "stateDiagram-v2" / "stateDiagram" ) as header
+
+  state_diagram_empty = "state" as keyword line_end
+
+  state_diagram_marker_target = 1*( !( *sp state_diagram_marker line_end ) state_diagram_line_char )
+
+  state_diagram_marker_declaration = state_diagram_marker_target as state_id *sp state_diagram_marker as marker
+
+  state_diagram_target = !( %x22 %x22 ) state_diagram_label_string as state_label 1*sp "as" 1*sp ( state_diagram_quoted_id / state_diagram_name ) as state_id / state_diagram_id as state_id
+
+  state_diagram_description = ":" *sp 1*( !"{" state_diagram_line_char ) as description
+
+  state_diagram_composite_statements = 1*( state_diagram_composite_statement ws )
+
+  state_diagram_composite_body = "{" ws [ state_diagram_composite_statements ] ws "}"
+
+  state_diagram_declaration = "state" as keyword 1*sp ( state_diagram_marker_declaration / state_diagram_target *sp [ state_diagram_description / state_diagram_composite_body as composite ] ) line_end
+
+  state_diagram_style_targets = state_diagram_name *( "," *sp state_diagram_name )
+
+  state_diagram_style = "style" as style_keyword 1*sp state_diagram_style_targets as style_targets [ 1*sp 1*state_diagram_line_char as style_props ] line_end
+
+  state_diagram_end = "[*]" / !state_diagram_reserved state_diagram_id
+
+  state_diagram_transition_label = *sp ":" *sp 1*( !"-->" state_diagram_line_char ) as label_text
+
+  state_diagram_transition = state_diagram_end as from *sp state_diagram_arrow *sp state_diagram_end as to [ state_diagram_transition_label as label ] *( *sp state_diagram_arrow *sp state_diagram_end as chain_to ) as chain line_end
+
+  state_diagram_note_head = "note" as note_keyword 1*sp ( "left" / "right" ) as position sp "of" 1*sp state_diagram_id as note_target *sp
+
+  state_diagram_note = state_diagram_note_head ":" *sp 1*state_diagram_line_char as note_text line_end
+
+  state_diagram_note_end = *sp "end note" line_end
+
+  state_diagram_note_body = *( !state_diagram_note_end *( !newline ANY ) newline )
+
+  state_diagram_note_block = state_diagram_note_head newline state_diagram_note_body as note_text state_diagram_note_end
+
+  state_diagram_floating_note = "note" as note_keyword 1*sp !( %x22 %x22 ) dq_string as note_text 1*sp "as" 1*sp state_diagram_id as note_id line_end
+
+  state_diagram_description_end = *sp ( newline / eof )
+
+  state_diagram_bare_description = ":" !( newline / eof ) *sp [ 1*( !state_diagram_description_end ANY ) as description ]
+
+  state_diagram_standalone = !state_diagram_reserved state_diagram_id as state_id [ *sp state_diagram_bare_description ] line_end
+
+  state_diagram_statement = state_diagram_direction / state_diagram_style / state_diagram_empty / state_diagram_declaration / state_diagram_note_block / state_diagram_floating_note / state_diagram_note / state_diagram_transition / state_diagram_standalone
+
+  state_diagram_composite_statement = "--" as concurrent_sep line_end / state_diagram_statement
+
+  state_diagram_statements = 1*( state_diagram_statement ws )
+
+  state_diagram = ws state_diagram_header !state_diagram_header_direction ws [ state_diagram_statements ] ws
+
+  entry state_diagram: state_diagram
+
+  test state_diagram {
+    accept "stateDiagram-v2"
+    accept "stateDiagram\n[*] --> A\nA --> [*]"
+    accept "stateDiagram-v2\nstate \"Idle mode\" as Idle\nstate C <<choice>>"
+    accept "stateDiagram-v2\nstate A {\n  B --> C\n  --\n  D\n}"
+    accept "stateDiagram-v2\nnote right of A : hi"
+    accept "stateDiagram-v2\nnote left of A\n  body\nend note"
+    reject "stateDiagram-v2 direction LR"
+    reject "stateDiagram-v2\nA --> class"
+    reject "state A"
+  }
