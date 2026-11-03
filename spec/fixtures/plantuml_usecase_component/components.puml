@@ -1,0 +1,9 @@
+@startuml(id=FRONTEND)
+component "Web App" as WebApp
+component "Mobile App" as MobileApp
+@enduml
+
+@startuml(id=BACKEND)
+component "API Gateway" as APIGateway
+component "Database" as DB
+@enduml

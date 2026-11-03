@@ -223,9 +223,10 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(plantuml.extensions).to eq([".puml"]).and be_frozen
     end
 
-    it "lists the class and sequence diagram types" do
+    it "lists the diagram types it reads" do
       expect(plantuml.types)
-        .to eq(%i[class_diagram sequence_diagram]).and be_frozen
+        .to eq(%i[class_diagram sequence_diagram activity_diagram
+                  usecase_diagram component_diagram]).and be_frozen
     end
   end
 

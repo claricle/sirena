@@ -7,6 +7,8 @@ require_relative "plantuml/layout"
 require_relative "plantuml/renderer"
 require_relative "plantuml/sequence"
 require_relative "plantuml/activity"
+require_relative "plantuml/usecase"
+require_relative "plantuml/component"
 
 module Sirena
   module Notation
@@ -48,7 +50,8 @@ module Sirena
 
       # @return [Array<Symbol>] diagram types, in display order
       def types
-        %i[class_diagram sequence_diagram activity_diagram].freeze
+        %i[class_diagram sequence_diagram activity_diagram usecase_diagram
+           component_diagram].freeze
       end
 
       # @param source [String] any String, including binary or invalid UTF-8
@@ -64,6 +67,8 @@ module Sirena
       # @param source [String] PlantUML source
       # @return [Notation::Parsed]
       def parse(source)
+        return Usecase.parse(source) if Usecase.usecase?(source)
+        return Component.parse(source) if Component.component?(source)
         return Activity.parse(source) if Activity.activity?(source)
         return Sequence.parse(source) if Sequence.sequence?(source)
 
