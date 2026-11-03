@@ -1,0 +1,45 @@
+  ## ------------------------------------------------------------------
+  ## quadrant (grammars/quadrant.rb)
+  ## ------------------------------------------------------------------
+
+  quadrant_text = 1*( !line_end ANY )
+
+  quadrant_name = 1*( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
+
+  quadrant_integer = 1*DIGIT
+
+  quadrant_float = quadrant_integer "." quadrant_integer
+
+  quadrant_title = "title" 1*sp quadrant_text as title line_end
+
+  quadrant_axis_label = dq_string / 1*( !"-->" !line_end ANY )
+
+  quadrant_x_axis = "x-axis" 1*sp quadrant_axis_label as x_axis_left *sp "-->" *sp quadrant_axis_label as x_axis_right line_end
+
+  quadrant_y_axis = "y-axis" 1*sp quadrant_axis_label as y_axis_bottom *sp "-->" *sp quadrant_axis_label as y_axis_top line_end
+
+  quadrant_label_line = "quadrant-" %x31-34 as quadrant_number 1*sp quadrant_text as quadrant_label line_end
+
+  quadrant_class_def = "classDef" 1*sp quadrant_name as class_name 1*sp *( !line_end ANY ) as class_style line_end
+
+  quadrant_color = "#" 3*8( DIGIT / %x61-66 / %x41-46 ) / 1*ALPHA
+
+  quadrant_param = "radius" *sp ":" *sp ( quadrant_float / quadrant_integer ) as radius / "color" *sp ":" *sp quadrant_color as color / "stroke-color" *sp ":" *sp quadrant_color as stroke_color / "stroke-width" *sp ":" *sp ( quadrant_float / quadrant_integer ) as stroke_width [ "px" ]
+
+  quadrant_styling = [ 1*sp quadrant_param *( *sp "," *sp quadrant_param ) ]
+
+  quadrant_coordinates = "[" *sp quadrant_float as x *sp "," *sp quadrant_float as y *sp "]"
+
+  quadrant_point = 1*( !":::" !":" ANY ) as label [ ":::" quadrant_name ] *sp ":" *sp quadrant_coordinates as coordinates quadrant_styling as styling line_end as data_point
+
+  quadrant_statement = quadrant_title / quadrant_x_axis / quadrant_y_axis / quadrant_label_line / quadrant_class_def / quadrant_point / comment line_end
+
+  quadrant = ws "quadrantChart" as header ws [ 1*( quadrant_statement ws ) as statements ] ws
+
+  entry quadrant: quadrant
+
+  test quadrant {
+    accept "quadrantChart"
+    accept "quadrantChart\n  title T\n  x-axis L --> R\n  quadrant-1 Q\n  A: [0.3, 0.7] radius: 10, color: #ff0000"
+    reject "quadrantChart\n  A: [3, 7]"
+  }
