@@ -1,0 +1,38 @@
+# Mermaid grammar -- PARG source (parsanol grammar language).
+# Extraction target: the hand-written Parslet grammars in
+# claricle/sirena lib/sirena/parser/grammars/*.rb -- the rules below mirror
+# those grammars rule for rule (same whitespace set, same line_end, same
+# quoting rules), so the native path and the Ruby fallback accept the same
+# language. One entry per diagram type; sirena routes by diagram keyword
+# and falls back to the Parslet grammar for every type not yet here and for
+# every input an entry here rejects (so error messages stay positioned).
+# Compile: parsanol parg compile mermaid.parg -o mermaid.json
+
+grammar Mermaid version "0.1.0" edition 2 {
+
+  ## ------------------------------------------------------------------
+  ## Common (grammars/common.rb)
+  ## ------------------------------------------------------------------
+
+  ## space: a blank within a line.
+  sp = %x20 / %x09
+
+  newline = %x0A / %x0D.0A
+
+  ## comment: "%%" to end of line (a lone CR stays in the comment).
+  comment = "%%" *( !%x0A ANY )
+
+  ws = *( sp / newline / comment )
+
+  eof = !ANY
+
+  ## line_end: optional ";", trailing blanks, then an optional comment
+  ## and a newline, or end of input.
+  line_end = [";"] *sp ( [comment] newline / eof )
+
+  rest_of_line = *( !line_end ANY )
+
+  dq_string = %x22 *( "\\" ANY / !%x22 ANY ) as string %x22
+
+  sq_string = "'" *( "\\" ANY / !"'" ANY ) as string "'"
+

@@ -11,9 +11,11 @@ module Sirena
     # source of every positioned ParseError.
     module Native
       ARTIFACT_PATH = File.expand_path("native/mermaid.json", __dir__)
+      ARTIFACT_VARIABLE = "SIRENA_NATIVE_ARTIFACT"
       DISABLE_VARIABLE = "SIRENA_NATIVE_PARSER"
       DISABLED_VALUES = %w[0 off false ruby].freeze
-      private_constant :ARTIFACT_PATH, :DISABLE_VARIABLE, :DISABLED_VALUES
+      private_constant :ARTIFACT_PATH, :ARTIFACT_VARIABLE, :DISABLE_VARIABLE,
+                       :DISABLED_VALUES
 
       class << self
         # @return [Boolean] whether the parsanol engine and artifact loaded
@@ -60,7 +62,8 @@ module Sirena
 
         def load_artifact
           require "parsanol"
-          Parsanol::PARG::Artifact.load(ARTIFACT_PATH)
+          Parsanol::PARG::Artifact.load(ENV.fetch(ARTIFACT_VARIABLE,
+                                                  ARTIFACT_PATH))
         rescue LoadError, StandardError
           nil
         end

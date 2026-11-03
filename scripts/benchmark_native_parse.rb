@@ -9,12 +9,15 @@
 require "benchmark"
 require "json"
 require_relative "../lib/sirena"
-require_relative "../lib/sirena/parser/pie"
-require_relative "../lib/sirena/parser/info"
+require_relative "native_types"
 
 ROUNDS = Integer(ARGV.fetch(0, 5))
 CORPUS = File.expand_path("../spec/mermaid", __dir__)
-TYPES = { "pie" => Sirena::Parser::Pie, "info" => Sirena::Parser::Info }.freeze
+TYPES = NativeTypes::TYPES.filter_map do |directory, (path, name)|
+  require_relative "../lib/sirena/parser/#{path}"
+  parser_class = Sirena::Parser.const_get(name)
+  [directory, parser_class] if parser_class.native
+end.to_h.freeze
 
 def run(parser_class, sources, native)
   ENV["SIRENA_NATIVE_PARSER"] = native ? "1" : "ruby"
