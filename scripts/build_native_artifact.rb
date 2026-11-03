@@ -12,7 +12,8 @@ require "fileutils"
 
 dir = File.expand_path("../native_grammar", __dir__)
 parg_out, json_out, *types = ARGV
-abort "usage: build_native_artifact.rb PARG_OUT JSON_OUT [type ...]" unless json_out
+usage = "usage: build_native_artifact.rb PARG_OUT JSON_OUT [type ...]"
+abort usage unless json_out
 
 files = Dir.glob(File.join(dir, "*.parg"))
 always = ->(file) { File.basename(file).start_with?("00_") }
