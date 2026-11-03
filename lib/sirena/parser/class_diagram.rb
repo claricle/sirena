@@ -52,8 +52,6 @@ module Sirena
         entry, builder = self.class.native
         tree = Native.parse(entry, source)
         tree && builder.new.apply(tree, source)
-      rescue Native::Declined
-        nil
       end
     end
   end

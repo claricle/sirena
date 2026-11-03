@@ -64,8 +64,6 @@ module Sirena
         entry, builder = self.class.native
         tree = Native.parse(entry, source)
         tree && builder.new.apply(tree, main_branch_name: main_branch_name)
-      rescue Native::Declined
-        nil
       end
 
       def ruby_result(source, main_branch_name)

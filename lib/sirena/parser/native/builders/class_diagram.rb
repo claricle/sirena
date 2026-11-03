@@ -22,7 +22,6 @@ module Sirena
             def collect_slices(node, slices)
               case node
               when Hash then node.each_value { |v| collect_slices(v, slices) }
-              when Array then node.each { |v| collect_slices(v, slices) }
               else slices << node if node.respond_to?(:offset)
               end
             end
