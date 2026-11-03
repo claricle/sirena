@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/c4"
 require_relative "builders/c4"
+require_relative "native/builders/c4"
 require_relative "../diagram/c4"
 
 module Sirena
@@ -30,6 +31,7 @@ module Sirena
     class C4 < Base
       grammar Grammars::C4
       builder Builders::C4
+      native :c4, builder: Native::Builders::C4
     end
   end
 end

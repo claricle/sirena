@@ -1,0 +1,73 @@
+  ## ------------------------------------------------------------------
+  ## c4 (grammars/c4.rb)
+  ## ------------------------------------------------------------------
+
+  c4_identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
+
+  c4_variable = "$" "{" c4_identifier as var "}"
+
+  c4_variable_or_identifier = c4_variable / c4_identifier
+
+  c4_macro = "$" "{" c4_identifier "}"
+
+
+  c4_canonical_header = ( "C4Context" / "C4Container" / "C4Component" / "C4Dynamic" / "C4Deployment" ) as header [ "$" "{" c4_identifier "}" / ";" ]
+
+  c4_compatibility_header = "C4 diagram" as header [ "$" "{" c4_identifier "}" / ";" ]
+
+  c4_title = "title" 1*sp 1*( !line_end !"$" ANY ) as title [c4_macro] line_end
+
+  c4_number = 1*DIGIT "." 1*DIGIT / 1*DIGIT
+
+  c4_config_param = ( "$" c4_identifier ) as key *sp "=" *sp ( dq_string / c4_number ) as value
+
+  c4_config_params = c4_config_param *( *sp "," *sp c4_config_param )
+
+  c4_layout_config = "UpdateLayoutConfig" *sp "(" *sp c4_config_params as config_params *sp ")" line_end
+
+  c4_unquoted_param = !( "$" ( ALPHA / "_" ) ) 1*( !"," !")" !line_end ANY )
+
+  c4_param_value = dq_string / c4_variable_or_identifier / c4_unquoted_param
+
+  c4_sep = *sp "," *sp
+
+  c4_boundary_type = ( "Enterprise_Boundary" / "System_Boundary" / "Boundary" ) / ( "$" "{" c4_identifier as var "}" ) as variable
+
+  c4_boundary_attribute = ( "$" "link" "=" dq_string ) as link / ( "$" "tags" "=" dq_string ) as tags
+
+  c4_boundary_attributes = 1*( c4_sep c4_boundary_attribute )
+
+  c4_boundary_params = c4_variable_or_identifier as id [ c4_sep c4_param_value as label ] [ c4_sep c4_param_value as type ] [c4_boundary_attributes]
+
+  c4_boundary_body = ( c4_boundary / c4_element ) as item *( ws ( c4_boundary / c4_element ) as item )
+
+  c4_boundary = c4_boundary_type as boundary_type *sp "(" *sp c4_boundary_params *sp ")" *sp "{" ws [ c4_boundary_body as body ] ws "}" line_end
+
+  c4_element_type = "Enterprise_Boundary" / "System_Boundary" / "Person_Ext" / "Person" / "SystemDb_Ext" / "SystemDb" / "SystemQueue_Ext" / "SystemQueue" / "System_Ext" / "System" / "ContainerDb" / "ContainerQueue" / "Container" / "Component" / ( "$" "{" c4_identifier as var "}" ) as variable
+
+  c4_element_attribute = ( "$" "sprite" "=" dq_string ) as sprite / ( "$" "link" "=" dq_string ) as link / ( "$" "tags" "=" dq_string ) as tags
+
+  c4_element_attributes = 1*( c4_sep c4_element_attribute )
+
+  c4_element_params = c4_variable_or_identifier as id c4_sep c4_param_value as label [ c4_sep c4_param_value as description ] [ c4_sep c4_param_value as technology ] [c4_element_attributes]
+
+  c4_element = c4_element_type as element_type *sp "(" *sp c4_element_params *sp ")" [c4_macro] line_end
+
+  c4_relationship_params = c4_variable_or_identifier as from c4_sep c4_variable_or_identifier as to [ c4_sep c4_param_value as label ] [ c4_sep c4_param_value as technology ]
+
+  c4_relationship = ( "BiRel" / "Rel" ) as rel_type *sp "(" *sp c4_relationship_params *sp ")" [c4_macro] line_end
+
+  c4_statement = c4_title / c4_layout_config / c4_boundary / c4_relationship / c4_element
+
+  c4_statements = 1*( c4_statement ws )
+
+  c4 = ws ( c4_canonical_header ws c4_statements ws / c4_compatibility_header ws [c4_statements] ws )
+
+  entry c4: c4
+
+  test c4 {
+    accept "C4Context\n  title T\n  Person(u, \"User\")\n  System(s, \"S\", \"d\", $tags=\"x\")\n  Rel(u, s, \"uses\")"
+    accept "C4 diagram"
+    accept "C4Container\n  Boundary(b, \"B\") {\n    Container(c, \"C\")\n  }"
+    reject "C4Context"
+  }
