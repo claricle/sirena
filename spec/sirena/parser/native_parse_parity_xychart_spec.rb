@@ -1,0 +1,56 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe Sirena::Parser::Native, ".parse parity (xychart)" do
+  it_behaves_like "native corpus parity", "xychart"
+
+  it_behaves_like "native edge parity", "xychart", [
+    "xychart-beta",
+    "xychart-beta\n",
+    "xychart-beta  \n",
+    "xychart-beta;\n",
+    "  xychart-beta\n",
+    "xychart\n",
+    "XYChart-beta\n",
+    "xychart-beta\n  title \"Sales\"",
+    "xychart-beta\n  title \"Sales\";\n",
+    "xychart-beta\n  title \"\"\n",
+    "xychart-beta\n  title Sales\n",
+    "xychart-beta\r\n  title \"T\"\r\n  line [1, 2]\r\n",
+    "xychart-beta\n  x-axis [jan, feb, mar]\n",
+    "xychart-beta\n  x-axis \"Month\" [jan, feb]\n",
+    "xychart-beta\n  x-axis \"\" [jan]\n",
+    "xychart-beta\n  x-axis [1, 2, 3]\n",
+    "xychart-beta\n  x-axis [1, a, 2]\n",
+    "xychart-beta\n  x-axis [only]\n",
+    "xychart-beta\n  x-axis [007]\n",
+    "xychart-beta\n  x-axis [a-b]\n",
+    "xychart-beta\n  x-axis []\n",
+    "xychart-beta\n  x-axis [a,]\n",
+    "xychart-beta\n  x-axis [ a , b ]\n",
+    "xychart-beta\n  y-axis 0 --> 10\n",
+    "xychart-beta\n  y-axis \"Rev\" 0 --> 100\n",
+    "xychart-beta\n  y-axis \"\" 0 --> 100\n",
+    "xychart-beta\n  y-axis -5 --> 10\n",
+    "xychart-beta\n  y-axis 0 -> 10\n",
+    "xychart-beta\n  line [1, 2.5, 3]\n  bar [4, 5]\n",
+    "xychart-beta\n  line [1.]\n",
+    "xychart-beta\n  line [.5]\n",
+    "xychart-beta\n  line [-1]\n",
+    "xychart-beta\n  line [1]",
+    "xychart-beta\n  bar [ 1 , 2 ]\n",
+    "xychart-beta\n  dataset \"Named\" [1, 2]\n",
+    "xychart-beta\n  dataset \"\" [1]\n",
+    "xychart-beta\n  dataset Named [1]\n",
+    "xychart-beta\n  x-axis [a, b]\n  x-axis [c]\n",
+    "xychart-beta\n  title \"A\"\n  title \"B\"\n",
+    "xychart-beta\n%% comment\n\n  line [1] %% trailing\n",
+    "xychart-beta\n  line [1]\n  ",
+    "xychart-beta\n\tline [1]\n",
+    "xychart-beta\n  title \"é 日本\"\n  x-axis [é]\n",
+    "xychart-beta\n  unknown [1]\n",
+    "",
+    "   ",
+  ]
+end
