@@ -3,6 +3,7 @@
 require "parslet"
 require_relative "base"
 require_relative "../error/score_error"
+require_relative "native/builders/user_journey"
 require_relative "../diagram/user_journey"
 
 module Sirena
@@ -162,17 +163,23 @@ module Sirena
 
     # User Journey diagram parser using Parslet
     class UserJourney < Base
+      native :user_journey, builder: Native::Builders::UserJourney
+
       # Both fixed-encoding grammar failures and invalid byte indexing can
       # escape as core encoding errors. Normalize them into ParseError across
       # the whole parse/build operation so callers see the parser contract.
       def parse(source)
-        tree = parse_with_grammar(UserJourneyGrammar.new, source)
-        build_diagram_from_tree(tree)
+        native_diagram(source) || ruby_diagram(source)
       rescue EncodingError, ArgumentError => e
         raise ParseError, "Parse error: #{e.message}"
       end
 
       private
+
+      def ruby_diagram(source)
+        tree = parse_with_grammar(UserJourneyGrammar.new, source)
+        build_diagram_from_tree(tree)
+      end
 
       def build_diagram_from_tree(tree)
         diagram = Diagram::UserJourney.new
