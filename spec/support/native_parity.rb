@@ -36,10 +36,26 @@ module NativeParity
   # [:ok, model yaml] or [:error, message] for one parse path.
   def outcome(directory, source, native:)
     with_native(native) do
-      [:ok, parser_class(directory).new.parse(source).to_yaml]
+      [:ok, dump(directory, parser_class(directory).new.parse(source))]
     end
   rescue Sirena::Parser::ParseError => e
     [:error, e.message]
+  end
+
+  # A mindmap node points at its parent, so its YAML dump never ends;
+  # the tree is compared as plain data instead.
+  def dump(directory, model)
+    return model.to_yaml unless directory == "mindmap"
+
+    [model.root && dump_node(model.root), model.nodes.map { dump_node(_1) }]
+  end
+
+  def dump_node(node)
+    {
+      id: node.id, content: node.content, level: node.level,
+      shape: node.shape, icon: node.icon, classes: node.classes,
+      parent: node.parent&.id, children: node.children.map { dump_node(_1) }
+    }
   end
 
   def same_outcome?(directory, source)
