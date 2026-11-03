@@ -1,0 +1,46 @@
+  ## ------------------------------------------------------------------
+  ## timeline (grammars/timeline.rb)
+  ## ------------------------------------------------------------------
+
+  ## ";" has no meaning in mmdc's timeline lexer, so line_end drops it.
+  timeline_line_end = *sp ( [comment] newline / eof )
+
+  timeline_rest = *( !timeline_line_end ANY )
+
+  timeline_title = "title" 1*sp 1*( !timeline_line_end ANY ) as title timeline_line_end
+
+  timeline_acc_title = "accTitle" *sp ":" *sp timeline_rest as acc_title timeline_line_end
+
+  timeline_acc_descr_single = "accDescr" *sp ":" *sp timeline_rest as acc_descr timeline_line_end
+
+  timeline_acc_descr_multi = "accDescr" *sp "{" ws *( !"}" ANY ) as acc_descr ws "}" timeline_line_end
+
+  timeline_section = "section" 1*sp 1*( !timeline_line_end ANY ) as section timeline_line_end
+
+  timeline_separator_colon = ":" ( %x20 / %x09 / %x0A / %x0D / %x0C / %x0B )
+
+  timeline_description_char = !timeline_separator_colon !timeline_line_end ANY
+
+  timeline_description = *sp 1*timeline_description_char *sp
+
+  timeline_descriptions = timeline_description as desc *( *sp ":" *sp timeline_description as desc )
+
+  timeline_time = 1*( !":" !timeline_line_end ANY )
+
+  timeline_event = *sp timeline_time as time *sp ":" timeline_descriptions as descriptions timeline_line_end
+
+  timeline_continuation = *sp ":" timeline_descriptions as descriptions timeline_line_end
+
+  timeline_task = 1*( !":" !"section" !"title" !"accTitle" !"accDescr" !timeline_line_end ANY ) as task timeline_line_end
+
+  timeline_statement = timeline_acc_title / timeline_acc_descr_single / timeline_acc_descr_multi / timeline_title / timeline_section / timeline_event as event_entry / timeline_continuation as continuation_entry / timeline_task / comment timeline_line_end
+
+  timeline = ws "timeline" as header ws [ 1*( timeline_statement ws ) as statements ] ws
+
+  entry timeline: timeline
+
+  test timeline {
+    accept "timeline"
+    accept "timeline\n  title T\n  section S\n  2002 : A\n  2004 : B : C\n  : D"
+    reject "timelin"
+  }
