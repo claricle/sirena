@@ -34,6 +34,7 @@ module Sirena
         VISIBILITY = { "+" => :public, "-" => :private, "#" => :protected,
                        "~" => :package }.freeze
         KINDS = { "class" => :class, "abstract class" => :abstract,
+                  "abstract" => :abstract,
                   "interface" => :interface, "static class" => :class }.freeze
 
         # Every quantified piece is separated from the next by a character
@@ -41,7 +42,7 @@ module Sirena
         STARTUML = /\A@startuml(?![A-Za-z0-9_])/
         STEREOTYPE = /<<[^<>]+>>/
         CLASS_DECLARATION =
-          /\A(abstract[ \t]+class|static[ \t]+class|class|interface)
+          /\A(abstract[ \t]+class|static[ \t]+class|abstract|class|interface)
            [ \t]+(#{NAME})
            (?:<([^<>]+)>)?((?:[ \t]*#{STEREOTYPE})*)
            ((?:[ \t]+\$#{NAME})*)(?:[ \t]*(\{))?\z/xo
@@ -58,6 +59,8 @@ module Sirena
         NOTE = /\Anote[ \t]+(left|right|top|bottom)[ \t]+of[ \t]+(#{NAME})
                 (?:::(#{NAME}))?(?:[ \t]+(\#[A-Za-z0-9]+))?
                 (?:[ \t]*(#{STEREOTYPE}))?(?:[ \t]*:[ \t]*(.+))?\z/xio
+        LAST_NOTE = /\Anote[ \t]+(left|right|top|bottom)
+                     (?:[ \t]*:[ \t]*(.+))?\z/xi
         END_NOTE = /\Aend[ \t]?note\z/i
         END_TEXT = '(?:"([^"]+)"(?:/"([^"]+)")?|/"([^"]+)"|(\[[^\]]+\]))'
         RELATION = /\A(#{NAME}|#{QUOTED_NAME})[ \t]+(?:#{END_TEXT}[ \t]+)?
@@ -79,8 +82,9 @@ module Sirena
                             "Source must start with one of: @startuml"
 
         private_constant :NAME, :VISIBILITY, :KINDS, :STARTUML, :END_TEXT,
-                         :STEREOTYPE, :CLASS_DECLARATION, :QUOTED_DECLARATION,
-                         :QUOTED_NAME, :HIDE_TAG, :PACKAGE, :NOTE, :END_NOTE,
+                         :STEREOTYPE, :CLASS_DECLARATION, :LAST_NOTE,
+                         :QUOTED_DECLARATION, :QUOTED_NAME, :HIDE_TAG, :PACKAGE,
+                         :NOTE, :END_NOTE,
                          :RELATION, :JUNCTION, :METHOD, :FIELD,
                          :TYPED_FIELD, :TYPED_METHOD, :MODIFIERS,
                          :STYLE_OPEN, :LINE_END, :NOT_FOUND_MESSAGE
@@ -252,8 +256,15 @@ module Sirena
           elsif (match = NOTE.match(text))
             note(builder, match, number, text)
           else
-            relation(builder, text, number)
+            last_note_or_relation(builder, text, number)
           end
+        end
+
+        def last_note_or_relation(builder, text, number)
+          match = LAST_NOTE.match(text)
+          return relation(builder, text, number) unless match
+
+          last_note(builder, match, number, text)
         end
 
         # A note with `: text` is one line; without it the text follows up
@@ -263,6 +274,21 @@ module Sirena
           inline = match[6]
           raise refusal(text, number) if inline && head[:member]
 
+          builder.open_note(head, number, [*inline])
+          return :note unless inline
+
+          builder.close_note
+          :statements
+        end
+
+        # `note left: text` sits beside the class defined last.
+        def last_note(builder, match, number, text)
+          target = builder.last_defined
+          raise refusal(text, number) unless target
+
+          head = { side: match[1].downcase.to_sym, target: target,
+                   member: nil, color: nil, stereotype: nil }
+          inline = match[2]
           builder.open_note(head, number, [*inline])
           return :note unless inline
 

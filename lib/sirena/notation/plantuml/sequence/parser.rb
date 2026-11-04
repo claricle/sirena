@@ -83,6 +83,7 @@ module Sirena
           BRANCH = /\Aelse(?:[ \t]+(.*))?\z/i
           RETURN = /\Areturn(?:[ \t]+(.*))?\z/i
           DIVIDER = /\A==[ \t]*(.*?)[ \t]*==\z/
+          DELAY = /\A\.\.\.(?:[ \t]*(\S.*?)[ \t]*\.\.\.)?\z/
           BOX = /\Abox(?:[ \t]+(#{QUOTED}))?\z/io
           END_BOX = /\A(?:endbox|end[ \t]+box)\z/i
           PRAGMA = /\A!pragma[ \t]+(teoz|svginteractive)[ \t]+true\z/i
@@ -95,7 +96,7 @@ module Sirena
           PARALLEL_KINDS = [MESSAGE, NOTE, BLOCK].freeze
           TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
                       [REF, :ref], [BRANCH, :branch], [ACTIVATION, :activation],
-                      [RETURN, :reply], [DIVIDER, :divider],
+                      [RETURN, :reply], [DIVIDER, :divider], [DELAY, :delay],
                       [DESTROY, :destroy], [NEWPAGE, :newpage],
                       [AUTONUMBER, :autonumber]].freeze
           SETTINGS = [[SKINPARAM_WIDTH, :min_width],
@@ -111,8 +112,9 @@ module Sirena
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
                            :LINE_END, :PRAGMA, :ACTIVATION, :MARKS, :TARGET,
                            :NOTE, :END_NOTE, :REF, :BLOCK, :BRANCH, :RETURN,
-                           :DIVIDER, :DESTROY, :COLOUR, :SKINPARAM_WIDTH,
-                           :STYLE_OPEN, :STYLE_CLOSE, :PARALLEL,
+                           :DIVIDER, :DELAY, :DESTROY, :COLOUR,
+                           :SKINPARAM_WIDTH, :STYLE_OPEN, :STYLE_CLOSE,
+                           :PARALLEL,
                            :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE,
                            :AUTOACTIVATE, :AUTONUMBER, :TITLE,
                            :CHROME_OPEN, :CHROME_CLOSE
@@ -439,6 +441,10 @@ module Sirena
 
           def divider(match)
             @outline.divider(match[1])
+          end
+
+          def delay(match)
+            @outline.delay(match[1].to_s)
           end
 
           def note(match)

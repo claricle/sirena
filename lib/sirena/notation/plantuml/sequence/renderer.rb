@@ -19,6 +19,7 @@ module Sirena
             %i[bars activation_bar], %i[crosses cross_line],
             %i[page_breaks page_break_line],
             %i[fragments fragment_group], %i[dividers divider_group],
+            %i[delays delay_group],
             %i[arrows arrow_group], %i[notes note_group],
             %i[heads head_group]
           ].freeze
@@ -41,7 +42,7 @@ module Sirena
             chrome_groups(document, scene)
             LAYERS.each do |collection, drawer|
               items = scene.public_send(collection)
-              items.each { |item| document << send(drawer, item) }
+              items&.each { |item| document << send(drawer, item) }
             end
             document
           end
@@ -210,6 +211,10 @@ module Sirena
             children = divider.lines.map { |line| solid(line) }
             children << divider_label(divider) unless divider.texts.empty?
             group("divider-#{divider.y}", children, divider.texts)
+          end
+
+          def delay_group(delay)
+            group("delay-#{delay.texts.first.y}", [], delay.texts)
           end
 
           def divider_label(divider)

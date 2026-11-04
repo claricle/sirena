@@ -2,11 +2,11 @@
   ## radar (grammars/radar.rb)
   ## ------------------------------------------------------------------
 
-  radar_text = 1*( !newline ANY )
+  radar_text = 1*( 1*( !( "\n" / "\r" ) ANY ) / !newline ANY )
 
   radar_id = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
 
-  radar_label = "[" %x22 1*( !%x22 ANY ) as label %x22 "]"
+  radar_label = "[" %x22 1*( !( "\"" ) ANY ) as label %x22 "]"
 
   radar_title = "title" sp radar_text as title line_end
 

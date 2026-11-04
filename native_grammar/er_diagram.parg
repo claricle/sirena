@@ -7,9 +7,9 @@
 
   er_diagram_line_terminator = %x0A / %x0D / %x2028 / %x2029
 
-  ## Character classes spelled as ranges: the engine scans a class repeat
-  ## in one pass, but a `*( !x ANY )` repeat builds its tree one character
-  ## at a time (quadratic on a long note or tilde run).
+  ## Character classes spelled as ranges: a class repeat is linear, where a
+  ## `*( !x ANY )` repeat with a lookahead the engine cannot scan builds its
+  ## tree one character at a time (quadratic on a long tilde run).
   ## Not "~" and not a JS space.
   er_diagram_plain_char = %x00-08 / %x0E-1F / %x21-7D / %x7F-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
 
@@ -19,12 +19,9 @@
   ## Not "~" and not a line terminator.
   er_diagram_tilde_body_char = %x00-09 / %x0B-0C / %x0E-7D / %x7F-2027 / %x202A-10FFFF
 
-  ## Not a double quote.
-  er_diagram_note_char = %x00-21 / %x23-10FFFF
-
   er_diagram_identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
 
-  er_diagram_entity_name = %x22 1*( !%x22 ANY ) %x22 / 1*DIGIT "." 1*DIGIT / 1*DIGIT / ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" / "-" )
+  er_diagram_entity_name = %x22 1*( !( "\"" ) ANY ) %x22 / 1*DIGIT "." 1*DIGIT / 1*DIGIT / ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" / "-" )
 
   er_diagram_class_name_list = er_diagram_identifier *( "," [sp] er_diagram_identifier )
 
@@ -48,7 +45,7 @@
 
   er_diagram_attribute = [ er_diagram_attribute_type ] as type *sp er_diagram_identifier as name *sp [ er_diagram_key_list ] as key [ *sp er_diagram_note as note ] [ *sp comment ]
 
-  er_diagram_note = %x22 *er_diagram_note_char as string %x22
+  er_diagram_note = %x22 *( !( "\"" ) ANY ) as string %x22
 
   er_diagram_attribute_type = er_diagram_tilde_type / er_diagram_identifier
 

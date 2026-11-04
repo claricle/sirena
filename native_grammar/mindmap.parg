@@ -8,7 +8,7 @@
 
   mindmap_icon = "::icon(" 1*( !")" ANY ) as icon ")"
 
-  mindmap_class = ":::" 1*( !%x0D !%x0A ANY ) as classes
+  mindmap_class = ":::" 1*( !( "\n" / "\r" ) ANY ) as classes
 
   mindmap_circle = "((" 1*( !")" ANY ) as content "))" "" as shape_circle
 
@@ -18,21 +18,21 @@
 
   mindmap_hexagon = "{{" 1*( !"}" ANY ) as content "}}" "" as shape_hexagon
 
-  mindmap_square = "[" ( %x22 1*( !%x22 ANY ) as content %x22 / 1*( !"]" ANY ) as content ) "]" "" as shape_square
+  mindmap_square = "[" ( %x22 1*( !( "\"" ) ANY ) as content %x22 / 1*( !"]" ANY ) as content ) "]" "" as shape_square
 
-  mindmap_round_comment_line = newline *mindmap_comment_indent "%%" !"{" *( !%x0D !%x0A ANY ) [newline]
+  mindmap_round_comment_line = newline *mindmap_comment_indent "%%" !"{" *( !( "\n" / "\r" ) ANY ) [newline]
 
-  mindmap_round_unquoted = 1*( mindmap_round_comment_line / !")" ANY ) as content
+  mindmap_round_unquoted = 1*( mindmap_round_comment_line / 1*( !( "\n" / "\r" / ")" ) ANY ) / n_29 ) as content
 
-  mindmap_round_quoted = 1*( mindmap_round_comment_line / !%x22 ANY ) as content
+  mindmap_round_quoted = 1*( mindmap_round_comment_line / 1*( !( "\n" / "\r" / "\"" ) ANY ) / n_22 ) as content
 
   mindmap_round = "(" ( %x22 mindmap_round_quoted %x22 "" as round_quoted / mindmap_round_unquoted ) ")" "" as shape_round
 
   mindmap_shaped = *mindmap_word_char ( mindmap_circle / mindmap_bang / mindmap_cloud / mindmap_hexagon / mindmap_square / mindmap_round )
 
-  mindmap_unterminated_opener = *( !%x0D !%x0A !"(" !"[" ANY ) ( "(" / "[" ) *( !%x0D !%x0A !")" !"]" ANY ) ( newline / eof )
+  mindmap_unterminated_opener = *( !( "\n" / "\r" / "(" / "[" ) ANY ) ( "(" / "[" ) *( !( "\n" / "\r" / ")" / "]" ) ANY ) ( newline / eof )
 
-  mindmap_plain = !mindmap_unterminated_opener 1*( !%x0D !%x0A !":" ANY ) as content
+  mindmap_plain = !mindmap_unterminated_opener 1*( !( "\n" / "\r" / ":" ) ANY ) as content
 
   mindmap_node = mindmap_icon / mindmap_class / mindmap_shaped / mindmap_plain
 

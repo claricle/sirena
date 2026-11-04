@@ -9,15 +9,15 @@
 
   requirement_identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
 
-  requirement_acc_title = "accTitle" *requirement_js_space ":" *requirement_js_space 1*( !newline ANY ) as acc_title ( newline / eof )
+  requirement_acc_title = "accTitle" *requirement_js_space ":" *requirement_js_space 1*( 1*( !( "\n" / "\r" ) ANY ) / !newline ANY ) as acc_title ( newline / eof )
 
-  requirement_acc_descr_single = "accDescr" *requirement_js_space ":" *requirement_js_space 1*( !newline ANY ) as acc_descr ( newline / eof )
+  requirement_acc_descr_single = "accDescr" *requirement_js_space ":" *requirement_js_space 1*( 1*( !( "\n" / "\r" ) ANY ) / !newline ANY ) as acc_descr ( newline / eof )
 
   requirement_acc_descr_multi = "accDescr" *requirement_js_space "{" *requirement_js_space *( !"}" ANY ) as acc_descr "}"
 
   requirement_property_key = ( "id" / "text" / "risk" / "verifymethod" / "type" / "docref" ) as prop_key
 
-  requirement_property_value = 1*( !requirement_line_end ANY )
+  requirement_property_value = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" ) ANY ) / le_mid / !requirement_line_end ANY )
 
   requirement_property = requirement_property_key as key ws ":" ws requirement_property_value as value requirement_line_end
 
@@ -39,7 +39,7 @@
 
   requirement_style_targets = requirement_identifier *( "," ws requirement_identifier )
 
-  requirement_style_property = 1*( !requirement_line_end !"," ANY )
+  requirement_style_property = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / "," ) ANY ) / le_mid / !requirement_line_end !"," ANY )
 
   requirement_style_properties = requirement_style_property *( "," requirement_style_property )
 

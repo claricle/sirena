@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../activation"
+require_relative "../delay"
 require_relative "../destroy"
 require_relative "../divider"
 require_relative "../fragment"
@@ -21,6 +22,7 @@ module Sirena
                         [Ref, Blocks.method(:ref)],
                         [Fragment, Blocks.method(:fragment)],
                         [Divider, Blocks.method(:divider)],
+                        [Delay, Blocks.method(:delay)],
                         [Activation, Blocks.method(:activation)],
                         [Destroy, Blocks.method(:destroy)],
                         [PageBreak, Blocks.method(:page_break)]].freeze

@@ -33,6 +33,10 @@ module Sirena
               sink.node("divider", divider.label)
             end
 
+            def delay(delay, sink, _ids)
+              sink.node("delay", delay.label)
+            end
+
             def activation(activation, sink, ids)
               node = sink.node("activation")
               sink.detail(node, "phase", activation.phase)

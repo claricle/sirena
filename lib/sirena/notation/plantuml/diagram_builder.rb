@@ -127,6 +127,12 @@ module Sirena
           @note = [head, number, lines]
         end
 
+        # @return [String, nil] the class defined last, which a note written
+        #   without `of` sits beside
+        def last_defined
+          @kinds.keys.last
+        end
+
         def add_note_line(text)
           @note.last << text
         end

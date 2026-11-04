@@ -6,7 +6,7 @@
 
   architecture_position = 1*( "L" / "R" / "T" / "B" )
 
-  architecture_text = 1*( !line_end ANY )
+  architecture_text = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / !line_end ANY )
 
   architecture_title = "title" 1*sp architecture_text as title line_end
 

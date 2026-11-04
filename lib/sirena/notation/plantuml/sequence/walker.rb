@@ -7,6 +7,7 @@ require_relative "tab_size"
 require_relative "arrow_marks"
 require_relative "bar_tracker"
 require_relative "destroy"
+require_relative "delay"
 require_relative "divider"
 require_relative "edge"
 require_relative "fragment"
@@ -63,7 +64,8 @@ module Sirena
                            :TEOZ_SELF_CONTACT_INSET, :TEOZ_CONTACT_PADDING
           PLACERS = { Message => :message, Activation => :activation,
                       Destroy => :destroy, Fragment => :fragment,
-                      Ref => :ref, PageBreak => :page_break }.freeze
+                      Ref => :ref, PageBreak => :page_break,
+                      Delay => :delay }.freeze
           Config = Struct.new(:message_measure, :message_font_size,
                               :message_family, :label_inset, :row, :self_row,
                               :unlabelled_row, :following_unlabelled_row,
@@ -82,8 +84,8 @@ module Sirena
             end.grep(Activation)
           end
 
-          attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
-                      :right, :y, :page_breaks
+          attr_reader :arrows, :notes, :fragments, :dividers, :delays, :crosses,
+                      :left, :right, :y, :page_breaks
 
           # @param lifelines [Hash{String => Float}] centre of each
           #   participant's lifeline, in participant order
@@ -205,6 +207,7 @@ module Sirena
             @notes = []
             @fragments = []
             @dividers = []
+            @delays = []
             @crosses = []
             @page_breaks = []
           end
@@ -946,6 +949,20 @@ module Sirena
 
             parent[:depth] = [parent[:depth], block[:depth] + 1].max
             parent[:text_height] = block[:text_height]
+          end
+
+          # The lifelines run on through the gap, drawn as for any other row.
+          def delay(item)
+            label = item.label.to_s
+            @delays << delay_record(label) unless label.empty?
+            @y += @divider_row
+          end
+
+          def delay_record(label)
+            middle = (@bounds[0] + @bounds[1]) / 2
+            half = @measure.call(label) / 2
+            touch(middle - half, middle + half)
+            Scene::Delay.new(texts: [text(label, middle, @y + 5, "delay")])
           end
 
           def divider(item)
