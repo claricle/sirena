@@ -1,0 +1,49 @@
+# frozen_string_literal: true
+
+module Sirena
+  module Notation
+    module PlantUMLData
+      # Shared model and drawing of PlantUML's box diagrams: JSON, YAML,
+      # object and map diagrams all draw boxes of rows joined by links.
+      module Boxes
+        # One line of a {Table}. `key` is nil in an array or object body,
+        # `child` the {Table} a link from this row ends at, `port` the name
+        # an object diagram's `Map::port` reaches this row by and `style` a
+        # highlight, or nil.
+        Row = Data.define(:key, :value, :child, :port, :style) do
+          def initialize(key: nil, value: "", child: nil, port: nil,
+                         style: nil)
+            super
+          end
+        end
+
+        # A box. `kind` is :tree for JSON and YAML, :object or :map.
+        Table = Data.define(:id, :title, :rows, :kind) do
+          def initialize(rows:, id: nil, title: nil, kind: :tree)
+            super
+          end
+
+          def keyed?
+            rows.any?(&:key)
+          end
+        end
+
+        # A line between two tables. `from_row` is the Row it leaves, or nil
+        # for a table-to-table relation. `glyph` is an Arrow.parse result.
+        Link = Data.define(:from, :to, :from_row, :to_row, :glyph, :label) do
+          def initialize(from:, to:, glyph:, from_row: nil, to_row: nil,
+                         label: nil)
+            super
+          end
+        end
+
+        # A parsed diagram. `roots` are the tables laid out first.
+        Diagram = Data.define(:tables, :links, :title, :direction) do
+          def initialize(tables:, links: [], title: nil, direction: :down)
+            super
+          end
+        end
+      end
+    end
+  end
+end

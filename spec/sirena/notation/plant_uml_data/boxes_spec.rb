@@ -1,0 +1,145 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+require "rexml/document"
+require "sirena/notation/plantuml"
+
+# What each fixture's picture must carry.
+module PlantUMLBoxesFixtures
+  DIR = File.expand_path("../../../fixtures/plantuml_boxes", __dir__)
+  EXPECTED = {
+    "lrg-11-1" => ["streetAddress", "212 555-1234", "\u2611 true"],
+    "lrg-11-2" => %w[lastName postalCode],
+    "lrg-11-3" => %w[firstName 646\ 555-4567],
+    "lrg-12-3-1" => ["Creole", "HTML Creole", "stricken-out"],
+    "lrg-12-3-2" => ["a deer, a female deer", "turtle-doves", "a pear tree"],
+    "lrg-4-2" => %w[Object01 Object08 some\ labels 4],
+    "lrg-4-6-3" => ["map: Map<Integer, String>", "Alice", "Charlie"],
+    "lrg-4-6-5" => %w[CapitalCity Germany Washington NewYork],
+    "lrg-4-7" => ["PERT: Project Name", "Kick.Off", "Label 4", "task.5"],
+    "lrg-4-8" => %w[Class Object fruit Green],
+  }.freeze
+end
+
+RSpec.describe Sirena::Notation::PlantUMLData::Boxes do
+  let(:boxes) { described_class }
+
+  include_context "with an isolated notation registry"
+
+  before do
+    [Sirena::Notation::PlantUML, Sirena::Notation::PlantUMLData].each do |n|
+      Sirena::Notation.register(n) unless Sirena::Notation.ids.include?(n.id)
+    end
+  end
+
+  def render(source)
+    notation = source.match?(/\A@start(json|yaml)/) ? :plantuml_data : :plantuml
+    Sirena.render(source, notation: notation)
+  end
+
+  def texts(svg)
+    REXML::Document.new(svg).get_elements("//text").map(&:text)
+  end
+
+  PlantUMLBoxesFixtures::EXPECTED.each do |name, wanted|
+    it "renders #{name} as an svg carrying its text", :aggregate_failures do
+      svg = render(File.read(File.join(PlantUMLBoxesFixtures::DIR,
+                                       "#{name}.puml")))
+
+      expect(REXML::Document.new(svg).root.name).to eq("svg")
+      expect(texts(svg)).to include(*wanted)
+    end
+  end
+
+  it "has a spec for every fixture" do
+    names = Dir[File.join(PlantUMLBoxesFixtures::DIR, "*.puml")]
+      .map { |path| File.basename(path, ".puml") }
+
+    expect(PlantUMLBoxesFixtures::EXPECTED.keys).to match_array(names)
+  end
+
+  describe "json" do
+    it "draws a nested object as its own box and links to it",
+       :aggregate_failures do
+      svg = Sirena.render(%(@startjson\n{"a": {"b": 1}}\n@endjson))
+      doc = REXML::Document.new(svg)
+
+      expect(doc.get_elements("//rect").size).to eq(4)
+      expect(doc.get_elements("//path").size).to eq(1)
+    end
+
+    it "draws an array as a box of value rows" do
+      svg = Sirena.render(%(@startjson\n["x", "y"]\n@endjson))
+
+      expect(texts(svg)).to eq(%w[x y])
+    end
+
+    it "fills a highlighted row, not the others", :aggregate_failures do
+      source = %(@startjson\n#highlight "b"\n{"a": 1, "b": 2}\n@endjson)
+      fills = REXML::Document.new(Sirena.render(source))
+        .get_elements("//rect").map { |r| r.attributes["fill"] }
+
+      expect(fills).to include("#CCFF02")
+      expect(fills.count("#CCFF02")).to eq(1)
+    end
+
+    it "colours a highlight from its <style> class" do
+      source = "@startjson\n<style>\n.warn { BackGroundColor red }\n" \
+               "</style>\n" \
+               "#highlight \"a\" <<warn>>\n{\"a\": 1}\n@endjson"
+
+      expect(Sirena.render(source)).to include('fill="red"')
+    end
+
+    it "raises a ParseError for text that is not JSON" do
+      expect { Sirena.render("@startjson\n{oops\n@endjson") }
+        .to raise_error(Sirena::Parser::ParseError, /JSON/)
+    end
+  end
+
+  describe "yaml" do
+    it "keeps a repeated key's first place and last value" do
+      value = boxes::YamlReader.new.call("a: 1\nb: 2\na: 3\n")
+
+      expect(value).to eq({ "a" => 3, "b" => 2 })
+    end
+
+    it "reads nested mappings and sequences" do
+      value = boxes::YamlReader.new
+        .call("k:\n  - x\n  - \"y z\"\nm:\n  n: true\n")
+
+      expect(value).to eq({ "k" => ["x", "y z"], "m" => { "n" => true } })
+    end
+
+    it "reads a line that is not valid YAML as PlantUML does" do
+      value = boxes::YamlReader.new.call(%(m: ""mono""\n))
+
+      expect(value).to eq({ "m" => "\"mono\"" })
+    end
+  end
+
+  describe "claiming" do
+    it "claims @startjson and @startyaml but not @startuml" do
+      notation = Sirena::Notation::PlantUMLData
+
+      claims = ["@startjson\n{}", "@startyaml\na: 1", "@startuml\n"]
+        .map { |source| notation.claims?(source) }
+
+      expect(claims).to eq([true, true, false])
+    end
+
+    it "keeps class diagrams on the class reader" do
+      svg = render("@startuml\nclass A\nA --> B\n@enduml")
+
+      expect(texts(svg)).to include("A", "B")
+    end
+
+    it "refuses an object diagram line outside its subset" do
+      source = "@startuml\nobject A\nnote right of A : hi\n@enduml"
+
+      expect { render(source) }
+        .to raise_error(Sirena::Notation::PlantUML::UnsupportedConstructError,
+                        /note/)
+    end
+  end
+end
