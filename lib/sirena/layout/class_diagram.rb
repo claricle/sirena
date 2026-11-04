@@ -12,6 +12,7 @@ require_relative "class_namespace_nodes"
 require_relative "../diagram/class_diagram"
 require_relative "../diagram/generic_text"
 require_relative "../notation/mermaid/ir_adapters/class_diagram"
+require_relative "../js_math"
 
 module Sirena
   module Layout
@@ -976,7 +977,7 @@ module Sirena
       def marker_angle(from, to)
         from_x, from_y = coordinates(from)
         to_x, to_y = coordinates(to)
-        Math.atan2(to_y - from_y, to_x - from_x)
+        JsMath.atan2(to_y - from_y, to_x - from_x)
       end
 
       def coordinates(point)
@@ -1004,8 +1005,8 @@ module Sirena
 
       def marker_point(x_coord, y_coord, distance, angle)
         [
-          x_coord + (distance * Math.cos(angle)),
-          y_coord + (distance * Math.sin(angle)),
+          x_coord + (distance * JsMath.cos(angle)),
+          y_coord + (distance * JsMath.sin(angle)),
         ]
       end
 

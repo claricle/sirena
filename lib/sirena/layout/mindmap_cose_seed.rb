@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "mindmap_cose_geometry"
-require_relative "mindmap_cose_trig"
+require_relative "../js_math"
 require_relative "mindmap_cose_wedge"
 
 module Sirena
@@ -64,8 +64,8 @@ module Sirena
 
       def branch(body, parent, wedge, distance)
         radians = (wedge.bearing * (2.0 * Math::PI)) / 360
-        body.center = [distance * MindmapCoseTrig.cos(radians),
-                       distance * MindmapCoseTrig.sin(radians)]
+        body.center = [distance * JsMath.cos(radians),
+                       distance * JsMath.sin(radians)]
         place_children(body, parent, wedge, distance + @ring)
       end
 

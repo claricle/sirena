@@ -4,6 +4,7 @@ require_relative "base"
 require_relative "pie_legend"
 require_relative "../diagram/pie"
 require_relative "../notation/mermaid/ir_adapters/pie"
+require_relative "../js_math"
 
 module Sirena
   module Layout
@@ -32,7 +33,7 @@ module Sirena
       TITLE_SIZE = 25
       # mmdc drops a slice under this share of the total, label and all.
       MIN_PERCENT = 1.0
-      # Math.cos and Math.sin differ in the last digit between platforms
+      # The platform Math.cos and Math.sin differ in the last digit
       # (Windows renders 225.0 where Linux renders 224.99999999999997), so
       # points are rounded before they reach the SVG text.
       POINT_DIGITS = 4
@@ -261,8 +262,8 @@ module Sirena
 
       def circle_point(angle, radius)
         radians = angle * Math::PI / 180.0
-        [(CENTER_X + (radius * Math.cos(radians))).round(POINT_DIGITS),
-         (CENTER_Y + (radius * Math.sin(radians))).round(POINT_DIGITS)]
+        [(CENTER_X + (radius * JsMath.cos(radians))).round(POINT_DIGITS),
+         (CENTER_Y + (radius * JsMath.sin(radians))).round(POINT_DIGITS)]
       end
 
       def transform_slices(data)

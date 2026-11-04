@@ -8,6 +8,7 @@ require_relative "elk_placement"
 require_relative "../diagram/flowchart"
 require_relative "../diagram/flowchart_label_text"
 require_relative "../notation/mermaid/ir_adapters/flowchart"
+require_relative "../js_math"
 
 module Sirena
   module Layout
@@ -678,7 +679,7 @@ module Sirena
       end
 
       def unit_towards(tip_x, tip_y, from_x, from_y)
-        span = Math.hypot(from_x - tip_x, from_y - tip_y)
+        span = JsMath.hypot(from_x - tip_x, from_y - tip_y)
         return [0.0, 0.0] if span.zero?
 
         [(from_x - tip_x) / span, (from_y - tip_y) / span]
@@ -934,7 +935,7 @@ module Sirena
       end
 
       def circle_scale(half_w, half_h, delta_x, delta_y)
-        [half_w, half_h].min / Math.hypot(delta_x, delta_y)
+        [half_w, half_h].min / JsMath.hypot(delta_x, delta_y)
       end
 
       def hexagon_scale(half_w, half_h, delta_x, delta_y)
@@ -1002,7 +1003,7 @@ module Sirena
         cx, cy = node_centre(node)
         dx = mid_x - cx
         dy = mid_y - cy
-        span = Math.hypot(dx, dy)
+        span = JsMath.hypot(dx, dy)
         return [mid_x, mid_y] if span.zero?
 
         [mid_x + ((dx / span) * EDGE_LABEL_LIFT),

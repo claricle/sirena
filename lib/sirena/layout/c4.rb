@@ -11,6 +11,7 @@ require_relative "c4_text"
 require_relative "elk_placement"
 require_relative "../diagram/c4"
 require_relative "../notation/mermaid/ir_adapters/c4"
+require_relative "../js_math"
 
 module Sirena
   module Layout
@@ -540,7 +541,7 @@ module Sirena
       def arrowhead_points(from, tip)
         run = tip.x - from.x
         rise = tip.y - from.y
-        length = Math.hypot(run, rise)
+        length = JsMath.hypot(run, rise)
         return if length.zero?
 
         arrowhead_text(tip, [run / length, rise / length])
