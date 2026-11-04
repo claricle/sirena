@@ -76,4 +76,15 @@ RSpec.describe Sirena::Parser::Native, ".parse parity (flowchart)" do
     expect(NativeParity.outcome("flowchart", source, native: true))
       .to eq(NativeParity.outcome("flowchart", source, native: false))
   end
+
+  it "parses a long bare node id run in linear time" do
+    skip "parsanol engine absent" unless described_class.available?
+
+    source = "graph TD\n#{"ab1_.-\u00e9#&*" * 5_000}\n"
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    described_class.parse(:flowchart, source)
+
+    # 9 s before the id rules scanned in runs
+    expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).to be < 3
+  end
 end

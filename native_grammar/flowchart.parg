@@ -75,9 +75,10 @@
   ## printable ASCII but not ; : , " % ( ) < = > @ [ ] ^ { | } ~ . - # & * 0-9
   flowchart_id_ascii_char = %x21 / %x24 / %x27 / %x2B / %x2F / %x3F / %x41-5A / %x5C / %x5F-7A
 
-  flowchart_id_carry_char = "#" / "&" / "*" / DIGIT
+  flowchart_id_carry_char = DIGIT / "#" / "&" / "*"
 
-  flowchart_id_restart_char = flowchart_unicode_letter
+  ## The look-ahead keeps an ASCII character from walking the whole letter table.
+  flowchart_id_restart_char = &%x80-10FFFF ( %x00D8-00F6 / %x00C0-00D6 / %x00F8-02C1 / flowchart_unicode_letter )
 
   flowchart_id_char = flowchart_id_ascii_char / flowchart_id_carry_char / flowchart_id_restart_char
 
@@ -89,7 +90,17 @@
 
   flowchart_entity_escape = "#" 1*( ALPHA / DIGIT / "_" ) ";"
 
-  flowchart_id_run = 1*( !flowchart_entity_escape flowchart_id_body )
+  ## The printable ASCII id characters other than "-" and "#", which need a
+  ## look-ahead of their own: one literal-look-ahead scan, so a long run costs
+  ## one pass instead of one failed alternative per character.
+  flowchart_id_ascii_span = 1*( !( ";" / ":" / "," / "\"" / "%" / "(" / ")" / "<" / "=" / ">" / "@" / "[" / "]" / "^" / "{" / "|" / "}" / "~" / "-" / "#" ) %x21-7E )
+
+  ## The same, with "#" taken as it stands (the carry the lexer restart models use).
+  flowchart_id_carry_span = 1*( !( ";" / ":" / "," / "\"" / "%" / "(" / ")" / "<" / "=" / ">" / "@" / "[" / "]" / "^" / "{" / "|" / "}" / "~" / "-" ) %x21-7E )
+
+  flowchart_id_hash = !flowchart_entity_escape "#"
+
+  flowchart_id_run = 1*( flowchart_id_ascii_span / flowchart_id_hash / flowchart_id_hyphen / flowchart_id_restart_char )
 
   flowchart_arrowhead_open = ( "x" / "o" ) ["-"] 1*"." "-" [ "x" / "o" / ">" ]
 
@@ -97,7 +108,7 @@
 
   flowchart_settled_char = flowchart_id_dot / flowchart_id_hyphen / flowchart_id_ascii_char
 
-  flowchart_settled_run = flowchart_settled_char *( flowchart_settled_char / flowchart_id_carry_char )
+  flowchart_settled_run = flowchart_settled_char *( flowchart_id_carry_span / flowchart_id_hyphen )
 
   flowchart_restart_run = 1*( flowchart_id_carry_char / flowchart_id_restart_char )
 
