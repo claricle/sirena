@@ -64,10 +64,23 @@ RSpec.describe Sirena::Notation::PlantUML::State do
     end
 
     it "refuses a line outside the subset" do
-      expect { model("note left of A") }.to raise_error(
+      expect { model("A -[#red]-> B") }.to raise_error(
         Sirena::Notation::PlantUML::UnsupportedConstructError,
         /state statement/,
       )
+    end
+
+    it "reads a one-line note and a note block onto their states" do
+      diagram = model("A --> B", "note left of A : one\\ntwo",
+                      "note right of B", "x", "y", "end note")
+
+      expect(diagram.notes.map { |n| [n.target_id, n.position, n.text] })
+        .to eq([["A", "left", "one<br>two"], ["B", "right", "x<br>y"]])
+    end
+
+    it "refuses a note block that is never closed" do
+      expect { model("A --> B", "note left of A", "text") }
+        .to raise_error(Sirena::Parser::ParseError, /never closed/)
     end
 
     it "refuses a body that is never closed" do

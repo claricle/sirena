@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "../../parser/state_diagram"
-require_relative "../../layout/state_diagram"
-require_relative "../../renderer/state_diagram"
 require_relative "../mermaid/ir_adapters/state_diagram"
 require_relative "state/reader"
+require_relative "state/layout"
+require_relative "state/renderer"
 
 module Sirena
   module Notation
@@ -39,8 +39,8 @@ module Sirena
           Notation::Parsed.new(
             type: :state_diagram,
             diagram: Sirena::Notation::Mermaid::IRAdapters::StateDiagram.call(model),
-            transform: Sirena::Layout::StateDiagram,
-            renderer: Sirena::Renderer::StateDiagram,
+            transform: Layout,
+            renderer: Renderer,
           )
         end
       end
