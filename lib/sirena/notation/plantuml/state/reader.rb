@@ -24,7 +24,8 @@ module Sirena
           ARROW = /-+(?:[a-z]+-+)?>/
           END_STATE = /\A(?:--|\|\|)\z/
           STATE_OPEN = /\Astate[ \t]+(?:"([^"]+)"[ \t]+as[ \t]+(#{NAME})|
-                         (#{NAME}))(?:[ \t]*<<[^<>]+>>)?
+                         (#{NAME}))(?:[ \t]*<<([^<>]+)>>)?
+                         (?:[ \t]*(\#\S+))?
                          (?:[ \t]*(\{))?(?:[ \t]*:[ \t]*(.+))?\z/xo
           TRANSITION = /\A(#{NAME}#{MARK}?|#{MARK})[ \t]*(#{ARROW})[ \t]*
                         (#{NAME}#{MARK}?|#{MARK})
@@ -36,12 +37,16 @@ module Sirena
                   (?:[ \t]*:[ \t]*(.+))?\z/xio
           END_NOTE = /\Aend[ \t]*note\z/i
           DESCRIPTION = /\A(#{NAME})[ \t]*:[ \t]*(.+)\z/o
+          STYLE_BLOCK = %r{\A<style>\z}i
+          END_STYLE = %r{\A</style>\z}i
+          SKIN_BLOCK = /\Askinparam[ \t]+\S+[ \t]*\{\z/i
           SKIPPED = /\A(?:scale\b|title\b|hide\b|skinparam\b|left to right
                      direction\z|top to bottom direction\z)/xi
           HISTORY = { "[H]" => ["history", "H"],
                       "[H*]" => ["deep_history", "H*"] }.freeze
           private_constant :NAME, :MARK, :ARROW, :END_STATE, :STATE_OPEN,
                            :TRANSITION, :REVERSED, :NOTE, :END_NOTE,
+                           :STYLE_BLOCK, :END_STYLE, :SKIN_BLOCK,
                            :DESCRIPTION, :SKIPPED, :HISTORY
 
           # @return [Array<Array(String, Integer)>] the stripped, non-empty,
@@ -70,6 +75,7 @@ module Sirena
             @scopes = [nil]
             @note = nil
             @owners = {}
+            @closing = nil
             self.class.lines_of(source).each { |line| read(*line) }
             raise unclosed unless @scopes.size == 1 && @note.nil?
 
@@ -80,13 +86,34 @@ module Sirena
 
           def read(text, number)
             return note_line(text) if @note
-            return if SKIPPED.match?(text) || END_STATE.match?(text)
+            return if skipped?(text)
             return close_scope if text == "}"
             return if statement(text)
 
             raise UnsupportedConstructError.new(
               construct: "state statement", line: number, text: text,
             )
+          end
+
+          def skipped?(text)
+            return skip_block(text) || true if @closing
+            return open_skipped(text) || true if skipped_block?(text)
+
+            SKIPPED.match?(text) || END_STATE.match?(text)
+          end
+
+          def skipped_block?(text)
+            STYLE_BLOCK.match?(text) || SKIN_BLOCK.match?(text)
+          end
+
+          # The `skinparam x {` and `<style>` bodies are read by
+          # {Style::Reader}; this reader only steps over them.
+          def open_skipped(text)
+            @closing = STYLE_BLOCK.match?(text) ? END_STYLE : /\A\}\z/
+          end
+
+          def skip_block(text)
+            @closing = nil if @closing.match?(text)
           end
 
           def statement(text)
@@ -146,8 +173,8 @@ module Sirena
             state = ensure_state(match[2] || match[3])
             adopt(state)
             state.label = match[1] if match[1]
-            describe(state, match[5]) if match[5]
-            @scopes.push(state) if match[4]
+            describe(state, match[7]) if match[7]
+            @scopes.push(state) if match[6]
             true
           end
 

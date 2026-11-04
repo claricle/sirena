@@ -3,14 +3,24 @@
 require_relative "../../renderer/base"
 require_relative "../../svg"
 require_relative "scene"
+require_relative "style"
+require_relative "creole"
 
 module Sirena
   module Notation
     module PlantUML
       # Draws a PlantUML Scene without changing any of its geometry.
       class Renderer < Sirena::Renderer::Base
+        CREOLE_ROLES = %w[note relation_label member_note].freeze
         BOLD_ROLES = %w[class_name package_title].freeze
-        private_constant :BOLD_ROLES
+        private_constant :BOLD_ROLES, :CREOLE_ROLES
+
+        # @param style [Style::Sheet] how the diagram's source styles it;
+        #   only what the source sets overrides the theme
+        def initialize(theme: nil, style: Style::Sheet.new)
+          super(theme: theme)
+          @style = style
+        end
 
         def render(scene)
           document = blank_document(scene)
@@ -25,7 +35,10 @@ module Sirena
         def render_content(scene, content)
           scene.frames.each { |frame| render_frame(frame, content) }
           scene.relations.each { |relation| render_relation(relation, content) }
-          scene.boxes.each { |box| render_box(box, content) }
+          scene.boxes.each do |box|
+            @box = box
+            render_box(box, content)
+          end
         end
 
         def render_background(scene, document)
@@ -119,7 +132,7 @@ module Sirena
         def frame_rectangle(frame, width, height, fill)
           Svg::Rect.new(x: frame.x, y: frame.y, width: width, height: height,
                         fill: fill || "none", stroke: node_stroke,
-                        stroke_width: stroke_width)
+                        stroke_width: node_width)
         end
 
         def package_icon(frame)
@@ -144,14 +157,34 @@ module Sirena
           Svg::Path.new.tap do |path|
             path.d = relation.path
             path.fill = "none"
-            path.stroke = edge_colour
-            path.stroke_width = stroke_width
-            path.stroke_dasharray = "6,4" if relation.dashed
+            path.stroke_dasharray = relation_dashing(relation)
+            relation_ink(path, relation)
           end
+        end
+
+        def relation_ink(element, relation)
+          element.stroke = relation.stroke || edge_colour
+          element.stroke_width = relation.stroke_width&.to_s || stroke_width
+        end
+
+        def relation_dashing(relation)
+          return "2,3" if relation.dotted
+
+          "6,4" if relation.dashed
         end
 
         def relation_marker_elements(relation)
           relation.markers.flat_map { |marker| marker_elements(marker) }
+            .each { |element| restyle(element, relation) }
+        end
+
+        # A marker takes its relation's own colour and thickness.
+        def restyle(element, relation)
+          return unless relation.stroke || relation.stroke_width
+
+          relation_ink(element, relation)
+          colour = relation.stroke
+          element.fill = colour if colour && element.fill == edge_colour
         end
 
         def marker_elements(marker)
@@ -222,7 +255,7 @@ module Sirena
           outline = [*member_note_near_edge(box), *member_note_far_edge(box),
                      "Z"].join(" ")
           Svg::Path.new(d: outline, fill: note_fill(box), stroke: node_stroke,
-                        stroke_width: stroke_width)
+                        stroke_width: node_width)
         end
 
         def member_note_near_edge(box)
@@ -247,14 +280,27 @@ module Sirena
           rectangle.y = box.y
           rectangle.width = box.width
           rectangle.height = box.height
-          rectangle.rx = 3
-          rectangle.ry = 3
+          rectangle.rx = rectangle.ry = box_look(:round_corner)
         end
 
         def apply_box_style(rectangle)
-          rectangle.fill = node_fill
-          rectangle.stroke = node_stroke
-          rectangle.stroke_width = stroke_width
+          rectangle.fill = box_look(:background)
+          rectangle.stroke = box_look(:border)
+          rectangle.stroke_width = box_look(:line_thickness).to_s
+          dash = box_look(:line_style)
+          rectangle.stroke_dasharray = dash if dash
+        end
+
+        # What the source says of the class being drawn, else PlantUML's own
+        # default look.
+        def box_look(property)
+          id = @box&.id
+          @style.resolve(:class, property, id: id,
+                                           stereotype: stereotype_of(id))
+        end
+
+        def stereotype_of(id)
+          @style.element(id)[:stereotype]
         end
 
         # `#yellow` is a colour name and `#FFAA00` a hex value.
@@ -281,7 +327,14 @@ module Sirena
           Svg::Text.new.tap do |text|
             apply_text_geometry(text, scene_text)
             apply_text_style(text, scene_text.role)
+            apply_creole(text, scene_text)
           end
+        end
+
+        def apply_creole(text, scene_text)
+          return unless CREOLE_ROLES.include?(scene_text.role)
+
+          Creole.assign(text, scene_text.content)
         end
 
         def apply_text_geometry(text, scene_text)
@@ -292,7 +345,7 @@ module Sirena
         end
 
         def apply_text_style(text, role)
-          text.fill = text_colour
+          text.fill = box_look(:font_colour)
           text.font_family = font_family(role)
           text.font_size = font_size(role)
           text.font_weight = "bold" if BOLD_ROLES.include?(role)
@@ -300,12 +353,15 @@ module Sirena
         end
 
         def font_family(role)
+          written = @style.explicit(:class, :font_name)
+          return written if written
+
           sans_members = %w[member_prefix member_note]
           if role.start_with?("member") && !sans_members.include?(role)
             return "monospace"
           end
 
-          theme_typography(:font_family) || "Arial, sans-serif"
+          box_look(:font_name)
         end
 
         def font_size(role)
@@ -320,23 +376,27 @@ module Sirena
         end
 
         def node_fill
-          theme_color(:node_fill)
+          @style.resolve(:class, :background)
         end
 
         def node_stroke
-          theme_color(:node_stroke)
+          @style.resolve(:class, :border)
         end
 
         def edge_colour
-          theme_color(:edge_stroke)
+          @style.resolve(:arrow, :border)
         end
 
         def text_colour
-          theme_color(:label_text)
+          @style.resolve(:any, :font_colour)
+        end
+
+        def node_width
+          @style.resolve(:class, :line_thickness).to_s
         end
 
         def stroke_width
-          (theme_shape(:stroke_width) || 2).to_s
+          @style.resolve(:arrow, :line_thickness).to_s
         end
       end
     end

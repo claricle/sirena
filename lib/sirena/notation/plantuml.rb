@@ -9,8 +9,10 @@ require_relative "plantuml/sequence"
 require_relative "plantuml/activity"
 require_relative "plantuml/usecase"
 require_relative "plantuml/component"
+require_relative "plantuml/entity"
 require_relative "plantuml/state"
 require_relative "plantuml/further"
+require_relative "plantuml/style"
 
 module Sirena
   module Notation
@@ -42,7 +44,7 @@ module Sirena
       # reads it, and the class diagram is what is left.
       FAMILIES = [[Further, :further?], [State, :state?], [Usecase, :usecase?],
                   [Component, :component?], [Activity, :activity?],
-                  [Sequence, :sequence?]].freeze
+                  [Entity, :entity?], [Sequence, :sequence?]].freeze
       private_constant :PAD, :OPENER, :FAMILIES
 
       # @return [Symbol] the notation identifier
@@ -58,8 +60,8 @@ module Sirena
       # @return [Array<Symbol>] diagram types, in display order
       def types
         %i[class_diagram sequence_diagram activity_diagram usecase_diagram
-           component_diagram state_diagram network_diagram
-           timing_diagram ebnf_diagram].freeze
+           component_diagram state_diagram entity_diagram
+           network_diagram timing_diagram ebnf_diagram].freeze
       end
 
       # @param source [String] any String, including binary or invalid UTF-8
@@ -84,7 +86,7 @@ module Sirena
           type: :class_diagram,
           diagram: IRAdapter.call(Parser.new.parse(source)),
           transform: Layout,
-          renderer: Renderer,
+          renderer: Style::Bound.wrap(Renderer, Style::Reader.read(source)),
         )
       end
     end

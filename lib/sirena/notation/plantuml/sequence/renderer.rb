@@ -4,6 +4,7 @@ require "zlib"
 require_relative "../../../renderer/base"
 require_relative "../../../svg"
 require_relative "scene"
+require_relative "../creole"
 
 module Sirena
   module Notation
@@ -316,6 +317,7 @@ module Sirena
                                font_size: text_size(scene_text),
                                font_style: text_font_style(scene_text),
                                font_weight: text_font_weight(scene_text))
+              .tap { |text| Creole.assign(text, scene_text.content) }
           end
 
           def text_font_style(scene_text)
