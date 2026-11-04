@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "style"
 require_relative "activity/parser"
 require_relative "activity/layout"
 require_relative "activity/renderer"
@@ -37,7 +38,7 @@ module Sirena
             type: :activity_diagram,
             diagram: Parser.new.parse(source),
             transform: Layout,
-            renderer: Renderer,
+            renderer: Style::Bound.wrap(Renderer, Style::Reader.read(source)),
           )
         end
       end

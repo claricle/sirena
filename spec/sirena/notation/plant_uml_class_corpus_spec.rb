@@ -227,7 +227,7 @@ RSpec.describe Sirena::Notation::PlantUML do
         polygons = REXML::XPath.match(svg, "//g[@id='relation-0']/polygon")
 
         expect(polygons.map { |p| p.attributes["fill"] })
-          .to eq(["#ffffff", "#000000"])
+          .to eq(["#F1F1F1", "#181818"])
       end
 
       it "dashes a dotted line that ends in a diamond" do
@@ -442,7 +442,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       )
     end
 
-    ["!pragma layout elk", "!pragma teoz true", "skinparam class {",
+    ["!pragma layout elk", "!pragma teoz true", "skinparam {",
      "hide everything"].each do |line|
       it "still refuses #{line.inspect}" do
         expect { parse_corpus("#{line}\nclass A") }

@@ -12,6 +12,7 @@ require_relative "plantuml/component"
 require_relative "plantuml/state"
 require_relative "plantuml/tree"
 require_relative "plantuml/gantt"
+require_relative "plantuml/style"
 
 module Sirena
   module Notation
@@ -97,7 +98,7 @@ module Sirena
           type: :class_diagram,
           diagram: IRAdapter.call(Parser.new.parse(source)),
           transform: Layout,
-          renderer: Renderer,
+          renderer: Style::Bound.wrap(Renderer, Style::Reader.read(source)),
         )
       end
     end
