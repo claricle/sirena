@@ -31,8 +31,7 @@ module SaltHelpers
   end
 
   def plain_cell(cell)
-    cell.gsub(%r{\A[\s+]+|</?b>|\s+\z}, "").sub(/\A"(.*)"\z/, '\1')
-      .gsub(/\s+/, " ")
+    cell.gsub(%r{\A[\s+]+|</?b>|\s+\z}, "").gsub(/\s+/, " ")
   end
 
   # Whether every needle occurs in the haystack, each after the one before.
