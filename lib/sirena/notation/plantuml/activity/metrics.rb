@@ -16,7 +16,7 @@ module Sirena
           PAD_X = 12.0
           PAD_Y = 8.0
           NOTE_PAD = 7.0
-          FIXED = { start: [20.0, 20.0], stop: [24.0, 24.0],
+          FIXED = { start: [20.0, 20.0], stop: [24.0, 24.0], kill: [24.0, 24.0],
                     merge: [14.0, 14.0], bar: [40.0, 6.0] }.freeze
 
           # @return [Float] the width of the widest of the lines

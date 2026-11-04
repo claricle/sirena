@@ -19,6 +19,7 @@ module Sirena
           SIMPLE = [
             [/\Astart\z/i, :on_start],
             [/\A(?:stop|end)\z/i, :on_stop],
+            [/\Akill\z/i, :on_kill],
             [/\Atitle\s+(.+)\z/i, :on_title],
             [/\A(?<colour>#\w+)?:(?<text>.*)\z/m, :on_action],
             [/\A-+(?:\[(?<spec>[^\]]*)\])?-*>\s*(?<text>.*)\z/m, :on_arrow],
@@ -62,6 +63,12 @@ module Sirena
 
           def on_stop(_match)
             add(@builder.node(:stop))
+            @ends = []
+          end
+
+          # `kill` ends the flow at a cross, as `stop` ends it at a circle.
+          def on_kill(_match)
+            add(@builder.node(:kill))
             @ends = []
           end
 

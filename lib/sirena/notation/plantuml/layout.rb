@@ -11,6 +11,7 @@ require_relative "rank_chain"
 require_relative "relation_label_separator"
 require_relative "scene"
 require_relative "sequence/text_advances"
+require_relative "../../js_math"
 
 module Sirena
   module Notation
@@ -2121,7 +2122,7 @@ module Sirena
 
         def unit_vector(from, to)
           delta_horizontal, delta_vertical = vector_between(from, to)
-          length = Math.hypot(delta_horizontal, delta_vertical)
+          length = JsMath.hypot(delta_horizontal, delta_vertical)
           return [1.0, 0.0] if length.zero?
 
           [delta_horizontal / length, delta_vertical / length]

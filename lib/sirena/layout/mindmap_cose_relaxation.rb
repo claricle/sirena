@@ -2,6 +2,7 @@
 
 require_relative "mindmap_cose_geometry"
 require_relative "mindmap_cose_grid"
+require_relative "../js_math"
 
 module Sirena
   module Layout
@@ -69,8 +70,8 @@ module Sirena
 
       def cool
         @cycle += 1
-        decay = (@cycle**(Math.log(100 * (1.0 - FINAL_COOLING)) /
-                          Math.log(COOLING_CYCLES))) / 100
+        decay = JsMath.pow(@cycle, JsMath.log(100 * (1.0 - FINAL_COOLING)) /
+                               JsMath.log(COOLING_CYCLES)) / 100
         @cooling = [1.0 - decay, FINAL_COOLING].max
       end
 

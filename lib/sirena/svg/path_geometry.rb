@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "strscan"
+require_relative "../js_math"
 
 module Sirena
   module Svg
@@ -347,7 +348,7 @@ module Sirena
       #   direction to point an arrowhead along
       def heading(at, from, to)
         dx, dy = direction(from, to)
-        length = Math.hypot(dx, dy)
+        length = JsMath.hypot(dx, dy)
         return nil unless usable_heading?(at, length)
 
         Anchor.new(at[0], at[1], dx / length, dy / length)

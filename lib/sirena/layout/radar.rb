@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../notation/mermaid/ir_adapters/radar"
+require_relative "../js_math"
 
 module Sirena
   module Layout
@@ -174,8 +175,8 @@ module Sirena
 
       def ring_vertex(ring, axis)
         radians = axis.angle * Math::PI / 180
-        x_pos = ring.x + (Math.cos(radians) * ring.radius)
-        y_pos = ring.y + (Math.sin(radians) * ring.radius)
+        x_pos = ring.x + (JsMath.cos(radians) * ring.radius)
+        y_pos = ring.y + (JsMath.sin(radians) * ring.radius)
         "#{x_pos},#{y_pos}"
       end
 
@@ -355,10 +356,10 @@ module Sirena
 
       def axis_coordinates(radians)
         {
-          end_x: Math.cos(radians) * DEFAULT_RADIUS,
-          end_y: Math.sin(radians) * DEFAULT_RADIUS,
-          label_x: Math.cos(radians) * DEFAULT_RADIUS * LABEL_SCALE,
-          label_y: Math.sin(radians) * DEFAULT_RADIUS * LABEL_SCALE,
+          end_x: JsMath.cos(radians) * DEFAULT_RADIUS,
+          end_y: JsMath.sin(radians) * DEFAULT_RADIUS,
+          label_x: JsMath.cos(radians) * DEFAULT_RADIUS * LABEL_SCALE,
+          label_y: JsMath.sin(radians) * DEFAULT_RADIUS * LABEL_SCALE,
         }
       end
 
@@ -381,8 +382,8 @@ module Sirena
         radius = normalized * DEFAULT_RADIUS
         {
           axis_id: axis[:id], value: value, normalized: normalized,
-          x: Math.cos(axis[:angle_radians]) * radius,
-          y: Math.sin(axis[:angle_radians]) * radius,
+          x: JsMath.cos(axis[:angle_radians]) * radius,
+          y: JsMath.sin(axis[:angle_radians]) * radius,
           angle: axis[:angle_radians]
         }
       end
