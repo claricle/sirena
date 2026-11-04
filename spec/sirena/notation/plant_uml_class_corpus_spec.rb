@@ -266,9 +266,11 @@ RSpec.describe Sirena::Notation::PlantUML do
                                         type: "void", parameters: "int a")
     end
 
-    it "still refuses three words, which PlantUML reads differently" do
-      expect { parse_corpus("class A {\nfinal int x\n}") }
-        .to raise_error(described_class::UnsupportedConstructError)
+    it "shows three words as written, as PlantUML does" do
+      body = parse_corpus("class A {\nfinal int x\n}").classes.first.body
+      member = body.first
+
+      expect(member).to have_attributes(kind: :field, name: "final int x")
     end
   end
 
@@ -293,6 +295,8 @@ RSpec.describe Sirena::Notation::PlantUML do
       "{static} count : int" => [:field, "count", [:static]],
       "{abstract} run()" => [:method, "run", [:abstract]],
       "{field} +x" => [:field, "x", []],
+      "{static} int x" => [:field, "x", [:static]],
+      "+void {abstract} start(int a)" => [:method, "start", [:abstract]],
     }.each do |text, (kind, name, modifiers)|
       context "with #{text.inspect}" do
         let(:line) { text }
@@ -304,7 +308,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       end
     end
 
-    ["{field} run()", "{field}{method} x", "{static} int x",
+    ["{field} run()", "{field}{method} x",
      "{classifier} x", "x {static}"].each do |text|
       it "still refuses #{text.inspect}" do
         expect { parse_corpus("class A {\n#{text}\n}") }

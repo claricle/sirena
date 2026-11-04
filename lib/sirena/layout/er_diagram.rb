@@ -7,6 +7,7 @@ require_relative "er_diagram_entity_size"
 require_relative "er_diagram_placement"
 require_relative "../diagram/er_diagram"
 require_relative "../notation/mermaid/ir_adapters/er_diagram"
+require_relative "../js_math"
 
 module Sirena
   module Layout
@@ -963,21 +964,21 @@ module Sirena
         def offset_point(point, opposite, distance)
           angle = direction(point, opposite)
           Point.new(
-            x: point.x + (distance * Math.cos(angle)),
-            y: point.y + (distance * Math.sin(angle)),
+            x: point.x + (distance * JsMath.cos(angle)),
+            y: point.y + (distance * JsMath.sin(angle)),
           )
         end
 
         def direction(point, opposite)
-          Math.atan2(opposite.y - point.y, opposite.x - point.x)
+          JsMath.atan2(opposite.y - point.y, opposite.x - point.x)
         end
 
         def x_offset(distance, angle)
-          distance * Math.cos(angle)
+          distance * JsMath.cos(angle)
         end
 
         def y_offset(distance, angle)
-          distance * Math.sin(angle)
+          distance * JsMath.sin(angle)
         end
 
         def crows_foot(point, opposite)

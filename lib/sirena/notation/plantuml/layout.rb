@@ -10,6 +10,7 @@ require_relative "qualified_association_layout"
 require_relative "rank_chain"
 require_relative "scene"
 require_relative "sequence/text_advances"
+require_relative "../../js_math"
 
 module Sirena
   module Notation
@@ -1033,9 +1034,15 @@ module Sirena
         end
 
         def box_context(klass, diagram)
-          { member_modifiers: klass.body.map(&:modifiers),
-            package: klass.package,
+          modifiers = klass.body.map { |member| rule_modifiers(member) }
+          { member_modifiers: modifiers, package: klass.package,
             chain: diagram.package_chain(klass.package) }
+        end
+
+        # A separator row carries the pseudo-modifier :rule, which the box
+        # draws as a line instead of text.
+        def rule_modifiers(member)
+          member.kind == :separator ? [:rule] : member.modifiers
         end
 
         def note_specifications(notes)
@@ -1091,6 +1098,8 @@ module Sirena
         end
 
         def member_text(member)
+          return member.name if member.kind == :separator
+
           name = member.name.dup
           name += "(#{member.parameters})" if member.parameters
           type = member.type
@@ -1380,7 +1389,9 @@ module Sirena
         # A dashed line from each note to the class it is attached to.
         def build_note_links(notes, boxes)
           by_name = boxes.to_h { |box| [box.id, box] }
-          notes.each_with_index.map do |note, index|
+          notes.each_with_index.filter_map do |note, index|
+            next unless note.target
+
             ends = [by_name.fetch("note-#{index}"), by_name.fetch(note.target)]
             edge = relation_endpoints(*ends)
             Scene::Relation.new(id: "note-link-#{index}", dashed: true,
@@ -1446,8 +1457,9 @@ module Sirena
           return [[], []] if item[:member_rows].empty?
 
           separator = member_separator(horizontal, cursor, width)
-          [member_texts(item, horizontal, cursor),
-           [separator, *underlines(item, horizontal, cursor)]]
+          [member_texts(item, horizontal, cursor, width),
+           [separator, *underlines(item, horizontal, cursor),
+            *rules(item, horizontal, cursor, width)]]
         end
 
         def member_separator(horizontal, cursor, width)
@@ -1455,13 +1467,49 @@ module Sirena
           segment(horizontal, vertical, horizontal + width, vertical)
         end
 
-        def member_texts(item, horizontal, cursor)
-          item[:member_rows].each_with_index.map do |content, index|
-            role = item[:member_modifiers][index].include?(:abstract)
+        def member_texts(item, horizontal, cursor, width)
+          item[:member_rows].each_with_index.filter_map do |content, index|
+            next if content.empty?
+
+            modifiers = item[:member_modifiers][index]
             vertical = cursor + 6.0 + (index * ROW_HEIGHT)
-            scene_text(content, horizontal + BOX_PADDING, vertical,
-                       role ? "member_abstract" : "member", "start")
+            member_text_row(content, modifiers, [horizontal, width], vertical)
           end
+        end
+
+        # A separator's title is centred; any other row starts at the padding.
+        def member_text_row(content, modifiers, box, vertical)
+          left, width = box
+          if modifiers.include?(:rule)
+            return scene_text(content, left + (width / 2.0), vertical,
+                              "member", "middle")
+          end
+
+          role = modifiers.include?(:abstract) ? "member_abstract" : "member"
+          scene_text(content, left + BOX_PADDING, vertical, role, "start")
+        end
+
+        # A separator is a rule across the box, broken around its title.
+        def rules(item, horizontal, cursor, width)
+          item[:member_rows].each_with_index.flat_map do |content, index|
+            next [] unless item[:member_modifiers][index].include?(:rule)
+
+            vertical = cursor + 2.0 + (index * ROW_HEIGHT)
+            rule_segments(content, horizontal, vertical, width)
+          end
+        end
+
+        def rule_segments(content, horizontal, vertical, width)
+          right = horizontal + width
+          if content.empty?
+            return [segment(horizontal, vertical, right,
+                            vertical)]
+          end
+
+          gap = (measured_width(content) / 2.0) + 4.0
+          middle = horizontal + (width / 2.0)
+          [segment(horizontal, vertical, middle - gap, vertical),
+           segment(middle + gap, vertical, right, vertical)]
         end
 
         # A static member is underlined, as PlantUML draws it.
@@ -1965,7 +2013,7 @@ module Sirena
 
         def unit_vector(from, to)
           delta_horizontal, delta_vertical = vector_between(from, to)
-          length = Math.hypot(delta_horizontal, delta_vertical)
+          length = JsMath.hypot(delta_horizontal, delta_vertical)
           return [1.0, 0.0] if length.zero?
 
           [delta_horizontal / length, delta_vertical / length]

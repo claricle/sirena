@@ -19,7 +19,11 @@ module Sirena
         # A bare `o` or `*` after the body only ends it before a space or a
         # quote; otherwise it starts the class name (`A --oB`).
         RIGHT_IN_LINE = '(?:\|>|>|(?:o|\*|\+)(?=[ \t"]))'
-        BODY = "[-.]+(?:(?:up|down|left|right|u|d|l|r)[-.]+)?"
+        # A bracketed style (`-[#red,dashed,thickness=2]->`) stands in for
+        # the dashes; its words after the colour set the line's dashing.
+        BRACKET = '-\[[^\]]*\]-*'
+        BODY = "(?:[-.]+(?:(?:up|down|left|right|u|d|l|r)[-.]+)?" \
+               "|#{BRACKET})".freeze
 
         # Matches one glyph; embed it, then call {parse} on the match.
         PATTERN = "(#{LEFT_MARKER}?#{BODY}#{RIGHT_IN_LINE}?)".freeze
@@ -31,8 +35,10 @@ module Sirena
         PLAIN_HEADS = %w[< >].freeze
         DIRECTIONS = { "u" => :up, "d" => :down, "l" => :left,
                        "r" => :right }.freeze
-        private_constant :LEFT_MARKER, :RIGHT_MARKER, :RIGHT_IN_LINE, :BODY,
-                         :GLYPH, :PLAIN, :KINDS, :PLAIN_HEADS, :DIRECTIONS
+        DASHING = /\b(?:dashed|dotted)\b/i
+        private_constant :BRACKET, :DASHING, :LEFT_MARKER, :RIGHT_MARKER,
+                         :RIGHT_IN_LINE, :BODY, :GLYPH, :PLAIN, :KINDS,
+                         :PLAIN_HEADS, :DIRECTIONS
 
         # @return [Hash, nil] `:markers` (side to kind, left first), `:dashed`,
         #   `:kind` and `:head` (:left, :right, or :both with a nil kind when
@@ -56,7 +62,9 @@ module Sirena
         end
 
         def details(glyph, left, body, right)
-          dashed = body.include?(".")
+          style = body[/\[([^\]]*)\]/, 1]
+          body = body.sub(/\[[^\]]*\]/, "") if style
+          dashed = body.include?(".") || DASHING.match?(style.to_s)
           markers = { left: left, right: right }.compact
             .transform_values { |marker| kind_of(marker, dashed) }
           { markers: markers, dashed: dashed, head: head_of(markers),

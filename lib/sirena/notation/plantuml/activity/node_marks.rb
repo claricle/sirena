@@ -24,7 +24,7 @@ module Sirena
             box = @boxes.fetch(node)
             case node.kind
             when :start then @canvas.circle(box, 10.0, fill: "#222222")
-            when :stop then stop(box)
+            when :stop, :kill then terminal(node, box)
             when :merge then diamond(box, node.fill)
             when :bar then bar(node, box)
             when :decision then decision(node, box)
@@ -78,9 +78,22 @@ module Sirena
                             fill: fill || PAPER)
           end
 
+          def terminal(node, box)
+            node.kind == :kill ? kill(box) : stop(box)
+          end
+
           def stop(box)
             @canvas.circle(box, 11.0, fill: "none")
             @canvas.circle(box, 6.0, fill: "#222222")
+          end
+
+          def kill(box)
+            reach = 9.0
+            [[-1, -1, 1, 1], [-1, 1, 1, -1]].each do |ax, ay, bx, by|
+              @canvas.path([[box.cx + (ax * reach), box.cy + (ay * reach)],
+                            [box.cx + (bx * reach), box.cy + (by * reach)]],
+                           stroke: "#222222", width: 2.0)
+            end
           end
 
           def bar(node, box)

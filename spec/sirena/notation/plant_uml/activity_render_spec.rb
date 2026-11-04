@@ -42,6 +42,14 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
                            'fill="pink"')
   end
 
+  it "ends a branch at a cross on `kill`, with no edge leaving it",
+     :aggregate_failures do
+    svg = render("if (ok?) then\n  :fail;\n  kill\nendif\n:next;")
+
+    expect(svg_texts(svg)).to include("ok?", "fail", "next")
+    expect(svg.scan(/stroke-width="2\.0" d="M[\d.]+,[\d.]+ L/).size).to eq(2)
+  end
+
   it "renders legacy syntax" do
     svg = render(%((*) --> "One"\n--> (*)))
 

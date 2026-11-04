@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "time"
+require_relative "../js_math"
 
 module Sirena
   module Layout
@@ -86,7 +87,7 @@ module Sirena
 
       # d3.tickIncrement's 1, 2, 5, 10 ladder, never below one year.
       def nice_step(raw)
-        power = Math.log10(raw).floor
+        power = JsMath.log10(raw).floor
         error = raw / (10.0**power)
         factor = [[Math.sqrt(50), 10], [Math.sqrt(10), 5],
                   [Math.sqrt(2), 2]].find { |limit, _| error >= limit }

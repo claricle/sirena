@@ -113,7 +113,7 @@ module Sirena
 
           def note_head(node, link, index)
             { side: index.detail(node, "side").to_sym,
-              target: name_of(link.target_id, index),
+              target: link && name_of(link.target_id, index),
               member: index.detail(node, "member"),
               color: index.detail(node, "color"),
               stereotype: index.detail(node, "stereotype") }

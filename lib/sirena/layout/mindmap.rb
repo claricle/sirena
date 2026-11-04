@@ -4,6 +4,7 @@ require_relative "base"
 require_relative "mindmap_cose"
 require_relative "mindmap_node_size"
 require_relative "../notation/mermaid/ir_adapters/mindmap"
+require_relative "../js_math"
 
 module Sirena
   module Layout
@@ -231,7 +232,7 @@ module Sirena
 
       def inset_point(from, toward)
         axes = from.zip(toward)
-        distance = Math.hypot(*axes.map { |start, stop| stop - start })
+        distance = JsMath.hypot(*axes.map { |start, stop| stop - start })
         return Point.new(x: from[0], y: from[1]) if distance.zero?
 
         x, y = axes.map { |start, stop| inset(start, stop, distance) }
