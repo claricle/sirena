@@ -14,7 +14,7 @@ module Sirena
 
         # Lines only an activity diagram has. A sequence declaration or a
         # class declaration anywhere in the source wins over these.
-        MARKER = /\A(?:start|stop)\z|\A(?:\#\w+)?:|\A\(\*|\Aif\s*[("]|
+        MARKER = /\A(?:start|stop|kill)\z|\A(?:\#\w+)?:|\A\(\*|\Aif\s*[("]|
                   \Awhile\s*\(|\Arepeat\b|\Aswitch\s*\(|\Afork\z|
                   \Apartition\s/xi
         OTHER = /\A(?:abstract[ \t]+class|class|interface|participant|actor|
