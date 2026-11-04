@@ -3,6 +3,7 @@
 require "open3"
 require "rbconfig"
 require "spec_helper"
+require_relative "../../support/leptris_fallback_notice_spec_support"
 
 # The native engine recurses on the machine stack once per nested block. A
 # source nested past the stack kills the whole process rather than raising,
@@ -25,7 +26,8 @@ RSpec.describe Sirena::Parser::Native do
       puts "parsed"
     RUBY
     env = { "RUBY_THREAD_MACHINE_STACK_SIZE" => "1048576" }
-    Open3.capture2e(env, RbConfig.ruby, "-e", script).first.strip
+    output = Open3.capture2e(env, RbConfig.ruby, "-e", script).first
+    LeptrisFallbackNoticeSpecSupport.normalize(output).strip
   end
 
   describe ".parse" do
