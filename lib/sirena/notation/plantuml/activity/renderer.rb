@@ -4,6 +4,7 @@ require_relative "../../../renderer/base"
 require_relative "../../../svg"
 require_relative "../style"
 require_relative "layout"
+require_relative "../creole"
 
 module Sirena
   module Notation
@@ -86,6 +87,7 @@ module Sirena
                                font_size: attrs[:size].to_s,
                                font_weight: attrs[:weight],
                                fill: look(:font_colour) || "#000000")
+              .tap { |text| Creole.assign(text, attrs[:content]) }
           end
 
           def look(property)

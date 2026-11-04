@@ -4,14 +4,16 @@ require_relative "../../renderer/base"
 require_relative "../../svg"
 require_relative "scene"
 require_relative "style"
+require_relative "creole"
 
 module Sirena
   module Notation
     module PlantUML
       # Draws a PlantUML Scene without changing any of its geometry.
       class Renderer < Sirena::Renderer::Base
+        CREOLE_ROLES = %w[note relation_label member_note].freeze
         BOLD_ROLES = %w[class_name package_title].freeze
-        private_constant :BOLD_ROLES
+        private_constant :BOLD_ROLES, :CREOLE_ROLES
 
         # @param style [Style::Sheet] how the diagram's source styles it;
         #   only what the source sets overrides the theme
@@ -155,14 +157,34 @@ module Sirena
           Svg::Path.new.tap do |path|
             path.d = relation.path
             path.fill = "none"
-            path.stroke = edge_colour
-            path.stroke_width = stroke_width
-            path.stroke_dasharray = "6,4" if relation.dashed
+            path.stroke_dasharray = relation_dashing(relation)
+            relation_ink(path, relation)
           end
+        end
+
+        def relation_ink(element, relation)
+          element.stroke = relation.stroke || edge_colour
+          element.stroke_width = relation.stroke_width&.to_s || stroke_width
+        end
+
+        def relation_dashing(relation)
+          return "2,3" if relation.dotted
+
+          "6,4" if relation.dashed
         end
 
         def relation_marker_elements(relation)
           relation.markers.flat_map { |marker| marker_elements(marker) }
+            .each { |element| restyle(element, relation) }
+        end
+
+        # A marker takes its relation's own colour and thickness.
+        def restyle(element, relation)
+          return unless relation.stroke || relation.stroke_width
+
+          relation_ink(element, relation)
+          colour = relation.stroke
+          element.fill = colour if colour && element.fill == edge_colour
         end
 
         def marker_elements(marker)
@@ -305,7 +327,14 @@ module Sirena
           Svg::Text.new.tap do |text|
             apply_text_geometry(text, scene_text)
             apply_text_style(text, scene_text.role)
+            apply_creole(text, scene_text)
           end
+        end
+
+        def apply_creole(text, scene_text)
+          return unless CREOLE_ROLES.include?(scene_text.role)
+
+          Creole.assign(text, scene_text.content)
         end
 
         def apply_text_geometry(text, scene_text)

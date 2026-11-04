@@ -24,6 +24,8 @@ module Sirena
       attribute :dominant_baseline, :string
       attribute :content, :string, collection: true
       attribute :tspans, Tspan, collection: true
+      # "preserve" keeps the spaces at the edges of tspan runs.
+      attribute :xml_space, :string
 
       # How far below `y` the baseline sits, in ems -- stands in for
       # `dominant-baseline` (rejected under :metanorma). Conventional
@@ -66,6 +68,7 @@ module Sirena
         ["font-size", :font_size],
         ["font-weight", :font_weight],
         ["font-style", :font_style],
+        ["xml:space", :xml_space],
       ].map(&:freeze).freeze
       private_constant :ATTRIBUTE_PAIRS
 

@@ -20,7 +20,9 @@ module PlantUmlGapsHelpers
   end
 
   def svg_texts(svg)
-    REXML::XPath.match(REXML::Document.new(svg), "//text").map(&:text)
+    REXML::XPath.match(REXML::Document.new(svg), "//text").map do |text|
+      REXML::XPath.match(text, ".//text()").map(&:value).join
+    end
   end
 
   def svg_height(svg)
@@ -42,7 +44,7 @@ RSpec.describe Sirena::Notation::PlantUML do
   describe "corpus files" do
     {
       "plantuml-lrg-1-15" => %w[Alice Bob],
-      "plantuml-lrg-1-19" => ["Some ~~long delay~~", "ok"],
+      "plantuml-lrg-1-19" => ["Some long delay", "ok"],
     }.each do |name, expected|
       it "renders #{name} as valid SVG with its text",
          :aggregate_failures do

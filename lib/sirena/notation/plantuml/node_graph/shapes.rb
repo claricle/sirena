@@ -3,6 +3,7 @@
 require_relative "../../../svg"
 require_relative "cloud"
 require_relative "figures"
+require_relative "../creole"
 require_relative "metrics"
 
 module Sirena
@@ -36,7 +37,7 @@ module Sirena
 
           def fill
             color = @p.node.color
-            return FILL unless color
+            return container_fill unless color
 
             color.match?(HEX) ? "##{color}" : color
           end
@@ -134,15 +135,35 @@ module Sirena
               options.fetch(:dy, 0)
           end
 
+          # A container is open: only a colour of its own fills it, so what it
+          # holds shows through.
+          def container_fill
+            @p.node.container? ? "none" : FILL
+          end
+
           def container
-            draw_rect(Figures::ORIGIN, Figures::FULL)
-            @out.last.fill = @p.node.color ? fill : "none"
+            outline = Figures.container(@p.node.kind)
+            if outline
+              outline.each { |type, *args| send(:"draw_#{type}", *args) }
+            else
+              draw_rect(Figures::ORIGIN, Figures::FULL)
+            end
             lines.each_with_index { |line, index| header(line, index) }
           end
 
+          # A header clears the cap of a cylinder, the bumps of a cloud and
+          # the slanted top of a node.
+          HEADER_DROP = { database: 10, cloud: 12, node: 8, folder: 14,
+                          frame: 14 }.freeze
+          HEADER_LEFT = { cloud: 24 }.freeze
+          private_constant :HEADER_DROP, :HEADER_LEFT
+
           def header(line, index)
-            y_pos = @p.y + 18 + (index * Metrics::LINE_HEIGHT)
-            text(@p.x + 12, y_pos, line, "start", index.zero? ? "bold" : nil)
+            kind = @p.node.kind
+            y_pos = @p.y + 18 + HEADER_DROP.fetch(kind, 0) +
+              (index * Metrics::LINE_HEIGHT)
+            text(@p.x + 12 + HEADER_LEFT.fetch(kind, 0), y_pos, line, "start",
+                 index.zero? ? "bold" : nil)
           end
 
           def text(x_pos, y_pos, content, anchor, weight = nil)
@@ -150,6 +171,7 @@ module Sirena
                            text_anchor: anchor, font_family: FONT,
                            font_size: Metrics::FONT_SIZE.to_s,
                            font_weight: weight, fill: "#000000")
+            Creole.assign(@out.last, content)
           end
         end
       end
