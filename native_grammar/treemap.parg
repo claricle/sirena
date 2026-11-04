@@ -2,7 +2,7 @@
   ## treemap (grammars/treemap.rb)
   ## ------------------------------------------------------------------
 
-  treemap_text = 1*( !newline ANY )
+  treemap_text = 1*( 1*( !( "\n" / "\r" ) ANY ) / !newline ANY )
 
   treemap_title = "title" 1*sp treemap_text as title
 

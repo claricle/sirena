@@ -4,13 +4,13 @@
 
   state_diagram_name = 1*( ALPHA / DIGIT / "_" )
 
-  state_diagram_line_char = !line_end ANY
+  state_diagram_line_char = n_09_0A_0D_20_25_3B / ( !line_end ANY )
 
   state_diagram_arrow = "-->" as arrow
 
-  state_diagram_quoted_id = %x22 *( "\\" ANY / !%x22 ANY ) %x22 / "'" *( "\\" ANY / !"'" ANY ) "'"
+  state_diagram_quoted_id = %x22 *( "\\" ANY / 1*( !( "\"" / "\\" ) ANY ) ) %x22 / "'" *( "\\" ANY / 1*( !( "'" / "\\" ) ANY ) ) "'"
 
-  state_diagram_label_string = %x22 *( !%x22 ANY ) as string %x22
+  state_diagram_label_string = %x22 *( !( "\"" ) ANY ) as string %x22
 
   state_diagram_id = dq_string / sq_string / state_diagram_name
 
@@ -28,13 +28,13 @@
 
   state_diagram_empty = "state" as keyword line_end
 
-  state_diagram_marker_target = 1*( !( *sp state_diagram_marker line_end ) state_diagram_line_char )
+  state_diagram_marker_target = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" / "<" ) ANY ) / !( *sp state_diagram_marker line_end ) state_diagram_line_char )
 
   state_diagram_marker_declaration = state_diagram_marker_target as state_id *sp state_diagram_marker as marker
 
   state_diagram_target = !( %x22 %x22 ) state_diagram_label_string as state_label 1*sp "as" 1*sp ( state_diagram_quoted_id / state_diagram_name ) as state_id / state_diagram_id as state_id
 
-  state_diagram_description = ":" *sp 1*( !"{" state_diagram_line_char ) as description
+  state_diagram_description = ":" *sp 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" / "{" ) ANY ) / le_mid / !"{" state_diagram_line_char ) as description
 
   state_diagram_composite_statements = 1*( state_diagram_composite_statement ws )
 
@@ -44,21 +44,21 @@
 
   state_diagram_style_targets = state_diagram_name *( "," *sp state_diagram_name )
 
-  state_diagram_style = "style" as style_keyword 1*sp state_diagram_style_targets as style_targets [ 1*sp 1*state_diagram_line_char as style_props ] line_end
+  state_diagram_style = "style" as style_keyword 1*sp state_diagram_style_targets as style_targets [ 1*sp 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / state_diagram_line_char ) as style_props ] line_end
 
   state_diagram_end = "[*]" / !state_diagram_reserved state_diagram_id
 
-  state_diagram_transition_label = *sp ":" *sp 1*( !"-->" state_diagram_line_char ) as label_text
+  state_diagram_transition_label = *sp ":" *sp 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / "-" / ";" ) ANY ) / le_mid / !"-->" state_diagram_line_char ) as label_text
 
   state_diagram_transition = state_diagram_end as from *sp state_diagram_arrow *sp state_diagram_end as to [ state_diagram_transition_label as label ] *( *sp state_diagram_arrow *sp state_diagram_end as chain_to ) as chain line_end
 
   state_diagram_note_head = "note" as note_keyword 1*sp ( "left" / "right" ) as position sp "of" 1*sp state_diagram_id as note_target *sp
 
-  state_diagram_note = state_diagram_note_head ":" *sp 1*state_diagram_line_char as note_text line_end
+  state_diagram_note = state_diagram_note_head ":" *sp 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / state_diagram_line_char ) as note_text line_end
 
   state_diagram_note_end = *sp "end note" line_end
 
-  state_diagram_note_body = *( !state_diagram_note_end *( !newline ANY ) newline )
+  state_diagram_note_body = *( !state_diagram_note_end *( 1*( !( "\n" / "\r" ) ANY ) / !newline ANY ) newline )
 
   state_diagram_note_block = state_diagram_note_head newline state_diagram_note_body as note_text state_diagram_note_end
 
@@ -66,7 +66,7 @@
 
   state_diagram_description_end = *sp ( newline / eof )
 
-  state_diagram_bare_description = ":" !( newline / eof ) *sp [ 1*( !state_diagram_description_end ANY ) as description ]
+  state_diagram_bare_description = ":" !( newline / eof ) *sp [ 1*( 1*( !( "\t" / "\n" / "\r" / " " ) ANY ) / !state_diagram_description_end ANY ) as description ]
 
   state_diagram_standalone = !state_diagram_reserved state_diagram_id as state_id [ *sp state_diagram_bare_description ] line_end
 

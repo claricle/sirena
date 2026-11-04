@@ -8,14 +8,14 @@
 
   user_journey_header = %s"journey" *sp user_journey_end
 
-  user_journey_text = 1*( !%x0A !":" ANY )
+  user_journey_text = 1*( !( "\n" / ":" ) ANY )
 
   user_journey_title = *sp %s"title" 1*sp user_journey_text as text user_journey_end
 
   user_journey_section = *sp %s"section" 1*sp user_journey_text as text user_journey_end
 
   ## accTitle / accDescr match case-insensitively; their text is discarded.
-  user_journey_acc_line = *sp ( %i"accTitle" / %i"accDescr" ) *sp ":" *( !%x0A ANY ) user_journey_end
+  user_journey_acc_line = *sp ( %i"accTitle" / %i"accDescr" ) *sp ":" *( !( "\n" ) ANY ) user_journey_end
 
   user_journey_acc_open = *sp %i"accDescr" *sp "{"
 
@@ -24,25 +24,25 @@
 
   user_journey_acc_space = %x09 / %x0B / %x0C / %x20 / %xA0 / %x1680 / %x2000-200A / %x202F / %x205F / %x3000 / %xFEFF
 
-  user_journey_acc_directive = user_journey_acc_nl *user_journey_acc_space "%%{" *( !user_journey_acc_nl !"}%%" ANY ) "}%%"
+  user_journey_acc_directive = user_journey_acc_nl *user_journey_acc_space "%%{" *( 1*( !( "\n" / "\r" / "}" / " " / " " ) ANY ) / !user_journey_acc_nl !"}%%" ANY ) "}%%"
 
-  user_journey_acc_comment = user_journey_acc_nl *user_journey_acc_space "%%" !"{" *( !user_journey_acc_nl ANY )
+  user_journey_acc_comment = user_journey_acc_nl *user_journey_acc_space "%%" !"{" *( !( "\n" / "\r" / " " / " " ) ANY )
 
-  user_journey_acc_body = *( 1*( !"}" !user_journey_acc_nl ANY ) / user_journey_acc_directive / user_journey_acc_comment / ( !"}" ANY ) )
+  user_journey_acc_body = *( 1*( !( "\n" / "\r" / "}" / " " / " " ) ANY ) / user_journey_acc_directive / user_journey_acc_comment / n_7D )
 
   user_journey_acc_block = user_journey_acc_open user_journey_acc_body "}"
 
   user_journey_acc_unclosed = user_journey_acc_open user_journey_acc_body !ANY
 
-  user_journey_task_text = 1*( !":" !%x0A ANY )
+  user_journey_task_text = 1*( !( "\n" / ":" ) ANY )
 
-  user_journey_actor = 1*( !"," !%x0A ANY )
+  user_journey_actor = 1*( !( "\n" / "," ) ANY )
 
   user_journey_actors = [ user_journey_actor *( *sp "," *sp user_journey_actor ) ]
 
   user_journey_task = *sp user_journey_task_text as name ":" *sp 1*DIGIT as score [ *sp ":" *sp user_journey_actors as actors ] *sp user_journey_end
 
-  user_journey_comment = *sp "%%" *( !%x0A ANY ) %x0A
+  user_journey_comment = *sp "%%" *( !( "\n" ) ANY ) %x0A
 
   user_journey_blank = *sp %x0A
 

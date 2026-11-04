@@ -2,7 +2,7 @@
   ## gantt (grammars/gantt.rb)
   ## ------------------------------------------------------------------
 
-  gantt_text = 1*( !line_end ANY )
+  gantt_text = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / !line_end ANY )
 
   gantt_title = "title" 1*sp gantt_text as title line_end
 
@@ -36,9 +36,9 @@
 
   gantt_click = "click" 1*sp gantt_identifier as click_id 1*sp ( gantt_click_href / gantt_click_callback ) line_end
 
-  gantt_description = 1*( !":" !line_end ANY )
+  gantt_description = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ":" / ";" ) ANY ) / le_mid / !":" !line_end ANY )
 
-  gantt_field = 1*( !"," !line_end ANY )
+  gantt_field = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / "," / ";" ) ANY ) / le_mid / !"," !line_end ANY )
 
   gantt_details = gantt_field as field *( *sp "," *sp gantt_field as field )
 

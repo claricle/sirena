@@ -2,7 +2,7 @@
   ## packet (grammars/packet.rb)
   ## ------------------------------------------------------------------
 
-  packet_text = 1*( !%x0A ANY )
+  packet_text = 1*( !( "\n" ) ANY )
 
   packet_title_line = "title" sp packet_text as title newline
 
@@ -10,7 +10,7 @@
 
   packet_bit_range = packet_bit as bit_start [ "-" packet_bit as bit_end ]
 
-  packet_label = %x22 *( "\\" ANY / !( %x22 / "\\" ) ANY ) as label %x22
+  packet_label = %x22 *( "\\" ANY / 1*( !( "\"" / "\\" ) ANY ) ) as label %x22
 
   packet_field_line = packet_bit_range ":" *sp packet_label ( newline / eof )
 

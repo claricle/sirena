@@ -63,11 +63,11 @@
 
   kanban_empty_quoted_fragments = *( "\"``\"" / "\"\"" )
 
-  kanban_markdown_body = "`" *( !%x22 !"`" ANY ) "`" %x22
+  kanban_markdown_body = "`" *( !( "\"" / "`" ) ANY ) "`" %x22
 
-  kanban_labelled_text = kanban_empty_quoted_fragments ( %x22 !kanban_markdown_body 1*( !%x22 ANY ) as text %x22 / !( %x22 kanban_markdown_body ) 1*( !"]" ANY ) as text ) kanban_empty_quoted_fragments
+  kanban_labelled_text = kanban_empty_quoted_fragments ( %x22 !kanban_markdown_body 1*( !( "\"" ) ANY ) as text %x22 / !( %x22 kanban_markdown_body ) 1*( !"]" ANY ) as text ) kanban_empty_quoted_fragments
 
-  kanban_round_text = kanban_empty_quoted_fragments ( %x22 !kanban_markdown_body 1*( !%x22 ANY ) as text %x22 / !%x22 1*( !"(" !")" !"]" !"}" ANY ) as text ) kanban_empty_quoted_fragments
+  kanban_round_text = kanban_empty_quoted_fragments ( %x22 !kanban_markdown_body 1*( !( "\"" ) ANY ) as text %x22 / !%x22 1*( !( "(" / ")" / "]" / "}" ) ANY ) as text ) kanban_empty_quoted_fragments
 
   kanban_labelled_item = kanban_identifier as id "[" kanban_labelled_text "]"
 

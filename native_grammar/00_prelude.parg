@@ -20,7 +20,7 @@ grammar Mermaid version "0.1.0" edition 2 {
   newline = %x0A / %x0D.0A
 
   ## comment: "%%" to end of line (a lone CR stays in the comment).
-  comment = "%%" *( !%x0A ANY )
+  comment = "%%" *( !( "\n" ) ANY )
 
   ws = *( sp / newline / comment )
 
@@ -30,9 +30,63 @@ grammar Mermaid version "0.1.0" edition 2 {
   ## and a newline, or end of input.
   line_end = [";"] *sp ( [comment] newline / eof )
 
-  rest_of_line = *( !line_end ANY )
+  ## A run of blanks that does not end the line: one step of a text run,
+  ## where line_end would otherwise be tried at every blank.
+  le_mid = 1*sp !( [comment] newline / eof )
 
-  dq_string = %x22 *( "\\" ANY / !%x22 ANY ) as string %x22
+  ## Text runs are scanned with a negated string-literal lookahead, one
+  ## `1*( !( "a" / "b" ) ANY )`: the engine scans that in one pass. A run
+  ## whose stop is spelled with %x escapes, several lookaheads or a rule
+  ## builds its tree one character at a time (quadratic on long text), and
+  ## so does a char-by-char class repeat. Where a run stops at a rule such
+  ## as line_end, a literal scan covers the characters that cannot start the
+  ## stop and le_mid covers blanks inside the line; the stop's own lookahead
+  ## runs only at the few characters left.
+  ##
+  ## n_<hex>: one character that is not any of the listed ones ("T" is a
+  ## range, 2000T200A = 2000-200A), for the alternative that follows a scan
+  ## and has to take the single character the scan left.
 
-  sq_string = "'" *( "\\" ANY / !"'" ANY ) as string "'"
+  n_09_0A_0B_0C_0D_20_22_25_2D_2E_3C_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / %x21 / %x23-24 / %x26-2C / %x2F-3B / %x3D-6E / %x70-77 / %x79-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
+
+  n_09_0A_0B_0C_0D_20_22_25_2D_3C_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / %x21 / %x23-24 / %x26-2C / %x2E-3B / %x3D-6E / %x70-77 / %x79-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
+
+  n_09_0A_0B_0C_0D_20_22_25_3C_3D_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / %x21 / %x23-24 / %x26-3B / %x3E-6E / %x70-77 / %x79-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
+
+  n_09_0A_0B_0C_0D_20_22_40_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / %x21 / %x23-3F / %x41-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
+
+  n_09_0A_0B_0C_0D_20_3B_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / %x21-3A / %x3C-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
+
+  n_09_0A_0D_20_25_2C_3A_3B_3C_3E_40 = %x00-08 / %x0B-0C / %x0E-1F / %x21-24 / %x26-2B / %x2D-39 / %x3D / %x3F / %x41-10FFFF
+
+  n_09_0A_0D_20_25_3A = %x00-08 / %x0B-0C / %x0E-1F / %x21-24 / %x26-39 / %x3B-10FFFF
+
+  n_09_0A_0D_20_25_3B = %x00-08 / %x0B-0C / %x0E-1F / %x21-24 / %x26-3A / %x3C-10FFFF
+
+  n_09_0A_0D_20_28_29_2D_3A_3B_3C_3D_3E_40_5B_5D_5E_7B_7C_7D_7E = %x00-08 / %x0B-0C / %x0E-1F / %x21-27 / %x2A-2C / %x2E-39 / %x3F / %x41-5A / %x5C / %x5F-7A / %x7F-10FFFF
+
+  n_0A_0D_25_2C_3A_3B_3C_3E_40 = %x00-09 / %x0B-0C / %x0E-24 / %x26-2B / %x2D-39 / %x3D / %x3F / %x41-10FFFF
+
+  n_0A_25_7B_7D = %x00-09 / %x0B-24 / %x26-7A / %x7C / %x7E-10FFFF
+
+  n_22 = %x00-21 / %x23-10FFFF
+
+  n_22_25 = %x00-21 / %x23-24 / %x26-10FFFF
+
+  n_22_29 = %x00-21 / %x23-28 / %x2A-10FFFF
+
+  n_22_5E_7D = %x00-21 / %x23-5D / %x5F-7C / %x7E-10FFFF
+
+  n_29 = %x00-28 / %x2A-10FFFF
+
+  n_29_5D = %x00-28 / %x2A-5C / %x5E-10FFFF
+
+  n_7D = %x00-7C / %x7E-10FFFF
+
+
+  rest_of_line = *( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / !line_end ANY )
+
+  dq_string = %x22 *( "\\" ANY / 1*( !( "\"" / "\\" ) ANY ) ) as string %x22
+
+  sq_string = "'" *( "\\" ANY / 1*( !( "'" / "\\" ) ANY ) ) as string "'"
 

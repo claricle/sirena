@@ -35,9 +35,9 @@
 
   sequence_rest_of_line = *sequence_not_lf line_end
 
-  sequence_comment_statement = "%" !"{" *( !line_end ANY ) line_end
+  sequence_comment_statement = "%" !"{" *( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / !line_end ANY ) line_end
 
-  sequence_hash_comment_statement = !sequence_char_ref "#" *( !line_end ANY ) line_end
+  sequence_hash_comment_statement = !sequence_char_ref "#" *( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / !line_end ANY ) line_end
 
   sequence_title_statement = "title" ( ":" *sp / 1*sp ) *sequence_title_char sequence_boundary
 
@@ -85,15 +85,15 @@
 
   sequence_declaration_stop = "<" / ">" / ":" / "," / ";" / "%%" / "@" / newline
 
-  sequence_declaration_char = !sequence_declaration_stop ANY
+  sequence_declaration_char = n_0A_0D_25_2C_3A_3B_3C_3E_40 / ( "%" !"%" ) / ( %x0D !%x0A )
 
   sequence_declaration_lead = sequence_char_ref / ( !"#" sequence_declaration_char )
 
-  sequence_declaration_word_char = !( sequence_declaration_stop / sp ) ANY
+  sequence_declaration_word_char = n_09_0A_0D_20_25_2C_3A_3B_3C_3E_40 / ( "%" !"%" ) / ( %x0D !%x0A )
 
   sequence_declaration_word_lead = sequence_char_ref / ( !"#" sequence_declaration_word_char )
 
-  sequence_declaration_name = ( sequence_declaration_word_lead *( sequence_char_ref / sequence_declaration_word_char ) &sequence_alias_keyword ) / ( sequence_declaration_lead *( sequence_char_ref / sequence_declaration_char ) )
+  sequence_declaration_name = ( sequence_declaration_word_lead *( sequence_char_ref / 1*( !( "\t" / "\n" / "\r" / " " / "#" / "%" / "," / ":" / ";" / "<" / ">" / "@" ) ANY ) / sequence_declaration_word_char ) &sequence_alias_keyword ) / ( sequence_declaration_lead *( sequence_char_ref / 1*( !( "\n" / "\r" / "#" / "%" / "," / ":" / ";" / "<" / ">" / "@" ) ANY ) / sequence_declaration_char ) )
 
   sequence_message_actor_stop = sequence_arrow_base / ":" / "," / ";" / "%%" / "@{" / "(" / ")" / newline
 
@@ -121,11 +121,11 @@
 
   ## --- declarations ---------------------------------------------------
 
-  sequence_shape_metadata = "@{" 1*( !"}" !newline ANY ) "}"
+  sequence_shape_metadata = "@{" 1*( 1*( !( "\n" / "\r" / "}" ) ANY ) / !"}" !newline ANY ) "}"
 
   sequence_declaration_identity = sequence_declaration_name as id [ sequence_shape_metadata as shape_metadata ] *sp
 
-  sequence_unquoted_label = 1*( sequence_char_ref / ( !line_end !";" ANY ) )
+  sequence_unquoted_label = 1*( sequence_char_ref / 1*( !( "\t" / "\n" / "\r" / " " / "#" / "%" / ";" ) ANY ) / le_mid / n_09_0A_0D_20_25_3B / ( !line_end !";" ANY ) )
 
   sequence_declaration_label = "as" 1*sp sequence_unquoted_label as label
 

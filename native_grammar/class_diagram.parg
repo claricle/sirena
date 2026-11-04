@@ -7,7 +7,7 @@
 
   class_name_char = ALPHA / DIGIT / "_" / class_unicode_letter
 
-  class_rest = 1*( !line_end ANY )
+  class_rest = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / !line_end ANY )
 
   class_direction_value = ( "TD" / "TB" / "LR" / "RL" / "BT" ) as dir_value
 
@@ -25,7 +25,7 @@
 
   class_ref = class_name as class_id [ *sp class_generic_params as generic ]
 
-  class_label_string = %x22 *( !%x22 ANY ) as string %x22
+  class_label_string = %x22 *( !( "\"" ) ANY ) as string %x22
 
   class_text_label = "[" *sp class_label_string *sp "]"
 
@@ -35,21 +35,21 @@
 
   class_member_end = *sp &( comment / newline / "}" / eof )
 
-  class_body_char = !( "%%" / %x0A / "{" / "}" ) ANY
+  class_body_char = n_0A_25_7B_7D / ( "%" !"%" )
 
-  class_body_text = !%x22 class_body_char *class_body_char class_member_end
+  class_body_text = !%x22 class_body_char *( 1*( !( "\n" / "%" / "{" / "}" ) ANY ) / class_body_char ) class_member_end
 
-  class_indented_quote_text = %x22 *class_body_char class_member_end
+  class_indented_quote_text = %x22 *( 1*( !( "\n" / "%" / "{" / "}" ) ANY ) / class_body_char ) class_member_end
 
-  class_annotation_text = 1*( !( ">>" class_member_end ) class_body_char )
+  class_annotation_text = 1*( 1*( !( "\n" / "%" / ">" / "{" / "}" ) ANY ) / !( ">>" class_member_end ) class_body_char )
 
   class_body_annotation = "<<" ( class_annotation_text as body_stereotype / "" as body_stereotype ) ">>" class_member_end
 
-  class_colon_annotation_text = 1*( !( ">>" class_member_end ) !( ":" / ";" ) class_body_char )
+  class_colon_annotation_text = 1*( 1*( !( "\n" / "%" / ":" / ";" / ">" / "{" / "}" ) ANY ) / !( ">>" class_member_end ) !( ":" / ";" ) class_body_char )
 
   class_colon_body_annotation = "<<" ( class_colon_annotation_text as body_stereotype / "" as body_stereotype ) ">>" class_member_end
 
-  class_colon_text = 1*( !( ":" / ";" / %x0A ) !line_end ANY )
+  class_colon_text = 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ":" / ";" ) ANY ) / le_mid / !( ":" / ";" / %x0A ) !line_end ANY )
 
   class_identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
 
@@ -113,7 +113,7 @@
 
   class_pipe_label = "|" 1*( !"|" ANY ) as label_text "|"
 
-  class_colon_label = *sp ":" *sp 1*( !line_end ANY ) as label_text
+  class_colon_label = *sp ":" *sp 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / !line_end ANY ) as label_text
 
   class_relationship = class_name as from_id [ *sp class_generic_params as from_generic ] *sp [ class_cardinality as source_card ] *sp class_operator as operator *sp [ class_pipe_label as pipe_label ] *sp [ class_cardinality as target_card ] *sp class_name as to_id [ *sp class_generic_params as to_generic ] [ class_colon_label as colon_label ] line_end
 
