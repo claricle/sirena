@@ -12,6 +12,7 @@ module Sirena
                         "ref" => Blocks.method(:ref),
                         "fragment" => Blocks.method(:fragment),
                         "divider" => Blocks.method(:divider),
+                        "delay" => Blocks.method(:delay),
                         "activation" => Blocks.method(:activation),
                         "destroy" => Blocks.method(:destroy),
                         "page_break" => Blocks.method(:page_break) }.freeze

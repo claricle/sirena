@@ -389,6 +389,7 @@ module Sirena
           def flow_items
             { arrows: @flow.arrows, fragments: @flow.fragments,
               notes: @flow.notes, dividers: @flow.dividers,
+              delays: @flow.delays,
               bars: @flow.bars, crosses: @flow.crosses }
           end
 
