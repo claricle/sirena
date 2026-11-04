@@ -63,6 +63,12 @@ module Sirena
         decline("options or a non-Mermaid notation", strict: strict)
       end
 
+      # What {Sirena.render} returns: the native SVG when Rust answers,
+      # otherwise the Ruby pipeline's.
+      def or_ruby(source, options)
+        render(source, options) || Engine.new.render(source, options)
+      end
+
       # Forget the memoised library probe (specs only).
       def reset!
         return unless instance_variable_defined?(:@library)

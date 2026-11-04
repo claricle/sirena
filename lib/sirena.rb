@@ -35,8 +35,6 @@ module Sirena
   # @param options [Hash] Rendering options, see {Engine#render}
   # @return [String] SVG output
   # @see Runtime for the optional Rust runtime (SIRENA_RUNTIME)
-  def self.render(source, options = {})
-    Runtime.render(source, options) || Engine.new.render(source, options)
-  end
+  def self.render(source, options = {}) = Runtime.or_ruby(source, options)
 end
 require_relative "sirena/notation/builtin"
