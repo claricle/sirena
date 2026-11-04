@@ -32,14 +32,17 @@ module Sirena
           REVERSED = /\A(#{NAME}#{MARK}?|#{MARK})[ \t]*<-+[ \t]*
                       (#{NAME}#{MARK}?|#{MARK})
                       (?:[ \t]*:[ \t]*(.+))?\z/xo
+          NOTE = /\Anote[ \t]+(left|right|top|bottom)[ \t]+of[ \t]+(#{NAME})
+                  (?:[ \t]*:[ \t]*(.+))?\z/xio
+          END_NOTE = /\Aend[ \t]*note\z/i
           DESCRIPTION = /\A(#{NAME})[ \t]*:[ \t]*(.+)\z/o
           SKIPPED = /\A(?:scale\b|title\b|hide\b|skinparam\b|left to right
                      direction\z|top to bottom direction\z)/xi
           HISTORY = { "[H]" => ["history", "H"],
                       "[H*]" => ["deep_history", "H*"] }.freeze
           private_constant :NAME, :MARK, :ARROW, :END_STATE, :STATE_OPEN,
-                           :TRANSITION, :REVERSED, :DESCRIPTION, :SKIPPED,
-                           :HISTORY
+                           :TRANSITION, :REVERSED, :NOTE, :END_NOTE,
+                           :DESCRIPTION, :SKIPPED, :HISTORY
 
           # @return [Array<Array(String, Integer)>] the stripped, non-empty,
           #   non-comment lines of the first diagram, with their numbers
@@ -65,8 +68,10 @@ module Sirena
             @model = Sirena::Diagram::StateDiagram.new(direction: "TB")
             @states = {}
             @scopes = [nil]
+            @note = nil
+            @owners = {}
             self.class.lines_of(source).each { |line| read(*line) }
-            raise unclosed unless @scopes.size == 1
+            raise unclosed unless @scopes.size == 1 && @note.nil?
 
             @model
           end
@@ -74,6 +79,7 @@ module Sirena
           private
 
           def read(text, number)
+            return note_line(text) if @note
             return if SKIPPED.match?(text) || END_STATE.match?(text)
             return close_scope if text == "}"
             return if statement(text)
@@ -84,7 +90,43 @@ module Sirena
           end
 
           def statement(text)
-            declaration(text) || transition(text) || description(text)
+            declaration(text) || transition(text) || note(text) ||
+              description(text)
+          end
+
+          # A note is one line (`note left of A : text`) or a block closed by
+          # `end note`; `\n` in the text breaks a line, as PlantUML draws it.
+          def note(text)
+            match = NOTE.match(text)
+            return unless match
+
+            target = ensure_state(match[2])
+            if match[3]
+              add_note(target, match[1], match[3])
+            else
+              @note = [target, match[1].downcase, []]
+            end
+            true
+          end
+
+          def note_line(text)
+            return end_note if END_NOTE.match?(text)
+
+            @note.last << text
+          end
+
+          def end_note
+            target, side, lines = @note
+            @note = nil
+            add_note(target, side, lines.join("<br>"))
+          end
+
+          def add_note(target, side, text)
+            @model.notes << Sirena::Diagram::StateNote.new(
+              id: "#{target.id}----note#{@model.notes.size}",
+              text: text.gsub("\\n", "<br>").strip,
+              target_id: target.id, position: side.downcase
+            )
           end
 
           def unclosed
@@ -102,10 +144,26 @@ module Sirena
             return unless match
 
             state = ensure_state(match[2] || match[3])
+            adopt(state)
             state.label = match[1] if match[1]
             describe(state, match[5]) if match[5]
             @scopes.push(state) if match[4]
             true
+          end
+
+          # `state X` names where X lives: a state first met as a transition
+          # target inside another body is moved to the scope that declares it.
+          def adopt(state)
+            parent = @scopes.last
+            return if parent.equal?(owner_of(state))
+
+            (owner_of(state)&.children || @model.states).delete(state)
+            (parent ? parent.children : @model.states) << state
+            @owners[state.id] = parent
+          end
+
+          def owner_of(state)
+            @owners[state.id]
           end
 
           def transition(text)
@@ -192,6 +250,7 @@ module Sirena
               id: id, label: label, state_type: type,
             )
             (parent ? parent.children : @model.states) << node
+            @owners[id] = parent
             node
           end
         end
