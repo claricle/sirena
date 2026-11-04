@@ -93,7 +93,9 @@ RSpec.describe Sirena::Parser::Native, ".parse parity (flowchart)" do
     source = "graph TD\n#{"a\u00e9" * 50_000}\n"
     elapsed = wall_time { described_class.parse(:flowchart, source) }
 
-    # 4 s before the guard walks shared one restart walk
-    expect(elapsed).to be < 2.5
+    # 4.3 s locally before the guard walks shared one restart walk, 1.3 s
+    # after; CI runners take about twice as long, so 5 s still catches
+    # the regression without timing out a slow runner.
+    expect(elapsed).to be < 5
   end
 end
