@@ -227,7 +227,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(plantuml.types)
         .to eq(%i[class_diagram sequence_diagram activity_diagram
                   usecase_diagram component_diagram
-                  state_diagram]).and be_frozen
+                  state_diagram entity_diagram]).and be_frozen
     end
   end
 
