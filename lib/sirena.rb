@@ -3,6 +3,7 @@
 require_relative "sirena/version"
 require_relative "sirena/error"
 require_relative "sirena/error_report"
+require_relative "sirena/runtime"
 
 module Sirena
   # Faults a hostile DOCUMENT can provoke that are not `StandardError`, so
@@ -33,8 +34,9 @@ module Sirena
   # @param source [String] diagram source code
   # @param options [Hash] Rendering options, see {Engine#render}
   # @return [String] SVG output
+  # @see Runtime for the optional Rust runtime (SIRENA_RUNTIME)
   def self.render(source, options = {})
-    Engine.new.render(source, options)
+    Runtime.render(source, options) || Engine.new.render(source, options)
   end
 end
 require_relative "sirena/notation/builtin"
