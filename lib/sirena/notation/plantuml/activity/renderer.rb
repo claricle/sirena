@@ -15,7 +15,8 @@ module Sirena
           FONT_FAMILY = "sans-serif"
           PAPER = "#F1F1F1"
           INK = "#181818"
-          private_constant :FONT_FAMILY, :PAPER, :INK
+          TERMINAL = "#222222"
+          private_constant :FONT_FAMILY, :PAPER, :INK, :TERMINAL
 
           # @param style [Style::Sheet] what the source sets; the drawn
           #   defaults stand for anything it leaves out
@@ -51,25 +52,26 @@ module Sirena
           def draw_rect(attrs)
             element(Svg::Rect, x: attrs[:x], y: attrs[:y], width: attrs[:width],
                                height: attrs[:height],
-                               rx: look(:round_corner) || attrs[:rx],
-                               fill: paper(attrs[:fill]),
+                               rx: corner(attrs),
+                               fill: fill(attrs),
                                stroke: ink(attrs),
-                               stroke_width: thickness,
+                               stroke_width: frame_width(attrs),
                                stroke_dasharray: look(:line_style))
           end
 
           def draw_circle(attrs)
             element(Svg::Circle, cx: attrs[:cx], cy: attrs[:cy], r: attrs[:r],
-                                 fill: attrs[:fill], stroke: attrs[:stroke],
+                                 fill: disc(attrs),
+                                 stroke: line_ink(attrs[:stroke]),
                                  stroke_width: "1")
           end
 
           def draw_polygon(attrs)
-            arrowhead = attrs[:fill] == INK
+            head = attrs[:fill] == INK
             element(Svg::Polygon, points: format_points(attrs[:points]),
-                                  fill: arrowhead ? arrow : paper(attrs[:fill]),
-                                  stroke: arrowhead ? arrow : ink(attrs),
-                                  stroke_width: "1")
+                                  fill: head ? arrow : fill(attrs),
+                                  stroke: head ? arrow : ink(attrs),
+                                  stroke_width: head ? "1" : hairline(attrs))
           end
 
           def draw_path(attrs)
@@ -83,10 +85,11 @@ module Sirena
             element(Svg::Text, x: attrs[:x], y: attrs[:y],
                                content: attrs[:content],
                                text_anchor: attrs[:anchor],
-                               font_family: look(:font_name) || FONT_FAMILY,
+                               font_family: face(attrs, :font_name) ||
+                                            FONT_FAMILY,
                                font_size: attrs[:size].to_s,
                                font_weight: attrs[:weight],
-                               fill: look(:font_colour) || "#000000")
+                               fill: face(attrs, :font_colour) || "#000000")
               .tap { |text| Creole.assign(text, attrs[:content]) }
           end
 
@@ -94,8 +97,53 @@ module Sirena
             @style.explicit(:activity, property)
           end
 
+          # The rule of the mark's own `<style>` selector (diamond, note,
+          # partition, arrow), which wins over the activityDiagram block.
+          def own(attrs, property)
+            role = attrs[:role]
+            @style.explicit(role, property) if role
+          end
+
+          def face(attrs, property)
+            own(attrs, property) || look(property)
+          end
+
+          # A partition has no paint of its own, so only its own rule
+          # fills it; a diamond falls back to the action paint.
+          def fill(attrs)
+            own(attrs, :background) ||
+              (attrs[:role] == :partition ? attrs[:fill] : paper(attrs[:fill]))
+          end
+
+          # PlantUML draws a partition's corners at half the RoundCorner.
+          def corner(attrs)
+            return look(:round_corner) || attrs[:rx] unless
+              attrs[:role] == :partition
+
+            round = own(attrs, :round_corner)
+            round ? round / 2 : attrs[:rx]
+          end
+
           def arrow
-            @style.explicit(:arrow, :border) || INK
+            @style.explicit(:arrow, :border) ||
+              @style.from_style(:activity, :border) || INK
+          end
+
+          # The start disc takes the activityDiagram background.
+          def disc(attrs)
+            return attrs[:fill] unless attrs[:role] == :start
+
+            @style.from_style(:activity, :background) || attrs[:fill]
+          end
+
+          def hairline(attrs)
+            (own(attrs, :line_thickness) || look(:line_thickness) || 0.5).to_s
+          end
+
+          def frame_width(attrs)
+            return hairline(attrs) unless attrs[:role] == :partition
+
+            (own(attrs, :line_thickness) || 1.5).to_s
           end
 
           # The default box paint stands for what the source sets.
@@ -105,15 +153,17 @@ module Sirena
 
           def ink(attrs)
             stroke = attrs[:stroke]
-            stroke == INK ? look(:border) || stroke : stroke
+            return stroke unless stroke == INK
+
+            own(attrs, :border) || look(:border) || stroke
           end
 
           def line_ink(stroke)
-            stroke == INK ? arrow : stroke
-          end
-
-          def thickness
-            (look(:line_thickness) || 1).to_s
+            case stroke
+            when INK then arrow
+            when TERMINAL then @style.from_style(:activity, :border) || stroke
+            else stroke
+            end
           end
 
           def format_points(points)

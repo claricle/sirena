@@ -45,7 +45,7 @@ module Sirena
 
             @canvas.lines(edge.label.split("\n"),
                           [route.label_x, route.label_y],
-                          anchor: route.anchor)
+                          anchor: route.anchor, role: :arrow)
           end
         end
       end
