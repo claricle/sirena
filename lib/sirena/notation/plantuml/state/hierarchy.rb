@@ -20,7 +20,7 @@ module Sirena
           PAD = 24.0
           HEADER = 36.0
           NOTE_GAP = 30.0
-          private_constant :MARGIN, :PAD, :HEADER, :NOTE_GAP
+          private_constant :MARGIN, :PAD, :NOTE_GAP
 
           # @param graph [Hash] the graph from the state layout's build_graph
           def initialize(graph)

@@ -262,6 +262,41 @@ jobs:
       - run: scripts/install_plantuml.sh
       - run: bundle exec rspec spec/plantuml/toolchain_probe_spec.rb --tag toolchain
 
+  native-runtime:
+    # The optional Rust runtime (claricle/sirena-rs, `sirena-native` gem). The
+    # shared library is built from a pinned sirena-rs commit and loaded through
+    # its Ruby binding; every other job runs without it and so proves the
+    # pure-Ruby path. Linux only: Ruby and Rust must share a libm.
+    name: native-runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SIRENA_RS_REF: 18a46c0e8bfb243c83ce34234ab18c9e8b627643
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          repository: claricle/sirena-rs
+          ref: ${{ env.SIRENA_RS_REF }}
+          path: sirena-rs
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          cache-version: >-
+            ${{ inputs.cache_version && inputs.cache_version != '0' &&
+            format('{0}-{1}', inputs.cache_version, github.job) || '0' }}
+      - run: cargo build --release -p sirena-ffi
+        working-directory: sirena-rs
+      - name: Rust runtime renders the corpus byte-identically
+        env:
+          SIRENA_NATIVE_LIB: ${{ github.workspace }}/sirena-rs/target/release/libsirena_ffi.so
+          RUBYLIB: ${{ github.workspace }}/sirena-rs/bindings/ruby/lib
+          SIRENA_RUNTIME: rust
+        run: >-
+          bundle exec rspec spec/sirena/runtime_spec.rb
+          spec/sirena/runtime_native_equality_spec.rb
+
   # Reserved full-lane slots, added to `needs` below:
   #   parity (14, waits on elkrb), scoreboard guard (02b)
   # The corpus slot (02b) is filled by `unit`: its `bundle exec rake` runs
@@ -270,7 +305,7 @@ jobs:
   full-lane:
     name: full-lane
     if: ${{ always() }}
-    needs: [docs-build, links, conformance, fresh-resolution, plantuml-toolchain, coverage, scoreboard-baseline]
+    needs: [docs-build, links, conformance, fresh-resolution, plantuml-toolchain, coverage, scoreboard-baseline, native-runtime]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -18,14 +18,19 @@ module Sirena
         DOCUMENT = "document"
         PROPERTIES = { "backgroundcolor" => :background,
                        "fontcolor" => :colour, "fontsize" => :size }.freeze
-        OPENING = /\A(\w+)[ \t]*\{\z/
+        OPENING = /\A(\.?\w+)[ \t]*\{\z/
+        # Element rules (`state { ... }`, `.hot { ... }`) belong to
+        # {Style::Reader}; this reader steps over them.
+        ELEMENTS = %w[classdiagram statediagram activitydiagram class state
+                      activity note arrow].freeze
         PROPERTY = /\A(\w+)[ \t]+(\S+)\z/
         CLOSING_TAG = %r{\A</style>\z}i
-        private_constant :DOCUMENT, :PROPERTIES, :OPENING, :PROPERTY,
+        private_constant :DOCUMENT, :PROPERTIES, :ELEMENTS, :OPENING, :PROPERTY,
                          :CLOSING_TAG
 
         def initialize
           @path = []
+          @skipped = 0
           @background = nil
           @rules = {}
         end
@@ -54,23 +59,49 @@ module Sirena
         private
 
         def read_rule(text, number)
+          return skip_element_rule(text) if skipping?(text)
+
           if (match = OPENING.match(text))
             open_selector(match[1], text, number)
           elsif text == "}" && !@path.empty?
             @path.pop
-          elsif (match = PROPERTY.match(text))
-            set(match[1].downcase, match[2], text, number)
           else
-            refuse("style rule form", text, number)
+            read_property(text, number)
+          end
+        end
+
+        def read_property(text, number)
+          match = PROPERTY.match(text)
+          return refuse("style rule form", text, number) unless match
+
+          set(match[1].downcase, match[2], text, number)
+        end
+
+        def skipping?(text)
+          @skipped.positive? || element_rule?(text)
+        end
+
+        def element_rule?(text)
+          match = OPENING.match(text)
+          return false unless match && @path.empty?
+
+          match[1].start_with?(".") || ELEMENTS.include?(match[1].downcase)
+        end
+
+        def skip_element_rule(text)
+          if OPENING.match?(text) || text.end_with?("{")
+            @skipped += 1
+          elsif text == "}"
+            @skipped -= 1
           end
         end
 
         def refuse_open_selector(number)
-          return if @path.empty?
+          return if @path.empty? && @skipped.zero?
 
           raise Sirena::Parser::ParseError,
                 "Parse error: line #{number} closes the style block " \
-                "with #{@path.last} still open"
+                "with #{@path.last || 'a rule'} still open"
         end
 
         def open_selector(name, text, number)

@@ -14,8 +14,9 @@ module Sirena
         # Lines another family owns; a source with one is never claimed.
         FOREIGN = /\A(?:participant|class|abstract|enum|boundary|control|
                    entity|collections|queue|autonumber|newpage|alt|loop|opt|
-                   par|critical|break|ref|start|stop|fork|partition|
-                   repeat|while|switch|if)\b|;\z|\A\(\*|\Astate\b/xi
+                   par|critical|break|ref|fork|partition|
+                   repeat|while|switch|if)\b|;\z|\A\(\*|\Astate\b|
+                   \A(?:start|stop)\z/xi
 
         module_function
 

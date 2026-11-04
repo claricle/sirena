@@ -215,7 +215,6 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Parser do
 
   describe "refusals" do
     {
-      "a style block" => ["<style>\nx {}\n</style>\n:a;", "style block"],
       "an image" => [":see <img:a.png>;", "image"],
       "an unknown statement" => ["start\nsplit", "statement"],
       "an unterminated action" => [":never ends", "unterminated"],

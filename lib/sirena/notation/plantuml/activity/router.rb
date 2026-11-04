@@ -50,7 +50,7 @@ module Sirena
             start_x = anchor_x(edge.from, from, to)
             end_x = anchor_x(edge.to, to, from)
             case shape(edge, from, to)
-            when :side_exit then side_exit(from, to, end_x)
+            when :side_exit then decision_exit(from, to, end_x)
             when :side_entry then side_entry(from, to, start_x)
             when :straight then straight(from, to, start_x)
             else elbow(edge, [from, to], start_x, end_x)
@@ -79,13 +79,23 @@ module Sirena
                       label_x: start_x + 5, label_y: from.bottom + LABEL_DROP)
           end
 
+          # A branch that lands under the decision's own tip needs no side
+          # run: it drops straight, as the first branch of a switch does.
+          def decision_exit(from, to, end_x)
+            return straight(from, to, end_x) if (end_x - from.cx).abs < 1
+
+            side_exit(from, to, end_x)
+          end
+
           def side_exit(from, to, end_x)
-            sign = to.cx > from.cx ? 1 : -1
+            sign = end_x > from.cx ? 1 : -1
             edge_x = sign.positive? ? from.right : from.left
+            # The label rides the branch's own drop, so the branches that
+            # share one horizontal run do not print their labels on top of
+            # each other.
             Route.new(points: [[edge_x, from.cy], [end_x, from.cy],
                                [end_x, to.top]],
-                      label_x: edge_x + (sign * 4), label_y: from.cy - 4,
-                      anchor: sign.positive? ? "start" : "end")
+                      label_x: end_x + 5, label_y: from.cy + LABEL_DROP)
           end
 
           def side_entry(from, to, start_x)

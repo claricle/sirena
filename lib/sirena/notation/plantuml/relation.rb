@@ -11,14 +11,17 @@ module Sirena
       # :implementation, :association, :dependency, :aggregation,
       # :composition or :nesting, and nil when `head` is :both; `markers`
       # then maps each side to its kind. `dashed` is true for a dotted
-      # body. `direction` is the glyph's :up, :down, :left or :right word,
+      # body. `color`, `width` and `dotted?` come from a bracketed style such as
+      # `-[#red,dotted,thickness=4]->` and are nil, nil and false without one.
+      # `direction` is the glyph's :up, :down, :left or :right word,
       # or nil. `length` counts the body's dashes and dots. The
       # multiplicities, roles and the label are the quoted, `/"role"` and
       # `: text` parts, or nil.
       class Relation
         attr_reader :left, :right, :kind, :head, :markers,
                     :left_multiplicity, :right_multiplicity, :label,
-                    :left_role, :right_role, :direction, :length
+                    :left_role, :right_role, :direction, :length,
+                    :color, :width
 
         # @param arrow [Hash] holds `:kind`, `:head`, `:markers`, `:dashed`
         #   and `:plain`, and optionally `:direction` and `:length` (2 when
@@ -43,6 +46,9 @@ module Sirena
             arrow.fetch_values(:kind, :head, :markers, :dashed, :plain)
           @direction = arrow[:direction]
           @length = arrow.fetch(:length, 2)
+          @color = arrow[:color]
+          @width = arrow[:width]
+          @dotted = arrow.fetch(:dotted, false)
         end
 
         def assign_ends(ends)
@@ -54,6 +60,11 @@ module Sirena
 
         def dashed?
           @dashed
+        end
+
+        # True for a bracketed `dotted` style, drawn finer than a dash.
+        def dotted?
+          @dotted
         end
 
         # True for a bare `-->` or `<--` style arrow, which a sequence
@@ -78,7 +89,8 @@ module Sirena
 
         def arrow_attributes
           { kind: kind, head: head, markers: markers, dashed: dashed?,
-            plain: plain?, direction: direction, length: length }
+            plain: plain?, direction: direction, length: length,
+            color: color, width: width, dotted: dotted? }
         end
 
         def end_attributes
