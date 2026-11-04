@@ -50,11 +50,6 @@ module Sirena
           end
         end
 
-        # @return [Boolean] whether `text` carries any markup
-        def markup?(text)
-          parse(text).any? { |piece| !piece.style.empty? }
-        end
-
         # Gives `element` the line's content: plain text when there is no
         # markup, one tspan per styled piece otherwise.
         #
@@ -67,11 +62,6 @@ module Sirena
           element.content = nil
           element.xml_space = "preserve"
           element.tspans = runs.map { |piece| tspan(piece) }
-        end
-
-        # The line as plain text, markup removed.
-        def plain(text)
-          parse(text).map(&:text).join
         end
 
         def split(text)

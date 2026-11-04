@@ -116,4 +116,20 @@ RSpec.describe Sirena::Notation::PlantUML do
         .to eq("preserve")
     end
   end
+
+  describe "qualified association box with members" do
+    let(:svg) do
+      render("class A {\n+f : int\n--\n+m()\n}\nclass B\n" \
+             "A \"[key]\" --> \"1\" B")
+    end
+
+    it "grows the box to hold its member rows" do
+      box = nodes(svg, "//g[@id='class-A']/rect").first
+      top = box.attributes["y"].to_f
+
+      expect(member_ys(svg)).to all(
+        be_between(top, top + box.attributes["height"].to_f),
+      )
+    end
+  end
 end
