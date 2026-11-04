@@ -94,9 +94,17 @@ module Sirena
 
         def rules(block, columns, area, tops)
           drawn = Box.new(area.left, area.top, columns.sum, area.height)
-          @marks << Mark.new(:rect, drawn, ink: TREE_INK) if block.border?
+          frame(drawn) if block.border?
           bars(columns, area) if block.grid? || block.column_lines?
           bands(tops, drawn) if block.grid? || block.row_lines?
+        end
+
+        # Four rules, as PlantUML draws it: top, bottom, left, right.
+        def frame(area)
+          @marks << grey(area.left, area.top, area.width, 0.0)
+          @marks << grey(area.left, area.bottom, area.width, 0.0)
+          @marks << grey(area.left, area.top, 0.0, area.height)
+          @marks << grey(area.right, area.top, 0.0, area.height)
         end
 
         def bands(tops, area)

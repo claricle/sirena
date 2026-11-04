@@ -5,17 +5,28 @@ module Sirena
     module PlantUMLSalt
       # One leaf of a salt row: plain text, a button, a text field and so on.
       class Widget
-        KINDS = %i[text button field checkbox radio droplist empty].freeze
+        KINDS = %i[text button field checkbox radio droplist empty
+                   rule].freeze
 
-        attr_reader :kind, :runs, :checked
+        attr_reader :kind, :runs, :checked, :items, :variant, :chars
 
         # @param kind [Symbol] one of {KINDS}
         # @param runs [Array<Run>] the visible label, in order
         # @param checked [Boolean] whether a checkbox or radio is ticked
-        def initialize(kind, runs = [], checked: false)
+        # @param items [Array<Array<Run>>] a droplist's further choices
+        # @param variant [Symbol, nil] a rule's kind: `:dotted`, `:double`,
+        #   `:solid` or `:heavy`
+        # @param chars [Integer, nil] the characters the label took in the
+        #   source, spaces included; PlantUML sizes a button, field or
+        #   droplist by these
+        def initialize(kind, runs = [], checked: false, items: [],
+                       variant: nil, chars: nil)
           @kind = kind
+          @chars = chars || runs.sum { |run| run.text.length }
           @runs = runs.freeze
           @checked = checked
+          @items = items.freeze
+          @variant = variant
           freeze
         end
 

@@ -3,6 +3,7 @@
 require_relative "block"
 require_relative "markup"
 require_relative "row"
+require_relative "run"
 require_relative "widget"
 
 module Sirena
@@ -20,9 +21,17 @@ module Sirena
         BUTTON = /\A\[([^\]]+)\]\z/
         FIELD = /\A"(.*)"\z/
         DROPLIST = /\A\^(.*)\^\z/
+        # A line of its own: `..`, `==`, `--` or `~~`, which may carry a
+        # title closed by the same mark (`.. title ..`, dropped on draw).
+        RULE = /\A(\.\.|==|--|~~)(?:.*?\1)?\z/
+        RULE_VARIANTS = { ".." => :dotted, "==" => :double, "--" => :solid,
+                          "~~" => :heavy }.freeze
+        # `== Title`: a bold heading in the row's first cell.
+        HEADING = /\A==\s*(\S.*)\z/
+        HEADING_SIZE = 14
         private_constant :OPENER, :START, :FINISH, :CHECKBOX, :RADIO,
-                         :BUTTON, :FIELD, :DROPLIST,
-                         :INLINE_CLOSE
+                         :BUTTON, :FIELD, :DROPLIST, :INLINE_CLOSE, :RULE,
+                         :RULE_VARIANTS, :HEADING, :HEADING_SIZE
 
         # @param source [String] any String; invalid UTF-8 is scrubbed
         # @return [Block] a root block holding every top-level row
@@ -84,11 +93,17 @@ module Sirena
 
         def strip_closers(line)
           closers = 0
-          while line.start_with?("}") || closing_group?(line)
+          while line.start_with?("}") || closing_group?(line) ||
+              closing_row?(line)
             line = line.delete_prefix("}").chomp("}").strip
             closers += 1
           end
           [line, closers]
+        end
+
+        # `+ World }`: the `}` that ends a row closes the block holding it.
+        def closing_row?(line)
+          line.end_with?("}") && !line.include?("{")
         end
 
         def closing_group?(line)
@@ -108,9 +123,28 @@ module Sirena
         def add_row(line)
           block = @stack.last
           depth, line = nesting(block, line)
-          cells = line.split("|", -1)
-            .map { |cell| widget(cell.strip, tree: block.tree?) }
+          cells = (rule(line) unless block.tree?) || cells(line, block)
           block.rows << Row.new(cells, depth: depth)
+        end
+
+        def rule(line)
+          match = RULE.match(line) or return
+
+          [Widget.new(:rule, variant: RULE_VARIANTS.fetch(match[1]))]
+        end
+
+        def cells(line, block)
+          cells = line.delete_prefix("|").split("|", -1)
+            .map { |cell| widget(cell.strip, tree: block.tree?) }
+          titled = HEADING.match(line) unless block.tree?
+          cells[0] = heading(titled[1]) if titled
+          cells
+        end
+
+        # The first cell's text, set as a heading in place of its `==`.
+        def heading(text)
+          title = text.split("|", 2).first.strip
+          Widget.new(:text, [Run.new(title, bold: true, size: HEADING_SIZE)])
         end
 
         # The depth a tree row's leading `+` marks give it, and the rest.
@@ -122,7 +156,8 @@ module Sirena
         # In a tree table a quoted cell is the text itself, quotes
         # included; elsewhere it is a text field.
         def widget(text, tree: false)
-          return Widget.new(:empty) if text.empty? || text == "."
+          return Widget.new(:empty) if text.empty?
+          return Widget.new(:empty, [Run.new(text)]) if text == "."
 
           plain = tree && FIELD.match?(text)
           (labelled(text) unless plain) || Widget.new(:text, Markup.runs(text))
@@ -144,13 +179,21 @@ module Sirena
         end
 
         def styled(kind, match)
-          Widget.new(kind, Markup.runs(match[1].strip)) if match
+          labelled_widget(kind, match[1]) if match
+        end
+
+        # A label's spaces count toward the widget's size, not its text.
+        def labelled_widget(kind, label, **extra)
+          Widget.new(kind, Markup.runs(label.strip), **extra,
+                     chars: Markup.runs(label).sum { |run| run.text.length })
         end
 
         def droplist(match)
           return unless match
 
-          Widget.new(:droplist, Markup.runs(match[1].split("^").first.to_s))
+          label, *items = match[1].split("^")
+          labelled_widget(:droplist, label.to_s,
+                          items: items.map { |item| Markup.runs(item) })
         end
       end
     end
