@@ -119,9 +119,9 @@ module Sirena
         end
 
         # PlantUML sets salt text in the platform's sans-serif, which is
-        # Lucida Grande wherever its measurements were taken.
+        # DejaVu Sans wherever its measurements were taken.
         def run_width(run)
-          face = run.bold ? :lucida_bold : :lucida
+          face = run.bold ? :dejavu_bold : :dejavu
           TextMeasurement.measure_in(face, run.text,
                                      font_size: run.size || FONT_SIZE)[:width]
         end

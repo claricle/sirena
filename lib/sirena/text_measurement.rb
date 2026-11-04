@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "text_measurement/arial_advances"
-require_relative "text_measurement/lucida_advances"
+require_relative "text_measurement/dejavu_advances"
 require_relative "text_measurement/trebuchet_advances"
 
 module Sirena
@@ -54,8 +54,8 @@ module Sirena
     FACE_TABLES = {
       arial: ArialAdvances::TABLE,
       trebuchet: TrebuchetAdvances::TABLE,
-      lucida: LucidaAdvances::REGULAR,
-      lucida_bold: LucidaAdvances::BOLD,
+      dejavu: DejaVuAdvances::REGULAR,
+      dejavu_bold: DejaVuAdvances::BOLD,
     }.freeze
 
     ZERO_WIDTH = /[\p{Mn}\p{Me}\p{Cf}\p{Cc}]/
@@ -92,7 +92,7 @@ module Sirena
     #
     # @param text [String] the text to measure, as one line
     # @param font_size [Numeric] the font size in points
-    # @param face [Symbol] :arial, :trebuchet, :lucida or :lucida_bold
+    # @param face [Symbol] :arial, :trebuchet, :dejavu or :dejavu_bold
     # @return [Hash] hash with :width and :height keys
     def self.measure_in(face, text, font_size:)
       {

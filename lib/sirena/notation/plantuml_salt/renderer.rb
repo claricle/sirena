@@ -82,12 +82,17 @@ module Sirena
         # move the text after it.
         def text(mark)
           run = mark.run
-          lead = lead_width(run)
-          element(Svg::Text, x: (mark.box.left + lead).round(4),
-                             y: (mark.box.top + Mark::TEXT_LIFT).round(4),
-                             content: run.text.lstrip,
-                             text_length: (mark.box.width - lead).round(4),
-                             length_adjust: "spacing", **typeface(run))
+          element(Svg::Text, content: run.text.lstrip,
+                             **placement(mark, lead_width(run)),
+                             **typeface(run))
+        end
+
+        def placement(mark, lead)
+          box = mark.box
+          { x: (box.left + lead).round(4),
+            y: (box.top + Mark::TEXT_LIFT).round(4),
+            text_length: (box.width - lead).round(4),
+            length_adjust: "spacing" }
         end
 
         def typeface(run)
@@ -108,7 +113,7 @@ module Sirena
         # measured and added to x instead.
         def lead_width(run)
           lead = run.text[/\A\s*/].length
-          TextMeasurement.measure_in(:lucida, " " * lead,
+          TextMeasurement.measure_in(:dejavu, " " * lead,
                                      font_size: run.size ||
                                        Layout::FONT_SIZE)[:width]
         end

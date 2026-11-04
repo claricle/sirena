@@ -91,8 +91,7 @@ module Sirena
           label = runs_width(widget.runs)
           case widget.kind
           when :rule then 0.0
-          when :empty then label
-          when :text then label
+          when :empty, :text then label
           when :checkbox, :radio then TICK_LABEL + tick_label_width(label)
           else span(widget) + CELL_EXTRA.fetch(widget.kind)
           end
@@ -107,12 +106,16 @@ module Sirena
         def overhang(block, columns)
           return 0.0 if columns.empty?
 
-          widths = block.rows.filter_map do |row|
-            cell = row.cells[columns.size - 1]
-            widget_width(cell) + OVERHANG if cell.is_a?(Widget) &&
-                                             CELL_EXTRA.key?(cell.kind)
+          reach = block.rows.filter_map do |row|
+            drawn_reach(row.cells[columns.size - 1])
           end
-          [widths.max.to_f - columns.last, 0.0].max
+          [reach.max.to_f - columns.last, 0.0].max
+        end
+
+        def drawn_reach(cell)
+          return unless cell.is_a?(Widget) && CELL_EXTRA.key?(cell.kind)
+
+          widget_width(cell) + OVERHANG
         end
 
         def tick_label_width(label)
@@ -124,9 +127,8 @@ module Sirena
           when :empty then nil
           when :rule then separator(widget, left, top, reach)
           when :text then text(widget.runs, left, top + text_drop(widget))
-          when :button then button(widget, left, top)
-          when :field then field(widget, left, top)
-          when :droplist then droplist(widget, left, top)
+          when :button, :field, :droplist
+            send(widget.kind, widget, left, top)
           else ticked(widget, left, top)
           end
         end
@@ -134,8 +136,8 @@ module Sirena
         def separator(widget, left, top, reach)
           weight, dash, offsets = RULES.fetch(widget.variant)
           offsets.each do |offset|
-            @marks << rule(left, top + RULE_DROP + offset, reach + RULE_BLEED, 0.0,
-                           ink: RULE_INK, weight: weight, dash: dash)
+            @marks << rule(left, top + RULE_DROP + offset, reach + RULE_BLEED,
+                           0.0, ink: RULE_INK, weight: weight, dash: dash)
           end
         end
 
@@ -173,12 +175,16 @@ module Sirena
         end
 
         def droplist(widget, left, top)
+          list(widget, left, top)
+          overlay { choices(widget, left, top) } if widget.items.any?
+        end
+
+        def list(widget, left, top)
           width = span(widget)
           @marks << pane(Box.new(left, top, width + LIST_EXTRA, LIST_HEIGHT),
                          1.0)
           text(widget.runs, left + 2, top + LIST_DROP)
           arrow(left + width, top)
-          overlay { choices(widget, left, top) } if widget.items.any?
         end
 
         # What the block draws on top of the layout, past its edge.
@@ -191,14 +197,18 @@ module Sirena
         # The open droplist: one line a choice, as wide as the list or its
         # widest choice, less a pixel.
         def choices(widget, left, top)
-          floor = span(widget) + LIST_EXTRA
-          width = [floor, *widget.items.map { |item| runs_width(item) }].max
           top += CHOICES_DROP
-          box = Box.new(left, top, width - 1, (TEXT_HEIGHT * widget.items.size) - 1)
-          @marks << pane(box, 1.0)
+          @marks << pane(choices_box(widget, left, top), 1.0)
           widget.items.each_with_index do |item, index|
             text(item, left, top + (index * TEXT_HEIGHT) + text_drop(widget))
           end
+        end
+
+        def choices_box(widget, left, top)
+          wide = widget.items.map { |item| runs_width(item) }
+          width = [span(widget) + LIST_EXTRA, *wide].max
+          Box.new(left, top, width - 1,
+                  (TEXT_HEIGHT * widget.items.size) - 1)
         end
 
         # The bar and the triangle after the label.

@@ -101,10 +101,12 @@ module Sirena
 
         # Four rules, as PlantUML draws it: top, bottom, left, right.
         def frame(area)
-          @marks << grey(area.left, area.top, area.width, 0.0)
-          @marks << grey(area.left, area.bottom, area.width, 0.0)
-          @marks << grey(area.left, area.top, 0.0, area.height)
-          @marks << grey(area.right, area.top, 0.0, area.height)
+          [area.top, area.bottom].each do |y|
+            @marks << grey(area.left, y, area.width, 0.0)
+          end
+          [area.left, area.right].each do |x|
+            @marks << grey(x, area.top, 0.0, area.height)
+          end
         end
 
         def bands(tops, area)
