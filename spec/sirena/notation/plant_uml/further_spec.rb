@@ -4,6 +4,8 @@ require "spec_helper"
 require "rexml/document"
 require "sirena/notation/plantuml"
 
+Sirena::Notation.send(:entries).delete(:plantuml)
+
 RSpec.describe Sirena::Notation::PlantUML::Further do
   include_context "with an isolated notation registry"
 
