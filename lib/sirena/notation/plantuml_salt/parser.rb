@@ -14,13 +14,15 @@ module Sirena
         OPENER = /\A\{([#+!\-^*TS]*)(?:[ \t]+(.*))?\z/
         START = /\A@startsalt(?![A-Za-z0-9_])/
         FINISH = /\A@endsalt\b/
+        INLINE_CLOSE = /\A([^{}]*?)\s*\}\s*\|(.*)\z/
         CHECKBOX = /\A\[([xX ]?)\](?:[ \t]+(.*))?\z/
         RADIO = /\A\(([xX ]?)\)(?:[ \t]+(.*))?\z/
         BUTTON = /\A\[([^\]]+)\]\z/
         FIELD = /\A"(.*)"\z/
         DROPLIST = /\A\^(.*)\^\z/
         private_constant :OPENER, :START, :FINISH, :CHECKBOX, :RADIO,
-                         :BUTTON, :FIELD, :DROPLIST
+                         :BUTTON, :FIELD, :DROPLIST,
+                         :INLINE_CLOSE
 
         # @param source [String] any String; invalid UTF-8 is scrubbed
         # @return [Block] a root block holding every top-level row
@@ -49,13 +51,35 @@ module Sirena
         end
 
         def read_line(line)
+          opened = false
           while (match = OPENER.match(line))
             open_block(match[1])
             line = match[2].to_s.strip
+            opened = true
           end
+          return if opened && inline_closed?(line)
+
           line, closers = strip_closers(line)
           add_row(line) unless line.empty?
           closers.times { close_block }
+        end
+
+        # `{+ a | b } | c`: the block closes mid-line and `c` joins the
+        # row that holds the block.
+        def inline_closed?(line)
+          match = INLINE_CLOSE.match(line) or return false
+
+          add_row(match[1]) unless match[1].empty?
+          close_block
+          graft(match[2])
+          true
+        end
+
+        def graft(tail)
+          host = @stack.last
+          row = host.rows.pop
+          cells = tail.split("|", -1).map { |cell| widget(cell.strip) }
+          host.rows << Row.new(row.cells + cells, depth: row.depth)
         end
 
         def strip_closers(line)

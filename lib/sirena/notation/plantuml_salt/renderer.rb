@@ -7,16 +7,12 @@ require_relative "layout"
 module Sirena
   module Notation
     module PlantUMLSalt
-      # Draws a {Scene} the way PlantUML draws a salt window: a bordered box
-      # on white, black one-pixel rules, widgets as small outlined shapes.
+      # Draws a {Scene} the way PlantUML draws a salt window: black one-pixel
+      # rules and widgets as small outlined shapes.
       class Renderer < Sirena::Renderer::Base
         FONT_FAMILY = "sans-serif"
         INK = "#000000"
-        PAPER = "#FFFFFF"
-        WIDGET_PAPER = "#F1F1F1"
-        WIDGET_FILLS = %w[button field droplist].freeze
-        private_constant :FONT_FAMILY, :INK, :PAPER, :WIDGET_PAPER,
-                         :WIDGET_FILLS
+        private_constant :FONT_FAMILY, :INK
 
         # @param scene [Scene]
         # @return [Svg::Document]
@@ -34,6 +30,8 @@ module Sirena
         def draw(mark)
           case mark.kind
           when :rect then rectangle(mark)
+          when :ellipse then ellipse(mark)
+          when :polygon then polygon(mark)
           when :line then rule(mark)
           else text(mark)
           end
@@ -47,23 +45,29 @@ module Sirena
           end
         end
 
+        def outline(mark)
+          { fill: mark.fill, stroke: mark.ink || INK,
+            stroke_width: mark.weight.to_s }
+        end
+
         def rectangle(mark)
           box = mark.box
           element(Svg::Rect, x: box.left, y: box.top, width: box.width,
-                             height: box.height, fill: paper_for(mark.fill),
-                             stroke: mark.ink || INK, stroke_width: "1",
-                             rx: corner(mark))
+                             height: box.height, rx: mark.radius,
+                             ry: mark.radius, **outline(mark))
         end
 
-        def corner(mark)
-          mark.box.width / 2 if mark.fill.start_with?("radio")
+        def ellipse(mark)
+          radius = mark.box.width / 2
+          element(Svg::Ellipse, cx: mark.box.left + radius,
+                                cy: mark.box.top + radius, rx: radius,
+                                ry: radius, **outline(mark))
         end
 
-        def paper_for(fill)
-          return "none" if %w[frame node].include?(fill)
-          return INK if fill.end_with?("-checked")
-
-          WIDGET_FILLS.include?(fill) ? WIDGET_PAPER : PAPER
+        def polygon(mark)
+          points = mark.points.map { |pair| pair.map { |n| n.round(4) } }
+          element(Svg::Polygon, points: Svg::Polygon.build_points(points),
+                                **outline(mark))
         end
 
         def rule(mark)

@@ -106,17 +106,18 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       expect(doc.get_elements("//line").size).to be > 3
     end
 
-    it "draws a line between rows only for a {- block" do
+    it "draws row rules, edges included, only for a {- block" do
       rows = "a\nb\nc\n}\n@endsalt"
       lined = Sirena.render("@startsalt\n{-\n#{rows}")
       plain = Sirena.render("@startsalt\n{\n#{rows}")
       counts = [lined, plain].map { |out| REXML::Document.new(out).get_elements("//line").size }
-      expect(counts).to eq([2, 0])
+      expect(counts).to eq([4, 0])
     end
 
     it "draws a droplist as a box with a trailing arrow" do
       out = Sirena.render("@startsalt\n{\n^pick^\n}\n@endsalt")
-      expect(svg_texts(out)).to eq(%w[pick v])
+      expect([svg_texts(out), REXML::Document.new(out).get_elements("//polygon").size])
+        .to eq([%w[pick], 1])
     end
 
     it "escapes literal angle text" do

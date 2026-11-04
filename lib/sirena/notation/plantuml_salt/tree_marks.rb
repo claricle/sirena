@@ -21,7 +21,9 @@ module Sirena
         ROW_HEIGHT = 14.1328
         PAD = 5.0
         INDENT = 10.0
-        TEXT_DROP = 7.6
+        # The table counts this much less toward its container than the
+        # bars it draws span.
+        OVERHANG = 3.0
 
         private
 
@@ -71,7 +73,7 @@ module Sirena
           x = centre_x(rows[index], area)
           y = centre_y(tops, index)
           box = Box.new(x - NODE_RISE, y - NODE_RISE, NODE, NODE)
-          @marks << Mark.new(:rect, box, fill: "node", ink: TREE_INK)
+          @marks << Mark.new(:rect, box, ink: TREE_INK)
         end
 
         def elbow(rows, parent, index, tops, area)
@@ -91,11 +93,10 @@ module Sirena
         end
 
         def rules(block, columns, area, tops)
-          if block.border?
-            @marks << Mark.new(:rect, area, fill: "frame", ink: TREE_INK)
-          end
+          drawn = Box.new(area.left, area.top, columns.sum, area.height)
+          @marks << Mark.new(:rect, drawn, ink: TREE_INK) if block.border?
           bars(columns, area) if block.grid? || block.column_lines?
-          bands(tops, area) if block.grid? || block.row_lines?
+          bands(tops, drawn) if block.grid? || block.row_lines?
         end
 
         def bands(tops, area)

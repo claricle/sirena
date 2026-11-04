@@ -145,7 +145,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
     it "still reads a quoted cell outside a tree as a text field" do
       svg = Sirena.render("@startsalt\n{\n\"name\" | x\n}\n@endsalt")
-      expect(elements(svg, "rect").size).to eq(1)
+      expect(horizontal_rules(svg)).to eq([20.1])
     end
   end
 
@@ -154,14 +154,14 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       svg = Sirena.render(salt("T!"))
       right = lines(svg).last.first
       box = REXML::Document.new(svg).root.attributes["viewBox"]
-      expect(box).to eq("0 0 #{(right + 4).ceil} 69")
+      expect(box).to eq("0 0 #{(right + 3).ceil} 69")
     end
   end
 
   describe "non-tree modifiers" do
-    it "keeps column bars between cells for {!" do
+    it "keeps column bars at the edges and between cells for {!" do
       svg = Sirena.render("@startsalt\n{!\na | b | c\n}\n@endsalt")
-      expect(vertical_bars(svg).size).to eq(2)
+      expect(vertical_bars(svg).size).to eq(4)
     end
   end
 
