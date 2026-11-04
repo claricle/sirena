@@ -17,4 +17,13 @@ RSpec.describe LeptrisFallbackNoticeSpecSupport do
     expected = "#{similar_notice}unexpected diagnostic\n"
     expect(described_class.normalize(stderr)).to eq(expected)
   end
+
+  it "removes the lutaml yeptris notice around the leptris one" do
+    lutaml = "[Lutaml::Model] yeptris is present in this bundle but the " \
+             "native YAML engine is not enabled (x); Enable explicitly " \
+             "with LUTAML_YAML=yeptris.\n"
+
+    expect(described_class.normalize("#{lutaml}#{notice}other\n#{lutaml}"))
+      .to eq("other\n")
+  end
 end
