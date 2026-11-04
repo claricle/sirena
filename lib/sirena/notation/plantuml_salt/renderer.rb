@@ -12,7 +12,8 @@ module Sirena
       class Renderer < Sirena::Renderer::Base
         FONT_FAMILY = "sans-serif"
         INK = "#000000"
-        private_constant :FONT_FAMILY, :INK
+        NO_BREAK_SPACE = "\u00A0"
+        private_constant :FONT_FAMILY, :INK, :NO_BREAK_SPACE
 
         # @param scene [Scene]
         # @return [Svg::Document]
@@ -82,9 +83,18 @@ module Sirena
         # move the text after it.
         def text(mark)
           run = mark.run
-          element(Svg::Text, content: run.text.lstrip,
-                             **placement(mark, lead_width(run)),
+          lead = lead_width(run)
+          element(Svg::Text, content: content(run), **placement(mark, lead),
                              **typeface(run))
+        end
+
+        # A run of spaces is drawn as no-break spaces, as PlantUML does:
+        # SVG would collapse them to an empty node, and an underline or
+        # strike through them would vanish.
+        def content(run)
+          return run.text.lstrip unless run.text.strip.empty?
+
+          NO_BREAK_SPACE * run.text.length
         end
 
         def placement(mark, lead)
@@ -112,6 +122,8 @@ module Sirena
         # SVG collapses a text element's leading spaces, so they are
         # measured and added to x instead.
         def lead_width(run)
+          return 0.0 if run.text.strip.empty?
+
           lead = run.text[/\A\s*/].length
           TextMeasurement.measure_in(:dejavu, " " * lead,
                                      font_size: run.size ||

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "box"
+require_relative "font_metrics"
 require_relative "mark"
 
 module Sirena
@@ -18,7 +19,7 @@ module Sirena
         NODE_RISE = 1.0
         ELBOW_GAP = 2.0
         NODE_LEFT = 6.0
-        ROW_HEIGHT = 14.1328
+        ROW_HEIGHT = FontMetrics::HEIGHT
         PAD = 5.0
         INDENT = 10.0
         # The table counts this much less toward its container than the

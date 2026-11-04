@@ -35,10 +35,10 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
   describe "separator rows" do
     {
-      ".." => [["#AAAAAA", "1", "1,2", 25.63]],
-      "==" => [["#AAAAAA", "1", nil, 24.63], ["#AAAAAA", "1", nil, 26.63]],
-      "--" => [["#AAAAAA", "1", nil, 25.63]],
-      "~~" => [["#AAAAAA", "1.5", nil, 25.63]],
+      ".." => [["#AAAAAA", "1", "1,2", 25.47]],
+      "==" => [["#AAAAAA", "1", nil, 24.47], ["#AAAAAA", "1", nil, 26.47]],
+      "--" => [["#AAAAAA", "1", nil, 25.47]],
+      "~~" => [["#AAAAAA", "1.5", nil, 25.47]],
     }.each do |mark, strokes|
       it "draws #{mark} as grey rules in the gap between two rows" do
         found = lines(render("a\n#{mark}\nb")).map do |line|
@@ -51,7 +51,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
     end
 
     it "makes a separator row six high" do
-      expect(ys(render("a\n..\nb"))).to eq([17.6, 41.73])
+      expect(ys(render("a\n..\nb"))).to eq([17.14, 41.11])
     end
 
     it "stretches a rule over the widest cell, a pixel past it" do
@@ -98,7 +98,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
     it "makes the row a fourteenth taller and drops the baseline",
        :aggregate_failures do
-      expect(ys(doc)).to eq([19.54, 36.09])
+      expect(ys(doc)).to eq([19.0, 35.44])
       expect(doc.root.attributes["viewBox"]).to eq("0 0 48 45")
     end
 
@@ -116,16 +116,16 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       box = drawn(doc, "rect").last
 
       expect(numbers(box, "x", "y", "width", "height"))
-        .to eq([6.0, 23.13, 46.0, 27.27])
+        .to eq([6.0, 22.97, 46.0, 26.94])
     end
 
     it "sets one choice a line, in order", :aggregate_failures do
       expect(svg_texts(doc.to_s)).to eq(%w[open x yy])
-      expect(ys(doc)).to eq([19.6, 34.73, 48.87])
+      expect(ys(doc)).to eq([19.14, 34.11, 48.08])
     end
 
     it "grows the canvas to hold the box" do
-      expect(doc.root.attributes["viewBox"]).to eq("0 0 61 51")
+      expect(doc.root.attributes["viewBox"]).to eq("0 0 61 50")
     end
 
     it "widens the box to the widest choice" do
@@ -154,6 +154,18 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
     it "draws no separate line for a decoration" do
       expect(lines(doc)).to be_empty
+    end
+
+    it "draws the space between two tags as a no-break space" do
+      texts = drawn(render("<u>u</u> <s>s</s>"), "text")
+      expect([texts.map(&:text), texts.map { |t| t.attributes["textLength"] }])
+        .to eq([["u", "\u00A0", "s"], %w[7.6055 3.8145 6.252]])
+    end
+
+    it "keeps an underline on a run of spaces" do
+      gap = drawn(render("a<u>   </u>b"), "text")[1]
+      expect([gap.text, gap.attributes["text-decoration"]])
+        .to eq(["\u00A0\u00A0\u00A0", "underline"])
     end
   end
 
@@ -193,8 +205,8 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       expect(attrs(ground, "fill", "stroke", "stroke-width"))
         .to eq(%w[#FFFFFF none 0.0])
       expect(numbers(ground, "x", "y", "width", "height"))
-        .to eq([0.0, 0.0, 20.0, 27.0])
-      expect(doc.root.attributes["viewBox"]).to eq("0 0 20 27")
+        .to eq([0.0, 0.0, 20.0, 26.0])
+      expect(doc.root.attributes["viewBox"]).to eq("0 0 20 26")
     end
 
     it "is the first element drawn" do
@@ -241,7 +253,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
   describe "what a widget reaches past its column" do
     it "counts a button's extra pixel toward the canvas" do
-      expect(render("[OK]").root.attributes["viewBox"]).to eq("0 0 40 36")
+      expect(render("[OK]").root.attributes["viewBox"]).to eq("0 0 40 35")
     end
 
     it "lets the next column start where the button's cell ends",
@@ -249,12 +261,12 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       doc = render("[OK] | z")
 
       expect(numbers(drawn(doc, "text").last, "x")).to eq([34.31])
-      expect(doc.root.attributes["viewBox"]).to eq("0 0 47 36")
+      expect(doc.root.attributes["viewBox"]).to eq("0 0 47 35")
     end
 
     it "adds nothing when a wider cell holds the column" do
       expect(render("zzzzzzzzzzzzzzzzzz\n[OK]").root.attributes["viewBox"])
-        .to eq("0 0 126 52")
+        .to eq("0 0 126 51")
     end
   end
 
@@ -269,8 +281,8 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
     it "is four grey lines: top, bottom, left and right" do
       expect(frame.map { |l| numbers(l, "x1", "y1", "x2", "y2") }).to eq(
-        [[5.0, 5.0, 37.62, 5.0], [5.0, 33.27, 37.62, 33.27],
-         [5.0, 5.0, 5.0, 33.27], [37.62, 5.0, 37.62, 33.27]],
+        [[5.0, 5.0, 37.62, 5.0], [5.0, 32.94, 37.62, 32.94],
+         [5.0, 5.0, 5.0, 32.94], [37.62, 5.0, 37.62, 32.94]],
       )
     end
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "box"
+require_relative "font_metrics"
 require_relative "mark"
 require_relative "widget"
 
@@ -11,14 +12,15 @@ module Sirena
       # the top of its row. A button, field or droplist is as wide as its
       # label or eight units a character, whichever is more.
       module WidgetMarks
-        FONT_SIZE = 12
+        FONT_SIZE = FontMetrics::SIZE
         # Where a size-12 text's baseline sits below the top of its row.
-        BASELINE = 11.6016
+        BASELINE = FontMetrics::ASCENT
         CHAR_WIDTH = 8.0
         LABEL_FILL = "#EEEEEE"
-        TEXT_HEIGHT = 14.1328
-        HEIGHTS = { button: 23.1328, droplist: 18.1328, field: 16.1328,
-                    rule: 6.0 }.freeze
+        TEXT_HEIGHT = FontMetrics::HEIGHT
+        # Each widget is its text line plus the room its own drawing takes.
+        HEIGHTS = { button: TEXT_HEIGHT + 9.0, droplist: TEXT_HEIGHT + 4.0,
+                    field: TEXT_HEIGHT + 2.0, rule: 6.0 }.freeze
         # What a cell holds beyond the label span: the widget's own
         # padding and stroke, then the next column's offset.
         CELL_EXTRA = { button: 9.0, field: 6.0, droplist: 16.0 }.freeze
@@ -28,24 +30,24 @@ module Sirena
 
         BUTTON_INSET = 2.5
         BUTTON_EXTRA = 4.0
-        BUTTON_HEIGHT = 18.1328
-        BUTTON_DROP = 12.1
+        BUTTON_HEIGHT = TEXT_HEIGHT + 4.0
+        BUTTON_DROP = BASELINE + 0.5
         BUTTON_RADIUS = 5.0
         BUTTON_WEIGHT = 2.5
 
         FIELD_EXTRA = 3.0
-        FIELD_RULE_DROP = 14.1328
-        FIELD_TICK_DROP = 11.1328
+        FIELD_RULE_DROP = TEXT_HEIGHT
+        FIELD_TICK_DROP = TEXT_HEIGHT - 3.0
         FIELD_TICK_HEIGHT = 2.0
 
         LIST_EXTRA = 15.0
-        LIST_HEIGHT = 17.1328
-        LIST_DROP = 9.6
+        LIST_HEIGHT = TEXT_HEIGHT + 3.0
+        LIST_DROP = BASELINE - 2.0
         LIST_DIVIDER = 4.0
-        LIST_ARROW = [[7.0, 6.0], [13.0, 6.0], [10.0, 12.1328]].freeze
+        LIST_ARROW = [[7.0, 6.0], [13.0, 6.0], [10.0, TEXT_HEIGHT - 2.0]].freeze
         # An open droplist's choices, a box below the widget; one choice
         # is a line high, less a pixel.
-        CHOICES_DROP = 17.1328
+        CHOICES_DROP = TEXT_HEIGHT + 3.0
 
         # A separator row is a rule in grey, drawn this far below its top:
         # (weight, dash, offsets of the strokes).
@@ -57,11 +59,11 @@ module Sirena
 
         TICK_SIZE = 10.0
         TICK_LEFT = 2.0
-        TICK_TOP = 2.0664
+        TICK_TOP = (TEXT_HEIGHT - TICK_SIZE) / 2
         TICK_WEIGHT = 1.5
         TICK_LABEL = 20.0
-        TICK_MARK = [[1, 3.9336], [4, 6.9336], [11, -2.0664],
-                     [4, 4.9336]].freeze
+        # The tick's points: right of the box's edge, below the row's top.
+        TICK_MARK = [[1, 6.0], [4, 9.0], [11, 0.0], [4, 7.0]].freeze
         RADIO_RADIUS = 5.0
         RADIO_DOT = 2.0
 
@@ -233,14 +235,14 @@ module Sirena
           @marks << Mark.new(:rect, box, ink: INK, weight: TICK_WEIGHT)
           return unless widget.checked
 
-          points = TICK_MARK.map { |dx, dy| [box.left + dx, box.top + dy] }
+          points = TICK_MARK.map { |dx, dy| [box.left + dx, top + dy] }
           @marks << Mark.new(:polygon, box, fill: INK, ink: INK,
                                             weight: TICK_WEIGHT,
                                             points: points)
         end
 
         def radio(widget, left, top)
-          centre = [left + 7.0, top + 7.0664]
+          centre = [left + 7.0, top + (TEXT_HEIGHT / 2)]
           @marks << dot(centre, RADIO_RADIUS, "none")
           @marks << dot(centre, RADIO_DOT, INK) if widget.checked
         end

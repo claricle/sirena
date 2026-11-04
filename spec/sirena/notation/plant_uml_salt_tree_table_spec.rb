@@ -58,9 +58,9 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
     it "drops an elbow from each parent to each child" do
       expect(lines(svg)).to eq(
-        [[10.0, 15.1, 10.0, 27.2], [10.0, 27.2, 18.0, 27.2],
-         [20.0, 29.2, 20.0, 41.3], [20.0, 41.3, 28.0, 41.3],
-         [10.0, 15.1, 10.0, 55.5], [10.0, 55.5, 18.0, 55.5]],
+        [[10.0, 15.0, 10.0, 27.0], [10.0, 27.0, 18.0, 27.0],
+         [20.0, 29.0, 20.0, 40.9], [20.0, 40.9, 28.0, 40.9],
+         [10.0, 15.0, 10.0, 54.9], [10.0, 54.9, 18.0, 54.9]],
       )
     end
 
@@ -76,7 +76,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
     it "uses tight fourteen-pixel rows" do
       ys = elements(svg, "text").map { |t| t.attributes["y"].to_f.round(1) }
-      expect([ys[0], ys[3], ys[6], ys[9]]).to eq([17.6, 31.7, 45.9, 60.0])
+      expect([ys[0], ys[3], ys[6], ys[9]]).to eq([17.1, 31.1, 45.1, 59.0])
     end
 
     it "attaches a skipped depth to the nearest shallower row" do
@@ -128,7 +128,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
     it "spans the bars over the whole table" do
       svg = Sirena.render(salt("T!"))
       bar = lines(svg).last
-      expect(bar.values_at(1, 3)).to eq([6.0, 62.5])
+      expect(bar.values_at(1, 3)).to eq([6.0, 61.9])
     end
   end
 
@@ -145,7 +145,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
     it "still reads a quoted cell outside a tree as a text field" do
       svg = Sirena.render("@startsalt\n{\n\"name\" | x\n}\n@endsalt")
-      expect(horizontal_rules(svg)).to eq([20.1])
+      expect(horizontal_rules(svg)).to eq([20.0])
     end
   end
 
@@ -154,7 +154,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       svg = Sirena.render(salt("T!"))
       right = lines(svg).last.first
       box = REXML::Document.new(svg).root.attributes["viewBox"]
-      expect(box).to eq("0 0 #{(right + 3).ceil} 69")
+      expect(box).to eq("0 0 #{(right + 3).ceil} 68")
     end
   end
 

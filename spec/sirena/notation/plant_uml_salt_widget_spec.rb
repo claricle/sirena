@@ -4,10 +4,10 @@ require "spec_helper"
 require_relative "plant_uml_salt/salt_helpers"
 
 # Every number below was read off PlantUML 1.2026.6 on a minimal diagram
-# per widget and per block modifier, on macOS: the heights and offsets are
-# those of its Java sans-serif there and have not been re-read on Linux.
-# Text widths are measured with the DejaVu Sans advances the layout uses,
-# so only the widget geometry is pinned.
+# per widget and per block modifier, set in DejaVu Sans: the JAR run on
+# Linux, where DejaVu Sans is the sans-serif. The same JAR on macOS draws
+# Lucida Grande and its rows are 0.16 taller. Text widths are measured
+# with the DejaVu Sans advances the layout uses.
 RSpec.describe Sirena::Notation::PlantUMLSalt do
   include SaltHelpers
 
@@ -37,8 +37,8 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       elements(doc, "text").map { |t| t.attributes["y"].to_f.round(2) }
     end
 
-    it "sets rows 14.13 tall with a two-pixel gap" do
-      expect(ys).to eq([17.6, 17.6, 33.73, 33.73])
+    it "sets rows 13.97 tall with a two-pixel gap" do
+      expect(ys).to eq([17.14, 17.14, 33.11, 33.11])
     end
 
     it "separates columns by a two-pixel gap" do
@@ -49,7 +49,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
     it "pads a block one pixel and its canvas five" do
       left = 6 + width_of("a") + 2 + width_of("b") + 1
       expect(doc.root.attributes["viewBox"])
-        .to eq("0 0 #{(left + 5).ceil} 43")
+        .to eq("0 0 #{(left + 5).ceil} 42")
     end
 
     it "pads a nested block one pixel inside its cell" do
@@ -86,7 +86,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
     it "draws {- rules above, between and below the rows" do
       expect(segments(render_block("-")).map { |l| l[1] }.sort)
-        .to eq([5.0, 21.13, 37.27])
+        .to eq([5.0, 20.97, 36.94])
     end
 
     it "spans each {- rule from edge to edge" do
@@ -101,7 +101,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
     it "runs each {! bar the full height" do
       expect(segments(render_block("!")).map { |l| [l[1], l[3]] }.uniq)
-        .to eq([[5.0, 37.27]])
+        .to eq([[5.0, 36.94]])
     end
 
     it "draws {# both rules and no frame" do
@@ -113,7 +113,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       rect = elements(render_block("+"), "rect").first
       expect([numbers(rect, "x", "y", "height", "stroke-width"),
               rect.attributes["fill"]])
-        .to eq([[5.0, 5.0, 32.27, 1.0], "none"])
+        .to eq([[5.0, 5.0, 31.94, 1.0], "none"])
     end
 
     it "draws a plain block with no rule or frame" do
@@ -130,7 +130,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       first = rects.first
       expect([numbers(first, "x", "y", "height", "rx", "stroke-width"),
               first.attributes["fill"]])
-        .to eq([[8.5, 8.5, 18.13, 5.0, 2.5], "#EEEEEE"])
+        .to eq([[8.5, 8.5, 17.97, 5.0, 2.5], "#EEEEEE"])
     end
 
     it "is four wider than the label, or than eight a character" do
@@ -145,9 +145,9 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       expect(text.attributes["x"].to_f.round(2)).to eq((10.5 + room).round(2))
     end
 
-    it "takes 23.13 of row height" do
+    it "takes 22.97 of row height" do
       ys = elements(render("[A]\nb"), "text").map { |t| t.attributes["y"].to_f }
-      expect(ys.last.round(2)).to eq((6 + 23.13 + 2 + 11.6).round(2))
+      expect(ys.last.round(2)).to eq((6 + 22.97 + 2 + 11.14).round(2))
     end
   end
 
@@ -156,9 +156,9 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
 
     it "is an underline with a tick at each end" do
       right = (7 + [width_of("name"), 32.0].max + 3).round(2)
-      expect(segments(doc)).to include([7.0, 20.13, right, 20.13],
-                                       [7.0, 17.13, 7.0, 19.13],
-                                       [right, 17.13, right, 19.13])
+      expect(segments(doc)).to include([7.0, 19.97, right, 19.97],
+                                       [7.0, 16.97, 7.0, 18.97],
+                                       [right, 16.97, right, 18.97])
     end
 
     it "sets its text three pixels in" do
@@ -178,7 +178,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       rect = elements(doc, "rect").first
       expect([numbers(rect, "x", "y", "height", "width", "stroke-width"),
               rect.attributes["fill"]])
-        .to eq([[6.0, 6.0, 17.13, (span + 15).round(2), 1.0], "#EEEEEE"])
+        .to eq([[6.0, 6.0, 16.97, (span + 15).round(2), 1.0], "#EEEEEE"])
     end
 
     it "splits the arrow off with a bar" do
@@ -189,7 +189,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       polygon = elements(doc, "polygon").first
       near, far, mid = [7, 13, 10].map { |dx| (6 + span + dx).round(4) }
       expect([polygon.attributes["fill"], polygon.attributes["points"]])
-        .to eq(["#000000", "#{near},12.0 #{far},12.0 #{mid},18.1328"])
+        .to eq(["#000000", "#{near},12.0 #{far},12.0 #{mid},17.9688"])
     end
   end
 
@@ -200,12 +200,12 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       rect = elements(doc, "rect").first
       expect([numbers(rect, "x", "y", "width", "height", "stroke-width"),
               rect.attributes["fill"]])
-        .to eq([[8.0, 8.07, 10.0, 10.0, 1.5], "none"])
+        .to eq([[8.0, 7.98, 10.0, 10.0, 1.5], "none"])
     end
 
     it "adds a black tick when checked" do
       expect(elements(doc, "polygon").first.attributes["points"])
-        .to eq("9.0,28.1328 12.0,31.1328 19.0,22.1328 12.0,29.1328")
+        .to eq("9.0,27.9688 12.0,30.9688 19.0,21.9688 12.0,28.9688")
     end
 
     it "sets the label twenty pixels in" do
@@ -220,7 +220,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
     it "is a radius-5 ring with a 1.5 stroke" do
       expect([numbers(circles.first, "cx", "cy", "rx", "stroke-width"),
               circles.first.attributes["fill"]])
-        .to eq([[13.0, 13.07, 5.0, 1.5], "none"])
+        .to eq([[13.0, 12.98, 5.0, 1.5], "none"])
     end
 
     it "adds a radius-2 black dot when checked" do
