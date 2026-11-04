@@ -271,7 +271,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      SIRENA_RS_REF: e87c1c87312b7a343132b118c288bdf912067d4f
+      SIRENA_RS_REF: 18a46c0e8bfb243c83ce34234ab18c9e8b627643
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
