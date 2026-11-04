@@ -50,13 +50,15 @@ module Sirena
       value = Float(value)
       return value if value.nan? || value.zero?
 
-      negative = value.negative?
-      magnitude = value.abs
-      result =
-        if magnitude < 2.0**-26 then magnitude
-        else to_float(atan_fixed(to_fixed(magnitude)), -BITS)
-        end
-      negative ? -result : result
+      result = atan_magnitude(value.abs)
+      value.negative? ? -result : result
+    end
+
+    def atan_magnitude(magnitude)
+      return pi_float / 2 if magnitude.infinite?
+      return magnitude if magnitude < 2.0**-26
+
+      to_float(atan_fixed(to_fixed(magnitude)), -BITS)
     end
 
     # @return [Float] atan2(y, x) as JS Math.atan2
@@ -255,11 +257,8 @@ module Sirena
       (pi_fixed >> 1) - atan_unit(fixed_div(ONE, value))
     end
 
-    # atan for |x| < 2**-27, where t - t**3/3 + t**5/5 settles it exactly.
-    def atan_tiny(magnitude)
-      atan_tiny_fraction(*fraction_of(magnitude, 1.0))
-    end
-
+    # atan of num / den for a ratio below 2**-27, where t - t**3/3 + t**5/5
+    # settles it exactly.
     def atan_tiny_fraction(num, den)
       num2 = num * num
       den2 = den * den
@@ -267,18 +266,13 @@ module Sirena
       integer_ratio_to_float(num * poly, 15 * (den**5))
     end
 
-    # The nearest double to numerator / denominator (both positive).
+    # The nearest double to numerator / denominator (both positive, ratio
+    # below 1, so numerator.bit_length <= denominator.bit_length and the shift
+    # is always positive).
     def integer_ratio_to_float(numerator, denominator)
       shift = denominator.bit_length + 60 - numerator.bit_length
-      top, bottom = align_ratio(numerator, denominator, shift)
-      scaled, rest = top.divmod(bottom)
+      scaled, rest = (numerator << shift).divmod(denominator)
       to_float((scaled << 1) | (rest.zero? ? 0 : 1), -shift - 1)
-    end
-
-    def align_ratio(numerator, denominator, shift)
-      return [numerator << shift, denominator] if shift.positive?
-
-      [numerator, denominator << -shift]
     end
 
     # y / x as an exact integer pair [numerator, denominator].
