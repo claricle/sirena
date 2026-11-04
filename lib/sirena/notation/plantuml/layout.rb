@@ -8,6 +8,7 @@ require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "qualified_association_layout"
 require_relative "rank_chain"
+require_relative "relation_label_separator"
 require_relative "scene"
 require_relative "sequence/text_advances"
 
@@ -1618,11 +1619,19 @@ module Sirena
           engine = RankChain.engine(diagram)
           context = { by_name: by_name, owners: owners, nodes: nodes,
                       engine: engine }
-          diagram.relations.each_with_index.flat_map do |relation, index|
-            next [] if relation.layout_only?
+          scenes = diagram.relations.each_with_index.flat_map do |rel, index|
+            next [] if rel.layout_only?
 
-            relation_scenes(relation, index, context)
+            relation_scenes(rel, index, context)
           end
+          separate_relation_labels(scenes)
+        end
+
+        def separate_relation_labels(scenes)
+          RelationLabelSeparator.new(
+            size: font_size * SMALL_TEXT_SCALE,
+            width_of: method(:end_text_width),
+          ).call(scenes)
         end
 
         def relation_scenes(relation, index, context)
