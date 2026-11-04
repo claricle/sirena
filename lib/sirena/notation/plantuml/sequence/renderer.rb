@@ -214,7 +214,7 @@ module Sirena
           end
 
           def delay_group(delay)
-            group("delay-#{delay.texts.first&.y}", [], delay.texts)
+            group("delay-#{delay.texts.first.y}", [], delay.texts)
           end
 
           def divider_label(divider)

@@ -72,8 +72,6 @@ module Sirena
 
           def sort_layer(index, step)
             neighbour = @layers[index + step]
-            return unless neighbour
-
             @layers[index] = @layers[index].sort_by.with_index do |item, at|
               [barycentre(item, neighbour) || at, at]
             end
