@@ -134,6 +134,33 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes do
       expect(texts(svg)).to include("A", "B")
     end
 
+    it "reads a false YAML scalar as an unchecked box" do
+      svg = render("@startyaml\nflag: false\n@endyaml")
+
+      expect(texts(svg)).to include("\u2610 false")
+    end
+
+    it "reads a bare scalar JSON root" do
+      expect(texts(render("@startjson\n42\n@endjson"))).to include("42")
+    end
+
+    it "reads a plain object body row" do
+      svg = render("@startuml\nobject A {\n  plain row\n}\n@enduml")
+
+      expect(texts(svg)).to include("plain row")
+    end
+
+    it "keeps a map row with no value or link as its own key" do
+      svg = render("@startuml\nmap M {\n  lonely\n}\n@enduml")
+
+      expect(texts(svg)).to include("lonely")
+    end
+
+    it "rejects an unclosed object body" do
+      expect { render("@startuml\nobject A {\n  row\n@enduml") }
+        .to raise_error(Sirena::Parser::ParseError, /unclosed \{/)
+    end
+
     it "refuses an object diagram line outside its subset" do
       source = "@startuml\nobject A\nnote right of A : hi\n@enduml"
 
