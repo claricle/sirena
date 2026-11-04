@@ -13,6 +13,7 @@ module TypeGeneratorSpecHelpers
   ACCEPTANCE_PATHS = [
     ".rspec",
     "lib",
+    "scripts/native_types.rb",
     "docs/ir-type-map.md",
     "spec/spec_helper.rb",
     "spec/support",

@@ -5,6 +5,7 @@ require_relative "grammars/class_diagram"
 require_relative "builders/class_diagram"
 require_relative "class_notes"
 require_relative "class_namespaces"
+require_relative "native/builders/class_diagram"
 require_relative "../diagram/class_diagram"
 
 module Sirena
@@ -24,17 +25,33 @@ module Sirena
     #   parser = ClassDiagram.new
     #   diagram = parser.parse("classDiagram\nAnimal <|-- Dog")
     class ClassDiagram < Base
+      native :class_diagram, builder: Native::Builders::ClassDiagram
+
       # Parses class diagram source into a ClassDiagram model.
       #
       # @param source [String] the Mermaid class diagram source
       # @return [Diagram::ClassDiagram] the parsed class diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
+        native_diagram(source) || ruby_diagram(source)
+      end
+
+      private
+
+      def ruby_diagram(source)
         tree = parse_with_grammar(Grammars::ClassDiagram.new, source)
         diagram = Builders::ClassDiagram.new.apply(tree, source)
         diagram.notes = ClassNotes.collect(tree, diagram)
         diagram.namespaces = ClassNamespaces.collect(tree, diagram)
         diagram
+      end
+
+      # The native builder also collects the notes and namespaces, and
+      # reads member text back from the source.
+      def native_diagram(source)
+        entry, builder = self.class.native
+        tree = Native.parse(entry, source)
+        tree && builder.new.apply(tree, source)
       end
     end
   end

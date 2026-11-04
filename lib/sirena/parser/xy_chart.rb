@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/xy_chart"
 require_relative "builders/xy_chart"
+require_relative "native/builders/xy_chart"
 require_relative "../diagram/xy_chart"
 
 module Sirena
@@ -31,9 +32,13 @@ module Sirena
     class XyChart < Base
       grammar Grammars::XyChart
       builder Builders::XyChart
+      native :xychart, builder: Native::Builders::XyChart
 
-      private
-
+      # Assembles the diagram from the builder's intermediate result; the
+      # native builder shares it.
+      #
+      # @param result [Hash] title, x_axis, y_axis and datasets
+      # @return [Diagram::XyChart]
       def create_diagram(result)
         diagram = Diagram::XyChart.new
         diagram.title = result[:title]
@@ -41,6 +46,8 @@ module Sirena
         append_datasets(diagram, result[:datasets])
         diagram
       end
+
+      private
 
       def assign_axes(diagram, result)
         diagram.x_axis = create_x_axis(result[:x_axis]) if result[:x_axis]

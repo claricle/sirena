@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/gantt"
 require_relative "builders/gantt"
+require_relative "native/builders/gantt"
 require_relative "../diagram/gantt"
 
 module Sirena
@@ -36,6 +37,7 @@ module Sirena
     class Gantt < Base
       grammar Grammars::Gantt
       builder Builders::Gantt
+      native :gantt, builder: Native::Builders::Gantt
     end
   end
 end

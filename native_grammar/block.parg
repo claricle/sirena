@@ -1,0 +1,64 @@
+  ## ------------------------------------------------------------------
+  ## block (grammars/block.rb)
+  ## ------------------------------------------------------------------
+
+  ## Quoted block ids are left to the Ruby path (its builder keeps their
+  ## tree node, not a string), so a block id here is an identifier only.
+  block_identifier_char = ALPHA / DIGIT / "_"
+
+  block_identifier = ( ALPHA / "_" ) *block_identifier_char
+
+  block_reserved = ( "block" / "end" / "space" ) !block_identifier_char
+
+  block_id = !block_reserved block_identifier
+
+  block_integer = 1*DIGIT
+
+  block_columns = "columns" as columns_keyword sp block_integer as columns_value line_end
+
+  block_style_property = 1*( !line_end !"," ANY )
+
+  block_style_properties = block_style_property *( "," block_style_property )
+
+  block_style = "style" as style_keyword sp block_id as style_target sp block_style_properties as style_props line_end
+
+  block_arrow = "-->" as arrow_type / "---" as line_type
+
+  block_connection = block_id as from *sp block_arrow as arrow *sp block_id as to line_end
+
+  block_space = "space" as space_keyword line_end
+
+  block_arrow_direction = ( "up" / "down" / "left" / "right" ) as direction
+
+  block_arrow_block = block_id as arrow_id "<" as arrow_open "[" *( !"]" ANY ) as arrow_label "]" ">" as arrow_close "(" block_arrow_direction as arrow_direction ")" line_end
+
+  block_width = ":" block_integer
+
+  block_double_circle = "((" as open *( !"))" ANY ) as label "))" as close
+
+  block_rectangle = "[" as open *( !"]" ANY ) as label "]" as close
+
+  block_shape = block_double_circle / block_rectangle
+
+  block_with_shape = block_id as block_id [ *sp block_shape as block_shape ] [ block_width as block_width ] line_end
+
+  block_plain = block_space / block_arrow_block / block_with_shape
+
+  block_compound = "block" as compound_keyword [ ":" block_id as compound_id ] *sp line_end ws [ block_compound_statements as compound_statements ] ws "end" as compound_end line_end
+
+  block_compound_statement = block_compound / block_plain
+
+  block_compound_statements = 1*( block_compound_statement ws )
+
+  block_statement = block_columns / block_style / block_connection / block_compound / block_plain
+
+  block = ws "block-beta" as header ws [ 1*( block_statement ws ) as statements ] ws
+
+  entry block: block
+
+  test block {
+    accept "block-beta"
+    accept "block-beta\n  columns 2\n  A[\"x\"]:2\n  B((y))\n"
+    accept "block-beta\n  block:c\n    D\n  end\n  A --> B\n  style A fill:#f9f"
+    reject "block-beta\n  \"quoted\""
+  }

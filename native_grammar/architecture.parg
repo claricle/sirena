@@ -1,0 +1,47 @@
+  ## ------------------------------------------------------------------
+  ## architecture (grammars/architecture.rb)
+  ## ------------------------------------------------------------------
+
+  architecture_identifier = 1*( ALPHA / DIGIT / "_" / "-" )
+
+  architecture_position = 1*( "L" / "R" / "T" / "B" )
+
+  architecture_text = 1*( !line_end ANY )
+
+  architecture_title = "title" 1*sp architecture_text as title line_end
+
+  architecture_acc_title = "accTitle:" 1*sp architecture_text as acc_title line_end
+
+  architecture_acc_descr = "accDescr:" 1*sp architecture_text as acc_descr line_end
+
+  architecture_acc_descr_block = "accDescr" *sp "{" *( !"}" ANY ) as acc_descr "}" line_end
+
+  architecture_icon = "(" 1*( !")" ANY ) as icon ")"
+
+  architecture_label = "[" 1*( !"]" ANY ) as label "]"
+
+  architecture_in = 1*sp "in" 1*sp architecture_identifier as group_id
+
+  architecture_group = "group" as stmt_type 1*sp architecture_identifier as id [architecture_icon] [architecture_label] [architecture_in as parent] line_end
+
+  architecture_service = "service" as stmt_type 1*sp architecture_identifier as id [architecture_icon] [architecture_label] [architecture_in as group] line_end
+
+  architecture_junction = "junction" as stmt_type 1*sp architecture_identifier as id [architecture_in as group] line_end
+
+  architecture_arrow = "-->" / "--"
+
+  architecture_from_position = ":" architecture_position as pos_value
+
+  architecture_edge = architecture_identifier as from [architecture_from_position as from_pos] *sp architecture_arrow as arrow *sp [architecture_position as to_pos ":"] architecture_identifier as to [*sp ":" *sp architecture_text as label] line_end
+
+  architecture_statement = architecture_title / architecture_acc_title / architecture_acc_descr_block / architecture_acc_descr / architecture_group / architecture_service / architecture_junction / architecture_edge
+
+  architecture = ws "architecture-beta" as header ws [ 1*( architecture_statement ws ) as statements ] ws
+
+  entry architecture: architecture
+
+  test architecture {
+    accept "architecture-beta"
+    accept "architecture-beta\n  group g(cloud)[G]\n  service s(db)[S] in g\n  junction j in g\n  s:L --> R:j : x"
+    reject "architecture-beta\n  bogus"
+  }

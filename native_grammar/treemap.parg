@@ -1,0 +1,33 @@
+  ## ------------------------------------------------------------------
+  ## treemap (grammars/treemap.rb)
+  ## ------------------------------------------------------------------
+
+  treemap_text = 1*( !newline ANY )
+
+  treemap_title = "title" 1*sp treemap_text as title
+
+  treemap_acc_title = "accTitle:" *sp treemap_text as acc_title
+
+  treemap_acc_descr = "accDescr" *sp [":"] *sp treemap_text as acc_descr
+
+  treemap_identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" / "-" )
+
+  treemap_class_def = "classDef" 1*sp treemap_identifier as class_name 1*sp 1*( !";" ANY ) as class_styles [";"]
+
+  treemap_number = ["-"] 1*DIGIT [ "." 1*DIGIT ]
+
+  treemap_value = *sp ( ":" / "," ) *sp treemap_number as value
+
+  treemap_node_line = *%x20 as indent dq_string as label [ treemap_value ] [ ":::" treemap_identifier as css_class ] *sp ( [comment] ( newline / eof ) )
+
+  treemap_statement = treemap_title *sp / treemap_acc_title *sp / treemap_acc_descr *sp / treemap_class_def as class_def *sp / treemap_node_line as node / comment *sp / *sp newline
+
+  treemap = ( "treemap-beta" / "treemap" ) as keyword *sp newline *treemap_statement as statements *sp eof
+
+  entry treemap: treemap
+
+  test treemap {
+    accept "treemap\n"
+    accept "treemap-beta\ntitle T\n\"A\": 1\n  \"B\": 2\n"
+    reject "treemap"
+  }

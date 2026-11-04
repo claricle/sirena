@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/flowchart"
 require_relative "builders/flowchart"
+require_relative "native/builders/flowchart"
 require_relative "../diagram/flowchart"
 
 module Sirena
@@ -22,6 +23,8 @@ module Sirena
     #   parser = Flowchart.new
     #   diagram = parser.parse("graph TD\nA[Start]-->B[End]")
     class Flowchart < Base
+      native :flowchart, builder: Native::Builders::Flowchart
+
       # Parses flowchart source into a Flowchart diagram model.
       #
       # @param source [String] the Mermaid flowchart source
@@ -31,10 +34,20 @@ module Sirena
         # A lone CR is folded before the grammar sees it; the shared
         # helper owns the parse and the failure message.
         source = normalize_line_ends(source)
-        Builders::Flowchart.new.apply(parse_tree(source))
+        native_diagram(source) ||
+          Builders::Flowchart.new.apply(parse_tree(source))
       end
 
       private
+
+      # The native engine recurses per nested box as well and can run
+      # out of stack before the Parslet grammar does. The Ruby path then
+      # answers, with its own "nests too deeply" error.
+      def native_diagram(source)
+        super
+      rescue SystemStackError
+        nil
+      end
 
       # A deeply nested diagram runs the grammar past the stack. mmdc
       # renders 220 nested subgraphs and we refuse them, which is a gap —

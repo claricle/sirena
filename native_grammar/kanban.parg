@@ -1,0 +1,105 @@
+  ## ------------------------------------------------------------------
+  ## kanban (grammars/kanban.rb)
+  ## ------------------------------------------------------------------
+
+  ## JS \s without the line feed: runs on one line.
+  kanban_line_space = %x09 / %x0B / %x0C / %x20 / %xA0 / %x1680 / %x2000-200A / %x2028 / %x2029 / %x202F / %x205F / %x3000 / %xFEFF
+
+  kanban_hspace = %x09 / %x0B / %x0C / %x20 / %xA0 / %x1680 / %x2000-200A / %x202F / %x205F / %x3000 / %xFEFF
+
+  kanban_line_sep = %x2028 / %x2029
+
+  ## Runs are written as positive character classes: the engine scans
+  ## those in linear time, but not a negated ANY.
+  kanban_not_lf = %x00-09 / %x0B-10FFFF
+
+  kanban_not_comment_end = %x00-09 / %x0B-2027 / %x202A-10FFFF
+
+  kanban_not_crlf = %x00-09 / %x0B-0C / %x0E-10FFFF
+
+  kanban_not_quote_lf = %x00-09 / %x0B-21 / %x23-10FFFF
+
+  kanban_not_body_end = %x00-09 / %x0B-21 / %x23-5D / %x5F-7C / %x7E-10FFFF
+
+  kanban_word_char = ALPHA / DIGIT / "_"
+
+  kanban_identifier = ( ALPHA / "_" ) *kanban_word_char
+
+  kanban_comment_body = *( kanban_not_comment_end )
+
+  kanban_comment = "%%" kanban_comment_body
+
+  kanban_rest = *( kanban_not_lf )
+
+  kanban_comment_line_start = "%%" !"{" kanban_rest
+
+  kanban_comment_line = *kanban_line_space "%%" !"{" kanban_rest ( newline / eof )
+
+  kanban_empty_line = *kanban_line_space newline
+
+  kanban_blank_text_run = 1*( kanban_empty_line / kanban_comment_line )
+
+  kanban_blank_lines_left = newline [kanban_blank_text_run] *kanban_line_space eof / eof
+
+  kanban_comment_end = newline / kanban_line_sep *kanban_line_space ( kanban_comment_line_start kanban_blank_lines_left / kanban_blank_lines_left ) / eof
+
+  kanban_line_end = *kanban_hspace kanban_comment kanban_comment_end / *kanban_line_space ( newline / eof )
+
+  kanban_icon_keyword = "::" ( "i" / "I" ) ( "c" / "C" ) ( "o" / "O" ) ( "n" / "N" ) "("
+
+  kanban_empty_class_modifier = ":::" &kanban_blank_lines_left
+
+  kanban_no_op_modifier_line = *sp ( kanban_icon_keyword ")" kanban_line_end / kanban_empty_class_modifier )
+
+  kanban_blank_run = 1*( kanban_empty_line / kanban_comment_line / kanban_no_op_modifier_line )
+
+  kanban_icon_modifier = kanban_icon_keyword 1*( !")" ANY ) as icon ")"
+
+  kanban_class_modifier = ":::" 1*( kanban_not_comment_end ) as classes
+
+  kanban_modifier_line = *sp as indent ( kanban_icon_modifier / kanban_class_modifier ) kanban_line_end
+
+  kanban_reserved_token = ( "k" / "K" ) ( "a" / "A" ) ( "n" / "N" ) ( "b" / "B" ) ( "a" / "A" ) ( "n" / "N" ) !kanban_word_char
+
+  kanban_empty_quoted_fragments = *( "\"``\"" / "\"\"" )
+
+  kanban_markdown_body = "`" *( !%x22 !"`" ANY ) "`" %x22
+
+  kanban_labelled_text = kanban_empty_quoted_fragments ( %x22 !kanban_markdown_body 1*( !%x22 ANY ) as text %x22 / !( %x22 kanban_markdown_body ) 1*( !"]" ANY ) as text ) kanban_empty_quoted_fragments
+
+  kanban_round_text = kanban_empty_quoted_fragments ( %x22 !kanban_markdown_body 1*( !%x22 ANY ) as text %x22 / !%x22 1*( !"(" !")" !"]" !"}" ANY ) as text ) kanban_empty_quoted_fragments
+
+  kanban_labelled_item = kanban_identifier as id "[" kanban_labelled_text "]"
+
+  kanban_shaped_item = kanban_identifier as id "(" kanban_round_text ")"
+
+  kanban_unlabelled_shaped_item = "(" kanban_round_text ")"
+
+  kanban_bare_item = kanban_identifier as id !( *sp ( "%%" / kanban_line_space ) )
+
+  kanban_metadata_comment_line = newline *kanban_line_space "%%" !"{" 1*( kanban_not_crlf )
+
+  kanban_metadata_quoted = %x22 *( kanban_metadata_comment_line / 1*( kanban_not_quote_lf ) / newline ) %x22
+
+  kanban_blank_line_run = 1*( newline &newline )
+
+  kanban_metadata_body = *( 1*( kanban_not_body_end ) / kanban_blank_line_run / kanban_metadata_comment_line / kanban_metadata_quoted / newline )
+
+  kanban_metadata = "@" *sp "{" kanban_metadata_body as body "}"
+
+  kanban_item = !kanban_reserved_token ( kanban_labelled_item / kanban_shaped_item / kanban_unlabelled_shaped_item / kanban_bare_item ) [ kanban_metadata as metadata ]
+
+  kanban_item_line = *%x20 as indent kanban_item kanban_line_end
+
+  kanban_content_line = kanban_blank_run / kanban_modifier_line / kanban_item_line
+
+  kanban = *sp "kanban" ( newline / eof ) *kanban_content_line as lines *kanban_line_space
+
+  entry kanban: kanban
+
+  test kanban {
+    accept "kanban\n  todo[Todo]\n    t1[Task]@{ assigned: 'a' }\n    ::icon(fa)\n    :::hot\n"
+    accept "kanban\n"
+    reject "kanban\n  kanban[X]"
+    reject "kanban root"
+  }

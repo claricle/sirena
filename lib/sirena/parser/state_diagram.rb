@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/state_diagram"
 require_relative "builders/state_diagram"
+require_relative "native/builders/state_diagram"
 require_relative "../diagram/state_diagram"
 
 module Sirena
@@ -22,6 +23,7 @@ module Sirena
     class StateDiagram < Base
       grammar Grammars::StateDiagram
       builder Builders::StateDiagram
+      native :state_diagram, builder: Native::Builders::StateDiagram
     end
   end
 end

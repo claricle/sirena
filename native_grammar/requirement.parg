@@ -1,0 +1,63 @@
+  ## ------------------------------------------------------------------
+  ## requirement (grammars/requirement.rb)
+  ## ------------------------------------------------------------------
+
+  requirement_line_end = *sp ( [comment] newline / eof )
+
+  ## JS's \s: what mermaid's accTitle/accDescr lexer tokens use.
+  requirement_js_space = %x09 / %x0A / %x0B / %x0C / %x0D / %x20 / %xA0 / %x1680 / %x2000-200A / %x2028 / %x2029 / %x202F / %x205F / %x3000 / %xFEFF
+
+  requirement_identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
+
+  requirement_acc_title = "accTitle" *requirement_js_space ":" *requirement_js_space 1*( !newline ANY ) as acc_title ( newline / eof )
+
+  requirement_acc_descr_single = "accDescr" *requirement_js_space ":" *requirement_js_space 1*( !newline ANY ) as acc_descr ( newline / eof )
+
+  requirement_acc_descr_multi = "accDescr" *requirement_js_space "{" *requirement_js_space *( !"}" ANY ) as acc_descr "}"
+
+  requirement_property_key = ( "id" / "text" / "risk" / "verifymethod" / "type" / "docref" ) as prop_key
+
+  requirement_property_value = 1*( !requirement_line_end ANY )
+
+  requirement_property = requirement_property_key as key ws ":" ws requirement_property_value as value requirement_line_end
+
+  requirement_properties = 1*( requirement_property ws )
+
+  requirement_name_list = requirement_identifier *( "," requirement_identifier )
+
+  requirement_shorthand = ":::" requirement_name_list
+
+  requirement_keyword = "functionalRequirement" / "interfaceRequirement" / "performanceRequirement" / "physicalRequirement" / "designConstraint" / "requirement"
+
+  requirement_requirement = requirement_keyword as req_type sp requirement_identifier as req_name [ ws requirement_shorthand as req_classes ] ws "{" ws [ requirement_properties as req_properties ] ws "}" requirement_line_end
+
+  requirement_element = "element" as elem_keyword sp requirement_identifier as elem_name [ ws requirement_shorthand as elem_classes ] ws "{" ws [ requirement_properties as elem_properties ] ws "}" requirement_line_end
+
+  requirement_relationship_type = ( "contains" / "copies" / "derives" / "satisfies" / "verifies" / "refines" / "traces" ) as type
+
+  requirement_relationship = requirement_identifier as rel_source ws "-" ws requirement_relationship_type as rel_type ws "->" ws requirement_identifier as rel_target requirement_line_end
+
+  requirement_style_targets = requirement_identifier *( "," ws requirement_identifier )
+
+  requirement_style_property = 1*( !requirement_line_end !"," ANY )
+
+  requirement_style_properties = requirement_style_property *( "," requirement_style_property )
+
+  requirement_style = "style" as style_keyword sp requirement_style_targets as style_targets sp requirement_style_properties as style_props requirement_line_end
+
+  requirement_class_def = "classDef" as classdef_keyword sp requirement_identifier as class_name ( sp requirement_style_property *( "," requirement_style_property ) ) as class_props requirement_line_end
+
+  requirement_class_assignment = "class" as class_keyword sp requirement_name_list as class_targets sp requirement_name_list as class_names requirement_line_end
+
+  requirement_statement = requirement_acc_title / requirement_acc_descr_single / requirement_acc_descr_multi / requirement_requirement / requirement_element / requirement_relationship / requirement_style / requirement_class_def / requirement_class_assignment
+
+  requirement = ws "requirementDiagram" as header ws [ 1*( requirement_statement ws ) as statements ] ws
+
+  entry requirement: requirement
+
+  test requirement {
+    accept "requirementDiagram"
+    accept "requirementDiagram\n  requirement r1 {\n    id: 1\n    text: t\n  }\n  element e {\n    type: sim\n  }\n  e - satisfies -> r1"
+    accept "requirementDiagram\n  accTitle: T\n  accDescr { d }\n  style r1 fill:#f9f\n  classDef c fill:red\n  class r1 c"
+    reject "requirementDiagram\n  bogus"
+  }

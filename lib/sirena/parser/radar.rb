@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/radar"
 require_relative "builders/radar"
+require_relative "native/builders/radar"
 require_relative "../diagram/radar"
 
 module Sirena
@@ -30,9 +31,13 @@ module Sirena
     class Radar < Base
       grammar Grammars::Radar
       builder Builders::Radar
+      native :radar, builder: Native::Builders::Radar
 
-      private
-
+      # Assembles the diagram from the builder's intermediate result; the
+      # native builder shares it.
+      #
+      # @param result [Hash] title, axes, curves and options
+      # @return [Diagram::Radar]
       def create_diagram(result)
         diagram = Diagram::Radar.new
         assign_metadata(diagram, result)
@@ -40,6 +45,8 @@ module Sirena
         append_curves(diagram, result[:curves])
         diagram
       end
+
+      private
 
       def assign_metadata(diagram, result)
         diagram.title = result[:title]

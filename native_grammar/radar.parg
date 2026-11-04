@@ -1,0 +1,45 @@
+  ## ------------------------------------------------------------------
+  ## radar (grammars/radar.rb)
+  ## ------------------------------------------------------------------
+
+  radar_text = 1*( !newline ANY )
+
+  radar_id = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
+
+  radar_label = "[" %x22 1*( !%x22 ANY ) as label %x22 "]"
+
+  radar_title = "title" sp radar_text as title line_end
+
+  radar_acc_title = "accTitle:" sp radar_text as acc_title line_end
+
+  radar_acc_descr = "accDescr:" sp radar_text as acc_descr line_end
+
+  radar_axis_item = *sp radar_id as id [ radar_label ] *sp
+
+  radar_axis = "axis" sp ( radar_axis_item *( "," radar_axis_item ) ) as axes line_end
+
+  radar_number = 1*DIGIT as value
+
+  radar_blank = *( sp / newline )
+
+  radar_positional = radar_blank radar_number *sp
+
+  radar_named = radar_blank radar_id as axis *sp [":"] *sp radar_number *sp
+
+  radar_values = "{" ( radar_named *( "," radar_named ) / radar_positional *( "," radar_positional ) ) as values radar_blank "}"
+
+  radar_curve = "curve" sp radar_id as id [ radar_label ] *sp radar_values line_end
+
+  radar_option = "ticks" sp 1*DIGIT as ticks line_end / "showLegend" sp ( "true" / "false" ) as show_legend line_end / "graticule" sp ( "polygon" / "circular" ) as graticule line_end / "min" sp 1*DIGIT as min line_end / "max" sp 1*DIGIT as max line_end
+
+  radar_statement = *sp ( radar_title / radar_acc_title / radar_acc_descr / radar_axis / radar_curve / radar_option / comment line_end / *sp newline )
+
+  radar = "radar-beta" *sp line_end *radar_statement as statements
+
+  entry radar: radar
+
+  test radar {
+    accept "radar-beta\n"
+    accept "radar-beta\n  title T\n  axis a, b[\"B\"]\n  curve c{1, 2}\n  curve d[\"D\"]{ a: 1, b: 2 }\n  ticks 3\n  showLegend true"
+    reject "radar-beta\n  bogus"
+  }

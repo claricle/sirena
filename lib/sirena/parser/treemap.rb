@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/treemap"
 require_relative "builders/treemap"
+require_relative "native/builders/treemap"
 require_relative "../diagram/treemap"
 
 module Sirena
@@ -11,6 +12,7 @@ module Sirena
     class Treemap < Base
       grammar Grammars::Treemap
       builder Builders::Treemap
+      native :treemap, builder: Native::Builders::Treemap
 
       private
 

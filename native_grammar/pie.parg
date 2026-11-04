@@ -1,0 +1,37 @@
+  ## ------------------------------------------------------------------
+  ## pie (grammars/pie.rb)
+  ## ------------------------------------------------------------------
+
+  pie_title_text = *( !line_end ANY )
+
+  pie_title = "title" ( ":" / 1*sp ) pie_title_text as text
+
+  pie_header = "pie" [ 1*sp "showData" as show_data ] [ 1*sp pie_title as title ] ws
+
+  pie_acc_title = "accTitle" [sp] ":" [sp] rest_of_line as text line_end
+
+  pie_acc_descr_single = "accDescr" [sp] ":" [sp] rest_of_line as text line_end
+
+  pie_acc_descr_multi = "accDescr" [sp] "{" ws *( !"}" ANY ) as text ws "}" line_end
+
+  pie_standalone_title = *sp "title" 1*sp pie_title_text as text line_end
+
+  pie_label = dq_string / sq_string
+
+  pie_number = ["-"] ( 1*DIGIT "." 1*DIGIT / 1*DIGIT )
+
+  pie_entry = *sp pie_label as label *sp ":" *sp pie_number as value line_end
+
+  pie_statement = pie_acc_title as acc_title / pie_acc_descr_single as acc_descr / pie_acc_descr_multi as acc_descr / pie_standalone_title as standalone_title / pie_entry as entry / comment line_end
+
+  pie = ws pie_header *( pie_statement ws ) ws
+
+  entry pie: pie
+  
+  test pie {
+    accept "pie"
+    accept "pie showData title Pets"
+    accept "pie\n  \"A\" : 1\n  \"B\" : 2.5"
+    reject "pie\n  A : 1"
+  }
+

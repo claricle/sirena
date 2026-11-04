@@ -1,0 +1,61 @@
+  ## ------------------------------------------------------------------
+  ## user_journey (parser/user_journey.rb UserJourneyGrammar)
+  ## ------------------------------------------------------------------
+
+  ## The Parslet grammar is LF-only and takes no leading blanks, comments
+  ## or ";" -- none of the prelude's ws / line_end applies here.
+  user_journey_end = %x0A / eof
+
+  user_journey_header = %s"journey" *sp user_journey_end
+
+  user_journey_text = 1*( !%x0A !":" ANY )
+
+  user_journey_title = *sp %s"title" 1*sp user_journey_text as text user_journey_end
+
+  user_journey_section = *sp %s"section" 1*sp user_journey_text as text user_journey_end
+
+  ## accTitle / accDescr match case-insensitively; their text is discarded.
+  user_journey_acc_line = *sp ( %i"accTitle" / %i"accDescr" ) *sp ":" *( !%x0A ANY ) user_journey_end
+
+  user_journey_acc_open = *sp %i"accDescr" *sp "{"
+
+  ## ECMAScript's four line terminators decide whether a "}" is content.
+  user_journey_acc_nl = %x0A / %x0D / %x2028 / %x2029
+
+  user_journey_acc_space = %x09 / %x0B / %x0C / %x20 / %xA0 / %x1680 / %x2000-200A / %x202F / %x205F / %x3000 / %xFEFF
+
+  user_journey_acc_directive = user_journey_acc_nl *user_journey_acc_space "%%{" *( !user_journey_acc_nl !"}%%" ANY ) "}%%"
+
+  user_journey_acc_comment = user_journey_acc_nl *user_journey_acc_space "%%" !"{" *( !user_journey_acc_nl ANY )
+
+  user_journey_acc_body = *( 1*( !"}" !user_journey_acc_nl ANY ) / user_journey_acc_directive / user_journey_acc_comment / ( !"}" ANY ) )
+
+  user_journey_acc_block = user_journey_acc_open user_journey_acc_body "}"
+
+  user_journey_acc_unclosed = user_journey_acc_open user_journey_acc_body !ANY
+
+  user_journey_task_text = 1*( !":" !%x0A ANY )
+
+  user_journey_actor = 1*( !"," !%x0A ANY )
+
+  user_journey_actors = [ user_journey_actor *( *sp "," *sp user_journey_actor ) ]
+
+  user_journey_task = *sp user_journey_task_text as name ":" *sp 1*DIGIT as score [ *sp ":" *sp user_journey_actors as actors ] *sp user_journey_end
+
+  user_journey_comment = *sp "%%" *( !%x0A ANY ) %x0A
+
+  user_journey_blank = *sp %x0A
+
+  user_journey_line = user_journey_title as title / user_journey_section as section / user_journey_acc_block / user_journey_acc_line / !user_journey_acc_unclosed user_journey_task as task / user_journey_comment / user_journey_blank
+
+  user_journey = user_journey_header *user_journey_line
+
+  entry user_journey: user_journey
+
+  test user_journey {
+    accept "journey"
+    accept "journey\n  title T\n  section S\n    Task: 5: Me, You\n"
+    accept "journey\n  accDescr {\n  x\n  }\n"
+    reject "Journey"
+    reject "journey\n  title a: x"
+  }

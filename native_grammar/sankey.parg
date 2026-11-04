@@ -1,0 +1,25 @@
+  ## ------------------------------------------------------------------
+  ## sankey (grammars/sankey.rb)
+  ## ------------------------------------------------------------------
+
+  sankey_node_id = 1*( ALPHA / DIGIT / "_" / "-" )
+
+  sankey_value = 1*DIGIT [ "." 1*DIGIT ]
+
+  sankey_node_declaration = *sp sankey_node_id as node_id *sp "[" 1*( !"]" ANY ) as node_label "]" line_end
+
+  sankey_flow_entry = *sp sankey_node_id as source *sp "," *sp sankey_node_id as target *sp "," *sp sankey_value as value line_end
+
+  sankey_statement = sankey_node_declaration as node_declaration / sankey_flow_entry as flow_entry / comment line_end
+
+  sankey = ws "sankey-beta" as header ws [ 1*( sankey_statement ws ) as statements ] ws
+
+  entry sankey: sankey
+
+  test sankey {
+    accept "sankey-beta"
+    accept "sankey-beta\nA,B,10\nB,C,2.5"
+    accept "sankey-beta\nA [Alpha]\nA,B,1"
+    reject "sankey-beta\nA,B"
+    reject "sankey"
+  }
