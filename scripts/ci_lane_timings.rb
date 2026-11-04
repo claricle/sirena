@@ -13,7 +13,8 @@ module CiLaneTimings
     "fast" => %r{\A(?:unit\ \(|pins\z|oracle-toolchain\z|lint\z|
                      scoreboard-baseline\z)}x,
     "full" => %r{\A(?:docs-build\ /|links\ /|conformance\z|fresh-resolution\z|
-                     plantuml-toolchain\z|coverage\z|scoreboard-baseline\z)}x,
+                     plantuml-toolchain\z|coverage\z|scoreboard-baseline\z|
+                     native-runtime\z)}x,
   }.freeze
 
   BUCKETS = %i[warm restore_key cold none].freeze

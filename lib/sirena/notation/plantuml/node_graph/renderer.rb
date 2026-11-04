@@ -3,6 +3,8 @@
 require_relative "../../../renderer/base"
 require_relative "../../../svg"
 require_relative "heads"
+require_relative "label_placer"
+require_relative "../creole"
 require_relative "layout"
 require_relative "shapes"
 
@@ -43,7 +45,9 @@ module Sirena
           end
 
           def labels(scene)
-            scene.routes.filter_map { |route| label(route) }
+            LabelPlacer.new.call(scene.routes).map do |placed|
+              text(placed.x, placed.y, placed.route.edge.label)
+            end
           end
 
           def title(scene)
@@ -79,24 +83,21 @@ module Sirena
             color.match?(NAMED) ? color : "##{color}"
           end
 
-          def label(route)
-            return if route.edge.label.to_s.empty?
-
-            x_mid, y_mid = route.points.transpose.map { |v| v.sum / 2 }
-            text(x_mid, y_mid - 4, route.edge.label)
-          end
-
           def text(x_pos, y_pos, content, weight = nil)
             Svg::Text.new.tap do |node|
               node.x = x_pos
               node.y = y_pos
-              node.content = content
-              node.text_anchor = "middle"
-              node.font_family = "sans-serif"
-              node.font_size = "12"
-              node.font_weight = weight
-              node.fill = "#000000"
+              style_text(node, weight)
+              Creole.assign(node, content)
             end
+          end
+
+          def style_text(node, weight)
+            node.text_anchor = "middle"
+            node.font_family = "sans-serif"
+            node.font_size = "12"
+            node.font_weight = weight
+            node.fill = "#000000"
           end
         end
       end
