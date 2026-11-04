@@ -27,7 +27,7 @@ module EngineRenderNotationHelpers
   end
 
   def valid_notations
-    "Valid notations: fake, mermaid, other"
+    "Valid notations: fake, mermaid, other, plantuml_salt"
   end
 end
 

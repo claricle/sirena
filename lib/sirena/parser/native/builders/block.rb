@@ -25,10 +25,6 @@ module Sirena
               @offset = slice.input.byteslice(0, slice.bytepos).length
             end
 
-            def to_s
-              @text
-            end
-
             def inspect
               "#{@text.inspect}@#{@offset}"
             end

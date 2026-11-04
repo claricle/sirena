@@ -64,4 +64,17 @@ RSpec.describe Sirena::Parser::Native do
         .and(satisfy { |output| !output.include?("[BUG]") })
     end
   end
+
+  # The guard counts only the openers it recognises, and a caller may already
+  # be deep in its own stack, so the flowchart parser still turns a native
+  # stack overflow into a Ruby-grammar answer.
+  describe "when the native engine runs out of stack" do
+    it "answers through the Ruby grammar" do
+      source = "graph TD\nA-->B\n"
+      allow(described_class).to receive(:parse).and_raise(SystemStackError)
+
+      expect(Sirena::Parser::Flowchart.new.parse(source).nodes.map(&:id))
+        .to eq(%w[A B])
+    end
+  end
 end

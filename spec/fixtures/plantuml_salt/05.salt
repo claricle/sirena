@@ -1,0 +1,10 @@
+@startsalt
+{
+    {T!
+        + <b>Figure</b> | . | .
+        + <b>Caption</b> | . | .
+        ++ <b>P</b> | paragraph | .
+        ++ <b>P</b> | paragraph | .
+    }
+}
+@endsalt
