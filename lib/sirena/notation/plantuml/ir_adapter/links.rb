@@ -60,6 +60,13 @@ module Sirena
             }.compact
           end
 
+          def note_details(note, node, sink)
+            { "side" => note.side, "member" => note.member,
+              "color" => note.color, "stereotype" => note.stereotype }
+              .each { |role, value| sink.detail(node, role, value) }
+            sink.details(node, "line", note.lines)
+          end
+
           def junction(junction, sink, ids)
             node = sink.node("association_class")
             [junction.from, junction.to].each do |name|
@@ -70,11 +77,9 @@ module Sirena
 
           def note(note, sink, ids)
             node = sink.node("note")
-            sink.detail(node, "side", note.side)
-            sink.detail(node, "member", note.member)
-            sink.detail(node, "color", note.color)
-            sink.detail(node, "stereotype", note.stereotype)
-            sink.details(node, "line", note.lines)
+            note_details(note, node, sink)
+            return unless note.target
+
             sink.edge("note_link", node, ids.fetch(note.target))
           end
         end

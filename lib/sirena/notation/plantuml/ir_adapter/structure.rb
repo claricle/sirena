@@ -8,7 +8,7 @@ module Sirena
         module Structure
           KIND_ROLES = {
             class: "class", abstract: "abstract_class",
-            interface: "interface"
+            interface: "interface", enum: "enum", annotation: "annotation"
           }.freeze
           private_constant :KIND_ROLES
 

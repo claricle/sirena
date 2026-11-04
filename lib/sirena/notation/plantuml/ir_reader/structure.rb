@@ -12,7 +12,8 @@ module Sirena
         module Structure
           KINDS = {
             "class" => :class, "abstract_class" => :abstract,
-            "interface" => :interface
+            "interface" => :interface, "enum" => :enum,
+            "annotation" => :annotation
           }.freeze
           private_constant :KINDS
 
@@ -52,7 +53,7 @@ module Sirena
           end
 
           def members(node, index)
-            index.children(node, "field", "method").map do |member|
+            index.children(node, "field", "method", "separator").map do |member|
               member(member, index)
             end
           end

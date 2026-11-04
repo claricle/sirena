@@ -9,6 +9,7 @@ require_relative "plantuml/sequence"
 require_relative "plantuml/activity"
 require_relative "plantuml/usecase"
 require_relative "plantuml/component"
+require_relative "plantuml/state"
 
 module Sirena
   module Notation
@@ -36,7 +37,12 @@ module Sirena
       OPENER = /\A(?:\xEF\xBB\xBF)?
                 (?:#{PAD}*(?:'[^\r\n]*)?(?:\r\n|\r|\n))*
                 #{PAD}*@startuml(?![A-Za-z0-9_])/xn
-      private_constant :PAD, :OPENER
+      # The families tried in order; the first whose query claims the source
+      # reads it, and the class diagram is what is left.
+      FAMILIES = [[State, :state?], [Usecase, :usecase?],
+                  [Component, :component?], [Activity, :activity?],
+                  [Sequence, :sequence?]].freeze
+      private_constant :PAD, :OPENER, :FAMILIES
 
       # @return [Symbol] the notation identifier
       def id
@@ -51,7 +57,7 @@ module Sirena
       # @return [Array<Symbol>] diagram types, in display order
       def types
         %i[class_diagram sequence_diagram activity_diagram usecase_diagram
-           component_diagram].freeze
+           component_diagram state_diagram].freeze
       end
 
       # @param source [String] any String, including binary or invalid UTF-8
@@ -67,10 +73,10 @@ module Sirena
       # @param source [String] PlantUML source
       # @return [Notation::Parsed]
       def parse(source)
-        return Usecase.parse(source) if Usecase.usecase?(source)
-        return Component.parse(source) if Component.component?(source)
-        return Activity.parse(source) if Activity.activity?(source)
-        return Sequence.parse(source) if Sequence.sequence?(source)
+        family = FAMILIES.find do |klass, query|
+          klass.public_send(query, source)
+        end
+        return family.first.parse(source) if family
 
         Notation::Parsed.new(
           type: :class_diagram,

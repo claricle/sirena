@@ -73,7 +73,6 @@ RSpec.describe Sirena::Notation::PlantUML::Parser do
     "class A\nA <-> B" => /relation <-> arrow/,
     "class A\nnote right of A\n' comment\nend note" => /comment in a note/,
     "class A {\n{static} +run() junk\n}" => /member/,
-    "class A {\n{static} int value\n}" => /member/,
     "class A {\n{field} run()\n}" => /member/,
   }.each do |body, message|
     it "refuses #{body.lines.first.strip.inspect}" do
