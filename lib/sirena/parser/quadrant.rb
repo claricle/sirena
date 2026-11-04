@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/quadrant"
 require_relative "builders/quadrant"
+require_relative "native/builders/quadrant"
 require_relative "../diagram/quadrant"
 
 module Sirena
@@ -33,19 +34,21 @@ module Sirena
     class Quadrant < Base
       grammar Grammars::Quadrant
       builder Builders::Quadrant
+      native :quadrant, builder: Native::Builders::Quadrant
 
       CLASS_STYLE_KEYS = %w[radius color stroke-color stroke-width].freeze
       private_constant :CLASS_STYLE_KEYS
 
       # @raise [ParseError] when a classDef uses a style Mermaid rejects
       def parse(source)
-        tree = parse_with_grammar(Grammars::Quadrant.new, source)
-        validate_class_styles(tree)
-        Builders::Quadrant.new.apply(tree)
+        native_diagram(source) || ruby_quadrant(source)
       end
 
-      private
-
+      # Mermaid rejects a classDef style outside CLASS_STYLE_KEYS; the
+      # native builder shares this check.
+      #
+      # @param tree [Array, Hash] statements carrying :class_style
+      # @raise [ParseError] for an unsupported style
       def validate_class_styles(tree)
         [tree].flatten.each do |item|
           next unless item.is_a?(Hash) && item.key?(:class_style)
@@ -56,6 +59,14 @@ module Sirena
             raise ParseError, "style named #{key} is not supported."
           end
         end
+      end
+
+      private
+
+      def ruby_quadrant(source)
+        tree = parse_with_grammar(Grammars::Quadrant.new, source)
+        validate_class_styles(tree)
+        Builders::Quadrant.new.apply(tree)
       end
 
       def class_style_keys(style)

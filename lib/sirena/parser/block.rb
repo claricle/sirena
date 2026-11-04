@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/block"
 require_relative "builders/block"
+require_relative "native/builders/block"
 require_relative "../diagram/block"
 
 module Sirena
@@ -25,6 +26,7 @@ module Sirena
     class Block < Base
       grammar Grammars::Block
       builder Builders::Block
+      native :block, builder: Native::Builders::Block
     end
   end
 end

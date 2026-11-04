@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/mindmap"
 require_relative "builders/mindmap"
+require_relative "native/builders/mindmap"
 require_relative "../diagram/mindmap"
 
 module Sirena
@@ -31,15 +32,20 @@ module Sirena
     class Mindmap < Base
       grammar Grammars::Mindmap
       builder Builders::Mindmap
+      native :mindmap, builder: Native::Builders::Mindmap
 
-      private
-
+      # The diagram for a builder's result: the root and every node.
+      #
+      # @param result [Hash] the builder's +:root+ and +:nodes+
+      # @return [Diagram::Mindmap] the mindmap diagram model
       def create_diagram(result)
         diagram = Diagram::Mindmap.new
         add_root(diagram, result[:root])
         add_remaining_nodes(diagram, result)
         diagram
       end
+
+      private
 
       def add_root(diagram, root_data)
         return unless root_data

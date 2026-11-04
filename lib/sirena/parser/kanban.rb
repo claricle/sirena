@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/kanban"
 require_relative "builders/kanban"
+require_relative "native/builders/kanban"
 require_relative "../diagram/kanban"
 
 module Sirena
@@ -34,8 +35,16 @@ module Sirena
         id text assigned ticket icon label priority classes
       ].freeze
 
+      # The native engine joins what each line captured, so its time grows
+      # with the source's bytes times its lines; the Parslet grammar scans
+      # the same source in linear time. A board is a few KB, so a source
+      # this large goes straight to Parslet.
+      NATIVE_BYTE_LIMIT = 100_000
+      private_constant :NATIVE_BYTE_LIMIT
+
       grammar Grammars::Kanban
       builder Builders::Kanban
+      native :kanban, builder: Native::Builders::Kanban
 
       # Parses kanban diagram source into a Kanban model.
       #
@@ -52,7 +61,29 @@ module Sirena
         super(readable_source(source))
       end
 
+      # The diagram for a builder's result: every column with its cards.
+      #
+      # @param result [Hash] the builder's +:columns+
+      # @return [Diagram::Kanban] the kanban diagram model
+      def create_diagram(result)
+        diagram = Diagram::Kanban.new
+
+        # Build columns and cards
+        result[:columns].each do |column_data|
+          column = build_column(column_data)
+          diagram.add_column(column)
+        end
+
+        diagram
+      end
+
       private
+
+      def native_diagram(source)
+        return nil if source.bytesize > NATIVE_BYTE_LIMIT
+
+        super
+      end
 
       def readable_source(source)
         normalize_line_ends(transcode_to_utf8(source))
@@ -83,18 +114,6 @@ module Sirena
       # `newline` knows `\n` and `\r\n` only.
       def normalize_line_ends(source)
         source.gsub(/\r\n?/, "\n")
-      end
-
-      def create_diagram(result)
-        diagram = Diagram::Kanban.new
-
-        # Build columns and cards
-        result[:columns].each do |column_data|
-          column = build_column(column_data)
-          diagram.add_column(column)
-        end
-
-        diagram
       end
 
       def build_column(column_data)

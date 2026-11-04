@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/sankey"
 require_relative "builders/sankey"
+require_relative "native/builders/sankey"
 require_relative "../diagram/sankey"
 
 module Sirena
@@ -40,6 +41,7 @@ module Sirena
     class Sankey < Base
       grammar Grammars::Sankey
       builder Builders::Sankey
+      native :sankey, builder: Native::Builders::Sankey
     end
   end
 end

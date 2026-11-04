@@ -1,0 +1,21 @@
+  ## ------------------------------------------------------------------
+  ## info (grammars/info.rb)
+  ## ------------------------------------------------------------------
+
+  info_flag = "showInfo" as show_info
+
+  info_body_line = *sp info_flag line_end
+
+  info = ws "info" as header [ 1*sp info_flag ] ws [ 1*info_body_line as body ] ws
+
+  entry info: info
+
+  test info {
+    accept "info"
+    accept "info showInfo"
+    accept "info\nshowInfo"
+    reject "inf"
+    reject "info other"
+    capture "info showInfo" { header: "info"
+      show_info: "showInfo" }
+  }

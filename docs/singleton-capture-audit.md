@@ -82,8 +82,8 @@ ruby scripts/audit_singleton_captures.rb --check
 - `lib/sirena/parser/builders/gantt.rb:187` — `Array(parts.is_a?(Array) ? parts : [parts]).map do |part|`
 - `lib/sirena/parser/builders/kanban.rb:389` — `lines_array = Array(lines)`
 - `lib/sirena/parser/builders/radar.rb:117` — `Array(statements).grep(Hash).each do |statement|`
-- `lib/sirena/parser/radar.rb:65` — `assign_curve_values(curve, Array(data[:values]), axes)`
-- `lib/sirena/parser/user_journey.rb:180` — `Array(tree[:lines]).each do |line|`
+- `lib/sirena/parser/radar.rb:72` — `assign_curve_values(curve, Array(data[:values]), axes)`
+- `lib/sirena/parser/user_journey.rb:187` — `Array(tree[:lines]).each do |line|`
 
 ## 07e — architecture, c4, block
 
@@ -149,4 +149,4 @@ ruby scripts/audit_singleton_captures.rb --check
 - `lib/sirena/parser/builders/xy_chart.rb:84` — `values: Array(values),`
 - `lib/sirena/parser/builders/xy_chart.rb:97` — `values: Array(values),`
 - `lib/sirena/parser/builders/xy_chart.rb:113` — `Array(statements).grep(Hash).each do |statement|`
-- `lib/sirena/parser/packet.rb:44` — `Array(fields).each { |data| diagram.add_field(build_field(data)) }`
+- `lib/sirena/parser/packet.rb:46` — `Array(fields).each { |data| diagram.add_field(build_field(data)) }`

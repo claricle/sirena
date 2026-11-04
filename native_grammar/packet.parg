@@ -1,0 +1,32 @@
+  ## ------------------------------------------------------------------
+  ## packet (grammars/packet.rb)
+  ## ------------------------------------------------------------------
+
+  packet_text = 1*( !%x0A ANY )
+
+  packet_title_line = "title" sp packet_text as title newline
+
+  packet_bit = 1*DIGIT
+
+  packet_bit_range = packet_bit as bit_start [ "-" packet_bit as bit_end ]
+
+  packet_label = %x22 *( "\\" ANY / !( %x22 / "\\" ) ANY ) as label %x22
+
+  packet_field_line = packet_bit_range ":" *sp packet_label ( newline / eof )
+
+  packet_comment_line = comment newline
+
+  packet_empty_line = *sp newline
+
+  packet_statement = *sp ( packet_title_line / packet_field_line / packet_comment_line / packet_empty_line )
+
+  packet = "packet-beta" *sp [ newline *packet_statement as statements ]
+
+  entry packet: packet
+
+  test packet {
+    accept "packet-beta"
+    accept "packet-beta\n  title T\n  0-7: \"a\"\n  8: \"b\""
+    reject "packet-beta\n  0-7 \"a\""
+    reject "packet"
+  }

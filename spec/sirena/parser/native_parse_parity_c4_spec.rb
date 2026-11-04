@@ -1,0 +1,65 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe Sirena::Parser::Native, ".parse parity (c4)" do
+  it_behaves_like "native corpus parity", "c4"
+
+  it_behaves_like "native edge parity", "c4", [
+    "C4Context",
+    "C4Context\n",
+    "C4 diagram",
+    "C4 diagram\n  Person(a, \"A\")",
+    "  C4Context  \n  title T\n",
+    "C4Context\r\n  title T\r\n  Person(a, \"A\")\r\n",
+    "C4Context;\n  Person(a, \"A\")",
+    "C4Context${var}\n  Person(a, \"A\")",
+    "C4Container\n  Person(a, \"A\")",
+    "C4Component\n  Component(a, \"A\", \"Go\", \"desc\")",
+    "C4Dynamic\n  Rel(a, b, \"x\")",
+    "C4Deployment\n  Container(a, \"A\")",
+    "c4context\n  Person(a, \"A\")",
+    "C4Context\n  title\n",
+    "C4Context\n  title My Title ${x}\n  Person(a, \"A\")",
+    "C4Context\n  title Money $5\n  Person(a, \"A\")",
+    "C4Context\n  Person(a, \"A\", \"Desc\")",
+    "C4Context\n  Person(a)",
+    "C4Context\n  Person_Ext(a, \"A\") ${m}\n  SystemDb(d, \"D\")",
+    "C4Context\n  System(s, \"S\", \"d\", \"t\", $sprite=\"s\", $link=\"l\")",
+    "C4Context\n  System(s, \"S\", $tags=\"t1\")",
+    "C4Context\n  System(s, \"S\", $bad=\"t1\")",
+    "C4Context\n  System(${v}, \"S\")",
+    "C4Context\n  ${macro}(s, \"S\")",
+    "C4Context\n  System(s, plain label, unquoted tech)",
+    "C4Context\n  System(s, é, 日本)",
+    "C4Context\n  System(s, \"é\\\"q\")",
+    "C4Context\n  System(s, $x)",
+    "C4Context\n  System(s,\"S\",\"d\")",
+    "C4Context\n  System ( s , \"S\" )",
+    "C4Context\n  System(s, \"S\"",
+    "C4Context\n  Rel(a, b)",
+    "C4Context\n  Rel(a, b, \"l\", \"t\")",
+    "C4Context\n  BiRel(a, b, l)",
+    "C4Context\n  Rel(${a}, ${b}, \"l\") ${m}",
+    "C4Context\n  Rel(a, b, \"l\", \"t\", \"extra\")",
+    "C4Context\n  UpdateLayoutConfig($a=\"3\", $b=\"1\")",
+    "C4Context\n  UpdateLayoutConfig($c4ShapeInRow=3)",
+    "C4Context\n  UpdateLayoutConfig($a=1.5 , $b = \"x\" )",
+    "C4Context\n  UpdateLayoutConfig()",
+    "C4Context\n  Enterprise_Boundary(b, \"B\") {\n    Person(a, \"A\")\n  }",
+    "C4Context\n  System_Boundary(b1, \"S\", \"type\", $tags=\"t\") {\n    " \
+    "Container(c, \"C\")\n    Boundary(b2, \"In\") {\n      " \
+    "System(s, \"S\")\n    }\n  }",
+    "C4Context\n  Boundary(b) {\n  }",
+    "C4Context\n  Boundary(b) { Person(a, \"A\") }",
+    "C4Context\n  ${macroName}(b1, \"B\") {\n    System(s, \"S\")\n  }",
+    "C4Context\n  Boundary(b, \"B\") {\n    Person(a, \"A\")",
+    "C4Context\n  Boundary(b, \"B\") {\n    Rel(a, b)\n  }",
+    "C4Context\n  %% comment\n  Person(a, \"A\") %% tail\n  Person(b, \"B\");",
+    "C4Context\n  Person(a, \"A\");Person(b, \"B\")",
+    "C4Context\n  Unknown(a, \"A\")",
+    "%% lead\nC4Context\n  Person(a, \"A\")",
+    "",
+    "   ",
+  ]
+end

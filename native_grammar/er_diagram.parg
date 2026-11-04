@@ -1,0 +1,74 @@
+  ## ------------------------------------------------------------------
+  ## er_diagram (grammars/er_diagram.rb)
+  ## ------------------------------------------------------------------
+
+  ## JS's \s (ECMA-262 WhiteSpace + LineTerminator).
+  er_diagram_js_space = %x09 / %x0A / %x0B / %x0C / %x0D / %x20 / %xA0 / %x1680 / %x2000-200A / %x2028 / %x2029 / %x202F / %x205F / %x3000 / %xFEFF
+
+  er_diagram_line_terminator = %x0A / %x0D / %x2028 / %x2029
+
+  ## Character classes spelled as ranges: the engine scans a class repeat
+  ## in one pass, but a `*( !x ANY )` repeat builds its tree one character
+  ## at a time (quadratic on a long note or tilde run).
+  ## Not "~" and not a JS space.
+  er_diagram_plain_char = %x00-08 / %x0E-1F / %x21-7D / %x7F-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
+
+  ## Not a JS space ("~" allowed).
+  er_diagram_non_space = er_diagram_plain_char / "~"
+
+  ## Not "~" and not a line terminator.
+  er_diagram_tilde_body_char = %x00-09 / %x0B-0C / %x0E-7D / %x7F-2027 / %x202A-10FFFF
+
+  ## Not a double quote.
+  er_diagram_note_char = %x00-21 / %x23-10FFFF
+
+  er_diagram_identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
+
+  er_diagram_entity_name = %x22 1*( !%x22 ANY ) %x22 / 1*DIGIT "." 1*DIGIT / 1*DIGIT / ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" / "-" )
+
+  er_diagram_class_name_list = er_diagram_identifier *( "," [sp] er_diagram_identifier )
+
+  er_diagram_class_def = "classDef" 1*sp er_diagram_class_name_list as classdef_names 1*sp 1*( !line_end ANY ) as classdef_styles line_end
+
+  er_diagram_entity_definition = er_diagram_entity_name as entity_id [ ":::" er_diagram_class_name_list as entity_classes ] *sp "{" ws [ er_diagram_attributes as attributes ] ws "}" line_end
+
+  er_diagram_relationship = er_diagram_entity_name as from_id [ ":::" er_diagram_class_name_list as from_classes ] *sp er_diagram_pattern as pattern *sp er_diagram_entity_name as to_id [ ":::" er_diagram_class_name_list as to_classes ] *sp [ er_diagram_label as label ] line_end
+
+  er_diagram_entity_declaration = er_diagram_entity_name as entity_id [ ":::" er_diagram_class_name_list as entity_classes ] line_end
+
+  er_diagram_pattern = er_diagram_cardinality as card_from er_diagram_operator as operator er_diagram_cardinality as card_to
+
+  er_diagram_cardinality = "||" / "o{" / "|{" / "}o" / "}|" / "o|" / "|o" / "{o" / "{|" / "}{" / "{}"
+
+  er_diagram_operator = "==" / "--" / ".."
+
+  er_diagram_label = ":" *sp 1*( !line_end ANY ) as label_text
+
+  er_diagram_attributes = 1*( er_diagram_attribute ws )
+
+  er_diagram_attribute = [ er_diagram_attribute_type ] as type *sp er_diagram_identifier as name *sp [ er_diagram_key_list ] as key [ *sp er_diagram_note as note ] [ *sp comment ]
+
+  er_diagram_note = %x22 *er_diagram_note_char as string %x22
+
+  er_diagram_attribute_type = er_diagram_tilde_type / er_diagram_identifier
+
+  er_diagram_tilde_type = ( *er_diagram_plain_char 1*( *er_diagram_tilde_body_char "~" ) *er_diagram_non_space ) as string
+
+  er_diagram_key_type = ( "PK" / "FK" / "UK" ) as key_type
+
+  er_diagram_key_list = er_diagram_key_type *( *sp "," *sp er_diagram_key_type )
+
+  er_diagram_statement = er_diagram_class_def / er_diagram_entity_definition / er_diagram_relationship / er_diagram_entity_declaration
+
+  er_diagram = ws "erDiagram" as header ws [ 1*( er_diagram_statement ws ) as statements ] ws
+
+  entry er_diagram: er_diagram
+
+  test er_diagram {
+    accept "erDiagram"
+    accept "erDiagram\n  CUSTOMER ||--o{ ORDER : places"
+    accept "erDiagram\n  CAR {\n    string make PK\n    int year \"note\"\n  }"
+    accept "erDiagram\n  classDef a fill:#f96\n  CAR:::a"
+    reject "erDiagram\n  CUSTOMER ||--o{"
+    reject "graph TD"
+  }

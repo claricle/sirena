@@ -1,0 +1,39 @@
+  ## ------------------------------------------------------------------
+  ## xychart (grammars/xy_chart.rb)
+  ## ------------------------------------------------------------------
+
+  xychart_integer = 1*DIGIT
+
+  xychart_identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
+
+  xychart_axis_value = *sp ( xychart_integer as value / xychart_identifier as value ) *sp
+
+  xychart_axis_values = "[" xychart_axis_value *( "," xychart_axis_value ) "]"
+
+  xychart_number_value = *sp ( xychart_integer [ "." 1*DIGIT ] ) as value *sp
+
+  xychart_value_array = "[" xychart_number_value *( "," xychart_number_value ) "]"
+
+  xychart_title_line = "title" sp dq_string as title line_end
+
+  xychart_x_axis_line = "x-axis" [ sp dq_string as x_label ] sp xychart_axis_values as x_values line_end
+
+  xychart_y_axis_line = "y-axis" [ sp dq_string as y_label ] sp xychart_integer as y_min sp "-->" sp xychart_integer as y_max line_end
+
+  xychart_line_dataset = "line" sp xychart_value_array as line_values line_end
+
+  xychart_bar_dataset = "bar" sp xychart_value_array as bar_values line_end
+
+  xychart_named_dataset = "dataset" sp dq_string as dataset_label sp xychart_value_array as dataset_values line_end
+
+  xychart_statement = *sp ( xychart_title_line / xychart_x_axis_line / xychart_y_axis_line / xychart_line_dataset / xychart_bar_dataset / xychart_named_dataset / comment newline / *sp newline )
+
+  xychart = "xychart-beta" *sp line_end *xychart_statement as statements
+
+  entry xychart: xychart
+
+  test xychart {
+    accept "xychart-beta\n"
+    accept "xychart-beta\n  title \"T\"\n  x-axis [a, b]\n  y-axis 0 --> 10\n  line [1, 2.5]\n  bar [3, 4]"
+    reject "xychart-beta\n  bogus"
+  }

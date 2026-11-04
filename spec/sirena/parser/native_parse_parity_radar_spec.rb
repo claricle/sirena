@@ -1,0 +1,57 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe Sirena::Parser::Native, ".parse parity (radar)" do
+  it_behaves_like "native corpus parity", "radar"
+
+  it_behaves_like "native edge parity", "radar", [
+    "radar-beta",
+    "radar-beta\n",
+    "radar-beta  \n",
+    "radar-beta;\n",
+    "  radar-beta\n",
+    "radar\n",
+    "Radar-beta\n",
+    "radar-beta\n  title Skills",
+    "radar-beta\n  title Skills;\n",
+    "radar-beta\n  title\n",
+    "radar-beta\r\n  title T\r\n  axis a, b\r\n",
+    "radar-beta\n  accTitle: Acc\n  accDescr: Desc\n",
+    "radar-beta\n  accTitle:\n",
+    "radar-beta\n  axis a",
+    "radar-beta\n  axis a, b, c\n",
+    "radar-beta\n  axis a[\"A\"], b[\"B B\"]\n",
+    "radar-beta\n  axis a[\"\"]\n",
+    "radar-beta\n  axis a ,b ,  c\n  axis d\n",
+    "radar-beta\n  axis a,\n",
+    "radar-beta\n  axis 1a\n",
+    "radar-beta\n  axis a, b\n  curve c1{1, 2}\n",
+    "radar-beta\n  axis a, b\n  curve c1[\"C\"]{1, 2}\n",
+    "radar-beta\n  axis a, b\n  curve c1{ a: 1, b: 2 }\n",
+    "radar-beta\n  axis a, b\n  curve c1{ a 1, b 2 }\n",
+    "radar-beta\n  axis a, b\n  curve c1{5}\n",
+    "radar-beta\n  axis a, b\n  curve c1{1,\n 2}\n",
+    "radar-beta\n  axis a, b\n  curve c1{a:\n1}\n",
+    "radar-beta\n  axis a, b\n  curve c1{1\n,2}\n",
+    "radar-beta\n  axis a, b\n  curve c1{1, 2, 3}\n",
+    "radar-beta\n  axis a, b\n  curve c1{1.5, 2}\n",
+    "radar-beta\n  axis a, b\n  curve c1{}\n",
+    "radar-beta\n  axis a, b\n  curve c1 {1, 2}\n",
+    "radar-beta\n  curve c1{1, 2}\n",
+    "radar-beta\n  ticks 5\n  showLegend false\n  graticule polygon\n",
+    "radar-beta\n  min 0\n  max 100\n",
+    "radar-beta\n  graticule circular\n  showLegend true",
+    "radar-beta\n  ticks x\n",
+    "radar-beta\n  showLegend maybe\n",
+    "radar-beta\n  graticule square\n",
+    "radar-beta\n  ticks 3\n  ticks 4\n",
+    "radar-beta\n%% comment\n\n  axis a %% trailing\n",
+    "radar-beta\n  axis é, b\n",
+    "radar-beta\n  title é 日本\n",
+    "radar-beta\n  unknown 1\n",
+    "radar-beta\n  ",
+    "",
+    "   ",
+  ]
+end

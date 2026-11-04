@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/sequence"
 require_relative "builders/sequence"
+require_relative "native/builders/sequence"
 require_relative "../diagram/sequence"
 
 module Sirena
@@ -27,6 +28,7 @@ module Sirena
     class Sequence < Base
       grammar Grammars::Sequence
       builder Builders::Sequence
+      native :sequence, builder: Native::Builders::Sequence
     end
   end
 end

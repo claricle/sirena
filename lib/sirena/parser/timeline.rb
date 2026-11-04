@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/timeline"
 require_relative "builders/timeline"
+require_relative "native/builders/timeline"
 require_relative "../diagram/timeline"
 
 module Sirena
@@ -33,6 +34,7 @@ module Sirena
     class Timeline < Base
       grammar Grammars::Timeline
       builder Builders::Timeline
+      native :timeline, builder: Native::Builders::Timeline
     end
   end
 end

@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grammars/architecture"
 require_relative "builders/architecture"
+require_relative "native/builders/architecture"
 
 module Sirena
   module Parser
@@ -10,6 +11,7 @@ module Sirena
     class Architecture < Base
       grammar Grammars::Architecture
       builder Builders::Architecture
+      native :architecture, builder: Native::Builders::Architecture
 
       # Stripped before parsing. The grammar tolerates leading and trailing
       # whitespace, but String#strip also removes ,  and , which the
