@@ -4,9 +4,10 @@ require "spec_helper"
 require_relative "plant_uml_salt/salt_helpers"
 
 # Every number below was read off PlantUML 1.2026.6 on a minimal diagram
-# per widget and per block modifier. Text widths are measured with the
-# DejaVu Sans advances the layout uses, so only the widget geometry is
-# pinned.
+# per widget and per block modifier, on macOS: the heights and offsets are
+# those of its Java sans-serif there and have not been re-read on Linux.
+# Text widths are measured with the DejaVu Sans advances the layout uses,
+# so only the widget geometry is pinned.
 RSpec.describe Sirena::Notation::PlantUMLSalt do
   include SaltHelpers
 
