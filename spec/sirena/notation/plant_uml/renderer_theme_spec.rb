@@ -54,13 +54,14 @@ RSpec.describe Sirena::Notation::PlantUML::Renderer do
     }
   end
 
-  def expected_paints(colors)
+  # PlantUML draws its own look, whatever Mermaid theme is passed.
+  def expected_paints
     {
-      boxes: Array.new(2, [colors.node_fill, colors.node_stroke]),
-      separators: [[colors.node_stroke]],
-      relation_paths: [[colors.edge_stroke]],
-      relation_markers: [[colors.edge_stroke, colors.edge_stroke]],
-      text: Array.new(4, [colors.label_text]),
+      boxes: Array.new(2, %w[#F1F1F1 #181818]),
+      separators: [%w[#181818]],
+      relation_paths: [%w[#181818]],
+      relation_markers: [%w[#181818 #181818]],
+      text: Array.new(4, %w[#000000]),
     }
   end
 
@@ -80,10 +81,10 @@ RSpec.describe Sirena::Notation::PlantUML::Renderer do
 
   def expected_partial_summary
     {
-      paints: expected_paints(theme.colors),
-      font_families: ["Arial, sans-serif", "monospace"],
-      box_widths: %w[2 2],
-      relation_widths: %w[2 2],
+      paints: expected_paints,
+      font_families: %w[sans-serif monospace],
+      box_widths: %w[0.5 0.5],
+      relation_widths: %w[1 1],
     }
   end
 
@@ -91,8 +92,8 @@ RSpec.describe Sirena::Notation::PlantUML::Renderer do
     context "with the #{theme_name} theme" do
       let(:theme) { Sirena::Theme::Registry.get(theme_name) }
 
-      it "uses its semantic class paint roles" do
-        expect(paint_summary).to eq(expected_paints(theme.colors))
+      it "draws PlantUML's own class paints, not the theme's" do
+        expect(paint_summary).to eq(expected_paints)
       end
     end
   end
@@ -101,7 +102,7 @@ RSpec.describe Sirena::Notation::PlantUML::Renderer do
     svg = Sirena.render(class_source, notation: :plantuml, theme: theme)
 
     expect(Digest::SHA256.hexdigest(svg)).to eq(
-      "70f04ce2f43086c3c35fc0e28f7fa16ccc76dbec9365bf10fa93e768222ca75e",
+      "7d071dd743a035eaea430a50168fa4a5cc7758a8d607671a6c7b54ef414b8ea8",
     )
   end
 
