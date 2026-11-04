@@ -164,4 +164,17 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
       expect(vertical_bars(svg).size).to eq(2)
     end
   end
+
+  describe "frames outside trees" do
+    it "keeps the frame the JAR draws around {+" do
+      svg = Sirena.render("@startsalt\n{+\n[OK] | [Cancel]\n}\n@endsalt")
+      expect(elements(svg, "rect").map { |r| r.attributes["fill"] })
+        .to include("none")
+    end
+
+    it "draws no frame around a plain block, as the JAR does not" do
+      svg = Sirena.render("@startsalt\n{\na | b\n}\n@endsalt")
+      expect(elements(svg, "rect")).to be_empty
+    end
+  end
 end
