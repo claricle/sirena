@@ -13,12 +13,12 @@ module Sirena
         extend self
 
         # The element types of `plantuml -language` (section `;type`, 1.2026.6),
-        # less the three the parser reads, plus the statements that are not an
+        # less the five the parser reads, plus the statements that are not an
         # element: note, layout, styling and page commands.
         KEYWORDS = %w[
-          action actor agent analog annotation archimate artifact binary
+          action actor agent analog archimate artifact binary
           boundary card circle cloud clock collections component concise
-          control database dataclass diamond entity enum exception file folder
+          control database dataclass diamond entity exception file folder
           frame hexagon json label map metaclass network node nwdiag object
           package packetdiag participant person port portin portout process
           protocol queue record rectangle relationship robust stack state
@@ -62,7 +62,7 @@ module Sirena
 
         MEMBER_RULES = [
           *GLOBAL_RULES,
-          [/\{(?:static|abstract|classifier|field|method)\}/i,
+          [/\{classifier\}|\{(?:static|abstract|field|method)\}\z/i,
            "member modifier"],
           [/\A(?:--|==|\.\.|__)/, "member separator"],
           [/<</, "stereotype"],

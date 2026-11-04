@@ -226,7 +226,8 @@ RSpec.describe Sirena::Notation::PlantUML do
     it "lists the diagram types it reads" do
       expect(plantuml.types)
         .to eq(%i[class_diagram sequence_diagram activity_diagram
-                  usecase_diagram component_diagram]).and be_frozen
+                  usecase_diagram component_diagram
+                  state_diagram]).and be_frozen
     end
   end
 
@@ -311,10 +312,10 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     it "propagates unsupported constructs instead of partially rendering" do
-      source = wrap("class A", "enum Color")
+      source = wrap("class A", "object Color")
 
       expect { Sirena.render(source, notation: :plantuml) }
-        .to raise_error(unsupported_error, /enum is not yet supported/)
+        .to raise_error(unsupported_error, /object is not yet supported/)
     end
   end
 
@@ -345,7 +346,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       "package Domain #teal {" => ["package colour name", 3],
       "+package Domain #teal {" => ["package colour name", 3],
       "namespace Domain {" => ["namespace", 3],
-      "enum Color" => ["enum", 3],
+      "object Color" => ["object", 3],
       "title **My** diagram" => ["title", 3],
       "!include other.puml" => ["preprocessor directive", 3],
       "/' block comment '/" => ["block comment", 3],
@@ -368,7 +369,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       "titles x" => ["statement", 3],
       "@STARTUML" => ["statement", 3],
       "@startuml_x" => ["statement", 3],
-      "ENUM Color" => ["enum", 3],
+      "OBJECT Color" => ["object", 3],
       "PACKAGE Domain #teal {" => ["package colour name", 3],
       "CLASS A extends B" => ["class declaration form", 3],
       "CLASS A <<entity>>" => ["stereotype", 3],
@@ -395,16 +396,12 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     {
-      "-- " => ["member separator", 3],
-      "==" => ["member separator", 3],
-      ".." => ["member separator", 3],
       "+run(" => ["member declaration", 3],
       "x : a(b" => ["member declaration", 3],
       "+cb : Func(int)" => ["member declaration", 3],
       "x : int {abstract}" => ["member modifier", 3],
       "+foo() : void {static}" => ["member modifier", 3],
       "x : int <<ro>>" => ["stereotype", 3],
-      "__" => ["member separator", 3],
       "____" => ["member separator", 3],
       "+run() junk" => ["member declaration", 3],
       "x :" => ["member declaration", 3],
@@ -440,9 +437,9 @@ RSpec.describe Sirena::Notation::PlantUML do
     # Written out here, not read from the implementation's own list, so a
     # keyword dropped from the implementation cannot also drop out of the spec.
     %w[
-      action actor agent analog annotation archimate artifact binary boundary
+      action actor agent analog archimate artifact binary boundary
       card circle cloud clock collections component concise control database
-      dataclass diamond entity enum exception file folder frame hexagon json
+      dataclass diamond entity exception file folder frame hexagon json
       label map metaclass network node nwdiag object package packetdiag
       participant person port portin portout process protocol queue record
       rectangle relationship robust stack state storage struct usecase yaml
@@ -464,10 +461,10 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     it "says not yet supported, names the construct, the line and the text" do
-      expect { parse_plantuml(wrap("class A", "enum Color")) }
+      expect { parse_plantuml(wrap("class A", "object Color")) }
         .to raise_error(unsupported_error,
-                        "PlantUML enum is not yet supported (line 3): " \
-                        '"enum Color"')
+                        "PlantUML object is not yet supported (line 3): " \
+                        '"object Color"')
     end
 
     it "keeps a lone apostrophe after text as text, as PlantUML does" do
@@ -493,27 +490,27 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     it "quotes the offending text so control bytes cannot reach a terminal" do
-      expect { parse_plantuml(wrap("enum \e[31mX")) }
-        .to raise_error(unsupported_error, /"enum \\e\[31mX"/)
+      expect { parse_plantuml(wrap("object \e[31mX")) }
+        .to raise_error(unsupported_error, /"object \\e\[31mX"/)
     end
 
     it "shortens a very long offending line" do
-      expect(refusal_of(wrap("enum #{'x' * 500}"))).to have_attributes(
-        message: "PlantUML enum is not yet supported (line 2): " \
-                 "\"enum #{'x' * 52}...\"",
+      expect(refusal_of(wrap("object #{'x' * 500}"))).to have_attributes(
+        message: "PlantUML object is not yet supported (line 2): " \
+                 "\"object #{'x' * 50}...\"",
       )
     end
 
     it "never returns a partial diagram when the unsupported line is last" do
       full = case_source("16-full-example")
-      source = full.sub("@enduml", "enum Late\n@enduml")
+      source = full.sub("@enduml", "object Late\n@enduml")
 
       expect { parse_plantuml(source) }.to raise_error(unsupported_error)
     end
 
     it "reports the first unsupported line when several are present" do
-      expect(refusal_of(wrap("enum A", "note over B")))
-        .to have_attributes(construct: "enum", line: 2)
+      expect(refusal_of(wrap("object A", "note over B")))
+        .to have_attributes(construct: "object", line: 2)
     end
 
     it "refuses to redeclare a class as another kind" do

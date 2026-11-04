@@ -34,7 +34,8 @@ module Sirena
         VISIBILITY = { "+" => :public, "-" => :private, "#" => :protected,
                        "~" => :package }.freeze
         KINDS = { "class" => :class, "abstract class" => :abstract,
-                  "abstract" => :abstract,
+                  "abstract" => :abstract, "enum" => :enum,
+                  "annotation" => :annotation,
                   "interface" => :interface, "static class" => :class }.freeze
 
         # Every quantified piece is separated from the next by a character
@@ -42,7 +43,8 @@ module Sirena
         STARTUML = /\A@startuml(?![A-Za-z0-9_])/
         STEREOTYPE = /<<[^<>]+>>/
         CLASS_DECLARATION =
-          /\A(abstract[ \t]+class|static[ \t]+class|abstract|class|interface)
+          /\A(abstract[ \t]+class|static[ \t]+class|abstract|class|interface|
+            enum|annotation)
            [ \t]+(#{NAME})
            (?:<([^<>]+)>)?((?:[ \t]*#{STEREOTYPE})*)
            ((?:[ \t]+\$#{NAME})*)(?:[ \t]*(\{))?\z/xo
@@ -57,8 +59,10 @@ module Sirena
         QUOTED_NAME = '"[^"]+"'
         HIDE_TAG = /\Ahide[ \t]+\$(#{NAME})\z/io
         NOTE = /\Anote[ \t]+(left|right|top|bottom)[ \t]+of[ \t]+(#{NAME})
-                (?:::(#{NAME}))?(?:[ \t]+(\#[A-Za-z0-9]+))?
+                (?:::(#{NAME}|"[^"]+"))?(?:[ \t]+(\#[A-Za-z0-9]+))?
                 (?:[ \t]*(#{STEREOTYPE}))?(?:[ \t]*:[ \t]*(.+))?\z/xio
+        FREE_NOTE = /\Anote[ \t]+as[ \t]+(#{NAME})\z/i
+        MEMBER_OF = /\A(#{NAME})[ \t]*:[ \t]*(\S.*)\z/o
         LAST_NOTE = /\Anote[ \t]+(left|right|top|bottom)
                      (?:[ \t]*:[ \t]*(.+))?\z/xi
         END_NOTE = /\Aend[ \t]?note\z/i
@@ -72,10 +76,15 @@ module Sirena
         METHOD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]*\(([^()]*)\)
                   (?:[ \t]*:[ \t]*(.+))?\z/xo
         FIELD = /\A([+\-#~])?[ \t]*(#{NAME})(?:[ \t]*:[ \t]*([^()]+))?\z/o
-        TYPED_FIELD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]+(#{NAME})\z/o
-        TYPED_METHOD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]+(#{NAME})[ \t]*
+        TYPE = /#{NAME}(?:\[\])*/o
+        TYPED_FIELD = /\A([+\-#~])?[ \t]*(#{TYPE})[ \t]+(#{NAME})\z/o
+        TYPED_METHOD = /\A([+\-#~])?[ \t]*(#{TYPE})[ \t]+(#{NAME})[ \t]*
                         \(([^()]*)\)\z/xo
-        MODIFIERS = /\A(?:\{(?:static|abstract|field|method)\}[ \t]*)+/i
+        MODIFIER = /\{(?:static|abstract|field|method)\}/i
+        SEPARATOR = /\A([-=._])\1(?:[ \t]*(\S.*?)[ \t]*\1\1)?\z/
+        INLINE_MARKUP = %r{</?(?:b|i|u|s|w|size|color|back|font)(?::[^>]*)?>|
+                           <img:[^>]*>}xi
+        PLAIN_TEXT = /\A[\p{Alnum}\[][^<>{}"!$():@;]*\z/
         STYLE_OPEN = %r{\A<style>\z}i
         LINE_END = /\r\n|\r|\n/
         NOT_FOUND_MESSAGE = "Unable to detect diagram type from source. " \
@@ -86,7 +95,9 @@ module Sirena
                          :QUOTED_DECLARATION, :QUOTED_NAME, :HIDE_TAG, :PACKAGE,
                          :NOTE, :END_NOTE,
                          :RELATION, :JUNCTION, :METHOD, :FIELD,
-                         :TYPED_FIELD, :TYPED_METHOD, :MODIFIERS,
+                         :TYPED_FIELD, :TYPED_METHOD, :MODIFIER, :TYPE,
+                         :SEPARATOR, :PLAIN_TEXT, :INLINE_MARKUP, :FREE_NOTE,
+                         :MEMBER_OF,
                          :STYLE_OPEN, :LINE_END, :NOT_FOUND_MESSAGE
 
         # @param source [String] PlantUML source
@@ -261,17 +272,40 @@ module Sirena
         end
 
         def last_note_or_relation(builder, text, number)
-          match = LAST_NOTE.match(text)
-          return relation(builder, text, number) unless match
+          return free_note(builder, number) if FREE_NOTE.match?(text)
 
-          last_note(builder, match, number, text)
+          match = LAST_NOTE.match(text)
+          return last_note(builder, match, number, text) if match
+
+          member_statement(builder, text, number) ||
+            relation(builder, text, number)
+        end
+
+        # `Name : text` adds a line to the class, declaring it when new.
+        def member_statement(builder, text, number)
+          match = MEMBER_OF.match(text)
+          return if match.nil? || RELATION.match?(text)
+
+          member = member_from(match[2])
+          raise refusal(text, number, scope: :member) unless member
+
+          builder.add_member_to(match[1], member)
+          :statements
+        end
+
+        # `note as N1` floats beside the classes, attached to none of them.
+        def free_note(builder, number)
+          head = { side: :free, target: nil, member: nil, color: nil,
+                   stereotype: nil }
+          builder.open_note(head, number, [])
+          :note
         end
 
         # A note with `: text` is one line; without it the text follows up
         # to `end note`. PlantUML refuses `::member` with inline text.
         def note(builder, match, number, text)
           head = note_head(match)
-          inline = match[6]
+          inline = match[6]&.then { |line| plain_note_text(line) }
           raise refusal(text, number) if inline && head[:member]
 
           builder.open_note(head, number, [*inline])
@@ -288,7 +322,7 @@ module Sirena
 
           head = { side: match[1].downcase.to_sym, target: target,
                    member: nil, color: nil, stereotype: nil }
-          inline = match[2]
+          inline = match[2]&.then { |line| plain_note_text(line) }
           builder.open_note(head, number, [*inline])
           return :note unless inline
 
@@ -307,8 +341,14 @@ module Sirena
             return :statements
           end
           refuse_note_text(builder, text, number)
-          builder.add_note_line(text)
+          builder.add_note_line(plain_note_text(text))
           :note
+        end
+
+        # Inline creole tags and `<img:>` have no drawn form here; the words
+        # between them are kept.
+        def plain_note_text(text)
+          text.gsub(INLINE_MARKUP, "").squeeze(" ")
         end
 
         def junction(builder, match, number, text)
@@ -490,26 +530,43 @@ module Sirena
             right: match[7] || match[10], right_role: match[8] || match[9] }
         end
 
-        # nil for anything the subset does not read. A modifier, separator or
-        # stereotype is checked first because NAME alone would swallow `__`
-        # and the type text would swallow a trailing `{static}`.
+        # nil for anything the subset does not read. A separator is checked
+        # first because NAME alone would swallow `__`; modifiers are lifted
+        # out of the line wherever they sit, as PlantUML reads them.
         def member_from(text)
-          prefix = MODIFIERS.match(text)
-          return modified_member(prefix[0], prefix.post_match) if prefix
+          separator = SEPARATOR.match(text)
+          return separator_member(separator) if separator
           return if UnsupportedConstructs.member_construct(text)
 
-          named_member(text) || typed_member(text)
+          modified_member(text)
         end
 
-        # `{method}{abstract} + run`: the words in braces set the kind and the
-        # style, so only the two plain shapes are read after them.
-        def modified_member(prefix, rest)
-          words = prefix.scan(/\w+/).map(&:downcase)
-          member = named_member(rest)
-          return if member.nil? || UnsupportedConstructs.member_construct(rest)
+        def modified_member(text)
+          words = text.scan(MODIFIER).map { |word| word.delete("{}").downcase }
+          rest = text.gsub(MODIFIER, " ").squeeze(" ").strip
+          member = named_member(rest) || typed_member(rest) || text_member(rest)
+          words.empty? || member.nil? ? member : lifted(member, words)
+        end
+
+        def lifted(member, words)
           return if words.include?("field") && contradicts_field?(words, member)
 
           retype(member, words)
+        end
+
+        # `.. title ..`, `== title ==`, `__ title __` and `-- title --`: a rule
+        # across the compartment, its title (if any) in the middle.
+        def separator_member(match)
+          Member.new(kind: :separator, visibility: nil, name: match[2].to_s,
+                     type: match[1])
+        end
+
+        # Any other plain line of a class body is shown as written.
+        def text_member(text)
+          return unless PLAIN_TEXT.match?(text)
+
+          Member.new(kind: :field, visibility: nil, name: text, type: nil,
+                     parameters: nil)
         end
 
         def contradicts_field?(words, member)

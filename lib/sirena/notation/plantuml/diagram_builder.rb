@@ -118,7 +118,7 @@ module Sirena
         # @raise [Sirena::Parser::ParseError] when the class is unknown, as
         #   PlantUML refuses a note on a class not yet mentioned
         def open_note(head, number, lines = [])
-          unless @kinds.key?(head[:target])
+          if head[:target] && !@kinds.key?(head[:target])
             raise Sirena::Parser::ParseError,
                   "Parse error: line #{number} puts a note on " \
                   "#{head[:target]}, which is not declared before it"
@@ -174,6 +174,13 @@ module Sirena
 
         def add_member(member)
           @bodies.fetch(@open.first) << member
+        end
+
+        # A member written outside a body, as `Name : member`.
+        def add_member_to(name, member)
+          mention(name)
+          @class_evidence = true
+          @bodies.fetch(name) << member
         end
 
         def relate(relation, number, text)
