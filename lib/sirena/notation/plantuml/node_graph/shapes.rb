@@ -2,6 +2,7 @@
 
 require_relative "../../../svg"
 require_relative "cloud"
+require_relative "data_shape"
 require_relative "figures"
 require_relative "metrics"
 
@@ -20,6 +21,8 @@ module Sirena
           # @param placed [Placed]
           # @return [Array<Svg::Element>]
           def draw(placed)
+            return DataShape.new(placed).elements if placed.node.kind == :data
+
             @p = placed
             @out = []
             placed.node.container? ? container : figure

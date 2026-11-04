@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../text_measurement"
+require_relative "../../plantuml_data/boxes/table_box"
 
 module Sirena
   module Notation
@@ -33,10 +34,17 @@ module Sirena
 
           # @return [Array(Float, Float)] width and height of a leaf node
           def size(node)
+            return data_size(node) if node.kind == :data
+
             lines = text_lines(node)
             width = text_width(lines)
             height = text_height(lines)
             send(:"size_#{shape(node.kind)}", width, height)
+          end
+
+          def data_size(node)
+            box = PlantUMLData::Boxes::TableBox.size(node.table)
+            [box.width, box.height]
           end
 
           def shape(kind)
