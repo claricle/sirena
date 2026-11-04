@@ -21,7 +21,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
   end
 
   def elements(svg, name)
-    REXML::Document.new(svg).get_elements("//#{name}")
+    drawn(REXML::Document.new(svg), name)
   end
 
   def attrs(element, *names)

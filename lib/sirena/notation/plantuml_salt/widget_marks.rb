@@ -105,6 +105,8 @@ module Sirena
 
         # How far the widgets in the last column reach past it.
         def overhang(block, columns)
+          return 0.0 if columns.empty?
+
           widths = block.rows.filter_map do |row|
             cell = row.cells[columns.size - 1]
             widget_width(cell) + OVERHANG if cell.is_a?(Widget) &&

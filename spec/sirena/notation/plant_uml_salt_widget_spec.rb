@@ -5,7 +5,8 @@ require_relative "plant_uml_salt/salt_helpers"
 
 # Every number below was read off PlantUML 1.2026.6 on a minimal diagram
 # per widget and per block modifier. Text widths are measured with the
-# same estimator the layout uses, so only the widget geometry is pinned.
+# Lucida Grande advances the layout uses, so only the widget geometry is
+# pinned.
 RSpec.describe Sirena::Notation::PlantUMLSalt do
   include SaltHelpers
 
@@ -14,7 +15,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
   end
 
   def elements(doc, name)
-    doc.get_elements("//#{name}")
+    drawn(doc, name)
   end
 
   def numbers(element, *names)
@@ -22,7 +23,7 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
   end
 
   def width_of(text)
-    Sirena::TextMeasurement.measure(text, font_size: 12)[:width]
+    Sirena::TextMeasurement.measure_in(:lucida, text, font_size: 12)[:width]
   end
 
   def segments(doc)
