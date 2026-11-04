@@ -32,6 +32,15 @@ RSpec.describe Sirena::Notation::PlantUML::Style::Reader do
       expect(result.resolve(:state, :background, id: "A")).to eq("#FF0000")
     end
 
+    it "merges a second set of properties written for the same element" do
+      first = sheet.with_element("A", background: "#FF0000")
+      result = first.with_element("A", border: "#0000FF")
+
+      expect([result.resolve(:state, :background, id: "A"),
+              result.resolve(:state, :border, id: "A")])
+        .to eq(%w[#FF0000 #0000FF])
+    end
+
     it "keeps one element's colour off its neighbour" do
       result = sheet.with_element("A", background: "#FF0000")
 

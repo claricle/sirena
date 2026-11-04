@@ -91,6 +91,34 @@ RSpec.describe Sirena::Notation::PlantUML::Style do
         .to eq(["#0000FF", "7,7"])
     end
 
+    it "draws the end state's ring and dot in the start colours" do
+      root = svg("[*] --> A", "A --> [*]")
+      ring, dot = REXML::XPath.match(group(root, "state-root_end"),
+                                     ".//*[local-name()='circle']")
+
+      expect([ring.attributes["stroke"], dot.attributes["fill"]])
+        .to eq(%w[#222222 #222222])
+    end
+
+    it "gives a transition label the arrow's font" do
+      root = svg("skinparam ArrowFontName Courier", "[*] --> A : go")
+
+      expect(root.to_s).to include("Courier")
+    end
+
+    it "reads a dashed line modifier after the colour" do
+      rect = first(group(svg("state A #pink;line.dashed"), "state-A"),
+                   "*[local-name()='rect']")
+
+      expect(attrs(rect, "fill", "stroke-dasharray")).to eq(["#FFC0CB", "7,7"])
+    end
+
+    it "ignores a non-numeric RoundCorner" do
+      root = svg("skinparam roundCorner abc", "[*] --> A")
+
+      expect(group(root, "state-A")).not_to be_nil
+    end
+
     it "applies ArrowColor to the transitions" do
       root = svg("skinparam ArrowColor Red", "[*] --> A")
       path = first(group(root, "transition-root_start_to_A"),

@@ -116,19 +116,6 @@ module Sirena
             end
           end
 
-          def choice_state_shape(state)
-            super.tap do |polygon|
-              polygon.fill = look(:background, state)
-              polygon.stroke = look(:border, state)
-            end
-          end
-
-          def fork_join_state_shape(state)
-            super.tap do |rect|
-              rect.fill = @style.resolve(:start, :background)
-            end
-          end
-
           def transition_path(edge)
             super.tap do |path|
               path.stroke = @style.resolve(:arrow, :border)
