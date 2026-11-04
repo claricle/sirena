@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../js_math"
+
 module Sirena
   module Layout
     # Works out where an edge's line runs between two boxes.
@@ -269,7 +271,8 @@ module Sirena
       end
 
       def near?(first, second)
-        Math.hypot(first[:x] - second[:x], first[:y] - second[:y]) < COINCIDENT
+        JsMath.hypot(first[:x] - second[:x],
+                     first[:y] - second[:y]) < COINCIDENT
       end
 
       def right_of(box)
