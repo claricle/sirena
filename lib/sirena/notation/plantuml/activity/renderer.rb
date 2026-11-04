@@ -3,6 +3,7 @@
 require_relative "../../../renderer/base"
 require_relative "../../../svg"
 require_relative "layout"
+require_relative "../creole"
 
 module Sirena
   module Notation
@@ -70,6 +71,7 @@ module Sirena
                                font_family: FONT_FAMILY,
                                font_size: attrs[:size].to_s,
                                font_weight: attrs[:weight], fill: "#000000")
+              .tap { |text| Creole.assign(text, attrs[:content]) }
           end
 
           def format_points(points)
