@@ -126,6 +126,7 @@ module Sirena
           end
 
           def scale(_line, fields)
+            @diagram.scale_units = fields[:units].to_i
             @diagram.pixels_per_unit =
               fields[:pixels].to_f / fields[:units].to_i
           end

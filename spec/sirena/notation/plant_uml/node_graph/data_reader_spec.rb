@@ -30,20 +30,18 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph::DataReader do
       expect(node.table.rows.first.value).to eq("Apple")
     end
 
-    it "gives a nested value a node joined by a dashed line" do
-      edge = parse(mixed).edges.fetch(0)
-
-      expect([edge.from.id, edge.to.id, edge.style])
-        .to eq(["J", "J.1", :dashed])
-    end
-
-    it "names the node of a nested value and keeps its rows",
+    it "keeps a nested value inside the element's own row",
        :aggregate_failures do
       graph = parse(mixed)
+      color = graph.nodes.fetch("J").table.rows.last
 
-      expect(graph.nodes.keys).to eq(%w[A U J J.1])
-      expect(graph.nodes.fetch("J.1").table.rows.map(&:value))
-        .to eq(%w[Red Green])
+      expect(graph.nodes.keys).to eq(%w[A U J])
+      expect(graph.edges).to be_empty
+      expect(color.inline.rows.map(&:value)).to eq(%w[Red Green])
+    end
+
+    it "titles the box with the element's name" do
+      expect(parse(mixed).nodes.fetch("J").table.title).to eq("J")
     end
 
     it "reads an element whose JSON closes on its own line" do
@@ -81,18 +79,19 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph::DataReader do
   describe "rendering" do
     let(:svg) { render(mixed) }
 
-    it "draws the diagram's own shapes beside the JSON boxes",
+    it "draws the diagram's own shapes beside the one JSON box",
        :aggregate_failures do
       texts = svg_texts(svg)
 
-      expect(texts).to include("A", "U", "fruit", "Apple", "Red", "Green")
-      expect(box_rects(svg).size).to eq(2)
+      expect(texts).to include("A", "U", "J", "fruit", "Apple", "Red", "Green")
+      expect(box_rects(svg).size).to eq(1)
     end
 
-    it "stacks the JSON boxes clear of each other, top to bottom" do
-      first, second = box_rects(svg).sort_by { |rect| [rect[1], rect[0]] }
+    it "keeps two JSON boxes clear of each other" do
+      two = "#{mixed}\njson K {\n  \"a\": 1\n}"
+      first, second = box_rects(render(two)).sort_by(&:first)
 
-      expect(first[1] + first[3]).to be <= second[1]
+      expect(first[0] + first[2]).to be <= second[0]
     end
   end
 

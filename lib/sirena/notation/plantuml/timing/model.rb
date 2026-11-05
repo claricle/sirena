@@ -22,10 +22,12 @@ module Sirena
         Highlight = Struct.new(:from, :to, :fill, :stroke, :caption,
                                keyword_init: true)
 
-        # Everything the source says. `pixels_per_unit` is nil unless a
-        # `scale` line set it; `dated` is true when times are dates.
+        # Everything the source says. `pixels_per_unit` and `scale_units` are
+        # nil unless a `scale` line set them; `dated` is true when times
+        # are dates.
         Diagram = Struct.new(:participants, :changes, :messages, :highlights,
-                             :pixels_per_unit, :dated, keyword_init: true)
+                             :pixels_per_unit, :dated, :scale_units,
+                             keyword_init: true)
       end
     end
   end

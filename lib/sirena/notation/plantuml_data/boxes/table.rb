@@ -8,19 +8,20 @@ module Sirena
       module Boxes
         # One line of a {Table}. `key` is nil in an array or object body,
         # `child` the {Table} a link from this row ends at, `port` the name
-        # an object diagram's `Map::port` reaches this row by and `style` a
-        # highlight, or nil.
-        Row = Data.define(:key, :value, :child, :port, :style) do
+        # an object diagram's `Map::port` reaches this row by, `style` a
+        # highlight, or nil, and `inline` the {Table} whose rows fill this
+        # row's value cell, or nil.
+        Row = Data.define(:key, :value, :child, :port, :style, :inline) do
           def initialize(key: nil, value: "", child: nil, port: nil,
-                         style: nil)
+                         style: nil, inline: nil)
             super
           end
         end
 
-        # A box. `kind` is :tree for JSON and YAML, :object or :map; `group`
-        # names the packages around it, outermost first (the JAR makes a
-        # dotted object name `a.b.c` a box `a.b.c` inside packages `a` and
-        # `b`).
+        # A box. `kind` is :tree for JSON and YAML, :inline for a `json`
+        # element mixed into another diagram, :object or :map; `group` names
+        # the packages around it, outermost first (the JAR makes a dotted
+        # object name `a.b.c` a box `a.b.c` inside packages `a` and `b`).
         Table = Data.define(:id, :title, :rows, :kind, :group) do
           def initialize(rows:, id: nil, title: nil, kind: :tree, group: [])
             super

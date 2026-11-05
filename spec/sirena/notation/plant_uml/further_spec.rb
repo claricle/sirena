@@ -170,7 +170,7 @@ RSpec.describe Sirena::Notation::PlantUML::Further do
     end
 
     it "labels a dated axis" do
-      expect(texts(seasons)).to include("Winter", "11/01", "02/01")
+      expect(texts(seasons)).to include("Winter", "11/01", "12/31", "01/30")
     end
 
     it "refuses a participant that was never declared" do

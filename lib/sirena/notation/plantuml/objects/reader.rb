@@ -33,8 +33,7 @@ module Sirena
           DIRECTION = /\A(left to right|top to bottom) direction\z/i
           SKIPPED = /\A(?:skinparam|hide|show|scale)\b/i
           Boxes = PlantUMLData::Boxes
-          TREE_GLYPH = { dashed: true, markers: {}.freeze }.freeze
-          private_constant :Boxes, :TREE_GLYPH, :NAME, :LABELLED, :ELEMENT,
+          private_constant :Boxes, :NAME, :LABELLED, :ELEMENT,
                            :MAP, :JSON_OPEN,
                            :END_TEXT, :END_REF,
                            :RELATION, :START, :TITLE, :DIRECTION, :SKIPPED
@@ -165,7 +164,8 @@ module Sirena
             match = JSON_OPEN.match(@text) or return false
             label, as_name, name, rest = match.captures
             value = Boxes::JsonReader.new.call("{#{json_body(rest)}")
-            root = Boxes::TreeBuilder.new(Boxes::Highlights.new).call(value)
+            root = Boxes::TreeBuilder.new(Boxes::Highlights.new, inline: true)
+              .call(value)
             adopt(root, label, as_name || name)
           end
 
@@ -182,23 +182,8 @@ module Sirena
           end
 
           def adopt(root, label, id)
-            table = Boxes::Table.new(id: id, title: label || id,
-                                     rows: root.rows, kind: :tree)
-            @tables[id] = table
-            walk(table, "#{id}.")
-          end
-
-          def walk(table, prefix)
-            table.rows.each_with_index do |row, i|
-              next unless row.child
-
-              child = Boxes::Table.new(id: "#{prefix}#{i}",
-                                       rows: row.child.rows, kind: :tree)
-              @tables[child.id] = child
-              @links << Boxes::Link.new(from: table.id, to: child.id,
-                                        from_row: row, glyph: TREE_GLYPH)
-              walk(child, "#{child.id}.")
-            end
+            @tables[id] = Boxes::Table.new(id: id, title: label || id,
+                                           rows: root.rows, kind: :inline)
           end
 
           def relation

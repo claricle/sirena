@@ -101,14 +101,15 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes do
     it "keeps a repeated key's first place and last value" do
       value = boxes::YamlReader.new.call("a: 1\nb: 2\na: 3\n")
 
-      expect(value).to eq({ "a" => 3, "b" => 2 })
+      expect(value).to eq({ "a" => "3", "b" => "2" })
     end
 
     it "reads nested mappings and sequences" do
       value = boxes::YamlReader.new
         .call("k:\n  - x\n  - \"y z\"\nm:\n  n: true\n")
 
-      expect(value).to eq({ "k" => ["x", "y z"], "m" => { "n" => true } })
+      expect(value)
+        .to eq({ "k" => ["x", "y z"], "m" => { "n" => "true" } })
     end
 
     it "reads a line that is not valid YAML as PlantUML does" do
@@ -134,10 +135,63 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes do
       expect(texts(svg)).to include("A", "B")
     end
 
-    it "reads a false YAML scalar as an unchecked box" do
-      svg = render("@startyaml\nflag: false\n@endyaml")
+    it "shows YAML booleans and null as the plain words PlantUML shows",
+       :aggregate_failures do
+      svg = render("@startyaml\nt: true\nf: false\nn: null\nz: ~\n@endyaml")
 
-      expect(texts(svg)).to include("\u2610 false")
+      expect(texts(svg)).to include("true", "false", "null", "~")
+      expect(texts(svg)).not_to include("\u2610 false", "\u2611 true",
+                                        "\u2400")
+    end
+
+    it "leaves an empty YAML value blank, not as a null mark",
+       :aggregate_failures do
+      svg = render("@startyaml\na:\nb: 1\n@endyaml")
+
+      expect(texts(svg)).to include("   ")
+      expect(texts(svg)).not_to include("\u2400")
+    end
+
+    it "keeps JSON booleans and null as check boxes and the null mark" do
+      svg = render(%(@startjson\n{"t":true,"f":false,"n":null}\n@endjson))
+
+      expect(texts(svg)).to include("\u2611 true", "\u2610 false", "\u2400")
+    end
+
+    context "with creole spans in a value" do
+      let(:runs) do
+        svg = render(<<~PUML)
+          @startyaml
+          b: **bold**
+          i: //it//
+          s: --gone--
+          w: ~~wavy~~
+          c: <color:blue>Blue
+          @endyaml
+        PUML
+        REXML::Document.new(svg).get_elements("//tspan")
+          .to_h { |t| [t.text, t.attributes] }
+      end
+
+      it "styles bold, italic, strike and wave runs", :aggregate_failures do
+        expect(runs["bold"]["font-weight"]).to eq("bold")
+        expect(runs["it"]["font-style"]).to eq("italic")
+        expect(runs["gone"]["text-decoration"]).to eq("line-through")
+        expect(runs["wavy"]["text-decoration"]).to eq("underline")
+      end
+
+      it "colours a run" do
+        expect(runs["Blue"]["fill"]).to eq("blue")
+      end
+    end
+
+    it "keeps __ and a tilde-escaped marker literal, and reads <U+..>",
+       :aggregate_failures do
+      svg = render("@startyaml\ne: ~__plain__\nu: __kept__\n" \
+                   "x: This is <U+221E> long\n@endyaml")
+
+      expect(texts(svg)).to include("__plain__", "__kept__",
+                                    "This is \u221E long")
     end
 
     it "reads a bare scalar JSON root" do

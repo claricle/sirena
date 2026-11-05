@@ -83,26 +83,20 @@ module Sirena
 
           def nested(indent)
             following = @lines[@at]
-            return unless following
+            return "" unless following
             return block(following.indent) if following.indent > indent
             if following.indent == indent && sequence?(following)
               return sequence(indent)
             end
 
-            nil
+            ""
           end
 
           def scalar(text)
             quoted = text.match(/\A(["'])(.*)\1\z/)
             return quoted[2] if quoted
 
-            { "true" => true, "false" => false, "null" => nil, "~" => nil }
-              .fetch(text) { number(text) }
-          end
-
-          def number(text)
-            Integer(text, 10, exception: false) ||
-              Float(text, exception: false) || text
+            text
           end
         end
       end

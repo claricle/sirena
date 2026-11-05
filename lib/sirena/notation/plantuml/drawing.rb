@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "drawing/box"
+require_relative "drawing/face"
 require_relative "drawing/scene"
 require_relative "drawing/pen"
 require_relative "drawing/renderer"
