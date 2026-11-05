@@ -17,9 +17,32 @@ module Sirena
         private
 
         def grid_rules(block, area, lefts, tops)
-          @marks << Mark.new(:rect, area) if block.border?
+          cut_frame(area, lefts, tops) if block.border?
           rules_across(area, tops) if block.row_rules?
           rules_down(area, lefts) if block.column_rules?
+        end
+
+        # The frame, cut at every cell boundary into a line a cell, as
+        # PlantUML draws it.
+        def cut_frame(frame, lefts, tops)
+          cut_across(frame, rule_lines(lefts, frame.left, frame.right))
+          cut_down(frame, rule_lines(tops, frame.top, frame.bottom))
+        end
+
+        def cut_across(frame, bounds)
+          bounds.each_cons(2) do |from, to|
+            [frame.top, frame.bottom].each do |y|
+              @marks << rule(from, y, to - from, 0.0)
+            end
+          end
+        end
+
+        def cut_down(frame, bounds)
+          bounds.each_cons(2) do |from, to|
+            [frame.left, frame.right].each do |x|
+              @marks << rule(x, from, 0.0, to - from)
+            end
+          end
         end
 
         def rules_across(area, tops)
