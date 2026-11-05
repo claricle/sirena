@@ -3,6 +3,7 @@
 require_relative "../../plantuml_data/boxes/json_reader"
 require_relative "../../plantuml_data/boxes/highlights"
 require_relative "../../plantuml_data/boxes/tree_builder"
+require_relative "box_reader"
 require_relative "edge"
 
 module Sirena
@@ -13,8 +14,11 @@ module Sirena
         # case, component or deployment diagram, which PlantUML allows after
         # `allowmixing`. The element is drawn as the boxes of a JSON
         # diagram; a nested value is a box of its own, joined to its parent
-        # by a dashed line.
+        # by a dashed line. A `map` or `object` element is a box of its own,
+        # read by {BoxReader}.
         module DataReader
+          include BoxReader
+
           MIXING = /\Aallow_?mixing\z/i
           JSON_OPEN = /\Ajson\s+(?:"(?<label>[^"]+)"\s+as\s+)?
                        (?<id>\w[\w.]*)\s*\{(?<body>.*)\z/mx
@@ -22,7 +26,13 @@ module Sirena
           private
 
           def take_data(text)
-            return unless @mixing && (match = text.match(JSON_OPEN))
+            return unless @mixing
+
+            take_json(text) || take_map(text) || take_object(text)
+          end
+
+          def take_json(text)
+            return unless (match = text.match(JSON_OPEN))
 
             root = tree(json_text(match[:body]))
             parent = data_node(match[:id], match[:label], root)
