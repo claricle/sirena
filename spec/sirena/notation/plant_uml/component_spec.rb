@@ -119,7 +119,7 @@ RSpec.describe Sirena::Notation::PlantUML::Component do
   describe "unsupported constructs" do
     it "names a preprocessor line" do
       expect do
-        render("!include x.puml\n[A]")
+        render("!procedure x()\n[A]")
       end.to raise_unsupported("preprocessor")
     end
 

@@ -39,7 +39,7 @@ module Sirena
                       KEYWORDS_REFUSED => "keyword",
                       /\Afloating\s+note/i => "floating note",
                       SHAPES => "shape" }.freeze
-          SIDE = /(?:left|right|top|bottom)(?:\s+of\s+(?<ref>#{REF}))?/
+          SIDE = /(?<side>left|right|top|bottom)(?:\s+of\s+(?<ref>#{REF}))?/
           NOTE = /\Anote\s+(?:#{SIDE}
                   |(?:"(?<quoted>.*)"\s+)?as\s+(?<name>\S+))
                   \s*(?::\s*(?<text>.*))?\z/xim
@@ -167,11 +167,11 @@ module Sirena
           def take_note(text)
             return unless (m = text.match(NOTE))
 
-            body = m[:text] || note_body
+            body = m[:text] || m[:quoted] || note_body
             id = m[:name] || "note#{@counter += 1}"
             note = @graph.node(id, :note, parent: @stack.last)
-            note.lines = References.lines_of(m[:quoted] || body)
-            link_note(note, m[:ref])
+            note.lines = References.lines_of(body)
+            link_note(note, m[:ref], m[:side])
             note
           end
 
@@ -187,11 +187,16 @@ module Sirena
             lines.join("\n")
           end
 
-          def link_note(note, ref)
+          # A note beside (`left`, `right`) its target sits in the target's
+          # rank, one above or below (`top`, `bottom`) in the next.
+          def link_note(note, ref, side)
             return unless ref
 
+            beside = %w[left right].include?(side)
             @graph.edges << Edge.new(from: note, to: resolve(ref),
-                                     style: :dashed, width: 1)
+                                     style: :dashed, width: 1,
+                                     rank_step: beside ? 0 : 1,
+                                     backwards: %w[right bottom].include?(side))
           end
 
           def take_edge(text)
@@ -202,11 +207,18 @@ module Sirena
           end
 
           def add_edge(match, link)
-            @graph.edges << Edge.new(from: resolve(match[:a]),
-                                     to: resolve(match[:b]),
-                                     label: match[:label]&.strip,
-                                     style: link.style, head: link.head,
-                                     color: link.color, width: link.width)
+            from = resolve(match[:a])
+            to = resolve(match[:b])
+            rows = { from_row: row_index(from, port(match, :aport)),
+                     to_row: row_index(to, port(match, :bport)) }
+            @graph.edges << link.edge(from, to, label: match[:label]&.strip,
+                                                **rows)
+          end
+
+          # @return [String, nil] a link end's row name; an entity link has
+          #   no ports and so no such capture
+          def port(match, name)
+            match[name] if match.names.include?(name.to_s)
           end
 
           # Declares `rest` -- a name, a label and an optional alias -- as a

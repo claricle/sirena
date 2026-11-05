@@ -4,13 +4,40 @@ module Sirena
   module Notation
     module PlantUMLSalt
       # A `{...}` group. `modifier` is what followed the brace (`T!`, `#`,
-      # `+`, an empty string for a plain group).
+      # `+`, `S` for scroll bars, `/` for tabs, `^` for a titled box, an
+      # empty string for a plain group); `title` is a `{^` box's heading.
       class Block
-        attr_reader :modifier, :rows
+        attr_reader :modifier, :rows, :title
 
-        def initialize(modifier)
+        def initialize(modifier, title: nil)
           @modifier = modifier
+          @title = title
           @rows = []
+        end
+
+        # @return [Boolean] a frame with scroll bars (`{S`, `{SI`, `{S-`)
+        def scroll?
+          modifier.start_with?("S")
+        end
+
+        # @return [Boolean] a vertical scroll bar: `{S` and `{SI`
+        def vertical_bar?
+          scroll? && !modifier.include?("-")
+        end
+
+        # @return [Boolean] a horizontal scroll bar: `{S` and `{S-`
+        def horizontal_bar?
+          scroll? && !modifier.include?("I")
+        end
+
+        # @return [Boolean] a row of tabs
+        def tabs?
+          modifier.include?("/")
+        end
+
+        # @return [Boolean] a frame whose heading sits in its top edge
+        def titled?
+          !title.nil?
         end
 
         # @return [Boolean] whether rows nest by leading `+` marks
@@ -25,7 +52,7 @@ module Sirena
 
         # @return [Boolean] a line between rows only
         def row_lines?
-          modifier.include?("-")
+          !scroll? && modifier.include?("-")
         end
 
         # @return [Boolean] a line between columns only
@@ -45,7 +72,7 @@ module Sirena
 
         # @return [Boolean] a frame around the block
         def border?
-          modifier.include?("+")
+          modifier.include?("+") || (modifier == "^" && !titled?)
         end
       end
     end

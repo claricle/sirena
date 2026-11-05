@@ -83,8 +83,10 @@ module Sirena
         # move the text after it.
         def text(mark)
           run = mark.run
-          lead = lead_width(run)
-          element(Svg::Text, content: content(run), **placement(mark, lead),
+          lead = edge_width(run, /\A\s*/)
+          trail = edge_width(run, /\s*\z/)
+          element(Svg::Text, content: content(run),
+                             **placement(mark, lead, trail),
                              **typeface(run))
         end
 
@@ -92,16 +94,16 @@ module Sirena
         # SVG would collapse them to an empty node, and an underline or
         # strike through them would vanish.
         def content(run)
-          return run.text.lstrip unless run.text.strip.empty?
+          return run.text.strip unless run.text.strip.empty?
 
           NO_BREAK_SPACE * run.text.length
         end
 
-        def placement(mark, lead)
+        def placement(mark, lead, trail)
           box = mark.box
           { x: (box.left + lead).round(4),
             y: (box.top + Mark::TEXT_LIFT).round(4),
-            text_length: (box.width - lead).round(4),
+            text_length: (box.width - lead - trail).round(4),
             length_adjust: "spacing" }
         end
 
@@ -119,12 +121,13 @@ module Sirena
           kinds.join(" ") unless kinds.empty?
         end
 
-        # SVG collapses a text element's leading spaces, so they are
-        # measured and added to x instead.
-        def lead_width(run)
+        # SVG collapses a text element's edge spaces, so the leading ones
+        # are measured and added to x, and the trailing ones left out of
+        # the length, as PlantUML does.
+        def edge_width(run, edge)
           return 0.0 if run.text.strip.empty?
 
-          lead = run.text[/\A\s*/].length
+          lead = run.text[edge].length
           TextMeasurement.measure_in(:dejavu, " " * lead,
                                      font_size: run.size ||
                                        Layout::FONT_SIZE)[:width]
