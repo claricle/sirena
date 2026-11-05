@@ -2,6 +2,7 @@
 
 require_relative "../../parser/state_diagram"
 require_relative "../mermaid/ir_adapters/state_diagram"
+require_relative "style"
 require_relative "state/reader"
 require_relative "state/layout"
 require_relative "state/renderer"
@@ -40,7 +41,7 @@ module Sirena
             type: :state_diagram,
             diagram: Sirena::Notation::Mermaid::IRAdapters::StateDiagram.call(model),
             transform: Layout,
-            renderer: Renderer,
+            renderer: Style::Bound.wrap(Renderer, Style::Reader.read(source)),
           )
         end
       end

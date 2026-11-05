@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "macros"
+
 module Sirena
   module Notation
     module PlantUML
@@ -18,7 +20,7 @@ module Sirena
           def entries(source)
             lines = source.dup.force_encoding(Encoding::UTF_8).scrub.lines
             numbered = lines.each_with_index.map { |l, i| [l.strip, i + 1] }
-            merge(first_diagram(numbered))
+            Macros.expand(merge(first_diagram(numbered)))
           end
 
           def first_diagram(numbered)
