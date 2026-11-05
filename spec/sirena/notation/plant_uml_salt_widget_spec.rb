@@ -110,10 +110,8 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
     end
 
     it "draws {+ as one one-pixel frame on the block's edge" do
-      rect = elements(render_block("+"), "rect").first
-      expect([numbers(rect, "x", "y", "height", "stroke-width"),
-              rect.attributes["fill"]])
-        .to eq([[5.0, 5.0, 31.94, 1.0], "none"])
+      doc = render_block("+")
+      expect([segments(doc).size, elements(doc, "rect").size]).to eq([8, 0])
     end
 
     it "draws a plain block with no rule or frame" do

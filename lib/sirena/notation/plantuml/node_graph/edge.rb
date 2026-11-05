@@ -7,11 +7,13 @@ module Sirena
         # A link between two nodes.
         #
         # `head` is `:target`, `:source`, `:socket` or `nil`; `style` is
-        # `:solid` or `:dashed`. `ends` is nil, or for an entity link the
-        # crow's foot markers of its two ends, `[from, to]`, each listed from
-        # the box outward (see {CrowsFoot}).
+        # `:solid` or `:dashed`. `from_row` and `to_row` are the index of the
+        # row of a map or object box the line starts or ends at, or nil. `ends`
+        # is nil, or for an entity link the crow's foot markers of its two
+        # ends, `[from, to]`, each listed from the box outward (see
+        # {CrowsFoot}).
         Edge = Struct.new(:from, :to, :label, :style, :head, :color, :width,
-                          :ends, keyword_init: true)
+                          :ends, :from_row, :to_row, keyword_init: true)
       end
     end
   end

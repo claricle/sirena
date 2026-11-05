@@ -37,6 +37,7 @@ module Sirena
           def reset
             @builder = Builder.new
             @current = nil
+            @stop = nil
             @frames = []
             @names = {}
             @bars = {}
@@ -69,15 +70,15 @@ module Sirena
 
           def open_if(match)
             text = clean(match[:cond] || match[:paren])
-            decision = @builder.node(:decision, text: text, bare: true)
-            @builder.connect(@current, decision) if @current
+            decision = legacy(@builder.node(:decision, text: text, bare: true))
+            joined(decision)
             @frames << { decision: decision, tails: [], else: false }
             @current = decision
           end
 
           def open_else
             frame = top
-            frame[:tails] << @current if @current
+            frame[:tails].concat(Array(@current))
             frame[:else] = true
             @current = frame[:decision]
           end
@@ -86,30 +87,41 @@ module Sirena
             frame = top
             @frames.pop
             tails = frame[:tails]
-            tails << @current if @current
+            tails.concat(Array(@current))
             tails << frame[:decision] unless frame[:else]
             tails.uniq!
-            @current = merged(tails)
+            @current = tails.one? ? tails.first : (tails unless tails.empty?)
           end
 
-          def merged(tails)
-            return nil if tails.empty?
-            return tails.first if tails.one?
+          # The legacy syntax draws no node where the branches of an `if`
+          # meet: each of them runs on into whatever follows.
+          def joined(node)
+            Array(@current).each { |tail| @builder.connect(tail, node) }
+          end
 
-            @builder.node(:merge).tap do |merge|
-              tails.each { |tail| @builder.connect(tail, merge) }
-            end
+          def legacy(node)
+            node.tap { |item| item.legacy = true }
           end
 
           def flow(match)
-            source = match[:source] ? resolve(match[:source]) : @current
-            refuse("arrow without a source", @line) unless source
+            sources = sources_of(match)
             style = ArrowStyle.parse(match[:arrow][/\[([^\]]*)\]/, 1],
                                      line: @number)
             dest = destination(match[:dest])
-            @builder.connect(source, dest, label: arrow_label(match[:label]),
-                                           **style)
+            label = arrow_label(match[:label])
+            sources.each do |from|
+              @builder.connect(from, dest, label: label, **style)
+            end
             @current = dest.kind == :stop ? nil : dest
+          end
+
+          # The nodes an arrow leaves: the one written, else wherever the
+          # flow is, which after an `endif` is every branch that is live.
+          def sources_of(match)
+            written = match[:source]
+            sources = written ? [resolve(written)] : Array(@current)
+            refuse("arrow without a source", @line) if sources.empty?
+            sources
           end
 
           def arrow_label(label)
@@ -128,7 +140,8 @@ module Sirena
           end
 
           def destination(text)
-            return @builder.node(:stop) if text.match?(/\A\(\*(?:top)?\)\z/)
+            return (@stop ||= @builder.node(:stop)) if
+              text.match?(/\A\(\*(?:top)?\)\z/)
             return bar(Regexp.last_match(1)) if text.match(BAR)
             return activity(text) if text.start_with?('"')
 
@@ -143,7 +156,7 @@ module Sirena
           end
 
           def bar(name)
-            @bars[name] ||= @builder.node(:bar, text: name)
+            @bars[name] ||= legacy(@builder.node(:bar, text: name))
           end
 
           def top

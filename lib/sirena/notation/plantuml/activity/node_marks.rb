@@ -112,8 +112,8 @@ module Sirena
           end
 
           def bar(node, box)
-            @canvas.rect(box, fill: "#000000")
-            return unless node.text
+            @canvas.rect(box, fill: node.legacy ? "#555555" : "#000000")
+            return if node.legacy || !node.text
 
             @canvas.lines([node.text], [box.right + 6, box.cy + 4],
                           size: Metrics::FONT_SIZE)

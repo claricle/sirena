@@ -88,13 +88,13 @@ module Sirena
 
           def trunk(hub, mid)
             centre = hub.x + (hub.item.width / 2.0)
-            segment(centre, hub.y + hub.item.height, centre, mid)
+            segment(centre, hub.y + hub.item.height, centre, mid, 0)
           end
 
           def branches(blocks, mid)
             xs = blocks.map(&:center)
-            segment(xs.min, mid, xs.max, mid) if xs.min != xs.max
-            blocks.each { |b| segment(b.center, mid, b.center, b.box.y) }
+            segment(xs.min, mid, xs.max, mid, 0) if xs.min != xs.max
+            blocks.each { |b| segment(b.center, mid, b.center, b.box.y, 0) }
           end
 
           # Hangs the children of a placed box under it; returns the bottom
@@ -106,7 +106,12 @@ module Sirena
 
             centre = parent.x + (item.width / 2.0)
             ends = hang_columns(parent, centre, bottom + COLUMN_GAP)
-            join_columns(centre, bottom, ends)
+            join_columns(centre, bottom, ends, parent_depth(item))
+          end
+
+          # The depth a connector under this item is styled by.
+          def parent_depth(item)
+            item.level - 1
           end
 
           def hang_columns(parent, centre, top)
@@ -119,9 +124,9 @@ module Sirena
 
           # Joins the columns' last boxes to the parent; returns the lowest
           # bottom.
-          def join_columns(centre, from, ends)
+          def join_columns(centre, from, ends, depth)
             last_centre = ends.filter_map(&:last).max
-            segment(centre, from, centre, last_centre) if last_centre
+            segment(centre, from, centre, last_centre, depth) if last_centre
             ends.map(&:first).max
           end
 
@@ -143,7 +148,8 @@ module Sirena
             edge = direction.positive? ? mid + STUB : mid - STUB - item.width
             placed = box(item, edge, cursor)
             reach = direction.positive? ? placed.x : placed.right
-            segment(mid, placed.mid_y, reach, placed.mid_y)
+            segment(mid, placed.mid_y, reach, placed.mid_y,
+                    parent_depth(item) - 1)
             placed
           end
         end
