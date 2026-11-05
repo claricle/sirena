@@ -65,39 +65,6 @@ module Sirena
             ASCENT_RATIO * size(role)
           end
 
-          # Skinparam names PlantUML reads for a role, besides the role.
-          SKIN_ALIASES = { diamond: :activitydiamond,
-                           arrow: :activityarrow }.freeze
-          private_constant :SKIN_ALIASES
-
-          # @param style [Style::Sheet]
-          def initialize(style = Style::Sheet.new)
-            @style = style
-          end
-
-          # PlantUML cascades `activityDiagram` down to every role from
-          # `<style>` only; skinparam `activityFontSize` is the action's.
-          #
-          # @param role [Symbol, nil] :diamond, :note, :arrow, :partition;
-          #   nil is an action
-          # @return [Numeric] the font size of the role's text
-          def size(role = nil)
-            written = role ? role_size(role) : activity_size
-            return FONT_SIZE unless written
-
-            written.to_i == written ? written.to_i : written
-          end
-
-          # @return [Float] the distance between the baselines of two lines
-          def line_height(role = nil)
-            LINE_HEIGHT * size(role) / FONT_SIZE
-          end
-
-          # @return [Float] the baseline of a line below the top of its row
-          def ascent(role = nil)
-            11.0 * size(role) / FONT_SIZE
-          end
-
           # @return [Float] the width of the widest of the lines
           def text_width(lines, role: nil, size: size(role))
             face = face(role)
