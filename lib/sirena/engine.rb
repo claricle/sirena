@@ -72,7 +72,12 @@ module Sirena
     # @option options [Date, nil] :today reference date override
     # @option options [Symbol, String, nil] :notation notation override
     # @option options [String, nil] :path where the source came from; its
-    #   extension picks the notation when none is given
+    #   extension picks the notation when none is given, and its directory
+    #   is where a notation that reads files looks first
+    # @option options [String, nil] :base_dir that directory when the
+    #   source has no file of its own (an inline block in a document)
+    # @option options [Array<String>, String, nil] :include_path further
+    #   directories a notation may read files from
     # @option options [Symbol] :layout_engine :grid (default) or :elk, which
     #   lays flowcharts out with elkrb and raises for any other diagram type
     # @return [String] SVG XML string
@@ -112,7 +117,8 @@ module Sirena
       @verbose = options[:verbose] if options.key?(:verbose)
       theme, today, layout_engine = render_settings(options)
       log "Starting render pipeline..."
-      parsed = parse_source(resolve_notation(source, options), source)
+      notation = resolve_notation(source, options)
+      parsed = parse_source(notation, source, options)
       layout_result = transform_diagram(
         parsed.diagram, parsed.transform, today, theme,
         **placement_options(parsed, options, layout_engine)
@@ -166,14 +172,29 @@ module Sirena
       "#{error.class}: <message unavailable>"
     end
 
-    # A notation that wants the engine's progress lines declares a `logger:`
-    # keyword; one that does not is called with the source alone.
-    def parse_source(notation, source)
-      if accepts_logger?(notation)
-        notation.parse(source, logger: verbose ? logger : nil)
-      else
-        notation.parse(source)
+    # A notation declares the keywords it wants and gets only those:
+    # `logger:` (progress lines), `base_dir:` (where the source lives, for a
+    # notation that reads files beside it) and `include_path:` (further
+    # directories such a notation may read). One that declares none is
+    # called with the source alone.
+    def parse_source(notation, source, options)
+      context = {
+        logger: verbose ? logger : nil,
+        base_dir: base_dir_of(options),
+        include_path: options[:include_path],
+      }
+      wanted = notation.method(:parse).parameters.filter_map do |kind, name|
+        name if kind == :key
       end
+      notation.parse(source, **context.slice(*wanted))
+    end
+
+    # `:base_dir`, else the directory of `:path`.
+    def base_dir_of(options)
+      return options[:base_dir] if options[:base_dir]
+      return unless options[:path]
+
+      File.dirname(File.expand_path(options[:path]))
     end
 
     # The registry's key for a validated notation, not the id the plugin
@@ -188,12 +209,6 @@ module Sirena
         when Symbol then notation
         else String.instance_method(:to_sym).bind_call(notation)
         end
-      end
-    end
-
-    def accepts_logger?(notation)
-      notation.method(:parse).parameters.any? do |kind, name|
-        kind == :key && name == :logger
       end
     end
 
