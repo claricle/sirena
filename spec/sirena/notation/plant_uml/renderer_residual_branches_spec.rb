@@ -62,13 +62,13 @@ RSpec.describe Sirena::Notation::PlantUML::Renderer do
   let(:matches) { ->(xpath) { REXML::XPath.match(document, xpath) } }
   let(:note_fills) do
     %w[note-default note-hex note-name].to_h do |id|
-      rect = matches.call("//g[@id='#{id}']/rect").first
-      [id, rect.attributes["fill"]]
+      shape = matches.call("//g[@id='#{id}']/path").first
+      [id, shape.attributes["fill"]]
     end
   end
   let(:expected_note_fills) do
     {
-      "note-default" => "#fbfb77", "note-hex" => "#abc",
+      "note-default" => "#FEFFDD", "note-hex" => "#abc",
       "note-name" => "yellow"
     }
   end
