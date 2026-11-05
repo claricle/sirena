@@ -212,6 +212,19 @@ File.write('output.svg', svg)
 svg = Sirena.render(mermaid_code, theme: 'dark')
 ----
 
+==== Optional Rust runtime
+
+When the optional `sirena-native` gem (the Rust runtime from
+https://github.com/claricle/sirena-rs[claricle/sirena-rs]) is installed,
+`Sirena.render` with no options renders Mermaid sources through it. The SVG
+bytes are the same as the Ruby pipeline's. Without the gem, for an
+option-bearing render, for a diagram type the Rust runtime has not ported, or
+when it reports an error, Sirena renders in Ruby, so errors are always the
+Ruby exceptions. `sirena-native` is not a dependency of this gem.
+
+`SIRENA_RUNTIME` selects the runtime: `auto` (default), `ruby` (never use
+Rust) or `rust` (raise `Sirena::Engine::PipelineError` instead of falling back).
+
 === Examples
 
 Browse link:examples/README.adoc[] for 53 example sources across all 24

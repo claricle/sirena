@@ -2,6 +2,7 @@
 
 require_relative "../../../text_measurement"
 require_relative "../../plantuml_data/boxes/table_box"
+require_relative "entity_metrics"
 
 module Sirena
   module Notation
@@ -34,6 +35,7 @@ module Sirena
 
           # @return [Array(Float, Float)] width and height of a leaf node
           def size(node)
+            return EntityMetrics.size(node) if node.kind == :entity
             return data_size(node) if node.kind == :data
 
             lines = text_lines(node)
@@ -49,7 +51,8 @@ module Sirena
 
           def shape(kind)
             return kind if %i[actor usecase component interface portin
-                              portout note database cloud node].include?(kind)
+                              portout note database cloud node
+                              circle].include?(kind)
 
             :box
           end
@@ -67,6 +70,7 @@ module Sirena
           def size_interface(width, height) = [[width, 20.0].max, 28.0 + height]
           def size_portin(width, height) = [[width, 14.0].max, 18.0 + height]
           def size_portout(width, height) = size_portin(width, height)
+          def size_circle(width, height) = [[width, 16.0].max, 24.0 + height]
           def size_note(width, height) = [width + 24, height + 16]
           def size_database(width, height) = [width + 30, height + 40]
 

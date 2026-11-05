@@ -20,7 +20,7 @@ module Sirena
 
         # @return [Boolean] a line around every cell
         def grid?
-          modifier.include?("#") || (modifier.include?("!") && tree?)
+          modifier.include?("#")
         end
 
         # @return [Boolean] a line between rows only
@@ -30,12 +30,18 @@ module Sirena
 
         # @return [Boolean] a line between columns only
         def column_lines?
-          modifier.include?("!") && !tree?
+          modifier.include?("!")
         end
 
         # @return [Boolean] a frame around the block
         def border?
-          modifier.include?("+") || grid?
+          modifier.include?("+") || (grid? && !tree?)
+        end
+
+        # @return [Boolean] whether the block draws no frame, so its
+        #   container leaves no gap around it
+        def flush?
+          tree? || modifier.empty?
         end
       end
     end

@@ -106,9 +106,7 @@
 
   flowchart_arrowhead_ends_id = flowchart_arrowhead_open !flowchart_id_body
 
-  flowchart_settled_char = flowchart_id_dot / flowchart_id_hyphen / flowchart_id_ascii_char
-
-  flowchart_settled_run = flowchart_settled_char *( flowchart_id_carry_span / flowchart_id_hyphen )
+  flowchart_settled_run = !flowchart_id_carry_char 1*( flowchart_id_carry_span / flowchart_id_hyphen )
 
   flowchart_restart_run = 1*( flowchart_id_carry_char / flowchart_id_restart_char )
 
@@ -119,13 +117,9 @@
   flowchart_dotted_link_open = 1*"." "-"
 
   ## token_at_lexer_restart(target), one rule per target
-  flowchart_restart_node_keyword = *( !flowchart_node_keyword flowchart_restart_step ) flowchart_node_keyword
-
   flowchart_restart_subgraph_keyword = *( !flowchart_subgraph_keyword flowchart_restart_step ) flowchart_subgraph_keyword
 
   flowchart_restart_arrowhead_open = *( !flowchart_arrowhead_open flowchart_restart_step ) flowchart_arrowhead_open
-
-  flowchart_restart_arrowhead_ends_id = *( !flowchart_arrowhead_ends_id flowchart_restart_step ) flowchart_arrowhead_ends_id
 
   flowchart_dot_run_before_link = *( !flowchart_dotted_link_open flowchart_restart_step ) flowchart_dotted_link_open
 
@@ -135,11 +129,15 @@
 
   flowchart_bare_subgraph_end = *( !flowchart_bare_subgraph_end_target flowchart_restart_step ) flowchart_bare_subgraph_end_target
 
-  flowchart_arrowhead_dot_dash = flowchart_arrowhead_open / flowchart_restart_arrowhead_ends_id
-
   flowchart_id_before_xo_link = 1*( !flowchart_xo_link_open flowchart_restart_step ) &flowchart_xo_link_open
 
-  flowchart_node_id = flowchart_id_before_xo_link / ( !flowchart_restart_node_keyword !flowchart_dot_run_before_link !flowchart_arrowhead_dot_dash flowchart_id_run )
+  ## One walk for the three guard targets: a boundary where any of them
+  ## matches is a boundary where one of the three separate walks matched.
+  flowchart_any_restart_target = flowchart_node_keyword / flowchart_dotted_link_open / flowchart_arrowhead_ends_id
+
+  flowchart_restart_any_target = *( !flowchart_any_restart_target flowchart_restart_step ) flowchart_any_restart_target
+
+  flowchart_node_id = flowchart_id_before_xo_link / ( !flowchart_arrowhead_open !flowchart_restart_any_target flowchart_id_run )
 
   ## --- subgraph -------------------------------------------------------
 
