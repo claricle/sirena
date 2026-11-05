@@ -53,6 +53,13 @@ module Sirena
             candidates(element, property, id, stereotype).compact.last
           end
 
+          # The value a `<style>` rule sets for the element itself, ignoring
+          # skinparam and the defaults, for what PlantUML cascades from the
+          # `<style>` root only.
+          def from_style(element, property)
+            from_rules(@layers[:style], element, property, nil).compact.last
+          end
+
           # @param id [String] an element id
           # @return [Hash] the properties written on that element
           def element(id)

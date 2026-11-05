@@ -23,7 +23,8 @@ module Sirena
           def draw(node)
             box = @boxes.fetch(node)
             case node.kind
-            when :start then @canvas.circle(box, 10.0, fill: "#222222")
+            when :start
+              @canvas.circle(box, 10.0, fill: "#222222", role: :start)
             when :stop, :kill then terminal(node, box)
             when :merge then diamond(box, node.fill)
             when :bar then bar(node, box)
@@ -36,9 +37,10 @@ module Sirena
           # @param note [Note]
           # @param box [Box] where the note sits
           def note(node, note, box)
-            @canvas.polygon(outline(box), fill: NOTE_PAPER)
+            @canvas.polygon(outline(box), fill: NOTE_PAPER, role: :note)
             pad = Metrics::NOTE_PAD
-            @canvas.lines(note.lines, [box.left + pad, box.top + pad + 11])
+            @canvas.lines(note.lines, [box.left + pad, box.top + pad + 11],
+                          role: :note)
             connector(@boxes.fetch(node), note.side, box)
           end
 
@@ -69,13 +71,13 @@ module Sirena
 
           def decision(node, box)
             diamond(box, node.fill)
-            centred(node.lines, box)
+            centred(node.lines, box, role: :diamond)
           end
 
           def diamond(box, fill)
             @canvas.polygon([[box.cx, box.top], [box.right, box.cy],
                              [box.cx, box.bottom], [box.left, box.cy]],
-                            fill: fill || PAPER)
+                            fill: fill || PAPER, role: :diamond)
           end
 
           def terminal(node, box)
@@ -103,9 +105,9 @@ module Sirena
             @canvas.lines([node.text], [box.right + 6, box.cy + 4])
           end
 
-          def centred(rows, box)
+          def centred(rows, box, role: nil)
             first = box.cy - (Metrics.text_height(rows) / 2.0) + 11
-            @canvas.lines(rows, [box.cx, first], anchor: "middle")
+            @canvas.lines(rows, [box.cx, first], anchor: "middle", role: role)
           end
         end
       end
