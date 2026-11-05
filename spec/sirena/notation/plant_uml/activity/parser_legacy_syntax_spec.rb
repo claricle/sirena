@@ -27,6 +27,26 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Parser do
       .to eq([[nil, "One"], %w[One Two]])
   end
 
+  it "reads one node for an activity written twice", :aggregate_failures do
+    diagram = parse(%((*) --> "S"\n--> "A"\n--> "B"\n--> "A"\n--> (*)))
+
+    expect(diagram.nodes.count { |n| n.text == "A" }).to eq(1)
+    expect(edge(diagram, "B", "A")).not_to be_nil
+  end
+
+  it "keeps an aliased activity apart from a plain one of the same text" do
+    diagram = parse(%((*) --> "A" as one\n--> "A"))
+
+    expect(diagram.nodes.count { |n| n.text == "A" }).to eq(2)
+  end
+
+  it "lays an arrow along its row for ->, -left-> and -right->" do
+    body = %((*) -> "A"\n-left-> "B"\n-right-> "C"\n--> "D"\n-up-> "E")
+
+    expect(parse(body).edges.map(&:direction))
+      .to eq([:right, :left, :right, nil, nil])
+  end
+
   it "reads a quoted activity that spans lines" do
     diagram = parse(%((*) --> "first line\nsecond <b>line</b>"))
 
@@ -71,13 +91,13 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Parser do
       expect(edge(diagram, "ok?", "B").label).to eq("no")
     end
 
-    it "leaves a branch that ends at (*) out of the merge",
+    it "carries on from the last node the closing branch drew",
        :aggregate_failures do
       expect(edge(diagram, "C", "After")).not_to be_nil
       expect(kinds(diagram)).not_to include(:merge)
     end
 
-    context "with two live branches" do
+    context "with two branches that both end on an activity" do
       let(:diagram) do
         parse(<<~PUML)
           (*) --> "S"
@@ -90,14 +110,29 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Parser do
         PUML
       end
 
-      it "runs both of them on into the next activity" do
+      it "runs only the last branch on into the next activity" do
         into_z = diagram.edges.select { |e| e.to.text == "Z" }
-        expect(into_z.map { |e| e.from.text }).to eq(%w[A B])
+        expect(into_z.map { |e| e.from.text }).to eq(%w[B])
       end
 
       it "draws no node where they meet" do
         expect(diagram.nodes.map(&:kind)).not_to include(:merge)
       end
+    end
+
+    it "carries on from the branch when there is no else",
+       :aggregate_failures do
+      diagram = parse(%((*) --> "S"\nif "x" then\n--> "A"\nendif\n--> "Z"))
+
+      expect(edge(diagram, "A", "Z")).not_to be_nil
+      expect(edge(diagram, "x", "Z")).to be_nil
+    end
+
+    it "lets the flow leave a branch that ended at (*)", :aggregate_failures do
+      diagram = parse(%((*) --> "S"\nif "x" then\n--> (*)\nendif\n--> "Z"))
+
+      expect(diagram.edges.find { |e| e.to.text == "Z" }.from.kind)
+        .to eq(:stop)
     end
 
     it "refuses else without if" do

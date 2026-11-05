@@ -7,6 +7,9 @@ module Sirena
         # A flow arrow between two nodes.
         class Edge
           attr_reader :from, :to, :label, :colour, :style
+          # @return [Symbol, nil] :left or :right when the arrow lies along
+          #   its row (legacy syntax)
+          attr_accessor :direction
 
           # @param from [Node]
           # @param to [Node]
@@ -19,6 +22,11 @@ module Sirena
             @label = label
             @colour = colour
             @style = style
+          end
+
+          # @return [Boolean] whether the arrow lies along its row
+          def level?
+            !@direction.nil?
           end
         end
       end

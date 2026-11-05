@@ -20,10 +20,37 @@ module Sirena
             @key = {}.compare_by_identity
             @taken = Set.new
             @widest = Hash.new(-1)
-            diagram.nodes.each { |node| place(node, 0) unless @key[node] }
+            place_all
           end
 
           private
+
+          def place_all
+            pending = @diagram.nodes.dup
+            until pending.empty?
+              node = pending.find { |n| ready?(n) } || pending.first
+              place(node, beside(node)) unless @key[node]
+              pending.reject! { |n| @key[n] }
+            end
+          end
+
+          # A node reached along a row waits for the node it lies beside.
+          def ready?(node)
+            level = level_in(node)
+            level.nil? || !@key[level.from].nil?
+          end
+
+          def level_in(node)
+            @ranking.level_in(node)
+          end
+
+          def beside(node)
+            edge = level_in(node)
+            return 0 unless edge && @key[edge.from]
+
+            column = @key[edge.from].last
+            edge.direction == :left ? column - 1 : column + 1
+          end
 
           def place(node, preferred)
             lane = lane_of(node)
@@ -36,7 +63,7 @@ module Sirena
           def place_children(node, lane, column)
             keep = true
             @ranking.forward(node).each do |edge|
-              next if @key[edge.to]
+              next if @key[edge.to] || edge.level?
 
               place(edge.to, child_preference(edge.to, lane, column, keep))
               keep = false
