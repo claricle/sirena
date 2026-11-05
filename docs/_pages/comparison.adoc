@@ -254,7 +254,7 @@ A migration guide is planned.
 ==== From PlantUML to Sirena
 
 // BEGIN GENERATED: rake docs:compatibility plantuml
-**Syntax Compatibility:** Sirena renders PlantUML class and sequence diagrams when started with `--require sirena/notation/plantuml` (`scoreboard/plantuml.json`: class 35/35, sequence 77/77 oracle-valid cases). Other PlantUML diagram types are not supported.
+**Syntax Compatibility:** Sirena renders PlantUML class and sequence diagrams when started with `--require sirena/notation/plantuml` (`scoreboard/plantuml.json`: class 35/35, sequence 90/90 oracle-valid cases). Other PlantUML diagram types are not supported.
 // END GENERATED: rake docs:compatibility plantuml
 
 **Migration Strategy:**

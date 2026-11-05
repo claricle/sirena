@@ -28,14 +28,6 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlClassRecognizer do
     extract(svg, recognizer).keys.sort_by(&:inspect)
   end
 
-  def suffix_spaced_keys(svg)
-    keys(svg).map do |key|
-      next key unless key.first == :class_content
-
-      key[0..1] + [key.last.map { |row| row.sub(/ : ([^:]*)\z/, ": \\1") }]
-    end
-  end
-
   def unresolved_svg
     <<~SVG
       <svg viewBox="0 0 100 100">
@@ -168,11 +160,11 @@ RSpec.describe SpecSupport::LayoutParity::PlantumlClassRecognizer do
     SVG
   end
 
-  it "keeps relation ownership aligned across producer member spacing" do
+  it "keeps relation ownership aligned with the reference" do
     name = "16-full-example"
     render = Sirena.render(source(name), notation: :plantuml)
 
-    expect(keys(render)).to eq(suffix_spaced_keys(reference(name)))
+    expect(keys(render)).to eq(keys(reference(name)))
   end
 
   it "resolves mixed arrow-side endpoints without reversing their owners" do
