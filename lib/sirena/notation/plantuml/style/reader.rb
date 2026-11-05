@@ -191,7 +191,8 @@ module Sirena
 
           def style_property(property, value)
             selector = @path.last
-            return unless selector
+            # PlantUML's <style> has no BorderColor; only skinparam does.
+            return if selector.nil? || property == "bordercolor"
 
             element, stereotype = target_of(selector)
             store(@style, element&.to_sym, property, stereotype, value)

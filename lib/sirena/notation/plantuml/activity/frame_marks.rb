@@ -57,9 +57,9 @@ module Sirena
 
           def partition(name, boxes)
             frame = frame_around(boxes)
-            @canvas.rect(frame, fill: "none")
+            @canvas.rect(frame, fill: "none", role: :partition)
             @canvas.lines([name], [frame.left + 8, frame.top + 15],
-                          weight: "bold")
+                          weight: "bold", role: :partition)
           end
 
           def frame_around(boxes)
