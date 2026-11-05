@@ -235,5 +235,130 @@ RSpec.describe Sirena::Notation::PlantUML::Style do
 
       expect(path.attributes["stroke"]).to eq("#FF0000")
     end
+
+    describe "element selectors of a <style> sheet" do
+      let(:sheet) do
+        ["<style>", "activityDiagram {", "BackgroundColor #33668E",
+         "FontColor #888", "diamond {", "BackgroundColor #ccf",
+         "LineColor #00FF00", "FontColor green", "}", "arrow {",
+         "FontColor gold", "}", "partition {", "LineColor red",
+         "FontColor green", "RoundCorner 10", "BackgroundColor PeachPuff", "}",
+         "note {", "FontColor Blue", "LineColor Navy",
+         "BackgroundColor #ccf", "}", "}", "</style>"]
+      end
+      let(:flow) do
+        ["start", "if (ok?) then (yes)", ":a;", "note right: n", "endif",
+         "partition P {", ":b;", "}", "-> done;", "stop"]
+      end
+      let(:root) { svg(*sheet, *flow) }
+
+      def shapes(xpath)
+        REXML::XPath.match(root, xpath)
+      end
+
+      def widths_of(tag)
+        shapes("//*[local-name()='#{tag}']")
+          .map { |s| s.attributes["stroke-width"] }.uniq.sort
+      end
+
+      def text_fill(content)
+        shapes("//*[local-name()='text']")
+          .find { |t| t.text == content }.attributes["fill"]
+      end
+
+      it "paints every diamond with the diamond rule" do
+        polygons = shapes("//*[local-name()='polygon'][@fill='#CCCCFF']")
+          .select { |p| p.attributes["points"].split.size == 4 }
+
+        expect(polygons.map { |p| p.attributes["stroke"] })
+          .to eq(%w[#00FF00 #00FF00])
+      end
+
+      it "colours the decision text with the diamond FontColor" do
+        expect(text_fill("ok?")).to eq("#008000")
+      end
+
+      it "colours arrow labels with the arrow FontColor" do
+        expect(text_fill("done")).to eq("#FFD700")
+      end
+
+      it "draws the partition with its own paint and half its RoundCorner" do
+        frame = shapes("//*[local-name()='rect'][@fill='#FFDAB9']").first
+
+        expect(attrs(frame, "stroke", "rx")).to eq(["#FF0000", "5.0"])
+      end
+
+      it "colours the partition title with the partition FontColor" do
+        expect(text_fill("P")).to eq("#008000")
+      end
+
+      it "paints the note with the note rule" do
+        note = shapes("//*[local-name()='polygon'][@stroke='#000080']").first
+
+        expect([note.attributes["fill"], text_fill("n")])
+          .to eq(["#CCCCFF", "#0000FF"])
+      end
+
+      it "leaves the actions to the activityDiagram block" do
+        action = first(root, "//*[local-name()='rect'][@rx='12.5']")
+
+        expect([action.attributes["fill"], text_fill("a")])
+          .to eq(["#33668E", "#888888"])
+      end
+
+      it "draws partitions at 1.5 and boxes, diamonds and notes at 0.5" do
+        widths = %w[rect polygon].map { |tag| widths_of(tag) }
+
+        expect(widths).to eq([%w[0.5 1.5], %w[0.5 1]])
+      end
+
+      it "ignores BorderColor in a <style> block" do
+        plain = svg("<style>", "activityDiagram {", "BorderColor red", "}",
+                    "</style>", *flow)
+        rect = first(plain, "//*[local-name()='rect'][@rx='12.5']")
+
+        expect(rect.attributes["stroke"]).to eq("#181818")
+      end
+
+      it "still honours BorderColor in skinparam" do
+        plain = svg("skinparam activityBorderColor red", *flow)
+        rect = first(plain, "//*[local-name()='rect'][@rx='12.5']")
+
+        expect(rect.attributes["stroke"]).to eq("#FF0000")
+      end
+
+      it "cascades the root LineColor to arrows, start and stop" do
+        plain = svg("<style>", "activityDiagram {", "LineColor #112233", "}",
+                    "</style>", "start", ":a;", "stop")
+        marks = "//*[local-name()='path' or local-name()='circle']"
+        strokes = REXML::XPath.match(plain, marks).map { |e| e["stroke"] }
+
+        expect(strokes.uniq).to eq(["#112233"])
+      end
+
+      it "fills the start disc with the root BackgroundColor" do
+        disc = first(root, "//*[local-name()='circle'][@r='10.0']")
+
+        expect(disc.attributes["fill"]).to eq("#33668E")
+      end
+
+      it "leaves arrows and the start disc alone under skinparam" do
+        plain = svg("skinparam activityBorderColor red",
+                    "skinparam activityBackgroundColor pink", *flow)
+        disc = first(plain, "//*[local-name()='circle'][@r='10.0']")
+        path = first(plain, "//*[local-name()='path']")
+
+        expect([disc["fill"], path["stroke"]]).to eq(%w[#222222 #181818])
+      end
+
+      it "keeps the default look of notes and diamonds without a rule" do
+        plain = svg("<style>", "activityDiagram {", "BackgroundColor pink",
+                    "}", "</style>", *flow)
+        note = REXML::XPath.match(plain, "//*[local-name()='polygon']")
+          .find { |p| p.attributes["fill"] == "#FEFFDD" }
+
+        expect(note).not_to be_nil
+      end
+    end
   end
 end
