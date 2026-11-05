@@ -71,7 +71,7 @@ module Sirena
           end
 
           def note?(edge)
-            edge.from.kind == :note
+            edge.pointer
           end
 
           def line(points, edge, color)

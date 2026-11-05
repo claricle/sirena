@@ -196,7 +196,8 @@ module Sirena
             @graph.edges << Edge.new(from: note, to: resolve(ref),
                                      style: :dashed, width: 1,
                                      rank_step: beside ? 0 : 1,
-                                     backwards: %w[right bottom].include?(side))
+                                     backwards: %w[right bottom].include?(side),
+                                     pointer: true)
           end
 
           def take_edge(text)

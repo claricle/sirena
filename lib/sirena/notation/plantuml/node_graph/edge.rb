@@ -13,10 +13,12 @@ module Sirena
         # ends, `[from, to]`, each listed from the box outward (see
         # {CrowsFoot}). `rank_step` is how many ranks the layout puts `to`
         # after `from` (0 keeps them in one rank); `backwards` reads the link
-        # from `to`.
+        # from `to`. `pointer` marks the tail of a note written beside its
+        # target (`note right of X`); a link to or from a named note is a
+        # plain line.
         Edge = Struct.new(:from, :to, :label, :style, :head, :color, :width,
                           :ends, :from_row, :to_row, :rank_step, :backwards,
-                          keyword_init: true)
+                          :pointer, keyword_init: true)
       end
     end
   end

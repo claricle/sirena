@@ -6,6 +6,7 @@ require_relative "detour"
 require_relative "frame_ports"
 require_relative "metrics"
 require_relative "packer"
+require_relative "paths"
 require_relative "ranking"
 require_relative "scene"
 
@@ -26,19 +27,24 @@ module Sirena
           # @param graph [Graph]
           # @return [Scene]
           def call(graph, **)
+            reset(graph)
+            top = arrange(nil)
+            placed = []
+            place(top, [MARGIN, MARGIN + title_room], 0, placed)
+            scene(top, placed)
+          end
+
+          private
+
+          def reset(graph)
             @graph = graph
             @sizes = {}
             @frame_ports = FramePorts.new(@sizes)
             @ports = {}
             @inner = {}
             @inset = {}
-            top = arrange(nil)
-            placed = []
-            place(top.offsets, [MARGIN, MARGIN + title_room], 0, placed)
-            scene(top, placed)
+            @paths = Paths.new(left_to_right? ? 0 : 1)
           end
-
-          private
 
           def scene(top, placed)
             Scene.new(width: [top.width + (2 * MARGIN), title_width].max,
@@ -62,9 +68,9 @@ module Sirena
             ports, children = split_ports(scope)
             (ports + children).each { |child| measure(child) }
             ranking = Ranking.new(children, pairs(scope))
-            packed = Packer.new(@sizes, left_to_right: left_to_right?,
+            packer = Packer.new(@sizes, left_to_right: left_to_right?,
                                         reach: label_reach(scope))
-              .pack(ranking.layers)
+            packed = packer.route(packer.pack(ranking.layers), ranking.chains)
             scope ? frame(packed, scope, ports) : packed
           end
 
@@ -155,8 +161,9 @@ module Sirena
             at && chain[at + 1]
           end
 
-          def place(offsets, origin, depth, placed)
-            offsets.each do |node, (x_pos, y_pos)|
+          def place(packed, origin, depth, placed)
+            @paths.record(packed.paths, origin)
+            packed.offsets.each do |node, (x_pos, y_pos)|
               width, height = @sizes[node]
               placed << Placed.new(node: node, x: origin[0] + x_pos,
                                    y: origin[1] + y_pos, width: width,
@@ -166,8 +173,7 @@ module Sirena
           end
 
           def place_inside(box, depth, placed)
-            place(@inner[box.node].offsets, inside_origin(box), depth + 1,
-                  placed)
+            place(@inner[box.node], inside_origin(box), depth + 1, placed)
             placed.concat(@frame_ports.place(box, @ports[box.node], depth + 1))
           end
 
@@ -187,13 +193,13 @@ module Sirena
             from, to = boxes.values_at(edge.from, edge.to)
             return if from.equal?(to)
 
-            points = segment(from, to, edge)
+            points = segment(from, to, edge, @paths.between(edge, center(from)))
             Route.new(edge: edge, points: bent(detour, edge, points))
           end
 
           # A note's pointer and a line to a row stay straight.
           def bent(detour, edge, points)
-            straight = edge.from.kind == :note || edge.from_row || edge.to_row
+            straight = edge.pointer || edge.from_row || edge.to_row
             straight ? points : detour.call(edge, points)
           end
 
@@ -203,11 +209,18 @@ module Sirena
             FramePorts.on_frame?(box.node) ? @frame_ports.terminal(box) : box
           end
 
-          def segment(from, to, edge)
+          # `between` is where a link across ranks passes the ranks it
+          # skips.
+          def segment(from, to, edge, between)
             a = center(from)
             b = center(to)
-            [row_end(from, edge.from_row, b) || clip(from, a, b),
-             row_end(to, edge.to_row, a) || clip(to, b, a)]
+            [end_at(from, edge.from_row, a, between.first || b),
+             *between,
+             end_at(to, edge.to_row, b, between.last || a)]
+          end
+
+          def end_at(box, row, inner, toward)
+            row_end(box, row, toward) || clip(box, inner, toward)
           end
 
           # The middle of the row of a map or object box that a line ends

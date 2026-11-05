@@ -14,6 +14,8 @@ module Sirena
           INK = "#181818"
           BLACK = "#000000"
           PAPER = "#F1F1F1"
+          # How far a text's baseline lies below its vertical middle.
+          BASELINE = 5.5
 
           def rect(left, top, width, height, **style)
             { kind: :rect, x: left, y: top, width: width, height: height,
@@ -28,7 +30,7 @@ module Sirena
           # @param middle [Float] the y of the text's vertical middle
           # @param style [Hash] bold, italic, fill and anchor
           def text(content, left, middle, **style)
-            { kind: :text, content: content, x: left, y: middle + 5.5,
+            { kind: :text, content: content, x: left, y: middle + BASELINE,
               bold: false, italic: false, fill: BLACK, anchor: nil }
               .merge(style)
           end

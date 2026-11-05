@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "skipped_ranks"
+
 module Sirena
   module Notation
     module PlantUML
@@ -10,8 +12,14 @@ module Sirena
         class Ranking
           SWEEPS = 4
 
-          # @return [Array<Array<Object>>] the items of each rank, in order
+          # @return [Array<Array<Object>>] the items of each rank, in order,
+          #   with a {Waypoint} in each rank a link skips
           attr_reader :layers
+
+          # @return [Hash{Array => Array<Waypoint>}] for each `[from, to]`
+          #   that spans more than one rank, its waypoints from the rank
+          #   after `from`
+          attr_reader :chains
 
           # @param items [Array<Object>] in source order
           # @param pairs [Array<Array>] links between items, each
@@ -24,11 +32,19 @@ module Sirena
             @rank = items.to_h { |item| [item, 0] }
             settle_ranks
             sink_sources
-            @layers = @pairs.empty? ? grid : group
+            @tie_order = tie_order
+            lay_out
             order
           end
 
           private
+
+          def lay_out
+            @layers = @pairs.empty? ? grid : group
+            skips = SkippedRanks.new(@layers, @rank, @pairs, @forward)
+            @chains = skips.chains
+            @bound = skips.links
+          end
 
           # Each pair once, with the longest step asked of it.
           def merged(pairs)
@@ -131,7 +147,32 @@ module Sirena
 
           def group
             by_rank = @items.group_by { |item| @rank[item] }
-            (0..(by_rank.keys.max || -1)).map { |rank| by_rank.fetch(rank, []) }
+            (0..(by_rank.keys.max || -1)).map do |rank|
+              tied_first(by_rank.fetch(rank, []))
+            end
+          end
+
+          # A rank with its tied items (links of step 0) first, in the order
+          # their first tie was written; the JAR places the actor of the
+          # first `A -> (B)` left of an actor declared earlier but untied.
+          def tied_first(layer)
+            layer.sort_by.with_index do |item, at|
+              tie = @tie_order[item]
+              [tie ? 0 : 1, tie || 0, at]
+            end
+          end
+
+          # @return [Hash] each item tied to another by a step-0 link, to
+          #   the position of its first such link
+          def tie_order
+            order = {}
+            @pairs.each_with_index do |(from, to, step), at|
+              next unless step&.zero?
+
+              order[from] ||= at
+              order[to] ||= at
+            end
+            order
           end
 
           def order
@@ -177,7 +218,7 @@ module Sirena
           end
 
           def barycentre(item, layer)
-            linked = @pairs.filter_map do |a, b|
+            linked = @bound.filter_map do |a, b, _|
               other = if a.equal?(item) then b elsif b.equal?(item) then a end
               layer.index { |entry| entry.equal?(other) } if other
             end
