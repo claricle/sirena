@@ -111,13 +111,77 @@ RSpec.describe Sirena::Notation::PlantUML, "#render shapes and maps" do
   end
 
   describe "a package, folder and frame" do
-    %w[package folder frame].each do |kind|
+    { "package" => 4, "folder" => 4, "frame" => 5 }.each do |kind, corners|
       it "puts the name of a #{kind} in a tab over its top left" do
         root = render("#{kind} \"Name\" {\n  [c]\n}")
 
         expect([point_counts(root), bold_texts(root)])
-          .to eq([[5], ["Name"]])
+          .to eq([[corners], ["Name"]])
       end
+    end
+
+    it "leans the right edge of a package's tab down its whole height" do
+      points = tab_points("package")
+
+      expect([points[2][0] > points[1][0], points[2][1] - points[1][1]])
+        .to eq([true, points[3][1] - points[0][1]])
+    end
+
+    it "cuts the lower right corner of a frame's tab" do
+      points = tab_points("frame")
+
+      expect([points[1][0] - points[2][0], points[3][0] < points[2][0]])
+        .to eq([0.0, true])
+    end
+
+    def tab_points(kind)
+      polygon = all(render("#{kind} \"Name\" {\n  [c]\n}"), "polygon").first
+      polygon.attributes["points"].split.map { |pt| pt.split(",").map(&:to_f) }
+    end
+  end
+
+  describe "a cloud's room" do
+    it "hugs what it holds instead of doubling its size" do
+      root = render("cloud {\n  [A]\n}")
+      comp = all(root, "rect").first
+      path = all(root, "path").first.attributes["d"]
+      xs = path.scan(/[ML]?(-?\d+\.?\d*),/).flatten.map(&:to_f)
+
+      expect(xs.max - xs.min - comp.attributes["width"].to_f).to be < 100
+    end
+  end
+
+  describe "an archimate technology device" do
+    it "carries the device icon, with its name below it" do
+      root = render("archimate #Technology \"VPN\" as v <<technology-device>>")
+      icon = all(root, "path").find { |p| p.attributes["transform"] }
+
+      expect(icon.attributes["d"]).to start_with("M0.59,0")
+    end
+
+    it "stays a plain box for a type without an icon" do
+      root = render("archimate #Technology \"VPN\" as v <<technology-node>>")
+
+      expect(all(root, "path")).to be_empty
+    end
+  end
+
+  describe "labelled links fanning from one node" do
+    let(:label) { "a rather long label #{'x' * 20}" }
+    let(:body) do
+      Array.new(3) { |i| "[foo] --> [bar#{i}] : #{label}#{i}" }.join("\n")
+    end
+    let(:centres) do
+      all(render(body), "rect").select { |r| r.attributes["width"].to_f > 40 }
+        .map { |r| centre(r).round(1) }.uniq.sort
+    end
+
+    def centre(rect)
+      rect.attributes["x"].to_f + (rect.attributes["width"].to_f / 2)
+    end
+
+    it "keeps their targets apart by the labels' width" do
+      expect(centres.each_cons(2).map { |a, b| b - a }.min).to be > 150
     end
   end
 

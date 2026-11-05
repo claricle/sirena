@@ -189,7 +189,7 @@ module Sirena
           def tree_link(link, from, to)
             start = tree_start(link, from)
             stop = [to.x, to.y + (to.height / 2)]
-            [Marks.curve(start, stop, dashed: true), arrowhead(stop),
+            [Marks.curve(start, stop, dashed: true), Marks.arrowhead(stop),
              Marks.dot(start)]
           end
 
@@ -199,11 +199,6 @@ module Sirena
               r.equal?(link.from_row) || r.port == link.from_row
             end
             [rect.right - 11.6, TableBox.row_middle(table, index.to_i, rect.y)]
-          end
-
-          def arrowhead(stop)
-            Marks.polygon([[stop[0] - 8, stop[1] - 3], stop,
-                           [stop[0] - 8, stop[1] + 3]])
           end
 
           def line_link(link, from, to)

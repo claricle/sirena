@@ -2,6 +2,7 @@
 
 require_relative "../../../text_measurement"
 require_relative "../../plantuml_data/boxes/table_box"
+require_relative "archimate"
 require_relative "entity_metrics"
 
 module Sirena
@@ -42,7 +43,11 @@ module Sirena
             lines = text_lines(node)
             width = text_width(lines)
             height = text_height(lines)
-            send(:"size_#{shape(node.kind)}", width, height)
+            send(:"size_#{shape(node.kind)}", width, height + sprite_room(node))
+          end
+
+          def sprite_room(node)
+            node.sprite ? Archimate::SPRITE_ROOM : 0.0
           end
 
           def data_size(node)

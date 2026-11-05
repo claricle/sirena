@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../svg"
+require_relative "archimate"
 require_relative "cloud"
 require_relative "data_shape"
 require_relative "entity_shape"
@@ -66,7 +67,16 @@ module Sirena
             Figures.for(kind).each do |type, *args|
               send(:"draw_#{type}", *args)
             end
-            label(Figures.label(kind))
+            label(Figures.label(kind).merge(@p.node.sprite ? { dy: 10 } : {}))
+            draw_sprite if @p.node.sprite
+          end
+
+          # The icon of an archimate element, centred at its top; the label
+          # moves down to make room.
+          def draw_sprite
+            left = @p.x + (@p.width / 2) - 8.5
+            add(Svg::Path, d: @p.node.sprite, fill: "#000000",
+                           transform: "translate(#{left},#{@p.y + 12})")
           end
 
           def draw_rect(origin, extent, radius = nil)
@@ -176,8 +186,8 @@ module Sirena
 
           def draw_tab
             width = Metrics.text_width([lines.first.to_s]) * 1.05
-            add(Svg::Polygon, points: Tab.points(@p.x, @p.y, width),
-                              fill: FILL, **LINE)
+            points = Tab.points(@p.x, @p.y, width, @p.node.kind)
+            add(Svg::Polygon, points: points, fill: FILL, **LINE)
           end
 
           # A header clears the cap of a cylinder, the bumps of a cloud and

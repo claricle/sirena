@@ -42,6 +42,14 @@ module Sirena
             { kind: :polygon, points: points, fill: fill, stroke: stroke }
           end
 
+          # The small notched arrow PlantUML ends a tree link with: 7.6 long,
+          # 6.1 wide, notched 2.3 in from its base; filled, never outlined.
+          def arrowhead(tip)
+            x, y = tip
+            polygon([[x - 7.6, y - 3.0], [x - 5.3, y], [x - 7.6, y + 3.0], tip],
+                    fill: BLACK, stroke: "none")
+          end
+
           def dot(centre)
             { kind: :circle, cx: centre[0], cy: centre[1], r: 3, fill: BLACK }
           end

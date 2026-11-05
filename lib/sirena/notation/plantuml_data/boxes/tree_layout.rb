@@ -72,8 +72,7 @@ module Sirena
 
           def link(from, to)
             @links << Marks.curve(from, to, dashed: true)
-            @links << Marks.polygon([[to[0] - 8, to[1] - 3], to,
-                                     [to[0] - 8, to[1] + 3]])
+            @links << Marks.arrowhead(to)
             @links << Marks.dot(from)
           end
         end

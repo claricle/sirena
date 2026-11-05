@@ -13,7 +13,8 @@ module Sirena
                                component].freeze
 
           attr_reader :id, :parent
-          attr_accessor :kind, :lines, :stereotype, :color, :sections, :table
+          attr_accessor :kind, :lines, :stereotype, :color, :sections, :table,
+                        :sprite
           attr_writer :container
 
           # @param parent [Node, nil] the container this node sits in
