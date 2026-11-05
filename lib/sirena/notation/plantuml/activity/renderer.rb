@@ -16,7 +16,10 @@ module Sirena
           PAPER = "#F1F1F1"
           INK = "#181818"
           TERMINAL = "#222222"
-          private_constant :FONT_FAMILY, :PAPER, :INK, :TERMINAL
+          # The stroke width of the shapes PlantUML draws heavier than a box.
+          DRAWN_WIDTHS = { warning: "3", bar: "1" }.freeze
+          private_constant :FONT_FAMILY, :PAPER, :INK, :TERMINAL,
+                           :DRAWN_WIDTHS
 
           # @param style [Style::Sheet] what the source sets; the drawn
           #   defaults stand for anything it leaves out
@@ -85,7 +88,8 @@ module Sirena
             element(Svg::Text, x: attrs[:x], y: attrs[:y],
                                content: attrs[:content],
                                text_anchor: attrs[:anchor],
-                               font_family: face(attrs, :font_name) ||
+                               font_family: attrs[:family] ||
+                                            face(attrs, :font_name) ||
                                             FONT_FAMILY,
                                font_size: attrs[:size].to_s,
                                font_weight: attrs[:weight],
@@ -141,7 +145,9 @@ module Sirena
           end
 
           def frame_width(attrs)
-            return hairline(attrs) unless attrs[:role] == :partition
+            unless attrs[:role] == :partition
+              return DRAWN_WIDTHS.fetch(attrs[:role]) { hairline(attrs) }
+            end
 
             (own(attrs, :line_thickness) || 1.5).to_s
           end

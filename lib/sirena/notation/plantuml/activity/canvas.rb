@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../../text_measurement"
 require_relative "mark"
 require_relative "metrics"
 
@@ -10,6 +11,7 @@ module Sirena
         # Collects {Mark}s in drawing order and the extent they reach.
         class Canvas
           INK = "#181818"
+          MONO_SIZE = 10
 
           # @return [Array<Mark>]
           attr_reader :marks
@@ -43,11 +45,11 @@ module Sirena
           # :partition, :diamond, :note or :arrow; nil is a plain action.
           #
           # @param box [Box]
-          def rect(box, fill:, radius: nil, role: nil)
+          def rect(box, fill:, radius: nil, role: nil, stroke: INK)
             see(box.left, box.right, box.bottom)
             add(:rect, x: box.left, y: box.top, width: box.width,
-                       height: box.height, fill: fill, stroke: INK, rx: radius,
-                       role: role)
+                       height: box.height, fill: fill, stroke: stroke,
+                       rx: radius, role: role)
           end
 
           # @param box [Box]
@@ -76,6 +78,23 @@ module Sirena
               y_pos = point.last + (index * @metrics.line_height(role))
               text([point.first, y_pos], content, anchor,
                    face.merge(role: role))
+            end
+          end
+
+          # @return [Float] the width of the widest of the monospace rows
+          def mono_width(rows)
+            rows.map do |row|
+              TextMeasurement.measure(row, font_size: MONO_SIZE,
+                                           monospace: true)[:width]
+            end.max
+          end
+
+          # Monospace notice lines, `pitch` apart.
+          def mono_lines(rows, point, pitch:)
+            rows.each_with_index do |content, index|
+              add(:text, x: point.first, y: point.last + (index * pitch),
+                         content: content, anchor: "start", size: MONO_SIZE,
+                         family: "monospace", role: nil)
             end
           end
 

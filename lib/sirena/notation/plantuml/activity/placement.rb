@@ -20,6 +20,8 @@ module Sirena
           HEADER_HEIGHT = 28.0
           PARTITION_BELOW = 10.0
           BAND_PAD = 14.0
+          # The height each line of a PlantUML notice adds above the drawing.
+          WARNING_PITCH = 21.6406
 
           # @return [Hash{Node => Box}]
           attr_reader :boxes
@@ -67,6 +69,7 @@ module Sirena
 
           def header_height
             (@diagram.title ? TITLE_HEIGHT : 0) +
+              (@diagram.warnings.size * WARNING_PITCH) +
               (@diagram.lanes.empty? ? 0 : HEADER_HEIGHT) +
               (@diagram.nodes.any?(&:partition) ? head : 0)
           end

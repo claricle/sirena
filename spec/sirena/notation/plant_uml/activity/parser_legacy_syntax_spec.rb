@@ -27,10 +27,11 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Parser do
       .to eq([[nil, "One"], %w[One Two]])
   end
 
-  it "reads a quoted activity that spans lines" do
+  it "reads a quoted activity that spans lines, keeping its creole" do
     diagram = parse(%((*) --> "first line\nsecond <b>line</b>"))
 
-    expect(diagram.nodes.last.lines).to eq(["first line", "second line"])
+    expect(diagram.nodes.last.lines).to eq(["first line",
+                                            "second <b>line</b>"])
   end
 
   it "refers back to an activity by its alias" do

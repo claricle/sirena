@@ -22,6 +22,13 @@ module Sirena
             @lanes = []
             @lane = nil
             @partition = nil
+            @warnings = []
+          end
+
+          # Records a notice PlantUML prints above the diagram, such as the
+          # old `#colour:` action syntax.
+          def warn(message)
+            @warnings << message
           end
 
           # @return [Node]
@@ -53,7 +60,7 @@ module Sirena
           # @return [Diagram]
           def diagram
             Diagram.new(nodes: @nodes, edges: @edges, lanes: @lanes,
-                        title: @title)
+                        title: @title, warnings: @warnings)
           end
 
           private

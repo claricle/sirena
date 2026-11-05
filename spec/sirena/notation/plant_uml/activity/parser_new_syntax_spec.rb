@@ -14,20 +14,24 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Parser do
       .to eq([[nil, "one"], %w[one two], ["two", nil]])
   end
 
-  it "reads a multi-line action and drops creole markup" do
+  it "reads a multi-line action and keeps its creole markup" do
     diagram = parse(":process\n  __sequence__ and **bold**;")
 
-    expect(diagram.nodes.first.lines).to eq(["process", "sequence and bold"])
+    expect(diagram.nodes.first.lines)
+      .to eq(["process", "__sequence__ and **bold**"])
   end
 
   it "reads a literal backslash-n as a line break" do
     expect(parse(':a\nb;').nodes.first.lines).to eq(%w[a b])
   end
 
-  it "reads the colour of `#colour:action;`" do
+  it "ignores the colour of `#colour:action;` and notes the old syntax",
+     :aggregate_failures do
     diagram = parse("#pink:red;\n#33668E:hex;")
 
-    expect(diagram.nodes.map(&:fill)).to eq(["pink", "#33668E"])
+    expect(diagram.nodes.map(&:fill)).to eq([nil, nil])
+    expect(diagram.warnings.map { |w| w[/<<(#\w+)>>/, 1] })
+      .to eq(%w[#pink #33668E])
   end
 
   it "labels the next edge from an arrow with text" do

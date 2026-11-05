@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../text_measurement"
+require_relative "../creole"
 require_relative "../style"
 require_relative "box"
 
@@ -69,7 +70,8 @@ module Sirena
           def text_width(lines, role: nil, size: size(role))
             face = face(role)
             lines.map do |line|
-              TextMeasurement.measure_in(face, line, font_size: size)[:width]
+              TextMeasurement.measure_in(face, Creole.plain(line),
+                                         font_size: size)[:width]
             end.max.to_f
           end
 

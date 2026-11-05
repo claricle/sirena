@@ -50,6 +50,13 @@ module Sirena
           end
         end
 
+        # @param text [String] one label line
+        # @return [String] the line as drawn: the markup is gone, its text
+        #   stays
+        def plain(text)
+          parse(text).map(&:text).join
+        end
+
         # Gives `element` the line's content: plain text when there is no
         # markup, one tspan per styled piece otherwise.
         #

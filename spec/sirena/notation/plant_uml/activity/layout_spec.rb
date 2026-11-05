@@ -43,7 +43,7 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
 
   it "stretches a fork bar over its branches" do
     scene = layout("fork\n:a;\nfork again\n:b;\nend fork")
-    bar = marks(scene, :rect).find { |m| m.attrs[:fill] == "#000000" }.attrs
+    bar = marks(scene, :rect).find { |m| m.attrs[:role] == :bar }.attrs
 
     expect(bar[:width]).to be > action_rect(scene,
                                             "b")[:x] - action_rect(scene,
