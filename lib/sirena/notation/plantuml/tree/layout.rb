@@ -12,11 +12,17 @@ module Sirena
           attribute :boxed, :boolean
           attribute :fill, :string
           attribute :corner_radius, :float
+          attribute :stroke, :string
+          attribute :stroke_width, :float
+          attribute :dasharray, :string
+          attribute :font_colour, :string
         end
 
         # A connector, as the path it draws.
         class Edge < Sirena::Layout::Mindmap::Edge
           attribute :stroke_width, :float
+          attribute :stroke, :string
+          attribute :dasharray, :string
         end
 
         # What a tree layout hands its renderer.
@@ -58,11 +64,24 @@ module Sirena
           end
           private_constant :Item, :Box
 
+          # @param rules [Rules] what the source's `<style>` blocks set
+          # @return [Class] this layout, drawing with those rules
+          def self.styled(rules)
+            return self unless rules.any?
+
+            Class.new(self) { define_method(:rules) { rules } }
+          end
+
           private
+
+          def rules
+            @rules ||= Rules.new
+          end
 
           def scene(graph)
             @boxes = []
             @segments = []
+            @depths = []
             @row_end = nil
             top = MARGIN
             forest(graph).each do |root|
@@ -124,13 +143,15 @@ module Sirena
             Box.new(item, left, top).tap { |placed| @boxes << placed }
           end
 
-          def segment(from_x, from_y, to_x, to_y)
-            @segments << "M#{from_x.round(3)},#{from_y.round(3)} " \
-                         "L#{to_x.round(3)},#{to_y.round(3)}"
+          # @param depth [Integer] the depth of the parent the line leaves
+          def segment(from_x, from_y, to_x, to_y, depth)
+            curve("M#{from_x.round(3)},#{from_y.round(3)} " \
+                  "L#{to_x.round(3)},#{to_y.round(3)}", depth)
           end
 
-          def curve(path)
+          def curve(path, depth)
             @segments << path
+            @depths << depth
           end
 
           def build_scene
@@ -149,9 +170,15 @@ module Sirena
 
           def edges(shift)
             @segments.each_with_index.map do |path, index|
-              Edge.new(id: "link#{index}", stroke_width: stroke_width,
-                       path: shift_path(path, shift))
+              Edge.new(id: "link#{index}", path: shift_path(path, shift),
+                       **connector_look(@depths[index]))
             end
+          end
+
+          def connector_look(depth)
+            look = rules.arrow(depth)
+            { stroke_width: look.fetch(:stroke_width, stroke_width),
+              stroke: look[:stroke], dasharray: look[:dasharray] }
           end
 
           def stroke_width
@@ -181,13 +208,21 @@ module Sirena
           end
 
           def appearance(item)
+            look = rules.node(item.level - 1, boxless: item.boxless)
             { shape: item.boxless ? "boxless" : "default",
-              boxed: !item.boxless, fill: item.fill || FILL,
-              corner_radius: corner_radius }
+              boxed: !item.boxless, fill: item.fill || look[:fill] || FILL,
+              corner_radius: corner_of(look) }.merge(
+                look.slice(:stroke, :stroke_width, :dasharray, :font_colour),
+              )
           end
 
           def corner_radius
             0.0
+          end
+
+          # PlantUML draws a corner of half the RoundCorner it is given.
+          def corner_of(look)
+            look[:round_corner] ? look[:round_corner] / 2.0 : corner_radius
           end
 
           def label(item, left_edge, top)

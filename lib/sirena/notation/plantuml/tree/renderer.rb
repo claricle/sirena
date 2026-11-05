@@ -11,16 +11,18 @@ module Sirena
         # Mermaid mindmap renderer it extends draws coloured, centred shapes.
         class Renderer < Sirena::Renderer::Mindmap
           INK = "#181818"
+          INK_TEXT = "#000000"
           FONT = "sans-serif"
-          private_constant :INK, :FONT
+          private_constant :INK, :INK_TEXT, :FONT
 
           protected
 
           def render_connection(edge, svg)
             svg.add_element(Svg::Path.new.tap do |path|
               path.d = edge.path
-              path.stroke = INK
+              path.stroke = edge.stroke || INK
               path.stroke_width = edge.stroke_width.to_s
+              path.stroke_dasharray = edge.dasharray
               path.fill = "none"
             end)
           end
@@ -30,7 +32,8 @@ module Sirena
             group.add_child(outline(node)) if node.boxed
             label = node.labels.first
             label.lines.each do |line|
-              group.add_child(text_line(line, label.font_size))
+              group.add_child(text_line(line, label.font_size,
+                                        node.font_colour || INK_TEXT))
             end
             svg.add_element(group)
           end
@@ -41,15 +44,17 @@ module Sirena
             Svg::Rect.new(x: node.x, y: node.y, width: node.width,
                           height: node.height, rx: node.corner_radius,
                           ry: node.corner_radius, fill: node.fill,
-                          stroke: INK, stroke_width: "1.5")
+                          stroke: node.stroke || INK,
+                          stroke_width: (node.stroke_width || 1.5).to_s,
+                          stroke_dasharray: node.dasharray)
           end
 
-          def text_line(line, size)
+          def text_line(line, size, colour)
             Svg::Text.new.tap do |text|
               text.x = line.x
               text.y = line.y
               text.content = line.text
-              text.fill = "#000000"
+              text.fill = colour
               text.font_size = size.to_s
               text.font_family = FONT
             end
