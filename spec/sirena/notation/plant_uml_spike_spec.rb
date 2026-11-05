@@ -228,7 +228,7 @@ RSpec.describe Sirena::Notation::PlantUML do
         .to eq(%i[class_diagram sequence_diagram activity_diagram
                   usecase_diagram component_diagram
                   state_diagram entity_diagram network_diagram timing_diagram
-                  ebnf_diagram object_diagram]).and be_frozen
+                  ebnf_diagram mindmap gantt object_diagram]).and be_frozen
     end
   end
 
