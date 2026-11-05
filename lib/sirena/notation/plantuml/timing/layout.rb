@@ -147,7 +147,7 @@ module Sirena
           end
 
           def tab_edge(title)
-            MARGIN + 6 + Drawing::Face.width(title, size: 14, bold: true)
+            MARGIN + 6 + Drawing::Face.lucida_width(title, size: 14, bold: true)
           end
 
           def axis_line

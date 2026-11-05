@@ -20,6 +20,13 @@ module Sirena
                                        text.to_s, font_size: size)[:width]
           end
 
+          # @return [Float] the width in Lucida Grande, the face the JAR
+          #   measures sans-serif text with on the machine it was measured on
+          def lucida_width(text, size:, bold: false)
+            TextMeasurement.measure_in(bold ? :lucida_bold : :lucida,
+                                       text.to_s, font_size: size)[:width]
+          end
+
           # @return [Float] the middle of a line whose baseline is given
           def middle(baseline, size)
             baseline - (MIDDLE * size)
