@@ -5,11 +5,15 @@ require_relative "caption_layout"
 require_relative "class_name"
 require_relative "class_header"
 require_relative "end_texts"
+require_relative "member_icon"
+require_relative "member_pitch"
 require_relative "member_rule"
 require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "qualified_association_layout"
 require_relative "rank_chain"
+require_relative "rank_hierarchy"
+require_relative "note_layout"
 require_relative "relation_label_separator"
 require_relative "scene"
 require_relative "sequence/text_advances"
@@ -34,8 +38,13 @@ module Sirena
         COMPACT_BOTTOM_PAD = 6.95
         COMPACT_HEAD_GAP = 17.5
         COMPACT_GROUP_GAP = 8.0
+        # The head rule is 32 below the top and the first row 17.5 below it,
+        # the last row 6.95 above the bottom, less the pitch of that row.
+        PROPORTIONAL_MEMBER_BASE_HEIGHT = 40.0
         COMPACT_RULE_BASE_HEIGHT = 34.488
         MARKER_LENGTH = 12.0
+        THICK_LINE = 4.0
+        JUNCTION_DOT_RADIUS = 2.0
         MARKER_HALF_WIDTH = 7.0
         LABEL_OFFSET = 10.0
         LABEL_GAP = 2.0
@@ -102,7 +111,8 @@ module Sirena
         DIAMOND_HALF_WIDTH = 4.0
         ARROW_MARKERS = %i[association dependency].freeze
         FILLED_MARKERS = %i[association dependency composition].freeze
-        private_constant :COMPACT_BOTTOM_PAD, :COMPACT_HEAD_GAP,
+        private_constant :PROPORTIONAL_MEMBER_BASE_HEIGHT,
+                         :COMPACT_BOTTOM_PAD, :COMPACT_HEAD_GAP,
                          :COMPACT_GROUP_GAP, :COMPACT_RULE_BASE_HEIGHT
         private_constant :MARGIN, :COLUMN_GAP, :ROW_GAP,
                          :ANNOTATED_RELATION_SLOT_WIDTH, :BOX_PADDING,
@@ -289,10 +299,20 @@ module Sirena
         end
 
         def standard_box_scene(diagram, specifications)
-          box_width = widest_box(specifications)
           chain = RankChain.for(diagram)
           return chain_scene(diagram, chain, specifications) if chain
+          return noted_scene(diagram, specifications) if diagram.notes.any?
 
+          hierarchy = RankHierarchy.for(diagram)
+          if hierarchy
+            return hierarchy_scene(diagram, hierarchy, specifications)
+          end
+
+          grid_scene(diagram, specifications)
+        end
+
+        def grid_scene(diagram, specifications)
+          box_width = widest_box(specifications)
           boxes = position_boxes(rows_by_package(specifications, diagram),
                                  box_width, stable_centers?(diagram),
                                  intrinsic_box_widths?(diagram), diagram)
@@ -354,6 +374,79 @@ module Sirena
           Scene.new(width: width, height: height,
                     boxes: boxes, frames: [],
                     relations: scene_relations(diagram, boxes, nodes))
+        end
+
+        def hierarchy_scene(diagram, hierarchy, specifications)
+          items = specifications.reject { |item| item[:note] }
+          sizes = item_sizes(items)
+          corners = hierarchy.place(sizes, [MARGIN, MARGIN])
+          boxes = chain_boxes(items, corners, sizes)
+          width, height = chain_dimensions(boxes)
+          Scene.new(width: width, height: height, boxes: boxes, frames: [],
+                    relations: scene_relations(diagram, boxes))
+        end
+
+        def item_sizes(items)
+          items.to_h { |item| [item[:id], [item[:width], item[:height]]] }
+        end
+
+        # Classes placed as without notes, then the notes around them; the
+        # whole drawing is moved so its top left corner keeps the margin.
+        def noted_scene(diagram, specifications)
+          items = specifications.reject { |item| item[:note] }
+          sizes, corners = noted_class_corners(diagram, items)
+          boxes = margined_boxes(diagram, items, sizes, corners)
+          width, height = chain_dimensions(boxes)
+          Scene.new(width: width, height: height, boxes: boxes, frames: [],
+                    relations: scene_relations(diagram, boxes))
+        end
+
+        # The class boxes and their notes, moved so the drawing's top left
+        # corner keeps the margin.
+        def margined_boxes(diagram, items, sizes, corners)
+          boxes = chain_boxes(items, corners, sizes)
+          shift = noted_shift(boxes + noted_boxes(diagram, boxes))
+          boxes = chain_boxes(items, shifted_corners(corners, shift), sizes)
+          boxes + noted_boxes(diagram, boxes)
+        end
+
+        def noted_class_corners(diagram, items)
+          hierarchy = RankHierarchy.for(diagram)
+          return hierarchy_corners(hierarchy, items) if hierarchy
+
+          grid_corners(diagram, items)
+        end
+
+        def hierarchy_corners(hierarchy, items)
+          sizes = item_sizes(items)
+          [sizes, hierarchy.place(sizes, [MARGIN, MARGIN])]
+        end
+
+        def grid_corners(diagram, items)
+          rows = rows_by_package(items, diagram)
+          placed = position_boxes(rows, widest_box(items),
+                                  stable_centers?(diagram),
+                                  intrinsic_box_widths?(diagram), diagram)
+          [placed.to_h { |box| [box.id, [box.width, box.height]] },
+           placed.to_h { |box| [box.id, [box.x, box.y]] }]
+        end
+
+        def noted_boxes(diagram, boxes)
+          NoteLayout.new(diagram, method(:note_line_width)).place(boxes)
+        end
+
+        def note_line_width(text)
+          measure_text(text, font_size: font_size * (13.0 / 14.0))[:width]
+        end
+
+        def noted_shift(boxes)
+          [MARGIN - boxes.map(&:x).min, MARGIN - boxes.map(&:y).min]
+        end
+
+        def shifted_corners(corners, shift)
+          corners.transform_values do |(left, top)|
+            [left + shift.first, top + shift.last]
+          end
         end
 
         def chain_sizes(specifications, diagram)
@@ -700,8 +793,7 @@ module Sirena
         # `nodes` holds each junction node as `[x, y, width, height]` by the
         # index of its relation; without one the legs meet at the middle.
         def scene_relations(diagram, boxes, nodes = {})
-          build_relations(diagram, boxes, nodes) +
-            build_note_links(diagram.notes, boxes)
+          build_relations(diagram, boxes, nodes)
         end
 
         def box_specification(klass, diagram)
@@ -721,15 +813,66 @@ module Sirena
         end
 
         def complete_box_specification(record, klass, diagram, details)
+          record = proportional_member_box(record, klass, diagram, details)
           record = compact_empty_box(record, details[:member_rows], diagram)
           record = smetana_hide_circle_box(record, klass, diagram, details)
           adjust_plain_empty_width(record, klass, diagram, details[:names])
           record = package_relation_box(record, klass, diagram, details)
           record = multiline_title_box(record, klass, details)
           record = isolated_box_sizes(record, klass, diagram, details)
+          with_box_context(record, klass, diagram, details)
+        end
+
+        def with_box_context(record, klass, diagram, details)
           record.merge(name_rows: details[:names].size,
                        floating_generic: details[:generic],
                        **box_context(klass, diagram))
+        end
+
+        # A box of one name row and some members is as wide as its widest
+        # proportional row and as tall as the reference row pitch makes it.
+        def proportional_member_box(record, klass, diagram, details)
+          rows = details[:member_rows]
+          return record if rows.empty? || record.fetch(:title_rows).size > 1
+
+          record.merge(
+            width: [*standard_title_widths(details[:names]),
+                    *member_row_widths(klass, rows, diagram)].max,
+            height: pitched_member_height(klass, diagram, rows),
+            compact_members: true,
+          )
+        end
+
+        MEMBER_PORTIONS = /\A(?:hide|show)\b.*\b(?:members|attributes|methods|
+                          fields)\z/xi
+        private_constant :MEMBER_PORTIONS
+
+        # An empty field or method group keeps its 8-high compartment unless
+        # a `hide` or `show` line is in play.
+        def empty_gaps?(diagram)
+          diagram.directives.none? { |line| line.match?(MEMBER_PORTIONS) }
+        end
+
+        def member_row_widths(klass, rows, diagram)
+          insets = member_insets_for(klass, diagram)
+          klass.body.each_index.filter_map do |index|
+            next unless insets[index]
+
+            member_row_width(rows[index], klass.body[index], insets[index])
+          end
+        end
+
+        def member_insets_for(klass, diagram)
+          MemberIcon.insets(klass.body.map(&:kind),
+                            klass.body.map(&:visibility),
+                            MemberIcon.enabled?(diagram.directives))
+        end
+
+        def member_row_width(row, member, inset)
+          text = MemberIcon.visible_text(row, member.visibility,
+                                         inset == MemberIcon::TEXT_INSET)
+          inset + standard_text_width(text, font_size) +
+            MemberIcon::TEXT_PLAIN
         end
 
         def isolated_box_sizes(record, klass, diagram, details)
@@ -1025,7 +1168,8 @@ module Sirena
 
           record.merge(
             width: isolated_standard_width(klass, details),
-            height: isolated_standard_height(klass, details[:member_rows]),
+            height: isolated_standard_height(klass, diagram,
+                                             details[:member_rows]),
             compact_members: header_rows(klass).empty?,
           )
         end
@@ -1073,16 +1217,30 @@ module Sirena
           Sequence::TextAdvances.width(text, font_size: size)
         end
 
-        def isolated_standard_height(klass, member_rows)
-          MEMBER_NOTE_CLASS_HEIGHT +
-            (member_rows.size * MEMBER_NOTE_ROW_HEIGHT) +
-            (header_rows(klass).size * STANDARD_STEREOTYPE_ROW_HEIGHT)
+        def isolated_standard_height(klass, diagram, member_rows)
+          headers = header_rows(klass)
+          unless headers.empty?
+            return MEMBER_NOTE_CLASS_HEIGHT +
+                (member_rows.size * MEMBER_NOTE_ROW_HEIGHT) +
+                (headers.size * STANDARD_STEREOTYPE_ROW_HEIGHT)
+          end
+
+          pitched_member_height(klass, diagram, member_rows)
+        end
+
+        def pitched_member_height(klass, diagram, member_rows)
+          PROPORTIONAL_MEMBER_BASE_HEIGHT +
+            MemberPitch.layout(klass.body.map(&:kind), member_rows,
+                               gaps: empty_gaps?(diagram)).last
         end
 
         def box_context(klass, diagram)
           modifiers = klass.body.map { |member| rule_modifiers(member) }
           { member_modifiers: modifiers, package: klass.package,
             member_kinds: klass.body.map(&:kind),
+            member_visibilities: klass.body.map(&:visibility),
+            icons_enabled: MemberIcon.enabled?(diagram.directives),
+            empty_gaps: empty_gaps?(diagram),
             chain: diagram.package_chain(klass.package) }
         end
 
@@ -1167,8 +1325,7 @@ module Sirena
         end
 
         def visibility_mark(visibility)
-          { public: "+", private: "-", protected: "#", package: "~" }
-            .fetch(visibility, "")
+          MemberIcon.mark(visibility)
         end
 
         # Classes outside any package first, then each package's own classes
@@ -1441,20 +1598,6 @@ module Sirena
           end
         end
 
-        # A dashed line from each note to the class it is attached to.
-        def build_note_links(notes, boxes)
-          by_name = boxes.to_h { |box| [box.id, box] }
-          notes.each_with_index.filter_map do |note, index|
-            next unless note.target
-
-            ends = [by_name.fetch("note-#{index}"), by_name.fetch(note.target)]
-            edge = relation_endpoints(*ends)
-            Scene::Relation.new(id: "note-link-#{index}", dashed: true,
-                                path: relation_path(edge),
-                                texts: [], markers: [])
-          end
-        end
-
         def box_contents(item, horizontal, vertical, width)
           return [note_texts(item, horizontal, vertical), []] if item[:note]
 
@@ -1548,49 +1691,90 @@ module Sirena
 
         def compact_row_geometry(item)
           offsets = compact_row_offsets(item)
-          last = item.fetch(:compact_bottom) - COMPACT_BOTTOM_PAD
+          last = item.fetch(:compact_bottom) - COMPACT_BOTTOM_PAD -
+            empty_gap(item, :tail)
           baselines = offsets.map { |offset| last - offsets.last + offset }
-          { head: baselines.first - COMPACT_HEAD_GAP, baselines: baselines }
+          { head: baselines.first - COMPACT_HEAD_GAP - offsets.first,
+            baselines: baselines }
+        end
+
+        # `:lead` or `:tail`: the gap an empty field or method group keeps.
+        def empty_gap(item, side)
+          return 0.0 unless item[:empty_gaps]
+
+          MemberPitch.public_send(side, item[:member_kinds])
         end
 
         def compact_row_offsets(item)
-          boundaries = member_group_boundaries(item[:member_kinds])
-          item[:member_rows].each_index.map do |index|
-            (index * MEMBER_NOTE_ROW_HEIGHT) +
-              (boundaries.count { |at| at <= index } * COMPACT_GROUP_GAP)
-          end
+          MemberPitch.layout(item[:member_kinds], item[:member_rows],
+                             gaps: item[:empty_gaps]).first
         end
 
-        # A thin rule between the field group and the method group.
+        # A thin rule between the field group and the method group, and one
+        # closing whichever of them is empty.
         def group_rules(item, horizontal, width, baselines)
           return [] unless item[:compact_members]
 
-          member_group_boundaries(item[:member_kinds]).map do |index|
-            vertical = ((baselines[index - 1] + baselines[index]) / 2.0) - 3.0
-            segment(horizontal, vertical, horizontal + width, vertical)
+          group_rule_heights(item, baselines).map do |at|
+            segment(horizontal, at, horizontal + width, at)
           end
+        end
+
+        def group_rule_heights(item, baselines)
+          member_group_boundaries(item[:member_kinds]).map do |index|
+            ((baselines[index - 1] + baselines[index]) / 2.0) - 3.0
+          end + empty_group_rules(item, baselines)
+        end
+
+        def empty_group_rules(item, baselines)
+          [(baselines.first - COMPACT_HEAD_GAP if
+              empty_gap(item, :lead).positive?),
+           (baselines.last + COMPACT_BOTTOM_PAD if
+              empty_gap(item, :tail).positive?)].compact
         end
 
         def member_texts(item, horizontal, width, baselines)
+          insets = member_insets(item)
           item[:member_rows].each_with_index.filter_map do |content, index|
             next if content.empty?
 
-            modifiers = item[:member_modifiers][index]
-            member_text_row(content, modifiers, [horizontal, width],
-                            baselines.fetch(index))
+            text = member_text_row(visible_member(item, content, index),
+                                   item[:member_modifiers][index],
+                                   [horizontal, width, insets[index]],
+                                   baselines.fetch(index))
+            text.icon = member_icon(item, index, horizontal, baselines)
+            text
           end
         end
 
-        # A separator's title is centred; any other row starts at the padding.
+        def member_icon(item, index, horizontal, baselines)
+          return unless item[:icons_enabled]
+
+          MemberIcon.at(item[:member_visibilities][index],
+                        item[:member_kinds][index], horizontal,
+                        baselines.fetch(index))
+        end
+
+        def member_insets(item)
+          MemberIcon.insets(item[:member_kinds], item[:member_visibilities],
+                            item[:icons_enabled])
+        end
+
+        def visible_member(item, content, index)
+          MemberIcon.visible_text(content, item[:member_visibilities][index],
+                                  item[:icons_enabled])
+        end
+
+        # A separator's title is centred; any other row starts at its inset.
         def member_text_row(content, modifiers, box, vertical)
-          left, width = box
+          left, width, inset = box
           if modifiers.include?(:rule)
             return scene_text(content, left + (width / 2.0), vertical,
                               "member", "middle")
           end
 
           role = modifiers.include?(:abstract) ? "member_abstract" : "member"
-          scene_text(content, left + BOX_PADDING, vertical, role, "start")
+          scene_text(content, left + inset, vertical, role, "start")
         end
 
         # A separator is a rule across the box, broken around its title.
@@ -1612,7 +1796,7 @@ module Sirena
                             vertical)]
           end
 
-          gap = (measured_width(content) / 2.0) + 4.0
+          gap = standard_text_width(content, font_size) / 2.0
           middle = horizontal + (width / 2.0)
           [segment(horizontal, vertical, middle - gap, vertical),
            segment(middle + gap, vertical, right, vertical)]
@@ -1623,10 +1807,16 @@ module Sirena
           item[:member_rows].each_with_index.filter_map do |content, index|
             next unless item[:member_modifiers][index].include?(:static)
 
-            vertical = baselines.fetch(index) + 2.0
-            left = horizontal + BOX_PADDING
-            segment(left, vertical, left + measured_width(content), vertical)
+            underline(item, horizontal, content, [index, baselines])
           end
+        end
+
+        def underline(item, horizontal, content, (index, baselines))
+          vertical = baselines.fetch(index) + 2.0
+          left = horizontal + member_insets(item).fetch(index)
+          width = standard_text_width(visible_member(item, content, index),
+                                      font_size)
+          segment(left, vertical, left + width, vertical)
         end
 
         def build_relations(diagram, boxes, nodes)
@@ -1675,7 +1865,8 @@ module Sirena
         def junction_relation_scenes(relation, index, details, context)
           ends, end_texts, junctions = details
           by_name = context.fetch(:by_name)
-          junction = junction_box(context.fetch(:nodes)[index], ends)
+          junction = junction_box(context.fetch(:nodes)[index], ends,
+                                  context.fetch(:engine))
           entries = junctions.map { |entry| [*entry, by_name] }
           junction_scenes(relation, index, [ends, junction, end_texts], entries)
         end
@@ -1700,14 +1891,18 @@ module Sirena
 
         # The junction node, or a zero-size one at the middle of the
         # relation when the grid placed the classes.
-        def junction_box(node, ends)
+        def junction_box(node, ends, engine)
           node ||= [*midpoint(*relation_endpoints(*ends).values_at(:left,
                                                                    :right)),
                     0.0, 0.0]
           x, y, width, height = node
-          Scene::Box.new(id: "junction", x: x, y: y, width: width,
-                         height: height, texts: [], separators: [],
-                         kind: "junction")
+          # Smetana's legs stop at the junction node's edge; the default
+          # engine runs one line through its middle.
+          return junction_node(x, y, width, height) unless engine == :dot
+
+          Scene::Box.new(id: "junction", x: x + (width / 2),
+                         y: y + (height / 2), width: 0.0, height: 0.0,
+                         texts: [], separators: [], kind: "junction")
         end
 
         def relation_scene(relation, id, endpoints, end_texts, style = {})
@@ -1735,7 +1930,38 @@ module Sirena
           drawn_markers = marker_scenes(markers.slice(*sides), endpoints,
                                         half_width: half_width)
           drawn_markers << label_arrow_scene(relation, endpoints)
-          drawn_markers.compact
+          scale_thick_markers(drawn_markers.compact, relation, endpoints)
+        end
+
+        # PlantUML grows an arrowhead with the line it ends: a head on a
+        # line thicker than 4 is as many times larger as 4 goes into it.
+        def scale_thick_markers(markers, relation, endpoints)
+          factor = relation.width.to_f / THICK_LINE
+          return markers unless factor > 1.0
+
+          markers.each do |marker|
+            next unless marker.shape == "polygon"
+
+            tip = marker_tip(marker, endpoints)
+            marker.points = scaled_points(marker.points, tip, factor)
+          end
+        end
+
+        def marker_tip(marker, endpoints)
+          first = point_pairs(marker.points).first
+          endpoints.values_at(:left, :right).compact.min_by do |tip|
+            JsMath.hypot(*tip.zip(first).map { |at, from| at - from })
+          end
+        end
+
+        def scaled_points(points, tip, factor)
+          formatted_points(point_pairs(points).map do |point|
+            point.zip(tip).map { |at, from| from + ((at - from) * factor) }
+          end)
+        end
+
+        def point_pairs(points)
+          points.split.map { |pair| pair.split(",").map(&:to_f) }
         end
 
         def relation_path_for(relation, endpoints)
@@ -1911,19 +2137,35 @@ module Sirena
         # the pinned references draw it.
         def junction_scenes(relation, index, boxes, owners)
           (from, to), junction, end_texts = boxes
+          legs = junction_legs(relation, index, [from, junction, to],
+                               end_texts)
+          legs.first.markers << junction_dot(junction)
+          [*legs, *owners.map { |entry| owner_link(junction, *entry) }]
+        end
+
+        def junction_legs(relation, index, (from, junction, to), end_texts)
           swap = %i[up left].include?(relation.direction)
-          markers = relation.markers
-          [relation_scene(
-            relation, "relation-#{index}-from",
-            relation_endpoints(from, junction), end_texts,
-            sides: %i[left], markers: junction_markers(markers, swap, :left)
-          ),
-           relation_scene(
-             relation, "relation-#{index}-to",
-             relation_endpoints(junction, to), end_texts,
-             sides: %i[right], markers: junction_markers(markers, swap, :right)
-           ),
-           *owners.map { |entry| owner_link(junction, *entry) }]
+          [[:left, "from", from, junction],
+           [:right, "to", junction, to]].map do |side, name, tail, head|
+            markers = junction_markers(relation.markers, swap, side)
+            relation_scene(relation, "relation-#{index}-#{name}",
+                           relation_endpoints(tail, head), end_texts,
+                           sides: [side], markers: markers)
+          end
+        end
+
+        def junction_node(left, top, width, height)
+          Scene::Box.new(id: "junction", x: left, y: top, width: width,
+                         height: height, texts: [], separators: [],
+                         kind: "junction")
+        end
+
+        # The filled dot where an association class meets its relation.
+        def junction_dot(junction)
+          Scene::Marker.new(shape: "dot", filled: true,
+                            cx: junction.x + (junction.width / 2),
+                            cy: junction.y + (junction.height / 2),
+                            r: JUNCTION_DOT_RADIUS)
         end
 
         def junction_markers(markers, swap, side)
@@ -2162,7 +2404,8 @@ module Sirena
         def relation_text_label(relation, endpoints, sides)
           return unless sides.include?(:left)
 
-          relation_label(visible_relation_label(relation.label), endpoints)
+          relation_label(visible_relation_label(relation.label), endpoints,
+                         [relation.width.to_f - 1.0, 0.0].max / 2)
         end
 
         def visible_relation_label(label)
@@ -2180,7 +2423,7 @@ module Sirena
 
         # Above the middle of a flat line; beside a steep one, centred on
         # its middle, as PlantUML draws a label in its own rank.
-        def relation_label(content, endpoints)
+        def relation_label(content, endpoints, clearance = 0.0)
           return unless content
 
           return self_relation_label(content, endpoints) if endpoints[:control]
@@ -2188,10 +2431,11 @@ module Sirena
           left, right = endpoints.values_at(:left, :right)
           horizontal, middle = midpoint(left, right)
           if steep?(left, right)
-            return steep_relation_label(content, horizontal, middle)
+            return steep_relation_label(content, horizontal + clearance,
+                                        middle)
           end
 
-          scene_text(content, horizontal, middle - LABEL_OFFSET,
+          scene_text(content, horizontal, middle - LABEL_OFFSET - clearance,
                      "relation_label", "middle")
         end
 

@@ -10,6 +10,17 @@ module Sirena
       # renderer. The records contain coordinates and drawable roles only;
       # the renderer chooses colours, fonts and strokes from the theme.
       class Scene < Sirena::Layout::Scene
+        # The visibility icon before a class member: `shape` is circle,
+        # square, diamond or triangle, centred on `cx`, `cy`; `visibility`
+        # names the colour pair; a method's icon is `filled`.
+        class Icon < Lutaml::Model::Serializable
+          attribute :shape, :string
+          attribute :visibility, :string
+          attribute :filled, :boolean
+          attribute :cx, :float
+          attribute :cy, :float
+        end
+
         class Text < Lutaml::Model::Serializable
           attribute :content, :string
           attribute :x, :float
@@ -21,6 +32,7 @@ module Sirena
           attribute :family, :string
           attribute :font_style, :string
           attribute :weight, :string
+          attribute :icon, Icon
         end
 
         class Segment < Lutaml::Model::Serializable

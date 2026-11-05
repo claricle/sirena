@@ -13,10 +13,10 @@ module Sirena
         # A state belongs to the scope that first mentions it. `[*]` is the
         # start of the scope when it begins a transition and the end of the
         # scope when it ends one; `[H]` and `[H*]` are the scope's shallow and
-        # deep history, or those of the state they follow. History has no
-        # shape of its own in the model, so it is drawn as a small state
-        # labelled `H` or `H*`. `scale` only resizes PlantUML's output and is
-        # read and dropped. A line outside this subset raises
+        # deep history, or those of the state they follow. History is a state
+        # labelled `H` or `H*`, which the layout draws as a circle. `scale`
+        # only resizes PlantUML's output; {.scale_of} reads it for the
+        # renderer. A line outside this subset raises
         # {UnsupportedConstructError}.
         class Reader
           NAME = /[A-Za-z_][A-Za-z0-9_.]*/
@@ -42,10 +42,11 @@ module Sirena
           SKIN_BLOCK = /\Askinparam[ \t]+\S+[ \t]*\{\z/i
           SKIPPED = /\A(?:scale\b|title\b|hide\b|skinparam\b|left to right
                      direction\z|top to bottom direction\z)/xi
+          SCALE = /\Ascale[ \t]+(\d+(?:\.\d+)?)(?:[ \t]+(width|height))?\z/i
           HISTORY = { "[H]" => ["history", "H"],
                       "[H*]" => ["deep_history", "H*"] }.freeze
           private_constant :NAME, :MARK, :ARROW, :END_STATE, :STATE_OPEN,
-                           :TRANSITION, :REVERSED, :NOTE, :END_NOTE,
+                           :TRANSITION, :REVERSED, :SCALE, :NOTE, :END_NOTE,
                            :STYLE_BLOCK, :END_STYLE, :SKIN_BLOCK,
                            :DESCRIPTION, :SKIPPED, :HISTORY
 
@@ -56,6 +57,17 @@ module Sirena
             diagram_lines(text).reject do |line, _|
               line.empty? || line.start_with?("'")
             end
+          end
+
+          # @return [Array(Float, Symbol), nil] the number of a `scale` line
+          #   and what it sizes: :width, :height or :factor
+          def self.scale_of(source)
+            match = lines_of(source).filter_map do |line,|
+              SCALE.match(line)
+            end.first
+            return unless match
+
+            [match[1].to_f, (match[2] || "factor").downcase.to_sym]
           end
 
           def self.diagram_lines(text)
