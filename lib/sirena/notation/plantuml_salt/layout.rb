@@ -6,6 +6,9 @@ require_relative "mark"
 require_relative "run"
 require_relative "scene"
 require_relative "grid_marks"
+require_relative "group_marks"
+require_relative "scroll_marks"
+require_relative "tab_marks"
 require_relative "tree_marks"
 require_relative "widget_marks"
 
@@ -18,6 +21,9 @@ module Sirena
       class Layout
         include TreeMarks
         include GridMarks
+        include GroupMarks
+        include ScrollMarks
+        include TabMarks
         include WidgetMarks
 
         TREE_ROW_HEIGHT = TreeMarks::ROW_HEIGHT
@@ -61,12 +67,19 @@ module Sirena
         # The outer size of a block: its cells, the gaps between them and,
         # outside a tree, a pad on every side.
         def measure(block)
+          return tab_extent(block) if block.tabs?
+
           columns = column_widths(block)
           heights = block.rows.map { |row| row_height(block, row) }
           return [columns.sum - TreeMarks::OVERHANG, heights.sum] if block.tree?
 
-          [grid_extent(columns) + overhang(block, columns),
-           grid_extent(heights)]
+          grid_size(block, columns, heights)
+        end
+
+        def grid_size(block, columns, heights)
+          room = group_room(block)
+          [grid_extent(columns) + overhang(block, columns) + room[0],
+           grid_extent(heights) + room[1]]
         end
 
         def grid_extent(sizes)
@@ -127,12 +140,20 @@ module Sirena
         end
 
         def place(block, area)
+          return place_tabs(block, area) if block.tabs?
+
+          frame, origin = group_boxes(block, area)
           columns = column_widths(block)
-          lefts, tops = slots(block, columns, area)
+          lefts, tops = slots(block, columns, origin)
           place_rows(block, columns, lefts, tops)
           return tree_decor(block, columns, area) if block.tree?
+          return group_frame(block, frame, lefts, tops) if framed?(block)
 
           grid_rules(block, area, lefts, tops)
+        end
+
+        def framed?(block)
+          block.titled? || block.scroll?
         end
 
         # Where each column and each row starts.
@@ -173,6 +194,7 @@ module Sirena
             @marks << Mark.new(:text, box, run: run)
             left = box.right
           end
+          left
         end
 
         def rule(left, top, width, height, **look)
