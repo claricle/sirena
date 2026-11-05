@@ -13,7 +13,8 @@ module Sirena
         module Pen
           INK = "#181818"
           COMMAND_KEYS = { move: %i[x y], line: %i[x y],
-                           curve: %i[cx cy x y], close: [] }.freeze
+                           curve: %i[cx cy x y],
+                           bezier: %i[c1x c1y c2x c2y x y], close: [] }.freeze
           FONT_SIZE = 12
 
           def marks
@@ -33,7 +34,8 @@ module Sirena
 
           # @param commands [Array<Hash, Array>] path commands, each a hash
           #   for {Svg::Path.build_path_data} or a tuple such as
-          #   `[:line, x, y]` or `[:curve, cx, cy, x, y]`
+          #   `[:line, x, y]`, `[:curve, cx, cy, x, y]` or
+          #   `[:bezier, c1x, c1y, c2x, c2y, x, y]`
           def path(commands, **style)
             hashes = commands.map { |one| command_hash(one) }
             data = Svg::Path.build_path_data(hashes)
