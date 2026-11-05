@@ -16,6 +16,9 @@ module Sirena
           MARGIN = 16.0
           PAD = 16.0
           TITLE_HEIGHT = 30.0
+          # A cloud's outline is an ellipse, so it needs this much more room
+          # on each side before its corners clear what it holds.
+          CLOUD_ROOM = 0.45
 
           # @param graph [Graph]
           # @return [Scene]
@@ -23,6 +26,7 @@ module Sirena
             @graph = graph
             @sizes = {}
             @inner = {}
+            @inset = {}
             top = arrange(nil)
             placed = []
             place(top.offsets, [MARGIN, MARGIN + title_room], 0, placed)
@@ -74,6 +78,17 @@ module Sirena
             inner = @inner[node] = arrange(node)
             @sizes[node] = [[inner.width, Metrics.header_width(node)].max,
                             inner.height]
+            inflate_cloud(node)
+          end
+
+          def inflate_cloud(node)
+            return @sizes[node] unless node.kind == :cloud
+
+            width, height = @sizes[node]
+            inset = @inset[node] = [width * CLOUD_ROOM, height * CLOUD_ROOM]
+            @sizes[node] = [width, height].zip(inset).map do |size, room|
+              size + (2 * room)
+            end
           end
 
           def pairs(scope)
@@ -109,9 +124,14 @@ module Sirena
           end
 
           def place_inside(box, depth, placed)
-            inside = [box.x + PAD,
-                      box.y + PAD + Metrics.header_height(box.node)]
-            place(@inner[box.node].offsets, inside, depth + 1, placed)
+            place(@inner[box.node].offsets, inside_origin(box), depth + 1,
+                  placed)
+          end
+
+          def inside_origin(box)
+            room = @inset.fetch(box.node, [0.0, 0.0])
+            [box.x + PAD + room[0],
+             box.y + PAD + room[1] + Metrics.header_height(box.node)]
           end
 
           def routes(placed)

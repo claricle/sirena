@@ -112,7 +112,7 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Parser do
 
   it "refuses an unknown statement" do
     expect do
-      parse(%((*) --> "S"\nskinparam x y))
+      parse(%((*) --> "S"\nfrobnicate x y))
     end.to raise_unsupported("statement")
   end
 end

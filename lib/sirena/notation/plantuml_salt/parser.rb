@@ -84,7 +84,8 @@ module Sirena
         def add_row(line)
           block = @stack.last
           depth, line = nesting(block, line)
-          cells = line.split("|", -1).map { |cell| widget(cell.strip) }
+          cells = line.split("|", -1)
+            .map { |cell| widget(cell.strip, tree: block.tree?) }
           block.rows << Row.new(cells, depth: depth)
         end
 
@@ -94,10 +95,13 @@ module Sirena
           [marks.length, line.delete_prefix(marks).strip]
         end
 
-        def widget(text)
+        # In a tree table a quoted cell is the text itself, quotes
+        # included; elsewhere it is a text field.
+        def widget(text, tree: false)
           return Widget.new(:empty) if text.empty? || text == "."
 
-          labelled(text) || Widget.new(:text, Markup.runs(text))
+          plain = tree && FIELD.match?(text)
+          (labelled(text) unless plain) || Widget.new(:text, Markup.runs(text))
         end
 
         def labelled(text)

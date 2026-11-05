@@ -8,6 +8,7 @@ require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "qualified_association_layout"
 require_relative "rank_chain"
+require_relative "relation_label_separator"
 require_relative "scene"
 require_relative "sequence/text_advances"
 require_relative "../../js_math"
@@ -24,6 +25,14 @@ module Sirena
         ANNOTATED_RELATION_SLOT_WIDTH = 160.0
         BOX_PADDING = 12.0
         ROW_HEIGHT = 22.0
+        # A compact box, sized from the reference row pitch, draws its member
+        # rows from the bottom edge: last baseline 6.95 above it, the head
+        # rule 17.5 above the first baseline, 8.0 between a field group and
+        # a method group.
+        COMPACT_BOTTOM_PAD = 6.95
+        COMPACT_HEAD_GAP = 17.5
+        COMPACT_GROUP_GAP = 8.0
+        COMPACT_RULE_BASE_HEIGHT = 34.488
         MARKER_LENGTH = 12.0
         MARKER_HALF_WIDTH = 7.0
         LABEL_OFFSET = 10.0
@@ -91,6 +100,8 @@ module Sirena
         DIAMOND_HALF_WIDTH = 4.0
         ARROW_MARKERS = %i[association dependency].freeze
         FILLED_MARKERS = %i[association dependency composition].freeze
+        private_constant :COMPACT_BOTTOM_PAD, :COMPACT_HEAD_GAP,
+                         :COMPACT_GROUP_GAP, :COMPACT_RULE_BASE_HEIGHT
         private_constant :MARGIN, :COLUMN_GAP, :ROW_GAP,
                          :ANNOTATED_RELATION_SLOT_WIDTH, :BOX_PADDING,
                          :ROW_HEIGHT, :MARKER_LENGTH, :MARKER_HALF_WIDTH,
@@ -737,14 +748,41 @@ module Sirena
 
           record.merge(title_rows: details[:names],
                        width: qualified_box_width(klass, diagram, details),
-                       height: qualified_box_height(diagram, details[:generic]))
+                       height: qualified_height_with_members(
+                         klass, diagram, details
+                       ),
+                       compact_members: details[:member_rows].any?)
+        end
+
+        # A qualified box that carries members grows by their rows; its fixed
+        # height is only right for a box that is a bare title.
+        def qualified_height_with_members(klass, diagram, details)
+          height = qualified_box_height(diagram, details[:generic])
+          rows = details[:member_rows].size
+          return height if rows.zero?
+
+          base = qualified_compact?(diagram) ? COMPACT_RULE_BASE_HEIGHT : height
+          gaps = member_group_boundaries(klass.body.map(&:kind)).size
+          base + (rows * MEMBER_NOTE_ROW_HEIGHT) + (gaps * COMPACT_GROUP_GAP)
+        end
+
+        # Indexes of the rows that open a method group after a field group.
+        def member_group_boundaries(kinds)
+          kinds.each_cons(2).with_index(1).filter_map do |(left, right), index|
+            index if left == :field && right == :method
+          end
         end
 
         def qualified_box_width(klass, diagram, details)
           widths = standard_title_widths(details[:names])
           widths << qualified_generic_width(widths.max, details[:generic])
           widths << qualified_incident_width(klass, diagram)
+          widths.concat(member_widths(details[:member_rows]))
           widths.compact.max
+        end
+
+        def member_widths(rows)
+          rows.map { |row| measured_width(row) + (BOX_PADDING * 2) }
         end
 
         def qualified_generic_width(title_width, generic)
@@ -807,7 +845,7 @@ module Sirena
           members = details[:member_rows]
           widths = standard_title_widths(details[:names]) +
             isolated_class_kind_member_widths(members)
-          record.merge(width: widths.max,
+          record.merge(width: widths.max, compact_members: true,
                        height: hide_members_box_height(members))
         end
 
@@ -825,6 +863,7 @@ module Sirena
             isolated_class_kind_member_widths(details[:member_rows])
           record.merge(
             title_rows: details[:names], width: widths.max,
+            compact_members: true,
             height: MEMBER_NOTE_CLASS_HEIGHT +
               (details[:member_rows].size * MEMBER_NOTE_ROW_HEIGHT)
           )
@@ -862,6 +901,7 @@ module Sirena
 
           record.merge(
             width: hide_circle_box_width(details),
+            compact_members: true,
             height: HIDE_CIRCLE_BASE_HEIGHT +
               (details[:member_rows].size * MEMBER_NOTE_ROW_HEIGHT),
           )
@@ -981,6 +1021,7 @@ module Sirena
           record.merge(
             width: isolated_standard_width(klass, details),
             height: isolated_standard_height(klass, details[:member_rows]),
+            compact_members: header_rows(klass).empty?,
           )
         end
 
@@ -1036,6 +1077,7 @@ module Sirena
         def box_context(klass, diagram)
           modifiers = klass.body.map { |member| rule_modifiers(member) }
           { member_modifiers: modifiers, package: klass.package,
+            member_kinds: klass.body.map(&:kind),
             chain: diagram.package_chain(klass.package) }
         end
 
@@ -1403,6 +1445,7 @@ module Sirena
         def box_contents(item, horizontal, vertical, width)
           return [note_texts(item, horizontal, vertical), []] if item[:note]
 
+          item = item.merge(compact_bottom: vertical + item[:height])
           texts, cursor = title_texts(item, horizontal, vertical, width)
           members, separators = member_contents(
             item, horizontal, cursor, width
@@ -1432,7 +1475,15 @@ module Sirena
             return vertical + MULTILINE_TITLE_BASELINE
           end
 
-          vertical + BOX_PADDING + font_size
+          baseline = vertical + BOX_PADDING + font_size
+          return baseline unless compact_single_title?(item)
+
+          [baseline, compact_row_geometry(item)[:head] - 8.0].min
+        end
+
+        def compact_single_title?(item)
+          item[:compact_members] && item[:title_rows].size == 1 &&
+            item[:member_rows].any?
         end
 
         def title_row_height(item)
@@ -1456,24 +1507,64 @@ module Sirena
         def member_contents(item, horizontal, cursor, width)
           return [[], []] if item[:member_rows].empty?
 
-          separator = member_separator(horizontal, cursor, width)
-          [member_texts(item, horizontal, cursor, width),
-           [separator, *underlines(item, horizontal, cursor),
-            *rules(item, horizontal, cursor, width)]]
+          rows = member_row_geometry(item, cursor)
+          [member_texts(item, horizontal, width, rows[:baselines]),
+           member_lines(item, horizontal, width, rows)]
         end
 
-        def member_separator(horizontal, cursor, width)
-          vertical = cursor - (ROW_HEIGHT / 2)
-          segment(horizontal, vertical, horizontal + width, vertical)
+        def member_lines(item, horizontal, width, rows)
+          base = rows[:baselines]
+          [segment(horizontal, rows[:head], horizontal + width, rows[:head]),
+           *group_rules(item, horizontal, width, base),
+           *underlines(item, horizontal, base),
+           *rules(item, horizontal, width, base)]
         end
 
-        def member_texts(item, horizontal, cursor, width)
+        # Baselines of the member rows and the y of the rule above them. The
+        # default box stacks rows from the title; a compact box, whose height
+        # was sized from the reference row pitch, stacks them up from its
+        # bottom edge so the last row always lies inside it.
+        def member_row_geometry(item, cursor)
+          return compact_row_geometry(item) if item[:compact_members]
+
+          { head: cursor - (ROW_HEIGHT / 2),
+            baselines: item[:member_rows].each_index.map do |index|
+              cursor + 6.0 + (index * ROW_HEIGHT)
+            end }
+        end
+
+        def compact_row_geometry(item)
+          offsets = compact_row_offsets(item)
+          last = item.fetch(:compact_bottom) - COMPACT_BOTTOM_PAD
+          baselines = offsets.map { |offset| last - offsets.last + offset }
+          { head: baselines.first - COMPACT_HEAD_GAP, baselines: baselines }
+        end
+
+        def compact_row_offsets(item)
+          boundaries = member_group_boundaries(item[:member_kinds])
+          item[:member_rows].each_index.map do |index|
+            (index * MEMBER_NOTE_ROW_HEIGHT) +
+              (boundaries.count { |at| at <= index } * COMPACT_GROUP_GAP)
+          end
+        end
+
+        # A thin rule between the field group and the method group.
+        def group_rules(item, horizontal, width, baselines)
+          return [] unless item[:compact_members]
+
+          member_group_boundaries(item[:member_kinds]).map do |index|
+            vertical = ((baselines[index - 1] + baselines[index]) / 2.0) - 3.0
+            segment(horizontal, vertical, horizontal + width, vertical)
+          end
+        end
+
+        def member_texts(item, horizontal, width, baselines)
           item[:member_rows].each_with_index.filter_map do |content, index|
             next if content.empty?
 
             modifiers = item[:member_modifiers][index]
-            vertical = cursor + 6.0 + (index * ROW_HEIGHT)
-            member_text_row(content, modifiers, [horizontal, width], vertical)
+            member_text_row(content, modifiers, [horizontal, width],
+                            baselines.fetch(index))
           end
         end
 
@@ -1490,12 +1581,12 @@ module Sirena
         end
 
         # A separator is a rule across the box, broken around its title.
-        def rules(item, horizontal, cursor, width)
+        def rules(item, horizontal, width, baselines)
           item[:member_rows].each_with_index.flat_map do |content, index|
             next [] unless item[:member_modifiers][index].include?(:rule)
 
-            vertical = cursor + 2.0 + (index * ROW_HEIGHT)
-            rule_segments(content, horizontal, vertical, width)
+            rule_segments(content, horizontal, baselines.fetch(index) - 4.0,
+                          width)
           end
         end
 
@@ -1513,11 +1604,11 @@ module Sirena
         end
 
         # A static member is underlined, as PlantUML draws it.
-        def underlines(item, horizontal, cursor)
+        def underlines(item, horizontal, baselines)
           item[:member_rows].each_with_index.filter_map do |content, index|
             next unless item[:member_modifiers][index].include?(:static)
 
-            vertical = cursor + 8.0 + (index * ROW_HEIGHT)
+            vertical = baselines.fetch(index) + 2.0
             left = horizontal + BOX_PADDING
             segment(left, vertical, left + measured_width(content), vertical)
           end
@@ -1529,11 +1620,19 @@ module Sirena
           engine = RankChain.engine(diagram)
           context = { by_name: by_name, owners: owners, nodes: nodes,
                       engine: engine }
-          diagram.relations.each_with_index.flat_map do |relation, index|
-            next [] if relation.layout_only?
+          scenes = diagram.relations.each_with_index.flat_map do |rel, index|
+            next [] if rel.layout_only?
 
-            relation_scenes(relation, index, context)
+            relation_scenes(rel, index, context)
           end
+          separate_relation_labels(scenes)
+        end
+
+        def separate_relation_labels(scenes)
+          RelationLabelSeparator.new(
+            size: font_size * SMALL_TEXT_SCALE,
+            width_of: method(:end_text_width),
+          ).call(scenes)
         end
 
         def relation_scenes(relation, index, context)
@@ -1602,8 +1701,18 @@ module Sirena
           texts = relation_texts(relation, endpoints, end_texts, sides)
           drawn_markers = relation_markers(relation, markers, sides, endpoints)
           Scene::Relation.new(id: id, dashed: relation.dashed?, texts: texts,
+                              dotted: relation.dotted?,
+                              stroke: svg_colour(relation.color),
+                              stroke_width: relation.width,
                               path: relation_path_for(relation, endpoints),
                               markers: drawn_markers)
+        end
+
+        # A bracketed colour is a CSS name (`red`) or bare hex digits.
+        def svg_colour(color)
+          return unless color
+
+          color.match?(/\A(?:\h{3}|\h{6}|\h{8})\z/) ? "##{color}" : color
         end
 
         def relation_markers(relation, markers, sides, endpoints)

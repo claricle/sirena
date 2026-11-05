@@ -71,6 +71,9 @@ module Sirena
           attribute :id, :string
           attribute :path, :string
           attribute :dashed, :boolean
+          attribute :dotted, :boolean
+          attribute :stroke, :string
+          attribute :stroke_width, :float
           attribute :markers, Marker, collection: true
           attribute :texts, Text, collection: true
         end

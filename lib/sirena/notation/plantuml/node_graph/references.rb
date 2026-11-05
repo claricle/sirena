@@ -15,7 +15,13 @@ module Sirena
           EDGE = /\A(?<a>#{REF})(?:::(?<aport>#{IDENT}))?\s*(?<arrow>#{ARROW})
                   \s*(?<b>#{REF})(?:::(?<bport>#{IDENT}))?
                   (?:\s*:\s*(?<label>.*))?\z/x
+          ER_LEFT = /\|o|\|\||\}o|\}\|/
+          ER_RIGHT = /o\||\|\||o\{|\|\{/
+          ER_EDGE = /\A(?<a>#{REF})\s+(?<l>#{ER_LEFT})(?<line>[-.]+)
+                     (?<r>#{ER_RIGHT})\s+(?<b>#{REF})
+                     (?:\s*:\s*(?<label>.*))?\z/x
           STEREOTYPE = /<<\s*(?<st>.*?)\s*>>/
+          LEADING_COLOR = /\A\#(?<color>[0-9A-Fa-f]{3,8}|[A-Za-z]+)\s+/
           COLOR = /\s+#(?<color>[0-9A-Fa-f]{3,8}|[A-Za-z]+)\z/
 
           module_function
