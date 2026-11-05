@@ -2,6 +2,10 @@
 
 require_relative "../../../layout/elk_placement"
 require_relative "routes"
+require_relative "ranking"
+require_relative "level_edges"
+require_relative "row"
+require_relative "rows"
 
 module Sirena
   module Notation
@@ -19,12 +23,17 @@ module Sirena
           MARGIN = 20.0
           PAD = 24.0
           HEADER = 36.0
-          NOTE_GAP = 30.0
-          private_constant :MARGIN, :PAD, :NOTE_GAP
+          # The step of one rank between the tops of two composites, as
+          # PlantUML measures it: a start marker and the gap after it.
+          RANK_DROP = 68.0
+          private_constant :MARGIN, :PAD, :RANK_DROP
 
           # @param graph [Hash] the graph from the state layout's build_graph
-          def initialize(graph)
+          # @param flat [Array<Array(String, String)>] the transitions drawn
+          #   on one rank
+          def initialize(graph, flat = [])
             @graph = graph
+            @flat = flat
             @options = graph[:layoutOptions]
             @nodes = {}
             @parent = {}
@@ -36,6 +45,8 @@ module Sirena
           def place
             index(@graph[:children], nil)
             adopt_notes
+            ranking = Ranking.new(@graph[:children], @graph[:edges])
+            @level_edges = LevelEdges.new(@graph[:edges], @parent, ranking)
             place_level(nil, @graph[:children])
             Routes.new(@graph, @nodes, @parent, @levels).write
           end
@@ -91,59 +102,87 @@ module Sirena
           def position(members)
             return if members.empty?
 
-            elk = lay_out(members)
-            spots = elk[:children].to_h { |placed| [placed[:id], placed] }
-            members.each { |node| spot(node, spots.fetch(node[:id])) }
+            rows = rows_of(members)
+            elk = lay_out(rows)
+            settle(rows, elk)
             elk
           end
 
-          def lay_out(members)
+          def settle(rows, elk)
+            spots = elk[:children].to_h { |placed| [placed[:id], placed] }
+            drop = entered_peers(rows)
+            rows.each do |row|
+              spot(row, spots.fetch(row.id), drop.include?(row.id))
+            end
+            follow(elk, drop)
+          end
+
+          # A route ELK drew to a row that has moved follows it down: its
+          # end and last bend travel with the row.
+          def follow(elk, moved)
+            elk[:edges].each do |edge|
+              next unless edge[:targets].intersect?(moved)
+
+              (edge[:sections] || []).each { |section| lower(section) }
+            end
+          end
+
+          def lower(section)
+            [section[:endPoint], section[:bendPoints]&.last].compact
+              .each { |point| point[:y] += RANK_DROP }
+          end
+
+          # Composites side by side, the one a start marker enters stands a
+          # rank below the others, as PlantUML ranks the cycle between them
+          # from the entry.
+          def entered_peers(rows)
+            peers = @level_edges.peer_ids(rows)
+            entered = peers.select { |id| entered_by_start?(id) }
+            entered.size == peers.size ? [] : entered
+          end
+
+          def entered_by_start?(id)
+            @graph[:edges].any? do |edge|
+              edge[:targets].first == id &&
+                @nodes[edge[:sources].first]&.dig(:metadata, :state_type) ==
+                  "start"
+            end
+          end
+
+          def lay_out(rows)
             elk = {
               id: "level", layoutOptions: @options,
-              children: members.map { |node| unit_of(node) },
-              edges: level_edges(members)
+              children: rows.map { |row| unit_of(row) },
+              edges: @level_edges.of(rows)
             }
             ::Sirena::Layout::ElkPlacement.apply(elk)
           end
 
-          # A node and the note beside it are laid out as one box.
-          def unit_of(node)
-            note = @notes[node[:id]]
-            return node.slice(:id, :width, :height) unless note
-
-            { id: node[:id], width: node[:width] + note[:width] + NOTE_GAP,
-              height: [node[:height], note[:height]].max }
-          end
-
-          def level_edges(members)
-            ids = members.map { |node| node[:id] }
-            @graph[:edges].filter_map do |edge|
-              pair = Routes.level_pair(edge, @parent, ids)
-              next unless pair
-
-              { id: edge.object_id.to_s, sources: [pair.first],
-                targets: [pair.last] }
+          # The members of a level, those joined by a flat transition
+          # gathered into one row in the order they chain.
+          def rows_of(members)
+            by_id = members.to_h { |node| [node[:id], node] }
+            rows = Rows.new(@flat).chains(by_id.keys).map do |ids|
+              Row.new(by_id.values_at(*ids), @notes)
             end
+            reversed_peers(rows)
           end
 
-          def spot(node, placed)
-            node[:x] = placed[:x]
-            node[:y] = placed[:y]
-            note = @notes[node[:id]]
-            place_note(node, note) if note
+          # Composites side by side that a transition joins stand in the
+          # reverse of the order they are listed, as PlantUML draws them.
+          def reversed_peers(rows)
+            peers = @level_edges.peer_ids(rows)
+            spots = rows.each_index.select { |at| peers.include?(rows[at].id) }
+            order = spots.zip(spots.reverse).to_h
+            rows.each_index.map { |at| rows[order.fetch(at, at)] }
           end
 
-          # The unit's box holds the target and its note side by side.
-          def place_note(node, note)
-            left = note.dig(:metadata, :note_position) == "left"
-            unit_x = node[:x]
-            note[:x] = left ? unit_x : unit_x + node[:width] + NOTE_GAP
-            node[:x] = unit_x + note[:width] + NOTE_GAP if left
-            center_note(node, note)
+          def unit_of(row)
+            { id: row.id, width: row.width, height: row.height }
           end
 
-          def center_note(node, note)
-            note[:y] = node[:y] + ((node[:height] - note[:height]) / 2.0)
+          def spot(row, placed, dropped)
+            row.place(placed[:x], placed[:y] + (dropped ? RANK_DROP : 0))
           end
 
           def shift_for(owner, children)

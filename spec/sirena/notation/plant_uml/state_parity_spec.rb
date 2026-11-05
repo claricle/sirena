@@ -164,4 +164,27 @@ RSpec.describe Sirena::Notation::PlantUML::State do
       expect(rule.attributes["y1"].to_f).to eq(parent[1] + 22.0)
     end
   end
+
+  context "with two composites that lead to each other" do
+    let(:source) do
+      "@startuml\n[*] --> Entered\nstate Entered {\n  [*] --> Idle\n  " \
+        "Idle --> Other\n  Other --> Idle\n}\n" \
+        "state Other {\n  [*] --> Inner\n}\n@enduml"
+    end
+
+    it "keeps the composite no start marker enters at the top" do
+      expect(box("Other")[1]).to be < box("Entered")[1]
+    end
+
+    it "stands the composite the start marker enters a rank below the other" do
+      expect(box("Entered")[1] - box("Other")[1]).to eq(68.0)
+    end
+
+    it "draws the start marker's arrow down to the top of that composite" do
+      path = nodes("path", group("transition-root_start_to_Entered")).first
+      entered = box("Entered")
+      ends = path.attributes["d"].scan(/-?\d+(?:\.\d+)?/).map(&:to_f).last(2)
+      expect(ends.last).to be_within(1.0).of(entered[1])
+    end
+  end
 end
