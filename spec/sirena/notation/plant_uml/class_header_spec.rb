@@ -107,4 +107,21 @@ RSpec.describe Sirena::Notation::PlantUML::ClassHeader do
 
     expect(svg).not_to include("monospace")
   end
+
+  describe "the kind row" do
+    let(:related) { "interface List\nclass ArrayList\nList <|-- ArrayList\n" }
+
+    def texts_of(src)
+      svg = Sirena.render("@startuml\n#{src}@enduml\n", notation: :plantuml)
+      REXML::XPath.match(REXML::Document.new(svg), "//text").map(&:text)
+    end
+
+    it "is left out of a related interface, whose spot names its kind" do
+      expect(texts_of(related)).not_to include("<<interface>>")
+    end
+
+    it "is kept when `hide circle` removes the spot" do
+      expect(texts_of("hide circle\n#{related}")).to include("<<interface>>")
+    end
+  end
 end

@@ -111,6 +111,13 @@ module Sirena
           GLYPHS[kind]
         end
 
+        # @return [Boolean] whether `hide circle` is in force
+        def circles_hidden?(diagram)
+          diagram.directives.any? do |line|
+            line.match?(/\Ahide[ \t]+circle\z/i)
+          end
+        end
+
         private
 
         # Class name to kind, empty when `hide circle` is in force.
@@ -118,12 +125,6 @@ module Sirena
           return {} if circles_hidden?(diagram)
 
           diagram.classes.to_h { |klass| [klass.name, klass.kind] }
-        end
-
-        def circles_hidden?(diagram)
-          diagram.directives.any? do |line|
-            line.match?(/\Ahide[ \t]+circle\z/i)
-          end
         end
 
         def rule_empty_compartments(box)

@@ -155,6 +155,7 @@ module Sirena
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
           diagram = IRReader.call(graph)
+          @kind_in_spot = !ClassHeader.circles_hidden?(diagram)
           body = if member_note_family?(diagram)
                    member_note_scene(diagram)
                  elsif class_note_pair_family?(diagram)
@@ -1121,9 +1122,17 @@ module Sirena
         end
 
         def header_rows(klass)
-          kind = ["<<#{klass.kind}>>"] unless klass.kind == :class
+          kind = ["<<#{klass.kind}>>"] unless spot_names_kind?(klass)
           tags = klass.stereotypes.map { |tag| "<<#{tag}>>" }
           [*kind, *(tags.join(" ") unless tags.empty?)]
+        end
+
+        # A class whose one-line name carries a circle needs no `<<kind>>`
+        # row.
+        def spot_names_kind?(klass)
+          klass.kind == :class ||
+            (@kind_in_spot && !ClassHeader.glyph(klass.kind).nil? &&
+              ClassName.lines(klass.name).one?)
         end
 
         def name_rows(klass, separate_generics: false)
