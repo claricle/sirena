@@ -18,12 +18,12 @@ module Sirena
           # separate it from the names.
           SOURCE =
             '(?:(?<=[ \t\[])[oxOX])?(?:<<|<|//|/|\\\\\\\\|\\\\)?' \
-            '-(?:(?i:\[hidden\])|\[\#\h{3}(?:\h{3})?\])?-?' \
+            '-(?:(?i:\[hidden\])|\[\#(?:\h{3}(?:\h{3})?|[a-zA-Z]+)\])?-?' \
             '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[oxOX](?=[ \t\]?]|\z))?'
           TOKEN = /\A([oxOX])?(<<|<|\/\/|\/|\\\\|\\)?(--?)
                    (>>|>|\\\\|\\|\/\/|\/)?([oxOX])?\z/x
           HIDDEN = /\[hidden\]/i
-          COLOUR = /\[(\#\h{6}|\#\h{3})\]/
+          COLOUR = /\[(\#(?:\h{6}|\h{3}|[a-z]+))\]/i
           LEFT = { "<<" => :open, "<" => :filled, "//" => :upper_open,
                    "/" => :upper, "\\\\" => :lower_open,
                    "\\" => :lower }.freeze
@@ -32,20 +32,26 @@ module Sirena
                     "/" => :lower }.freeze
 
           # `-[hidden]>` takes its row and its label's room but draws nothing.
-          # `-[#22A722]>` draws the shaft and head in that colour.
+          # `-[#22A722]>` and `-[#red]>` draw the shaft and head in that colour.
           #
           # @return [Array(ArrowStyle, Boolean), nil] the style and whether
           #   the arrow is written pointing at the sender's name
           def read(token)
             match = TOKEN.match(token.sub(HIDDEN, "").sub(COLOUR, "")) or return
             lead, left, shaft, right, trail = match.captures
-            return unless fits?(lead, left, right, trail)
+            return unless fits?(lead, left, right, trail) && colour?(token)
 
             build(ends(lead, left, LEFT), ends(trail, right, RIGHT),
                   shaft.length == 2, !left.nil? && right.nil?, looks(token))
           end
 
           private
+
+          # A colour in the brackets must be one PlantUML is known to draw.
+          def colour?(token)
+            written = token[COLOUR, 1]
+            written.nil? || !Fill.read(written).nil?
+          end
 
           def looks(token)
             { hidden: HIDDEN.match?(token),
