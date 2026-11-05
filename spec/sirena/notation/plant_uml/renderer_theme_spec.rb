@@ -82,7 +82,7 @@ RSpec.describe Sirena::Notation::PlantUML::Renderer do
   def expected_partial_summary
     {
       paints: expected_paints,
-      font_families: %w[sans-serif monospace],
+      font_families: %w[sans-serif],
       box_widths: %w[0.5 0.5],
       relation_widths: %w[1 1],
     }
@@ -102,7 +102,7 @@ RSpec.describe Sirena::Notation::PlantUML::Renderer do
     svg = Sirena.render(class_source, notation: :plantuml, theme: theme)
 
     expect(Digest::SHA256.hexdigest(svg)).to eq(
-      "7d071dd743a035eaea430a50168fa4a5cc7758a8d607671a6c7b54ef414b8ea8",
+      "2bb010cd967d6f2b4f72c9d23e442e2f22b384808fee1a8c38fc12ae8e02c6ba",
     )
   end
 

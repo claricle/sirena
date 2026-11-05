@@ -6,7 +6,7 @@
 
   radar_id = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
 
-  radar_label = "[" %x22 1*( !( "\"" ) ANY ) as label %x22 "]"
+  radar_label = "[" "\"" 1*( !( "\"" ) ANY ) as label "\"" "]"
 
   radar_title = "title" sp radar_text as title line_end
 

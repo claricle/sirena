@@ -9,7 +9,12 @@ require_relative "plantuml/sequence"
 require_relative "plantuml/activity"
 require_relative "plantuml/usecase"
 require_relative "plantuml/component"
+require_relative "plantuml/entity"
 require_relative "plantuml/state"
+require_relative "plantuml/objects"
+require_relative "plantuml/tree"
+require_relative "plantuml/gantt"
+require_relative "plantuml/further"
 require_relative "plantuml/style"
 
 module Sirena
@@ -37,13 +42,20 @@ module Sirena
       # not, can make it raise.
       OPENER = /\A(?:\xEF\xBB\xBF)?
                 (?:#{PAD}*(?:'[^\r\n]*)?(?:\r\n|\r|\n))*
-                #{PAD}*@startuml(?![A-Za-z0-9_])/xn
+                #{PAD}*@start(?:uml|ebnf|nwdiag|mindmap|wbs|gantt)
+                (?![A-Za-z0-9_])/xn
       # The families tried in order; the first whose query claims the source
       # reads it, and the class diagram is what is left.
-      FAMILIES = [[State, :state?], [Usecase, :usecase?],
+      FAMILIES = [[Further, :further?], [State, :state?], [Usecase, :usecase?],
                   [Component, :component?], [Activity, :activity?],
-                  [Sequence, :sequence?]].freeze
-      private_constant :PAD, :OPENER, :FAMILIES
+                  [Entity, :entity?], [Sequence, :sequence?],
+                  [Objects, :objects?]].freeze
+      # The diagram kinds with a front end of their own, named by the
+      # `@start` tag that opens them.
+      TAGGED = /\A(?:\xEF\xBB\xBF)?
+                (?:#{PAD}*(?:'[^\r\n]*)?(?:\r\n|\r|\n))*
+                #{PAD}*@start(mindmap|wbs|gantt)(?![A-Za-z0-9_])/xn
+      private_constant :PAD, :OPENER, :FAMILIES, :TAGGED
 
       # @return [Symbol] the notation identifier
       def id
@@ -58,7 +70,9 @@ module Sirena
       # @return [Array<Symbol>] diagram types, in display order
       def types
         %i[class_diagram sequence_diagram activity_diagram usecase_diagram
-           component_diagram state_diagram].freeze
+           component_diagram state_diagram entity_diagram
+           network_diagram timing_diagram ebnf_diagram mindmap gantt
+           object_diagram].freeze
       end
 
       # @param source [String] any String, including binary or invalid UTF-8
@@ -74,11 +88,19 @@ module Sirena
       # @param source [String] PlantUML source
       # @return [Notation::Parsed]
       def parse(source)
+        tag = TAGGED.match(source.b)&.[](1)
+        return Gantt.parse(source) if tag == "gantt"
+        return Tree.parse(source, tag) if tag
+
         family = FAMILIES.find do |klass, query|
           klass.public_send(query, source)
         end
-        return family.first.parse(source) if family
+        family ? family.first.parse(source) : parse_class(source)
+      end
 
+      private
+
+      def parse_class(source)
         Notation::Parsed.new(
           type: :class_diagram,
           diagram: IRAdapter.call(Parser.new.parse(source)),

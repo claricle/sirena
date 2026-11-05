@@ -14,6 +14,13 @@ module SaltHelpers
     Sirena::Notation::PlantUMLSalt::Parser.new.parse(source)
   end
 
+  # The elements the diagram draws, not the white canvas behind it.
+  def drawn(doc, name)
+    doc.get_elements("//#{name}").reject do |element|
+      element.attributes["stroke"] == "none"
+    end
+  end
+
   def svg_texts(svg)
     REXML::Document.new(svg).get_elements("//text").map(&:text)
   end
@@ -31,8 +38,7 @@ module SaltHelpers
   end
 
   def plain_cell(cell)
-    cell.gsub(%r{\A[\s+]+|</?b>|\s+\z}, "").sub(/\A"(.*)"\z/, '\1')
-      .gsub(/\s+/, " ")
+    cell.gsub(%r{\A[\s+]+|</?b>|\s+\z}, "").gsub(/\s+/, " ")
   end
 
   # Whether every needle occurs in the haystack, each after the one before.

@@ -227,7 +227,8 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(plantuml.types)
         .to eq(%i[class_diagram sequence_diagram activity_diagram
                   usecase_diagram component_diagram
-                  state_diagram]).and be_frozen
+                  state_diagram entity_diagram network_diagram timing_diagram
+                  ebnf_diagram mindmap gantt object_diagram]).and be_frozen
     end
   end
 
@@ -312,10 +313,10 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     it "propagates unsupported constructs instead of partially rendering" do
-      source = wrap("class A", "object Color")
+      source = wrap("class A", "hexagon Color")
 
       expect { Sirena.render(source, notation: :plantuml) }
-        .to raise_error(unsupported_error, /object is not yet supported/)
+        .to raise_error(unsupported_error, /hexagon is not yet supported/)
     end
   end
 
@@ -461,10 +462,10 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     it "says not yet supported, names the construct, the line and the text" do
-      expect { parse_plantuml(wrap("class A", "object Color")) }
+      expect { parse_plantuml(wrap("class A", "hexagon Color")) }
         .to raise_error(unsupported_error,
-                        "PlantUML object is not yet supported (line 3): " \
-                        '"object Color"')
+                        "PlantUML hexagon is not yet supported (line 3): " \
+                        '"hexagon Color"')
     end
 
     it "keeps a lone apostrophe after text as text, as PlantUML does" do

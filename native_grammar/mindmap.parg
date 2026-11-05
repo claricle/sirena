@@ -4,7 +4,7 @@
 
   mindmap_word_char = ALPHA / DIGIT / "_"
 
-  mindmap_comment_indent = %x09 / %x0A / %x0B / %x0C / %x0D / %x20 / %xA0 / %x1680 / %x2000-200A / %x2028 / %x2029 / %x202F / %x205F / %x3000 / %xFEFF
+  mindmap_comment_indent = "\t" / "\n" / char_vt / char_ff / "\r" / " " / char_nbsp / char_ogham_space_mark / %x2000-200A / char_line_separator / char_paragraph_separator / char_narrow_nbsp / char_medium_math_space / char_ideographic_space / char_bom
 
   mindmap_icon = "::icon(" 1*( !")" ANY ) as icon ")"
 
@@ -18,7 +18,7 @@
 
   mindmap_hexagon = "{{" 1*( !"}" ANY ) as content "}}" "" as shape_hexagon
 
-  mindmap_square = "[" ( %x22 1*( !( "\"" ) ANY ) as content %x22 / 1*( !"]" ANY ) as content ) "]" "" as shape_square
+  mindmap_square = "[" ( "\"" 1*( !( "\"" ) ANY ) as content "\"" / 1*( !"]" ANY ) as content ) "]" "" as shape_square
 
   mindmap_round_comment_line = newline *mindmap_comment_indent "%%" !"{" *( !( "\n" / "\r" ) ANY ) [newline]
 
@@ -26,7 +26,7 @@
 
   mindmap_round_quoted = 1*( mindmap_round_comment_line / 1*( !( "\n" / "\r" / "\"" ) ANY ) / n_22 ) as content
 
-  mindmap_round = "(" ( %x22 mindmap_round_quoted %x22 "" as round_quoted / mindmap_round_unquoted ) ")" "" as shape_round
+  mindmap_round = "(" ( "\"" mindmap_round_quoted "\"" "" as round_quoted / mindmap_round_unquoted ) ")" "" as shape_round
 
   mindmap_shaped = *mindmap_word_char ( mindmap_circle / mindmap_bang / mindmap_cloud / mindmap_hexagon / mindmap_square / mindmap_round )
 

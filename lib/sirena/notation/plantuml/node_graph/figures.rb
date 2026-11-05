@@ -48,6 +48,7 @@ module Sirena
           USECASE = [[:ellipse]].freeze
           CLOUD = [[:cloud]].freeze
           INTERFACE = [[:circle, [0.5, 0, 0, 10], 8]].freeze
+          CIRCLE = [[:circle, [0.5, 0, 0, 8], 8]].freeze
 
           # What a container is drawn as; any other kind is a plain frame.
           CONTAINERS = { node: NODE, database: DATABASE, cloud: CLOUD,
@@ -56,12 +57,13 @@ module Sirena
           BY_KIND = { actor: ACTOR, usecase: USECASE, component: COMPONENT,
                       interface: INTERFACE, portin: PORT, portout: PORT,
                       note: NOTE, database: DATABASE, node: NODE, cloud: CLOUD,
-                      file: FILE }.freeze
+                      file: FILE, circle: CIRCLE }.freeze
 
           # Where the label goes, by kind: `top` from the box top, else
           # centred; `dy` moves a centred label, `shift` and `shrink` its
           # horizontal middle and width, `left` pins it to the left.
           LABELS = { actor: { top: 52 }, interface: { top: 22 },
+                     circle: { top: 20 },
                      portin: { top: 16 }, portout: { top: 16 },
                      note: { top: 4, left: 8 }, database: { dy: 6 },
                      component: { shift: 6, shrink: 6 },

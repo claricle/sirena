@@ -4,6 +4,9 @@ require_relative "graph"
 require_relative "reader"
 require_relative "references"
 require_relative "link"
+require_relative "data_reader"
+require_relative "archimate"
+require_relative "entity_reader"
 require_relative "../unsupported_construct_error"
 
 module Sirena
@@ -13,10 +16,13 @@ module Sirena
         # Reads use case, component and deployment source into a {Graph}.
         class Parser
           include References
+          include DataReader
+          include EntityReader
 
           KEYWORDS = %w[package node database cloud rectangle folder frame
                         storage artifact card namespace component file
-                        interface actor usecase portin portout].freeze
+                        interface actor usecase portin portout circle
+                        archimate].freeze
           CONTAINER = /\A(?<kw>#{KEYWORDS.join('|')})\s+(?<rest>.*?)\s*\{\z/i
           LEAF = /\A(?<kw>#{KEYWORDS.join('|')})\s+(?<rest>.+)\z/im
           SHORT = /\A(?<ref>\[[^\]]+\]|\([^()]+\)|:[^:\n]+:)
@@ -25,7 +31,7 @@ module Sirena
           BARE = /\A(?<id>#{IDENT})\s*(?<tail><<.*>>)\z/
           LOLLIPOP = /\A\(\)\s+(?<rest>.+)\z/
           SKIPPED = /\A(?:skinparam|hide|show|allow_?mixing|scale)\b/i
-          SHAPES = /\A(?:queue|stack|agent|boundary|control|entity|collections|
+          SHAPES = /\A(?:queue|stack|agent|boundary|control|collections|
                     hexagon|label|person)\s/xi
           KEYWORDS_REFUSED = /\A(?:legend|header|footer|sprite|mainframe|
                               together)\b/xi
@@ -67,7 +73,8 @@ module Sirena
             @text = text
             return if skip?(text)
 
-            handlers = %i[close container note short lollipop leaf bare edge]
+            handlers = %i[close container note short lollipop data entity leaf
+                          bare er_edge edge]
             handlers.any? { |name| send(:"take_#{name}", text) } ||
               refuse("statement")
           end
@@ -86,6 +93,7 @@ module Sirena
           def skip_setting(text)
             return unless text.match?(SKIPPED)
 
+            @mixing ||= text.match?(DataReader::MIXING)
             skip_block if text.end_with?("{")
             :skipped
           end
@@ -205,14 +213,18 @@ module Sirena
           # node of `kind`.
           def declare(kind, rest)
             stereo = rest[STEREOTYPE, :st]
-            color = rest[COLOR, :color]
-            rest = rest.sub(STEREOTYPE, "").sub(COLOR, "").strip
-            id, label = names(rest)
+            color = rest[COLOR, :color] || rest[LEADING_COLOR, :color]
+            id, label = names(bare_name(rest))
             kind = :usecase if kind == :usecase
             node = place(label, kind, id)
-            node.stereotype = stereo
-            node.color = color
+            node.stereotype = kind == :archimate ? nil : stereo
+            node.color = kind == :archimate ? Archimate.color(color) : color
             node
+          end
+
+          def bare_name(rest)
+            rest.sub(STEREOTYPE, "").sub(COLOR, "").sub(LEADING_COLOR, "")
+              .strip
           end
 
           def names(rest)
