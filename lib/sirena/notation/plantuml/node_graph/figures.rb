@@ -17,9 +17,12 @@ module Sirena
           FILE = [[:rect, ORIGIN, FULL],
                   [:polygon, [[1, 0, -8, 0], [1, 0, 0, 8], [1, 0, -8, 8]],
                    "#FFFFFF"]].freeze
-          COMPONENT = [[:rect, ORIGIN, FULL],
-                       [:rect, [0, 0, -6, 8], [0, 0, 12, 6]],
-                       [:rect, [0, 0, -6, 18], [0, 0, 12, 6]]].freeze
+          # The box is rounded; its glyph is a small component icon at the top
+          # right, a body with two tabs on its left.
+          COMPONENT = [[:rect, ORIGIN, FULL, 2.5],
+                       [:rect, [1, 0, -20, 5], [0, 0, 15, 8]],
+                       [:rect, [1, 0, -23, 7], [0, 0, 6, 2]],
+                       [:rect, [1, 0, -23, 11], [0, 0, 6, 2]]].freeze
           NOTE = [[:polygon, [[0, 0, 0, 0], [1, 0, -8, 0], [1, 0, 0, 8],
                               [1, 1, 0, 0], [0, 1, 0, 0]], "#FEFFDD"]].freeze
           ACTOR = [[:circle, [0.5, 0, 0, 8], 8],
@@ -41,19 +44,16 @@ module Sirena
                   [:polygon, [[1, 0, -8, 8], [1, 0, 0, 0], [1, 1, 0, -8],
                               [1, 1, -8, 0]]],
                   [:rect, [0, 0, 0, 8], [1, 1, -8, -8]]].freeze
-          # The tab of a folder or frame, drawn over the box's top left edge.
-          TAB = [:polygon, [[0, 0, 0, 0], [0, 0, 56, 0], [0, 0, 64, 8],
-                            [0, 0, 64, 12], [0, 0, 0, 12]], "none"].freeze
-          FOLDER = [[:rect, ORIGIN, FULL], TAB].freeze
-          FRAME = [[:rect, ORIGIN, FULL], TAB].freeze
+          # The containers that wear a tab over the top left edge, which
+          # holds their name.
+          TABBED = %i[package folder frame].freeze
           USECASE = [[:ellipse]].freeze
           CLOUD = [[:cloud]].freeze
           INTERFACE = [[:circle, [0.5, 0, 0, 10], 8]].freeze
           CIRCLE = [[:circle, [0.5, 0, 0, 8], 8]].freeze
 
           # What a container is drawn as; any other kind is a plain frame.
-          CONTAINERS = { node: NODE, database: DATABASE, cloud: CLOUD,
-                         folder: FOLDER, frame: FRAME }.freeze
+          CONTAINERS = { node: NODE, database: DATABASE, cloud: CLOUD }.freeze
 
           BY_KIND = { actor: ACTOR, usecase: USECASE, component: COMPONENT,
                       interface: INTERFACE, portin: PORT_IN, portout: PORT,
@@ -67,7 +67,7 @@ module Sirena
                      circle: { top: 20 },
                      portin: { top: 0 }, portout: { top: 16 },
                      note: { top: 4, left: 8 }, database: { dy: 6 },
-                     component: { shift: 6, shrink: 6 },
+                     component: { dy: 4 },
                      node: { dy: 4, shrink: 8 } }.freeze
 
           module_function

@@ -7,6 +7,7 @@ require_relative "entity_shape"
 require_relative "figures"
 require_relative "../creole"
 require_relative "metrics"
+require_relative "tab"
 
 module Sirena
   module Notation
@@ -68,11 +69,11 @@ module Sirena
             label(Figures.label(kind))
           end
 
-          def draw_rect(origin, extent)
+          def draw_rect(origin, extent, radius = nil)
             x, y = at(origin)
             width, height = size(extent)
             add(Svg::Rect, x: x, y: y, width: width, height: height,
-                           fill: fill, **LINE)
+                           rx: radius, ry: radius, fill: fill, **LINE)
           end
 
           def draw_circle(center, radius)
@@ -151,28 +152,55 @@ module Sirena
           end
 
           def container
-            outline = Figures.container(@p.node.kind)
-            if outline
-              outline.each { |type, *args| send(:"draw_#{type}", *args) }
-            else
-              draw_rect(Figures::ORIGIN, Figures::FULL)
-            end
+            outline = Figures.container(@p.node.kind) || Figures::BOX
+            outline.each { |type, *args| send(:"draw_#{type}", *args) }
+            decorate
             lines.each_with_index { |line, index| header(line, index) }
+          end
+
+          def decorate
+            draw_tab if tabbed?
+            draw_icon if @p.node.kind == :component
+          end
+
+          def tabbed?
+            Figures::TABBED.include?(@p.node.kind)
+          end
+
+          # A component container carries the glyph of a component too.
+          def draw_icon
+            Figures::COMPONENT.drop(1).each do |type, *args|
+              send(:"draw_#{type}", *args)
+            end
+          end
+
+          def draw_tab
+            width = Metrics.text_width([lines.first.to_s]) * 1.05
+            add(Svg::Polygon, points: Tab.points(@p.x, @p.y, width),
+                              fill: FILL, **LINE)
           end
 
           # A header clears the cap of a cylinder, the bumps of a cloud and
           # the slanted top of a node.
-          HEADER_DROP = { database: 10, cloud: 12, node: 8, folder: 14,
-                          frame: 14 }.freeze
+          HEADER_DROP = { database: 10, cloud: 12, node: 8 }.freeze
           HEADER_LEFT = { cloud: 24 }.freeze
           private_constant :HEADER_DROP, :HEADER_LEFT
 
           def header(line, index)
-            kind = @p.node.kind
-            y_pos = @p.y + 18 + HEADER_DROP.fetch(kind, 0) +
-              (index * Metrics::LINE_HEIGHT)
-            text(@p.x + 12 + HEADER_LEFT.fetch(kind, 0), y_pos, line, "start",
+            return tab_text(line) if tabbed? && index.zero?
+
+            left = HEADER_LEFT.fetch(@p.node.kind, 0)
+            text(@p.x + 12 + left, header_top(index), line, "start",
                  index.zero? ? "bold" : nil)
+          end
+
+          def header_top(index)
+            @p.y + 18 + HEADER_DROP.fetch(@p.node.kind, 0) +
+              (index * Metrics::LINE_HEIGHT)
+          end
+
+          def tab_text(line)
+            text(@p.x + Tab::PAD, @p.y + 14, line, "start", "bold")
           end
 
           def text(x_pos, y_pos, content, anchor, weight = nil)

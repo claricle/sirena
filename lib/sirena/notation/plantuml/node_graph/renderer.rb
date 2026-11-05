@@ -6,6 +6,7 @@ require_relative "heads"
 require_relative "label_placer"
 require_relative "../creole"
 require_relative "layout"
+require_relative "note_tail"
 require_relative "shapes"
 
 module Sirena
@@ -56,11 +57,18 @@ module Sirena
             [text(scene.width / 2, 22, scene.title, "bold")]
           end
 
+          # A note's pointer is a pale triangle from the note to its target.
           def link(route)
             edge = route.edge
+            return [NoteTail.new(route.points).element] if note?(edge)
+
             color = ink(edge.color)
             [line(route.points, edge, color),
              *Heads.for(edge, *route.points, color)]
+          end
+
+          def note?(edge)
+            edge.from.kind == :note
           end
 
           def line(points, edge, color)

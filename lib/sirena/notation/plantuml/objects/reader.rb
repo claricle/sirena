@@ -74,8 +74,9 @@ module Sirena
           # An end of a relation nobody declared is an object of that name.
           def implicit_tables
             @links.flat_map { |l| [l.from, l.to] }.each do |id|
-              @tables[id] ||= Boxes::Table.new(id: id, title: id,
-                                               rows: [], kind: :object)
+              @tables[id] ||= Boxes::Table.new(id: id, title: id, rows: [],
+                                               kind: :object,
+                                               group: packages(id))
             end
           end
 
@@ -115,7 +116,13 @@ module Sirena
           def declare(label, as_name, name, kind, rows = [])
             id = as_name || name
             @tables[id] = Boxes::Table.new(id: id, title: label || name,
-                                           rows: rows, kind: kind)
+                                           rows: rows, kind: kind,
+                                           group: as_name ? [] : packages(id))
+          end
+
+          # @return [Array<String>] the packages a dotted name stands in
+          def packages(name)
+            name.split(".")[0...-1]
           end
 
           def element
@@ -145,9 +152,12 @@ module Sirena
             map_links(as_name || name, links)
           end
 
+          # A map row's `*->` is a plain line out of the row: the JAR draws no
+          # composition diamond for it.
           def map_links(id, links)
             links.each do |key, glyph, target|
-              @links << link(id, target, Arrow.parse(glyph), [], key)
+              @links << link(id, target, Arrow.parse(glyph.delete("*")), [],
+                             key)
             end
           end
 

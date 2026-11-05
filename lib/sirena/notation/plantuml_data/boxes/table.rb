@@ -17,9 +17,12 @@ module Sirena
           end
         end
 
-        # A box. `kind` is :tree for JSON and YAML, :object or :map.
-        Table = Data.define(:id, :title, :rows, :kind) do
-          def initialize(rows:, id: nil, title: nil, kind: :tree)
+        # A box. `kind` is :tree for JSON and YAML, :object or :map; `group`
+        # names the packages around it, outermost first (the JAR makes a
+        # dotted object name `a.b.c` a box `a.b.c` inside packages `a` and
+        # `b`).
+        Table = Data.define(:id, :title, :rows, :kind, :group) do
+          def initialize(rows:, id: nil, title: nil, kind: :tree, group: [])
             super
           end
 
