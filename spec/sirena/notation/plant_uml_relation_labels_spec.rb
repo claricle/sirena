@@ -63,9 +63,10 @@ RSpec.describe Sirena::Notation::PlantUML do
   end
 
   it "leaves a label on the middle of a relation of its own untouched" do
+    # B and C fan out in one rank below A, so both labels share a height.
     labels = labels_of("class A", "class B", "class C", "A --> B : l1",
                        "A --> C : l2")
 
-    expect(labels.map { _1[:y] }).to eq([49.0, 131.725])
+    expect(labels.map { _1[:y] }).to eq([131.725, 131.725])
   end
 end
