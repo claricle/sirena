@@ -51,7 +51,8 @@ module Sirena
           box = mark.box
           element(Svg::Rect, x: box.left, y: box.top, width: box.width,
                              height: box.height, fill: paper_for(mark.fill),
-                             stroke: INK, stroke_width: "1", rx: corner(mark))
+                             stroke: mark.ink || INK, stroke_width: "1",
+                             rx: corner(mark))
         end
 
         def corner(mark)
@@ -59,7 +60,7 @@ module Sirena
         end
 
         def paper_for(fill)
-          return "none" if fill == "frame"
+          return "none" if %w[frame node].include?(fill)
           return INK if fill.end_with?("-checked")
 
           WIDGET_FILLS.include?(fill) ? WIDGET_PAPER : PAPER
@@ -68,7 +69,8 @@ module Sirena
         def rule(mark)
           box = mark.box
           element(Svg::Line, x1: box.left, y1: box.top, x2: box.right,
-                             y2: box.bottom, stroke: INK, stroke_width: "1")
+                             y2: box.bottom, stroke: mark.ink || INK,
+                             stroke_width: "1")
         end
 
         def text(mark)

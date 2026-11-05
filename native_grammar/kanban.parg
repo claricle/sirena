@@ -3,11 +3,11 @@
   ## ------------------------------------------------------------------
 
   ## JS \s without the line feed: runs on one line.
-  kanban_line_space = %x09 / %x0B / %x0C / %x20 / %xA0 / %x1680 / %x2000-200A / %x2028 / %x2029 / %x202F / %x205F / %x3000 / %xFEFF
+  kanban_line_space = "\t" / char_vt / char_ff / " " / char_nbsp / char_ogham_space_mark / %x2000-200A / char_line_separator / char_paragraph_separator / char_narrow_nbsp / char_medium_math_space / char_ideographic_space / char_bom
 
-  kanban_hspace = %x09 / %x0B / %x0C / %x20 / %xA0 / %x1680 / %x2000-200A / %x202F / %x205F / %x3000 / %xFEFF
+  kanban_hspace = "\t" / char_vt / char_ff / " " / char_nbsp / char_ogham_space_mark / %x2000-200A / char_narrow_nbsp / char_medium_math_space / char_ideographic_space / char_bom
 
-  kanban_line_sep = %x2028 / %x2029
+  kanban_line_sep = char_line_separator / char_paragraph_separator
 
   ## Runs are written as positive character classes: the engine scans
   ## those in linear time, but not a negated ANY.
@@ -63,11 +63,11 @@
 
   kanban_empty_quoted_fragments = *( "\"``\"" / "\"\"" )
 
-  kanban_markdown_body = "`" *( !( "\"" / "`" ) ANY ) "`" %x22
+  kanban_markdown_body = "`" *( !( "\"" / "`" ) ANY ) "`" "\""
 
-  kanban_labelled_text = kanban_empty_quoted_fragments ( %x22 !kanban_markdown_body 1*( !( "\"" ) ANY ) as text %x22 / !( %x22 kanban_markdown_body ) 1*( !"]" ANY ) as text ) kanban_empty_quoted_fragments
+  kanban_labelled_text = kanban_empty_quoted_fragments ( "\"" !kanban_markdown_body 1*( !( "\"" ) ANY ) as text "\"" / !( "\"" kanban_markdown_body ) 1*( !"]" ANY ) as text ) kanban_empty_quoted_fragments
 
-  kanban_round_text = kanban_empty_quoted_fragments ( %x22 !kanban_markdown_body 1*( !( "\"" ) ANY ) as text %x22 / !%x22 1*( !( "(" / ")" / "]" / "}" ) ANY ) as text ) kanban_empty_quoted_fragments
+  kanban_round_text = kanban_empty_quoted_fragments ( "\"" !kanban_markdown_body 1*( !( "\"" ) ANY ) as text "\"" / !"\"" 1*( !( "(" / ")" / "]" / "}" ) ANY ) as text ) kanban_empty_quoted_fragments
 
   kanban_labelled_item = kanban_identifier as id "[" kanban_labelled_text "]"
 
@@ -79,7 +79,7 @@
 
   kanban_metadata_comment_line = newline *kanban_line_space "%%" !"{" 1*( kanban_not_crlf )
 
-  kanban_metadata_quoted = %x22 *( kanban_metadata_comment_line / 1*( kanban_not_quote_lf ) / newline ) %x22
+  kanban_metadata_quoted = "\"" *( kanban_metadata_comment_line / 1*( kanban_not_quote_lf ) / newline ) "\""
 
   kanban_blank_line_run = 1*( newline &newline )
 
@@ -89,7 +89,7 @@
 
   kanban_item = !kanban_reserved_token ( kanban_labelled_item / kanban_shaped_item / kanban_unlabelled_shaped_item / kanban_bare_item ) [ kanban_metadata as metadata ]
 
-  kanban_item_line = *%x20 as indent kanban_item kanban_line_end
+  kanban_item_line = *" " as indent kanban_item kanban_line_end
 
   kanban_content_line = kanban_blank_run / kanban_modifier_line / kanban_item_line
 
