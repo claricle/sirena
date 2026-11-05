@@ -13,11 +13,15 @@ module Sirena
         class Packer
           MAIN_GAP = 70.0
           CROSS_GAP = 28.0
+          REACH_SHARE = 0.8
 
           # @param sizes [Hash{Object => Array(Float, Float)}] width, height
           # @param left_to_right [Boolean] whether ranks run left to right
-          def initialize(sizes, left_to_right:)
+          # @param reach [Hash{Object => Float}] the widest label on a link of
+          #   each item; side by side items stay half of both apart
+          def initialize(sizes, left_to_right:, reach: {})
             @sizes = sizes
+            @reach = left_to_right ? {} : reach
             @main = left_to_right ? 0 : 1
             @cross = 1 - @main
           end
@@ -58,16 +62,24 @@ module Sirena
             return 0.0 if layer.empty?
 
             layer.sum { |item| @sizes[item][@cross] } +
-              (CROSS_GAP * (layer.size - 1))
+              layer.each_cons(2).sum { |pair| gap(*pair) }
+          end
+
+          # Centres of two neighbours sit a share of both labels' reach apart.
+          def gap(first, second)
+            reach = [first, second].sum { |item| @reach[item].to_f } / 2
+            half = [first, second].sum { |item| @sizes[item][@cross] } / 2
+            [CROSS_GAP, (REACH_SHARE * reach) - half].max
           end
 
           def stack(layer, main, cross, offsets)
-            layer.each do |item|
+            layer.each_with_index do |item, index|
               offset = [0.0, 0.0]
               offset[@main] = main
               offset[@cross] = cross
               offsets[item] = offset
-              cross += @sizes[item][@cross] + CROSS_GAP
+              cross += @sizes[item][@cross] +
+                (layer[index + 1] ? gap(item, layer[index + 1]) : 0.0)
             end
           end
         end

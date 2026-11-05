@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "frames"
 require_relative "heads"
 require_relative "marks"
 require_relative "scene"
@@ -31,10 +32,35 @@ module Sirena
             @diagram = diagram
             @tables = diagram.tables.to_h { |t| [t.id, t] }
             @rects = place
-            scene([*table_marks, *link_marks, *title_marks])
+            @frames = Frames.new(diagram.tables, @rects).frames
+            nudge
+            scene([*frame_marks, *table_marks, *link_marks, *title_marks])
           end
 
           private
+
+          # Moves everything right and down when a frame reaches past the
+          # margin.
+          def nudge
+            dx = [MARGIN - extent.map(&:x).min, 0].max
+            dy = [band - extent.map(&:y).min, 0].max
+            @rects = moved(@rects, dx, dy)
+            @frames = moved(@frames, dx, dy)
+          end
+
+          def extent
+            [*@rects.values, *@frames.values]
+          end
+
+          def moved(boxes, across, down)
+            boxes.transform_values do |box|
+              box.with(x: box.x + across, y: box.y + down)
+            end
+          end
+
+          def frame_marks
+            @frames.values.reverse.flat_map { |frame| Frames.marks(frame) }
+          end
 
           def table_marks
             @diagram.tables.flat_map do |table|
@@ -48,9 +74,8 @@ module Sirena
           end
 
           def scene(marks)
-            right = @rects.values.map(&:right).max.to_f
-            bottom = @rects.values.map(&:bottom).max.to_f
-            Scene.new(width: right + MARGIN + 1, height: bottom + MARGIN + 1,
+            Scene.new(width: extent.map(&:right).max + MARGIN + 1,
+                      height: extent.map(&:bottom).max + MARGIN + 1,
                       marks: marks)
           end
 
@@ -89,7 +114,7 @@ module Sirena
           end
 
           def span_of(boxes)
-            boxes.sum { |box| cross_of(box) } + (SIBLING_GAP * (boxes.size - 1))
+            boxes.sum { |box| cross_of(box) } + (sibling_gap * (boxes.size - 1))
           end
 
           def lane_rects(lanes, sizes)
@@ -105,15 +130,28 @@ module Sirena
             main = across? ? MARGIN : band
             sizes.map do |boxes|
               start = main
-              main += boxes.map { |box| main_of(box) }.max + RANK_GAP
+              main += boxes.map { |box| main_of(box) }.max + rank_gap
               start
             end
+          end
+
+          # Frames take room between ranks and between boxes of a rank.
+          def rank_gap
+            RANK_GAP + framed_room
+          end
+
+          def sibling_gap
+            SIBLING_GAP + framed_room
+          end
+
+          def framed_room
+            @diagram.tables.any? { |t| t.group.any? } ? Frames::ROOM : 0.0
           end
 
           def place_lane(ids, boxes, main, cross)
             ids.zip(boxes).to_h do |id, box|
               rect = box_rect(box, main, cross)
-              cross += cross_of(box) + SIBLING_GAP
+              cross += cross_of(box) + sibling_gap
               [id, rect]
             end
           end
@@ -151,7 +189,7 @@ module Sirena
           def tree_link(link, from, to)
             start = tree_start(link, from)
             stop = [to.x, to.y + (to.height / 2)]
-            [Marks.curve(start, stop, dashed: true), arrowhead(stop),
+            [Marks.curve(start, stop, dashed: true), Marks.arrowhead(stop),
              Marks.dot(start)]
           end
 
@@ -161,11 +199,6 @@ module Sirena
               r.equal?(link.from_row) || r.port == link.from_row
             end
             [rect.right - 11.6, TableBox.row_middle(table, index.to_i, rect.y)]
-          end
-
-          def arrowhead(stop)
-            Marks.polygon([[stop[0] - 8, stop[1] - 3], stop,
-                           [stop[0] - 8, stop[1] + 3]])
           end
 
           def line_link(link, from, to)

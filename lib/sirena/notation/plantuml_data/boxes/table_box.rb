@@ -47,9 +47,12 @@ module Sirena
           private
 
           def key_width(table)
+            return map_key_width(table) if table.kind == :map
             return 0.0 unless table.kind == :tree && table.keyed?
 
-            widest(table) { |r| Text.width(r.key.to_s, bold: true) } + (2 * PAD)
+            widest(table.rows) do |r|
+              Text.width(r.key.to_s, bold: true)
+            end + (2 * PAD)
           end
 
           def values_width(table)
@@ -58,17 +61,35 @@ module Sirena
             table.kind == :map ? map_width(table) : list_width(table)
           end
 
+          # A map's key column is as wide as its widest key; a row without a
+          # value (a link out) centres its key across the whole box instead.
+          def map_key_width(table)
+            valued = table.rows.reject { |r| r.value.empty? }
+            return 0.0 if valued.empty?
+
+            widest(valued) { |r| Text.width(r.key.to_s) } + (2 * PAD)
+          end
+
           def map_width(table)
-            widest(table) { |r| Text.width(r.key.to_s) + Text.width(r.value) } +
-              (4 * PAD)
+            valued, bare = table.rows.partition { |r| !r.value.empty? }
+            [map_value_width(valued),
+             map_alone_width(bare) - map_key_width(table)].max
+          end
+
+          def map_value_width(rows)
+            widest(rows) { |r| Text.width(r.value) } + (2 * PAD)
+          end
+
+          def map_alone_width(rows)
+            widest(rows) { |r| Text.width(r.key.to_s) } + (2 * PAD)
           end
 
           def list_width(table)
-            widest(table) { |r| Text.width(r.value) } + (2 * PAD)
+            widest(table.rows) { |r| Text.width(r.value) } + (2 * PAD)
           end
 
-          def widest(table, &)
-            table.rows.map(&).max
+          def widest(rows, &)
+            rows.map(&).max || 0.0
           end
 
           def titled?(table)
@@ -196,13 +217,17 @@ module Sirena
 
           def map_cells(row, box, corner)
             left, top = corner
-            split = left + (box.width / 2)
-            if row.value.empty?
-              return [cell_text(row.key, split, top, anchor: "middle")]
-            end
+            return map_link_cell(row, box, corner) if row.value.empty?
 
+            split = left + box.key
             [cell_text(row.key, left + PAD, top),
              cell_text(row.value, split + PAD, top), map_split(split, top)]
+          end
+
+          # The key of a row that only links out, centred across the box.
+          def map_link_cell(row, box, corner)
+            [cell_text(row.key, corner[0] + (box.width / 2), corner[1],
+                       anchor: "middle")]
           end
 
           def map_split(split, top)

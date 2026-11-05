@@ -170,6 +170,26 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes do
     end
   end
 
+  describe "a tree link's head" do
+    let(:head) do
+      svg = render("@startjson\n{\"a\": {\"b\": 1}}\n@endjson")
+      REXML::Document.new(svg).get_elements("//polygon")
+        .find { |poly| poly.attributes["stroke"] == "none" }
+    end
+
+    it "is the small notched arrow, filled and not outlined" do
+      points = head.attributes["points"].split.map(&:to_f)
+
+      expect(points.size).to eq(4)
+    end
+
+    it "is 7.6 long" do
+      xs = head.attributes["points"].split.map { |pt| pt.split(",").first.to_f }
+
+      expect(xs.max - xs.min).to be_within(0.01).of(7.6)
+    end
+  end
+
   describe "edges" do
     it "reads an empty YAML document as nothing" do
       expect(boxes::YamlReader.new.call("# only a comment\n---\n")).to be_nil

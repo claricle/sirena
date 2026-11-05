@@ -2,10 +2,12 @@
 
 require_relative "../../../renderer/base"
 require_relative "../../../svg"
+require_relative "curve"
 require_relative "heads"
 require_relative "label_placer"
 require_relative "../creole"
 require_relative "layout"
+require_relative "note_tail"
 require_relative "shapes"
 
 module Sirena
@@ -56,18 +58,37 @@ module Sirena
             [text(scene.width / 2, 22, scene.title, "bold")]
           end
 
+          # A note's pointer is a pale triangle from the note to its target.
           def link(route)
             edge = route.edge
+            return [NoteTail.new(route.points).element] if note?(edge)
+
             color = ink(edge.color)
-            [line(route.points, edge, color),
-             *Heads.for(edge, *route.points, color)]
+            points = route.points
+            [line(points, edge, color),
+             *Heads.for(edge, points.first, points.last, color,
+                        [points[1], points[-2]])]
+          end
+
+          def note?(edge)
+            edge.from.kind == :note
           end
 
           def line(points, edge, color)
+            return bent(points, edge, color) if points.size > 2
+
             Svg::Line.new.tap do |line|
               line.x1, line.y1 = points.first
               line.x2, line.y2 = points.last
               stroke(line, edge, color)
+            end
+          end
+
+          def bent(points, edge, color)
+            Svg::Path.new.tap do |path|
+              path.d = Curve.path(points)
+              path.fill = "none"
+              stroke(path, edge, color)
             end
           end
 
