@@ -16,6 +16,7 @@ module Sirena
                         "spacing" => Blocks.method(:spacing),
                         "activation" => Blocks.method(:activation),
                         "destroy" => Blocks.method(:destroy),
+                        "create" => Blocks.method(:create),
                         "page_break" => Blocks.method(:page_break) }.freeze
             private_constant :READERS
 

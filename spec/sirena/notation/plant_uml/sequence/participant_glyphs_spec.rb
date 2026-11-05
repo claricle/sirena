@@ -34,7 +34,7 @@ module Sirena
             "queue" => %w[path path text],
           }.freeze
           ORDINARY_SHA256 =
-            "ed91a4390400569f324a91bcdb645d2cdbb4eb7a9c64d247baa65b74030e18fa"
+            "81da6e74397eeb527e6193022bfbbf21e0a46283a1e244012d20dd896371ca09"
           FIELDS = {
             rectangles: %i[x y width height],
             ellipses: %i[cx cy rx ry],

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../activation"
+require_relative "../create"
 require_relative "../delay"
 require_relative "../destroy"
 require_relative "../divider"
@@ -27,6 +28,7 @@ module Sirena
                         [Spacing, Blocks.method(:spacing)],
                         [Activation, Blocks.method(:activation)],
                         [Destroy, Blocks.method(:destroy)],
+                        [Create, Blocks.method(:create)],
                         [PageBreak, Blocks.method(:page_break)]].freeze
             private_constant :ENCODERS
 

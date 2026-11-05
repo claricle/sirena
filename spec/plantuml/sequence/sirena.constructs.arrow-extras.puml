@@ -1,0 +1,5 @@
+@startuml
+A -[#red,bold]> B : one
+B -[dashed,#0000ff]> A : two
+A -[dotted]> B : three
+@enduml

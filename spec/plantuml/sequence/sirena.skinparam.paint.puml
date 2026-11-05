@@ -1,0 +1,29 @@
+@startuml
+skinparam ParticipantBackgroundColor #AA0001
+skinparam ParticipantBorderColor red
+skinparam ParticipantFontColor #AA0003
+skinparam ArrowColor #AA0004
+skinparam ArrowThickness 3
+skinparam ArrowFontColor #AA0005
+skinparam SequenceLifeLineBorderColor #AA0008
+skinparam SequenceGroupBackgroundColor #AA0009
+skinparam SequenceGroupBorderColor #AA000A
+skinparam SequenceGroupHeaderFontColor #AA000B
+skinparam NoteBackgroundColor #AA0012
+skinparam NoteBorderColor #AA0013
+skinparam NoteFontColor #AA0014
+skinparam BackgroundColor #AA0015
+skinparam SequenceDividerBackgroundColor #AA000F
+skinparam SequenceDividerBorderColor #AA0010
+skinparam SequenceDividerFontColor #AA0034
+participant A
+box "bx" #AA000D
+participant B
+end box
+A -> B : hi
+group G
+B --> A : back
+end
+== div ==
+note over A : n
+@enduml

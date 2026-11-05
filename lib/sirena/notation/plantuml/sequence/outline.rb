@@ -2,6 +2,7 @@
 
 require_relative "activation"
 require_relative "arrow_style"
+require_relative "create"
 require_relative "delay"
 require_relative "destroy"
 require_relative "divider"
@@ -69,6 +70,14 @@ module Sirena
             @depth[id] += phase == :on ? 1 : -1
             @items << Activation.new(participant: id, phase: phase,
                                      color: color)
+          end
+
+          # false when `id` already took part in a message: PlantUML cannot
+          # create a participant that is already on the page.
+          def create(id)
+            return false if @items.any? { |item| appears?(item, id) }
+
+            @items << Create.new(participant: id)
           end
 
           def destroy(id)
@@ -169,6 +178,10 @@ module Sirena
           end
 
           private
+
+          def appears?(item, id)
+            item.is_a?(Message) && [item.from, item.to].include?(id)
+          end
 
           # Under `autonumber` a message takes the next number. One with no
           # label or a line break in it is not drawn; false then.

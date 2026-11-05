@@ -52,6 +52,10 @@ module Sirena
               targets(sink.node("destroy"), [destroy.participant], sink, ids)
             end
 
+            def create(create, sink, ids)
+              targets(sink.node("create"), [create.participant], sink, ids)
+            end
+
             def page_break(_break, sink, _ids)
               sink.node("page_break")
             end

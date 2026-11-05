@@ -27,6 +27,19 @@ module Sirena
 
           private
 
+          # @return [String, nil] what a skinparam set for the role, which
+          #   wins over the skin and the theme
+          def painted(role)
+            @painted[role]
+          end
+
+          def read_painted(scene)
+            @painted = scene.paint.to_h do |pair|
+              role, value = pair.split("=", 2)
+              [role.to_sym, value]
+            end
+          end
+
           def skinned?
             theme.nil? || theme.name.nil? || theme.name == "default"
           end

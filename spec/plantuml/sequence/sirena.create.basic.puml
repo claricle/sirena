@@ -1,0 +1,7 @@
+@startuml
+participant A
+A -> B : hello
+create C
+B -> C : make
+C -> A : done
+@enduml

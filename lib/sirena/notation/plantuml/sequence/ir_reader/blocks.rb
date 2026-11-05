@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../activation"
+require_relative "../create"
 require_relative "../destroy"
 require_relative "../delay"
 require_relative "../spacing"
@@ -59,6 +60,10 @@ module Sirena
 
             def destroy(node, index)
               Destroy.new(participant: index.target_names(node).first)
+            end
+
+            def create(node, index)
+              Create.new(participant: index.target_names(node).first)
             end
 
             def page_break(_node, _index)

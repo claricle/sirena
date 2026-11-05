@@ -49,7 +49,7 @@ module PlantUmlSequenceCorpus
   # upstream corpus.
   def unread_cases
     Dir.glob(File.join(DIR, "*.puml")).reject do |path|
-      File.basename(path).start_with?("sirena.constructs.") ||
+      File.basename(path).start_with?("sirena.") ||
         RENDERED.any? { |suffix| path.end_with?("--#{suffix}.puml") }
     end
   end

@@ -9,7 +9,7 @@ module Sirena
           # appearance skinparam and `<style>` set, the banners and the title.
           module Settings
             KEYS = %i[min_width alignment tab_fill tab_colour tab_size
-                      max_message].freeze
+                      max_message arrow_width].freeze
             HEAD_KEYS = %i[colour size style family weight line].freeze
             private_constant :KEYS, :HEAD_KEYS
 
@@ -34,9 +34,16 @@ module Sirena
               KEYS.each do |key|
                 sink.detail(node, key.to_s, appearance.public_send(key))
               end
+              paint_details(appearance, node, sink)
               head = appearance.head_style
               HEAD_KEYS.each do |key|
                 sink.detail(node, "head_#{key}", head.public_send(key))
+              end
+            end
+
+            def paint_details(appearance, node, sink)
+              appearance.paint.each do |role, colour|
+                sink.detail(node, "paint_#{role}", colour)
               end
             end
           end

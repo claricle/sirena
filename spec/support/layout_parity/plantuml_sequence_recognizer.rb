@@ -34,9 +34,32 @@ module SpecSupport
 
           participant(extractor, group, group["data-qualified-name"])
         end
-        return found unless found.empty?
+        return legacy_reference_participants(extractor, doc) if found.empty?
 
-        legacy_reference_participants(extractor, doc)
+        found + created_reference_heads(extractor, doc, found)
+      end
+
+      # PlantUML draws a `create`d participant's head as a bare rectangle and
+      # text mid-diagram, with no participant-head group; only its lifeline
+      # and tail groups carry the name.
+      def created_reference_heads(extractor, doc, found)
+        named = found.map(&:key)
+        lifelines = doc.xpath("//g[contains(@class, 'participant-lifeline')]")
+        lifelines.filter_map do |life|
+          name = life["data-qualified-name"]
+          next if named.include?(name)
+
+          created_head(extractor, doc, name)
+        end
+      end
+
+      def created_head(extractor, doc, name)
+        text = doc.xpath("/svg/g/text").find { |node| node.text == name }
+        shape = text&.previous_element
+        return unless shape&.name == "rect"
+
+        Element.new(kind: :participant, key: name, bbox: extractor.bbox(shape),
+                    label: name)
       end
 
       # Teoz omits PlantUML's interactive participant wrappers. Its first

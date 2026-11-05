@@ -19,7 +19,8 @@ module Sirena
         MARKER = /\A(?:participant|actor|boundary|control|entity|database|
                   collections|queue|activate|deactivate|autonumber|newpage|
                   alt|loop|opt|par|critical|break|ref)\b
-                  |\A==|\A(?:"[^"]*"|\w+)[ \t]*(?:->|<<?-(?!-)|-\[\#\w+\]>)/xi
+                  |\A==|\A(?:"[^"]*"|\w+)[ \t]*
+                  (?:->|<<?-(?!-)|-\[[\w\#,]+\]>)/xi
         CLASS = /\A(?:abstract[ \t]+class|class|interface)[ \t]/i
         private_constant :MARKER, :CLASS
 

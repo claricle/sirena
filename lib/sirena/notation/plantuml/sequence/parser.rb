@@ -18,6 +18,8 @@ require_relative "note"
 require_relative "note_fill"
 require_relative "outline"
 require_relative "parallel_message"
+require_relative "create"
+require_relative "paint"
 require_relative "participant"
 require_relative "ref"
 require_relative "refusals"
@@ -50,6 +52,8 @@ module Sirena
           MAXMESSAGE = /maxmessagesize[ \t]+(\d+)\z/i
           SKINPARAM_MAXMESSAGE = /\Askinparam[ \t]+#{MAXMESSAGE}/i
           SKINPARAM_LINE = /\A#{MAXMESSAGE}/i
+          SKINPARAM_PAINT = /\Askinparam[ \t]+(\w+)[ \t]+(\S+)\z/i
+          SKINPARAM_PAINT_LINE = /\A(\w+)[ \t]+(\S+)\z/
           SKINPARAM_OPEN = /\Askinparam[ \t]*\{\z/i
           HIDE_FOOTBOX = /\Ahide[ \t]+footbox\z/i
           AUTOACTIVATE = /\Aautoactivate[ \t]+(on|off)\z/i
@@ -68,6 +72,7 @@ module Sirena
                      [ \t]*(?::[ \t]*(.*))?\z/xo
           ACTIVATION = /\A(activate|deactivate)[ \t]+(#{QUOTED}|#{NAME})
                         (?:[ \t]+(#{COLOUR}))?\z/xio
+          CREATE = /\Acreate[ \t]+(.+)\z/i
           DESTROY = /\Adestroy[ \t]+(#{QUOTED}|#{NAME})\z/io
           MARKS = { "++" => [:on], "--" => [:off], "!!" => [:destroy],
                     "--++" => %i[off on], "++--" => %i[on off] }.freeze
@@ -102,11 +107,13 @@ module Sirena
                       [REF, :ref], [BRANCH, :branch], [ACTIVATION, :activation],
                       [RETURN, :reply], [DIVIDER, :divider], [DELAY, :delay],
                       [SPACING, :spacing],
-                      [DESTROY, :destroy], [NEWPAGE, :newpage],
+                      [DESTROY, :destroy], [CREATE, :create],
+                      [NEWPAGE, :newpage],
                       [AUTONUMBER, :autonumber],
                       [AUTONUMBER_PAUSE, :counting]].freeze
           SETTINGS = [[SKINPARAM_WIDTH, :min_width],
                       [SKINPARAM_MAXMESSAGE, :max_message],
+                      [SKINPARAM_PAINT, :skinparam_paint],
                       [SKINPARAM_OPEN, :open_skinparam],
                       [HIDE_FOOTBOX, :hide_footbox],
                       [AUTOACTIVATE, :autoactivate],
@@ -118,9 +125,10 @@ module Sirena
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
                            :LINE_END, :PRAGMA, :ACTIVATION, :MARKS, :TARGET,
                            :NOTE, :END_NOTE, :REF, :BLOCK, :BRANCH, :RETURN,
-                           :DIVIDER, :DELAY, :SPACING, :DESTROY, :COLOUR,
+                           :DIVIDER, :DELAY, :SPACING, :DESTROY, :CREATE,
+                           :COLOUR,
                            :SKINPARAM_WIDTH, :STYLE_OPEN, :STYLE_CLOSE,
-                           :PARALLEL,
+                           :PARALLEL, :SKINPARAM_PAINT, :SKINPARAM_PAINT_LINE,
                            :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE,
                            :AUTOACTIVATE, :AUTONUMBER,
                            :AUTONUMBER_PAUSE, :TITLE,
@@ -255,6 +263,16 @@ module Sirena
             set(max_message: match[1].to_i)
           end
 
+          def skinparam_paint(match, number, text)
+            painted(match[1], match[2], text, number)
+          end
+
+          def painted(key, value, text, number)
+            read = Paint.read(key, value) or raise refusal(text, number)
+
+            @appearance = @appearance.merge(read)
+          end
+
           def open_skinparam(_match, number, _text)
             @skin_open = number
           end
@@ -352,9 +370,16 @@ module Sirena
             elsif (match = SKINPARAM_LINE.match(text))
               set(max_message: match[1].to_i)
             else
-              raise refusal(text, number)
+              block_paint(text, number)
             end
             :statements
+          end
+
+          def block_paint(text, number)
+            match = SKINPARAM_PAINT_LINE.match(text) or
+              raise refusal(text, number)
+
+            painted(match[1], match[2], text, number)
           end
 
           def close_style
@@ -437,6 +462,19 @@ module Sirena
 
           def destroy(match)
             @outline.destroy(mention(match[1]))
+          end
+
+          # `create X` or `create participant X`: the head appears where the
+          # next message to it is.
+          def create(match)
+            declared = DECLARATION.match(match[1])
+            if declared && declaration?(declared)
+              declare(declared)
+              return @outline.create(declared[3] || unquote(declared[2]))
+            end
+            return false unless /\A(?:#{QUOTED}|#{NAME})\z/o.match?(match[1])
+
+            @outline.create(mention(match[1]))
           end
 
           def autonumber(match)

@@ -16,14 +16,19 @@ module Sirena
           # The arrow as a part of a longer pattern. A leading or trailing
           # o/x is a decoration only when blanks, or a `[` or `]` or `?` edge,
           # separate it from the names.
+          EXTRA = "(?:(?i:hidden|bold|dashed|dotted)|" \
+                  '\#(?:\h{3}(?:\h{3})?|[a-zA-Z]+))'
+          BRACKET = "\\[#{EXTRA}(?:,#{EXTRA})*\\]".freeze
           SOURCE =
             '(?:(?<=[ \t\[])[oxOX])?(?:<<|<|//|/|\\\\\\\\|\\\\)?' \
-            '-(?:(?i:\[hidden\])|\[\#(?:\h{3}(?:\h{3})?|[a-zA-Z]+)\])?-?' \
-            '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[oxOX](?=[ \t\]?]|\z))?'
+            "-(?:#{BRACKET})?-?" \
+            '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[oxOX](?=[ \t\]?]|\z))?'.freeze
           TOKEN = /\A([oxOX])?(<<|<|\/\/|\/|\\\\|\\)?(--?)
                    (>>|>|\\\\|\\|\/\/|\/)?([oxOX])?\z/x
-          HIDDEN = /\[hidden\]/i
-          COLOUR = /\[(\#(?:\h{6}|\h{3}|[a-z]+))\]/i
+          EXTRAS = /\[([^\]]*)\]/
+          HIDDEN = /\bhidden\b/i
+          DASHED = /\b(?:dashed|dotted)\b/i
+          COLOUR = /(\#(?:\h{6}|\h{3}|[a-z]+))/i
           LEFT = { "<<" => :open, "<" => :filled, "//" => :upper_open,
                    "/" => :upper, "\\\\" => :lower_open,
                    "\\" => :lower }.freeze
@@ -32,7 +37,9 @@ module Sirena
                     "/" => :lower }.freeze
 
           # `-[hidden]>` takes its row and its label's room but draws nothing.
-          # `-[#22A722]>` and `-[#red]>` draw the shaft and head in that colour.
+          # `-[#22A722]>` and `-[#red]>` draw the shaft and head in that
+          # colour; `dashed` and `dotted` draw the shaft dashed; `bold` is
+          # read and, as in PlantUML 1.2026.6, changes nothing.
           #
           # @return [Array(ArrowStyle, Boolean), nil] the style and whether
           #   the arrow is written pointing at the sender's name
@@ -49,22 +56,32 @@ module Sirena
             return unless fits?(lead, left, right, trail) && colour?(token)
 
             build(ends(lead, left, LEFT), ends(trail, right, RIGHT),
-                  shaft.length == 2, !left.nil? && right.nil?, looks(token))
+                  shaft.length == 2 || dashed?(token),
+                  !left.nil? && right.nil?, looks(token))
           end
 
           def plain(token)
-            token.sub(HIDDEN, "").sub(COLOUR, "")
+            token.sub(EXTRAS, "")
+          end
+
+          def extras(token)
+            token[EXTRAS, 1].to_s
+          end
+
+          def dashed?(token)
+            DASHED.match?(extras(token))
           end
 
           # A colour in the brackets must be one PlantUML is known to draw.
           def colour?(token)
-            written = token[COLOUR, 1]
+            written = extras(token)[COLOUR, 1]
             written.nil? || !Fill.read(written).nil?
           end
 
           def looks(token)
-            { hidden: HIDDEN.match?(token),
-              colour: Fill.read(token[COLOUR, 1])&.colour }
+            written = extras(token)
+            { hidden: HIDDEN.match?(written),
+              colour: Fill.read(written[COLOUR, 1])&.colour }
           end
 
           # Pairs of glyph and decoration for one side; `x` beside a head
