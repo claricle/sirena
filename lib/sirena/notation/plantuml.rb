@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../sirena"
+require_relative "plantuml/include"
 require_relative "plantuml/parser"
 require_relative "plantuml/ir_adapter"
 require_relative "plantuml/layout"
@@ -55,7 +56,9 @@ module Sirena
       TAGGED = /\A(?:\xEF\xBB\xBF)?
                 (?:#{PAD}*(?:'[^\r\n]*)?(?:\r\n|\r|\n))*
                 #{PAD}*@start(mindmap|wbs|gantt)(?![A-Za-z0-9_])/xn
-      private_constant :PAD, :OPENER, :FAMILIES, :TAGGED
+      # Stands in for the JAR's `-Dplantuml.<dir>.path` system property.
+      INCLUDE_PATH_ENV = "PLANTUML_INCLUDE_PATH"
+      private_constant :PAD, :OPENER, :FAMILIES, :TAGGED, :INCLUDE_PATH_ENV
 
       # @return [Symbol] the notation identifier
       def id
@@ -86,8 +89,20 @@ module Sirena
       # exists.
       #
       # @param source [String] PlantUML source
+      # @param base_dir [String, nil] directory `!include` reads beside
+      # @param include_path [Array<String>, String, nil] further directories
+      #   `!include` may read (PlantUML's `plantuml.include.path`); defaults
+      #   to the `PLANTUML_INCLUDE_PATH` environment variable
       # @return [Notation::Parsed]
-      def parse(source)
+      # @raise [Include::Error] an include that cannot be read
+      def parse(source, base_dir: nil, include_path: nil)
+        path = include_path || ENV.fetch(INCLUDE_PATH_ENV, nil)
+        read(Include.expand(source, base_dir: base_dir, include_path: path))
+      end
+
+      private
+
+      def read(source)
         tag = TAGGED.match(source.b)&.[](1)
         return Gantt.parse(source) if tag == "gantt"
         return Tree.parse(source, tag) if tag
@@ -97,8 +112,6 @@ module Sirena
         end
         family ? family.first.parse(source) : parse_class(source)
       end
-
-      private
 
       def parse_class(source)
         Notation::Parsed.new(
