@@ -12,11 +12,11 @@
   {
     "notation": "plantuml",
     "type": "sequence",
-    "cases": 79,
-    "oracle_valid": 77,
-    "passing": 77,
+    "cases": 92,
+    "oracle_valid": 90,
+    "passing": 90,
     "pass_rate": 1.0,
-    "status": "77/77 oracle-valid cases pass; 2/79 cases are rejected by the pinned oracle",
+    "status": "90/90 oracle-valid cases pass; 2/92 cases are rejected by the pinned oracle",
     "provenance": "upstream-fixture"
   }
 ]

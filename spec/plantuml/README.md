@@ -43,7 +43,9 @@ different value and a source URL, and none exists yet.
    never mislabels one. The type is a heuristic, not an oracle verdict;
    step 2 may find a case PlantUML renders as a different type.
 
-Result at the pinned SHA: 37 class, 79 sequence. `!include`/`!define`
+Result at the pinned SHA: 37 class, 79 sequence. The sequence directory
+also holds 13 `sirena.*` ledger cases (no `.meta.json`, so outside the
+manifest checksum) that count in `pin.json` and the scoreboard. `!include`/`!define`
 blocks are kept and flagged `uses_preprocessor: true`.
 
 ## Case IDs

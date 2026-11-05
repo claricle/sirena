@@ -1165,31 +1165,21 @@ verdicts:
   graphviz: 15.1.1
   command: plantuml --svg --pipe --charset UTF-8
   contract: 1
-- id: sequence/sirena.constructs.spacing
+- id: sequence/sirena.constructs.arrow-colour
   verdict: valid
   reason: rendered SEQUENCE
-  source_sha256: fa6e40ab69ddc7e7ede0d73a02f7f638d0bc1c3934674f8a512f3b902bdcb8f2
-  svg_sha256: fbcd339761aa0a98f795d8af193399423e7b06777a709af2bd9f8f65f80739fe
+  source_sha256: cb8ecde757469e42fc1bc52e94d0b818f5f08890c6a17eae73d24880abbcbedc
+  svg_sha256: 8465745b731eefdcaaf52a0077fd05b15070b784da649db24df077049107f3d9
   plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
   java: 26.0.2
   graphviz: 15.1.1
   command: plantuml --svg --pipe --charset UTF-8
   contract: 1
-- id: sequence/sirena.constructs.participant-colour
+- id: sequence/sirena.constructs.arrow-extras
   verdict: valid
   reason: rendered SEQUENCE
-  source_sha256: 3b456ae662a18d6777cce81e5a4026d8d3d12cc99cb951fa44da845167a0d817
-  svg_sha256: 916ca5d54716e832684cb130877913b2b03fc4ab6f69d41ae6cd3f615f952d39
-  plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
-  java: 26.0.2
-  graphviz: 15.1.1
-  command: plantuml --svg --pipe --charset UTF-8
-  contract: 1
-- id: sequence/sirena.constructs.order
-  verdict: valid
-  reason: rendered SEQUENCE
-  source_sha256: 554ef7be16646956a9dff3694fc2c8c4bf537fc1434a682cee71c809f9393ed5
-  svg_sha256: 86f270d0adfdeb6062b4e1e7b852be442d890c6453c45a1adca89e5ec373343d
+  source_sha256: 3203b5c9b854c0c1c45d469ddb5578d25896a637cecec49ae5ee568161244bec
+  svg_sha256: 89d94631867ded948d02fa70d18cd8cadd07b4c80cf50b4f9f104c2f5ec98b52
   plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
   java: 26.0.2
   graphviz: 15.1.1
@@ -1215,16 +1205,6 @@ verdicts:
   graphviz: 15.1.1
   command: plantuml --svg --pipe --charset UTF-8
   contract: 1
-- id: sequence/sirena.constructs.arrow-colour
-  verdict: valid
-  reason: rendered SEQUENCE
-  source_sha256: cb8ecde757469e42fc1bc52e94d0b818f5f08890c6a17eae73d24880abbcbedc
-  svg_sha256: 8465745b731eefdcaaf52a0077fd05b15070b784da649db24df077049107f3d9
-  plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
-  java: 26.0.2
-  graphviz: 15.1.1
-  command: plantuml --svg --pipe --charset UTF-8
-  contract: 1
 - id: sequence/sirena.constructs.box-colour
   verdict: valid
   reason: rendered SEQUENCE
@@ -1235,31 +1215,31 @@ verdicts:
   graphviz: 15.1.1
   command: plantuml --svg --pipe --charset UTF-8
   contract: 1
-- id: sequence/sirena.create.basic
+- id: sequence/sirena.constructs.order
   verdict: valid
   reason: rendered SEQUENCE
-  source_sha256: 596fe04d0173c5f8f942f3a2cb97ccd7127261795d5a69720cee9233cb43f0dc
-  svg_sha256: 4f192d90c5ec120137bb9b34664fafeed664e4c32c9f927d06f035293467d81e
+  source_sha256: 554ef7be16646956a9dff3694fc2c8c4bf537fc1434a682cee71c809f9393ed5
+  svg_sha256: 86f270d0adfdeb6062b4e1e7b852be442d890c6453c45a1adca89e5ec373343d
   plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
   java: 26.0.2
   graphviz: 15.1.1
   command: plantuml --svg --pipe --charset UTF-8
   contract: 1
-- id: sequence/sirena.create.participant
+- id: sequence/sirena.constructs.participant-colour
   verdict: valid
   reason: rendered SEQUENCE
-  source_sha256: b6cbfde5e9b99d9764a8b57b686610d8d0b55d960f735ec4b665ebf9b1f24a10
-  svg_sha256: 560f7437424ee53bb421928c86e440e09e7e25924450f139058ee6f3c8482eed
+  source_sha256: 3b456ae662a18d6777cce81e5a4026d8d3d12cc99cb951fa44da845167a0d817
+  svg_sha256: 916ca5d54716e832684cb130877913b2b03fc4ab6f69d41ae6cd3f615f952d39
   plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
   java: 26.0.2
   graphviz: 15.1.1
   command: plantuml --svg --pipe --charset UTF-8
   contract: 1
-- id: sequence/sirena.create.leftward
+- id: sequence/sirena.constructs.spacing
   verdict: valid
   reason: rendered SEQUENCE
-  source_sha256: 903f70d79c50e1d9503a30c6fffec4c41bb2594adec333665f51b1a22eb5c8d5
-  svg_sha256: 224ac50568363584ffcca8ae0bda247c00a89ac9e20f3762aec900850d078b37
+  source_sha256: fa6e40ab69ddc7e7ede0d73a02f7f638d0bc1c3934674f8a512f3b902bdcb8f2
+  svg_sha256: fbcd339761aa0a98f795d8af193399423e7b06777a709af2bd9f8f65f80739fe
   plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
   java: 26.0.2
   graphviz: 15.1.1
@@ -1275,11 +1255,31 @@ verdicts:
   graphviz: 15.1.1
   command: plantuml --svg --pipe --charset UTF-8
   contract: 1
-- id: sequence/sirena.constructs.arrow-extras
+- id: sequence/sirena.create.basic
   verdict: valid
   reason: rendered SEQUENCE
-  source_sha256: 3203b5c9b854c0c1c45d469ddb5578d25896a637cecec49ae5ee568161244bec
-  svg_sha256: 89d94631867ded948d02fa70d18cd8cadd07b4c80cf50b4f9f104c2f5ec98b52
+  source_sha256: 596fe04d0173c5f8f942f3a2cb97ccd7127261795d5a69720cee9233cb43f0dc
+  svg_sha256: 4f192d90c5ec120137bb9b34664fafeed664e4c32c9f927d06f035293467d81e
+  plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
+  java: 26.0.2
+  graphviz: 15.1.1
+  command: plantuml --svg --pipe --charset UTF-8
+  contract: 1
+- id: sequence/sirena.create.leftward
+  verdict: valid
+  reason: rendered SEQUENCE
+  source_sha256: 903f70d79c50e1d9503a30c6fffec4c41bb2594adec333665f51b1a22eb5c8d5
+  svg_sha256: 224ac50568363584ffcca8ae0bda247c00a89ac9e20f3762aec900850d078b37
+  plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
+  java: 26.0.2
+  graphviz: 15.1.1
+  command: plantuml --svg --pipe --charset UTF-8
+  contract: 1
+- id: sequence/sirena.create.participant
+  verdict: valid
+  reason: rendered SEQUENCE
+  source_sha256: b6cbfde5e9b99d9764a8b57b686610d8d0b55d960f735ec4b665ebf9b1f24a10
+  svg_sha256: 560f7437424ee53bb421928c86e440e09e7e25924450f139058ee6f3c8482eed
   plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
   java: 26.0.2
   graphviz: 15.1.1
