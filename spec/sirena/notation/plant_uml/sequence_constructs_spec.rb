@@ -34,9 +34,10 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
 
   describe "spacing" do
     it "reads || | and ||N|| lines as spacing items" do
-      items = parse("A -> B", "|||", "||45||", "B -> A").items
+      items = parse("A -> B", "|||", "||||", "||45||", "B -> A").items
 
-      expect(items.grep(sequence::Spacing).map(&:room)).to eq([25.0, 45.0])
+      expect(items.grep(sequence::Spacing).map(&:room)).to eq([25.0, 25.0,
+                                                               45.0])
     end
 
     it "moves the next row down by the room written, as PlantUML does" do
@@ -131,6 +132,10 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
 
       expect(messages.map { |m| [m.number.to_s, m.number_weight] })
         .to eq([["[008]", nil], ["1", "bold"]])
+    end
+
+    it "gives a message with no number no weight" do
+      expect(parse("A -> B : a").messages.first.number_weight).to be_nil
     end
 
     it "draws a plain number in the regular weight" do

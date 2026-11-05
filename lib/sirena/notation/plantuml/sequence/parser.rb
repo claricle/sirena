@@ -84,7 +84,7 @@ module Sirena
           BRANCH = /\Aelse(?:[ \t]+(.*))?\z/i
           RETURN = /\Areturn(?:[ \t]+(.*))?\z/i
           DIVIDER = /\A==[ \t]*(.*?)[ \t]*==\z/
-          SPACING = /\A\|\|(?:(\d+)\|\|)?\|?\z/
+          SPACING = /\A\|\|(?:(\d+)\|\||\|\|?)\z/
           DELAY = /\A\.\.\.(?:[ \t]*(\S.*?)[ \t]*\.\.\.)?\z/
           BOX = /\Abox(?:[ \t]+(#{QUOTED}))?(?:[ \t]+(\#\w+))?\z/io
           END_BOX = /\A(?:endbox|end[ \t]+box)\z/i
