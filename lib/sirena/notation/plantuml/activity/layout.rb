@@ -39,7 +39,7 @@ module Sirena
                                       metrics)
             router = Router.new(boxes: placement.boxes, ranking: ranking,
                                 bottoms: placement.bottoms,
-                                gap: placement.gap,
+                                gaps: placement.gaps,
                                 label_drop: metrics.size(:arrow) + 1)
             Marks.new(diagram, placement, router, metrics).tap(&:build)
           end

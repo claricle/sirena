@@ -11,9 +11,13 @@ module Sirena
         # partition frames.
         class FrameMarks
           PARTITION_PAD = 10.0
+          LANE_FLOOR = 20.0
           LANE_TITLE = 18
           LANE_RULE = "#000000"
-          private_constant :PARTITION_PAD, :LANE_TITLE, :LANE_RULE
+          WARNING_PAPER = "#FFFFCC"
+          WARNING_INK = "#FFDD88"
+          private_constant :PARTITION_PAD, :LANE_FLOOR, :LANE_TITLE,
+                           :LANE_RULE, :WARNING_PAPER, :WARNING_INK
 
           def initialize(diagram, placement, canvas, metrics)
             @diagram = diagram
@@ -30,8 +34,24 @@ module Sirena
                                                               size: 14)
           end
 
+          # PlantUML's notices, in a yellow box under the title: one
+          # monospace line each.
+          def warnings
+            rows = @diagram.warnings
+            return if rows.empty?
+
+            left = Layout::MARGIN
+            top = left + (@diagram.title ? Placement::TITLE_HEIGHT : 0)
+            @canvas.rect(notice_box(rows, left, top), fill: WARNING_PAPER,
+                                                      stroke: WARNING_INK,
+                                                      radius: 2.5,
+                                                      role: :warning)
+            @canvas.mono_lines(rows, [left + 7, top + 10.6406],
+                               pitch: Placement::WARNING_PITCH)
+          end
+
           def lanes
-            floor = @placement.bottoms.last + (@placement.gap / 2)
+            floor = @placement.bottoms.last + LANE_FLOOR
             ceiling = @placement.top - Placement::HEADER_HEIGHT
             @placement.bands.each { |band| lane(band, ceiling, floor) }
           end
@@ -44,6 +64,11 @@ module Sirena
           end
 
           private
+
+          def notice_box(rows, left, top)
+            Box.spanning(left, top, left + @canvas.mono_width(rows) + 10,
+                         top + (Placement::WARNING_PITCH * rows.size) - 5)
+          end
 
           def lane(band, ceiling, floor)
             left = band[:left]
@@ -70,7 +95,7 @@ module Sirena
             @canvas.lines([name],
                           [frame.left + 8,
                            frame.top + @metrics.size(:partition) + 3],
-                          weight: "bold", role: :partition)
+                          role: :partition)
           end
 
           # The frame is as tall above the nodes as the title is, and wide

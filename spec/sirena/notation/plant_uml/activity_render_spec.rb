@@ -35,11 +35,12 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
     expect(svg.scan("<polygon").size).to eq(2)
   end
 
-  it "dashes a dashed arrow and fills a coloured action" do
+  it "dashes a dashed arrow and leaves an old-syntax colour unpainted",
+     :aggregate_failures do
     svg = render(":a;\n-[#green,dashed]->\n#pink:b;")
 
-    expect(svg).to include('stroke="green"', 'stroke-dasharray="7,5"',
-                           'fill="pink"')
+    expect(svg).to include('stroke="green"', 'stroke-dasharray="7,5"')
+    expect(svg).not_to include('fill="pink"')
   end
 
   it "ends a branch at a cross on `kill`, with no edge leaving it",

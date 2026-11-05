@@ -71,6 +71,13 @@ module Sirena
           end
         end
 
+        # @param text [String] one label line
+        # @return [String] the line as drawn: the markup is gone, its text
+        #   stays
+        def plain(text)
+          parse(text).map(&:text).join
+        end
+
         def styled(token, state, paired, inline)
           return run(token[:escaped], state) if token[:escaped]
           return formula(token[:body], state) if token[:formula]

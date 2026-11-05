@@ -6,17 +6,16 @@ module Sirena
   module Notation
     module PlantUML
       module Activity
-        # Turns PlantUML label markup into plain lines. Creole styling is
-        # dropped and a `<math>` formula is kept as its source; an embedded
+        # Turns PlantUML label markup into lines. Creole styling (`**bold**`,
+        # `__underline__`, `<b>`, `<color:..>`) stays in the line for
+        # {Creole} to draw and for {Creole.plain} to measure; an embedded
         # image or sprite is refused, never dropped.
         module Text
           module_function
 
-          TAG = %r{</?(?:b|i|u|s|w|plain|back|size|color|font)
-                   (?:[:\s][^>]*)?>}xi
+          PLAIN = %r{</?plain>}i
           PICTURE = /<(?:img|\$|&)/i
-          FORMULA = %r{<(math|latex)>(.*?)</\1>}
-          private_constant :TAG, :PICTURE, :FORMULA
+          private_constant :PLAIN, :PICTURE
 
           # @param raw [String]
           # @param line [Integer] source line, for the refusal
@@ -27,8 +26,8 @@ module Sirena
                                                   line: line, text: raw)
             end
 
-            raw.gsub("\\n", "\n").gsub(FORMULA, '\2').gsub(TAG, "")
-              .gsub(/\*\*|__/, "").split("\n").map(&:strip).join("\n").strip
+            raw.gsub("\\n", "\n").gsub(PLAIN, "")
+              .split("\n").map(&:strip).join("\n").strip
           end
         end
       end
