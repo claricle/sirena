@@ -74,8 +74,8 @@ module Sirena
         JUNCTION = /\A\((#{NAME})[ \t]*,[ \t]*(#{NAME})\)[ \t]*
                     \.{1,2}[ \t]*(#{NAME})\z/xo
         METHOD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]*\(([^()]*)\)
-                  (?:[ \t]*:[ \t]*(.+))?\z/xo
-        FIELD = /\A([+\-#~])?[ \t]*(#{NAME})(?:[ \t]*:[ \t]*([^()]+))?\z/o
+                  (?:([ \t]*:[ \t]*)(.+))?\z/xo
+        FIELD = /\A([+\-#~])?[ \t]*(#{NAME})(?:([ \t]*:[ \t]*)([^()]+))?\z/o
         TYPE = /#{NAME}(?:\[\])*/o
         TYPED_FIELD = /\A([+\-#~])?[ \t]*(#{TYPE})[ \t]+(#{NAME})\z/o
         TYPED_METHOD = /\A([+\-#~])?[ \t]*(#{TYPE})[ \t]+(#{NAME})[ \t]*
@@ -578,12 +578,19 @@ module Sirena
 
         def named_member(text)
           if (match = METHOD.match(text))
-            Member.new(kind: :method, visibility: VISIBILITY[match[1]],
-                       name: match[2], type: match[4], parameters: match[3])
+            suffixed(:method, match, 5, parameters: match[3])
           elsif (match = FIELD.match(text))
-            Member.new(kind: :field, visibility: VISIBILITY[match[1]],
-                       name: match[2], type: match[3], parameters: nil)
+            suffixed(:field, match, 4)
           end
+        end
+
+        # A member whose type follows a colon; the group before the type
+        # holds the colon with the spacing written around it.
+        def suffixed(kind, match, type_group, parameters: nil)
+          Member.new(kind: kind, visibility: VISIBILITY[match[1]],
+                     name: match[2], type: match[type_group],
+                     parameters: parameters,
+                     type_separator: match[type_group - 1] || ": ")
         end
 
         def retype(member, words)
@@ -592,7 +599,8 @@ module Sirena
           Member.new(kind: kind, visibility: member.visibility,
                      name: member.name, type: member.type,
                      parameters: member.parameters, modifiers: modifiers,
-                     type_position: member.type_position)
+                     type_position: member.type_position,
+                     type_separator: member.type_separator)
         end
 
         # `int x` and `void run(int a)`: the type comes first.

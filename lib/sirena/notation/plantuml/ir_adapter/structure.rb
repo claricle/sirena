@@ -62,9 +62,18 @@ module Sirena
             node = sink.node(member.kind.to_s, member.name, parent: parent)
             sink.detail(node, "visibility", member.visibility)
             sink.detail(node, "type", member.type)
-            sink.detail(node, "type_position", declared_type_position(member))
             sink.detail(node, "parameters", member.parameters)
             sink.details(node, "modifier", member.modifiers)
+            type_details(member, node, sink)
+          end
+
+          def type_details(member, node, sink)
+            sink.detail(node, "type_position", declared_type_position(member))
+            sink.detail(node, "type_separator", declared_separator(member))
+          end
+
+          def declared_separator(member)
+            member.type_separator unless member.type_separator == ": "
           end
 
           def declared_type_position(member)

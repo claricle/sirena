@@ -333,7 +333,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       it "underlines a static member" do
         lines = REXML::XPath.match(svg, "//g[@id='class-A']/line")
 
-        expect(lines.size).to eq(2)
+        expect(lines.size).to eq(3)
       end
     end
 

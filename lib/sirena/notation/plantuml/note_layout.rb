@@ -25,7 +25,7 @@ module Sirena
         SIDE = 21.0
         TEXT_INDENT = 6.0
         FIRST_BASELINE = 17.568
-        ROW_CENTRE = 4.0
+        ROW_CENTRE = 5.2911
         private_constant :GAP, :STACK_GAP, :FREE_GAP, :TEXT_SCALE,
                          :LINE_HEIGHT, :PADDING, :SIDE, :TEXT_INDENT,
                          :FIRST_BASELINE, :ROW_CENTRE
@@ -78,9 +78,12 @@ module Sirena
 
         # @param diagram [Diagram]
         # @param measure [#call] width of a note line at the note font
-        def initialize(diagram, measure)
+        # @param member_measure [#call] width of a member row at the class
+        #   font; a note on a member points at the near end of that text
+        def initialize(diagram, measure, member_measure = measure)
           @diagram = diagram
           @measure = measure
+          @member_measure = member_measure
         end
 
         # @param boxes [Array<Scene::Box>] the placed class boxes
@@ -141,20 +144,32 @@ module Sirena
           index = member_index(note)
           return unless index
 
-          rows = target.texts.select { |text| text.role.start_with?("member") }
-          rows[index]&.y&.-(ROW_CENTRE)
+          row = member_text(target, index)
+          row && [row.x, row.y - ROW_CENTRE, row.content]
+        end
+
+        def member_text(target, index)
+          target.texts.select { |text| text.role.start_with?("member") }[index]
         end
 
         def member_index(note)
           return unless note.member
 
           klass = @diagram.classes.find { |item| item.name == note.target }
-          klass&.body&.index { |item| item.name == note.member }
+          wanted = note.member.delete('"')
+          klass&.body&.index { |item| signature(item) == wanted }
+        end
+
+        # `counter` and `start(int timeoutms)`: how a note names a member.
+        def signature(item)
+          return item.name unless item.parameters
+
+          "#{item.name}(#{item.parameters})"
         end
 
         def anchored(note, target, member)
           width, height = size(note)
-          mid = member || (target.y + (target.height / 2))
+          mid = member ? member[1] : target.y + (target.height / 2)
           x, y = ORIGINS.fetch(note.side).call(target, width, height, mid)
           Rect.new(x, y, width, height)
         end
@@ -192,14 +207,25 @@ module Sirena
         end
 
         def horizontal_pointer(side, rect, target, member)
-          row = member || rect.mid_y
           mid = rect.mid_y.clamp(rect.y + 6.0, rect.bottom - 6.0)
+          row = member ? member[1] : rect.mid_y
           if side == :right
-            return [[target.x + target.width, row],
-                    [rect.x, mid]]
+            [[right_tip(target, member), row], [rect.x, mid]]
+          else
+            [[left_tip(target, member), row], [rect.right, mid]]
           end
+        end
 
-          [[target.x, row], [rect.right, mid]]
+        # A member note points at the text itself: the end of the text for a
+        # note on the right, its start for a note on the left.
+        def right_tip(target, member)
+          return target.x + target.width unless member
+
+          member[0] + @member_measure.call(member[2])
+        end
+
+        def left_tip(target, member)
+          member ? member[0] : target.x
         end
 
         def vertical_pointer(side, rect, target)

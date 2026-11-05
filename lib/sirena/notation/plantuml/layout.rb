@@ -3,6 +3,7 @@
 require_relative "../../layout/base"
 require_relative "caption_layout"
 require_relative "class_name"
+require_relative "stereotype_head"
 require_relative "class_header"
 require_relative "end_texts"
 require_relative "member_icon"
@@ -432,7 +433,12 @@ module Sirena
         end
 
         def noted_boxes(diagram, boxes)
-          NoteLayout.new(diagram, method(:note_line_width)).place(boxes)
+          NoteLayout.new(diagram, method(:note_line_width),
+                         method(:member_text_width)).place(boxes)
+        end
+
+        def member_text_width(text)
+          standard_text_width(text, font_size)
         end
 
         def note_line_width(text)
@@ -1166,12 +1172,32 @@ module Sirena
         def isolated_standard_box(record, klass, diagram, details)
           return record unless isolated_standard_box?(klass, diagram, details)
 
-          record.merge(
+          record = record.merge(
             width: isolated_standard_width(klass, details),
             height: isolated_standard_height(klass, diagram,
                                              details[:member_rows]),
             compact_members: header_rows(klass).empty?,
           )
+          stereotype_headed(record, klass, details)
+        end
+
+        # A lone class with one stereotype takes the jar's header: circle
+        # at the left, stereotype above the name, rows packed from the foot.
+        def stereotype_headed(record, klass, details)
+          return record unless StereotypeHead.applies?(klass,
+                                                       circle: @kind_in_spot)
+
+          row = "«#{klass.stereotypes.first}»"
+          sizes = stereotype_head_sizes(row, details[:names].first)
+          width = [StereotypeHead.width(*sizes),
+                   *standard_member_widths(details[:member_rows])].max
+          record.merge(width: width, compact_members: true,
+                       stereotype_head: { row: row, sizes: sizes })
+        end
+
+        def stereotype_head_sizes(row, name)
+          [standard_text_width(row, font_size * 0.85),
+           standard_text_width(name, font_size)]
         end
 
         def isolated_standard_box?(klass, diagram, details)
@@ -1319,7 +1345,7 @@ module Sirena
           content = if type && member.type_position == :prefix
                       "#{type} #{name}"
                     else
-                      "#{name}#{": #{type}" if type}"
+                      "#{name}#{"#{member.type_separator}#{type}" if type}"
                     end
           "#{visibility_mark(member.visibility)}#{content}"
         end
@@ -1586,8 +1612,16 @@ module Sirena
           Scene::Box.new(
             id: item[:id], x: left, y: top, width: box_width,
             height: item[:height], texts: texts, separators: separators,
-            kind: item[:note] ? "note" : "class", fill: item[:note]&.color
+            kind: item[:note] ? "note" : "class", fill: item[:note]&.color,
+            spot: stereotype_spot(item, left, top)
           )
+        end
+
+        def stereotype_spot(item, left, top)
+          return unless item[:stereotype_head]
+
+          across, down = StereotypeHead.circle_centre
+          Scene::Spot.new(kind: "class", cx: left + across, cy: top + down)
         end
 
         def note_texts(item, horizontal, vertical)
@@ -1610,10 +1644,23 @@ module Sirena
         end
 
         def title_texts(item, horizontal, vertical, width)
+          if item[:stereotype_head]
+            return stereotype_head_texts(item, horizontal, vertical)
+          end
+
           cursor = title_text_cursor(item, vertical)
           texts, cursor = title_text_rows(item, horizontal, width, cursor)
           texts << floating_generic_text(item, horizontal, vertical, width)
           [texts.compact, cursor]
+        end
+
+        def stereotype_head_texts(item, horizontal, vertical)
+          head = item[:stereotype_head]
+          centre = horizontal + StereotypeHead.centre(*head[:sizes])
+          first, second = StereotypeHead.baselines
+          [[scene_text(head[:row], centre, vertical + first, "kind", "middle"),
+            scene_text(item[:title_rows].last, centre, vertical + second,
+                       "class_name", "middle")], vertical + second]
         end
 
         def title_text_rows(item, horizontal, width, cursor)
@@ -1634,7 +1681,7 @@ module Sirena
           baseline = vertical + BOX_PADDING + font_size
           return baseline unless compact_single_title?(item)
 
-          [baseline, compact_row_geometry(item)[:head] - 8.0].min
+          [baseline, compact_row_geometry(item)[:head] - 10.709].min
         end
 
         def compact_single_title?(item)
@@ -1722,7 +1769,7 @@ module Sirena
 
         def group_rule_heights(item, baselines)
           member_group_boundaries(item[:member_kinds]).map do |index|
-            ((baselines[index - 1] + baselines[index]) / 2.0) - 3.0
+            ((baselines[index - 1] + baselines[index]) / 2.0) - 5.2911
           end + empty_group_rules(item, baselines)
         end
 
