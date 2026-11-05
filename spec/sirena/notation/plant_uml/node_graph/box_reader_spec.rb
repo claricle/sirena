@@ -152,8 +152,12 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph::BoxReader do
         .row_middle(box.node.table, index, box.y)
     end
 
+    def centre(placed)
+      placed.x + (placed.width / 2)
+    end
+
     def side_for(other)
-      other.x >= box.x ? box.x + box.width : box.x
+      centre(other) >= centre(box) ? box.x + box.width : box.x
     end
 
     it "ends the line at the middle of the row, on the side it comes from",

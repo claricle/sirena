@@ -89,10 +89,10 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph::DataReader do
       expect(box_rects(svg).size).to eq(2)
     end
 
-    it "places each JSON box clear of the other" do
-      first, second = box_rects(svg).sort
+    it "stacks the JSON boxes clear of each other, top to bottom" do
+      first, second = box_rects(svg).sort_by { |rect| [rect[1], rect[0]] }
 
-      expect(first[0] + first[2]).to be <= second[0]
+      expect(first[1] + first[3]).to be <= second[1]
     end
   end
 
