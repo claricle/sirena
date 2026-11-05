@@ -23,7 +23,10 @@ module Sirena
           MARGIN = 20.0
           PAD = 24.0
           HEADER = 36.0
-          private_constant :MARGIN, :PAD
+          # The step of one rank between the tops of two composites, as
+          # PlantUML measures it: a start marker and the gap after it.
+          RANK_DROP = 68.0
+          private_constant :MARGIN, :PAD, :RANK_DROP
 
           # @param graph [Hash] the graph from the state layout's build_graph
           # @param flat [Array<Array(String, String)>] the transitions drawn
@@ -101,9 +104,49 @@ module Sirena
 
             rows = rows_of(members)
             elk = lay_out(rows)
-            spots = elk[:children].to_h { |placed| [placed[:id], placed] }
-            rows.each { |row| spot(row, spots.fetch(row.id)) }
+            settle(rows, elk)
             elk
+          end
+
+          def settle(rows, elk)
+            spots = elk[:children].to_h { |placed| [placed[:id], placed] }
+            drop = entered_peers(rows)
+            rows.each do |row|
+              spot(row, spots.fetch(row.id), drop.include?(row.id))
+            end
+            follow(elk, drop)
+          end
+
+          # A route ELK drew to a row that has moved follows it down: its
+          # end and last bend travel with the row.
+          def follow(elk, moved)
+            elk[:edges].each do |edge|
+              next unless edge[:targets].intersect?(moved)
+
+              (edge[:sections] || []).each { |section| lower(section) }
+            end
+          end
+
+          def lower(section)
+            [section[:endPoint], section[:bendPoints]&.last].compact
+              .each { |point| point[:y] += RANK_DROP }
+          end
+
+          # Composites side by side, the one a start marker enters stands a
+          # rank below the others, as PlantUML ranks the cycle between them
+          # from the entry.
+          def entered_peers(rows)
+            peers = @level_edges.peer_ids(rows)
+            entered = peers.select { |id| entered_by_start?(id) }
+            entered.size == peers.size ? [] : entered
+          end
+
+          def entered_by_start?(id)
+            @graph[:edges].any? do |edge|
+              edge[:targets].first == id &&
+                @nodes[edge[:sources].first]&.dig(:metadata, :state_type) ==
+                  "start"
+            end
           end
 
           def lay_out(rows)
@@ -138,8 +181,8 @@ module Sirena
             { id: row.id, width: row.width, height: row.height }
           end
 
-          def spot(row, placed)
-            row.place(placed[:x], placed[:y])
+          def spot(row, placed, dropped)
+            row.place(placed[:x], placed[:y] + (dropped ? RANK_DROP : 0))
           end
 
           def shift_for(owner, children)
