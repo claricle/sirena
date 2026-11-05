@@ -86,4 +86,16 @@ RSpec.describe Sirena::Parser::Native, ".parse parity (flowchart)" do
     # 9 s before the id rules scanned in runs
     expect(elapsed).to be < 3
   end
+
+  it "parses a letter-restarted long id in linear time", :speed do
+    skip "parsanol engine absent" unless described_class.available?
+
+    source = "graph TD\n#{"a\u00e9" * 50_000}\n"
+    elapsed = wall_time { described_class.parse(:flowchart, source) }
+
+    # 4.3 s locally before the guard walks shared one restart walk, 1.3 s
+    # after; CI runners take about twice as long, so 5 s still catches
+    # the regression without timing out a slow runner.
+    expect(elapsed).to be < 5
+  end
 end
