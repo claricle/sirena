@@ -82,8 +82,7 @@ module Sirena
                         \(([^()]*)\)\z/xo
         MODIFIER = /\{(?:static|abstract|field|method)\}/i
         SEPARATOR = /\A([-=._])\1(?:[ \t]*(\S.*?)[ \t]*\1\1)?\z/
-        INLINE_MARKUP = %r{</?(?:b|i|u|s|w|size|color|back|font)(?::[^>]*)?>|
-                           <img:[^>]*>}xi
+        INLINE_MARKUP = /<img:[^>]*>/i
         PLAIN_TEXT = /\A[\p{Alnum}\[][^<>{}"!$():@;]*\z/
         STYLE_OPEN = %r{\A<style>\z}i
         SKIN_BLOCK = /\Askinparam[ \t]+\S+[ \t]*\{\z/i
@@ -349,8 +348,8 @@ module Sirena
           :note
         end
 
-        # Inline creole tags and `<img:>` have no drawn form here; the words
-        # between them are kept.
+        # Creole tags stay for the renderer; `<img:>` has no drawn form
+        # here and is dropped.
         def plain_note_text(text)
           text.gsub(INLINE_MARKUP, "").squeeze(" ")
         end

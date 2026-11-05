@@ -401,15 +401,16 @@ RSpec.describe Sirena::Notation::PlantUML do
       end
 
       it "fills the note with its colour" do
-        rect = REXML::XPath.first(svg, "//g[@id='note-0']/rect")
+        shape = REXML::XPath.first(svg, "//g[@id='note-0']/path")
 
-        expect(rect.attributes["fill"]).to eq("yellow")
+        expect(shape.attributes["fill"]).to eq("yellow")
       end
 
-      it "links the note to its class with a line" do
-        link = REXML::XPath.first(svg, "//g[@id='note-link-0']/path")
+      it "points a tail from the note at its class instead of a link line" do
+        shape = REXML::XPath.first(svg, "//g[@id='note-0']/path")
+        link = REXML::XPath.first(svg, "//g[@id='note-link-0']")
 
-        expect(link).not_to be_nil
+        expect([shape.attributes["d"].scan("L").size, link]).to eq([7, nil])
       end
     end
   end

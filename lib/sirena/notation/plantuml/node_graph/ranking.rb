@@ -23,7 +23,8 @@ module Sirena
             @forward = acyclic(@pairs)
             @rank = items.to_h { |item| [item, 0] }
             settle_ranks
-            @layers = group
+            sink_sources
+            @layers = @pairs.empty? ? grid : group
             order
           end
 
@@ -69,6 +70,49 @@ module Sirena
             end
           end
 
+          # A group of items with no link in (items tied by a link of step 0
+          # move together) drops to the rank just before its nearest target,
+          # which shortens every link it has, as the JAR's ranking does.
+          def sink_sources
+            groups = same_rank_groups
+            groups.sort_by { |group| -@rank[group.first] }.each do |group|
+              target = sink_rank(group)
+              next unless target && target > @rank[group.first]
+
+              group.each { |item| @rank[item] = target }
+            end
+          end
+
+          # @return [Integer, nil] the rank before the nearest target of
+          #   `group`, when no link feeds it
+          def sink_rank(group)
+            return if fed?(group)
+
+            @forward.filter_map do |from, to, step|
+              next unless group.include?(from) && !group.include?(to)
+
+              @rank[to] - (step || 1)
+            end.min
+          end
+
+          # Whether a link from outside `group` ends in it.
+          def fed?(group)
+            @forward.any? do |from, to, _|
+              group.include?(to) && !group.include?(from)
+            end
+          end
+
+          def same_rank_groups
+            groups = @items.to_h { |item| [item, [item]] }
+            @forward.each do |from, to, step|
+              next unless step&.zero?
+
+              merged = groups[from] | groups[to]
+              merged.each { |item| groups[item] = merged }
+            end
+            groups.values.uniq
+          end
+
           # @return [Boolean] whether the link moved a rank
           def hold?(from, to, step)
             step ||= 1
@@ -76,6 +120,13 @@ module Sirena
             ends = step.zero? ? [from, to] : [to]
             want = ends.map { |item| @rank[item] }.push(want).max
             ends.map { |item| @rank[item] < want && @rank[item] = want }.any?
+          end
+
+          # Items with no links between them are packed into the squarest
+          # grid, `ceil(sqrt(n))` to a rank, in source order, as the
+          # PlantUML JAR does.
+          def grid
+            @items.each_slice([Math.sqrt(@items.size).ceil, 1].max).to_a
           end
 
           def group
