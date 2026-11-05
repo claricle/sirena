@@ -138,8 +138,8 @@ module Sirena
 
           def title_rule(box, corner)
             left, top = corner
-            Marks.line([left, top + box.title],
-                       [left + box.width, top + box.title],
+            rule = top + [box.title, ROW].min
+            Marks.line([left, rule], [left + box.width, rule],
                        stroke: Marks::INK, width: 0.5)
           end
 

@@ -170,7 +170,7 @@ module Sirena
 
           # A note's pointer and a line to a row stay straight.
           def bent(detour, edge, points)
-            straight = edge.from.kind == :note || edge.from_row || edge.to_row
+            straight = edge.pointer || edge.from_row || edge.to_row
             straight ? points : detour.call(edge, points)
           end
 

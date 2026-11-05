@@ -24,6 +24,7 @@ module Sirena
             @rank = items.to_h { |item| [item, 0] }
             settle_ranks
             sink_sources
+            @tie_order = tie_order
             @layers = @pairs.empty? ? grid : group
             order
           end
@@ -131,7 +132,32 @@ module Sirena
 
           def group
             by_rank = @items.group_by { |item| @rank[item] }
-            (0..(by_rank.keys.max || -1)).map { |rank| by_rank.fetch(rank, []) }
+            (0..(by_rank.keys.max || -1)).map do |rank|
+              tied_first(by_rank.fetch(rank, []))
+            end
+          end
+
+          # A rank with its tied items (links of step 0) first, in the order
+          # their first tie was written; the JAR places the actor of the
+          # first `A -> (B)` left of an actor declared earlier but untied.
+          def tied_first(layer)
+            layer.sort_by.with_index do |item, at|
+              tie = @tie_order[item]
+              [tie ? 0 : 1, tie || 0, at]
+            end
+          end
+
+          # @return [Hash] each item tied to another by a step-0 link, to
+          #   the position of its first such link
+          def tie_order
+            order = {}
+            @pairs.each_with_index do |(from, to, step), at|
+              next unless step&.zero?
+
+              order[from] ||= at
+              order[to] ||= at
+            end
+            order
           end
 
           def order

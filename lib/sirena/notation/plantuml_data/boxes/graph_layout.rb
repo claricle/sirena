@@ -3,6 +3,7 @@
 require_relative "frames"
 require_relative "heads"
 require_relative "marks"
+require_relative "row_bend"
 require_relative "scene"
 require_relative "table_box"
 
@@ -11,9 +12,11 @@ module Sirena
     module PlantUMLData
       module Boxes
         # Lays an object diagram out in ranks: a relation's left end sits
-        # a rank before its right end, boxes of one rank stand in a row (a
-        # column when the diagram runs left to right) in the order they were
-        # declared, and every rank is centred on the widest.
+        # as many ranks before its right end as its line is long less one
+        # (`->` none, `-->` one, `--->` two), boxes of one rank stand in a
+        # row (a column when the diagram runs left to right) in the order
+        # they were declared, a box tied to another by a relation of no rank
+        # right after it, and every rank is centred on the widest.
         class GraphLayout
           RANK_GAP = 50.0
           SIBLING_GAP = 30.0
@@ -105,7 +108,8 @@ module Sirena
           end
 
           def place
-            lanes = @tables.keys.group_by { |id| rank(id, []) }.sort.map(&:last)
+            lanes = @tables.keys.group_by { |id| rank(id, []) }.sort
+              .map { |_, ids| lane_order(ids) }
             lane_rects(lanes, lanes.map { |ids| lane_boxes(ids) })
           end
 
@@ -165,15 +169,66 @@ module Sirena
             return 0 if visiting.include?(id)
 
             @ranks ||= {}
-            @ranks[id] ||= parents(id).map do |parent|
-              rank(parent, visiting + [id]) + 1
+            @ranks[id] ||= parents(id).map do |parent, step|
+              rank(parent, visiting + [id]) + step
             end.max || 0
           end
 
+          # @return [Array<Array(String, Integer)>] each box with a relation
+          #   into `id`, and the ranks that relation spans
           def parents(id)
             @diagram.links.filter_map do |l|
-              l.from if l.to == id && l.from != id && @tables.key?(l.from)
+              next unless l.to == id && l.from != id && @tables.key?(l.from)
+
+              [l.from, step(l)]
             end
+          end
+
+          # A direction word says it (`left` and `right` keep the ends in one
+          # rank, `up` and `down` span one), as does a one-dash line (`->`,
+          # which reads as `right`); otherwise the line is one shorter than
+          # it is long. A JSON link spans one.
+          def step(link)
+            glyph = link.glyph
+            return 1 unless glyph[:length]
+            return direction_step(glyph[:direction]) if glyph[:direction]
+
+            [glyph[:length] - 1, 0].max
+          end
+
+          def direction_step(word)
+            %i[left right].include?(word) ? 0 : 1
+          end
+
+          # `ids` with each box tied to another of the rank by a relation of
+          # no rank placed right after that box.
+          def lane_order(ids)
+            ids.each_with_object([]) { |id, out| settle(id, ids, out, []) }
+          end
+
+          def settle(id, ids, out, path)
+            return if out.include?(id)
+
+            parent = flat_parent(id, ids)
+            if parent && !path.include?(parent)
+              settle(parent, ids, out, path + [id])
+              out.insert(after(parent, ids, out), id)
+            else
+              out << id
+            end
+          end
+
+          def after(parent, ids, out)
+            at = out.index(parent) + 1
+            at += 1 while out[at] && flat_parent(out[at], ids) == parent
+            at
+          end
+
+          def flat_parent(id, ids)
+            @diagram.links.find do |l|
+              l.to == id && l.from != id && ids.include?(l.from) &&
+                step(l).zero?
+            end&.from
           end
 
           def draw_link(link)
@@ -209,19 +264,35 @@ module Sirena
           def line_link(link, from, to)
             start = anchor(link.from, link.from_row, from, to.centre)
             stop = anchor(link.to, link.to_row, to, from.centre)
-            [line_mark(link, start, stop),
-             *heads(link.glyph[:markers], start, stop),
+            bend = row_bend(link, [start, stop], from, to)
+            [line_mark(link, start, stop, bend),
+             *heads(link.glyph[:markers], start, stop, bend),
              *label(link, start, stop)]
           end
 
-          def heads(markers, start, stop)
-            [*Heads.call(markers[:left], start, stop),
-             *Heads.call(markers[:right], stop, start)]
+          def heads(markers, start, stop, bend)
+            [*Heads.call(markers[:left], start, bend ? bend[0] : stop),
+             *Heads.call(markers[:right], stop, bend ? bend[1] : start)]
           end
 
-          def line_mark(link, start, stop)
-            { kind: :path, d: "M #{start.join(' ')} L #{stop.join(' ')}",
+          def line_mark(link, start, stop, bend)
+            { kind: :path, d: path_d(start, stop, bend),
               dashed: link.glyph[:dashed], stroke: Marks::INK }
+          end
+
+          def path_d(start, stop, bend)
+            return "M #{start.join(' ')} L #{stop.join(' ')}" unless bend
+
+            "M #{start.join(' ')} C #{bend[0].join(' ')} " \
+              "#{bend[1].join(' ')} #{stop.join(' ')}"
+          end
+
+          # Nil for a link between whole boxes, which stays straight.
+          def row_bend(link, ends, from, to)
+            return unless link.from_row || link.to_row
+
+            rows = [link.from_row, link.to_row].map { |port| !port.nil? }
+            RowBend.handles(ends, rows, [from.centre, to.centre])
           end
 
           def label(link, start, stop)
