@@ -34,6 +34,8 @@ module Sirena
           def call(edge)
             from = @boxes.fetch(edge.from)
             to = @boxes.fetch(edge.to)
+            return level(from, to) if level?(edge)
+
             side = detour_side(edge, from, to)
             return detour(edge, from, to, side) if side
 
@@ -42,11 +44,51 @@ module Sirena
 
           private
 
+          def level?(edge)
+            edge.level? && !@ranking.back?(edge) &&
+              @ranking.rank[edge.from] == @ranking.rank[edge.to]
+          end
+
+          # Along the row: out of the side of `from` that faces `to`.
+          def level(from, to)
+            right = to.cx >= from.cx
+            ends = right ? [from.right, to.left] : [from.left, to.right]
+            Route.new(points: ends.map { |x_pos| [x_pos, from.cy] },
+                      label_x: ends.min + 5, label_y: from.cy - 4)
+          end
+
           def detour_side(edge, from, to)
             return :left if @ranking.back?(edge)
+            return unless skips?(edge)
+            return :right if same_column?(from, to)
 
-            skips = @ranking.rank[edge.to] - @ranking.rank[edge.from] > 1
-            :right if skips && same_column?(from, to)
+            blocked_side(edge, from, to)
+          end
+
+          def skips?(edge)
+            @ranking.rank[edge.to] - @ranking.rank[edge.from] > 1
+          end
+
+          # Round the left when everything in the way lies to the right.
+          def blocked_side(edge, from, to)
+            boxes = blockers(edge, from, to)
+            return if boxes.empty?
+
+            boxes.all? { |box| box.cx > from.cx } ? :left : :right
+          end
+
+          # Boxes on the rows between that stand where the edge drops.
+          def blockers(edge, from, to)
+            rows = (@ranking.rank[edge.from] + 1)...@ranking.rank[edge.to]
+            drops = [from.cx, to.cx]
+            @boxes.filter_map do |node, box|
+              box if blocks?(node, box, rows, drops)
+            end
+          end
+
+          def blocks?(node, box, rows, drops)
+            node.kind != :bar && rows.cover?(@ranking.rank[node]) &&
+              drops.any? { |x_pos| x_pos.between?(box.left, box.right) }
           end
 
           def forward(edge, from, to)
