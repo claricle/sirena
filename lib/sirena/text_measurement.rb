@@ -2,7 +2,6 @@
 
 require_relative "text_measurement/arial_advances"
 require_relative "text_measurement/dejavu_advances"
-require_relative "text_measurement/lucida_grande_advances"
 require_relative "text_measurement/trebuchet_advances"
 
 module Sirena
@@ -57,8 +56,6 @@ module Sirena
       trebuchet: TrebuchetAdvances::TABLE,
       dejavu: DejaVuAdvances::REGULAR,
       dejavu_bold: DejaVuAdvances::BOLD,
-      lucida: LucidaGrandeAdvances::REGULAR,
-      lucida_bold: LucidaGrandeAdvances::BOLD,
     }.freeze
 
     ZERO_WIDTH = /[\p{Mn}\p{Me}\p{Cf}\p{Cc}]/

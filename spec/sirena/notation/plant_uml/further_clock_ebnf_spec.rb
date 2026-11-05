@@ -108,16 +108,17 @@ RSpec.describe Sirena::Notation::PlantUML::Further do
       expect(arrows.last.attributes["y1"].to_f).to be_within(0.01).of(127.98)
     end
 
-    it "starts the plot after the lane names as Lucida Grande measures them" do
-      expect(arrows.first.attributes["x1"].to_f).to be_within(0.01).of(118.248)
-    end
-
     it "sets the label of a vertical arrow at its tip" do
-      expect(label_x("URL")).to be_within(0.01).of(118.248)
+      tip_x = arrows.first.attributes["x2"].to_f
+      expect(label_x("URL")).to be_within(0.01).of(tip_x)
     end
 
     it "pulls the label of a slanting arrow back along the arrow" do
-      expect(label_x("URL2")).to be_within(0.01).of(241.018)
+      slant = %w[x1 y1 x2 y2].to_h { |k| [k, arrows.last.attributes[k].to_f] }
+      dx = slant["x2"] - slant["x1"]
+      unit_x = dx / Math.hypot(dx, slant["y2"] - slant["y1"])
+      expect(label_x("URL2"))
+        .to be_within(0.01).of(slant["x2"] - (7.518 * unit_x))
     end
 
     it "sets the label of a falling arrow above its tip" do

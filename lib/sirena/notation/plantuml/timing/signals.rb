@@ -107,7 +107,7 @@ module Sirena
             names = labels(participant, 0).map(&:first)
             return 0.0 unless %w[robust analog].include?(participant.kind)
 
-            names.map { |n| Drawing::Face.lucida_width(n, size: size, bold: bold) }
+            names.map { |n| Drawing::Face.width(n, size: size, bold: bold) }
               .max.to_f
           end
 
