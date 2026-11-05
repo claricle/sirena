@@ -2,6 +2,7 @@
 
 require_relative "route_geometry"
 require_relative "label_clearance"
+require_relative "route_detour"
 
 module Sirena
   module Notation
@@ -18,6 +19,7 @@ module Sirena
         class Routes
           include RouteGeometry
           include LabelClearance
+          include RouteDetour
 
           # @return [Array(String, String), nil] the two members of a
           #   container the edge joins, nil when it does not join two of them
@@ -39,6 +41,9 @@ module Sirena
             @levels = levels
             @boxes = {}
             @degree = degrees(graph[:edges])
+            @placed = []
+            @detoured = []
+            @lanes = Hash.new(0)
           end
 
           def write
@@ -53,8 +58,9 @@ module Sirena
 
           def record(edge, points, slot)
             edge[:sections] = [section(points)]
-            edge[:label_at] = label_point(clear_of_containers(edge, points),
-                                          edge[:labels]&.first, slot)
+            label = edge[:labels]&.first
+            spot = label_point(label_route(edge, points), label, slot)
+            edge[:label_at] = settled(spot, points, label)
           end
 
           def measure(children, left, top)
@@ -71,7 +77,19 @@ module Sirena
             target = edge[:targets].first
             return loop_points(@boxes.fetch(source)) if source == target
 
-            elk_route(edge, source, target) || straight(source, target)
+            route = elk_route(edge, source, target) ||
+              straight(source, target)
+            detoured = around_boxes(edge, route)
+            @detoured << edge.object_id if detoured != route
+            detoured
+          end
+
+          # A route bent round a box carries its label along the route
+          # itself; a straight one may slide its label along the chord.
+          def label_route(edge, points)
+            return points if @detoured.include?(edge.object_id)
+
+            clear_of_containers(edge, points)
           end
 
           def elk_route(edge, source, target)

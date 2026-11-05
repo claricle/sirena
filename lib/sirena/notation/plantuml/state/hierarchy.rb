@@ -119,9 +119,19 @@ module Sirena
           # gathered into one row in the order they chain.
           def rows_of(members)
             by_id = members.to_h { |node| [node[:id], node] }
-            Rows.new(@flat).chains(by_id.keys).map do |ids|
+            rows = Rows.new(@flat).chains(by_id.keys).map do |ids|
               Row.new(by_id.values_at(*ids), @notes)
             end
+            reversed_peers(rows)
+          end
+
+          # Composites side by side that a transition joins stand in the
+          # reverse of the order they are listed, as PlantUML draws them.
+          def reversed_peers(rows)
+            peers = @level_edges.peer_ids(rows)
+            spots = rows.each_index.select { |at| peers.include?(rows[at].id) }
+            order = spots.zip(spots.reverse).to_h
+            rows.each_index.map { |at| rows[order.fetch(at, at)] }
           end
 
           def unit_of(row)

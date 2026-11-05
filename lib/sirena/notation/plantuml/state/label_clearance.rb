@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "plane"
+
 module Sirena
   module Notation
     module PlantUML
@@ -10,9 +12,62 @@ module Sirena
           CHORD_STEPS = 40
           CROWD = 4
           CROWD_SHIFT = 0.15
-          private_constant :CHORD_STEPS, :CROWD, :CROWD_SHIFT
+          TITLE_BAND = 30.0
+          ALONG = [0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.1, 0.9].freeze
+          private_constant :CHORD_STEPS, :CROWD, :CROWD_SHIFT, :TITLE_BAND,
+                           :ALONG
 
           private
+
+          # The label's spot, moved along the route to the nearest one that
+          # is off every container's title, every state and every label
+          # already placed; the first spot when none is.
+          def settled(spot, points, label)
+            return spot unless spot
+
+            found = [spot, *spots_along(points, label)].find do |at|
+              free?(rect_at(at, label))
+            end || spot
+            @placed << rect_at(found, label)
+            found
+          end
+
+          def rect_at(spot, label)
+            half = [label[:width], label[:height]].map { |size| size / 2.0 }
+            Plane.around(spot.values_at(:x, :y), half)
+          end
+
+          def free?(rect)
+            fenced = Plane.grow(rect, 3)
+            (@placed + obstacles).none? { |other| Plane.meet?(fenced, other) }
+          end
+
+          # Each container's title band and each state that holds nothing.
+          def obstacles
+            @obstacles ||= @boxes.values.reject { |box| note_box?(box) }
+              .map { |box| title_band(box) }
+          end
+
+          def title_band(box)
+            rect = Plane.rect(box)
+            return rect unless box.node[:children]&.any?
+
+            [rect[0], rect[1], rect[2], rect[1] + TITLE_BAND]
+          end
+
+          def spots_along(points, label)
+            ALONG.flat_map do |fraction|
+              at, from, to = Plane.at_length(points, fraction)
+              sides(at, steep?(from, to), label)
+            end
+          end
+
+          def sides(at, steep, label)
+            reach = steep ? (label[:width] / 2.0) + RouteGeometry::LABEL_GAP : 0
+            lift = steep ? 0 : (label[:height] / 2.0) + RouteGeometry::LABEL_GAP
+            [{ x: at.first + reach, y: at.last - lift },
+             { x: at.first - reach, y: at.last + lift }]
+          end
 
           # @return [Hash{String=>Integer}] how many transitions meet at
           #   each state

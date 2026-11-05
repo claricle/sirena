@@ -127,8 +127,8 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(box("Right")[1]).to be < box("Left").last
     end
 
-    it "puts one beside the other" do
-      expect(box("Right")[0]).to be >= box("Left")[2]
+    it "puts the later-listed one on the left, as PlantUML does" do
+      expect(box("Left")[0]).to be >= box("Right")[2]
     end
   end
 

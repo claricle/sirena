@@ -27,7 +27,32 @@ module Sirena
               !@ranking.overlap?(*pair)
             end
             elk = kept.filter_map { |edge, pair| elk_edge(edge, pair, unit) }
-            elk + entries(elk, peers.map { |_, pair| pair.map { unit[_1] } })
+            joined = elk + entries(elk, peer_pairs(peers, unit))
+            peers.empty? ? joined : by_target(joined, rows)
+          end
+
+          def peer_pairs(peers, unit)
+            peers.map { |_, pair| pair.map { |id| unit[id] } }
+          end
+
+          # Edges into the rows listed first come first, so ELK places
+          # those rows first.
+          def by_target(edges, rows)
+            ids = rows.map(&:id)
+            edges.sort_by.with_index do |edge, at|
+              [ids.index(edge[:targets].first), at]
+            end
+          end
+
+          # @param rows [Array<Row>] the container's rows
+          # @return [Array<String>] the ids of rows PlantUML draws beside a
+          #   row one of its transitions joins, in the order given
+          def peer_ids(rows)
+            unit = unit_ids(rows)
+            linked = joins(unit).map(&:last).select do |pair|
+              @ranking.overlap?(*pair)
+            end
+            rows.map(&:id) & linked.flatten.map { |id| unit[id] }
           end
 
           private
