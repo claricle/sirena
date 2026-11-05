@@ -101,7 +101,8 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
       points.size == 4 && points.map(&:first).uniq.size == 3
     end
 
-    expect([extent(merge, 0), extent(merge, 1)]).to eq([24.0, 24.0])
+    expect([extent(merge, 0), extent(merge, 1)])
+      .to all(be_within(1e-6).of(24.0))
   end
 
   # JAR: "Hello world" is a 34.13 high box, 20 wider than its text

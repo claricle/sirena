@@ -11,8 +11,9 @@ module Sirena
         # partition frames.
         class FrameMarks
           PARTITION_PAD = 10.0
+          LANE_FLOOR = 20.0
           LANE_FILL = "#E2E2F0"
-          private_constant :PARTITION_PAD, :LANE_FILL
+          private_constant :PARTITION_PAD, :LANE_FLOOR, :LANE_FILL
 
           def initialize(diagram, placement, canvas, metrics)
             @diagram = diagram
@@ -30,7 +31,7 @@ module Sirena
           end
 
           def lanes
-            floor = @placement.bottoms.last + (@placement.gap / 2)
+            floor = @placement.bottoms.last + LANE_FLOOR
             ceiling = @placement.top - Placement::HEADER_HEIGHT
             @placement.bands.each { |band| lane(band, ceiling, floor) }
           end
@@ -62,7 +63,7 @@ module Sirena
             @canvas.lines([name],
                           [frame.left + 8,
                            frame.top + @metrics.size(:partition) + 3],
-                          weight: "bold", role: :partition)
+                          role: :partition)
           end
 
           # The frame is as tall above the nodes as the title is, and wide

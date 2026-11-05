@@ -10,7 +10,8 @@ module Sirena
         class EdgeMarks
           INK = "#181818"
           DASHES = { dashed: "7,5", dotted: "2,4" }.freeze
-          private_constant :INK, :DASHES
+          QUESTION_GAP = 13.0
+          private_constant :INK, :DASHES, :QUESTION_GAP
 
           def initialize(router, canvas)
             @router = router
@@ -24,6 +25,7 @@ module Sirena
             route = @router.call(edge)
             paint(edge, route.points)
             label(edge, route)
+            question(edge.to, route.points.last(2)) if edge.to.bare
           end
 
           private
@@ -34,6 +36,15 @@ module Sirena
                                  dash: DASHES[edge.style])
             @canvas.polygon(ArrowHead.points(points.last(2)), fill: colour,
                                                               stroke: colour)
+          end
+
+          # A bare decision's question stands left of the arrow into it,
+          # level with the middle of the arrow.
+          def question(node, segment)
+            tail, tip = segment
+            @canvas.lines(node.lines, [tip.first - QUESTION_GAP,
+                                       ((tail.last + tip.last) / 2) + 10.0],
+                          anchor: "end", role: :arrow)
           end
 
           def width(edge)

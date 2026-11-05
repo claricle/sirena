@@ -21,12 +21,16 @@ module Sirena
           attr_accessor :partition
           # @return [Array<Note>] notes attached to the node
           attr_reader :notes
+          # @return [Boolean] a decision drawn as a bare diamond, its text
+          #   written beside the arrow that enters it (legacy `if`)
+          attr_reader :bare
 
-          def initialize(id:, kind:, text: nil, fill: nil)
+          def initialize(id:, kind:, text: nil, fill: nil, bare: false)
             @id = id
             @kind = kind
             @text = text
             @fill = fill
+            @bare = bare
             @notes = []
           end
 

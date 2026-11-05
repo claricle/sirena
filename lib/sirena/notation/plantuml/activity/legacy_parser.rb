@@ -69,7 +69,7 @@ module Sirena
 
           def open_if(match)
             text = clean(match[:cond] || match[:paren])
-            decision = @builder.node(:decision, text: text)
+            decision = @builder.node(:decision, text: text, bare: true)
             @builder.connect(@current, decision) if @current
             @frames << { decision: decision, tails: [], else: false }
             @current = decision

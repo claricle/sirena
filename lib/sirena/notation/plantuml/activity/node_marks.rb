@@ -73,6 +73,8 @@ module Sirena
           end
 
           def decision(node, box)
+            return diamond(box, node.fill) if node.bare
+
             @canvas.polygon(hexagon(box), fill: node.fill || PAPER,
                                           role: :diamond)
             centred(node.lines, box, role: :diamond)

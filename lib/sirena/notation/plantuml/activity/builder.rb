@@ -25,9 +25,9 @@ module Sirena
           end
 
           # @return [Node]
-          def node(kind, text: nil, fill: nil)
+          def node(kind, text: nil, fill: nil, bare: false)
             Node.new(id: "n#{@nodes.size}", kind: kind, text: text,
-                     fill: fill).tap { |n| enrol(n) }
+                     fill: fill, bare: bare).tap { |n| enrol(n) }
           end
 
           # @return [Edge]

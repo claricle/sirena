@@ -81,6 +81,7 @@ module Sirena
           # @return [Box] a box of the node's size, not yet placed
           def box_for(node)
             return fixed_box(FIXED[node.kind]) if FIXED.key?(node.kind)
+            return fixed_box(FIXED[:merge]) if node.bare
             return decision_box(node.lines) if node.kind == :decision
 
             action_box(node.lines)
