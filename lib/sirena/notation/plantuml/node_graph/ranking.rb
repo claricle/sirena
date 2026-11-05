@@ -14,18 +14,27 @@ module Sirena
           attr_reader :layers
 
           # @param items [Array<Object>] in source order
-          # @param pairs [Array<Array(Object, Object)>] links between items
+          # @param pairs [Array<Array>] links between items, each
+          #   `[from, to, step]`: `to` sits `step` ranks after `from` (0 puts
+          #   them in one rank, with `from` first; 1 when omitted)
           def initialize(items, pairs)
             @items = items
-            @pairs = pairs.uniq.reject { |a, b| a.equal?(b) }
+            @pairs = merged(pairs)
             @forward = acyclic(@pairs)
             @rank = items.to_h { |item| [item, 0] }
-            items.each { |item| rank_of(item, {}) }
+            settle_ranks
             @layers = group
             order
           end
 
           private
+
+          # Each pair once, with the longest step asked of it.
+          def merged(pairs)
+            pairs.reject { |a, b| a.equal?(b) }
+              .group_by { |a, b, _| [a.object_id, b.object_id] }
+              .values.map { |group| group.max_by { |_, _, step| step || 1 } }
+          end
 
           # The links that remain once every link closing a cycle, found
           # depth first in source order, is dropped.
@@ -44,22 +53,36 @@ module Sirena
           end
 
           def follow(pair)
-            return if @state[pair.last] == :open
+            return if @state[pair[1]] == :open
 
             @kept << pair
-            descend(pair.last) unless @state[pair.last]
+            descend(pair[1]) unless @state[pair[1]]
           end
 
-          def rank_of(item, seen)
-            return @rank[item] if seen[item]
+          # Longest path ranks: a link of step n puts its target n ranks
+          # after its source, a step of 0 puts both in one rank. Stops after
+          # a bounded number of sweeps, so links that cannot all hold (a
+          # one-rank link across a pair held in one rank) cannot loop.
+          def settle_ranks
+            (@items.size + 1).times do
+              break unless @forward.map { |link| hold?(*link) }.any?
+            end
+          end
 
-            seen[item] = true
-            preds = @forward.select { |_, b| b.equal?(item) }.map(&:first)
-            @rank[item] = preds.map { |pred| rank_of(pred, seen) + 1 }.max || 0
+          # @return [Boolean] whether the link moved a rank
+          def hold?(from, to, step)
+            step ||= 1
+            want = @rank[from] + step
+            want = [want, @rank[to]].max if step.zero?
+            moved = @rank[to] < want || (step.zero? && @rank[from] < want)
+            @rank[to] = [@rank[to], want].max
+            @rank[from] = want if step.zero?
+            moved
           end
 
           def group
-            @items.group_by { |item| @rank[item] }.sort.map(&:last)
+            by_rank = @items.group_by { |item| @rank[item] }
+            (0..(by_rank.keys.max || -1)).map { |rank| by_rank.fetch(rank, []) }
           end
 
           def order
@@ -74,6 +97,26 @@ module Sirena
             neighbour = @layers[index + step]
             @layers[index] = @layers[index].sort_by.with_index do |item, at|
               [barycentre(item, neighbour) || at, at]
+            end
+            @layers[index] = settled(@layers[index])
+          end
+
+          # The layer with every item after the items that must come first
+          # in its rank (links of step 0), otherwise as it was.
+          def settled(layer)
+            rest = layer.dup
+            Array.new(layer.size) do
+              pick = rest.find { |item| !before(item).intersect?(rest) }
+              pick ||= rest.first
+              rest.delete_if { |item| item.equal?(pick) }
+              pick
+            end
+          end
+
+          # The items a link of step 0 puts ahead of `item`.
+          def before(item)
+            @forward.filter_map do |from, to, step|
+              from if step&.zero? && to.equal?(item)
             end
           end
 

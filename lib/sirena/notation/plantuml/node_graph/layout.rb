@@ -80,8 +80,14 @@ module Sirena
             @graph.edges.filter_map do |edge|
               from = lift(edge.from, scope)
               to = lift(edge.to, scope)
-              [from, to] if from && to && !from.equal?(to)
+              ranked(edge, from, to) if from && to && !from.equal?(to)
             end
+          end
+
+          # `[from, to, step]`, the ends swapped when the link reads backwards.
+          def ranked(edge, from, to)
+            ends = edge.backwards ? [to, from] : [from, to]
+            [*ends, edge.rank_step]
           end
 
           def lift(node, scope)
