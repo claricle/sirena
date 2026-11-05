@@ -10,6 +10,8 @@ require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "qualified_association_layout"
 require_relative "rank_chain"
+require_relative "rank_hierarchy"
+require_relative "note_layout"
 require_relative "relation_label_separator"
 require_relative "scene"
 require_relative "sequence/text_advances"
@@ -36,6 +38,8 @@ module Sirena
         COMPACT_GROUP_GAP = 8.0
         COMPACT_RULE_BASE_HEIGHT = 34.488
         MARKER_LENGTH = 12.0
+        THICK_LINE = 4.0
+        JUNCTION_DOT_RADIUS = 2.0
         MARKER_HALF_WIDTH = 7.0
         LABEL_OFFSET = 10.0
         LABEL_GAP = 2.0
@@ -289,10 +293,20 @@ module Sirena
         end
 
         def standard_box_scene(diagram, specifications)
-          box_width = widest_box(specifications)
           chain = RankChain.for(diagram)
           return chain_scene(diagram, chain, specifications) if chain
+          return noted_scene(diagram, specifications) if diagram.notes.any?
 
+          hierarchy = RankHierarchy.for(diagram)
+          if hierarchy
+            return hierarchy_scene(diagram, hierarchy, specifications)
+          end
+
+          grid_scene(diagram, specifications)
+        end
+
+        def grid_scene(diagram, specifications)
+          box_width = widest_box(specifications)
           boxes = position_boxes(rows_by_package(specifications, diagram),
                                  box_width, stable_centers?(diagram),
                                  intrinsic_box_widths?(diagram), diagram)
@@ -354,6 +368,79 @@ module Sirena
           Scene.new(width: width, height: height,
                     boxes: boxes, frames: [],
                     relations: scene_relations(diagram, boxes, nodes))
+        end
+
+        def hierarchy_scene(diagram, hierarchy, specifications)
+          items = specifications.reject { |item| item[:note] }
+          sizes = item_sizes(items)
+          corners = hierarchy.place(sizes, [MARGIN, MARGIN])
+          boxes = chain_boxes(items, corners, sizes)
+          width, height = chain_dimensions(boxes)
+          Scene.new(width: width, height: height, boxes: boxes, frames: [],
+                    relations: scene_relations(diagram, boxes))
+        end
+
+        def item_sizes(items)
+          items.to_h { |item| [item[:id], [item[:width], item[:height]]] }
+        end
+
+        # Classes placed as without notes, then the notes around them; the
+        # whole drawing is moved so its top left corner keeps the margin.
+        def noted_scene(diagram, specifications)
+          items = specifications.reject { |item| item[:note] }
+          sizes, corners = noted_class_corners(diagram, items)
+          boxes = margined_boxes(diagram, items, sizes, corners)
+          width, height = chain_dimensions(boxes)
+          Scene.new(width: width, height: height, boxes: boxes, frames: [],
+                    relations: scene_relations(diagram, boxes))
+        end
+
+        # The class boxes and their notes, moved so the drawing's top left
+        # corner keeps the margin.
+        def margined_boxes(diagram, items, sizes, corners)
+          boxes = chain_boxes(items, corners, sizes)
+          shift = noted_shift(boxes + noted_boxes(diagram, boxes))
+          boxes = chain_boxes(items, shifted_corners(corners, shift), sizes)
+          boxes + noted_boxes(diagram, boxes)
+        end
+
+        def noted_class_corners(diagram, items)
+          hierarchy = RankHierarchy.for(diagram)
+          return hierarchy_corners(hierarchy, items) if hierarchy
+
+          grid_corners(diagram, items)
+        end
+
+        def hierarchy_corners(hierarchy, items)
+          sizes = item_sizes(items)
+          [sizes, hierarchy.place(sizes, [MARGIN, MARGIN])]
+        end
+
+        def grid_corners(diagram, items)
+          rows = rows_by_package(items, diagram)
+          placed = position_boxes(rows, widest_box(items),
+                                  stable_centers?(diagram),
+                                  intrinsic_box_widths?(diagram), diagram)
+          [placed.to_h { |box| [box.id, [box.width, box.height]] },
+           placed.to_h { |box| [box.id, [box.x, box.y]] }]
+        end
+
+        def noted_boxes(diagram, boxes)
+          NoteLayout.new(diagram, method(:note_line_width)).place(boxes)
+        end
+
+        def note_line_width(text)
+          measure_text(text, font_size: font_size * (13.0 / 14.0))[:width]
+        end
+
+        def noted_shift(boxes)
+          [MARGIN - boxes.map(&:x).min, MARGIN - boxes.map(&:y).min]
+        end
+
+        def shifted_corners(corners, shift)
+          corners.transform_values do |(left, top)|
+            [left + shift.first, top + shift.last]
+          end
         end
 
         def chain_sizes(specifications, diagram)
@@ -700,8 +787,7 @@ module Sirena
         # `nodes` holds each junction node as `[x, y, width, height]` by the
         # index of its relation; without one the legs meet at the middle.
         def scene_relations(diagram, boxes, nodes = {})
-          build_relations(diagram, boxes, nodes) +
-            build_note_links(diagram.notes, boxes)
+          build_relations(diagram, boxes, nodes)
         end
 
         def box_specification(klass, diagram)
@@ -1441,20 +1527,6 @@ module Sirena
           end
         end
 
-        # A dashed line from each note to the class it is attached to.
-        def build_note_links(notes, boxes)
-          by_name = boxes.to_h { |box| [box.id, box] }
-          notes.each_with_index.filter_map do |note, index|
-            next unless note.target
-
-            ends = [by_name.fetch("note-#{index}"), by_name.fetch(note.target)]
-            edge = relation_endpoints(*ends)
-            Scene::Relation.new(id: "note-link-#{index}", dashed: true,
-                                path: relation_path(edge),
-                                texts: [], markers: [])
-          end
-        end
-
         def box_contents(item, horizontal, vertical, width)
           return [note_texts(item, horizontal, vertical), []] if item[:note]
 
@@ -1675,7 +1747,8 @@ module Sirena
         def junction_relation_scenes(relation, index, details, context)
           ends, end_texts, junctions = details
           by_name = context.fetch(:by_name)
-          junction = junction_box(context.fetch(:nodes)[index], ends)
+          junction = junction_box(context.fetch(:nodes)[index], ends,
+                                  context.fetch(:engine))
           entries = junctions.map { |entry| [*entry, by_name] }
           junction_scenes(relation, index, [ends, junction, end_texts], entries)
         end
@@ -1700,14 +1773,18 @@ module Sirena
 
         # The junction node, or a zero-size one at the middle of the
         # relation when the grid placed the classes.
-        def junction_box(node, ends)
+        def junction_box(node, ends, engine)
           node ||= [*midpoint(*relation_endpoints(*ends).values_at(:left,
                                                                    :right)),
                     0.0, 0.0]
           x, y, width, height = node
-          Scene::Box.new(id: "junction", x: x, y: y, width: width,
-                         height: height, texts: [], separators: [],
-                         kind: "junction")
+          # Smetana's legs stop at the junction node's edge; the default
+          # engine runs one line through its middle.
+          return junction_node(x, y, width, height) unless engine == :dot
+
+          Scene::Box.new(id: "junction", x: x + (width / 2),
+                         y: y + (height / 2), width: 0.0, height: 0.0,
+                         texts: [], separators: [], kind: "junction")
         end
 
         def relation_scene(relation, id, endpoints, end_texts, style = {})
@@ -1735,7 +1812,38 @@ module Sirena
           drawn_markers = marker_scenes(markers.slice(*sides), endpoints,
                                         half_width: half_width)
           drawn_markers << label_arrow_scene(relation, endpoints)
-          drawn_markers.compact
+          scale_thick_markers(drawn_markers.compact, relation, endpoints)
+        end
+
+        # PlantUML grows an arrowhead with the line it ends: a head on a
+        # line thicker than 4 is as many times larger as 4 goes into it.
+        def scale_thick_markers(markers, relation, endpoints)
+          factor = relation.width.to_f / THICK_LINE
+          return markers unless factor > 1.0
+
+          markers.each do |marker|
+            next unless marker.shape == "polygon"
+
+            tip = marker_tip(marker, endpoints)
+            marker.points = scaled_points(marker.points, tip, factor)
+          end
+        end
+
+        def marker_tip(marker, endpoints)
+          first = point_pairs(marker.points).first
+          endpoints.values_at(:left, :right).compact.min_by do |tip|
+            JsMath.hypot(*tip.zip(first).map { |at, from| at - from })
+          end
+        end
+
+        def scaled_points(points, tip, factor)
+          formatted_points(point_pairs(points).map do |point|
+            point.zip(tip).map { |at, from| from + ((at - from) * factor) }
+          end)
+        end
+
+        def point_pairs(points)
+          points.split.map { |pair| pair.split(",").map(&:to_f) }
         end
 
         def relation_path_for(relation, endpoints)
@@ -1911,19 +2019,35 @@ module Sirena
         # the pinned references draw it.
         def junction_scenes(relation, index, boxes, owners)
           (from, to), junction, end_texts = boxes
+          legs = junction_legs(relation, index, [from, junction, to],
+                               end_texts)
+          legs.first.markers << junction_dot(junction)
+          [*legs, *owners.map { |entry| owner_link(junction, *entry) }]
+        end
+
+        def junction_legs(relation, index, (from, junction, to), end_texts)
           swap = %i[up left].include?(relation.direction)
-          markers = relation.markers
-          [relation_scene(
-            relation, "relation-#{index}-from",
-            relation_endpoints(from, junction), end_texts,
-            sides: %i[left], markers: junction_markers(markers, swap, :left)
-          ),
-           relation_scene(
-             relation, "relation-#{index}-to",
-             relation_endpoints(junction, to), end_texts,
-             sides: %i[right], markers: junction_markers(markers, swap, :right)
-           ),
-           *owners.map { |entry| owner_link(junction, *entry) }]
+          [[:left, "from", from, junction],
+           [:right, "to", junction, to]].map do |side, name, tail, head|
+            markers = junction_markers(relation.markers, swap, side)
+            relation_scene(relation, "relation-#{index}-#{name}",
+                           relation_endpoints(tail, head), end_texts,
+                           sides: [side], markers: markers)
+          end
+        end
+
+        def junction_node(left, top, width, height)
+          Scene::Box.new(id: "junction", x: left, y: top, width: width,
+                         height: height, texts: [], separators: [],
+                         kind: "junction")
+        end
+
+        # The filled dot where an association class meets its relation.
+        def junction_dot(junction)
+          Scene::Marker.new(shape: "dot", filled: true,
+                            cx: junction.x + (junction.width / 2),
+                            cy: junction.y + (junction.height / 2),
+                            r: JUNCTION_DOT_RADIUS)
         end
 
         def junction_markers(markers, swap, side)
@@ -2162,7 +2286,8 @@ module Sirena
         def relation_text_label(relation, endpoints, sides)
           return unless sides.include?(:left)
 
-          relation_label(visible_relation_label(relation.label), endpoints)
+          relation_label(visible_relation_label(relation.label), endpoints,
+                         [relation.width.to_f - 1.0, 0.0].max / 2)
         end
 
         def visible_relation_label(label)
@@ -2180,7 +2305,7 @@ module Sirena
 
         # Above the middle of a flat line; beside a steep one, centred on
         # its middle, as PlantUML draws a label in its own rank.
-        def relation_label(content, endpoints)
+        def relation_label(content, endpoints, clearance = 0.0)
           return unless content
 
           return self_relation_label(content, endpoints) if endpoints[:control]
@@ -2188,10 +2313,11 @@ module Sirena
           left, right = endpoints.values_at(:left, :right)
           horizontal, middle = midpoint(left, right)
           if steep?(left, right)
-            return steep_relation_label(content, horizontal, middle)
+            return steep_relation_label(content, horizontal + clearance,
+                                        middle)
           end
 
-          scene_text(content, horizontal, middle - LABEL_OFFSET,
+          scene_text(content, horizontal, middle - LABEL_OFFSET - clearance,
                      "relation_label", "middle")
         end
 

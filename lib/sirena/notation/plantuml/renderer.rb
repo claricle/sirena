@@ -5,6 +5,7 @@ require_relative "../../svg"
 require_relative "scene"
 require_relative "style"
 require_relative "creole"
+require_relative "note_outline"
 require_relative "class_header"
 
 module Sirena
@@ -156,6 +157,17 @@ module Sirena
           relation_marker_elements(relation).each { |e| group << e }
           relation.texts.each { |text| group << text_element(text) }
           document << group
+          render_junction_dots(relation, document)
+        end
+
+        # The dot sits in a group of its own, apart from the relation's.
+        def render_junction_dots(relation, document)
+          relation.markers.select { |marker| marker.shape == "dot" }
+            .each_with_index do |marker, number|
+            dot = Svg::Group.new(id: "dot-#{relation.id}-#{number}")
+            dot << junction_dot(marker)
+            document << dot
+          end
         end
 
         def relation_line(relation)
@@ -188,14 +200,27 @@ module Sirena
           return unless relation.stroke || relation.stroke_width
 
           relation_ink(element, relation)
-          colour = relation.stroke
-          element.fill = colour if colour && element.fill == edge_colour
+          thick = relation.stroke_width.to_f > 4.0
+          element.stroke_width = "1" if thick
+          element.fill = relation.stroke if recoloured?(element, relation,
+                                                        thick)
+        end
+
+        def recoloured?(element, relation, thick)
+          relation.stroke && (thick || element.fill == edge_colour)
         end
 
         def marker_elements(marker)
+          return [] if marker.shape == "dot"
           return [relation_marker(marker)] unless marker.shape == "nesting"
 
           [nesting_circle(marker), nesting_cross(marker)]
+        end
+
+        def junction_dot(marker)
+          Svg::Circle.new(cx: marker.cx, cy: marker.cy, r: marker.r,
+                          fill: edge_colour, stroke: edge_colour,
+                          stroke_width: stroke_width)
         end
 
         def nesting_circle(marker)
@@ -239,7 +264,7 @@ module Sirena
         end
 
         def rule_lines(box)
-          return [] if box.kind == "member_note"
+          return [] if box.kind.end_with?("note")
 
           box.separators.map { |separator| separator_line(separator) }
         end
@@ -269,12 +294,19 @@ module Sirena
 
         def box_rectangle(box)
           return member_note_shape(box) if box.kind == "member_note"
+          return note_shape(box) if box.kind == "note"
 
           Svg::Rect.new.tap do |rectangle|
             apply_box_geometry(rectangle, box)
             apply_box_style(rectangle)
-            rectangle.fill = note_fill(box) if box.kind == "note"
           end
+        end
+
+        # A note: a folded top right corner and, when it points at a class,
+        # a tail on the edge that faces it.
+        def note_shape(box)
+          Svg::Path.new(d: NoteOutline.call(box), fill: note_fill(box),
+                        stroke: node_stroke, stroke_width: node_width)
         end
 
         def member_note_shape(box)
@@ -332,7 +364,7 @@ module Sirena
         # `#yellow` is a colour name and `#FFAA00` a hex value.
         def note_fill(box)
           colour = box.fill&.delete_prefix("#")
-          return "#fbfb77" unless colour
+          return "#FEFFDD" unless colour
           return "##{colour}" if colour.match?(/\A\h{3}(?:\h{3})?\z/)
 
           colour

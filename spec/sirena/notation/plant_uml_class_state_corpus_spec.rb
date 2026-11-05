@@ -21,7 +21,7 @@ RSpec.describe Sirena::Notation::PlantUML do
   let(:root) { REXML::Document.new(svg).root }
   let(:texts) do
     REXML::XPath.match(root, "//*[local-name()='text']").map do |text|
-      text.texts.map(&:value).join
+      REXML::XPath.first(text, "string(.)")
     end
   end
 
