@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "edge"
+
 module Sirena
   module Notation
     module PlantUML
@@ -18,6 +20,13 @@ module Sirena
             @width = @options.filter_map { |o| o[/\Athickness=(\d+)/, 1] }
               .first.to_i
             @width = 1 if @width < 1
+          end
+
+          # @return [Edge] the line this arrow draws from `from` to `to`;
+          #   `rest` is the label and the rows it starts and ends at
+          def edge(from, to, **rest)
+            Edge.new(from: from, to: to, style: style, head: head,
+                     color: color, width: width, **rest)
           end
 
           def hidden?

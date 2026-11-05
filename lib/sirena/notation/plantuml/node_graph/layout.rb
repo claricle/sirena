@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../plantuml_data/boxes/table_box"
 require_relative "metrics"
 require_relative "packer"
 require_relative "ranking"
@@ -134,14 +135,25 @@ module Sirena
               to = boxes[edge.to]
               next if from.equal?(to)
 
-              Route.new(edge: edge, points: segment(from, to))
+              Route.new(edge: edge, points: segment(from, to, edge))
             end
           end
 
-          def segment(from, to)
+          def segment(from, to, edge)
             a = center(from)
             b = center(to)
-            [clip(from, a, b), clip(to, b, a)]
+            [row_end(from, edge.from_row, b) || clip(from, a, b),
+             row_end(to, edge.to_row, a) || clip(to, b, a)]
+          end
+
+          # The middle of the row of a map or object box that a line ends
+          # at, on the side facing `toward`.
+          def row_end(box, row, toward)
+            return unless row
+
+            side = toward[0] >= center(box)[0] ? box.x + box.width : box.x
+            [side, PlantUMLData::Boxes::TableBox
+              .row_middle(box.node.table, row, box.y)]
           end
 
           def center(box)
