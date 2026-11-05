@@ -11,6 +11,7 @@ require_relative "plantuml/usecase"
 require_relative "plantuml/component"
 require_relative "plantuml/entity"
 require_relative "plantuml/state"
+require_relative "plantuml/further"
 require_relative "plantuml/style"
 
 module Sirena
@@ -38,10 +39,10 @@ module Sirena
       # not, can make it raise.
       OPENER = /\A(?:\xEF\xBB\xBF)?
                 (?:#{PAD}*(?:'[^\r\n]*)?(?:\r\n|\r|\n))*
-                #{PAD}*@startuml(?![A-Za-z0-9_])/xn
+                #{PAD}*@start(?:uml|ebnf|nwdiag)(?![A-Za-z0-9_])/xn
       # The families tried in order; the first whose query claims the source
       # reads it, and the class diagram is what is left.
-      FAMILIES = [[State, :state?], [Usecase, :usecase?],
+      FAMILIES = [[Further, :further?], [State, :state?], [Usecase, :usecase?],
                   [Component, :component?], [Activity, :activity?],
                   [Entity, :entity?], [Sequence, :sequence?]].freeze
       private_constant :PAD, :OPENER, :FAMILIES
@@ -59,7 +60,8 @@ module Sirena
       # @return [Array<Symbol>] diagram types, in display order
       def types
         %i[class_diagram sequence_diagram activity_diagram usecase_diagram
-           component_diagram state_diagram entity_diagram].freeze
+           component_diagram state_diagram entity_diagram
+           network_diagram timing_diagram ebnf_diagram].freeze
       end
 
       # @param source [String] any String, including binary or invalid UTF-8
