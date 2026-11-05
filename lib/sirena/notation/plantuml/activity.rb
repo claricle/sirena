@@ -34,11 +34,14 @@ module Sirena
 
         # @return [Notation::Parsed]
         def parse(source)
+          sheet = Style::Reader.read(source)
+          diagram = Parser.new.parse(source)
+          diagram.style = sheet
           Notation::Parsed.new(
             type: :activity_diagram,
-            diagram: Parser.new.parse(source),
+            diagram: diagram,
             transform: Layout,
-            renderer: Style::Bound.wrap(Renderer, Style::Reader.read(source)),
+            renderer: Style::Bound.wrap(Renderer, sheet),
           )
         end
       end
