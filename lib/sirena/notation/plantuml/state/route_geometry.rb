@@ -9,6 +9,7 @@ module Sirena
           SPREAD = 16.0
           LOOP = 28.0
           LABEL_GAP = 6.0
+          BOW = 1.5
 
           # A state's absolute box and the layout hash it came from.
           Box = Struct.new(:x, :y, :w, :h, :node)
@@ -69,6 +70,15 @@ module Sirena
             points.map { |x, y| [x - (rise * scale), y + (run * scale)] }
           end
 
+          # A bend halfway along the route, pushed across the line from
+          # `from` to `to`.
+          def bowed(points, from, to, offset)
+            middle = midpoint(*points)
+            normal = sideways([[0.0, 0.0]], from, to, offset * BOW).first
+            [points.first, [middle.first + normal.first,
+                            middle.last + normal.last], points.last]
+          end
+
           def section(points)
             {
               startPoint: point_hash(points.first),
@@ -85,6 +95,8 @@ module Sirena
           # stacked so none is written over another.
           def label_point(points, label, slot)
             return unless label
+            return bowed_label(points, label) if slot.total > 1 &&
+              points.size == 3
 
             from, to = longest_stretch(points)
             middle = midpoint(from, to)
@@ -92,6 +104,29 @@ module Sirena
 
             { x: middle.first,
               y: middle.last - LABEL_GAP - (label[:height] / 2.0) }
+          end
+
+          # Past the apex of a bowed route, on the side it bows to.
+          def bowed_label(points, label)
+            apex = points[1]
+            unit = unit_between(midpoint(points.first, points.last), apex)
+            reach = outward_reach(unit, label) + LABEL_GAP
+            x, y = apex.zip(unit).map { |at, step| at + (step * reach) }
+            { x: x, y: y }
+          end
+
+          def unit_between(from, to)
+            run = to.first - from.first
+            rise = to.last - from.last
+            length = Math.hypot(run, rise)
+            [run / length, rise / length]
+          end
+
+          # How far a label's centre sits from the point it clears, along
+          # `unit`.
+          def outward_reach(unit, label)
+            ((unit.first.abs * label[:width]) +
+              (unit.last.abs * label[:height])) / 2.0
           end
 
           def midpoint(from, to)
@@ -112,7 +147,14 @@ module Sirena
           def beside(label, slot, middle)
             { x: rightmost(slot, middle.first) + (label[:width] / 2.0) +
               LABEL_GAP,
-              y: middle.last + (slot.lane * (label[:height] + 4)) }
+              y: middle.last + (slot.lane * (label[:height] + 4)) +
+                clear_of_bow(label, slot) }
+          end
+
+          # The straight middle route of three or more shares its side with
+          # the bowed one's label, so it takes the row below.
+          def clear_of_bow(label, slot)
+            slot.total > 2 && slot.offset.zero? ? label[:height] + 2 : 0
           end
 
           def rightmost(slot, line_x)

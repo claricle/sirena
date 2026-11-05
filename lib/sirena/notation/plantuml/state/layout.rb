@@ -2,6 +2,8 @@
 
 require_relative "../../../layout/state_diagram"
 require_relative "hierarchy"
+require_relative "look"
+require_relative "curve"
 
 module Sirena
   module Notation
@@ -21,23 +23,111 @@ module Sirena
             scene_from_graph(graph)
           end
 
+          # What the diagram draws, apart from Mermaid's reading: a history
+          # state is a circle.
+          def state_shape_type(state)
+            return "history" if history?(state)
+
+            super
+          end
+
+          def history?(state)
+            %w[H H*].include?(state.label) &&
+              state.id.to_s.match?(/_(?:deep_)?history\z/)
+          end
+
+          def dimensions_for_shape(state, label_dims, descriptions)
+            case state_shape_type(state)
+            when "history" then Look::HISTORY_SIZE
+            when "start", "end" then Look.terminal(state_shape_type(state))
+            when "note" then note_dimensions(state)
+            when "normal" then leaf_dimensions(state, label_dims, descriptions)
+            else super
+            end
+          end
+
+          def add_terminal_radius(metadata)
+            radius = Look::TERMINAL_RADIUS[metadata[:shape_type]]
+            metadata[:shape_radius] = radius if radius
+            metadata
+          end
+
+          def note_dimensions(state)
+            lines = state_texts(state)
+            widest = lines.map do |line|
+              measure_text(line, font_size: Look::NOTE_FONT)[:width]
+            end.max.to_f
+            { width: widest + Look::NOTE_PAD_X + Look::NOTE_PAD_RIGHT,
+              height: (lines.size * Look::NOTE_LINE) + (2 * Look::NOTE_PAD_Y) }
+          end
+
+          # A plain state is a name above a divider; a composite is sized
+          # from its children later.
+          def leaf_dimensions(state, label_dims, descriptions)
+            if state.children.any?
+              return calculate_normal_state_dimensions(state, label_dims,
+                                                       descriptions)
+            end
+
+            lines = descriptions.map do |text|
+              measure_text(text, font_size: Look::TEXT_FONT)[:width]
+            end
+            { width: ([label_dims[:width]] + lines).max + 20.0,
+              height: leaf_height(descriptions.size) }
+          end
+
+          def leaf_height(lines)
+            body = (lines * Look::TEXT_LINE) + 10
+            body = Look::EMPTY_BODY if lines.zero?
+            Look::LEAF_BAR + body
+          end
+
           # A composite's name is its header, not its centre; a start or end
           # marker carries no text.
           def typed_labels(state)
-            return [] if %w[start end].include?(
-              state.dig(:metadata, :shape_type),
-            )
-            return super if Array(state[:children]).empty?
-
-            [header_label(state, state[:labels].first)]
+            case state.dig(:metadata, :shape_type)
+            when "start", "end" then []
+            when "note" then note_labels(state)
+            when "history" then super
+            else titled_labels(state)
+            end
           end
 
-          def header_label(state, name)
+          def titled_labels(state)
+            name, *rest = state[:labels]
+            bar = Array(state[:children]).empty? ? Look::LEAF_BAR : Look::BAR
+            [text_label(name, state[:x] + (state[:width] / 2.0),
+                        state[:y] + (bar / 2.0)),
+             *body_labels(state, rest, bar)]
+          end
+
+          def body_labels(state, lines, bar)
+            lines.each_with_index.map do |line, index|
+              text_label(line, state[:x] + Look::TEXT_PAD,
+                         state[:y] + bar + 13.0 + (index * Look::TEXT_LINE))
+            end
+          end
+
+          def note_labels(state)
+            state[:labels].each_with_index.map do |line, index|
+              text_label(
+                line, state[:x] + Look::NOTE_PAD_X,
+                state[:y] + Look::NOTE_PAD_Y + (Look::NOTE_LINE / 2.0) +
+                (index * Look::NOTE_LINE), size: Look::NOTE_FONT
+              )
+            end
+          end
+
+          def text_label(line, x_position, y_position, size: Look::TEXT_FONT)
             Sirena::Layout::StateDiagram::Label.new(
-              text: name[:text], width: name[:width], height: name[:height],
-              x: state[:x] + (state[:width] / 2.0), y: state[:y] + 18.0,
-              font_size: label_font_sizes[:normal]
+              text: line[:text], width: line[:width], height: line[:height],
+              x: x_position, y: y_position, font_size: size
             )
+          end
+
+          def section_path(section)
+            Curve.path([section.start_point, *section.bend_points,
+                        section.end_point])
           end
 
           def typed_edge_labels(edge, _source, _target)
