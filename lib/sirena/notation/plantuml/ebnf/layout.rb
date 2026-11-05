@@ -14,7 +14,7 @@ module Sirena
 
           MARGIN = 15.0
           TITLE = 22.0
-          LEAD = 18.0
+          LEAD = 26.0
           BETWEEN = 20.0
           RAIL = "1.5"
           BOX = { fill: "#FFFFFF", stroke_width: "0.5" }.freeze
@@ -53,7 +53,7 @@ module Sirena
           end
 
           def draw_rule(rule, block, top)
-            text(rule.name, MARGIN, top + 6, size: 13, bold: true)
+            text(rule.name, MARGIN, top + 6, size: 14, bold: true)
             draw_rail(block, top + TITLE)
           end
 
@@ -68,6 +68,7 @@ module Sirena
 
           def draw_end(from, rail)
             line(from, rail, from + LEAD, rail)
+            Blocks.heading(self, from + Blocks.heading_at(LEAD), rail)
             circle(from + LEAD + 4, rail, 4, fill: INK)
           end
 

@@ -13,7 +13,24 @@ module Sirena
           RADIUS = 10.0
           GAP = 10.0
           SIDE = 20.0
-          WORD_HEIGHT = 26.0
+          WORD_HEIGHT = 26.4883
+          WORD_PAD = 10.0
+          TEXT = 14
+          # Where a heading arrow sits along a rail, as PlantUML places it.
+          HEAD_AT = 0.4
+          HEAD_BACK = 2.0
+          HEAD_MIN = 11.0
+
+          # An arrowhead on the rail at `y`, pointing right from `tail`.
+          def self.heading(pen, tail, level)
+            pen.polygon([[tail, level - 3], [tail + 6, level],
+                         [tail, level + 3]])
+          end
+
+          # Where the arrowhead sits on a rail of `length`, from its start.
+          def self.heading_at(length)
+            [(HEAD_AT * length) - HEAD_BACK, HEAD_MIN].max
+          end
 
           # A block's shared shape.
           class Block
@@ -29,7 +46,8 @@ module Sirena
           # A terminal, nonterminal or special sequence in a box.
           class Word < Block
             def initialize(pen, text, style)
-              super(pen.text_width(text) + 20, WORD_HEIGHT, WORD_HEIGHT / 2)
+              super(pen.text_width(text, size: TEXT) + WORD_PAD, WORD_HEIGHT,
+                    WORD_HEIGHT / 2)
               @text = text
               @style = style
             end
@@ -37,7 +55,7 @@ module Sirena
             def draw(pen, left, top)
               pen.rect(left, top, width, height, **@style)
               pen.text(@text, left + (width / 2), top + baseline,
-                       anchor: "middle")
+                       anchor: "middle", size: TEXT)
             end
           end
 
@@ -101,9 +119,18 @@ module Sirena
                 level = top + @tops[index] + branch.baseline
                 draw_branch(pen, branch, left, [rail, level])
               end
+              heading(pen, left, rail)
             end
 
             private
+
+            # A skipped branch leaves the rail bare, so it carries the
+            # arrow that shows which way the rail runs.
+            def heading(pen, left, rail)
+              return unless @branches.first.is_a?(Gap)
+
+              Blocks.heading(pen, left + Blocks.heading_at(width), rail)
+            end
 
             def tops_of(branches)
               branches.each_with_object([0.0]) do |branch, tops|

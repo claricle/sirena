@@ -27,11 +27,13 @@ module Sirena
                    "robust" => 25.0, "analog" => 30.0 }.freeze
           NAME_DROP = 5.54
           SEGMENT_MIDDLE = 34.49
+          CONCISE_RISE = 12.0
           ANALOG_LOW = 109.49
           MAX_EDGES = 2000
           private_constant :GREEN, :LAVENDER, :ROW, :HIGH, :LOW, :BOTTOM,
                            :TIP, :HEIGHTS, :MAX_EDGES, :INK, :LABEL_X, :LEAD,
-                           :NAME_DROP, :SEGMENT_MIDDLE, :ANALOG_LOW
+                           :NAME_DROP, :SEGMENT_MIDDLE, :ANALOG_LOW,
+                           :CONCISE_RISE
 
           # @param pen [Drawing::Pen]
           # @param diagram [Diagram]
@@ -77,6 +79,8 @@ module Sirena
 
           # @return [Float] y of the signal at a time, or the track's middle
           def y_at(participant, top, time)
+            return concise_y(participant, top, time) if
+              participant.kind == "concise"
             return top + (height(participant) / 2) unless
               %w[binary robust].include?(participant.kind)
 
@@ -84,6 +88,18 @@ module Sirena
           end
 
           private
+
+          # A concise lane's segment is a hexagon: a message that meets it
+          # where a state changes meets its point, in the middle of the
+          # lane; one that meets it between changes meets its top edge.
+          def concise_y(participant, top, time)
+            middle = top + SEGMENT_MIDDLE
+            times = changes(participant).map(&:time)
+            return middle if times.empty? || time <= times.first ||
+              times.include?(time)
+
+            middle - CONCISE_RISE
+          end
 
           # How wide the lane's names stand left of its plot.
           def stand(participant)

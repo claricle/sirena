@@ -12,9 +12,14 @@ module Sirena
           WING = 2.74
           STROKE = "1.5"
           LABEL_SIZE = 14
-          LABEL_DROP = 15.5
+          # Where the JAR sets a message's text from the tip: pulled back
+          # along the arrow, then below the tip of a rising arrow and above
+          # that of a falling one.
+          PULL = 7.518
+          BELOW = 7.98
+          ABOVE = -8.11
           private_constant :BLUE, :HEAD, :WING, :STROKE, :LABEL_SIZE,
-                           :LABEL_DROP
+                           :PULL, :BELOW, :ABOVE
 
           # @param pen [Drawing::Pen]
           # @param axis [Axis]
@@ -41,8 +46,11 @@ module Sirena
           end
 
           # PlantUML sets the message in serif, just under the arrow's tip.
-          def label(text, _tail, tip)
-            @pen.text(text, tip[0], tip[1] + LABEL_DROP, fill: BLUE,
+          def label(text, tail, tip)
+            dir = tail == tip ? [0.0, -1.0] : unit(tail, tip)
+            drop = dir.last.positive? ? ABOVE : BELOW
+            @pen.text(text, tip[0] - (PULL * dir.first),
+                      tip[1] + drop - (PULL * dir.last), fill: BLUE,
                                                          family: "Serif",
                                                          size: LABEL_SIZE)
           end
