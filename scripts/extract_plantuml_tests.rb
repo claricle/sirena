@@ -229,6 +229,10 @@ module PlantumlExtractor
   module Writer
     module_function
 
+    # Sirena's own ledger cases share the type folders; extraction must
+    # never delete them.
+    OWN_PREFIX = "sirena."
+
     def write(cases, out_dir)
       cases.each do |id, kase|
         dir = File.join(out_dir, kase[:type])
@@ -242,6 +246,7 @@ module PlantumlExtractor
     def clear(out_dir)
       TYPES.each do |type|
         Dir.glob(File.join(out_dir, type, "*.{puml,meta.json}"))
+          .reject { |f| File.basename(f).start_with?(OWN_PREFIX) }
           .each { |f| File.delete(f) }
       end
     end

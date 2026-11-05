@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "json"
+require "tmpdir"
+require "fileutils"
 require "yaml"
 require_relative "../../scripts/extract_plantuml_tests"
 
@@ -175,6 +177,34 @@ RSpec.describe PlantumlExtractor do
     expect { described_class::Cases.build(block(source)) }
       .to raise_error(described_class::CaseIdCollision,
                       /case ID collision.*collision/i)
+  end
+
+  describe "Writer.clear" do
+    let(:out_dir) { Dir.mktmpdir }
+
+    after { FileUtils.remove_entry(out_dir) }
+
+    def touch(name)
+      FileUtils.mkdir_p(File.join(out_dir, "sequence"))
+      File.write(File.join(out_dir, "sequence", name), "x")
+    end
+
+    it "deletes extracted cases" do
+      touch("upstream.case.puml")
+      touch("upstream.case.meta.json")
+      described_class::Writer.clear(out_dir)
+
+      expect(Dir.children(File.join(out_dir, "sequence"))).to be_empty
+    end
+
+    it "keeps Sirena's own ledger cases" do
+      touch("sirena.create.basic.puml")
+      touch("upstream.case.puml")
+      described_class::Writer.clear(out_dir)
+
+      expect(Dir.children(File.join(out_dir, "sequence")))
+        .to eq(["sirena.create.basic.puml"])
+    end
   end
 
   describe "the committed corpus" do
