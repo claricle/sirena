@@ -45,9 +45,12 @@ module PlantUmlSequenceCorpus
     File.read(case_named(suffix))
   end
 
+  # The sirena.constructs.* cases are Sirena's own, all read; the rest are the
+  # upstream corpus.
   def unread_cases
     Dir.glob(File.join(DIR, "*.puml")).reject do |path|
-      RENDERED.any? { |suffix| path.end_with?("--#{suffix}.puml") }
+      File.basename(path).start_with?("sirena.constructs.") ||
+        RENDERED.any? { |suffix| path.end_with?("--#{suffix}.puml") }
     end
   end
 
