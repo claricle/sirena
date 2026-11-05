@@ -28,6 +28,16 @@ module Sirena
           attribute :y1, :float
           attribute :x2, :float
           attribute :y2, :float
+          attribute :width, :float
+          attribute :dash, :string
+        end
+
+        # The circled kind letter of a class header: `kind` is the class
+        # kind, `cx` and `cy` the circle's centre.
+        class Spot < Lutaml::Model::Serializable
+          attribute :kind, :string
+          attribute :cx, :float
+          attribute :cy, :float
         end
 
         class Box < Lutaml::Model::Serializable
@@ -40,6 +50,7 @@ module Sirena
           attribute :separators, Segment, collection: true
           attribute :kind, :string
           attribute :fill, :string
+          attribute :spot, Spot
         end
 
         class Frame < Lutaml::Model::Serializable
@@ -71,6 +82,9 @@ module Sirena
           attribute :id, :string
           attribute :path, :string
           attribute :dashed, :boolean
+          attribute :dotted, :boolean
+          attribute :stroke, :string
+          attribute :stroke_width, :float
           attribute :markers, Marker, collection: true
           attribute :texts, Text, collection: true
         end

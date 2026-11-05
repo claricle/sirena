@@ -15,7 +15,7 @@ module Sirena
         # them too.
         MARKER = /\A(?:\[[^\]]+\]|component\s|portin\s|portout\s|\(\)\s|
                    (?:node|cloud|file|folder|frame|storage|artifact|card|
-                   rectangle)\s)/xi
+                   rectangle|archimate)\s)/xi
         private_constant :MARKER
 
         # @return [Boolean] whether the source reads as a component diagram

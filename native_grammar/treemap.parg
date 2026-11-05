@@ -18,7 +18,7 @@
 
   treemap_value = *sp ( ":" / "," ) *sp treemap_number as value
 
-  treemap_node_line = *%x20 as indent dq_string as label [ treemap_value ] [ ":::" treemap_identifier as css_class ] *sp ( [comment] ( newline / eof ) )
+  treemap_node_line = *" " as indent dq_string as label [ treemap_value ] [ ":::" treemap_identifier as css_class ] *sp ( [comment] ( newline / eof ) )
 
   treemap_statement = treemap_title *sp / treemap_acc_title *sp / treemap_acc_descr *sp / treemap_class_def as class_def *sp / treemap_node_line as node / comment *sp / *sp newline
 

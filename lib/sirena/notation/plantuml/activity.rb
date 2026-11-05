@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "style"
 require_relative "activity/parser"
 require_relative "activity/layout"
 require_relative "activity/renderer"
@@ -33,11 +34,14 @@ module Sirena
 
         # @return [Notation::Parsed]
         def parse(source)
+          sheet = Style::Reader.read(source)
+          diagram = Parser.new.parse(source)
+          diagram.style = sheet
           Notation::Parsed.new(
             type: :activity_diagram,
-            diagram: Parser.new.parse(source),
+            diagram: diagram,
             transform: Layout,
-            renderer: Renderer,
+            renderer: Style::Bound.wrap(Renderer, sheet),
           )
         end
       end

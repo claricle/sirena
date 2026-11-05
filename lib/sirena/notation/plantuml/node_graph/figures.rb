@@ -41,19 +41,30 @@ module Sirena
                   [:polygon, [[1, 0, -8, 8], [1, 0, 0, 0], [1, 1, 0, -8],
                               [1, 1, -8, 0]]],
                   [:rect, [0, 0, 0, 8], [1, 1, -8, -8]]].freeze
+          # The tab of a folder or frame, drawn over the box's top left edge.
+          TAB = [:polygon, [[0, 0, 0, 0], [0, 0, 56, 0], [0, 0, 64, 8],
+                            [0, 0, 64, 12], [0, 0, 0, 12]], "none"].freeze
+          FOLDER = [[:rect, ORIGIN, FULL], TAB].freeze
+          FRAME = [[:rect, ORIGIN, FULL], TAB].freeze
           USECASE = [[:ellipse]].freeze
           CLOUD = [[:cloud]].freeze
           INTERFACE = [[:circle, [0.5, 0, 0, 10], 8]].freeze
+          CIRCLE = [[:circle, [0.5, 0, 0, 8], 8]].freeze
+
+          # What a container is drawn as; any other kind is a plain frame.
+          CONTAINERS = { node: NODE, database: DATABASE, cloud: CLOUD,
+                         folder: FOLDER, frame: FRAME }.freeze
 
           BY_KIND = { actor: ACTOR, usecase: USECASE, component: COMPONENT,
                       interface: INTERFACE, portin: PORT_IN, portout: PORT,
                       note: NOTE, database: DATABASE, node: NODE, cloud: CLOUD,
-                      file: FILE }.freeze
+                      file: FILE, circle: CIRCLE }.freeze
 
           # Where the label goes, by kind: `top` from the box top, else
           # centred; `dy` moves a centred label, `shift` and `shrink` its
           # horizontal middle and width, `left` pins it to the left.
           LABELS = { actor: { top: 52 }, interface: { top: 22 },
+                     circle: { top: 20 },
                      portin: { top: 0 }, portout: { top: 16 },
                      note: { top: 4, left: 8 }, database: { dy: 6 },
                      component: { shift: 6, shrink: 6 },
@@ -63,6 +74,12 @@ module Sirena
 
           def for(kind)
             BY_KIND.fetch(kind, BOX)
+          end
+
+          # @return [Array, nil] the outline of a container of `kind`, nil
+          #   for a plain rectangle
+          def container(kind)
+            CONTAINERS[kind]
           end
 
           def label(kind)

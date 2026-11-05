@@ -10,8 +10,8 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
-  rendered = %w[5-4 5-12 6-3 6-4 6-10-4 6-15 6-19]
-  refused = { "5-7" => "image", "6-25-2" => "style block" }
+  rendered = %w[5-4 5-12 6-3 6-4 6-10-4 6-15 6-19 6-25-2]
+  refused = { "5-7" => "image" }
 
   rendered.each do |id|
     context "with plantuml-lrg-#{id}" do

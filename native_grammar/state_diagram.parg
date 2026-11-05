@@ -8,9 +8,9 @@
 
   state_diagram_arrow = "-->" as arrow
 
-  state_diagram_quoted_id = %x22 *( "\\" ANY / 1*( !( "\"" / "\\" ) ANY ) ) %x22 / "'" *( "\\" ANY / 1*( !( "'" / "\\" ) ANY ) ) "'"
+  state_diagram_quoted_id = "\"" *( "\\" ANY / 1*( !( "\"" / "\\" ) ANY ) ) "\"" / "'" *( "\\" ANY / 1*( !( "'" / "\\" ) ANY ) ) "'"
 
-  state_diagram_label_string = %x22 *( !( "\"" ) ANY ) as string %x22
+  state_diagram_label_string = "\"" *( !( "\"" ) ANY ) as string "\""
 
   state_diagram_id = dq_string / sq_string / state_diagram_name
 
@@ -32,7 +32,7 @@
 
   state_diagram_marker_declaration = state_diagram_marker_target as state_id *sp state_diagram_marker as marker
 
-  state_diagram_target = !( %x22 %x22 ) state_diagram_label_string as state_label 1*sp "as" 1*sp ( state_diagram_quoted_id / state_diagram_name ) as state_id / state_diagram_id as state_id
+  state_diagram_target = !( "\"" "\"" ) state_diagram_label_string as state_label 1*sp "as" 1*sp ( state_diagram_quoted_id / state_diagram_name ) as state_id / state_diagram_id as state_id
 
   state_diagram_description = ":" *sp 1*( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" / "{" ) ANY ) / le_mid / !"{" state_diagram_line_char ) as description
 
@@ -62,7 +62,7 @@
 
   state_diagram_note_block = state_diagram_note_head newline state_diagram_note_body as note_text state_diagram_note_end
 
-  state_diagram_floating_note = "note" as note_keyword 1*sp !( %x22 %x22 ) dq_string as note_text 1*sp "as" 1*sp state_diagram_id as note_id line_end
+  state_diagram_floating_note = "note" as note_keyword 1*sp !( "\"" "\"" ) dq_string as note_text 1*sp "as" 1*sp state_diagram_id as note_id line_end
 
   state_diagram_description_end = *sp ( newline / eof )
 

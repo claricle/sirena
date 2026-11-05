@@ -47,12 +47,12 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(texts.map(&:text)).to eq(%w[A B])
     end
 
-    it "styles only the name lines as the name" do
+    it "keeps the kind row, which a multi-line name has no spot for" do
       svg = drawn('abstract class "A\nB"')
-      weights = REXML::XPath.match(svg, "//g[@id='class-A\\nB']/text")
-        .map { |text| text.attributes["font-weight"] }
+      styles = REXML::XPath.match(svg, "//g[@id='class-A\\nB']/text")
+        .map { |text| text.attributes["font-style"] }
 
-      expect(weights).to eq([nil, "bold", "bold"])
+      expect(styles).to eq(["italic", nil, nil])
     end
 
     it "keeps an emoji in the name" do

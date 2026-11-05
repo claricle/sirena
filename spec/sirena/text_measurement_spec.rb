@@ -245,4 +245,74 @@ RSpec.describe Sirena::TextMeasurement do
       expect(described_class::TABLE.values.max).to be < 3000
     end
   end
+
+  describe ".measure_in with the DejaVu Sans faces" do
+    # textLength values PlantUML 1.2026.6 wrote for the same strings set in
+    # <font:DejaVu Sans> (regular and <b>), at 12 px.
+    jar = {
+      "Hello World" => [69.3223, 78.9316],
+      "Zebra Quartz MWmw iIlL" => [147.9082, 166.5645],
+      "0123456789 .,;:!?()+=/@#%" => [174.0293, 188.3613],
+      "Caf\u00E9 d\u00E9j\u00E0 vu \u00F1 \u00FC" => [98.2031, 109.3652],
+    }
+
+    def dejavu(face, text)
+      described_class.measure_in(face, text, font_size: 12)[:width]
+    end
+
+    jar.each do |text, (regular, bold)|
+      it "measures #{text.inspect} as the JAR does, regular and bold",
+         :aggregate_failures do
+        expect(dejavu(:dejavu, text)).to be_within(5.0e-5).of(regular)
+        expect(dejavu(:dejavu_bold, text)).to be_within(5.0e-5).of(bold)
+      end
+    end
+
+    it "is wider in bold than in regular" do
+      expect(dejavu(:dejavu_bold, "Hello")).to be > dejavu(:dejavu, "Hello")
+    end
+
+    it "falls back to the default face for a codepoint DejaVu lacks here" do
+      expect(dejavu(:dejavu, "\u4E2D"))
+        .to eq(described_class.measure("\u4E2D", font_size: 12)[:width])
+    end
+
+    it "leaves .measure on the Arial table, apart from the DejaVu one" do
+      arial = described_class.measure("Hello World", font_size: 12)[:width]
+
+      expect(arial).to eq(described_class.measure_in(:arial, "Hello World",
+                                                     font_size: 12)[:width])
+    end
+
+    it "keeps the Arial width of a string apart from the DejaVu width" do
+      expect(described_class.measure("Hello World", font_size: 12)[:width])
+        .not_to be_within(1.0).of(69.3223)
+    end
+  end
+
+  describe Sirena::TextMeasurement::DejaVuAdvances do
+    it "lists codepoints in ascending order" do
+      keys = described_class::REGULAR.keys
+
+      expect(keys).to eq(keys.sort)
+    end
+
+    it "holds the same codepoints in regular and bold" do
+      expect(described_class::BOLD.keys).to eq(described_class::REGULAR.keys)
+    end
+
+    it "gives every advance in the data its own codepoint" do
+      listed = described_class::REGULAR_DATA.gsub(/U\+\h+:/, "").split.length
+
+      expect(described_class::REGULAR.size).to eq(listed)
+    end
+
+    it "keeps every advance under three em" do
+      expect(described_class::BOLD.values.max).to be < 3000
+    end
+
+    it "holds advances in per-mille em" do
+      expect(described_class::REGULAR[0x20]).to eq(651 * 1000 / 2048.0)
+    end
+  end
 end

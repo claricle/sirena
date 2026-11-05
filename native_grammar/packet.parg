@@ -10,7 +10,7 @@
 
   packet_bit_range = packet_bit as bit_start [ "-" packet_bit as bit_end ]
 
-  packet_label = %x22 *( "\\" ANY / 1*( !( "\"" / "\\" ) ANY ) ) as label %x22
+  packet_label = "\"" *( "\\" ANY / 1*( !( "\"" / "\\" ) ANY ) ) as label "\""
 
   packet_field_line = packet_bit_range ":" *sp packet_label ( newline / eof )
 

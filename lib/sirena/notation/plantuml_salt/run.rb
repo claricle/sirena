@@ -4,7 +4,8 @@ module Sirena
   module Notation
     module PlantUMLSalt
       # A stretch of text drawn in one style. `style` may hold `:bold`,
-      # `:italic`, `:underline`, `:strike` (true) and `:color` (a String).
+      # `:italic`, `:underline`, `:strike` (true), `:color` (a String) and
+      # `:size` (a Numeric, in points).
       class Run
         attr_reader :text
 
@@ -16,6 +17,11 @@ module Sirena
 
         %i[bold italic underline strike].each do |name|
           define_method(name) { @style.fetch(name, false) }
+        end
+
+        # @return [Numeric, nil] the font size, when it is not the default
+        def size
+          @style[:size]
         end
 
         # @return [String, nil] a colour name or hex digits

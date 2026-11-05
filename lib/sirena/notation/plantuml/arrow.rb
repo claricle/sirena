@@ -65,11 +65,31 @@ module Sirena
           style = body[/\[([^\]]*)\]/, 1]
           body = body.sub(/\[[^\]]*\]/, "") if style
           dashed = body.include?(".") || DASHING.match?(style.to_s)
-          markers = { left: left, right: right }.compact
-            .transform_values { |marker| kind_of(marker, dashed) }
+          markers = markers_of(left, right, dashed)
           { markers: markers, dashed: dashed, head: head_of(markers),
             kind: single_kind(markers, dashed), plain: PLAIN.match?(glyph),
             direction: direction_of(body), length: body.count("-.") }
+            .merge(stroke_of(style.to_s))
+        end
+
+        def markers_of(left, right, dashed)
+          { left: left, right: right }.compact
+            .transform_values { |marker| kind_of(marker, dashed) }
+        end
+
+        # The bracket's colour (the first of `#red;#green`), thickness and
+        # dotted flag; absent keys mean the theme's own line.
+        def stroke_of(style)
+          words = style.split(/[,;]/).map(&:strip)
+          { color: words.filter_map { |word| word[/\A#(\w+)\z/, 1] }.first,
+            width: thickness_of(words),
+            dotted: words.any? { |word| word.casecmp?("dotted") } }
+        end
+
+        def thickness_of(words)
+          width = words.filter_map { |word| word[/\Athickness=(\d+)/, 1] }
+            .first.to_i
+          width if width.positive?
         end
 
         def direction_of(body)

@@ -34,11 +34,11 @@ module Sirena
           def take_object(text)
             return unless (match = text.match(OBJECT_OPEN))
 
-            rows = match[:open] ? body_lines.map { |line| field(line) } : []
+            rows = match[:open] ? body_lines.map { |line| box_row(line) } : []
             box_node(match, :object, rows)
           end
 
-          def field(line)
+          def box_row(line)
             Boxes::Row.new(value: line, port: line[FIELD])
           end
 

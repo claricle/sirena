@@ -47,7 +47,7 @@ module Sirena
             enum|annotation)
            [ \t]+(#{NAME})
            (?:<([^<>]+)>)?((?:[ \t]*#{STEREOTYPE})*)
-           ((?:[ \t]+\$#{NAME})*)(?:[ \t]*(\{))?\z/xo
+           ((?:[ \t]+\$#{NAME})*)(?:[ \t]+\#\S+)?(?:[ \t]*(\{))?\z/xo
         PACKAGE = /\A(\+)?package[ \t]+
                    (?:"([^"]+)"[ \t]+as[ \t]+(#{NAME})|
                       (#{NAME}(?:\.#{NAME})*))
@@ -86,6 +86,7 @@ module Sirena
                            <img:[^>]*>}xi
         PLAIN_TEXT = /\A[\p{Alnum}\[][^<>{}"!$():@;]*\z/
         STYLE_OPEN = %r{\A<style>\z}i
+        SKIN_BLOCK = /\Askinparam[ \t]+\S+[ \t]*\{\z/i
         LINE_END = /\r\n|\r|\n/
         NOT_FOUND_MESSAGE = "Unable to detect diagram type from source. " \
                             "Source must start with one of: @startuml"
@@ -98,7 +99,7 @@ module Sirena
                          :TYPED_FIELD, :TYPED_METHOD, :MODIFIER, :TYPE,
                          :SEPARATOR, :PLAIN_TEXT, :INLINE_MARKUP, :FREE_NOTE,
                          :MEMBER_OF,
-                         :STYLE_OPEN, :LINE_END, :NOT_FOUND_MESSAGE
+                         :STYLE_OPEN, :SKIN_BLOCK, :LINE_END, :NOT_FOUND_MESSAGE
 
         # @param source [String] PlantUML source
         # @return [Diagram] the parsed diagram; the Diagram, its collections
@@ -141,6 +142,7 @@ module Sirena
 
           refuse_continuation(phase, text, number)
           return phase if comment?(phase, text)
+          return (text == "}" ? :statements : :skin) if phase == :skin
 
           read_line(phase, builder, text, number)
         end
@@ -170,6 +172,8 @@ module Sirena
           raise refusal(text, number, "second diagram") if STARTUML.match?(text)
 
           refuse_block_comment(text, number)
+          # The block's lines are read by Style::Reader, not here.
+          return :skin if SKIN_BLOCK.match?(text)
           return record(builder, text) if Directives.match?(text)
 
           line_statement(builder, text, number)
