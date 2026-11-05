@@ -56,11 +56,11 @@ module Sirena
 
           # `autonumber stop` and `autonumber resume`: false when no
           # numbering was started.
-          def pause_numbering(counting)
+          def counting(on)
             return false unless @numbering
 
-            @counting = counting
-            true
+            @counting = on
+            self
           end
 
           def activation(phase, id, color = nil)
@@ -177,7 +177,7 @@ module Sirena
             return if message.label.to_s.strip.empty?
             return if message.label.include?("\\n")
 
-            message.numbered(@numbering.text(@number), @numbering.bold?)
+            message.numbered(@numbering.text(@number), bold: @numbering.bold?)
               .tap { @number += @numbering.step }
           end
 

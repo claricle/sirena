@@ -850,3 +850,80 @@ rows:
       worst_analog:
   matched: 4
   status: pass
+- case: sirena.constructs.arrow-colour
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.008142
+      worst_e_w: 0.038745
+      worst_e_h: 0.0
+      worst_e_a: 0.038745
+      worst_analog:
+  matched: 4
+  status: pass
+- case: sirena.constructs.autonumber
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.003957
+      worst_e_w: 0.019399
+      worst_e_h: 0.0
+      worst_e_a: 0.019399
+      worst_analog:
+  matched: 6
+  status: pass
+- case: sirena.constructs.autonumber-format
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.006607
+      worst_e_w: 0.006872
+      worst_e_h: 0.0
+      worst_e_a: 0.006872
+      worst_analog:
+  matched: 8
+  status: pass
+- case: sirena.constructs.box-colour
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.011247
+      worst_e_w: 0.059126
+      worst_e_h: 0.0
+      worst_e_a: 0.059126
+      worst_analog:
+  matched: 3
+  status: pass
+- case: sirena.constructs.order
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.005909
+      worst_e_w: 0.062333
+      worst_e_h: 0.0
+      worst_e_a: 0.062333
+      worst_analog:
+  matched: 6
+  status: pass
+- case: sirena.constructs.participant-colour
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.007149
+      worst_e_w: 0.031029
+      worst_e_h: 0.0
+      worst_e_a: 0.031029
+      worst_analog:
+  matched: 3
+  status: pass
+- case: sirena.constructs.spacing
+  summary:
+    hard_failure: false
+    metrics:
+      worst_e_c: 0.004739
+      worst_e_w: 0.036539
+      worst_e_h: 0.0
+      worst_e_a: 0.036539
+      worst_analog:
+  matched: 5
+  status: pass

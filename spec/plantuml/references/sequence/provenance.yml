@@ -236,3 +236,24 @@ cases:
   resources.vega.tikz.tikz-scale-nested-scale--2539f518bd84:
     source_sha256: 4c569a8f83ef8a0a10e891568e9bda04941ec674f72ea8233bdc46bf40266efe
     reference_sha256: e58286564695afaa39f0c5a962ff0844155509c296a004ad0226a966493c43b6
+  sirena.constructs.spacing:
+    source_sha256: fa6e40ab69ddc7e7ede0d73a02f7f638d0bc1c3934674f8a512f3b902bdcb8f2
+    reference_sha256: fbcd339761aa0a98f795d8af193399423e7b06777a709af2bd9f8f65f80739fe
+  sirena.constructs.participant-colour:
+    source_sha256: 3b456ae662a18d6777cce81e5a4026d8d3d12cc99cb951fa44da845167a0d817
+    reference_sha256: 916ca5d54716e832684cb130877913b2b03fc4ab6f69d41ae6cd3f615f952d39
+  sirena.constructs.order:
+    source_sha256: 554ef7be16646956a9dff3694fc2c8c4bf537fc1434a682cee71c809f9393ed5
+    reference_sha256: 86f270d0adfdeb6062b4e1e7b852be442d890c6453c45a1adca89e5ec373343d
+  sirena.constructs.autonumber:
+    source_sha256: 6fd9e270af30bb5e20c54b55e7e84fce9c8d0a582eeb3dd177114e5cfe563f89
+    reference_sha256: a2a42226a6e5a48f35a421ef1d5cee1225343f05ede248ec37917acf45626469
+  sirena.constructs.autonumber-format:
+    source_sha256: 9d57bb56715846573b2f66c9ceeffe44c5a796182b2dc69622cf4880bfe8e92f
+    reference_sha256: 43ef0ee25acfdb7b563e6be69a910cdced5bef39858d7aa2dc3f999394bce31f
+  sirena.constructs.arrow-colour:
+    source_sha256: cb8ecde757469e42fc1bc52e94d0b818f5f08890c6a17eae73d24880abbcbedc
+    reference_sha256: 8465745b731eefdcaaf52a0077fd05b15070b784da649db24df077049107f3d9
+  sirena.constructs.box-colour:
+    source_sha256: c42f355cad81a85b4cba33829782d48517f43fd66a802d83edb2fa4464c33b00
+    reference_sha256: b59306d87df8c1f63b1656e56cda18ff71bdab9d9b307a5f337b0c2d502585c5

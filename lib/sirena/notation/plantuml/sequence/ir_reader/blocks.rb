@@ -48,7 +48,7 @@ module Sirena
 
             def spacing(node, index)
               height = index.detail(node, "height")
-              Spacing.new(height: height && height.to_f)
+              Spacing.new(height: height&.to_f)
             end
 
             def activation(node, index)

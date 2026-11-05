@@ -21,7 +21,7 @@ module Sirena
 
             def details(message, node, sink)
               style = message.style
-              sink.detail(node, "number", message.number)
+              sink.detail(node, "number", message.number&.text)
               sink.detail(node, "label_family", message.label_family)
               flags(message).each do |role, on|
                 sink.detail(node, role, "true") if on
@@ -32,7 +32,7 @@ module Sirena
             def flags(message)
               style = message.style
               { "parallel" => message.parallel?,
-                "number_plain" => message.number && !message.number_weight,
+                "number_plain" => message.number && !message.number.bold,
                 "dashed" => style.dashed,
                 "leftward" => style.leftward,
                 "hidden" => style.hidden,

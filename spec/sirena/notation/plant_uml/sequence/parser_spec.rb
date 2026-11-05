@@ -337,8 +337,13 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       expect(style_of("->").colour).to be_nil
     end
 
-    it "refuses a named colour" do
-      expect { parse("A -[#red]> B") }.to raise_error(unsupported, /arrow/)
+    it "reads a named colour as the hex PlantUML draws" do
+      expect(style_of("-[#red]>").colour).to eq("#FF0000")
+    end
+
+    it "refuses a name that is no colour" do
+      expect { parse("A -[#notacolour]> B") }
+        .to raise_error(unsupported, /arrow/)
     end
   end
 
@@ -654,7 +659,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     {
       "newpage Next" => "newpage",
       "!pragma layout smetana" => "preprocessor directive",
-      "A -[#red]> B" => "message arrow",
+      "A -[#notacolour]> B" => "message arrow",
       "[<- A" => "message arrow",
       "A <-]" => "message arrow",
       "A ->[" => "message arrow",
@@ -889,7 +894,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
 
   describe "autonumber" do
     def numbers(*lines)
-      parse(*lines).messages.map(&:number)
+      parse(*lines).messages.map { |message| message.number&.to_s }
     end
 
     it "numbers each message from 1" do
@@ -937,8 +942,9 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
 
     it "steps by the second number" do
-      expect(numbers("autonumber 10 5", "A -> B : a", "B -> A : b", "A -> B : c"))
-        .to eq(%w[10 15 20])
+      lines = ["autonumber 10 5", "A -> B : a", "B -> A : b", "A -> B : c"]
+
+      expect(numbers(*lines)).to eq(%w[10 15 20])
     end
 
     it "stops numbering, then resumes where it left off" do
@@ -977,7 +983,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       "a format with a dot" => 'autonumber "(0)."',
       "a format with other markup" => 'autonumber "<i>0</i>"',
     }.each do |what, line|
-      it "refuses #{what}" do
+      it "refuses an unread format: #{what}" do
         expect { parse(line, "A -> B : a") }
           .to raise_error(unsupported, /autonumber/)
       end

@@ -1,0 +1,4 @@
+@startuml
+A -[#red]> B : hi
+B -[#blue]-> A : back
+@enduml

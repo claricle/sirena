@@ -100,10 +100,11 @@ module Sirena
           PARALLEL_KINDS = [MESSAGE, NOTE, BLOCK].freeze
           TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
                       [REF, :ref], [BRANCH, :branch], [ACTIVATION, :activation],
-                      [RETURN, :reply], [DIVIDER, :divider], [DELAY, :delay], [SPACING, :spacing],
+                      [RETURN, :reply], [DIVIDER, :divider], [DELAY, :delay],
+                      [SPACING, :spacing],
                       [DESTROY, :destroy], [NEWPAGE, :newpage],
                       [AUTONUMBER, :autonumber],
-                      [AUTONUMBER_PAUSE, :pause_numbering]].freeze
+                      [AUTONUMBER_PAUSE, :counting]].freeze
           SETTINGS = [[SKINPARAM_WIDTH, :min_width],
                       [SKINPARAM_MAXMESSAGE, :max_message],
                       [SKINPARAM_OPEN, :open_skinparam],
@@ -121,7 +122,8 @@ module Sirena
                            :SKINPARAM_WIDTH, :STYLE_OPEN, :STYLE_CLOSE,
                            :PARALLEL,
                            :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE,
-                           :AUTOACTIVATE, :AUTONUMBER, :AUTONUMBER_PAUSE, :TITLE,
+                           :AUTOACTIVATE, :AUTONUMBER,
+                           :AUTONUMBER_PAUSE, :TITLE,
                            :CHROME_OPEN, :CHROME_CLOSE
 
           # @param source [String] PlantUML source
@@ -444,8 +446,8 @@ module Sirena
             numbering && @outline.autonumber(numbering)
           end
 
-          def pause_numbering(match)
-            @outline.pause_numbering(match[1].casecmp?("resume"))
+          def counting(match)
+            @outline.counting(match[1].casecmp?("resume"))
           end
 
           def newpage(_match)

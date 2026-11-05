@@ -174,7 +174,7 @@ RSpec.describe Plantuml::SequenceLayoutParity do
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
   it "has pinned provenance for every oracle-valid sequence case" do
-    expect([case_ids.size, evidence_failures]).to eq([77, []])
+    expect([case_ids.size, evidence_failures]).to eq([84, []])
   end
 
   it "records exactly the oracle-valid sequence cases in the ledger" do

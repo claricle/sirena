@@ -22,8 +22,9 @@ module Sirena
                        to: place(edge.target_id, index),
                        label: display_label(node, index),
                        style: style(node, edge, index),
-                       number: number,
-                       number_bold: !set?(node, "number_plain", index))
+                       number: number && Message::Number.new(
+                         text: number, bold: !set?(node, "number_plain", index),
+                       ))
             end
 
             def display_label(node, index)

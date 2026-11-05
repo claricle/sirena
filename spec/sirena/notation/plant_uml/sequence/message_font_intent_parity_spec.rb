@@ -26,7 +26,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Message do
     end
     let(:messages) do
       rebuilt.messages.map do |message|
-        [message.label, message.label_family, message.number, message.parallel?]
+        [message.label, message.label_family, message.number&.to_s,
+         message.parallel?]
       end
     end
     let(:expected) do
