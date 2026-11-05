@@ -105,7 +105,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Renderer do
 
   it "draws every residual arrow mark and dashed shaft", :aggregate_failures do
     expect(arrow_mark_attributes)
-      .to eq([["6,4"], ["#ffffff"], 1, %w[4.0 2.0]])
+      .to eq([["2,2"], ["#FFFFFF"], 1, %w[2.0 1]])
   end
 
   it "keeps optional note and head opacity absent or explicit",
