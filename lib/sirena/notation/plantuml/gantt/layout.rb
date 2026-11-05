@@ -6,9 +6,9 @@ module Sirena
   module Notation
     module PlantUML
       module Gantt
-        # What a PlantUML gantt layout hands its renderer: a table of start,
-        # end and duration beside a grid of numbered days, with the tasks as
-        # bars on it.
+        # What a PlantUML gantt layout hands its renderer: a grid of numbered
+        # days with the tasks as bars on it, and for a dated project a table
+        # of start, end and duration beside it.
         class Scene < Sirena::Layout::Gantt::Scene
           attribute :grid_lines, Sirena::Layout::Gantt::Line,
                     collection: true, default: -> { [] }
@@ -93,7 +93,7 @@ module Sirena
 
           def frame(rows, tasks)
             table = tasks.map { |task| cells(task) }
-            widths = column_widths(table)
+            widths = @dated ? column_widths(table) : []
             @origin = widths.sum
             geometry(rows, table, widths)
           end
@@ -121,7 +121,7 @@ module Sirena
           end
 
           def header_texts(widths)
-            columns = widths.each_with_index.map do |_, index|
+            columns = widths.each_index.map do |index|
               text(COLUMNS[index], column_left(widths, index) + 5, 11.779,
                    TABLE_FONT)
             end
@@ -180,6 +180,8 @@ module Sirena
           end
 
           def place_cells(cells, widths)
+            return if widths.empty?
+
             cells.each_with_index do |cell, index|
               @texts << text(cell, column_left(widths, index) + 5,
                              @body + 12.257, TABLE_FONT)
@@ -239,13 +241,17 @@ module Sirena
           end
 
           def table_rules(bottom)
+            return [] if @origin.zero?
+
             [0.0, HEADER, bottom].map do |y_position|
               rule(0, y_position, @origin, y_position)
             end
           end
 
           def edge_rules(widths, bottom)
-            edges = [0.0] + widths.each_with_index.map do |_, index|
+            return [] if widths.empty?
+
+            edges = [0.0] + widths.each_index.map do |index|
               widths.first(index + 1).sum
             end
             edges.map { |x_position| rule(x_position, 0, x_position, bottom) }

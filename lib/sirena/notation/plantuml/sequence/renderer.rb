@@ -4,6 +4,7 @@ require "zlib"
 require_relative "../../../renderer/base"
 require_relative "../../../svg"
 require_relative "scene"
+require_relative "skin"
 require_relative "../creole"
 
 module Sirena
@@ -12,6 +13,8 @@ module Sirena
       module Sequence
         # Draws a sequence Scene without changing its geometry.
         class Renderer < Sirena::Renderer::Base
+          include Skin
+
           # Back to front: the scene collection and the method drawing each
           # of its items.
           LAYERS = [
@@ -106,7 +109,7 @@ module Sirena
           end
 
           def frame_group(frame)
-            group("box-#{frame.x}", [frame_rectangle(frame)], frame.texts)
+            group("box-#{frame.x}", [box_rectangle(frame)], frame.texts)
           end
 
           def frame_rectangle(frame)
@@ -115,9 +118,28 @@ module Sirena
                                stroke: node_stroke, stroke_width: "1")
           end
 
+          def box_rectangle(frame)
+            frame_rectangle(frame).tap do |rect|
+              rect.fill = skin_paint(:box_fill) || rect.fill
+              rect.stroke = skin_paint(:line) || rect.stroke
+              rect.stroke_width = skin_width(:thin) || rect.stroke_width
+            end
+          end
+
+          def fragment_rectangle(fragment)
+            frame_rectangle(fragment).tap do |rect|
+              rect.stroke = skin_paint(:frame_stroke) || rect.stroke
+              rect.stroke_width = skin_width(:frame) || rect.stroke_width
+            end
+          end
+
           def activation_bar(bar)
-            fill = bar.fill || node_fill
-            frame_rectangle(bar).tap { |rect| rect.fill = fill }
+            fill = bar.fill || skin_paint(:bar_fill) || node_fill
+            frame_rectangle(bar).tap do |rect|
+              rect.fill = fill
+              rect.stroke = skin_paint(:line) || rect.stroke
+              rect.stroke_width = skin_width(:bar) || rect.stroke_width
+            end
           end
 
           def cross_line(segment)
@@ -131,7 +153,8 @@ module Sirena
           def lifeline(segment)
             element(Svg::Line, x1: segment.x1, y1: segment.y1,
                                x2: segment.x2, y2: segment.y2,
-                               stroke: node_stroke, stroke_width: "1",
+                               stroke: skin_paint(:line) || node_stroke,
+                               stroke_width: skin_width(:thin) || "1",
                                stroke_dasharray: "5,5")
           end
 
@@ -145,7 +168,11 @@ module Sirena
             element(Svg::Path, d: arrow.path, fill: "none",
                                stroke: arrow.colour || edge_colour,
                                stroke_width: stroke_width,
-                               stroke_dasharray: arrow.dashed ? "6,4" : nil)
+                               stroke_dasharray: arrow_dash(arrow))
+          end
+
+          def arrow_dash(arrow)
+            skin_dash("6,4") if arrow.dashed
           end
 
           def arrow_mark(mark, colour)
@@ -157,7 +184,7 @@ module Sirena
           end
 
           def mark_polygon(mark, colour)
-            fill = mark.filled ? colour : node_fill
+            fill = mark.filled ? colour : mark_open_fill
             element(Svg::Polygon, points: mark.points, fill: fill,
                                   stroke: colour,
                                   stroke_width: stroke_width)
@@ -165,8 +192,12 @@ module Sirena
 
           def mark_circle(mark, colour)
             element(Svg::Circle, cx: mark.cx, cy: mark.cy, r: mark.r,
-                                 fill: node_fill, stroke: colour,
+                                 fill: mark_open_fill, stroke: colour,
                                  stroke_width: stroke_width)
+          end
+
+          def mark_open_fill
+            skin_paint(:bar_fill) || node_fill
           end
 
           def mark_line(mark, colour)
@@ -177,12 +208,19 @@ module Sirena
           end
 
           def fragment_group(fragment)
-            children = [frame_rectangle(fragment),
-                        outlined_path(fragment.tab_path,
-                                      fragment.tab_fill || node_fill),
+            children = [fragment_rectangle(fragment),
+                        tab_path(fragment),
                         *fragment.separators.map { |line| dashed(line) }]
             group("fragment-#{fragment.x}-#{fragment.y}", children,
                   fragment.texts)
+          end
+
+          def tab_path(fragment)
+            fill = fragment.tab_fill || skin_paint(:tab_fill) || node_fill
+            outlined_path(fragment.tab_path, fill).tap do |path|
+              path.stroke = skin_paint(:frame_stroke) || path.stroke
+              path.stroke_width = skin_width(:frame) || path.stroke_width
+            end
           end
 
           def note_group(note)
@@ -204,6 +242,8 @@ module Sirena
 
           def note_path(data, note)
             outlined_path(data, note.fill || note_fill).tap do |path|
+              path.stroke = skin_paint(:line) || path.stroke
+              path.stroke_width = skin_width(:thin) || path.stroke_width
               path.fill_opacity = note.fill_opacity&.to_s
             end
           end
@@ -230,11 +270,19 @@ module Sirena
           end
 
           def solid(segment)
-            lifeline(segment).tap { |line| line.stroke_dasharray = nil }
+            lifeline(segment).tap do |line|
+              line.stroke = skin_paint(:frame_stroke) || line.stroke
+              line.stroke_width = skin_width(:separator) || line.stroke_width
+              line.stroke_dasharray = nil
+            end
           end
 
           def dashed(segment)
-            lifeline(segment).tap { |line| line.stroke_dasharray = "5,3" }
+            lifeline(segment).tap do |line|
+              line.stroke = skin_paint(:frame_stroke) || line.stroke
+              line.stroke_width = skin_width(:separator) || line.stroke_width
+              line.stroke_dasharray = skin_dash("5,3")
+            end
           end
 
           def head_group(head)
@@ -257,38 +305,43 @@ module Sirena
           # height are already final geometry; this only preserves that Scene
           # input while Layout-published heads use typed primitives above.
           def legacy_head_rectangle(head)
+            corner = head_corner(3)
             element(Svg::Rect, x: head.x, y: head.y, width: head.width,
-                               height: head.height, rx: 3, ry: 3,
-                               fill: head.fill || node_fill,
+                               height: head.height, rx: corner, ry: corner,
+                               fill: head.fill || head_fill,
                                fill_opacity: head.fill_opacity&.to_s,
-                               stroke: head.stroke || node_stroke,
-                               stroke_width: stroke_width)
+                               stroke: head.stroke || head_stroke,
+                               stroke_width: head_width)
           end
 
           def head_rectangle(shape, head)
             element(Svg::Rect, x: shape.x, y: shape.y, width: shape.width,
-                               height: shape.height, rx: shape.rx, ry: shape.ry,
-                               fill: head.fill || node_fill,
-                               fill_opacity: head.fill_opacity&.to_s,
-                               stroke: head.stroke || node_stroke,
-                               stroke_width: stroke_width)
+                               height: shape.height, rx: head_corner(shape.rx),
+                               ry: head_corner(shape.ry),
+                               **head_paint(head))
+          end
+
+          def head_paint(head)
+            { fill: head.fill || head_fill,
+              fill_opacity: head.fill_opacity&.to_s,
+              stroke: head.stroke || head_stroke, stroke_width: head_width }
           end
 
           def head_ellipse(shape, head)
             element(Svg::Ellipse, cx: shape.cx, cy: shape.cy,
                                   rx: shape.rx, ry: shape.ry,
-                                  fill: head.fill || node_fill,
+                                  fill: head.fill || head_fill,
                                   fill_opacity: head.fill_opacity&.to_s,
-                                  stroke: head.stroke || node_stroke,
-                                  stroke_width: stroke_width)
+                                  stroke: head.stroke || head_stroke,
+                                  stroke_width: head_width)
           end
 
           def head_path(shape, head)
-            fill = shape.filled ? head.fill || node_fill : "none"
+            fill = shape.filled ? head.fill || head_fill : "none"
             element(Svg::Path, d: shape.data, fill: fill,
                                fill_opacity: head_path_opacity(shape, head),
-                               stroke: head.stroke || node_stroke,
-                               stroke_width: stroke_width)
+                               stroke: head.stroke || head_stroke,
+                               stroke_width: head_width)
           end
 
           def head_path_opacity(shape, head)
@@ -298,14 +351,14 @@ module Sirena
           def head_line(shape, head)
             element(Svg::Line, x1: shape.x1, y1: shape.y1,
                                x2: shape.x2, y2: shape.y2,
-                               stroke: head.stroke || node_stroke,
-                               stroke_width: stroke_width)
+                               stroke: head.stroke || head_stroke,
+                               stroke_width: head_width)
           end
 
           def head_polygon(shape, head)
-            colour = head.stroke || node_stroke
+            colour = head.stroke || head_stroke
             element(Svg::Polygon, points: shape.points, fill: colour,
-                                  stroke: colour, stroke_width: stroke_width)
+                                  stroke: colour, stroke_width: head_width)
           end
 
           def text_element(scene_text)
@@ -335,7 +388,7 @@ module Sirena
           def font_family(role = nil)
             return "monospace" if role == "warning"
 
-            theme_typography(:font_family) || "Arial"
+            skin_family || theme_typography(:font_family) || "Arial"
           end
 
           def text_style(role)
@@ -343,7 +396,9 @@ module Sirena
           end
 
           def text_weight(role)
-            "bold" if %w[fragment_tab title].include?(role)
+            return "bold" if %w[fragment_tab box title].include?(role)
+
+            "bold" if role == "fragment_guard" && skinned?
           end
 
           def text_size(scene_text)
@@ -355,6 +410,9 @@ module Sirena
           def font_size(role)
             return WARNING_SIZE if role == "warning"
 
+            skinned = skin_size(role)
+            return skinned if skinned
+
             normal = theme_typography(:font_size_normal) || 14
             return (normal.to_f * 0.85).to_s if role == "kind"
 
@@ -362,7 +420,7 @@ module Sirena
           end
 
           def note_fill
-            theme_color(:note_fill)
+            skin_paint(:note_fill) || theme_color(:note_fill)
           end
 
           def node_fill
@@ -373,8 +431,24 @@ module Sirena
             theme_color(:node_stroke)
           end
 
+          def head_fill
+            skin_paint(:head_fill) || node_fill
+          end
+
+          def head_stroke
+            skin_paint(:line) || node_stroke
+          end
+
+          def head_width
+            skin_width(:thin) || stroke_width
+          end
+
+          def head_corner(shape_corner)
+            skin_corner(shape_corner)
+          end
+
           def edge_colour
-            theme_color(:edge_stroke)
+            skin_paint(:line) || theme_color(:edge_stroke)
           end
 
           def text_colour
@@ -382,7 +456,7 @@ module Sirena
           end
 
           def stroke_width
-            (theme_shape(:stroke_width) || 2).to_s
+            skin_width(:arrow) || (theme_shape(:stroke_width) || 2).to_s
           end
         end
       end

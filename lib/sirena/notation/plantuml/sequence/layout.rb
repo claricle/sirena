@@ -30,8 +30,9 @@ module Sirena
           INTRINSIC_HEAD_PADDING = 7.0
           INTRINSIC_HEAD_HEIGHT = 30.4883
           MIN_GAP = 10.0
-          BOX_BOUNDARY_GAP = 35.0
-          BOX_PADDING = 8.0
+          BOX_PADDING = 4.0
+          BOX_TITLE_SIZE = 13.0
+          SELF_MIN_CLEARANCE = 50.0
           BOX_TITLE_PADDING = 3.0
           BOX_TITLE_HEIGHT = 26.0
           MIN_WIDTH_PADDING = 14.0
@@ -106,7 +107,7 @@ module Sirena
           }.freeze
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
-                           :BOX_BOUNDARY_GAP,
+                           :BOX_TITLE_SIZE, :SELF_MIN_CLEARANCE,
                            :INTRINSIC_HEAD_PADDING, :INTRINSIC_HEAD_HEIGHT,
                            :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_PADDING,
                            :BOX_TITLE_HEIGHT,
@@ -523,7 +524,14 @@ module Sirena
           end
 
           def title_width(box)
+            return boxed_title_advance(box) if boxed_plain_heads?
+
             measure_text(box.title, font_size: font_size)[:width]
+          end
+
+          def boxed_title_advance(box)
+            TextAdvances.width(box.title, font_size: BOX_TITLE_SIZE,
+                                          bold: true)
           end
 
           def centers(widths)
@@ -540,7 +548,17 @@ module Sirena
           def left_edge_room(widths, gaps)
             start = margin + (widths.first / 2)
             short = edge_messages(:left).map { |m| shortfall(m, start, gaps) }
-            [0.0, *short].max
+            [0.0, *short, *leading_box_overhang(widths, gaps)].max
+          end
+
+          def leading_box_overhang(widths, gaps)
+            return [] unless boxed_plain_heads?
+
+            @diagram.boxes.filter_map do |box|
+              next unless member_indexes(box).min.zero?
+
+              box_overhang(box, widths, gaps)
+            end
           end
 
           def shortfall(message, start, gaps)
@@ -554,19 +572,35 @@ module Sirena
               ((a + b) / 2) + participant_gap(index)
             end
             widen_for_items(gaps)
+            clear_box_titles(widths, gaps) if boxed_plain_heads?
             gaps
           end
 
-          def participant_gap(index)
-            return minimum_gap unless boxed_plain_heads?
-
-            left = participant_box(ids[index])
-            right = participant_box(ids[index + 1])
-            left == right ? minimum_gap : BOX_BOUNDARY_GAP
+          def participant_gap(_index)
+            minimum_gap
           end
 
-          def participant_box(id)
-            @diagram.boxes.find { |box| box.members.include?(id) }
+          # A title wider than its members is centred on them and pushes the
+          # neighbouring heads away by the overhang on that side.
+          def clear_box_titles(widths, gaps)
+            @diagram.boxes.each do |box|
+              first, last = member_indexes(box).minmax
+              extra = box_overhang(box, widths, gaps)
+              [first - 1, last].each do |index|
+                gaps[index] += extra if index.between?(0, gaps.size - 1)
+              end
+            end
+          end
+
+          def box_overhang(box, widths, gaps)
+            first, last = member_indexes(box).minmax
+            inner = gaps[first...last].sum + box_head_half(widths, first, last)
+            need = title_width(box) + (2 * BOX_TITLE_PADDING)
+            [(need - inner - (2 * BOX_PADDING)) / 2, 0.0].max
+          end
+
+          def box_head_half(widths, first, last)
+            (widths[first] + widths[last]) / 2
           end
 
           def widen_for_items(gaps)
@@ -648,6 +682,8 @@ module Sirena
           end
 
           def widen_box(gaps, box)
+            return if boxed_plain_heads?
+
             span = member_span(box)
             need = title_width(box) / span.size
             span.each { |i| raise_gap(gaps, i, need) }
@@ -728,7 +764,8 @@ module Sirena
           def classic_message_room(message, ordinary, self_message)
             return ordinary unless self_message
 
-            room = label_width(message) + (2 * INTRINSIC_HEAD_PADDING)
+            room = [label_width(message) + (2 * INTRINSIC_HEAD_PADDING),
+                    SELF_MIN_CLEARANCE].max
             return room unless nested_in_fragment?(message)
 
             [room, classic_self_clearance(message)].max

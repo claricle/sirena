@@ -27,7 +27,7 @@ module Sirena
         # @return [Notation::Parsed]
         def parse(source)
           NodeGraph.parsed(source, type: :usecase_diagram,
-                                   direction: :left_to_right,
+                                   direction: :top_to_bottom,
                                    default_kind: :actor)
         end
       end

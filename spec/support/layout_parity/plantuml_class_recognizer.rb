@@ -110,7 +110,7 @@ module SpecSupport
         rows = node.xpath(".//text").map do |text|
           normalize(text.text)
         end.reject(&:empty?)
-        rows = reference_rows(node, rows) if reference_class?(node)
+        rows = visibility_rows(node, rows)
 
         rows.reject { |row| stereotype?(row) }
       end
@@ -119,7 +119,10 @@ module SpecSupport
         row.match?(/\A(?:<<.+>>|«.+»)\z/)
       end
 
-      def reference_rows(group, rows)
+      # Both renderers mark a member's icon with `data-visibility-modifier`
+      # in the element before its text; the written prefix it replaces is
+      # part of the member's identity.
+      def visibility_rows(group, rows)
         rows.map.with_index do |row, index|
           index.zero? ? row : "#{visibility_for(group, index)}#{row}"
         end

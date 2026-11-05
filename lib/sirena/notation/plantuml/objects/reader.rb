@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../arrow"
+require_relative "map_rows"
 require_relative "../../plantuml_data/boxes/table"
 require_relative "../../plantuml_data/boxes/json_reader"
 require_relative "../../plantuml_data/boxes/highlights"
@@ -17,14 +18,12 @@ module Sirena
         # elements, empty `class` boxes, and the relations between them. A
         # line outside that subset raises {UnsupportedConstructError}.
         class Reader
-          NAME = /[A-Za-z_][A-Za-z0-9_.]*/
+          NAME = MapRows::NAME
           LABELLED = /(?:"([^"]+)"[ \t]+as[ \t]+(#{NAME})|(#{NAME}))/o
           ELEMENT = /\A(object|class|abstract class|interface)[ \t]+
                      #{LABELLED}(?:[ \t]*(\{))?\z/xo
           MAP = /\Amap[ \t]+#{LABELLED}[ \t]*\{\z/o
           JSON_OPEN = /\Ajson[ \t]+#{LABELLED}[ \t]*\{(.*)\z/o
-          MAP_VALUE = /\A(.+?)[ \t]*=>[ \t]*(.*)\z/
-          MAP_LINK = /\A(.+?)[ \t]+(\*?-+>)[ \t]*(#{NAME}(?:::#{NAME})?)\z/o
           END_TEXT = '(?:"([^"]+)"[ \t]+)?'
           END_REF = "(#{NAME}(?:::#{NAME})?)".freeze
           RELATION = /\A#{END_REF}[ \t]+#{END_TEXT}#{Arrow::PATTERN}[ \t]*
@@ -36,7 +35,7 @@ module Sirena
           Boxes = PlantUMLData::Boxes
           TREE_GLYPH = { dashed: true, markers: {}.freeze }.freeze
           private_constant :Boxes, :TREE_GLYPH, :NAME, :LABELLED, :ELEMENT,
-                           :MAP, :JSON_OPEN, :MAP_VALUE, :MAP_LINK,
+                           :MAP, :JSON_OPEN,
                            :END_TEXT, :END_REF,
                            :RELATION, :START, :TITLE, :DIRECTION, :SKIPPED
 
@@ -141,8 +140,7 @@ module Sirena
           def map
             match = MAP.match(@text) or return false
             label, as_name, name = match.captures
-            links = []
-            rows = body_lines.map { |line| map_row(line, links) }
+            rows, links = MapRows.call(body_lines)
             declare(label, as_name, name, :map, rows)
             map_links(as_name || name, links)
           end
@@ -150,19 +148,6 @@ module Sirena
           def map_links(id, links)
             links.each do |key, glyph, target|
               @links << link(id, target, Arrow.parse(glyph), [], key)
-            end
-          end
-
-          def map_row(line, links)
-            if (found = MAP_LINK.match(line))
-              key, glyph, target = found.captures
-              links << [key, glyph, target]
-              Boxes::Row.new(key: key, port: key)
-            elsif (pair = MAP_VALUE.match(line))
-              Boxes::Row.new(key: pair[1], port: pair[1],
-                             value: pair[2])
-            else
-              Boxes::Row.new(key: line, port: line)
             end
           end
 

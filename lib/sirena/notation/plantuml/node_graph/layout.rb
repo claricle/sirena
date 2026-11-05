@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../plantuml_data/boxes/table_box"
+require_relative "frame_ports"
 require_relative "metrics"
 require_relative "packer"
 require_relative "ranking"
@@ -24,6 +26,8 @@ module Sirena
           def call(graph, **)
             @graph = graph
             @sizes = {}
+            @frame_ports = FramePorts.new(@sizes)
+            @ports = {}
             @inner = {}
             @inset = {}
             top = arrange(nil)
@@ -53,19 +57,27 @@ module Sirena
 
           # Lays out the children of `scope` and records their sizes.
           def arrange(scope)
-            children = @graph.children_of(scope)
-            children.each { |child| measure(child) }
+            ports, children = split_ports(scope)
+            (ports + children).each { |child| measure(child) }
             ranking = Ranking.new(children, pairs(scope))
             packed = Packer.new(@sizes, left_to_right: left_to_right?)
               .pack(ranking.layers)
-            scope ? frame(packed, scope) : packed
+            scope ? frame(packed, scope, ports) : packed
+          end
+
+          # The children of `scope` on its frame, then the rest.
+          def split_ports(scope)
+            @graph.children_of(scope).partition do |node|
+              FramePorts.on_frame?(node)
+            end.tap { |ports, _| @ports[scope] = ports }
           end
 
           def left_to_right?
             @graph.direction == :left_to_right
           end
 
-          def frame(packed, scope)
+          def frame(packed, scope, ports)
+            packed.width = [packed.width, @frame_ports.width(ports)].max
             packed.width += 2 * PAD
             packed.height += (2 * PAD) + Metrics.header_height(scope)
             packed
@@ -94,8 +106,21 @@ module Sirena
             @graph.edges.filter_map do |edge|
               from = lift(edge.from, scope)
               to = lift(edge.to, scope)
-              [from, to] if from && to && !from.equal?(to)
+              ranked(edge, from, to) if inner?(from, to)
             end
+          end
+
+          # Whether a link is between two items that take part in ranking.
+          def inner?(from, to)
+            return false unless from && to && !from.equal?(to)
+
+            [from, to].none? { |node| FramePorts.on_frame?(node) }
+          end
+
+          # `[from, to, step]`, the ends swapped when the link reads backwards.
+          def ranked(edge, from, to)
+            ends = edge.backwards ? [to, from] : [from, to]
+            [*ends, edge.rank_step]
           end
 
           def lift(node, scope)
@@ -119,6 +144,7 @@ module Sirena
           def place_inside(box, depth, placed)
             place(@inner[box.node].offsets, inside_origin(box), depth + 1,
                   placed)
+            placed.concat(@frame_ports.place(box, @ports[box.node], depth + 1))
           end
 
           def inside_origin(box)
@@ -128,20 +154,37 @@ module Sirena
           end
 
           def routes(placed)
-            boxes = placed.to_h { |box| [box.node, box] }
+            boxes = placed.to_h { |box| [box.node, terminal(box)] }
             @graph.edges.filter_map do |edge|
               from = boxes[edge.from]
               to = boxes[edge.to]
               next if from.equal?(to)
 
-              Route.new(edge: edge, points: segment(from, to))
+              Route.new(edge: edge, points: segment(from, to, edge))
             end
           end
 
-          def segment(from, to)
+          # What a link ends at: the square of a port on a frame, otherwise
+          # the box itself.
+          def terminal(box)
+            FramePorts.on_frame?(box.node) ? @frame_ports.terminal(box) : box
+          end
+
+          def segment(from, to, edge)
             a = center(from)
             b = center(to)
-            [clip(from, a, b), clip(to, b, a)]
+            [row_end(from, edge.from_row, b) || clip(from, a, b),
+             row_end(to, edge.to_row, a) || clip(to, b, a)]
+          end
+
+          # The middle of the row of a map or object box that a line ends
+          # at, on the side facing `toward`.
+          def row_end(box, row, toward)
+            return unless row
+
+            side = toward[0] >= center(box)[0] ? box.x + box.width : box.x
+            [side, PlantUMLData::Boxes::TableBox
+              .row_middle(box.node.table, row, box.y)]
           end
 
           def center(box)

@@ -85,7 +85,8 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
       diagram = parse("(*) --> \"A\"\n\"A\" --> \"B\"\nif \"ok\" then\n" \
                       "--> \"C\"\nendif\n--> (*)")
 
-      expect(kinds(diagram)).to include(:decision, :merge)
+      expect(kinds(diagram)).to include(:decision)
+      expect(kinds(diagram)).not_to include(:merge)
     end
 
     it "opens an if as the first statement" do
