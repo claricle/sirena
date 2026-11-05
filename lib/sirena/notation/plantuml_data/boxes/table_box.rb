@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "inline_rows"
 require_relative "marks"
 require_relative "text"
 
@@ -12,20 +13,21 @@ module Sirena
         module TableBox
           extend self
 
-          ROW = 20.4883
+          ROW = InlineRows::ROW
           PAD = 5.0
           TITLE_PAD = 7.0
           LONE_TITLE = 36.4883
+          EMPTY_WIDTH = 30.0
+          EMPTY_HEIGHT = 15.0
           Size = Data.define(:key, :value, :title, :width, :height)
 
           # @return [Size] the key and value column widths, the title band's
           #   height and the box's width and height
           def size(table)
-            key = key_width(table)
-            title = title_height(table)
-            width = [key + values_width(table), title_width(table)].max
-            Size.new(key: key, value: width - key, title: title, width: width,
-                     height: title + (table.rows.size * ROW))
+            return inline_size(table) if table.kind == :inline
+            return empty_size if table.kind == :tree && table.rows.empty?
+
+            grid_size(table)
           end
 
           # @return [Float] the y of the middle of row `index` in a box at `top`
@@ -38,6 +40,8 @@ module Sirena
           def draw(table, left, top)
             box = size(table)
             corner = [left, top]
+            return inline_marks(table, box, corner) if table.kind == :inline
+
             [background(table, box, corner),
              *title_marks(table, box, corner),
              *rows_marks(table, box, corner),
@@ -45,6 +49,33 @@ module Sirena
           end
 
           private
+
+          def grid_size(table)
+            key = key_width(table)
+            title = title_height(table)
+            width = [key + values_width(table), title_width(table)].max
+            Size.new(key: key, value: width - key, title: title, width: width,
+                     height: title + (table.rows.size * ROW))
+          end
+
+          def inline_size(table)
+            title = title_height(table)
+            width = [InlineRows.width(table.rows), title_width(table)].max
+            key = InlineRows.key_width(table.rows)
+            Size.new(key: key, value: width - key, title: title, width: width,
+                     height: title + InlineRows.height(table.rows))
+          end
+
+          def empty_size
+            Size.new(key: 0.0, value: EMPTY_WIDTH, title: 0.0,
+                     width: EMPTY_WIDTH, height: EMPTY_HEIGHT)
+          end
+
+          def inline_marks(table, box, corner)
+            left, top = corner
+            [background(table, box, corner), *title_marks(table, box, corner),
+             *InlineRows.draw(table.rows, left, top + box.title, box.width)]
+          end
 
           def key_width(table)
             return 0.0 unless table.kind == :tree && table.keyed?

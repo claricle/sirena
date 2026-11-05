@@ -34,6 +34,12 @@ module Sirena
             end
           end
 
+          # @return [String] how a scalar of a mixed `json` element reads: the
+          #   JSON literal, with no check box
+          def literal(value)
+            value.nil? ? "null" : plain(value)
+          end
+
           # @return [Float] the width of the text in the diagram's font
           def width(text, bold: false)
             wide = TextMeasurement.measure(text.to_s,

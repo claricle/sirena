@@ -35,9 +35,9 @@ module Sirena
             return unless (match = text.match(JSON_OPEN))
 
             root = tree(json_text(match[:body]))
-            parent = data_node(match[:id], match[:label], root)
-            hang(parent, root, match[:id])
-            parent
+            data_node(match[:id], match[:label],
+                      Boxes::Table.new(id: match[:id], title: root_title(match),
+                                       rows: root.rows, kind: :inline))
           end
 
           def json_text(first)
@@ -56,7 +56,12 @@ module Sirena
           def tree(text)
             value = PlantUMLData::Boxes::JsonReader.new.call(text)
             PlantUMLData::Boxes::TreeBuilder
-              .new(PlantUMLData::Boxes::Highlights.new).call(value)
+              .new(PlantUMLData::Boxes::Highlights.new, inline: true)
+              .call(value)
+          end
+
+          def root_title(match)
+            match[:label] || match[:id]
           end
 
           def data_node(id, label, table)
@@ -64,18 +69,6 @@ module Sirena
             node.lines = [label || id]
             node.table = table
             node
-          end
-
-          # Gives each nested table a node under `parent`, in source order.
-          def hang(parent, table, prefix)
-            table.rows.each_with_index do |row, index|
-              next unless row.child
-
-              child = data_node("#{prefix}.#{index}", nil, row.child)
-              @graph.edges << Edge.new(from: parent, to: child, style: :dashed,
-                                       width: 1)
-              hang(child, row.child, child.id)
-            end
           end
         end
       end
