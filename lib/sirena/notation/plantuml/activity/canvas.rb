@@ -20,7 +20,9 @@ module Sirena
           # @return [Float] the lowest y any mark reaches
           attr_reader :max_y
 
-          def initialize
+          # @param metrics [Metrics] the font sizes of the roles
+          def initialize(metrics = Metrics.new)
+            @metrics = metrics
             @marks = []
             @min_x = Float::INFINITY
             @max_x = 0.0
@@ -69,9 +71,9 @@ module Sirena
 
           # One text mark per line, the first baseline at `point`.
           def lines(rows, point, anchor: "start", role: nil, **face)
-            face = { size: Metrics::FONT_SIZE, **face }
+            face = { size: @metrics.size(role), **face }
             rows.each_with_index do |content, index|
-              y_pos = point.last + (index * Metrics::LINE_HEIGHT)
+              y_pos = point.last + (index * @metrics.line_height(role))
               text([point.first, y_pos], content, anchor,
                    face.merge(role: role))
             end
@@ -80,7 +82,7 @@ module Sirena
           private
 
           def text(point, content, anchor, face)
-            width = Metrics.text_width([content])
+            width = @metrics.text_width([content], size: face[:size])
             left = point.first - (width * { "start" => 0, "middle" => 0.5,
                                             "end" => 1 }.fetch(anchor))
             see(left, left + width, point.last + 3)

@@ -14,9 +14,10 @@ module Sirena
           FOLD = 6.0
           private_constant :PAPER, :NOTE_PAPER, :INK, :FOLD
 
-          def initialize(boxes, canvas)
+          def initialize(boxes, canvas, metrics)
             @boxes = boxes
             @canvas = canvas
+            @metrics = metrics
           end
 
           # @param node [Node]
@@ -39,7 +40,9 @@ module Sirena
           def note(node, note, box)
             @canvas.polygon(outline(box), fill: NOTE_PAPER, role: :note)
             pad = Metrics::NOTE_PAD
-            @canvas.lines(note.lines, [box.left + pad, box.top + pad + 11],
+            @canvas.lines(note.lines,
+                          [box.left + pad,
+                           box.top + pad + @metrics.ascent(:note)],
                           role: :note)
             connector(@boxes.fetch(node), note.side, box)
           end
@@ -102,11 +105,13 @@ module Sirena
             @canvas.rect(box, fill: "#000000")
             return unless node.text
 
-            @canvas.lines([node.text], [box.right + 6, box.cy + 4])
+            @canvas.lines([node.text], [box.right + 6, box.cy + 4],
+                          size: Metrics::FONT_SIZE)
           end
 
           def centred(rows, box, role: nil)
-            first = box.cy - (Metrics.text_height(rows) / 2.0) + 11
+            height = @metrics.text_height(rows, role: role)
+            first = box.cy - (height / 2.0) + @metrics.ascent(role)
             @canvas.lines(rows, [box.cx, first], anchor: "middle", role: role)
           end
         end

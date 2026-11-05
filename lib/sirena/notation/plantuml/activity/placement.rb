@@ -15,7 +15,7 @@ module Sirena
           NOTE_GAP = 10.0
           TITLE_HEIGHT = 26.0
           HEADER_HEIGHT = 28.0
-          PARTITION_PAD = 22.0
+          PARTITION_BELOW = 10.0
           BAR_OVERHANG = 14.0
           BAND_PAD = 14.0
 
@@ -30,11 +30,12 @@ module Sirena
           # @return [Array<Hash>] a name, colour, left and right per lane
           attr_reader :bands
 
-          def initialize(diagram, ranking, columns, margin)
+          def initialize(diagram, ranking, columns, margin, metrics)
             @diagram = diagram
             @ranking = ranking
             @columns = columns
-            @boxes = diagram.nodes.to_h { |n| [n, Metrics.box_for(n)] }
+            @metrics = metrics
+            @boxes = diagram.nodes.to_h { |n| [n, metrics.box_for(n)] }
             @top = margin + header_height
             place_columns(margin)
             place_rows
@@ -42,12 +43,30 @@ module Sirena
             place_notes
           end
 
+          # @return [Float] the space between rows
+          def gap
+            @gap ||= rank_gap
+          end
+
+          # @return [Float] room above a partition's nodes for its title
+          def head
+            @metrics.size(:partition) + 10.0
+          end
+
           private
+
+          # Rows sit far enough apart for a label and a partition's title
+          # and frame edge between them.
+          def rank_gap
+            framed = @diagram.nodes.any?(&:partition)
+            [RANK_GAP, @metrics.size(:arrow) + 14.0,
+             framed ? head + PARTITION_BELOW + 8.0 : 0].max
+          end
 
           def header_height
             (@diagram.title ? TITLE_HEIGHT : 0) +
               (@diagram.lanes.empty? ? 0 : HEADER_HEIGHT) +
-              (@diagram.nodes.any?(&:partition) ? PARTITION_PAD : 0)
+              (@diagram.nodes.any?(&:partition) ? head : 0)
           end
 
           def place_columns(margin)
@@ -97,7 +116,7 @@ module Sirena
 
           def note_room(node, side)
             widths = node.notes.select { |n| n.side == side }
-              .map { |n| Metrics.note_box(n).width }
+              .map { |n| @metrics.note_box(n).width }
             widths.empty? ? 0.0 : widths.max + NOTE_GAP
           end
 
@@ -127,7 +146,7 @@ module Sirena
           end
 
           def row_top(heights, row)
-            @top + heights.first(row).sum + (row * RANK_GAP)
+            @top + heights.first(row).sum + (row * gap)
           end
 
           def row_heights
@@ -171,7 +190,7 @@ module Sirena
           end
 
           def note_at(node, note)
-            box = Metrics.note_box(note)
+            box = @metrics.note_box(note)
             anchor = @boxes[node]
             box.cy = anchor.cy
             box.cx = note_centre(box, anchor, note.side)
