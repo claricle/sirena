@@ -12,6 +12,7 @@ require_relative "member_rule"
 require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "qualified_association_layout"
+require_relative "styled_relation_curve"
 require_relative "rank_chain"
 require_relative "rank_hierarchy"
 require_relative "note_layout"
@@ -2033,10 +2034,19 @@ module Sirena
         def controlled_relation_path(relation, ordered)
           control = qualified_label_control(relation, ordered) ||
             qualified_lane_control(relation, ordered)
-          return relation_path(ordered) unless control
+          return styled_curve_path(relation, ordered) unless control
 
           "M #{point(ordered[:left])} Q #{point(control)} " \
             "#{point(ordered[:right])}"
+        end
+
+        def styled_curve_path(relation, ordered)
+          first, last = ordered.values_at(:left, :right)
+          controls = StyledRelationCurve.controls(relation, first, last)
+          return relation_path(ordered) unless controls
+
+          "M #{point(first)} C #{point(controls.first)} " \
+            "#{point(controls.last)} #{point(last)}"
         end
 
         def fan_qualifier_relation?(relation)

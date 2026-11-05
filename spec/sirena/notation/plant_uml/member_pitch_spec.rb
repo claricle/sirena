@@ -39,7 +39,7 @@ RSpec.describe Sirena::Notation::PlantUML::MemberPitch do
     kinds = %i[method separator method]
 
     expect(offsets(kinds, ["a", "t", "b"]).first)
-      .to eq([8.0, 8.0 + 16.48828125 + 3.5, 8.0 + (2 * 16.48828125) + 4.0])
+      .to eq([0.0, 16.48828125 + 3.5, (2 * 16.48828125) + 4.0])
   end
 
   it "sets a bare separator as 8 of gap, its rule 6.95 under the row before" do
@@ -47,5 +47,15 @@ RSpec.describe Sirena::Notation::PlantUML::MemberPitch do
 
     expect(offsets(kinds, ["a", "", "b"]).first)
       .to eq([0.0, 10.95, 16.48828125 + 8.0])
+  end
+
+  it "drops the empty method compartment of fields split by a separator" do
+    extent = offsets(%i[field separator field], ["a", "", "b"]).last
+
+    expect(extent).to eq((2 * 16.48828125) + 8.0)
+  end
+
+  it "drops the empty field compartment of methods split by a separator" do
+    expect(offsets(%i[method separator method]).first.first).to eq(0.0)
   end
 end

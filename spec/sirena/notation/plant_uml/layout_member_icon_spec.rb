@@ -77,8 +77,8 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
   context "with a bare separator between two fields" do
     let(:source) { "@startuml\nclass Dummy {\n  a\n  ..\n  b\n}\n@enduml\n" }
 
-    it "adds 8 for the separator and keeps the closing method gap" do
-      expect(box.height).to be_within(0.001).of(40.0 + 32.9766 + 8.0 + 8.0)
+    it "adds 8 for the separator and no closing method gap" do
+      expect(box.height).to be_within(0.001).of(40.0 + 32.9766 + 8.0)
     end
   end
 
