@@ -20,7 +20,8 @@ RSpec.describe Sirena::Notation::PlantUMLSalt::FontMetrics do
   end
 
   it "gives a button row, which holds a line, nine pixels more" do
-    expect(Sirena::Notation::PlantUMLSalt::WidgetMarks::HEIGHTS[:button])
+    marks = Sirena::Notation::PlantUMLSalt::WidgetMarks
+    expect(marks::TEXT_HEIGHT + marks::EXTRA_HEIGHT[:button])
       .to eq(22.96875)
   end
 end

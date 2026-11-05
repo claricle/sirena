@@ -41,9 +41,20 @@ module Sirena
             type: :state_diagram,
             diagram: Sirena::Notation::Mermaid::IRAdapters::StateDiagram.call(model),
             transform: Layout,
-            renderer: Style::Bound.wrap(Renderer, Style::Reader.read(source)),
+            renderer: Binding.new(Style::Reader.read(source),
+                                  Reader.scale_of(source)),
           )
         end
+
+        # The renderer class of one diagram: the engine builds a renderer
+        # with `new(theme:)` only, so the diagram's style and `scale` travel
+        # here.
+        Binding = Struct.new(:sheet, :scale) do
+          def new(theme: nil)
+            Renderer.new(theme: theme, style: sheet, scale: scale)
+          end
+        end
+        private_constant :Binding
       end
     end
   end
