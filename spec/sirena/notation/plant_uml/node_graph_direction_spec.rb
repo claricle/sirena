@@ -101,6 +101,31 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph do
 
         expect(at["B"].y).to be > at["A"].y
       end
+
+      it "keeps a note beside its target in the target's rank",
+         :aggregate_failures do
+        at = boxes(family, "A --> B\nnote right of A : hi\nnote left of B : lo")
+        notes = at.values_at("note1", "note2")
+
+        expect(notes.map(&:y)).to eq([at["A"].y, at["B"].y])
+        expect(notes.first.x).to be > at["A"].x
+        expect(notes.last.x).to be < at["B"].x
+      end
+
+      it "puts a note under its target for `bottom of`" do
+        at = boxes(family, "note bottom of A : hi")
+        note = at["note1"]
+
+        expect(note.y).to be > at["A"].y
+      end
+
+      it "keeps a one-dash partner beside its source, ahead of others",
+         :aggregate_failures do
+        at = boxes(family, "A -> B\nA --> C")
+
+        expect(at["A"].x).to be < at["B"].x
+        expect(at["C"].y).to be > at["B"].y
+      end
     end
   end
 end

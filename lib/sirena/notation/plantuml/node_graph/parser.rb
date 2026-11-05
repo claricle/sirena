@@ -35,7 +35,7 @@ module Sirena
                       KEYWORDS_REFUSED => "keyword",
                       /\Afloating\s+note/i => "floating note",
                       SHAPES => "shape" }.freeze
-          SIDE = /(?:left|right|top|bottom)(?:\s+of\s+(?<ref>#{REF}))?/
+          SIDE = /(?<side>left|right|top|bottom)(?:\s+of\s+(?<ref>#{REF}))?/
           NOTE = /\Anote\s+(?:#{SIDE}
                   |(?:"(?<quoted>.*)"\s+)?as\s+(?<name>\S+))
                   \s*(?::\s*(?<text>.*))?\z/xim
@@ -167,7 +167,7 @@ module Sirena
             id = m[:name] || "note#{@counter += 1}"
             note = @graph.node(id, :note, parent: @stack.last)
             note.lines = References.lines_of(m[:quoted] || body)
-            link_note(note, m[:ref])
+            link_note(note, m[:ref], m[:side])
             note
           end
 
@@ -183,11 +183,16 @@ module Sirena
             lines.join("\n")
           end
 
-          def link_note(note, ref)
+          # A note beside (`left`, `right`) its target sits in the target's
+          # rank, one above or below (`top`, `bottom`) in the next.
+          def link_note(note, ref, side)
             return unless ref
 
+            beside = %w[left right].include?(side)
             @graph.edges << Edge.new(from: note, to: resolve(ref),
-                                     style: :dashed, width: 1)
+                                     style: :dashed, width: 1,
+                                     rank_step: beside ? 0 : 1,
+                                     backwards: %w[right bottom].include?(side))
           end
 
           def take_edge(text)

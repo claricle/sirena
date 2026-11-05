@@ -73,11 +73,9 @@ module Sirena
           def hold?(from, to, step)
             step ||= 1
             want = @rank[from] + step
-            want = [want, @rank[to]].max if step.zero?
-            moved = @rank[to] < want || (step.zero? && @rank[from] < want)
-            @rank[to] = [@rank[to], want].max
-            @rank[from] = want if step.zero?
-            moved
+            ends = step.zero? ? [from, to] : [to]
+            want = ends.map { |item| @rank[item] }.push(want).max
+            ends.map { |item| @rank[item] < want && @rank[item] = want }.any?
           end
 
           def group
@@ -102,15 +100,22 @@ module Sirena
           end
 
           # The layer with every item after the items that must come first
-          # in its rank (links of step 0), otherwise as it was.
+          # in its rank (links of step 0); an item goes right after the one
+          # it is tied to, otherwise the layer keeps its order.
           def settled(layer)
             rest = layer.dup
+            last = nil
             Array.new(layer.size) do
-              pick = rest.find { |item| !before(item).intersect?(rest) }
-              pick ||= rest.first
-              rest.delete_if { |item| item.equal?(pick) }
-              pick
+              last = pick_next(rest, last)
+              rest.delete_if { |item| item.equal?(last) }
+              last
             end
+          end
+
+          def pick_next(rest, last)
+            ready = rest.reject { |item| before(item).intersect?(rest) }
+            ready.find { |item| before(item).include?(last) } ||
+              ready.first || rest.first
           end
 
           # The items a link of step 0 puts ahead of `item`.
