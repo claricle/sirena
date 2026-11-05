@@ -8,6 +8,7 @@ require_relative "divider"
 require_relative "fragment"
 require_relative "message"
 require_relative "page_break"
+require_relative "spacing"
 
 module Sirena
   module Notation
@@ -121,6 +122,10 @@ module Sirena
 
           def divider(label)
             @items << Divider.new(label: label)
+          end
+
+          def spacing(height)
+            @items << Spacing.new(height: height)
           end
 
           def delay(label)

@@ -9,6 +9,7 @@ require_relative "bar_tracker"
 require_relative "destroy"
 require_relative "delay"
 require_relative "divider"
+require_relative "spacing"
 require_relative "edge"
 require_relative "fragment"
 require_relative "message"
@@ -65,7 +66,7 @@ module Sirena
           PLACERS = { Message => :message, Activation => :activation,
                       Destroy => :destroy, Fragment => :fragment,
                       Ref => :ref, PageBreak => :page_break,
-                      Delay => :delay }.freeze
+                      Delay => :delay, Spacing => :spacing }.freeze
           Config = Struct.new(:message_measure, :message_font_size,
                               :message_family, :label_inset, :row, :self_row,
                               :unlabelled_row, :following_unlabelled_row,
@@ -949,6 +950,10 @@ module Sirena
 
             parent[:depth] = [parent[:depth], block[:depth] + 1].max
             parent[:text_height] = block[:text_height]
+          end
+
+          def spacing(item)
+            @y += item.room
           end
 
           # The lifelines run on through the gap, drawn as for any other row.

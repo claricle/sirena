@@ -3,6 +3,7 @@
 require_relative "../activation"
 require_relative "../destroy"
 require_relative "../delay"
+require_relative "../spacing"
 require_relative "../divider"
 require_relative "../fragment"
 require_relative "../note"
@@ -43,6 +44,11 @@ module Sirena
 
             def delay(node, _index)
               Delay.new(label: node.label.to_s)
+            end
+
+            def spacing(node, index)
+              height = index.detail(node, "height")
+              Spacing.new(height: height && height.to_f)
             end
 
             def activation(node, index)

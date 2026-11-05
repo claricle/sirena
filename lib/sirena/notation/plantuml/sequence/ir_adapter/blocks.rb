@@ -37,6 +37,10 @@ module Sirena
               sink.node("delay", delay.label)
             end
 
+            def spacing(spacing, sink, _ids)
+              sink.detail(sink.node("spacing"), "height", spacing.height)
+            end
+
             def activation(activation, sink, ids)
               node = sink.node("activation")
               sink.detail(node, "phase", activation.phase)

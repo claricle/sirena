@@ -9,6 +9,7 @@ require_relative "../message"
 require_relative "../note"
 require_relative "../page_break"
 require_relative "../ref"
+require_relative "../spacing"
 
 module Sirena
   module Notation
@@ -23,6 +24,7 @@ module Sirena
                         [Fragment, Blocks.method(:fragment)],
                         [Divider, Blocks.method(:divider)],
                         [Delay, Blocks.method(:delay)],
+                        [Spacing, Blocks.method(:spacing)],
                         [Activation, Blocks.method(:activation)],
                         [Destroy, Blocks.method(:destroy)],
                         [PageBreak, Blocks.method(:page_break)]].freeze
