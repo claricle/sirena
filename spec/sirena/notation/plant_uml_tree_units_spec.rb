@@ -39,11 +39,11 @@ RSpec.describe Sirena::Notation::PlantUML do
     before { layout.instance_variable_set(:@segments, []) }
 
     it "returns the lowest bottom when no column has a last box" do
-      expect(layout.send(:join_columns, 5.0, 1.0, ends)).to eq(9.0)
+      expect(layout.send(:join_columns, 5.0, 1.0, ends, 0)).to eq(9.0)
     end
 
     it "draws no trunk when no column has a last box" do
-      layout.send(:join_columns, 5.0, 1.0, ends)
+      layout.send(:join_columns, 5.0, 1.0, ends, 0)
       expect(layout.instance_variable_get(:@segments)).to be_empty
     end
   end

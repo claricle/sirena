@@ -32,12 +32,12 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     expect(centres.fetch("d") - centres.fetch("c")).to eq(50.0)
   end
 
-  it "does not add nested clearance to a self-message before a fragment" do
+  it "gives a self-message before a fragment only the 50-point minimum" do
     scene = scene_of("x -> x: start", "group test", "a -> b: 1",
                      "ref over b, c: a reference spanning b and c", "end",
                      "d -> d: next")
     centres = head_centres(scene)
 
-    expect(centres.fetch("a") - centres.fetch("x")).to be < 50.0
+    expect(centres.fetch("a") - centres.fetch("x")).to eq(50.0)
   end
 end

@@ -355,10 +355,17 @@ RSpec.describe Sirena::Notation::PlantUML do
                                "T4 (1 week and 4 days)", "T5 (2 weeks)")
     end
 
-    it "tabulates each task's first day, last day and length" do
-      expect(texts.each_slice(1).to_a.flatten & ["Day 15", "15 days", "11 days",
-                                                 "14 days", "1 day"])
-        .to eq(["Day 15", "15 days", "1 day", "11 days", "14 days"])
+    it "draws no table of start, end and duration beside the chart" do
+      expect(texts & ["Start", "End", "Duration", "Day 15", "15 days"])
+        .to be_empty
+    end
+
+    it "numbers the days above and below the grid" do
+      expect(texts.grep(/\A\d+\z/)).to eq((1..15).map(&:to_s) * 2)
+    end
+
+    it "begins the grid at the left edge" do
+      expect(rects.map { |rect| rect[0] }.uniq).to eq([2.0])
     end
 
     it "draws a bar a day wide per day of the task, less the gap" do
@@ -384,7 +391,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       PUML
     end
 
-    it "starts a task after the one it follows" do
+    it "keeps the dated table with each task's first and last day" do
       expect(texts).to include("2020-07-01", "2020-07-03", "2020-07-04",
                                "2020-07-05")
     end

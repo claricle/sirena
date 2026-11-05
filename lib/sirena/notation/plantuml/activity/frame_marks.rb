@@ -11,8 +11,9 @@ module Sirena
         # partition frames.
         class FrameMarks
           PARTITION_PAD = 10.0
-          LANE_FILL = "#E2E2F0"
-          private_constant :PARTITION_PAD, :LANE_FILL
+          LANE_TITLE = 18
+          LANE_RULE = "#000000"
+          private_constant :PARTITION_PAD, :LANE_TITLE, :LANE_RULE
 
           def initialize(diagram, placement, canvas, metrics)
             @diagram = diagram
@@ -48,12 +49,19 @@ module Sirena
             left = band[:left]
             right = band[:right]
             @canvas.rect(Box.spanning(left, ceiling, right, floor),
-                         fill: "none")
-            header = Box.spanning(left, ceiling, right,
-                                  ceiling + Placement::HEADER_HEIGHT - 4)
-            @canvas.rect(header, fill: band[:colour] || LANE_FILL)
-            @canvas.lines([band[:name]], [(left + right) / 2, ceiling + 17],
-                          anchor: "middle", size: Metrics::FONT_SIZE)
+                         fill: band[:colour] || "none")
+            [left, right].each do |x_pos|
+              @canvas.path([[x_pos, ceiling], [x_pos, floor]],
+                           stroke: LANE_RULE, width: 1.5)
+            end
+            @canvas.lines([band[:name]], [(left + right) / 2, ceiling + 20],
+                          anchor: "middle", size: lane_title_size(band))
+          end
+
+          # The JAR's large title, while the band is wide enough to hold it.
+          def lane_title_size(band)
+            wide = @metrics.text_width([band[:name]], size: LANE_TITLE)
+            wide + 8 <= band[:right] - band[:left] ? LANE_TITLE : Metrics::FONT_SIZE
           end
 
           def partition(name, boxes)
