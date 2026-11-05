@@ -83,6 +83,7 @@ module Sirena
         MODIFIER = /\{(?:static|abstract|field|method)\}/i
         SEPARATOR = /\A([-=._])\1(?:[ \t]*(\S.*?)[ \t]*\1\1)?\z/
         INLINE_MARKUP = /<img:[^>]*>/i
+        UNDECODED_IMAGE = '""(Cannot decode)""'
         PLAIN_TEXT = /\A[\p{Alnum}\[][^<>{}"!$():@;]*\z/
         STYLE_OPEN = %r{\A<style>\z}i
         SKIN_BLOCK = /\Askinparam[ \t]+\S+[ \t]*\{\z/i
@@ -96,7 +97,8 @@ module Sirena
                          :NOTE, :END_NOTE,
                          :RELATION, :JUNCTION, :METHOD, :FIELD,
                          :TYPED_FIELD, :TYPED_METHOD, :MODIFIER, :TYPE,
-                         :SEPARATOR, :PLAIN_TEXT, :INLINE_MARKUP, :FREE_NOTE,
+                         :SEPARATOR, :PLAIN_TEXT, :INLINE_MARKUP,
+                         :UNDECODED_IMAGE, :FREE_NOTE,
                          :MEMBER_OF,
                          :STYLE_OPEN, :SKIN_BLOCK, :LINE_END, :NOT_FOUND_MESSAGE
 
@@ -348,10 +350,11 @@ module Sirena
           :note
         end
 
-        # Creole tags stay for the renderer; `<img:>` has no drawn form
-        # here and is dropped.
+        # Creole tags stay for the renderer. An `<img:>` has no drawn form
+        # here; PlantUML prints "(Cannot decode)" in monospace for an image
+        # it cannot load, and so does this.
         def plain_note_text(text)
-          text.gsub(INLINE_MARKUP, "").squeeze(" ")
+          text.gsub(INLINE_MARKUP, UNDECODED_IMAGE).squeeze(" ")
         end
 
         def junction(builder, match, number, text)

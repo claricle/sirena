@@ -6,9 +6,10 @@ module Sirena
       # How far apart PlantUML sets the rows of a class box's members,
       # measured against 1.2026.6. A row is 16.49 below the one before, with
       # 8 more between a field group and a method group; an empty group
-      # keeps a gap of its own. A separator with a title is a row of its own,
-      # drawn 3.5 low and followed 4 further down; one without a title is
-      # no row but 8 of gap, its rule 6.95 under the row before.
+      # keeps a gap of its own, unless a separator already splits the rows
+      # into compartments of their own. A separator with a title is a row of
+      # its own, drawn 3.5 low and followed 4 further down; one without a
+      # title is no row but 8 of gap, its rule 6.95 under the row before.
       module MemberPitch
         extend self
 
@@ -42,12 +43,16 @@ module Sirena
         # @return [Float] the gap above the rows of a box with methods and no
         #   fields: PlantUML draws the empty field compartment there
         def lead(kinds)
+          return 0.0 if kinds.include?(:separator)
+
           kinds.include?(:method) && !kinds.include?(:field) ? GROUP_GAP : 0.0
         end
 
         # @return [Float] the gap below the rows of a box with fields and no
         #   methods: the empty method compartment
         def tail(kinds)
+          return 0.0 if kinds.include?(:separator)
+
           kinds.include?(:field) && !kinds.include?(:method) ? GROUP_GAP : 0.0
         end
 
