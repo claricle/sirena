@@ -303,9 +303,9 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.017525
-      worst_e_w: 0.148547
-      worst_e_h: 0.147495
+      worst_e_c: 0.014268
+      worst_e_w: 0.052972
+      worst_e_h: 0.041667
       worst_e_a: 0.098754
       worst_analog:
   matched: 5

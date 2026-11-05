@@ -141,8 +141,8 @@ RSpec.describe Sirena::Notation::PlantUML do
                      "This method with int", "This method with Duration"]
 
     it "draws both overloads" do
-      expect(texts).to include("+void start(int timeoutms)",
-                               "+void start(Duration timeout)")
+      expect(texts).to include("void start(int timeoutms)",
+                               "void start(Duration timeout)")
     end
   end
 

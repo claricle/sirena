@@ -7,6 +7,7 @@ require_relative "style"
 require_relative "creole"
 require_relative "note_outline"
 require_relative "class_header"
+require_relative "member_icon_elements"
 
 module Sirena
   module Notation
@@ -259,8 +260,13 @@ module Sirena
           group = Svg::Group.new(id: box_id(box))
           [box_rectangle(box), *spot_elements(box), *rule_lines(box)]
             .each { |element| group << element }
-          box.texts.each { |text| group << text_element(text) }
+          box.texts.each { |text| add_text(group, text) }
           document << group
+        end
+
+        def add_text(group, text)
+          group << MemberIconElements.group(text.icon) if text.icon
+          group << text_element(text)
         end
 
         def rule_lines(box)
