@@ -37,7 +37,7 @@ module Sirena
           private
 
           def candidates(name, dir)
-            return [name] if name.start_with?("/")
+            return [name] if File.absolute_path?(name)
 
             [dir, *@roots].compact.uniq.map { |root| File.join(root, name) }
           end
