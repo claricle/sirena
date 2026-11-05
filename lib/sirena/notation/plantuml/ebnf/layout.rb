@@ -16,11 +16,13 @@ module Sirena
           TITLE = 22.0
           LEAD = 18.0
           BETWEEN = 20.0
-          PLAIN = { fill: "#F1F1F1" }.freeze
-          ROUND = { fill: "#F1F1F1", rx: 8.0 }.freeze
-          DASHED = { fill: "#F1F1F1", stroke_dasharray: "4,3" }.freeze
-          private_constant :MARGIN, :TITLE, :LEAD, :BETWEEN, :PLAIN, :ROUND,
-                           :DASHED
+          RAIL = "1.5"
+          BOX = { fill: "#FFFFFF", stroke_width: "0.5" }.freeze
+          PLAIN = BOX
+          ROUND = BOX.merge(rx: 8.0).freeze
+          DASHED = BOX.merge(stroke_dasharray: "4,3").freeze
+          private_constant :MARGIN, :TITLE, :LEAD, :BETWEEN, :RAIL, :BOX,
+                           :PLAIN, :ROUND, :DASHED
 
           # @param rules [Array<Rule>]
           # @return [Drawing::Scene]
@@ -29,6 +31,15 @@ module Sirena
             bottom = stack(rules, blocks)
             width = blocks.map(&:width).max + (2 * LEAD) + 8
             scene(width + (2 * MARGIN), bottom - BETWEEN + MARGIN)
+          end
+
+          # Rails are thick, as PlantUML draws them.
+          def line(*coordinates, **style)
+            super(*coordinates, stroke_width: RAIL, **style)
+          end
+
+          def path(commands, **style)
+            super(commands, stroke_width: RAIL, **style)
           end
 
           private
@@ -49,7 +60,7 @@ module Sirena
           def draw_rail(block, top)
             rail = top + block.baseline
             left = MARGIN + 4
-            circle(left, rail, 4, fill: "#FFFFFF")
+            circle(left, rail, 4, fill: "#FFFFFF", stroke_width: "2")
             line(left + 4, rail, left + LEAD, rail)
             block.draw(self, left + LEAD, top)
             draw_end(left + LEAD + block.width, rail)

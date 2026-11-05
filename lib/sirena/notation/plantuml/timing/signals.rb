@@ -172,10 +172,20 @@ module Sirena
 
           def clock_edges(participant)
             start = @axis.start
-            inside = edges_of(participant).select do |time, _on|
-              time > start && time < @axis.finish
+            edges = edges_of(participant)
+            inside = edges.select do |time, _on|
+              time > start && time <= @axis.finish
             end
-            [[start, high_at?(participant, start)]] + inside
+            opening(participant, edges, start) + inside
+          end
+
+          # An edge exactly at the start is drawn as a stroke up from the
+          # opposite level, as PlantUML draws it.
+          def opening(participant, edges, start)
+            level = high_at?(participant, start)
+            return [[start, level]] if edges.none? { |time, _| time == start }
+
+            [[start, !level], [start, level]]
           end
 
           def high_at?(clock, time)

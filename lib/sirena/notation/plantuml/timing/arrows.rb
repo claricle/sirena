@@ -8,9 +8,13 @@ module Sirena
         # text beside it.
         class Arrows
           BLUE = "#00008B"
-          HEAD = 8.0
-          WING = 3.0
-          private_constant :BLUE, :HEAD, :WING
+          HEAD = 7.5
+          WING = 2.74
+          STROKE = "1.5"
+          LABEL_SIZE = 14
+          LABEL_DROP = 15.5
+          private_constant :BLUE, :HEAD, :WING, :STROKE, :LABEL_SIZE,
+                           :LABEL_DROP
 
           # @param pen [Drawing::Pen]
           # @param axis [Axis]
@@ -25,7 +29,7 @@ module Sirena
           def draw(message)
             tail = point(message.from, message.time)
             tip = point(message.to, message.arrives || message.time)
-            @pen.line(*tail, *tip, stroke: BLUE)
+            @pen.line(*tail, *tip, stroke: BLUE, stroke_width: STROKE)
             head(tail, tip)
             label(message.text, tail, tip)
           end
@@ -36,9 +40,11 @@ module Sirena
             [@axis.x(time), @lookup.call(id, time)]
           end
 
-          def label(text, tail, tip)
-            @pen.text(text, ((tail[0] + tip[0]) / 2) + 4,
-                      (tail[1] + tip[1]) / 2, fill: BLUE)
+          # PlantUML sets the message in serif, just under the arrow's tip.
+          def label(text, _tail, tip)
+            @pen.text(text, tip[0], tip[1] + LABEL_DROP, fill: BLUE,
+                                                         family: "Serif",
+                                                         size: LABEL_SIZE)
           end
 
           def head(tail, tip)
@@ -47,7 +53,7 @@ module Sirena
             dir = unit(tail, tip)
             base = [tip[0] - (HEAD * dir[0]), tip[1] - (HEAD * dir[1])]
             @pen.polygon([tip, wing(base, dir, WING), wing(base, dir, -WING)],
-                         fill: BLUE, stroke: BLUE)
+                         fill: BLUE, stroke: BLUE, stroke_width: STROKE)
           end
 
           def unit(tail, tip)

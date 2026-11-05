@@ -60,7 +60,7 @@ module Sirena
           end
 
           # @param options [Hash] `size`, `anchor` (an SVG text-anchor),
-          #   `bold` and `fill`
+          #   `bold`, `family` and `fill`
           def text(content, left, middle, **options)
             put(Svg::Text, { x: left, y: middle, content: content.to_s,
                              text_anchor: "start", font_family: "sans-serif",
@@ -88,7 +88,7 @@ module Sirena
 
           def typeface(options)
             { font_size: options[:size]&.to_s, fill: options[:fill],
-              text_anchor: options[:anchor],
+              text_anchor: options[:anchor], font_family: options[:family],
               font_weight: ("bold" if options[:bold]) }.compact
           end
 

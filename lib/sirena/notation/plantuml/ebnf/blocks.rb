@@ -147,21 +147,21 @@ module Sirena
             end
           end
 
-          # A block that may be taken again, by a line looping back under it.
+          # A block that may be taken again, by a line looping back over it.
           class Loop < Block
-            BACK = 26.0
+            BACK = 14.0
 
             def initialize(item)
               super(item.width + (2 * SIDE), item.height + BACK,
-                    item.baseline)
+                    item.baseline + BACK)
               @item = item
             end
 
             def draw(pen, left, top)
               rail = top + baseline
-              @item.draw(pen, left + SIDE, top)
+              @item.draw(pen, left + SIDE, top + BACK)
               rails(pen, left, rail)
-              back(pen, left, rail, top + @item.height + (BACK / 2))
+              back(pen, left, rail, top + (BACK / 2))
             end
 
             private
@@ -174,10 +174,10 @@ module Sirena
             def back(pen, left, rail, level)
               near = left + RADIUS
               far = left + width - RADIUS
-              pen.path([[:move, far, rail], [:line, far, level - RADIUS],
+              pen.path([[:move, far, rail], [:line, far, level + RADIUS],
                         [:curve, far, level, far - RADIUS, level],
                         [:line, near + RADIUS, level],
-                        [:curve, near, level, near, level - RADIUS],
+                        [:curve, near, level, near, level + RADIUS],
                         [:line, near, rail]])
               arrow(pen, (near + far) / 2, level)
             end
