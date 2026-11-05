@@ -7,9 +7,10 @@ module Sirena
         # A link between two nodes.
         #
         # `head` is `:target`, `:source`, `:socket` or `nil`; `style` is
-        # `:solid` or `:dashed`.
+        # `:solid` or `:dashed`. `from_row` and `to_row` are the index of the
+        # row of a map or object box the line starts or ends at, or nil.
         Edge = Struct.new(:from, :to, :label, :style, :head, :color, :width,
-                          keyword_init: true)
+                          :from_row, :to_row, keyword_init: true)
       end
     end
   end

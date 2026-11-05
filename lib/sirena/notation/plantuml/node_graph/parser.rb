@@ -198,11 +198,12 @@ module Sirena
           end
 
           def add_edge(match, link)
-            @graph.edges << Edge.new(from: resolve(match[:a]),
-                                     to: resolve(match[:b]),
-                                     label: match[:label]&.strip,
-                                     style: link.style, head: link.head,
-                                     color: link.color, width: link.width)
+            from = resolve(match[:a])
+            to = resolve(match[:b])
+            rows = { from_row: row_index(from, match[:aport]),
+                     to_row: row_index(to, match[:bport]) }
+            @graph.edges << link.edge(from, to, label: match[:label]&.strip,
+                                                **rows)
           end
 
           # Declares `rest` -- a name, a label and an optional alias -- as a

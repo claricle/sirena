@@ -12,7 +12,8 @@ module Sirena
           DIRECTION = /(?:up|down|left|right)(?![[:alpha:]])/
           ARROW = /<?<?[-.=]+(?:\[[^\]]*\]|#{DIRECTION})?
                    [-.=]*(?:\(0\)|\(0|0\)|\))?[-.=]*>?>?/x
-          EDGE = /\A(?<a>#{REF})\s*(?<arrow>#{ARROW})\s*(?<b>#{REF})
+          EDGE = /\A(?<a>#{REF})(?:::(?<aport>#{IDENT}))?\s*(?<arrow>#{ARROW})
+                  \s*(?<b>#{REF})(?:::(?<bport>#{IDENT}))?
                   (?:\s*:\s*(?<label>.*))?\z/x
           STEREOTYPE = /<<\s*(?<st>.*?)\s*>>/
           COLOR = /\s+#(?<color>[0-9A-Fa-f]{3,8}|[A-Za-z]+)\z/
