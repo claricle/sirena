@@ -28,6 +28,7 @@ module Sirena
                    [:line, [0.5, 0, 0, 36], [0.5, 0, -12, 50]],
                    [:line, [0.5, 0, 0, 36], [0.5, 0, 12, 50]]].freeze
           PORT = [[:rect, [0.5, 0, -6, 0], [0, 0, 12, 12]]].freeze
+          PORT_IN = [[:rect, [0.5, 1, -6, -12], [0, 0, 12, 12]]].freeze
           DATABASE = [[:path, [[:M, [0, 0, 0, 8]],
                                [:A, [0.5, 0, 0, 8], 1, [1, 0, 0, 8]],
                                [:L, [1, 1, 0, -8]],
@@ -45,7 +46,7 @@ module Sirena
           INTERFACE = [[:circle, [0.5, 0, 0, 10], 8]].freeze
 
           BY_KIND = { actor: ACTOR, usecase: USECASE, component: COMPONENT,
-                      interface: INTERFACE, portin: PORT, portout: PORT,
+                      interface: INTERFACE, portin: PORT_IN, portout: PORT,
                       note: NOTE, database: DATABASE, node: NODE, cloud: CLOUD,
                       file: FILE }.freeze
 
@@ -53,7 +54,7 @@ module Sirena
           # centred; `dy` moves a centred label, `shift` and `shrink` its
           # horizontal middle and width, `left` pins it to the left.
           LABELS = { actor: { top: 52 }, interface: { top: 22 },
-                     portin: { top: 16 }, portout: { top: 16 },
+                     portin: { top: 0 }, portout: { top: 16 },
                      note: { top: 4, left: 8 }, database: { dy: 6 },
                      component: { shift: 6, shrink: 6 },
                      node: { dy: 4, shrink: 8 } }.freeze

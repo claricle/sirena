@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../plantuml_data/boxes/table_box"
+require_relative "frame_ports"
 require_relative "metrics"
 require_relative "packer"
 require_relative "ranking"
@@ -22,6 +23,8 @@ module Sirena
           def call(graph, **)
             @graph = graph
             @sizes = {}
+            @frame_ports = FramePorts.new(@sizes)
+            @ports = {}
             @inner = {}
             top = arrange(nil)
             placed = []
@@ -50,19 +53,27 @@ module Sirena
 
           # Lays out the children of `scope` and records their sizes.
           def arrange(scope)
-            children = @graph.children_of(scope)
-            children.each { |child| measure(child) }
+            ports, children = split_ports(scope)
+            (ports + children).each { |child| measure(child) }
             ranking = Ranking.new(children, pairs(scope))
             packed = Packer.new(@sizes, left_to_right: left_to_right?)
               .pack(ranking.layers)
-            scope ? frame(packed, scope) : packed
+            scope ? frame(packed, scope, ports) : packed
+          end
+
+          # The children of `scope` on its frame, then the rest.
+          def split_ports(scope)
+            @graph.children_of(scope).partition do |node|
+              FramePorts.on_frame?(node)
+            end.tap { |ports, _| @ports[scope] = ports }
           end
 
           def left_to_right?
             @graph.direction == :left_to_right
           end
 
-          def frame(packed, scope)
+          def frame(packed, scope, ports)
+            packed.width = [packed.width, @frame_ports.width(ports)].max
             packed.width += 2 * PAD
             packed.height += (2 * PAD) + Metrics.header_height(scope)
             packed
@@ -80,8 +91,15 @@ module Sirena
             @graph.edges.filter_map do |edge|
               from = lift(edge.from, scope)
               to = lift(edge.to, scope)
-              ranked(edge, from, to) if from && to && !from.equal?(to)
+              ranked(edge, from, to) if inner?(from, to)
             end
+          end
+
+          # Whether a link is between two items that take part in ranking.
+          def inner?(from, to)
+            return false unless from && to && !from.equal?(to)
+
+            [from, to].none? { |node| FramePorts.on_frame?(node) }
           end
 
           # `[from, to, step]`, the ends swapped when the link reads backwards.
@@ -109,13 +127,16 @@ module Sirena
           end
 
           def place_inside(box, depth, placed)
-            inside = [box.x + PAD,
-                      box.y + PAD + Metrics.header_height(box.node)]
-            place(@inner[box.node].offsets, inside, depth + 1, placed)
+            place(@inner[box.node].offsets, inside(box), depth + 1, placed)
+            placed.concat(@frame_ports.place(box, @ports[box.node], depth + 1))
+          end
+
+          def inside(box)
+            [box.x + PAD, box.y + PAD + Metrics.header_height(box.node)]
           end
 
           def routes(placed)
-            boxes = placed.to_h { |box| [box.node, box] }
+            boxes = placed.to_h { |box| [box.node, terminal(box)] }
             @graph.edges.filter_map do |edge|
               from = boxes[edge.from]
               to = boxes[edge.to]
@@ -123,6 +144,12 @@ module Sirena
 
               Route.new(edge: edge, points: segment(from, to, edge))
             end
+          end
+
+          # What a link ends at: the square of a port on a frame, otherwise
+          # the box itself.
+          def terminal(box)
+            FramePorts.on_frame?(box.node) ? @frame_ports.terminal(box) : box
           end
 
           def segment(from, to, edge)

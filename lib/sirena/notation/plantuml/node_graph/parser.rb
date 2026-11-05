@@ -163,10 +163,10 @@ module Sirena
           def take_note(text)
             return unless (m = text.match(NOTE))
 
-            body = m[:text] || note_body
+            body = m[:text] || m[:quoted] || note_body
             id = m[:name] || "note#{@counter += 1}"
             note = @graph.node(id, :note, parent: @stack.last)
-            note.lines = References.lines_of(m[:quoted] || body)
+            note.lines = References.lines_of(body)
             link_note(note, m[:ref], m[:side])
             note
           end
