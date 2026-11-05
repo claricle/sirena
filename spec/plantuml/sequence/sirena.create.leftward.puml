@@ -1,0 +1,6 @@
+@startuml
+participant A
+create B
+B <- A : spawn
+B -> A : ready
+@enduml

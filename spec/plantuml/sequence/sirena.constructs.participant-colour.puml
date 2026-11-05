@@ -1,0 +1,5 @@
+@startuml
+participant "Long Name" as L #pink
+participant B
+L -> B : hi
+@enduml

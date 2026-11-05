@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../activation"
+require_relative "../create"
 require_relative "../delay"
 require_relative "../destroy"
 require_relative "../divider"
@@ -9,6 +10,7 @@ require_relative "../message"
 require_relative "../note"
 require_relative "../page_break"
 require_relative "../ref"
+require_relative "../spacing"
 
 module Sirena
   module Notation
@@ -23,8 +25,10 @@ module Sirena
                         [Fragment, Blocks.method(:fragment)],
                         [Divider, Blocks.method(:divider)],
                         [Delay, Blocks.method(:delay)],
+                        [Spacing, Blocks.method(:spacing)],
                         [Activation, Blocks.method(:activation)],
                         [Destroy, Blocks.method(:destroy)],
+                        [Create, Blocks.method(:create)],
                         [PageBreak, Blocks.method(:page_break)]].freeze
             private_constant :ENCODERS
 

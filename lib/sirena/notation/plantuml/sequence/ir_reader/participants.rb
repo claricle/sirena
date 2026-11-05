@@ -30,7 +30,8 @@ module Sirena
             def boxes(index)
               index.with_role("box").map do |node|
                 Box.new(title: node.label,
-                        members: index.target_names(node))
+                        members: index.target_names(node),
+                        fill: Fills.call(node, index))
               end
             end
           end

@@ -2,12 +2,15 @@
 
 require_relative "activation"
 require_relative "arrow_style"
+require_relative "create"
 require_relative "delay"
 require_relative "destroy"
 require_relative "divider"
 require_relative "fragment"
 require_relative "message"
+require_relative "numbering"
 require_relative "page_break"
+require_relative "spacing"
 
 module Sirena
   module Notation
@@ -24,6 +27,7 @@ module Sirena
             @blocks = []
             @depth = Hash.new(0)
             @number = nil
+            @counting = false
           end
 
           # @return [Array] the items of the first page, which ends with its
@@ -44,9 +48,20 @@ module Sirena
 
           # PlantUML draws nothing for a `--` or `deactivate` on a
           # participant with no open bar, so that change is dropped.
-          # Messages after this line are numbered from `start`.
-          def autonumber(start)
-            @number = start
+          # Messages after this line are numbered as `numbering` says.
+          def autonumber(numbering)
+            @numbering = numbering
+            @number = numbering.start
+            @counting = true
+          end
+
+          # `autonumber stop` and `autonumber resume`: false when no
+          # numbering was started.
+          def counting(on)
+            return false unless @numbering
+
+            @counting = on
+            self
           end
 
           def activation(phase, id, color = nil)
@@ -55,6 +70,14 @@ module Sirena
             @depth[id] += phase == :on ? 1 : -1
             @items << Activation.new(participant: id, phase: phase,
                                      color: color)
+          end
+
+          # false when `id` already took part in a message: PlantUML cannot
+          # create a participant that is already on the page.
+          def create(id)
+            return false if @items.any? { |item| appears?(item, id) }
+
+            @items << Create.new(participant: id)
           end
 
           def destroy(id)
@@ -123,6 +146,10 @@ module Sirena
             @items << Divider.new(label: label)
           end
 
+          def spacing(height)
+            @items << Spacing.new(height: height)
+          end
+
           def delay(label)
             @items << Delay.new(label: label)
           end
@@ -152,14 +179,19 @@ module Sirena
 
           private
 
+          def appears?(item, id)
+            item.is_a?(Message) && [item.from, item.to].include?(id)
+          end
+
           # Under `autonumber` a message takes the next number. One with no
           # label or a line break in it is not drawn; false then.
           def numbered(message)
-            return message unless @number
+            return message unless @counting
             return if message.label.to_s.strip.empty?
             return if message.label.include?("\\n")
 
-            message.numbered(@number).tap { @number += 1 }
+            message.numbered(@numbering.text(@number), bold: @numbering.bold?)
+              .tap { @number += @numbering.step }
           end
 
           def mark(phase, id, color)

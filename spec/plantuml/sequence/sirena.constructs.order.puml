@@ -1,0 +1,8 @@
+@startuml
+participant C
+participant B order 20
+participant A order 10
+participant D
+participant E order 15
+C -> D : x
+@enduml

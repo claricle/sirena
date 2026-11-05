@@ -1,0 +1,9 @@
+@startuml
+autonumber 10 5
+A -> B : one
+B -> A : two
+autonumber stop
+A -> B : x
+autonumber resume
+B -> A : y
+@enduml

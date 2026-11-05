@@ -26,12 +26,13 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Message do
     end
     let(:messages) do
       rebuilt.messages.map do |message|
-        [message.label, message.label_family, message.number, message.parallel?]
+        [message.label, message.label_family, message.number&.to_s,
+         message.parallel?]
       end
     end
     let(:expected) do
-      [["hello", nil, 1, false], ["hello", "monospace", 2, false],
-       ["hello", "monospace", 3, true]]
+      [["hello", nil, "1", false], ["hello", "monospace", "2", false],
+       ["hello", "monospace", "3", true]]
     end
 
     it "preserves numbered and parallel font intent through typed IR" do

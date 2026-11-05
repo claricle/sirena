@@ -6,9 +6,11 @@ require_relative "message_wrap"
 require_relative "tab_size"
 require_relative "arrow_marks"
 require_relative "bar_tracker"
+require_relative "create"
 require_relative "destroy"
 require_relative "delay"
 require_relative "divider"
+require_relative "spacing"
 require_relative "edge"
 require_relative "fragment"
 require_relative "message"
@@ -47,6 +49,9 @@ module Sirena
           NOTE_ABOVE = 35.0
           LEFT_EDGE = 0.0
           TEOZ_NESTED_HEADER_ROW = 31.3105
+          # What the row of a message that creates a participant gains over
+          # a plain one, measured against PlantUML 1.2026.6.
+          CREATION_EXTRA_ROW = 12.18
           TEOZ_MESSAGE_HEADER_ROW = 28.6211
           TEOZ_EMPTY_HEADER_ROW = 13.3105
           TEOZ_MESSAGE_BASE_ROW = 14.0
@@ -56,16 +61,18 @@ module Sirena
           TEOZ_LABEL_HEIGHT = 15.3105
           TEOZ_SELF_CONTACT_INSET = 2.5
           TEOZ_CONTACT_PADDING = 2.0
-          private_constant :TEOZ_NESTED_HEADER_ROW, :TEOZ_MESSAGE_HEADER_ROW,
+          private_constant :CREATION_EXTRA_ROW, :TEOZ_NESTED_HEADER_ROW,
+                           :TEOZ_MESSAGE_HEADER_ROW,
                            :TEOZ_EMPTY_HEADER_ROW, :TEOZ_MESSAGE_BASE_ROW,
                            :TEOZ_FRAME_BOTTOM_PAD,
                            :TEOZ_ROOT_CLOSE_GAP,
                            :TEOZ_NESTED_CLOSE_GAP, :TEOZ_LABEL_HEIGHT,
                            :TEOZ_SELF_CONTACT_INSET, :TEOZ_CONTACT_PADDING
           PLACERS = { Message => :message, Activation => :activation,
-                      Destroy => :destroy, Fragment => :fragment,
+                      Destroy => :destroy, Create => :create,
+                      Fragment => :fragment,
                       Ref => :ref, PageBreak => :page_break,
-                      Delay => :delay }.freeze
+                      Delay => :delay, Spacing => :spacing }.freeze
           Config = Struct.new(:message_measure, :message_font_size,
                               :message_family, :label_inset, :row, :self_row,
                               :unlabelled_row, :following_unlabelled_row,
@@ -74,7 +81,7 @@ module Sirena
                               :group_fragment_row, :group_close_gap,
                               :activation_edges, :teoz_fragment_cadence,
                               :deactivation_gap, :bare_deactivation_gap,
-                              :bounds,
+                              :bounds, :head_halves,
                               keyword_init: true)
 
           def self.following_activations(items, parallel_notes: false)
@@ -85,7 +92,7 @@ module Sirena
           end
 
           attr_reader :arrows, :notes, :fragments, :dividers, :delays, :crosses,
-                      :left, :right, :y, :page_breaks
+                      :left, :right, :y, :page_breaks, :created
 
           # @param lifelines [Hash{String => Float}] centre of each
           #   participant's lifeline, in participant order
@@ -111,6 +118,7 @@ module Sirena
             @edge_right = edge_right
             @appearance = appearance
             @fragmented = items.any?(Fragment)
+            @creations = Create.messages(items)
             @fragment_contacts = fragment_contacts(items)
             walk_items(items)
             @tracker.finish(@y - 20)
@@ -127,6 +135,7 @@ module Sirena
             apply_message_config(config)
             apply_cadence_config(config)
             @bounds = config.bounds
+            @head_halves = config.head_halves || {}
           end
 
           def apply_message_config(config)
@@ -200,6 +209,7 @@ module Sirena
             @blocks = []
             @left = Float::INFINITY
             @right = -Float::INFINITY
+            @created = {}
           end
 
           def start_collections
@@ -308,9 +318,27 @@ module Sirena
             start_row(message)
             @message_activations = active_participants
             from, to = ends_of(message)
+            to = created_end(message, from, to)
             draw(message, from, to) unless message.style.hidden
             touch(*extent(message, from, to))
-            @y += message_row(message)
+            @y += message_row(message) + creation_extra(message)
+          end
+
+          # `create X` has no row of its own; the message to X lands on the
+          # left or right edge of X's head, which is drawn at this row.
+          def created_end(message, from, to)
+            id = @creations[message] or return to
+
+            @created[id] = @y
+            to - ((to <=> from) * @head_halves.fetch(id, 0.0))
+          end
+
+          def creation_extra(message)
+            @creations.key?(message) ? CREATION_EXTRA_ROW : 0.0
+          end
+
+          def create(_item)
+            nil
           end
 
           def apply_message_font(message)
@@ -949,6 +977,10 @@ module Sirena
 
             parent[:depth] = [parent[:depth], block[:depth] + 1].max
             parent[:text_height] = block[:text_height]
+          end
+
+          def spacing(item)
+            @y += item.room
           end
 
           # The lifelines run on through the gap, drawn as for any other row.

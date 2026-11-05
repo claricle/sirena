@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "../activation"
+require_relative "../create"
 require_relative "../destroy"
 require_relative "../delay"
+require_relative "../spacing"
 require_relative "../divider"
 require_relative "../fragment"
 require_relative "../note"
@@ -45,6 +47,11 @@ module Sirena
               Delay.new(label: node.label.to_s)
             end
 
+            def spacing(node, index)
+              height = index.detail(node, "height")
+              Spacing.new(height: height&.to_f)
+            end
+
             def activation(node, index)
               Activation.new(participant: index.target_names(node).first,
                              phase: index.detail(node, "phase").to_sym,
@@ -53,6 +60,10 @@ module Sirena
 
             def destroy(node, index)
               Destroy.new(participant: index.target_names(node).first)
+            end
+
+            def create(node, index)
+              Create.new(participant: index.target_names(node).first)
             end
 
             def page_break(_node, _index)

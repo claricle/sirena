@@ -15,26 +15,33 @@ module Sirena
         # `head_style`.
         class Appearance
           KEYS = %i[min_width alignment tab_fill tab_colour tab_size
-                    head_style max_message].freeze
+                    head_style max_message paint arrow_width].freeze
           private_constant :KEYS
 
           attr_reader :min_width, :tab_fill, :tab_colour, :tab_size,
-                      :max_message
+                      :max_message, :arrow_width
 
           def initialize(**settings)
             unknown = settings.keys - KEYS
             raise ArgumentError, "unknown: #{unknown}" if unknown.any?
 
             @settings = settings.freeze
-            @min_width, @tab_fill, @tab_colour, @tab_size, @max_message =
+            @min_width, @tab_fill, @tab_colour, @tab_size, @max_message,
+              @arrow_width =
               settings.values_at(:min_width, :tab_fill, :tab_colour, :tab_size,
-                                 :max_message)
+                                 :max_message, :arrow_width)
             freeze
           end
 
           # @return [Symbol] :left, :center or :right
           def alignment
             @settings[:alignment] || :center
+          end
+
+          # @return [Hash{Symbol => String}] the colour each {Paint} role was
+          #   given
+          def paint
+            @settings[:paint] || {}
           end
 
           # @return [HeadStyle]
@@ -47,6 +54,7 @@ module Sirena
             Appearance.new(
               **@settings.merge(other.made) { |_, mine, new| new || mine },
               head_style: head_style.merge(other.head_style),
+              paint: paint.merge(other.paint),
             )
           end
 

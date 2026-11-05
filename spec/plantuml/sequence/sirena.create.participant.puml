@@ -1,0 +1,6 @@
+@startuml
+A -> B : one
+create participant C
+A -> C : new
+C --> A : ok
+@enduml

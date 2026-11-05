@@ -3,6 +3,7 @@
 require_relative "../appearance"
 require_relative "../chrome"
 require_relative "../head_style"
+require_relative "../paint"
 
 module Sirena
   module Notation
@@ -12,7 +13,7 @@ module Sirena
           # Rebuilds the footbox, the appearance, the banners and the title.
           module Settings
             NUMBERS = %i[min_width tab_size max_message].freeze
-            TEXTS = %i[tab_fill tab_colour].freeze
+            TEXTS = %i[tab_fill tab_colour arrow_width].freeze
             HEAD_NUMBERS = %i[size].freeze
             HEAD_TEXTS = %i[colour style family weight line].freeze
             private_constant :NUMBERS, :TEXTS, :HEAD_NUMBERS, :HEAD_TEXTS
@@ -42,9 +43,16 @@ module Sirena
               alignment = index.detail(node, "alignment")&.to_sym
               Appearance.new(
                 **read(node, index, NUMBERS, TEXTS, ""),
-                alignment: alignment,
-                head_style: HeadStyle.new(**head(node, index)),
+                alignment: alignment, paint: paint(node, index),
+                head_style: HeadStyle.new(**head(node, index))
               )
+            end
+
+            def paint(node, index)
+              Paint::ROLES.filter_map do |role|
+                colour = index.detail(node, "paint_#{role}")
+                [role, colour] if colour
+              end.to_h
             end
 
             def head(node, index)
