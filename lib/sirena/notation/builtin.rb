@@ -36,3 +36,4 @@ end
 
 Sirena::Notation.register(Sirena::Notation::Mermaid)
 require_relative "plantuml_salt"
+require_relative "plantuml_data"

@@ -3,7 +3,9 @@
 require_relative "../../layout/base"
 require_relative "caption_layout"
 require_relative "class_name"
+require_relative "class_header"
 require_relative "end_texts"
+require_relative "member_rule"
 require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "qualified_association_layout"
@@ -154,6 +156,7 @@ module Sirena
         # @param graph [IR::Graph] from {IRAdapter}
         def scene(graph)
           diagram = IRReader.call(graph)
+          @kind_in_spot = !ClassHeader.circles_hidden?(diagram)
           body = if member_note_family?(diagram)
                    member_note_scene(diagram)
                  elsif class_note_pair_family?(diagram)
@@ -653,6 +656,8 @@ module Sirena
           measure = lambda do |text, size|
             measure_text(text, font_size: size)[:width]
           end
+          ClassHeader.apply(diagram, scene,
+                            ->(text) { measure.call(text, font_size) })
           captions = CaptionLayout.new(diagram, normal_size: font_size,
                                                 measure: measure)
           captions.dress(scene)
@@ -1084,7 +1089,7 @@ module Sirena
         # A separator row carries the pseudo-modifier :rule, which the box
         # draws as a line instead of text.
         def rule_modifiers(member)
-          member.kind == :separator ? [:rule] : member.modifiers
+          member.kind == :separator ? [:rule, member.type] : member.modifiers
         end
 
         def note_specifications(notes)
@@ -1118,9 +1123,17 @@ module Sirena
         end
 
         def header_rows(klass)
-          kind = ["<<#{klass.kind}>>"] unless klass.kind == :class
+          kind = ["<<#{klass.kind}>>"] unless spot_names_kind?(klass)
           tags = klass.stereotypes.map { |tag| "<<#{tag}>>" }
           [*kind, *(tags.join(" ") unless tags.empty?)]
+        end
+
+        # A class whose one-line name carries a circle needs no `<<kind>>`
+        # row.
+        def spot_names_kind?(klass)
+          klass.kind == :class ||
+            (@kind_in_spot && !ClassHeader.glyph(klass.kind).nil? &&
+              ClassName.lines(klass.name).one?)
         end
 
         def name_rows(klass, separate_generics: false)
@@ -1583,10 +1596,12 @@ module Sirena
         # A separator is a rule across the box, broken around its title.
         def rules(item, horizontal, width, baselines)
           item[:member_rows].each_with_index.flat_map do |content, index|
-            next [] unless item[:member_modifiers][index].include?(:rule)
+            rule, character = item[:member_modifiers][index]
+            next [] unless rule == :rule
 
-            rule_segments(content, horizontal, baselines.fetch(index) - 4.0,
-                          width)
+            MemberRule.style(character,
+                             rule_segments(content, horizontal,
+                                           baselines.fetch(index) - 4.0, width))
           end
         end
 

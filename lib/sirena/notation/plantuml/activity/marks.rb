@@ -16,13 +16,13 @@ module Sirena
           # @return [Scene]
           attr_reader :scene
 
-          def initialize(diagram, placement, router)
+          def initialize(diagram, placement, router, metrics)
             @diagram = diagram
             @placement = placement
-            @canvas = Canvas.new
-            @frames = FrameMarks.new(diagram, placement, @canvas)
+            @canvas = Canvas.new(metrics)
+            @frames = FrameMarks.new(diagram, placement, @canvas, metrics)
             @edges = EdgeMarks.new(router, @canvas)
-            @nodes = NodeMarks.new(placement.boxes, @canvas)
+            @nodes = NodeMarks.new(placement.boxes, @canvas, metrics)
           end
 
           # @return [Float] the leftmost x any mark reaches
