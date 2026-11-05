@@ -5,6 +5,8 @@ require_relative "caption_layout"
 require_relative "class_name"
 require_relative "class_header"
 require_relative "end_texts"
+require_relative "member_icon"
+require_relative "member_pitch"
 require_relative "member_rule"
 require_relative "ir_reader"
 require_relative "package_frames"
@@ -36,6 +38,9 @@ module Sirena
         COMPACT_BOTTOM_PAD = 6.95
         COMPACT_HEAD_GAP = 17.5
         COMPACT_GROUP_GAP = 8.0
+        # The head rule is 32 below the top and the first row 17.5 below it,
+        # the last row 6.95 above the bottom, less the pitch of that row.
+        PROPORTIONAL_MEMBER_BASE_HEIGHT = 40.0
         COMPACT_RULE_BASE_HEIGHT = 34.488
         MARKER_LENGTH = 12.0
         THICK_LINE = 4.0
@@ -106,7 +111,8 @@ module Sirena
         DIAMOND_HALF_WIDTH = 4.0
         ARROW_MARKERS = %i[association dependency].freeze
         FILLED_MARKERS = %i[association dependency composition].freeze
-        private_constant :COMPACT_BOTTOM_PAD, :COMPACT_HEAD_GAP,
+        private_constant :PROPORTIONAL_MEMBER_BASE_HEIGHT,
+                         :COMPACT_BOTTOM_PAD, :COMPACT_HEAD_GAP,
                          :COMPACT_GROUP_GAP, :COMPACT_RULE_BASE_HEIGHT
         private_constant :MARGIN, :COLUMN_GAP, :ROW_GAP,
                          :ANNOTATED_RELATION_SLOT_WIDTH, :BOX_PADDING,
@@ -807,15 +813,66 @@ module Sirena
         end
 
         def complete_box_specification(record, klass, diagram, details)
+          record = proportional_member_box(record, klass, diagram, details)
           record = compact_empty_box(record, details[:member_rows], diagram)
           record = smetana_hide_circle_box(record, klass, diagram, details)
           adjust_plain_empty_width(record, klass, diagram, details[:names])
           record = package_relation_box(record, klass, diagram, details)
           record = multiline_title_box(record, klass, details)
           record = isolated_box_sizes(record, klass, diagram, details)
+          with_box_context(record, klass, diagram, details)
+        end
+
+        def with_box_context(record, klass, diagram, details)
           record.merge(name_rows: details[:names].size,
                        floating_generic: details[:generic],
                        **box_context(klass, diagram))
+        end
+
+        # A box of one name row and some members is as wide as its widest
+        # proportional row and as tall as the reference row pitch makes it.
+        def proportional_member_box(record, klass, diagram, details)
+          rows = details[:member_rows]
+          return record if rows.empty? || record.fetch(:title_rows).size > 1
+
+          record.merge(
+            width: [*standard_title_widths(details[:names]),
+                    *member_row_widths(klass, rows, diagram)].max,
+            height: pitched_member_height(klass, diagram, rows),
+            compact_members: true,
+          )
+        end
+
+        MEMBER_PORTIONS = /\A(?:hide|show)\b.*\b(?:members|attributes|methods|
+                          fields)\z/xi
+        private_constant :MEMBER_PORTIONS
+
+        # An empty field or method group keeps its 8-high compartment unless
+        # a `hide` or `show` line is in play.
+        def empty_gaps?(diagram)
+          diagram.directives.none? { |line| line.match?(MEMBER_PORTIONS) }
+        end
+
+        def member_row_widths(klass, rows, diagram)
+          insets = member_insets_for(klass, diagram)
+          klass.body.each_index.filter_map do |index|
+            next unless insets[index]
+
+            member_row_width(rows[index], klass.body[index], insets[index])
+          end
+        end
+
+        def member_insets_for(klass, diagram)
+          MemberIcon.insets(klass.body.map(&:kind),
+                            klass.body.map(&:visibility),
+                            MemberIcon.enabled?(diagram.directives))
+        end
+
+        def member_row_width(row, member, inset)
+          text = MemberIcon.visible_text(row, member.visibility,
+                                         inset == MemberIcon::TEXT_INSET)
+          inset + standard_text_width(text, font_size) +
+            MemberIcon::TEXT_PLAIN
         end
 
         def isolated_box_sizes(record, klass, diagram, details)
@@ -1111,7 +1168,8 @@ module Sirena
 
           record.merge(
             width: isolated_standard_width(klass, details),
-            height: isolated_standard_height(klass, details[:member_rows]),
+            height: isolated_standard_height(klass, diagram,
+                                             details[:member_rows]),
             compact_members: header_rows(klass).empty?,
           )
         end
@@ -1159,16 +1217,30 @@ module Sirena
           Sequence::TextAdvances.width(text, font_size: size)
         end
 
-        def isolated_standard_height(klass, member_rows)
-          MEMBER_NOTE_CLASS_HEIGHT +
-            (member_rows.size * MEMBER_NOTE_ROW_HEIGHT) +
-            (header_rows(klass).size * STANDARD_STEREOTYPE_ROW_HEIGHT)
+        def isolated_standard_height(klass, diagram, member_rows)
+          headers = header_rows(klass)
+          unless headers.empty?
+            return MEMBER_NOTE_CLASS_HEIGHT +
+                (member_rows.size * MEMBER_NOTE_ROW_HEIGHT) +
+                (headers.size * STANDARD_STEREOTYPE_ROW_HEIGHT)
+          end
+
+          pitched_member_height(klass, diagram, member_rows)
+        end
+
+        def pitched_member_height(klass, diagram, member_rows)
+          PROPORTIONAL_MEMBER_BASE_HEIGHT +
+            MemberPitch.layout(klass.body.map(&:kind), member_rows,
+                               gaps: empty_gaps?(diagram)).last
         end
 
         def box_context(klass, diagram)
           modifiers = klass.body.map { |member| rule_modifiers(member) }
           { member_modifiers: modifiers, package: klass.package,
             member_kinds: klass.body.map(&:kind),
+            member_visibilities: klass.body.map(&:visibility),
+            icons_enabled: MemberIcon.enabled?(diagram.directives),
+            empty_gaps: empty_gaps?(diagram),
             chain: diagram.package_chain(klass.package) }
         end
 
@@ -1253,8 +1325,7 @@ module Sirena
         end
 
         def visibility_mark(visibility)
-          { public: "+", private: "-", protected: "#", package: "~" }
-            .fetch(visibility, "")
+          MemberIcon.mark(visibility)
         end
 
         # Classes outside any package first, then each package's own classes
@@ -1620,49 +1691,90 @@ module Sirena
 
         def compact_row_geometry(item)
           offsets = compact_row_offsets(item)
-          last = item.fetch(:compact_bottom) - COMPACT_BOTTOM_PAD
+          last = item.fetch(:compact_bottom) - COMPACT_BOTTOM_PAD -
+            empty_gap(item, :tail)
           baselines = offsets.map { |offset| last - offsets.last + offset }
-          { head: baselines.first - COMPACT_HEAD_GAP, baselines: baselines }
+          { head: baselines.first - COMPACT_HEAD_GAP - offsets.first,
+            baselines: baselines }
+        end
+
+        # `:lead` or `:tail`: the gap an empty field or method group keeps.
+        def empty_gap(item, side)
+          return 0.0 unless item[:empty_gaps]
+
+          MemberPitch.public_send(side, item[:member_kinds])
         end
 
         def compact_row_offsets(item)
-          boundaries = member_group_boundaries(item[:member_kinds])
-          item[:member_rows].each_index.map do |index|
-            (index * MEMBER_NOTE_ROW_HEIGHT) +
-              (boundaries.count { |at| at <= index } * COMPACT_GROUP_GAP)
-          end
+          MemberPitch.layout(item[:member_kinds], item[:member_rows],
+                             gaps: item[:empty_gaps]).first
         end
 
-        # A thin rule between the field group and the method group.
+        # A thin rule between the field group and the method group, and one
+        # closing whichever of them is empty.
         def group_rules(item, horizontal, width, baselines)
           return [] unless item[:compact_members]
 
-          member_group_boundaries(item[:member_kinds]).map do |index|
-            vertical = ((baselines[index - 1] + baselines[index]) / 2.0) - 3.0
-            segment(horizontal, vertical, horizontal + width, vertical)
+          group_rule_heights(item, baselines).map do |at|
+            segment(horizontal, at, horizontal + width, at)
           end
+        end
+
+        def group_rule_heights(item, baselines)
+          member_group_boundaries(item[:member_kinds]).map do |index|
+            ((baselines[index - 1] + baselines[index]) / 2.0) - 3.0
+          end + empty_group_rules(item, baselines)
+        end
+
+        def empty_group_rules(item, baselines)
+          [(baselines.first - COMPACT_HEAD_GAP if
+              empty_gap(item, :lead).positive?),
+           (baselines.last + COMPACT_BOTTOM_PAD if
+              empty_gap(item, :tail).positive?)].compact
         end
 
         def member_texts(item, horizontal, width, baselines)
+          insets = member_insets(item)
           item[:member_rows].each_with_index.filter_map do |content, index|
             next if content.empty?
 
-            modifiers = item[:member_modifiers][index]
-            member_text_row(content, modifiers, [horizontal, width],
-                            baselines.fetch(index))
+            text = member_text_row(visible_member(item, content, index),
+                                   item[:member_modifiers][index],
+                                   [horizontal, width, insets[index]],
+                                   baselines.fetch(index))
+            text.icon = member_icon(item, index, horizontal, baselines)
+            text
           end
         end
 
-        # A separator's title is centred; any other row starts at the padding.
+        def member_icon(item, index, horizontal, baselines)
+          return unless item[:icons_enabled]
+
+          MemberIcon.at(item[:member_visibilities][index],
+                        item[:member_kinds][index], horizontal,
+                        baselines.fetch(index))
+        end
+
+        def member_insets(item)
+          MemberIcon.insets(item[:member_kinds], item[:member_visibilities],
+                            item[:icons_enabled])
+        end
+
+        def visible_member(item, content, index)
+          MemberIcon.visible_text(content, item[:member_visibilities][index],
+                                  item[:icons_enabled])
+        end
+
+        # A separator's title is centred; any other row starts at its inset.
         def member_text_row(content, modifiers, box, vertical)
-          left, width = box
+          left, width, inset = box
           if modifiers.include?(:rule)
             return scene_text(content, left + (width / 2.0), vertical,
                               "member", "middle")
           end
 
           role = modifiers.include?(:abstract) ? "member_abstract" : "member"
-          scene_text(content, left + BOX_PADDING, vertical, role, "start")
+          scene_text(content, left + inset, vertical, role, "start")
         end
 
         # A separator is a rule across the box, broken around its title.
@@ -1684,7 +1796,7 @@ module Sirena
                             vertical)]
           end
 
-          gap = (measured_width(content) / 2.0) + 4.0
+          gap = standard_text_width(content, font_size) / 2.0
           middle = horizontal + (width / 2.0)
           [segment(horizontal, vertical, middle - gap, vertical),
            segment(middle + gap, vertical, right, vertical)]
@@ -1695,10 +1807,16 @@ module Sirena
           item[:member_rows].each_with_index.filter_map do |content, index|
             next unless item[:member_modifiers][index].include?(:static)
 
-            vertical = baselines.fetch(index) + 2.0
-            left = horizontal + BOX_PADDING
-            segment(left, vertical, left + measured_width(content), vertical)
+            underline(item, horizontal, content, [index, baselines])
           end
+        end
+
+        def underline(item, horizontal, content, (index, baselines))
+          vertical = baselines.fetch(index) + 2.0
+          left = horizontal + member_insets(item).fetch(index)
+          width = standard_text_width(visible_member(item, content, index),
+                                      font_size)
+          segment(left, vertical, left + width, vertical)
         end
 
         def build_relations(diagram, boxes, nodes)
