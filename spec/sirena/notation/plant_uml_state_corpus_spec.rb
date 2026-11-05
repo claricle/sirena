@@ -183,8 +183,8 @@ RSpec.describe Sirena::Notation::PlantUML do
       end).to eq(Array.new(kids.size, true))
     end
 
-    it "gives State3 its three children" do
-      expect(contained_children("State3").last.size).to be >= 3
+    it "gives State3 its two boxes, the history marks being circles" do
+      expect(contained_children("State3").last.size).to eq(2)
     end
   end
 end

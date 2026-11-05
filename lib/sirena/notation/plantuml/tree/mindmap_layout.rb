@@ -135,7 +135,8 @@ module Sirena
           def join(parent, child, direction)
             start = direction.positive? ? parent.right : parent.x
             stop = direction.positive? ? child.x : child.right
-            curve(connector(start, parent.mid_y, stop, child.mid_y, direction))
+            curve(connector(start, parent.mid_y, stop, child.mid_y, direction),
+                  parent.item.level - 1)
           end
 
           def connector(from_x, from_y, to_x, to_y, direction)
