@@ -7,10 +7,10 @@ module Sirena
   module Notation
     module PlantUMLSalt
       # Reads the inline markup salt shares with Creole: `<b>`, `<i>`,
-      # `<u>`, `<s>` and `<color:...>`. Any other angle-bracket text, such
-      # as `<P>`, is kept as literal text.
+      # `<u>`, `<s>`, `<color:...>` and `<size:N>`. Any other angle-bracket
+      # text, such as `<P>`, is kept as literal text.
       module Markup
-        TAG = %r{<(/?)(b|i|u|s|color)(?::([#\w]+))?>}i
+        TAG = %r{<(/?)(b|i|u|s|color|size)(?::([#\w]+))?>}i
         UNTIL_TAG = /(?=#{TAG})|\z/
         STYLE_KEYS = { "b" => :bold, "i" => :italic, "u" => :underline,
                        "s" => :strike }.freeze
@@ -33,11 +33,22 @@ module Sirena
         end
 
         def apply(state, scanner)
-          key = STYLE_KEYS.fetch(scanner[2].downcase, :color)
+          key = STYLE_KEYS.fetch(scanner[2].downcase) do
+            scanner[2].downcase.to_sym
+          end
           if scanner[1].empty?
-            state[key] = key == :color ? scanner[3] : true
+            state[key] = value(key, scanner[3])
           else
             state.delete(key)
+          end
+        end
+
+        # A style's value: a colour name, a size in points or just on.
+        def value(key, argument)
+          case key
+          when :color then argument
+          when :size then argument.to_i
+          else true
           end
         end
       end

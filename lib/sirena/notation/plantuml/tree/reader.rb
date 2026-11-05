@@ -4,6 +4,7 @@ require_relative "../../../ir"
 require_relative "../source_lines"
 require_relative "../unsupported_construct_error"
 require_relative "role"
+require_relative "rules"
 
 module Sirena
   module Notation
@@ -17,8 +18,8 @@ module Sirena
         # `:` in place of the space opens a multi-line text closed by a line
         # ending in `;`. A `_` after the run draws no box, a `[#colour]`
         # fills the box, and `<<name>>` at the end of the text applies the
-        # `.name` colour of a `<style>` block. Every other style property is
-        # read and dropped. A line outside this subset raises
+        # `.name` colour of a `<style>` block. A `<style>` block's other
+        # rules are kept in {#rules}. A line outside this subset raises
         # {UnsupportedConstructError}.
         class Reader
           ITEM = /\A([*+-]+)([<>])?(_)?(?:\[(\#?\w+)\])?(:|[ \t])[ \t]*(.*)\z/
@@ -40,12 +41,16 @@ module Sirena
                              :parent, keyword_init: true)
           private_constant :Entry
 
+          # @return [Rules] what the source's `<style>` blocks set
+          attr_reader :rules
+
           # @param source [String] PlantUML source
           # @param id [String] the graph's id, which names the kind
           # @return [Sirena::IR::Graph]
           # @raise [UnsupportedConstructError] on a line outside the subset
           def parse(source, id:)
             @entries = []
+            @rules = Rules.new
             @classes = {}
             @open = nil
             @style = nil
@@ -82,6 +87,7 @@ module Sirena
           end
 
           def close_style
+            @rules.add(@style.join("\n"))
             sheet = @style.join("\n").gsub(%r{//[^\n]*}, "")
             sheet.scan(CLASS_STYLE) do |name, properties|
               colour = BACKGROUND.match(properties)
