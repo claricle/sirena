@@ -252,8 +252,8 @@ RSpec.describe Sirena::Notation::PlantUMLSalt do
   end
 
   describe "what a widget reaches past its column" do
-    it "counts a button's extra pixel toward the canvas" do
-      expect(render("[OK]").root.attributes["viewBox"]).to eq("0 0 40 35")
+    it "counts a button's fractional width toward the canvas" do
+      expect(render("[OK]").root.attributes["viewBox"]).to eq("0 0 39 35")
     end
 
     it "lets the next column start where the button's cell ends",

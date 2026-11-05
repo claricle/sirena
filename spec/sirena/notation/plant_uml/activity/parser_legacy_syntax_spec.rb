@@ -90,8 +90,13 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Parser do
         PUML
       end
 
-      it "merges them before the next activity" do
-        expect(edge(diagram, nil, "Z").from.kind).to eq(:merge)
+      it "runs both of them on into the next activity" do
+        into_z = diagram.edges.select { |e| e.to.text == "Z" }
+        expect(into_z.map { |e| e.from.text }).to eq(%w[A B])
+      end
+
+      it "draws no node where they meet" do
+        expect(diagram.nodes.map(&:kind)).not_to include(:merge)
       end
     end
 
