@@ -7,16 +7,13 @@ require_relative "layout"
 module Sirena
   module Notation
     module PlantUMLSalt
-      # Draws a {Scene} the way PlantUML draws a salt window: a bordered box
-      # on white, black one-pixel rules, widgets as small outlined shapes.
+      # Draws a {Scene} the way PlantUML draws a salt window: black one-pixel
+      # rules and widgets as small outlined shapes.
       class Renderer < Sirena::Renderer::Base
         FONT_FAMILY = "sans-serif"
         INK = "#000000"
-        PAPER = "#FFFFFF"
-        WIDGET_PAPER = "#F1F1F1"
-        WIDGET_FILLS = %w[button field droplist].freeze
-        private_constant :FONT_FAMILY, :INK, :PAPER, :WIDGET_PAPER,
-                         :WIDGET_FILLS
+        NO_BREAK_SPACE = "\u00A0"
+        private_constant :FONT_FAMILY, :INK, :NO_BREAK_SPACE
 
         # @param scene [Scene]
         # @return [Svg::Document]
@@ -34,6 +31,8 @@ module Sirena
         def draw(mark)
           case mark.kind
           when :rect then rectangle(mark)
+          when :ellipse then ellipse(mark)
+          when :polygon then polygon(mark)
           when :line then rule(mark)
           else text(mark)
           end
@@ -47,51 +46,88 @@ module Sirena
           end
         end
 
+        def outline(mark)
+          { fill: mark.fill, stroke: mark.ink || INK,
+            stroke_width: mark.weight.to_s }
+        end
+
         def rectangle(mark)
           box = mark.box
           element(Svg::Rect, x: box.left, y: box.top, width: box.width,
-                             height: box.height, fill: paper_for(mark.fill),
-                             stroke: mark.ink || INK, stroke_width: "1",
-                             rx: corner(mark))
+                             height: box.height, rx: mark.radius,
+                             ry: mark.radius, **outline(mark))
         end
 
-        def corner(mark)
-          mark.box.width / 2 if mark.fill.start_with?("radio")
+        def ellipse(mark)
+          radius = mark.box.width / 2
+          element(Svg::Ellipse, cx: mark.box.left + radius,
+                                cy: mark.box.top + radius, rx: radius,
+                                ry: radius, **outline(mark))
         end
 
-        def paper_for(fill)
-          return "none" if %w[frame node].include?(fill)
-          return INK if fill.end_with?("-checked")
-
-          WIDGET_FILLS.include?(fill) ? WIDGET_PAPER : PAPER
+        def polygon(mark)
+          points = mark.points.map { |pair| pair.map { |n| n.round(4) } }
+          element(Svg::Polygon, points: Svg::Polygon.build_points(points),
+                                **outline(mark))
         end
 
         def rule(mark)
           box = mark.box
           element(Svg::Line, x1: box.left, y1: box.top, x2: box.right,
                              y2: box.bottom, stroke: mark.ink || INK,
-                             stroke_width: "1")
+                             stroke_width: format("%g", mark.weight),
+                             stroke_dasharray: mark.dash)
         end
 
+        # The width is the layout's, so a viewer's own sans-serif cannot
+        # move the text after it.
         def text(mark)
           run = mark.run
-          element(Svg::Text, x: mark.box.left + lead_width(run.text),
-                             y: mark.box.top + 4, content: run.text.lstrip,
+          lead = lead_width(run)
+          element(Svg::Text, content: content(run), **placement(mark, lead),
                              **typeface(run))
         end
 
+        # A run of spaces is drawn as no-break spaces, as PlantUML does:
+        # SVG would collapse them to an empty node, and an underline or
+        # strike through them would vanish.
+        def content(run)
+          return run.text.lstrip unless run.text.strip.empty?
+
+          NO_BREAK_SPACE * run.text.length
+        end
+
+        def placement(mark, lead)
+          box = mark.box
+          { x: (box.left + lead).round(4),
+            y: (box.top + Mark::TEXT_LIFT).round(4),
+            text_length: (box.width - lead).round(4),
+            length_adjust: "spacing" }
+        end
+
         def typeface(run)
-          { font_family: FONT_FAMILY, font_size: Layout::FONT_SIZE.to_s,
+          { font_family: FONT_FAMILY,
+            font_size: (run.size || Layout::FONT_SIZE).to_s,
             font_weight: ("bold" if run.bold),
-            font_style: ("italic" if run.italic), fill: run.color }
+            font_style: ("italic" if run.italic), fill: run.color,
+            text_decoration: decoration(run) }
+        end
+
+        def decoration(run)
+          kinds = [("underline" if run.underline),
+                   ("line-through" if run.strike)].compact
+          kinds.join(" ") unless kinds.empty?
         end
 
         # SVG collapses a text element's leading spaces, so they are
         # measured and added to x instead.
-        def lead_width(text)
-          lead = text[/\A\s*/].length
-          TextMeasurement.measure(" " * lead,
-                                  font_size: Layout::FONT_SIZE)[:width]
+        def lead_width(run)
+          return 0.0 if run.text.strip.empty?
+
+          lead = run.text[/\A\s*/].length
+          TextMeasurement.measure_in(:dejavu, " " * lead,
+                                     font_size: run.size ||
+                                       Layout::FONT_SIZE)[:width]
         end
       end
     end

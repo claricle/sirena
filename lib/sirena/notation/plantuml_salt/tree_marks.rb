@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "box"
+require_relative "font_metrics"
 require_relative "mark"
 
 module Sirena
@@ -18,10 +19,12 @@ module Sirena
         NODE_RISE = 1.0
         ELBOW_GAP = 2.0
         NODE_LEFT = 6.0
-        ROW_HEIGHT = 14.1328
+        ROW_HEIGHT = FontMetrics::HEIGHT
         PAD = 5.0
         INDENT = 10.0
-        TEXT_DROP = 7.6
+        # The table counts this much less toward its container than the
+        # bars it draws span.
+        OVERHANG = 3.0
 
         private
 
@@ -71,7 +74,7 @@ module Sirena
           x = centre_x(rows[index], area)
           y = centre_y(tops, index)
           box = Box.new(x - NODE_RISE, y - NODE_RISE, NODE, NODE)
-          @marks << Mark.new(:rect, box, fill: "node", ink: TREE_INK)
+          @marks << Mark.new(:rect, box, ink: TREE_INK)
         end
 
         def elbow(rows, parent, index, tops, area)
@@ -91,11 +94,20 @@ module Sirena
         end
 
         def rules(block, columns, area, tops)
-          if block.border?
-            @marks << Mark.new(:rect, area, fill: "frame", ink: TREE_INK)
-          end
+          drawn = Box.new(area.left, area.top, columns.sum, area.height)
+          frame(drawn) if block.border?
           bars(columns, area) if block.grid? || block.column_lines?
-          bands(tops, area) if block.grid? || block.row_lines?
+          bands(tops, drawn) if block.grid? || block.row_lines?
+        end
+
+        # Four rules, as PlantUML draws it: top, bottom, left, right.
+        def frame(area)
+          [area.top, area.bottom].each do |y|
+            @marks << grey(area.left, y, area.width, 0.0)
+          end
+          [area.left, area.right].each do |x|
+            @marks << grey(x, area.top, 0.0, area.height)
+          end
         end
 
         def bands(tops, area)
