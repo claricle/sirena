@@ -15,7 +15,8 @@ module Sirena
 
           PLAIN = %r{</?plain>}i
           PICTURE = /<(?:img|\$|&)/i
-          private_constant :PLAIN, :PICTURE
+          FORMULA = %r{<(math|latex)>(.*?)</\1>}
+          private_constant :PLAIN, :PICTURE, :FORMULA
 
           # @param raw [String]
           # @param line [Integer] source line, for the refusal
@@ -26,7 +27,7 @@ module Sirena
                                                   line: line, text: raw)
             end
 
-            raw.gsub("\\n", "\n").gsub(PLAIN, "")
+            raw.gsub("\\n", "\n").gsub(FORMULA, '\2').gsub(PLAIN, "")
               .split("\n").map(&:strip).join("\n").strip
           end
         end
