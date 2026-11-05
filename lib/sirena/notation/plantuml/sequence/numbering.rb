@@ -13,7 +13,7 @@ module Sirena
                     (?<after>[^0<>#.]*)\z/x
           private_constant :FORMAT
 
-          attr_reader :start, :step, :weight
+          attr_reader :start, :step
 
           # @param format [String, nil] the text between the quotes
           # @return [Numbering, nil] nil when the format is not one read
@@ -21,15 +21,18 @@ module Sirena
             return new(start, step) unless format
 
             parts = FORMAT.match(format) or return
-            new(start, step, parts, parts[:bold] ? "bold" : nil)
+            new(start, step, parts)
           end
 
-          def initialize(start, step, parts = nil, weight = "bold")
+          def initialize(start, step, parts = nil)
             @start = start
             @step = step
             @parts = parts
-            @weight = weight
             freeze
+          end
+
+          def bold?
+            @parts.nil? || !@parts[:bold].nil?
           end
 
           # @return [String] the text drawn for the `count`th number

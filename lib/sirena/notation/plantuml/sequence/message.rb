@@ -11,30 +11,34 @@ module Sirena
         # `A -> B` read the same. `style` is an {ArrowStyle}. `label` is the
         # source text. `from` or `to` is an {Edge} when the message has no
         # participant at that end. `number` is the `autonumber` text, or nil, and
-        # `number_weight` the weight it is drawn in.
+        # and `number_bold` whether it is drawn bold.
         class Message
           Label = Struct.new(:content, :font_family, keyword_init: true)
 
-          attr_reader :from, :to, :label, :style, :number, :number_weight,
-                      :label_family
+          attr_reader :from, :to, :label, :style, :number, :label_family
 
           def initialize(from:, to:, label:, style:, number: nil,
-                         number_weight: nil)
+                         number_bold: true)
             @from = from
             @to = to
             @label = label.is_a?(Label) ? label.content : label
             @label_family = label.is_a?(Label) ? label.font_family : nil
             @style = style
             @number = number
-            @number_weight = number ? number_weight : nil
+            @number_bold = number_bold
             freeze
           end
 
           # @return [Message] the same message, drawn with `number`
-          def numbered(number, weight = "bold")
+          def numbered(number, bold = true)
             display = Label.new(content: label, font_family: label_family)
             self.class.new(from: from, to: to, label: display, style: style,
-                           number: number, number_weight: weight)
+                           number: number, number_bold: bold)
+          end
+
+          # @return [String, nil] the weight of the number
+          def number_weight
+            "bold" if @number_bold
           end
 
           def head

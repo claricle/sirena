@@ -23,7 +23,7 @@ module Sirena
                        label: display_label(node, index),
                        style: style(node, edge, index),
                        number: number,
-                       number_weight: index.detail(node, "number_weight"))
+                       number_bold: !set?(node, "number_plain", index))
             end
 
             def display_label(node, index)

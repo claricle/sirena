@@ -177,7 +177,7 @@ module Sirena
             return if message.label.to_s.strip.empty?
             return if message.label.include?("\\n")
 
-            message.numbered(@numbering.text(@number), @numbering.weight)
+            message.numbered(@numbering.text(@number), @numbering.bold?)
               .tap { @number += @numbering.step }
           end
 

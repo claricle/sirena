@@ -894,26 +894,26 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
 
     it "numbers each message from 1" do
       expect(numbers("autonumber", "A -> B : a", "B --> A : b"))
-        .to eq([1, 2])
+        .to eq(%w[1 2])
     end
 
     it "starts from the number it is given" do
-      expect(numbers("autonumber 7", "A -> B : a")).to eq([7])
+      expect(numbers("autonumber 7", "A -> B : a")).to eq(["7"])
     end
 
     it "leaves the messages before it unnumbered" do
       expect(numbers("A -> B : a", "autonumber", "B -> A : b"))
-        .to eq([nil, 1])
+        .to eq([nil, "1"])
     end
 
     it "numbers a return like any other message" do
-      expect(numbers("autonumber", "A -> B : a", "return b")).to eq([1, 2])
+      expect(numbers("autonumber", "A -> B : a", "return b")).to eq(%w[1 2])
     end
 
     it "numbers a message that starts with &" do
       lines = ["!pragma teoz true", "autonumber", "A -> B : a", "& B -> A : b"]
 
-      expect(numbers(*lines)).to eq([1, 2])
+      expect(numbers(*lines)).to eq(%w[1 2])
     end
 
     it "keeps a numbered message on the row of the one before it" do
@@ -936,9 +936,51 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       end
     end
 
-    it "refuses a step, which has not been measured" do
-      expect { parse("autonumber 5 10", "A -> B : a") }
+    it "steps by the second number" do
+      expect(numbers("autonumber 10 5", "A -> B : a", "B -> A : b", "A -> B : c"))
+        .to eq(%w[10 15 20])
+    end
+
+    it "stops numbering, then resumes where it left off" do
+      lines = ["autonumber 3 4", "A -> B : a", "autonumber stop", "A -> B : b",
+               "autonumber resume", "B -> A : c"]
+
+      expect(numbers(*lines)).to eq(["3", nil, "7"])
+    end
+
+    it "restarts at the new line, with the step of that line" do
+      lines = ["autonumber 3 4", "A -> B : a", "autonumber 5", "A -> B : b",
+               "B -> A : c"]
+
+      expect(numbers(*lines)).to eq(%w[3 5 6])
+    end
+
+    it "pads the number to the zeros of a format" do
+      expect(numbers('autonumber 8 "[000]"', "A -> B : a")).to eq(["[008]"])
+    end
+
+    it "draws a number plain unless its format opens with <b>" do
+      lines = ['autonumber "z0"', "A -> B : a", 'autonumber "<b>[0]"',
+               "A -> B : b", "autonumber", "A -> B : c"]
+      bold = parse(*lines).messages.map(&:number_weight)
+
+      expect(bold).to eq([nil, "bold", "bold"])
+    end
+
+    it "refuses stop and resume before any autonumber" do
+      expect { parse("autonumber stop", "A -> B : a") }
         .to raise_error(unsupported, /autonumber/)
+    end
+
+    {
+      "a format with no zero" => 'autonumber "step"',
+      "a format with a dot" => 'autonumber "(0)."',
+      "a format with other markup" => 'autonumber "<i>0</i>"',
+    }.each do |what, line|
+      it "refuses #{what}" do
+        expect { parse(line, "A -> B : a") }
+          .to raise_error(unsupported, /autonumber/)
+      end
     end
 
     it "refuses a numbered message when Maxmessagesize is set" do
@@ -1099,8 +1141,14 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       expect(parse("participant A").participants.first.fill).to be_nil
     end
 
-    it "refuses a colour name, which is not measured" do
-      expect { parse("participant A #red") }
+    it "reads a colour name as the hex PlantUML draws" do
+      fill = parse('participant "Long Name" as L #pink').participants.first.fill
+
+      expect(fill.colour).to eq("#FFC0CB")
+    end
+
+    it "refuses a name that is no colour" do
+      expect { parse("participant A #notacolour") }
         .to raise_error(unsupported, /participant/)
     end
 
