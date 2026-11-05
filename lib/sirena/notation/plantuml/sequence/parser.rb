@@ -93,14 +93,17 @@ module Sirena
           LINE_END = /\r\n|\r|\n/
           PARALLEL = /\A&[ \t]*(.*)\z/
           NEWPAGE = /\Anewpage\z/i
-          AUTONUMBER = /\Aautonumber(?:[ \t]+(\d+))?\z/i
+          AUTONUMBER = /\Aautonumber(?:[ \t]+(\d+)(?:[ \t]+(\d+))?)?
+                        (?:[ \t]+"([^"]*)")?\z/xi
+          AUTONUMBER_PAUSE = /\Aautonumber[ \t]+(stop|resume)\z/i
 
           PARALLEL_KINDS = [MESSAGE, NOTE, BLOCK].freeze
           TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
                       [REF, :ref], [BRANCH, :branch], [ACTIVATION, :activation],
                       [RETURN, :reply], [DIVIDER, :divider], [DELAY, :delay], [SPACING, :spacing],
                       [DESTROY, :destroy], [NEWPAGE, :newpage],
-                      [AUTONUMBER, :autonumber]].freeze
+                      [AUTONUMBER, :autonumber],
+                      [AUTONUMBER_PAUSE, :pause_numbering]].freeze
           SETTINGS = [[SKINPARAM_WIDTH, :min_width],
                       [SKINPARAM_MAXMESSAGE, :max_message],
                       [SKINPARAM_OPEN, :open_skinparam],
@@ -118,7 +121,7 @@ module Sirena
                            :SKINPARAM_WIDTH, :STYLE_OPEN, :STYLE_CLOSE,
                            :PARALLEL,
                            :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE,
-                           :AUTOACTIVATE, :AUTONUMBER, :TITLE,
+                           :AUTOACTIVATE, :AUTONUMBER, :AUTONUMBER_PAUSE, :TITLE,
                            :CHROME_OPEN, :CHROME_CLOSE
 
           # @param source [String] PlantUML source
@@ -435,7 +438,14 @@ module Sirena
           end
 
           def autonumber(match)
-            @outline.autonumber((match[1] || 1).to_i)
+            numbering = Numbering.read(start: (match[1] || 1).to_i,
+                                       step: (match[2] || 1).to_i,
+                                       format: match[3])
+            numbering && @outline.autonumber(numbering)
+          end
+
+          def pause_numbering(match)
+            @outline.pause_numbering(match[1].casecmp?("resume"))
           end
 
           def newpage(_match)

@@ -31,7 +31,8 @@ module Sirena
           # @return [Array<Scene::Text>] the number, then the label
           def texts(message, at_x, at_y, anchor)
             left = left_of(message, at_x, anchor)
-            [piece(message.number.to_s, left, at_y, "message_number", "bold"),
+            [piece(message.number.to_s, left, at_y, "message_number",
+                   message.number_weight),
              piece(message.label, left + extra(message), at_y, "message_label")]
           end
 

@@ -10,27 +10,31 @@ module Sirena
         # One arrow, normalised so `from` is always the sender: `B <- A` and
         # `A -> B` read the same. `style` is an {ArrowStyle}. `label` is the
         # source text. `from` or `to` is an {Edge} when the message has no
-        # participant at that end. `number` is the `autonumber` count, or nil.
+        # participant at that end. `number` is the `autonumber` text, or nil, and
+        # `number_weight` the weight it is drawn in.
         class Message
           Label = Struct.new(:content, :font_family, keyword_init: true)
 
-          attr_reader :from, :to, :label, :style, :number, :label_family
+          attr_reader :from, :to, :label, :style, :number, :number_weight,
+                      :label_family
 
-          def initialize(from:, to:, label:, style:, number: nil)
+          def initialize(from:, to:, label:, style:, number: nil,
+                         number_weight: nil)
             @from = from
             @to = to
             @label = label.is_a?(Label) ? label.content : label
             @label_family = label.is_a?(Label) ? label.font_family : nil
             @style = style
             @number = number
+            @number_weight = number ? number_weight : nil
             freeze
           end
 
           # @return [Message] the same message, drawn with `number`
-          def numbered(number)
+          def numbered(number, weight = "bold")
             display = Label.new(content: label, font_family: label_family)
             self.class.new(from: from, to: to, label: display, style: style,
-                           number: number)
+                           number: number, number_weight: weight)
           end
 
           def head

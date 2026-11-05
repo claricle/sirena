@@ -7,6 +7,7 @@ require_relative "destroy"
 require_relative "divider"
 require_relative "fragment"
 require_relative "message"
+require_relative "numbering"
 require_relative "page_break"
 require_relative "spacing"
 
@@ -25,6 +26,7 @@ module Sirena
             @blocks = []
             @depth = Hash.new(0)
             @number = nil
+            @counting = false
           end
 
           # @return [Array] the items of the first page, which ends with its
@@ -45,9 +47,20 @@ module Sirena
 
           # PlantUML draws nothing for a `--` or `deactivate` on a
           # participant with no open bar, so that change is dropped.
-          # Messages after this line are numbered from `start`.
-          def autonumber(start)
-            @number = start
+          # Messages after this line are numbered as `numbering` says.
+          def autonumber(numbering)
+            @numbering = numbering
+            @number = numbering.start
+            @counting = true
+          end
+
+          # `autonumber stop` and `autonumber resume`: false when no
+          # numbering was started.
+          def pause_numbering(counting)
+            return false unless @numbering
+
+            @counting = counting
+            true
           end
 
           def activation(phase, id, color = nil)
@@ -160,11 +173,12 @@ module Sirena
           # Under `autonumber` a message takes the next number. One with no
           # label or a line break in it is not drawn; false then.
           def numbered(message)
-            return message unless @number
+            return message unless @counting
             return if message.label.to_s.strip.empty?
             return if message.label.include?("\\n")
 
-            message.numbered(@number).tap { @number += 1 }
+            message.numbered(@numbering.text(@number), @numbering.weight)
+              .tap { @number += @numbering.step }
           end
 
           def mark(phase, id, color)

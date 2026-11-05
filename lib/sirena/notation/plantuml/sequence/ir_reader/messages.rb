@@ -22,7 +22,8 @@ module Sirena
                        to: place(edge.target_id, index),
                        label: display_label(node, index),
                        style: style(node, edge, index),
-                       number: number&.to_i)
+                       number: number,
+                       number_weight: index.detail(node, "number_weight"))
             end
 
             def display_label(node, index)
