@@ -19,6 +19,10 @@ module Sirena
           attr_accessor :lane
           # @return [String, nil] enclosing partition name
           attr_accessor :partition
+          # @return [Boolean] whether the node came from the legacy `(*)`
+          #   syntax, which draws a decision as a bare diamond with its
+          #   condition beside it and a bar without its name
+          attr_accessor :legacy
           # @return [Array<Note>] notes attached to the node
           attr_reader :notes
 
@@ -27,6 +31,7 @@ module Sirena
             @kind = kind
             @text = text
             @fill = fill
+            @legacy = false
             @notes = []
           end
 

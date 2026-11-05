@@ -2,6 +2,8 @@
 
 require_relative "../../../renderer/state_diagram"
 require_relative "../style"
+require_relative "look"
+require_relative "note_shape"
 
 module Sirena
   module Notation
@@ -13,14 +15,19 @@ module Sirena
         # diagram's {Style::Sheet}, whose defaults are PlantUML's own look.
         class Renderer < Sirena::Renderer::StateDiagram
           # @param style [Style::Sheet] the diagram's style
-          def initialize(theme: nil, style: Style::Sheet.new)
+          # @param scale [Array(Float, Symbol), nil] a `scale` line: the
+          #   number and what it sizes (:width, :height or :factor)
+          def initialize(theme: nil, style: Style::Sheet.new, scale: nil)
             super(theme: theme)
             @style = style
+            @scale = scale
           end
 
           def render(scene)
             require_typed_scene!(scene)
+            @states = index(scene.children)
             svg = create_document(scene)
+            apply_scale(svg)
             paint_canvas(scene, svg)
             render_states(scene, svg)
             @owner = nil
@@ -36,6 +43,25 @@ module Sirena
           end
 
           private
+
+          def index(states)
+            states.each_with_object({}) do |state, found|
+              found[state.id] = state
+              found.merge!(index(state.children))
+            end
+          end
+
+          # `scale` sizes the picture, not what is drawn: the viewBox keeps
+          # the drawing's own units.
+          def apply_scale(svg)
+            return unless @scale
+
+            value, axis = @scale
+            factor = { width: value / svg.width, height: value / svg.height,
+                       factor: value }.fetch(axis)
+            svg.width *= factor
+            svg.height *= factor
+          end
 
           def paint_canvas(scene, svg)
             colour = @style.resolve(:document, :background)
@@ -62,16 +88,59 @@ module Sirena
           end
 
           def final_state_shape(state)
-            return super unless state.shape_type == "normal" ||
-              state.shape_type.nil?
-
-            outline(state)
+            case state.shape_type
+            when "note" then note_shape(state)
+            when "history" then history_shape(state)
+            when "normal", nil then outline(state)
+            else super
+            end
           end
 
-          # A composite's name sits in a bar above its children.
+          # A divider under the name of every plain state and composite.
           def append_state_labels(state, group)
-            group.children << header_rule(state) if state.children.any?
-            super
+            group.children << divider(state) if divided?(state)
+            state.labels.each_with_index do |label, index|
+              text = state_label(label)
+              text.text_anchor = "start" if left_aligned?(state, index)
+              group.children << text
+            end
+          end
+
+          def divided?(state)
+            [nil, "normal"].include?(state.shape_type)
+          end
+
+          def left_aligned?(state, index)
+            state.shape_type == "note" || (index.positive? && divided?(state))
+          end
+
+          def history_shape(state)
+            Svg::Circle.new(cx: state.x + (state.width / 2.0),
+                            cy: state.y + (state.height / 2.0),
+                            r: state.width / 2.0,
+                            fill: look(:background, state)).tap do |circle|
+              stroke(circle, state)
+            end
+          end
+
+          # A pale sheet with a folded corner and a tail to its state.
+          def note_shape(state)
+            sheet = NoteShape.new(state,
+                                  @states[state.id.split("----note").first])
+            Svg::Group.new.tap do |group|
+              [sheet.outline, sheet.fold].each do |data|
+                group.children << note_path(data)
+              end
+            end
+          end
+
+          def note_path(data)
+            Svg::Path.new(d: data,
+                          fill: @style.resolve(:note,
+                                               :background)).tap do |path|
+              path.stroke = @style.resolve(:note, :border)
+              path.stroke_width = @style.resolve(:note, :line_thickness).to_s
+            end
           end
 
           def outline(state)
@@ -96,8 +165,9 @@ module Sirena
             element.stroke_dasharray = dash if dash
           end
 
-          def header_rule(state)
-            y = state.y + Hierarchy::HEADER
+          def divider(state)
+            bar = state.children.any? ? Look::BAR : Look::LEAF_BAR
+            y = state.y + bar
             Svg::Line.new(x1: state.x, y1: y, x2: state.x + state.width,
                           y2: y).tap { |line| stroke(line, state) }
           end

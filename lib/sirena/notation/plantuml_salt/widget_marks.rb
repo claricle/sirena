@@ -18,36 +18,38 @@ module Sirena
         CHAR_WIDTH = 8.0
         LABEL_FILL = "#EEEEEE"
         TEXT_HEIGHT = FontMetrics::HEIGHT
+        # PlantUML never sizes a widget's text line under this, however
+        # small the font: `<size:6>` rows are as tall as `<size:8>` ones.
+        MIN_LINE = 10.0
         # Each widget is its text line plus the room its own drawing takes.
-        HEIGHTS = { button: TEXT_HEIGHT + 9.0, droplist: TEXT_HEIGHT + 4.0,
-                    field: TEXT_HEIGHT + 2.0, rule: 6.0 }.freeze
+        EXTRA_HEIGHT = { button: 9.0, droplist: 4.0, field: 2.0 }.freeze
+        RULE_HEIGHT = 6.0
         # What a cell holds beyond the label span: the widget's own
         # padding and stroke, then the next column's offset.
         CELL_EXTRA = { button: 9.0, field: 6.0, droplist: 16.0 }.freeze
         # What a drawn widget reaches past its cell: it counts toward the
         # canvas when nothing follows it, and falls in the gap otherwise.
-        OVERHANG = 1.0
+        OVERHANG = 1.0e-6
 
         BUTTON_INSET = 2.5
         BUTTON_EXTRA = 4.0
-        BUTTON_HEIGHT = TEXT_HEIGHT + 4.0
-        BUTTON_DROP = BASELINE + 0.5
+        BUTTON_EXTRA_HEIGHT = 4.0
+        BUTTON_DROP = 0.5
         BUTTON_RADIUS = 5.0
         BUTTON_WEIGHT = 2.5
 
         FIELD_EXTRA = 3.0
-        FIELD_RULE_DROP = TEXT_HEIGHT
-        FIELD_TICK_DROP = TEXT_HEIGHT - 3.0
+        FIELD_TICK_RISE = 3.0
         FIELD_TICK_HEIGHT = 2.0
 
         LIST_EXTRA = 15.0
-        LIST_HEIGHT = TEXT_HEIGHT + 3.0
-        LIST_DROP = BASELINE - 2.0
+        LIST_EXTRA_HEIGHT = 3.0
+        LIST_DROP = -2.0
         LIST_DIVIDER = 4.0
-        LIST_ARROW = [[7.0, 6.0], [13.0, 6.0], [10.0, TEXT_HEIGHT - 2.0]].freeze
+        LIST_ARROW = [[7.0, 6.0], [13.0, 6.0], [10.0, -2.0]].freeze
         # An open droplist's choices, a box below the widget; one choice
         # is a line high, less a pixel.
-        CHOICES_DROP = TEXT_HEIGHT + 3.0
+        CHOICES_DROP = 3.0
 
         # A separator row is a rule in grey, drawn this far below its top:
         # (weight, dash, offsets of the strokes).
@@ -59,7 +61,6 @@ module Sirena
 
         TICK_SIZE = 10.0
         TICK_LEFT = 2.0
-        TICK_TOP = (TEXT_HEIGHT - TICK_SIZE) / 2
         TICK_WEIGHT = 1.5
         TICK_LABEL = 20.0
         # The tick's points: right of the box's edge, below the row's top.
@@ -73,20 +74,58 @@ module Sirena
         private
 
         def widget_height(widget)
-          HEIGHTS.fetch(widget.kind) { text_height(widget) }
+          return RULE_HEIGHT if widget.kind == :rule
+
+          line_height(widget) + EXTRA_HEIGHT.fetch(widget.kind, 0.0)
         end
 
-        # A line of text is as tall as its size asks.
-        def text_height(widget)
-          TEXT_HEIGHT * text_size(widget) / FONT_SIZE
+        # A line of text is as tall as its size asks, but never under
+        # {MIN_LINE}.
+        def line_height(widget)
+          [unfloored_line(widget), MIN_LINE].max
+        end
+
+        def unfloored_line(widget)
+          line_of(text_size(widget))
+        end
+
+        def line_of(size)
+          TEXT_HEIGHT * size / FONT_SIZE
+        end
+
+        def ascent_of(size)
+          BASELINE * size / FONT_SIZE
+        end
+
+        def descent_of(size)
+          (TEXT_HEIGHT - BASELINE) * size / FONT_SIZE
         end
 
         def text_size(widget)
-          widget.runs.filter_map(&:size).max || FONT_SIZE
+          runs_size(widget.runs)
+        end
+
+        def runs_size(runs)
+          runs.filter_map(&:size).max || FONT_SIZE
         end
 
         def text_drop(widget)
-          (BASELINE * text_size(widget) / FONT_SIZE) - Mark::TEXT_LIFT
+          runs_drop(widget.runs)
+        end
+
+        # Where the baseline of `runs` sits below the top of their line.
+        def runs_drop(runs)
+          ascent_of(runs_size(runs)) - Mark::TEXT_LIFT
+        end
+
+        # Each run hangs from the bottom of the tallest one's line, so
+        # runs of different sizes share a baseline.
+        def text_runs(widget, left, top)
+          rise = unfloored_line(widget) - Mark::TEXT_LIFT
+          widget.runs.each do |run|
+            left = text([run], left,
+                        top + rise - descent_of(run.size || FONT_SIZE))
+          end
         end
 
         def widget_width(widget)
@@ -128,7 +167,7 @@ module Sirena
           case widget.kind
           when :empty then nil
           when :rule then separator(widget, left, top, reach)
-          when :text then text(widget.runs, left, top + text_drop(widget))
+          when :text then text_runs(widget, left, top)
           when :button, :field, :droplist
             send(widget.kind, widget, left, top)
           else ticked(widget, left, top)
@@ -144,10 +183,16 @@ module Sirena
         end
 
         def button(widget, left, top)
-          box = Box.new(left + BUTTON_INSET, top + BUTTON_INSET,
-                        span(widget) + BUTTON_EXTRA, BUTTON_HEIGHT)
+          box = button_box(widget, left, top)
           @marks << pane(box, BUTTON_WEIGHT, BUTTON_RADIUS)
-          button_label(widget, box.left, top + BUTTON_DROP)
+          button_label(widget, box.left,
+                       top + ascent_of(text_size(widget)) + BUTTON_DROP)
+        end
+
+        def button_box(widget, left, top)
+          Box.new(left + BUTTON_INSET, top + BUTTON_INSET,
+                  span(widget) + BUTTON_EXTRA,
+                  line_height(widget) + BUTTON_EXTRA_HEIGHT)
         end
 
         # The label is centred in the box, inside its two-pixel padding.
@@ -163,17 +208,20 @@ module Sirena
 
         def field(widget, left, top)
           text(widget.runs, left + FIELD_EXTRA, top + text_drop(widget))
-          underline(left + 1, top, span(widget) + FIELD_EXTRA)
+          underline(left + 1, top, span(widget) + FIELD_EXTRA,
+                    line_height(widget))
         end
 
         # A rule with a short tick up from each end.
-        def underline(left, top, reach)
-          @marks << rule(left, top + FIELD_RULE_DROP, reach, 0.0)
-          [left, left + reach].each { |x| tick(x, top) }
+        def underline(left, top, reach, line)
+          @marks << rule(left, top + line, reach, 0.0)
+          [left, left + reach].each do |x|
+            tick(x, top + line - FIELD_TICK_RISE)
+          end
         end
 
         def tick(left, top)
-          @marks << rule(left, top + FIELD_TICK_DROP, 0.0, FIELD_TICK_HEIGHT)
+          @marks << rule(left, top, 0.0, FIELD_TICK_HEIGHT)
         end
 
         def droplist(widget, left, top)
@@ -182,11 +230,16 @@ module Sirena
         end
 
         def list(widget, left, top)
-          width = span(widget)
-          @marks << pane(Box.new(left, top, width + LIST_EXTRA, LIST_HEIGHT),
-                         1.0)
-          text(widget.runs, left + 2, top + LIST_DROP)
-          arrow(left + width, top)
+          line = line_height(widget)
+          @marks << pane(list_box(widget, left, top, line), 1.0)
+          text(widget.runs, left + 2,
+               top + ascent_of(text_size(widget)) + LIST_DROP)
+          arrow(left + span(widget), top, line)
+        end
+
+        def list_box(widget, left, top, line)
+          Box.new(left, top, span(widget) + LIST_EXTRA,
+                  line + LIST_EXTRA_HEIGHT)
         end
 
         # What the block draws on top of the layout, past its edge.
@@ -199,10 +252,11 @@ module Sirena
         # The open droplist: one line a choice, as wide as the list or its
         # widest choice, less a pixel.
         def choices(widget, left, top)
-          top += CHOICES_DROP
+          top += line_height(widget) + CHOICES_DROP
           @marks << pane(choices_box(widget, left, top), 1.0)
           widget.items.each_with_index do |item, index|
-            text(item, left, top + (index * TEXT_HEIGHT) + text_drop(widget))
+            text(item, left,
+                 top + (index * TEXT_HEIGHT) + BASELINE - Mark::TEXT_LIFT)
           end
         end
 
@@ -214,9 +268,12 @@ module Sirena
         end
 
         # The bar and the triangle after the label.
-        def arrow(left, top)
-          @marks << rule(left + LIST_DIVIDER, top, 0.0, LIST_HEIGHT)
-          points = LIST_ARROW.map { |dx, dy| [left + dx, top + dy] }
+        def arrow(left, top, line)
+          @marks << rule(left + LIST_DIVIDER, top, 0.0,
+                         line + LIST_EXTRA_HEIGHT)
+          points = LIST_ARROW.map do |dx, dy|
+            [left + dx, top + (dy.negative? ? line + dy : dy)]
+          end
           @marks << Mark.new(:polygon, Box.new(left, top, 0.0, 0.0),
                              fill: INK, ink: INK, points: points)
         end
@@ -231,10 +288,14 @@ module Sirena
         end
 
         def checkbox(widget, left, top)
-          box = Box.new(left + TICK_LEFT, top + TICK_TOP, TICK_SIZE, TICK_SIZE)
+          box = Box.new(left + TICK_LEFT,
+                        top + ((line_height(widget) - TICK_SIZE) / 2),
+                        TICK_SIZE, TICK_SIZE)
           @marks << Mark.new(:rect, box, ink: INK, weight: TICK_WEIGHT)
-          return unless widget.checked
+          check_mark(box, top) if widget.checked
+        end
 
+        def check_mark(box, top)
           points = TICK_MARK.map { |dx, dy| [box.left + dx, top + dy] }
           @marks << Mark.new(:polygon, box, fill: INK, ink: INK,
                                             weight: TICK_WEIGHT,
@@ -242,7 +303,7 @@ module Sirena
         end
 
         def radio(widget, left, top)
-          centre = [left + 7.0, top + (TEXT_HEIGHT / 2)]
+          centre = [left + 7.0, top + (line_height(widget) / 2)]
           @marks << dot(centre, RADIO_RADIUS, "none")
           @marks << dot(centre, RADIO_DOT, INK) if widget.checked
         end
