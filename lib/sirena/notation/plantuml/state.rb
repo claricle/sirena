@@ -36,11 +36,12 @@ module Sirena
 
         # @return [Notation::Parsed]
         def parse(source)
-          model = Reader.new.parse(source)
+          reader = Reader.new
+          model = reader.parse(source)
           Notation::Parsed.new(
             type: :state_diagram,
             diagram: Sirena::Notation::Mermaid::IRAdapters::StateDiagram.call(model),
-            transform: Layout,
+            transform: Layout.with_flat(reader.flat),
             renderer: Binding.new(Style::Reader.read(source),
                                   Reader.scale_of(source)),
           )

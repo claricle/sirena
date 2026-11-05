@@ -2,6 +2,10 @@
 
 require_relative "../../../layout/elk_placement"
 require_relative "routes"
+require_relative "ranking"
+require_relative "level_edges"
+require_relative "row"
+require_relative "rows"
 
 module Sirena
   module Notation
@@ -19,12 +23,14 @@ module Sirena
           MARGIN = 20.0
           PAD = 24.0
           HEADER = 36.0
-          NOTE_GAP = 30.0
-          private_constant :MARGIN, :PAD, :NOTE_GAP
+          private_constant :MARGIN, :PAD
 
           # @param graph [Hash] the graph from the state layout's build_graph
-          def initialize(graph)
+          # @param flat [Array<Array(String, String)>] the transitions drawn
+          #   on one rank
+          def initialize(graph, flat = [])
             @graph = graph
+            @flat = flat
             @options = graph[:layoutOptions]
             @nodes = {}
             @parent = {}
@@ -36,6 +42,8 @@ module Sirena
           def place
             index(@graph[:children], nil)
             adopt_notes
+            ranking = Ranking.new(@graph[:children], @graph[:edges])
+            @level_edges = LevelEdges.new(@graph[:edges], @parent, ranking)
             place_level(nil, @graph[:children])
             Routes.new(@graph, @nodes, @parent, @levels).write
           end
@@ -91,59 +99,37 @@ module Sirena
           def position(members)
             return if members.empty?
 
-            elk = lay_out(members)
+            rows = rows_of(members)
+            elk = lay_out(rows)
             spots = elk[:children].to_h { |placed| [placed[:id], placed] }
-            members.each { |node| spot(node, spots.fetch(node[:id])) }
+            rows.each { |row| spot(row, spots.fetch(row.id)) }
             elk
           end
 
-          def lay_out(members)
+          def lay_out(rows)
             elk = {
               id: "level", layoutOptions: @options,
-              children: members.map { |node| unit_of(node) },
-              edges: level_edges(members)
+              children: rows.map { |row| unit_of(row) },
+              edges: @level_edges.of(rows)
             }
             ::Sirena::Layout::ElkPlacement.apply(elk)
           end
 
-          # A node and the note beside it are laid out as one box.
-          def unit_of(node)
-            note = @notes[node[:id]]
-            return node.slice(:id, :width, :height) unless note
-
-            { id: node[:id], width: node[:width] + note[:width] + NOTE_GAP,
-              height: [node[:height], note[:height]].max }
-          end
-
-          def level_edges(members)
-            ids = members.map { |node| node[:id] }
-            @graph[:edges].filter_map do |edge|
-              pair = Routes.level_pair(edge, @parent, ids)
-              next unless pair
-
-              { id: edge.object_id.to_s, sources: [pair.first],
-                targets: [pair.last] }
+          # The members of a level, those joined by a flat transition
+          # gathered into one row in the order they chain.
+          def rows_of(members)
+            by_id = members.to_h { |node| [node[:id], node] }
+            Rows.new(@flat).chains(by_id.keys).map do |ids|
+              Row.new(by_id.values_at(*ids), @notes)
             end
           end
 
-          def spot(node, placed)
-            node[:x] = placed[:x]
-            node[:y] = placed[:y]
-            note = @notes[node[:id]]
-            place_note(node, note) if note
+          def unit_of(row)
+            { id: row.id, width: row.width, height: row.height }
           end
 
-          # The unit's box holds the target and its note side by side.
-          def place_note(node, note)
-            left = note.dig(:metadata, :note_position) == "left"
-            unit_x = node[:x]
-            note[:x] = left ? unit_x : unit_x + node[:width] + NOTE_GAP
-            node[:x] = unit_x + note[:width] + NOTE_GAP if left
-            center_note(node, note)
-          end
-
-          def center_note(node, note)
-            note[:y] = node[:y] + ((node[:height] - note[:height]) / 2.0)
+          def spot(row, placed)
+            row.place(placed[:x], placed[:y])
           end
 
           def shift_for(owner, children)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "route_geometry"
+require_relative "label_clearance"
 
 module Sirena
   module Notation
@@ -16,6 +17,7 @@ module Sirena
         # the same two states are spread apart so none hides another.
         class Routes
           include RouteGeometry
+          include LabelClearance
 
           # @return [Array(String, String), nil] the two members of a
           #   container the edge joins, nil when it does not join two of them
@@ -36,6 +38,7 @@ module Sirena
             @parent = parent
             @levels = levels
             @boxes = {}
+            @degree = degrees(graph[:edges])
           end
 
           def write
@@ -50,7 +53,8 @@ module Sirena
 
           def record(edge, points, slot)
             edge[:sections] = [section(points)]
-            edge[:label_at] = label_point(points, edge[:labels]&.first, slot)
+            edge[:label_at] = label_point(clear_of_containers(edge, points),
+                                          edge[:labels]&.first, slot)
           end
 
           def measure(children, left, top)
