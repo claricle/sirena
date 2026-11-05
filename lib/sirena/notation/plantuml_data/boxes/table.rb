@@ -33,9 +33,12 @@ module Sirena
 
         # A line between two tables. `from_row` is the Row it leaves, or nil
         # for a table-to-table relation. `glyph` is an Arrow.parse result.
-        Link = Data.define(:from, :to, :from_row, :to_row, :glyph, :label) do
+        # `label` runs along the line; `tail_text` and `head_text` are the
+        # quoted texts beside its two ends.
+        Link = Data.define(:from, :to, :from_row, :to_row, :glyph, :label,
+                           :tail_text, :head_text) do
           def initialize(from:, to:, glyph:, from_row: nil, to_row: nil,
-                         label: nil)
+                         label: nil, tail_text: nil, head_text: nil)
             super
           end
         end

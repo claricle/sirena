@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
+require_relative "../../../text_measurement"
 require_relative "frames"
 require_relative "heads"
+require_relative "link_text"
 require_relative "marks"
+require_relative "row_alignment"
 require_relative "row_bend"
 require_relative "scene"
 require_relative "table_box"
@@ -19,6 +22,8 @@ module Sirena
         # right after it, and every rank is centred on the widest.
         class GraphLayout
           RANK_GAP = 50.0
+          DASH = "7,7"
+          FONT_SIZE = 14
           SIBLING_GAP = 30.0
           MARGIN = 7.0
           TITLE_BAND = 30.0
@@ -27,7 +32,8 @@ module Sirena
             def right = x + width
             def bottom = y + height
           end
-          private_constant :RANK_GAP, :SIBLING_GAP, :MARGIN, :TITLE_BAND, :Rect
+          private_constant :RANK_GAP, :SIBLING_GAP, :MARGIN, :TITLE_BAND, :Rect,
+                           :DASH, :FONT_SIZE
 
           # @param diagram [Diagram]
           # @return [Scene]
@@ -77,9 +83,21 @@ module Sirena
           end
 
           def scene(marks)
-            Scene.new(width: extent.map(&:right).max + MARGIN + 1,
+            right = [extent.map(&:right).max, *text_rights(marks)].max
+            Scene.new(width: right + MARGIN + 1,
                       height: extent.map(&:bottom).max + MARGIN + 1,
                       marks: marks)
+          end
+
+          # How far right the texts that start at a point and run on reach.
+          def text_rights(marks)
+            marks.filter_map do |mark|
+              next unless mark[:kind] == :text && mark[:anchor].nil?
+
+              mark[:x] + TextMeasurement.measure(
+                mark[:content], font_size: FONT_SIZE
+              )[:width].to_f
+            end
           end
 
           def title_marks
@@ -110,7 +128,13 @@ module Sirena
           def place
             lanes = @tables.keys.group_by { |id| rank(id, []) }.sort
               .map { |_, ids| lane_order(ids) }
-            lane_rects(lanes, lanes.map { |ids| lane_boxes(ids) })
+            rects = lane_rects(lanes, lanes.map { |ids| lane_boxes(ids) })
+            across? ? rects : row_aligned(rects, lanes)
+          end
+
+          def row_aligned(rects, lanes)
+            alone = lanes.select { |ids| ids.size == 1 }.flatten
+            RowAlignment.new(@diagram.links).call(rects, alone)
           end
 
           def lane_boxes(ids)
@@ -267,7 +291,7 @@ module Sirena
             bend = row_bend(link, [start, stop], from, to)
             [line_mark(link, start, stop, bend),
              *heads(link.glyph[:markers], start, stop, bend),
-             *label(link, start, stop)]
+             *LinkText.call(link, start, stop)]
           end
 
           def heads(markers, start, stop, bend)
@@ -277,7 +301,7 @@ module Sirena
 
           def line_mark(link, start, stop, bend)
             { kind: :path, d: path_d(start, stop, bend),
-              dashed: link.glyph[:dashed], stroke: Marks::INK }
+              dashed: link.glyph[:dashed], dash: DASH, stroke: Marks::INK }
           end
 
           def path_d(start, stop, bend)
@@ -293,13 +317,6 @@ module Sirena
 
             rows = [link.from_row, link.to_row].map { |port| !port.nil? }
             RowBend.handles(ends, rows, [from.centre, to.centre])
-          end
-
-          def label(link, start, stop)
-            return [] if link.label.to_s.empty?
-
-            [Marks.text(link.label, (start[0] + stop[0]) / 2,
-                        ((start[1] + stop[1]) / 2) - 6, anchor: "middle")]
           end
 
           def anchor(id, port, rect, toward)

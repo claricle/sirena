@@ -211,9 +211,10 @@ module Sirena
           def link(from, to, glyph, texts, from_port = nil)
             source, port = from.split("::")
             target, target_port = to.split("::")
+            tail, head, label = texts
             Boxes::Link.new(from: source, to: target, glyph: glyph,
                             from_row: from_port || port, to_row: target_port,
-                            label: texts.compact.join(" "))
+                            label: label, tail_text: tail, head_text: head)
           end
         end
       end

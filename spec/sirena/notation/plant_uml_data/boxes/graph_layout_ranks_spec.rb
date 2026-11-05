@@ -34,6 +34,12 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes::GraphLayout do
     rise.between?(0, 20) && left <= text.attributes["x"].to_f
   end
 
+  def width(svg, name)
+    text = elements(svg, "text").find { |t| t.text == name }
+    elements(svg, "rect").find { |r| holds?(r, text) }
+      .attributes["width"].to_f
+  end
+
   def corners(svg, *names)
     names.map { |name| corner(svg, name) }
   end
@@ -126,6 +132,79 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes::GraphLayout do
         .map { |p| p.attributes["d"] }
 
       expect(path.first).to match(/\AM [\d. ]+ L [\d. ]+\z/)
+    end
+  end
+
+  describe "the texts of a link" do
+    def text(svg, content)
+      elements(svg, "text").find { |t| t.text == content }
+    end
+
+    def line_x(svg)
+      elements(svg, "path").first.attributes["d"].split[1].to_f
+    end
+
+    let(:svg) do
+      render("object A\nobject B\nA o-- \"4\" B\nobject C\nobject D\n" \
+             "C .. D : some labels")
+    end
+
+    it "puts the label to the right of its line, just past it",
+       :aggregate_failures do
+      label = text(svg, "some labels")
+      dotted = elements(svg, "path").last.attributes["d"].split[1].to_f
+
+      expect(label.attributes["x"].to_f).to eq(dotted + 1)
+      expect(label.attributes["text-anchor"]).to be_nil
+    end
+
+    it "puts the text of an end to the left of the line, beside that end",
+       :aggregate_failures do
+      four = text(svg, "4")
+      top = elements(svg, "rect").map { |r| r.attributes["y"].to_f }.max
+
+      expect(four.attributes["text-anchor"]).to eq("end")
+      expect(four.attributes["x"].to_f).to be < line_x(svg)
+      expect(four.attributes["y"].to_f).to be < top
+    end
+
+    it "keeps a text of the tail by the tail" do
+      svg = render("object A\nobject B\nA \"3\" --> B")
+
+      expect(text(svg, "3").attributes["y"].to_f)
+        .to be < text(svg, "B").attributes["y"].to_f
+    end
+
+    it "makes the picture wide enough for a label" do
+      width = REXML::Document.new(svg).root.attributes["width"].to_f
+
+      expect(width).to be > text(svg, "some labels").attributes["x"].to_f + 60
+    end
+
+    it "dashes a dotted line as the JAR does" do
+      dash = elements(svg, "path").map { |p| p.attributes["stroke-dasharray"] }
+
+      expect(dash.compact).to eq(["7,7"])
+    end
+  end
+
+  describe "a box alone in its rank, linked with a map row" do
+    let(:svg) { Sirena.render(capitals, notation: :plantuml) }
+
+    def middle(name)
+      x, = corner(svg, name)
+      x + (width(svg, name) / 2)
+    end
+
+    it "stands left of the map when its row also takes a line in",
+       :aggregate_failures do
+      expect(middle("Washington")).to be < corner(svg, "CapitalCity")[0] + 10
+      expect(middle("Berlin"))
+        .to be > corner(svg, "CapitalCity")[0] + 80
+    end
+
+    it "stands over the middle of the map it links to" do
+      expect(middle("NewYork")).to be_within(1).of(middle("CapitalCity"))
     end
   end
 

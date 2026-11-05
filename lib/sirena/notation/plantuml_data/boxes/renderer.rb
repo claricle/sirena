@@ -57,7 +57,11 @@ module Sirena
           def draw_path(mark)
             element(Svg::Path, d: mark[:d], fill: "none", stroke: mark[:stroke],
                                stroke_width: "1",
-                               stroke_dasharray: ("3,3" if mark[:dashed]))
+                               stroke_dasharray: dashes(mark))
+          end
+
+          def dashes(mark)
+            mark[:dash] || "3,3" if mark[:dashed]
           end
 
           def draw_polygon(mark)

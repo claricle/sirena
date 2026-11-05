@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "skipped_ranks"
+
 module Sirena
   module Notation
     module PlantUML
@@ -10,8 +12,14 @@ module Sirena
         class Ranking
           SWEEPS = 4
 
-          # @return [Array<Array<Object>>] the items of each rank, in order
+          # @return [Array<Array<Object>>] the items of each rank, in order,
+          #   with a {Waypoint} in each rank a link skips
           attr_reader :layers
+
+          # @return [Hash{Array => Array<Waypoint>}] for each `[from, to]`
+          #   that spans more than one rank, its waypoints from the rank
+          #   after `from`
+          attr_reader :chains
 
           # @param items [Array<Object>] in source order
           # @param pairs [Array<Array>] links between items, each
@@ -25,11 +33,18 @@ module Sirena
             settle_ranks
             sink_sources
             @tie_order = tie_order
-            @layers = @pairs.empty? ? grid : group
+            lay_out
             order
           end
 
           private
+
+          def lay_out
+            @layers = @pairs.empty? ? grid : group
+            skips = SkippedRanks.new(@layers, @rank, @pairs, @forward)
+            @chains = skips.chains
+            @bound = skips.links
+          end
 
           # Each pair once, with the longest step asked of it.
           def merged(pairs)
@@ -203,7 +218,7 @@ module Sirena
           end
 
           def barycentre(item, layer)
-            linked = @pairs.filter_map do |a, b|
+            linked = @bound.filter_map do |a, b, _|
               other = if a.equal?(item) then b elsif b.equal?(item) then a end
               layer.index { |entry| entry.equal?(other) } if other
             end
