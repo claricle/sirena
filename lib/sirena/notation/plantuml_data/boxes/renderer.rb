@@ -2,6 +2,7 @@
 
 require_relative "../../../renderer/base"
 require_relative "../../../svg"
+require_relative "ornaments"
 require_relative "text"
 
 module Sirena
@@ -20,12 +21,17 @@ module Sirena
             Svg::Document.new(width: scene.width, height: scene.height,
                               view_box: scene.view_box).tap do |document|
               scene.marks.each do |mark|
-                document << send(:"draw_#{mark[:kind]}", mark)
+                [*Ornaments.behind(mark), mark, *Ornaments.over(mark)]
+                  .each { |piece| document << draw(piece) }
               end
             end
           end
 
           private
+
+          def draw(mark)
+            send(:"draw_#{mark[:kind]}", mark)
+          end
 
           def element(type, **attributes)
             type.new.tap do |node|
@@ -59,6 +65,11 @@ module Sirena
             element(Svg::Path, d: mark[:d], fill: "none", stroke: mark[:stroke],
                                stroke_width: "1",
                                stroke_dasharray: ("3,3" if mark[:dashed]))
+          end
+
+          def draw_glyph(mark)
+            element(Svg::Path, d: mark[:d], fill: mark[:fill],
+                               transform: mark[:transform])
           end
 
           def draw_polygon(mark)

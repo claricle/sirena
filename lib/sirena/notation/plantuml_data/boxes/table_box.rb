@@ -19,6 +19,9 @@ module Sirena
           LONE_TITLE = 36.4883
           EMPTY_WIDTH = 30.0
           EMPTY_HEIGHT = 15.0
+          # Of the height a larger font adds to a row, the part its baseline
+          # drops (measured on PlantUML 1.2026.6: 5.8 of 7.06 at size 20).
+          BASE_SHARE = 0.82
           Size = Data.define(:key, :value, :title, :width, :height)
 
           # @return [Size] the key and value column widths, the title band's
@@ -32,7 +35,8 @@ module Sirena
 
           # @return [Float] the y of the middle of row `index` in a box at `top`
           def row_middle(table, index, top)
-            top + size(table).title + (index * ROW) + (ROW / 2)
+            top + size(table).title + offsets(table)[index] +
+              (row_height(table, table.rows[index]) / 2)
           end
 
           # @return [Array<Hash>] the marks of the box with its corner at
@@ -55,7 +59,22 @@ module Sirena
             title = title_height(table)
             width = [key + values_width(table), title_width(table)].max
             Size.new(key: key, value: width - key, title: title, width: width,
-                     height: title + (table.rows.size * ROW))
+                     height: title + offsets(table).last)
+          end
+
+          # A tree row grows with the largest `<size:..>` in its cells.
+          def row_height(table, row)
+            return ROW unless table.kind == :tree
+
+            ROW + [Text.growth(row.key), Text.growth(row.value)].max
+          end
+
+          # @return [Array<Float>] each row's top below the title, and the
+          #   rows' total height last
+          def offsets(table)
+            table.rows.each_with_object([0.0]) do |row, tops|
+              tops << (tops.last + row_height(table, row))
+            end
           end
 
           def inline_size(table)
@@ -155,26 +174,27 @@ module Sirena
 
           def rows_marks(table, box, corner)
             table.rows.each_with_index.flat_map do |row, i|
-              at = [corner[0], corner[1] + box.title + (i * ROW)]
+              at = [corner[0], corner[1] + box.title + offsets(table)[i]]
               row_marks(table, row, box, at, i)
             end
           end
 
           def row_marks(table, row, box, corner, index)
             case table.kind
-            when :tree then tree_row(row, box, corner,
-                                     index == table.rows.size - 1)
+            when :tree then tree_row(table, row, box, corner, index)
             when :map then map_row(row, box, corner, index)
             else [Marks.text(row.value, corner[0] + PAD + 2,
                              corner[1] + (ROW / 2))]
             end
           end
 
-          def tree_row(row, box, corner, last)
-            [*highlight(row.style, box, corner),
+          def tree_row(table, row, box, corner, index)
+            height = row_height(table, row)
+            last = index == table.rows.size - 1
+            [*highlight(row.style, box, corner, height),
              *tree_text(row, box, corner),
-             *divider(box, corner),
-             *separator(box, corner, last)]
+             *divider(box, corner, height),
+             *separator(box, corner, last, height)]
           end
 
           def tree_text(row, box, corner)
@@ -186,30 +206,33 @@ module Sirena
             [cell_text(row.key, left + PAD, top, **ink(row.style, true)), value]
           end
 
-          # The text of a row whose top is `top`, vertically centred.
+          # The text of a row whose top is `top`: centred in a plain row, and
+          # sitting lower by most of what its own size adds to a taller one.
           def cell_text(content, left, top, **style)
-            Marks.text(content, left, top + (ROW / 2), **style)
+            Marks.text(content, left,
+                       top + (ROW / 2) + (BASE_SHARE * Text.growth(content)),
+                       **style)
           end
 
-          def divider(box, corner)
+          def divider(box, corner, height)
             return [] unless box.key.positive?
 
             left, top = corner
-            [Marks.line([left + box.key, top], [left + box.key, top + ROW])]
+            [Marks.line([left + box.key, top], [left + box.key, top + height])]
           end
 
-          def separator(box, corner, last)
+          def separator(box, corner, last, height)
             return [] if last
 
             left, top = corner
-            [Marks.line([left, top + ROW], [left + box.width, top + ROW])]
+            [Marks.line([left, top + height], [left + box.width, top + height])]
           end
 
-          def highlight(style, box, corner)
+          def highlight(style, box, corner, height)
             return [] unless style
 
             paint = style[:background]
-            [Marks.rect(corner[0] + 1.5, corner[1], box.width - 2, ROW,
+            [Marks.rect(corner[0] + 1.5, corner[1], box.width - 2, height,
                         rx: 2, fill: paint, stroke: paint, stroke_width: 1)]
           end
 
