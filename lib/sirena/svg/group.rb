@@ -12,6 +12,10 @@ module Sirena
     # SVG structure.
     class Group < Element
       attribute :children, Element, collection: true
+      # PlantUML marks a class member's visibility icon with it.
+      attribute :data_visibility_modifier, :string
+
+      writes_attributes :data_visibility_modifier
 
       def initialize(**args)
         super
