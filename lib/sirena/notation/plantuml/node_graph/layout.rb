@@ -68,10 +68,14 @@ module Sirena
             ports, children = split_ports(scope)
             (ports + children).each { |child| measure(child) }
             ranking = Ranking.new(children, pairs(scope))
+            packed = pack(ranking, scope)
+            scope ? frame(packed, scope, ports) : packed
+          end
+
+          def pack(ranking, scope)
             packer = Packer.new(@sizes, left_to_right: left_to_right?,
                                         reach: label_reach(scope))
-            packed = packer.route(packer.pack(ranking.layers), ranking.chains)
-            scope ? frame(packed, scope, ports) : packed
+            packer.route(packer.pack(ranking.layers), ranking.chains)
           end
 
           # How wide the widest label on a link of each item of `scope` is:

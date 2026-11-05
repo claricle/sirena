@@ -83,12 +83,16 @@ module Sirena
             heads = @spans[node]
             keep = heads.nil?
             @ranking.forward(node).each do |edge|
-              next if @key[edge.to] || edge.level? || pending?(edge.to)
+              next if placed_or_held?(edge)
 
               place(edge.to, preference(edge.to, [lane, column, keep], heads))
               keep = false
             end
             close_branches(node, lane, column)
+          end
+
+          def placed_or_held?(edge)
+            @key[edge.to] || edge.level? || pending?(edge.to)
           end
 
           def preference(child, spot, heads)

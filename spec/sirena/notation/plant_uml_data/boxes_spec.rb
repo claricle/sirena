@@ -265,7 +265,7 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes do
       expect(value).to eq([{ "a" => "1" }, "2"])
     end
 
-    it "reads a key with no value at the end of the document as an empty string" do
+    it "reads a key with no value at the document end as an empty string" do
       value = boxes::YamlReader.new.call("a: 1\nb:\n")
 
       expect(value).to eq({ "a" => "1", "b" => "" })
