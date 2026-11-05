@@ -122,13 +122,17 @@ module Sirena
             [edge[:sources].first, edge[:targets].first].sort
           end
 
-          # Moves a route sideways, across the line between the two states
-          # taken in one fixed order so a pair's two directions part ways.
+          # Parts a route from the others of its pair, across the line
+          # between the two states taken in one fixed order so a pair's two
+          # directions part ways. A straight route bows through one bend
+          # point; a longer one moves over.
           def move(points, key, offset)
             return points if offset.zero? || key.first == key.last
 
             from = centre(@boxes.fetch(key.first))
             to = centre(@boxes.fetch(key.last))
+            return bowed(points, from, to, offset) if points.size == 2
+
             sideways(points, from, to, offset)
           end
         end

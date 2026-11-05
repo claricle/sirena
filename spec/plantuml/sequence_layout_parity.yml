@@ -403,7 +403,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.033214
+      worst_e_c: 0.017084
       worst_e_w: 0.106383
       worst_e_h: 0.0
       worst_e_a: 0.106383
@@ -414,7 +414,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.035593
+      worst_e_c: 0.027922
       worst_e_w: 0.066068
       worst_e_h: 0.0
       worst_e_a: 0.066068
@@ -436,7 +436,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.021491
+      worst_e_c: 0.005789
       worst_e_w: 0.066068
       worst_e_h: 0.0
       worst_e_a: 0.066068
@@ -491,7 +491,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.031629
+      worst_e_c: 0.037407
       worst_e_w: 0.066068
       worst_e_h: 0.0
       worst_e_a: 0.066068
@@ -524,10 +524,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.052191
-      worst_e_w: 0.024973
+      worst_e_c: 0.048288
+      worst_e_w: 0.036265
       worst_e_h: 0.0
-      worst_e_a: 0.024973
+      worst_e_a: 0.036265
       worst_analog:
   matched: 7
   status: pass
@@ -535,10 +535,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.062592
-      worst_e_w: 0.024973
+      worst_e_c: 0.061857
+      worst_e_w: 0.009701
       worst_e_h: 0.0
-      worst_e_a: 0.024973
+      worst_e_a: 0.009701
       worst_analog:
   matched: 4
   status: pass
@@ -546,10 +546,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.028733
-      worst_e_w: 0.024973
+      worst_e_c: 0.004209
+      worst_e_w: 0.02439
       worst_e_h: 0.0
-      worst_e_a: 0.024973
+      worst_e_a: 0.02439
       worst_analog:
   matched: 4
   status: pass
@@ -568,10 +568,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.016471
-      worst_e_w: 0.02439
+      worst_e_c: 0.006851
+      worst_e_w: 0.034676
       worst_e_h: 0.0
-      worst_e_a: 0.02439
+      worst_e_a: 0.034676
       worst_analog:
   matched: 5
   status: pass
@@ -590,10 +590,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.008998
-      worst_e_w: 0.038494
+      worst_e_c: 0.00852
+      worst_e_w: 0.036267
       worst_e_h: 0.0
-      worst_e_a: 0.038494
+      worst_e_a: 0.036267
       worst_analog:
   matched: 4
   status: pass
@@ -645,10 +645,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.042386
-      worst_e_w: 0.06996
+      worst_e_c: 0.005929
+      worst_e_w: 0.027175
       worst_e_h: 0.0
-      worst_e_a: 0.06996
+      worst_e_a: 0.027175
       worst_analog:
   matched: 4
   status: pass
