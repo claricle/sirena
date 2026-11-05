@@ -27,9 +27,10 @@ RSpec.describe Sirena::Notation::PlantUML::Network::Layout do
     expect(svg).to include('fill="#E2E2F0"')
   end
 
-  it "draws a database as a body under an elliptical lid",
+  it "draws a database as a rounded body and the front edge of its lid",
      :aggregate_failures do
-    expect(svg).to include("<ellipse")
+    expect(svg).not_to include("<ellipse")
     expect(svg).to match(/<path[^>]*d="M[^"]*Q[^"]*Z/i)
+    expect(svg.scan(/<path[^>]*d="M[^"]*Q/).size).to be >= 2
   end
 end

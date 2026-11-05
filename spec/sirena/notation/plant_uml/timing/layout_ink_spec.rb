@@ -25,8 +25,8 @@ RSpec.describe Sirena::Notation::PlantUML::Timing::Layout,
     end
   end
 
-  it "draws a digital signal in PlantUML's dark green at 1.5" do
-    expect(strokes(doc)).to include(["#006400", "1.5"])
+  it "draws a digital signal in PlantUML's dark green at 2" do
+    expect(strokes(doc)).to include(["#006400", "2"])
     expect(strokes(doc).map(&:first)).not_to include("#007900")
   end
 

@@ -34,7 +34,7 @@ RSpec.describe Sirena::Notation::PlantUML::Timing::Layout do
   end
 
   def grid_gaps(svg)
-    xs = svg.scan(/<line[^>]*stroke-dasharray="3,3"[^>]*>/)
+    xs = svg.scan(/<line[^>]*stroke-dasharray="3,5"[^>]*>/)
       .map { |l| l[/x1="([\d.]+)"/, 1].to_f }.sort
     xs.each_cons(2).map { |a, b| b - a }
   end

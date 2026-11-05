@@ -13,14 +13,25 @@ module Sirena
           LAVENDER = "#E2E2F0"
           # PlantUML draws a lane's names and its analog line in this grey.
           INK = "#333333"
+          # Measured against the JAR: a lane's vertical rhythm.
           ROW = 20.0
-          PAD = 10.0
-          TIP = 6.0
-          HEIGHTS = { "clock" => 40.0, "binary" => 40.0, "concise" => 40.0,
-                      "analog" => 90.0 }.freeze
+          HIGH = 25.49
+          LOW = 39.49
+          BOTTOM = 18.0
+          TIP = 12.0
+          HEIGHTS = { "clock" => 47.49, "binary" => 47.49, "concise" => 56.49,
+                      "analog" => 117.49 }.freeze
+          # Where a lane's names sit, left of the plot (JAR measures).
+          LABEL_X = 25.0
+          LEAD = { "clock" => 30.0, "binary" => 30.0, "concise" => 25.0,
+                   "robust" => 25.0, "analog" => 30.0 }.freeze
+          NAME_DROP = 5.54
+          SEGMENT_MIDDLE = 34.49
+          ANALOG_LOW = 109.49
           MAX_EDGES = 2000
-          private_constant :GREEN, :LAVENDER, :ROW, :PAD, :TIP, :HEIGHTS,
-                           :MAX_EDGES, :INK
+          private_constant :GREEN, :LAVENDER, :ROW, :HIGH, :LOW, :BOTTOM,
+                           :TIP, :HEIGHTS, :MAX_EDGES, :INK, :LABEL_X, :LEAD,
+                           :NAME_DROP, :SEGMENT_MIDDLE, :ANALOG_LOW
 
           # @param pen [Drawing::Pen]
           # @param diagram [Diagram]
@@ -38,16 +49,25 @@ module Sirena
             return HEIGHTS.fetch(participant.kind) unless
               participant.kind == "robust"
 
-            (ROW * states(participant).size) + ROW
+            HIGH + (ROW * [states(participant).size, 1].max)
           end
 
-          # @return [Array<Array(String, Float)>] the left-hand labels of
-          #   the track, each with its y
-          def labels(participant, top)
-            case participant.kind
-            when "robust" then robust_labels(participant, top)
-            when "analog" then analog_labels(participant, top)
-            else []
+          # @return [Float] the least x the plot may start at for this lane:
+          #   robust state names and analog bounds stand to its left
+          def lead(participant)
+            LEAD.fetch(participant.kind) + stand(participant)
+          end
+
+          # Writes the lane's names and bounds in the margin left of the plot.
+          def draw_labels(participant, top)
+            labels(participant, top).each do |name, y|
+              if participant.kind == "robust"
+                @pen.text(name, LABEL_X, Drawing::Face.middle(y + NAME_DROP,
+                                                              12), fill: INK)
+              else
+                @pen.text(name, @left - 2, y, size: 14, bold: true,
+                                              anchor: "end", fill: INK)
+              end
             end
           end
 
@@ -65,6 +85,24 @@ module Sirena
 
           private
 
+          # How wide the lane's names stand left of its plot.
+          def stand(participant)
+            size, bold = participant.kind == "analog" ? [14, true] : [12, false]
+            names = labels(participant, 0).map(&:first)
+            return 0.0 unless %w[robust analog].include?(participant.kind)
+
+            names.map { |n| Drawing::Face.width(n, size: size, bold: bold) }
+              .max.to_f
+          end
+
+          def labels(participant, top)
+            case participant.kind
+            when "robust" then robust_labels(participant, top)
+            when "analog" then analog_labels(participant, top)
+            else []
+            end
+          end
+
           def robust_labels(participant, top)
             states(participant).map do |state|
               [state, level_y(participant, top, state)]
@@ -73,8 +111,8 @@ module Sirena
 
           def analog_labels(participant, top)
             low, high = values(participant).minmax
-            [[format("%.1f", high), top + PAD],
-             [format("%.1f", low), top + height(participant) - PAD]]
+            [[high.to_s, Drawing::Face.middle(top + 30.78, 14)],
+             [low.to_s, Drawing::Face.middle(top + 114.78, 14)]]
           end
 
           def changes(participant)
@@ -98,11 +136,11 @@ module Sirena
 
           def level_y(participant, top, state)
             if participant.kind == "binary"
-              return binary_high?(state) ? top + PAD : top + 40.0 - PAD
+              return binary_high?(state) ? top + HIGH : top + LOW
             end
 
             index = states(participant).index(state) || 0
-            top + height(participant) - 14.0 - (index * ROW)
+            top + height(participant) - BOTTOM - (index * ROW)
           end
 
           def binary_high?(state)
@@ -115,19 +153,19 @@ module Sirena
             end
             points.unshift([@axis.start, level_y(participant, top, nil)]) if
               points.empty? || points.first.first > @axis.start
-            steps(points)
+            steps(points, "2")
           end
 
           def draw_robust(participant, top)
             points = changes(participant).map do |c|
               [c.time, level_y(participant, top, c.state)]
             end
-            steps(points)
+            steps(points, "2")
           end
 
           def draw_clock(participant, top)
-            high = top + PAD
-            low = top + 40.0 - PAD
+            high = top + HIGH
+            low = top + LOW
             level = ->(on) { on ? high : low }
             steps(clock_edges(participant).map { |t, on| [t, level.call(on)] })
           end
@@ -164,12 +202,12 @@ module Sirena
             rises.take_while { |rise| rise <= @axis.finish }
           end
 
-          def steps(points)
+          def steps(points, width = "1.5")
             return if points.empty?
 
             @pen.path(step_commands(points) +
                       [[:line, @axis.x(@axis.finish), points.last[1]]],
-                      stroke: GREEN, stroke_width: "1.5")
+                      stroke: GREEN, stroke_width: width)
           end
 
           def step_commands(points)
@@ -195,29 +233,42 @@ module Sirena
             @pen.path(hexagon(left, right, top, closed),
                       fill: change.fill || LAVENDER,
                       stroke: change.stroke || GREEN, stroke_width: "1.5")
-            @pen.text(change.state, (left + right) / 2, top + 20.0,
-                      anchor: "middle", bold: true, fill: INK)
+            label(change, left, right, top, closed)
+          end
+
+          # A name sits centred in a closed segment and flush after the
+          # notch of the open last one, as in the JAR.
+          def label(change, left, right, top, closed)
+            x, anchor = if closed
+                          [(left + right) / 2, "middle"]
+                        else
+                          [left + TIP, "start"]
+                        end
+            @pen.text(change.state, x,
+                      Drawing::Face.middle(top + SEGMENT_MIDDLE + 4.54, 12),
+                      anchor: anchor, size: 12, bold: true, fill: INK)
           end
 
           def hexagon(left, right, top, closed)
-            upper = top + 8.0
-            lower = top + 32.0
-            middle = top + 20.0
-            tail = if closed
-                     [[right - TIP, upper], [right, middle],
-                      [right - TIP, lower]]
-                   else
-                     [[right, upper], [right, lower]]
-                   end
-            polygon_path([[left + TIP, upper]] + tail +
-                         [[left + TIP, lower], [left, middle]])
+            upper = top + SEGMENT_MIDDLE - 12.0
+            lower = top + SEGMENT_MIDDLE + 12.0
+            middle = top + SEGMENT_MIDDLE
+            notch = [[left + TIP, upper], [left, middle], [left + TIP, lower]]
+            unless closed
+              return polygon_path([[right, upper]] + notch + [[right, lower]],
+                                  false)
+            end
+
+            polygon_path(notch + [[right - TIP, lower], [right, middle],
+                                  [right - TIP, upper]], true)
           end
 
-          def polygon_path(points)
+          # The open last segment has no edge at the right, as in the JAR.
+          def polygon_path(points, closed)
             commands = points.each_with_index.map do |(x, y), index|
               { type: index.zero? ? :move : :line, x: x, y: y }
             end
-            commands << { type: :close }
+            closed ? commands << { type: :close } : commands
           end
 
           def draw_analog(participant, top)
@@ -241,9 +292,8 @@ module Sirena
             end
           end
 
-          def analog_y(participant, top, share)
-            room = height(participant) - (2 * PAD)
-            top + height(participant) - PAD - (share * room)
+          def analog_y(_participant, top, share)
+            top + ANALOG_LOW - (share * (ANALOG_LOW - HIGH))
           end
         end
       end
