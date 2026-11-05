@@ -52,19 +52,26 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Renderer do
     svg = Sirena.render(source, notation: :plantuml)
 
     expect(Digest::SHA256.hexdigest(svg))
-      .to eq("0d13fac124793871b98837630a7d5bbc694785d33d4964adf2ec1d7add5c292d")
+      .to eq("3aec4baa49f214f2635ad96aeb7df35f2de59500fa895fa309f8e9c90061a0ea")
   end
 
   it "uses every built-in theme's sequence paint roles" do
-    %i[default light dark high_contrast].each do |name|
+    %i[light dark high_contrast].each do |name|
       theme = Sirena::Theme::Registry.get(name)
 
       expect(paint_roles(theme)).to eq(expected_paint_roles(theme))
     end
   end
 
+  it "paints the default theme with the PlantUML skin" do
+    expect(paint_roles(Sirena::Theme::Registry.get(:default)))
+      .to eq(note_fill: "#FEFFDD", node_fill: "#E2E2F0",
+             node_stroke: "#181818", edge_stroke: "#181818",
+             label_text: "#000000")
+  end
+
   it "leaves omitted scalar paint roles unpainted" do
-    theme = Sirena::Theme::Registry.get(:default).dup
+    theme = Sirena::Theme::Registry.get(:light).dup
     theme.colors = Sirena::Theme::ColorPalette.new
 
     expect(paint_roles(theme).values).to eq([nil, nil, nil, nil, nil])
