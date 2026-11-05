@@ -51,10 +51,12 @@ module Sirena
           end
 
           def main_extent(layer)
-            layer.map { |item| @sizes[item][@main] }.max
+            layer.map { |item| @sizes[item][@main] }.max || 0.0
           end
 
           def cross_extent(layer)
+            return 0.0 if layer.empty?
+
             layer.sum { |item| @sizes[item][@cross] } +
               (CROSS_GAP * (layer.size - 1))
           end

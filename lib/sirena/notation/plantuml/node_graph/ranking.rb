@@ -14,18 +14,28 @@ module Sirena
           attr_reader :layers
 
           # @param items [Array<Object>] in source order
-          # @param pairs [Array<Array(Object, Object)>] links between items
+          # @param pairs [Array<Array>] links between items, each
+          #   `[from, to, step]`: `to` sits `step` ranks after `from` (0 puts
+          #   them in one rank, with `from` first; 1 when omitted)
           def initialize(items, pairs)
             @items = items
-            @pairs = pairs.uniq.reject { |a, b| a.equal?(b) }
+            @pairs = merged(pairs)
             @forward = acyclic(@pairs)
             @rank = items.to_h { |item| [item, 0] }
-            items.each { |item| rank_of(item, {}) }
-            @layers = group
+            settle_ranks
+            sink_sources
+            @layers = @pairs.empty? ? grid : group
             order
           end
 
           private
+
+          # Each pair once, with the longest step asked of it.
+          def merged(pairs)
+            pairs.reject { |a, b| a.equal?(b) }
+              .group_by { |a, b, _| [a.object_id, b.object_id] }
+              .values.map { |group| group.max_by { |_, _, step| step || 1 } }
+          end
 
           # The links that remain once every link closing a cycle, found
           # depth first in source order, is dropped.
@@ -44,22 +54,84 @@ module Sirena
           end
 
           def follow(pair)
-            return if @state[pair.last] == :open
+            return if @state[pair[1]] == :open
 
             @kept << pair
-            descend(pair.last) unless @state[pair.last]
+            descend(pair[1]) unless @state[pair[1]]
           end
 
-          def rank_of(item, seen)
-            return @rank[item] if seen[item]
+          # Longest path ranks: a link of step n puts its target n ranks
+          # after its source, a step of 0 puts both in one rank. Stops after
+          # a bounded number of sweeps, so links that cannot all hold (a
+          # one-rank link across a pair held in one rank) cannot loop.
+          def settle_ranks
+            (@items.size + 1).times do
+              break unless @forward.map { |link| hold?(*link) }.any?
+            end
+          end
 
-            seen[item] = true
-            preds = @forward.select { |_, b| b.equal?(item) }.map(&:first)
-            @rank[item] = preds.map { |pred| rank_of(pred, seen) + 1 }.max || 0
+          # @return [Boolean] whether the link moved a rank
+          # A group of items with no link in (items tied by a link of step 0
+          # move together) drops to the rank just before its nearest target,
+          # which shortens every link it has, as the JAR's ranking does.
+          def sink_sources
+            groups = same_rank_groups
+            groups.sort_by { |group| -@rank[group.first] }.each do |group|
+              target = sink_rank(group)
+              next unless target && target > @rank[group.first]
+
+              group.each { |item| @rank[item] = target }
+            end
+          end
+
+          # @return [Integer, nil] the rank before the nearest target of
+          #   `group`, when no link feeds it
+          def sink_rank(group)
+            return if fed?(group)
+
+            @forward.filter_map do |from, to, step|
+              next unless group.include?(from) && !group.include?(to)
+
+              @rank[to] - (step || 1)
+            end.min
+          end
+
+          # Whether a link from outside `group` ends in it.
+          def fed?(group)
+            @forward.any? do |from, to, _|
+              group.include?(to) && !group.include?(from)
+            end
+          end
+
+          def same_rank_groups
+            groups = @items.to_h { |item| [item, [item]] }
+            @forward.each do |from, to, step|
+              next unless step&.zero?
+
+              merged = groups[from] | groups[to]
+              merged.each { |item| groups[item] = merged }
+            end
+            groups.values.uniq
+          end
+
+          def hold?(from, to, step)
+            step ||= 1
+            want = @rank[from] + step
+            ends = step.zero? ? [from, to] : [to]
+            want = ends.map { |item| @rank[item] }.push(want).max
+            ends.map { |item| @rank[item] < want && @rank[item] = want }.any?
+          end
+
+          # Items with no links between them are packed into the squarest
+          # grid, `ceil(sqrt(n))` to a rank, in source order, as the
+          # PlantUML JAR does.
+          def grid
+            @items.each_slice([Math.sqrt(@items.size).ceil, 1].max).to_a
           end
 
           def group
-            @items.group_by { |item| @rank[item] }.sort.map(&:last)
+            by_rank = @items.group_by { |item| @rank[item] }
+            (0..(by_rank.keys.max || -1)).map { |rank| by_rank.fetch(rank, []) }
           end
 
           def order
@@ -74,6 +146,33 @@ module Sirena
             neighbour = @layers[index + step]
             @layers[index] = @layers[index].sort_by.with_index do |item, at|
               [barycentre(item, neighbour) || at, at]
+            end
+            @layers[index] = settled(@layers[index])
+          end
+
+          # The layer with every item after the items that must come first
+          # in its rank (links of step 0); an item goes right after the one
+          # it is tied to, otherwise the layer keeps its order.
+          def settled(layer)
+            rest = layer.dup
+            last = nil
+            Array.new(layer.size) do
+              last = pick_next(rest, last)
+              rest.delete_if { |item| item.equal?(last) }
+              last
+            end
+          end
+
+          def pick_next(rest, last)
+            ready = rest.reject { |item| before(item).intersect?(rest) }
+            ready.find { |item| before(item).include?(last) } ||
+              ready.first || rest.first
+          end
+
+          # The items a link of step 0 puts ahead of `item`.
+          def before(item)
+            @forward.filter_map do |from, to, step|
+              from if step&.zero? && to.equal?(item)
             end
           end
 

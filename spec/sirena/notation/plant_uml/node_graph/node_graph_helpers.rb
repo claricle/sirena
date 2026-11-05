@@ -12,12 +12,8 @@ module NodeGraphHelpers
 
   def parse(body, family: :usecase)
     parser = Sirena::Notation::PlantUML::NodeGraph::Parser
-    direction, kind = if family == :usecase
-                        %i[left_to_right actor]
-                      else
-                        %i[top_to_bottom interface]
-                      end
-    parser.new(direction: direction, default_kind: kind)
+    kind = family == :usecase ? :actor : :interface
+    parser.new(direction: :top_to_bottom, default_kind: kind)
       .parse("@startuml\n#{body}\n@enduml\n")
   end
 

@@ -26,6 +26,11 @@ number makes is in [VERSIONING.md](VERSIONING.md).
 - `Sirena.render` uses the Rust runtime of the optional `sirena-native` gem
   when it is installed, with the same SVG bytes, and renders in Ruby when it
   is missing or cannot answer. `SIRENA_RUNTIME=auto|ruby|rust` selects it.
+- PlantUML `!include FILE[!SELECTOR]`, `!includesub FILE!NAME` and
+  `!startsub`/`!endsub` are expanded. Files are read beside the source's
+  `path:` (or `base_dir:`) and then in `include_path:` or
+  `PLANTUML_INCLUDE_PATH`, never outside those directories. A file that cannot
+  be read raises `Sirena::Notation::PlantUML::Include::Error`.
 
 ### Changed
 

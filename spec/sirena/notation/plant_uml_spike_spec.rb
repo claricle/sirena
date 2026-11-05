@@ -77,7 +77,7 @@ module PlantUmlSpikeHelpers
   end
 
   def rendered_member_line(member)
-    line = "#{VISIBILITY_MARKS.fetch(member.visibility)}#{member.name}"
+    line = member.name.dup
     line += "(#{member.parameters})" if member.kind == :method
     line += ": #{member.type}" if member.type
     line
