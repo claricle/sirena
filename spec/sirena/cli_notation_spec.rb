@@ -104,7 +104,7 @@ RSpec.describe Sirena::Cli do
 
       expect([status, err]).to eq(
         [1, "Error: Unknown notation: nope. " \
-            "Valid notations: mermaid, plantuml_salt\n"],
+            "Valid notations: mermaid, plantuml_data, plantuml_salt\n"],
       )
     end
 

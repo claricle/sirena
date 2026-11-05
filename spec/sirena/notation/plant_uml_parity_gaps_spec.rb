@@ -19,6 +19,18 @@ RSpec.describe Sirena::Notation::PlantUML do
     REXML::XPath.match(REXML::Document.new(svg), xpath)
   end
 
+  def box_span(svg)
+    box = nodes(svg, "//g[@id='class-A']/rect").first.attributes
+    top = box["y"].to_f
+    height = box["height"].to_f
+    [top, top + height]
+  end
+
+  def member_row_ys(svg)
+    nodes(svg, "//g[@id='class-A']/text").drop(1)
+      .map { |row| row.attributes["y"].to_f }
+  end
+
   def member_ys(svg)
     nodes(svg, "//text[@text-anchor='start']")
       .map { |t| t.attributes["y"].to_f }
@@ -31,7 +43,9 @@ RSpec.describe Sirena::Notation::PlantUML do
     it "keeps every member baseline inside the class box" do
       top = box.attributes["y"].to_f
 
-      expect(member_ys(svg)).to all(
+      rows = nodes(svg, "//g[@id='class-A']/text").drop(1)
+
+      expect(rows.map { |row| row.attributes["y"].to_f }).to all(
         be_between(top, top + box.attributes["height"].to_f),
       )
     end
@@ -124,12 +138,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     it "grows the box to hold its member rows" do
-      box = nodes(svg, "//g[@id='class-A']/rect").first
-      top = box.attributes["y"].to_f
-
-      expect(member_ys(svg)).to all(
-        be_between(top, top + box.attributes["height"].to_f),
-      )
+      expect(member_row_ys(svg)).to all(be_between(*box_span(svg)))
     end
   end
 end
