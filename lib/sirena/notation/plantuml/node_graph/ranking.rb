@@ -86,7 +86,6 @@ module Sirena
             end
           end
 
-          # @return [Boolean] whether the link moved a rank
           # A group of items with no link in (items tied by a link of step 0
           # move together) drops to the rank just before its nearest target,
           # which shortens every link it has, as the JAR's ranking does.
@@ -130,6 +129,7 @@ module Sirena
             groups.values.uniq
           end
 
+          # @return [Boolean] whether the link moved a rank
           def hold?(from, to, step)
             step ||= 1
             want = @rank[from] + step
