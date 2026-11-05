@@ -115,11 +115,19 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Metrics do
   end
 
   describe "skinparam" do
-    it "applies activityFontSize to actions only" do
+    it "applies activityFontSize to actions and decisions only" do
       root = root_for("skinparam activityFontSize 20", *flow)
 
-      expect([size_of(root, "a long action label"), size_of(root, "ok?")])
-        .to eq(%w[20 12])
+      expect(["a long action label", "ok?", "edge label", "a note", "Part"]
+        .map { |label| size_of(root, label) }).to eq(%w[20 20 11 13 14])
+    end
+
+    it "lets activityDiamondFontSize win over activityFontSize" do
+      root = root_for("skinparam activityFontSize 20",
+                      "skinparam activityDiamondFontSize 16", *flow)
+
+      expect(["a long action label", "ok?"]
+        .map { |label| size_of(root, label) }).to eq(%w[20 16])
     end
 
     it "applies the per-role keys" do
@@ -147,11 +155,11 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Metrics do
     end
   end
 
-  it "keeps the default size when the source sets none" do
+  it "gives each role the size PlantUML draws when the source sets none" do
     root = root_for(*flow)
 
-    expect(texts(root).map { |t| t.attributes["font-size"] }.uniq)
-      .to eq(["12"])
+    expect(["a long action label", "ok?", "edge label", "a note", "Part"]
+      .map { |label| size_of(root, label) }).to eq(%w[12 11 11 13 14])
   end
 
   describe "the label of an edge leaving a partition" do

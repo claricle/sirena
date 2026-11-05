@@ -73,8 +73,16 @@ module Sirena
           end
 
           def decision(node, box)
-            diamond(box, node.fill)
+            @canvas.polygon(hexagon(box), fill: node.fill || PAPER,
+                                          role: :diamond)
             centred(node.lines, box, role: :diamond)
+          end
+
+          def hexagon(box)
+            left = box.left + Metrics::DECISION_POINT
+            right = box.right - Metrics::DECISION_POINT
+            [[left, box.top], [right, box.top], [box.right, box.cy],
+             [right, box.bottom], [left, box.bottom], [box.left, box.cy]]
           end
 
           def diamond(box, fill)
