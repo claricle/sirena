@@ -4,6 +4,7 @@ require_relative "graph"
 require_relative "reader"
 require_relative "references"
 require_relative "link"
+require_relative "data_reader"
 require_relative "archimate"
 require_relative "entity_reader"
 require_relative "../unsupported_construct_error"
@@ -15,6 +16,7 @@ module Sirena
         # Reads use case, component and deployment source into a {Graph}.
         class Parser
           include References
+          include DataReader
           include EntityReader
 
           KEYWORDS = %w[package node database cloud rectangle folder frame
@@ -71,8 +73,8 @@ module Sirena
             @text = text
             return if skip?(text)
 
-            handlers = %i[close container note short lollipop entity leaf bare
-                          er_edge edge]
+            handlers = %i[close container note short lollipop data entity leaf
+                          bare er_edge edge]
             handlers.any? { |name| send(:"take_#{name}", text) } ||
               refuse("statement")
           end
@@ -91,6 +93,7 @@ module Sirena
           def skip_setting(text)
             return unless text.match?(SKIPPED)
 
+            @mixing ||= text.match?(DataReader::MIXING)
             skip_block if text.end_with?("{")
             :skipped
           end

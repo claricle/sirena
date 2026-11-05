@@ -34,11 +34,14 @@ module Sirena
           private
 
           def build(diagram, ranking, columns, margin)
-            placement = Placement.new(diagram, ranking, columns, margin)
+            metrics = Metrics.new(diagram.style)
+            placement = Placement.new(diagram, ranking, columns, margin,
+                                      metrics)
             router = Router.new(boxes: placement.boxes, ranking: ranking,
                                 bottoms: placement.bottoms,
-                                gap: Placement::RANK_GAP)
-            Marks.new(diagram, placement, router).tap(&:build)
+                                gap: placement.gap,
+                                label_drop: metrics.size(:arrow) + 1)
+            Marks.new(diagram, placement, router, metrics).tap(&:build)
           end
         end
       end

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "placement"
 require_relative "route"
 
 module Sirena
@@ -12,14 +13,16 @@ module Sirena
         class Router
           DETOUR = 16.0
           DETOUR_STEP = 7.0
-          LABEL_DROP = 13.0
-          private_constant :DETOUR, :DETOUR_STEP, :LABEL_DROP
+          private_constant :DETOUR, :DETOUR_STEP
 
           # @param boxes [Hash{Node => Box}]
           # @param ranking [Ranking]
           # @param bottoms [Array<Float>] bottom of each row
           # @param gap [Float] space between rows
-          def initialize(boxes:, ranking:, bottoms:, gap:)
+          # @param label_drop [Float] how far below a node a label's
+          #   baseline sits
+          def initialize(boxes:, ranking:, bottoms:, gap:, label_drop: 13.0)
+            @label_drop = label_drop
             @boxes = boxes
             @ranking = ranking
             @bottoms = bottoms
@@ -49,12 +52,31 @@ module Sirena
           def forward(edge, from, to)
             start_x = anchor_x(edge.from, from, to)
             end_x = anchor_x(edge.to, to, from)
-            case shape(edge, from, to)
-            when :side_exit then decision_exit(from, to, end_x)
-            when :side_entry then side_entry(from, to, start_x)
-            when :straight then straight(from, to, start_x)
-            else elbow(edge, [from, to], start_x, end_x)
+            shape = shape(edge, from, to)
+            return decision_exit(from, to, end_x) if shape == :side_exit
+
+            below_frame(edge, hanging(shape, edge, [from, to],
+                                      [start_x, end_x]))
+          end
+
+          # A route that leaves the bottom of `from`.
+          def hanging(shape, edge, boxes, anchors)
+            case shape
+            when :side_entry then side_entry(*boxes, anchors.first)
+            when :straight then straight(*boxes, anchors.first)
+            else elbow(edge, boxes, *anchors)
             end
+          end
+
+          # An edge that leaves a partition from the node's bottom crosses
+          # the frame's bottom edge; its label hangs below that edge.
+          def below_frame(edge, route)
+            leaving = edge.from.partition
+            return route unless leaving && leaving != edge.to.partition
+
+            Route.new(points: route.points, label_x: route.label_x,
+                      label_y: route.label_y + Placement::PARTITION_BELOW,
+                      anchor: route.anchor)
           end
 
           def shape(edge, from, to)
@@ -66,7 +88,7 @@ module Sirena
 
           def straight(from, to, x_pos)
             Route.new(points: [[x_pos, from.bottom], [x_pos, to.top]],
-                      label_x: x_pos + 5, label_y: from.bottom + LABEL_DROP)
+                      label_x: x_pos + 5, label_y: from.bottom + @label_drop)
           end
 
           def elbow(edge, boxes, start_x, end_x)
@@ -76,7 +98,7 @@ module Sirena
             mid = @bottoms[@ranking.rank[edge.from]] + (@gap / 2.0)
             Route.new(points: [[start_x, from.bottom], [start_x, mid],
                                [end_x, mid], [end_x, to.top]],
-                      label_x: start_x + 5, label_y: from.bottom + LABEL_DROP)
+                      label_x: start_x + 5, label_y: from.bottom + @label_drop)
           end
 
           # A branch that lands under the decision's own tip needs no side
@@ -95,14 +117,14 @@ module Sirena
             # each other.
             Route.new(points: [[edge_x, from.cy], [end_x, from.cy],
                                [end_x, to.top]],
-                      label_x: end_x + 5, label_y: from.cy + LABEL_DROP)
+                      label_x: end_x + 5, label_y: from.cy + @label_drop)
           end
 
           def side_entry(from, to, start_x)
             edge_x = start_x > to.cx ? to.right : to.left
             Route.new(points: [[start_x, from.bottom], [start_x, to.cy],
                                [edge_x, to.cy]],
-                      label_x: start_x + 5, label_y: from.bottom + LABEL_DROP)
+                      label_x: start_x + 5, label_y: from.bottom + @label_drop)
           end
 
           # Out of one side of `from`, along a lane beside every node in

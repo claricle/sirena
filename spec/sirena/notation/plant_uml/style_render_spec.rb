@@ -266,11 +266,15 @@ RSpec.describe Sirena::Notation::PlantUML::Style do
           .find { |t| t.text == content }.attributes["fill"]
       end
 
-      it "paints every diamond with the diamond rule" do
-        polygons = shapes("//*[local-name()='polygon'][@fill='#CCCCFF']")
-          .select { |p| p.attributes["points"].split.size == 4 }
+      def diamonds
+        sides = [4, 6]
+        shapes("//*[local-name()='polygon'][@fill='#CCCCFF']").select do |poly|
+          sides.include?(poly.attributes["points"].split.size)
+        end
+      end
 
-        expect(polygons.map { |p| p.attributes["stroke"] })
+      it "paints every diamond with the diamond rule" do
+        expect(diamonds.map { |p| p.attributes["stroke"] })
           .to eq(%w[#00FF00 #00FF00])
       end
 
