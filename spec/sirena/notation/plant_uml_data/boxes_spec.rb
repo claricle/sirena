@@ -256,25 +256,25 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes do
     it "stops a mapping at a line that is not an entry" do
       value = boxes::YamlReader.new.call("a: 1\n@@@ b\n")
 
-      expect(value).to eq({ "a" => 1 })
+      expect(value).to eq({ "a" => "1" })
     end
 
     it "nests a block under a bare dash" do
       value = boxes::YamlReader.new.call("-\n  a: 1\n- 2\n")
 
-      expect(value).to eq([{ "a" => 1 }, 2])
+      expect(value).to eq([{ "a" => "1" }, "2"])
     end
 
-    it "reads a key with no value at the end of the document as null" do
+    it "reads a key with no value at the end of the document as an empty string" do
       value = boxes::YamlReader.new.call("a: 1\nb:\n")
 
-      expect(value).to eq({ "a" => 1, "b" => nil })
+      expect(value).to eq({ "a" => "1", "b" => "" })
     end
 
-    it "reads a key with no value before a shallower line as null" do
+    it "reads a key with no value before a shallower line as an empty string" do
       value = boxes::YamlReader.new.call("a:\n  b:\nc: 1\n")
 
-      expect(value).to eq({ "a" => { "b" => nil }, "c" => 1 })
+      expect(value).to eq({ "a" => { "b" => "" }, "c" => "1" })
     end
 
     it "reads a sequence at the same indent as its key" do
@@ -283,10 +283,10 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes do
       expect(value).to eq({ "a" => %w[x y] })
     end
 
-    it "reads a null YAML scalar as an empty marker" do
+    it "keeps a null YAML scalar as its text" do
       svg = render("@startyaml\nk: null\n@endyaml")
 
-      expect(texts(svg)).to include("\u2400")
+      expect(texts(svg)).to include("null")
     end
 
     it "shows an tag-only scalar as the blank marker" do
