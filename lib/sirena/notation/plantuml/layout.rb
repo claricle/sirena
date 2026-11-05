@@ -3,6 +3,7 @@
 require_relative "../../layout/base"
 require_relative "caption_layout"
 require_relative "class_name"
+require_relative "class_header"
 require_relative "end_texts"
 require_relative "ir_reader"
 require_relative "package_frames"
@@ -653,6 +654,8 @@ module Sirena
           measure = lambda do |text, size|
             measure_text(text, font_size: size)[:width]
           end
+          ClassHeader.apply(diagram, scene,
+                            ->(text) { measure.call(text, font_size) })
           captions = CaptionLayout.new(diagram, normal_size: font_size,
                                                 measure: measure)
           captions.dress(scene)

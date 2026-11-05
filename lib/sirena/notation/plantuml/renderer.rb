@@ -5,6 +5,7 @@ require_relative "../../svg"
 require_relative "scene"
 require_relative "style"
 require_relative "creole"
+require_relative "class_header"
 
 module Sirena
   module Notation
@@ -12,8 +13,12 @@ module Sirena
       # Draws a PlantUML Scene without changing any of its geometry.
       class Renderer < Sirena::Renderer::Base
         CREOLE_ROLES = %w[note relation_label member_note].freeze
-        BOLD_ROLES = %w[class_name package_title].freeze
-        private_constant :BOLD_ROLES, :CREOLE_ROLES
+        BOLD_ROLES = %w[package_title].freeze
+        # PlantUML draws a compartment rule hairline-thin and one pixel
+        # short of the box's border on each side.
+        RULE_INSET = 1.0
+        RULE_WIDTH = "0.5"
+        private_constant :BOLD_ROLES, :CREOLE_ROLES, :RULE_INSET, :RULE_WIDTH
 
         # @param style [Style::Sheet] how the diagram's source styles it;
         #   only what the source sets overrides the theme
@@ -94,7 +99,7 @@ module Sirena
           text.content = panel.content
           text.text_anchor = "middle"
           text.fill = panel.colour || text_colour
-          text.font_family = font_family("caption")
+          text.font_family = font_family
           text.font_size = panel.font_size.to_s
           text.font_weight = "bold" if panel.bold
         end
@@ -227,14 +232,35 @@ module Sirena
 
         def render_box(box, document)
           group = Svg::Group.new(id: box_id(box))
-          group << box_rectangle(box)
-          unless box.kind == "member_note"
-            box.separators.each do |separator|
-              group << separator_line(separator)
-            end
-          end
+          [box_rectangle(box), *spot_elements(box), *rule_lines(box)]
+            .each { |element| group << element }
           box.texts.each { |text| group << text_element(text) }
           document << group
+        end
+
+        def rule_lines(box)
+          return [] if box.kind == "member_note"
+
+          box.separators.map { |separator| separator_line(separator) }
+        end
+
+        def spot_elements(box)
+          spot = box.spot
+          return [] unless spot
+
+          glyph = ClassHeader.glyph(spot.kind.to_sym)
+          [Svg::Circle.new(cx: spot.cx, cy: spot.cy, r: ClassHeader::RADIUS,
+                           fill: glyph.fill, stroke: node_stroke,
+                           stroke_width: "1"),
+           Svg::Path.new(d: translate_outline(glyph.outline, spot),
+                         fill: "#000000")]
+        end
+
+        def translate_outline(outline, spot)
+          outline.gsub(/(-?[\d.]+),(-?[\d.]+)/) do
+            "#{format('%g', ($1.to_f + spot.cx).round(4))}," \
+              "#{format('%g', ($2.to_f + spot.cy).round(4))}"
+          end
         end
 
         def box_id(box)
@@ -313,14 +339,9 @@ module Sirena
         end
 
         def separator_line(segment)
-          Svg::Line.new.tap do |line|
-            line.x1 = segment.x1
-            line.y1 = segment.y1
-            line.x2 = segment.x2
-            line.y2 = segment.y2
-            line.stroke = node_stroke
-            line.stroke_width = "1"
-          end
+          Svg::Line.new(x1: segment.x1 + RULE_INSET, y1: segment.y1,
+                        x2: segment.x2 - RULE_INSET, y2: segment.y2,
+                        stroke: node_stroke, stroke_width: RULE_WIDTH)
         end
 
         def text_element(scene_text)
@@ -346,20 +367,24 @@ module Sirena
 
         def apply_text_style(text, role)
           text.fill = box_look(:font_colour)
-          text.font_family = font_family(role)
+          text.font_family = font_family
           text.font_size = font_size(role)
           text.font_weight = "bold" if BOLD_ROLES.include?(role)
-          text.font_style = "italic" if %w[kind member_abstract].include?(role)
+          text.font_style = "italic" if italic?(role)
         end
 
-        def font_family(role)
+        ITALIC_SPOTS = %w[abstract interface].freeze
+        private_constant :ITALIC_SPOTS
+
+        def italic?(role)
+          return true if %w[kind member_abstract].include?(role)
+
+          role == "class_name" && ITALIC_SPOTS.include?(@box&.spot&.kind)
+        end
+
+        def font_family
           written = @style.explicit(:class, :font_name)
           return written if written
-
-          sans_members = %w[member_prefix member_note]
-          if role.start_with?("member") && !sans_members.include?(role)
-            return "monospace"
-          end
 
           box_look(:font_name)
         end
