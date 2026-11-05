@@ -56,7 +56,8 @@ RSpec.describe Sirena::Notation do
       described_class.register(other)
 
       expect(described_class.ids.map(&:to_s)).to eq(%w[mermaid plantuml_salt
-                                                       fake other])
+                                                       plantuml_data fake
+                                                       other])
     end
 
     {
@@ -329,7 +330,8 @@ RSpec.describe Sirena::Notation do
       end
 
       it "records no id" do
-        expect(described_class.ids.map(&:to_s)).to eq(%w[mermaid plantuml_salt])
+        expect(described_class.ids.map(&:to_s))
+          .to eq(%w[mermaid plantuml_salt plantuml_data])
       end
 
       it "records no extension" do
@@ -390,8 +392,8 @@ RSpec.describe Sirena::Notation do
     it "names the given id and every valid one, sorted" do
       described_class.register(other)
 
-      message = "Unknown notation: nope. " \
-                "Valid notations: fake, mermaid, other, plantuml_salt"
+      message = "Unknown notation: nope. Valid notations: fake, mermaid, " \
+                "other, plantuml_data, plantuml_salt"
       expect { described_class.fetch(:nope) }
         .to raise_error(pipeline_error, message)
     end

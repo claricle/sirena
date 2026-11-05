@@ -11,6 +11,7 @@ require_relative "plantuml/usecase"
 require_relative "plantuml/component"
 require_relative "plantuml/entity"
 require_relative "plantuml/state"
+require_relative "plantuml/objects"
 require_relative "plantuml/tree"
 require_relative "plantuml/gantt"
 require_relative "plantuml/further"
@@ -47,7 +48,8 @@ module Sirena
       # reads it, and the class diagram is what is left.
       FAMILIES = [[Further, :further?], [State, :state?], [Usecase, :usecase?],
                   [Component, :component?], [Activity, :activity?],
-                  [Entity, :entity?], [Sequence, :sequence?]].freeze
+                  [Entity, :entity?], [Sequence, :sequence?],
+                  [Objects, :objects?]].freeze
       # The diagram kinds with a front end of their own, named by the
       # `@start` tag that opens them.
       TAGGED = /\A(?:\xEF\xBB\xBF)?
@@ -69,7 +71,8 @@ module Sirena
       def types
         %i[class_diagram sequence_diagram activity_diagram usecase_diagram
            component_diagram state_diagram entity_diagram
-           network_diagram timing_diagram ebnf_diagram mindmap gantt].freeze
+           network_diagram timing_diagram ebnf_diagram mindmap gantt
+           object_diagram].freeze
       end
 
       # @param source [String] any String, including binary or invalid UTF-8
