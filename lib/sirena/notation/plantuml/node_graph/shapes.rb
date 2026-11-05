@@ -127,7 +127,7 @@ module Sirena
           def label(options)
             top = options[:top] ? @p.y + options[:top] : middle(options)
             lines.each_with_index do |line, index|
-              y = top + (index * Metrics::LINE_HEIGHT) + 11
+              y = top + (index * Metrics::LINE_HEIGHT) + Metrics::ASCENT
               anchor, x_pos = label_anchor(options)
               text(x_pos, y, line, anchor)
             end
@@ -189,13 +189,23 @@ module Sirena
           def header(line, index)
             return tab_text(line) if tabbed? && index.zero?
 
-            left = HEADER_LEFT.fetch(@p.node.kind, 0)
-            text(@p.x + 12 + left, header_top(index), line, "start",
-                 index.zero? ? "bold" : nil)
+            weight = index.zero? ? "bold" : nil
+            return centred_title(line, index, weight) if centred?
+
+            text(@p.x + 12 + HEADER_LEFT.fetch(@p.node.kind, 0),
+                 header_top(index), line, "start", weight)
+          end
+
+          # A component container names itself in the middle of its top.
+          def centred? = @p.node.kind == :component
+
+          def centred_title(line, index, weight)
+            text(@p.x + (@p.width / 2), header_top(index), line, "middle",
+                 weight)
           end
 
           def header_top(index)
-            @p.y + 18 + HEADER_DROP.fetch(@p.node.kind, 0) +
+            @p.y + 13 + Metrics::ASCENT + HEADER_DROP.fetch(@p.node.kind, 0) +
               (index * Metrics::LINE_HEIGHT)
           end
 

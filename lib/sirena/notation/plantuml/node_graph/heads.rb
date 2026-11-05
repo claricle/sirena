@@ -16,21 +16,25 @@ module Sirena
           module_function
 
           # @return [Array<Svg::Element>] what the edge draws at its ends
-          def for(edge, from, to, color)
-            return crows(edge.ends, from, to, color) if edge.ends
+          # @param inner [Array] the points next to `from` and next to `to`
+          #   on the line, which give each end its direction; the opposite
+          #   end of a straight line
+          def for(edge, from, to, color, inner = [to, from])
+            return crows(edge.ends, [from, to], inner, color) if edge.ends
 
             case edge.head
-            when :target then [arrow(to, from, color)]
-            when :source then [arrow(from, to, color)]
-            when :both then [arrow(to, from, color), arrow(from, to, color)]
-            when :socket then [socket(to, from)]
+            when :target then [arrow(to, inner[1], color)]
+            when :source then [arrow(from, inner[0], color)]
+            when :both then [arrow(to, inner[1], color),
+                             arrow(from, inner[0], color)]
+            when :socket then [socket(to, inner[1])]
             else []
             end
           end
 
-          def crows(ends, from, to, color)
-            CrowsFoot.draw(ends[0], from, unit(from, to), color) +
-              CrowsFoot.draw(ends[1], to, unit(to, from), color)
+          def crows(ends, (from, to), inner, color)
+            CrowsFoot.draw(ends[0], from, unit(from, inner[0]), color) +
+              CrowsFoot.draw(ends[1], to, unit(to, inner[1]), color)
           end
 
           # @param tip [Array(Float, Float)] where the head points

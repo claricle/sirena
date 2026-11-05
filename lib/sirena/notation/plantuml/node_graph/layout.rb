@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../plantuml_data/boxes/table_box"
+require_relative "detour"
 require_relative "frame_ports"
 require_relative "metrics"
 require_relative "packer"
@@ -155,13 +156,22 @@ module Sirena
 
           def routes(placed)
             boxes = placed.to_h { |box| [box.node, terminal(box)] }
-            @graph.edges.filter_map do |edge|
-              from = boxes[edge.from]
-              to = boxes[edge.to]
-              next if from.equal?(to)
+            detour = Detour.new(placed)
+            @graph.edges.filter_map { |edge| route(edge, boxes, detour) }
+          end
 
-              Route.new(edge: edge, points: segment(from, to, edge))
-            end
+          def route(edge, boxes, detour)
+            from, to = boxes.values_at(edge.from, edge.to)
+            return if from.equal?(to)
+
+            points = segment(from, to, edge)
+            Route.new(edge: edge, points: bent(detour, edge, points))
+          end
+
+          # A note's pointer and a line to a row stay straight.
+          def bent(detour, edge, points)
+            straight = edge.from.kind == :note || edge.from_row || edge.to_row
+            straight ? points : detour.call(edge, points)
           end
 
           # What a link ends at: the square of a port on a frame, otherwise

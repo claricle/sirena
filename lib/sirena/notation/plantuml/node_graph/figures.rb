@@ -65,7 +65,7 @@ module Sirena
           # horizontal middle and width, `left` pins it to the left.
           LABELS = { actor: { top: 52 }, interface: { top: 22 },
                      circle: { top: 20 },
-                     portin: { top: 0 }, portout: { top: 16 },
+                     portin: { top: 0 }, portout: { top: 12 },
                      note: { top: 4, left: 8 }, database: { dy: 6 },
                      component: { dy: 4 },
                      node: { dy: 4, shrink: 8 } }.freeze

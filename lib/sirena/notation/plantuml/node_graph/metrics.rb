@@ -10,8 +10,9 @@ module Sirena
       module NodeGraph
         # The size of each shape, from the text it carries.
         module Metrics
-          FONT_SIZE = 12
-          LINE_HEIGHT = 15.0
+          FONT_SIZE = 14
+          LINE_HEIGHT = 16.4883
+          ASCENT = 13.5352
           HEADER_PAD = 10.0
 
           module_function
@@ -64,12 +65,12 @@ module Sirena
           end
 
           def size_component(width, height)
-            [width + 44, [height + 20, 38.0].max]
+            [width + 40, height + 30]
           end
 
           def size_interface(width, height) = [[width, 20.0].max, 28.0 + height]
-          def size_portin(width, height) = [[width, 14.0].max, 18.0 + height]
-          def size_portout(width, height) = size_portin(width, height)
+          def size_portin(width, height) = [[width, 14.0].max, 24.0 + height]
+          def size_portout(width, height) = [[width, 14.0].max, 12.0 + height]
           def size_circle(width, height) = [[width, 16.0].max, 24.0 + height]
           def size_note(width, height) = [width + 24, height + 16]
           def size_database(width, height) = [width + 30, height + 40]
