@@ -2,25 +2,25 @@
   ## gitgraph (grammars/git_graph.rb)
   ## ------------------------------------------------------------------
 
-  gitgraph_plain_id = %x22 1*( !( "\"" ) ANY ) as id %x22 / "'" 1*( !"'" ANY ) as id "'" / 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "," ) ANY ) as id
+  gitgraph_plain_id = "\"" 1*( !( "\"" ) ANY ) as id "\"" / "'" 1*( !"'" ANY ) as id "'" / 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "," ) ANY ) as id
 
-  gitgraph_plain_tag = %x22 1*( !( "\"" ) ANY ) as tag %x22 / "'" 1*( !"'" ANY ) as tag "'" / 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "," ) ANY ) as tag
+  gitgraph_plain_tag = "\"" 1*( !( "\"" ) ANY ) as tag "\"" / "'" 1*( !"'" ANY ) as tag "'" / 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "," ) ANY ) as tag
 
-  gitgraph_plain_parent = %x22 1*( !( "\"" ) ANY ) as parent %x22 / "'" 1*( !"'" ANY ) as parent "'" / 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "," ) ANY ) as parent
+  gitgraph_plain_parent = "\"" 1*( !( "\"" ) ANY ) as parent "\"" / "'" 1*( !"'" ANY ) as parent "'" / 1*( !( "\t" / "\n" / "" / "" / "\r" / " " / "," ) ANY ) as parent
 
-  gitgraph_break = %x0A / %x0D / %x2028 / %x2029
+  gitgraph_break = "\n" / "\r" / char_line_separator / char_paragraph_separator
 
   gitgraph_escape = "\\" !gitgraph_break ANY
 
-  gitgraph_dq_message = %x22 *( gitgraph_escape / 1*( !( "\"" / "\\" ) ANY ) ) as message %x22
+  gitgraph_dq_message = "\"" *( gitgraph_escape / 1*( !( "\"" / "\\" ) ANY ) ) as message "\""
 
   gitgraph_sq_message = "'" *( gitgraph_escape / 1*( !( "'" / "\\" ) ANY ) ) as message "'"
 
-  gitgraph_dq_name = %x22 *( gitgraph_escape / 1*( !( "\"" / "\\" ) ANY ) ) as name %x22
+  gitgraph_dq_name = "\"" *( gitgraph_escape / 1*( !( "\"" / "\\" ) ANY ) ) as name "\""
 
   gitgraph_sq_name = "'" *( gitgraph_escape / 1*( !( "'" / "\\" ) ANY ) ) as name "'"
 
-  gitgraph_dq_branch = %x22 *( gitgraph_escape / 1*( !( "\"" / "\\" ) ANY ) ) as branch %x22
+  gitgraph_dq_branch = "\"" *( gitgraph_escape / 1*( !( "\"" / "\\" ) ANY ) ) as branch "\""
 
   gitgraph_sq_branch = "'" *( gitgraph_escape / 1*( !( "'" / "\\" ) ANY ) ) as branch "'"
 
@@ -42,7 +42,7 @@
 
   gitgraph_commit_option = gitgraph_commit_id / gitgraph_commit_type / gitgraph_commit_tag / gitgraph_commit_message
 
-  gitgraph_commit_options = ( 1*sp / &( %x22 / "'" ) ) 1*( gitgraph_commit_option *sp )
+  gitgraph_commit_options = ( 1*sp / &( "\"" / "'" ) ) 1*( gitgraph_commit_option *sp )
 
   gitgraph_commit_body = "commit" [ gitgraph_commit_options as options ]
 
@@ -64,7 +64,7 @@
 
   gitgraph_switch = gitgraph_switch_body as switch line_end
 
-  gitgraph_quoted = %x22 *( !( "\"" ) ANY ) %x22 / "'" *( !"'" ANY ) "'"
+  gitgraph_quoted = "\"" *( !( "\"" ) ANY ) "\"" / "'" *( !"'" ANY ) "'"
 
   gitgraph_merge_option = gitgraph_commit_id / gitgraph_commit_type / gitgraph_commit_tag / "random:" gitgraph_quoted
 

@@ -21,9 +21,16 @@ module Sirena
       attribute :font_size, :string
       attribute :font_weight, :string
       attribute :font_style, :string
+      attribute :text_decoration, :string
+      # `textLength` and `lengthAdjust`: the width the text must fill, so a
+      # viewer's font cannot move what follows it.
+      attribute :text_length, :float
+      attribute :length_adjust, :string
       attribute :dominant_baseline, :string
       attribute :content, :string, collection: true
       attribute :tspans, Tspan, collection: true
+      # "preserve" keeps the spaces at the edges of tspan runs.
+      attribute :xml_space, :string
 
       # How far below `y` the baseline sits, in ems -- stands in for
       # `dominant-baseline` (rejected under :metanorma). Conventional
@@ -66,6 +73,10 @@ module Sirena
         ["font-size", :font_size],
         ["font-weight", :font_weight],
         ["font-style", :font_style],
+        ["text-decoration", :text_decoration],
+        ["textLength", :text_length],
+        ["lengthAdjust", :length_adjust],
+        ["xml:space", :xml_space],
       ].map(&:freeze).freeze
       private_constant :ATTRIBUTE_PAIRS
 

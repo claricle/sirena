@@ -20,7 +20,9 @@ module Sirena
           # @return [Float] the lowest y any mark reaches
           attr_reader :max_y
 
-          def initialize
+          # @param metrics [Metrics] the font sizes of the roles
+          def initialize(metrics = Metrics.new)
+            @metrics = metrics
             @marks = []
             @min_x = Float::INFINITY
             @max_x = 0.0
@@ -37,23 +39,28 @@ module Sirena
             @max_y = [@max_y, bottom].max
           end
 
+          # `role` names the `<style>` selector that restyles the mark:
+          # :partition, :diamond, :note or :arrow; nil is a plain action.
+          #
           # @param box [Box]
-          def rect(box, fill:, radius: nil)
+          def rect(box, fill:, radius: nil, role: nil)
             see(box.left, box.right, box.bottom)
             add(:rect, x: box.left, y: box.top, width: box.width,
-                       height: box.height, fill: fill, stroke: INK, rx: radius)
+                       height: box.height, fill: fill, stroke: INK, rx: radius,
+                       role: role)
           end
 
           # @param box [Box]
-          def polygon(points, fill:, stroke: INK)
+          def polygon(points, fill:, stroke: INK, role: nil)
             points.each { |x_pos, y_pos| see(x_pos, x_pos, y_pos) }
-            add(:polygon, points: points, fill: fill, stroke: stroke)
+            add(:polygon, points: points, fill: fill, stroke: stroke,
+                          role: role)
           end
 
-          def circle(box, radius, fill:, stroke: "#222222")
+          def circle(box, radius, fill:, stroke: "#222222", role: nil)
             see(box.left, box.right, box.bottom)
             add(:circle, cx: box.cx, cy: box.cy, r: radius, fill: fill,
-                         stroke: stroke)
+                         stroke: stroke, role: role)
           end
 
           def path(points, stroke:, width: 1.0, dash: nil)
@@ -63,24 +70,26 @@ module Sirena
           end
 
           # One text mark per line, the first baseline at `point`.
-          def lines(rows, point, anchor: "start", weight: nil,
-                    size: Metrics::FONT_SIZE)
+          def lines(rows, point, anchor: "start", role: nil, **face)
+            face = { size: @metrics.size(role), **face }
             rows.each_with_index do |content, index|
-              x_pos = point.first
-              y_pos = point.last + (index * Metrics::LINE_HEIGHT)
-              text(content, [x_pos, y_pos], anchor, weight, size)
+              y_pos = point.last + (index * @metrics.line_height(role))
+              text([point.first, y_pos], content, anchor,
+                   face.merge(role: role))
             end
           end
 
           private
 
-          def text(content, point, anchor, weight, size)
-            width = Metrics.text_width([content])
+          def text(point, content, anchor, face)
+            size = face[:size]
+            role = face[:role]
+            width = @metrics.text_width([content], role: role, size: size)
             left = point.first - (width * { "start" => 0, "middle" => 0.5,
                                             "end" => 1 }.fetch(anchor))
             see(left, left + width, point.last + 3)
             add(:text, x: point.first, y: point.last, content: content,
-                       anchor: anchor, weight: weight, size: size)
+                       anchor: anchor, **face)
           end
         end
       end

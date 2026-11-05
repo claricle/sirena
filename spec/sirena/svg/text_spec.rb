@@ -23,4 +23,33 @@ RSpec.describe Sirena::Svg::Text do
       expect(Array(text.content).join).to eq("plain string")
     end
   end
+
+  describe "text-decoration, textLength and lengthAdjust" do
+    let(:plain) do
+      described_class.new.tap do |t|
+        t.x = "1"
+        t.y = "2"
+        t.content = "ab"
+      end
+    end
+    let(:styled) do
+      plain.dup.tap do |t|
+        t.text_decoration = "underline line-through"
+        t.text_length = 12.5
+        t.length_adjust = "spacing"
+      end
+    end
+
+    it "writes all three under their SVG names" do
+      expect(styled.to_xml).to include(
+        'text-decoration="underline line-through"',
+        'textLength="12.5"', 'lengthAdjust="spacing"'
+      )
+    end
+
+    it "writes none of them when unset" do
+      expect(plain.to_xml)
+        .not_to match(/text-decoration|textLength|lengthAdjust/)
+    end
+  end
 end

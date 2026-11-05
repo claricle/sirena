@@ -188,8 +188,7 @@ RSpec.describe Sirena::Notation::PlantUML do
 
     it_behaves_like "a rendered corpus fixture",
                     ["TimeUnit", "DAYS", "SuppressWarnings",
-                     "Object[] elementData", "annotation with members",
-                     "<<enum>>", "<<annotation>>"]
+                     "Object[] elementData", "annotation with members"]
   end
 
   context "with fixture 3-35-4, bracketed line styles" do

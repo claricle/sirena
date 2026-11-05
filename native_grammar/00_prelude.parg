@@ -14,10 +14,44 @@ grammar Mermaid version "0.1.0" edition 2 {
   ## Common (grammars/common.rb)
   ## ------------------------------------------------------------------
 
-  ## space: a blank within a line.
-  sp = %x20 / %x09
+  ## Single codepoints the quoted-string escapes cannot write. A single
+  ## character is a quoted string, never a %xNN terminal: the engine
+  ## matches %xNN by an unanchored search, which is quadratic in the input
+  ## whenever the character does not occur later (native_grammar_single_character_terminals_spec).
+  ## U+000B vertical tab
+  char_vt = ""
 
-  newline = %x0A / %x0D.0A
+  ## U+000C form feed
+  char_ff = ""
+
+  ## U+00A0 no-break space
+  char_nbsp = " "
+
+  ## U+1680 ogham space mark
+  char_ogham_space_mark = " "
+
+  ## U+2028 line separator
+  char_line_separator = " "
+
+  ## U+2029 paragraph separator
+  char_paragraph_separator = " "
+
+  ## U+202F narrow no-break space
+  char_narrow_nbsp = " "
+
+  ## U+205F medium mathematical space
+  char_medium_math_space = " "
+
+  ## U+3000 ideographic space
+  char_ideographic_space = "　"
+
+  ## U+FEFF byte order mark
+  char_bom = "﻿"
+
+  ## space: a blank within a line.
+  sp = " " / "\t"
+
+  newline = "\n" / "\r\n"
 
   ## comment: "%%" to end of line (a lone CR stays in the comment).
   comment = "%%" *( !( "\n" ) ANY )
@@ -47,27 +81,27 @@ grammar Mermaid version "0.1.0" edition 2 {
   ## range, 2000T200A = 2000-200A), for the alternative that follows a scan
   ## and has to take the single character the scan left.
 
-  n_09_0A_0B_0C_0D_20_22_25_2D_2E_3C_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / %x21 / %x23-24 / %x26-2C / %x2F-3B / %x3D-6E / %x70-77 / %x79-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
+  n_09_0A_0B_0C_0D_20_22_25_2D_2E_3C_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / "!" / %x23-24 / %x26-2C / %x2F-3B / %x3D-6E / %x70-77 / %x79-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
 
-  n_09_0A_0B_0C_0D_20_22_25_2D_3C_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / %x21 / %x23-24 / %x26-2C / %x2E-3B / %x3D-6E / %x70-77 / %x79-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
+  n_09_0A_0B_0C_0D_20_22_25_2D_3C_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / "!" / %x23-24 / %x26-2C / %x2E-3B / %x3D-6E / %x70-77 / %x79-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
 
-  n_09_0A_0B_0C_0D_20_22_25_3C_3D_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / %x21 / %x23-24 / %x26-3B / %x3E-6E / %x70-77 / %x79-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
+  n_09_0A_0B_0C_0D_20_22_25_3C_3D_6F_78_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / "!" / %x23-24 / %x26-3B / %x3E-6E / %x70-77 / %x79-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
 
-  n_09_0A_0B_0C_0D_20_22_40_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / %x21 / %x23-3F / %x41-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
+  n_09_0A_0B_0C_0D_20_22_40_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / "!" / %x23-3F / %x41-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
 
   n_09_0A_0B_0C_0D_20_3B_A0_1680_2000T200A_2028_2029_202F_205F_3000_FEFF = %x00-08 / %x0E-1F / %x21-3A / %x3C-9F / %xA1-167F / %x1681-1FFF / %x200B-2027 / %x202A-202E / %x2030-205E / %x2060-2FFF / %x3001-FEFE / %xFF00-10FFFF
 
-  n_09_0A_0D_20_25_2C_3A_3B_3C_3E_40 = %x00-08 / %x0B-0C / %x0E-1F / %x21-24 / %x26-2B / %x2D-39 / %x3D / %x3F / %x41-10FFFF
+  n_09_0A_0D_20_25_2C_3A_3B_3C_3E_40 = %x00-08 / %x0B-0C / %x0E-1F / %x21-24 / %x26-2B / %x2D-39 / "=" / "?" / %x41-10FFFF
 
   n_09_0A_0D_20_25_3A = %x00-08 / %x0B-0C / %x0E-1F / %x21-24 / %x26-39 / %x3B-10FFFF
 
   n_09_0A_0D_20_25_3B = %x00-08 / %x0B-0C / %x0E-1F / %x21-24 / %x26-3A / %x3C-10FFFF
 
-  n_09_0A_0D_20_28_29_2D_3A_3B_3C_3D_3E_40_5B_5D_5E_7B_7C_7D_7E = %x00-08 / %x0B-0C / %x0E-1F / %x21-27 / %x2A-2C / %x2E-39 / %x3F / %x41-5A / %x5C / %x5F-7A / %x7F-10FFFF
+  n_09_0A_0D_20_28_29_2D_3A_3B_3C_3D_3E_40_5B_5D_5E_7B_7C_7D_7E = %x00-08 / %x0B-0C / %x0E-1F / %x21-27 / %x2A-2C / %x2E-39 / "?" / %x41-5A / "\\" / %x5F-7A / %x7F-10FFFF
 
-  n_0A_0D_25_2C_3A_3B_3C_3E_40 = %x00-09 / %x0B-0C / %x0E-24 / %x26-2B / %x2D-39 / %x3D / %x3F / %x41-10FFFF
+  n_0A_0D_25_2C_3A_3B_3C_3E_40 = %x00-09 / %x0B-0C / %x0E-24 / %x26-2B / %x2D-39 / "=" / "?" / %x41-10FFFF
 
-  n_0A_25_7B_7D = %x00-09 / %x0B-24 / %x26-7A / %x7C / %x7E-10FFFF
+  n_0A_25_7B_7D = %x00-09 / %x0B-24 / %x26-7A / "|" / %x7E-10FFFF
 
   n_22 = %x00-21 / %x23-10FFFF
 
@@ -86,7 +120,7 @@ grammar Mermaid version "0.1.0" edition 2 {
 
   rest_of_line = *( 1*( !( "\t" / "\n" / "\r" / " " / "%" / ";" ) ANY ) / le_mid / !line_end ANY )
 
-  dq_string = %x22 *( "\\" ANY / 1*( !( "\"" / "\\" ) ANY ) ) as string %x22
+  dq_string = "\"" *( "\\" ANY / 1*( !( "\"" / "\\" ) ANY ) ) as string "\""
 
   sq_string = "'" *( "\\" ANY / 1*( !( "'" / "\\" ) ANY ) ) as string "'"
 

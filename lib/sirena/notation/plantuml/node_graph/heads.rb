@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../svg"
+require_relative "crows_foot"
 
 module Sirena
   module Notation
@@ -16,6 +17,8 @@ module Sirena
 
           # @return [Array<Svg::Element>] what the edge draws at its ends
           def for(edge, from, to, color)
+            return crows(edge.ends, from, to, color) if edge.ends
+
             case edge.head
             when :target then [arrow(to, from, color)]
             when :source then [arrow(from, to, color)]
@@ -23,6 +26,11 @@ module Sirena
             when :socket then [socket(to, from)]
             else []
             end
+          end
+
+          def crows(ends, from, to, color)
+            CrowsFoot.draw(ends[0], from, unit(from, to), color) +
+              CrowsFoot.draw(ends[1], to, unit(to, from), color)
           end
 
           # @param tip [Array(Float, Float)] where the head points

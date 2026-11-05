@@ -58,7 +58,15 @@ module Sirena
               dashed: flagged?(node, "dashed", index),
               plain: flagged?(node, "plain", index),
               direction: detail(node, "direction", index)&.to_sym,
-              length: Integer(detail(node, "length", index) || 2) }
+              length: Integer(detail(node, "length", index) || 2),
+              dotted: flagged?(node, "dotted", index) }
+              .merge(stroke(node, index))
+          end
+
+          def stroke(node, index)
+            width = detail(node, "width", index)
+            { color: detail(node, "color", index),
+              width: (Integer(width) if width) }
           end
 
           def markers(edge)

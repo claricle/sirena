@@ -8,11 +8,14 @@ module Sirena
         #
         # `head` is `:target`, `:source`, `:socket` or `nil`; `style` is
         # `:solid` or `:dashed`. `from_row` and `to_row` are the index of the
-        # row of a map or object box the line starts or ends at, or nil.
-        # `rank_step` is how many ranks the layout puts `to` after `from`
-        # (0 keeps them in one rank); `backwards` reads the link from `to`.
+        # row of a map or object box the line starts or ends at, or nil. `ends`
+        # is nil, or for an entity link the crow's foot markers of its two
+        # ends, `[from, to]`, each listed from the box outward (see
+        # {CrowsFoot}). `rank_step` is how many ranks the layout puts `to`
+        # after `from` (0 keeps them in one rank); `backwards` reads the link
+        # from `to`.
         Edge = Struct.new(:from, :to, :label, :style, :head, :color, :width,
-                          :from_row, :to_row, :rank_step, :backwards,
+                          :ends, :from_row, :to_row, :rank_step, :backwards,
                           keyword_init: true)
       end
     end

@@ -3,9 +3,9 @@
   ## ------------------------------------------------------------------
 
   ## JS's \s (ECMA-262 WhiteSpace + LineTerminator).
-  er_diagram_js_space = %x09 / %x0A / %x0B / %x0C / %x0D / %x20 / %xA0 / %x1680 / %x2000-200A / %x2028 / %x2029 / %x202F / %x205F / %x3000 / %xFEFF
+  er_diagram_js_space = "\t" / "\n" / char_vt / char_ff / "\r" / " " / char_nbsp / char_ogham_space_mark / %x2000-200A / char_line_separator / char_paragraph_separator / char_narrow_nbsp / char_medium_math_space / char_ideographic_space / char_bom
 
-  er_diagram_line_terminator = %x0A / %x0D / %x2028 / %x2029
+  er_diagram_line_terminator = "\n" / "\r" / char_line_separator / char_paragraph_separator
 
   ## Character classes spelled as ranges: a class repeat is linear, where a
   ## `*( !x ANY )` repeat with a lookahead the engine cannot scan builds its
@@ -21,7 +21,7 @@
 
   er_diagram_identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
 
-  er_diagram_entity_name = %x22 1*( !( "\"" ) ANY ) %x22 / 1*DIGIT "." 1*DIGIT / 1*DIGIT / ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" / "-" )
+  er_diagram_entity_name = "\"" 1*( !( "\"" ) ANY ) "\"" / 1*DIGIT "." 1*DIGIT / 1*DIGIT / ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" / "-" )
 
   er_diagram_class_name_list = er_diagram_identifier *( "," [sp] er_diagram_identifier )
 
@@ -45,7 +45,7 @@
 
   er_diagram_attribute = [ er_diagram_attribute_type ] as type *sp er_diagram_identifier as name *sp [ er_diagram_key_list ] as key [ *sp er_diagram_note as note ] [ *sp comment ]
 
-  er_diagram_note = %x22 *( !( "\"" ) ANY ) as string %x22
+  er_diagram_note = "\"" *( !( "\"" ) ANY ) as string "\""
 
   er_diagram_attribute_type = er_diagram_tilde_type / er_diagram_identifier
 

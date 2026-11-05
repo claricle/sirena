@@ -20,7 +20,7 @@ module Sirena
 
         # @return [Boolean] a line around every cell
         def grid?
-          modifier.include?("#") || (modifier.include?("!") && tree?)
+          modifier.include?("#")
         end
 
         # @return [Boolean] a line between rows only
@@ -30,12 +30,22 @@ module Sirena
 
         # @return [Boolean] a line between columns only
         def column_lines?
-          modifier.include?("!") && !tree?
+          modifier.include?("!")
+        end
+
+        # @return [Boolean] a rule between rows (`-` or `#`)
+        def row_rules?
+          grid? || row_lines?
+        end
+
+        # @return [Boolean] a rule between columns (`!` or `#`)
+        def column_rules?
+          grid? || column_lines?
         end
 
         # @return [Boolean] a frame around the block
         def border?
-          modifier.include?("+") || grid?
+          modifier.include?("+")
         end
       end
     end

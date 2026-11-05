@@ -21,6 +21,12 @@ number makes is in [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+### Added
+
+- `Sirena.render` uses the Rust runtime of the optional `sirena-native` gem
+  when it is installed, with the same SVG bytes, and renders in Ruby when it
+  is missing or cannot answer. `SIRENA_RUNTIME=auto|ruby|rust` selects it.
+
 ### Changed
 
 - Sirena now requires Ruby 3.3 or newer and elkrb `~> 2.0`. elkrb 2 itself
