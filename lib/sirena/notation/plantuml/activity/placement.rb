@@ -10,7 +10,7 @@ module Sirena
         # the nodes it joins and each note beside its node.
         class Placement
           RANK_GAP = 40.0
-          COLUMN_GAP = 44.0
+          COLUMN_GAP = 20.0
           LANE_GAP = 30.0
           NOTE_GAP = 10.0
           TITLE_HEIGHT = 26.0

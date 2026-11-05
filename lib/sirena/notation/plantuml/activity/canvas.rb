@@ -82,7 +82,9 @@ module Sirena
           private
 
           def text(point, content, anchor, face)
-            width = @metrics.text_width([content], size: face[:size])
+            size = face[:size]
+            role = face[:role]
+            width = @metrics.text_width([content], role: role, size: size)
             left = point.first - (width * { "start" => 0, "middle" => 0.5,
                                             "end" => 1 }.fetch(anchor))
             see(left, left + width, point.last + 3)
