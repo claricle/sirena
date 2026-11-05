@@ -21,7 +21,7 @@ module Sirena
           LINK = 30.0
           COLUMN_PAD = 40.0
           SHADE = "#E5E5E5"
-          DEFAULT_BAR = "#AAAAAA"
+          DEFAULT_BAR = "#E2E2F0"
           COLOR = /\A#?[A-Za-z0-9]+\z/
           private_constant :MARGIN, :BAR, :GAP, :TOP, :BOX_HEIGHT, :LINK,
                            :COLUMN_PAD, :SHADE, :DEFAULT_BAR, :COLOR
@@ -93,8 +93,10 @@ module Sirena
           def draw_node(span)
             box = box_of(span)
             draw_links(span, box)
-            Shapes.draw(self, @diagram.shapes[span.name], box)
-            text(span.name, box.centre, box.middle, anchor: "middle")
+            shape = @diagram.shapes[span.name]
+            Shapes.draw(self, shape, box)
+            text(span.name, box.centre, Shapes.label_middle(shape, box),
+                 anchor: "middle")
             draw_addresses(span, box)
           end
 

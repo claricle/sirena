@@ -7,7 +7,8 @@ module Sirena
         # How a node's `shape` is drawn into a pen.
         module Shapes
           PAPER = "#F1F1F1"
-          private_constant :PAPER
+          LID = 8.0
+          private_constant :PAPER, :LID
 
           module_function
 
@@ -20,6 +21,11 @@ module Sirena
             else pen.rect(box.left, box.top, box.width, box.height,
                           fill: PAPER)
             end
+          end
+
+          # @return [Float] y of the name's middle: below a cylinder's lid
+          def label_middle(shape, box)
+            shape == "database" ? box.middle + (LID / 2) : box.middle
           end
 
           def cube(pen, box)
@@ -36,21 +42,19 @@ module Sirena
              [:line, right, box.bottom]]
           end
 
+          # A cylinder: a body whose foot bulges and a full ellipse for the lid.
           def database(pen, box)
-            pen.path(cylinder(box), fill: PAPER)
-            pen.path([[:move, box.left, box.top + 8],
-                      [:curve, box.centre, box.top + 16, box.right,
-                       box.top + 8]])
+            pen.path(body(box), fill: PAPER)
+            pen.ellipse(box.centre, box.top + LID, box.width / 2, LID,
+                        fill: PAPER)
           end
 
-          def cylinder(box)
-            left = box.left
-            right = box.right
-            top = box.top + 8
-            bottom = box.bottom - 8
-            [[:move, left, top], [:curve, box.centre, top - 12, right, top],
-             [:line, right, bottom],
-             [:curve, box.centre, bottom + 12, left, bottom], [:close]]
+          def body(box)
+            rim = box.top + LID
+            foot = box.bottom - LID
+            [[:move, box.left, rim], [:line, box.left, foot],
+             [:curve, box.centre, foot + (2 * LID), box.right, foot],
+             [:line, box.right, rim], [:close]]
           end
         end
       end

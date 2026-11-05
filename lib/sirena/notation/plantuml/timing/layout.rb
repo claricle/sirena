@@ -17,9 +17,12 @@ module Sirena
           TOP = 10.0
           PLOT = 420.0
           MIN_LEFT = 70.0
-          RULE = "#BBBBBB"
+          RULE = "#333333"
+          TAB_HEIGHT = 17.5
+          TAB_SLANT = 10.0
           GRID = "3,3"
-          private_constant :TOP, :PLOT, :MIN_LEFT, :RULE, :GRID
+          private_constant :TOP, :PLOT, :MIN_LEFT, :RULE, :GRID,
+                           :TAB_HEIGHT, :TAB_SLANT
 
           # @param diagram [Diagram]
           # @return [Drawing::Scene]
@@ -105,12 +108,28 @@ module Sirena
 
           def track(participant)
             top, = @tracks.fetch(participant.id)
-            line(0, top, @axis.x(@axis.finish), top, stroke: RULE)
-            text(participant.title, 6, top + 12, size: 13, bold: true)
+            frame(participant.title, top)
             @signals.labels(participant, top).each do |name, y|
               text(name, @left - 6, y, anchor: "end")
             end
             @signals.draw(participant, top)
+          end
+
+          def frame(title, top)
+            line(0, top, @axis.x(@axis.finish), top, stroke: RULE,
+                                                     stroke_width: "0.5")
+            text(title, 6, top + 12, size: 13, bold: true)
+            tab(title, top)
+          end
+
+          # The outline PlantUML draws round a lane's name: a rule under the
+          # text that slants up to the lane's top edge.
+          def tab(title, top)
+            edge = 12 + text_width(title, size: 13)
+            low = top + TAB_HEIGHT
+            line(0, low, edge, low, stroke: RULE, stroke_width: "0.5")
+            line(edge, low, edge + TAB_SLANT, top, stroke: RULE,
+                                                   stroke_width: "0.5")
           end
 
           def axis_line
@@ -122,6 +141,8 @@ module Sirena
           def tick(time)
             x = @axis.x(time)
             line(x, @bottom, x, @bottom + 5)
+            return unless @axis.labelled?(time)
+
             text(@axis.label(time), x, @bottom + 16, size: 11,
                                                      anchor: "middle")
           end

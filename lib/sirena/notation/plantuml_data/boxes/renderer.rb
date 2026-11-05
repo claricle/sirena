@@ -2,6 +2,7 @@
 
 require_relative "../../../renderer/base"
 require_relative "../../../svg"
+require_relative "text"
 
 module Sirena
   module Notation
@@ -46,12 +47,12 @@ module Sirena
           end
 
           def draw_text(mark)
-            element(Svg::Text, x: mark[:x], y: mark[:y],
-                               content: mark[:content], fill: mark[:fill],
+            element(Svg::Text, x: mark[:x], y: mark[:y], fill: mark[:fill],
                                font_family: FONT, font_size: "14",
                                font_weight: ("bold" if mark[:bold]),
                                font_style: ("italic" if mark[:italic]),
                                text_anchor: mark[:anchor])
+              .tap { |text| Text.assign(text, mark[:content]) }
           end
 
           def draw_path(mark)
