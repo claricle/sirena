@@ -120,7 +120,7 @@ module Sirena
 
           def box_rectangle(frame)
             frame_rectangle(frame).tap do |rect|
-              rect.fill = skin_paint(:box_fill) || rect.fill
+              rect.fill = frame.fill || skin_paint(:box_fill) || rect.fill
               rect.stroke = skin_paint(:line) || rect.stroke
               rect.stroke_width = skin_width(:thin) || rect.stroke_width
             end

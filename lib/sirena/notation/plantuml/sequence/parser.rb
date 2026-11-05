@@ -86,7 +86,7 @@ module Sirena
           DIVIDER = /\A==[ \t]*(.*?)[ \t]*==\z/
           SPACING = /\A\|\|(?:(\d+)\|\|)?\|?\z/
           DELAY = /\A\.\.\.(?:[ \t]*(\S.*?)[ \t]*\.\.\.)?\z/
-          BOX = /\Abox(?:[ \t]+(#{QUOTED}))?\z/io
+          BOX = /\Abox(?:[ \t]+(#{QUOTED}))?(?:[ \t]+(\#\w+))?\z/io
           END_BOX = /\A(?:endbox|end[ \t]+box)\z/i
           PRAGMA = /\A!pragma[ \t]+(teoz|svginteractive)[ \t]+true\z/i
           STARTUML = /\A@startuml(?![A-Za-z0-9_])/
@@ -577,14 +577,16 @@ module Sirena
           # not drawn at all.
           def open_box(match)
             @open_boxes.last&.store(:nested, true)
-            @open_boxes << { title: unquote(match[1].to_s), members: [] }
+            @open_boxes << { title: unquote(match[1].to_s), members: [],
+                             fill: Fill.read(match[2]) }
           end
 
           def close_box
             box = @open_boxes.pop
             return if box[:nested] && box[:members].empty?
 
-            @boxes << Box.new(title: box[:title], members: box[:members])
+            @boxes << Box.new(title: box[:title], members: box[:members],
+                              fill: box[:fill])
           end
 
           def end_of_diagram(text, number)

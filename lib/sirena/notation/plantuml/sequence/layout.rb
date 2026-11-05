@@ -1260,6 +1260,7 @@ module Sirena
             Scene::Frame.new(
               x: left, y: @origin, width: right - left,
               height: @flow.y + foot_height + BOX_PADDING - @origin,
+              fill: box.fill&.colour,
               texts: [text(box.title, (left + right) / 2, @origin + 17, "box")]
             )
           end

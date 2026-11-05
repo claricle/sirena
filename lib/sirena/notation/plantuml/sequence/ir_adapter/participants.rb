@@ -28,6 +28,7 @@ module Sirena
 
             def box(box, sink, ids)
               node = sink.node("box", box.title)
+              Fills.call(node, box.fill, sink)
               box.members.each do |member|
                 sink.edge("box_member", node, ids.fetch(member),
                           parent_id: node.id)

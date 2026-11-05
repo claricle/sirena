@@ -91,6 +91,7 @@ module Sirena
             attribute :y, :float
             attribute :width, :float
             attribute :height, :float
+            attribute :fill, :string
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
