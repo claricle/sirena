@@ -41,8 +41,7 @@ module Sirena
             when "history" then Look::HISTORY_SIZE
             when "start", "end" then Look.terminal(state_shape_type(state))
             when "note" then note_dimensions(state)
-            when "normal" then leaf_dimensions(state, label_dims, descriptions)
-            else super
+            else leaf_dimensions(state, label_dims, descriptions)
             end
           end
 
