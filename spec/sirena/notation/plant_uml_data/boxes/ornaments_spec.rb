@@ -62,13 +62,19 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes::Ornaments,
       .not_to include("green")
   end
 
-  it "grows a row with its <size:..> and sinks that cell's baseline" do
+  it "grows a row with its <size:..>" do
     plain = svg_of("big")
     sized = svg_of("<size:20>big")
+
     expect(number(sized.root, "height") - number(plain.root, "height"))
       .to be_within(0.01).of(7.07)
-    expect(number(value_text(sized), "y") - number(value_text(plain), "y"))
-      .to be_within(0.01).of(5.8)
+  end
+
+  it "sinks the baseline of a cell with its <size:..>" do
+    plain = value_text(svg_of("big"))
+    sized = value_text(svg_of("<size:20>big"))
+
+    expect(number(sized, "y") - number(plain, "y")).to be_within(0.01).of(5.8)
   end
 
   it "draws <&icon> as the Open Iconic outline scaled to the font" do

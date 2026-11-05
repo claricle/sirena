@@ -2,7 +2,6 @@
 
 require_relative "marks"
 require_relative "text"
-require_relative "../../plantuml/creole_icons"
 
 module Sirena
   module Notation
@@ -97,10 +96,16 @@ module Sirena
           end
 
           def icon(name, left, baseline, fill)
-            { kind: :glyph, d: Sirena::Notation::PlantUML::Creole::Icons
-              .outline(name),
+            { kind: :glyph, d: outline(name),
               fill: fill,
               transform: place(left + ICON_NUDGE, baseline - ICON_LIFT) }
+          end
+
+          # Loaded on first use, like {Text}: `require "sirena"` must not
+          # define the PlantUML namespace.
+          def outline(name)
+            require_relative "../../plantuml/creole_icons"
+            Sirena::Notation::PlantUML::Creole::Icons.outline(name)
           end
 
           def place(left, top)

@@ -50,7 +50,7 @@ module Sirena
               [participant.title] +
                 signals.labels(participant, 0).map(&:first)
             end
-            [names.map { |name| text_width(name, size: 13) }.max.to_f + 30,
+            [names.map { |name| text_width(name, size: 14) }.max.to_f + 30,
              MIN_LEFT].max
           end
 
@@ -110,7 +110,7 @@ module Sirena
             top, = @tracks.fetch(participant.id)
             frame(participant.title, top)
             @signals.labels(participant, top).each do |name, y|
-              text(name, @left - 6, y, anchor: "end")
+              text(name, @left - 6, y, anchor: "end", fill: RULE)
             end
             @signals.draw(participant, top)
           end
@@ -118,14 +118,14 @@ module Sirena
           def frame(title, top)
             line(0, top, @axis.x(@axis.finish), top, stroke: RULE,
                                                      stroke_width: "0.5")
-            text(title, 6, top + 12, size: 13, bold: true)
+            text(title, 5, top + 8.75, size: 14, bold: true, fill: RULE)
             tab(title, top)
           end
 
           # The outline PlantUML draws round a lane's name: a rule under the
           # text that slants up to the lane's top edge.
           def tab(title, top)
-            edge = 12 + text_width(title, size: 13)
+            edge = 6 + text_width(title, size: 14)
             low = top + TAB_HEIGHT
             line(0, low, edge, low, stroke: RULE, stroke_width: "0.5")
             line(edge, low, edge + TAB_SLANT, top, stroke: RULE,
@@ -134,7 +134,7 @@ module Sirena
 
           def axis_line
             line(@axis.x(@axis.start), @bottom, @axis.x(@axis.finish),
-                 @bottom, stroke_width: "1.5")
+                 @bottom, stroke_width: "2", stroke: RULE)
             @axis.ticks.each { |time| tick(time) }
           end
 
@@ -144,7 +144,8 @@ module Sirena
             return unless @axis.labelled?(time)
 
             text(@axis.label(time), x, @bottom + 16, size: 11,
-                                                     anchor: "middle")
+                                                     anchor: "middle",
+                                                     fill: RULE)
           end
         end
       end

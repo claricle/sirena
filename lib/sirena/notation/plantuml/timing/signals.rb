@@ -9,8 +9,10 @@ module Sirena
         # Draws one participant's signal inside its track, and says where on
         # the track the signal is at a time (where a message arrow lands).
         class Signals
-          GREEN = "#007900"
+          GREEN = "#006400"
           LAVENDER = "#E2E2F0"
+          # PlantUML draws a lane's names and its analog line in this grey.
+          INK = "#333333"
           ROW = 20.0
           PAD = 10.0
           TIP = 6.0
@@ -18,7 +20,7 @@ module Sirena
                       "analog" => 90.0 }.freeze
           MAX_EDGES = 2000
           private_constant :GREEN, :LAVENDER, :ROW, :PAD, :TIP, :HEIGHTS,
-                           :MAX_EDGES
+                           :MAX_EDGES, :INK
 
           # @param pen [Drawing::Pen]
           # @param diagram [Diagram]
@@ -167,7 +169,7 @@ module Sirena
 
             @pen.path(step_commands(points) +
                       [[:line, @axis.x(@axis.finish), points.last[1]]],
-                      stroke: GREEN, stroke_width: "2")
+                      stroke: GREEN, stroke_width: "1.5")
           end
 
           def step_commands(points)
@@ -194,7 +196,7 @@ module Sirena
                       fill: change.fill || LAVENDER,
                       stroke: change.stroke || GREEN, stroke_width: "1.5")
             @pen.text(change.state, (left + right) / 2, top + 20.0,
-                      anchor: "middle", bold: true)
+                      anchor: "middle", bold: true, fill: INK)
           end
 
           def hexagon(left, right, top, closed)
@@ -226,7 +228,8 @@ module Sirena
               [index.zero? ? :move : :line, @axis.x(time), y]
             end
             @pen.path(commands + [[:line, @axis.x(@axis.finish),
-                                   points.last[1]]], stroke: Drawing::Pen::INK)
+                                   points.last[1]]], stroke: INK,
+                                                     stroke_width: "0.5")
           end
 
           def analog_points(participant, top)
