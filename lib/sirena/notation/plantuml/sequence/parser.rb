@@ -44,6 +44,7 @@ module Sirena
           DECLARATION = /\A(#{KINDS.join('|')})[ \t]+(#{QUOTED}|#{NAME})
                          (?:[ \t]+as[ \t]+(#{NAME}))?
                          (?:[ \t]+<<[ \t]*([^<>\n]+?)[ \t]*>>)?
+                         (?:[ \t]+order[ \t]+(-?\d+))?
                          (?:[ \t]+(\#\w+))?\z/xio
           SKINPARAM_WIDTH = /\Askinparam[ \t]+MinClassWidth[ \t]+(\d+)\z/i
           MAXMESSAGE = /maxmessagesize[ \t]+(\d+)\z/i
@@ -139,6 +140,7 @@ module Sirena
 
           def start_empty
             @participants = {}
+            @orders = {}
             @outline = Outline.new
             @boxes = []
             @open_boxes = []
@@ -325,7 +327,7 @@ module Sirena
           def declaration?(match)
             participant = match[1].casecmp?("participant")
             (match[4].nil? || participant) &&
-              (match[5].nil? || (participant && Fill.read(match[5])))
+              (match[6].nil? || (participant && Fill.read(match[6])))
           end
 
           def collect_style(text)
@@ -587,13 +589,14 @@ module Sirena
             display = unquote(match[2])
             id = match[3] || display
             @participants[id] ||= participant(match, id, display)
+            @orders[id] ||= match[5].to_i
             @open_boxes.last[:members] << id if @open_boxes.any?
           end
 
           def participant(match, id, display)
             Participant.new(
               id: id, label: display, kind: match[1].downcase.to_sym,
-              stereotype: match[4], fill: Fill.read(match[5])
+              stereotype: match[4], fill: Fill.read(match[6])
             )
           end
 
@@ -715,6 +718,7 @@ module Sirena
           end
 
           def diagram
+            ordered_participants
             check_boxes
             check_numbering
             Diagram.new(participants: @participants.values.freeze,
@@ -722,6 +726,15 @@ module Sirena
                         appearance: @appearance, footbox: @footbox,
                         warnings: @warnings.freeze, title: @title,
                         chrome: @chrome, teoz: @teoz)
+          end
+
+          # `order N` seats a participant left to right by N; one with none
+          # counts as 0, and equal numbers keep the order they were met in.
+          def ordered_participants
+            ranked = @participants.each_with_index.sort_by do |(id, _), index|
+              [@orders.fetch(id, 0), index]
+            end
+            @participants = ranked.to_h(&:first)
           end
 
           # The number of a wrapped label would sit on one of its lines,
