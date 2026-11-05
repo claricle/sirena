@@ -33,15 +33,19 @@ module Sirena
           modifier.include?("!")
         end
 
-        # @return [Boolean] a frame around the block
-        def border?
-          modifier.include?("+") || (grid? && !tree?)
+        # @return [Boolean] a rule between rows (`-` or `#`)
+        def row_rules?
+          grid? || row_lines?
         end
 
-        # @return [Boolean] whether the block draws no frame, so its
-        #   container leaves no gap around it
-        def flush?
-          tree? || modifier.empty?
+        # @return [Boolean] a rule between columns (`!` or `#`)
+        def column_rules?
+          grid? || column_lines?
+        end
+
+        # @return [Boolean] a frame around the block
+        def border?
+          modifier.include?("+")
         end
       end
     end

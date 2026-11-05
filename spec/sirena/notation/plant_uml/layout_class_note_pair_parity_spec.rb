@@ -27,7 +27,7 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
 
   def box(extractor, id)
     group = extractor.doc.at_xpath("//g[@id='#{id}']")
-    path = group.at_xpath("./path[@d]")
+    path = group.at_xpath("./path[@d]") if id.start_with?("note")
     return note_body(path) if path
 
     bounds = extractor.bbox(group)
