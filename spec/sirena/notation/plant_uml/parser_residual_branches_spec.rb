@@ -55,9 +55,9 @@ RSpec.describe Sirena::Notation::PlantUML::Parser do
 
   it "reads typed and modified members" do
     expect(member_summary).to eq(
-      [[:field, "count", "int"], [:method, "run", "void"],
-       [:method, "operation", nil], [:field, "visible", nil],
-       [:field, "cached", nil]],
+      [[:field, "count", "int"], [:field, "visible", nil],
+       [:field, "cached", nil], [:method, "run", "void"],
+       [:method, "operation", nil]],
     )
   end
 

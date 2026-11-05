@@ -65,6 +65,7 @@ module Sirena
               type: index.detail(node, "type"),
               type_position: index.detail(node, "type_position")&.to_sym ||
                 :suffix,
+              type_separator: index.detail(node, "type_separator") || ": ",
               parameters: index.detail(node, "parameters"),
               modifiers: index.details(node, "modifier").map(&:to_sym).freeze
             )
