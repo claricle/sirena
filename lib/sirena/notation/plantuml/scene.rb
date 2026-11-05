@@ -28,6 +28,8 @@ module Sirena
           attribute :y1, :float
           attribute :x2, :float
           attribute :y2, :float
+          attribute :width, :float
+          attribute :dash, :string
         end
 
         # The circled kind letter of a class header: `kind` is the class

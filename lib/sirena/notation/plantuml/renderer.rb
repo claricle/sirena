@@ -341,7 +341,9 @@ module Sirena
         def separator_line(segment)
           Svg::Line.new(x1: segment.x1 + RULE_INSET, y1: segment.y1,
                         x2: segment.x2 - RULE_INSET, y2: segment.y2,
-                        stroke: node_stroke, stroke_width: RULE_WIDTH)
+                        stroke: node_stroke,
+                        stroke_width: (segment.width || RULE_WIDTH).to_s,
+                        stroke_dasharray: segment.dash)
         end
 
         def text_element(scene_text)

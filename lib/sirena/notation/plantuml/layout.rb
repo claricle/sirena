@@ -5,6 +5,7 @@ require_relative "caption_layout"
 require_relative "class_name"
 require_relative "class_header"
 require_relative "end_texts"
+require_relative "member_rule"
 require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "qualified_association_layout"
@@ -1088,7 +1089,7 @@ module Sirena
         # A separator row carries the pseudo-modifier :rule, which the box
         # draws as a line instead of text.
         def rule_modifiers(member)
-          member.kind == :separator ? [:rule] : member.modifiers
+          member.kind == :separator ? [:rule, member.type] : member.modifiers
         end
 
         def note_specifications(notes)
@@ -1595,10 +1596,12 @@ module Sirena
         # A separator is a rule across the box, broken around its title.
         def rules(item, horizontal, width, baselines)
           item[:member_rows].each_with_index.flat_map do |content, index|
-            next [] unless item[:member_modifiers][index].include?(:rule)
+            rule, character = item[:member_modifiers][index]
+            next [] unless rule == :rule
 
-            rule_segments(content, horizontal, baselines.fetch(index) - 4.0,
-                          width)
+            MemberRule.style(character,
+                             rule_segments(content, horizontal,
+                                           baselines.fetch(index) - 4.0, width))
           end
         end
 
