@@ -34,13 +34,13 @@ RSpec.describe Sirena::Notation::PlantUMLSalt::Parser do
       expect(table.rows.first.cells[1].kind).to eq(:empty)
     end
 
-    it "reads a quoted cell as a text field without its quotes" do
-      field = table.rows.last.cells.last
-      expect([field.kind, field.text]).to eq([:field, "relevant content"])
+    it "reads a quoted cell as plain text, quotes kept" do
+      cell = table.rows.last.cells.last
+      expect([cell.kind, cell.text]).to eq([:text, '"relevant content"'])
     end
 
-    it "treats the table as gridded" do
-      expect(table).to be_grid
+    it "draws column bars, not a grid" do
+      expect([table.column_lines?, table.grid?]).to eq([true, false])
     end
   end
 

@@ -2,6 +2,7 @@
 
 require_relative "legacy_parser"
 require_relative "new_parser"
+require_relative "../style"
 require_relative "../unsupported_construct_error"
 
 module Sirena
@@ -27,11 +28,12 @@ module Sirena
           #   stripped, with its 1-based number
           def self.entries(source)
             lines = source.dup.force_encoding(Encoding::UTF_8).scrub.lines
-            lines.each_with_index.filter_map do |line, index|
-              text = line.strip
+            texts = lines.map(&:strip)
+            styling = Style::Reader.styling?(texts)
+            texts.each_with_index.filter_map do |text, index|
               next if text.empty? || text.start_with?("'", "@start", "@end")
+              next if styling[index]
 
-              refuse_style(text, index + 1)
               [text, index + 1]
             end
           end
@@ -42,14 +44,6 @@ module Sirena
               line.include?("(*") || line.match?(/\Aif\s+"/i)
             end
           end
-
-          def self.refuse_style(text, number)
-            return unless text.match?(/\A<style>/i)
-
-            raise UnsupportedConstructError.new(construct: "style block",
-                                                line: number, text: text)
-          end
-          private_class_method :refuse_style
         end
       end
     end
