@@ -204,10 +204,16 @@ module Sirena
           def add_edge(match, link)
             from = resolve(match[:a])
             to = resolve(match[:b])
-            rows = { from_row: row_index(from, match[:aport]),
-                     to_row: row_index(to, match[:bport]) }
+            rows = { from_row: row_index(from, port(match, :aport)),
+                     to_row: row_index(to, port(match, :bport)) }
             @graph.edges << link.edge(from, to, label: match[:label]&.strip,
                                                 **rows)
+          end
+
+          # @return [String, nil] a link end's row name; an entity link has
+          #   no ports and so no such capture
+          def port(match, name)
+            match[name] if match.names.include?(name.to_s)
           end
 
           # Declares `rest` -- a name, a label and an optional alias -- as a
