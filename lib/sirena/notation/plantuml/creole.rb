@@ -6,7 +6,7 @@ module Sirena
   module Notation
     module PlantUML
       # PlantUML's creole inline markup in a one-line label: `**bold**`,
-      # `//italic//`, `__underline__`, `--strike--`, `~~wave~~` (drawn as an
+      # `//italic//`, `__underline__`, `--strike--`, `~~wave~~` (a wavy
       # underline), `""monospace""`, and the tags `<b>`, `<i>`, `<u>`, `<s>`,
       # `<w>`, `<color:red>`, `<size:18>` and `<back:..>` (the background is
       # not drawn; its text is kept). A marker with no partner stays literal,
@@ -15,11 +15,11 @@ module Sirena
         Run = Struct.new(:text, :style, keyword_init: true)
 
         TOGGLES = { "**" => :bold, "//" => :italic, "__" => :underline,
-                    "--" => :strike, "~~" => :underline,
+                    "--" => :strike, "~~" => :wave,
                     '""' => :mono }.freeze
         TAG_STYLES = { "b" => :bold, "i" => :italic, "u" => :underline,
                        "s" => :strike, "strike" => :strike,
-                       "w" => :underline, "del" => :strike }.freeze
+                       "w" => :wave, "del" => :strike }.freeze
         PAIRED = %w[color size].freeze
         IGNORED = %w[back font].freeze
         TOKEN = %r{
@@ -171,6 +171,7 @@ module Sirena
         def decoration(style)
           words = []
           words << "underline" if style[:underline]
+          words << "wavy underline" if style[:wave]
           words << "line-through" if style[:strike]
           words.join(" ") unless words.empty?
         end

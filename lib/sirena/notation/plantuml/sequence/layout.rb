@@ -26,6 +26,8 @@ module Sirena
         # source order, and the same heads again at the foot of the lifelines.
         class Layout < Sirena::Layout::Base
           MARGIN = 20.0
+          DELAY_DASH = "1,4"
+          private_constant :DELAY_DASH
           HEAD_PADDING = 12.0
           MIN_HEAD_WIDTH = 80.0
           INTRINSIC_HEAD_PADDING = 7.0
@@ -76,6 +78,7 @@ module Sirena
           CLASSIC_ROW = 29.3105
           CLASSIC_SELF_ROW = 42.3105
           CLASSIC_SELF_CLEARANCE = 50.0
+          CLASSIC_LABEL_INSET = Walker::CLASSIC_LABEL_INSET
           CLASSIC_FRAGMENT_ROW = 24.3105
           CLASSIC_BRANCH_GAP = 2.0
           CLASSIC_FRAGMENT_CLOSE = 7.0
@@ -114,7 +117,8 @@ module Sirena
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
                            :BOX_TITLE_SIZE, :SELF_MIN_CLEARANCE,
                            :INTRINSIC_HEAD_PADDING, :INTRINSIC_HEAD_HEIGHT,
-                           :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_PADDING,
+                           :SELF_WIDTH, :CLASSIC_LABEL_INSET, :BOX_PADDING,
+                           :BOX_TITLE_PADDING,
                            :BOX_TITLE_HEIGHT,
                            :MIN_WIDTH_PADDING, :HEAD_LEADING, :EDGE_GAP,
                            :EDGE_MARGIN,
@@ -968,7 +972,13 @@ module Sirena
             end
             return 0.0 if labels.empty?
 
-            SELF_WIDTH + 6 + labels.map { |m| label_width(m) }.max
+            reach_for(labels.map { |m| label_width(m) }.max)
+          end
+
+          def reach_for(widest)
+            return SELF_WIDTH + 6 + widest if compact?
+
+            [SELF_WIDTH, CLASSIC_LABEL_INSET + widest].max
           end
 
           def place_heads(widths, top, tail:)
@@ -1317,12 +1327,32 @@ module Sirena
           end
 
           def lifelines
-            ids.zip(@centers).map do |id, centre|
-              PlantUML::Scene::Segment.new(
-                x1: centre, y1: lifeline_top(id),
-                x2: centre, y2: @flow.y
-              )
+            ids.zip(@centers).flat_map do |id, centre|
+              lifeline_pieces(centre, lifeline_top(id), @flow.y)
             end
+          end
+
+          # The lifeline from `top` to `bottom`, dotted across each gap.
+          def lifeline_pieces(centre, top, bottom)
+            at = top
+            pieces = gaps.flat_map do |gap|
+              next [] if gap.y1 < at || gap.y2 > bottom
+
+              piece = [lifeline_segment(centre, at, gap.y1),
+                       lifeline_segment(centre, gap.y1, gap.y2, DELAY_DASH)]
+              at = gap.y2
+              piece
+            end
+            pieces << lifeline_segment(centre, at, bottom)
+          end
+
+          def gaps
+            @flow.delays.select { |delay| delay.y2 > delay.y1 }
+          end
+
+          def lifeline_segment(centre, from, to, dash = nil)
+            PlantUML::Scene::Segment.new(x1: centre, y1: from, x2: centre,
+                                         y2: to, dash: dash)
           end
 
           def created_top(id, top)

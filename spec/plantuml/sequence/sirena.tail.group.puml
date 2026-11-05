@@ -1,0 +1,6 @@
+@startuml
+A -> B : x
+group g
+B -> B : inside
+end
+@enduml

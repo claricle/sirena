@@ -163,11 +163,21 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       expect(numbers[2]).to eq(numbers[0] - 42)
     end
 
-    it "anchors the label of a left loop at its end" do
+    it "anchors the label of a left loop at its end, above the loop" do
+      numbers = numbers_of("A <- A : hi")
       arrow = scene_of("A <- A : hi").arrows.first
 
       expect(arrow.texts.first).to have_attributes(
-        anchor: "end", x: numbers_of("A <- A : hi")[2] - 6,
+        anchor: "end", x: numbers[0] - 7, y: numbers[1] - 4.74,
+      )
+    end
+
+    it "anchors the label of a right loop at its start, above the loop" do
+      numbers = numbers_of("A -> A : hi")
+      arrow = scene_of("A -> A : hi").arrows.first
+
+      expect(arrow.texts.first).to have_attributes(
+        anchor: "start", x: numbers[0] + 7, y: numbers[1] - 4.74,
       )
     end
 
@@ -274,6 +284,71 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     scene = scene_of("A -> A : long long long long long msg")
 
     expect(scene.width).to be > top_heads(scene).first.width + 150
+  end
+
+  describe "the foot tail" do
+    def foot_gap(*lines)
+      scene = scene_of(*lines)
+      scene.heads.last.y - arrow_ys(scene).last
+    end
+
+    it "puts the foot heads 17 below the last plain message" do
+      expect(foot_gap("A -> B")).to eq(17.0)
+    end
+
+    it "puts the foot heads 30 below the top of a last self message" do
+      expect([foot_gap("A -> A"), foot_gap("A -> A : x")]).to eq([30.0, 30.0])
+    end
+
+    it "leaves 24 below a last message closing a frame" do
+      expect(foot_gap("A -> B", "group g", "B -> A", "end")).to be_within(1e-6)
+        .of(24.0)
+    end
+
+    it "lays out a diagram with no message at all" do
+      expect(scene_of("participant A").heads.size).to eq(2)
+    end
+  end
+
+  describe "a delay" do
+    def arrow_gap(*lines)
+      ys = arrow_ys(scene_of(*lines))
+      ys[1] - ys[0]
+    end
+
+    # Rows measured on PlantUML 1.2026.6.
+    it "adds 28 between two messages" do
+      expect(arrow_gap("A -> B : a", "...", "B -> A : b"))
+        .to be_within(1e-3).of(57.3105)
+    end
+
+    it "adds 40.95 when the gap has its text" do
+      expect(arrow_gap("A -> B : a", "...x...", "B -> A : b"))
+        .to be_within(1e-3).of(70.2656)
+    end
+
+    it "keeps unlabelled messages 6 clear of the gap" do
+      expect(arrow_gap("A -> B", "...", "B -> A")).to be_within(1e-3).of(42.0)
+    end
+
+    it "ends the foot 12.3 sooner when the gap is last" do
+      scene = scene_of("A -> B : a", "...")
+
+      expect(scene.heads.last.y).to be_within(1e-3).of(127.7988)
+    end
+
+    it "dots each lifeline across the gap" do
+      scene = scene_of("A -> B : a", "...", "B -> A : b")
+      dotted = scene.lifelines.select { |line| line.dash == "1,4" }
+
+      expect(dotted.map do |line|
+        (line.y2 - line.y1).round(3)
+      end).to eq([28.0] * 2)
+    end
+
+    it "keeps the lifelines solid when there is no gap" do
+      expect(scene_of("A -> B").lifelines.map(&:dash).uniq).to eq([nil])
+    end
   end
 
   it "frames a box and shifts the heads below its title" do

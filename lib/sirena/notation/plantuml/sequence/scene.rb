@@ -171,6 +171,8 @@ module Sirena
 
           # A `...` gap between two messages, with its text if it has any.
           class Delay < Lutaml::Model::Serializable
+            attribute :y1, :float
+            attribute :y2, :float
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 

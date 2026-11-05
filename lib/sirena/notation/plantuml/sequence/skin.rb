@@ -18,7 +18,7 @@ module Sirena
           }.freeze
           SIZES = { "message_label" => "13", "note" => "13", "box" => "13",
                     "fragment_tab" => "13", "fragment_guard" => "11",
-                    "divider" => "13", "delay" => "13" }.freeze
+                    "divider" => "13", "delay" => "11" }.freeze
           HEAD_CORNER = 2.5
           SEPARATOR_DASH = "2,2"
           FAMILY = "sans-serif"

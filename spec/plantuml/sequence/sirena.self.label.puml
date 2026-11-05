@@ -1,0 +1,9 @@
+@startuml
+participant A
+participant B
+A -> A : label above the loop
+B <- B : leftward label
+A -> A
+A -> B : plain
+B -> B : last self
+@enduml
