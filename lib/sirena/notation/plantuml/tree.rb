@@ -28,9 +28,11 @@ module Sirena
         # @return [Notation::Parsed]
         def parse(source, kind)
           id, layout = KINDS.fetch(kind)
+          reader = Reader.new
+          diagram = reader.parse(source, id: id)
           Notation::Parsed.new(
-            type: :mindmap, diagram: Reader.new.parse(source, id: id),
-            transform: layout, renderer: Renderer
+            type: :mindmap, diagram: diagram,
+            transform: layout.styled(reader.rules), renderer: Renderer
           )
         end
       end

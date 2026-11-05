@@ -169,4 +169,78 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes do
                         /note/)
     end
   end
+
+  describe "edges" do
+    it "reads an empty YAML document as nothing" do
+      expect(boxes::YamlReader.new.call("# only a comment\n---\n")).to be_nil
+    end
+
+    it "reads a bare scalar YAML document" do
+      expect(boxes::YamlReader.new.call("hello")).to eq("hello")
+    end
+
+    it "stops a mapping at a line that is not an entry" do
+      value = boxes::YamlReader.new.call("a: 1\n@@@ b\n")
+
+      expect(value).to eq({ "a" => 1 })
+    end
+
+    it "nests a block under a bare dash" do
+      value = boxes::YamlReader.new.call("-\n  a: 1\n- 2\n")
+
+      expect(value).to eq([{ "a" => 1 }, 2])
+    end
+
+    it "reads a key with no value at the end of the document as null" do
+      value = boxes::YamlReader.new.call("a: 1\nb:\n")
+
+      expect(value).to eq({ "a" => 1, "b" => nil })
+    end
+
+    it "reads a key with no value before a shallower line as null" do
+      value = boxes::YamlReader.new.call("a:\n  b:\nc: 1\n")
+
+      expect(value).to eq({ "a" => { "b" => nil }, "c" => 1 })
+    end
+
+    it "reads a sequence at the same indent as its key" do
+      value = boxes::YamlReader.new.call("a:\n- x\n- y\n")
+
+      expect(value).to eq({ "a" => %w[x y] })
+    end
+
+    it "reads a null YAML scalar as an empty marker" do
+      svg = render("@startyaml\nk: null\n@endyaml")
+
+      expect(texts(svg)).to include("\u2400")
+    end
+
+    it "shows an tag-only scalar as the blank marker" do
+      expect(boxes::Text.scalar("<b></b>")).to eq(boxes::Text::BLANK)
+    end
+
+    it "gives a head with no length along the line a default axis" do
+      marks = boxes::Heads.call(:association, [5.0, 5.0], [5.0, 5.0])
+
+      expect(marks.size).to eq(1)
+    end
+
+    it "lays out a relation cycle without looping", :aggregate_failures do
+      svg = render("@startuml\nobject A\nobject B\nA --> B\nB --> A\n@enduml")
+
+      expect(texts(svg)).to include("A", "B")
+    end
+
+    it "draws a relation from an object to itself" do
+      svg = render("@startuml\nobject A\nA --> A\n@enduml")
+
+      expect(REXML::Document.new(svg).root.name).to eq("svg")
+    end
+
+    it "reads a top to bottom direction line" do
+      svg = render("@startuml\ntop to bottom direction\nobject A\n@enduml")
+
+      expect(texts(svg)).to include("A")
+    end
+  end
 end

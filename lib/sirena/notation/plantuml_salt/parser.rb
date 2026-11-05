@@ -12,8 +12,11 @@ module Sirena
       # Reads `@startsalt ... @endsalt` into a {Block} tree. Anything it does
       # not recognise becomes plain text; it never raises on content.
       class Parser
-        OPENER = /\A\{([#+!\-^*TS]*)(?:[ \t]+(.*))?\z/
+        OPENER = %r{\A\{((?:S[I-]?)?[#+!\-*T/]*)(?:[ \t]+(.*))?\z}
+        # `{^Title`: the rest of the line heads the box.
+        TITLED = /\A\{\^(.*)\z/
         START = /\A@startsalt(?![A-Za-z0-9_])/
+        CLOSE_TAIL = /\A\}\s*\|(.*)\z/
         FINISH = /\A@endsalt\b/
         INLINE_CLOSE = /\A([^{}]*?)\s*\}\s*\|(.*)\z/
         CHECKBOX = /\A\[([xX ]?)\](?:[ \t]+(.*))?\z/
@@ -29,9 +32,10 @@ module Sirena
         # `== Title`: a bold heading in the row's first cell.
         HEADING = /\A==\s*(\S.*)\z/
         HEADING_SIZE = 14
-        private_constant :OPENER, :START, :FINISH, :CHECKBOX, :RADIO,
-                         :BUTTON, :FIELD, :DROPLIST, :INLINE_CLOSE, :RULE,
-                         :RULE_VARIANTS, :HEADING, :HEADING_SIZE
+        private_constant :OPENER, :TITLED, :CLOSE_TAIL, :START, :FINISH,
+                         :CHECKBOX, :RADIO, :BUTTON, :FIELD, :DROPLIST,
+                         :INLINE_CLOSE, :RULE, :RULE_VARIANTS, :HEADING,
+                         :HEADING_SIZE
 
         # @param source [String] any String; invalid UTF-8 is scrubbed
         # @return [Block] a root block holding every top-level row
@@ -60,17 +64,41 @@ module Sirena
         end
 
         def read_line(line)
-          opened = false
-          while (match = OPENER.match(line))
-            open_block(match[1])
-            line = match[2].to_s.strip
-            opened = true
-          end
+          line, opened = open_blocks(line)
           return if opened && inline_closed?(line)
+          return if closed_with_tail?(line)
 
           line, closers = strip_closers(line)
           add_row(line) unless line.empty?
           closers.times { close_block }
+        end
+
+        # Opens every group the line starts with.
+        # @return [Array(String, Boolean)] what follows them and whether any
+        #   opened
+        def open_blocks(line)
+          opened = false
+          while (rest = open_block_on(line))
+            line = rest
+            opened = true
+          end
+          [line, opened]
+        end
+
+        # @return [String, nil] what follows the opener, nil when there is none
+        def open_block_on(line)
+          if (titled = TITLED.match(line))
+            open_block("^", title: heading_runs(titled[1].strip))
+            return ""
+          end
+          match = OPENER.match(line) or return
+
+          open_block(match[1])
+          match[2].to_s.strip
+        end
+
+        def heading_runs(text)
+          Markup.runs(text) unless text.empty?
         end
 
         # `{+ a | b } | c`: the block closes mid-line and `c` joins the
@@ -81,6 +109,15 @@ module Sirena
           add_row(match[1]) unless match[1].empty?
           close_block
           graft(match[2])
+          true
+        end
+
+        # `} | c`: the block closes and `c` joins the row that holds it.
+        def closed_with_tail?(line)
+          match = CLOSE_TAIL.match(line) or return false
+
+          close_block
+          graft(match[1])
           true
         end
 
@@ -110,8 +147,8 @@ module Sirena
           line.end_with?("}") && line.start_with?("{")
         end
 
-        def open_block(modifier)
-          block = Block.new(modifier)
+        def open_block(modifier, **)
+          block = Block.new(modifier, **)
           @stack.last.rows << Row.new([block])
           @stack.push(block)
         end
@@ -192,6 +229,7 @@ module Sirena
           return unless match
 
           label, *items = match[1].split("^")
+          items.reject! { |item| item.strip.empty? }
           labelled_widget(:droplist, label.to_s,
                           items: items.map { |item| Markup.runs(item) })
         end
