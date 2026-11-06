@@ -177,7 +177,7 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes do
         expect(runs["bold"]["font-weight"]).to eq("bold")
         expect(runs["it"]["font-style"]).to eq("italic")
         expect(runs["gone"]["text-decoration"]).to eq("line-through")
-        expect(runs["wavy"]["text-decoration"]).to eq("underline")
+        expect(runs["wavy"]["text-decoration"]).to eq("wavy underline")
       end
 
       it "colours a run" do
