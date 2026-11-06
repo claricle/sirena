@@ -26,6 +26,11 @@ module Sirena
             BLOCK_GAP
           end
 
+          # The jar leaves a boxless node's text one above and below.
+          def boxless_pad_y
+            1.0
+          end
+
           def stroke_width
             1.5
           end
