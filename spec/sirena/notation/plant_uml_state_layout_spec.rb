@@ -151,4 +151,117 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(box("B")[1]).to be > box("A").last
     end
   end
+
+  def circles
+    REXML::XPath.match(root, "//*[local-name()='circle']").map do |circle|
+      [circle.attributes["cx"].to_f, circle.attributes["cy"].to_f]
+    end
+  end
+
+  context "with two states joined both ways, one way twice" do
+    let(:source) do
+      <<~PUML
+        @startuml
+        [*] --> Low
+        Low --> High : up
+        High --> Low : down
+        High --> Low : again
+        @enduml
+      PUML
+    end
+
+    it "ranks them by the way most transitions run" do
+      expect(box("High")[1]).to be < box("Low")[1]
+    end
+  end
+
+  context "with two states joined one way each" do
+    let(:source) do
+      "@startuml\n[*] --> A\nA --> B\nB --> A\n@enduml"
+    end
+
+    it "keeps the first listed on top" do
+      expect(box("A")[1]).to be < box("B")[1]
+    end
+  end
+
+  context "with a start marker entering the composite that stands lower" do
+    let(:source) do
+      <<~PUML
+        @startuml
+        [*] --> Lower
+        state Upper {
+          [*] --> Idle
+          Idle --> Lower : go
+        }
+        state Lower {
+          [*] --> Busy
+          Busy --> Upper : back
+        }
+        @enduml
+      PUML
+    end
+
+    it "hangs the marker straight above it" do
+      x, = circles.min_by { |circle| circle[1] }
+      expect(x).to be_within(0.5).of(centre_x("Lower"))
+    end
+  end
+
+  context "with an end marker a composite leads to" do
+    let(:source) do
+      <<~PUML
+        @startuml
+        state Box {
+          [*] --> First
+          First --> Second
+        }
+        Box --> [*] : done
+        @enduml
+      PUML
+    end
+
+    it "stands beside the composite, right of it" do
+      marker = circles.max_by(&:first)
+      expect(marker.first).to be > box("Box")[2]
+    end
+
+    it "is level with the state its start marker enters" do
+      marker = circles.max_by(&:first)
+      expect(marker[1]).to be_within(0.5).of(centre_y("First"))
+    end
+  end
+
+  context "with an end marker a composite without a start marker leads to" do
+    let(:source) do
+      "@startuml\nstate Box {\n  First --> Second\n}\nBox --> [*]\n@enduml"
+    end
+
+    it "keeps the marker below the composite" do
+      expect(circles.first[1]).to be > box("Box").last
+    end
+  end
+
+  context "with a transition from a composite to itself" do
+    let(:source) do
+      <<~PUML
+        @startuml
+        state Box {
+          [*] --> First
+          First --> Second
+          Second --> Third
+          Third --> Fourth
+        }
+        Box --> Box : retry
+        @enduml
+      PUML
+    end
+
+    it "loops level with the start marker, its first row" do
+      loop_line = REXML::XPath.match(root, "//*[local-name()='path']").last
+      numbers = loop_line.attributes["d"].scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
+      ys = numbers.each_slice(2).map(&:last)
+      expect(ys).to include(a_value_within(12.0).of(circles.first[1]))
+    end
+  end
 end

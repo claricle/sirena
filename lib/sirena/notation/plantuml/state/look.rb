@@ -18,6 +18,7 @@ module Sirena
           NOTE_PAD_X = 6.0
           NOTE_PAD_RIGHT = 15.0
           NOTE_PAD_Y = 5.0
+          CANVAS_MARGIN = 20.0
           FOLD = 10.0
           TAIL = 4.0
           HISTORY_SIZE = { width: 22.0, height: 22.0 }.freeze
