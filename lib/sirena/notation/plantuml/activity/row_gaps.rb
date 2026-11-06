@@ -6,7 +6,9 @@ module Sirena
       module Activity
         # The space above each row, as PlantUML leaves it: 20 between
         # steps, 10 from a decision down to a branch beside it, 6 from a
-        # branch into the diamond that closes them, and room for the label
+        # branch into the diamond that closes them (23.13 from a join bar,
+        # which PlantUML sets off by a step's half-height more), and room
+        # for the label
         # of an arrow between two rows. A row is as far from the one above
         # as the largest of its arrows asks. A branch that leaves the foot of
         # its decision rather than its side asks for the label's room.
@@ -14,9 +16,10 @@ module Sirena
           STEP = 20.0
           BRANCH = 10.0
           CLOSE = 6.0
+          BAR_CLOSE = 23.1328
           LABEL_MARGIN = 28.33
           LABEL_BELOW_DECISION = 11.45
-          private_constant :STEP, :BRANCH, :CLOSE, :LABEL_MARGIN,
+          private_constant :STEP, :BRANCH, :CLOSE, :BAR_CLOSE, :LABEL_MARGIN,
                            :LABEL_BELOW_DECISION
 
           # @param frame [Float] the space a partition's frame asks where an
@@ -71,9 +74,13 @@ module Sirena
           end
 
           def side_run(edge, height)
-            return [CLOSE, labelled(height)].max if edge.to.kind == :merge
+            return close(edge, height) if edge.to.kind == :merge
 
             edge.from.kind == :decision && !edge.from.bare ? BRANCH : STEP
+          end
+
+          def close(edge, height)
+            [edge.from.kind == :bar ? BAR_CLOSE : CLOSE, labelled(height)].max
           end
 
           def beside?(edge)
