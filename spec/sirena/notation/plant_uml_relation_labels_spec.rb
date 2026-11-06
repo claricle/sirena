@@ -65,10 +65,11 @@ RSpec.describe Sirena::Notation::PlantUML do
   it "leaves a label on the middle of a relation of its own untouched" do
     # B and C fan out in one rank below A, so both labels share a height;
     # the rank gap is the jar's 60 plus 17 for the one-line labels, which
-    # puts the labels 29 below the jar's own (98.57, less its 7 margin).
+    # puts the labels 0.35 above the jar's own (98.57), on the jar's 7 margin
+    # (127.225 before the margin matched: 29 below).
     labels = labels_of("class A", "class B", "class C", "A --> B : l1",
                        "A --> C : l2")
 
-    expect(labels.map { _1[:y] }).to eq([127.225, 127.225])
+    expect(labels.map { _1[:y] }).to eq([98.225, 98.225])
   end
 end

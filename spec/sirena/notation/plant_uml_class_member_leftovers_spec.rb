@@ -117,8 +117,9 @@ RSpec.describe Sirena::Notation::PlantUML do
       rows = texts(svg)
       start = number(rows.fetch("int counter"), "x")
 
-      expect(pointers.first).to include("L #{start.round(3)} ")
-        .or include("L #{start.round(2)} ")
+      tips = pointers.first.scan(/L ([\d.]+) /).flatten.map(&:to_f)
+
+      expect(tips).to include(be_within(0.001).of(start))
     end
 
     it "finds a method named by its quoted signature" do
