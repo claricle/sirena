@@ -481,9 +481,8 @@ module Sirena
           end
 
           def participant_label_width(participant)
-            Drawing::Face.widest_line(participant.label,
-                                      size: head_font_size,
-                                      bold: bold_heads?)
+            NoteGeometry.widest_line(participant.label, head_font_size,
+                                     bold: bold_heads?)
           end
 
           # PlantUML draws a head label bold from weight 700 up.
@@ -869,7 +868,7 @@ module Sirena
           end
 
           def sans_width(text)
-            Drawing::Face.widest_line(text, size: message_font_size)
+            NoteGeometry.widest_line(text, message_font_size)
           end
 
           def label_width(message)
@@ -1546,7 +1545,7 @@ module Sirena
           def label_text_width(string)
             return message_text_width(string) if compact?
 
-            Drawing::Face.widest_line(string, size: message_font_size)
+            NoteGeometry.widest_line(string, message_font_size)
           end
         end
       end

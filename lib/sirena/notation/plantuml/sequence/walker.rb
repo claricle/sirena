@@ -451,7 +451,7 @@ module Sirena
           end
 
           def sans_message_width(text)
-            Drawing::Face.widest_line(text, size: @message_font_size)
+            NoteGeometry.widest_line(text, @message_font_size)
           end
 
           def message_row(message)
