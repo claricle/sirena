@@ -186,11 +186,6 @@ module Sirena
             trailing.any?(&:on?) && trailing.any? { |item| !item.on? }
           end
 
-          def unlabelled_self?(item)
-            item.is_a?(Message) && item.self_message? &&
-              item.label.to_s.empty?
-          end
-
           def apply_config(config)
             apply_message_config(config)
             apply_cadence_config(config)

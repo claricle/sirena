@@ -349,6 +349,16 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     it "keeps the lifelines solid when there is no gap" do
       expect(scene_of("A -> B").lifelines.map(&:dash).uniq).to eq([nil])
     end
+
+    it "records the text of a gap in a teoz diagram" do
+      scene = teoz_scene("A -> B : a", "...x...", "B -> A : b")
+
+      expect(scene.delays.map { |delay| delay.texts.size }).to eq([1])
+    end
+
+    it "records nothing for a bare gap in a teoz diagram" do
+      expect(teoz_scene("A -> B : a", "...", "B -> A : b").delays).to be_empty
+    end
   end
 
   it "frames a box and shifts the heads below its title" do
