@@ -79,7 +79,7 @@ module PlantUmlSpikeHelpers
   def rendered_member_line(member)
     line = member.name.dup
     line += "(#{member.parameters})" if member.kind == :method
-    line += ": #{member.type}" if member.type
+    line += "#{member.type_separator}#{member.type}" if member.type
     line
   end
 

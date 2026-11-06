@@ -91,6 +91,7 @@ module Sirena
             attribute :y, :float
             attribute :width, :float
             attribute :height, :float
+            attribute :fill, :string
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
@@ -170,9 +171,13 @@ module Sirena
 
           # A `...` gap between two messages, with its text if it has any.
           class Delay < Lutaml::Model::Serializable
+            attribute :y1, :float
+            attribute :y2, :float
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
+          # `role=value` for each colour or thickness skinparam set.
+          attribute :paint, :string, collection: true
           attribute :banners, Banner, collection: true
           attribute :title, Title
           attribute :text_blocks, TextBlock, collection: true

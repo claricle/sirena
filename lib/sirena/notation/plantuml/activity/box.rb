@@ -7,6 +7,16 @@ module Sirena
         # Where a node sits: its centre and size.
         class Box
           attr_accessor :cx, :cy, :width, :height
+          # @return [Float, nil] where arrows meet a bar that has one
+          #   neighbour on a side; nil elsewhere
+          attr_writer :anchor
+          # @return [Array<Box>] the boxes a bar fans out to or gathers
+          attr_accessor :fan
+
+          # @return [Float] where a lone neighbour's arrow meets the box
+          def anchor
+            @anchor || cx
+          end
 
           def initialize(width:, height:)
             @width = width

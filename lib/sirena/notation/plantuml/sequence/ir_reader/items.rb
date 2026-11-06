@@ -13,8 +13,10 @@ module Sirena
                         "fragment" => Blocks.method(:fragment),
                         "divider" => Blocks.method(:divider),
                         "delay" => Blocks.method(:delay),
+                        "spacing" => Blocks.method(:spacing),
                         "activation" => Blocks.method(:activation),
                         "destroy" => Blocks.method(:destroy),
+                        "create" => Blocks.method(:create),
                         "page_break" => Blocks.method(:page_break) }.freeze
             private_constant :READERS
 

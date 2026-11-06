@@ -13,12 +13,13 @@ RSpec.describe Sirena::Notation::PlantUML::MemberRule do
   end
 
   # The inked rules of class K when its body is `a`, the separator, `b`;
-  # the compartment rules under the name and under the fields are dropped.
+  # the compartment rule under the name is dropped; a separator leaves no
+  # empty method compartment, so no rule closes the fields.
   def rules(separator)
     svg = Sirena.render("@startuml\nclass K {\n a\n #{separator}\n b\n}\n" \
                         "@enduml\n", notation: :plantuml)
     REXML::XPath.match(REXML::Document.new(svg), "//g[@id='class-K']/line")
-      .drop(2).map do |line|
+      .drop(1).map do |line|
       [line.attributes["stroke-width"],
        line.attributes["stroke-dasharray"]]
     end
@@ -48,7 +49,7 @@ RSpec.describe Sirena::Notation::PlantUML::MemberRule do
     svg = Sirena.render("@startuml\nclass K {\n a\n ==\n b\n}\n@enduml\n",
                         notation: :plantuml)
     ys = REXML::XPath.match(REXML::Document.new(svg), "//g[@id='class-K']/line")
-      .drop(2).map { |line| line.attributes["y1"].to_f }
+      .drop(1).map { |line| line.attributes["y1"].to_f }
 
     expect(ys.last - ys.first).to eq(2.0)
   end

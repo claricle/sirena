@@ -74,8 +74,8 @@ module Sirena
         JUNCTION = /\A\((#{NAME})[ \t]*,[ \t]*(#{NAME})\)[ \t]*
                     \.{1,2}[ \t]*(#{NAME})\z/xo
         METHOD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]*\(([^()]*)\)
-                  (?:[ \t]*:[ \t]*(.+))?\z/xo
-        FIELD = /\A([+\-#~])?[ \t]*(#{NAME})(?:[ \t]*:[ \t]*([^()]+))?\z/o
+                  (?:([ \t]*:[ \t]*)(.+))?\z/xo
+        FIELD = /\A([+\-#~])?[ \t]*(#{NAME})(?:([ \t]*:[ \t]*)([^()]+))?\z/o
         TYPE = /#{NAME}(?:\[\])*/o
         TYPED_FIELD = /\A([+\-#~])?[ \t]*(#{TYPE})[ \t]+(#{NAME})\z/o
         TYPED_METHOD = /\A([+\-#~])?[ \t]*(#{TYPE})[ \t]+(#{NAME})[ \t]*
@@ -83,6 +83,7 @@ module Sirena
         MODIFIER = /\{(?:static|abstract|field|method)\}/i
         SEPARATOR = /\A([-=._])\1(?:[ \t]*(\S.*?)[ \t]*\1\1)?\z/
         INLINE_MARKUP = /<img:[^>]*>/i
+        UNDECODED_IMAGE = '""(Cannot decode)""'
         PLAIN_TEXT = /\A[\p{Alnum}\[][^<>{}"!$():@;]*\z/
         STYLE_OPEN = %r{\A<style>\z}i
         SKIN_BLOCK = /\Askinparam[ \t]+\S+[ \t]*\{\z/i
@@ -96,7 +97,8 @@ module Sirena
                          :NOTE, :END_NOTE,
                          :RELATION, :JUNCTION, :METHOD, :FIELD,
                          :TYPED_FIELD, :TYPED_METHOD, :MODIFIER, :TYPE,
-                         :SEPARATOR, :PLAIN_TEXT, :INLINE_MARKUP, :FREE_NOTE,
+                         :SEPARATOR, :PLAIN_TEXT, :INLINE_MARKUP,
+                         :UNDECODED_IMAGE, :FREE_NOTE,
                          :MEMBER_OF,
                          :STYLE_OPEN, :SKIN_BLOCK, :LINE_END, :NOT_FOUND_MESSAGE
 
@@ -348,10 +350,11 @@ module Sirena
           :note
         end
 
-        # Creole tags stay for the renderer; `<img:>` has no drawn form
-        # here and is dropped.
+        # Creole tags stay for the renderer. An `<img:>` has no drawn form
+        # here; PlantUML prints "(Cannot decode)" in monospace for an image
+        # it cannot load, and so does this.
         def plain_note_text(text)
-          text.gsub(INLINE_MARKUP, "").squeeze(" ")
+          text.gsub(INLINE_MARKUP, UNDECODED_IMAGE).squeeze(" ")
         end
 
         def junction(builder, match, number, text)
@@ -578,12 +581,19 @@ module Sirena
 
         def named_member(text)
           if (match = METHOD.match(text))
-            Member.new(kind: :method, visibility: VISIBILITY[match[1]],
-                       name: match[2], type: match[4], parameters: match[3])
+            suffixed(:method, match, 5, parameters: match[3])
           elsif (match = FIELD.match(text))
-            Member.new(kind: :field, visibility: VISIBILITY[match[1]],
-                       name: match[2], type: match[3], parameters: nil)
+            suffixed(:field, match, 4)
           end
+        end
+
+        # A member whose type follows a colon; the group before the type
+        # holds the colon with the spacing written around it.
+        def suffixed(kind, match, type_group, parameters: nil)
+          Member.new(kind: kind, visibility: VISIBILITY[match[1]],
+                     name: match[2], type: match[type_group],
+                     parameters: parameters,
+                     type_separator: match[type_group - 1] || ": ")
         end
 
         def retype(member, words)
@@ -592,7 +602,8 @@ module Sirena
           Member.new(kind: kind, visibility: member.visibility,
                      name: member.name, type: member.type,
                      parameters: member.parameters, modifiers: modifiers,
-                     type_position: member.type_position)
+                     type_position: member.type_position,
+                     type_separator: member.type_separator)
         end
 
         # `int x` and `void run(int a)`: the type comes first.

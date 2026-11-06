@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 require_relative "../../../svg"
+require_relative "archimate"
 require_relative "cloud"
 require_relative "data_shape"
 require_relative "entity_shape"
 require_relative "figures"
 require_relative "../creole"
 require_relative "metrics"
+require_relative "tab"
 
 module Sirena
   module Notation
@@ -52,8 +54,22 @@ module Sirena
           end
 
           def at(spec)
-            [@p.x + (spec[0] * @p.width) + spec[2],
-             @p.y + (spec[1] * @p.height) + spec[3]]
+            [along(spec[0], spec[2], @p.x, @p.width),
+             along(spec[1], spec[3], @p.y + figure_drop, @p.height)]
+          end
+
+          def along(fraction, offset, origin, extent)
+            origin + (fraction * extent) + offset
+          end
+
+          # An actor's stereotype is written above its figure, which moves
+          # down a line to make room.
+          def figure_drop
+            above_figure? ? Metrics::LINE_HEIGHT : 0
+          end
+
+          def above_figure?
+            @p.node.kind == :actor && @p.node.stereotype
           end
 
           def size(spec)
@@ -65,14 +81,23 @@ module Sirena
             Figures.for(kind).each do |type, *args|
               send(:"draw_#{type}", *args)
             end
-            label(Figures.label(kind))
+            label(Figures.label(kind).merge(@p.node.sprite ? { dy: 10 } : {}))
+            draw_sprite if @p.node.sprite
           end
 
-          def draw_rect(origin, extent)
+          # The icon of an archimate element, centred at its top; the label
+          # moves down to make room.
+          def draw_sprite
+            left = @p.x + (@p.width / 2) - 8.5
+            add(Svg::Path, d: @p.node.sprite, fill: "#000000",
+                           transform: "translate(#{left},#{@p.y + 12})")
+          end
+
+          def draw_rect(origin, extent, radius = nil)
             x, y = at(origin)
             width, height = size(extent)
             add(Svg::Rect, x: x, y: y, width: width, height: height,
-                           fill: fill, **LINE)
+                           rx: radius, ry: radius, fill: fill, **LINE)
           end
 
           def draw_circle(center, radius)
@@ -125,11 +150,29 @@ module Sirena
 
           def label(options)
             top = options[:top] ? @p.y + options[:top] : middle(options)
+            anchor, x_pos = label_anchor(options)
             lines.each_with_index do |line, index|
-              y = top + (index * Metrics::LINE_HEIGHT) + 11
-              anchor, x_pos = label_anchor(options)
-              text(x_pos, y, line, anchor)
+              y = top + (index * Metrics::LINE_HEIGHT) + Metrics::ASCENT
+              caption(stereotype?(index), [x_pos, y], line, anchor)
             end
+          end
+
+          def caption(stereotype, point, line, anchor)
+            return text(*point, line, anchor) unless stereotype
+
+            stereotype_line(*point, line, anchor)
+          end
+
+          def stereotype?(index)
+            index.zero? && @p.node.stereotype
+          end
+
+          # The stereotype line is italic; an actor's goes above its figure,
+          # the name lines staying where they were.
+          def stereotype_line(x_pos, baseline, line, anchor)
+            text(x_pos, above_figure? ? @p.y + Metrics::ASCENT : baseline,
+                 line, anchor)
+            @out.last.font_style = "italic"
           end
 
           def label_anchor(options)
@@ -151,28 +194,65 @@ module Sirena
           end
 
           def container
-            outline = Figures.container(@p.node.kind)
-            if outline
-              outline.each { |type, *args| send(:"draw_#{type}", *args) }
-            else
-              draw_rect(Figures::ORIGIN, Figures::FULL)
-            end
+            outline = Figures.container(@p.node.kind) || Figures::BOX
+            outline.each { |type, *args| send(:"draw_#{type}", *args) }
+            decorate
             lines.each_with_index { |line, index| header(line, index) }
+          end
+
+          def decorate
+            draw_tab if tabbed?
+            draw_icon if @p.node.kind == :component
+          end
+
+          def tabbed?
+            Figures::TABBED.include?(@p.node.kind)
+          end
+
+          # A component container carries the glyph of a component too.
+          def draw_icon
+            Figures::COMPONENT.drop(1).each do |type, *args|
+              send(:"draw_#{type}", *args)
+            end
+          end
+
+          def draw_tab
+            width = Metrics.text_width([lines.first.to_s]) * 1.05
+            points = Tab.points(@p.x, @p.y, width, @p.node.kind)
+            add(Svg::Polygon, points: points, fill: FILL, **LINE)
           end
 
           # A header clears the cap of a cylinder, the bumps of a cloud and
           # the slanted top of a node.
-          HEADER_DROP = { database: 10, cloud: 12, node: 8, folder: 14,
-                          frame: 14 }.freeze
+          HEADER_DROP = { database: 10, cloud: 12, node: 8 }.freeze
           HEADER_LEFT = { cloud: 24 }.freeze
           private_constant :HEADER_DROP, :HEADER_LEFT
 
           def header(line, index)
-            kind = @p.node.kind
-            y_pos = @p.y + 18 + HEADER_DROP.fetch(kind, 0) +
+            return tab_text(line) if tabbed? && index.zero?
+
+            weight = index.zero? ? "bold" : nil
+            return centred_title(line, index, weight) if centred?
+
+            text(@p.x + 12 + HEADER_LEFT.fetch(@p.node.kind, 0),
+                 header_top(index), line, "start", weight)
+          end
+
+          # A component container names itself in the middle of its top.
+          def centred? = @p.node.kind == :component
+
+          def centred_title(line, index, weight)
+            text(@p.x + (@p.width / 2), header_top(index), line, "middle",
+                 weight)
+          end
+
+          def header_top(index)
+            @p.y + 13 + Metrics::ASCENT + HEADER_DROP.fetch(@p.node.kind, 0) +
               (index * Metrics::LINE_HEIGHT)
-            text(@p.x + 12 + HEADER_LEFT.fetch(kind, 0), y_pos, line, "start",
-                 index.zero? ? "bold" : nil)
+          end
+
+          def tab_text(line)
+            text(@p.x + Tab::PAD, @p.y + 14, line, "start", "bold")
           end
 
           def text(x_pos, y_pos, content, anchor, weight = nil)

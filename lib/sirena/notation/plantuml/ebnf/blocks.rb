@@ -13,7 +13,24 @@ module Sirena
           RADIUS = 12.0
           GAP = 10.0
           SIDE = 2 * RADIUS
-          WORD_HEIGHT = 26.0
+          WORD_HEIGHT = 26.4883
+          WORD_PAD = 10.0
+          TEXT = 14
+          # Where a heading arrow sits along a rail, as PlantUML places it.
+          HEAD_AT = 0.4
+          HEAD_BACK = 2.0
+          HEAD_MIN = 11.0
+
+          # An arrowhead on the rail at `y`, pointing right from `tail`.
+          def self.heading(pen, tail, level)
+            pen.polygon([[tail, level - 3], [tail + 6, level],
+                         [tail, level + 3]])
+          end
+
+          # Where the arrowhead sits on a rail of `length`, from its start.
+          def self.heading_at(length)
+            [(HEAD_AT * length) - HEAD_BACK, HEAD_MIN].max
+          end
 
           # The rail's bends, as the PlantUML JAR draws them: cubic curves
           # whose handles run three quarters of the radius.
@@ -64,7 +81,8 @@ module Sirena
           # A terminal, nonterminal or special sequence in a box.
           class Word < Block
             def initialize(pen, text, style)
-              super(pen.text_width(text) + 20, WORD_HEIGHT, WORD_HEIGHT / 2)
+              super(pen.text_width(text, size: TEXT) + WORD_PAD, WORD_HEIGHT,
+                    WORD_HEIGHT / 2)
               @text = text
               @style = style
             end
@@ -72,7 +90,7 @@ module Sirena
             def draw(pen, left, top)
               pen.rect(left, top, width, height, **@style)
               pen.text(@text, left + (width / 2), top + baseline,
-                       anchor: "middle")
+                       anchor: "middle", size: TEXT)
             end
           end
 
@@ -137,9 +155,18 @@ module Sirena
                 level = top + @tops[index] + branch.baseline
                 draw_branch(pen, branch, left, [rail, level])
               end
+              heading(pen, left, rail)
             end
 
             private
+
+            # A skipped branch leaves the rail bare, so it carries the
+            # arrow that shows which way the rail runs.
+            def heading(pen, left, rail)
+              return unless @branches.first.is_a?(Gap)
+
+              Blocks.heading(pen, left + Blocks.heading_at(width), rail)
+            end
 
             def tops_of(branches)
               branches.each_with_object([0.0]) do |branch, tops|
@@ -179,23 +206,23 @@ module Sirena
             end
           end
 
-          # A block that may be taken again, by a line looping back under it.
+          # A block that may be taken again, by a line looping back over it.
           class Loop < Block
-            BACK = 26.0
+            BACK = 14.0
             INSET = 20.0
             TURN = 8.0
 
             def initialize(item)
               super(item.width + (2 * INSET), item.height + BACK,
-                    item.baseline)
+                    item.baseline + BACK)
               @item = item
             end
 
             def draw(pen, left, top)
               rail = top + baseline
-              @item.draw(pen, left + INSET, top)
+              @item.draw(pen, left + INSET, top + BACK)
               rails(pen, left, rail)
-              back(pen, left, rail, top + @item.height + (BACK / 2))
+              back(pen, left, rail, top + (BACK / 2))
             end
 
             private
@@ -208,15 +235,15 @@ module Sirena
             def back(pen, left, rail, level)
               near = left + TURN
               far = left + width - TURN
-              pen.path(under(near, far, [rail, level]))
+              pen.path(over(near, far, [rail, level]))
               arrow(pen, (near + far) / 2, level)
             end
 
-            def under(near, far, (rail, level))
-              [[:move, far, rail], [:line, far, level - TURN],
-               Curves.level(far, level - TURN, -TURN, TURN, TURN),
+            def over(near, far, (rail, level))
+              [[:move, far, rail], [:line, far, level + TURN],
+               Curves.level(far, level + TURN, -TURN, -TURN, TURN),
                [:line, near + TURN, level],
-               Curves.upright(near + TURN, level, -TURN, -TURN, TURN),
+               Curves.upright(near + TURN, level, -TURN, TURN, TURN),
                [:line, near, rail]]
             end
 

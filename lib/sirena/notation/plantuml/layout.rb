@@ -3,6 +3,7 @@
 require_relative "../../layout/base"
 require_relative "caption_layout"
 require_relative "class_name"
+require_relative "stereotype_head"
 require_relative "class_header"
 require_relative "end_texts"
 require_relative "member_icon"
@@ -11,6 +12,8 @@ require_relative "member_rule"
 require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "qualified_association_layout"
+require_relative "qualifier_box"
+require_relative "styled_relation_curve"
 require_relative "rank_chain"
 require_relative "rank_hierarchy"
 require_relative "note_layout"
@@ -79,6 +82,8 @@ module Sirena
         # boxes also keep four more pixels of side padding than our ordinary
         # measured class box; both values are pinned by the group2712 family.
         EMPTY_MEMBER_COMPARTMENT = 14.0
+        EMPTY_COMPARTMENTS_EXTRA = 2.0
+        AXIS_TOLERANCE = 0.5
         EMPTY_CLASS_WIDTH_EXTRA = 8.0
         EMPTY_CLASS_MIN_WIDTH = 41.5
         HIDE_CIRCLE_BASE_HEIGHT = 42.48828125
@@ -140,7 +145,9 @@ module Sirena
                          :SELF_RELATION_END_RATIO,
                          :SELF_RELATION_CONTROL_OFFSET,
                          :SELF_RELATION_LABEL_GAP,
-                         :EMPTY_MEMBER_COMPARTMENT, :EMPTY_CLASS_WIDTH_EXTRA,
+                         :EMPTY_MEMBER_COMPARTMENT,
+                         :EMPTY_COMPARTMENTS_EXTRA, :AXIS_TOLERANCE,
+                         :EMPTY_CLASS_WIDTH_EXTRA,
                          :EMPTY_CLASS_MIN_WIDTH, :HIDE_CIRCLE_BASE_HEIGHT,
                          :HIDE_CIRCLE_TITLE_ALLOWANCE,
                          :HIDE_CIRCLE_MEMBER_ALLOWANCE,
@@ -432,7 +439,12 @@ module Sirena
         end
 
         def noted_boxes(diagram, boxes)
-          NoteLayout.new(diagram, method(:note_line_width)).place(boxes)
+          NoteLayout.new(diagram, method(:note_line_width),
+                         method(:member_text_width)).place(boxes)
+        end
+
+        def member_text_width(text)
+          standard_text_width(text, font_size)
         end
 
         def note_line_width(text)
@@ -814,6 +826,8 @@ module Sirena
 
         def complete_box_specification(record, klass, diagram, details)
           record = proportional_member_box(record, klass, diagram, details)
+          record = compartmented_empty_box(record, details[:member_rows],
+                                           diagram)
           record = compact_empty_box(record, details[:member_rows], diagram)
           record = smetana_hide_circle_box(record, klass, diagram, details)
           adjust_plain_empty_width(record, klass, diagram, details[:names])
@@ -1025,6 +1039,15 @@ module Sirena
           end
         end
 
+        # A class with no members keeps its two 8-high compartments below
+        # the name, which ClassHeader rules.
+        def compartmented_empty_box(record, member_rows, diagram)
+          return record unless member_rows.empty? && empty_gaps?(diagram)
+          return record unless record.fetch(:title_rows).one?
+
+          record.merge(height: record.fetch(:height) + EMPTY_COMPARTMENTS_EXTRA)
+        end
+
         def compact_empty_box(record, member_rows, diagram)
           return record unless member_rows.empty?
           return record unless compact_empty_members?(diagram)
@@ -1166,12 +1189,32 @@ module Sirena
         def isolated_standard_box(record, klass, diagram, details)
           return record unless isolated_standard_box?(klass, diagram, details)
 
-          record.merge(
+          record = record.merge(
             width: isolated_standard_width(klass, details),
             height: isolated_standard_height(klass, diagram,
                                              details[:member_rows]),
             compact_members: header_rows(klass).empty?,
           )
+          stereotype_headed(record, klass, details)
+        end
+
+        # A lone class with one stereotype takes the jar's header: circle
+        # at the left, stereotype above the name, rows packed from the foot.
+        def stereotype_headed(record, klass, details)
+          return record unless StereotypeHead.applies?(klass,
+                                                       circle: @kind_in_spot)
+
+          row = "«#{klass.stereotypes.first}»"
+          sizes = stereotype_head_sizes(row, details[:names].first)
+          width = [StereotypeHead.width(*sizes),
+                   *standard_member_widths(details[:member_rows])].max
+          record.merge(width: width, compact_members: true,
+                       stereotype_head: { row: row, sizes: sizes })
+        end
+
+        def stereotype_head_sizes(row, name)
+          [standard_text_width(row, font_size * 0.85),
+           standard_text_width(name, font_size)]
         end
 
         def isolated_standard_box?(klass, diagram, details)
@@ -1319,7 +1362,7 @@ module Sirena
           content = if type && member.type_position == :prefix
                       "#{type} #{name}"
                     else
-                      "#{name}#{": #{type}" if type}"
+                      "#{name}#{"#{member.type_separator}#{type}" if type}"
                     end
           "#{visibility_mark(member.visibility)}#{content}"
         end
@@ -1586,8 +1629,16 @@ module Sirena
           Scene::Box.new(
             id: item[:id], x: left, y: top, width: box_width,
             height: item[:height], texts: texts, separators: separators,
-            kind: item[:note] ? "note" : "class", fill: item[:note]&.color
+            kind: item[:note] ? "note" : "class", fill: item[:note]&.color,
+            spot: stereotype_spot(item, left, top)
           )
+        end
+
+        def stereotype_spot(item, left, top)
+          return unless item[:stereotype_head]
+
+          across, down = StereotypeHead.circle_centre
+          Scene::Spot.new(kind: "class", cx: left + across, cy: top + down)
         end
 
         def note_texts(item, horizontal, vertical)
@@ -1610,10 +1661,23 @@ module Sirena
         end
 
         def title_texts(item, horizontal, vertical, width)
+          if item[:stereotype_head]
+            return stereotype_head_texts(item, horizontal, vertical)
+          end
+
           cursor = title_text_cursor(item, vertical)
           texts, cursor = title_text_rows(item, horizontal, width, cursor)
           texts << floating_generic_text(item, horizontal, vertical, width)
           [texts.compact, cursor]
+        end
+
+        def stereotype_head_texts(item, horizontal, vertical)
+          head = item[:stereotype_head]
+          centre = horizontal + StereotypeHead.centre(*head[:sizes])
+          first, second = StereotypeHead.baselines
+          [[scene_text(head[:row], centre, vertical + first, "kind", "middle"),
+            scene_text(item[:title_rows].last, centre, vertical + second,
+                       "class_name", "middle")], vertical + second]
         end
 
         def title_text_rows(item, horizontal, width, cursor)
@@ -1634,7 +1698,7 @@ module Sirena
           baseline = vertical + BOX_PADDING + font_size
           return baseline unless compact_single_title?(item)
 
-          [baseline, compact_row_geometry(item)[:head] - 8.0].min
+          [baseline, compact_row_geometry(item)[:head] - 10.709].min
         end
 
         def compact_single_title?(item)
@@ -1722,7 +1786,7 @@ module Sirena
 
         def group_rule_heights(item, baselines)
           member_group_boundaries(item[:member_kinds]).map do |index|
-            ((baselines[index - 1] + baselines[index]) / 2.0) - 3.0
+            ((baselines[index - 1] + baselines[index]) / 2.0) - 5.2911
           end + empty_group_rules(item, baselines)
         end
 
@@ -1907,15 +1971,69 @@ module Sirena
 
         def relation_scene(relation, id, endpoints, end_texts, style = {})
           sides = style.fetch(:sides, %i[left right])
-          markers = style.fetch(:markers, relation.markers)
-          texts = relation_texts(relation, endpoints, end_texts, sides)
-          drawn_markers = relation_markers(relation, markers, sides, endpoints)
-          Scene::Relation.new(id: id, dashed: relation.dashed?, texts: texts,
+          boxes, endpoints = qualifier_boxes(relation, end_texts, endpoints,
+                                             sides)
+          texts = relation_texts(relation, endpoints, end_texts, sides,
+                                 boxes.size)
+          drawn = styled_markers(relation, style, sides, endpoints)
+          relation_record(relation, id, texts: texts, markers: drawn,
+                                        qualifiers: boxes,
+                                        path: relation_path_for(relation,
+                                                                endpoints))
+        end
+
+        def styled_markers(relation, style, sides, endpoints)
+          relation_markers(relation, style.fetch(:markers, relation.markers),
+                           sides, endpoints)
+        end
+
+        def relation_record(relation, id, **drawn)
+          Scene::Relation.new(id: id, dashed: relation.dashed?,
                               dotted: relation.dotted?,
                               stroke: svg_colour(relation.color),
-                              stroke_width: relation.width,
-                              path: relation_path_for(relation, endpoints),
-                              markers: drawn_markers)
+                              stroke_width: relation.width, **drawn)
+        end
+
+        # A one-line bracketed qualifier is a box on the class edge, and the
+        # link starts at the box's far side.
+        # @return [Array(Array<Scene::Box>, Hash)] the boxes and the
+        #   endpoints moved clear of them
+        def qualifier_boxes(relation, end_texts, endpoints, sides)
+          first, second = end_texts.sides
+          direction = unit_vector(*endpoints.values_at(first, second))
+          entries = qualifier_entries(end_texts, endpoints, sides, relation)
+          placed = entries.to_h do |entry|
+            [entry[:side], qualifier_placement(entry, endpoints, direction,
+                                               first)]
+          end
+          [placed.values.map(&:box),
+           endpoints.merge(placed) { |_, tip, found| found.clear(tip) }]
+        end
+
+        # Only on a straight vertical, unlabelled link: a slanted or flat one
+        # is drawn between estimated class positions and beside labels that
+        # sit away from the reference's, so a box would land off it.
+        def qualifier_entries(end_texts, endpoints, sides, relation)
+          return [] unless boxable_link?(endpoints, relation)
+
+          end_texts.entries.select do |entry|
+            entry[:kind] == :qualifier && entry[:pieces].one? &&
+              sides.include?(entry[:side])
+          end
+        end
+
+        def boxable_link?(endpoints, relation)
+          left, right = endpoints.values_at(:left, :right)
+          !endpoints[:control] && !relation.label &&
+            (left[0] - right[0]).abs < AXIS_TOLERANCE
+        end
+
+        def qualifier_placement(entry, endpoints, direction, first)
+          content = entry[:pieces].first
+          outward = entry[:side] == first ? direction : direction.map(&:-@)
+          width = measure_text(content, font_size: font_size)[:width]
+          QualifierBox.place(content, endpoints.fetch(entry[:side]), outward,
+                             width, font_size)
         end
 
         # A bracketed colour is a CSS name (`red`) or bare hex digits.
@@ -1986,10 +2104,19 @@ module Sirena
         def controlled_relation_path(relation, ordered)
           control = qualified_label_control(relation, ordered) ||
             qualified_lane_control(relation, ordered)
-          return relation_path(ordered) unless control
+          return styled_curve_path(relation, ordered) unless control
 
           "M #{point(ordered[:left])} Q #{point(control)} " \
             "#{point(ordered[:right])}"
+        end
+
+        def styled_curve_path(relation, ordered)
+          first, last = ordered.values_at(:left, :right)
+          controls = StyledRelationCurve.controls(relation, first, last)
+          return relation_path(ordered) unless controls
+
+          "M #{point(first)} C #{point(controls.first)} " \
+            "#{point(controls.last)} #{point(last)}"
         end
 
         def fan_qualifier_relation?(relation)
@@ -2392,12 +2519,12 @@ module Sirena
 
         # The label rides with the left end, so a relation split into legs
         # still shows it once.
-        def relation_texts(relation, endpoints, end_texts, sides)
+        def relation_texts(relation, endpoints, end_texts, sides, boxed = 0)
           first, second = end_texts.sides
           direction = unit_vector(*endpoints.values_at(first, second))
           label = relation_text_label(relation, endpoints, sides)
-          texts = positioned_end_texts(end_texts.entries, endpoints,
-                                       direction, first, sides)
+          texts = positioned_end_texts(unboxed_entries(end_texts, boxed),
+                                       endpoints, direction, first, sides)
           [label, *texts].compact
         end
 
@@ -2410,6 +2537,14 @@ module Sirena
 
         def visible_relation_label(label)
           label&.sub(/[ \t]+[<>]\z/, "")
+        end
+
+        def unboxed_entries(end_texts, boxed)
+          return end_texts.entries if boxed.zero?
+
+          end_texts.entries.reject do |entry|
+            entry[:kind] == :qualifier && entry[:pieces].one?
+          end
         end
 
         def positioned_end_texts(entries, endpoints, direction, first, sides)

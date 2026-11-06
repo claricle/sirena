@@ -1,0 +1,14 @@
+@startuml
+autonumber 3 4 "<b>[0]"
+A -> B : one
+autonumber stop
+A -> B : x
+autonumber resume
+B -> A : two
+autonumber 5 3
+A -> B : a
+autonumber "z0"
+B -> A : b
+autonumber "z00"
+B -> A : c
+@enduml

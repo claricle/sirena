@@ -39,7 +39,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
   let(:expected_digests) do
     %w[
-      8ee50dfdaa77f4e20f745536ccc1204a35e7a410a8ed08cc1b38a52face2d1c9
+      6d3641c871d597ea7559edabc4291c0f1eaf35e1eb9add29e5f26e103b441971
       2e1568bceb26ff39f7160be3fbb0d8d2b981efa7d1af543fee35284239d90632
     ]
   end

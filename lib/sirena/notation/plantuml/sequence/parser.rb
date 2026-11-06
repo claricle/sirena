@@ -18,6 +18,8 @@ require_relative "note"
 require_relative "note_fill"
 require_relative "outline"
 require_relative "parallel_message"
+require_relative "create"
+require_relative "paint"
 require_relative "participant"
 require_relative "ref"
 require_relative "refusals"
@@ -44,11 +46,14 @@ module Sirena
           DECLARATION = /\A(#{KINDS.join('|')})[ \t]+(#{QUOTED}|#{NAME})
                          (?:[ \t]+as[ \t]+(#{NAME}))?
                          (?:[ \t]+<<[ \t]*([^<>\n]+?)[ \t]*>>)?
+                         (?:[ \t]+order[ \t]+(-?\d+))?
                          (?:[ \t]+(\#\w+))?\z/xio
           SKINPARAM_WIDTH = /\Askinparam[ \t]+MinClassWidth[ \t]+(\d+)\z/i
           MAXMESSAGE = /maxmessagesize[ \t]+(\d+)\z/i
           SKINPARAM_MAXMESSAGE = /\Askinparam[ \t]+#{MAXMESSAGE}/i
           SKINPARAM_LINE = /\A#{MAXMESSAGE}/i
+          SKINPARAM_PAINT = /\Askinparam[ \t]+(\w+)[ \t]+(\S+)\z/i
+          SKINPARAM_PAINT_LINE = /\A(\w+)[ \t]+(\S+)\z/
           SKINPARAM_OPEN = /\Askinparam[ \t]*\{\z/i
           HIDE_FOOTBOX = /\Ahide[ \t]+footbox\z/i
           AUTOACTIVATE = /\Aautoactivate[ \t]+(on|off)\z/i
@@ -67,6 +72,7 @@ module Sirena
                      [ \t]*(?::[ \t]*(.*))?\z/xo
           ACTIVATION = /\A(activate|deactivate)[ \t]+(#{QUOTED}|#{NAME})
                         (?:[ \t]+(#{COLOUR}))?\z/xio
+          CREATE = /\Acreate[ \t]+(.+)\z/i
           DESTROY = /\Adestroy[ \t]+(#{QUOTED}|#{NAME})\z/io
           MARKS = { "++" => [:on], "--" => [:off], "!!" => [:destroy],
                     "--++" => %i[off on], "++--" => %i[on off] }.freeze
@@ -83,24 +89,31 @@ module Sirena
           BRANCH = /\Aelse(?:[ \t]+(.*))?\z/i
           RETURN = /\Areturn(?:[ \t]+(.*))?\z/i
           DIVIDER = /\A==[ \t]*(.*?)[ \t]*==\z/
+          SPACING = /\A\|\|(?:(\d+)\|\||\|\|?)\z/
           DELAY = /\A\.\.\.(?:[ \t]*(\S.*?)[ \t]*\.\.\.)?\z/
-          BOX = /\Abox(?:[ \t]+(#{QUOTED}))?\z/io
+          BOX = /\Abox(?:[ \t]+(#{QUOTED}))?(?:[ \t]+(\#\w+))?\z/io
           END_BOX = /\A(?:endbox|end[ \t]+box)\z/i
           PRAGMA = /\A!pragma[ \t]+(teoz|svginteractive)[ \t]+true\z/i
           STARTUML = /\A@startuml(?![A-Za-z0-9_])/
           LINE_END = /\r\n|\r|\n/
           PARALLEL = /\A&[ \t]*(.*)\z/
           NEWPAGE = /\Anewpage\z/i
-          AUTONUMBER = /\Aautonumber(?:[ \t]+(\d+))?\z/i
+          AUTONUMBER = /\Aautonumber(?:[ \t]+(\d+)(?:[ \t]+(\d+))?)?
+                        (?:[ \t]+"([^"]*)")?\z/xi
+          AUTONUMBER_PAUSE = /\Aautonumber[ \t]+(stop|resume)\z/i
 
           PARALLEL_KINDS = [MESSAGE, NOTE, BLOCK].freeze
           TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
                       [REF, :ref], [BRANCH, :branch], [ACTIVATION, :activation],
                       [RETURN, :reply], [DIVIDER, :divider], [DELAY, :delay],
-                      [DESTROY, :destroy], [NEWPAGE, :newpage],
-                      [AUTONUMBER, :autonumber]].freeze
+                      [SPACING, :spacing],
+                      [DESTROY, :destroy], [CREATE, :create],
+                      [NEWPAGE, :newpage],
+                      [AUTONUMBER, :autonumber],
+                      [AUTONUMBER_PAUSE, :counting]].freeze
           SETTINGS = [[SKINPARAM_WIDTH, :min_width],
                       [SKINPARAM_MAXMESSAGE, :max_message],
+                      [SKINPARAM_PAINT, :skinparam_paint],
                       [SKINPARAM_OPEN, :open_skinparam],
                       [HIDE_FOOTBOX, :hide_footbox],
                       [AUTOACTIVATE, :autoactivate],
@@ -112,11 +125,13 @@ module Sirena
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
                            :LINE_END, :PRAGMA, :ACTIVATION, :MARKS, :TARGET,
                            :NOTE, :END_NOTE, :REF, :BLOCK, :BRANCH, :RETURN,
-                           :DIVIDER, :DELAY, :DESTROY, :COLOUR,
+                           :DIVIDER, :DELAY, :SPACING, :DESTROY, :CREATE,
+                           :COLOUR,
                            :SKINPARAM_WIDTH, :STYLE_OPEN, :STYLE_CLOSE,
-                           :PARALLEL,
+                           :PARALLEL, :SKINPARAM_PAINT, :SKINPARAM_PAINT_LINE,
                            :PARALLEL_KINDS, :HIDE_FOOTBOX, :NEWPAGE,
-                           :AUTOACTIVATE, :AUTONUMBER, :TITLE,
+                           :AUTOACTIVATE, :AUTONUMBER,
+                           :AUTONUMBER_PAUSE, :TITLE,
                            :CHROME_OPEN, :CHROME_CLOSE
 
           # @param source [String] PlantUML source
@@ -138,6 +153,7 @@ module Sirena
 
           def start_empty
             @participants = {}
+            @orders = {}
             @outline = Outline.new
             @boxes = []
             @open_boxes = []
@@ -247,6 +263,16 @@ module Sirena
             set(max_message: match[1].to_i)
           end
 
+          def skinparam_paint(match, number, text)
+            painted(match[1], match[2], text, number)
+          end
+
+          def painted(key, value, text, number)
+            read = Paint.read(key, value) or raise refusal(text, number)
+
+            @appearance = @appearance.merge(read)
+          end
+
           def open_skinparam(_match, number, _text)
             @skin_open = number
           end
@@ -324,7 +350,7 @@ module Sirena
           def declaration?(match)
             participant = match[1].casecmp?("participant")
             (match[4].nil? || participant) &&
-              (match[5].nil? || (participant && Fill.read(match[5])))
+              (match[6].nil? || (participant && Fill.read(match[6])))
           end
 
           def collect_style(text)
@@ -344,9 +370,16 @@ module Sirena
             elsif (match = SKINPARAM_LINE.match(text))
               set(max_message: match[1].to_i)
             else
-              raise refusal(text, number)
+              block_paint(text, number)
             end
             :statements
+          end
+
+          def block_paint(text, number)
+            match = SKINPARAM_PAINT_LINE.match(text) or
+              raise refusal(text, number)
+
+            painted(match[1], match[2], text, number)
           end
 
           def close_style
@@ -431,8 +464,28 @@ module Sirena
             @outline.destroy(mention(match[1]))
           end
 
+          # `create X` or `create participant X`: the head appears where the
+          # next message to it is.
+          def create(match)
+            declared = DECLARATION.match(match[1])
+            if declared && declaration?(declared)
+              declare(declared)
+              return @outline.create(declared[3] || unquote(declared[2]))
+            end
+            return false unless /\A(?:#{QUOTED}|#{NAME})\z/o.match?(match[1])
+
+            @outline.create(mention(match[1]))
+          end
+
           def autonumber(match)
-            @outline.autonumber((match[1] || 1).to_i)
+            numbering = Numbering.read(start: (match[1] || 1).to_i,
+                                       step: (match[2] || 1).to_i,
+                                       format: match[3])
+            numbering && @outline.autonumber(numbering)
+          end
+
+          def counting(match)
+            @outline.counting(match[1].casecmp?("resume"))
           end
 
           def newpage(_match)
@@ -441,6 +494,10 @@ module Sirena
 
           def divider(match)
             @outline.divider(match[1])
+          end
+
+          def spacing(match)
+            @outline.spacing(match[1]&.to_f)
           end
 
           def delay(match)
@@ -560,14 +617,16 @@ module Sirena
           # not drawn at all.
           def open_box(match)
             @open_boxes.last&.store(:nested, true)
-            @open_boxes << { title: unquote(match[1].to_s), members: [] }
+            @open_boxes << { title: unquote(match[1].to_s), members: [],
+                             fill: Fill.read(match[2]) }
           end
 
           def close_box
             box = @open_boxes.pop
             return if box[:nested] && box[:members].empty?
 
-            @boxes << Box.new(title: box[:title], members: box[:members])
+            @boxes << Box.new(title: box[:title], members: box[:members],
+                              fill: box[:fill])
           end
 
           def end_of_diagram(text, number)
@@ -582,13 +641,14 @@ module Sirena
             display = unquote(match[2])
             id = match[3] || display
             @participants[id] ||= participant(match, id, display)
+            @orders[id] ||= match[5].to_i
             @open_boxes.last[:members] << id if @open_boxes.any?
           end
 
           def participant(match, id, display)
             Participant.new(
               id: id, label: display, kind: match[1].downcase.to_sym,
-              stereotype: match[4], fill: Fill.read(match[5])
+              stereotype: match[4], fill: Fill.read(match[6])
             )
           end
 
@@ -710,6 +770,7 @@ module Sirena
           end
 
           def diagram
+            ordered_participants
             check_boxes
             check_numbering
             Diagram.new(participants: @participants.values.freeze,
@@ -717,6 +778,15 @@ module Sirena
                         appearance: @appearance, footbox: @footbox,
                         warnings: @warnings.freeze, title: @title,
                         chrome: @chrome, teoz: @teoz)
+          end
+
+          # `order N` seats a participant left to right by N; one with none
+          # counts as 0, and equal numbers keep the order they were met in.
+          def ordered_participants
+            ranked = @participants.each_with_index.sort_by do |(id, _), index|
+              [@orders.fetch(id, 0), index]
+            end
+            @participants = ranked.to_h(&:first)
           end
 
           # The number of a wrapped label would sit on one of its lines,

@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
+require_relative "../../../text_measurement"
 require_relative "../../plantuml_data/boxes/table_box"
+require_relative "detour"
 require_relative "frame_ports"
 require_relative "metrics"
 require_relative "packer"
+require_relative "paths"
 require_relative "ranking"
 require_relative "scene"
 
@@ -17,26 +20,31 @@ module Sirena
           MARGIN = 16.0
           PAD = 16.0
           TITLE_HEIGHT = 30.0
-          # A cloud's outline is an ellipse, so it needs this much more room
-          # on each side before its corners clear what it holds.
-          CLOUD_ROOM = 0.45
+          # A cloud's cut, bumped outline needs this much more room on each
+          # side, across and down, before it clears what it holds.
+          CLOUD_ROOM = [22.0, 19.0].freeze
 
           # @param graph [Graph]
           # @return [Scene]
           def call(graph, **)
+            reset(graph)
+            top = arrange(nil)
+            placed = []
+            place(top, [MARGIN, MARGIN + title_room], 0, placed)
+            scene(top, placed)
+          end
+
+          private
+
+          def reset(graph)
             @graph = graph
             @sizes = {}
             @frame_ports = FramePorts.new(@sizes)
             @ports = {}
             @inner = {}
             @inset = {}
-            top = arrange(nil)
-            placed = []
-            place(top.offsets, [MARGIN, MARGIN + title_room], 0, placed)
-            scene(top, placed)
+            @paths = Paths.new(left_to_right? ? 0 : 1)
           end
-
-          private
 
           def scene(top, placed)
             Scene.new(width: [top.width + (2 * MARGIN), title_width].max,
@@ -60,9 +68,36 @@ module Sirena
             ports, children = split_ports(scope)
             (ports + children).each { |child| measure(child) }
             ranking = Ranking.new(children, pairs(scope))
-            packed = Packer.new(@sizes, left_to_right: left_to_right?)
-              .pack(ranking.layers)
+            packed = pack(ranking, scope)
             scope ? frame(packed, scope, ports) : packed
+          end
+
+          def pack(ranking, scope)
+            packer = Packer.new(@sizes, left_to_right: left_to_right?,
+                                        reach: label_reach(scope))
+            packer.route(packer.pack(ranking.layers), ranking.chains)
+          end
+
+          # How wide the widest label on a link of each item of `scope` is:
+          # neighbours are kept this far apart so the labels fan out.
+          def label_reach(scope)
+            @graph.edges.each_with_object(Hash.new(0.0)) do |edge, reach|
+              width = label_width(edge)
+              ends(edge, scope).each do |item|
+                reach[item] = [reach[item], width].max
+              end
+            end
+          end
+
+          def ends(edge, scope)
+            [edge.from, edge.to].filter_map { |node| lift(node, scope) }
+          end
+
+          def label_width(edge)
+            text = edge.label.to_s
+            return 0.0 if text.empty?
+
+            TextMeasurement.measure(text, font_size: 12)[:width].to_f
           end
 
           # The children of `scope` on its frame, then the rest.
@@ -95,9 +130,8 @@ module Sirena
           def inflate_cloud(node)
             return @sizes[node] unless node.kind == :cloud
 
-            width, height = @sizes[node]
-            inset = @inset[node] = [width * CLOUD_ROOM, height * CLOUD_ROOM]
-            @sizes[node] = [width, height].zip(inset).map do |size, room|
+            inset = @inset[node] = CLOUD_ROOM
+            @sizes[node] = @sizes[node].zip(inset).map do |size, room|
               size + (2 * room)
             end
           end
@@ -131,8 +165,9 @@ module Sirena
             at && chain[at + 1]
           end
 
-          def place(offsets, origin, depth, placed)
-            offsets.each do |node, (x_pos, y_pos)|
+          def place(packed, origin, depth, placed)
+            @paths.record(packed.paths, origin)
+            packed.offsets.each do |node, (x_pos, y_pos)|
               width, height = @sizes[node]
               placed << Placed.new(node: node, x: origin[0] + x_pos,
                                    y: origin[1] + y_pos, width: width,
@@ -142,8 +177,7 @@ module Sirena
           end
 
           def place_inside(box, depth, placed)
-            place(@inner[box.node].offsets, inside_origin(box), depth + 1,
-                  placed)
+            place(@inner[box.node], inside_origin(box), depth + 1, placed)
             placed.concat(@frame_ports.place(box, @ports[box.node], depth + 1))
           end
 
@@ -155,13 +189,22 @@ module Sirena
 
           def routes(placed)
             boxes = placed.to_h { |box| [box.node, terminal(box)] }
-            @graph.edges.filter_map do |edge|
-              from = boxes[edge.from]
-              to = boxes[edge.to]
-              next if from.equal?(to)
+            detour = Detour.new(placed)
+            @graph.edges.filter_map { |edge| route(edge, boxes, detour) }
+          end
 
-              Route.new(edge: edge, points: segment(from, to, edge))
-            end
+          def route(edge, boxes, detour)
+            from, to = boxes.values_at(edge.from, edge.to)
+            return if from.equal?(to)
+
+            points = segment(from, to, edge, @paths.between(edge, center(from)))
+            Route.new(edge: edge, points: bent(detour, edge, points))
+          end
+
+          # A note's pointer and a line to a row stay straight.
+          def bent(detour, edge, points)
+            straight = edge.pointer || edge.from_row || edge.to_row
+            straight ? points : detour.call(edge, points)
           end
 
           # What a link ends at: the square of a port on a frame, otherwise
@@ -170,11 +213,18 @@ module Sirena
             FramePorts.on_frame?(box.node) ? @frame_ports.terminal(box) : box
           end
 
-          def segment(from, to, edge)
+          # `between` is where a link across ranks passes the ranks it
+          # skips.
+          def segment(from, to, edge, between)
             a = center(from)
             b = center(to)
-            [row_end(from, edge.from_row, b) || clip(from, a, b),
-             row_end(to, edge.to_row, a) || clip(to, b, a)]
+            [end_at(from, edge.from_row, a, between.first || b),
+             *between,
+             end_at(to, edge.to_row, b, between.last || a)]
+          end
+
+          def end_at(box, row, inner, toward)
+            row_end(box, row, toward) || clip(box, inner, toward)
           end
 
           # The middle of the row of a map or object box that a line ends

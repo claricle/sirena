@@ -23,6 +23,6 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   it "uses the pinned initial gaps for classic messages" do
     actual = [first_arrow_y("A -> B"), first_arrow_y("A -> B: request")]
 
-    expect(actual).to eq([67.7988, 82.7988])
+    expect(actual).to eq([67.4883, 82.7988])
   end
 end

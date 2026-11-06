@@ -1,0 +1,5 @@
+@startuml
+A -> A : a self message label wider than the loop
+A -> B : x
+B -> B : another wide self message label
+@enduml

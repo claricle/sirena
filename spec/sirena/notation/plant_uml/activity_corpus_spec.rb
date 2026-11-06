@@ -43,12 +43,13 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
                                       "condition E")
   end
 
-  it "draws both swimlane names and the lane fill of corpus 6-19",
-     :aggregate_failures do
+  it "draws the swimlane names and lane fill of corpus 6-19, not the " \
+     "old-syntax node colours", :aggregate_failures do
     svg = render_fixture("6-19")
 
     expect(svg_texts(svg)).to include("Actor_For_red", "Final_Actor")
-    expect(svg).to include('fill="pink"', 'fill="palegreen"')
+    expect(svg).to include('fill="pink"', 'fill="lightgray"')
+    expect(svg).not_to include('fill="palegreen"', 'fill="lightblue"')
   end
 
   refused.each do |id, construct|

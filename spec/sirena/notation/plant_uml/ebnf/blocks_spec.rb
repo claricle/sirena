@@ -21,6 +21,14 @@ RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
     render(rule).scan(/<path[^>]*>/).map { |tag| tag[/ d="([^"]*)"/, 1] }
   end
 
+  def rounded(path)
+    path.gsub(/-?\d+\.\d+/) { |n| n.to_f.round(3).to_s }
+  end
+
+  def stroke_widths(svg, tag)
+    svg.scan(/<#{tag}[^>]*stroke-width="([^"]*)"/).flatten.uniq
+  end
+
   def numbers(commands)
     commands.flat_map { |command| command.drop(1) }
   end
@@ -60,30 +68,31 @@ RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
 
   describe "the rails of a rule" do
     it "turns a choice in cubic curves, not quadratic ones" do
-      expect(paths("r = a | b | c;").first).to eq(
-        "M 37.0 50.0 C 46.0 50.0 49.0 53.0 49.0 62.0 L 49.0 74.0 " \
-        "C 49.0 83.0 52.0 86.0 61.0 86.0",
+      expect(rounded(paths("r = a | b | c;").first)).to eq(
+        "M 45.0 50.244 C 54.0 50.244 57.0 53.244 57.0 62.244 L 57.0 74.732 " \
+        "C 57.0 83.732 60.0 86.732 69.0 86.732",
       )
     end
 
     it "turns an optional's bypass in one S" do
-      expect(paths("r = [ a ];").first).to eq(
-        "M 37.0 37.0 C 46.0 37.0 49.0 39.5 49.0 48.5 " \
-        "C 49.0 57.5 52.0 60.0 61.0 60.0",
+      expect(rounded(paths("r = [ a ];").first)).to eq(
+        "M 45.0 37.0 C 54.0 37.0 57.0 39.622 57.0 48.622 " \
+        "C 57.0 57.622 60.0 60.244 69.0 60.244",
       )
     end
 
-    it "rounds the loop-back line at the JAR's loop radius of 8" do
-      expect(paths("r = { a };").first).to eq(
-        "M 119.672 60.0 L 119.672 78.0 C 119.672 84.0 117.672 86.0 111.672 " \
-        "86.0 L 77.0 86.0 C 71.0 86.0 69.0 84.0 69.0 78.0 L 69.0 60.0",
+    it "rounds the loop-back line above the item at the loop radius of 8" do
+      expect(rounded(paths("r = { a };").first)).to eq(
+        "M 118.784 74.244 L 118.784 62.0 C 118.784 56.0 116.784 54.0 " \
+        "110.784 54.0 L 85.0 54.0 C 79.0 54.0 77.0 56.0 77.0 62.0 " \
+        "L 77.0 74.244",
       )
     end
 
-    it "draws rails and boxes at 1.5" do
-      expect(render("r = a, b;").scan(
-        /<(?:line|rect)[^>]*stroke-width="([^"]*)"/,
-      ).flatten.uniq).to eq(["1.5"])
+    it "draws rails at 1.5 and boxes at 0.5" do
+      svg = render("r = a, b;")
+      expect([stroke_widths(svg, "line"), stroke_widths(svg, "rect")])
+        .to eq([["1.5"], ["0.5"]])
     end
 
     it "draws the start dot at 2" do

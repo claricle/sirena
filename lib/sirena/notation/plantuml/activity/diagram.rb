@@ -7,19 +7,21 @@ module Sirena
     module PlantUML
       module Activity
         # A parsed activity diagram: nodes and edges in source order, the
-        # swimlanes in order of first use and an optional title.
+        # swimlanes in order of first use, an optional title and the notices
+        # PlantUML prints above the drawing.
         class Diagram
-          attr_reader :nodes, :edges, :lanes, :title
+          attr_reader :nodes, :edges, :lanes, :title, :warnings
           # @return [Style::Sheet] what the source says about fonts and
           #   looks; the layout sizes boxes from it
           attr_accessor :style
 
           # @param lanes [Array<Array(String, String)>] name and colour
-          def initialize(nodes:, edges:, lanes: [], title: nil)
+          def initialize(nodes:, edges:, lanes: [], title: nil, warnings: [])
             @nodes = nodes
             @edges = edges
             @lanes = lanes
             @title = title
+            @warnings = warnings
             @style = Style::Sheet.new
           end
         end

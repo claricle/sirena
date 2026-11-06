@@ -92,6 +92,26 @@ RSpec.describe Sirena::Notation::PlantUML::ClassHeader do
       .to eq([32.0, 40.0])
   end
 
+  context "with only plain classes" do
+    let(:source) { "@startuml\nclass C1\nclass C2\n@enduml\n" }
+
+    it "keeps the 48-high box and both compartment rules of an empty class" do
+      box = REXML::XPath.first(group("C1"), "rect").attributes
+
+      expect([box["height"].to_f, REXML::XPath.match(group("C1"), "line").size])
+        .to eq([48.0, 2])
+    end
+  end
+
+  it "leaves an empty class no compartments under `hide empty members`" do
+    hidden = REXML::Document.new(
+      Sirena.render("@startuml\nhide empty members\nclass C1\nclass C2\n" \
+                    "@enduml\n", notation: :plantuml),
+    )
+
+    expect(REXML::XPath.match(hidden, "//line")).to be_empty
+  end
+
   it "draws compartment rules a hairline thick and inset by one pixel" do
     box = REXML::XPath.first(group("C1"), "rect").attributes
     rule = REXML::XPath.first(group("C1"), "line").attributes

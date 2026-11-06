@@ -42,7 +42,9 @@ module Sirena
                            :WARNING_SIZE, :LEGEND_FILL, :HEAD_SHAPE_DRAWERS
 
           def render(scene)
+            read_painted(scene)
             document = blank_document(scene)
+            background(document, scene)
             chrome_groups(document, scene)
             LAYERS.each do |collection, drawer|
               items = scene.public_send(collection)
@@ -58,6 +60,14 @@ module Sirena
               width: scene.width, height: scene.height,
               view_box: "0 0 #{scene.width} #{scene.height}"
             )
+          end
+
+          def background(document, scene)
+            return unless painted(:background)
+
+            document << element(Svg::Rect, x: 0, y: 0, width: scene.width,
+                                           height: scene.height,
+                                           fill: painted(:background))
           end
 
           # Assigns every attribute that is not nil.
@@ -120,15 +130,24 @@ module Sirena
 
           def box_rectangle(frame)
             frame_rectangle(frame).tap do |rect|
-              rect.fill = skin_paint(:box_fill) || rect.fill
-              rect.stroke = skin_paint(:line) || rect.stroke
+              rect.fill = box_fill(frame) || rect.fill
+              rect.stroke = stroke_of(:box_line, :line, rect.stroke)
               rect.stroke_width = skin_width(:thin) || rect.stroke_width
             end
           end
 
+          def box_fill(frame)
+            frame.fill || painted(:box_fill) || skin_paint(:box_fill)
+          end
+
+          # The stroke a painted role, then the skin, then the default give.
+          def stroke_of(role, skin_key, default)
+            painted(role) || skin_paint(skin_key) || default
+          end
+
           def fragment_rectangle(fragment)
             frame_rectangle(fragment).tap do |rect|
-              rect.stroke = skin_paint(:frame_stroke) || rect.stroke
+              rect.stroke = stroke_of(:group_line, :frame_stroke, rect.stroke)
               rect.stroke_width = skin_width(:frame) || rect.stroke_width
             end
           end
@@ -153,9 +172,10 @@ module Sirena
           def lifeline(segment)
             element(Svg::Line, x1: segment.x1, y1: segment.y1,
                                x2: segment.x2, y2: segment.y2,
-                               stroke: skin_paint(:line) || node_stroke,
+                               stroke: stroke_of(:lifeline, :line,
+                                                 node_stroke),
                                stroke_width: skin_width(:thin) || "1",
-                               stroke_dasharray: "5,5")
+                               stroke_dasharray: segment.dash || "5,5")
           end
 
           def arrow_group(arrow)
@@ -218,7 +238,7 @@ module Sirena
           def tab_path(fragment)
             fill = fragment.tab_fill || skin_paint(:tab_fill) || node_fill
             outlined_path(fragment.tab_path, fill).tap do |path|
-              path.stroke = skin_paint(:frame_stroke) || path.stroke
+              path.stroke = stroke_of(:group_line, :frame_stroke, path.stroke)
               path.stroke_width = skin_width(:frame) || path.stroke_width
             end
           end
@@ -242,26 +262,34 @@ module Sirena
 
           def note_path(data, note)
             outlined_path(data, note.fill || note_fill).tap do |path|
-              path.stroke = skin_paint(:line) || path.stroke
+              path.stroke = stroke_of(:note_line, :line, path.stroke)
               path.stroke_width = skin_width(:thin) || path.stroke_width
               path.fill_opacity = note.fill_opacity&.to_s
             end
           end
 
           def divider_group(divider)
-            children = divider.lines.map { |line| solid(line) }
+            children = divider.lines.map { |line| divider_line(line) }
             children << divider_label(divider) unless divider.texts.empty?
             group("divider-#{divider.y}", children, divider.texts)
           end
 
           def delay_group(delay)
-            group("delay-#{delay.texts.first.y}", [], delay.texts)
+            group("delay-#{delay.texts.first&.y || delay.y1}", [], delay.texts)
           end
 
           def divider_label(divider)
             element(Svg::Rect, x: divider.x, y: divider.y, width: divider.width,
-                               height: divider.height, fill: node_fill,
-                               stroke: node_stroke, stroke_width: "1")
+                               height: divider.height,
+                               fill: painted(:divider_fill) || node_fill,
+                               stroke: painted(:divider_line) || node_stroke,
+                               stroke_width: "1")
+          end
+
+          def divider_line(segment)
+            solid(segment).tap do |line|
+              line.stroke = painted(:divider_line) || line.stroke
+            end
           end
 
           def outlined_path(data, fill)
@@ -279,7 +307,7 @@ module Sirena
 
           def dashed(segment)
             lifeline(segment).tap do |line|
-              line.stroke = skin_paint(:frame_stroke) || line.stroke
+              line.stroke = stroke_of(:group_line, :frame_stroke, line.stroke)
               line.stroke_width = skin_width(:separator) || line.stroke_width
               line.stroke_dasharray = skin_dash("5,3")
             end
@@ -361,11 +389,16 @@ module Sirena
                                   stroke: colour, stroke_width: head_width)
           end
 
+          def text_fill(scene_text)
+            scene_text.colour || painted(:"text_#{scene_text.role}") ||
+              text_colour
+          end
+
           def text_element(scene_text)
             element(Svg::Text, x: scene_text.x, y: scene_text.y,
                                content: scene_text.content,
                                text_anchor: scene_text.anchor,
-                               fill: scene_text.colour || text_colour,
+                               fill: text_fill(scene_text),
                                font_family: text_family(scene_text),
                                font_size: text_size(scene_text),
                                font_style: text_font_style(scene_text),
@@ -420,7 +453,8 @@ module Sirena
           end
 
           def note_fill
-            skin_paint(:note_fill) || theme_color(:note_fill)
+            painted(:note_fill) || skin_paint(:note_fill) ||
+              theme_color(:note_fill)
           end
 
           def node_fill
@@ -432,11 +466,11 @@ module Sirena
           end
 
           def head_fill
-            skin_paint(:head_fill) || node_fill
+            painted(:head_fill) || skin_paint(:head_fill) || node_fill
           end
 
           def head_stroke
-            skin_paint(:line) || node_stroke
+            painted(:head_line) || skin_paint(:line) || node_stroke
           end
 
           def head_width
@@ -448,7 +482,8 @@ module Sirena
           end
 
           def edge_colour
-            skin_paint(:line) || theme_color(:edge_stroke)
+            painted(:arrow) || skin_paint(:line) ||
+              theme_color(:edge_stroke)
           end
 
           def text_colour
@@ -456,7 +491,8 @@ module Sirena
           end
 
           def stroke_width
-            skin_width(:arrow) || (theme_shape(:stroke_width) || 2).to_s
+            painted(:arrow_width) || skin_width(:arrow) ||
+              (theme_shape(:stroke_width) || 2).to_s
           end
         end
       end

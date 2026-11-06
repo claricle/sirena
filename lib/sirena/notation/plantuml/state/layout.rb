@@ -4,6 +4,7 @@ require_relative "../../../layout/state_diagram"
 require_relative "hierarchy"
 require_relative "look"
 require_relative "curve"
+require_relative "extent"
 
 module Sirena
   module Notation
@@ -15,11 +16,29 @@ module Sirena
         # centres; this one sizes each composite from its content, puts the
         # name in a header, and routes transitions between borders.
         class Layout < Sirena::Layout::StateDiagram
+          # The engine builds a layout with `new` only, so a diagram's flat
+          # transitions travel in a class that builds it.
+          Flat = Struct.new(:pairs) do
+            def new
+              Layout.new.tap { |layout| layout.flat = pairs }
+            end
+          end
+          private_constant :Flat
+
+          # @param pairs [Array<Array(String, String)>] the transitions
+          #   PlantUML draws on one rank
+          # @return [#new] builds a layout that keeps them on one rank
+          def self.with_flat(pairs)
+            Flat.new(pairs)
+          end
+
+          attr_writer :flat
+
           private
 
           def scene(diagram)
             graph = build_graph(diagram)
-            Hierarchy.new(graph).place
+            Hierarchy.new(graph, @flat || []).place
             scene_from_graph(graph)
           end
 
@@ -29,6 +48,14 @@ module Sirena
             return "history" if history?(state)
 
             super
+          end
+
+          # The canvas ends a margin past the last box, route or label, as
+          # PlantUML's does, not past a fixed padding.
+          def scene_geometry(graph)
+            width, height = Extent.of(graph).map { |far| far + Look::CANVAS_MARGIN }
+            { width: width, height: height,
+              view_box: "0 0 #{width} #{height}" }
           end
 
           def history?(state)

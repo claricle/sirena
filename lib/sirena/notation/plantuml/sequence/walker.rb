@@ -6,9 +6,11 @@ require_relative "message_wrap"
 require_relative "tab_size"
 require_relative "arrow_marks"
 require_relative "bar_tracker"
+require_relative "create"
 require_relative "destroy"
 require_relative "delay"
 require_relative "divider"
+require_relative "spacing"
 require_relative "edge"
 require_relative "fragment"
 require_relative "message"
@@ -31,11 +33,30 @@ module Sirena
         # `left`, `right` and `y` describe the space the items ended up using.
         class Walker
           ROW = 40.0
-          LINE_LEADING = 1.1776
+          LINE_LEADING = NoteGeometry::LINE_LEADING
           SELF_WIDTH = 42.0
           CLASSIC_SELF_WIDTH = 42.0
           CLASSIC_UNLABELLED_SELF_ROW = 27.0
-          private_constant :CLASSIC_SELF_WIDTH, :CLASSIC_UNLABELLED_SELF_ROW
+          CLASSIC_ROW_SPARE = 12.3105
+          CLASSIC_TAIL = 17.0
+          CLASSIC_GUARD_ROW = 13.0
+          CLASSIC_SELF_TAIL = 30.0
+          CLASSIC_LABEL_INSET = 7.0
+          CLASSIC_LABEL_RISE = 4.74
+          # A `...` gap is 28 high, and 40.95 with its 11-point text, whose
+          # baseline sits 24.63 below the gap's top (PlantUML 1.2026.6).
+          CLASSIC_DELAY_ROW = 28.0
+          CLASSIC_LABEL_ROW = 21.3105
+          CLASSIC_DELAY_LABEL_ROW = 40.9551
+          CLASSIC_DELAY_TEXT_DROP = 24.6348
+          private_constant :CLASSIC_DELAY_ROW, :CLASSIC_DELAY_LABEL_ROW,
+                           :CLASSIC_DELAY_TEXT_DROP
+          private_constant :CLASSIC_SELF_WIDTH, :CLASSIC_UNLABELLED_SELF_ROW,
+                           :CLASSIC_ROW_SPARE, :CLASSIC_TAIL,
+                           :CLASSIC_SELF_TAIL, :CLASSIC_GUARD_ROW,
+                           :CLASSIC_LABEL_RISE
+          SPARE_ROWS = [Destroy, Spacing, Delay].freeze
+          private_constant :SPARE_ROWS
           SELF_HEIGHT = 20.0
           COMPACT_FRAGMENT_SELF_HEIGHT = 17.75
           LOOP_HEIGHT = 13.0
@@ -45,8 +66,19 @@ module Sirena
           ACTIVATION_END_INSET = 7.0
           TOP_OFFSET = 20.0
           NOTE_ABOVE = 35.0
+          # PlantUML 1.2026.6 leaves this much above and below a message row
+          # that carries a note.
+          ATTACHED_NOTE_PAD = 3.0
+          ATTACHED_NOTE_RISE = 5.6895
+          STANDALONE_NOTE_RISE = 16.3105
+          STANDALONE_NOTE_TAIL = 26.6211
+          private_constant :ATTACHED_NOTE_PAD, :ATTACHED_NOTE_RISE,
+                           :STANDALONE_NOTE_RISE, :STANDALONE_NOTE_TAIL
           LEFT_EDGE = 0.0
           TEOZ_NESTED_HEADER_ROW = 31.3105
+          # What the row of a message that creates a participant gains over
+          # a plain one, measured against PlantUML 1.2026.6.
+          CREATION_EXTRA_ROW = 12.18
           TEOZ_MESSAGE_HEADER_ROW = 28.6211
           TEOZ_EMPTY_HEADER_ROW = 13.3105
           TEOZ_MESSAGE_BASE_ROW = 14.0
@@ -56,16 +88,18 @@ module Sirena
           TEOZ_LABEL_HEIGHT = 15.3105
           TEOZ_SELF_CONTACT_INSET = 2.5
           TEOZ_CONTACT_PADDING = 2.0
-          private_constant :TEOZ_NESTED_HEADER_ROW, :TEOZ_MESSAGE_HEADER_ROW,
+          private_constant :CREATION_EXTRA_ROW, :TEOZ_NESTED_HEADER_ROW,
+                           :TEOZ_MESSAGE_HEADER_ROW,
                            :TEOZ_EMPTY_HEADER_ROW, :TEOZ_MESSAGE_BASE_ROW,
                            :TEOZ_FRAME_BOTTOM_PAD,
                            :TEOZ_ROOT_CLOSE_GAP,
                            :TEOZ_NESTED_CLOSE_GAP, :TEOZ_LABEL_HEIGHT,
                            :TEOZ_SELF_CONTACT_INSET, :TEOZ_CONTACT_PADDING
           PLACERS = { Message => :message, Activation => :activation,
-                      Destroy => :destroy, Fragment => :fragment,
+                      Destroy => :destroy, Create => :create,
+                      Fragment => :fragment,
                       Ref => :ref, PageBreak => :page_break,
-                      Delay => :delay }.freeze
+                      Delay => :delay, Spacing => :spacing }.freeze
           Config = Struct.new(:message_measure, :message_font_size,
                               :message_family, :label_inset, :row, :self_row,
                               :unlabelled_row, :following_unlabelled_row,
@@ -74,7 +108,8 @@ module Sirena
                               :group_fragment_row, :group_close_gap,
                               :activation_edges, :teoz_fragment_cadence,
                               :deactivation_gap, :bare_deactivation_gap,
-                              :bounds,
+                              :frame_top_offset, :frame_bottom_offset,
+                              :branch_offset, :bounds, :head_halves,
                               keyword_init: true)
 
           def self.following_activations(items, parallel_notes: false)
@@ -85,7 +120,7 @@ module Sirena
           end
 
           attr_reader :arrows, :notes, :fragments, :dividers, :delays, :crosses,
-                      :left, :right, :y, :page_breaks
+                      :left, :right, :y, :page_breaks, :created
 
           # @param lifelines [Hash{String => Float}] centre of each
           #   participant's lifeline, in participant order
@@ -111,9 +146,11 @@ module Sirena
             @edge_right = edge_right
             @appearance = appearance
             @fragmented = items.any?(Fragment)
+            @creations = Create.messages(items)
             @fragment_contacts = fragment_contacts(items)
             walk_items(items)
             @tracker.finish(@y - 20)
+            @y -= classic_tail_trim(items)
             self
           end
 
@@ -123,10 +160,37 @@ module Sirena
 
           private
 
+          # The foot heads of a plain classic diagram sit CLASSIC_TAIL below
+          # the last message line (a self loop's top, CLASSIC_SELF_TAIL), not
+          # a whole row below it.
+          def classic_tail_trim(items)
+            return 0.0 if @label_inset || @teoz_fragment_cadence
+
+            last = items.reverse_each.find { |item| !item.is_a?(Activation) }
+            return 0.0 if last.nil? || bar_after?(items, last)
+
+            tail_trim(last)
+          end
+
+          def tail_trim(last)
+            return CLASSIC_ROW_SPARE if last.is_a?(Fragment)
+            return @spare_row if last.is_a?(Message)
+
+            SPARE_ROWS.include?(last.class) ? CLASSIC_ROW_SPARE : 0.0
+          end
+
+          # A bar opened and closed after the last message is not drawn the
+          # way PlantUML does, so its tail is left as it was.
+          def bar_after?(items, last)
+            trailing = items.drop(items.rindex { |item| item.equal?(last) } + 1)
+            trailing.any?(&:on?) && trailing.any? { |item| !item.on? }
+          end
+
           def apply_config(config)
             apply_message_config(config)
             apply_cadence_config(config)
             @bounds = config.bounds
+            @head_halves = config.head_halves || {}
           end
 
           def apply_message_config(config)
@@ -160,6 +224,17 @@ module Sirena
                                                10.0)
             @group_fragment_row = config.group_fragment_row
             @group_close_gap = config.group_close_gap
+            apply_frame_offsets(config)
+          end
+
+          # How far above the row line a frame's top, bottom and `else`
+          # line sit.
+          def apply_frame_offsets(config)
+            @frame_top_offset = config_value(config, :frame_top_offset,
+                                             TOP_OFFSET)
+            @frame_bottom_offset = config_value(config, :frame_bottom_offset,
+                                                TOP_OFFSET)
+            @branch_offset = config_value(config, :branch_offset, 10.0)
           end
 
           def config_value(config, member, default)
@@ -196,10 +271,12 @@ module Sirena
           def start_empty
             start_collections
             @headroom = 0.0
+            @spare_row = 0.0
             @tracker = BarTracker.new(method(:centre))
             @blocks = []
             @left = Float::INFINITY
             @right = -Float::INFINITY
+            @created = {}
           end
 
           def start_collections
@@ -245,7 +322,8 @@ module Sirena
           def row_offset(item)
             case item
             when Message then 0.0
-            when Note, Ref then TOP_OFFSET
+            when Note then STANDALONE_NOTE_RISE
+            when Ref then TOP_OFFSET
             when Fragment then TOP_OFFSET if item.phase == :open
             end
           end
@@ -308,9 +386,36 @@ module Sirena
             start_row(message)
             @message_activations = active_participants
             from, to = ends_of(message)
+            to = created_end(message, from, to)
             draw(message, from, to) unless message.style.hidden
             touch(*extent(message, from, to))
-            @y += message_row(message)
+            advance_by(message, message_row(message) + creation_extra(message))
+          end
+
+          def advance_by(message, row)
+            @spare_row = row - tail_of(message)
+            @y += row
+          end
+
+          def tail_of(message)
+            message.self_message? ? CLASSIC_SELF_TAIL : CLASSIC_TAIL
+          end
+
+          # `create X` has no row of its own; the message to X lands on the
+          # left or right edge of X's head, which is drawn at this row.
+          def created_end(message, from, to)
+            id = @creations[message] or return to
+
+            @created[id] = @y
+            to - ((to <=> from) * @head_halves.fetch(id, 0.0))
+          end
+
+          def creation_extra(message)
+            @creations.key?(message) ? CREATION_EXTRA_ROW : 0.0
+          end
+
+          def create(_item)
+            nil
           end
 
           def apply_message_font(message)
@@ -370,10 +475,18 @@ module Sirena
             label_lines(message).size * TEOZ_LABEL_HEIGHT
           end
 
+          # A classic loop leaves room for the label of the message that
+          # follows it, so the row is short only before an unlabelled one.
           def self_message_row(message)
-            return @self_row if @label_inset || !message.label.to_s.empty?
+            return @self_row if @label_inset
 
-            CLASSIC_UNLABELLED_SELF_ROW
+            following = @next_non_activation
+            labelled = if following.is_a?(Message)
+                         !following.label.to_s.empty?
+                       else
+                         !message.label.to_s.empty?
+                       end
+            labelled ? @self_row : CLASSIC_UNLABELLED_SELF_ROW
           end
 
           def following_unlabelled_row?
@@ -400,11 +513,25 @@ module Sirena
             end
             return 0.0 unless following.is_a?(Note) && following.attached?
 
-            attached_note_headroom(following)
+            attached_note_pad(items[index], following) +
+              attached_note_headroom(following)
+          end
+
+          # Self arrows, parallel rows and picture notes carry their own
+          # spacing.
+          def attached_note_pad(item, note)
+            return 0.0 if @teoz_fragment_cadence || note.picture
+            return 0.0 if item.is_a?(Message) && own_spacing?(item)
+
+            ATTACHED_NOTE_PAD
+          end
+
+          def own_spacing?(message)
+            message.self_message? || message.parallel?
           end
 
           def attached_note_headroom(note)
-            height = NoteGeometry.height(note, @font_size)
+            height = NoteGeometry.height(note)
             clearance = note.picture ? height / 2 : height
             [clearance - NOTE_ABOVE, 0.0].max
           end
@@ -567,7 +694,9 @@ module Sirena
           end
 
           def reach(message)
-            self_width + 6 + label_width(message)
+            return self_width + 6 + label_width(message) if @label_inset
+
+            [self_width, CLASSIC_LABEL_INSET + label_width(message)].max
           end
 
           def label_width(message)
@@ -626,15 +755,13 @@ module Sirena
             [tail + head, start, stop]
           end
 
+          # The label rides above the loop, inset from the lifeline, on the
+          # side the loop leaves by.
           def loop_label(far, side)
-            unless @label_inset
-              return [far + (side * 6), @y + 12,
-                      side.positive? ? "start" : "end"]
-            end
-
             centre = far - (side * SELF_WIDTH)
-            [centre + (side * @label_inset), @y - 5.0659,
-             side.positive? ? "start" : "end"]
+            rise = @label_inset ? 5.0659 : CLASSIC_LABEL_RISE
+            [centre + (side * (@label_inset || CLASSIC_LABEL_INSET)),
+             @y - rise, side.positive? ? "start" : "end"]
           end
 
           def self_height
@@ -716,11 +843,26 @@ module Sirena
           def note(note, previous)
             on_block = note.attached? && previous.is_a?(Fragment)
             x, width = on_block ? block_box(note) : note_box(note, previous)
-            height = NoteGeometry.height(note, @font_size)
+            height = NoteGeometry.height(note)
             top = note_top(note, on_block, height)
             @notes << note_record(note, [x, top, width, height])
             touch(x, x + width)
-            @y = [@y, top + height + 22].max
+            pad = trailing_pad(note, previous, on_block)
+            clear_note(note, top + height, pad)
+          end
+
+          def clear_note(note, bottom, pad)
+            @y = [@y, bottom + note_tail(note)].max + pad
+          end
+
+          def trailing_pad(note, previous, on_block)
+            return 0.0 if on_block || !note.attached?
+
+            attached_note_pad(previous, note)
+          end
+
+          def note_tail(note)
+            note.parallel? || note.attached? ? 22 : STANDALONE_NOTE_TAIL
           end
 
           def note_top(note, on_block, height)
@@ -729,7 +871,9 @@ module Sirena
               return @last_y - (height / 2) + 10
             end
 
-            note.attached? ? @last_y - height + 10 : @y - 20
+            return @last_y - height + ATTACHED_NOTE_RISE if note.attached?
+
+            @y - STANDALONE_NOTE_RISE
           end
 
           def block_box(note)
@@ -768,7 +912,7 @@ module Sirena
 
             step = NoteGeometry.line_height(@font_size)
             note.lines.each_with_index.map do |line, index|
-              baseline = top + 7 + (index * step) + @font_size
+              baseline = top + NoteGeometry::FIRST_BASELINE + (index * step)
               text(line, left, baseline, "note", "start")
             end
           end
@@ -779,11 +923,15 @@ module Sirena
           end
 
           def ref(item)
-            span = item.targets.map { |id| centre(id) }.minmax
-            shape = RefShape.new(item, @y - 20, span, @measure)
+            shape = ref_shape(item)
             @fragments << shape.scene
             touch(shape.x, shape.x + shape.width)
-            @y += RefShape::HEIGHT + 10
+            @y += RefShape::HEIGHT + RefShape::TAIL
+          end
+
+          def ref_shape(item)
+            span = item.targets.map { |id| centre(id) }.minmax
+            RefShape.new(item, @y - @frame_bottom_offset, span, @measure)
           end
 
           def fragment(item)
@@ -797,7 +945,7 @@ module Sirena
           def open_block(item)
             @y += @fragment_contacts.fetch(@item_index, 0.0)
             @blocks << { keyword: item.keyword, label: item.label.to_s,
-                         top: @y - 20, low: Float::INFINITY,
+                         top: @y - @frame_top_offset, low: Float::INFINITY,
                          high: -Float::INFINITY, branches: [], depth: 0,
                          resume: @resume, tab: tab_size, text_height: 0.0 }
             @y += fragment_row(item) + tab_size.height_growth
@@ -866,23 +1014,14 @@ module Sirena
           end
 
           def branch(item)
-            @blocks.last[:branches] << [@y - 10, item.label.to_s]
+            @blocks.last[:branches] << [@y - @branch_offset, item.label.to_s]
             @y += branch_row + classic_guard_row(item)
           end
 
           def classic_guard_row(item)
             return 0.0 if @label_inset || item.label.to_s.strip.empty?
 
-            [classic_guard_y + @font_size - next_classic_label_y, 0.0].max
-          end
-
-          def classic_guard_y
-            separator_y = @blocks.last[:branches].last.first
-            FragmentShape.branch_text_baseline(separator_y)
-          end
-
-          def next_classic_label_y
-            straight_label(0, 0)[1] + branch_row
+            CLASSIC_GUARD_ROW
           end
 
           def branch_row
@@ -905,7 +1044,7 @@ module Sirena
           end
 
           def fragment_bottom_offset(block)
-            return TOP_OFFSET unless @teoz_fragment_cadence
+            return @frame_bottom_offset unless @teoz_fragment_cadence
 
             block[:text_height] + TEOZ_FRAME_BOTTOM_PAD
           end
@@ -951,18 +1090,43 @@ module Sirena
             parent[:text_height] = block[:text_height]
           end
 
-          # The lifelines run on through the gap, drawn as for any other row.
+          def spacing(item)
+            @y += item.room
+          end
+
+          # The lifelines run on through the gap, dotted over it in a classic
+          # diagram.
           def delay(item)
             label = item.label.to_s
-            @delays << delay_record(label) unless label.empty?
+            return plain_delay(label) if @label_inset || @teoz_fragment_cadence
+
+            gap = label.empty? ? CLASSIC_DELAY_ROW : CLASSIC_DELAY_LABEL_ROW
+            top = @y - CLASSIC_LABEL_ROW
+            @delays << delay_record(label, top, top + gap,
+                                    CLASSIC_DELAY_TEXT_DROP)
+            @y = top + gap + delay_clearance
+          end
+
+          # What the next message's row needs below the gap.
+          def delay_clearance
+            following_unlabelled_message? ? 6.0 : CLASSIC_LABEL_ROW
+          end
+
+          def plain_delay(label)
+            @delays << delay_record(label, @y, @y, 5) unless label.empty?
             @y += @divider_row
           end
 
-          def delay_record(label)
+          def delay_record(label, top, bottom, drop)
+            texts = label.empty? ? [] : [delay_text(label, top + drop)]
+            Scene::Delay.new(y1: top, y2: bottom, texts: texts)
+          end
+
+          def delay_text(label, at_y)
             middle = (@bounds[0] + @bounds[1]) / 2
             half = @measure.call(label) / 2
             touch(middle - half, middle + half)
-            Scene::Delay.new(texts: [text(label, middle, @y + 5, "delay")])
+            text(label, middle, at_y, "delay")
           end
 
           def divider(item)

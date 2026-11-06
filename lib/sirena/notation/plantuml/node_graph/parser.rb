@@ -196,7 +196,8 @@ module Sirena
             @graph.edges << Edge.new(from: note, to: resolve(ref),
                                      style: :dashed, width: 1,
                                      rank_step: beside ? 0 : 1,
-                                     backwards: %w[right bottom].include?(side))
+                                     backwards: %w[right bottom].include?(side),
+                                     pointer: true)
           end
 
           def take_edge(text)
@@ -227,10 +228,23 @@ module Sirena
             stereo = rest[STEREOTYPE, :st]
             color = rest[COLOR, :color] || rest[LEADING_COLOR, :color]
             id, label = names(bare_name(rest))
-            kind = :usecase if kind == :usecase
             node = place(label, kind, id)
-            node.stereotype = kind == :archimate ? nil : stereo
-            node.color = kind == :archimate ? Archimate.color(color) : color
+            return archimate(node, stereo, color) if kind == :archimate
+
+            plain(node, stereo, color)
+          end
+
+          def plain(node, stereo, color)
+            node.stereotype = stereo
+            node.color = color
+            node
+          end
+
+          # An archimate element keeps no stereotype line: its layer is its
+          # colour and its type, at most, an icon.
+          def archimate(node, stereo, color)
+            node.color = Archimate.color(color)
+            node.sprite = Archimate.sprite(stereo)
             node
           end
 

@@ -12,6 +12,12 @@ module Sirena
         # activities, with `if` ... `else` ... `endif`. A direction hint such
         # as `-left->` is a layout hint and is not kept. The node the flow is
         # at is `@current`; an arrow with no source starts there.
+        #
+        # PlantUML's own reader is followed where it differs from the new
+        # syntax: the flow after `endif` is the last node the branch drew
+        # (no join, no merge node), `(*)` is a node the flow can leave, and
+        # a quoted activity written twice is one node. An arrow `->`, or one
+        # with `-right->` or `-left->`, lies along its row.
         class LegacyParser
           ARROW = /-+(?:\[[^\]]*\]|left|right|up|down)?-*>/
           STATEMENT = /\A(?<source>\(\*(?:top)?\)|"[^"]*"|={2,}[^=]+={2,}|\w+)?
@@ -40,6 +46,7 @@ module Sirena
             @stop = nil
             @frames = []
             @names = {}
+            @labels = {}
             @bars = {}
           end
 
@@ -70,33 +77,20 @@ module Sirena
 
           def open_if(match)
             text = clean(match[:cond] || match[:paren])
-            decision = legacy(@builder.node(:decision, text: text))
-            joined(decision)
-            @frames << { decision: decision, tails: [], else: false }
+            decision = legacy(@builder.node(:decision, text: text, bare: true))
+            @builder.connect(@current, decision) if @current
+            @frames << decision
             @current = decision
           end
 
           def open_else
-            frame = top
-            frame[:tails].concat(Array(@current))
-            frame[:else] = true
-            @current = frame[:decision]
+            @current = top
           end
 
+          # The flow carries on from the last node the closing branch drew.
           def close_if
-            frame = top
+            top
             @frames.pop
-            tails = frame[:tails]
-            tails.concat(Array(@current))
-            tails << frame[:decision] unless frame[:else]
-            tails.uniq!
-            @current = tails.one? ? tails.first : (tails unless tails.empty?)
-          end
-
-          # The legacy syntax draws no node where the branches of an `if`
-          # meet: each of them runs on into whatever follows.
-          def joined(node)
-            Array(@current).each { |tail| @builder.connect(tail, node) }
           end
 
           def legacy(node)
@@ -104,24 +98,29 @@ module Sirena
           end
 
           def flow(match)
-            sources = sources_of(match)
+            from = source_of(match)
             style = ArrowStyle.parse(match[:arrow][/\[([^\]]*)\]/, 1],
                                      line: @number)
             dest = destination(match[:dest])
-            label = arrow_label(match[:label])
-            sources.each do |from|
-              @builder.connect(from, dest, label: label, **style)
-            end
-            @current = dest.kind == :stop ? nil : dest
+            edge = @builder.connect(from, dest,
+                                    label: arrow_label(match[:label]), **style)
+            edge.direction = direction(match[:arrow])
+            @current = dest
           end
 
-          # The nodes an arrow leaves: the one written, else wherever the
-          # flow is, which after an `endif` is every branch that is live.
-          def sources_of(match)
+          def direction(arrow)
+            return :right if arrow == "->"
+
+            arrow[/left|right/]&.to_sym
+          end
+
+          # The node an arrow leaves: the one written, else wherever the
+          # flow is.
+          def source_of(match)
             written = match[:source]
-            sources = written ? [resolve(written)] : Array(@current)
-            refuse("arrow without a source", @line) if sources.empty?
-            sources
+            return resolve(written) if written
+
+            @current or refuse("arrow without a source", @line)
           end
 
           def arrow_label(label)
@@ -150,9 +149,13 @@ module Sirena
 
           def activity(text)
             match = ACTIVITY.match(text) or refuse("activity", text)
-            node = @builder.node(:action, text: clean(match[1]))
-            @names[match[2]] = node if match[2]
-            node
+            return @labels[match[1]] ||= action(match[1]) unless match[2]
+
+            @names[match[2]] = action(match[1])
+          end
+
+          def action(text)
+            @builder.node(:action, text: clean(text))
           end
 
           def bar(name)

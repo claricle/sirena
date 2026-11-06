@@ -33,6 +33,7 @@ module Sirena
           # Fills {#scene}.
           def build
             @frames.title
+            @frames.warnings
             @frames.lanes unless @placement.bands.empty?
             @frames.partitions
             @diagram.edges.each { |edge| @edges.draw(edge) }

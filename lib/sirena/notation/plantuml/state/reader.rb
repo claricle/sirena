@@ -22,6 +22,7 @@ module Sirena
           NAME = /[A-Za-z_][A-Za-z0-9_.]*/
           MARK = /\[(?:\*|H\*?)\]/
           ARROW = /-+(?:[a-z]+-+)?>/
+          FLAT = /\A-(?:right-)?>\z/
           END_STATE = /\A(?:--|\|\|)\z/
           STATE_OPEN = /\Astate[ \t]+(?:"([^"]+)"[ \t]+as[ \t]+(#{NAME})|
                          (#{NAME}))(?:[ \t]*<<([^<>]+)>>)?
@@ -46,7 +47,8 @@ module Sirena
           HISTORY = { "[H]" => ["history", "H"],
                       "[H*]" => ["deep_history", "H*"] }.freeze
           private_constant :NAME, :MARK, :ARROW, :END_STATE, :STATE_OPEN,
-                           :TRANSITION, :REVERSED, :SCALE, :NOTE, :END_NOTE,
+                           :FLAT, :TRANSITION, :REVERSED, :SCALE, :NOTE,
+                           :END_NOTE,
                            :STYLE_BLOCK, :END_STYLE, :SKIN_BLOCK,
                            :DESCRIPTION, :SKIPPED, :HISTORY
 
@@ -77,11 +79,17 @@ module Sirena
           end
           private_class_method :diagram_lines
 
+          # @return [Array<Array(String, String)>] the source and target ids
+          #   of each transition written with a single-dash arrow (`->`,
+          #   `-right->`), which PlantUML draws on one rank, left to right
+          attr_reader :flat
+
           # @param source [String] PlantUML source
           # @return [Sirena::Diagram::StateDiagram]
           # @raise [UnsupportedConstructError] on a line outside the subset
           # @raise [Sirena::Parser::ParseError] when a `{` is never closed
           def parse(source)
+            @flat = []
             @model = Sirena::Diagram::StateDiagram.new(direction: "TB")
             @states = {}
             @scopes = [nil]
@@ -206,21 +214,24 @@ module Sirena
           end
 
           def transition(text)
-            from, to, label = parts_of(text)
+            from, to, label, flat = parts_of(text)
             return unless from
 
-            add_transition(endpoint(from, :source), endpoint(to, :target),
-                           label)
+            source = endpoint(from, :source)
+            target = endpoint(to, :target)
+            add_transition(source, target, label)
+            @flat << [source.id, target.id] if flat
             true
           end
 
-          # @return [Array(String, String, String)] source, target and label
-          #   as written; nil when the line is no transition
+          # @return [Array(String, String, String, Boolean)] source, target,
+          #   label as written and whether the arrow is a single-dash one;
+          #   nil when the line is no transition
           def parts_of(text)
             if (match = TRANSITION.match(text))
-              [match[1], match[3], match[4]]
+              [match[1], match[3], match[4], FLAT.match?(match[2])]
             elsif (match = REVERSED.match(text))
-              [match[2], match[1], match[3]]
+              [match[2], match[1], match[3], false]
             end
           end
 

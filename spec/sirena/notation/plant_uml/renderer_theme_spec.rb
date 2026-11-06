@@ -58,7 +58,7 @@ RSpec.describe Sirena::Notation::PlantUML::Renderer do
   def expected_paints
     {
       boxes: Array.new(2, %w[#F1F1F1 #181818]),
-      separators: Array.new(2, %w[#181818]),
+      separators: Array.new(4, %w[#181818]),
       relation_paths: [%w[#181818]],
       relation_markers: [%w[#181818 #181818]],
       text: Array.new(4, %w[#000000]),
@@ -102,7 +102,7 @@ RSpec.describe Sirena::Notation::PlantUML::Renderer do
     svg = Sirena.render(class_source, notation: :plantuml, theme: theme)
 
     expect(Digest::SHA256.hexdigest(svg)).to eq(
-      "09c29d1aefc971852b68d427d7cd320eb4a506e4a12fefee04da9fdccf8c9f8b",
+      "29a773eb1af2bc0e242b03dc48427075b527a53a1a195951b66afd17d82f3a65",
     )
   end
 

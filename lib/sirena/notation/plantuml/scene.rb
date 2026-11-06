@@ -99,6 +99,7 @@ module Sirena
           attribute :stroke_width, :float
           attribute :markers, Marker, collection: true
           attribute :texts, Text, collection: true
+          attribute :qualifiers, Box, collection: true, default: -> { [] }
         end
 
         # A title, header, footer, caption or legend: a rectangle (drawn when

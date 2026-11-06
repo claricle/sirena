@@ -2,6 +2,7 @@
 
 require_relative "../../../layout/base"
 require_relative "chrome_rows"
+require_relative "create"
 require_relative "edge"
 require_relative "ir_adapter"
 require_relative "ir_reader"
@@ -25,6 +26,8 @@ module Sirena
         # source order, and the same heads again at the foot of the lifelines.
         class Layout < Sirena::Layout::Base
           MARGIN = 20.0
+          DELAY_DASH = "1,4"
+          private_constant :DELAY_DASH
           HEAD_PADDING = 12.0
           MIN_HEAD_WIDTH = 80.0
           INTRINSIC_HEAD_PADDING = 7.0
@@ -70,15 +73,18 @@ module Sirena
           COMPACT_SELF_ROW = 42.1328
           COMPACT_SELF_CLEARANCE = 53.0
           CLASSIC_FIRST_ROW_GAP = 32.3105
-          CLASSIC_UNLABELLED_FIRST_ROW_GAP = 17.3105
+          CLASSIC_UNLABELLED_FIRST_ROW_GAP = 17.0
           CLASSIC_FOLLOWING_UNLABELLED_ROW = 14.0
           CLASSIC_ROW = 29.3105
           CLASSIC_SELF_ROW = 42.3105
           CLASSIC_SELF_CLEARANCE = 50.0
+          CLASSIC_LABEL_INSET = Walker::CLASSIC_LABEL_INSET
           CLASSIC_FRAGMENT_ROW = 24.3105
           CLASSIC_BRANCH_GAP = 2.0
+          CLASSIC_FRAME_TOP = 14.3105
+          CLASSIC_FRAME_BOTTOM = 21.3105
+          CLASSIC_BRANCH_LINE = 20.3105
           CLASSIC_FRAGMENT_CLOSE = 7.0
-          CLASSIC_GROUP_CLOSE = 10.0
           CLASSIC_DIVIDER_ROW = 42.3105
           CLASSIC_DEACTIVATION_GAP = 31.0
           CLASSIC_BARE_DEACTIVATION_GAP = 1.0
@@ -96,6 +102,10 @@ module Sirena
           QUEUE_LABEL_INSET = 7.9531
           TAIL_QUEUE_LABEL = 18.5352
           ICON_RADIUS = 12.0
+          # A created head sits this far above the row of its message, and
+          # its lifeline starts this far below the head.
+          CREATE_HEAD_RISE = 21.31
+          CREATE_LIFELINE_LAG = 0.25
           GLYPH_BUILDERS = {
             actor: :actor_geometry,
             boundary: :boundary_geometry,
@@ -109,7 +119,8 @@ module Sirena
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
                            :BOX_TITLE_SIZE, :SELF_MIN_CLEARANCE,
                            :INTRINSIC_HEAD_PADDING, :INTRINSIC_HEAD_HEIGHT,
-                           :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_PADDING,
+                           :SELF_WIDTH, :CLASSIC_LABEL_INSET, :BOX_PADDING,
+                           :BOX_TITLE_PADDING,
                            :BOX_TITLE_HEIGHT,
                            :MIN_WIDTH_PADDING, :HEAD_LEADING, :EDGE_GAP,
                            :EDGE_MARGIN,
@@ -131,7 +142,9 @@ module Sirena
                            :CLASSIC_FOLLOWING_UNLABELLED_ROW, :CLASSIC_ROW,
                            :CLASSIC_SELF_ROW, :CLASSIC_SELF_CLEARANCE,
                            :CLASSIC_FRAGMENT_ROW, :CLASSIC_BRANCH_GAP,
-                           :CLASSIC_FRAGMENT_CLOSE, :CLASSIC_GROUP_CLOSE,
+                           :CLASSIC_FRAME_TOP, :CLASSIC_FRAME_BOTTOM,
+                           :CLASSIC_BRANCH_LINE,
+                           :CLASSIC_FRAGMENT_CLOSE,
                            :CLASSIC_DIVIDER_ROW, :CLASSIC_DEACTIVATION_GAP,
                            :CLASSIC_BARE_DEACTIVATION_GAP,
                            :MIN_WIDTH_GLYPH_MARGIN, :MIN_WIDTH_GLYPH_GAP,
@@ -141,7 +154,8 @@ module Sirena
                            :ICON_LABEL_INSET, :TAIL_ICON_LABEL,
                            :BOX_LABEL_INSET, :TAIL_BOX_LABEL,
                            :QUEUE_LABEL_INSET, :TAIL_QUEUE_LABEL,
-                           :ICON_RADIUS, :GLYPH_BUILDERS
+                           :ICON_RADIUS, :GLYPH_BUILDERS, :CREATE_HEAD_RISE,
+                           :CREATE_LIFELINE_LAG
 
           # @param graph [IR::Graph] from {IRAdapter}
           def scene(graph)
@@ -188,6 +202,7 @@ module Sirena
           end
 
           def measure_heads
+            @creations = Create.messages(@diagram.items)
             @activation_depths = activation_depths
             @widths = @diagram.participants.map { |p| head_width(p) }
             @centers = centers(@widths)
@@ -268,10 +283,14 @@ module Sirena
               message_font_size: label_font_size,
               message_family: ("monospace" if compact?),
               label_inset: (7 if compact?), bounds: head_bounds,
-              activation_edges: activation_edges?,
+              activation_edges: activation_edges?, head_halves: head_halves,
               teoz_fragment_cadence: teoz_fragment_cadence?,
               **walker_cadence
             )
+          end
+
+          def head_halves
+            ids.zip(@widths.map { |width| width / 2 }).to_h
           end
 
           def activation_edges?
@@ -295,8 +314,16 @@ module Sirena
               fragment_close_gap: fragment_close_gap,
               group_close_gap: group_close_gap,
               divider_row: divider_row_height,
+              **frame_cadence,
               deactivation_gap: deactivation_gap,
               bare_deactivation_gap: bare_deactivation_gap }
+          end
+
+          def frame_cadence
+            return {} if compact?
+
+            { frame_top_offset: CLASSIC_FRAME_TOP, frame_bottom_offset:
+              CLASSIC_FRAME_BOTTOM, branch_offset: CLASSIC_BRANCH_LINE }
           end
 
           def classic_following_unlabelled_row
@@ -314,7 +341,7 @@ module Sirena
           end
 
           def group_close_gap
-            compact? ? COMPACT_GROUP_CLOSE : CLASSIC_GROUP_CLOSE
+            compact? ? COMPACT_GROUP_CLOSE : CLASSIC_FRAGMENT_CLOSE
           end
 
           # Where `->]` messages end: past every head, and far enough from
@@ -357,12 +384,20 @@ module Sirena
             Scene.new(width: canvas_width(widths),
                       height: page_height,
                       banners: banners, title: title_scene(widths),
+                      paint: scene_paint,
                       text_blocks: text_blocks(widths),
                       legend: legend_scene(widths),
                       frames: frames(widths),
                       heads: heads(widths),
                       lifelines: lifelines, page_breaks: page_breaks(widths),
                       **flow_items)
+          end
+
+          def scene_paint
+            appearance = @diagram.appearance
+            width = appearance.arrow_width
+            pairs = appearance.paint.map { |role, colour| "#{role}=#{colour}" }
+            width ? pairs + ["arrow_width=#{width}"] : pairs
           end
 
           # A dotted line across the page where the first page ends.
@@ -707,7 +742,7 @@ module Sirena
 
             low, high = indexes(message).sort
             span = gap_span(gaps, message, low, high)
-            need = message_room(message, low == high)
+            need = message_room(message, low == high) + created_room(message)
             span.each { |i| raise_gap(gaps, i, need / span.size) }
           end
 
@@ -717,6 +752,13 @@ module Sirena
             return [low - 1] if message.self_message? && message.leftward?
 
             (low...[high, low + 1].max).select { |i| i < gaps.size }
+          end
+
+          # The arrow ends at the edge of a created head, not at its centre.
+          def created_room(message)
+            return 0.0 unless @creations.key?(message)
+
+            @widths.fetch(ids.index(message.to)) / 2
           end
 
           def message_room(message, self_message)
@@ -942,12 +984,19 @@ module Sirena
             end
             return 0.0 if labels.empty?
 
-            SELF_WIDTH + 6 + labels.map { |m| label_width(m) }.max
+            reach_for(labels.map { |m| label_width(m) }.max)
+          end
+
+          def reach_for(widest)
+            return SELF_WIDTH + 6 + widest if compact?
+
+            [SELF_WIDTH, CLASSIC_LABEL_INSET + widest].max
           end
 
           def place_heads(widths, top, tail:)
             @diagram.participants.each_with_index.map do |participant, index|
-              head(participant, @centers[index], widths[index], top, tail)
+              at = tail ? top : created_top(participant.id, top)
+              head(participant, @centers[index], widths[index], at, tail)
             end
           end
 
@@ -1260,8 +1309,12 @@ module Sirena
             Scene::Frame.new(
               x: left, y: @origin, width: right - left,
               height: @flow.y + foot_height + BOX_PADDING - @origin,
-              texts: [text(box.title, (left + right) / 2, @origin + 17, "box")]
+              fill: box.fill&.colour, texts: [box_title(box, left, right)]
             )
+          end
+
+          def box_title(box, left, right)
+            text(box.title, (left + right) / 2, @origin + 17, "box")
           end
 
           def frame_edges(box, widths)
@@ -1286,12 +1339,43 @@ module Sirena
           end
 
           def lifelines
-            @centers.map do |centre|
-              PlantUML::Scene::Segment.new(
-                x1: centre, y1: @top + @head_height,
-                x2: centre, y2: @flow.y
-              )
+            ids.zip(@centers).flat_map do |id, centre|
+              lifeline_pieces(centre, lifeline_top(id), @flow.y)
             end
+          end
+
+          # The lifeline from `top` to `bottom`, dotted across each gap.
+          def lifeline_pieces(centre, top, bottom)
+            at = top
+            pieces = gaps.flat_map do |gap|
+              next [] if gap.y1 < at || gap.y2 > bottom
+
+              piece = [lifeline_segment(centre, at, gap.y1),
+                       lifeline_segment(centre, gap.y1, gap.y2, DELAY_DASH)]
+              at = gap.y2
+              piece
+            end
+            pieces << lifeline_segment(centre, at, bottom)
+          end
+
+          def gaps
+            @flow.delays.select { |delay| delay.y2 > delay.y1 }
+          end
+
+          def lifeline_segment(centre, from, to, dash = nil)
+            PlantUML::Scene::Segment.new(x1: centre, y1: from, x2: centre,
+                                         y2: to, dash: dash)
+          end
+
+          def created_top(id, top)
+            row = @flow.created[id]
+            row ? row - CREATE_HEAD_RISE : top
+          end
+
+          def lifeline_top(id)
+            return @top + @head_height unless @flow.created.key?(id)
+
+            created_top(id, @top) + @head_height + CREATE_LIFELINE_LAG
           end
 
           def text(content, at_x, at_y, role, anchor = "middle")

@@ -11,8 +11,9 @@ module Sirena
           PAPER = "#F1F1F1"
           NOTE_PAPER = "#FEFFDD"
           INK = "#181818"
+          BAR_GREY = "#555555"
           FOLD = 6.0
-          private_constant :PAPER, :NOTE_PAPER, :INK, :FOLD
+          private_constant :PAPER, :NOTE_PAPER, :INK, :BAR_GREY, :FOLD
 
           def initialize(boxes, canvas, metrics)
             @boxes = boxes
@@ -73,18 +74,11 @@ module Sirena
           end
 
           def decision(node, box)
-            return legacy_decision(node, box) if node.legacy
+            return diamond(box, node.fill) if node.bare
 
             @canvas.polygon(hexagon(box), fill: node.fill || PAPER,
                                           role: :diamond)
             centred(node.lines, box, role: :diamond)
-          end
-
-          # A diamond with its condition above and to the left of it.
-          def legacy_decision(node, box)
-            diamond(box, node.fill)
-            @canvas.lines(node.lines, [box.left - 4, box.top - 2],
-                          anchor: "end", role: :diamond)
           end
 
           def hexagon(box)
@@ -119,11 +113,20 @@ module Sirena
           end
 
           def bar(node, box)
-            @canvas.rect(box, fill: node.legacy ? "#555555" : "#000000")
+            draw_bar(node, box)
             return if node.legacy || !node.text
 
             @canvas.lines([node.text], [box.right + 6, box.cy + 4],
                           size: Metrics::FONT_SIZE)
+          end
+
+          # PlantUML draws a legacy bar as a grey slab and a fork bar as a
+          # grey rounded one.
+          def draw_bar(node, box)
+            return @canvas.rect(box, fill: BAR_GREY) if node.legacy
+
+            @canvas.rect(box, fill: BAR_GREY, stroke: BAR_GREY, radius: 2.5,
+                              role: :bar)
           end
 
           def centred(rows, box, role: nil)

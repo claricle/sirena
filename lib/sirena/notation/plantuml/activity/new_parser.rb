@@ -77,9 +77,17 @@ module Sirena
           end
 
           def on_action(match)
-            fill = ArrowStyle.colour(match[:colour]) if match[:colour]
             text = clean(collect(match[:text]))
-            add(@builder.node(:action, text: text, fill: fill))
+            deprecate_colour(match[:colour]) if match[:colour]
+            add(@builder.node(:action, text: text))
+          end
+
+          # PlantUML draws no colour from the old `#colour:` prefix; it
+          # prints a notice that names the suffix to use instead.
+          def deprecate_colour(colour)
+            @builder.warn("This syntax is deprecated, you must add " \
+                          "<<#{colour}>> at the end of the line, after " \
+                          "the ';'")
           end
 
           def on_arrow(match)

@@ -88,8 +88,15 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(svg_width(long)).to be > svg_width(delayed)
     end
 
-    it "still refuses spacing, which is not read" do
-      expect { render("A -> B\n|||\nB -> A") }
+    it "reads spacing as room between rows" do
+      plain = render("A -> B : a\nB -> A : b")
+
+      expect(svg_height(render("A -> B : a\n|||\nB -> A : b")))
+        .to be_within(0.001).of(svg_height(plain) + 25)
+    end
+
+    it "still refuses a spacing line of five bars, which is not measured" do
+      expect { render("A -> B\n|||||\nB -> A") }
         .to raise_error(described_class::UnsupportedConstructError,
                         /spacing/)
     end

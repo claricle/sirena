@@ -36,7 +36,7 @@
         "rejected": 2
       },
       "sequence": {
-        "valid": 77,
+        "valid": 90,
         "rejected": 2
       }
     }
@@ -46,7 +46,7 @@
   "corpus": {
     "cases": {
       "class": 37,
-      "sequence": 79
+      "sequence": 95
     },
     "manifest_sha256": "1ad072b88fb211367b5d12eb5d18d239bce84113b3bab6b7de45a319a22ccc69"
   }

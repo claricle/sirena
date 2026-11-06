@@ -147,7 +147,7 @@ module Sirena
         # The circle and the name sit side by side, centred on the box.
         def place(box, kind, measure)
           name = sole_name(box)
-          return unless name && GLYPHS.key?(kind)
+          return unless name && GLYPHS.key?(kind) && box.spot.nil?
 
           left = name.x - (block_width(name, measure) / 2) + BLOCK_SHIFT
           box.spot = spot_at(kind, left, name.y)

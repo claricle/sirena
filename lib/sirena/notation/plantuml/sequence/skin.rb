@@ -18,7 +18,7 @@ module Sirena
           }.freeze
           SIZES = { "message_label" => "13", "note" => "13", "box" => "13",
                     "fragment_tab" => "13", "fragment_guard" => "11",
-                    "divider" => "13", "delay" => "13" }.freeze
+                    "divider" => "13", "delay" => "11" }.freeze
           HEAD_CORNER = 2.5
           SEPARATOR_DASH = "2,2"
           FAMILY = "sans-serif"
@@ -26,6 +26,19 @@ module Sirena
                            :SEPARATOR_DASH, :FAMILY
 
           private
+
+          # @return [String, nil] what a skinparam set for the role, which
+          #   wins over the skin and the theme
+          def painted(role)
+            @painted[role]
+          end
+
+          def read_painted(scene)
+            @painted = scene.paint.to_h do |pair|
+              role, value = pair.split("=", 2)
+              [role.to_sym, value]
+            end
+          end
 
           def skinned?
             theme.nil? || theme.name.nil? || theme.name == "default"

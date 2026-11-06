@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../text_measurement"
+require_relative "../creole"
 require_relative "../style"
 require_relative "box"
 
@@ -69,7 +70,8 @@ module Sirena
           def text_width(lines, role: nil, size: size(role))
             face = face(role)
             lines.map do |line|
-              TextMeasurement.measure_in(face, line, font_size: size)[:width]
+              TextMeasurement.measure_in(face, Creole.plain(line),
+                                         font_size: size)[:width]
             end.max.to_f
           end
 
@@ -81,7 +83,7 @@ module Sirena
           # @return [Box] a box of the node's size, not yet placed
           def box_for(node)
             return fixed_box(FIXED[node.kind]) if FIXED.key?(node.kind)
-            return legacy_decision_box if legacy_decision?(node)
+            return fixed_box(FIXED[:merge]) if node.bare
             return decision_box(node.lines) if node.kind == :decision
 
             action_box(node.lines)
@@ -94,16 +96,6 @@ module Sirena
 
           def fixed_box(size)
             Box.new(width: size.first, height: size.last)
-          end
-
-          # @return [Boolean] whether the node is a legacy `if` diamond
-          def legacy_decision?(node)
-            node.legacy && node.kind == :decision
-          end
-
-          # A bare diamond; the condition is written beside it.
-          def legacy_decision_box
-            Box.new(width: DECISION_MIN, height: DECISION_MIN)
           end
 
           def decision_box(lines)

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
+require_relative "bar_columns"
+require_relative "column_centres"
+require_relative "exits"
 require_relative "metrics"
+require_relative "row_gaps"
 
 module Sirena
   module Notation
@@ -9,20 +13,22 @@ module Sirena
         # Puts every node's box at its row and column, then fits each bar to
         # the nodes it joins and each note beside its node.
         class Placement
-          RANK_GAP = 40.0
-          COLUMN_GAP = 20.0
-          LANE_GAP = 30.0
-          NOTE_GAP = 10.0
+          LABEL_OFFSET = 5.0
+          BARE_LABEL_GAP = 13.0
+          NOTE_GAP = 20.0
           TITLE_HEIGHT = 26.0
           HEADER_HEIGHT = 28.0
           PARTITION_BELOW = 10.0
-          BAR_OVERHANG = 14.0
           BAND_PAD = 14.0
+          # The height each line of a PlantUML notice adds above the drawing.
+          WARNING_PITCH = 21.6406
 
           # @return [Hash{Node => Box}]
           attr_reader :boxes
           # @return [Array<Float>] the bottom of each row
           attr_reader :bottoms
+          # @return [Array<Float>] the space above each row; the first is 0
+          attr_reader :gaps
           # @return [Hash{Node => Array<Array(Note, Box)>}]
           attr_reader :notes
           # @return [Float] the top of the first row
@@ -37,15 +43,7 @@ module Sirena
             @metrics = metrics
             @boxes = diagram.nodes.to_h { |n| [n, metrics.box_for(n)] }
             @top = margin + header_height
-            place_columns(margin)
-            place_rows
-            fit_bars
-            place_notes
-          end
-
-          # @return [Float] the space between rows
-          def gap
-            @gap ||= rank_gap
+            lay_out(margin)
           end
 
           # @return [Float] room above a partition's nodes for its title
@@ -55,22 +53,30 @@ module Sirena
 
           private
 
-          # Rows sit far enough apart for a label and a partition's title
-          # and frame edge between them.
-          def rank_gap
-            framed = @diagram.nodes.any?(&:partition)
-            [RANK_GAP, @metrics.size(:arrow) + 14.0,
-             framed ? head + PARTITION_BELOW + 8.0 : 0].max
+          def lay_out(margin)
+            place_columns(margin)
+            @gaps = row_gaps
+            place_rows
+            fit_bars
+            place_notes
+          end
+
+          def row_gaps
+            frame = head + PARTITION_BELOW + 8.0
+            exits = Exits.new(@columns, @boxes)
+            RowGaps.new(@diagram, @ranking, exits, @metrics, frame).to_a
           end
 
           def header_height
             (@diagram.title ? TITLE_HEIGHT : 0) +
+              (@diagram.warnings.size * WARNING_PITCH) +
               (@diagram.lanes.empty? ? 0 : HEADER_HEIGHT) +
               (@diagram.nodes.any?(&:partition) ? head : 0)
           end
 
           def place_columns(margin)
             keys = @columns.key.values.uniq.sort
+            @bar_columns = BarColumns.new(@diagram, @ranking, @columns, @boxes)
             reach = reaches(keys)
             @centres = centres(keys, reach, margin)
             centre_nodes
@@ -84,34 +90,59 @@ module Sirena
           end
 
           def centres(keys, reach, margin)
-            cursor = margin
-            keys.each_with_index.to_h do |key, index|
-              cursor += spacing(keys[index - 1], key) if index.positive?
-              centre = cursor + reach[key].first
-              cursor = centre + reach[key].last
-              [key, centre]
-            end
-          end
-
-          def spacing(previous, key)
-            COLUMN_GAP + (previous.first == key.first ? 0 : LANE_GAP)
+            ColumnCentres.new(@columns, @boxes, reach, margin,
+                              @bar_columns).call(keys)
           end
 
           # How far each column reaches left and right of its centre,
-          # including notes.
+          # including notes and the labels hung on its arrows.
           def reaches(keys)
             reach = keys.to_h { |key| [key, [0.0, 0.0]] }
             @diagram.nodes.reject { |n| n.kind == :bar }.each do |node|
               key = @columns.key[node]
               reach[key] = widen(reach[key], node)
             end
-            reach
+            @bar_columns.widen(reach_labels(reach))
           end
 
           def widen(reach, node)
             half = @boxes[node].width / 2.0
             [[reach.first, half + note_room(node, :left)].max,
              [reach.last, half + note_room(node, :right)].max]
+          end
+
+          # A label sits to the right of the line it rides, and a bare
+          # decision's question to the left of the line that enters it.
+          def reach_labels(reach)
+            @diagram.edges.each do |edge|
+              next if edge.from.kind == :bar || edge.to.kind == :bar
+
+              reach_text(reach, edge)
+              reach_question(reach, edge.to) if edge.to.bare
+            end
+            reach
+          end
+
+          def reach_text(reach, edge)
+            lines = edge.label.to_s.split("\n")
+            return if lines.empty?
+
+            side = reach[@columns.key[label_owner(edge)]]
+            side[1] = [side[1], LABEL_OFFSET + width_of(lines)].max
+          end
+
+          def reach_question(reach, node)
+            key = @columns.key[node]
+            reach[key][0] = [reach[key][0],
+                             BARE_LABEL_GAP + width_of(node.lines)].max
+          end
+
+          def width_of(lines)
+            lines.empty? ? 0.0 : @metrics.text_width(lines, role: :arrow)
+          end
+
+          def label_owner(edge)
+            edge.from.kind == :decision ? edge.to : edge.from
           end
 
           def note_room(node, side)
@@ -146,7 +177,7 @@ module Sirena
           end
 
           def row_top(heights, row)
-            @top + heights.first(row).sum + (row * gap)
+            @top + heights.first(row).sum + @gaps.first(row + 1).sum
           end
 
           def row_heights
@@ -158,29 +189,31 @@ module Sirena
             nodes.to_a.map { |node| @boxes[node].height }.max.to_f
           end
 
-          # A bar stretches over the nodes on either side of it.
+          # A bar stretches over the boxes it fans out to or gathers.
           def fit_bars
             @diagram.nodes.select { |n| n.kind == :bar }.each do |bar|
-              xs = neighbours(bar).map { |n| @boxes[n].cx }
-              stretch(@boxes[bar], xs.minmax) unless xs.empty?
+              fan = @bar_columns.fan(bar).map { |n| @boxes[n] }
+              stretch(@boxes[bar], fan) unless fan.empty?
             end
           end
 
-          def stretch(box, span)
-            box.cx = span.sum / 2.0
-            box.width = [span.last - span.first + (2 * BAR_OVERHANG),
-                         box.width].max
+          def stretch(box, fan)
+            left, right = extent(fan)
+            box.cx = (left + right) / 2.0
+            box.width = [right - left, box.width].max
+            hang(box, fan)
           end
 
-          def neighbours(bar)
-            @diagram.edges.filter_map do |edge|
-              other = if edge.from.equal?(bar)
-                        edge.to
-                      elsif edge.to.equal?(bar)
-                        edge.from
-                      end
-              other if other && other.kind != :bar
-            end
+          # The boxes the bar spans, and the middle of them where a lone
+          # neighbour's arrow meets it.
+          def hang(box, fan)
+            box.fan = fan
+            box.anchor = fan.map(&:cx).minmax.sum / 2.0
+          end
+
+          def extent(fan)
+            [fan.map(&:left).min - BarColumns::OVERHANG,
+             fan.map(&:right).max + BarColumns::OVERHANG]
           end
 
           def place_notes

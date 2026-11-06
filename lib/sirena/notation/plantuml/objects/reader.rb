@@ -33,8 +33,7 @@ module Sirena
           DIRECTION = /\A(left to right|top to bottom) direction\z/i
           SKIPPED = /\A(?:skinparam|hide|show|scale)\b/i
           Boxes = PlantUMLData::Boxes
-          TREE_GLYPH = { dashed: true, markers: {}.freeze }.freeze
-          private_constant :Boxes, :TREE_GLYPH, :NAME, :LABELLED, :ELEMENT,
+          private_constant :Boxes, :NAME, :LABELLED, :ELEMENT,
                            :MAP, :JSON_OPEN,
                            :END_TEXT, :END_REF,
                            :RELATION, :START, :TITLE, :DIRECTION, :SKIPPED
@@ -74,8 +73,9 @@ module Sirena
           # An end of a relation nobody declared is an object of that name.
           def implicit_tables
             @links.flat_map { |l| [l.from, l.to] }.each do |id|
-              @tables[id] ||= Boxes::Table.new(id: id, title: id,
-                                               rows: [], kind: :object)
+              @tables[id] ||= Boxes::Table.new(id: id, title: id, rows: [],
+                                               kind: :object,
+                                               group: packages(id))
             end
           end
 
@@ -115,7 +115,13 @@ module Sirena
           def declare(label, as_name, name, kind, rows = [])
             id = as_name || name
             @tables[id] = Boxes::Table.new(id: id, title: label || name,
-                                           rows: rows, kind: kind)
+                                           rows: rows, kind: kind,
+                                           group: as_name ? [] : packages(id))
+          end
+
+          # @return [Array<String>] the packages a dotted name stands in
+          def packages(name)
+            name.split(".")[0...-1]
           end
 
           def element
@@ -145,9 +151,12 @@ module Sirena
             map_links(as_name || name, links)
           end
 
+          # A map row's `*->` is a plain line out of the row: the JAR draws no
+          # composition diamond for it.
           def map_links(id, links)
             links.each do |key, glyph, target|
-              @links << link(id, target, Arrow.parse(glyph), [], key)
+              @links << link(id, target, Arrow.parse(glyph.delete("*")), [],
+                             key)
             end
           end
 
@@ -155,7 +164,8 @@ module Sirena
             match = JSON_OPEN.match(@text) or return false
             label, as_name, name, rest = match.captures
             value = Boxes::JsonReader.new.call("{#{json_body(rest)}")
-            root = Boxes::TreeBuilder.new(Boxes::Highlights.new).call(value)
+            root = Boxes::TreeBuilder.new(Boxes::Highlights.new, inline: true)
+              .call(value)
             adopt(root, label, as_name || name)
           end
 
@@ -172,23 +182,8 @@ module Sirena
           end
 
           def adopt(root, label, id)
-            table = Boxes::Table.new(id: id, title: label || id,
-                                     rows: root.rows, kind: :tree)
-            @tables[id] = table
-            walk(table, "#{id}.")
-          end
-
-          def walk(table, prefix)
-            table.rows.each_with_index do |row, i|
-              next unless row.child
-
-              child = Boxes::Table.new(id: "#{prefix}#{i}",
-                                       rows: row.child.rows, kind: :tree)
-              @tables[child.id] = child
-              @links << Boxes::Link.new(from: table.id, to: child.id,
-                                        from_row: row, glyph: TREE_GLYPH)
-              walk(child, "#{child.id}.")
-            end
+            @tables[id] = Boxes::Table.new(id: id, title: label || id,
+                                           rows: root.rows, kind: :inline)
           end
 
           def relation
@@ -201,9 +196,10 @@ module Sirena
           def link(from, to, glyph, texts, from_port = nil)
             source, port = from.split("::")
             target, target_port = to.split("::")
+            tail, head, label = texts
             Boxes::Link.new(from: source, to: target, glyph: glyph,
                             from_row: from_port || port, to_row: target_port,
-                            label: texts.compact.join(" "))
+                            label: label, tail_text: tail, head_text: head)
           end
         end
       end

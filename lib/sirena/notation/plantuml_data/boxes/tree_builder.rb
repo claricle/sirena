@@ -15,8 +15,11 @@ module Sirena
           private_constant :Entry
 
           # @param highlights [#style_for] answers the style of a key path
-          def initialize(highlights)
+          # @param inline [Boolean] a nested value fills its row's cell
+          #   instead of being a box of its own
+          def initialize(highlights, inline: false)
             @highlights = highlights
+            @inline = inline
           end
 
           # @return [Table] the root; its descendants hang off its rows
@@ -50,19 +53,27 @@ module Sirena
             here = path + [entry.segment]
             style = @highlights.style_for(here)
             item = entry.item
-            return plain_row(entry, style) unless nested?(item)
+            return plain_row(entry, style) unless container?(item)
+
+            nested = build(item, here)
+            return inline_row(entry, style, nested) if @inline
 
             Row.new(key: entry.key, value: Text::BLANK, style: style,
-                    child: build(item, here))
+                    child: nested)
+          end
+
+          def inline_row(entry, style, nested)
+            Row.new(key: entry.key, style: style,
+                    inline: (nested unless nested.rows.empty?))
           end
 
           def plain_row(entry, style)
-            Row.new(key: entry.key, value: Text.scalar(entry.item),
-                    style: style)
+            value = @inline ? Text.literal(entry.item) : Text.scalar(entry.item)
+            Row.new(key: entry.key, value: value, style: style)
           end
 
-          def nested?(item)
-            (item.is_a?(Hash) || item.is_a?(Array)) && !item.empty?
+          def container?(item)
+            item.is_a?(Hash) || item.is_a?(Array)
           end
         end
       end

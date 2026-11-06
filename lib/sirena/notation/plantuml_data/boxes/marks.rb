@@ -14,6 +14,8 @@ module Sirena
           INK = "#181818"
           BLACK = "#000000"
           PAPER = "#F1F1F1"
+          # How far a text's baseline lies below its vertical middle.
+          BASELINE = 5.5
 
           def rect(left, top, width, height, **style)
             { kind: :rect, x: left, y: top, width: width, height: height,
@@ -28,7 +30,7 @@ module Sirena
           # @param middle [Float] the y of the text's vertical middle
           # @param style [Hash] bold, italic, fill and anchor
           def text(content, left, middle, **style)
-            { kind: :text, content: content, x: left, y: middle + 5.5,
+            { kind: :text, content: content, x: left, y: middle + BASELINE,
               bold: false, italic: false, fill: BLACK, anchor: nil }
               .merge(style)
           end
@@ -40,6 +42,14 @@ module Sirena
 
           def polygon(points, fill: BLACK, stroke: fill)
             { kind: :polygon, points: points, fill: fill, stroke: stroke }
+          end
+
+          # The small notched arrow PlantUML ends a tree link with: 7.6 long,
+          # 6.1 wide, notched 2.3 in from its base; filled, never outlined.
+          def arrowhead(tip)
+            x, y = tip
+            polygon([[x - 7.6, y - 3.0], [x - 5.3, y], [x - 7.6, y + 3.0], tip],
+                    fill: BLACK, stroke: "none")
           end
 
           def dot(centre)
