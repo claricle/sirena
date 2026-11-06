@@ -101,7 +101,7 @@ module Sirena
             text = edge.label.to_s
             return 0.0 if text.empty?
 
-            TextMeasurement.measure(text, font_size: 12)[:width].to_f
+            Drawing::Face.width(text, size: 12).to_f
           end
 
           # The children of `scope` on its frame, then the rest.

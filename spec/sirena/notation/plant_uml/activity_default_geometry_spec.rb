@@ -34,8 +34,9 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
     values.max - values.min
   end
 
-  def arial(text, size)
-    Sirena::TextMeasurement.measure(text, font_size: size)[:width]
+  def dejavu(text, size)
+    Sirena::TextMeasurement.measure_in(:dejavu, text,
+                                       font_size: size)[:width]
   end
 
   def trebuchet(text, size)
@@ -68,7 +69,7 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
     # JAR: "Is it ok?" at 11 is 40.86 wide in a 64.86 hexagon
     it "is a hexagon as wide as its text plus 24" do
       expect(extent(hexagon, 0))
-        .to be_within(0.01).of(arial("Is it ok?", 11) + 24)
+        .to be_within(0.01).of(dejavu("Is it ok?", 11) + 24)
     end
 
     # JAR: points (56.02,109.13) (96.88,109.13) (108.88,121.13): 12 in
@@ -110,7 +111,7 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
     rect = actions(root_for(":Hello world;")).first
 
     expect([number(rect, "height"), number(rect, "width")])
-      .to eq([(1.1777 * 12) + 20, arial("Hello world", 12) + 20])
+      .to eq([(1.1777 * 12) + 20, dejavu("Hello world", 12) + 20])
   end
 
   # JAR: two wide branches stand 20 apart
@@ -136,9 +137,9 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
         .to be_within(0.01).of(trebuchet("Hello world", 12) + 20)
     end
 
-    it "measures in Arial for a face without a table" do
+    it "measures in DejaVu for a face without a table" do
       expect(action_width("Courier"))
-        .to be_within(0.01).of(arial("Hello world", 12) + 20)
+        .to be_within(0.01).of(dejavu("Hello world", 12) + 20)
     end
 
     it "measures the diamond's own FontName over the diagram's" do

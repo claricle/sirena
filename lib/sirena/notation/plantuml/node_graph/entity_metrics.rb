@@ -40,7 +40,7 @@ module Sirena
           end
 
           def text_width(text)
-            TextMeasurement.measure(text, font_size: FONT_SIZE)[:width].to_f
+            Drawing::Face.width(text, size: FONT_SIZE).to_f
           end
         end
       end

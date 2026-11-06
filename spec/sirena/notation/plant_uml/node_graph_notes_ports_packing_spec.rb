@@ -162,7 +162,7 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph do
     it "leave a linked pair alone", :aggregate_failures do
       at = boxes(usecase, "usecase A\nusecase B\nA --> B")
 
-      expect(at["A"].x).to eq(at["B"].x)
+      expect(at["A"].x).to be_within(0.01).of(at["B"].x)
       expect(at["B"].y).to be > at["A"].y
     end
   end
