@@ -66,6 +66,15 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
         .to be < middle(rect_of(scene, "Some Action"))
     end
 
+    it "stands Something else over Some Action's column, not past it",
+       :aggregate_failures do
+      parked = rect_of(scene, "Something else")
+      action = rect_of(scene, "Some Action")
+
+      expect(parked[:x]).to be < action[:x] + action[:width]
+      expect(scene.width).to be < 320
+    end
+
     it "draws no edge through Another Action" do
       another = rect_of(scene, "Another Action")
       crossing = scene.marks.select { |m| m.kind == :path }.select do |m|
@@ -127,6 +136,10 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
     let(:diagram) do
       path = File.join(ActivityHelpers::FIXTURES, "plantuml-lrg-5-12.puml")
       Sirena::Notation::PlantUML::Activity::Parser.new.parse(File.read(path))
+    end
+
+    it "stands the branches of a long diagram on shared rows only" do
+      expect(scene_of("5-12").width).to be < 560
     end
 
     it "prints no label over another" do

@@ -4,6 +4,7 @@ require_relative "bar_columns"
 require_relative "column_centres"
 require_relative "exits"
 require_relative "metrics"
+require_relative "reach"
 require_relative "legacy_row_gaps"
 require_relative "row_gaps"
 
@@ -84,7 +85,7 @@ module Sirena
             reach = reaches(keys)
             @centres = centres(keys, reach, margin)
             centre_nodes
-            @bands = lane_bands(keys, reach)
+            @bands = lane_bands(keys, reach.columns)
           end
 
           def centre_nodes
@@ -101,18 +102,39 @@ module Sirena
           # How far each column reaches left and right of its centre,
           # including notes and the labels hung on its arrows.
           def reaches(keys)
-            reach = keys.to_h { |key| [key, [0.0, 0.0]] }
+            reach = Reach.new(keys, by_row: @diagram.legacy)
             @diagram.nodes.reject { |n| n.kind == :bar }.each do |node|
-              key = @columns.key[node]
-              reach[key] = widen(reach[key], node)
+              widen(reach, node)
             end
+            reach_lines(reach)
             @bar_columns.widen(reach_labels(reach))
+            reach
           end
 
           def widen(reach, node)
             half = @boxes[node].width / 2.0
-            [[reach.first, half + note_room(node, :left)].max,
-             [reach.last, half + note_room(node, :right)].max]
+            grow(reach, node, 0, half + note_room(node, :left))
+            grow(reach, node, 1, half + note_room(node, :right))
+          end
+
+          def grow(reach, node, side, value)
+            reach.grow(@columns.key[node], @ranking.row(node), side, value)
+          end
+
+          # An arrow that runs past rows stands on them as a line, in its
+          # own column and where it lands, as wide as nothing; one that
+          # runs back up the page passes none.
+          def reach_lines(reach)
+            return unless @diagram.legacy
+
+            @diagram.edges.each { |edge| reach_line(reach, edge) }
+          end
+
+          def reach_line(reach, edge)
+            rows = ((@ranking.rank[edge.from] + 1)...@ranking.rank[edge.to])
+            [edge.from, edge.to].each do |node|
+              reach.line(@columns.key[node], rows)
+            end
           end
 
           # A label sits to the right of the line it rides, and a bare
@@ -131,14 +153,11 @@ module Sirena
             lines = edge.label.to_s.split("\n")
             return if lines.empty?
 
-            side = reach[@columns.key[label_owner(edge)]]
-            side[1] = [side[1], LABEL_OFFSET + width_of(lines)].max
+            grow(reach, label_owner(edge), 1, LABEL_OFFSET + width_of(lines))
           end
 
           def reach_question(reach, node)
-            key = @columns.key[node]
-            reach[key][0] = [reach[key][0],
-                             BARE_LABEL_GAP + width_of(node.lines)].max
+            grow(reach, node, 0, BARE_LABEL_GAP + width_of(node.lines))
           end
 
           def width_of(lines)

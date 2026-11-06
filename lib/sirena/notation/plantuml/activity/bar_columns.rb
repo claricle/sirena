@@ -38,7 +38,7 @@ module Sirena
           end
 
           # Gives the outermost columns a bar joins room for its overhang.
-          # @param reach [Hash{Array => Array(Float, Float)}]
+          # @param reach [Reach]
           def widen(reach)
             @diagram.nodes.select { |n| n.kind == :bar }.each do |bar|
               widen_bar(reach, bar)
@@ -49,16 +49,16 @@ module Sirena
           private
 
           def widen_bar(reach, bar)
-            boxes = fan(bar).map { |n| [@columns.key[n], @boxes[n]] }
+            boxes = fan(bar).map { |n| [@columns.key[n], n] }
             return if boxes.empty?
 
             overhang(reach, boxes.min_by(&:first), 0)
             overhang(reach, boxes.max_by(&:first), 1)
           end
 
-          def overhang(reach, (key, box), side)
-            reach[key][side] =
-              [reach[key][side], (box.width / 2.0) + OVERHANG].max
+          def overhang(reach, (key, node), side)
+            reach.grow(key, @ranking.row(node), side,
+                       (@boxes[node].width / 2.0) + OVERHANG)
           end
 
           def joined(bar)
