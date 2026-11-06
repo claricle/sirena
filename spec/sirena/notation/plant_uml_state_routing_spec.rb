@@ -146,5 +146,49 @@ RSpec.describe Sirena::Notation::PlantUML do
     it "puts Configuring on the left of NotShooting, as PlantUML does" do
       expect(box("Configuring")[2]).to be <= box("NotShooting")[0]
     end
+
+    it "stands Idle a rank and its label below Configuring, as PlantUML does" do
+      expect(box("Idle")[1] - box("Configuring")[3]).to eq(77.0)
+    end
+
+    it "stretches NotShooting down to hold Idle" do
+      expect(box("NotShooting")[3] - box("Idle")[3]).to eq(24.0)
+    end
+
+    it "draws the start marker's arrow into Idle's new place" do
+      points = curve("NotShooting_start_to_Idle")
+      expect(points.last[1]).to be_within(1.0).of(box("Idle")[1])
+    end
+  end
+
+  context "with a state that already stands below the composite it follows" do
+    let(:source) do
+      <<~PUML
+        @startuml
+        [*] --> Outer
+        state Outer {
+          [*] --> A
+          A --> B
+          B --> C
+          C --> D
+          D --> E
+          E --> Far
+          Far --> Other : back
+          Other --> Far : again
+        }
+        state Other {
+          [*] --> Inner
+        }
+        @enduml
+      PUML
+    end
+
+    it "leaves it where its own container put it" do
+      expect(box("Far")[1] - box("Other")[3]).to be >= 77.0
+    end
+
+    it "does not grow the container beyond the state" do
+      expect(box("Outer")[3] - box("Far")[3]).to eq(24.0)
+    end
   end
 end

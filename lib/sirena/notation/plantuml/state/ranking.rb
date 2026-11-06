@@ -14,8 +14,8 @@ module Sirena
         # A transition into a composite arrives at its top and one out of it
         # leaves from its bottom. A transition that would close a cycle is
         # left out of the ranking, as graphviz reverses it; the search that
-        # finds it starts from the composites, so the cycle is cut at the
-        # transition into a composite.
+        # finds it starts from the composites no start marker enters, so the
+        # cycle is cut at the transition into such a composite.
         class Ranking
           # @param nodes [Hash{String=>Hash}] the graph's states by id
           # @param children [Array<Hash>] the top-level states
@@ -24,8 +24,10 @@ module Sirena
             @arcs = Hash.new { |hash, key| hash[key] = [] }
             @order = []
             @ends = {}
+            @starts = []
             structure(children)
             edges.each { |edge| transition(edge) }
+            @entered = entered_by_start(edges)
           end
 
           # @return [Range, nil] the ranks a composite spans
@@ -34,6 +36,11 @@ module Sirena
             return unless ends
 
             (rank[ends.first]..rank[ends.last])
+          end
+
+          # @return [Boolean] whether a state ranks below a composite's bottom
+          def below?(id, composite)
+            rank[known(id)] > rank[@ends.fetch(composite).last]
           end
 
           # @return [Boolean] whether two composites share a rank
@@ -53,6 +60,13 @@ module Sirena
             end
           end
 
+          def entered_by_start(edges)
+            from_start = edges.select do |edge|
+              @starts.include?(edge[:sources].first)
+            end
+            from_start.map { |edge| edge[:targets].first }
+          end
+
           def note?(node)
             node.dig(:metadata, :state_type) == "note"
           end
@@ -60,6 +74,7 @@ module Sirena
           def enter(node, owner)
             top, bottom = keys_of(node)
             @order << top
+            @starts << node[:id] if node.dig(:metadata, :state_type) == "start"
             link(owner, top, bottom)
             structure(node[:children] || [], [top, bottom]) if top != bottom
           end
@@ -107,7 +122,11 @@ module Sirena
 
           def cut_cycles(acyclic)
             state = {}
-            roots = @order.partition { |key| key.is_a?(Array) }.flatten(1)
+            composites, leaves = @order.partition { |key| key.is_a?(Array) }
+            free, entered = composites.partition do |key|
+              @entered.none?(key.first)
+            end
+            roots = free + entered + leaves
             roots.each { |key| visit(key, state, acyclic) }
           end
 
