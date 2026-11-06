@@ -10,9 +10,9 @@ module Sirena
         # height and `baseline`, the y of its rail from its top, and draws
         # itself, rails included, at a position.
         module Blocks
-          RADIUS = 10.0
+          RADIUS = 12.0
           GAP = 10.0
-          SIDE = 20.0
+          SIDE = 2 * RADIUS
           WORD_HEIGHT = 26.4883
           WORD_PAD = 10.0
           TEXT = 14
@@ -30,6 +30,41 @@ module Sirena
           # Where the arrowhead sits on a rail of `length`, from its start.
           def self.heading_at(length)
             [(HEAD_AT * length) - HEAD_BACK, HEAD_MIN].max
+          end
+
+          # The rail's bends, as the PlantUML JAR draws them: cubic curves
+          # whose handles run three quarters of the radius.
+          module Curves
+            module_function
+
+            # A turn from a horizontal rail into a vertical one.
+            def upright(from_x, from_y, run, rise, radius)
+              handle = 0.75 * radius
+              [:bezier, from_x + ((run <=> 0) * handle), from_y,
+               from_x + run, from_y + rise - ((rise <=> 0) * handle),
+               from_x + run, from_y + rise]
+            end
+
+            # A turn from a vertical rail into a horizontal one.
+            def level(from_x, from_y, run, rise, radius)
+              handle = 0.75 * radius
+              [:bezier, from_x, from_y + ((rise <=> 0) * handle),
+               from_x + run - ((run <=> 0) * handle), from_y + rise,
+               from_x + run, from_y + rise]
+            end
+
+            # From the rail at an edge down to a branch's level, `run`
+            # being the radius toward the branch (negative on the right).
+            # A bypass turns once, in an S; any other branch turns, runs
+            # straight and turns again.
+            def drop(edge, rail, level, run, smooth: false)
+              top = smooth ? (rail + level) / 2 : rail + RADIUS
+              bottom = smooth ? top : level - RADIUS
+              [[:move, edge, rail],
+               upright(edge, rail, run, top - rail, RADIUS),
+               *(smooth ? [] : [[:line, edge + run, bottom]]),
+               level(edge + run, bottom, run, level - bottom, RADIUS)]
+            end
           end
 
           # A block's shared shape.
@@ -107,6 +142,7 @@ module Sirena
           class Stack < Block
             def initialize(branches)
               @branches = branches
+              @smooth = branches.first.is_a?(Gap)
               @tops = tops_of(branches)
               super(branches.map(&:width).max + (2 * SIDE),
                     @tops.last + branches.last.height,
@@ -158,35 +194,33 @@ module Sirena
             # The rail from a branch's end out to the stack's edge, stopping
             # short of it where a turn takes over.
             def feed(pen, edge, from, level, turned)
-              inset = turned ? RADIUS : 0.0
+              inset = turned ? SIDE : 0.0
               pen.line(from, level, edge + (from > edge ? inset : -inset),
                        level)
             end
 
             def turns(pen, left, rail, level)
-              pen.path(corner(left, rail, level, RADIUS))
-              pen.path(corner(left + width, rail, level, -RADIUS))
-            end
-
-            def corner(edge, rail, level, run)
-              [[:move, edge, rail], [:line, edge, level - RADIUS],
-               [:curve, edge, level, edge + run, level]]
+              pen.path(Curves.drop(left, rail, level, RADIUS, smooth: @smooth))
+              pen.path(Curves.drop(left + width, rail, level, -RADIUS,
+                                   smooth: @smooth))
             end
           end
 
           # A block that may be taken again, by a line looping back over it.
           class Loop < Block
             BACK = 14.0
+            INSET = 20.0
+            TURN = 8.0
 
             def initialize(item)
-              super(item.width + (2 * SIDE), item.height + BACK,
+              super(item.width + (2 * INSET), item.height + BACK,
                     item.baseline + BACK)
               @item = item
             end
 
             def draw(pen, left, top)
               rail = top + baseline
-              @item.draw(pen, left + SIDE, top + BACK)
+              @item.draw(pen, left + INSET, top + BACK)
               rails(pen, left, rail)
               back(pen, left, rail, top + (BACK / 2))
             end
@@ -194,19 +228,23 @@ module Sirena
             private
 
             def rails(pen, left, rail)
-              pen.line(left, rail, left + SIDE, rail)
-              pen.line(left + SIDE + @item.width, rail, left + width, rail)
+              pen.line(left, rail, left + INSET, rail)
+              pen.line(left + INSET + @item.width, rail, left + width, rail)
             end
 
             def back(pen, left, rail, level)
-              near = left + RADIUS
-              far = left + width - RADIUS
-              pen.path([[:move, far, rail], [:line, far, level + RADIUS],
-                        [:curve, far, level, far - RADIUS, level],
-                        [:line, near + RADIUS, level],
-                        [:curve, near, level, near, level + RADIUS],
-                        [:line, near, rail]])
+              near = left + TURN
+              far = left + width - TURN
+              pen.path(over(near, far, [rail, level]))
               arrow(pen, (near + far) / 2, level)
+            end
+
+            def over(near, far, (rail, level))
+              [[:move, far, rail], [:line, far, level + TURN],
+               Curves.level(far, level + TURN, -TURN, -TURN, TURN),
+               [:line, near + TURN, level],
+               Curves.upright(near + TURN, level, -TURN, TURN, TURN),
+               [:line, near, rail]]
             end
 
             def arrow(pen, centre, level)
