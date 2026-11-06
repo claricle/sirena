@@ -7,6 +7,7 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 
 RSpec.describe Sirena::Notation::PlantUML::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
@@ -66,6 +67,8 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
   it "does not widen a class to the width of its attached note" do
     widths = class_widths(noted_class)
 
-    expect(widths.fetch("Short")).to eq(68.0)
+    title = dejavu("Short", size: 14)
+
+    expect(widths.fetch("Short")).to eq(((title * 2).round / 2.0) + 32.0)
   end
 end

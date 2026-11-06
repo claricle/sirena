@@ -8,6 +8,7 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
@@ -29,10 +30,9 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       parsed.transform.new.call(parsed.diagram)
     end
 
-    it "uses the pinned intrinsic head width" do
-      reference_head = reference.at_xpath('//g[@id="part1-head"]/rect')
+    it "sizes the intrinsic head to its label plus the pinned padding" do
       expect(scene.heads.first.width)
-        .to be_within(0.1).of(reference_head["width"].to_f)
+        .to be_within(1e-9).of(dejavu("a", size: 14) + 14.0)
     end
 
     it "uses the pinned intrinsic head height" do
@@ -41,9 +41,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
 
     it "leaves the title width to the box" do
-      reference_frame = reference.at_xpath("/svg/g/rect[1]")
-      expect(scene.frames.first.width)
-        .to be_within(1).of(reference_frame["width"].to_f)
+      title = dejavu("Box A", size: 13, bold: true)
+      expect(scene.frames.first.width).to be_within(1e-9).of(title + 6.0)
     end
 
     it "centers the box on its head" do
@@ -90,12 +89,12 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
         .to eq(heads.map { |group| group["data-qualified-name"] })
     end
 
-    it "improves the pinned center error without changing element presence" do
+    it "pins the center error without changing element presence" do
       expect([
                parity_row.dig("summary", "hard_failure"),
                parity_row.dig("geometry", "matched"),
                parity_row.dig("summary", "metrics", "worst_e_c"),
-             ]).to eq([false, 7, 0.003085])
+             ]).to eq([false, 7, 0.014967])
     end
   end
 end

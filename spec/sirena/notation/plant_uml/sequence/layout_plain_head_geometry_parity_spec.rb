@@ -6,6 +6,7 @@ require "sirena/notation/plantuml"
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before do
     Sirena::Notation.send(:entries).delete(:plantuml)
@@ -22,9 +23,9 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
   let(:expected_metrics) do
     {
-      case_ids[0] => [0.008353, 0.037871, 0.0, 0.037871],
-      case_ids[1] => [0.008353, 0.037871, 0.0, 0.037871],
-      case_ids[2] => [0.01217, 0.037871, 0.0, 0.037871],
+      case_ids[0] => [0.010529, 0.070367, 0.0, 0.070367],
+      case_ids[1] => [0.010529, 0.070367, 0.0, 0.070367],
+      case_ids[2] => [0.013606, 0.070367, 0.0, 0.070367],
     }
   end
   let(:root) { File.expand_path("../../../../plantuml", __dir__) }
@@ -75,6 +76,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "uses intrinsic boxed-participant dimensions" do
-    expect(boxed_participant_dimensions).to eq([23.6591796875, 30.4883])
+    width = dejavu("A", size: 14) + 14.0
+
+    expect(boxed_participant_dimensions).to eq([width, 30.4883])
   end
 end

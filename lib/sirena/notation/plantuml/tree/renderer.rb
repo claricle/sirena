@@ -13,7 +13,8 @@ module Sirena
           INK = "#181818"
           INK_TEXT = "#000000"
           FONT = "sans-serif"
-          private_constant :INK, :INK_TEXT, :FONT
+          MONO_FONT = "monospace"
+          private_constant :INK, :INK_TEXT, :FONT, :MONO_FONT
 
           protected
 
@@ -56,7 +57,7 @@ module Sirena
               text.content = line.text
               text.fill = colour
               text.font_size = size.to_s
-              text.font_family = FONT
+              text.font_family = line.mono ? MONO_FONT : FONT
             end
           end
         end

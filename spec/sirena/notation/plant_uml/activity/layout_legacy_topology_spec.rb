@@ -2,12 +2,14 @@
 
 require "spec_helper"
 require_relative "activity_helpers"
+require_relative "scene_geometry"
 
 # The legacy `(*)` syntax laid out as PlantUML does: an arrow that lies along
 # its row puts both ends on one row, and a long edge goes round what it would
 # cross. Fixtures plantuml-lrg-5-4 and 5-12 are the oracle.
 RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
   include ActivityHelpers
+  include SceneGeometry
 
   def scene_of(id)
     path = File.join(ActivityHelpers::FIXTURES, "plantuml-lrg-#{id}.puml")
@@ -40,6 +42,12 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
   def crosses?(rect, segment)
     overlap?(segment, 0, rect[:x], rect[:width]) &&
       overlap?(segment, 1, rect[:y], rect[:height])
+  end
+
+  %w[5-4 5-12].each do |id|
+    it "ends every edge of #{id} on a node" do
+      expect(dangling_edges(scene_of(id))).to be_empty
+    end
   end
 
   describe "plantuml-lrg-5-4" do
@@ -119,6 +127,12 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
     let(:diagram) do
       path = File.join(ActivityHelpers::FIXTURES, "plantuml-lrg-5-12.puml")
       Sirena::Notation::PlantUML::Activity::Parser.new.parse(File.read(path))
+    end
+
+    it "prints no label over another" do
+      overprints = label_boxes(scene_of("5-12")).combination(2)
+        .select { |first, second| first.overlaps?(second) }
+      expect(overprints).to be_empty
     end
 
     it "has no loop: the next test is fed by the last branch only",

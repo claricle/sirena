@@ -1,21 +1,27 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "sirena/notation/plantuml/sequence/text_advances"
+require "sirena/notation/plantuml/drawing"
 
-RSpec.describe Sirena::Notation::PlantUML::Sequence::TextAdvances do
-  it "matches the pinned PlantUML plain sans-serif advances" do
-    expect(described_class.width("transparent_keyword", font_size: 14))
-      .to be_within(0.0001).of(142.7412)
+# Sequence text is measured in DejaVu Sans, the face the SVG renders in,
+# not in the Lucida Grande advances the macOS JAR reports. The path stays
+# because the coverage guard refuses spec deletions; the subject moved from
+# Sequence::TextAdvances to Drawing::Face.
+RSpec.describe "PlantUML sequence text advances", type: :task do
+  let(:face) { Sirena::Notation::PlantUML::Drawing::Face }
+
+  it "measures plain sequence text in DejaVu Sans" do
+    expect(face.widest_line("transparent_keyword", size: 14))
+      .to be_within(0.0001).of(148.8525)
   end
 
-  it "matches the pinned PlantUML bold sans-serif advances" do
-    expect(described_class.width("Alice", font_size: 26, bold: true))
-      .to be_within(0.0001).of(65.127)
+  it "measures bold sequence text in DejaVu Sans Bold" do
+    expect(face.widest_line("Alice", size: 26, bold: true))
+      .to be_within(0.0001).of(70.9922)
   end
 
   it "measures the widest explicit line instead of summing them" do
-    expect(described_class.width("longest\\nshort", font_size: 13))
-      .to be_within(0.0001).of(46.6489)
+    expect(face.widest_line("longest\\nshort", size: 13))
+      .to be_within(0.0001).of(47.9248)
   end
 end

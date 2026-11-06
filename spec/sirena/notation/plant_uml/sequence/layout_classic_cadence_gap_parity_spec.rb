@@ -5,6 +5,7 @@ require "sirena/notation/plantuml"
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before do
     Sirena::Notation.send(:entries).delete(:plantuml)
@@ -36,8 +37,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
   it "sizes classic heads to the PlantUML label advance plus fourteen" do
     expect(plain_head_widths).to contain_exactly(
-      be_within(0.0001).of(23.6592),
-      be_within(0.0001).of(22.0527),
+      be_within(1e-9).of(dejavu("A", size: 14) + 14.0),
+      be_within(1e-9).of(dejavu("B", size: 14) + 14.0),
     )
   end
 
@@ -74,12 +75,17 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     expect(scene.lifelines.last.x1 - endpoint).to eq(7.0)
   end
 
+  def hello_gap
+    bob, alice = %w[Bob Alice].map { |name| dejavu(name, size: 14) + 14.0 }
+    dejavu("hello", size: 13) + 24.0 - ((bob + alice) / 2)
+  end
+
   it "does not separate peers to make room for a one-participant note" do
     scene = scene_of("Bob -> Alice: hello", "alt link",
                      "note over Bob: [[https://www.google.com]]", "end")
     heads = scene.heads.first(2)
 
     expect(heads.last.x - (heads.first.x + heads.first.width))
-      .to be_within(0.0001).of(11.7178)
+      .to be_within(1e-9).of(hello_gap)
   end
 end

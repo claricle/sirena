@@ -28,7 +28,7 @@ module Sirena
 
           def text_width(lines)
             lines.map do |line|
-              TextMeasurement.measure(line, font_size: FONT_SIZE)[:width]
+              Drawing::Face.width(line, size: FONT_SIZE)
             end.max.to_f
           end
 

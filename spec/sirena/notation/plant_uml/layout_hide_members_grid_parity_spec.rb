@@ -7,6 +7,7 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 
 RSpec.describe Sirena::Notation::PlantUML::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
@@ -38,11 +39,15 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
 
   def expected
     { order: %w[B A C D],
-      dimensions: { "B" => [121.3477, 56.4883],
-                    "A" => [41.6592, 32.0],
-                    "C" => [41.6865, 32.0],
-                    "D" => [42.4863, 32.0] },
+      dimensions: { "B" => [padded("run(): boolean", 26.0), 56.4883],
+                    "A" => [padded("A", 32.0), 32.0],
+                    "C" => [padded("C", 32.0), 32.0],
+                    "D" => [padded("D", 32.0), 32.0] },
       gaps: [35.0, 35.0, 60.0], alignments: [0.0, 0.0, 0.0] }
+  end
+
+  def padded(text, padding)
+    (dejavu(text, size: 14) + padding).round(4)
   end
 
   def gaps

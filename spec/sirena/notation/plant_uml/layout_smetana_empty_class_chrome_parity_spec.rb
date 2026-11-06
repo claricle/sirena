@@ -7,6 +7,7 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 
 RSpec.describe Sirena::Notation::PlantUML::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
@@ -24,11 +25,10 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
 
   def expected_dimensions
     height = be_within(0.01).of(48.0)
-    {
-      "Company" => [be_within(0.01).of(95.9023), height],
-      "Person" => [be_within(0.01).of(77.6914), height],
-      "Car" => [be_within(0.01).of(55.1465), height],
-    }
+    %w[Company Person Car].to_h do |name|
+      width = be_within(0.01).of(dejavu(name, size: 14) + 32.0)
+      [name, [width, height]]
+    end
   end
 
   it "keeps intrinsic Smetana chrome for heterogeneous empty classes" do

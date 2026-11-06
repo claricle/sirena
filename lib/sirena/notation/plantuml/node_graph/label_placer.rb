@@ -95,7 +95,7 @@ module Sirena
           end
 
           def width_of(text)
-            TextMeasurement.measure(text, font_size: FONT_SIZE)[:width].to_f
+            Drawing::Face.width(text, size: FONT_SIZE).to_f
           end
 
           # The point `fraction` of the way along the polyline.

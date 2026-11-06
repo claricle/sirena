@@ -7,6 +7,7 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 
 RSpec.describe Sirena::Notation::PlantUML::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
@@ -69,14 +70,18 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     boxes.values_at(1, 3).map { |note| note.values_at("width", "height") }
   end
 
+  def note_width(line)
+    dejavu(line, size: 13) + 21.0
+  end
+
   def expected_geometry
     gap = be_within(0.01).of(35.0)
     height = be_within(0.01).of(25.3105)
     {
       gaps: [gap, gap, gap],
       note_sizes: [
-        [be_within(0.01).of(127.7866), height],
-        [be_within(0.01).of(144.0366), height],
+        [be_within(0.01).of(note_width("yellow class note")), height],
+        [be_within(0.01).of(note_width("lightblue class note")), height],
       ],
     }
   end

@@ -27,7 +27,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       end
     end
     let(:expected) do
-      width = sequence::TextAdvances.width(label, font_size: 13)
+      width = Sirena::Notation::PlantUML::Drawing::Face
+        .widest_line(label, size: 13)
       cases.map { |row| width + 24.0 + row.last }
     end
 
@@ -71,7 +72,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       end
     end
     let(:expected) do
-      width = sequence::TextAdvances.width(label, font_size: 13)
+      width = Sirena::Notation::PlantUML::Drawing::Face
+        .widest_line(label, size: 13)
       cases.map { |row| width + 24.0 + row.last }
     end
 

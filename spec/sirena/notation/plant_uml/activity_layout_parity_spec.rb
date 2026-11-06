@@ -228,17 +228,20 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
 
   describe "a decision with three or more branches" do
     let(:root) do
-      root_for("start", "switch (test?)", "case ( condition A )", ":T1;",
-               "case ( condition B )", ":T2;", "case ( condition C )",
+      root_for("start", "switch (test?)", "case ( cond A )", ":T1;",
+               "case ( cond B )", ":T2;", "case ( cond C )",
                ":T3;", "endswitch", "stop")
     end
     let(:steps) { boxes(root).sort_by { |b| num(b, "x") }.first(3) }
+    let(:label_width) do
+      Sirena::TextMeasurement.measure_in(:dejavu, "cond C",
+                                         font_size: 11)[:width]
+    end
 
     # JAR 6-4: the decision stands 19 right of the middle of the outer
     # steps, a label's width counted
     it "hangs the decision off the middle of the block it spans" do
-      label = Sirena::TextMeasurement.measure("condition C", font_size: 11)
-      right = centre(steps.last) + 5 + label[:width] + 3.5
+      right = centre(steps.last) + 5 + label_width + 3.5
       left = centre(steps.first) - (num(steps.first, "width") / 2)
 
       expect(span(hexagon(root), 0).sum / 2)
@@ -321,13 +324,19 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
       .to eq([nil, 14.0])
   end
 
-  # JAR: a note stands 20 from its step
+  # The note outline's two leftmost x: the tail tip, then the body edge.
+  def note_left_xs(root)
+    note = match(root, "polygon").find { |g| g.attributes["fill"] == "#FEFFDD" }
+    points(note).map(&:first).uniq.sort.first(2)
+  end
+
+  # JAR: a note's body stands 20 from its step; its tail tip touches the step
   it "puts a note 20 from its step" do
     root = root_for(":a;", "note right: a note")
     step = boxes(root).first
-    note = match(root, "polygon").map { |g| points(g) }.find { |p| p.size == 5 }
+    right = num(step, "x") + num(step, "width")
+    gaps = note_left_xs(root).map { |x| x - right }
 
-    expect(span(note, 0).first - (num(step, "x") + num(step, "width")))
-      .to be_within(0.01).of(20.0)
+    expect(gaps.map { |g| g.round(2) }).to eq([0.0, 20.0])
   end
 end

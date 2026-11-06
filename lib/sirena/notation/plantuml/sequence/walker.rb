@@ -449,7 +449,7 @@ module Sirena
           end
 
           def sans_message_width(text)
-            TextAdvances.width(text, font_size: @message_font_size)
+            Drawing::Face.widest_line(text, size: @message_font_size)
           end
 
           def message_row(message)

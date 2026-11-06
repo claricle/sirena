@@ -7,8 +7,13 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 
 RSpec.describe Sirena::Notation::PlantUML::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
+
+  def padded(text, padding)
+    (dejavu(text, size: 14) + padding).round(4)
+  end
 
   def dimensions(id, names)
     source = File.read("spec/plantuml/class/#{id}.puml")
@@ -23,18 +28,16 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
 
   it "uses compact chrome for empty classes when circles are hidden" do
     id = "resources.vega.nonreg.group2903.nodesep_ranksep--7c073f601760"
-    expected = { "A" => [15.6592, 42.4883],
-                 "B" => [14.0527, 42.4883],
-                 "C" => [15.6865, 42.4883] }
+    expected = %w[A B C].to_h { |name| [name, [padded(name, 6.0), 42.4883]] }
 
     expect(dimensions(id, expected.keys)).to eq(expected)
   end
 
   it "uses compact chrome for member classes when circles are hidden" do
     id = "resources.vega.nonreg.group2903.reported_case--fd42e1abb616"
-    expected = { "Respuesta" => [88.6514, 58.9766],
-                 "Opcion" => [96.2871, 58.9766],
-                 "Voto" => [148.1172, 58.9766] }
+    expected = { "Respuesta" => [padded("fecha: Date", 12.0), 58.9766],
+                 "Opcion" => [padded("texto: String", 12.0), 58.9766],
+                 "Voto" => [padded("getOpcion(): Opcion", 12.0), 58.9766] }
 
     expect(dimensions(id, expected.keys)).to eq(expected)
   end

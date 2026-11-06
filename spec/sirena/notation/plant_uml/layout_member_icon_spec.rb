@@ -25,7 +25,10 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     end
 
     it "is as wide as its widest proportional row" do
-      expect(box.width).to be_within(0.001).of(113.582)
+      widest = Sirena::Notation::PlantUML::Drawing::Face
+        .widest_line("void methods()", size: 14.0)
+
+      expect(box.width).to be_within(0.001).of(widest + 12.0)
     end
 
     it "starts plain text 6 in" do
@@ -55,8 +58,8 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     end
 
     it "is as wide as the indent, the widest row and 6 beyond" do
-      widest = Sirena::Notation::PlantUML::Sequence::TextAdvances
-        .width("m1()", font_size: 14.0)
+      widest = Sirena::Notation::PlantUML::Drawing::Face
+        .widest_line("m1()", size: 14.0)
 
       expect(box.width).to be >= 20.0 + widest + 6.0
     end
