@@ -26,9 +26,13 @@ module Sirena
             kept, peers = joins(unit).partition do |_, pair|
               !@ranking.overlap?(*pair)
             end
-            elk = kept.filter_map { |edge, pair| elk_edge(edge, pair, unit) }
+            elk = elk_edges(majority(kept), unit)
             joined = elk + entries(elk, peer_pairs(peers, unit))
             peers.empty? ? joined : by_target(joined, rows)
+          end
+
+          def elk_edges(joined, unit)
+            joined.filter_map { |edge, pair| elk_edge(edge, pair, unit) }
           end
 
           def peer_pairs(peers, unit)
@@ -56,6 +60,16 @@ module Sirena
           end
 
           private
+
+          # Of two states joined both ways, graphviz keeps the way most
+          # transitions run and reverses the rest, so the states rank by the
+          # majority; an even split keeps both.
+          def majority(joined)
+            counts = joined.map(&:last).tally
+            joined.reject do |_, pair|
+              counts[pair] < counts.fetch(pair.reverse, 0)
+            end
+          end
 
           def unit_ids(rows)
             rows.each_with_object({}) do |row, found|

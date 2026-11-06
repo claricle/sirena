@@ -8,6 +8,7 @@ module Sirena
         module RouteGeometry
           SPREAD = 16.0
           LOOP = 28.0
+          LOOP_HALF = 10.0
           LABEL_GAP = 6.0
           BOW = 1.5
 
@@ -29,10 +30,28 @@ module Sirena
 
           def loop_points(box)
             right = box.x + box.w
-            top = box.y + (box.h * 0.35)
-            bottom = box.y + (box.h * 0.65)
+            top, bottom = loop_span(box)
             [[right, top], [right + LOOP, top], [right + LOOP, bottom],
              [right, bottom]]
+          end
+
+          # A composite's loop sits level with the first row of its content,
+          # as PlantUML hangs it on the cluster's first rank.
+          def loop_span(box)
+            rows = child_rows(box)
+            return fraction_span(box) if rows.empty?
+
+            [rows.min - LOOP_HALF, rows.min + LOOP_HALF].map { |at| box.y + at }
+          end
+
+          def child_rows(box)
+            Array(box.node[:children]).map do |child|
+              child[:y] + (child[:height] / 2.0)
+            end
+          end
+
+          def fraction_span(box)
+            [0.35, 0.65].map { |part| box.y + (box.h * part) }
           end
 
           def shifted(section, origin, shift)

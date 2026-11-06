@@ -26,7 +26,9 @@ module Sirena
           # The step of one rank between the tops of two composites, as
           # PlantUML measures it: a start marker and the gap after it.
           RANK_DROP = 68.0
-          private_constant :MARGIN, :PAD, :RANK_DROP
+          # The distance from a composite to the end marker beside it.
+          END_GAP = 130.0
+          private_constant :MARGIN, :PAD, :RANK_DROP, :END_GAP
 
           # @param graph [Hash] the graph from the state layout's build_graph
           # @param flat [Array<Array(String, String)>] the transitions drawn
@@ -115,6 +117,85 @@ module Sirena
               spot(row, spots.fetch(row.id), drop.include?(row.id))
             end
             follow(elk, drop)
+            above_entered(rows, elk, drop)
+            beside_composites(rows, elk)
+          end
+
+          # An end marker a composite leads to stands beside the composite,
+          # on the rank after the one its own start marker sits on, as
+          # PlantUML ranks a transition that leaves a cluster.
+          def beside_composites(rows, elk)
+            rows.flat_map(&:nodes).select { |node| end_marker?(node) }
+              .each do |marker|
+                composite = leaving_composite(marker)
+                lean(marker, composite, elk) if composite
+              end
+          end
+
+          def lean(marker, composite, elk)
+            after = after_start(composite)
+            return unless after
+
+            marker[:x] = composite[:x] + composite[:width] + END_GAP
+            marker[:y] = composite[:y] + level_with(after, marker[:height])
+            cut_routes(elk, marker)
+          end
+
+          def cut_routes(elk, marker)
+            elk[:edges].each do |edge|
+              edge.delete(:sections) if edge[:targets] == [marker[:id]]
+            end
+          end
+
+          # The top that centres a box of `height` on the node.
+          def level_with(node, height)
+            node[:y] + ((node[:height] - height) / 2.0)
+          end
+
+          def end_marker?(node)
+            node.dig(:metadata, :state_type) == "end"
+          end
+
+          def leaving_composite(marker)
+            sources = @graph[:edges].select do |edge|
+              edge[:targets] == [marker[:id]]
+            end.map { |edge| @nodes[edge[:sources].first] }
+            sources.find { |node| Array(node[:children]).any? }
+          end
+
+          def after_start(composite)
+            start = composite[:children].find { |node| start?(node) }
+            edge = @graph[:edges].find do |found|
+              start && found[:sources] == [start[:id]]
+            end
+            @nodes[edge[:targets].first] if edge
+          end
+
+          # A start marker whose only way on is a composite that stands a
+          # rank lower hangs straight above it, as PlantUML draws it; its
+          # route is then the straight line between them.
+          def above_entered(rows, elk, dropped)
+            starts = rows.flat_map(&:nodes).select { |node| start?(node) }
+            dropped.each do |id|
+              start = starts.find { |node| starts_into?(node, id) }
+              hang(start, @nodes[id], elk)
+            end
+          end
+
+          def hang(start, target, elk)
+            start[:x] = target[:x] + ((target[:width] - start[:width]) / 2.0)
+            elk[:edges].select { |edge| edge[:sources] == [start[:id]] }
+              .each { |edge| edge.delete(:sections) }
+          end
+
+          def start?(node)
+            node.dig(:metadata, :state_type) == "start"
+          end
+
+          def starts_into?(start, id)
+            @graph[:edges].any? do |edge|
+              edge[:sources] == [start[:id]] && edge[:targets] == [id]
+            end
           end
 
           # A route ELK drew to a row that has moved follows it down: its

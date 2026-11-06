@@ -4,6 +4,7 @@ require_relative "../../../layout/state_diagram"
 require_relative "hierarchy"
 require_relative "look"
 require_relative "curve"
+require_relative "extent"
 
 module Sirena
   module Notation
@@ -47,6 +48,14 @@ module Sirena
             return "history" if history?(state)
 
             super
+          end
+
+          # The canvas ends a margin past the last box, route or label, as
+          # PlantUML's does, not past a fixed padding.
+          def scene_geometry(graph)
+            width, height = Extent.of(graph).map { |far| far + Look::CANVAS_MARGIN }
+            { width: width, height: height,
+              view_box: "0 0 #{width} #{height}" }
           end
 
           def history?(state)
