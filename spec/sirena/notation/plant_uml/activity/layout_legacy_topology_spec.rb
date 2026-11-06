@@ -81,6 +81,13 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
       expect(diagram.nodes.count { |n| n.kind == :bar }).to eq(3)
     end
 
+    it "draws every bar 80 by 8, however many branches it joins" do
+      bars = scene_of("5-12").marks.select { |m| m.attrs[:fill] == "#555555" }
+
+      expect(bars.map { |m| m.attrs.values_at(:width, :height) })
+        .to all(eq([80.0, 8.0]))
+    end
+
     it "lays the left-hand branch of a decision left of it",
        :aggregate_failures do
       scene = scene_of("5-12")

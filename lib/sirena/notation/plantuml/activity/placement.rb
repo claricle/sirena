@@ -202,14 +202,15 @@ module Sirena
           def fit_bars
             @diagram.nodes.select { |n| n.kind == :bar }.each do |bar|
               fan = @bar_columns.fan(bar).map { |n| @boxes[n] }
-              stretch(@boxes[bar], fan) unless fan.empty?
+              stretch(bar, fan) unless fan.empty?
             end
           end
 
-          def stretch(box, fan)
+          def stretch(bar, fan)
+            box = @boxes[bar]
             left, right = extent(fan)
             box.cx = (left + right) / 2.0
-            box.width = [right - left, box.width].max
+            box.width = [right - left, box.width].max unless bar.legacy
             hang(box, fan)
           end
 
