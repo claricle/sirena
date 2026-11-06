@@ -98,13 +98,18 @@ module Sirena
 
           # A divider under the name of every plain state and composite.
           def append_state_labels(state, group)
-            group.children.insert(-2, band(state)) if banded?(state)
+            underlay_band(state, group)
             group.children << divider(state) if divided?(state)
             state.labels.each_with_index do |label, index|
               text = state_label(label)
               text.text_anchor = "start" if left_aligned?(state, index)
               group.children << text
             end
+          end
+
+          # The outline was the last child added; the band goes just beneath it.
+          def underlay_band(state, group)
+            group.children.insert(-2, band(state)) if banded?(state)
           end
 
           def divided?(state)
