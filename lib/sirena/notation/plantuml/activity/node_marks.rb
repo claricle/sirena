@@ -27,8 +27,7 @@ module Sirena
             case node.kind
             when :start
               @canvas.circle(box, 10.0, fill: "#222222", role: :start)
-            when :stop, :kill then terminal(node, box)
-            when :end then final(box)
+            when :stop, :kill, :end then terminal(node, box)
             when :merge then diamond(box, node.fill)
             when :bar then bar(node, box)
             when :decision then decision(node, box)
@@ -96,7 +95,11 @@ module Sirena
           end
 
           def terminal(node, box)
-            node.kind == :kill ? kill(box) : stop(box)
+            case node.kind
+            when :kill then kill(box)
+            when :end then final(box)
+            else stop(box)
+            end
           end
 
           def stop(box)

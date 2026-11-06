@@ -33,7 +33,7 @@ module Sirena
             end
           end
 
-          # @return [Boolean] whether the vertical through x runs through the box
+          # @return [Boolean] whether the vertical at x runs through the box
           def spans?(x_pos)
             left < x_pos && x_pos < right
           end

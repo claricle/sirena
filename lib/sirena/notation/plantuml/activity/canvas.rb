@@ -59,11 +59,10 @@ module Sirena
                           role: role)
           end
 
-          def circle(box, radius, fill:, stroke: "#222222", role: nil,
-                     width: 1)
+          def circle(box, radius, fill:, role: nil, width: 1)
             see(box.left, box.right, box.bottom)
             add(:circle, cx: box.cx, cy: box.cy, r: radius, fill: fill,
-                         stroke: stroke, role: role, width: width)
+                         stroke: "#222222", role: role, width: width)
           end
 
           def path(points, stroke:, width: 1.0, dash: nil)
