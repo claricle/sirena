@@ -256,28 +256,7 @@ module Sirena
           end
 
           def draw_link(link)
-            from = @rects.fetch(link.from)
-            to = @rects.fetch(link.to)
-            if link.from_row.is_a?(Row)
-              tree_link(link, from, to)
-            else
-              line_link(link, from, to)
-            end
-          end
-
-          def tree_link(link, from, to)
-            start = tree_start(link, from)
-            stop = [to.x, to.y + (to.height / 2)]
-            [Marks.curve(start, stop, dashed: true), Marks.arrowhead(stop),
-             Marks.dot(start)]
-          end
-
-          def tree_start(link, rect)
-            table = @tables.fetch(link.from)
-            index = table.rows.index do |r|
-              r.equal?(link.from_row) || r.port == link.from_row
-            end
-            [rect.right - 11.6, TableBox.row_middle(table, index.to_i, rect.y)]
+            line_link(link, @rects.fetch(link.from), @rects.fetch(link.to))
           end
 
           def line_link(link, from, to)
