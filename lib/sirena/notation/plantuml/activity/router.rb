@@ -37,7 +37,7 @@ module Sirena
           def call(edge)
             from = @boxes.fetch(edge.from)
             to = @boxes.fetch(edge.to)
-            return level(from, to) if level?(edge)
+            return level(edge, from, to) if level?(edge)
 
             side = detour_side(edge, from, to)
             return detour(edge, from, to, side) if side
@@ -52,12 +52,52 @@ module Sirena
               @ranking.rank[edge.from] == @ranking.rank[edge.to]
           end
 
-          # Along the row: out of the side of `from` that faces `to`.
-          def level(from, to)
+          # Along the row: out of the side of `from` that faces `to`. A
+          # parked `to` sits half a row lower, so the arrow runs on to
+          # above its middle and drops into it.
+          def level(edge, from, to)
             right = to.cx >= from.cx
             ends = right ? [from.right, to.left] : [from.left, to.right]
+            return parked_level(edge, from, to, ends.first) if parked?(from, to)
+
             Route.new(points: ends.map { |x_pos| [x_pos, from.cy] },
-                      label_x: ends.min + 5, label_y: from.cy - 4)
+                      **level_label(edge, from, ends))
+          end
+
+          def parked?(from, to)
+            (from.cy - to.cy).abs > 1
+          end
+
+          def parked_level(edge, from, to, start_x)
+            Route.new(points: [[start_x, from.cy], [to.cx, from.cy],
+                               [to.cx, to.top]],
+                      **level_label(edge, from, [start_x, to.cx]))
+          end
+
+          # The label sits at the start of the run, unless a sibling exit
+          # leaves the same side of the decision and prints its own there:
+          # then it sits at the far end.
+          def level_label(edge, from, ends)
+            return { label_x: ends.min + 5, label_y: from.cy - 4 } unless
+              shared_side?(edge, from, ends.last)
+
+            { label_x: ends.max - 4, label_y: from.cy - 4, anchor: "end" }
+          end
+
+          def shared_side?(edge, from, end_x)
+            return false unless edge.from.kind == :decision
+
+            @ranking.forward(edge.from).any? do |other|
+              sibling_beside?(other, edge, from, end_x)
+            end
+          end
+
+          def sibling_beside?(other, edge, from, end_x)
+            return false if other.equal?(edge) || other.level?
+
+            offset = @boxes.fetch(other.to).cx - from.cx
+            offset.abs >= from.width / 2.0 &&
+              (offset <=> 0) == (end_x <=> from.cx)
           end
 
           def detour_side(edge, from, to)
