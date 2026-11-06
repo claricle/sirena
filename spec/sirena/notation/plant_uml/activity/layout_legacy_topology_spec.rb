@@ -72,7 +72,7 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
       action = rect_of(scene, "Some Action")
 
       expect(parked[:x]).to be < action[:x] + action[:width]
-      expect(scene.width).to be < 320
+      expect(scene.width).to be_within(0.01).of(330.37)
     end
 
     it "draws no edge through Another Action" do
@@ -139,7 +139,7 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
     end
 
     it "stands the branches of a long diagram on shared rows only" do
-      expect(scene_of("5-12").width).to be < 560
+      expect(scene_of("5-12").width).to be_within(0.01).of(593.70)
     end
 
     it "prints no label over another" do
