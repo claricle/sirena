@@ -20,11 +20,15 @@ module Sirena
           FILL = "#F1F1F1"
           FONT = "sans-serif"
           HEX = /\A[0-9A-Fa-f]{3,8}\z/
-          # The reference draws a leaf component and a note with a hairline,
-          # a port with a heavy line and everything else with a plain one.
-          WIDTHS = { component: "0.5", note: "0.5", portin: "1.5",
-                     portout: "1.5" }.freeze
-          private_constant :WIDTHS
+          # The reference draws every leaf with a hairline, a port with a
+          # heavy line, and a container with a plain one.
+          LEAF_WIDTH = "0.5"
+          WIDTHS = { portin: "1.5", portout: "1.5" }.freeze
+          # A package and a folder are the two containers drawn heavy, in
+          # black rather than the plain stroke.
+          HEAVY = { width: "1.5", stroke: "#000000" }.freeze
+          HEAVY_KINDS = %i[package folder].freeze
+          private_constant :LEAF_WIDTH, :WIDTHS, :HEAVY, :HEAVY_KINDS
 
           # @param placed [Placed]
           # @return [Array<Svg::Element>]
@@ -46,7 +50,13 @@ module Sirena
           end
 
           def line
+            return HEAVY.transform_keys(width: :stroke_width) if heavy?
+
             { stroke: STROKE, stroke_width: stroke_width }
+          end
+
+          def heavy?
+            @p.node.container? && HEAVY_KINDS.include?(@p.node.kind)
           end
 
           # A container keeps the plain line; so does its icon, drawn as the
@@ -54,7 +64,7 @@ module Sirena
           def stroke_width
             return "0.5" if @icon
 
-            @p.node.container? ? "1" : WIDTHS.fetch(@p.node.kind, "1")
+            @p.node.container? ? "1" : WIDTHS.fetch(@p.node.kind, LEAF_WIDTH)
           end
 
           def add(type, **attrs)
