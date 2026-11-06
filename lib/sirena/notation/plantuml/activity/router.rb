@@ -103,9 +103,15 @@ module Sirena
           def detour_side(edge, from, to)
             return :left if @ranking.back?(edge)
             return unless skips?(edge)
-            return :right if same_column?(from, to)
+            return same_column_side(edge, from, to) if same_column?(from, to)
 
             blocked_side(edge, from, to)
+          end
+
+          # A drop down one column goes round the right only when a node
+          # stands in it; a clear column is drawn straight.
+          def same_column_side(edge, from, to)
+            :right unless blockers(edge, from, to).empty?
           end
 
           def skips?(edge)

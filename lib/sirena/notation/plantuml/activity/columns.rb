@@ -40,6 +40,7 @@ module Sirena
             @trunks = Set.new
             @spans, @joins, @after = Array.new(3) { {}.compare_by_identity }
             @wide = Set.new.compare_by_identity
+            @open = Set.new.compare_by_identity
           end
 
           def place_all
@@ -66,7 +67,8 @@ module Sirena
             return 0 unless edge && @key[edge.from]
 
             column = @key[edge.from].last
-            edge.direction == :left ? column - 1 : column + 1
+            step = @open.include?(edge.from) ? 0.5 : 1
+            edge.direction == :left ? column - step : column + step
           end
 
           def place(node, preferred)
@@ -85,7 +87,8 @@ module Sirena
             @ranking.forward(node).each do |edge|
               next if placed_or_held?(edge)
 
-              place(edge.to, preference(edge.to, [lane, column, keep], heads))
+              place(edge.to,
+                    preference(edge.to, [lane, column, keep], node, heads))
               keep = false
             end
             close_branches(node, lane, column)
@@ -95,12 +98,13 @@ module Sirena
             @key[edge.to] || edge.level? || pending?(edge.to)
           end
 
-          def preference(child, spot, heads)
+          def preference(child, spot, node, heads)
             lane, column, keep = spot
             return column - 0.5 if heads && child.equal?(heads.first)
             return 0 unless lane_of(child) == lane
             return column if keep
-            return room_right(lane, column, child) if heads
+            return room_right(lane, column, child, @open.include?(node)) if
+              heads
 
             @widest[lane] + 1
           end
@@ -108,9 +112,9 @@ module Sirena
           # The nearest column on the right that no step of an earlier part
           # of the flow still reaches down to, and that no decision hangs
           # from.
-          def room_right(lane, column, child)
+          def room_right(lane, column, child, adjacent)
             rank = @ranking.rank[child]
-            found = column.floor + 1
+            found = adjacent ? column + 0.5 : column.floor + 1
             found += 1 while @trunks.include?([lane, found]) ||
                 @last[[lane, found]] >= rank ||
                 @taken.include?([lane, found, rank])
@@ -138,13 +142,38 @@ module Sirena
           def hang_branches(node, lane, column)
             heads = @ranking.forward(node).map(&:to)
             join = split_join(node, heads)
-            return unless join && lane_of(join) == lane
+            return open_branches(node, heads, lane, column) unless join
+            return unless lane_of(join) == lane
 
+            hang(node, heads, lane, column)
+            @joins[join] = column
+            @after[node] = join
+          end
+
+          # A legacy decision of two steps that never meet, one of them
+          # parked beside it, hangs the same way: the steps stand either
+          # side of it, the parked one a half column away.
+          def open_branches(node, heads, lane, column)
+            return unless parked_pair?(node, heads)
+
+            @open << node
+            hang(node, heads, lane, column)
+          end
+
+          def parked_pair?(node, heads)
+            @diagram.legacy && forks?(node, heads) && heads.size == 2 &&
+              steps_with_parked?(heads)
+          end
+
+          def steps_with_parked?(heads)
+            heads.all? { |head| head.kind == :action } &&
+              heads.any? { |head| @ranking.parked?(head) }
+          end
+
+          def hang(node, heads, lane, column)
             @spans[node] = [heads.first, heads.last]
             @wide << node if heads.size > 2
             @trunks << [lane, column]
-            @joins[join] = column
-            @after[node] = join
           end
 
           # The merge that closes a decision with two or more branches of
