@@ -12,6 +12,7 @@ require_relative "member_rule"
 require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "qualified_association_layout"
+require_relative "qualifier_box"
 require_relative "styled_relation_curve"
 require_relative "rank_chain"
 require_relative "rank_hierarchy"
@@ -81,6 +82,8 @@ module Sirena
         # boxes also keep four more pixels of side padding than our ordinary
         # measured class box; both values are pinned by the group2712 family.
         EMPTY_MEMBER_COMPARTMENT = 14.0
+        EMPTY_COMPARTMENTS_EXTRA = 2.0
+        AXIS_TOLERANCE = 0.5
         EMPTY_CLASS_WIDTH_EXTRA = 8.0
         EMPTY_CLASS_MIN_WIDTH = 41.5
         HIDE_CIRCLE_BASE_HEIGHT = 42.48828125
@@ -142,7 +145,8 @@ module Sirena
                          :SELF_RELATION_END_RATIO,
                          :SELF_RELATION_CONTROL_OFFSET,
                          :SELF_RELATION_LABEL_GAP,
-                         :EMPTY_MEMBER_COMPARTMENT, :EMPTY_CLASS_WIDTH_EXTRA,
+                         :EMPTY_MEMBER_COMPARTMENT, :EMPTY_COMPARTMENTS_EXTRA, :AXIS_TOLERANCE,
+                         :EMPTY_CLASS_WIDTH_EXTRA,
                          :EMPTY_CLASS_MIN_WIDTH, :HIDE_CIRCLE_BASE_HEIGHT,
                          :HIDE_CIRCLE_TITLE_ALLOWANCE,
                          :HIDE_CIRCLE_MEMBER_ALLOWANCE,
@@ -821,6 +825,8 @@ module Sirena
 
         def complete_box_specification(record, klass, diagram, details)
           record = proportional_member_box(record, klass, diagram, details)
+          record = compartmented_empty_box(record, details[:member_rows],
+                                           diagram)
           record = compact_empty_box(record, details[:member_rows], diagram)
           record = smetana_hide_circle_box(record, klass, diagram, details)
           adjust_plain_empty_width(record, klass, diagram, details[:names])
@@ -1030,6 +1036,15 @@ module Sirena
             standard_text_width(visible, font_size) +
               ISOLATED_KIND_MEMBER_ALLOWANCE
           end
+        end
+
+        # A class with no members keeps its two 8-high compartments below
+        # the name, which ClassHeader rules.
+        def compartmented_empty_box(record, member_rows, diagram)
+          return record unless member_rows.empty? && empty_gaps?(diagram)
+          return record unless record.fetch(:title_rows).one?
+
+          record.merge(height: record.fetch(:height) + EMPTY_COMPARTMENTS_EXTRA)
         end
 
         def compact_empty_box(record, member_rows, diagram)
@@ -1956,14 +1971,62 @@ module Sirena
         def relation_scene(relation, id, endpoints, end_texts, style = {})
           sides = style.fetch(:sides, %i[left right])
           markers = style.fetch(:markers, relation.markers)
-          texts = relation_texts(relation, endpoints, end_texts, sides)
+          qualifiers, endpoints = qualifier_boxes(relation, end_texts, endpoints,
+                                                  sides)
+          texts = relation_texts(relation, endpoints, end_texts, sides,
+                                 qualifiers.size)
           drawn_markers = relation_markers(relation, markers, sides, endpoints)
           Scene::Relation.new(id: id, dashed: relation.dashed?, texts: texts,
                               dotted: relation.dotted?,
                               stroke: svg_colour(relation.color),
                               stroke_width: relation.width,
                               path: relation_path_for(relation, endpoints),
-                              markers: drawn_markers)
+                              markers: drawn_markers, qualifiers: qualifiers)
+        end
+
+        # A one-line bracketed qualifier is a box on the class edge, and the
+        # link starts at the box's far side.
+        # @return [Array(Array<Scene::Box>, Hash)] the boxes and the
+        #   endpoints moved clear of them
+        def qualifier_boxes(relation, end_texts, endpoints, sides)
+          first, second = end_texts.sides
+          direction = unit_vector(*endpoints.values_at(first, second))
+          boxed = qualifier_entries(end_texts, endpoints, sides, relation)
+          placed = boxed.map do |entry|
+            outward = entry[:side] == first ? direction : direction.map(&:-@)
+            tip = endpoints.fetch(entry[:side])
+            [entry[:side], outward, qualifier_placement(entry, tip, outward)]
+          end
+          [placed.map { |_, _, found| found.box },
+           placed.each_with_object(endpoints.dup) do |(side, outward, found), cleared|
+             cleared[side] = shift(endpoints.fetch(side), *outward,
+                                   found.clearance)
+           end]
+        end
+
+        # Only on a straight vertical, unlabelled link: a slanted or flat one
+        # is drawn between estimated class positions and beside labels that
+        # sit away from the reference's, so a box would land off it.
+        def qualifier_entries(end_texts, endpoints, sides, relation)
+          return [] if endpoints[:control] || relation.label
+          return [] unless vertical?(endpoints)
+
+          end_texts.entries.select do |entry|
+            entry[:kind] == :qualifier && entry[:pieces].one? &&
+              sides.include?(entry[:side])
+          end
+        end
+
+        def vertical?(endpoints)
+          left, right = endpoints.values_at(:left, :right)
+          (left[0] - right[0]).abs < AXIS_TOLERANCE
+        end
+
+        def qualifier_placement(entry, tip, outward)
+          content = entry[:pieces].first
+          QualifierBox.place(content, tip, outward,
+                             measure_text(content, font_size: font_size)[:width],
+                             font_size)
         end
 
         # A bracketed colour is a CSS name (`red`) or bare hex digits.
@@ -2449,12 +2512,12 @@ module Sirena
 
         # The label rides with the left end, so a relation split into legs
         # still shows it once.
-        def relation_texts(relation, endpoints, end_texts, sides)
+        def relation_texts(relation, endpoints, end_texts, sides, boxed = 0)
           first, second = end_texts.sides
           direction = unit_vector(*endpoints.values_at(first, second))
           label = relation_text_label(relation, endpoints, sides)
-          texts = positioned_end_texts(end_texts.entries, endpoints,
-                                       direction, first, sides)
+          texts = positioned_end_texts(unboxed_entries(end_texts, boxed),
+                                       endpoints, direction, first, sides)
           [label, *texts].compact
         end
 
@@ -2467,6 +2530,14 @@ module Sirena
 
         def visible_relation_label(label)
           label&.sub(/[ \t]+[<>]\z/, "")
+        end
+
+        def unboxed_entries(end_texts, boxed)
+          return end_texts.entries if boxed.zero?
+
+          end_texts.entries.reject do |entry|
+            entry[:kind] == :qualifier && entry[:pieces].one?
+          end
         end
 
         def positioned_end_texts(entries, endpoints, direction, first, sides)

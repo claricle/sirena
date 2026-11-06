@@ -19,6 +19,15 @@ module Sirena
           LONE_TITLE = 36.4883
           EMPTY_WIDTH = 30.0
           EMPTY_HEIGHT = 15.0
+          # An empty class: its circle and name, then two 8-high compartments
+          # ruled 32 and 40 below the top (measured on PlantUML 1.2026.6).
+          CLASS_PAD = 32.0
+          CLASS_HEIGHT = 48.0
+          CLASS_RULES = [32.0, 40.0].freeze
+          NAME_LEFT = 29.0
+          SPOT_LEFT = 15.0
+          SPOT_RADIUS = 11.0
+          NAME_MIDDLE = 15.79
           # Of the height a larger font adds to a row, the part its baseline
           # drops (measured on PlantUML 1.2026.6: 5.8 of 7.06 at size 20).
           BASE_SHARE = 0.82
@@ -29,6 +38,7 @@ module Sirena
           def size(table)
             return inline_size(table) if table.kind == :inline
             return empty_size if table.kind == :tree && table.rows.empty?
+            return class_size(table) if bare_class?(table)
 
             grid_size(table)
           end
@@ -45,6 +55,8 @@ module Sirena
             box = size(table)
             corner = [left, top]
             return inline_marks(table, box, corner) if table.kind == :inline
+
+            return class_marks(table, box, corner) if bare_class?(table)
 
             [background(table, box, corner),
              *title_marks(table, box, corner),
@@ -75,6 +87,45 @@ module Sirena
             table.rows.each_with_object([0.0]) do |row, tops|
               tops << (tops.last + row_height(table, row))
             end
+          end
+
+          def bare_class?(table)
+            table.kind == :class && table.rows.empty?
+          end
+
+          def bare_map?(table)
+            table.kind == :map && table.rows.empty?
+          end
+
+          def class_size(table)
+            width = Text.width(table.title.to_s) + CLASS_PAD
+            Size.new(key: 0.0, value: width, title: CLASS_HEIGHT, width: width,
+                     height: CLASS_HEIGHT)
+          end
+
+          def class_marks(table, box, corner)
+            left, top = corner
+            [background(table, box, corner), *class_spot(left, top),
+             Marks.text(table.title, left + NAME_LEFT, top + NAME_MIDDLE,
+                        anchor: "start"),
+             *CLASS_RULES.map { |rule| class_rule(box, left, top + rule) }]
+          end
+
+          def class_rule(box, left, y)
+            Marks.line([left + 1, y], [left + box.width - 1, y],
+                       stroke: Marks::INK, width: 0.5)
+          end
+
+          # The circled C, drawn with the outline PlantUML's class diagrams use.
+          def class_spot(left, top)
+            require_relative "../../plantuml/class_header"
+            glyph = PlantUML::ClassHeader.glyph(:class)
+            centre = [left + SPOT_LEFT, top + (SPOT_RADIUS + 5.0)]
+            [{ kind: :circle, cx: centre[0], cy: centre[1], r: SPOT_RADIUS,
+               fill: glyph.fill, stroke: Marks::INK },
+             { kind: :glyph, d: glyph.outline, fill: Marks::BLACK,
+               transform: format("translate(%<x>.4f %<y>.4f)", x: centre[0],
+                                                              y: centre[1]) }]
           end
 
           def inline_size(table)
@@ -155,7 +206,9 @@ module Sirena
           def title_height(table)
             return 0.0 unless titled?(table)
 
-            table.rows.empty? ? LONE_TITLE : ROW
+            return ROW unless table.rows.empty?
+
+            bare_map?(table) ? ROW : LONE_TITLE
           end
 
           def background(table, box, corner)
@@ -177,6 +230,7 @@ module Sirena
 
           def title_marks(table, box, corner)
             return [] unless box.title.positive?
+            return [title_text(table, box, corner)] if bare_map?(table)
 
             [title_text(table, box, corner), title_rule(box, corner)]
           end

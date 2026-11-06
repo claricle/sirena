@@ -173,8 +173,33 @@ module SpecSupport
         return [UNRESOLVED_ENDPOINT] * 2 if points.empty?
 
         [points.first, points.last].map do |point|
-          nearest_class(point, groups) || UNRESOLVED_ENDPOINT
+          class_at(point, group, groups) || UNRESOLVED_ENDPOINT
         end
+      end
+
+      # A bracketed qualifier box sits between the class and the line's
+      # start; the class is the one on the box's other side.
+      def class_at(point, group, groups)
+        nearest_class(point, groups) ||
+          qualifier_rects(group, point).filter_map do |rect|
+            nearest_class(mirrored(point, rect), groups)
+          end.first
+      end
+
+      def qualifier_rects(group, point)
+        group.xpath("./rect").map do |rect|
+          %w[x y width height].map { |name| rect[name].to_f }
+        end.select { |rect| touches?(rect, point) }
+      end
+
+      def touches?((left, top, width, height), point)
+        distance(point, Bbox.new(left, top, left + width,
+                                  top + height)) < 1.0
+      end
+
+      def mirrored(point, (left, top, width, height))
+        [(2 * (left + (width / 2))) - point[0],
+         (2 * (top + (height / 2))) - point[1]]
       end
 
       def transformed_path_points(path)

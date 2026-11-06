@@ -157,8 +157,16 @@ module Sirena
           group << relation_line(relation)
           relation_marker_elements(relation).each { |e| group << e }
           relation.texts.each { |text| group << text_element(text) }
+          relation.qualifiers.each { |box| qualifier_elements(box, group) }
           document << group
           render_junction_dots(relation, document)
+        end
+
+        def qualifier_elements(box, group)
+          group << Svg::Rect.new(x: box.x, y: box.y, width: box.width,
+                                 height: box.height, fill: node_fill,
+                                 stroke: node_stroke, stroke_width: node_width)
+          box.texts.each { |text| group << text_element(text) }
         end
 
         # The dot sits in a group of its own, apart from the relation's.
