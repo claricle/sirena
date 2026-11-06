@@ -81,8 +81,10 @@ module Sirena
           CLASSIC_LABEL_INSET = Walker::CLASSIC_LABEL_INSET
           CLASSIC_FRAGMENT_ROW = 24.3105
           CLASSIC_BRANCH_GAP = 2.0
+          CLASSIC_FRAME_TOP = 14.3105
+          CLASSIC_FRAME_BOTTOM = 21.3105
+          CLASSIC_BRANCH_LINE = 20.3105
           CLASSIC_FRAGMENT_CLOSE = 7.0
-          CLASSIC_GROUP_CLOSE = 10.0
           CLASSIC_DIVIDER_ROW = 42.3105
           CLASSIC_DEACTIVATION_GAP = 31.0
           CLASSIC_BARE_DEACTIVATION_GAP = 1.0
@@ -140,7 +142,9 @@ module Sirena
                            :CLASSIC_FOLLOWING_UNLABELLED_ROW, :CLASSIC_ROW,
                            :CLASSIC_SELF_ROW, :CLASSIC_SELF_CLEARANCE,
                            :CLASSIC_FRAGMENT_ROW, :CLASSIC_BRANCH_GAP,
-                           :CLASSIC_FRAGMENT_CLOSE, :CLASSIC_GROUP_CLOSE,
+                           :CLASSIC_FRAME_TOP, :CLASSIC_FRAME_BOTTOM,
+                           :CLASSIC_BRANCH_LINE,
+                           :CLASSIC_FRAGMENT_CLOSE,
                            :CLASSIC_DIVIDER_ROW, :CLASSIC_DEACTIVATION_GAP,
                            :CLASSIC_BARE_DEACTIVATION_GAP,
                            :MIN_WIDTH_GLYPH_MARGIN, :MIN_WIDTH_GLYPH_GAP,
@@ -310,8 +314,16 @@ module Sirena
               fragment_close_gap: fragment_close_gap,
               group_close_gap: group_close_gap,
               divider_row: divider_row_height,
+              **frame_cadence,
               deactivation_gap: deactivation_gap,
               bare_deactivation_gap: bare_deactivation_gap }
+          end
+
+          def frame_cadence
+            return {} if compact?
+
+            { frame_top_offset: CLASSIC_FRAME_TOP, frame_bottom_offset:
+              CLASSIC_FRAME_BOTTOM, branch_offset: CLASSIC_BRANCH_LINE }
           end
 
           def classic_following_unlabelled_row
@@ -329,7 +341,7 @@ module Sirena
           end
 
           def group_close_gap
-            compact? ? COMPACT_GROUP_CLOSE : CLASSIC_GROUP_CLOSE
+            compact? ? COMPACT_GROUP_CLOSE : CLASSIC_FRAGMENT_CLOSE
           end
 
           # Where `->]` messages end: past every head, and far enough from

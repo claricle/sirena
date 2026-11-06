@@ -59,7 +59,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     scene = scene_of("participant A", "participant B", "group Setup",
                      "A -> B: hello", "end", "B -> A: back")
 
-    expect(arrow_ys(scene)).to eq([107.1093, 146.4198])
+    expect(arrow_ys(scene)).to eq([107.1093, 143.4198])
   end
 
   it "keeps divider and deactivation clearance on PlantUML's cadence" do

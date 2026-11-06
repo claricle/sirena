@@ -441,6 +441,68 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
       expect(heights.last).to be > heights.first
     end
+
+    def note_box(scene)
+      numbers = scene.notes.first.path.scan(/-?\d+\.?\d*/).map(&:to_f)
+      { top: numbers[1], bottom: numbers.each_slice(2).map(&:last).max }
+    end
+
+    def note_height(*words)
+      box = note_box(scene_of("A -> B", "note over A: #{words.join('\\n')}"))
+      box[:bottom] - box[:top]
+    end
+
+    it "sizes a one-line note 10 plus 15" do
+      expect(note_height("a")).to be_within(0.001).of(25.0)
+    end
+
+    it "sizes a three-line note 10 plus 15 per line" do
+      expect(note_height("a", "b", "c")).to be_within(0.001).of(55.0)
+    end
+
+    it "sets the first line of a note 17.568 below its top" do
+      scene = scene_of("A -> B", "note over A: a")
+
+      expect(scene.notes.first.texts.first.y - note_box(scene)[:top])
+        .to be_within(0.001).of(17.568)
+    end
+
+    it "steps the lines of a note by 1.1776 of the 14-point default font" do
+      texts = scene_of("A -> B", "note over A: a\\nb").notes.first.texts
+
+      expect(texts.last.y - texts.first.y).to be_within(0.001).of(14 * 1.1776)
+    end
+
+    context "with a standalone note between two messages" do
+      let(:plain) { arrow_ys(scene_of("A -> B: a", "B -> A: b")) }
+      let(:scene) { scene_of("A -> B: a", "note over A: n", "B -> A: b") }
+
+      it "hangs the note 16.3105 above the row it replaces" do
+        expect(note_box(scene)[:top])
+          .to be_within(0.001).of(plain.last - 16.3105)
+      end
+
+      it "leaves the next row 26.6211 below the note" do
+        expect(arrow_ys(scene).last)
+          .to be_within(0.001).of(note_box(scene)[:bottom] + 26.6211)
+      end
+    end
+
+    it "pads a message that carries a note by 3 above and 3 below" do
+      plain = arrow_ys(scene_of("A -> B: a", "B -> A: b", "A -> B: c"))
+      noted = arrow_ys(scene_of("A -> B: a", "B -> A: b", "note right: n",
+                                "A -> B: c"))
+
+      expect(noted.zip(plain).map { |n, p| (n - p).round(3) })
+        .to eq([0.0, 3.0, 6.0])
+    end
+
+    it "gives a self arrow that carries a note no extra pad" do
+      plain = arrow_ys(scene_of("A -> A: a", "A -> B: b"))
+      noted = arrow_ys(scene_of("A -> A: a", "note right: n", "A -> B: b"))
+
+      expect(noted.first).to eq(plain.first)
+    end
   end
 
   describe "blocks" do

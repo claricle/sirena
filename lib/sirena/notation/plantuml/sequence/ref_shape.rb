@@ -16,8 +16,10 @@ module Sirena
           LABEL_SIZE = 12.0
           MIN_WIDTH = 63.916
           TAB_WIDTH = 63.0
-          HEIGHT = 44.0
-          LABEL_BASELINE = 34.0
+          HEIGHT = 39.4434
+          TAIL = 5.0
+          LABEL_BASELINE = 32.6
+          TAB_BASELINE = 14.6
 
           # @param span [Array<Float>] centres of the outermost lifelines
           def self.width_for(label)
@@ -55,7 +57,7 @@ module Sirena
           end
 
           def texts
-            [text("ref", @x + FragmentShape::TAB_PAD, @top + 14,
+            [text("ref", @x + FragmentShape::TAB_PAD, @top + TAB_BASELINE,
                   "fragment_tab", "start"),
              text(@ref.label, @x + (@width / 2), @top + LABEL_BASELINE,
                   "fragment_guard", "middle")]

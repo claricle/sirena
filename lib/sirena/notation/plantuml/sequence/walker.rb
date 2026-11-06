@@ -33,16 +33,16 @@ module Sirena
         # `left`, `right` and `y` describe the space the items ended up using.
         class Walker
           ROW = 40.0
-          LINE_LEADING = 1.1776
+          LINE_LEADING = NoteGeometry::LINE_LEADING
           SELF_WIDTH = 42.0
           CLASSIC_SELF_WIDTH = 42.0
           CLASSIC_UNLABELLED_SELF_ROW = 27.0
           CLASSIC_ROW_SPARE = 12.3105
           CLASSIC_TAIL = 17.0
+          CLASSIC_GUARD_ROW = 13.0
           CLASSIC_SELF_TAIL = 30.0
           CLASSIC_LABEL_INSET = 7.0
           CLASSIC_LABEL_RISE = 4.74
-          CLASSIC_GROUP_TAIL_TRIM = 15.3105
           # A `...` gap is 28 high, and 40.95 with its 11-point text, whose
           # baseline sits 24.63 below the gap's top (PlantUML 1.2026.6).
           CLASSIC_DELAY_ROW = 28.0
@@ -53,7 +53,7 @@ module Sirena
                            :CLASSIC_DELAY_TEXT_DROP
           private_constant :CLASSIC_SELF_WIDTH, :CLASSIC_UNLABELLED_SELF_ROW,
                            :CLASSIC_ROW_SPARE, :CLASSIC_TAIL,
-                           :CLASSIC_SELF_TAIL, :CLASSIC_GROUP_TAIL_TRIM,
+                           :CLASSIC_SELF_TAIL, :CLASSIC_GUARD_ROW,
                            :CLASSIC_LABEL_RISE
           SPARE_ROWS = [Destroy, Spacing, Delay].freeze
           private_constant :SPARE_ROWS
@@ -66,6 +66,14 @@ module Sirena
           ACTIVATION_END_INSET = 7.0
           TOP_OFFSET = 20.0
           NOTE_ABOVE = 35.0
+          # PlantUML 1.2026.6 leaves this much above and below a message row
+          # that carries a note.
+          ATTACHED_NOTE_PAD = 3.0
+          ATTACHED_NOTE_RISE = 5.6895
+          STANDALONE_NOTE_RISE = 16.3105
+          STANDALONE_NOTE_TAIL = 26.6211
+          private_constant :ATTACHED_NOTE_PAD, :ATTACHED_NOTE_RISE,
+                           :STANDALONE_NOTE_RISE, :STANDALONE_NOTE_TAIL
           LEFT_EDGE = 0.0
           TEOZ_NESTED_HEADER_ROW = 31.3105
           # What the row of a message that creates a participant gains over
@@ -100,7 +108,8 @@ module Sirena
                               :group_fragment_row, :group_close_gap,
                               :activation_edges, :teoz_fragment_cadence,
                               :deactivation_gap, :bare_deactivation_gap,
-                              :bounds, :head_halves,
+                              :frame_top_offset, :frame_bottom_offset,
+                              :branch_offset, :bounds, :head_halves,
                               keyword_init: true)
 
           def self.following_activations(items, parallel_notes: false)
@@ -164,7 +173,7 @@ module Sirena
           end
 
           def tail_trim(last)
-            return group_close_trim(last) if last.is_a?(Fragment)
+            return CLASSIC_ROW_SPARE if last.is_a?(Fragment)
             return @spare_row if last.is_a?(Message)
 
             SPARE_ROWS.include?(last.class) ? CLASSIC_ROW_SPARE : 0.0
@@ -175,15 +184,6 @@ module Sirena
           def bar_after?(items, last)
             trailing = items.drop(items.rindex { |item| item.equal?(last) } + 1)
             trailing.any?(&:on?) && trailing.any? { |item| !item.on? }
-          end
-
-          # A closing `group` frame leaves three more than the others.
-          def group_close_trim(fragment)
-            return 0.0 unless fragment.phase == :close
-
-            return CLASSIC_GROUP_TAIL_TRIM if fragment.keyword.to_s == "group"
-
-            CLASSIC_ROW_SPARE
           end
 
           def unlabelled_self?(item)
@@ -229,6 +229,17 @@ module Sirena
                                                10.0)
             @group_fragment_row = config.group_fragment_row
             @group_close_gap = config.group_close_gap
+            apply_frame_offsets(config)
+          end
+
+          # How far above the row line a frame's top, bottom and `else`
+          # line sit.
+          def apply_frame_offsets(config)
+            @frame_top_offset = config_value(config, :frame_top_offset,
+                                             TOP_OFFSET)
+            @frame_bottom_offset = config_value(config, :frame_bottom_offset,
+                                                TOP_OFFSET)
+            @branch_offset = config_value(config, :branch_offset, 10.0)
           end
 
           def config_value(config, member, default)
@@ -316,7 +327,8 @@ module Sirena
           def row_offset(item)
             case item
             when Message then 0.0
-            when Note, Ref then TOP_OFFSET
+            when Note then STANDALONE_NOTE_RISE
+            when Ref then TOP_OFFSET
             when Fragment then TOP_OFFSET if item.phase == :open
             end
           end
@@ -506,11 +518,25 @@ module Sirena
             end
             return 0.0 unless following.is_a?(Note) && following.attached?
 
-            attached_note_headroom(following)
+            attached_note_pad(items[index], following) +
+              attached_note_headroom(following)
+          end
+
+          # Self arrows, parallel rows and picture notes carry their own
+          # spacing.
+          def attached_note_pad(item, note)
+            return 0.0 if @teoz_fragment_cadence || note.picture
+            return 0.0 if item.is_a?(Message) && own_spacing?(item)
+
+            ATTACHED_NOTE_PAD
+          end
+
+          def own_spacing?(message)
+            message.self_message? || message.parallel?
           end
 
           def attached_note_headroom(note)
-            height = NoteGeometry.height(note, @font_size)
+            height = NoteGeometry.height(note)
             clearance = note.picture ? height / 2 : height
             [clearance - NOTE_ABOVE, 0.0].max
           end
@@ -822,11 +848,26 @@ module Sirena
           def note(note, previous)
             on_block = note.attached? && previous.is_a?(Fragment)
             x, width = on_block ? block_box(note) : note_box(note, previous)
-            height = NoteGeometry.height(note, @font_size)
+            height = NoteGeometry.height(note)
             top = note_top(note, on_block, height)
             @notes << note_record(note, [x, top, width, height])
             touch(x, x + width)
-            @y = [@y, top + height + 22].max
+            pad = trailing_pad(note, previous, on_block)
+            clear_note(note, top + height, pad)
+          end
+
+          def clear_note(note, bottom, pad)
+            @y = [@y, bottom + note_tail(note)].max + pad
+          end
+
+          def trailing_pad(note, previous, on_block)
+            return 0.0 if on_block || !note.attached?
+
+            attached_note_pad(previous, note)
+          end
+
+          def note_tail(note)
+            note.parallel? || note.attached? ? 22 : STANDALONE_NOTE_TAIL
           end
 
           def note_top(note, on_block, height)
@@ -835,7 +876,9 @@ module Sirena
               return @last_y - (height / 2) + 10
             end
 
-            note.attached? ? @last_y - height + 10 : @y - 20
+            return @last_y - height + ATTACHED_NOTE_RISE if note.attached?
+
+            @y - STANDALONE_NOTE_RISE
           end
 
           def block_box(note)
@@ -874,7 +917,7 @@ module Sirena
 
             step = NoteGeometry.line_height(@font_size)
             note.lines.each_with_index.map do |line, index|
-              baseline = top + 7 + (index * step) + @font_size
+              baseline = top + NoteGeometry::FIRST_BASELINE + (index * step)
               text(line, left, baseline, "note", "start")
             end
           end
@@ -885,11 +928,15 @@ module Sirena
           end
 
           def ref(item)
-            span = item.targets.map { |id| centre(id) }.minmax
-            shape = RefShape.new(item, @y - 20, span, @measure)
+            shape = ref_shape(item)
             @fragments << shape.scene
             touch(shape.x, shape.x + shape.width)
-            @y += RefShape::HEIGHT + 10
+            @y += RefShape::HEIGHT + RefShape::TAIL
+          end
+
+          def ref_shape(item)
+            span = item.targets.map { |id| centre(id) }.minmax
+            RefShape.new(item, @y - @frame_bottom_offset, span, @measure)
           end
 
           def fragment(item)
@@ -903,7 +950,7 @@ module Sirena
           def open_block(item)
             @y += @fragment_contacts.fetch(@item_index, 0.0)
             @blocks << { keyword: item.keyword, label: item.label.to_s,
-                         top: @y - 20, low: Float::INFINITY,
+                         top: @y - @frame_top_offset, low: Float::INFINITY,
                          high: -Float::INFINITY, branches: [], depth: 0,
                          resume: @resume, tab: tab_size, text_height: 0.0 }
             @y += fragment_row(item) + tab_size.height_growth
@@ -972,23 +1019,14 @@ module Sirena
           end
 
           def branch(item)
-            @blocks.last[:branches] << [@y - 10, item.label.to_s]
+            @blocks.last[:branches] << [@y - @branch_offset, item.label.to_s]
             @y += branch_row + classic_guard_row(item)
           end
 
           def classic_guard_row(item)
             return 0.0 if @label_inset || item.label.to_s.strip.empty?
 
-            [classic_guard_y + @font_size - next_classic_label_y, 0.0].max
-          end
-
-          def classic_guard_y
-            separator_y = @blocks.last[:branches].last.first
-            FragmentShape.branch_text_baseline(separator_y)
-          end
-
-          def next_classic_label_y
-            straight_label(0, 0)[1] + branch_row
+            CLASSIC_GUARD_ROW
           end
 
           def branch_row
@@ -1011,7 +1049,7 @@ module Sirena
           end
 
           def fragment_bottom_offset(block)
-            return TOP_OFFSET unless @teoz_fragment_cadence
+            return @frame_bottom_offset unless @teoz_fragment_cadence
 
             block[:text_height] + TEOZ_FRAME_BOTTOM_PAD
           end
