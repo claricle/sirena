@@ -22,7 +22,7 @@ module Sirena
           TITLE_HEIGHT = 30.0
           # A cloud's cut, bumped outline needs this much more room on each
           # side, across and down, before it clears what it holds.
-          CLOUD_ROOM = [22.0, 19.0].freeze
+          CLOUD_ROOM = [5.0, 0.0].freeze
 
           # @param graph [Graph]
           # @return [Scene]

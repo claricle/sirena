@@ -20,10 +20,10 @@ module Sirena
           # The box is rounded; its glyph is a small component icon at the top
           # right, a body with two tabs on its left.
           COMPONENT = [[:rect, ORIGIN, FULL, 2.5],
-                       [:rect, [1, 0, -20, 5], [0, 0, 15, 8]],
-                       [:rect, [1, 0, -23, 7], [0, 0, 6, 2]],
-                       [:rect, [1, 0, -23, 11], [0, 0, 6, 2]]].freeze
-          NOTE = [[:polygon, [[0, 0, 0, 0], [1, 0, -8, 0], [1, 0, 0, 8],
+                       [:rect, [1, 0, -20, 5], [0, 0, 15, 10]],
+                       [:rect, [1, 0, -22, 7], [0, 0, 4, 2]],
+                       [:rect, [1, 0, -22, 11], [0, 0, 4, 2]]].freeze
+          NOTE = [[:polygon, [[0, 0, 0, 0], [1, 0, -10, 0], [1, 0, 0, 10],
                               [1, 1, 0, 0], [0, 1, 0, 0]], "#FEFFDD"]].freeze
           ACTOR = [[:circle, [0.5, 0, 0, 8], 8],
                    [:line, [0.5, 0, 0, 16], [0.5, 0, 0, 36]],
