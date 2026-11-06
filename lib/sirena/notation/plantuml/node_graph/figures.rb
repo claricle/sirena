@@ -13,7 +13,7 @@ module Sirena
           CORNERS = [[0, 0, 0, 0], [1, 0, 0, 0], [1, 1, 0, 0],
                      [0, 1, 0, 0]].freeze
 
-          BOX = [[:rect, ORIGIN, FULL]].freeze
+          BOX = [[:rect, ORIGIN, FULL, 2.5]].freeze
           FILE = [[:rect, ORIGIN, FULL],
                   [:polygon, [[1, 0, -8, 0], [1, 0, 0, 8], [1, 0, -8, 8]],
                    "#FFFFFF"]].freeze

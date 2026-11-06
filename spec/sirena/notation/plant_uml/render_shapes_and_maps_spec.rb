@@ -228,7 +228,7 @@ RSpec.describe Sirena::Notation::PlantUML, "#render shapes and maps" do
     it "keeps the header of an untitled package" do
       root = render("package {\n  [Example 1]\n}")
       frame = all(root, "rect").find { |r| r.attributes["fill"] == "none" }
-      held = all(root, "rect").find { |r| r.attributes["rx"] }
+      held = all(root, "rect").find { |r| r.attributes["fill"] == "#F1F1F1" }
 
       expect(frame.attributes["height"].to_f - held.attributes["height"].to_f)
         .to be_within(0.1).of(42)
