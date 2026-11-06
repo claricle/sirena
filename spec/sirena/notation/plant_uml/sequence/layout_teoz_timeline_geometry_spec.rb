@@ -4,6 +4,8 @@ require "spec_helper"
 require "sirena/notation/plantuml/sequence"
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
+  include DejaVuText
+
   let(:root) { File.expand_path("../../../../plantuml/sequence", __dir__) }
   let(:notes_case) do
     "java.nonreg.simple.TeozTimelineIssues_0002_Test--c35d69988621"
@@ -56,16 +58,29 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     )
   end
 
+  # The JAR puts the first head 10 from the edge and the next 10 beyond it;
+  # heads are as wide as their DejaVu label plus 14.
+  def lifeline_centres
+    first, second = %w[Participant_A Participant_B].map do |label|
+      dejavu(label, size: 14) + 14.0
+    end
+    left = 10.0 + (first / 2)
+    [left, left + ((first + second) / 2) + 10.0]
+  end
+
   it "tracks nested activation edges" do
+    right = lifeline_centres.last
+
     expect(timeline_end_xs(6..9)).to eq(
-      [166.43603515625, 171.43603515625, 176.43603515625, 181.43603515625],
+      [right - 7.0, right - 2.0, right + 3.0, right + 8.0],
     )
   end
 
   it "clears activation edges on destruction" do
+    left, right = lifeline_centres
+
     expect(timeline_x_pairs(-2..-1)).to eq(
-      [[61.4130859375, 171.43603515625],
-       [173.43603515625, 63.4130859375]],
+      [[left, right - 2.0], [right, left + 2.0]],
     )
   end
 end

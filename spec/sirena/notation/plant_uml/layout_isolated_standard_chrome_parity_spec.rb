@@ -14,6 +14,7 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
   end
 
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
@@ -31,9 +32,8 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     end
 
     it "uses PlantUML's member row cadence" do
-      expected = [
-        be_within(0.01).of(56.7051), be_within(0.01).of(80.9766)
-      ]
+      width = dejavu("Foo", size: 14) + 32.0
+      expected = [be_within(1e-9).of(width), be_within(0.01).of(80.9766)]
       expect(dimensions).to match(expected)
     end
   end
@@ -50,9 +50,8 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     end
 
     it "uses PlantUML's stereotype chrome" do
-      expected = [
-        be_within(0.01).of(78.0742), be_within(0.01).of(56.6211)
-      ]
+      width = dejavu("Access", size: 14) + 32.0
+      expected = [be_within(1e-9).of(width), be_within(0.01).of(56.6211)]
       expect(dimensions).to match(expected)
     end
   end

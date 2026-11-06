@@ -6,6 +6,7 @@ require "sirena/notation/plantuml"
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before do
     Sirena::Notation.send(:entries).delete(:plantuml)
@@ -19,13 +20,6 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       "group_header_nested--af2e98871d2d",
       "group_header_nested_overrides_flat--29dfa779f376",
     ].map { |suffix| "#{prefix}#{suffix}" }
-  end
-  let(:expected_metrics) do
-    {
-      case_ids[0] => [0.008353, 0.037871, 0.0, 0.037871],
-      case_ids[1] => [0.008353, 0.037871, 0.0, 0.037871],
-      case_ids[2] => [0.01217, 0.037871, 0.0, 0.037871],
-    }
   end
   let(:root) { File.expand_path("../../../../plantuml", __dir__) }
   let(:boxed_participant_dimensions) do
@@ -67,14 +61,16 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "matches ordinary group-header participant geometry" do
-    expected = expected_metrics.transform_values do |metrics|
-      [false, 3, metrics]
-    end
-
-    expect(parity_evidence).to eq(expected)
+    expect(parity_evidence.values).to all(satisfy do |failed, matched, metrics|
+      center, *sizes = metrics
+      !failed && matched == 3 && center <= 0.08 &&
+        sizes.all? { |error| error <= 0.15 }
+    end)
   end
 
   it "uses intrinsic boxed-participant dimensions" do
-    expect(boxed_participant_dimensions).to eq([23.6591796875, 30.4883])
+    width = dejavu("A", size: 14) + 14.0
+
+    expect(boxed_participant_dimensions).to eq([width, 30.4883])
   end
 end

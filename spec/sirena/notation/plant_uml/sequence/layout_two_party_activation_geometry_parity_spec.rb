@@ -4,6 +4,8 @@ require "spec_helper"
 require "sirena/notation/plantuml/sequence"
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
+  include DejaVuText
+
   let(:source) do
     path = Dir[File.expand_path(
       "../../../../plantuml/sequence/" \
@@ -28,6 +30,6 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
                        scene.bars[1].x - 2.0]
 
     expect([lifelines.last - lifelines.first, x_points(scene.arrows.first)])
-      .to eq([68.03173828125, first_bar_edges])
+      .to eq([dejavu("hello3", size: 13) + 29.0, first_bar_edges])
   end
 end

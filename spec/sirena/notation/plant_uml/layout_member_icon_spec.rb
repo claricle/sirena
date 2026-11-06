@@ -25,7 +25,10 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     end
 
     it "is as wide as its widest proportional row" do
-      expect(box.width).to be_within(0.001).of(113.582)
+      widest = Sirena::Notation::PlantUML::Drawing::Face
+        .widest_line("void methods()", size: 14.0)
+
+      expect(box.width).to be_within(0.001).of(widest + 12.0)
     end
 
     it "starts plain text 6 in" do
