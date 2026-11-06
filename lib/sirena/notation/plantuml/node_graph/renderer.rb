@@ -18,13 +18,16 @@ module Sirena
         class Renderer < Sirena::Renderer::Base
           INK = "#181818"
           DASH = "5,4"
+          TITLE_SIZE = 13
           SECOND_OFFSET = "translate(2,2)"
           NAMED = /\A[A-Za-z]+\z/
 
           # @param scene [Scene]
           # @return [Svg::Document]
           def render(scene)
-            placements = LabelPlacer.new.call(scene.routes, scene.placed)
+            placements = LabelPlacer.new.call(scene.routes,
+                                              [*scene.placed,
+                                               *title_area(scene)])
             document(scene, placements).tap do |document|
               elements(scene, placements).each { |item| document << item }
             end
@@ -58,6 +61,15 @@ module Sirena
             placements.map do |placed|
               text(placed.x, placed.y, placed.route.edge.label)
             end
+          end
+
+          # The room the title takes, which no label covers.
+          def title_area(scene)
+            return [] unless scene.title
+
+            width = Drawing::Face.width(scene.title, size: TITLE_SIZE)
+            [Placed.new(x: (scene.width - width) / 2, y: 8.0, width: width,
+                        height: 18.0)]
           end
 
           def title(scene)

@@ -2,6 +2,7 @@
 
 require_relative "../../../text_measurement"
 require_relative "../label_clearance"
+require_relative "../segment_box"
 
 module Sirena
   module Notation
@@ -11,18 +12,22 @@ module Sirena
         # over one another. A label starts on the middle of its edge; when
         # that spot is taken by an earlier label it slides along the edge and
         # then steps up and down in whole lines until a free spot is found.
-        # A label never covers its own edge: it sits above a flat leg of the
-        # edge and to the right of a steep one.
+        # A label never covers its own edge, nor any other: it sits above a
+        # flat leg of the edge and to the right of a steep one, and moves on
+        # when a neighbouring edge runs through the spot.
         class LabelPlacer
           FONT_SIZE = 12
           LINE_STEP = 14.0
           RISE = 4.0
           MARGIN = 2.0
           FRACTIONS = [0.5, 0.65, 0.35, 0.8, 0.2].freeze
+          SPREAD = (1..19).map { |step| step * 0.05 }
+            .sort_by { |share| (share - 0.5).abs }.freeze
           MAX_STEPS = 24
           BESIDE_GAP = 4.0
+          NEIGHBOUR_GAP = 6.0
           private_constant :FONT_SIZE, :LINE_STEP, :RISE, :MARGIN, :FRACTIONS,
-                           :MAX_STEPS, :BESIDE_GAP
+                           :SPREAD, :MAX_STEPS, :BESIDE_GAP, :NEIGHBOUR_GAP
 
           # `width` is the width of the label's text; {#right} and
           # {#bottom} are how far the label reaches.
@@ -45,17 +50,18 @@ module Sirena
               text = route.edge.label.to_s
               next if text.empty?
 
-              place(route, width_of(text), taken)
+              place(route, width_of(text), taken,
+                    routes.reject { |other| other.equal?(route) })
             end
           end
 
           private
 
-          def place(route, width, taken)
+          def place(route, width, taken, others)
             candidates(route, width).each do |x_pos, y_pos|
               box = bounds(x_pos, y_pos, width)
               next if taken.any? { |other| overlap?(box, other) }
-              next if covers?(box, route)
+              next if covers?(box, route) || near?(box, others)
 
               taken << box
               return Placement.new(route, x_pos, y_pos, width)
@@ -68,7 +74,8 @@ module Sirena
           # below.
           def candidates(route, width)
             [*beside(route.label_at, width), *aside(route, width),
-             *clear_of(route, width), *along_edge(route.points)]
+             *clear_of(route, width), *spread(route, width),
+             *along_edge(route.points)]
           end
 
           # Right of a sloping edge, in the corner the edge leaves free:
@@ -110,6 +117,19 @@ module Sirena
             end
           end
 
+          # Both sides of the edge at finer places along it, for when its
+          # neighbours leave no room at the usual ones.
+          def spread(route, width)
+            SPREAD.flat_map do |fraction|
+              from, to = leg(route.points, fraction)
+              places = steep?(from, to) ? %i[right_of left_of] : %i[above below]
+              places.map do |place|
+                send(place, from, to, along(route.points, fraction), width,
+                     stroke(route.edge))
+              end
+            end
+          end
+
           def steep?(from, to)
             (to[1] - from[1]).abs > (to[0] - from[0]).abs
           end
@@ -125,6 +145,20 @@ module Sirena
             [spot[0], top - half - 1.0 - (FONT_SIZE / 4.0)]
           end
 
+          def below(from, to, spot, width, half)
+            reach = (width / 2) + MARGIN
+            bottom = LabelClearance.bottom_between(from, to, spot[0] - reach,
+                                                   spot[0] + reach)
+            [spot[0], bottom + half + 1.0 + FONT_SIZE]
+          end
+
+          def left_of(from, to, spot, width, half)
+            edge = LabelClearance.left_between(from, to, spot[1] - FONT_SIZE,
+                                               spot[1] + (FONT_SIZE / 4.0))
+            [edge - half - BESIDE_GAP - (width / 2),
+             spot[1] + (FONT_SIZE / 3.0)]
+          end
+
           def right_of(from, to, spot, width, half)
             edge = LabelClearance.right_between(from, to,
                                                 spot[1] - FONT_SIZE,
@@ -133,34 +167,19 @@ module Sirena
              spot[1] + (FONT_SIZE / 3.0)]
           end
 
-          # Whether the box lies across any part of the route's own line.
-          def covers?(box, route)
-            pad = stroke(route.edge)
+          # Whether the box lies within reach of any other edge's line, which
+          # is drawn as a curve a little off the points it passes through.
+          def near?(box, others)
+            others.any? { |other| covers?(box, other, NEIGHBOUR_GAP) }
+          end
+
+          # Whether the box lies across any part of the route's line.
+          def covers?(box, route, gap = 0.0)
+            pad = stroke(route.edge) + gap
             padded = box.zip([-pad, -pad, pad, pad]).map(&:sum)
-            route.points.each_cons(2).any? { |a, b| crosses?(padded, a, b) }
-          end
-
-          # Liang-Barsky: the part of the segment from `from` to `to` inside
-          # the box, if any, as a range of its length narrowed axis by axis.
-          def crosses?(box, from, to)
-            span = [0.0, 1.0]
-            [0, 1].all? do |axis|
-              inside?(span, from[axis], to[axis], box[axis], box[axis + 2])
+            route.points.each_cons(2).any? do |from, to|
+              SegmentBox.crosses?(padded, from, to)
             end
-          end
-
-          def inside?(span, start, finish, low, high)
-            delta = finish - start
-            return start.between?(low, high) if delta.zero?
-
-            overlaps?(span, [(low - start) / delta, (high - start) / delta])
-          end
-
-          def overlaps?(span, bounds)
-            first, last = bounds.minmax
-            span[0] = [span[0], first].max
-            span[1] = [span[1], last].min
-            span[0] <= span[1]
           end
 
           # The JAR prints a label on the right of the point its line
