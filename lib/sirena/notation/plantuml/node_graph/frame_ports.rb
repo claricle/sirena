@@ -13,6 +13,10 @@ module Sirena
           KINDS = %i[portin portout].freeze
           SIDE = 12.0
           GAP = 12.0
+          # From a container's border to the children inside it, when ports
+          # sit on that side: the JAR ranks the children a full rank gap
+          # below the port row.
+          REACH = 66.0
 
           # @return [Boolean] whether `node` sits on the frame of its container
           def self.on_frame?(node)

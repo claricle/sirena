@@ -173,7 +173,67 @@ RSpec.describe Sirena::Notation::PlantUML, "#render shapes and maps" do
     end
   end
 
+  describe "a tab's padding" do
+    def tab_geometry(kind, name)
+      root = render("#{kind} \"#{name}\" {\n  [c]\n}")
+      points = all(root, "polygon").first.attributes["points"].split
+        .map { |pt| pt.split(",").map(&:to_f) }
+      [points, all(root, "text").first.attributes["x"].to_f]
+    end
+
+    def bold_width(name)
+      Sirena::TextMeasurement
+        .measure_in(:dejavu_bold, name, font_size: 14)[:width]
+    end
+
+    # Measured on the JAR (1.2026.6): the name starts 4 right of a package's
+    # or folder's tab and ends 2 short of its edge, a frame's 3 and 7.
+    names = ["Some Group", "This is my folder", "Foo"]
+    {
+      "package" => [4, 2], "folder" => [4, 2], "frame" => [3, 7]
+    }.each do |kind, (before, after)|
+      names.each do |name|
+        it "sets #{name} #{before} in and #{after} short in a #{kind}" do
+          points, text_x = tab_geometry(kind, name)
+
+          expect([text_x - points[0][0], points[1][0] - text_x -
+            bold_width(name)].map { |gap| gap.round(2) })
+            .to eq([before, after].map(&:to_f))
+        end
+      end
+    end
+  end
+
   describe "a cloud's room" do
+    # The JAR's untitled cloud is 36.3 taller than what it holds; the bump
+    # control points of ours reach 4 beyond the outline on each side.
+    it "leaves the JAR's room around what an untitled cloud holds" do
+      root = render("cloud {\n  [Example 1]\n}")
+      held = all(root, "rect").find { |r| r.attributes["rx"] }
+      ys = all(root, "path").first.attributes["d"].scan(/,(-?\d+\.?\d*)/)
+
+      expect(ys.flatten.map(&:to_f).minmax.reverse.reduce(:-) -
+        held.attributes["height"].to_f).to be_within(0.1).of(44.3)
+    end
+
+    it "gives a titled cloud its header and no extra height" do
+      root = render("cloud \"Named\" {\n  [Example 1]\n}")
+      held = all(root, "rect").find { |r| r.attributes["rx"] }
+      ys = all(root, "path").first.attributes["d"].scan(/,(-?\d+\.?\d*)/)
+
+      expect(ys.flatten.map(&:to_f).minmax.reverse.reduce(:-) -
+        held.attributes["height"].to_f).to be_within(0.1).of(66.5)
+    end
+
+    it "keeps the header of an untitled package" do
+      root = render("package {\n  [Example 1]\n}")
+      frame = all(root, "rect").find { |r| r.attributes["fill"] == "none" }
+      held = all(root, "rect").find { |r| r.attributes["rx"] }
+
+      expect(frame.attributes["height"].to_f - held.attributes["height"].to_f)
+        .to be_within(0.1).of(42)
+    end
+
     it "hugs what it holds instead of doubling its size" do
       root = render("cloud {\n  [A]\n}")
       comp = all(root, "rect").first
