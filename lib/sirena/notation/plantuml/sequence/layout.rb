@@ -15,7 +15,7 @@ require_relative "picture"
 require_relative "ref"
 require_relative "ref_shape"
 require_relative "scene"
-require_relative "text_advances"
+require_relative "../drawing"
 require_relative "walker"
 
 module Sirena
@@ -480,9 +480,9 @@ module Sirena
           end
 
           def participant_label_width(participant)
-            TextAdvances.width(participant.label,
-                               font_size: head_font_size,
-                               bold: bold_heads?)
+            Drawing::Face.widest_line(participant.label,
+                                      size: head_font_size,
+                                      bold: bold_heads?)
           end
 
           # PlantUML draws a head label bold from weight 700 up.
@@ -565,8 +565,8 @@ module Sirena
           end
 
           def boxed_title_advance(box)
-            TextAdvances.width(box.title, font_size: BOX_TITLE_SIZE,
-                                          bold: true)
+            Drawing::Face.widest_line(box.title, size: BOX_TITLE_SIZE,
+                                                 bold: true)
           end
 
           def centers(widths)
@@ -866,7 +866,7 @@ module Sirena
           end
 
           def sans_width(text)
-            TextAdvances.width(text, font_size: message_font_size)
+            Drawing::Face.widest_line(text, size: message_font_size)
           end
 
           def label_width(message)
@@ -1536,7 +1536,7 @@ module Sirena
           def label_text_width(string)
             return message_text_width(string) if compact?
 
-            TextAdvances.width(string, font_size: message_font_size)
+            Drawing::Face.widest_line(string, size: message_font_size)
           end
         end
       end
