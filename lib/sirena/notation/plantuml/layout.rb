@@ -1914,6 +1914,9 @@ module Sirena
           RelationLabelSeparator.new(
             size: font_size * SMALL_TEXT_SCALE,
             width_of: method(:end_text_width),
+            drawn_width_of: lambda { |content|
+              Drawing::Face.width(content, size: font_size * SMALL_TEXT_SCALE)
+            },
           ).call(scenes)
         end
 
