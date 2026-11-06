@@ -127,7 +127,11 @@ module Sirena
             return :straight if same_column?(from, to)
             return :side_exit if edge.from.kind == :decision
 
-            edge.to.kind == :merge ? :side_entry : :elbow
+            side_entry?(edge, from, to) ? :side_entry : :elbow
+          end
+
+          def side_entry?(edge, from, to)
+            edge.to.kind == :merge && !from.spans?(to.cx)
           end
 
           def straight(from, to, x_pos)

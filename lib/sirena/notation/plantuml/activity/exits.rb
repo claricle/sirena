@@ -16,10 +16,10 @@ module Sirena
           end
 
           # @return [Boolean] whether the arrow runs beside its row: out of
-          #   a decision's side, or into the diamond that closes branches
+          #   a decision's side, or into the side of the diamond that closes
+          #   branches
           def beside?(edge)
-            !same_column?(edge) && !under?(edge) &&
-              (edge.to.kind == :merge || edge.from.kind == :decision)
+            !same_column?(edge) && !under?(edge) && sideways?(edge)
           end
 
           # @return [Boolean] whether the arrow leaves a decision's foot and
@@ -33,6 +33,14 @@ module Sirena
           end
 
           private
+
+          # A branch that stands over the diamond's own tip drops into its
+          # top instead of its side.
+          def sideways?(edge)
+            return edge.from.kind == :decision unless edge.to.kind == :merge
+
+            !@boxes[edge.from].spans?(@boxes[edge.to].cx)
+          end
 
           def under?(edge)
             edge.from.kind == :decision &&
