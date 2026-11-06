@@ -26,6 +26,11 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
     rect[:y] + (rect[:height] / 2.0)
   end
 
+  def decision_ys(scene)
+    scene.marks.find { |m| m.kind == :polygon && m.attrs[:points].size == 4 }
+      .attrs[:points].map(&:last)
+  end
+
   def overlap?(points, axis, start, size)
     values = points.map { |point| point[axis] }
     values.min < start + size - 2 && values.max > start + 2
@@ -59,6 +64,54 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
         m.attrs[:points].each_cons(2).any? { |seg| crosses?(another, seg) }
       end
       expect(crossing).to be_empty
+    end
+  end
+
+  describe "legacy row spacing" do
+    def tops(source)
+      layout(source).marks.select { |m| m.kind == :rect }
+        .map { |m| m.attrs[:y] }
+    end
+
+    def gap(source)
+      first, second = tops(source)
+      second - first - 34.1324
+    end
+
+    let(:plain) { %((*) --> "A"\n--> "B") }
+    let(:labelled) { %((*) --> "A"\n-->[lab] "B") }
+    let(:long) { %((*) --> "A"\n--> "B"\n--> "C"\n"A" -->[lab] "C") }
+    let(:unlabelled) { long.sub("-->[lab]", "-->") }
+    let(:short_way_on) do
+      %((*) --> "A"\nif "T" then\n--> "Y"\nelse\n->[f] "N"\n-->[e] (*)\nendif)
+    end
+
+    it "leaves 40.5 between rows, as PlantUML does" do
+      expect(gap(plain)).to be_within(0.01).of(40.5)
+    end
+
+    it "adds the height of a label to its gap" do
+      expect(gap(labelled)).to be > gap(plain)
+    end
+
+    it "keeps the label of an even-length arrow out of the gaps" do
+      expect(tops(long)).to eq(tops(unlabelled))
+    end
+
+    it "parks the target of -> half a row below when its way on is long",
+       :aggregate_failures do
+      scene = scene_of("5-4")
+      parked = rect_of(scene, "Something else")
+
+      expect(parked[:y]).to be > decision_ys(scene).max
+      expect(middle(parked)).to be < rect_of(scene, "Some Action")[:y]
+    end
+
+    it "keeps the target of -> on its row when its way on is short" do
+      scene = layout(short_way_on)
+
+      expect(middle(rect_of(scene, "N")))
+        .to be_within(0.5).of(decision_ys(scene).minmax.sum / 2.0)
     end
   end
 

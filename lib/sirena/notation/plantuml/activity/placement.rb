@@ -4,6 +4,7 @@ require_relative "bar_columns"
 require_relative "column_centres"
 require_relative "exits"
 require_relative "metrics"
+require_relative "legacy_row_gaps"
 require_relative "row_gaps"
 
 module Sirena
@@ -62,6 +63,9 @@ module Sirena
           end
 
           def row_gaps
+            return LegacyRowGaps.new(@diagram, @ranking, @metrics).to_a if
+              @diagram.legacy
+
             frame = head + PARTITION_BELOW + 8.0
             exits = Exits.new(@columns, @boxes)
             RowGaps.new(@diagram, @ranking, exits, @metrics, frame).to_a
@@ -182,7 +186,15 @@ module Sirena
 
           def centre_row(node, tops, heights)
             row = @ranking.rank[node]
-            @boxes[node].cy = tops[row] + (heights[row] / 2.0)
+            @boxes[node].cy = tops[row] + offset(node, row, heights)
+          end
+
+          # A parked node sits in the gap under its row, a node on a row
+          # in the middle of it.
+          def offset(node, row, heights)
+            return heights[row] / 2.0 unless @ranking.parked?(node)
+
+            heights[row] + (@gaps[row + 1] / 2.0)
           end
 
           def row_top(heights, row)
@@ -190,7 +202,8 @@ module Sirena
           end
 
           def row_heights
-            tall = @diagram.nodes.group_by { |node| @ranking.rank[node] }
+            tall = @diagram.nodes.reject { |node| @ranking.parked?(node) }
+              .group_by { |node| @ranking.rank[node] }
             Array.new(tall.keys.max.to_i + 1) { |row| tallest(tall[row]) }
           end
 
