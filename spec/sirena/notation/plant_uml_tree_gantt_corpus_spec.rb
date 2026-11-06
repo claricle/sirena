@@ -27,6 +27,15 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
   end
 
+  def text_named(label)
+    REXML::XPath.match(root, "//*[local-name()='text']")
+      .find { |text| text.texts.map(&:value).join == label }
+  end
+
+  def family_of(label)
+    text_named(label).attributes["font-family"]
+  end
+
   def rect_keys
     %w[x y width height]
   end
@@ -176,6 +185,34 @@ RSpec.describe Sirena::Notation::PlantUML do
 
     it "drops the code tags" do
       expect(texts.grep(/code/)).to be_empty
+    end
+
+    it "draws the code lines in monospace and the rest in sans-serif" do
+      expect([family_of("Example 1"), family_of("template <typename T>")])
+        .to eq(%w[sans-serif monospace])
+    end
+
+    it "sizes the box from DejaVu Sans Mono (JAR: 177.0029 + 20)" do
+      widths = REXML::XPath.match(root, "//*[local-name()='rect']")
+        .map { |rect| rect.attributes["width"].to_f }
+      expect(widths).to include(be_within(0.001).of(197.003))
+    end
+
+    it "pitches code lines at the monospace line height (JAR 16.297)" do
+      ys = ["template <typename T>", "class cname{"].map do |label|
+        text_named(label).attributes["y"].to_f
+      end
+      expect(ys.last - ys.first).to be_within(0.002).of(16.297)
+    end
+  end
+
+  context "with a code line that ends the node" do
+    let(:source) do
+      "@startmindmap\n* root\n**:a\n<code>\nx = 1;\n@endmindmap\n"
+    end
+
+    it "draws the closing line in monospace" do
+      expect(family_of("x = 1")).to eq("monospace")
     end
   end
 

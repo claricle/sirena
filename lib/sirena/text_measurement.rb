@@ -35,6 +35,8 @@ module Sirena
     DEFAULT_ADVANCE = 1000
     EMOJI_ADVANCE = 1500
     MONOSPACE_ADVANCE = 600
+    # DejaVu Sans Mono: 1233 units of 2048 per glyph.
+    DEJAVU_MONO_ADVANCE = 1233 * 1000.0 / 2048
     SPACE_ADVANCE = ArialAdvances::TABLE.fetch(0x20)
 
     # SVG draws one <text> as ONE line: a tab, newline or carriage return is
@@ -99,6 +101,21 @@ module Sirena
         width: calculate_width(text, font_size, false, face),
         height: calculate_height(font_size),
       }
+    end
+
+    # Measures text in the `monospace` family PlantUML's JAR resolves to,
+    # DejaVu Sans Mono: every glyph advances 1233/2048 em (a combining mark
+    # or control character advances nothing).
+    #
+    # @param text [String] the text to measure, as one line
+    # @param font_size [Numeric] the font size in points
+    # @return [Hash] hash with :width and :height keys
+    def self.measure_mono(text, font_size:)
+      cells = normalize(text).scan(CLUSTER).count do |cluster|
+        !cluster.match?(ZERO_WIDTH)
+      end
+      { width: cells * DEJAVU_MONO_ADVANCE * font_size / 1000.0,
+        height: calculate_height(font_size) }
     end
 
     # @return [Float] the width of the text drawn as one line

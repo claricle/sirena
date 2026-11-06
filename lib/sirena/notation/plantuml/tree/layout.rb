@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../layout/mindmap"
+require_relative "reader"
 require_relative "role"
 
 module Sirena
@@ -45,13 +46,17 @@ module Sirena
           PAD_Y = 10.0
           LINE_RATIO = 1.1777
           BASELINE_RATIO = 0.9667
+          # DejaVu Sans Mono, the JAR's `monospace`: line height and ascent.
+          MONO_LINE_RATIO = 1.1641
+          MONO_BASELINE_RATIO = 0.928
           FILL = "#F1F1F1"
           private_constant :MARGIN, :PAD_X, :PAD_Y, :LINE_RATIO,
-                           :BASELINE_RATIO, :FILL
+                           :BASELINE_RATIO, :FILL,
+                           :MONO_LINE_RATIO, :MONO_BASELINE_RATIO
 
           # A node of the forest with its text measured.
           Item = Struct.new(:id, :level, :side, :boxless, :fill, :lines,
-                            :width, :height, :children)
+                            :width, :height, :children, :mono)
           # A placed box.
           Box = Struct.new(:item, :x, :y) do
             def right
@@ -121,22 +126,35 @@ module Sirena
 
           def sized_item(node, level, children)
             role = Role.parse(node.role)
-            lines = text_lines(node)
-            width, height = measured(lines)
+            lines, mono = text_lines(node)
+            width, height = measured(lines, mono)
             Item.new(node.id, level, role.side, role.boxless, role.fill, lines,
-                     width, height, children)
+                     width, height, children, mono)
           end
 
           def text_lines(node)
             lines = node.label.to_s.split("\n", -1)
-            lines.empty? ? [""] : lines
+            lines = [""] if lines.empty?
+            [lines.map { |line| line.delete_prefix(Reader::MONO_MARK) },
+             lines.map { |line| line.start_with?(Reader::MONO_MARK) }]
           end
 
-          def measured(lines)
-            widest = lines.map do |line|
-              measure_text(line, font_size: font_size)[:width]
+          def measured(lines, mono)
+            widest = lines.zip(mono).map do |line, mono_line|
+              line_width(line, mono_line)
             end.max
-            [widest + (2 * PAD_X), (lines.length * line_height) + (2 * PAD_Y)]
+            [widest + (2 * PAD_X),
+             mono.sum { |mono_line| pitch(mono_line) } + (2 * PAD_Y)]
+          end
+
+          def line_width(line, mono)
+            return measure_text(line, font_size: font_size)[:width] unless mono
+
+            TextMeasurement.measure_mono(line, font_size: font_size)[:width]
+          end
+
+          def pitch(mono)
+            mono ? font_size * MONO_LINE_RATIO : line_height
           end
 
           def box(item, left, top)
@@ -230,13 +248,15 @@ module Sirena
             first = top + PAD_Y + (font_size * BASELINE_RATIO)
             Label.new(text: item.lines.join("\n"), x: left, y: first.round(3),
                       font_size: font_size,
-                      lines: positioned_lines(item, left, first))
+                      lines: positioned_lines(item, left, top + PAD_Y))
           end
 
-          def positioned_lines(item, left, first)
-            item.lines.each_with_index.map do |text, index|
-              LabelLine.new(text: text, x: left,
-                            y: (first + (index * line_height)).round(3))
+          def positioned_lines(item, left, line_top)
+            item.lines.zip(item.mono).map do |text, mono|
+              ascent = mono ? MONO_BASELINE_RATIO : BASELINE_RATIO
+              LabelLine.new(text: text, x: left, mono: mono,
+                            y: (line_top + (font_size * ascent)).round(3))
+                .tap { line_top += pitch(mono) }
             end
           end
         end
