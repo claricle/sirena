@@ -111,8 +111,8 @@ module Sirena
              *CLASS_RULES.map { |rule| class_rule(box, left, top + rule) }]
           end
 
-          def class_rule(box, left, y)
-            Marks.line([left + 1, y], [left + box.width - 1, y],
+          def class_rule(box, left, rule_y)
+            Marks.line([left + 1, rule_y], [left + box.width - 1, rule_y],
                        stroke: Marks::INK, width: 0.5)
           end
 
@@ -124,8 +124,8 @@ module Sirena
             [{ kind: :circle, cx: centre[0], cy: centre[1], r: SPOT_RADIUS,
                fill: glyph.fill, stroke: Marks::INK },
              { kind: :glyph, d: glyph.outline, fill: Marks::BLACK,
-               transform: format("translate(%<x>.4f %<y>.4f)", x: centre[0],
-                                                              y: centre[1]) }]
+               transform: format("translate(%<x>.4f %<y>.4f)",
+                                 x: centre[0], y: centre[1]) }]
           end
 
           def inline_size(table)

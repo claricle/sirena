@@ -12,6 +12,7 @@ module SpecSupport
       SIRENA_JUNCTION = "junction-"
       UNRESOLVED_ENDPOINT = "unresolved-endpoint"
       ENDPOINT_TOLERANCE = 6.0
+      RECT_ATTRIBUTES = %w[x y width height].freeze
       VISIBILITY = {
         "PUBLIC" => "+", "PRIVATE" => "-", "PROTECTED" => "#",
         "PACKAGE" => "~"
@@ -188,13 +189,13 @@ module SpecSupport
 
       def qualifier_rects(group, point)
         group.xpath("./rect").map do |rect|
-          %w[x y width height].map { |name| rect[name].to_f }
+          RECT_ATTRIBUTES.map { |name| rect[name].to_f }
         end.select { |rect| touches?(rect, point) }
       end
 
       def touches?((left, top, width, height), point)
-        distance(point, Bbox.new(left, top, left + width,
-                                  top + height)) < 1.0
+        box = Bbox.new(left, top, left + width, top + height)
+        distance(point, box) < 1.0
       end
 
       def mirrored(point, (left, top, width, height))

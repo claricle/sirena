@@ -145,7 +145,8 @@ module Sirena
                          :SELF_RELATION_END_RATIO,
                          :SELF_RELATION_CONTROL_OFFSET,
                          :SELF_RELATION_LABEL_GAP,
-                         :EMPTY_MEMBER_COMPARTMENT, :EMPTY_COMPARTMENTS_EXTRA, :AXIS_TOLERANCE,
+                         :EMPTY_MEMBER_COMPARTMENT,
+                         :EMPTY_COMPARTMENTS_EXTRA, :AXIS_TOLERANCE,
                          :EMPTY_CLASS_WIDTH_EXTRA,
                          :EMPTY_CLASS_MIN_WIDTH, :HIDE_CIRCLE_BASE_HEIGHT,
                          :HIDE_CIRCLE_TITLE_ALLOWANCE,
@@ -1970,18 +1971,27 @@ module Sirena
 
         def relation_scene(relation, id, endpoints, end_texts, style = {})
           sides = style.fetch(:sides, %i[left right])
-          markers = style.fetch(:markers, relation.markers)
-          qualifiers, endpoints = qualifier_boxes(relation, end_texts, endpoints,
-                                                  sides)
+          boxes, endpoints = qualifier_boxes(relation, end_texts, endpoints,
+                                             sides)
           texts = relation_texts(relation, endpoints, end_texts, sides,
-                                 qualifiers.size)
-          drawn_markers = relation_markers(relation, markers, sides, endpoints)
-          Scene::Relation.new(id: id, dashed: relation.dashed?, texts: texts,
+                                 boxes.size)
+          drawn = styled_markers(relation, style, sides, endpoints)
+          relation_record(relation, id, texts: texts, markers: drawn,
+                                        qualifiers: boxes,
+                                        path: relation_path_for(relation,
+                                                                endpoints))
+        end
+
+        def styled_markers(relation, style, sides, endpoints)
+          relation_markers(relation, style.fetch(:markers, relation.markers),
+                           sides, endpoints)
+        end
+
+        def relation_record(relation, id, **drawn)
+          Scene::Relation.new(id: id, dashed: relation.dashed?,
                               dotted: relation.dotted?,
                               stroke: svg_colour(relation.color),
-                              stroke_width: relation.width,
-                              path: relation_path_for(relation, endpoints),
-                              markers: drawn_markers, qualifiers: qualifiers)
+                              stroke_width: relation.width, **drawn)
         end
 
         # A one-line bracketed qualifier is a box on the class edge, and the
@@ -1991,25 +2001,20 @@ module Sirena
         def qualifier_boxes(relation, end_texts, endpoints, sides)
           first, second = end_texts.sides
           direction = unit_vector(*endpoints.values_at(first, second))
-          boxed = qualifier_entries(end_texts, endpoints, sides, relation)
-          placed = boxed.map do |entry|
-            outward = entry[:side] == first ? direction : direction.map(&:-@)
-            tip = endpoints.fetch(entry[:side])
-            [entry[:side], outward, qualifier_placement(entry, tip, outward)]
+          entries = qualifier_entries(end_texts, endpoints, sides, relation)
+          placed = entries.to_h do |entry|
+            [entry[:side], qualifier_placement(entry, endpoints, direction,
+                                               first)]
           end
-          [placed.map { |_, _, found| found.box },
-           placed.each_with_object(endpoints.dup) do |(side, outward, found), cleared|
-             cleared[side] = shift(endpoints.fetch(side), *outward,
-                                   found.clearance)
-           end]
+          [placed.values.map(&:box),
+           endpoints.merge(placed) { |_, tip, found| found.clear(tip) }]
         end
 
         # Only on a straight vertical, unlabelled link: a slanted or flat one
         # is drawn between estimated class positions and beside labels that
         # sit away from the reference's, so a box would land off it.
         def qualifier_entries(end_texts, endpoints, sides, relation)
-          return [] if endpoints[:control] || relation.label
-          return [] unless vertical?(endpoints)
+          return [] unless boxable_link?(endpoints, relation)
 
           end_texts.entries.select do |entry|
             entry[:kind] == :qualifier && entry[:pieces].one? &&
@@ -2017,16 +2022,18 @@ module Sirena
           end
         end
 
-        def vertical?(endpoints)
+        def boxable_link?(endpoints, relation)
           left, right = endpoints.values_at(:left, :right)
-          (left[0] - right[0]).abs < AXIS_TOLERANCE
+          !endpoints[:control] && !relation.label &&
+            (left[0] - right[0]).abs < AXIS_TOLERANCE
         end
 
-        def qualifier_placement(entry, tip, outward)
+        def qualifier_placement(entry, endpoints, direction, first)
           content = entry[:pieces].first
-          QualifierBox.place(content, tip, outward,
-                             measure_text(content, font_size: font_size)[:width],
-                             font_size)
+          outward = entry[:side] == first ? direction : direction.map(&:-@)
+          width = measure_text(content, font_size: font_size)[:width]
+          QualifierBox.place(content, endpoints.fetch(entry[:side]), outward,
+                             width, font_size)
         end
 
         # A bracketed colour is a CSS name (`red`) or bare hex digits.

@@ -19,7 +19,12 @@ module Sirena
         OVERLAP = 0.5
         private_constant :HEIGHT, :BASELINE, :INSET, :OVERLAP
 
-        Placed = Data.define(:box, :clearance)
+        Placed = Data.define(:box, :clearance, :outward) do
+          # @return [Array<Float>] the point moved clear of the box
+          def clear(endpoint)
+            endpoint.zip(outward).map { |at, step| at + (step * clearance) }
+          end
+        end
 
         # @param content [String] the qualifier's text
         # @param endpoint [Array<Float>] where the link meets the class
@@ -30,21 +35,22 @@ module Sirena
         # @return [Placed] the box and how far along the link it pushes the
         #   link's start
         def place(content, endpoint, outward, text_width, size)
-          width = text_width + (2 * INSET)
-          height = size * HEIGHT
-          steep = outward[1].abs >= outward[0].abs
-          left, top, reach = if steep
-                               across(endpoint, outward[1], width, height)
-                             else
-                               beside(endpoint, outward[0], width, height)
-                             end
-          Placed.new(
-            box: build(content, [left, top, width, height], size),
-            clearance: reach / outward[steep ? 1 : 0].abs,
-          )
+          axis = outward[1].abs >= outward[0].abs ? 1 : 0
+          frame = [text_width + (2 * INSET), size * HEIGHT]
+          left, top, reach = layout(axis, endpoint, outward[axis], *frame)
+          Placed.new(box: build(content, [left, top, *frame], size),
+                     clearance: reach / outward[axis].abs, outward: outward)
         end
 
         private
+
+        def layout(axis, endpoint, sign, width, height)
+          if axis == 1
+            across(endpoint, sign, width, height)
+          else
+            beside(endpoint, sign, width, height)
+          end
+        end
 
         def across(endpoint, sign, width, height)
           ex, ey = endpoint

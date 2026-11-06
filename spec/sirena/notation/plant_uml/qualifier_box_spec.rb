@@ -42,54 +42,75 @@ RSpec.describe Sirena::Notation::PlantUML::QualifierBox do
     expect([text.content, text.x, text.y.round(2), text.anchor])
       .to eq(["key", 90.0, 64.04, "start"])
   end
-end
 
-RSpec.describe "PlantUML qualifier boxes in a class diagram" do
-  include_context "with an isolated notation registry"
+  describe "in a class diagram" do
+    include_context "with an isolated notation registry"
 
-  before do
-    Sirena::Notation.send(:entries).delete(:plantuml)
-    Sirena::Notation.register(Sirena::Notation::PlantUML)
-  end
+    before do
+      Sirena::Notation.send(:entries).delete(:plantuml)
+      Sirena::Notation.register(Sirena::Notation::PlantUML)
+    end
 
-  def document(link)
-    source = "@startuml\nclass A\nclass B\n#{link}\n@enduml\n"
-    REXML::Document.new(Sirena.render(source, notation: :plantuml))
-  end
+    def document(link)
+      source = "@startuml\nclass A\nclass B\n#{link}\n@enduml\n"
+      REXML::Document.new(Sirena.render(source, notation: :plantuml))
+    end
 
-  def relation(link)
-    REXML::XPath.first(document(link), "//g[starts-with(@id, 'relation-')]")
-  end
+    def relation(link)
+      REXML::XPath.first(document(link), "//g[starts-with(@id, 'relation-')]")
+    end
 
-  it "draws a vertical link's qualifier as a box under its class" do
-    group = relation("A [key: string] *-- \"1\" B")
-    box = REXML::XPath.first(group, "rect").attributes
-    path = REXML::XPath.first(group, "path").attributes["d"]
-    text = REXML::XPath.first(group, "text[@text-anchor='start']")
+    def rects(group)
+      REXML::XPath.match(group, "rect")
+    end
 
-    expect([text.text, box["height"].to_f.round(2),
-            path.split[2].to_f > box["y"].to_f + box["height"].to_f - 0.6])
-      .to eq(["key: string", 18.49, true])
-  end
+    def label(group)
+      REXML::XPath.first(group, "text[@text-anchor='start']").text
+    end
 
-  it "leaves a labelled link's qualifier as text" do
-    group = relation("A [key] *-- B : owns")
+    def path_points(group)
+      REXML::XPath.first(group, "path").attributes["d"].split
+    end
 
-    expect(REXML::XPath.match(group, "rect")).to be_empty
-  end
+    it "draws a vertical link's qualifier as a box under its class" do
+      group = relation("A [key: string] *-- \"1\" B")
+      box = rects(group).first.attributes
+      gap = path_points(group)[2].to_f - box["y"].to_f - box["height"].to_f
 
-  it "leaves a self link's qualifier as text" do
-    group = relation("A [key] --> A")
+      expect([label(group), box["height"], gap.round(2)])
+        .to eq(["key: string", "18.4883", 0.0])
+    end
 
-    expect(REXML::XPath.match(group, "rect")).to be_empty
-  end
+    it "draws the qualifier written before the second class under that class" do
+      group = relation("A *-- [key: string] B")
+      box = rects(group).first.attributes
 
-  it "leaves a slanted link's qualifier as text" do
-    source = "@startuml\nclass A\nclass B\nclass C\n" \
-             "A --> B\nA [key] --> C\n@enduml\n"
-    svg = Sirena.render(source, notation: :plantuml)
+      expect([box["height"].to_f.round(2),
+              path_points(group).last.to_f.round(1) <= box["y"].to_f.round(1)])
+        .to eq([18.49, true])
+    end
 
-    expect(REXML::Document.new(svg).get_elements("//g[starts-with(@id, " \
-                                                  "'relation-')]/rect")).to be_empty
+    it "leaves a labelled link's qualifier as text" do
+      expect(rects(relation("A [key] *-- B : owns"))).to be_empty
+    end
+
+    it "leaves a self link's qualifier as text" do
+      expect(rects(relation("A [key] --> A"))).to be_empty
+    end
+
+    it "leaves a flat link's qualifier as text" do
+      group = relation("A -right-> [key] B")
+
+      expect([rects(group), REXML::XPath.first(group, "text").text])
+        .to eq([[], "key"])
+    end
+
+    it "leaves a bent link's qualifier as text" do
+      source = "@startuml\nclass A\nclass B\nclass C\n" \
+               "A --> B\nA [key] --> C\n@enduml\n"
+      svg = REXML::Document.new(Sirena.render(source, notation: :plantuml))
+
+      expect(REXML::XPath.match(svg, "//g[@id='relation-1']/rect")).to be_empty
+    end
   end
 end
