@@ -98,6 +98,7 @@ module Sirena
 
           # A divider under the name of every plain state and composite.
           def append_state_labels(state, group)
+            group.children.insert(-2, band(state)) if banded?(state)
             group.children << divider(state) if divided?(state)
             state.labels.each_with_index do |label, index|
               text = state_label(label)
@@ -162,14 +163,13 @@ module Sirena
               look(:background, state) == Style::Defaults::BOX[:background]
           end
 
+          # The frame stays the group's first rect, so its box is the
+          # state's box; append_state_labels paints the band beneath it.
           def banded_outline(state)
-            frame = Svg::Rect.new(x: state.x, y: state.y, width: state.width,
-                                  height: state.height, fill: "none")
-            stroke(frame, state)
-            round(frame, state)
-            Svg::Group.new.tap do |group|
-              group.children << band(state)
-              group.children << frame
+            Svg::Rect.new(x: state.x, y: state.y, width: state.width,
+                          height: state.height, fill: "none").tap do |frame|
+              stroke(frame, state)
+              round(frame, state)
             end
           end
 
