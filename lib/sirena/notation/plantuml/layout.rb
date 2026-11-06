@@ -13,6 +13,7 @@ require_relative "ir_reader"
 require_relative "package_frames"
 require_relative "qualified_association_layout"
 require_relative "qualifier_box"
+require_relative "label_clearance"
 require_relative "styled_relation_curve"
 require_relative "rank_chain"
 require_relative "rank_hierarchy"
@@ -51,6 +52,7 @@ module Sirena
         MARKER_HALF_WIDTH = 7.0
         LABEL_OFFSET = 10.0
         LABEL_GAP = 2.0
+        BESIDE_LABEL_SLOPE = 0.8
         END_TEXT_ACROSS = 3.0
         END_TEXT_ALONG = 1.0
         TEXT_DESCENT = 0.25
@@ -2584,14 +2586,30 @@ module Sirena
           return self_relation_label(content, endpoints) if endpoints[:control]
 
           left, right = endpoints.values_at(:left, :right)
-          horizontal, middle = midpoint(left, right)
-          if steep?(left, right)
-            return steep_relation_label(content, horizontal + clearance,
-                                        middle)
+          if beside_label?(left, right)
+            return steep_label_for(content, left, right, clearance)
           end
 
-          scene_text(content, horizontal, middle - LABEL_OFFSET - clearance,
+          scene_text(content, midpoint(left, right).first,
+                     flat_label_baseline(content, left, right, clearance),
                      "relation_label", "middle")
+        end
+
+        def steep_label_for(content, left, right, clearance)
+          horizontal, middle = midpoint(left, right)
+          steep_relation_label(content, horizontal, middle,
+                               [left, right], clearance)
+        end
+
+        # Above the line; higher where a slope climbs under the text's
+        # ends, so the line does not run through it.
+        def flat_label_baseline(content, left, right, clearance)
+          centre, middle = midpoint(left, right)
+          size = font_size * SMALL_TEXT_SCALE
+          half = standard_text_width(content.to_s, size) / 2
+          top = LabelClearance.top_between(left, right, centre - half,
+                                           centre + half)
+          [middle - LABEL_OFFSET, top - (size * TEXT_DESCENT)].min - clearance
         end
 
         def self_relation_label(content, endpoints)
@@ -2619,10 +2637,20 @@ module Sirena
           vertical.abs > horizontal.abs
         end
 
-        def steep_relation_label(content, horizontal, middle)
+        # A line this near the diagonal would run through a label centred
+        # above its middle, so the label goes beside it.
+        def beside_label?(left, right)
+          horizontal, vertical = vector_between(left, right)
+          vertical.abs > horizontal.abs * BESIDE_LABEL_SLOPE
+        end
+
+        def steep_relation_label(content, horizontal, middle, line, clearance)
           size = font_size * SMALL_TEXT_SCALE
           baseline = middle + (size * (1 - TEXT_DESCENT) / 2)
-          scene_text(content, horizontal + LABEL_GAP, baseline,
+          reach = LabelClearance.right_between(*line, baseline - size,
+                                               baseline)
+          scene_text(content, [horizontal, reach].max + clearance + LABEL_GAP,
+                     baseline,
                      "relation_label", "start")
         end
 
