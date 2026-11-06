@@ -112,12 +112,12 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
       expect(sizes).to eq(%w[18 18])
     end
 
-    it "keeps a name that is too wide for its band at the body size" do
+    it "sets a long name large too, in a band widened to hold it" do
       wide = "|#pink|An_exceedingly_long_swimlane_name|\nstart\n:a;\nstop"
       size = elements(render(wide), "text").find do |t|
         t.texts.join == "An_exceedingly_long_swimlane_name"
       end.attributes["font-size"]
-      expect(size).to eq("12")
+      expect(size).to eq("18")
     end
   end
 
