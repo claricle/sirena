@@ -13,7 +13,9 @@ module Sirena
           INK = "#181818"
           BAR_GREY = "#555555"
           FOLD = 6.0
-          private_constant :PAPER, :NOTE_PAPER, :INK, :BAR_GREY, :FOLD
+          TAIL_HALF = 4.0
+          private_constant :PAPER, :NOTE_PAPER, :INK, :BAR_GREY, :FOLD,
+                           :TAIL_HALF
 
           def initialize(boxes, canvas, metrics)
             @boxes = boxes
@@ -39,33 +41,52 @@ module Sirena
           # @param note [Note]
           # @param box [Box] where the note sits
           def note(node, note, box)
-            @canvas.polygon(outline(box), fill: NOTE_PAPER, role: :note)
+            @canvas.polygon(outline(box, @boxes.fetch(node), note.side),
+                            fill: NOTE_PAPER, role: :note)
             pad = Metrics::NOTE_PAD
             @canvas.lines(note.lines,
                           [box.left + pad,
                            box.top + pad + @metrics.ascent(:note)],
                           role: :note)
-            connector(@boxes.fetch(node), note.side, box)
           end
 
           private
 
-          # A rectangle with its top right corner folded.
-          def outline(box)
-            [[box.left, box.top], [box.right - FOLD, box.top],
-             [box.right, box.top + FOLD], [box.right, box.bottom],
-             [box.left, box.bottom]]
+          # A rectangle with its top right corner folded, and the note's
+          # tail: a wedge from the middle of the edge facing the node to the
+          # node's border, as PlantUML draws it.
+          def outline(box, anchor, side)
+            if side == :right
+              return folded(box) + floor(box) + west(box,
+                                                     anchor)
+            end
+
+            folded(box) + east(box, anchor) + floor(box)
           end
 
-          def connector(anchor, side, box)
-            near = if side == :right
-                     [anchor.right,
-                      box.left]
-                   else
-                     [anchor.left, box.right]
-                   end
-            @canvas.path(near.map { |x_pos| [x_pos, anchor.cy] }, stroke: INK,
-                                                                  dash: "7,5")
+          def west(box, anchor)
+            wedge(box.left, anchor.right, box.cy, -1)
+          end
+
+          def east(box, anchor)
+            wedge(box.right, anchor.left, box.cy, 1)
+          end
+
+          def folded(box)
+            [[box.left, box.top], [box.right - FOLD, box.top],
+             [box.right, box.top + FOLD]]
+          end
+
+          def floor(box)
+            [[box.right, box.bottom], [box.left, box.bottom]]
+          end
+
+          # @param edge [Float] x of the note's edge
+          # @param tip [Float] x of the node's border
+          # @param sign [Integer] 1 walking down the edge, -1 walking up
+          def wedge(edge, tip, mid, sign)
+            [[edge, mid - (sign * TAIL_HALF)], [tip, mid],
+             [edge, mid + (sign * TAIL_HALF)]]
           end
 
           def action(node, box)
