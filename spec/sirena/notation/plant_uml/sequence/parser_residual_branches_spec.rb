@@ -14,9 +14,10 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       .to raise_error(unsupported, /content after @enduml/)
   end
 
-  it "refuses a named opening directive" do
-    expect { parser.parse("@startuml sequence\n@enduml\n") }
-      .to raise_error(unsupported, /diagram name/)
+  it "accepts a named opening directive" do
+    diagram = parser.parse("@startuml sequence\nA -> B\n@enduml\n")
+
+    expect(diagram.messages.size).to eq(1)
   end
 
   it "reports a non-PlantUML first statement as an unknown diagram" do

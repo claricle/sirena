@@ -725,9 +725,16 @@ RSpec.describe Sirena::Notation::PlantUML do
         .to raise_error(unsupported_error, /second diagram/)
     end
 
-    it "refuses a diagram name after @startuml" do
-      expect(refusal_of("@startuml foo\n@enduml\n"))
-        .to have_attributes(construct: "diagram name")
+    it "accepts a diagram name after @startuml and draws the same classes" do
+      named = parse_plantuml("@startuml foo\nclass A\nA --> B\n@enduml\n")
+      plain = parse_plantuml("@startuml\nclass A\nA --> B\n@enduml\n")
+
+      expect(named.classes.map(&:name)).to eq(plain.classes.map(&:name))
+    end
+
+    it "still reports a word fused to @startuml as an unknown diagram" do
+      expect { parse_plantuml("@startumlfoo\n@enduml\n") }
+        .to raise_error(Sirena::Engine::DiagramTypeError)
     end
 
     it "accepts CRLF line ends" do

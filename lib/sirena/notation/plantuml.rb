@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../sirena"
+require_relative "plantuml/diagram_name"
 require_relative "plantuml/include"
 require_relative "plantuml/parser"
 require_relative "plantuml/ir_adapter"
@@ -93,11 +94,14 @@ module Sirena
       # @param include_path [Array<String>, String, nil] further directories
       #   `!include` may read (PlantUML's `plantuml.include.path`); defaults
       #   to the `PLANTUML_INCLUDE_PATH` environment variable
-      # @return [Notation::Parsed]
+      # @return [Notation::Parsed] its `name` is the opener's
+      #   `@startuml foo` / `@startuml(id=foo)` text (see {DiagramName})
       # @raise [Include::Error] an include that cannot be read
       def parse(source, base_dir: nil, include_path: nil)
         path = include_path || ENV.fetch(INCLUDE_PATH_ENV, nil)
-        read(Include.expand(source, base_dir: base_dir, include_path: path))
+        expanded = Include.expand(source, base_dir: base_dir,
+                                          include_path: path)
+        read(expanded).with_name(DiagramName.read(expanded))
       end
 
       private

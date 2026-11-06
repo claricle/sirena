@@ -159,13 +159,11 @@ module Sirena
           end
         end
 
-        def before(text, number)
-          return :statements if text == "@startuml"
-          unless STARTUML.match?(text)
-            raise Engine::DiagramTypeError, NOT_FOUND_MESSAGE
-          end
+        def before(text, _number)
+          # A name after @startuml only names PlantUML's output file.
+          return :statements if STARTUML.match?(text)
 
-          raise refusal(text, number, "diagram name")
+          raise Engine::DiagramTypeError, NOT_FOUND_MESSAGE
         end
 
         def statement(builder, text, number)

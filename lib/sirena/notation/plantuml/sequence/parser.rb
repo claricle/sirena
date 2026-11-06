@@ -202,9 +202,9 @@ module Sirena
             text.empty? || text.start_with?("'")
           end
 
-          def before(text, number)
-            return :statements if text == "@startuml"
-            raise refusal(text, number, "diagram name") if STARTUML.match?(text)
+          def before(text, _number)
+            # A name after @startuml only names PlantUML's output file.
+            return :statements if STARTUML.match?(text)
 
             raise Sirena::Engine::DiagramTypeError,
                   "Unable to detect diagram type from source. " \
