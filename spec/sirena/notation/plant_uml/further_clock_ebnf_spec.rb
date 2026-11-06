@@ -141,16 +141,18 @@ RSpec.describe Sirena::Notation::PlantUML::Further do
     end
 
     it "points the loop arrow back against the rail" do
-      arrow = elements(doc, "polygon").first.attributes["points"]
-      xs = arrow.split.map { |pt| pt.split(",").first.to_f }
-      expect(xs.first).to be < xs.last
+      tips = elements(doc, "polygon").map do |polygon|
+        xs = polygon.attributes["points"].scan(/(-?[\d.]+),/).flatten
+        xs[1].to_f - xs[0].to_f
+      end
+      expect(tips).to include(be_negative)
     end
 
-    it "draws rails thick and boxes white and thin" do
+    it "draws rails thick and boxes unfilled and thin" do
       box = elements(doc, "rect").first.attributes
       expect([elements(doc, "line").first.attributes["stroke-width"],
               box["fill"], box["stroke-width"]])
-        .to eq(["1.5", "#FFFFFF", "0.5"])
+        .to eq(["1.5", "none", "0.5"])
     end
   end
 
@@ -165,7 +167,8 @@ RSpec.describe Sirena::Notation::PlantUML::Further do
     it "sizes a box to its text and ten points" do
       box = elements(doc, "rect").first.attributes["width"].to_f
       expect(box).to be_within(0.5).of(
-        Sirena::TextMeasurement.measure("1", font_size: 14)[:width] + 10,
+        Sirena::TextMeasurement
+          .measure_in(:dejavu, "1", font_size: 14)[:width] + 10,
       )
     end
 

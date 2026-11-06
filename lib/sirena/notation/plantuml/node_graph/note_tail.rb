@@ -26,7 +26,7 @@ module Sirena
               polygon.points = outline
               polygon.fill = FILL
               polygon.stroke = STROKE
-              polygon.stroke_width = "1"
+              polygon.stroke_width = "0.5"
             end
           end
 

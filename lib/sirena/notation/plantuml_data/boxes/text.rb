@@ -18,7 +18,9 @@ module Sirena
           CODE_POINT = /<U\+(\h{4,6})>/
           # A line of text is this many times its font size tall.
           LINE_RATIO = 1.1778
-          private_constant :LITERAL, :CODE_POINT, :LINE_RATIO
+          # A DejaVu Sans Mono glyph is this many ems wide.
+          MONO_ADVANCE = 0.602
+          private_constant :LITERAL, :CODE_POINT, :LINE_RATIO, :MONO_ADVANCE
 
           # @return [String] the text as it reads, with creole and HTML
           #   emphasis removed
@@ -61,14 +63,18 @@ module Sirena
 
           # @return [Float] the width of the text in the diagram's font
           def width(text, bold: false)
-            wide = runs(text).sum do |piece|
-              TextMeasurement.measure(piece.text,
-                                      font_size: piece_size(piece))[:width]
-            end
+            wide = runs(text).sum { |piece| piece_width(piece) }
             bold ? wide * 1.04 : wide
           end
 
           private
+
+          def piece_width(piece)
+            size = piece_size(piece)
+            return piece.text.length * size * MONO_ADVANCE if piece.style[:mono]
+
+            TextMeasurement.measure(piece.text, font_size: size)[:width]
+          end
 
           def piece_size(piece)
             size = piece.style[:size]

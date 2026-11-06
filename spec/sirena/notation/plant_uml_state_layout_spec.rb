@@ -264,4 +264,133 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(ys).to include(a_value_within(12.0).of(circles.first[1]))
     end
   end
+
+  context "with the labels of a composite's transitions" do
+    let(:source) do
+      <<~PUML
+        @startuml
+        state Wide {
+          [*] --> Top
+          Top --> Bottom : a long label for the first transition
+          Top --> Bottom : a second long label beside it
+        }
+        state Plain {
+          [*] --> One
+          One --> Two
+        }
+        @enduml
+      PUML
+    end
+
+    def width_of(id)
+      box = box(id)
+      box[2] - box[0]
+    end
+
+    # Graphviz gives each label a node of its own rank, so the two labels
+    # stand side by side and the cluster grows to hold them (JAR 1.2026.6:
+    # a composite 263.2 wide around one 213-wide label).
+    it "widens the composite to hold the labels of one rank side by side" do
+      labels = REXML::XPath.match(root, "//*[local-name()='text']")
+        .select { |text| text.text.to_s.include?("label") }
+      estimate = labels.sum { |text| text.text.size * 5.0 }
+      expect(width_of("Wide")).to be > estimate
+    end
+
+    it "leaves a composite with no labelled transitions at its content width" do
+      expect(width_of("Plain")).to be < 120
+    end
+  end
+
+  context "with composites that stand side by side" do
+    let(:source) do
+      <<~PUML
+        @startuml
+        state Left {
+          [*] --> Idle
+          Idle --> Right
+          Right --> Idle
+        }
+        state Right {
+          [*] --> One
+          One --> Two
+        }
+        @enduml
+      PUML
+    end
+
+    # JAR 1.2026.6 keeps 24 between two composites on one rank; the layout
+    # engine's own spacing is 60.
+    it "keeps 24 between them" do
+      gap = [box("Right")[0] - box("Left")[2], box("Left")[0] - box("Right")[2]]
+      expect(gap.max).to be_within(0.5).of(24)
+    end
+  end
+
+  # JAR 1.2026.6: 24 right and 13 below a composite's children with nothing
+  # at its border, 16 on both with a transition out of a child, and 24 with
+  # that and a transition ending at the composite.
+  describe "the room a composite keeps round its children" do
+    let(:source) do
+      <<~PUML
+        @startuml
+        #{border}
+        state "A title far longer than the one state it holds, to set the width" as Box {
+          state Inner
+        }
+        @enduml
+      PUML
+    end
+
+    def room
+      [box("Box")[2] - box("Inner")[2], box("Box")[3] - box("Inner")[3]]
+    end
+
+    context "with nothing at the border" do
+      let(:border) { "" }
+
+      it "keeps 13 below" do
+        expect(room.last).to eq(13.0)
+      end
+    end
+
+    context "with a transition out of a child" do
+      let(:border) { "Inner --> Elsewhere" }
+
+      it "keeps 16 below" do
+        expect(room.last).to eq(16.0)
+      end
+    end
+
+    context "with that and a transition into the composite" do
+      let(:border) { "[*] --> Box\nInner --> Elsewhere" }
+
+      it "keeps 24 below" do
+        expect(room.last).to eq(24.0)
+      end
+    end
+  end
+
+  # JAR 1.2026.6 keeps 20 beside the title of a composite with nothing at
+  # its border and about 15.5 beside any other.
+  describe "the room beside a composite title" do
+    def width_with(border)
+      svg = Sirena.render(<<~PUML)
+        @startuml
+        #{border}
+        state "A title far longer than the one state it holds, to set the width" as Box {
+          state Inner
+        }
+        @enduml
+      PUML
+      rect = REXML::XPath.first(REXML::Document.new(svg).root,
+                                "//*[@id='state-Box']/*[local-name()='rect']")
+      rect.attributes["width"].to_f
+    end
+
+    it "is smaller when a transition crosses the border" do
+      expect(width_with("") - width_with("Inner --> Elsewhere"))
+        .to be_within(0.01).of(4.5)
+    end
+  end
 end

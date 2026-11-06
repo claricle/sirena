@@ -13,9 +13,12 @@ module Sirena
           QUESTION_GAP = 13.0
           private_constant :INK, :DASHES, :QUESTION_GAP
 
-          def initialize(router, canvas)
+          # @param curved [Boolean] draw each straight edge as a cubic, as
+          #   PlantUML does in the legacy syntax
+          def initialize(router, canvas, curved: false)
             @router = router
             @canvas = canvas
+            @curved = curved
           end
 
           # @param edge [Edge]
@@ -33,7 +36,7 @@ module Sirena
           def paint(edge, points)
             colour = edge.colour || INK
             @canvas.path(points, stroke: colour, width: width(edge),
-                                 dash: DASHES[edge.style])
+                                 dash: DASHES[edge.style], curve: @curved)
             @canvas.polygon(ArrowHead.points(points.last(2)), fill: colour,
                                                               stroke: colour)
           end

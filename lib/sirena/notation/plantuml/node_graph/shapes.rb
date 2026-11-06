@@ -20,7 +20,11 @@ module Sirena
           FILL = "#F1F1F1"
           FONT = "sans-serif"
           HEX = /\A[0-9A-Fa-f]{3,8}\z/
-          LINE = { stroke: STROKE, stroke_width: "1" }.freeze
+          # The reference draws a leaf component and a note with a hairline,
+          # a port with a heavy line and everything else with a plain one.
+          WIDTHS = { component: "0.5", note: "0.5", portin: "1.5",
+                     portout: "1.5" }.freeze
+          private_constant :WIDTHS
 
           # @param placed [Placed]
           # @return [Array<Svg::Element>]
@@ -30,6 +34,7 @@ module Sirena
 
             @p = placed
             @out = []
+            @icon = false
             placed.node.container? ? container : figure
             @out
           end
@@ -38,6 +43,18 @@ module Sirena
 
           def entity(placed)
             EntityShape.new(placed).elements
+          end
+
+          def line
+            { stroke: STROKE, stroke_width: stroke_width }
+          end
+
+          # A container keeps the plain line; so does its icon, drawn as the
+          # hairline of a leaf component.
+          def stroke_width
+            return "0.5" if @icon
+
+            @p.node.container? ? "1" : WIDTHS.fetch(@p.node.kind, "1")
           end
 
           def add(type, **attrs)
@@ -97,39 +114,39 @@ module Sirena
             x, y = at(origin)
             width, height = size(extent)
             add(Svg::Rect, x: x, y: y, width: width, height: height,
-                           rx: radius, ry: radius, fill: fill, **LINE)
+                           rx: radius, ry: radius, fill: fill, **line)
           end
 
           def draw_circle(center, radius)
             x, y = at(center)
-            add(Svg::Circle, cx: x, cy: y, r: radius, fill: fill, **LINE)
+            add(Svg::Circle, cx: x, cy: y, r: radius, fill: fill, **line)
           end
 
           def draw_line(from, to)
             x1, y1 = at(from)
             x2, y2 = at(to)
-            add(Svg::Line, x1: x1, y1: y1, x2: x2, y2: y2, **LINE)
+            add(Svg::Line, x1: x1, y1: y1, x2: x2, y2: y2, **line)
           end
 
           def draw_ellipse
             add(Svg::Ellipse, cx: @p.x + (@p.width / 2),
                               cy: @p.y + (@p.height / 2), rx: @p.width / 2,
-                              ry: @p.height / 2, fill: fill, **LINE)
+                              ry: @p.height / 2, fill: fill, **line)
           end
 
           def draw_polygon(points, color = fill)
             add(Svg::Polygon, points: points.map { |pt| at(pt).join(",") }
               .join(" "),
-                              fill: color, **LINE)
+                              fill: color, **line)
           end
 
           def draw_path(commands, color = fill)
             add(Svg::Path, d: commands.map { |cmd| command(*cmd) }.join(" "),
-                           fill: color, **LINE)
+                           fill: color, **line)
           end
 
           def draw_cloud
-            add(Svg::Path, d: Cloud.new(@p).to_d, fill: fill, **LINE)
+            add(Svg::Path, d: Cloud.new(@p).to_d, fill: fill, **line)
           end
 
           def command(verb, *args)
@@ -211,15 +228,20 @@ module Sirena
 
           # A component container carries the glyph of a component too.
           def draw_icon
+            @icon = true
             Figures::COMPONENT.drop(1).each do |type, *args|
               send(:"draw_#{type}", *args)
             end
           end
 
           def draw_tab
-            width = Metrics.text_width([lines.first.to_s]) * 1.05
-            points = Tab.points(@p.x, @p.y, width, @p.node.kind)
-            add(Svg::Polygon, points: points, fill: FILL, **LINE)
+            points = Tab.points(@p.x, @p.y, tab_text_width, @p.node.kind)
+            add(Svg::Polygon, points: points, fill: FILL, **line)
+          end
+
+          def tab_text_width
+            TextMeasurement.measure_in(:dejavu_bold, lines.first.to_s,
+                                       font_size: Metrics::FONT_SIZE)[:width]
           end
 
           # A header clears the cap of a cylinder, the bumps of a cloud and
@@ -252,7 +274,8 @@ module Sirena
           end
 
           def tab_text(line)
-            text(@p.x + Tab::PAD, @p.y + 14, line, "start", "bold")
+            top = @p.y + Tab.baseline(@p.node.kind)
+            text(@p.x + Tab.indent(@p.node.kind), top, line, "start", "bold")
           end
 
           def text(x_pos, y_pos, content, anchor, weight = nil)

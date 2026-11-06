@@ -102,7 +102,23 @@ RSpec.describe Sirena::Notation::PlantUML, "#render shapes and maps" do
 
     it "is an outline of many small bumps" do
       expect(all(root, "path").first.attributes["d"].scan("Q").size)
-        .to be > 20
+        .to be > 15
+    end
+
+    it "hugs what it holds, as the reference draws it" do
+      root = render("cloud {\n  [Example 1]\n}")
+      xs = all(root, "path").first.attributes["d"].scan(/[QM]?(\d+\.?\d*),/)
+        .flatten.map(&:to_f)
+      component = all(root, "rect").first.attributes["width"].to_f
+
+      expect(xs.max - xs.min - component).to be_between(40, 55)
+    end
+
+    it "is only a little wider than the text of a lone cloud" do
+      xs = all(root, "path").first.attributes["d"].scan(/[QM]?(\d+\.?\d*),/)
+        .flatten.map(&:to_f)
+
+      expect(xs.max - xs.min).to be < 80
     end
 
     it "is not an ellipse" do
@@ -127,6 +143,23 @@ RSpec.describe Sirena::Notation::PlantUML, "#render shapes and maps" do
         .to eq([true, points[3][1] - points[0][1]])
     end
 
+    it "makes a package's tab a line taller than a frame's" do
+      heights = [tab_points("package"), tab_points("frame")].map do |pts|
+        (pts.last[1] - pts.first[1]).round(2)
+      end
+
+      expect(heights).to eq([22.49, 20.0])
+    end
+
+    it "sets the name of a package lower in its tab than a frame's" do
+      baselines = %w[package frame].map do |kind|
+        all(render("#{kind} \"Name\" {\n  [c]\n}"), "text").first
+          .attributes["y"].to_f.-(tab_points(kind).first[1]).round(2)
+      end
+
+      expect(baselines).to eq([15.5, 14.5])
+    end
+
     it "cuts the lower right corner of a frame's tab" do
       points = tab_points("frame")
 
@@ -140,7 +173,67 @@ RSpec.describe Sirena::Notation::PlantUML, "#render shapes and maps" do
     end
   end
 
+  describe "a tab's padding" do
+    def tab_geometry(kind, name)
+      root = render("#{kind} \"#{name}\" {\n  [c]\n}")
+      points = all(root, "polygon").first.attributes["points"].split
+        .map { |pt| pt.split(",").map(&:to_f) }
+      [points, all(root, "text").first.attributes["x"].to_f]
+    end
+
+    def bold_width(name)
+      Sirena::TextMeasurement
+        .measure_in(:dejavu_bold, name, font_size: 14)[:width]
+    end
+
+    # Measured on the JAR (1.2026.6): the name starts 4 right of a package's
+    # or folder's tab and ends 2 short of its edge, a frame's 3 and 7.
+    names = ["Some Group", "This is my folder", "Foo"]
+    {
+      "package" => [4, 2], "folder" => [4, 2], "frame" => [3, 7]
+    }.each do |kind, (before, after)|
+      names.each do |name|
+        it "sets #{name} #{before} in and #{after} short in a #{kind}" do
+          points, text_x = tab_geometry(kind, name)
+
+          expect([text_x - points[0][0], points[1][0] - text_x -
+            bold_width(name)].map { |gap| gap.round(2) })
+            .to eq([before, after].map(&:to_f))
+        end
+      end
+    end
+  end
+
   describe "a cloud's room" do
+    # The JAR's untitled cloud is 36.3 taller than what it holds; the bump
+    # control points of ours reach 4 beyond the outline on each side.
+    it "leaves the JAR's room around what an untitled cloud holds" do
+      root = render("cloud {\n  [Example 1]\n}")
+      held = all(root, "rect").find { |r| r.attributes["rx"] }
+      ys = all(root, "path").first.attributes["d"].scan(/,(-?\d+\.?\d*)/)
+
+      expect(ys.flatten.map(&:to_f).minmax.reverse.reduce(:-) -
+        held.attributes["height"].to_f).to be_within(0.1).of(44.3)
+    end
+
+    it "gives a titled cloud its header and no extra height" do
+      root = render("cloud \"Named\" {\n  [Example 1]\n}")
+      held = all(root, "rect").find { |r| r.attributes["rx"] }
+      ys = all(root, "path").first.attributes["d"].scan(/,(-?\d+\.?\d*)/)
+
+      expect(ys.flatten.map(&:to_f).minmax.reverse.reduce(:-) -
+        held.attributes["height"].to_f).to be_within(0.1).of(66.5)
+    end
+
+    it "keeps the header of an untitled package" do
+      root = render("package {\n  [Example 1]\n}")
+      frame = all(root, "rect").find { |r| r.attributes["fill"] == "none" }
+      held = all(root, "rect").find { |r| r.attributes["rx"] }
+
+      expect(frame.attributes["height"].to_f - held.attributes["height"].to_f)
+        .to be_within(0.1).of(42)
+    end
+
     it "hugs what it holds instead of doubling its size" do
       root = render("cloud {\n  [A]\n}")
       comp = all(root, "rect").first
@@ -195,7 +288,26 @@ RSpec.describe Sirena::Notation::PlantUML, "#render shapes and maps" do
 
     it "carries a small icon at its top right" do
       expect([icon.attributes["width"], icon.attributes["height"]])
-        .to eq(%w[15.0 8.0])
+        .to eq(%w[15.0 10.0])
+    end
+
+    it "draws the box with a hairline and the icon likewise" do
+      rects = all(render("[Web]"), "rect")
+
+      expect(rects.map { |r| r.attributes["stroke-width"] }.uniq).to eq(["0.5"])
+    end
+
+    it "keeps a container's frame at the plain line, its icon a hairline" do
+      rects = all(render("component C {\n  [a]\n}"), "rect")
+
+      expect(rects.map { |r| r.attributes["stroke-width"] }.first(5))
+        .to eq(%w[1 0.5 0.5 0.5 0.5])
+    end
+
+    it "draws a port with a heavy line" do
+      rects = all(render("component C {\n  portin p1\n  [a]\n}"), "rect")
+
+      expect(rects.map { |r| r.attributes["stroke-width"] }).to include("1.5")
     end
 
     it "has the icon's two tabs" do
@@ -216,6 +328,14 @@ RSpec.describe Sirena::Notation::PlantUML, "#render shapes and maps" do
       end
 
       expect(tail.map { |p| p.attributes["points"].split.size }).to include(3)
+    end
+
+    it "is drawn with a hairline" do
+      tail = all(root, "polygon").select do |p|
+        p.attributes["fill"] == "#FEFFDD"
+      end
+
+      expect(tail.map { |p| p.attributes["stroke-width"] }.uniq).to eq(["0.5"])
     end
 
     it "draws no dashed line to its target" do

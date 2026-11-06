@@ -34,6 +34,14 @@ module Sirena
             @out[node].reject { |edge| back?(edge) }
           end
 
+          # @return [Boolean] whether the node sits between two rows: in the
+          #   legacy syntax, an `->` target whose own arrow runs two rows or
+          #   more further down is drawn half a row below its source
+          def parked?(node)
+            @diagram.legacy && @level_in.key?(node) &&
+              forward(node).any? { |edge| @rank[edge.to] - @rank[node] >= 2 }
+          end
+
           # @return [Edge, nil] the edge that puts the node beside another
           def level_in(node)
             @level_in[node]

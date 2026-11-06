@@ -235,7 +235,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.01698
+      worst_e_c: 0.015709
       worst_e_w: 0.086957
       worst_e_h: 0.0
       worst_e_a: 0.086957
@@ -439,7 +439,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.017084
+      worst_e_c: 0.00764
       worst_e_w: 0.106383
       worst_e_h: 0.0
       worst_e_a: 0.106383

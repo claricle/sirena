@@ -62,7 +62,7 @@ module Sirena
               frame = pop("if")
               branches = frame[:branches] + @ends
               branches << [frame[:decision], nil] unless frame[:else]
-              join(branches)
+              join(branches, lane: frame[:decision].lane)
             end
 
             def on_while(match)
@@ -121,7 +121,7 @@ module Sirena
 
             def on_endswitch(_match)
               frame = pop("switch")
-              join(frame[:branches] + @ends)
+              join(frame[:branches] + @ends, lane: frame[:decision].lane)
             end
 
             def decision_node(match)
@@ -129,11 +129,14 @@ module Sirena
             end
 
             # Closes a branching construct: many open ends become one
-            # merge node, one stays as it is, none means the flow ended.
-            def join(branches, kind: :merge)
+            # merge node, one stays as it is, none means the flow ended. The
+            # diamond stays in the swimlane of the decision it closes, as
+            # PlantUML draws it, whichever lane the branches ended in.
+            def join(branches, kind: :merge, lane: nil)
               return @ends = branches if branches.size < 2
 
               merge = @builder.node(kind)
+              merge.lane = lane if lane
               branches.each do |from, label|
                 @builder.connect(from, merge, label: label)
               end

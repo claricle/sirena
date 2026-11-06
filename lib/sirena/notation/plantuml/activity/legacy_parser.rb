@@ -35,7 +35,7 @@ module Sirena
             reset
             join_quoted(entries).each { |line, number| statement(line, number) }
             refuse("unclosed if", "") unless @frames.empty?
-            @builder.diagram
+            @builder.diagram.tap { |diagram| diagram.legacy = true }
           end
 
           private

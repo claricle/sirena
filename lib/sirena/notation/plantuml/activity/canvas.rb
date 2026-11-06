@@ -59,16 +59,16 @@ module Sirena
                           role: role)
           end
 
-          def circle(box, radius, fill:, stroke: "#222222", role: nil)
+          def circle(box, radius, fill:, role: nil, width: 1)
             see(box.left, box.right, box.bottom)
             add(:circle, cx: box.cx, cy: box.cy, r: radius, fill: fill,
-                         stroke: stroke, role: role)
+                         stroke: "#222222", role: role, width: width)
           end
 
-          def path(points, stroke:, width: 1.0, dash: nil)
+          def path(points, stroke:, width: 1.0, dash: nil, curve: false)
             points.each { |x_pos, y_pos| see(x_pos, x_pos, y_pos) }
             add(:path, points: points, stroke: stroke, width: width,
-                       dash: dash)
+                       dash: dash, curve: curve)
           end
 
           # One text mark per line, the first baseline at `point`.

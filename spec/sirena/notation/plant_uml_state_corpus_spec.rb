@@ -130,6 +130,21 @@ RSpec.describe Sirena::Notation::PlantUML do
         .not_to include('id="state-Configuring"')
     end
 
+    # The JAR 1.2026.6 draws Configuring 449.6 wide: its three labels
+    # between the two rows stand side by side.
+    it "makes Configuring wide enough for its labels, as the JAR does" do
+      rect = groups_named("state-Configuring").first
+        .elements["*[local-name()='rect']"]
+      expect(rect.attributes["width"].to_f).to be_within(10).of(449.6)
+    end
+
+    # The JAR draws the canvas 607 wide: 24 between the two composites and
+    # the room PlantUML keeps round the children.
+    it "draws the canvas close to the JAR's 607 wide" do
+      width = root.attributes["viewBox"].split.fetch(2).to_f
+      expect(width).to be_within(20).of(607)
+    end
+
     %w[NotShooting Configuring NewValuePreview].each do |name|
       it "holds the children of #{name} inside it" do
         parent, kids = contained_children(name)

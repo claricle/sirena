@@ -96,6 +96,65 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     end
   end
 
+  describe "labels on bracketed link styles" do
+    let(:diagram) do
+      render(<<~BODY)
+        class foo
+        class bar1
+        class bar2
+        class bar3
+        class bar4
+        class bar5
+        bar1 : [#red,thickness=1]
+        bar2 : [#red,dashed,thickness=2]
+        bar3 : [#green,dashed,thickness=4]
+        bar4 : [#blue,dotted,thickness=8]
+        bar5 : [#blue,plain,thickness=16]
+        foo -[#red,thickness=1]-> bar1 : one
+        foo -[#red,dashed,thickness=2]-> bar2 : two
+        foo -[#green,dashed,thickness=4]-> bar3 : three
+        foo -[#blue,dotted,thickness=8]-> bar4 : thin
+        foo -[#blue,plain,thickness=16]-> bar5 : thick
+      BODY
+    end
+
+    def label(text)
+      REXML::XPath.first(diagram, "//text[text()='#{text}']")
+    end
+
+    def curve_y(label, at)
+      path = label.parent.elements["path"].attributes["d"]
+      ys = path.scan(/-?\d+\.?\d*/).map(&:to_f).each_slice(2).map(&:last)
+      ys.zip(bezier_weights(at)).sum { |value, weight| value * weight }
+    end
+
+    def bezier_weights(at)
+      rest = 1 - at
+      [rest**3, 3 * (rest**2) * at, 3 * rest * (at**2), at**3]
+    end
+
+    it "lifts a label clear of the thick curve it names" do
+      thick = label("thick")
+
+      expect(thick.attributes["y"].to_f).to be < curve_y(thick, 0.65) - 8.0
+    end
+
+    it "starts a label where the curve runs away below it" do
+      expect(label("thick").attributes["text-anchor"]).to eq("start")
+    end
+
+    it "ends a label where a rising curve runs away below it" do
+      expect(label("one").attributes["text-anchor"]).to eq("end")
+    end
+
+    it "draws the thickest link first so a thin link's label stays on top" do
+      groups = REXML::XPath.match(diagram, "//g[starts-with(@id,'relation-')]")
+      ids = groups.map { |node| node.attributes["id"] }
+
+      expect(ids.first).to eq(label("thick").parent.attributes["id"])
+    end
+  end
+
   describe "an abstract hierarchy" do
     let(:diagram) do
       render(<<~BODY)

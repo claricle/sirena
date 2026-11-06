@@ -30,7 +30,11 @@ module Sirena
           DECISION_POINT = 12.0
           DECISION_MIN = 24.0
           FIXED = { start: [20.0, 20.0], stop: [24.0, 24.0], kill: [24.0, 24.0],
+                    end: [24.0, 24.0],
                     merge: [24.0, 24.0], bar: [40.0, 6.0] }.freeze
+          # PlantUML draws a legacy bar at this size however many branches
+          # it joins.
+          LEGACY_BAR = [80.0, 8.0].freeze
 
           # Skinparam names PlantUML reads for a role, besides the role.
           SKIN_ALIASES = { diamond: :activitydiamond,
@@ -69,10 +73,19 @@ module Sirena
           # @return [Float] the width of the widest of the lines
           def text_width(lines, role: nil, size: size(role))
             face = face(role)
-            lines.map do |line|
-              TextMeasurement.measure_in(face, Creole.plain(line),
-                                         font_size: size)[:width]
-            end.max.to_f
+            lines.map { |line| line_width(line, face, size) }.max.to_f
+          end
+
+          def line_width(line, face, size)
+            Creole.parse(line).sum do |run|
+              if Creole.monospace?(run.style)
+                TextMeasurement.measure(run.text, font_size: size,
+                                                  monospace: true)[:width]
+              else
+                TextMeasurement.measure_in(face, run.text,
+                                           font_size: size)[:width]
+              end
+            end
           end
 
           def text_height(lines, role: nil)
@@ -82,11 +95,15 @@ module Sirena
           # @param node [Node]
           # @return [Box] a box of the node's size, not yet placed
           def box_for(node)
-            return fixed_box(FIXED[node.kind]) if FIXED.key?(node.kind)
+            return fixed_box(fixed_size(node)) if FIXED.key?(node.kind)
             return fixed_box(FIXED[:merge]) if node.bare
             return decision_box(node.lines) if node.kind == :decision
 
             action_box(node.lines)
+          end
+
+          def fixed_size(node)
+            node.kind == :bar && node.legacy ? LEGACY_BAR : FIXED[node.kind]
           end
 
           def action_box(lines)

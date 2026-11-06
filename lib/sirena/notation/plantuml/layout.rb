@@ -2531,8 +2531,28 @@ module Sirena
         def relation_text_label(relation, endpoints, sides)
           return unless sides.include?(:left)
 
-          relation_label(visible_relation_label(relation.label), endpoints,
-                         [relation.width.to_f - 1.0, 0.0].max / 2)
+          content = visible_relation_label(relation.label)
+          clearance = [relation.width.to_f - 1.0, 0.0].max / 2
+          curved_relation_label(content, relation, endpoints, clearance) ||
+            relation_label(content, endpoints, clearance)
+        end
+
+        # A label on a sloping curve starts, or ends, on the side where the
+        # curve runs away below it, so the curve does not cross the text.
+        def curved_relation_label(content, relation, endpoints, clearance)
+          left, right = endpoints.values_at(:left, :right)
+          point = StyledRelationCurve.label_point(relation, left, right)
+          return unless content && point && !endpoints[:control]
+
+          descending = descending?(left, right)
+          scene_text(content, point[0] + (descending ? LABEL_GAP : -LABEL_GAP),
+                     point[1] - LABEL_OFFSET - clearance, "relation_label",
+                     descending ? "start" : "end")
+        end
+
+        def descending?(left, right)
+          horizontal, vertical = vector_between(left, right)
+          (horizontal * vertical).positive?
         end
 
         def visible_relation_label(label)

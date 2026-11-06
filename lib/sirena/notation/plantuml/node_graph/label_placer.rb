@@ -17,8 +17,9 @@ module Sirena
           MARGIN = 2.0
           FRACTIONS = [0.5, 0.65, 0.35, 0.8, 0.2].freeze
           MAX_STEPS = 24
+          BESIDE_GAP = 4.0
           private_constant :FONT_SIZE, :LINE_STEP, :RISE, :MARGIN, :FRACTIONS,
-                           :MAX_STEPS
+                           :MAX_STEPS, :BESIDE_GAP
 
           Placement = Struct.new(:route, :x, :y)
 
@@ -37,7 +38,7 @@ module Sirena
           private
 
           def place(route, width, taken)
-            candidates(route.points).each do |x_pos, y_pos|
+            candidates(route, width).each do |x_pos, y_pos|
               box = bounds(x_pos, y_pos, width)
               next if taken.any? { |other| overlap?(box, other) }
 
@@ -49,7 +50,20 @@ module Sirena
 
           # Every candidate, nearest the edge first: along the edge, then one
           # line off it, then two, alternately above and below.
-          def candidates(points)
+          def candidates(route, width)
+            [*beside(route.label_at, width), *along_edge(route.points)]
+          end
+
+          # The JAR prints a label on the right of the point its line
+          # passes through.
+          def beside(anchor, width)
+            return [] unless anchor
+
+            x_pos, y_pos = anchor
+            [[x_pos + (width / 2) + BESIDE_GAP, y_pos + (FONT_SIZE / 3.0)]]
+          end
+
+          def along_edge(points)
             offsets.flat_map do |shift|
               FRACTIONS.map do |fraction|
                 x_pos, y_pos = along(points, fraction)

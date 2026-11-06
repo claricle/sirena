@@ -4,6 +4,7 @@ require_relative "bar_columns"
 require_relative "column_centres"
 require_relative "exits"
 require_relative "metrics"
+require_relative "legacy_row_gaps"
 require_relative "row_gaps"
 
 module Sirena
@@ -62,6 +63,9 @@ module Sirena
           end
 
           def row_gaps
+            return LegacyRowGaps.new(@diagram, @ranking, @metrics).to_a if
+              @diagram.legacy
+
             frame = head + PARTITION_BELOW + 8.0
             exits = Exits.new(@columns, @boxes)
             RowGaps.new(@diagram, @ranking, exits, @metrics, frame).to_a
@@ -152,9 +156,18 @@ module Sirena
           end
 
           def lane_bands(keys, reach)
-            @diagram.lanes.each_with_index.filter_map do |(name, colour), idx|
+            lanes = @diagram.lanes.each_with_index
+            abut(lanes.filter_map do |(name, colour), idx|
               own = keys.select { |key| key.first == idx }
               band(name, colour, own, reach) unless own.empty?
+            end)
+          end
+
+          # A decision centred on branches in the lane beside it reaches
+          # over the border; the next lane starts where this one ends.
+          def abut(bands)
+            bands.each_cons(2) do |prior, band|
+              band[:left] = [band[:left], prior[:right]].max
             end
           end
 
@@ -173,7 +186,15 @@ module Sirena
 
           def centre_row(node, tops, heights)
             row = @ranking.rank[node]
-            @boxes[node].cy = tops[row] + (heights[row] / 2.0)
+            @boxes[node].cy = tops[row] + offset(node, row, heights)
+          end
+
+          # A parked node sits in the gap under its row, a node on a row
+          # in the middle of it.
+          def offset(node, row, heights)
+            return heights[row] / 2.0 unless @ranking.parked?(node)
+
+            heights[row] + (@gaps[row + 1] / 2.0)
           end
 
           def row_top(heights, row)
@@ -181,7 +202,8 @@ module Sirena
           end
 
           def row_heights
-            tall = @diagram.nodes.group_by { |node| @ranking.rank[node] }
+            tall = @diagram.nodes.reject { |node| @ranking.parked?(node) }
+              .group_by { |node| @ranking.rank[node] }
             Array.new(tall.keys.max.to_i + 1) { |row| tallest(tall[row]) }
           end
 
@@ -193,14 +215,15 @@ module Sirena
           def fit_bars
             @diagram.nodes.select { |n| n.kind == :bar }.each do |bar|
               fan = @bar_columns.fan(bar).map { |n| @boxes[n] }
-              stretch(@boxes[bar], fan) unless fan.empty?
+              stretch(bar, fan) unless fan.empty?
             end
           end
 
-          def stretch(box, fan)
+          def stretch(bar, fan)
+            box = @boxes[bar]
             left, right = extent(fan)
             box.cx = (left + right) / 2.0
-            box.width = [right - left, box.width].max
+            box.width = [right - left, box.width].max unless bar.legacy
             hang(box, fan)
           end
 

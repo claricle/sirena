@@ -31,6 +31,21 @@ module Sirena
             @nodes.map { |node| slot_height(node) }.max
           end
 
+          # @return [Float] the left of the row's box
+          def left
+            first = @nodes.first
+            note = @notes[first[:id]]
+            first[:x] - (note ? note[:width] + NOTE_GAP : 0)
+          end
+
+          # Moves each state and note `shift` to the right.
+          def slide(shift)
+            @nodes.each do |node|
+              node[:x] += shift
+              @notes[node[:id]]&.then { |note| note[:x] += shift }
+            end
+          end
+
           # Writes the position of each state and note, the row's box at
           # `left`, `top`.
           def place(left, top)

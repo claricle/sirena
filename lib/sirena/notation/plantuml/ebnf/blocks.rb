@@ -14,22 +14,38 @@ module Sirena
           GAP = 10.0
           SIDE = 2 * RADIUS
           WORD_HEIGHT = 26.4883
-          WORD_PAD = 10.0
-          TEXT = 14
-          # Where a heading arrow sits along a rail, as PlantUML places it.
-          HEAD_AT = 0.4
-          HEAD_BACK = 2.0
-          HEAD_MIN = 11.0
+          FONT_SIZE = 14
+          # The JAR puts a word's baseline 5.2910 below its rail; the pen
+          # centres text on `middle`, which sits 0.35 em above the baseline.
+          TEXT_DROP = 5.2910 - (0.35 * FONT_SIZE)
+          ARROW = 6.0
+          ARROW_HALF = 3.0
 
-          # An arrowhead on the rail at `y`, pointing right from `tail`.
-          def self.heading(pen, tail, level)
-            pen.polygon([[tail, level - 3], [tail + 6, level],
-                         [tail, level + 3]])
-          end
+          # The arrowheads that show a rail's direction. The JAR places one
+          # 40% along its rail less two pixels (measured at six spans).
+          module Arrow
+            module_function
 
-          # Where the arrowhead sits on a rail of `length`, from its start.
-          def self.heading_at(length)
-            [(HEAD_AT * length) - HEAD_BACK, HEAD_MIN].max
+            def forward(pen, from, to, rail)
+              start = from + (0.4 * (to - from)) - 2
+              pen.polygon(head(start, rail, ARROW), stroke: "none")
+            end
+
+            # On the 26-pixel rail out of a rule, which the JAR does not
+            # place by the same measure.
+            def closing(pen, from, rail)
+              pen.polygon(head(from + 11, rail, ARROW), stroke: "none")
+            end
+
+            def backward(pen, from, to, rail)
+              start = to - (0.4 * (to - from)) - 2
+              pen.polygon(head(start, rail, -ARROW), stroke: "none")
+            end
+
+            def head(start, rail, length)
+              [[start, rail - ARROW_HALF], [start + length, rail],
+               [start, rail + ARROW_HALF]]
+            end
           end
 
           # The rail's bends, as the PlantUML JAR draws them: cubic curves
@@ -80,24 +96,25 @@ module Sirena
 
           # A terminal, nonterminal or special sequence in a box.
           class Word < Block
-            def initialize(pen, text, style)
-              super(pen.text_width(text, size: TEXT) + WORD_PAD, WORD_HEIGHT,
-                    WORD_HEIGHT / 2)
+            def initialize(pen, text, style, padding: 10.0)
+              super(pen.text_width(text, size: FONT_SIZE) + padding,
+                    WORD_HEIGHT, WORD_HEIGHT / 2)
               @text = text
               @style = style
             end
 
             def draw(pen, left, top)
               pen.rect(left, top, width, height, **@style)
-              pen.text(@text, left + (width / 2), top + baseline,
-                       anchor: "middle", size: TEXT)
+              pen.text(@text, left + (width / 2),
+                       top + baseline + TEXT_DROP,
+                       anchor: "middle", size: FONT_SIZE)
             end
           end
 
           # Nothing: just the rail, for the empty branch of an optional.
           class Gap < Block
             def initialize
-              super(0.0, 0.0, 0.0)
+              super(0.0, GAP, GAP)
             end
 
             def draw(_pen, _left, _top); end
@@ -105,10 +122,12 @@ module Sirena
 
           # Blocks one after another along the rail.
           class Row < Block
+            JOIN = 20.0
+
             def initialize(items)
               ascent = items.map(&:baseline).max
               descent = items.map { |item| item.height - item.baseline }.max
-              super(items.sum(&:width) + (GAP * (items.size - 1)),
+              super(items.sum(&:width) + (JOIN * (items.size - 1)),
                     ascent + descent, ascent)
               @items = items
             end
@@ -126,7 +145,7 @@ module Sirena
 
             def lefts_from(left)
               @items.each_with_object([left]) do |item, lefts|
-                lefts << (lefts.last + item.width + GAP)
+                lefts << (lefts.last + item.width + JOIN)
               end
             end
 
@@ -138,7 +157,9 @@ module Sirena
             end
           end
 
-          # Alternatives stacked, the first on the rail.
+          # Alternatives stacked, the first on the rail, each starting at
+          # the stack's left. An empty first branch is a bypass: one rail
+          # across the top, with an arrowhead.
           class Stack < Block
             def initialize(branches)
               @branches = branches
@@ -151,22 +172,14 @@ module Sirena
 
             def draw(pen, left, top)
               rail = top + baseline
-              @branches.each_with_index do |branch, index|
-                level = top + @tops[index] + branch.baseline
-                draw_branch(pen, branch, left, [rail, level])
+              bypass(pen, left, rail) if @smooth
+              @branches.each_with_index.drop(@smooth ? 1 : 0).each do |one, i|
+                level = top + @tops[i] + one.baseline
+                draw_branch(pen, one, left, [rail, level])
               end
-              heading(pen, left, rail)
             end
 
             private
-
-            # A skipped branch leaves the rail bare, so it carries the
-            # arrow that shows which way the rail runs.
-            def heading(pen, left, rail)
-              return unless @branches.first.is_a?(Gap)
-
-              Blocks.heading(pen, left + Blocks.heading_at(width), rail)
-            end
 
             def tops_of(branches)
               branches.each_with_object([0.0]) do |branch, tops|
@@ -174,17 +187,18 @@ module Sirena
               end.first(branches.size)
             end
 
+            def bypass(pen, left, rail)
+              pen.line(left, rail, left + width, rail)
+              Arrow.forward(pen, left, left + width, rail)
+            end
+
             def draw_branch(pen, branch, left, (rail, level))
-              inner = left + SIDE + slack(branch)
+              inner = left + SIDE
               branch.draw(pen, inner, level - branch.baseline)
               turned = level != rail
               feeds(pen, [[left, inner], [left + width, inner + branch.width]],
                     level, turned)
               turns(pen, left, rail, level) if turned
-            end
-
-            def slack(branch)
-              (width - (2 * SIDE) - branch.width) / 2
             end
 
             def feeds(pen, spans, level, turned)
@@ -208,21 +222,23 @@ module Sirena
 
           # A block that may be taken again, by a line looping back over it.
           class Loop < Block
-            BACK = 14.0
-            INSET = 20.0
+            INSET = 15.0
             TURN = 8.0
+            ABOVE = 12.0
+            BACK = 5.0
 
             def initialize(item)
-              super(item.width + (2 * INSET), item.height + BACK,
-                    item.baseline + BACK)
+              super(item.width + (2 * INSET), item.height + ABOVE,
+                    item.baseline + ABOVE)
               @item = item
             end
 
             def draw(pen, left, top)
               rail = top + baseline
-              @item.draw(pen, left + INSET, top + BACK)
+              @item.draw(pen, left + INSET, top + ABOVE)
               rails(pen, left, rail)
-              back(pen, left, rail, top + (BACK / 2))
+              back(pen, [left + INSET, left + INSET + @item.width],
+                   [top + BACK, rail])
             end
 
             private
@@ -232,24 +248,21 @@ module Sirena
               pen.line(left + INSET + @item.width, rail, left + width, rail)
             end
 
-            def back(pen, left, rail, level)
-              near = left + TURN
-              far = left + width - TURN
-              pen.path(over(near, far, [rail, level]))
-              arrow(pen, (near + far) / 2, level)
+            # The loop-back line, the JAR's: a straight run above the item
+            # with a bend at each end that drops to the rail.
+            def back(pen, (from, to), (level, rail))
+              pen.line(from, level, to, level)
+              Arrow.backward(pen, from, to, level)
+              [[from - INSET + TURN, TURN], [to + INSET - TURN, -TURN]]
+                .each { |edge, run| side(pen, edge, run, [level, rail]) }
             end
 
-            def over(near, far, (rail, level))
-              [[:move, far, rail], [:line, far, level + TURN],
-               Curves.level(far, level + TURN, -TURN, -TURN, TURN),
-               [:line, near + TURN, level],
-               Curves.upright(near + TURN, level, -TURN, TURN, TURN),
-               [:line, near, rail]]
-            end
-
-            def arrow(pen, centre, level)
-              pen.polygon([[centre - 4, level], [centre + 3, level - 4],
-                           [centre + 3, level + 4]])
+            def side(pen, edge, run, (level, rail))
+              pen.path([[:move, edge, rail - TURN],
+                        Curves.level(edge, rail - TURN, run, TURN, TURN)])
+              pen.path([[:move, edge, rail - TURN],
+                        [:line, edge, level + TURN],
+                        Curves.level(edge, level + TURN, run, -TURN, TURN)])
             end
           end
         end

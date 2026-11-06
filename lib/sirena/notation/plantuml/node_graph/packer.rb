@@ -19,7 +19,7 @@ module Sirena
           CROSS_GAP = 28.0
           # The room between a skipped link and what stands beside it.
           WAYPOINT_GAP = 17.0
-          REACH_SHARE = 0.8
+          REACH_SHARE = 1.3
 
           # @param sizes [Hash{Object => Array(Float, Float)}] width, height
           # @param left_to_right [Boolean] whether ranks run left to right

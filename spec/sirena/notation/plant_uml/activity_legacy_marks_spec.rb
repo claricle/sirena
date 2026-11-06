@@ -120,4 +120,29 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
       expect(size).to eq("12")
     end
   end
+
+  describe "straight edges" do
+    def path_data(source)
+      elements(render(source), "path").map { |p| p.attributes["d"] }
+    end
+
+    it "are cubics with control points on the line, in the legacy syntax" do
+      expect(path_data(%((*) --> "A")).first)
+        .to match(/\AM28,34 C28,[\d.]+ 28,[\d.]+ 28,[\d.]+\z/)
+    end
+
+    it "stop 5 short of the arrow's tip" do
+      d = path_data(%((*) --> "A")).first
+      tip = elements(render(%((*) --> "A")), "polygon").first
+        .attributes["points"].split.first
+
+      expect(d.split.last.split(",").last.to_f)
+        .to be_within(0.01).of(tip.split(",").last.to_f - 5)
+    end
+
+    it "stay polylines in the new syntax" do
+      expect(path_data("start\n:a;\nstop").first)
+        .to match(/\AM[\d.]+,[\d.]+ L/)
+    end
+  end
 end

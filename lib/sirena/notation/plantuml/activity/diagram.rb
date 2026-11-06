@@ -14,6 +14,9 @@ module Sirena
           # @return [Style::Sheet] what the source says about fonts and
           #   looks; the layout sizes boxes from it
           attr_accessor :style
+          # @return [Boolean] whether it was written in the legacy `(*)`
+          #   syntax, which PlantUML ranks differently from the new one
+          attr_accessor :legacy
 
           # @param lanes [Array<Array(String, String)>] name and colour
           def initialize(nodes:, edges:, lanes: [], title: nil, warnings: [])
@@ -23,6 +26,7 @@ module Sirena
             @title = title
             @warnings = warnings
             @style = Style::Sheet.new
+            @legacy = false
           end
         end
       end

@@ -4,6 +4,9 @@ require_relative "../../../layout/elk_placement"
 require_relative "routes"
 require_relative "ranking"
 require_relative "level_edges"
+require_relative "label_reach"
+require_relative "cluster_padding"
+require_relative "dot_axis"
 require_relative "row"
 require_relative "rows"
 require_relative "stretch"
@@ -22,14 +25,17 @@ module Sirena
         # {Routes}. A note sits beside its target and travels with it.
         class Hierarchy
           MARGIN = 20.0
-          PAD = 24.0
           HEADER = 36.0
           # The step of one rank between the tops of two composites, as
           # PlantUML measures it: a start marker and the gap after it.
           RANK_DROP = 68.0
           # The distance from a composite to the end marker beside it.
           END_GAP = 130.0
-          private_constant :MARGIN, :PAD, :RANK_DROP, :END_GAP
+          # The room between two composites that stand side by side.
+          PEER_GAP = 24.0
+          PEER_SPACING = ::Sirena::Layout::Base::ElkOptions::NODE_NODE_SPACING
+          private_constant :MARGIN, :RANK_DROP, :END_GAP, :PEER_GAP,
+                           :PEER_SPACING
 
           # @param graph [Hash] the graph from the state layout's build_graph
           # @param flat [Array<Array(String, String)>] the transitions drawn
@@ -42,6 +48,8 @@ module Sirena
             @parent = {}
             @levels = {}
             @notes = {}
+            @label_reach = LabelReach.new(graph[:edges], @parent)
+            @padding = ClusterPadding.new(graph[:edges], @parent)
           end
 
           # Places the graph's states and edges in place.
@@ -137,6 +145,24 @@ module Sirena
             follow(elk, drop)
             above_entered(rows, elk, drop)
             beside_composites(rows, elk)
+            slide_to_dot(rows, elk)
+          end
+
+          # The rows of the diagram's top level that graphviz puts elsewhere
+          # along the x axis move there, and the routes ELK drew to them are
+          # dropped.
+          def slide_to_dot(rows, elk)
+            return if @parent[rows.first.nodes.first[:id]]
+
+            moved = DotAxis.new(@graph[:edges], @nodes, @parent).apply(rows)
+            unroute_rows(elk, moved.map(&:id))
+          end
+
+          def unroute_rows(elk, ids)
+            elk[:edges].each do |edge|
+              edge.delete(:sections) if (edge[:sources] + edge[:targets])
+                .intersect?(ids)
+            end
           end
 
           # An end marker a composite leads to stands beside the composite,
@@ -250,11 +276,17 @@ module Sirena
 
           def lay_out(rows)
             elk = {
-              id: "level", layoutOptions: @options,
+              id: "level", layoutOptions: level_options(rows),
               children: rows.map { |row| unit_of(row) },
               edges: @level_edges.of(rows)
             }
             ::Sirena::Layout::ElkPlacement.apply(elk)
+          end
+
+          def level_options(rows)
+            return @options if @level_edges.peer_ids(rows).empty?
+
+            @options.merge(PEER_SPACING => PEER_GAP)
           end
 
           # The members of a level, those joined by a flat transition
@@ -289,7 +321,7 @@ module Sirena
 
             left = children.map { |child| child[:x] }.min || 0
             top = children.map { |child| child[:y] }.min || 0
-            [PAD - left, HEADER - top]
+            [@padding.room(owner).left - left, HEADER - top]
           end
 
           def finish(owner, children, shift)
@@ -301,10 +333,16 @@ module Sirena
           end
 
           def size_container(node, children)
+            room = @padding.room(node[:id])
+            node[:width] = width_of(node, children, room)
+            node[:height] = extent(children, :y, :height) + room.bottom
+          end
+
+          def width_of(node, children, room)
             title = node[:labels].first&.fetch(:width, 0) || 0
-            node[:width] = [extent(children, :x, :width) + PAD,
-                            title + (2 * PAD)].max
-            node[:height] = extent(children, :y, :height) + PAD
+            [extent(children, :x, :width) + room.right,
+             title + room.title,
+             @label_reach.width(members_of(children))].max
           end
 
           def extent(children, origin, size)

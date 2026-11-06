@@ -51,6 +51,26 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
     expect(svg.scan(/stroke-width="2\.0" d="M[\d.]+,[\d.]+ L/).size).to eq(2)
   end
 
+  it "ends a flow at a crossed circle on `end`, a plain circle on `stop`",
+     :aggregate_failures do
+    ended = render(":a;\nend")
+    stopped = render(":a;\nstop")
+
+    expect(ended).to include('r="10.0"', 'stroke-width="1.5"')
+    expect(ended.scan(/stroke-width="2\.5" d="M[\d.]+,[\d.]+ L/).size).to eq(2)
+    expect(stopped).not_to include('stroke-width="1.5"')
+  end
+
+  it "draws a formula in monospace and sizes the box to it",
+     :aggregate_failures do
+    plain = render(":int_0^1f(x)dx;")
+    formula = render(":<math>int_0^1f(x)dx</math>;")
+
+    expect(formula).to include('font-family="monospace"')
+    expect(plain).not_to include('font-family="monospace"')
+    expect(box_width(formula)).to be > box_width(plain)
+  end
+
   it "renders legacy syntax" do
     svg = render(%((*) --> "One"\n--> (*)))
 
@@ -84,5 +104,9 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
     parsed = Sirena::Notation::PlantUML.parse(source)
 
     expect(parsed.type).to eq(:class_diagram)
+  end
+
+  def box_width(svg)
+    svg[/<rect[^>]*width="([\d.]+)"[^>]*rx=/, 1].to_f
   end
 end
