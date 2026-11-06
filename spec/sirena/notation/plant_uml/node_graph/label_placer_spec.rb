@@ -4,7 +4,7 @@ require "spec_helper"
 require "sirena/notation/plantuml"
 
 RSpec.describe Sirena::Notation::PlantUML::NodeGraph::LabelPlacer do
-  let(:route_class) { Struct.new(:points, :edge) }
+  let(:route_class) { Struct.new(:points, :edge, :label_at) }
   let(:edge_class) { Struct.new(:label) }
 
   def route_on(points)
@@ -26,5 +26,14 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph::LabelPlacer do
 
     expect([placements.size, placements.last.x, placements.last.y])
       .to eq([300, 0.0, 46.0])
+  end
+
+  it "prints a label to the right of the point its line passes through" do
+    routed = route_class.new([[0, 0], [0, 100]], edge_class.new("label"),
+                             [50.0, 50.0])
+
+    placement = described_class.new.call([routed]).first
+
+    expect(placement.x).to be > 50.0
   end
 end

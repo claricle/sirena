@@ -4,6 +4,7 @@ require_relative "../../../text_measurement"
 require_relative "../../plantuml_data/boxes/table_box"
 require_relative "detour"
 require_relative "frame_ports"
+require_relative "label_fan"
 require_relative "metrics"
 require_relative "packer"
 require_relative "paths"
@@ -190,7 +191,15 @@ module Sirena
           def routes(placed)
             boxes = placed.to_h { |box| [box.node, terminal(box)] }
             detour = Detour.new(placed)
-            @graph.edges.filter_map { |edge| route(edge, boxes, detour) }
+            found = @graph.edges.filter_map do |edge|
+              route(edge, boxes, detour)
+            end
+            LabelFan.new(axis).call(found)
+            found
+          end
+
+          def axis
+            left_to_right? ? 0 : 1
           end
 
           def route(edge, boxes, detour)

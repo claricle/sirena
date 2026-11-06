@@ -9,7 +9,9 @@ module Sirena
                             keyword_init: true)
 
         # A link routed between two placed nodes, as a list of points.
-        Route = Struct.new(:edge, :points, keyword_init: true)
+        # `label_at` is the point the line passes through at its label, or
+        # nil.
+        Route = Struct.new(:edge, :points, :label_at, keyword_init: true)
 
         # A laid-out diagram.
         Scene = Struct.new(:width, :height, :placed, :routes, :title,
