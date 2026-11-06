@@ -43,6 +43,15 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
     expect(path_ends(scene)).to include(left_tip(diamond(scene)))
   end
 
+  it "sets the diamond 23.13 below a closing bar, as PlantUML does" do
+    scene = layout(["if (m?) then (y)", "fork", ":a;", "fork again", ":b;",
+                    "end fork", "else (n)", ":c;", ":d;", "endif"].join("\n"))
+    bar = rects(scene).select { |r| r[:height].round == 6 }.max_by { |r| r[:y] }
+
+    expect(diamond(scene).map(&:last).min - (bar[:y] + bar[:height]))
+      .to be_within(0.01).of(23.1328)
+  end
+
   def path_ends(scene)
     scene.marks.select { |m| m.kind == :path }.map { |m| m.attrs[:points].last }
   end
