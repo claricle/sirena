@@ -5,6 +5,7 @@ require_relative "column_centres"
 require_relative "exits"
 require_relative "metrics"
 require_relative "reach"
+require_relative "lane_steps"
 require_relative "legacy_row_gaps"
 require_relative "row_gaps"
 
@@ -68,8 +69,11 @@ module Sirena
               @diagram.legacy
 
             frame = head + PARTITION_BELOW + 8.0
-            exits = Exits.new(@columns, @boxes)
             RowGaps.new(@diagram, @ranking, exits, @metrics, frame).to_a
+          end
+
+          def exits
+            @exits ||= Exits.new(@columns, @boxes)
           end
 
           def header_height
@@ -206,6 +210,20 @@ module Sirena
           def centre_row(node, tops, heights)
             row = @ranking.rank[node]
             @boxes[node].cy = tops[row] + offset(node, row, heights)
+            hang_lane(node, tops)
+          end
+
+          # A lane's first step hangs from the top of its row and its last
+          # stands just over the diamond that closes the branches, wherever
+          # the rows would have put them.
+          def hang_lane(node, tops)
+            box = @boxes[node]
+            centre = lane_steps.centre(node, box.height, tops)
+            box.cy = centre if centre
+          end
+
+          def lane_steps
+            @lane_steps ||= LaneSteps.new(@diagram, @ranking, exits)
           end
 
           # A parked node sits in the gap under its row, a node on a row
@@ -221,9 +239,13 @@ module Sirena
           end
 
           def row_heights
-            tall = @diagram.nodes.reject { |node| @ranking.parked?(node) }
+            tall = @diagram.nodes.reject { |node| parked_or_hung?(node) }
               .group_by { |node| @ranking.rank[node] }
             Array.new(tall.keys.max.to_i + 1) { |row| tallest(tall[row]) }
+          end
+
+          def parked_or_hung?(node)
+            @ranking.parked?(node) || lane_steps.hung?(node)
           end
 
           def tallest(nodes)

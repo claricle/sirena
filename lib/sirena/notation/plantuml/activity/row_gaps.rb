@@ -19,7 +19,7 @@ module Sirena
           BAR_CLOSE = 23.1328
           LABEL_MARGIN = 28.33
           LABEL_BELOW_DECISION = 11.45
-          private_constant :STEP, :BRANCH, :CLOSE, :BAR_CLOSE, :LABEL_MARGIN,
+          private_constant :STEP, :BRANCH, :BAR_CLOSE, :LABEL_MARGIN,
                            :LABEL_BELOW_DECISION
 
           # @param frame [Float] the space a partition's frame asks where an
