@@ -41,10 +41,19 @@ module Sirena
 
         def render_content(scene, content)
           scene.frames.each { |frame| render_frame(frame, content) }
-          scene.relations.each { |relation| render_relation(relation, content) }
+          thickest_first(scene.relations).each do |relation|
+            render_relation(relation, content)
+          end
           scene.boxes.each do |box|
             @box = box
             render_box(box, content)
+          end
+        end
+
+        # A thin link's label is drawn over the thick links that cross it.
+        def thickest_first(relations)
+          relations.sort_by.with_index do |relation, index|
+            [-relation.stroke_width.to_f, index]
           end
         end
 
