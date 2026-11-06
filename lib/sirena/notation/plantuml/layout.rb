@@ -246,7 +246,8 @@ module Sirena
         end
 
         def isolated_class_kind_scene(diagram, specifications)
-          return unless isolated_class_kind_family?(diagram)
+          return unless isolated_class_kind_family?(diagram) ||
+            loose_member_class_family?(diagram)
 
           rows = specifications.each_slice(2).to_a
           boxes = isolated_class_kind_boxes(rows)
@@ -259,6 +260,14 @@ module Sirena
           diagram.classes.size > 1 && diagram.notes.empty? &&
             standalone_diagram?(diagram) &&
             diagram.classes.any? { |klass| klass.kind != :class }
+        end
+
+        # Several unlinked classes with members: the jar packs them like
+        # the other loose boxes, a node-separation apart, not a grid column.
+        def loose_member_class_family?(diagram)
+          diagram.classes.size > 1 && diagram.notes.empty? &&
+            standalone_diagram?(diagram) &&
+            diagram.classes.any? { |klass| klass.body.any? }
         end
 
         def isolated_class_kind_boxes(rows)

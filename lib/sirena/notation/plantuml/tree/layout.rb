@@ -122,7 +122,7 @@ module Sirena
           def sized_item(node, level, children)
             role = Role.parse(node.role)
             lines = text_lines(node)
-            width, height = measured(lines)
+            width, height = measured(lines, boxless: role.boxless)
             Item.new(node.id, level, role.side, role.boxless, role.fill, lines,
                      width, height, children)
           end
@@ -132,11 +132,22 @@ module Sirena
             lines.empty? ? [""] : lines
           end
 
-          def measured(lines)
+          def measured(lines, boxless: false)
             widest = lines.map do |line|
               measure_text(line, font_size: font_size)[:width]
             end.max
-            [widest + (2 * PAD_X), (lines.length * line_height) + (2 * PAD_Y)]
+            [widest + (2 * PAD_X),
+             (lines.length * line_height) + (2 * pad_y(boxless))]
+          end
+
+          # The room above and below a box's text; a boxless node's own
+          # layout may keep it tighter.
+          def pad_y(boxless)
+            boxless ? boxless_pad_y : PAD_Y
+          end
+
+          def boxless_pad_y
+            PAD_Y
           end
 
           def box(item, left, top)
@@ -227,7 +238,7 @@ module Sirena
 
           def label(item, left_edge, top)
             left = left_edge + PAD_X
-            first = top + PAD_Y + (font_size * BASELINE_RATIO)
+            first = top + pad_y(item.boxless) + (font_size * BASELINE_RATIO)
             Label.new(text: item.lines.join("\n"), x: left, y: first.round(3),
                       font_size: font_size,
                       lines: positioned_lines(item, left, first))
