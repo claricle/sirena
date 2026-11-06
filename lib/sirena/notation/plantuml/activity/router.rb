@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "exits"
 require_relative "placement"
 require_relative "route"
 
@@ -131,7 +132,7 @@ module Sirena
           end
 
           def side_entry?(edge, from, to)
-            edge.to.kind == :merge && !from.spans?(to.cx)
+            edge.to.kind == :merge && !Exits.top_entry?(edge, from, to)
           end
 
           def straight(from, to, x_pos)

@@ -8,6 +8,15 @@ module Sirena
         # the foot of a decision, straight or with a jog to a step standing
         # under the decision's width, or from its side.
         class Exits
+          # A step that stands over the diamond closing the branches drops
+          # into its top instead of its side; a bar runs round to the side.
+          #
+          # @return [Boolean]
+          def self.top_entry?(edge, from, to)
+            edge.to.kind == :merge && edge.from.kind != :bar &&
+              from.spans?(to.cx)
+          end
+
           # @param columns [Columns]
           # @param boxes [Hash{Node => Box}]
           def initialize(columns, boxes)
@@ -34,12 +43,10 @@ module Sirena
 
           private
 
-          # A branch that stands over the diamond's own tip drops into its
-          # top instead of its side.
           def sideways?(edge)
             return edge.from.kind == :decision unless edge.to.kind == :merge
 
-            !@boxes[edge.from].spans?(@boxes[edge.to].cx)
+            !Exits.top_entry?(edge, @boxes[edge.from], @boxes[edge.to])
           end
 
           def under?(edge)

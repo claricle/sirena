@@ -36,6 +36,21 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
     expect(gap_above_join(source)).to be_within(0.01).of(20.0)
   end
 
+  it "runs a fork's closing bar round to the side of the diamond" do
+    scene = layout(["if (m?) then (y)", "fork", ":a;", "fork again", ":b;",
+                    "end fork", "else (n)", ":c;", ":d;", "endif"].join("\n"))
+
+    expect(path_ends(scene)).to include(left_tip(diamond(scene)))
+  end
+
+  def path_ends(scene)
+    scene.marks.select { |m| m.kind == :path }.map { |m| m.attrs[:points].last }
+  end
+
+  def left_tip(points)
+    [points.map(&:first).min, points.sum(&:last) / 4.0]
+  end
+
   context "with a decision whose else branch is in another swimlane" do
     let(:scene) do
       layout(["|#pink|One|", "start", "if (c?) then (y)", ":a;", "else (n)",
