@@ -37,8 +37,8 @@ module Sirena
           def self.tab(frame)
             top = frame.y
             right = frame.x + Text.width(frame.name, bold: true) + (2 * TAB_PAD)
-            [[frame.x, top], [right, top], [right + SLANT, top + SLANT],
-             [right + SLANT, top + TAB], [frame.x, top + TAB]]
+            [[frame.x, top], [right, top], [right + SLANT, top + TAB],
+             [frame.x, top + TAB]]
           end
           private_class_method :tab
 

@@ -8,6 +8,8 @@ module Sirena
         # holds the first line of its name.
         module Tab
           HEIGHT = 20.0
+          # A package's and a folder's tab is a line taller than a frame's.
+          LEANING_HEIGHT = 22.49
           SLANT = 7.0
           CHAMFER = 10.0
           PAD = 8.0
@@ -28,12 +30,22 @@ module Sirena
                       else
                         leaning(right, top)
                       end
-            [[left, top], [right, top], *outline, [left, top + HEIGHT]]
+            [[left, top], [right, top], *outline, [left, top + height(kind)]]
               .map { |point| point.join(",") }.join(" ")
           end
 
+          # @return [Float] how tall the tab of a container of `kind` is
+          def height(kind)
+            kind == :frame ? HEIGHT : LEANING_HEIGHT
+          end
+
+          # @return [Float] how far below the tab's top the name sits
+          def baseline(kind)
+            kind == :frame ? 14.5 : 15.5
+          end
+
           def leaning(right, top)
-            [[right + SLANT, top + HEIGHT]]
+            [[right + SLANT, top + LEANING_HEIGHT]]
           end
 
           def chamfered(right, top)

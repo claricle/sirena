@@ -80,9 +80,7 @@ module Sirena
           def size_note(width, height) = [width + 24, height + 16]
           def size_database(width, height) = [width + 30, height + 40]
 
-          def size_cloud(width, height)
-            [(width * 1.5) + 30, (height * 1.5) + 34]
-          end
+          def size_cloud(width, height) = [width + 34, height + 31]
 
           def size_node(width, height) = [width + 38, height + 28]
           def size_box(width, height) = [width + 26, height + 20]
