@@ -119,6 +119,37 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
     end
   end
 
+  # Where the arrow from the join bar into the merge diamond starts, and the
+  # middle of the two steps the bar gathers.
+  def join_start_and_middle(root)
+    bars, steps = boxes(root).partition { |b| num(b, "height") < 7 }
+    gathered = steps.select { |s| top(s) > bottom(bars.first) }
+    [join_exit(root, bottom(bars.last)), middle_of(gathered)]
+  end
+
+  def middle_of(steps) = steps.sum { |s| centre(s) } / steps.size
+
+  def join_exit(root, foot)
+    routes(root).find do |route|
+      route.size == 3 && (route.first[1] - foot).abs < 0.01
+    end.first.first
+  end
+
+  describe "a join bar closing onto the merge diamond" do
+    let(:forked) do
+      root_for("start", "if (c?) then (yes)", "fork", ":a;", "fork again",
+               ":b;", "end fork", "else (no)", ":c;", "endif")
+    end
+
+    # JAR: the arrow leaves the bar at the middle of the branches it joins
+    # (133.51 between 73.75 and 193.26), not under the diamond (226.14)
+    it "leaves from the middle of the branches it joins" do
+      start, middle = join_start_and_middle(forked)
+
+      expect(start).to be_within(0.01).of(middle)
+    end
+  end
+
   describe "the gap between rows" do
     let(:rows) { boxes(two_way) }
     let(:hex) { hexagon(two_way) }

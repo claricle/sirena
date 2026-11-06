@@ -240,13 +240,20 @@ module Sirena
           end
 
           # A bar is crossed wherever its neighbour stands. A decision
-          # reaches for the middle of the branches the bar fans out to.
+          # reaches for the middle of the branches the bar fans out to, and
+          # a bar that closes onto the merge diamond leaves from that middle.
           def anchor_x(node, box, other, edge)
             return box.cx unless node.kind == :bar
-            return box.anchor if edge.from.kind == :decision &&
-              !box.fan&.any? { |f| f.equal?(other) }
+            return box.anchor if middle?(node, box, other, edge)
 
             other.cx.clamp(box.left, box.right)
+          end
+
+          def middle?(node, box, other, edge)
+            return true if edge.to.kind == :merge && node.equal?(edge.from)
+
+            edge.from.kind == :decision &&
+              !box.fan&.any? { |f| f.equal?(other) }
           end
         end
       end
