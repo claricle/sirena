@@ -1285,16 +1285,6 @@ verdicts:
   graphviz: 15.1.1
   command: plantuml --svg --pipe --charset UTF-8
   contract: 1
-- id: sequence/sirena.skinparam.paint
-  verdict: valid
-  reason: rendered SEQUENCE
-  source_sha256: a8cadcb152392532ca9012c04822d23a4b75824f86bef84ce3b813a7f3690352
-  svg_sha256: 6c9853b8caea266e9688dc9479f650ede633edcb422bc30a30f4bce63b95d02e
-  plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
-  java: 26.0.2
-  graphviz: 15.1.1
-  command: plantuml --svg --pipe --charset UTF-8
-  contract: 1
 - id: sequence/sirena.self.label
   verdict: valid
   reason: rendered SEQUENCE
@@ -1310,6 +1300,16 @@ verdicts:
   reason: rendered SEQUENCE
   source_sha256: a18a0ff70948a4e1e78c278e68f6bb79ec879057d2f0eb587363b1b19530459e
   svg_sha256: 1a430472590fee36f5d2923025353cc073d5918330e3bbb039113b01def518e3
+  plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
+  java: 26.0.2
+  graphviz: 15.1.1
+  command: plantuml --svg --pipe --charset UTF-8
+  contract: 1
+- id: sequence/sirena.skinparam.paint
+  verdict: valid
+  reason: rendered SEQUENCE
+  source_sha256: a8cadcb152392532ca9012c04822d23a4b75824f86bef84ce3b813a7f3690352
+  svg_sha256: 6c9853b8caea266e9688dc9479f650ede633edcb422bc30a30f4bce63b95d02e
   plantuml: 1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]
   java: 26.0.2
   graphviz: 15.1.1
