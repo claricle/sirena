@@ -167,7 +167,8 @@ RSpec.describe Sirena::Notation::PlantUML::Further do
     it "sizes a box to its text and ten points" do
       box = elements(doc, "rect").first.attributes["width"].to_f
       expect(box).to be_within(0.5).of(
-        Sirena::TextMeasurement.measure("1", font_size: 14)[:width] + 10,
+        Sirena::Notation::PlantUML::Sequence::TextAdvances
+          .width("1", font_size: 14) + 10,
       )
     end
 

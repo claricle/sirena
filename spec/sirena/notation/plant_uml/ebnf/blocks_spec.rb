@@ -6,8 +6,8 @@ require "sirena/notation/plantuml"
 Sirena::Notation.send(:entries).delete(:plantuml)
 
 # The numbers in the examples are the PlantUML JAR 1.2026.6's own: its SVG
-# for each construct. The JAR measures text in its own font, so the examples
-# feed Sirena the JAR's advances; every coordinate then agrees to 0.001.
+# for each construct. Text is measured with Sirena's own DejaVu Sans advances,
+# which are the JAR's, so every coordinate agrees to 0.001.
 RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
   include_context "with an isolated notation registry"
 
@@ -16,21 +16,7 @@ RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
                               notation: :plantuml)
   end
 
-  let(:jar_advances) do
-    { "a" => 7.7314, "b" => 8.8115, "c" => 7.1709, "d" => 8.8115,
-      "x" => 8.5859, "e" => 7.7998, "s" => 7.916, "special seq" => 74.9219 }
-  end
-
-  before do
-    Sirena::Notation.register(Sirena::Notation::PlantUML)
-    allow(Sirena::TextMeasurement).to receive(:measure)
-      .and_wrap_original do |original, text, **options|
-      advance = jar_advances[text]
-      next original.call(text, **options) unless advance
-
-      { width: advance, height: 14.0 }
-    end
-  end
+  before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
   def paths(rule)
     render(rule).scan(/<path[^>]*>/).map do |tag|

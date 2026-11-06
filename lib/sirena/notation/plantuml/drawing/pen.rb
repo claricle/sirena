@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../svg"
-require_relative "../../../text_measurement"
+require_relative "../sequence/text_advances"
 require_relative "scene"
 
 module Sirena
@@ -72,7 +72,7 @@ module Sirena
           end
 
           def text_width(content, size: FONT_SIZE)
-            TextMeasurement.measure(content.to_s, font_size: size)[:width]
+            Sequence::TextAdvances.width(content.to_s, font_size: size)
           end
 
           def scene(width, height)
