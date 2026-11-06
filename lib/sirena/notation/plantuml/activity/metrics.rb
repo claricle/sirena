@@ -137,7 +137,7 @@ module Sirena
             name = written_face(role).to_s.downcase
             TextMeasurement::FACE_TABLES.keys.find do |face|
               name.include?(face.to_s)
-            end || :arial
+            end || :dejavu
           end
 
           private

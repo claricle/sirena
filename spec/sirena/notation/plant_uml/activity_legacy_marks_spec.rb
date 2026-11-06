@@ -128,7 +128,7 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
 
     it "are cubics with control points on the line, in the legacy syntax" do
       expect(path_data(%((*) --> "A")).first)
-        .to match(/\AM28,34 C28,[\d.]+ 28,[\d.]+ 28,[\d.]+\z/)
+        .to match(/\AM([\d.]+),34 C\1,[\d.]+ \1,[\d.]+ \1,[\d.]+\z/)
     end
 
     it "stop 5 short of the arrow's tip" do

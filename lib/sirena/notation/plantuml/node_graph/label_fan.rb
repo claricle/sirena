@@ -59,8 +59,7 @@ module Sirena
           end
 
           def width(route)
-            TextMeasurement.measure(route.edge.label.to_s,
-                                    font_size: FONT_SIZE)[:width].to_f
+            Drawing::Face.width(route.edge.label, size: FONT_SIZE).to_f
           end
 
           def bend(route)
