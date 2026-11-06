@@ -41,7 +41,8 @@ module Sirena
             extra = Hash.new(0.0)
             placed = spread(solid, extra)
             (solid.size * 2).times do
-              deficit = branch_deficit(placed, solid) or break
+              deficit = branch_deficit(placed, solid) ||
+                lane_deficit(placed, solid) or break
               extra[deficit.first] += deficit.last
               placed = spread(solid, extra)
             end
@@ -73,6 +74,26 @@ module Sirena
               return [anchor, short] if short.positive? && anchor
             end
             nil
+          end
+
+          # The first column of a lane that has to move right so that the
+          # lane before it, its decisions centred on branches in this one
+          # included, ends before its band begins.
+          def lane_deficit(placed, solid)
+            solid.each_cons(2) do |prior, key|
+              next if prior.first == key.first
+
+              short = lane_reach(prior.first, placed) +
+                (2 * Placement::BAND_PAD) -
+                (placed[key] - @reach[key].first)
+              return [key, short] if short.positive?
+            end
+            nil
+          end
+
+          def lane_reach(lane, placed)
+            (placed.keys + @trunks.keys).select { |key| key.first == lane }
+              .map { |key| centre(key, placed) + @reach[key].last }.max
           end
 
           def shortfall(node, left, right, placed)

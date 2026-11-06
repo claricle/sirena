@@ -152,9 +152,18 @@ module Sirena
           end
 
           def lane_bands(keys, reach)
-            @diagram.lanes.each_with_index.filter_map do |(name, colour), idx|
+            lanes = @diagram.lanes.each_with_index
+            abut(lanes.filter_map do |(name, colour), idx|
               own = keys.select { |key| key.first == idx }
               band(name, colour, own, reach) unless own.empty?
+            end)
+          end
+
+          # A decision centred on branches in the lane beside it reaches
+          # over the border; the next lane starts where this one ends.
+          def abut(bands)
+            bands.each_cons(2) do |prior, band|
+              band[:left] = [band[:left], prior[:right]].max
             end
           end
 

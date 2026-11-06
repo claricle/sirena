@@ -66,7 +66,7 @@ module Sirena
             element(Svg::Circle, cx: attrs[:cx], cy: attrs[:cy], r: attrs[:r],
                                  fill: disc(attrs),
                                  stroke: line_ink(attrs[:stroke]),
-                                 stroke_width: "1")
+                                 stroke_width: attrs[:width].to_s)
           end
 
           def draw_polygon(attrs)

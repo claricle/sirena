@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "exits"
 require_relative "placement"
 require_relative "route"
 
@@ -127,7 +128,11 @@ module Sirena
             return :straight if same_column?(from, to)
             return :side_exit if edge.from.kind == :decision
 
-            edge.to.kind == :merge ? :side_entry : :elbow
+            side_entry?(edge, from, to) ? :side_entry : :elbow
+          end
+
+          def side_entry?(edge, from, to)
+            edge.to.kind == :merge && !Exits.top_entry?(edge, from, to)
           end
 
           def straight(from, to, x_pos)
