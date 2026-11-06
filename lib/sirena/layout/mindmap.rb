@@ -28,6 +28,7 @@ module Sirena
         attribute :text, :string
         attribute :x, :float
         attribute :y, :float
+        attribute :mono, :boolean, default: -> { false }
       end
 
       class Label < Lutaml::Model::Serializable

@@ -206,6 +206,19 @@ RSpec.describe Sirena::TextMeasurement do
     end
   end
 
+  describe ".measure_mono" do
+    it "advances 1233/2048 em per glyph, as the JAR does (21 at 14)" do
+      width = described_class.measure_mono("template <typename T>",
+                                           font_size: 14)[:width]
+      expect(width).to be_within(0.001).of(177.003)
+    end
+
+    it "counts no cell for a combining mark" do
+      expect(described_class.measure_mono("a\u0301", font_size: 10)[:width])
+        .to eq(described_class.measure_mono("a", font_size: 10)[:width])
+    end
+  end
+
   describe "monospace" do
     it "measures table characters and unknown ones at 0.6 em" do
       expect(width("Wi中", monospace: true)).to be_within(0.001).of(180.0)

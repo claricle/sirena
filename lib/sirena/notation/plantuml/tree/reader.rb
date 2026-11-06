@@ -32,6 +32,9 @@ module Sirena
           BACKGROUND = /BackgroundColor[ \t]+(\#?\w+)/i
           TRAILING_CLASS = /[ \t]*<<(\w+)>>\z/
           CODE_TAG = %r{\A</?code>\z}i
+          # A line of a `<code>` block carries this mark in front, which the
+          # layout reads back as "draw in the monospace family".
+          MONO_MARK = "\u{E000}"
           private_constant :ITEM, :SKIPPED, :STYLE_OPEN, :STYLE_CLOSE,
                            :CLASS_STYLE, :BACKGROUND, :TRAILING_CLASS,
                            :CODE_TAG
@@ -53,6 +56,7 @@ module Sirena
             @rules = Rules.new
             @classes = {}
             @open = nil
+            @code = false
             @style = nil
             SourceLines.of(source).each { |text, number| read(text, number) }
             IR::Graph.new(id: id, role: "hierarchy", nodes: nodes,
@@ -112,13 +116,18 @@ module Sirena
           end
 
           def continue_text(text)
-            return if CODE_TAG.match?(text)
-            return @open.lines << text unless text.end_with?(";")
+            return @code = !text.start_with?("</") if CODE_TAG.match?(text)
+            return @open.lines << marked(text) unless text.end_with?(";")
 
             entry = @open
             @open = nil
-            last = text == ";" ? "" : text.delete_suffix(";")
+            last = text == ";" ? "" : marked(text.delete_suffix(";"))
+            @code = false
             finish(entry, last, continued: true)
+          end
+
+          def marked(text)
+            @code ? "#{MONO_MARK}#{text}" : text
           end
 
           def finish(entry, last, continued: false)
