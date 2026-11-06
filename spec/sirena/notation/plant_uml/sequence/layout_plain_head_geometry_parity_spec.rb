@@ -61,11 +61,14 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "matches ordinary group-header participant geometry" do
-    expect(parity_evidence.values).to all(satisfy do |failed, matched, metrics|
-      center, *sizes = metrics
-      !failed && matched == 3 && center <= 0.08 &&
-        sizes.all? { |error| error <= 0.15 }
-    end)
+    expect(parity_evidence.values).to eq([
+                                           [false, 3,
+                                            [0.010529, 0.070367, 0.0, 0.070367]],
+                                           [false, 3,
+                                            [0.010529, 0.070367, 0.0, 0.070367]],
+                                           [false, 3,
+                                            [0.013606, 0.070367, 0.0, 0.070367]],
+                                         ])
   end
 
   it "uses intrinsic boxed-participant dimensions" do

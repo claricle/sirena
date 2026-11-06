@@ -89,12 +89,12 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
         .to eq(heads.map { |group| group["data-qualified-name"] })
     end
 
-    it "keeps the center error inside the parity bar without losing elements" do
+    it "pins the center error without changing element presence" do
       expect([
                parity_row.dig("summary", "hard_failure"),
                parity_row.dig("geometry", "matched"),
-               parity_row.dig("summary", "metrics", "worst_e_c") <= 0.08,
-             ]).to eq([false, 7, true])
+               parity_row.dig("summary", "metrics", "worst_e_c"),
+             ]).to eq([false, 7, 0.014967])
     end
   end
 end

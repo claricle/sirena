@@ -69,14 +69,6 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     SpecSupport::LayoutParity::CaseLedger.build([result]).first
   end
 
-  RSpec::Matchers.define :be_in_bars do |matched|
-    match do |(hard_failure, count, metrics)|
-      center, *sizes = metrics
-      !hard_failure && count == matched && center <= 0.08 &&
-        sizes.all? { |error| error <= 0.15 }
-    end
-  end
-
   def digest(document)
     Digest::SHA256.hexdigest(Sirena.render(document, notation: :plantuml))
   end
@@ -90,7 +82,10 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "matches all five minimum-width mixed-glyph cases" do
-    expect(case_ids.map { |id| parity_evidence(id) }).to all(be_in_bars(5))
+    evidence = case_ids.map { |id| parity_evidence(id) }
+
+    expect(evidence).to all(eq([false, 5,
+                                [0.012912, 0.040388, 0.0, 0.040388]]))
   end
 
   it "preserves ordinary and teoz output bytes" do
