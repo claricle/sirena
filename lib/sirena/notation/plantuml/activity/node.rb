@@ -8,8 +8,8 @@ module Sirena
         class Node
           # @return [String] stable id, `n<index>` in source order
           attr_reader :id
-          # @return [Symbol] :start, :stop, :kill, :action, :decision, :merge or
-          #   :bar
+          # @return [Symbol] :start, :stop, :end, :kill, :action, :decision,
+          #   :merge or :bar
           attr_reader :kind
           # @return [String, nil] label, lines separated by newlines
           attr_reader :text
