@@ -52,6 +52,21 @@ RSpec.describe Sirena::Notation::PlantUML::Activity do
     expect(svg).not_to include('fill="palegreen"', 'fill="lightblue"')
   end
 
+  it "draws every swimlane title of corpus 6-19 at 18, in a band that " \
+     "holds it", :aggregate_failures do
+    svg = render_fixture("6-19")
+
+    expect(lane_title_sizes(svg)).to eq(%w[18] * 4)
+    expect(svg).to include('width="165.7355839572847"',
+                           'width="108.9296875"', 'width="109.474609375"')
+  end
+
+  def lane_title_sizes(svg)
+    REXML::Document.new(svg).get_elements("//text")
+      .select { |t| t.text.to_s.match?(/\A[A-Z][a-z]+_[A-Za-z_]+\z/) }
+      .map { |t| t.attributes["font-size"] }
+  end
+
   refused.each do |id, construct|
     it "names the #{construct} it refuses in plantuml-lrg-#{id}" do
       source = File.read(File.join(ActivityHelpers::FIXTURES,

@@ -17,7 +17,7 @@ module Sirena
             header: { step: 11.78, lead: 1.0, base: 9.67, anchor: "end",
                       size: 10.0, colour: "#888888", pad: 0.0 },
             title: { step: LINE, lead: 21.0, base: 23.54, anchor: "middle",
-                     pad: 10.0 },
+                     pad: 27.0, bold: true },
             caption: { step: LINE, lead: 3.0, base: 16.54, anchor: "middle",
                        pad: 2.0 },
             footer: { step: 11.78, lead: 1.0, base: 11.67, anchor: "middle",
@@ -31,7 +31,8 @@ module Sirena
           LEGEND_BASE = 18.54
 
           # @param diagram [Diagram]
-          # @param measure [#call] width of a text given the text and a size
+          # @param measure [#call] width of a text given the text, a size and
+          #   whether it is drawn bold
           def initialize(diagram, measure)
             @diagram = diagram
             @chrome = diagram.chrome
@@ -131,7 +132,9 @@ module Sirena
 
           def text_width(kind)
             style = STYLES.fetch(kind)
-            widest = lines(kind).map { |l| @measure.call(l, style[:size]) }.max
+            widest = lines(kind).map do |line|
+              @measure.call(line, style[:size], bold: style.fetch(:bold, false))
+            end.max
             widest ? widest + style[:pad] : 0.0
           end
 

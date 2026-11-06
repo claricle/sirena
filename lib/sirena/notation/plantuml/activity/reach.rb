@@ -34,6 +34,14 @@ module Sirena
             end
           end
 
+          # Widens a whole column, and every row it has, by `extra` on a side.
+          # @param side [Integer] 0 for left, 1 for right
+          def widen_column(key, side, extra)
+            [@columns[key], *@rows[key].values].each do |reach|
+              reach[side] += extra
+            end
+          end
+
           # Stands a line on a column's rows, as wide as nothing.
           def line(key, rows)
             rows.each { |row| grow(key, row, 0, 0.0) }

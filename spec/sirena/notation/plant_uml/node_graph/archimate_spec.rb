@@ -31,7 +31,16 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph::Archimate do
                           "rectangle R"), "v")
 
       expect([vpn.kind, vpn.lines, vpn.color, vpn.stereotype])
-        .to eq([:archimate, ["VPN"], "C9E7B7", nil])
+        .to eq([:archimate, ["VPN"], "C9FFC9", nil])
+    end
+
+    it "fills each layer as the JAR 1.2026.6 does" do
+      jar = { "business" => "FFFFCC", "application" => "C2F0FF",
+              "technology" => "C9FFC9", "physical" => "97FF97",
+              "motivation" => "CCCCFF", "strategy" => "F8E7C0",
+              "implementation" => "FFE0E0" }
+
+      expect(jar.keys.to_h { |l| [l, described_class.color(l)] }).to eq(jar)
     end
 
     it "keeps an ordinary colour and survives no colour", :aggregate_failures do
@@ -88,7 +97,7 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph::Archimate do
     end
 
     it "fills a layer element and a junction", :aggregate_failures do
-      expect(svg).to include('fill="#C9E7B7"')
+      expect(svg).to include('fill="#C9FFC9"')
       expect(svg).to include('fill="black"').and include('fill="whitesmoke"')
     end
   end

@@ -98,12 +98,18 @@ module Sirena
 
           # A divider under the name of every plain state and composite.
           def append_state_labels(state, group)
+            underlay_band(state, group)
             group.children << divider(state) if divided?(state)
             state.labels.each_with_index do |label, index|
               text = state_label(label)
               text.text_anchor = "start" if left_aligned?(state, index)
               group.children << text
             end
+          end
+
+          # The outline was the last child added; the band goes just beneath it.
+          def underlay_band(state, group)
+            group.children.insert(-2, band(state)) if banded?(state)
           end
 
           def divided?(state)
@@ -143,13 +149,55 @@ module Sirena
             end
           end
 
+          # PlantUML fills only the name band of a composite left at the
+          # default background and leaves its body clear; a colour the
+          # diagram sets fills the whole composite.
           def outline(state)
+            return banded_outline(state) if banded?(state)
+
             Svg::Rect.new(x: state.x, y: state.y, width: state.width,
                           height: state.height,
                           fill: look(:background, state)).tap do |rect|
               stroke(rect, state)
               round(rect, state)
             end
+          end
+
+          def banded?(state)
+            state.children.any? &&
+              look(:background, state) == Style::Defaults::BOX[:background]
+          end
+
+          # The frame stays the group's first rect, so its box is the
+          # state's box; append_state_labels paints the band beneath it.
+          def banded_outline(state)
+            Svg::Rect.new(x: state.x, y: state.y, width: state.width,
+                          height: state.height, fill: "none").tap do |frame|
+              stroke(frame, state)
+              round(frame, state)
+            end
+          end
+
+          # The name band: rounded above, square below, as far down as the
+          # divider.
+          def band(state)
+            left = state.x
+            right = left + state.width
+            top = state.y
+            radius = look(:round_corner, state)
+            Svg::Path.new(
+              d: band_path(left, right, top, radius),
+              fill: look(:background, state),
+            )
+          end
+
+          def band_path(left, right, top, radius)
+            bottom = top + Look::BAR
+            "M#{left + radius},#{top} L#{right - radius},#{top} " \
+              "A#{radius},#{radius} 0 0 1 #{right},#{top + radius} " \
+              "L#{right},#{bottom} L#{left},#{bottom} " \
+              "L#{left},#{top + radius} " \
+              "A#{radius},#{radius} 0 0 1 #{left + radius},#{top}"
           end
 
           def round(rect, state)

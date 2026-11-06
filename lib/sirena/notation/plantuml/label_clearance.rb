@@ -28,6 +28,22 @@ module Sirena
           [top, bottom].map { |y_pos| across(from, to, 1, y_pos, widest) }.max
         end
 
+        # @return [Float] the y of the line's lowest point between the x
+        #   values `left` and `right`
+        def bottom_between(from, to, left, right)
+          highest = [from[1], to[1]].max
+          [left, right].map { |x_pos| across(from, to, 0, x_pos, highest) }.max
+        end
+
+        # @return [Float] the x of the line's leftmost point between the y
+        #   values `top` and `bottom`
+        def left_between(from, to, top, bottom)
+          narrowest = [from[0], to[0]].min
+          [top, bottom].map do |y_pos|
+            across(from, to, 1, y_pos, narrowest)
+          end.min
+        end
+
         private
 
         # The line's coordinate on the other axis where `axis` is `value`,
