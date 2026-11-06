@@ -60,7 +60,7 @@ module Sirena
             @level_edges = LevelEdges.new(@graph[:edges], @parent, ranking)
             place_level(nil, @graph[:children])
             sink_followers(ranking)
-            Routes.new(@graph, @nodes, @parent, @levels).write
+            Routes.new(@graph, @nodes, @parent, @levels, @label_reach).write
           end
 
           private

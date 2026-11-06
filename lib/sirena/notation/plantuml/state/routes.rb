@@ -34,11 +34,12 @@ module Sirena
             id
           end
 
-          def initialize(graph, nodes, parent, levels)
+          def initialize(graph, nodes, parent, levels, label_reach)
             @graph = graph
             @nodes = nodes
             @parent = parent
             @levels = levels
+            @label_reach = label_reach
             @boxes = {}
             @degree = degrees(graph[:edges])
             @placed = []
@@ -48,6 +49,7 @@ module Sirena
 
           def write
             measure(@graph[:children], 0.0, 0.0)
+            @slots = label_slots
             routed = @graph[:edges].map { |edge| [edge, polyline(edge)] }
             spread(routed).each do |edge, points, slot|
               record(edge, points, slot)
@@ -57,10 +59,40 @@ module Sirena
           private
 
           def record(edge, points, slot)
+            slotted = @slots[edge]
+            points = through(points, slotted) if slotted
             edge[:sections] = [section(points)]
             label = edge[:labels]&.first
             spot = label_point(label_route(edge, points), label, slot)
-            edge[:label_at] = settled(spot, points, label)
+            edge[:label_at] = stood(slotted, label) if slotted
+            edge[:label_at] ||= settled(spot, points, label)
+          end
+
+          def stood(slotted, label)
+            slotted.slice(:x, :y).tap { |at| @placed << rect_at(at, label) }
+          end
+
+          # A line whose label has a slot of its own bends through the left
+          # of that slot, as graphviz routes it through its label node.
+          def through(points, slotted)
+            [points.first, [slotted[:via], slotted[:y]], points.last]
+          end
+
+          # The labels that share a rank inside a container stand in the slots
+          # {LabelReach} gives them, which also size that container.
+          def label_slots
+            containers = @boxes.values.select { |box| box.node[:children] }
+            containers.flat_map { |box| container_slots(box) }
+              .each_with_object({}.compare_by_identity) do |(edge, at), found|
+                found[edge] = at
+              end
+          end
+
+          def container_slots(box)
+            @label_reach.slots(box.node[:children]).map do |edge, at|
+              [edge, { x: box.x + at[:x], y: box.y + at[:y],
+                       via: box.x + at[:via] }]
+            end
           end
 
           def measure(children, left, top)

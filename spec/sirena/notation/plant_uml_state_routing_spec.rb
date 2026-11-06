@@ -30,9 +30,8 @@ RSpec.describe Sirena::Notation::PlantUML do
   end
 
   # Points along the transition's drawn curve.
-  def curve(id)
-    path = REXML::XPath.first(groups("transition-#{id}").first,
-                              "*[local-name()='path']")
+  def curve(id, group = groups("transition-#{id}").first)
+    path = REXML::XPath.first(group, "*[local-name()='path']")
     commands = path.attributes["d"].scan(/[MLC][^MLC]*/)
     commands.each_with_object([]) do |command, samples|
       nums = command.scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
@@ -67,9 +66,9 @@ RSpec.describe Sirena::Notation::PlantUML do
   end
 
   def label(id, text)
-    node = REXML::XPath.match(groups("transition-#{id}").first,
-                              "*[local-name()='text']")
-      .find { |t| t.texts.map(&:value).join == text }
+    node = groups("transition-#{id}").flat_map do |group|
+      REXML::XPath.match(group, "*[local-name()='text']")
+    end.find { |t| t.texts.map(&:value).join == text }
     [node.attributes["x"].to_f, node.attributes["y"].to_f]
   end
 
@@ -135,12 +134,57 @@ RSpec.describe Sirena::Notation::PlantUML do
           [*] --> NewValueSelection
           NewValueSelection --> NewValuePreview : EvNewValue
           NewValuePreview --> NewValueSelection : EvNewValueRejected
+          NewValuePreview --> NewValueSelection : EvNewValueSaved
           state NewValuePreview {
             State1 -> State2
           }
         }
         @enduml
       PUML
+    end
+
+    let(:slotted) do
+      [%w[NewValueSelection_to_NewValuePreview EvNewValue],
+       %w[NewValuePreview_to_NewValueSelection EvNewValueRejected],
+       %w[NewValuePreview_to_NewValueSelection EvNewValueSaved]]
+    end
+
+    # A label's box: its text starts at x - w/2 and sits on y.
+    def label_box(id, text)
+      x, y = label(id, text)
+      half = text.length * 3.4
+      [x - half, y - 12, x + half, y + 4]
+    end
+
+    def own_curve(id, text)
+      group = groups("transition-#{id}").find do |found|
+        REXML::XPath.match(found, "*[local-name()='text']")
+          .any? { |t| t.texts.map(&:value).join == text }
+      end
+      curve(id, group)
+    end
+
+    def gap_to(box, point)
+      run, rise = [[0, 2], [1, 3]].map do |low, high|
+        [box[low] - point[low % 2], 0, point[low % 2] - box[high]].max
+      end
+      Math.hypot(run, rise)
+    end
+
+    it "stands the three labels between Configuring's rows side by side" do
+      boxes = slotted.map { |id, text| label_box(id, text) }
+      overlaps = boxes.combination(2).count do |a, b|
+        a[0] < b[2] && b[0] < a[2]
+      end
+      expect(overlaps).to eq(0)
+    end
+
+    it "keeps each of those labels within 20 px of its own line" do
+      gaps = slotted.map do |id, text|
+        box = label_box(id, text)
+        own_curve(id, text).map { |point| gap_to(box, point) }.min
+      end
+      expect(gaps.max).to be <= 20
     end
 
     it "puts Configuring on the left of NotShooting, as PlantUML does" do
