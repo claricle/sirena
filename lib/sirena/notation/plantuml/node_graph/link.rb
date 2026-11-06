@@ -11,12 +11,13 @@ module Sirena
         class Link
           LINE_STYLES = %w[dashed dotted].freeze
 
-          attr_reader :color, :width
+          attr_reader :color, :color2, :width
 
           def initialize(arrow)
             @arrow = arrow
             @options = arrow[/\[(.*)\]/, 1].to_s.split(/[,;]/).map(&:strip)
-            @color = @options.filter_map { |o| o[/\A#(\w+)\z/, 1] }.first
+            colours = @options.filter_map { |o| o[/\A#(\w+)\z/, 1] }
+            @color, @color2 = colours
             @width = @options.filter_map { |o| o[/\Athickness=(\d+)/, 1] }
               .first.to_i
             @width = 1 if @width < 1
@@ -26,8 +27,8 @@ module Sirena
           #   `rest` is the label and the rows it starts and ends at
           def edge(from, to, **rest)
             Edge.new(from: from, to: to, style: style, head: head,
-                     color: color, width: width, rank_step: rank_step,
-                     backwards: backwards?, **rest)
+                     color: color, color2: color2, width: width,
+                     rank_step: rank_step, backwards: backwards?, **rest)
           end
 
           def bare

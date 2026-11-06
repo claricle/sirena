@@ -10,6 +10,13 @@ RSpec.describe Sirena::Notation::PlantUML::Component do
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
+  # A link's line, which is a path once it bends and a line when straight.
+  def thick_lines(body)
+    root = svg_root(render(body))
+    REXML::XPath.match(root,
+                       "//*[(self::line or self::path) and @stroke-width='4']")
+  end
+
   def parse_component(body)
     parse(body, family: :component)
   end
@@ -81,6 +88,30 @@ RSpec.describe Sirena::Notation::PlantUML::Component do
 
       expect([edge.color, edge.style, edge.width, edge.label])
         .to eq(["red", :dashed, 2, "x"])
+    end
+
+    it "reads the second colour of a two-colour link", :aggregate_failures do
+      edge = parse_component("A -[#blue;#green]-> B").edges.first
+
+      expect([edge.color, edge.color2]).to eq(%w[blue green])
+    end
+
+    it "leaves the second colour empty for a one-colour link" do
+      expect(parse_component("A -[#blue]-> B").edges.first.color2).to be_nil
+    end
+
+    # JAR 1.2026.6: the second colour is the same spline drawn 2 right, 2 down
+    it "draws a two-colour link in each colour, the second offset by 2,2",
+       :aggregate_failures do
+      strokes = thick_lines("node A\nA -[#blue;#green,thickness=4]-> B")
+        .map(&:attributes)
+        .map { |attrs| [attrs["stroke"], attrs["transform"]] }
+
+      expect(strokes).to eq([["blue", nil], ["green", "translate(2,2)"]])
+    end
+
+    it "draws a one-colour link once" do
+      expect(thick_lines("A -[#blue,thickness=4]-> B").size).to eq(1)
     end
 
     it "drops a hidden link" do
