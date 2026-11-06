@@ -6,6 +6,7 @@ require_relative "ranking"
 require_relative "level_edges"
 require_relative "row"
 require_relative "rows"
+require_relative "stretch"
 
 module Sirena
   module Notation
@@ -50,10 +51,27 @@ module Sirena
             ranking = Ranking.new(@graph[:children], @graph[:edges])
             @level_edges = LevelEdges.new(@graph[:edges], @parent, ranking)
             place_level(nil, @graph[:children])
+            sink_followers(ranking)
             Routes.new(@graph, @nodes, @parent, @levels).write
           end
 
           private
+
+          # A state that follows another composite stands below it. Its
+          # container's ELK routes to the states that moved are dropped, so
+          # they are drawn between the boxes where they now stand.
+          def sink_followers(ranking)
+            moved = Stretch.new(@graph[:edges], @nodes, @parent, ranking)
+              .apply(@graph[:children])
+            moved.each { |node| unroute(node) }
+          end
+
+          def unroute(node)
+            level = @levels.fetch(@parent[node[:id]])
+            level[:elk][:edges].each do |edge|
+              edge.delete(:sections) if edge[:targets] == [node[:id]]
+            end
+          end
 
           def index(children, parent)
             children.each do |node|
