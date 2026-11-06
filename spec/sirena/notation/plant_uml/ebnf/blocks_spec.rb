@@ -6,19 +6,62 @@ require "sirena/notation/plantuml"
 Sirena::Notation.send(:entries).delete(:plantuml)
 
 # The numbers in the examples are the PlantUML JAR 1.2026.6's own: its SVG
-# for `r = a | b | c;`, `r = [ a ];` and `r = { a };`.
+# for each construct. The JAR measures text in its own font, so the examples
+# feed Sirena the JAR's advances; every coordinate then agrees to 0.001.
 RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
   include_context "with an isolated notation registry"
-
-  before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
   def render(rule)
     Sirena::Engine.new.render("@startebnf\n#{rule}\n@endebnf\n",
                               notation: :plantuml)
   end
 
+  let(:jar_advances) do
+    { "a" => 7.7314, "b" => 8.8115, "c" => 7.1709, "d" => 8.8115,
+      "x" => 8.5859, "e" => 7.7998, "s" => 7.916, "special seq" => 74.9219 }
+  end
+
+  before do
+    Sirena::Notation.register(Sirena::Notation::PlantUML)
+    allow(Sirena::TextMeasurement).to receive(:measure)
+      .and_wrap_original do |original, text, **options|
+      advance = jar_advances[text]
+      next original.call(text, **options) unless advance
+
+      { width: advance, height: 14.0 }
+    end
+  end
+
   def paths(rule)
-    render(rule).scan(/<path[^>]*>/).map { |tag| tag[/ d="([^"]*)"/, 1] }
+    render(rule).scan(/<path[^>]*>/).map do |tag|
+      tag[/ d="([^"]*)"/, 1].gsub(/-?\d+\.\d+/) { |n| n.to_f.round(2).to_s }
+    end
+  end
+
+  def tags(rule, name)
+    render(rule).scan(/<#{name}\b[^>]*>/)
+  end
+
+  def attribute(tag, name)
+    tag[/ #{name}="([^"]*)"/, 1]
+  end
+
+  def size(rule)
+    svg = render(rule)
+    [svg[/ width="([\d.]+)"/, 1], svg[/ height="([\d.]+)"/, 1]].map(&:to_f)
+  end
+
+  def points(rule)
+    tags(rule, "polygon").map do |tag|
+      attribute(tag, "points").scan(/-?[\d.]+/).map { |n| n.to_f.round(2) }
+    end
+  end
+
+  def rects(rule)
+    tags(rule, "rect").map do |tag|
+      attributes = %w[x y width height]
+      attributes.map { |name| attribute(tag, name).to_f.round(2) }
+    end
   end
 
   def rounded(path)
@@ -68,35 +111,109 @@ RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
 
   describe "the rails of a rule" do
     it "turns a choice in cubic curves, not quadratic ones" do
-      expect(rounded(paths("r = a | b | c;").first)).to eq(
-        "M 45.0 50.244 C 54.0 50.244 57.0 53.244 57.0 62.244 L 57.0 74.732 " \
-        "C 57.0 83.732 60.0 86.732 69.0 86.732",
+      expect(paths('r = "a" | "b" | "c";').first).to eq(
+        "M 40.0 49.73 C 49.0 49.73 52.0 52.73 52.0 61.73 " \
+        "L 52.0 74.22 C 52.0 83.22 55.0 86.22 64.0 86.22",
       )
     end
 
     it "turns an optional's bypass in one S" do
-      expect(rounded(paths("r = [ a ];").first)).to eq(
-        "M 45.0 37.0 C 54.0 37.0 57.0 39.622 57.0 48.622 " \
-        "C 57.0 57.622 60.0 60.244 69.0 60.244",
+      expect(paths('r = [ "a" ];').first).to eq(
+        "M 40.0 46.49 C 49.0 46.49 52.0 49.11 52.0 58.11 " \
+        "C 52.0 67.11 55.0 69.73 64.0 69.73",
       )
     end
 
-    it "rounds the loop-back line above the item at the loop radius of 8" do
-      expect(rounded(paths("r = { a };").first)).to eq(
-        "M 118.784 74.244 L 118.784 62.0 C 118.784 56.0 116.784 54.0 " \
-        "110.784 54.0 L 85.0 54.0 C 79.0 54.0 77.0 56.0 77.0 62.0 " \
-        "L 77.0 74.244",
+    it "draws a loop with the item on the lower rail and the line above" do
+      expect(rects('r = { "a" };')).to eq([[79.0, 68.49, 17.73, 26.49]])
+    end
+
+    it "rounds the loop-back line at the JAR's loop radius of 8" do
+      expect(paths('r = { "a" };')).to include(
+        "M 72.0 73.73 C 72.0 79.73 74.0 81.73 80.0 81.73",
+        "M 72.0 73.73 L 72.0 69.49 C 72.0 63.49 74.0 61.49 80.0 61.49",
       )
     end
 
-    it "draws rails at 1.5 and boxes at 0.5" do
-      svg = render("r = a, b;")
-      expect([stroke_widths(svg, "line"), stroke_widths(svg, "rect")])
-        .to eq([["1.5"], ["0.5"]])
+    it "loops back over the item of a one-or-more" do
+      expect(tags('r = { "a" }-;', "line").map { |t| attribute(t, "y1") })
+        .to include("41.488299999999995")
+    end
+
+    it "points the bypass arrowhead forward and the loop-back one back" do
+      expect(points('r = { "a" };').first(2)).to eq(
+        [[76.29, 43.49, 82.29, 46.49, 76.29, 49.49],
+         [87.64, 58.49, 81.64, 61.49, 87.64, 64.49]],
+      )
+    end
+
+    it "closes a rule with an arrowhead on its end rail" do
+      expect(points('r = "a", "b", c;')).to eq(
+        [[144.71, 46.73, 150.71, 49.73, 144.71, 52.73]],
+      )
+    end
+
+    it "draws rails at 1.5" do
+      expect(render('r = "a", "b";').scan(/<line[^>]*stroke-width="([^"]*)"/)
+        .flatten.uniq).to eq(["1.5"])
     end
 
     it "draws the start dot at 2" do
-      expect(render("r = a, b;")).to match(/<circle[^>]*stroke-width="2"/)
+      expect(render('r = "a", "b";')).to match(/<circle[^>]*stroke-width="2"/)
+    end
+  end
+
+  describe "the size of a diagram" do
+    {
+      'r = "a", "b", c;' => [174, 88],
+      'r = "a" | "b" | "c" | "d";' => [147, 198],
+      'r = [ "a" ];' => [146, 108],
+      'r = { "a" };' => [176, 120],
+      'r = { "a" }-;' => [128, 100],
+      'r = "x", { "a" | [ b ] }, ( "c" | "d" ), "e";' => [437, 180],
+      %(r = "a";\ns = b, "c";) => [136, 156],
+    }.each do |rule, expected|
+      it "is #{expected.join('x')} for #{rule.inspect}" do
+        expect(size(rule)).to eq(expected.map(&:to_f))
+      end
+    end
+  end
+
+  describe "the boxes" do
+    it "leaves a terminal bare at half a pixel" do
+      expect(tags('r = "a";', "rect").first)
+        .to include('fill="none"', 'stroke-width="0.5"')
+    end
+
+    it "fills a reference and rounds it at 5" do
+      expect(tags("r = a;", "rect").first)
+        .to include('fill="#F1F1F1"', 'rx="5.0"', 'stroke-width="1.5"')
+    end
+
+    it "dashes a special sequence 5 on 5 off" do
+      expect(tags("r = ? special seq ?;", "rect").first)
+        .to include('stroke-dasharray="5,5"', 'width="93.78')
+    end
+
+    it "sets words at 14" do
+      expect(tags('r = "a";', "text")).to all(include('font-size="14"'))
+    end
+  end
+
+  describe "a choice of four" do
+    it "stacks the branches 36.4883 apart, left aligned" do
+      expect(rects('r = "a" | "b" | "c" | "d";').map { |box| box.first(2) })
+        .to eq([[64.0, 36.49], [64.0, 72.98], [64.0, 109.46],
+                [64.0, 145.95]])
+    end
+  end
+
+  describe "nested constructs" do
+    it "puts a choice with an optional in a loop as the JAR does" do
+      expect(rects('r = "x", { "a" | [ b ] }, ( "c" | "d" ), "e";')
+        .map { |box| box.first(2) }).to include([141.59, 71.73],
+                                                [165.59, 128.22],
+                                                [315.4, 72.98])
     end
   end
 end
