@@ -4,6 +4,7 @@ require_relative "../../../layout/elk_placement"
 require_relative "routes"
 require_relative "ranking"
 require_relative "level_edges"
+require_relative "label_reach"
 require_relative "row"
 require_relative "rows"
 require_relative "stretch"
@@ -42,6 +43,7 @@ module Sirena
             @parent = {}
             @levels = {}
             @notes = {}
+            @label_reach = LabelReach.new(graph[:edges], @parent)
           end
 
           # Places the graph's states and edges in place.
@@ -303,7 +305,8 @@ module Sirena
           def size_container(node, children)
             title = node[:labels].first&.fetch(:width, 0) || 0
             node[:width] = [extent(children, :x, :width) + PAD,
-                            title + (2 * PAD)].max
+                            title + (2 * PAD),
+                            @label_reach.width(members_of(children))].max
             node[:height] = extent(children, :y, :height) + PAD
           end
 

@@ -264,4 +264,41 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(ys).to include(a_value_within(12.0).of(circles.first[1]))
     end
   end
+
+  context "with the labels of a composite's transitions" do
+    let(:source) do
+      <<~PUML
+        @startuml
+        state Wide {
+          [*] --> Top
+          Top --> Bottom : a long label for the first transition
+          Top --> Bottom : a second long label beside it
+        }
+        state Plain {
+          [*] --> One
+          One --> Two
+        }
+        @enduml
+      PUML
+    end
+
+    def width_of(id)
+      box = box(id)
+      box[2] - box[0]
+    end
+
+    # Graphviz gives each label a node of its own rank, so the two labels
+    # stand side by side and the cluster grows to hold them (JAR 1.2026.6:
+    # a composite 263.2 wide around one 213-wide label).
+    it "widens the composite to hold the labels of one rank side by side" do
+      labels = REXML::XPath.match(root, "//*[local-name()='text']")
+        .select { |text| text.text.to_s.include?("label") }
+      estimate = labels.sum { |text| text.text.size * 5.0 }
+      expect(width_of("Wide")).to be > estimate
+    end
+
+    it "leaves a composite with no labelled transitions at its content width" do
+      expect(width_of("Plain")).to be < 120
+    end
+  end
 end
