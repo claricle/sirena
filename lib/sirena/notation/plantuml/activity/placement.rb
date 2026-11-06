@@ -6,6 +6,7 @@ require_relative "exits"
 require_relative "metrics"
 require_relative "reach"
 require_relative "lane_steps"
+require_relative "lane_titles"
 require_relative "legacy_row_gaps"
 require_relative "row_gaps"
 
@@ -23,6 +24,10 @@ module Sirena
           HEADER_HEIGHT = 28.0
           PARTITION_BELOW = 10.0
           BAND_PAD = 14.0
+          # The size the JAR draws a swimlane's title at, and the room it
+          # keeps about the title inside the band.
+          LANE_TITLE = 18
+          LANE_TITLE_PAD = 10.0
           # The height each line of a PlantUML notice adds above the drawing.
           WARNING_PITCH = 21.6406
 
@@ -87,9 +92,23 @@ module Sirena
             keys = @columns.key.values.uniq.sort
             @bar_columns = BarColumns.new(@diagram, @ranking, @columns, @boxes)
             reach = reaches(keys)
-            @centres = centres(keys, reach, margin)
+            centre_columns(keys, reach, margin)
             centre_nodes
             @bands = lane_bands(keys, reach.columns)
+          end
+
+          # Centres the columns; a lane whose title is wider than its band
+          # widens the band, and the columns are centred again.
+          def centre_columns(keys, reach, margin)
+            @centres = centres(keys, reach, margin)
+            bands = lane_bands(keys, reach.columns)
+            return unless lane_titles.widen(bands, reach).positive?
+
+            @centres = centres(keys, reach, margin)
+          end
+
+          def lane_titles
+            LaneTitles.new(@metrics, LANE_TITLE, LANE_TITLE_PAD)
           end
 
           def centre_nodes
@@ -195,7 +214,7 @@ module Sirena
           end
 
           def band(name, colour, own, reach)
-            { name: name, colour: colour,
+            { name: name, colour: colour, columns: own,
               left: @centres[own.first] - reach[own.first].first - BAND_PAD,
               right: @centres[own.last] + reach[own.last].last + BAND_PAD }
           end

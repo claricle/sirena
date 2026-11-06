@@ -5,13 +5,14 @@ module Sirena
     module PlantUML
       module NodeGraph
         # `archimate #Layer "Name" as id <<archimate-type>>`. The layer name
-        # is a colour in PlantUML. Only the technology device's icon is
-        # drawn; any other element is a plain box carrying its label.
+        # is a colour in PlantUML, filled as the JAR 1.2026.6 fills it. Only
+        # the technology device's icon is drawn; any other element is a
+        # plain box carrying its label.
         module Archimate
           LAYERS = {
-            "business" => "#FFFFB5", "application" => "#B5FFFF",
-            "technology" => "#C9E7B7", "physical" => "#C9E7B7",
-            "motivation" => "#EFBDEB", "strategy" => "#F5DEAA",
+            "business" => "#FFFFCC", "application" => "#C2F0FF",
+            "technology" => "#C9FFC9", "physical" => "#97FF97",
+            "motivation" => "#CCCCFF", "strategy" => "#F8E7C0",
             "implementation" => "#FFE0E0", "migration" => "#FFE0E0",
             "other" => "#FFFFFF"
           }.freeze
