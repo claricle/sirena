@@ -102,6 +102,20 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph do
       expect(at["c1"].y + at["c1"].height).to be < frame.y + frame.height
     end
 
+    it "keeps the children 66 inside the frame, as the JAR ranks them",
+       :aggregate_failures do
+      expect(at["c1"].y - frame.y).to be_within(0.01).of(66)
+      expect(frame.y + frame.height - at["c1"].y - at["c1"].height)
+        .to be_within(0.01).of(66)
+    end
+
+    it "keeps the plain padding below a frame with no out port" do
+      at = boxes(component, "component C {\nportin p1\ncomponent c1\n}")
+
+      expect(at["C"].y + at["C"].height - at["c1"].y - at["c1"].height)
+        .to be_within(0.01).of(16)
+    end
+
     it "ends a link at the port square, not at the label box" do
       graph = graph_of(component, body)
       scene = described_class::Layout.new.call(graph)

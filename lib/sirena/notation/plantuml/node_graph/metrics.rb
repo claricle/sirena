@@ -96,8 +96,12 @@ module Sirena
           # @return [Float] the room a container's label takes at its top
           def header_height(node)
             lines = text_lines(node).reject(&:empty?)
-            lines.empty? ? HEADER_PAD : text_height(lines) + HEADER_PAD
+            return text_height(lines) + HEADER_PAD unless lines.empty?
+
+            node.kind == :cloud ? 0.0 : HEADER_PAD
           end
+
+          def untitled?(node) = text_lines(node).empty?
 
           def header_width(node)
             text_width(text_lines(node)) + 28

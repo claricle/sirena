@@ -24,6 +24,9 @@ module Sirena
           # A cloud's cut, bumped outline needs this much more room on each
           # side, across and down, before it clears what it holds.
           CLOUD_ROOM = [5.0, 0.0].freeze
+          # An untitled cloud has no header to take that room, and the JAR
+          # leaves a little more above and below what it holds.
+          UNTITLED_CLOUD_ROOM = [5.0, 2.15].freeze
 
           # @param graph [Graph]
           # @return [Scene]
@@ -115,7 +118,7 @@ module Sirena
           def frame(packed, scope, ports)
             packed.width = [packed.width, @frame_ports.width(ports)].max
             packed.width += 2 * PAD
-            packed.height += (2 * PAD) + Metrics.header_height(scope)
+            packed.height += top_inset(scope) + bottom_inset(scope)
             packed
           end
 
@@ -131,10 +134,30 @@ module Sirena
           def inflate_cloud(node)
             return @sizes[node] unless node.kind == :cloud
 
-            inset = @inset[node] = CLOUD_ROOM
+            inset = @inset[node] = cloud_room(node)
             @sizes[node] = @sizes[node].zip(inset).map do |size, room|
               size + (2 * room)
             end
+          end
+
+          def cloud_room(node)
+            Metrics.untitled?(node) ? UNTITLED_CLOUD_ROOM : CLOUD_ROOM
+          end
+
+          # A container with ports on its top keeps its children a rank
+          # below them, as the JAR does; likewise for the bottom.
+          def top_inset(node)
+            return FramePorts::REACH if ports_on?(node, :portin)
+
+            PAD + Metrics.header_height(node)
+          end
+
+          def bottom_inset(node)
+            ports_on?(node, :portout) ? FramePorts::REACH : PAD
+          end
+
+          def ports_on?(node, kind)
+            @ports[node].any? { |port| port.kind == kind }
           end
 
           def pairs(scope)
@@ -184,8 +207,7 @@ module Sirena
 
           def inside_origin(box)
             room = @inset.fetch(box.node, [0.0, 0.0])
-            [box.x + PAD + room[0],
-             box.y + PAD + room[1] + Metrics.header_height(box.node)]
+            [box.x + PAD + room[0], box.y + room[1] + top_inset(box.node)]
           end
 
           def routes(placed)

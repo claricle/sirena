@@ -235,9 +235,13 @@ module Sirena
           end
 
           def draw_tab
-            width = Metrics.text_width([lines.first.to_s]) * 1.05
-            points = Tab.points(@p.x, @p.y, width, @p.node.kind)
+            points = Tab.points(@p.x, @p.y, tab_text_width, @p.node.kind)
             add(Svg::Polygon, points: points, fill: FILL, **line)
+          end
+
+          def tab_text_width
+            TextMeasurement.measure_in(:dejavu_bold, lines.first.to_s,
+                                       font_size: Metrics::FONT_SIZE)[:width]
           end
 
           # A header clears the cap of a cylinder, the bumps of a cloud and
@@ -271,7 +275,7 @@ module Sirena
 
           def tab_text(line)
             top = @p.y + Tab.baseline(@p.node.kind)
-            text(@p.x + Tab::PAD, top, line, "start", "bold")
+            text(@p.x + Tab.indent(@p.node.kind), top, line, "start", "bold")
           end
 
           def text(x_pos, y_pos, content, anchor, weight = nil)
