@@ -38,8 +38,15 @@ module Sirena
           # text is measured in: creole markers and tags take no room, a bold
           # run is measured bold, a `<size:N>` run at its own size, and a
           # monospace run (`""..""`, an undecoded image) in the mono face.
-          def line_width(line, font_size)
-            Creole.parse(line).sum { |run| run_width(run, font_size) }
+          def line_width(line, font_size, bold: false)
+            Creole.parse(line).sum { |run| run_width(run, font_size, bold) }
+          end
+
+          # The widest line of a multi-line label (a newline or a literal
+          # backslash-n splits it), each line measured as drawn.
+          def widest_line(text, font_size, bold: false)
+            lines = text.to_s.split(/\\n|\n/, -1)
+            lines.map { |l| line_width(l, font_size, bold: bold) }.max.to_f
           end
 
           def line_height(font_size)
@@ -97,7 +104,7 @@ module Sirena
 
           private
 
-          def run_width(run, font_size)
+          def run_width(run, font_size, bold)
             size = run.style[:size].to_f
             size = font_size unless size.positive?
             if run.style[:mono]
@@ -105,7 +112,8 @@ module Sirena
                                                   font_size: size)[:width]
             end
 
-            Drawing::Face.width(run.text, size: size, bold: run.style[:bold])
+            Drawing::Face.width(run.text, size: size,
+                                          bold: bold || run.style[:bold])
           end
 
           def message_span(message, ids)
