@@ -175,7 +175,7 @@ module Sirena
                                stroke: stroke_of(:lifeline, :line,
                                                  node_stroke),
                                stroke_width: skin_width(:thin) || "1",
-                               stroke_dasharray: "5,5")
+                               stroke_dasharray: segment.dash || "5,5")
           end
 
           def arrow_group(arrow)
@@ -275,7 +275,7 @@ module Sirena
           end
 
           def delay_group(delay)
-            group("delay-#{delay.texts.first.y}", [], delay.texts)
+            group("delay-#{delay.texts.first&.y || delay.y1}", [], delay.texts)
           end
 
           def divider_label(divider)

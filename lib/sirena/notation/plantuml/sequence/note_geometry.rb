@@ -14,6 +14,13 @@ module Sirena
           OVER_MARGIN = 10.0
           BLOCK_GAP = 5.0
           PICTURE_CHROME = 15.0
+          LINE_LEADING = 1.1776
+          # PlantUML 1.2026.6 sizes a note box as 10 + 15 per line, though
+          # the text inside steps by the font's own leading.
+          LINE_PITCH = 15.0
+          CHROME = 10.0
+          FIRST_BASELINE = 17.568
+          private_constant :LINE_PITCH, :CHROME
 
           # Width the text needs, without regard to the participants.
           def natural_width(note, measure)
@@ -23,13 +30,13 @@ module Sirena
           end
 
           def line_height(font_size)
-            font_size * 1.3
+            font_size * LINE_LEADING
           end
 
-          def height(note, font_size)
+          def height(note)
             return picture_height(note.picture) + 14 if note.picture
 
-            (note.lines.size * line_height(font_size)) + 14
+            (note.lines.size * LINE_PITCH) + CHROME
           end
 
           def picture_inset(picture)

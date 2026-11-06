@@ -7,7 +7,7 @@ module Sirena
   module Notation
     module PlantUML
       # PlantUML's creole inline markup in a one-line label: `**bold**`,
-      # `//italic//`, `__underline__`, `--strike--`, `~~wave~~` (drawn as an
+      # `//italic//`, `__underline__`, `--strike--`, `~~wave~~` (a wavy
       # underline), `""monospace""`, and the tags `<b>`, `<i>`, `<u>`, `<s>`,
       # `<w>`, `<color:red>`, `<size:18>` and `<back:..>` (the background is
       # not drawn; its text is kept). `<s:red>` and `<u:red>` keep their
@@ -28,11 +28,11 @@ module Sirena
         Run = Struct.new(:text, :style, keyword_init: true)
 
         TOGGLES = { "**" => :bold, "//" => :italic, "__" => :underline,
-                    "--" => :strike, "~~" => :underline,
+                    "--" => :strike, "~~" => :wave,
                     '""' => :mono }.freeze
         TAG_STYLES = { "b" => :bold, "i" => :italic, "u" => :underline,
                        "s" => :strike, "strike" => :strike,
-                       "w" => :underline, "del" => :strike }.freeze
+                       "w" => :wave, "del" => :strike }.freeze
         PAIRED = %w[color size font].freeze
         IGNORED = %w[back].freeze
         LINE_TAGS = %w[s u].freeze
@@ -251,6 +251,7 @@ module Sirena
         def decoration(style, inline: false)
           words = []
           words << "underline" if drawn?(style, :underline, inline)
+          words << "wavy underline" if style[:wave]
           words << "line-through" if drawn?(style, :strike, inline)
           words.join(" ") unless words.empty?
         end

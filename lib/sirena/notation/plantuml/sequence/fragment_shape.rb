@@ -15,6 +15,8 @@ module Sirena
           TAB_HEIGHT = 20.0
           BASE_PAD = 10.0
           NEST_PAD = 8.0
+          BRANCH_BASELINE = 10.7
+          private_constant :BRANCH_BASELINE
 
           attr_reader :x, :width
 
@@ -24,10 +26,6 @@ module Sirena
             bottom = top + height
             "M #{left} #{top} L #{right} #{top} L #{right} #{bottom - 6} " \
               "L #{right - 6} #{bottom} L #{left} #{bottom} Z"
-          end
-
-          def self.branch_text_baseline(separator_y)
-            separator_y + 14
           end
 
           def initialize(block, bottom, centers, measure, appearance)
@@ -125,7 +123,7 @@ module Sirena
               next if label.to_s.strip.empty?
 
               text("[#{label}]", x + TAB_PAD,
-                   self.class.branch_text_baseline(y), "fragment_guard")
+                   y + BRANCH_BASELINE, "fragment_guard")
             end
           end
 

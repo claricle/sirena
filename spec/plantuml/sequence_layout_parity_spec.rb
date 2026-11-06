@@ -87,13 +87,16 @@ module Plantuml
       end
     end
 
-    def result_for(id)
+    def sirena_svg(id)
+      Sirena.render(File.read(source_path(id)), notation: :plantuml)
+    end
+
+    def result_for(id, rendered)
       reference = reference_path(id)
       SpecSupport::LayoutParity::CaseComparator.compare(
         case_id: "plantuml/sequence/#{id}", type: "plantuml_sequence",
         reference: reference, reference_svg: File.read(reference),
-        sirena_svg: Sirena.render(File.read(source_path(id)),
-                                  notation: :plantuml),
+        sirena_svg: rendered,
         reproduce: "bundle exec rspec #{REPRODUCE}",
         recognizer: SpecSupport::LayoutParity::PlantumlSequenceRecognizer.new,
         spatial_kinds: [:participant]
@@ -103,10 +106,46 @@ module Plantuml
     # The extractor raises on a Sirena path it cannot read (short cubic
     # arguments); the ledger pins that as its own status instead.
     def row_for(id)
-      row = SpecSupport::LayoutParity::CaseLedger.build([result_for(id)]).first
-      ledger_row(row)
+      rendered = sirena_svg(id)
+      row = SpecSupport::LayoutParity::CaseLedger.build(
+        [result_for(id, rendered)],
+      ).first
+      ledger_row(row).merge("span_delta" => span_delta(id, rendered))
     rescue ArgumentError
       error_row(id)
+    end
+
+    # How much taller (positive) or shorter Sirena's lifelines run than the
+    # reference's, head to foot: the whole-diagram height the element
+    # metrics above do not see. A match is zero.
+    def span_delta(id, rendered)
+      reference = span(File.read(reference_path(id)))
+      sirena = span(rendered)
+      return unless reference && sirena
+
+      (sirena - reference).round(2)
+    end
+
+    def span(svg)
+      lines = svg.scan(/<line\b([^>]*)>/).filter_map do |(attributes)|
+        vertical_run(attributes)
+      end
+      return if lines.empty?
+
+      lines.map(&:last).max - lines.map(&:first).min
+    end
+
+    def vertical_run(attributes)
+      x1, y1, x2, y2 = %w[x1 y1 x2 y2].map do |name|
+        coordinate(attributes, name)
+      end
+      return unless [x1, y1, x2, y2].all? && x1 == x2
+
+      [y1, y2] if y2 - y1 >= 20
+    end
+
+    def coordinate(attributes, name)
+      attributes[/(?<![a-z])#{name}="(-?[\d.]+)"/, 1]&.to_f
     end
 
     def measured_rows
@@ -138,6 +177,22 @@ module Plantuml
 
     def committed_rows
       ledger.fetch("rows")
+    end
+
+    SPAN_SLACK = 0.05
+
+    # Cases whose lifeline span moved away from the reference's (or, with
+    # `toward`, closer to it) since the ledger was recorded.
+    def span_moves(toward:)
+      committed = committed_rows.to_h { |row| [row["case"], row["span_delta"]] }
+      fresh_rows.filter_map do |row|
+        move = span_move(committed.fetch(row["case"]), row["span_delta"])
+        row["case"] if move && (toward ? move < -SPAN_SLACK : move > SPAN_SLACK)
+      end
+    end
+
+    def span_move(before, after)
+      after.abs - before.abs if before && after
     end
 
     def fresh_rows
@@ -174,7 +229,7 @@ RSpec.describe Plantuml::SequenceLayoutParity do
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
   it "has pinned provenance for every oracle-valid sequence case" do
-    expect([case_ids.size, evidence_failures]).to eq([90, []])
+    expect([case_ids.size, evidence_failures]).to eq([93, []])
   end
 
   it "records exactly the oracle-valid sequence cases in the ledger" do
@@ -191,6 +246,23 @@ RSpec.describe Plantuml::SequenceLayoutParity do
 
   it "has no stale ledger row after a status or count change" do
     expect(diff.slice(:missing, :new)).to eq(missing: [], new: [])
+  end
+
+  it "keeps no lifeline span further from its reference than recorded" do
+    expect(span_moves(toward: false)).to eq([])
+  end
+
+  it "has no lifeline span improvement missing from the ledger" do
+    expect(span_moves(toward: true)).to eq([])
+  end
+
+  it "ends the lifelines of the self-message and tail cases on the reference" do
+    cases = %w[sirena.self.label sirena.self.wide sirena.tail.group
+               resources.vega.asciiverse.hello_001--18b03e1b811e
+               resources.vega.asciiverse.self_001--da4311bd2115]
+    rows = fresh_rows.select { |row| cases.include?(row["case"]) }
+
+    expect(rows.map { |row| row["span_delta"] }).to eq([0.0] * cases.size)
   end
 
   it "keeps the recorded status and matched count of every case" do
