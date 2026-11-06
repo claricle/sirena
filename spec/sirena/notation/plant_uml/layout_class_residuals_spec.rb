@@ -155,6 +155,53 @@ RSpec.describe Sirena::Notation::PlantUML::Layout do
     end
   end
 
+  describe "labels of sloping links" do
+    let(:diagram) do
+      render(<<~BODY)
+        class foo
+        class bar1
+        class bar2
+        class bar3
+        bar1 : a member line wide enough to push its box far left
+        bar2 : [#red,dashed,thickness=2]
+        bar3 : another member line wide enough to push its box right
+        foo -[#red,dashed,thickness=2]-> bar2 : [#red,dashed,2]
+        foo --> bar1 : tilted
+        foo --> bar3
+      BODY
+    end
+
+    def text_of(label)
+      REXML::XPath.first(diagram, "//text[text()='#{label}']")
+    end
+
+    def line_points(label)
+      path = text_of(label).parent.elements["path"].attributes["d"]
+      path.scan(/-?\d+\.?\d*/).map(&:to_f).each_slice(2).to_a
+    end
+
+    def clearance
+      Sirena::Notation::PlantUML::LabelClearance
+    end
+
+    it "keeps a label on the right of a sloping line past the line" do
+      label = text_of("[#red,dashed,2]")
+      base = label.attributes["y"].to_f
+      line = line_points("[#red,dashed,2]").first(2)
+
+      expect(label.attributes["x"].to_f)
+        .to be > clearance.right_between(*line, base - 12, base)
+    end
+
+    it "lifts the label of a gentle slope clear of the line under its end" do
+      label = text_of("tilted")
+      end_x = label.attributes["x"].to_f + 15.0
+      line_y = clearance.top_between(*line_points("tilted"), end_x, end_x)
+
+      expect(label.attributes["y"].to_f + 3.0).to be <= line_y
+    end
+  end
+
   describe "an abstract hierarchy" do
     let(:diagram) do
       render(<<~BODY)
