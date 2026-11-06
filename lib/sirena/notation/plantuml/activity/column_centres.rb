@@ -20,7 +20,8 @@ module Sirena
           def initialize(columns, boxes, reach, margin, bars)
             @columns = columns
             @boxes = boxes
-            @reach = reach
+            @spread = reach.row_spread(margin)
+            @reach = reach.columns
             @margin = margin
             @bars = bars
             @trunks = columns.spans.keys.group_by { |node| columns.key[node] }
@@ -50,6 +51,12 @@ module Sirena
           end
 
           def spread(solid, extra)
+            return spread_columns(solid, extra) unless @spread
+
+            @spread.call(solid) { |prior, key| gap(prior, key, extra) }
+          end
+
+          def spread_columns(solid, extra)
             cursor = @margin
             solid.each_with_index.to_h do |key, index|
               cursor += gap(solid[index - 1], key, extra) if index.positive?
