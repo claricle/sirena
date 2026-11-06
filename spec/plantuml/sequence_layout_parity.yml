@@ -31,10 +31,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.013131
-      worst_e_w: 0.011433
+      worst_e_c: 0.0208
+      worst_e_w: 0.121999
       worst_e_h: 0.0
-      worst_e_a: 0.011433
+      worst_e_a: 0.121999
       worst_analog:
   matched: 11
   status: pass
@@ -43,10 +43,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 1.0e-06
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.004521
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.039008
       worst_analog:
   matched: 5
   status: pass
@@ -55,10 +55,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.055624
-      worst_e_w: 1.0e-06
+      worst_e_c: 0.056916
+      worst_e_w: 0.054956
       worst_e_h: 0.0
-      worst_e_a: 1.0e-06
+      worst_e_a: 0.054956
       worst_analog:
   matched: 6
   status: pass
@@ -67,10 +67,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.005768
-      worst_e_w: 0.025105
+      worst_e_c: 0.051364
+      worst_e_w: 0.10008
       worst_e_h: 3.6e-05
-      worst_e_a: 0.025105
+      worst_e_a: 0.10008
       worst_analog:
   matched: 3
   status: pass
@@ -79,10 +79,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 0.0
+      worst_e_c: 0.014608
+      worst_e_w: 0.043266
       worst_e_h: 0.0
-      worst_e_a: 0.0
+      worst_e_a: 0.043266
       worst_analog:
   matched: 6
   status: pass
@@ -91,10 +91,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.024376
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.070367
       worst_analog:
   matched: 6
   status: pass
@@ -103,10 +103,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.007271
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.022987
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.070367
       worst_analog:
   matched: 12
   status: pass
@@ -115,10 +115,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.001095
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.02045
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.070367
       worst_analog:
   matched: 12
   status: pass
@@ -127,10 +127,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 0.0
+      worst_e_c: 0.017523
+      worst_e_w: 0.043266
       worst_e_h: 0.0
-      worst_e_a: 0.0
+      worst_e_a: 0.043266
       worst_analog:
   matched: 5
   status: pass
@@ -139,10 +139,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 0.0
+      worst_e_c: 0.025304
+      worst_e_w: 0.043266
       worst_e_h: 0.0
-      worst_e_a: 0.0
+      worst_e_a: 0.043266
       worst_analog:
   matched: 6
   status: pass
@@ -151,10 +151,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.00995
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.039008
       worst_analog:
   matched: 8
   status: pass
@@ -163,7 +163,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.01858
+      worst_e_c: 0.017557
       worst_e_w: 0.106383
       worst_e_h: 0.0
       worst_e_a: 0.106383
@@ -175,10 +175,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.004415
-      worst_e_w: 0.040926
+      worst_e_c: 0.01171
+      worst_e_w: 0.057682
       worst_e_h: 0.0
-      worst_e_a: 0.040926
+      worst_e_a: 0.057682
       worst_analog:
   matched: 6
   status: pass
@@ -187,10 +187,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.005795
-      worst_e_w: 0.02024
+      worst_e_c: 0.020619
+      worst_e_w: 0.046771
       worst_e_h: 0.0
-      worst_e_a: 0.02024
+      worst_e_a: 0.046771
       worst_analog:
   matched: 4
   status: pass
@@ -199,10 +199,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.012422
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.070367
       worst_analog:
   matched: 7
   status: pass
@@ -211,10 +211,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.036523
-      worst_e_w: 0.088591
+      worst_e_c: 0.030665
+      worst_e_w: 0.112938
       worst_e_h: 0.0
-      worst_e_a: 0.088591
+      worst_e_a: 0.112938
       worst_analog:
   matched: 4
   status: pass
@@ -223,10 +223,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.039847
-      worst_e_w: 0.02439
+      worst_e_c: 0.037412
+      worst_e_w: 0.040359
       worst_e_h: 0.0
-      worst_e_a: 0.02439
+      worst_e_a: 0.040359
       worst_analog:
   matched: 18
   status: pass
@@ -235,22 +235,22 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.015709
+      worst_e_c: 0.048439
       worst_e_w: 0.086957
       worst_e_h: 0.0
       worst_e_a: 0.086957
       worst_analog:
   matched: 3
   status: pass
-  span_delta: -0.02
+  span_delta: 15.29
 - case: resources.vega.asciiverse.nested_001--5bbc1c2fa32b
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.026878
-      worst_e_w: 0.062446
+      worst_e_c: 0.04572
+      worst_e_w: 0.097918
       worst_e_h: 0.0
-      worst_e_a: 0.062446
+      worst_e_a: 0.097918
       worst_analog:
   matched: 10
   status: pass
@@ -259,10 +259,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.004234
-      worst_e_w: 0.013615
+      worst_e_c: 0.025489
+      worst_e_w: 0.048226
       worst_e_h: 0.0
-      worst_e_a: 0.013615
+      worst_e_a: 0.048226
       worst_analog:
   matched: 5
   status: pass
@@ -271,10 +271,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.004167
-      worst_e_w: 0.0128
+      worst_e_c: 0.037949
+      worst_e_w: 0.077962
       worst_e_h: 0.0
-      worst_e_a: 0.0128
+      worst_e_a: 0.077962
       worst_analog:
   matched: 7
   status: pass
@@ -283,10 +283,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.001222
-      worst_e_w: 1.0e-06
+      worst_e_c: 0.007087
+      worst_e_w: 0.048964
       worst_e_h: 0.0
-      worst_e_a: 1.0e-06
+      worst_e_a: 0.048964
       worst_analog:
   matched: 31
   status: pass
@@ -295,10 +295,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.002187
-      worst_e_w: 0.01386
+      worst_e_c: 0.012912
+      worst_e_w: 0.040388
       worst_e_h: 0.0
-      worst_e_a: 0.01386
+      worst_e_a: 0.040388
       worst_analog:
   matched: 5
   status: pass
@@ -307,10 +307,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.002187
-      worst_e_w: 0.01386
+      worst_e_c: 0.012912
+      worst_e_w: 0.040388
       worst_e_h: 0.0
-      worst_e_a: 0.01386
+      worst_e_a: 0.040388
       worst_analog:
   matched: 5
   status: pass
@@ -319,10 +319,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.002187
-      worst_e_w: 0.01386
+      worst_e_c: 0.012912
+      worst_e_w: 0.040388
       worst_e_h: 0.0
-      worst_e_a: 0.01386
+      worst_e_a: 0.040388
       worst_analog:
   matched: 5
   status: pass
@@ -331,10 +331,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.002187
-      worst_e_w: 0.01386
+      worst_e_c: 0.012912
+      worst_e_w: 0.040388
       worst_e_h: 0.0
-      worst_e_a: 0.01386
+      worst_e_a: 0.040388
       worst_analog:
   matched: 5
   status: pass
@@ -343,10 +343,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.002187
-      worst_e_w: 0.01386
+      worst_e_c: 0.012912
+      worst_e_w: 0.040388
       worst_e_h: 0.0
-      worst_e_a: 0.01386
+      worst_e_a: 0.040388
       worst_analog:
   matched: 5
   status: pass
@@ -355,10 +355,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.008353
-      worst_e_w: 0.037871
+      worst_e_c: 0.010529
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.037871
+      worst_e_a: 0.070367
       worst_analog:
   matched: 3
   status: pass
@@ -367,10 +367,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.008353
-      worst_e_w: 0.037871
+      worst_e_c: 0.010529
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.037871
+      worst_e_a: 0.070367
       worst_analog:
   matched: 3
   status: pass
@@ -379,10 +379,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.01217
-      worst_e_w: 0.037871
+      worst_e_c: 0.013606
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.037871
+      worst_e_a: 0.070367
       worst_analog:
   matched: 3
   status: pass
@@ -391,10 +391,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.009995
-      worst_e_w: 0.044078
+      worst_e_c: 0.039662
+      worst_e_w: 0.118957
       worst_e_h: 0.0
-      worst_e_a: 0.044078
+      worst_e_a: 0.118957
       worst_analog:
   matched: 3
   status: pass
@@ -403,10 +403,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 1.0e-06
+      worst_e_c: 0.008199
+      worst_e_w: 0.020952
       worst_e_h: 0.0
-      worst_e_a: 1.0e-06
+      worst_e_a: 0.020952
       worst_analog:
   matched: 3
   status: pass
@@ -415,10 +415,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 1.0e-06
+      worst_e_c: 0.009594
+      worst_e_w: 0.020952
       worst_e_h: 0.0
-      worst_e_a: 1.0e-06
+      worst_e_a: 0.020952
       worst_analog:
   matched: 3
   status: pass
@@ -427,10 +427,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 1.0e-06
-      worst_e_w: 1.0e-06
+      worst_e_c: 0.01204
+      worst_e_w: 0.028343
       worst_e_h: 0.0
-      worst_e_a: 1.0e-06
+      worst_e_a: 0.028343
       worst_analog:
   matched: 4
   status: pass
@@ -439,7 +439,7 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.00764
+      worst_e_c: 0.00577
       worst_e_w: 0.106383
       worst_e_h: 0.0
       worst_e_a: 0.106383
@@ -451,10 +451,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.003087
-      worst_e_w: 0.066068
+      worst_e_c: 0.003335
+      worst_e_w: 0.081311
       worst_e_h: 0.0
-      worst_e_a: 0.066068
+      worst_e_a: 0.081311
       worst_analog:
   matched: 9
   status: pass
@@ -463,10 +463,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.008437
-      worst_e_w: 0.037869
+      worst_e_c: 0.0177
+      worst_e_w: 0.049287
       worst_e_h: 0.0
-      worst_e_a: 0.037869
+      worst_e_a: 0.049287
       worst_analog:
   matched: 3
   status: pass
@@ -475,10 +475,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.002896
-      worst_e_w: 0.066068
+      worst_e_c: 0.003394
+      worst_e_w: 0.081311
       worst_e_h: 0.0
-      worst_e_a: 0.066068
+      worst_e_a: 0.081311
       worst_analog:
   matched: 9
   status: pass
@@ -487,10 +487,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.004038
-      worst_e_w: 0.066068
+      worst_e_c: 0.006681
+      worst_e_w: 0.081311
       worst_e_h: 0.0
-      worst_e_a: 0.066068
+      worst_e_a: 0.081311
       worst_analog:
   matched: 7
   status: pass
@@ -499,10 +499,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.002402
-      worst_e_w: 0.032769
+      worst_e_c: 0.010854
+      worst_e_w: 0.043481
       worst_e_h: 0.0
-      worst_e_a: 0.032769
+      worst_e_a: 0.043481
       worst_analog:
   matched: 9
   status: pass
@@ -511,10 +511,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.005401
-      worst_e_w: 0.059126
+      worst_e_c: 0.007759
+      worst_e_w: 0.059877
       worst_e_h: 0.0
-      worst_e_a: 0.059126
+      worst_e_a: 0.059877
       worst_analog:
   matched: 5
   status: pass
@@ -523,10 +523,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.008437
-      worst_e_w: 0.037869
+      worst_e_c: 0.0177
+      worst_e_w: 0.049287
       worst_e_h: 0.0
-      worst_e_a: 0.037869
+      worst_e_a: 0.049287
       worst_analog:
   matched: 3
   status: pass
@@ -535,10 +535,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.020084
-      worst_e_w: 0.066068
+      worst_e_c: 0.039058
+      worst_e_w: 0.081311
       worst_e_h: 0.0
-      worst_e_a: 0.066068
+      worst_e_a: 0.081311
       worst_analog:
   matched: 8
   status: pass
@@ -547,10 +547,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.001854
-      worst_e_w: 0.02439
+      worst_e_c: 0.001296
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 0.02439
+      worst_e_a: 0.039008
       worst_analog:
   matched: 7
   status: pass
@@ -559,10 +559,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.003309
-      worst_e_w: 0.066068
+      worst_e_c: 0.003575
+      worst_e_w: 0.081311
       worst_e_h: 0.0
-      worst_e_a: 0.066068
+      worst_e_a: 0.081311
       worst_analog:
   matched: 9
   status: pass
@@ -571,10 +571,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.003085
-      worst_e_w: 0.036265
+      worst_e_c: 0.014967
+      worst_e_w: 0.06288
       worst_e_h: 0.0
-      worst_e_a: 0.036265
+      worst_e_a: 0.06288
       worst_analog:
   matched: 7
   status: pass
@@ -583,10 +583,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.004032
-      worst_e_w: 0.009701
+      worst_e_c: 0.014127
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 0.009701
+      worst_e_a: 0.039008
       worst_analog:
   matched: 4
   status: pass
@@ -595,10 +595,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.004019
-      worst_e_w: 0.02439
+      worst_e_c: 0.014541
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 0.02439
+      worst_e_a: 0.039008
       worst_analog:
   matched: 4
   status: pass
@@ -607,10 +607,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 1.0e-06
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.004428
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.039008
       worst_analog:
   matched: 2
   status: pass
@@ -619,10 +619,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.006851
-      worst_e_w: 0.034676
+      worst_e_c: 0.024302
+      worst_e_w: 0.080164
       worst_e_h: 0.0
-      worst_e_a: 0.034676
+      worst_e_a: 0.080164
       worst_analog:
   matched: 5
   status: pass
@@ -632,9 +632,9 @@ rows:
     hard_failure: false
     metrics:
       worst_e_c: 0.005223
-      worst_e_w: 0.02439
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 0.02439
+      worst_e_a: 0.039008
       worst_analog:
   matched: 2
   status: pass
@@ -643,10 +643,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.008136
-      worst_e_w: 0.036267
+      worst_e_c: 0.016317
+      worst_e_w: 0.062882
       worst_e_h: 0.0
-      worst_e_a: 0.036267
+      worst_e_a: 0.062882
       worst_analog:
   matched: 4
   status: pass
@@ -656,9 +656,9 @@ rows:
     hard_failure: false
     metrics:
       worst_e_c: 0.004282
-      worst_e_w: 0.02439
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 0.02439
+      worst_e_a: 0.039008
       worst_analog:
   matched: 2
   status: pass
@@ -667,10 +667,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 1.0e-06
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.004428
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.039008
       worst_analog:
   matched: 2
   status: pass
@@ -679,10 +679,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 1.0e-06
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.004428
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.039008
       worst_analog:
   matched: 2
   status: pass
@@ -691,10 +691,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.006117
-      worst_e_w: 0.030099
+      worst_e_c: 0.010194
+      worst_e_w: 0.050161
       worst_e_h: 0.0
-      worst_e_a: 0.030099
+      worst_e_a: 0.050161
       worst_analog:
   matched: 4
   status: pass
@@ -703,10 +703,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.005929
-      worst_e_w: 0.027175
+      worst_e_c: 0.014601
+      worst_e_w: 0.065232
       worst_e_h: 0.0
-      worst_e_a: 0.027175
+      worst_e_a: 0.065232
       worst_analog:
   matched: 4
   status: pass
@@ -716,9 +716,9 @@ rows:
     hard_failure: false
     metrics:
       worst_e_c: 0.005223
-      worst_e_w: 0.02439
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 0.02439
+      worst_e_a: 0.039008
       worst_analog:
   matched: 2
   status: pass
@@ -728,9 +728,9 @@ rows:
     hard_failure: false
     metrics:
       worst_e_c: 0.003374
-      worst_e_w: 0.02439
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 0.02439
+      worst_e_a: 0.039008
       worst_analog:
   matched: 3
   status: pass
@@ -739,10 +739,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 1.0e-06
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.004428
+      worst_e_w: 0.039008
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.039008
       worst_analog:
   matched: 2
   status: pass
@@ -751,10 +751,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.007986
-      worst_e_w: 1.0e-06
+      worst_e_c: 0.013187
+      worst_e_w: 0.040359
       worst_e_h: 0.0
-      worst_e_a: 1.0e-06
+      worst_e_a: 0.040359
       worst_analog:
   matched: 8
   status: pass
@@ -763,10 +763,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.001568
-      worst_e_w: 1.0e-06
+      worst_e_c: 0.006043
+      worst_e_w: 0.040359
       worst_e_h: 0.0
-      worst_e_a: 1.0e-06
+      worst_e_a: 0.040359
       worst_analog:
   matched: 22
   status: pass
@@ -775,10 +775,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 1.0e-06
-      worst_e_w: 2.0e-06
+      worst_e_c: 0.01073
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 2.0e-06
+      worst_e_a: 0.070367
       worst_analog:
   matched: 4
   status: pass
@@ -787,10 +787,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.004527
-      worst_e_w: 0.035033
+      worst_e_c: 0.013929
+      worst_e_w: 0.072071
       worst_e_h: 0.0
-      worst_e_a: 0.035033
+      worst_e_a: 0.072071
       worst_analog:
   matched: 5
   status: pass
@@ -799,10 +799,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 1.0e-06
-      worst_e_w: 0.035031
+      worst_e_c: 0.014741
+      worst_e_w: 0.072071
       worst_e_h: 0.0
-      worst_e_a: 0.035031
+      worst_e_a: 0.072071
       worst_analog:
   matched: 4
   status: pass
@@ -811,10 +811,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 0.035031
+      worst_e_c: 0.014072
+      worst_e_w: 0.072071
       worst_e_h: 0.0
-      worst_e_a: 0.035031
+      worst_e_a: 0.072071
       worst_analog:
   matched: 5
   status: pass
@@ -823,10 +823,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 0.035031
+      worst_e_c: 0.016225
+      worst_e_w: 0.072071
       worst_e_h: 0.0
-      worst_e_a: 0.035031
+      worst_e_a: 0.072071
       worst_analog:
   matched: 4
   status: pass
@@ -835,10 +835,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.0
-      worst_e_w: 0.035031
+      worst_e_c: 0.016225
+      worst_e_w: 0.072071
       worst_e_h: 0.0
-      worst_e_a: 0.035031
+      worst_e_a: 0.072071
       worst_analog:
   matched: 4
   status: pass
@@ -847,10 +847,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.040178
-      worst_e_w: 0.067285
+      worst_e_c: 0.069859
+      worst_e_w: 0.086338
       worst_e_h: 0.0
-      worst_e_a: 0.067285
+      worst_e_a: 0.086338
       worst_analog:
   matched: 10
   status: pass
@@ -859,10 +859,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.040178
-      worst_e_w: 0.067285
+      worst_e_c: 0.069859
+      worst_e_w: 0.086338
       worst_e_h: 0.0
-      worst_e_a: 0.067285
+      worst_e_a: 0.086338
       worst_analog:
   matched: 10
   status: pass
@@ -871,10 +871,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.000347
-      worst_e_w: 0.011417
+      worst_e_c: 0.026852
+      worst_e_w: 0.03899
       worst_e_h: 0.0
-      worst_e_a: 0.011417
+      worst_e_a: 0.03899
       worst_analog:
   matched: 17
   status: pass
@@ -883,10 +883,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.010056
-      worst_e_w: 0.040259
+      worst_e_c: 0.009571
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.040259
+      worst_e_a: 0.070367
       worst_analog:
   matched: 3
   status: pass
@@ -895,10 +895,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.007974
-      worst_e_w: 0.032769
+      worst_e_c: 0.014343
+      worst_e_w: 0.043481
       worst_e_h: 0.0
-      worst_e_a: 0.032769
+      worst_e_a: 0.043481
       worst_analog:
   matched: 3
   status: pass
@@ -907,10 +907,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.006186
-      worst_e_w: 0.025222
+      worst_e_c: 0.015228
+      worst_e_w: 0.050919
       worst_e_h: 0.0
-      worst_e_a: 0.025222
+      worst_e_a: 0.050919
       worst_analog:
   matched: 6
   status: pass
@@ -919,10 +919,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.04834
-      worst_e_w: 0.025222
+      worst_e_c: 0.048506
+      worst_e_w: 0.050919
       worst_e_h: 0.0
-      worst_e_a: 0.025222
+      worst_e_a: 0.050919
       worst_analog:
   matched: 4
   status: pass
@@ -931,10 +931,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.008142
-      worst_e_w: 0.038745
+      worst_e_c: 0.013002
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.038745
+      worst_e_a: 0.070367
       worst_analog:
   matched: 4
   status: pass
@@ -943,10 +943,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.006732
-      worst_e_w: 0.036539
+      worst_e_c: 0.012994
+      worst_e_w: 0.072026
       worst_e_h: 0.0
-      worst_e_a: 0.036539
+      worst_e_a: 0.072026
       worst_analog:
   matched: 5
   status: pass
@@ -955,10 +955,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.003957
-      worst_e_w: 0.019399
+      worst_e_c: 0.006133
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.019399
+      worst_e_a: 0.070367
       worst_analog:
   matched: 6
   status: pass
@@ -967,10 +967,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.006607
-      worst_e_w: 0.006872
+      worst_e_c: 0.006487
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.006872
+      worst_e_a: 0.070367
       worst_analog:
   matched: 8
   status: pass
@@ -979,10 +979,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.011247
-      worst_e_w: 0.059126
+      worst_e_c: 0.010928
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.059126
+      worst_e_a: 0.070367
       worst_analog:
   matched: 3
   status: pass
@@ -991,10 +991,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.005909
-      worst_e_w: 0.062333
+      worst_e_c: 0.013796
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.062333
+      worst_e_a: 0.070367
       worst_analog:
   matched: 6
   status: pass
@@ -1003,10 +1003,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.007149
-      worst_e_w: 0.031029
+      worst_e_c: 0.027146
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.031029
+      worst_e_a: 0.070367
       worst_analog:
   matched: 3
   status: pass
@@ -1015,10 +1015,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.004739
-      worst_e_w: 0.036539
+      worst_e_c: 0.009147
+      worst_e_w: 0.072026
       worst_e_h: 0.0
-      worst_e_a: 0.036539
+      worst_e_a: 0.072026
       worst_analog:
   matched: 5
   status: pass
@@ -1027,10 +1027,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.013182
-      worst_e_w: 0.064819
+      worst_e_c: 0.017485
+      worst_e_w: 0.088635
       worst_e_h: 0.0
-      worst_e_a: 0.064819
+      worst_e_a: 0.088635
       worst_analog:
   matched: 3
   status: pass
@@ -1039,10 +1039,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.00494
-      worst_e_w: 0.037871
+      worst_e_c: 0.012873
+      worst_e_w: 0.071219
       worst_e_h: 0.0
-      worst_e_a: 0.037871
+      worst_e_a: 0.071219
       worst_analog:
   matched: 6
   status: pass
@@ -1051,10 +1051,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.006849
-      worst_e_w: 0.032221
+      worst_e_c: 0.017292
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.032221
+      worst_e_a: 0.070367
       worst_analog:
   matched: 4
   status: pass
@@ -1063,10 +1063,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.005801
-      worst_e_w: 0.044154
+      worst_e_c: 0.010409
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.044154
+      worst_e_a: 0.070367
       worst_analog:
   matched: 6
   status: pass
@@ -1075,10 +1075,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.00339
-      worst_e_w: 0.02439
+      worst_e_c: 0.018319
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.02439
+      worst_e_a: 0.070367
       worst_analog:
   matched: 7
   status: pass
@@ -1087,10 +1087,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.002808
-      worst_e_w: 0.007507
+      worst_e_c: 0.027303
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.007507
+      worst_e_a: 0.070367
       worst_analog:
   matched: 5
   status: pass
@@ -1099,10 +1099,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.00701
-      worst_e_w: 0.038745
+      worst_e_c: 0.011194
+      worst_e_w: 0.070367
       worst_e_h: 0.0
-      worst_e_a: 0.038745
+      worst_e_a: 0.070367
       worst_analog:
   matched: 4
   status: pass
@@ -1111,10 +1111,10 @@ rows:
   summary:
     hard_failure: false
     metrics:
-      worst_e_c: 0.006285
-      worst_e_w: 0.064819
+      worst_e_c: 0.008337
+      worst_e_w: 0.088635
       worst_e_h: 0.0
-      worst_e_a: 0.064819
+      worst_e_a: 0.088635
       worst_analog:
   matched: 4
   status: pass

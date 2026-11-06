@@ -19,7 +19,7 @@ require_relative "rank_hierarchy"
 require_relative "note_layout"
 require_relative "relation_label_separator"
 require_relative "scene"
-require_relative "sequence/text_advances"
+require_relative "drawing"
 require_relative "../../js_math"
 
 module Sirena
@@ -609,7 +609,7 @@ module Sirena
         def class_level_note_width(note)
           size = font_size * (13.0 / 14.0)
           widths = note.lines.map do |line|
-            Sequence::TextAdvances.width(line, font_size: size)
+            Drawing::Face.widest_line(line, size: size)
           end
           widths.max.to_f + 21.0
         end
@@ -1158,8 +1158,7 @@ module Sirena
         end
 
         def plain_empty_class_width(name)
-          title_width = Sequence::TextAdvances.width(name,
-                                                     font_size: font_size)
+          title_width = Drawing::Face.widest_line(name, size: font_size)
           [((title_width * 2).round / 2.0) + 32.0,
            EMPTY_CLASS_MIN_WIDTH].max
         end
@@ -1257,7 +1256,7 @@ module Sirena
         end
 
         def standard_text_width(text, size)
-          Sequence::TextAdvances.width(text, font_size: size)
+          Drawing::Face.widest_line(text, size: size)
         end
 
         def isolated_standard_height(klass, diagram, member_rows)

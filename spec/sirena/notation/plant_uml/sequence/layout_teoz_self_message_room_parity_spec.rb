@@ -14,6 +14,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before do
     Sirena::Notation.send(:entries).delete(:plantuml)
@@ -37,7 +38,9 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
 
     it "fits the self-message label at its sans width" do
-      expect(participant_gap).to eq(185.2)
+      label = dejavu("test which is very very long", size: 13)
+
+      expect(participant_gap).to eq((label + 14.0).round(1))
     end
   end
 end

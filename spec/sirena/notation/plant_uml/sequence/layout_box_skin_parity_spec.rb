@@ -6,6 +6,7 @@ require "sirena/notation/plantuml"
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before do
     Sirena::Notation.send(:entries).delete(:plantuml)
@@ -54,21 +55,33 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     attribute_of(document, "//*[starts-with(@id,'fragment-')]/rect", "stroke")
   end
 
-  # JAR 1.2026.6 measures the heads at x=5, 100.29, 149.75 and the box at
-  # x=1, width 142.75; sirena draws the same picture 15 points further right.
+  def head_width(label)
+    dejavu(label, size: 14) + 14.0
+  end
+
+  # JAR 1.2026.6 puts neighbouring centres a label plus 24 apart, or half
+  # the two heads plus 10 when the label is short; sirena measures the labels
+  # and heads in DejaVu Sans.
+  def jar_head_spacing
+    bob = head_width("Bob")
+    [dejavu("hello there", size: 13) + 24.0 +
+      ((head_width("Alice") - bob) / 2), bob + 10.0]
+  end
+
   it "spaces boxed heads as the JAR does" do
     heads = scene_of(boxed).heads.first(3).map(&:x)
 
-    expect(heads.map { |x| (x - heads.first + 5).round(2) })
-      .to eq([5.0, 100.29, 149.75])
+    expect(heads.each_cons(2).map { |a, b| b - a })
+      .to match(jar_head_spacing.map { |gap| be_within(1e-9).of(gap) })
   end
 
-  it "pads a box by 4 and widens it for its bold-13 title overhang" do
+  it "pads a box by 4 round its members" do
     scene = scene_of(boxed)
     frame = scene.frames.first
+    bob = scene.heads[1]
 
-    expect([frame.x, frame.width.round(2)])
-      .to eq([scene.heads.first.x - 4, 142.75])
+    expect([frame.x, frame.width])
+      .to eq([scene.heads.first.x - 4, bob.x + bob.width + 4 - frame.x])
   end
 
   it "keeps a self-message minimum of 50 between neighbouring lifelines" do

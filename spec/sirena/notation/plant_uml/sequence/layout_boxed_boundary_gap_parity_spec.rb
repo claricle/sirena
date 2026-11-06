@@ -5,6 +5,7 @@ require "sirena/notation/plantuml"
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before do
     Sirena::Notation.send(:entries).delete(:plantuml)
@@ -41,7 +42,14 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
     gap = heads.last.x - heads.first.x - heads.first.width
 
-    expect(gap).to be_within(0.01).of(34.877)
+    expect(gap).to be_within(1e-9).of(jar_gap)
+  end
+
+  def jar_gap
+    first = dejavu("b", size: 14) + 14.0
+    second = dejavu("a", size: 14) + 14.0
+    title = dejavu("Box A", size: 13, bold: true) + 6.0
+    50.0 + ((title - second - 8.0) / 2) - ((first + second) / 2)
   end
 
   it "retains the ordinary gap between members of the same box" do

@@ -2,7 +2,7 @@
 
 require_relative "fragment_shape"
 require_relative "scene"
-require_relative "text_advances"
+require_relative "../drawing"
 
 module Sirena
   module Notation
@@ -23,7 +23,7 @@ module Sirena
 
           # @param span [Array<Float>] centres of the outermost lifelines
           def self.width_for(label)
-            label_width = TextAdvances.width(label, font_size: LABEL_SIZE)
+            label_width = Drawing::Face.widest_line(label, size: LABEL_SIZE)
             [label_width + (2 * TEXT_PAD), MIN_WIDTH].max
           end
 

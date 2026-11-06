@@ -20,6 +20,14 @@ module Sirena
                                        text.to_s, font_size: size)[:width]
           end
 
+          # @return [Float] the width of the widest line of `text`, split at
+          #   a newline or a literal backslash-n
+          def widest_line(text, size:, bold: false)
+            text.to_s.split(/\\n|\n/, -1).map do |line|
+              width(line, size: size, bold: bold)
+            end.max.to_f
+          end
+
           # @return [Float] the middle of a line whose baseline is given
           def middle(baseline, size)
             baseline - (MIDDLE * size)

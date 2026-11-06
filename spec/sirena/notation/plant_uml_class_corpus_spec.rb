@@ -89,13 +89,21 @@ module PlantUmlCorpusHelpers
     [item.x, item.y, item.width, item.height]
   end
 
+  # The JAR pads a class title by 32 and each package frame by 8 to 24 round
+  # it; the titles are measured in DejaVu Sans.
   def expected_nested_package_geometry
-    [[78.0, 135.0, 79.126953125, 48.0],
-     [191.087890625, 279.0, 76.078125, 48.0],
-     [6.0, 6.0, 231.126953125, 249.0],
-     [38.0, 57.0, 159.126953125, 166.0],
-     [62.0, 100.0, 111.126953125, 99.0],
-     "M 229.127 255.0 L 229.127 279.0"]
+    nested, target = %w[Nested Target].map do |name|
+      Sirena::Notation::PlantUML::Drawing::Face.widest_line(name, size: 14) +
+        32.0
+    end
+    outer = nested + 152.0
+    edge = format("%.3f", outer - 2.0)
+    [[78.0, 135.0, nested, 48.0],
+     [outer - 2.0 - (target / 2), 279.0, target, 48.0],
+     [6.0, 6.0, outer, 249.0],
+     [38.0, 57.0, nested + 80.0, 166.0],
+     [62.0, 100.0, nested + 32.0, 99.0],
+     "M #{edge} 255.0 L #{edge} 279.0"]
   end
 end
 

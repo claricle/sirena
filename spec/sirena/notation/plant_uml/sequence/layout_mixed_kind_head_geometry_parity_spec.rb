@@ -8,6 +8,7 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   include_context "with an isolated notation registry"
+  include DejaVuText
 
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
@@ -28,6 +29,6 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "sizes a plain participant to its label beside an actor" do
-    expect(rectangle["width"].to_f).to eq(41.2822265625)
+    expect(rectangle["width"].to_f).to eq(dejavu("App", size: 14) + 14.0)
   end
 end
