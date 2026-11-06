@@ -21,6 +21,13 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       "group_header_nested_overrides_flat--29dfa779f376",
     ].map { |suffix| "#{prefix}#{suffix}" }
   end
+  let(:expected_metrics) do
+    {
+      case_ids[0] => [0.010529, 0.070367, 0.0, 0.070367],
+      case_ids[1] => [0.010529, 0.070367, 0.0, 0.070367],
+      case_ids[2] => [0.013606, 0.070367, 0.0, 0.070367],
+    }
+  end
   let(:root) { File.expand_path("../../../../plantuml", __dir__) }
   let(:boxed_participant_dimensions) do
     source = <<~PLANTUML
@@ -61,14 +68,11 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   end
 
   it "matches ordinary group-header participant geometry" do
-    expect(parity_evidence.values).to eq([
-                                           [false, 3,
-                                            [0.010529, 0.070367, 0.0, 0.070367]],
-                                           [false, 3,
-                                            [0.010529, 0.070367, 0.0, 0.070367]],
-                                           [false, 3,
-                                            [0.013606, 0.070367, 0.0, 0.070367]],
-                                         ])
+    expected = expected_metrics.transform_values do |metrics|
+      [false, 3, metrics]
+    end
+
+    expect(parity_evidence).to eq(expected)
   end
 
   it "uses intrinsic boxed-participant dimensions" do
