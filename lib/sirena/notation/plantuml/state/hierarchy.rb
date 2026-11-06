@@ -5,6 +5,7 @@ require_relative "routes"
 require_relative "ranking"
 require_relative "level_edges"
 require_relative "label_reach"
+require_relative "dot_axis"
 require_relative "row"
 require_relative "rows"
 require_relative "stretch"
@@ -139,6 +140,24 @@ module Sirena
             follow(elk, drop)
             above_entered(rows, elk, drop)
             beside_composites(rows, elk)
+            slide_to_dot(rows, elk)
+          end
+
+          # The rows of the diagram's top level that graphviz puts elsewhere
+          # along the x axis move there, and the routes ELK drew to them are
+          # dropped.
+          def slide_to_dot(rows, elk)
+            return if @parent[rows.first.nodes.first[:id]]
+
+            moved = DotAxis.new(@graph[:edges], @nodes, @parent).apply(rows)
+            unroute_rows(elk, moved.map(&:id))
+          end
+
+          def unroute_rows(elk, ids)
+            elk[:edges].each do |edge|
+              edge.delete(:sections) if (edge[:sources] + edge[:targets])
+                .intersect?(ids)
+            end
           end
 
           # An end marker a composite leads to stands beside the composite,
