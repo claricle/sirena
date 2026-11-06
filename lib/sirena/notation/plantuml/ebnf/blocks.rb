@@ -177,18 +177,9 @@ module Sirena
                 level = top + @tops[i] + one.baseline
                 draw_branch(pen, one, left, [rail, level])
               end
-              heading(pen, left, rail)
             end
 
             private
-
-            # A skipped branch leaves the rail bare, so it carries the
-            # arrow that shows which way the rail runs.
-            def heading(pen, left, rail)
-              return unless @branches.first.is_a?(Gap)
-
-              Blocks.heading(pen, left + Blocks.heading_at(width), rail)
-            end
 
             def tops_of(branches)
               branches.each_with_object([0.0]) do |branch, tops|
