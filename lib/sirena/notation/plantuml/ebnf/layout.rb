@@ -12,27 +12,36 @@ module Sirena
         class Layout
           include Drawing::Pen
 
-          MARGIN = 15.0
-          TITLE = 22.0
-          LEAD = 18.0
-          BETWEEN = 20.0
+          MARGIN = 10.0
+          TITLE_BASE = 23.5352
+          TITLE_SIZE = 14
+          # From a rule's name down to its rail, and on to the next name.
+          RULE_TOP = 12.9531
+          RULE_BOTTOM = 28.5352
+          LEAD = 26.0
+          # Past the end rail: the end dot's diameter and the margin, plus
+          # the start dot's radius the left side starts after.
+          RIGHT = 18.0
+          FOOT = 25.0
           RAIL = "1.5"
-          PLAIN = { fill: "#F1F1F1" }.freeze
-          ROUND = { fill: "#F1F1F1", rx: 8.0 }.freeze
-          DASHED = { fill: "#F1F1F1", stroke_dasharray: "4,3" }.freeze
-          private_constant :MARGIN, :TITLE, :RAIL, :LEAD, :BETWEEN, :PLAIN,
-                           :ROUND, :DASHED
+          PLAIN = { stroke_width: "0.5" }.freeze
+          ROUND = { fill: "#F1F1F1", rx: 5.0, stroke_width: "1.5" }.freeze
+          DASHED = { stroke_width: "1", stroke_dasharray: "5,5" }.freeze
+          SPECIAL_PADDING = 18.8594
+          private_constant :MARGIN, :TITLE_BASE, :TITLE_SIZE, :RULE_TOP,
+                           :RULE_BOTTOM, :RAIL, :LEAD, :RIGHT, :FOOT, :PLAIN,
+                           :ROUND, :DASHED, :SPECIAL_PADDING
 
           # @param rules [Array<Rule>]
           # @return [Drawing::Scene]
           def call(rules, **)
             blocks = rules.map { |rule| build(rule.expression) }
             bottom = stack(rules, blocks)
-            width = blocks.map(&:width).max + (2 * LEAD) + 8
-            scene(width + (2 * MARGIN), bottom - BETWEEN + MARGIN)
+            width = blocks.map(&:width).max + (2 * LEAD) + MARGIN + RIGHT
+            scene(width, bottom + FOOT)
           end
 
-          # PlantUML draws the rails and boxes at one and a half pixels.
+          # PlantUML draws the rails at one and a half pixels.
           def line(*coordinates, **style)
             super(*coordinates, stroke_width: RAIL, **style)
           end
@@ -41,29 +50,27 @@ module Sirena
             super(commands, stroke_width: RAIL, **style)
           end
 
-          def rect(*geometry, **style)
-            super(*geometry, stroke_width: RAIL, **style)
-          end
-
           private
 
-          # @return [Float] where the next rule would start
+          # @return [Float] where the last rule's rail ends
           def stack(rules, blocks)
-            rules.zip(blocks).reduce(MARGIN) do |top, (rule, block)|
-              draw_rule(rule, block, top)
-              top + TITLE + block.height + BETWEEN
+            names = rules.zip(blocks).reduce(TITLE_BASE) do |name, (rule, one)|
+              draw_rule(rule, one, name)
+              name + RULE_TOP + one.height + RULE_BOTTOM
             end
+            names - RULE_BOTTOM
           end
 
-          def draw_rule(rule, block, top)
-            text(rule.name, MARGIN, top + 6, size: 13, bold: true)
-            draw_rail(block, top + TITLE)
+          def draw_rule(rule, block, name)
+            text(rule.name, MARGIN, name - (0.35 * TITLE_SIZE),
+                 size: TITLE_SIZE, bold: true)
+            draw_rail(block, name + RULE_TOP)
           end
 
           def draw_rail(block, top)
             rail = top + block.baseline
             left = MARGIN + 4
-            circle(left, rail, 4, fill: "#FFFFFF", stroke_width: "2")
+            circle(left, rail, 4, stroke_width: "2")
             line(left + 4, rail, left + LEAD, rail)
             block.draw(self, left + LEAD, top)
             draw_end(left + LEAD + block.width, rail)
@@ -71,6 +78,7 @@ module Sirena
 
           def draw_end(from, rail)
             line(from, rail, from + LEAD, rail)
+            Blocks::Arrow.closing(self, from, rail)
             circle(from + LEAD + 4, rail, 4, fill: INK)
           end
 
@@ -78,7 +86,8 @@ module Sirena
             case node
             when Literal then Blocks::Word.new(self, node.text, PLAIN)
             when Reference then Blocks::Word.new(self, node.name, ROUND)
-            when Special then Blocks::Word.new(self, node.text, DASHED)
+            when Special then Blocks::Word.new(self, node.text, DASHED,
+                                               padding: SPECIAL_PADDING)
             else compound(node)
             end
           end
