@@ -84,7 +84,8 @@ module Sirena
 
           def draw_circle(mark)
             element(Svg::Circle, cx: mark[:cx], cy: mark[:cy], r: mark[:r],
-                                 fill: mark[:fill], stroke: mark[:fill],
+                                 fill: mark[:fill],
+                                 stroke: mark.fetch(:stroke, mark[:fill]),
                                  stroke_width: "1")
           end
         end

@@ -12,6 +12,7 @@ module SpecSupport
       SIRENA_JUNCTION = "junction-"
       UNRESOLVED_ENDPOINT = "unresolved-endpoint"
       ENDPOINT_TOLERANCE = 6.0
+      RECT_ATTRIBUTES = %w[x y width height].freeze
       VISIBILITY = {
         "PUBLIC" => "+", "PRIVATE" => "-", "PROTECTED" => "#",
         "PACKAGE" => "~"
@@ -173,8 +174,33 @@ module SpecSupport
         return [UNRESOLVED_ENDPOINT] * 2 if points.empty?
 
         [points.first, points.last].map do |point|
-          nearest_class(point, groups) || UNRESOLVED_ENDPOINT
+          class_at(point, group, groups) || UNRESOLVED_ENDPOINT
         end
+      end
+
+      # A bracketed qualifier box sits between the class and the line's
+      # start; the class is the one on the box's other side.
+      def class_at(point, group, groups)
+        nearest_class(point, groups) ||
+          qualifier_rects(group, point).filter_map do |rect|
+            nearest_class(mirrored(point, rect), groups)
+          end.first
+      end
+
+      def qualifier_rects(group, point)
+        group.xpath("./rect").map do |rect|
+          RECT_ATTRIBUTES.map { |name| rect[name].to_f }
+        end.select { |rect| touches?(rect, point) }
+      end
+
+      def touches?((left, top, width, height), point)
+        box = Bbox.new(left, top, left + width, top + height)
+        distance(point, box) < 1.0
+      end
+
+      def mirrored(point, (left, top, width, height))
+        [(2 * (left + (width / 2))) - point[0],
+         (2 * (top + (height / 2))) - point[1]]
       end
 
       def transformed_path_points(path)
