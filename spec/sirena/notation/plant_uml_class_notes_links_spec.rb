@@ -190,6 +190,14 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(label.call(fat).attributes["x"].to_f)
         .to be > label.call(thin).attributes["x"].to_f + 6.0
     end
+
+    # JAR 1.2026.6: `-[#blue,#green]->` draws one green line
+    it "strokes the last of several colours" do
+      doc = svg_of("class a", "class b", "a -[#blue,#green]-> b")
+      line = nodes(doc, "//g[@id='relation-0']/path").first
+
+      expect(line.attributes["stroke"]).to eq("green")
+    end
   end
 
   describe "an association class" do
