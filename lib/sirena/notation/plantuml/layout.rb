@@ -29,7 +29,7 @@ module Sirena
       # Positions PlantUML class boxes and relations in final canvas space,
       # from the IR::Graph {IRAdapter} emits.
       class Layout < Sirena::Layout::Base
-        MARGIN = 36.0
+        MARGIN = 7.0
         COLUMN_GAP = 90.0
         ROW_GAP = 90.0
         ANNOTATED_RELATION_SLOT_WIDTH = 160.0
@@ -337,7 +337,7 @@ module Sirena
           boxes = align_package_relation_targets(diagram, boxes,
                                                  specifications)
 
-          build_scene(diagram, boxes, box_width)
+          build_scene(diagram, boxes)
         end
 
         def box_specifications(diagram)
@@ -626,7 +626,7 @@ module Sirena
         end
 
         def far_edge(boxes, &)
-          boxes.map(&).max + MARGIN
+          boxes.map(&).max + (MARGIN * 2)
         end
 
         def member_note_class_box(klass)
@@ -779,17 +779,17 @@ module Sirena
           captions.dress(scene)
         end
 
-        def build_scene(diagram, boxes, box_width)
+        def build_scene(diagram, boxes)
           frames = scene_frames(diagram, boxes)
-          width, height = scene_dimensions(diagram, boxes, frames, box_width)
+          width, height = scene_dimensions(diagram, boxes, frames)
           Scene.new(width: width, height: height, boxes: boxes,
                     relations: scene_relations(diagram, boxes + frames),
                     frames: frames)
         end
 
-        def scene_dimensions(diagram, boxes, frames, box_width)
+        def scene_dimensions(diagram, boxes, frames)
           unless package_endpoint_relation?(diagram)
-            return [canvas_width(boxes, box_width),
+            return [canvas_width(diagram, boxes),
                     scene_height(diagram, boxes)]
           end
 
@@ -806,7 +806,8 @@ module Sirena
 
         def scene_height(diagram, boxes)
           room = PackageFrames::OPEN + PackageFrames::CLOSE
-          canvas_height(box_rows(boxes)) + (diagram.packages.size * room)
+          canvas_height(box_rows(boxes)) + (diagram.packages.size * room) +
+            trailing_margin(diagram)
         end
 
         def scene_frames(diagram, boxes)
@@ -1557,6 +1558,8 @@ module Sirena
           if package_endpoint_relation?(diagram)
             return package_left_margin(depth)
           end
+
+          return MARGIN if depth.zero?
 
           [MARGIN, (depth * PackageFrames::SIDE) + 8.0].max
         end
@@ -2769,8 +2772,15 @@ module Sirena
           coordinates.map { |number| number.round(3) }.join(separator)
         end
 
-        def canvas_width(boxes, _box_width)
-          boxes.map { |box| box.x + box.width }.max + boxes.map(&:x).min
+        # The jar leaves one margin before the drawing and two after it; a
+        # diagram with package frames keeps the frames' own symmetric room.
+        def trailing_margin(diagram)
+          diagram.packages.empty? ? MARGIN : 0.0
+        end
+
+        def canvas_width(diagram, boxes)
+          boxes.map { |box| box.x + box.width }.max + boxes.map(&:x).min +
+            trailing_margin(diagram)
         end
 
         def widest_box(specifications)

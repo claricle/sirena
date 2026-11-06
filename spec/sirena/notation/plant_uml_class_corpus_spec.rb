@@ -671,7 +671,8 @@ RSpec.describe Sirena::Notation::PlantUML do
     it "leaves the canvas margin above frames opened together" do
       stacked = rendered_document("package o {\npackage i {\nclass B\n}\n}")
 
-      expect(bounds(stacked, "package-o")["y"]).to be >= 36.0
+      # The jar's 7 margin and the two frames' 12 each: 19.
+      expect(bounds(stacked, "package-o")["y"]).to eq(19.0)
     end
 
     it "keeps the class outside every package clear of the outer frame" do
