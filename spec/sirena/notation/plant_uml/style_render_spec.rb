@@ -49,6 +49,31 @@ RSpec.describe Sirena::Notation::PlantUML::Style do
       expect(first(comp, "*[local-name()='line']")).not_to be_nil
     end
 
+    it "fills only the name band of a composite and leaves its body clear" do
+      comp = group(svg(*composite), "state-Comp")
+      band = first(comp, ".//*[local-name()='path']")
+      frame = first(comp, ".//*[local-name()='rect']")
+
+      expect([band.attributes["fill"], frame.attributes["fill"]])
+        .to eq(["#F1F1F1", "none"])
+    end
+
+    it "closes the composite's band at its divider" do
+      comp = group(svg(*composite), "state-Comp")
+      band = first(comp, ".//*[local-name()='path']").attributes["d"]
+      rule = first(comp, "*[local-name()='line']").attributes["y1"].to_f
+      bottoms = band.scan(/L(\S+),(\S+)/).map { |_, y| y.to_f }
+
+      expect(bottoms).to include(rule)
+    end
+
+    it "fills the whole composite when the source sets its colour" do
+      comp = group(svg("state Comp #pink {", "[*] --> A", "}"), "state-Comp")
+      fill = first(comp, ".//*[local-name()='rect']").attributes["fill"]
+
+      expect(fill).to eq("#FFC0CB")
+    end
+
     it "applies BackgroundColor, BorderColor and RoundCorner from skinparam" do
       rect = first(group(svg(*state_block, "state A"), "state-A"),
                    "*[local-name()='rect']")

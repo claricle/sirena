@@ -28,6 +28,19 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     expect(wide.width).to be > plain.width
   end
 
+  it "widens the canvas to a bold title plus the JAR's 27 px" do
+    scene = laid_out("title this contains only B and D", "B -> B", "D -> D")
+
+    expect(scene.width).to be_within(0.01).of(216.13)
+  end
+
+  it "keeps the wide title's text inside the canvas" do
+    scene = laid_out("title this contains only B and D", "B -> B", "D -> D")
+    half = 189.0342 / 2
+
+    expect(scene.title.texts.first.x - half).to be >= 0
+  end
+
   it "draws no title when none is written" do
     expect(plain.title).to be_nil
   end

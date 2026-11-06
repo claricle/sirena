@@ -143,13 +143,56 @@ module Sirena
             end
           end
 
+          # PlantUML fills only the name band of a composite left at the
+          # default background and leaves its body clear; a colour the
+          # diagram sets fills the whole composite.
           def outline(state)
+            return banded_outline(state) if banded?(state)
+
             Svg::Rect.new(x: state.x, y: state.y, width: state.width,
                           height: state.height,
                           fill: look(:background, state)).tap do |rect|
               stroke(rect, state)
               round(rect, state)
             end
+          end
+
+          def banded?(state)
+            state.children.any? &&
+              look(:background, state) == Style::Defaults::BOX[:background]
+          end
+
+          def banded_outline(state)
+            frame = Svg::Rect.new(x: state.x, y: state.y, width: state.width,
+                                  height: state.height, fill: "none")
+            stroke(frame, state)
+            round(frame, state)
+            Svg::Group.new.tap do |group|
+              group.children << band(state)
+              group.children << frame
+            end
+          end
+
+          # The name band: rounded above, square below, as far down as the
+          # divider.
+          def band(state)
+            left = state.x
+            right = left + state.width
+            top = state.y
+            radius = look(:round_corner, state)
+            Svg::Path.new(
+              d: band_path(left, right, top, radius),
+              fill: look(:background, state),
+            )
+          end
+
+          def band_path(left, right, top, radius)
+            bottom = top + Look::BAR
+            "M#{left + radius},#{top} L#{right - radius},#{top} " \
+              "A#{radius},#{radius} 0 0 1 #{right},#{top + radius} " \
+              "L#{right},#{bottom} L#{left},#{bottom} " \
+              "L#{left},#{top + radius} " \
+              "A#{radius},#{radius} 0 0 1 #{left + radius},#{top}"
           end
 
           def round(rect, state)

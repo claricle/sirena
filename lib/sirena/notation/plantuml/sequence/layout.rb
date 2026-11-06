@@ -35,6 +35,7 @@ module Sirena
           MIN_GAP = 10.0
           BOX_PADDING = 4.0
           BOX_TITLE_SIZE = 13.0
+          BOLD_CHROME_SCALE = 0.9158
           SELF_MIN_CLEARANCE = 50.0
           BOX_TITLE_PADDING = 3.0
           BOX_TITLE_HEIGHT = 26.0
@@ -117,7 +118,8 @@ module Sirena
           }.freeze
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
-                           :BOX_TITLE_SIZE, :SELF_MIN_CLEARANCE,
+                           :BOX_TITLE_SIZE, :BOLD_CHROME_SCALE,
+                           :SELF_MIN_CLEARANCE,
                            :INTRINSIC_HEAD_PADDING, :INTRINSIC_HEAD_HEIGHT,
                            :SELF_WIDTH, :CLASSIC_LABEL_INSET, :BOX_PADDING,
                            :BOX_TITLE_PADDING,
@@ -914,8 +916,19 @@ module Sirena
             @chrome_rows ||= ChromeRows.new(@diagram, method(:chrome_width))
           end
 
-          def chrome_width(text, size)
-            measure_text(text, font_size: size || font_size)[:width]
+          def chrome_width(text, size, bold: false)
+            size ||= font_size
+            return bold_width(text, size) if bold
+
+            measure_text(text, font_size: size)[:width]
+          end
+
+          # The JAR measures a bold chrome text at 0.916 of DejaVu Bold: its
+          # textLength over the table's width is 0.9153, 0.9160 and 0.9159
+          # for three titles of 17 to 36 characters.
+          def bold_width(text, size)
+            Drawing::Face.width(text, size: size, bold: true) *
+              BOLD_CHROME_SCALE
           end
 
           def page_height
