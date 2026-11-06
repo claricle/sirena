@@ -26,10 +26,10 @@ module Sirena
           NOTE = [[:polygon, [[0, 0, 0, 0], [1, 0, -8, 0], [1, 0, 0, 8],
                               [1, 1, 0, 0], [0, 1, 0, 0]], "#FEFFDD"]].freeze
           ACTOR = [[:circle, [0.5, 0, 0, 8], 8],
-                   [:line, [0.5, 0, 0, 16], [0.5, 0, 0, 36]],
-                   [:line, [0.5, 0, -12, 22], [0.5, 0, 12, 22]],
-                   [:line, [0.5, 0, 0, 36], [0.5, 0, -12, 50]],
-                   [:line, [0.5, 0, 0, 36], [0.5, 0, 12, 50]]].freeze
+                   [:line, [0.5, 0, 0, 16], [0.5, 0, 0, 43]],
+                   [:line, [0.5, 0, -13, 24], [0.5, 0, 13, 24]],
+                   [:line, [0.5, 0, 0, 43], [0.5, 0, -13, 58]],
+                   [:line, [0.5, 0, 0, 43], [0.5, 0, 13, 58]]].freeze
           PORT = [[:rect, [0.5, 0, -6, 0], [0, 0, 12, 12]]].freeze
           PORT_IN = [[:rect, [0.5, 1, -6, -12], [0, 0, 12, 12]]].freeze
           DATABASE = [[:path, [[:M, [0, 0, 0, 8]],
@@ -63,7 +63,7 @@ module Sirena
           # Where the label goes, by kind: `top` from the box top, else
           # centred; `dy` moves a centred label, `shift` and `shrink` its
           # horizontal middle and width, `left` pins it to the left.
-          LABELS = { actor: { top: 52 }, interface: { top: 22 },
+          LABELS = { actor: { top: 59.5 }, interface: { top: 22 },
                      circle: { top: 20 },
                      portin: { top: 0 }, portout: { top: 12 },
                      note: { top: 4, left: 8 }, database: { dy: 6 },

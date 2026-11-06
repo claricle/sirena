@@ -4,6 +4,7 @@ require_relative "../../../text_measurement"
 require_relative "../../plantuml_data/boxes/table_box"
 require_relative "archimate"
 require_relative "entity_metrics"
+require_relative "usecase_ellipse"
 
 module Sirena
   module Notation
@@ -37,13 +38,24 @@ module Sirena
 
           # @return [Array(Float, Float)] width and height of a leaf node
           def size(node)
-            return EntityMetrics.size(node) if node.kind == :entity
-            return data_size(node) if node.kind == :data
+            case node.kind
+            when :entity then EntityMetrics.size(node)
+            when :data then data_size(node)
+            when :usecase then usecase_size(node)
+            else text_size(node)
+            end
+          end
 
+          def text_size(node)
             lines = text_lines(node)
             width = text_width(lines)
             height = text_height(lines)
             send(:"size_#{shape(node.kind)}", width, height + sprite_room(node))
+          end
+
+          def usecase_size(node)
+            widths = text_lines(node).map { |line| text_width([line]) }
+            UsecaseEllipse.size(widths, LINE_HEIGHT)
           end
 
           def sprite_room(node)
@@ -63,11 +75,7 @@ module Sirena
             :box
           end
 
-          def size_actor(width, height) = [[width + 8, 40.0].max, 54.0 + height]
-
-          def size_usecase(width, height)
-            [[(width * 1.35) + 24, 80.0].max, height + 34]
-          end
+          def size_actor(width, height) = [[width, 26.0].max, 59.5 + height]
 
           def size_component(width, height)
             [width + 40, height + 30]
