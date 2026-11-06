@@ -21,7 +21,7 @@ module Sirena
             @placement = placement
             @canvas = Canvas.new(metrics)
             @frames = FrameMarks.new(diagram, placement, @canvas, metrics)
-            @edges = EdgeMarks.new(router, @canvas)
+            @edges = EdgeMarks.new(router, @canvas, curved: diagram.legacy)
             @nodes = NodeMarks.new(placement.boxes, @canvas, metrics)
           end
 

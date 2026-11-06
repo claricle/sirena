@@ -18,8 +18,10 @@ module Sirena
           TERMINAL = "#222222"
           # The stroke width of the shapes PlantUML draws heavier than a box.
           DRAWN_WIDTHS = { warning: "3", bar: "1" }.freeze
+          # How far a cubic stops short of the tip of its arrow head.
+          HEAD_NOTCH = 5.0
           private_constant :FONT_FAMILY, :PAPER, :INK, :TERMINAL,
-                           :DRAWN_WIDTHS
+                           :DRAWN_WIDTHS, :HEAD_NOTCH
 
           # @param style [Style::Sheet] what the source sets; the drawn
           #   defaults stand for anything it leaves out
@@ -78,7 +80,8 @@ module Sirena
           end
 
           def draw_path(attrs)
-            element(Svg::Path, d: path_data(attrs[:points]), fill: "none",
+            data = path_data(attrs[:points], curve: attrs[:curve])
+            element(Svg::Path, d: data, fill: "none",
                                stroke: line_ink(attrs[:stroke]),
                                stroke_width: attrs[:width].to_s,
                                stroke_dasharray: attrs[:dash])
@@ -176,7 +179,32 @@ module Sirena
             points.map { |x, y| "#{number(x)},#{number(y)}" }.join(" ")
           end
 
-          def path_data(points)
+          # PlantUML's cubic for a straight edge: control points a third of
+          # the way along, stopping short of the arrow head's notch.
+          def cubic(points)
+            from, to = points
+            to = shortened(from, to)
+            ctrl = [1, 2].map { |third| lerp(from, to, third / 3.0) }
+            curve = [*ctrl, to].map { |point| coords(point) }.join(" ")
+            "M#{coords(from)} C#{curve}"
+          end
+
+          def lerp(from, to, fraction)
+            from.zip(to).map { |a, b| a + ((b - a) * fraction) }
+          end
+
+          def shortened(from, to)
+            length = Math.hypot(to.first - from.first, to.last - from.last)
+            lerp(from, to, [(length - HEAD_NOTCH) / length, 0.0].max)
+          end
+
+          def coords(point)
+            point.map { |value| number(value) }.join(",")
+          end
+
+          def path_data(points, curve: false)
+            return cubic(points) if curve && points.size == 2
+
             points.each_with_index.map do |(x, y), index|
               "#{index.zero? ? 'M' : 'L'}#{number(x)},#{number(y)}"
             end.join(" ")
