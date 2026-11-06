@@ -477,10 +477,10 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
         .to be_within(0.001).of(17.568)
     end
 
-    it "steps the lines of a note by 1.1776 of the 14-point default font" do
+    it "steps the lines of a note by 1.1776 of its 13-point skin font" do
       texts = scene_of("A -> B", "note over A: a\\nb").notes.first.texts
 
-      expect(texts.last.y - texts.first.y).to be_within(0.001).of(14 * 1.1776)
+      expect(texts.last.y - texts.first.y).to be_within(0.001).of(13 * 1.1776)
     end
 
     context "with a standalone note between two messages" do

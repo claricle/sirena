@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative "../creole"
+require_relative "../drawing"
+
 module Sirena
   module Notation
     module PlantUML
@@ -10,6 +13,7 @@ module Sirena
           extend self
 
           PAD = 8.0
+          SKIN_FONT_SIZE = 13.0
           OFFSET = 6.0
           OVER_MARGIN = 10.0
           BLOCK_GAP = 5.0
@@ -23,10 +27,26 @@ module Sirena
           private_constant :LINE_PITCH, :CHROME
 
           # Width the text needs, without regard to the participants.
-          def natural_width(note, measure)
+          def natural_width(note, font_size)
             return picture_width(note.picture) + (2 * PAD) if note.picture
 
-            note.lines.map { |line| measure.call(line) }.max + (2 * PAD)
+            widest = note.lines.map { |line| line_width(line, font_size) }
+            widest.max + (2 * PAD)
+          end
+
+          # A line is as wide as it is drawn, in the face the other sequence
+          # text is measured in: creole markers and tags take no room, a bold
+          # run is measured bold, a `<size:N>` run at its own size, and a
+          # monospace run (`""..""`, an undecoded image) in the mono face.
+          def line_width(line, font_size, bold: false)
+            Creole.parse(line).sum { |run| run_width(run, font_size, bold) }
+          end
+
+          # The widest line of a multi-line label (a newline or a literal
+          # backslash-n splits it), each line measured as drawn.
+          def widest_line(text, font_size, bold: false)
+            lines = text.to_s.split(/\\n|\n/, -1)
+            lines.map { |l| line_width(l, font_size, bold: bold) }.max.to_f
           end
 
           def line_height(font_size)
@@ -83,6 +103,18 @@ module Sirena
           end
 
           private
+
+          def run_width(run, font_size, bold)
+            size = run.style[:size].to_f
+            size = font_size unless size.positive?
+            if run.style[:mono]
+              return TextMeasurement.measure_mono(run.text,
+                                                  font_size: size)[:width]
+            end
+
+            Drawing::Face.width(run.text, size: size,
+                                          bold: bold || run.style[:bold])
+          end
 
           def message_span(message, ids)
             message.participants.map { |id| ids.index(id) }.minmax

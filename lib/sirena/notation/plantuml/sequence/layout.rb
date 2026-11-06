@@ -284,6 +284,7 @@ module Sirena
               message_family: ("monospace" if compact?),
               label_inset: (7 if compact?), bounds: head_bounds,
               activation_edges: activation_edges?, head_halves: head_halves,
+              note_font_size: note_font_size,
               teoz_fragment_cadence: teoz_fragment_cadence?,
               **walker_cadence
             )
@@ -480,9 +481,8 @@ module Sirena
           end
 
           def participant_label_width(participant)
-            Drawing::Face.widest_line(participant.label,
-                                      size: head_font_size,
-                                      bold: bold_heads?)
+            NoteGeometry.widest_line(participant.label, head_font_size,
+                                     bold: bold_heads?)
           end
 
           # PlantUML draws a head label bold from weight 700 up.
@@ -668,12 +668,14 @@ module Sirena
               (previous.is_a?(Message) && previous.self_message?)
           end
 
-          # Classic side notes keep clear of neighbouring lifelines; Teoz
-          # allows them to cross the neighbouring lifeline.
+          # PlantUML 1.2026.6 classic never moves lifelines for a note: a
+          # wide note overlaps its neighbours and only grows the canvas.
+          # Teoz keeps a note over several lifelines clear of them.
           def widen_note(gaps, note, span)
-            return if compact? && %i[left right].include?(note.side)
+            return unless compact?
+            return if %i[left right].include?(note.side)
 
-            need = NoteGeometry.natural_width(note, method(:text_width))
+            need = NoteGeometry.natural_width(note, note_font_size)
             low, high = span
             case note.side
             when :left then raise_gap(gaps, low - 1, need + 12)
@@ -866,7 +868,7 @@ module Sirena
           end
 
           def sans_width(text)
-            Drawing::Face.widest_line(text, size: message_font_size)
+            NoteGeometry.widest_line(text, message_font_size)
           end
 
           def label_width(message)
@@ -1387,6 +1389,13 @@ module Sirena
             theme.typography.font_size_normal.to_f
           end
 
+          # The default skin draws a note in 13px, a theme in its own size.
+          def note_font_size
+            return font_size unless [nil, "default"].include?(theme.name)
+
+            NoteGeometry::SKIN_FONT_SIZE
+          end
+
           def text_width(string)
             measure_text(string, font_size: font_size)[:width]
           end
@@ -1536,7 +1545,7 @@ module Sirena
           def label_text_width(string)
             return message_text_width(string) if compact?
 
-            Drawing::Face.widest_line(string, size: message_font_size)
+            NoteGeometry.widest_line(string, message_font_size)
           end
         end
       end

@@ -21,10 +21,15 @@ module Sirena
         # they were declared, a box tied to another by a relation of no rank
         # right after it, and every rank is centred on the widest.
         class GraphLayout
-          RANK_GAP = 50.0
+          RANK_GAP = 60.0
+          # A label on a line between neighbouring ranks takes a text row of
+          # its own between them, the JAR's way: 17 for one line, 15 more
+          # for each further line.
+          LABEL_ROW = 15.0
+          LABEL_PAD = 2.0
           DASH = "7,7"
           FONT_SIZE = 14
-          SIBLING_GAP = 30.0
+          SIBLING_GAP = 35.0
           MARGIN = 7.0
           TITLE_BAND = 30.0
           Rect = Data.define(:x, :y, :width, :height) do
@@ -32,8 +37,8 @@ module Sirena
             def right = x + width
             def bottom = y + height
           end
-          private_constant :RANK_GAP, :SIBLING_GAP, :MARGIN, :TITLE_BAND, :Rect,
-                           :DASH, :FONT_SIZE
+          private_constant :RANK_GAP, :LABEL_ROW, :LABEL_PAD, :SIBLING_GAP,
+                           :MARGIN, :TITLE_BAND, :Rect, :DASH, :FONT_SIZE
 
           # @param diagram [Diagram]
           # @return [Scene]
@@ -147,20 +152,38 @@ module Sirena
 
           def lane_rects(lanes, sizes)
             spans = sizes.map { |boxes| span_of(boxes) }
-            lanes.zip(sizes, lane_starts(sizes), spans).map do |*lane, span|
+            starts = lane_starts(lanes, sizes)
+            lanes.zip(sizes, starts, spans).map do |*lane, span|
               cross = (across? ? band : MARGIN) + ((spans.max - span) / 2)
               place_lane(*lane, cross)
             end.reduce({}, :merge)
           end
 
           # The coordinate along the ranks at which each lane begins.
-          def lane_starts(sizes)
+          def lane_starts(lanes, sizes)
             main = across? ? MARGIN : band
-            sizes.map do |boxes|
+            sizes.each_index.map do |index|
               start = main
-              main += boxes.map { |box| main_of(box) }.max + rank_gap
+              main += sizes[index].map { |box| main_of(box) }.max +
+                rank_gap + label_room(lanes, index)
               start
             end
+          end
+
+          # The room the labels of the lines from lane `index` to the next
+          # lane take: the tallest of them.
+          def label_room(lanes, index)
+            rows = @diagram.links.filter_map do |link|
+              label_rows(link, lanes[index], lanes[index + 1])
+            end.max
+            rows ? LABEL_PAD + (rows * LABEL_ROW) : 0.0
+          end
+
+          def label_rows(link, above, below)
+            return unless below && above.include?(link.from)
+            return if !below.include?(link.to) || link.label.to_s.empty?
+
+            link.label.split(/\\n|\n/).size
           end
 
           # Frames take room between ranks and between boxes of a rank.

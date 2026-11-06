@@ -126,7 +126,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
   it "pins the classic non-teoz SVG bytes" do
     expect(digest(noted_source))
-      .to eq("e1bd174b28703189164f9932374e83adc65479c734b6ae3bb2c44f46e62facea")
+      .to eq("6672b472d696f6835a25a31915013a14f0ac363dbd0a3fc39548402cb26e46fa")
   end
 
   it "matches the pinned teoz participant-head dimensions" do

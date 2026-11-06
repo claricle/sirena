@@ -127,7 +127,7 @@ module Sirena
           def sized_item(node, level, children)
             role = Role.parse(node.role)
             lines, mono = text_lines(node)
-            width, height = measured(lines, mono)
+            width, height = measured(lines, mono, boxless: role.boxless)
             Item.new(node.id, level, role.side, role.boxless, role.fill, lines,
                      width, height, children, mono)
           end
@@ -139,12 +139,12 @@ module Sirena
              lines.map { |line| line.start_with?(Reader::MONO_MARK) }]
           end
 
-          def measured(lines, mono)
+          def measured(lines, mono, boxless: false)
             widest = lines.zip(mono).map do |line, mono_line|
               line_width(line, mono_line)
             end.max
             [widest + (2 * PAD_X),
-             mono.sum { |mono_line| pitch(mono_line) } + (2 * PAD_Y)]
+             mono.sum { |mono_line| pitch(mono_line) } + (2 * pad_y(boxless))]
           end
 
           def line_width(line, mono)
@@ -155,6 +155,16 @@ module Sirena
 
           def pitch(mono)
             mono ? font_size * MONO_LINE_RATIO : line_height
+          end
+
+          # The room above and below a box's text; a boxless node's own
+          # layout may keep it tighter.
+          def pad_y(boxless)
+            boxless ? boxless_pad_y : PAD_Y
+          end
+
+          def boxless_pad_y
+            PAD_Y
           end
 
           def box(item, left, top)
@@ -245,7 +255,7 @@ module Sirena
 
           def label(item, left_edge, top)
             left = left_edge + PAD_X
-            first = top + PAD_Y + (font_size * BASELINE_RATIO)
+            first = top + pad_y(item.boxless) + (font_size * BASELINE_RATIO)
             Label.new(text: item.lines.join("\n"), x: left, y: first.round(3),
                       font_size: font_size,
                       lines: positioned_lines(item, left, top + PAD_Y))

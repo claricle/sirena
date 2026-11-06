@@ -28,9 +28,32 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
     rect[:y] + (rect[:height] / 2.0)
   end
 
-  def decision_ys(scene)
+  def centre(rect)
+    rect[:x] + (rect[:width] / 2.0)
+  end
+
+  def diamond(scene)
     scene.marks.find { |m| m.kind == :polygon && m.attrs[:points].size == 4 }
-      .attrs[:points].map(&:last)
+      .attrs[:points]
+  end
+
+  def decision_x(scene)
+    xs = diamond(scene).map(&:first)
+    xs.sum / xs.size
+  end
+
+  def paths(scene)
+    scene.marks.select { |m| m.kind == :path }.map { |m| m.attrs[:points] }
+  end
+
+  # The x of every corner of the path that leaves the bottom of `rect`.
+  def leaving(scene, rect)
+    bottom = (rect[:y] + rect[:height]).round(2)
+    paths(scene).find { |pts| pts.first.last.round(2) == bottom }.map(&:first)
+  end
+
+  def decision_ys(scene)
+    diamond(scene).map(&:last)
   end
 
   def overlap?(points, axis, start, size)
@@ -66,12 +89,58 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
         .to be < middle(rect_of(scene, "Some Action"))
     end
 
+    it "stands Something else over Some Action's column, not past it",
+       :aggregate_failures do
+      parked = rect_of(scene, "Something else")
+      action = rect_of(scene, "Some Action")
+
+      expect(parked[:x]).to be < action[:x] + action[:width]
+      expect(scene.width).to be_within(0.01).of(258.31)
+    end
+
+    it "hangs the decision midway between its two branches",
+       :aggregate_failures do
+      action = centre(rect_of(scene, "Some Action"))
+      parked = centre(rect_of(scene, "Something else"))
+
+      expect(decision_x(scene)).to be_within(0.01).of((action + parked) / 2.0)
+      expect(parked - action).to be_within(0.01).of(86.70)
+    end
+
+    it "drops Ending process straight into the end beside Another Action",
+       :aggregate_failures do
+      xs = leaving(scene, rect_of(scene, "Something else"))
+
+      expect(xs.uniq).to eq([stop[:cx]])
+      expect(stop[:cx]).to be_within(0.01)
+        .of(centre(rect_of(scene, "Something else")))
+    end
+
     it "draws no edge through Another Action" do
       another = rect_of(scene, "Another Action")
       crossing = scene.marks.select { |m| m.kind == :path }.select do |m|
         m.attrs[:points].each_cons(2).any? { |seg| crosses?(another, seg) }
       end
       expect(crossing).to be_empty
+    end
+  end
+
+  describe "a drop down one column" do
+    let(:blocked) { layout(%((*) --> "A"\n--> "B"\n--> "C"\n"A" --> "C")) }
+
+    it "goes round the right of a step that stands in it" do
+      middle_box = rect_of(blocked, "B")
+      lane = paths(blocked).flat_map { |pts| pts.map(&:first) }.max
+
+      expect(lane).to be > middle_box[:x] + middle_box[:width]
+    end
+
+    it "is drawn straight when the column is clear" do
+      clear = layout(%((*) --> "A"\n--> "B"))
+
+      widths = paths(clear).map { |pts| pts.map(&:first).uniq.size }
+
+      expect(widths).to all(eq(1))
     end
   end
 
@@ -127,6 +196,10 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
     let(:diagram) do
       path = File.join(ActivityHelpers::FIXTURES, "plantuml-lrg-5-12.puml")
       Sirena::Notation::PlantUML::Activity::Parser.new.parse(File.read(path))
+    end
+
+    it "stands the branches of a long diagram on shared rows only" do
+      expect(scene_of("5-12").width).to be_within(0.01).of(593.70)
     end
 
     it "prints no label over another" do

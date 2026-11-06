@@ -18,27 +18,35 @@ module Sirena
         class Renderer < Sirena::Renderer::Base
           INK = "#181818"
           DASH = "5,4"
+          SECOND_OFFSET = "translate(2,2)"
           NAMED = /\A[A-Za-z]+\z/
 
           # @param scene [Scene]
           # @return [Svg::Document]
           def render(scene)
-            Svg::Document.new(width: scene.width, height: scene.height,
-                              view_box: "0 0 #{scene.width} #{scene.height}")
-              .tap do |document|
-              elements(scene).each { |element| document << element }
+            placements = LabelPlacer.new.call(scene.routes, scene.placed)
+            document(scene, placements).tap do |document|
+              elements(scene, placements).each { |item| document << item }
             end
           end
 
           private
 
-          def elements(scene)
+          # Wide and tall enough for the labels as well as the scene.
+          def document(scene, placements)
+            width = [scene.width, *placements.map(&:right)].max
+            height = [scene.height, *placements.map(&:bottom)].max
+            Svg::Document.new(width: width, height: height,
+                              view_box: "0 0 #{width} #{height}")
+          end
+
+          def elements(scene, placements)
             containers, leaves = scene.placed.partition do |box|
               box.node.container?
             end
             [*drawn(containers.sort_by(&:depth)), *scene.routes.flat_map do |r|
               link(r)
-            end, *drawn(leaves), *labels(scene), *title(scene)]
+            end, *drawn(leaves), *labels(placements), *title(scene)]
           end
 
           def drawn(boxes)
@@ -46,8 +54,8 @@ module Sirena
             boxes.flat_map { |box| shapes.draw(box) }
           end
 
-          def labels(scene)
-            LabelPlacer.new.call(scene.routes).map do |placed|
+          def labels(placements)
+            placements.map do |placed|
               text(placed.x, placed.y, placed.route.edge.label)
             end
           end
@@ -63,11 +71,24 @@ module Sirena
             edge = route.edge
             return [NoteTail.new(route.points).element] if note?(edge)
 
-            color = ink(edge.color)
             points = route.points
-            [line(points, edge, color),
-             *Heads.for(edge, points.first, points.last, color,
-                        [points[1], points[-2]])]
+            [line(points, edge, ink(edge.color)), *heads(points, edge),
+             *second_stroke(points, edge)]
+          end
+
+          def heads(points, edge)
+            Heads.for(edge, points.first, points.last, ink(edge.color),
+                      [points[1], points[-2]])
+          end
+
+          # PlantUML draws `-[#blue;#green]->` as the line in each colour, the
+          # second two units right and down (measured on 1.2026.6).
+          def second_stroke(points, edge)
+            return [] unless edge.color2
+
+            [line(points, edge, ink(edge.color2)).tap do |copy|
+              copy.transform = SECOND_OFFSET
+            end]
           end
 
           def note?(edge)

@@ -51,7 +51,7 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph do
     it "sizes a component as the JAR does: text plus 40 by text plus 30" do
       width = Sirena::TextMeasurement.measure_in(:dejavu, "c1",
                                                  font_size: 14)[:width]
-      box = rects(svg).find { |rect| rect["rx"] == "2.5" }
+      box = rects(svg).find { |r| r["rx"] == "2.5" && r["fill"] != "none" }
       expect(box["width"].to_f).to be_within(0.1).of(width + 40)
     end
   end

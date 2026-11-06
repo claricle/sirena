@@ -77,13 +77,20 @@ module Sirena
             .transform_values { |marker| kind_of(marker, dashed) }
         end
 
-        # The bracket's colour (the first of `#red;#green`), thickness and
-        # dotted flag; absent keys mean the theme's own line.
+        # The bracket's colour, thickness and dotted flag; absent keys mean
+        # the theme's own line. Of comma-separated colours the last wins, as
+        # in the JAR; of a `#red;#green` pair the first.
         def stroke_of(style)
           words = style.split(/[,;]/).map(&:strip)
-          { color: words.filter_map { |word| word[/\A#(\w+)\z/, 1] }.first,
+          { color: color_of(style),
             width: thickness_of(words),
             dotted: words.any? { |word| word.casecmp?("dotted") } }
+        end
+
+        def color_of(style)
+          style.split(",").filter_map do |group|
+            group.split(";").first.to_s.strip[/\A#(\w+)\z/, 1]
+          end.last
         end
 
         def thickness_of(words)

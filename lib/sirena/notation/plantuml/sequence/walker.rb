@@ -113,6 +113,7 @@ module Sirena
                               :fragment_close_gap, :divider_row,
                               :group_fragment_row, :group_close_gap,
                               :activation_edges, :teoz_fragment_cadence,
+                              :note_font_size,
                               :deactivation_gap, :bare_deactivation_gap,
                               :frame_top_offset, :frame_bottom_offset,
                               :branch_offset, :bounds, :head_halves,
@@ -196,6 +197,7 @@ module Sirena
             apply_message_config(config)
             apply_cadence_config(config)
             @bounds = config.bounds
+            @note_font_size = config_value(config, :note_font_size, @font_size)
             @head_halves = config.head_halves || {}
           end
 
@@ -449,7 +451,7 @@ module Sirena
           end
 
           def sans_message_width(text)
-            Drawing::Face.widest_line(text, size: @message_font_size)
+            NoteGeometry.widest_line(text, @message_font_size)
           end
 
           def message_row(message)
@@ -904,13 +906,13 @@ module Sirena
           end
 
           def block_box(note)
-            natural = NoteGeometry.natural_width(note, @measure)
+            natural = NoteGeometry.natural_width(note, @note_font_size)
             NoteGeometry.beside(@closed[:shape], natural)
           end
 
           def note_box(note, previous)
             span = NoteGeometry.span(note, previous, @ids)
-            natural = NoteGeometry.natural_width(note, @measure)
+            natural = NoteGeometry.natural_width(note, @note_font_size)
             NoteGeometry.box(note, span.map { |i| @centers[i] }, natural)
           end
 
@@ -937,7 +939,7 @@ module Sirena
           def note_texts(note, left, top)
             return [] if note.picture
 
-            step = NoteGeometry.line_height(@font_size)
+            step = NoteGeometry.line_height(@note_font_size)
             note.lines.each_with_index.map do |line, index|
               baseline = top + NoteGeometry::FIRST_BASELINE + (index * step)
               text(line, left, baseline, "note", "start")

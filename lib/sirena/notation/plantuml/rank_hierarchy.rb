@@ -14,15 +14,19 @@ module Sirena
       # {for} returns nil when the diagram has packages, association classes
       # or a relation cycle, which keeps the grid.
       class RankHierarchy
-        RANK_GAP = 90.0
+        RANK_GAP = 60.0
         NODE_GAP = 35.0
         SAME_RANK_GAP = 50.0
         BLOCK_GAP = 35.0
+        # A label on a relation between neighbouring ranks takes a text row
+        # of its own between them: 17 for one line, 15 more per further line.
+        LABEL_ROW = 15.0
+        LABEL_PAD = 2.0
         LOOSE_COLUMNS = 2
-        LOOSE_ROW_GAP = 60.0
         SIDEWAYS = %i[left right].freeze
-        private_constant :RANK_GAP, :NODE_GAP, :SAME_RANK_GAP, :BLOCK_GAP,
-                         :LOOSE_COLUMNS, :LOOSE_ROW_GAP, :SIDEWAYS
+        private_constant :RANK_GAP, :LABEL_ROW, :LABEL_PAD, :NODE_GAP,
+                         :SAME_RANK_GAP, :BLOCK_GAP,
+                         :LOOSE_COLUMNS, :SIDEWAYS
 
         # @return [RankHierarchy, nil]
         def self.for(diagram)
@@ -112,19 +116,24 @@ module Sirena
         # @param origin [Array<Float>] top-left corner of the drawing
         # @return [Hash{String => Array<Float>}] each class's top-left corner
         def place(sizes, origin)
-          corners = ranked_corners(rows_in_order, sizes, origin)
-          corners.merge(loose_corners(sizes, corners, origin))
+          rows = rows_in_order
+          loose = loose_rows
+          tops = rank_tops(rows, loose, sizes, origin.last)
+          corners = ranked_corners(rows, sizes, origin.first, tops)
+          corners.merge(loose_corners(loose, sizes, corners, tops))
         end
 
         private
 
-        def ranked_corners(rows, sizes, origin)
+        def ranked_corners(rows, sizes, left, tops)
           lefts = centred_lefts(rows, sizes)
-          shift = origin.first - lefts.values.min
-          tops = row_tops(rows, sizes, origin.last)
-          rows.flatten.to_h do |name|
-            [name, [lefts.fetch(name) + shift, tops.fetch(name)]]
-          end
+          shift = left - lefts.values.min
+          rows.each_with_index.flat_map do |row, rank|
+            row.map do |name|
+              [name, [lefts.fetch(name) + shift,
+                      centred_top(tops.fetch(rank), sizes.fetch(name).last)]]
+            end
+          end.to_h
         end
 
         def declared
@@ -250,41 +259,85 @@ module Sirena
           lefts.fetch(name) + (sizes.fetch(name).first / 2)
         end
 
-        def row_tops(rows, sizes, start)
+        # Each rank's top and height: as tall as its tallest class, loose
+        # ones included, the next rank a rank gap and the labels' room below.
+        def rank_tops(rows, loose, sizes, start)
           cursor = start
-          rows.each_with_object({}) do |row, tops|
-            row.each { |name| tops[name] = cursor }
-            cursor += row_height(row, sizes) + RANK_GAP
+          Array.new([rows.size, loose.size].max) do |rank|
+            height = [rows, loose].map do |set|
+              row_height(set.fetch(rank, []), sizes)
+            end.max
+            Top.new(cursor, height).tap do
+              cursor += height + RANK_GAP + label_room(rows, rank)
+            end
           end
+        end
+
+        Top = Struct.new(:at, :height)
+        private_constant :Top
+
+        # Classes of unequal height share their rank's middle.
+        def centred_top(rank, height)
+          rank.at + ((rank.height - height) / 2)
+        end
+
+        # The room the labels of the relations from rank `rank` down to the
+        # next take: the tallest of them.
+        def label_room(rows, rank)
+          lines = rows[rank + 1] && @diagram.relations.filter_map do |relation|
+            label_lines(relation, rows[rank], rows[rank + 1])
+          end&.max
+          lines ? LABEL_PAD + (lines * LABEL_ROW) : 0.0
+        end
+
+        def label_lines(relation, row, below)
+          top, bottom = pair(relation)
+          return if self.class.level?(relation) || relation.label.to_s.empty?
+          return unless row.include?(top) && below.include?(bottom)
+
+          relation.label.split('\\n').size
         end
 
         def row_height(row, sizes)
-          row.map { |name| sizes.fetch(name).last }.max
+          row.map { |name| sizes.fetch(name).last }.max || 0.0
         end
 
-        # Unrelated classes fill rows of two beside the hierarchy.
-        def loose_corners(sizes, corners, origin)
-          loose = declared - @ranks.keys
+        # Unrelated classes fill rows of two beside the hierarchy, a row to
+        # a rank.
+        def loose_rows
+          (declared - @ranks.keys).each_slice(LOOSE_COLUMNS).to_a
+        end
+
+        # The first column sits right of the hierarchy's ranks that hold a
+        # loose class and centres its classes on one another; the rest follow
+        # their neighbour.
+        def loose_corners(loose, sizes, corners, tops)
           return {} if loose.empty?
 
-          edge = corners.map { |name, (x, _)| x + sizes.fetch(name).first }.max
-          loose_rows(loose.each_slice(LOOSE_COLUMNS).to_a, sizes,
-                     edge + BLOCK_GAP, origin.last)
+          left = loose_left(loose, sizes, corners)
+          starts = first_columns(loose, sizes, left)
+          loose.each_index.map do |rank|
+            row_corners(loose[rank], sizes, tops.fetch(rank), starts[rank])
+          end.reduce(:merge)
         end
 
-        def loose_rows(rows, sizes, left, top)
-          cursor = top
-          rows.each_with_object({}) do |row, corners|
-            corners.merge!(row_corners(row, sizes, left, cursor))
-            cursor += row_height(row, sizes) + LOOSE_ROW_GAP
-          end
+        def first_columns(loose, sizes, left)
+          widths = loose.map { |row| sizes.fetch(row.first).first }
+          widths.map { |width| left + ((widths.max - width) / 2) }
         end
 
-        def row_corners(row, sizes, left, top)
-          x = left
+        def loose_left(loose, sizes, corners)
+          beside = corners.select { |name, _| @ranks.fetch(name) < loose.size }
+          beside.map { |name, (x, _)| x + sizes.fetch(name).first }.max +
+            BLOCK_GAP
+        end
+
+        def row_corners(row, sizes, rank, first)
+          x = first
           row.to_h do |name|
-            corner = [name, [x, top]]
-            x += sizes.fetch(name).first + NODE_GAP
+            width, height = sizes.fetch(name)
+            corner = [name, [x, centred_top(rank, height)]]
+            x += width + NODE_GAP
             corner
           end
         end

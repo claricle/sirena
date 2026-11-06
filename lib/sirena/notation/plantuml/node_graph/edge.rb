@@ -15,10 +15,11 @@ module Sirena
         # after `from` (0 keeps them in one rank); `backwards` reads the link
         # from `to`. `pointer` marks the tail of a note written beside its
         # target (`note right of X`); a link to or from a named note is a
-        # plain line.
-        Edge = Struct.new(:from, :to, :label, :style, :head, :color, :width,
-                          :ends, :from_row, :to_row, :rank_step, :backwards,
-                          :pointer, keyword_init: true)
+        # plain line. `color2` is the second colour of `-[#red;#blue]->`,
+        # drawn as a copy of the line two units right and down.
+        Edge = Struct.new(:from, :to, :label, :style, :head, :color, :color2,
+                          :width, :ends, :from_row, :to_row, :rank_step,
+                          :backwards, :pointer, keyword_init: true)
       end
     end
   end

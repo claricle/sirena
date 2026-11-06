@@ -158,6 +158,25 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes::GraphLayout do
       expect(label.attributes["text-anchor"]).to be_nil
     end
 
+    context "with a flat line" do
+      let(:flat) do
+        render("left to right direction\nobject A\nobject B\n" \
+               "A --> B : across")
+      end
+      let(:label) { text(flat, "across") }
+      let(:line) do
+        elements(flat, "path").first.attributes["d"].scan(/[\d.]+/).map(&:to_f)
+      end
+
+      it "sets the label above it, centred on its middle",
+         :aggregate_failures do
+        expect(label.attributes["text-anchor"]).to eq("middle")
+        expect(label.attributes["y"].to_f).to be < line[1]
+        expect(label.attributes["x"].to_f)
+          .to be_within(4.0).of((line[0] + line[2]) / 2)
+      end
+    end
+
     it "puts the text of an end to the left of the line, beside that end",
        :aggregate_failures do
       four = text(svg, "4")

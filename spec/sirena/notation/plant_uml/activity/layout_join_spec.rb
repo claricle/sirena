@@ -43,6 +43,73 @@ RSpec.describe Sirena::Notation::PlantUML::Activity::Layout do
     expect(path_ends(scene)).to include(left_tip(diamond(scene)))
   end
 
+  it "sets the diamond 23.13 below a closing bar, as PlantUML does" do
+    scene = layout(["if (m?) then (y)", "fork", ":a;", "fork again", ":b;",
+                    "end fork", "else (n)", ":c;", ":d;", "endif"].join("\n"))
+    bar = rects(scene).select { |r| r[:height].round == 6 }.max_by { |r| r[:y] }
+
+    expect(diamond(scene).map(&:last).min - (bar[:y] + bar[:height]))
+      .to be_within(0.01).of(23.1328)
+  end
+
+  context "with a fork in one branch and two steps in the other" do
+    let(:source) do
+      ["if (m?) then (y)", "fork", ":a;", "fork again", ":b;", "end fork",
+       "else (n)", ":c;", ":d;", "endif"].join("\n")
+    end
+    let(:scene) { layout(source) }
+    let(:steps) do
+      scene.marks.select { |m| m.kind == :rect && m.attrs[:height] > 30 }
+        .map(&:attrs)
+    end
+    let(:bars) do
+      scene.marks.select { |m| m.kind == :rect && m.attrs[:height] == 6 }
+        .map(&:attrs).sort_by { |r| r[:y] }
+    end
+    let(:lane) do
+      edge = bars.first[:x] + bars.first[:width]
+      steps.select { |r| r[:x] > edge }
+    end
+
+    it "hangs the lane's first step from the top of the fork bar's row" do
+      head = lane.min_by { |r| r[:y] }
+
+      expect(head[:y]).to be_within(0.01).of(bars.first[:y])
+    end
+
+    it "sets the steps under the fork bar 20 below it" do
+      under = steps.reject { |r| lane.include?(r) }
+
+      expect(under.map { |r| r[:y] - (bars.first[:y] + 6) })
+        .to all(be_within(0.01).of(20.0))
+    end
+
+    it "hangs the lane's last step 6 over the closing diamond" do
+      last = lane.max_by { |r| r[:y] }
+
+      expect(diamond(scene).map(&:last).min - (last[:y] + last[:height]))
+        .to be_within(0.01).of(6.0)
+    end
+
+    it "stacks the rows no taller than the lane's steps need" do
+      expect(scene.height).to be < 240.0
+    end
+  end
+
+  context "with three steps in the lane beside a fork" do
+    let(:scene) do
+      layout(["if (m?) then (y)", "fork", ":a;", "fork again", ":b;",
+              "end fork", "else (n)", ":c;", ":d;", ":e;", "endif"].join("\n"))
+    end
+
+    it "leaves the lane's steps on the rows, the fork bar centred on its row" do
+      bar = rects(scene).find { |r| r[:height] == 6 }
+      top = rects(scene).select { |r| r[:height] > 30 }.map { |r| r[:y] }.min
+
+      expect(bar[:y] - top).to be_within(0.01).of(14.0662)
+    end
+  end
+
   def path_ends(scene)
     scene.marks.select { |m| m.kind == :path }.map { |m| m.attrs[:points].last }
   end

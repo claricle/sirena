@@ -4,6 +4,8 @@ require_relative "bar_columns"
 require_relative "column_centres"
 require_relative "exits"
 require_relative "metrics"
+require_relative "reach"
+require_relative "lane_steps"
 require_relative "legacy_row_gaps"
 require_relative "row_gaps"
 
@@ -67,8 +69,11 @@ module Sirena
               @diagram.legacy
 
             frame = head + PARTITION_BELOW + 8.0
-            exits = Exits.new(@columns, @boxes)
             RowGaps.new(@diagram, @ranking, exits, @metrics, frame).to_a
+          end
+
+          def exits
+            @exits ||= Exits.new(@columns, @boxes)
           end
 
           def header_height
@@ -84,7 +89,7 @@ module Sirena
             reach = reaches(keys)
             @centres = centres(keys, reach, margin)
             centre_nodes
-            @bands = lane_bands(keys, reach)
+            @bands = lane_bands(keys, reach.columns)
           end
 
           def centre_nodes
@@ -101,18 +106,39 @@ module Sirena
           # How far each column reaches left and right of its centre,
           # including notes and the labels hung on its arrows.
           def reaches(keys)
-            reach = keys.to_h { |key| [key, [0.0, 0.0]] }
+            reach = Reach.new(keys, by_row: @diagram.legacy)
             @diagram.nodes.reject { |n| n.kind == :bar }.each do |node|
-              key = @columns.key[node]
-              reach[key] = widen(reach[key], node)
+              widen(reach, node)
             end
+            reach_lines(reach)
             @bar_columns.widen(reach_labels(reach))
+            reach
           end
 
           def widen(reach, node)
             half = @boxes[node].width / 2.0
-            [[reach.first, half + note_room(node, :left)].max,
-             [reach.last, half + note_room(node, :right)].max]
+            grow(reach, node, 0, half + note_room(node, :left))
+            grow(reach, node, 1, half + note_room(node, :right))
+          end
+
+          def grow(reach, node, side, value)
+            reach.grow(@columns.key[node], @ranking.row(node), side, value)
+          end
+
+          # An arrow that runs past rows stands on them as a line, in its
+          # own column and where it lands, as wide as nothing; one that
+          # runs back up the page passes none.
+          def reach_lines(reach)
+            return unless @diagram.legacy
+
+            @diagram.edges.each { |edge| reach_line(reach, edge) }
+          end
+
+          def reach_line(reach, edge)
+            rows = ((@ranking.rank[edge.from] + 1)...@ranking.rank[edge.to])
+            [edge.from, edge.to].each do |node|
+              reach.line(@columns.key[node], rows)
+            end
           end
 
           # A label sits to the right of the line it rides, and a bare
@@ -131,14 +157,11 @@ module Sirena
             lines = edge.label.to_s.split("\n")
             return if lines.empty?
 
-            side = reach[@columns.key[label_owner(edge)]]
-            side[1] = [side[1], LABEL_OFFSET + width_of(lines)].max
+            grow(reach, label_owner(edge), 1, LABEL_OFFSET + width_of(lines))
           end
 
           def reach_question(reach, node)
-            key = @columns.key[node]
-            reach[key][0] = [reach[key][0],
-                             BARE_LABEL_GAP + width_of(node.lines)].max
+            grow(reach, node, 0, BARE_LABEL_GAP + width_of(node.lines))
           end
 
           def width_of(lines)
@@ -187,6 +210,20 @@ module Sirena
           def centre_row(node, tops, heights)
             row = @ranking.rank[node]
             @boxes[node].cy = tops[row] + offset(node, row, heights)
+            hang_lane(node, tops)
+          end
+
+          # A lane's first step hangs from the top of its row and its last
+          # stands just over the diamond that closes the branches, wherever
+          # the rows would have put them.
+          def hang_lane(node, tops)
+            box = @boxes[node]
+            centre = lane_steps.centre(node, box.height, tops)
+            box.cy = centre if centre
+          end
+
+          def lane_steps
+            @lane_steps ||= LaneSteps.new(@diagram, @ranking, exits)
           end
 
           # A parked node sits in the gap under its row, a node on a row
@@ -202,9 +239,13 @@ module Sirena
           end
 
           def row_heights
-            tall = @diagram.nodes.reject { |node| @ranking.parked?(node) }
+            tall = @diagram.nodes.reject { |node| parked_or_hung?(node) }
               .group_by { |node| @ranking.rank[node] }
             Array.new(tall.keys.max.to_i + 1) { |row| tallest(tall[row]) }
+          end
+
+          def parked_or_hung?(node)
+            @ranking.parked?(node) || lane_steps.hung?(node)
           end
 
           def tallest(nodes)

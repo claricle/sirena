@@ -42,6 +42,12 @@ module Sirena
               forward(node).any? { |edge| @rank[edge.to] - @rank[node] >= 2 }
           end
 
+          # @return [Numeric] the row a node's box lies on: a parked node's
+          #   is half a row below its rank
+          def row(node)
+            parked?(node) ? @rank[node] + 0.5 : @rank[node]
+          end
+
           # @return [Edge, nil] the edge that puts the node beside another
           def level_in(node)
             @level_in[node]

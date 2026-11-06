@@ -12,6 +12,10 @@ module Sirena
         # bullet.
         class EntityShape
           STROKE = "#181818"
+          # The reference draws the frame of an entity with a hairline and
+          # rounds its corners.
+          FRAME_WIDTH = "0.5"
+          CORNER = 2.5
           Metrics = EntityMetrics
 
           # @param placed [Placed]
@@ -23,7 +27,9 @@ module Sirena
           # @return [Array<Svg::Element>]
           def elements
             [shape(Svg::Rect, x: @p.x, y: @p.y, width: @p.width,
-                              height: @p.height, fill: "#F1F1F1"),
+                              height: @p.height, fill: "#F1F1F1",
+                              rx: CORNER, ry: CORNER,
+                              stroke_width: FRAME_WIDTH),
              *header, *compartments]
           end
 
