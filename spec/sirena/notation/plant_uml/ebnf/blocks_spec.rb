@@ -5,9 +5,10 @@ require "sirena/notation/plantuml"
 
 Sirena::Notation.send(:entries).delete(:plantuml)
 
-# The numbers in the examples are the PlantUML JAR 1.2026.6's own: its SVG
-# for each construct. The JAR measures text in its own font, so the examples
-# feed Sirena the JAR's advances; every coordinate then agrees to 0.001.
+# Radii, strokes, heights and arrowhead shapes are the PlantUML JAR 1.2026.6's
+# own, from its SVG for each construct. Text is measured with Sirena's DejaVu
+# Sans advances, not the JAR's face, so every x coordinate and width is
+# Sirena's DejaVu-derived geometry and sits a few pixels from the JAR's.
 RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
   include_context "with an isolated notation registry"
 
@@ -16,20 +17,10 @@ RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
                               notation: :plantuml)
   end
 
-  let(:jar_advances) do
-    { "a" => 7.7314, "b" => 8.8115, "c" => 7.1709, "d" => 8.8115,
-      "x" => 8.5859, "e" => 7.7998, "s" => 7.916, "special seq" => 74.9219 }
-  end
+  before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
-  before do
-    Sirena::Notation.register(Sirena::Notation::PlantUML)
-    allow(Sirena::TextMeasurement).to receive(:measure)
-      .and_wrap_original do |original, text, **options|
-      advance = jar_advances[text]
-      next original.call(text, **options) unless advance
-
-      { width: advance, height: 14.0 }
-    end
+  def advance(text)
+    Sirena::TextMeasurement.measure_in(:dejavu, text, font_size: 14)[:width]
   end
 
   def paths(rule)
@@ -125,7 +116,8 @@ RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
     end
 
     it "draws a loop with the item on the lower rail and the line above" do
-      expect(rects('r = { "a" };')).to eq([[79.0, 68.49, 17.73, 26.49]])
+      width = (advance("a") + 10).round(2)
+      expect(rects('r = { "a" };')).to eq([[79.0, 68.49, width, 26.49]])
     end
 
     it "rounds the loop-back line at the JAR's loop radius of 8" do
@@ -142,14 +134,14 @@ RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
 
     it "points the bypass arrowhead forward and the loop-back one back" do
       expect(points('r = { "a" };').first(2)).to eq(
-        [[76.29, 43.49, 82.29, 46.49, 76.29, 49.49],
-         [87.64, 58.49, 81.64, 61.49, 87.64, 64.49]],
+        [[76.63, 43.49, 82.63, 46.49, 76.63, 49.49],
+         [88.15, 58.49, 82.15, 61.49, 88.15, 64.49]],
       )
     end
 
     it "closes a rule with an arrowhead on its end rail" do
       expect(points('r = "a", "b", c;')).to eq(
-        [[144.71, 46.73, 150.71, 49.73, 144.71, 52.73]],
+        [[146.16, 46.73, 152.16, 49.73, 146.16, 52.73]],
       )
     end
 
@@ -165,13 +157,13 @@ RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
 
   describe "the size of a diagram" do
     {
-      'r = "a", "b", c;' => [174, 88],
+      'r = "a", "b", c;' => [176, 88],
       'r = "a" | "b" | "c" | "d";' => [147, 198],
-      'r = [ "a" ];' => [146, 108],
-      'r = { "a" };' => [176, 120],
-      'r = { "a" }-;' => [128, 100],
+      'r = [ "a" ];' => [147, 108],
+      'r = { "a" };' => [177, 120],
+      'r = { "a" }-;' => [129, 100],
       'r = "x", { "a" | [ b ] }, ( "c" | "d" ), "e";' => [437, 180],
-      %(r = "a";\ns = b, "c";) => [136, 156],
+      %(r = "a";\ns = b, "c";) => [137, 156],
     }.each do |rule, expected|
       it "is #{expected.join('x')} for #{rule.inspect}" do
         expect(size(rule)).to eq(expected.map(&:to_f))
@@ -192,7 +184,13 @@ RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
 
     it "dashes a special sequence 5 on 5 off" do
       expect(tags("r = ? special seq ?;", "rect").first)
-        .to include('stroke-dasharray="5,5"', 'width="93.78')
+        .to include('stroke-dasharray="5,5"')
+    end
+
+    it "pads a special sequence's text by 18.8594" do
+      width = attribute(tags("r = ? special seq ?;", "rect").first, "width")
+      expect(width.to_f)
+        .to be_within(0.001).of(advance("special seq") + 18.8594)
     end
 
     it "sets words at 14" do
@@ -211,9 +209,9 @@ RSpec.describe Sirena::Notation::PlantUML::Ebnf::Blocks do
   describe "nested constructs" do
     it "puts a choice with an optional in a loop as the JAR does" do
       expect(rects('r = "x", { "a" | [ b ] }, ( "c" | "d" ), "e";')
-        .map { |box| box.first(2) }).to include([141.59, 71.73],
-                                                [165.59, 128.22],
-                                                [315.4, 72.98])
+        .map { |box| box.first(2) }).to include([141.29, 71.73],
+                                                [165.29, 128.22],
+                                                [315.17, 72.98])
     end
   end
 end
