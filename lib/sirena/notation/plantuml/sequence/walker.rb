@@ -60,7 +60,13 @@ module Sirena
           SELF_HEIGHT = 20.0
           COMPACT_FRAGMENT_SELF_HEIGHT = 17.75
           LOOP_HEIGHT = 13.0
-          private_constant :LOOP_HEIGHT
+          # PlantUML 1.2026.6 ends the bar of a lifeline one pixel below a
+          # loop written on it when the bar closes right after: the loop
+          # drops 5, and any bar closing after a loop ends 6 below its row.
+          CLOSING_LOOP_DROP = 5.0
+          CLOSING_LOOP_BAR_REACH = 6.0
+          private_constant :LOOP_HEIGHT, :CLOSING_LOOP_DROP,
+                           :CLOSING_LOOP_BAR_REACH
           TAB_HEIGHT = 20.0
           CROSS_HALF = 9.0
           ACTIVATION_END_INSET = 7.0
@@ -399,7 +405,20 @@ module Sirena
 
           def advance_by(message, row)
             @spare_row = row - tail_of(message)
-            @y += row
+            @y += row - @loop_drop
+          end
+
+          def closing_loop_drop(message)
+            return 0.0 unless classic? && message.self_message?
+
+            closes = @following_activations.any? do |activation|
+              !activation.on? && activation.participant == message.from
+            end
+            closes ? CLOSING_LOOP_DROP : 0.0
+          end
+
+          def classic?
+            !@label_inset && !@teoz_fragment_cadence
           end
 
           def tail_of(message)
@@ -546,6 +565,7 @@ module Sirena
             @y += [label_lines(message).size - 1, 0].max * line_step
             @self_drop = message.self_message? ? self_height : 0.0
             @last_y = @mark_y = @y
+            @y += @loop_drop = closing_loop_drop(message)
             record_text_height(message)
           end
 
@@ -659,10 +679,17 @@ module Sirena
           # A bar starts or ends at the arrow it is written on, or else
           # between the rows on either side of the line.
           def activation(item)
-            @tracker.apply(item, @mark_y || (@y - 20))
+            @tracker.apply(item, bar_edge(item))
             return if item.on? || !@next_non_activation.is_a?(Divider)
 
             @y += @mark_y ? @deactivation_gap : @bare_deactivation_gap
+          end
+
+          def bar_edge(item)
+            return @y - 20 unless @mark_y
+
+            loop_closing = !item.on? && classic? && @self_drop.positive?
+            loop_closing ? @mark_y + CLOSING_LOOP_BAR_REACH : @mark_y
           end
 
           # The cross sits at the end of the arrow it follows, or else
