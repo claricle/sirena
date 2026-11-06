@@ -32,12 +32,29 @@ module Sirena
             ranks = by_rank(members)
             return 0.0 if ranks.empty?
 
-            ranks.values.map { |labels| reach(labels) }.max + MARGIN
+            ranks.values.map { |labels| placed(labels).last }
+              .map { |label, left| left + label.width }.max + MARGIN
+          end
+
+          # Where the labels of a rank shared by two or more transitions
+          # stand, so each takes its own slot of the rank between its states.
+          #
+          # @param members [Array<Hash>] as for {#width}
+          # @return [Array<Array(Hash, Hash)>] each such transition and its
+          #   label centre and the x its line bends through, relative to the
+          #   container
+          def slots(members)
+            ranks = by_rank(members).values.map { |all| all.select(&:direct) }
+            ranks = ranks.select { |labels| labels.size > 1 }
+            ranks.flat_map { |labels| centres(labels) }
           end
 
           private
 
-          # The labels of each rank, as [ideal left, width] pairs.
+          Label = Struct.new(:edge, :ideal, :width, :row, :down, :direct)
+          private_constant :Label
+
+          # The labels of each rank, in the order their edges were drawn.
           def by_rank(members)
             by_id = members.to_h { |node| [node[:id], node] }
             joined = @edges.filter_map { |edge| joint(edge, by_id) }
@@ -52,13 +69,26 @@ module Sirena
             return unless pair
 
             from, to = pair.map { |id| by_id.fetch(id) }
-            [rank_of(from, to),
-             [middle(from, to) + 1, edge[:labels].first[:width]]]
+            upper, lower = [from, to].sort_by { |node| node[:y] }
+            [upper[:y] + upper[:height], label(edge, from, to, upper, lower)]
           end
 
-          def rank_of(from, to)
-            upper = [from, to].min_by { |node| node[:y] }
-            upper[:y] + upper[:height]
+          def label(edge, from, to, upper, lower)
+            Label.new(edge, middle(from, to) + 1, edge[:labels].first[:width],
+                      rank_middle(upper, lower), upper.equal?(from),
+                      direct?(edge, from, to))
+          end
+
+          # Whether the edge joins the two members themselves, not states
+          # inside them.
+          def direct?(edge, from, to)
+            edge.values_at(:sources, :targets).flatten == [from[:id], to[:id]]
+          end
+
+          # The row halfway across the gap between the two states.
+          def rank_middle(upper, lower)
+            bottom = upper[:y] + upper[:height]
+            bottom + ((lower[:y] - bottom) / 2.0)
           end
 
           def middle(from, to)
@@ -66,9 +96,40 @@ module Sirena
             centres.sum / 2.0
           end
 
-          def reach(labels)
-            labels.sort.reduce(0.0) do |right, (left, width)|
-              [left, right + GAP].max + width
+          # The group is centred on where its transitions meant to stand,
+          # but never left of the container's own edge.
+          def centres(labels)
+            row = placed(labels)
+            slide = slide_for(row, labels)
+            row.map do |label, left|
+              [label.edge, { x: left + slide + (label.width / 2.0),
+                             y: label.row, via: left + slide }]
+            end
+          end
+
+          def slide_for(row, labels)
+            first = row.first.last
+            middle = labels.sum(&:ideal) / labels.size
+            [middle - (span(row) / 2.0), 0.0].max - first
+          end
+
+          def span(row)
+            last, left = row.last
+            left + last.width - row.first.last
+          end
+
+          # Each label of a rank with its left edge: side by side from the
+          # ideal spot, those of edges that run down before those that run
+          # up.
+          def placed(labels)
+            ordered = labels.sort_by.with_index do |label, index|
+              [label.ideal, label.down ? 0 : 1, index]
+            end
+            right = 0.0
+            ordered.map do |label|
+              left = [label.ideal, right + GAP].max
+              right = left + label.width
+              [label, left]
             end
           end
         end
