@@ -102,12 +102,18 @@ RSpec.describe Sirena::Notation::PlantUMLData::Boxes::Ornaments,
     expect(words(value_text(doc))).to include("Calendar")
   end
 
-  it "never fetches <img:..>: it stays literal text" do
+  it "never fetches <img:..>: it prints PlantUML's `(Cannot decode)`" do
     doc = svg_of("<img:https://example.test/a.png>")
 
-    expect(words(value_text(doc)))
-      .to include("<img:https://example.test/a.png>")
+    expect(words(value_text(doc))).to eq("(Cannot decode)")
     expect(shapes(doc, "image")).to be_empty
+  end
+
+  it "makes room for `(Cannot decode)` in monospace advances" do
+    boxes = Sirena::Notation::PlantUMLData::Boxes
+    width = boxes::Text.width("<img:https://example.test/a.png>")
+
+    expect(width).to be_within(0.001).of("(Cannot decode)".length * 14 * 0.602)
   end
 
   describe "label creole (not a data cell)" do

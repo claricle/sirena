@@ -12,8 +12,9 @@ module Sirena
       # `<w>`, `<color:red>`, `<size:18>` and `<back:..>` (the background is
       # not drawn; its text is kept). `<s:red>` and `<u:red>` keep their
       # colour in the run for a caller that draws the line itself. A marker
-      # with no partner stays literal, and so does any tag it does not know,
-      # such as `<img>`. `<math>` and
+      # with no partner stays literal, and so does any tag it does not know.
+      # `<img..>` is never fetched: PlantUML prints "(Cannot decode)" in
+      # monospace for an image it cannot load, and so does this. `<math>` and
       # `<latex>` are not typeset (no math engine is bundled): the formula
       # shows as monospace source, as PlantUML does without jlatexmath.
       # A `~` before a marker keeps the marker literal. `literal:` names
@@ -22,8 +23,7 @@ module Sirena
       # With `inline: true` (a data diagram's cell) `<&icon>` (an Open Iconic
       # glyph) and `<:emoji:>` become runs of non-breaking spaces as wide as
       # the picture, which the caller draws over; `<back:..>` is kept in the
-      # run for the caller to paint. `<img:..>` is never fetched: it stays
-      # literal text.
+      # run for the caller to paint.
       module Creole
         Run = Struct.new(:text, :style, keyword_init: true)
 
@@ -40,14 +40,16 @@ module Sirena
         PICTURE_ROOM = { icon: 3, emoji: 5 }.freeze
         TOKEN = %r{
           <(?<formula>math|latex)>(?<body>.*?)</\k<formula>>|
+          (?<image><img[:\s][^<>]*>)|
           \*\*|//|__|--|~~|""|~(?<escaped>\*\*|//|__|--|"")|
           <(?<close>/)?(?<tag>b|i|u|s|w|strike|del|color|size|back|font)
           (?:[:\s](?<arg>[^<>]*))?>
         }xi
         PICTURE = "|<&(?<icon>[\\w-]+)>|<:(?<emoji>[\\w-]+):>"
+        UNDECODED_IMAGE = "(Cannot decode)"
         INLINE_TOKEN = Regexp.new(TOKEN.source + PICTURE, TOKEN.options)
         private_constant :TOGGLES, :TAG_STYLES, :PAIRED, :IGNORED, :TOKEN,
-                         :LINE_TAGS, :PICTURE_ROOM, :PICTURE,
+                         :LINE_TAGS, :PICTURE_ROOM, :PICTURE, :UNDECODED_IMAGE,
                          :INLINE_TOKEN
 
         module_function
@@ -82,6 +84,7 @@ module Sirena
           return run(token[:escaped], state) if token[:escaped]
           return formula(token[:body], state) if token[:formula]
           return picture(token, state) if picture?(token)
+          return undecoded_image(state) if token[:image]
 
           run(token[0], state) unless apply(token, state, paired, inline)
         end
@@ -91,6 +94,10 @@ module Sirena
         def picture?(token)
           token.names.include?("icon") &&
             (token[:emoji] || Icons.known?(token[:icon]))
+        end
+
+        def undecoded_image(state)
+          Run.new(text: UNDECODED_IMAGE, style: state.merge(mono: true))
         end
 
         def picture(token, state)

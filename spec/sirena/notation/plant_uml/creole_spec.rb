@@ -27,6 +27,15 @@ RSpec.describe Sirena::Notation::PlantUML::Creole do
     expect(runs("<latex>a_b</latex>")).to eq([["a_b", { mono: true }]])
   end
 
+  it "shows an image it cannot load as monospace `(Cannot decode)`",
+     :aggregate_failures do
+    expected = [["by ", {}], ["(Cannot decode)", { mono: true }]]
+
+    expect(runs("by <img sourceforge.jpg>")).to eq(expected)
+    expect(runs("by <img:https://x.test/a.png>", inline: true))
+      .to eq(expected)
+  end
+
   it "reads a monospaced font tag as monospace and ignores other fonts" do
     node = Sirena::Svg::Text.new
     described_class.assign(node, "<font:monospaced>m</font> <font:Arial>a")

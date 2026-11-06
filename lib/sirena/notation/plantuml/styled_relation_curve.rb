@@ -16,7 +16,13 @@ module Sirena
         REACH = 0.4
         DEPARTURE = 0.3
         ARRIVAL = 0.6
-        private_constant :SHALLOW_SLOPE, :REACH, :DEPARTURE, :ARRIVAL
+        LABEL_AT = 0.65
+        LABEL_WEIGHTS = [(1 - LABEL_AT)**3,
+                         3 * ((1 - LABEL_AT)**2) * LABEL_AT,
+                         3 * (1 - LABEL_AT) * (LABEL_AT**2),
+                         LABEL_AT**3].freeze
+        private_constant :SHALLOW_SLOPE, :REACH, :DEPARTURE, :ARRIVAL,
+                         :LABEL_AT, :LABEL_WEIGHTS
 
         # @param relation [Relation]
         # @param from [Array(Float, Float)] the left end
@@ -32,6 +38,18 @@ module Sirena
 
           [point(from, run, rise, REACH, DEPARTURE),
            point(to, -run, -rise, REACH, ARRIVAL)]
+        end
+
+        # @return [Array(Float, Float), nil] the curve's point at LABEL_AT,
+        #   which {#controls} puts off the chord; nil when the link stays on
+        #   its chord
+        def label_point(relation, from, to)
+          points = controls(relation, from, to)
+          return unless points
+
+          [from, *points, to].transpose.map do |axis|
+            axis.zip(LABEL_WEIGHTS).sum { |value, weight| value * weight }
+          end
         end
 
         private
