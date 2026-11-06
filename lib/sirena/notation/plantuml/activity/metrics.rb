@@ -32,6 +32,9 @@ module Sirena
           FIXED = { start: [20.0, 20.0], stop: [24.0, 24.0], kill: [24.0, 24.0],
                     end: [24.0, 24.0],
                     merge: [24.0, 24.0], bar: [40.0, 6.0] }.freeze
+          # PlantUML draws a legacy bar at this size however many branches
+          # it joins.
+          LEGACY_BAR = [80.0, 8.0].freeze
 
           # Skinparam names PlantUML reads for a role, besides the role.
           SKIN_ALIASES = { diamond: :activitydiamond,
@@ -92,11 +95,15 @@ module Sirena
           # @param node [Node]
           # @return [Box] a box of the node's size, not yet placed
           def box_for(node)
-            return fixed_box(FIXED[node.kind]) if FIXED.key?(node.kind)
+            return fixed_box(fixed_size(node)) if FIXED.key?(node.kind)
             return fixed_box(FIXED[:merge]) if node.bare
             return decision_box(node.lines) if node.kind == :decision
 
             action_box(node.lines)
+          end
+
+          def fixed_size(node)
+            node.kind == :bar && node.legacy ? LEGACY_BAR : FIXED[node.kind]
           end
 
           def action_box(lines)
