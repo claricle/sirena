@@ -16,14 +16,17 @@ module Sirena
         ROLE = "relation_label"
         MARGIN = 1.0
         MAX_STEPS = 24
+        REACH = 20.0
         SLIDES = [0.0, 0.1, -0.1, 0.2, -0.2, 0.3, -0.3, 0.4, -0.4].freeze
 
         # @param size [Float] label font size
         # @param width_of [#call] maps label text to its width in the layout
         # @param drawn_width_of [#call] maps label text to the width it is
         #   drawn at, which decides what lines run through it
-        def initialize(size:, width_of:, drawn_width_of: width_of)
+        # @param boxes [Array<Scene::Box>] boxes a label may not lie on
+        def initialize(size:, width_of:, drawn_width_of: width_of, boxes: [])
           @size = size
+          @boxes = boxes
           @width_of = width_of
           @drawn_width_of = drawn_width_of
         end
@@ -32,7 +35,7 @@ module Sirena
         # @param scenes [Array<Scene::Relation>]
         # @return [Array<Scene::Relation>] the same scenes
         def call(scenes)
-          taken = []
+          taken = box_areas
           scenes.each do |scene|
             next unless scene.respond_to?(:texts)
 
@@ -46,6 +49,12 @@ module Sirena
 
         private
 
+        def box_areas
+          @boxes.map do |box|
+            [box.x, box.y, box.x + box.width, box.y + box.height]
+          end
+        end
+
         # A relation's own points, and with them the lines of all the others.
         Track = Struct.new(:scene, :scenes) do
           def own
@@ -54,13 +63,18 @@ module Sirena
             )
           end
 
-          def lines
-            @lines ||= [[own, 0.0], *others_lines]
+          # How near its own line a label stays, from the line's middle.
+          def reach
+            (scene.stroke_width.to_f / 2) + REACH
+          end
+
+          def others
+            @others ||= other_lines
           end
 
           private
 
-          def others_lines
+          def other_lines
             scenes.reject { |other| other.equal?(scene) }
               .select { |other| other.respond_to?(:path) }
               .map { |other| line_of(other) }
@@ -74,13 +88,28 @@ module Sirena
 
         def free_box(text, taken, track)
           home = [text.x, text.y]
+          shift(text, home, best_move(text, home, taken, track) || [0.0, 0.0])
+          box_of(text)
+        end
+
+        # The first move that leaves the label clear of every line but its
+        # own; when each spot near its line has another line across it, the
+        # move with the fewest.
+        def best_move(text, home, taken, track)
+          fewest = nil
           moves(track.own).each do |move|
             shift(text, home, move)
-            box = box_of(text)
-            return box if free?(text, box, taken, track)
+            count = clashes(text, taken, track)
+            next unless count
+            return move if count.zero?
+
+            fewest = [move, count] if fewer?(fewest, count)
           end
-          shift(text, home, [0.0, 0.0])
-          box_of(text)
+          fewest&.first
+        end
+
+        def fewer?(fewest, count)
+          fewest.nil? || count < fewest[1]
         end
 
         def shift(text, home, move)
@@ -105,10 +134,28 @@ module Sirena
           offsets.map { |step| [across, down + step] }
         end
 
-        def free?(text, box, taken, track)
+        # How many other lines run through the label, or nil when it
+        # cannot stay: on another label, across its own line or too far
+        # from it.
+        def clashes(text, taken, track)
+          return if taken.any? { |other| overlap?(box_of(text), other) }
+
           drawn = box_of(text, @drawn_width_of)
-          taken.none? { |other| overlap?(box, other) } &&
-            track.lines.none? { |line| crossed?(drawn, *line) }
+          return unless beside?(drawn, track)
+
+          track.others.count { |line| crossed?(drawn, *line) }
+        end
+
+        def beside?(drawn, track)
+          return true if track.own.empty?
+
+          !crossed?(drawn, track.own, 0.0) && reaches?(drawn, track)
+        end
+
+        def reaches?(drawn, track)
+          track.own.each_cons(2).any? do |from, to|
+            SegmentBox.within?(drawn, from, to, track.reach)
+          end
         end
 
         def crossed?(box, points, half)
@@ -135,8 +182,11 @@ module Sirena
            text.y + (@size / 4)]
         end
 
+        # The left side of the text, which is drawn from `x` rightwards,
+        # leftwards or either way from it.
         def left_edge(text, width)
-          text.anchor == "middle" ? text.x - (width / 2) : text.x
+          { "middle" => text.x - (width / 2),
+            "end" => text.x - width }.fetch(text.anchor, text.x)
         end
 
         def overlap?(first, second)

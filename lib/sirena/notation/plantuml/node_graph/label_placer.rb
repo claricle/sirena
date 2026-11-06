@@ -26,8 +26,10 @@ module Sirena
           MAX_STEPS = 24
           BESIDE_GAP = 4.0
           NEIGHBOUR_GAP = 6.0
+          REACH = 20.0
           private_constant :FONT_SIZE, :LINE_STEP, :RISE, :MARGIN, :FRACTIONS,
-                           :SPREAD, :MAX_STEPS, :BESIDE_GAP, :NEIGHBOUR_GAP
+                           :SPREAD, :MAX_STEPS, :BESIDE_GAP,
+                           :NEIGHBOUR_GAP, :REACH
 
           # `width` is the width of the label's text; {#right} and
           # {#bottom} are how far the label reaches.
@@ -58,15 +60,42 @@ module Sirena
           private
 
           def place(route, width, taken, others)
-            candidates(route, width).each do |x_pos, y_pos|
-              box = bounds(x_pos, y_pos, width)
-              next if taken.any? { |other| overlap?(box, other) }
-              next if covers?(box, route) || near?(box, others)
+            spot = spot_for(route, width, taken, others)
+            return fallback(route, width, taken) unless spot
 
-              taken << box
-              return Placement.new(route, x_pos, y_pos, width)
+            taken << bounds(*spot, width)
+            Placement.new(route, spot[0], spot[1], width)
+          end
+
+          # The first candidate that no edge but its own runs through; when
+          # every candidate near the edge has some other edge across it, the
+          # one with the fewest.
+          def spot_for(route, width, taken, others)
+            fewest = nil
+            candidates(route, width).each do |spot|
+              count = clashes(spot, route, width, [taken, others])
+              next unless count
+              return spot if count.zero?
+
+              fewest = [spot, count] if fewer?(fewest, count)
             end
-            fallback(route, width, taken)
+            fewest&.first
+          end
+
+          def fewer?(fewest, count)
+            fewest.nil? || count < fewest[1]
+          end
+
+          # How many other edges lie across the candidate, or nil when it
+          # cannot be used: on a taken spot, across its own edge or further
+          # from it than a label is read with.
+          def clashes(spot, route, width, around)
+            taken, others = around
+            box = bounds(*spot, width)
+            return if taken.any? { |other| overlap?(box, other) }
+            return if covers?(box, route) || !reaches?(box, route)
+
+            others.count { |other| covers?(box, other, NEIGHBOUR_GAP) }
           end
 
           # Every candidate, nearest the edge first: beside its line, along
@@ -167,13 +196,18 @@ module Sirena
              spot[1] + (FONT_SIZE / 3.0)]
           end
 
-          # Whether the box lies within reach of any other edge's line, which
-          # is drawn as a curve a little off the points it passes through.
-          def near?(box, others)
-            others.any? { |other| covers?(box, other, NEIGHBOUR_GAP) }
+          # Whether the box lies within `REACH` of the route's line, as the
+          # crow flies from the line to the nearest point of the box.
+          def reaches?(box, route)
+            reach = stroke(route.edge) + REACH
+            route.points.each_cons(2).any? do |from, to|
+              SegmentBox.within?(box, from, to, reach)
+            end
           end
 
-          # Whether the box lies across any part of the route's line.
+          # Whether the box lies across any part of the route's line, or within
+          # `gap` of it. A neighbour's line is drawn as a curve a little off
+          # the points it passes through, so it takes a gap too.
           def covers?(box, route, gap = 0.0)
             pad = stroke(route.edge) + gap
             padded = box.zip([-pad, -pad, pad, pad]).map(&:sum)

@@ -1907,11 +1907,12 @@ module Sirena
 
             relation_scenes(rel, index, context)
           end
-          separate_relation_labels(scenes)
+          separate_relation_labels(scenes, boxes)
         end
 
-        def separate_relation_labels(scenes)
+        def separate_relation_labels(scenes, boxes)
           RelationLabelSeparator.new(
+            boxes: boxes,
             size: font_size * SMALL_TEXT_SCALE,
             width_of: method(:end_text_width),
             drawn_width_of: lambda { |content|

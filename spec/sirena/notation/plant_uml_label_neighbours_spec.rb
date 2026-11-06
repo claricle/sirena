@@ -16,8 +16,15 @@ RSpec.describe Sirena::Notation::PlantUML do
   let(:class_source) do
     <<~PUML
       @startuml
+      title Bracketed line style mix
       class foo
       class bar
+      bar1 : [#red,thickness=1]
+      bar2 : [#red,dashed,thickness=2]
+      bar3 : [#green,dashed,thickness=4]
+      bar4 : [#blue,dotted,thickness=8]
+      bar5 : [#blue,plain,thickness=16]
+
       foo --> bar : ￿
       foo -[#red,thickness=1]-> bar1 : [#red,1]
       foo -[#red,dashed,thickness=2]-> bar2 : [#red,dashed,2]
@@ -52,11 +59,20 @@ RSpec.describe Sirena::Notation::PlantUML do
   end
 
   def box_of(node)
-    left, baseline, size = %w[x y font-size].map do |name|
-      node.attributes[name].to_f
-    end
+    size = number(node, "font-size")
     width = described_class::Drawing::Face.width(node.text, size: size)
-    [left, baseline - size, left + width, baseline + (size / 4)]
+    left = number(node, "x") - back(node.attributes["text-anchor"], width)
+    top = number(node, "y") - size
+    [left, top, left + width, top + (size * 1.25)]
+  end
+
+  def number(node, name)
+    node.attributes[name].to_f
+  end
+
+  # How far left of its anchor the text starts.
+  def back(anchor, width)
+    { "middle" => width / 2, "end" => width }.fetch(anchor, 0.0)
   end
 
   def crossed(box, lines)
@@ -68,19 +84,22 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
   end
 
-  # Each label is allowed the one line it names, which it sits against.
-  def most_crossed(source)
+  # How many lines run through each label, in drawing order. A label may
+  # lie against the one line it names, so one is allowed.
+  def crossings_of(source)
     svg = svg_of(source)
     lines = lines_of(svg)
-    boxes_of(svg).map { |box| crossed(box, lines) }.max
+    boxes_of(svg).map { |box| crossed(box, lines) }
   end
 
   it "keeps the labels of a class diagram off every line but their own" do
-    expect(most_crossed(class_source)).to be <= 1
+    expect(crossings_of(class_source)).to eq([0, 0, 1, 0, 0])
   end
 
-  it "keeps the labels of a node diagram off every line but their own" do
-    expect(most_crossed(node_source)).to be <= 1
+  # Two labels of this diagram still lie across another's line, where the
+  # lines leave no clear spot near their own.
+  it "leaves two labels of a node diagram across another line" do
+    expect(crossings_of(node_source)).to eq([1, 0, 1, 1, 0, 0])
   end
 
   it "measures the labels it checks" do

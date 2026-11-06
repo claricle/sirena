@@ -82,11 +82,11 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph::LabelPlacer do
 
   it "prints a label to the right of the point its line passes through" do
     routed = route_class.new([[0, 0], [0, 100]], edge_class.new("label"),
-                             [50.0, 50.0])
+                             [0.0, 50.0])
 
     placement = described_class.new.call([routed]).first
 
-    expect(placement.x).to be > 50.0
+    expect(placement.x).to be > 0.0
   end
 
   it "keeps a label off the line of a neighbouring edge" do
@@ -116,5 +116,21 @@ RSpec.describe Sirena::Notation::PlantUML::NodeGraph::LabelPlacer do
     placement = described_class.new.call([own, roof]).first
 
     expect(placement.y - 12.0).to be > 100.0
+  end
+
+  it "keeps a label near its edge when the neighbours fill the space" do
+    own = route_class.new([[0, 100], [300, 100]], edge_class.new("label", 1),
+                          [150.0, 100.0])
+
+    placement = described_class.new.call([own, *fence]).first
+
+    expect((placement.y - 100.0).abs).to be < 30.0
+  end
+
+  def fence
+    Array.new(31) do |index|
+      route_class.new([[index * 10, -500], [index * 10, 500]],
+                      edge_class.new("", 1))
+    end
   end
 end
